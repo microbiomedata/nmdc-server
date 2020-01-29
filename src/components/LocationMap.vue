@@ -2,7 +2,6 @@
   <GChart
     :settings="{
       packages: ['geochart'],
-      mapsApiKey: 'AIzaSyB6gTlWesrHls1rSUMQnTIOcwkspDi-wo8'
     }"
     type="GeoChart"
     :data="geoChartMarkerData"
