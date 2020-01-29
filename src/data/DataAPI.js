@@ -85,8 +85,6 @@ function backPopulate(parents, children, field) {
   children.forEach((c) => {
     if (parentMap[c.part_of] !== undefined) {
       parentMap[c.part_of][field].push(c);
-    } else {
-      console.log(c.part_of);
     }
   });
 }
