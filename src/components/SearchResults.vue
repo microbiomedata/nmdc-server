@@ -16,7 +16,7 @@
         />
         <v-list-item
           :key="result.id"
-          @click="$emit('selected', { type, id: result.id })"
+          @click="$emit('selected', { type, value: result.id })"
         >
           <v-list-item-avatar>
             <v-icon
@@ -75,7 +75,7 @@
               <v-list-item
                 v-for="child in results[0][childType]"
                 :key="child.id"
-                @click="$emit('selected', { type: childType, id: child.id })"
+                @click="$emit('selected', { type: childType, value: child.id })"
               >
                 <v-list-item-avatar>
                   <v-icon
@@ -94,7 +94,7 @@
             </v-list>
             <v-list v-if="parentType && results[0].part_of">
               <v-list-item
-                @click="$emit('selected', { type: parentType, id: results[0].part_of.id })"
+                @click="$emit('selected', { type: parentType, value: results[0].part_of.id })"
               >
                 <v-list-item-avatar>
                   <v-icon
