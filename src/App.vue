@@ -92,7 +92,10 @@
             <v-card
               v-if="types[typeIndex].id === 'sample'"
             >
-              <LocationMap :data="results" />
+              <LocationMap
+                :data="results"
+                @selected="addSelected($event)"
+              />
             </v-card>
           </v-col>
         </v-row>
@@ -101,7 +104,10 @@
         >
           <v-col :cols="12">
             <v-card>
-              <EcosystemChart :data="results" />
+              <EcosystemChart
+                :data="results"
+                @selected="addSelected($event)"
+              />
             </v-card>
           </v-col>
         </v-row>
@@ -174,12 +180,12 @@ export default {
     count(type) {
       return api.count(type);
     },
-    async addSelected({ type, id }) {
+    async addSelected({ type = this.type, value, field = 'id' }) {
       if (type !== this.type) {
-        this.typeIndex = this.types.findIndex((t) => t.id === type);
+        this.typeIndex = this.types.findIndex((t) => t[field] === type);
       }
       await this.$nextTick();
-      this.conditions.push({ field: 'id', op: '==', value: id });
+      this.conditions.push({ field, op: '==', value });
     },
     fieldDisplayName,
     valueDisplayName,

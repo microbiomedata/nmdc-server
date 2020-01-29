@@ -1,17 +1,21 @@
 <template>
   <GChart
+    ref="chart"
     :settings="{
       packages: ['geochart'],
     }"
     type="GeoChart"
     :data="geoChartMarkerData"
     :options="geoChartMarkerOptions"
+    :events="chartEvents"
   />
 </template>
 
 <script>
 import colors from 'vuetify/lib/util/colors';
 import { GChart } from 'vue-google-charts';
+
+import encoding from './encoding';
 
 export default {
   name: 'LocationMap',
@@ -24,26 +28,22 @@ export default {
       default: () => [],
     },
   },
-  data: () => ({
-    ecosystems: [
-      {
-        name: 'Host-associated',
-        color: colors.red.base,
+  data() {
+    return {
+      ecosystems: encoding.ecosystems,
+      chartEvents: {
+        select: () => {
+          const chart = this.$refs.chart.chartObject;
+          const selection = chart.getSelection();
+          if (selection.length === 1) {
+            const [lat, lon] = this.geoChartMarkerData[selection[0].row + 1];
+            this.$emit('selected', { field: 'latitude', value: lat });
+            this.$emit('selected', { field: 'longitude', value: lon });
+          }
+        },
       },
-      {
-        name: 'Aquatic',
-        color: colors.lightBlue.base,
-      },
-      {
-        name: 'Terrestrial',
-        color: colors.lightGreen.darken2,
-      },
-      {
-        name: 'Engineered',
-        color: colors.orange.base,
-      },
-    ],
-  }),
+    };
+  },
   computed: {
     geoChartMarkerData() {
       const hist = {};

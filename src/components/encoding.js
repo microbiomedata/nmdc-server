@@ -1,3 +1,5 @@
+import colors from '../colors';
+
 export default {
   type: {
     study: {
@@ -13,17 +15,24 @@ export default {
       icon: 'mdi-file',
     },
   },
-  ecosystem: {
-    Engineered: {
-      color: 'orange',
+  ecosystems: [
+    {
+      name: 'Host-associated',
+      color: colors.hostAssociated,
     },
-    Environmental: {
-      color: 'green',
+    {
+      name: 'Aquatic',
+      color: colors.aquatic,
     },
-    'Host-associated': {
-      color: 'red',
+    {
+      name: 'Terrestrial',
+      color: colors.terrestrial,
     },
-  },
+    {
+      name: 'Engineered',
+      color: colors.engineered,
+    },
+  ],
   ecosystem_category: {
     Bioreactor: {
       icon: 'test-tube-empty',

@@ -1,16 +1,17 @@
 <template>
   <GChart
+    ref="chart"
     type="BarChart"
     :data="barChartData"
     :options="barChartOptions"
+    :events="chartEvents"
   />
 </template>
 
 <script>
-import colors from 'vuetify/lib/util/colors';
 import { GChart } from 'vue-google-charts';
 
-// import encoding from './encoding';
+import encoding from './encoding';
 
 export default {
   name: 'EcosystemChart',
@@ -23,26 +24,25 @@ export default {
       default: () => [],
     },
   },
-  data: () => ({
-    ecosystems: [
-      {
-        name: 'Host-associated',
-        color: colors.red.base,
+  data() {
+    return {
+      ecosystems: encoding.ecosystems,
+      chartEvents: {
+        select: () => {
+          const chart = this.$refs.chart.chartObject;
+          const selection = chart.getSelection();
+          if (selection.length === 1) {
+            const [value] = this.barChartData[selection[0].row + 1];
+            let field = 'ecosystem';
+            if (['Aquatic', 'Terrestrial'].includes(value)) {
+              field = 'ecosystem_category';
+            }
+            this.$emit('selected', { field, value });
+          }
+        },
       },
-      {
-        name: 'Aquatic',
-        color: colors.lightBlue.base,
-      },
-      {
-        name: 'Terrestrial',
-        color: colors.lightGreen.darken2,
-      },
-      {
-        name: 'Engineered',
-        color: colors.orange.base,
-      },
-    ],
-  }),
+    };
+  },
   computed: {
     barChartData() {
       const hist = {};
