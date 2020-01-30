@@ -13,15 +13,19 @@ function parseAnnotation(a) {
   return value;
 }
 
-function parseNamedThings(arr) {
+function parseNamedThings(arr, parentType) {
   return arr.map((d) => {
     const datum = {
       id: d.id,
       name: d.name,
       description: d.description,
     };
-    if (d.part_of !== undefined) {
-      [datum.part_of] = d.part_of;
+    if (parentType !== undefined) {
+      if (d.part_of !== undefined) {
+        [datum[`${parentType}_id`]] = d.part_of;
+      } else {
+        datum[`${parentType}_id`] = 'None';
+      }
     }
     d.annotations.forEach((a) => {
       datum[a.has_characteristic.name] = parseAnnotation(a);
@@ -30,8 +34,20 @@ function parseNamedThings(arr) {
   });
 }
 
+function idMap(items) {
+  const itemMap = {};
+  for (let i = 0; i < items.length; i += 1) {
+    const item = items[i];
+    itemMap[item.id] = item;
+  }
+  return itemMap;
+}
+
 function meetsCondition(d, condition) {
   if (condition.op === '==') {
+    if (Array.isArray(d[condition.field])) {
+      return d[condition.field].includes(condition.value);
+    }
     return d[condition.field] === condition.value;
   }
   if (condition.op === '<') {
@@ -75,35 +91,46 @@ function meetsAllConditions(d, fieldConditions) {
   return true;
 }
 
-function backPopulate(parents, children, field) {
-  const parentMap = {};
-  parents.forEach((p) => {
-    parentMap[p.id] = p;
-    // eslint-disable-next-line no-param-reassign
-    p[field] = [];
-  });
-  children.forEach((c) => {
-    if (parentMap[c.part_of] !== undefined) {
-      parentMap[c.part_of][field].push(c);
-    }
-  });
-}
-
 export default class DataAPI {
   constructor() {
-    this.sample = parseNamedThings(biosamples);
-    this.project = parseNamedThings(projects);
+    this.sample = parseNamedThings(biosamples, 'project');
+    this.sampleMap = idMap(this.sample);
+    this.project = parseNamedThings(projects, 'study');
+    this.projectMap = idMap(this.project);
     this.study = parseNamedThings(studies);
+    this.studyMap = idMap(this.study);
     this.file = [{ id: '0', name: 'Test' }];
-    backPopulate(this.study, this.project, 'project');
-    backPopulate(this.project, this.sample, 'sample');
-    this.sample.forEach((s) => {
+    this.fileMap = idMap(this.file);
+    this.backPopulate('study', 'project');
+    this.backPopulate('project', 'sample');
+    for (let i = 0; i < this.study.length; i += 1) {
+      this.study[i].sample_id = [];
+    }
+    for (let i = 0; i < this.sample.length; i += 1) {
+      const s = this.sample[i];
+      if (this.projectMap[s.project_id]) {
+        s.study_id = this.projectMap[s.project_id].study_id;
+        if (this.studyMap[s.study_id]) {
+          this.studyMap[s.study_id].sample_id.push(s.id);
+        }
+      }
+    }
+  }
+
+  backPopulate(parentType, childType) {
+    const parentMap = this[`${parentType}Map`];
+    const parents = this[parentType];
+    const children = this[childType];
+    parents.forEach((p) => {
+      parentMap[p.id] = p;
       // eslint-disable-next-line no-param-reassign
-      s.part_of = this.project.find((p) => p.id === s.part_of);
+      p[`${childType}_id`] = [];
     });
-    this.project.forEach((p) => {
-      // eslint-disable-next-line no-param-reassign
-      p.part_of = this.study.find((s) => s.id === p.part_of);
+    children.forEach((c) => {
+      const parent = parentMap[c[`${parentType}_id`]];
+      if (parent !== undefined) {
+        parent[`${childType}_id`].push(c.id);
+      }
     });
   }
 

@@ -11,7 +11,7 @@
 <script>
 import { GChart } from 'vue-google-charts';
 
-import encoding from './encoding';
+import { ecosystems } from './encoding';
 
 export default {
   name: 'EcosystemChart',
@@ -26,7 +26,7 @@ export default {
   },
   data() {
     return {
-      ecosystems: encoding.ecosystems,
+      ecosystems,
       chartEvents: {
         select: () => {
           const chart = this.$refs.chart.chartObject;

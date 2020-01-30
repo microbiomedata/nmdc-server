@@ -24,15 +24,15 @@
         mandatory
       >
         <v-btn
-          v-for="(type, ind) in types"
-          :key="type.id"
+          v-for="(t, ind) in types"
+          :key="t.id"
         >
           <v-icon left>
-            {{ type.icon }}
+            {{ t.icon }}
           </v-icon>
           {{ `${
-            typeIndex === ind && count(type.id) > results.length ? `${results.length} of ` : ''
-          }${count(type.id)} ${type.name}` }}
+            typeIndex === ind && count(t.id) > results.length ? `${results.length} of ` : ''
+          }${count(t.id)} ${t.plural}` }}
         </v-btn>
       </v-btn-toggle>
 
@@ -86,12 +86,10 @@
     <v-content>
       <v-container fluid>
         <v-row
-          v-if="results.length > 1 && ['sample'].includes(types[typeIndex].id)"
+          v-show="['sample'].includes(types[typeIndex].id)"
         >
           <v-col :cols="12">
-            <v-card
-              v-if="types[typeIndex].id === 'sample'"
-            >
+            <v-card>
               <LocationMap
                 :data="results"
                 @selected="addSelected($event)"
@@ -100,7 +98,7 @@
           </v-col>
         </v-row>
         <v-row
-          v-if="results.length > 1 && ['study', 'sample'].includes(types[typeIndex].id)"
+          v-show="['study', 'sample'].includes(types[typeIndex].id)"
         >
           <v-col :cols="12">
             <v-card>
@@ -117,7 +115,9 @@
               <SearchResults
                 :type="types[typeIndex].id"
                 :results="results"
+                :conditions="conditions"
                 @selected="addSelected($event)"
+                @unselected="removeSelected($event)"
               />
             </v-card>
           </v-col>
@@ -129,6 +129,7 @@
 
 <script>
 import { fieldDisplayName, valueDisplayName } from './util';
+import { types } from './components/encoding';
 import DataAPI from './data/DataAPI';
 import FacetedSearch from './components/FacetedSearch.vue';
 import SearchResults from './components/SearchResults.vue';
@@ -147,48 +148,39 @@ export default {
   },
   data: () => ({
     typeIndex: 0,
-    types: [
-      {
-        id: 'study',
-        name: 'Studies',
-        icon: 'mdi-book',
-      },
-      {
-        id: 'project',
-        name: 'Projects',
-        icon: 'mdi-dna',
-      },
-      {
-        id: 'sample',
-        name: 'Samples',
-        icon: 'mdi-test-tube',
-      },
-      {
-        id: 'file',
-        name: 'Files',
-        icon: 'mdi-file',
-      },
-    ],
+    types: Object.keys(types).map((type) => ({ id: type, ...types[type] })),
     conditions: [],
   }),
   computed: {
+    type() {
+      return this.types[this.typeIndex].id;
+    },
     results() {
-      return api.query(this.types[this.typeIndex].id, this.conditions);
+      return api.query(this.type, this.conditions);
     },
   },
   methods: {
+    fieldDisplayName,
+    valueDisplayName,
     count(type) {
       return api.count(type);
     },
     async addSelected({ type = this.type, value, field = 'id' }) {
       if (type !== this.type) {
-        this.typeIndex = this.types.findIndex((t) => t[field] === type);
+        this.typeIndex = this.types.findIndex((t) => t.id === type);
       }
       await this.$nextTick();
       this.conditions.push({ field, op: '==', value });
     },
-    fieldDisplayName,
-    valueDisplayName,
+    removeSelected({ type = this.type, value, field = 'id' }) {
+      if (type !== this.type) {
+        return;
+      }
+      const foundIndex = this.conditions.findIndex((cond) => cond.field === field && cond.op === '==' && cond.value === value);
+      if (foundIndex >= 0) {
+        this.conditions.splice(foundIndex, 1);
+      }
+    },
   },
 };
 </script>
