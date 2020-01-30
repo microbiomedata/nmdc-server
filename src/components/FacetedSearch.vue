@@ -98,9 +98,13 @@ export default {
       deep: true,
     },
     conditions() {
-      // Check for no-op to avoid loop
+      // First check for equivalence no-op to avoid update loop
       let same = true;
       this.conditions.forEach((condition) => {
+        if (this.selected[condition.field] === undefined) {
+          // A field that faceted search cannot track (e.g. array field)
+          return;
+        }
         if (condition.op === '==' && !this.selected[condition.field].includes(condition.value)) {
           same = false;
         }
@@ -118,9 +122,13 @@ export default {
         Object.keys(this.selected).forEach((field) => { sel[field] = []; });
         this.conditions.forEach((condition) => {
           if (condition.op === '==') {
+            if (sel[condition.field] === undefined) {
+              // A field that faceted search cannot track (e.g. array field)
+              return;
+            }
             sel[condition.field].push(condition.value);
           }
-          // Otherwise don't know what to do with condition
+          // Don't know what to do with non-equality condition
         });
         this.selected = sel;
       }

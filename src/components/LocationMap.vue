@@ -15,7 +15,7 @@
 import colors from 'vuetify/lib/util/colors';
 import { GChart } from 'vue-google-charts';
 
-import encoding from './encoding';
+import { ecosystems } from './encoding';
 
 export default {
   name: 'LocationMap',
@@ -30,7 +30,7 @@ export default {
   },
   data() {
     return {
-      ecosystems: encoding.ecosystems,
+      ecosystems,
       chartEvents: {
         select: () => {
           const chart = this.$refs.chart.chartObject;
@@ -67,6 +67,7 @@ export default {
     geoChartMarkerOptions() {
       return {
         displayMode: 'markers',
+        height: 400,
         colorAxis: {
           minValue: 0,
           maxValue: 3,

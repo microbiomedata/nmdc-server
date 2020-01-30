@@ -1,5 +1,5 @@
 <template>
-  <div v-if="results.length > 1">
+  <div v-if="!singleton">
     <v-pagination
       v-model="page"
       :length="Math.ceil(results.length / 10)"
@@ -16,7 +16,7 @@
         />
         <v-list-item
           :key="result.id"
-          @click="$emit('selected', { type, value: result.id })"
+          @click="$emit('selected', { value: result.id })"
         >
           <v-list-item-avatar>
             <v-icon
@@ -52,65 +52,52 @@
             </div>
             <div>{{ results[0].description }}</div>
             <v-list>
-              <v-list-item
+              <v-tooltip
                 v-for="field in displayFields"
                 :key="field"
+                bottom
               >
-                <v-list-item-avatar>
-                  <v-icon>
-                    {{ fields[field] ? fields[field].icon : 'mdi-text' }}
-                  </v-icon>
-                </v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title>
-                    {{ fieldDisplayName(field) }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{ valueDisplayName(field, results[0][field]) }}
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
+                <template v-slot:activator="{ on }">
+                  <v-list-item
+                    @click="selectField(field)"
+                    v-on="on"
+                  >
+                    <v-list-item-avatar>
+                      <v-icon>
+                        {{ fields[field] ? fields[field].icon : 'mdi-text' }}
+                      </v-icon>
+                    </v-list-item-avatar>
+                    <v-list-item-content>
+                      <v-list-item-title>
+                        {{ fieldDisplayName(field) }}
+                      </v-list-item-title>
+                      <v-list-item-subtitle>
+                        {{ valueDisplayName(field, results[0][field]) }}
+                      </v-list-item-subtitle>
+                    </v-list-item-content>
+                  </v-list-item>
+                </template>
+                <span>Click to select {{ typeWithCardinality(type, 2) }} with this value</span>
+              </v-tooltip>
             </v-list>
-            <v-list v-if="childType">
-              <v-list-item
-                v-for="child in results[0][childType]"
-                :key="child.id"
-                @click="$emit('selected', { type: childType, value: child.id })"
+            <template v-for="relatedType in ['study', 'project', 'sample']">
+              <v-btn
+                v-if="type !== relatedType"
+                :key="relatedType"
+                outlined
+                class="mr-3"
+                @click="$emit('selected', {
+                  type: relatedType,
+                  field: `${type}_id`,
+                  value: results[0].id,
+                })"
               >
-                <v-list-item-avatar>
-                  <v-icon
-                    v-text="types[childType].icon"
-                  />
-                </v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title>
-                    {{ child.name }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{ child.description || 'No description' }}
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list>
-            <v-list v-if="parentType && results[0].part_of">
-              <v-list-item
-                @click="$emit('selected', { type: parentType, value: results[0].part_of.id })"
-              >
-                <v-list-item-avatar>
-                  <v-icon
-                    v-text="types[parentType].icon"
-                  />
-                </v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title>
-                    {{ results[0].part_of.name }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle>
-                    {{ results[0].part_of.description || 'No description' }}
-                  </v-list-item-subtitle>
-                </v-list-item-content>
-              </v-list-item>
-            </v-list>
+                <v-icon left>
+                  {{ types[relatedType].icon }}
+                </v-icon>
+                {{ relatedTypeDescription(relatedType) }}
+              </v-btn>
+            </template>
           </v-col>
         </v-row>
       </v-container>
@@ -120,8 +107,10 @@
 <script>
 import { isObject } from 'lodash';
 
-import { fieldDisplayName, valueDisplayName } from '../util';
-import encoding from './encoding';
+import {
+  typeWithCardinality, valueCardinality, fieldDisplayName, valueDisplayName,
+} from '../util';
+import { types, fields } from './encoding';
 
 export default {
   props: {
@@ -133,59 +122,20 @@ export default {
       type: Array,
       default: () => [],
     },
+    conditions: {
+      type: Array,
+      default: () => [],
+    },
   },
   data: () => ({
     page: 1,
-    types: encoding.type,
-    fields: {
-      location: {
-        icon: 'mdi-earth',
-      },
-      latitude: {
-        icon: 'mdi-earth',
-      },
-      longitude: {
-        icon: 'mdi-earth',
-      },
-      sample_collection_site: {
-        icon: 'mdi-earth',
-      },
-      geographic_location: {
-        icon: 'mdi-earth',
-      },
-      add_date: {
-        icon: 'mdi-calendar',
-      },
-      mod_date: {
-        icon: 'mdi-calendar',
-      },
-      ecosystem: {
-        icon: 'mdi-pine-tree',
-      },
-      ecosystem_category: {
-        icon: 'mdi-pine-tree',
-      },
-      ecosystem_type: {
-        icon: 'mdi-pine-tree',
-      },
-      ecosystem_subtype: {
-        icon: 'mdi-pine-tree',
-      },
-      specific_ecosystem: {
-        icon: 'mdi-pine-tree',
-      },
-      ecosystem_path_id: {
-        icon: 'mdi-pine-tree',
-      },
-      habitat: {
-        icon: 'mdi-pine-tree',
-      },
-      community: {
-        icon: 'mdi-google-circles-communities',
-      },
-    },
+    types,
+    fields,
   }),
   computed: {
+    singleton() {
+      return this.results.length === 1 && this.conditions.findIndex((cond) => cond.field === 'id' && cond.op === '==') >= 0;
+    },
     childType() {
       const childTypes = {
         study: 'project',
@@ -213,6 +163,15 @@ export default {
   methods: {
     fieldDisplayName,
     valueDisplayName,
+    typeWithCardinality,
+    selectField(field) {
+      this.$emit('unselected', { value: this.results[0].id });
+      this.$emit('selected', { field, value: this.results[0][field] });
+    },
+    relatedTypeDescription(relatedType) {
+      const n = valueCardinality(this.results[0][`${relatedType}_id`]);
+      return `${n} ${typeWithCardinality(relatedType, n)}`;
+    },
   },
 };
 </script>

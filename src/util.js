@@ -1,5 +1,24 @@
 import moment from 'moment';
 
+export function valueCardinality(value) {
+  if (Array.isArray(value)) {
+    return value.length;
+  }
+  return 1;
+}
+
+export function typeWithCardinality(type, cardinality) {
+  if (cardinality === 1) {
+    return type;
+  }
+  return {
+    study: 'studies',
+    project: 'projects',
+    sample: 'samples',
+    file: 'files',
+  }[type];
+}
+
 export function toSentenceCase(word) {
   if (['id', 'ncbi'].includes(word)) {
     return word.toUpperCase();
