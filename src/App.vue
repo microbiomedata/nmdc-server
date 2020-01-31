@@ -2,48 +2,48 @@
   <v-app>
     <v-app-bar
       app
-      color="primary"
-      dark
+      color="white"
       clipped-left
     >
-      <v-toolbar-title class="font-weight-bold mr-8">
-        <v-icon
-          large
-          left
-        >
-          mdi-google-circles-extended
-        </v-icon>
-        National Microbiome Data Collaborative
-      </v-toolbar-title>
+      <img
+        :style="{position: 'absolute', 'top': '14px', 'left': '10px'}"
+        src="NMDC_logo_long.jpg"
+        height="80"
+      >
 
       <v-btn-toggle
-        v-model="typeIndex"
+        v-model="type"
+        :style="{'margin-left': '245px'}"
         background-color="transparent"
         tile
         group
         mandatory
       >
         <v-btn
-          v-for="(t, ind) in types"
-          :key="t.id"
+          v-for="(t) in Object.keys(types)"
+          :key="t"
+          :value="t"
+          text
+          color="primary"
         >
           <v-icon left>
-            {{ t.icon }}
+            {{ types[t].icon }}
           </v-icon>
           {{ `${
-            typeIndex === ind && count(t.id) > results.length ? `${results.length} of ` : ''
-          }${count(t.id)} ${t.plural}` }}
+            type === t && count(t) > results.length ? `${results.length} of ` : ''
+          }${count(t)} ${types[t].plural}` }}
         </v-btn>
       </v-btn-toggle>
 
       <template v-slot:extension>
         <v-chip
           v-if="conditions.length"
+          :style="{'margin-left': '250px !important'}"
           label
           outlined
-          class="ma-2"
-          color="white"
-          text-color="white"
+          class="ma-1"
+          color="primary"
+          text-color="primary"
           @click="conditions = []"
         >
           Clear all
@@ -54,9 +54,9 @@
           :key="i"
           close
           label
-          class="ma-2"
-          color="grey lighten-2"
-          text-color="black"
+          class="ma-1"
+          color="primary"
+          dark
           @click="conditions.splice(i, 1)"
           @click:close="conditions.splice(i, 1)"
         >
@@ -69,7 +69,6 @@
       </template>
 
       <v-spacer />
-      Login
     </v-app-bar>
 
     <v-navigation-drawer
@@ -79,14 +78,14 @@
     >
       <FacetedSearch
         v-model="conditions"
-        :type="types[typeIndex].id"
+        :type="type"
       />
     </v-navigation-drawer>
 
     <v-content>
       <v-container fluid>
         <v-row
-          v-show="['sample'].includes(types[typeIndex].id)"
+          v-show="['sample'].includes(type)"
         >
           <v-col :cols="12">
             <v-card>
@@ -98,7 +97,7 @@
           </v-col>
         </v-row>
         <v-row
-          v-show="['study', 'sample'].includes(types[typeIndex].id)"
+          v-show="['study', 'sample'].includes(type)"
         >
           <v-col :cols="12">
             <v-card>
@@ -113,7 +112,7 @@
           <v-col :cols="12">
             <v-card>
               <SearchResults
-                :type="types[typeIndex].id"
+                :type="type"
                 :results="results"
                 :conditions="conditions"
                 @selected="addSelected($event)"
@@ -147,16 +146,42 @@ export default {
     EcosystemChart,
   },
   data: () => ({
-    typeIndex: 0,
-    types: Object.keys(types).map((type) => ({ id: type, ...types[type] })),
+    type: 'study',
+    types,
     conditions: [],
   }),
   computed: {
-    type() {
-      return this.types[this.typeIndex].id;
-    },
     results() {
       return api.query(this.type, this.conditions);
+    },
+  },
+  watch: {
+    $route: {
+      handler(to) {
+        if (to.path === '/') {
+          this.$router.push({ path: `/${this.type}` });
+          return;
+        }
+        this.type = to.path.substring(1);
+        if (to.query.q) {
+          this.conditions = JSON.parse(to.query.q);
+        } else {
+          this.conditions = [];
+        }
+        // eslint-disable-next-line no-console
+        console.log(to);
+      },
+      immediate: true,
+    },
+    type: {
+      handler() {
+        this.navigateIfChanged();
+      },
+    },
+    conditions: {
+      handler() {
+        this.navigateIfChanged();
+      },
     },
   },
   methods: {
@@ -167,9 +192,10 @@ export default {
     },
     async addSelected({ type = this.type, value, field = 'id' }) {
       if (type !== this.type) {
-        this.typeIndex = this.types.findIndex((t) => t.id === type);
+        this.type = type;
+        this.conditions = [];
+        await this.$nextTick();
       }
-      await this.$nextTick();
       this.conditions.push({ field, op: '==', value });
     },
     removeSelected({ type = this.type, value, field = 'id' }) {
@@ -179,6 +205,12 @@ export default {
       const foundIndex = this.conditions.findIndex((cond) => cond.field === field && cond.op === '==' && cond.value === value);
       if (foundIndex >= 0) {
         this.conditions.splice(foundIndex, 1);
+      }
+    },
+    navigateIfChanged() {
+      const queryParam = JSON.stringify(this.conditions);
+      if (this.$route.path !== `/${this.type}` || (this.$route.query.q !== queryParam)) {
+        this.$router.push({ path: `/${this.type}`, query: { q: queryParam } });
       }
     },
   },

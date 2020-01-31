@@ -6,7 +6,6 @@
       :total-visible="7"
     />
     <v-list
-      dense
       two-line
     >
       <template v-for="(result, resultIndex) in results.slice(10*(page-1), 10*page)">

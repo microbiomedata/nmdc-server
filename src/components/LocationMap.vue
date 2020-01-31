@@ -12,7 +12,6 @@
 </template>
 
 <script>
-import colors from 'vuetify/lib/util/colors';
 import { GChart } from 'vue-google-charts';
 
 import { ecosystems } from './encoding';
@@ -73,8 +72,8 @@ export default {
           maxValue: 3,
           colors: this.ecosystems.map((eco) => eco.color),
         },
-        backgroundColor: colors.lightBlue.lighten3,
-        datalessRegionColor: '#eeeeee',
+        backgroundColor: '#ffffff',
+        datalessRegionColor: '#efefef',
         defaultColor: '#f5f5f5',
         legend: 'none',
       };
