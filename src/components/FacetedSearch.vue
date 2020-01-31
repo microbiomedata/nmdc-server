@@ -118,22 +118,11 @@ export default {
       });
 
       if (!same) {
-        const sel = {};
-        Object.keys(this.selected).forEach((field) => { sel[field] = []; });
-        this.conditions.forEach((condition) => {
-          if (condition.op === '==') {
-            if (sel[condition.field] === undefined) {
-              // A field that faceted search cannot track (e.g. array field)
-              return;
-            }
-            sel[condition.field].push(condition.value);
-          }
-          // Don't know what to do with non-equality condition
-        });
-        this.selected = sel;
+        this.syncSelectedWithConditions();
       }
       this.updateResults();
     },
+    immediate: true,
   },
   created() {
     this.initializeType();
@@ -141,12 +130,11 @@ export default {
   },
   methods: {
     initializeType() {
-      this.selected = {};
       this.valueCount = {};
       api.primitiveFields(this.type).forEach((field) => {
-        this.$set(this.selected, field, []);
         this.$set(this.valueCount, field, 5);
       });
+      this.syncSelectedWithConditions();
     },
     updateResults() {
       this.facets = api.primitiveFields(this.type)
@@ -157,6 +145,21 @@ export default {
     },
     fieldDisplayName,
     valueDisplayName,
+    syncSelectedWithConditions() {
+      const sel = {};
+      api.primitiveFields(this.type).forEach((field) => { sel[field] = []; });
+      this.conditions.forEach((condition) => {
+        if (condition.op === '==') {
+          if (sel[condition.field] === undefined) {
+            // A field that faceted search cannot track (e.g. array field)
+            return;
+          }
+          sel[condition.field].push(condition.value);
+        }
+        // Don't know what to do with non-equality condition
+      });
+      this.selected = sel;
+    },
   },
 };
 </script>
