@@ -34,26 +34,6 @@
          "has_characteristic": {
             "name": "add_date"
          },
-         "has_raw_value": "23-DEC-13 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "09-FEB-17 10.44.00.653000000 PM"
-      }
-   ],
-   "id": "Gp0072734",
-   "name": "Cyanobacterial communities from the Joint Genome Institute, California, USA - itags"
-}, {
-   "part_of": [
-      "Gs0110132"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
          "has_raw_value": "19-JUN-14 12.00.00.000000000 AM"
       },
       {
@@ -253,26 +233,6 @@
    ],
    "id": "Gp0061278",
    "name": "Avena fatua rhizosphere microbial communities - H1_Bulk_Litter_6"
-}, {
-   "part_of": [
-      "Gs0110115"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "08-MAY-14 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "21-FEB-17 03.12.33.000000000 PM"
-      }
-   ],
-   "id": "Gp0093989",
-   "name": "Soil carbon bulk and rhizosphere cDNA itags"
 }, {
    "part_of": [
       "Gs0110115"
@@ -1208,60 +1168,6 @@
          "has_characteristic": {
             "name": "mod_date"
          },
-         "has_raw_value": "29-SEP-19 11.21.42.469000000 PM"
-      },
-      {
-         "has_characteristic": {
-            "name": "ncbi_project_name"
-         },
-         "has_raw_value": "Halanaerobium congolense WG3"
-      }
-   ],
-   "id": "Gp0115143",
-   "name": "Halanaerobium congolense WG3",
-   "description": "Microbial controls on biogeochemical cycling in deep subsurface shale carbon reservoirs"
-}, {
-   "part_of": [
-      "Gs0114675"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "15-MAY-15 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "29-SEP-19 11.21.38.097000000 PM"
-      },
-      {
-         "has_characteristic": {
-            "name": "ncbi_project_name"
-         },
-         "has_raw_value": "Halanaerobium congolense WG4"
-      }
-   ],
-   "id": "Gp0115144",
-   "name": "Halanaerobium congolense WG4",
-   "description": "Microbial controls on biogeochemical cycling in deep subsurface shale carbon reservoirs"
-}, {
-   "part_of": [
-      "Gs0114675"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "15-MAY-15 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
          "has_raw_value": "29-SEP-19 11.24.16.829000000 PM"
       },
       {
@@ -1586,54 +1492,6 @@
          "has_characteristic": {
             "name": "mod_date"
          },
-         "has_raw_value": "29-SEP-19 11.21.41.917000000 PM"
-      },
-      {
-         "has_characteristic": {
-            "name": "ncbi_project_name"
-         },
-         "has_raw_value": "Desulfovibrio magnetic ML1"
-      }
-   ],
-   "id": "Gp0114911",
-   "name": "Desulfovibrio magnetic ML1",
-   "description": "Microbial controls on biogeochemical cycling in deep subsurface shale carbon reservoirs"
-}, {
-   "part_of": [
-      "Gs0114675"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "15-MAY-15 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "29-SEP-19 11.21.28.318000000 PM"
-      }
-   ],
-   "id": "Gp0114912",
-   "name": "Gammaproteobacteria sp. LSUCC 101",
-   "description": "Microbial controls on biogeochemical cycling in deep subsurface shale carbon reservoirs"
-}, {
-   "part_of": [
-      "Gs0114675"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "15-MAY-15 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
          "has_raw_value": "29-SEP-19 11.24.06.258000000 PM"
       },
       {
@@ -1699,33 +1557,6 @@
    ],
    "id": "Gp0115195",
    "name": "Halarsenatibacter silvermanii SLAS-1",
-   "description": "Microbial controls on biogeochemical cycling in deep subsurface shale carbon reservoirs"
-}, {
-   "part_of": [
-      "Gs0114675"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "15-MAY-15 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "29-SEP-19 11.21.41.157000000 PM"
-      },
-      {
-         "has_characteristic": {
-            "name": "ncbi_project_name"
-         },
-         "has_raw_value": "Halarsenatibacter silvermanii SLSR-1"
-      }
-   ],
-   "id": "Gp0115196",
-   "name": "Halarsenatibacter silvermanii SLSR-1",
    "description": "Microbial controls on biogeochemical cycling in deep subsurface shale carbon reservoirs"
 }, {
    "part_of": [
@@ -1996,33 +1827,6 @@
    ],
    "id": "Gp0114940",
    "name": "Methanococcoides vulcani SLH 33",
-   "description": "Microbial controls on biogeochemical cycling in deep subsurface shale carbon reservoirs"
-}, {
-   "part_of": [
-      "Gs0114675"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "15-MAY-15 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "29-SEP-19 11.21.37.219000000 PM"
-      },
-      {
-         "has_characteristic": {
-            "name": "ncbi_project_name"
-         },
-         "has_raw_value": "Halanaerobium congolense UTICA-W4B4"
-      }
-   ],
-   "id": "Gp0115139",
-   "name": "Halanaerobium congolense UTICA-W4B4",
    "description": "Microbial controls on biogeochemical cycling in deep subsurface shale carbon reservoirs"
 }, {
    "part_of": [
@@ -2795,33 +2599,6 @@
          "has_characteristic": {
             "name": "mod_date"
          },
-         "has_raw_value": "23-JUN-19 06.29.48.310000000 PM"
-      },
-      {
-         "has_characteristic": {
-            "name": "ncbi_project_name"
-         },
-         "has_raw_value": "Halanaerobium congolense WG8-pro"
-      }
-   ],
-   "id": "Gp0156923",
-   "name": "Halanaerobium congolense WG8-pro",
-   "description": "Genome sequencing of microbes from deep subsurface shale carbon reservoirs to understand their role in biogeochemical cycling"
-}, {
-   "part_of": [
-      "Gs0114675"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "05-OCT-16 01.02.05.731000000 PM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
          "has_raw_value": "28-APR-19 02.43.39.581000000 PM"
       },
       {
@@ -2876,26 +2653,6 @@
          "has_characteristic": {
             "name": "mod_date"
          },
-         "has_raw_value": "19-NOV-19 02.11.50.050000000 AM"
-      }
-   ],
-   "id": "Gp0108334",
-   "name": "Thawing permafrost microbial communities from the Arctic, studying carbon transformations - Permafrost 612E123D"
-}, {
-   "part_of": [
-      "Gs0112340"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "30-OCT-14 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
          "has_raw_value": "19-NOV-19 02.24.17.776000000 AM"
       },
       {
@@ -2907,86 +2664,6 @@
    ],
    "id": "Gp0108335",
    "name": "Thawing permafrost microbial communities from the Arctic, studying carbon transformations - Permafrost 712P3D"
-}, {
-   "part_of": [
-      "Gs0112340"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "30-OCT-14 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "19-NOV-19 02.18.12.331000000 AM"
-      }
-   ],
-   "id": "Gp0108336",
-   "name": "Thawing permafrost microbial communities from the Arctic, studying carbon transformations - Permafrost 712E2X"
-}, {
-   "part_of": [
-      "Gs0112340"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "30-OCT-14 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "19-NOV-19 02.18.12.764000000 AM"
-      }
-   ],
-   "id": "Gp0108337",
-   "name": "Thawing permafrost microbial communities from the Arctic, studying carbon transformations - Permafrost 712E3M"
-}, {
-   "part_of": [
-      "Gs0112340"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "30-OCT-14 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "19-NOV-19 02.17.53.654000000 AM"
-      }
-   ],
-   "id": "Gp0108338",
-   "name": "Thawing permafrost microbial communities from the Arctic, studying carbon transformations - Permafrost 712S1D"
-}, {
-   "part_of": [
-      "Gs0112340"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "30-OCT-14 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "19-NOV-19 02.18.58.713000000 AM"
-      }
-   ],
-   "id": "Gp0108339",
-   "name": "Thawing permafrost microbial communities from the Arctic, studying carbon transformations - Permafrost P3-7"
 }, {
    "part_of": [
       "Gs0112340"
@@ -3065,26 +2742,6 @@
    ],
    "id": "Gp0108342",
    "name": "Thawing permafrost microbial communities from the Arctic, studying carbon transformations - Permafrost 812E2M"
-}, {
-   "part_of": [
-      "Gs0112340"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "30-OCT-14 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "19-NOV-19 02.24.31.093000000 AM"
-      }
-   ],
-   "id": "Gp0108343",
-   "name": "Thawing permafrost microbial communities from the Arctic, studying carbon transformations - Permafrost 812E3D"
 }, {
    "part_of": [
       "Gs0112340"
@@ -3287,33 +2944,6 @@
          "has_characteristic": {
             "name": "mod_date"
          },
-         "has_raw_value": "19-NOV-19 02.02.04.934000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "ncbi_project_name"
-         },
-         "has_raw_value": "Continental margin sediment microbial communities from Kyrgyzstan - ATL_50T metaT"
-      }
-   ],
-   "id": "Gp0146714",
-   "name": "Continental margin sediment microbial communities from Kyrgyzstan - ATL_50T metaT",
-   "description": "Metatranscriptomics of methane hydrate-bearing continental margin sediments"
-}, {
-   "part_of": [
-      "Gs0120351"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "28-MAY-16 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
          "has_raw_value": "19-NOV-19 02.02.06.141000000 AM"
       },
       {
@@ -3380,27 +3010,6 @@
    "id": "Gp0111280",
    "name": "Permafrost soil microbial communities from the Arctic, to analyse light accelerated degradation of dissolved organic matter (DOM) - Organic soil replicate 3 DNA2013-049",
    "description": "Decoding DOM degradation: Permafrost soil sample from the Arctic, to analyse light accelerated degradation of dissolved organic matter (DOM) - Organic soil replicate 3 DNA2013-049"
-}, {
-   "part_of": [
-      "Gs0114298"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "26-FEB-15 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "08-OCT-18 12.33.06.187000000 PM"
-      }
-   ],
-   "id": "Gp0111283",
-   "name": "Permafrost soil microbial communities from the Arctic, to analyse light accelerated degradation of dissolved organic matter (DOM) - Permafrost soil replicate 1 DNA2013-188",
-   "description": "Decoding DOM degradation: Permafrost soil sample from the Arctic, to analyse light accelerated degradation of dissolved organic matter (DOM) - Permafrost soil replicate 1 DNA2013-188"
 }, {
    "part_of": [
       "Gs0114298"
@@ -3563,27 +3172,6 @@
    "id": "Gp0111286",
    "name": "Permafrost soil microbial communities from the Arctic, to analyse light accelerated degradation of dissolved organic matter (DOM) - Permafrost soil replicate 2 DNA2013-191",
    "description": "Decoding DOM degradation: Permafrost soil sample from the Arctic, to analyse light accelerated degradation of dissolved organic matter (DOM) - Permafrost soil replicate 2 DNA2013-191"
-}, {
-   "part_of": [
-      "Gs0114298"
-   ],
-   "annotations": [
-      {
-         "has_characteristic": {
-            "name": "add_date"
-         },
-         "has_raw_value": "26-FEB-15 12.00.00.000000000 AM"
-      },
-      {
-         "has_characteristic": {
-            "name": "mod_date"
-         },
-         "has_raw_value": "08-OCT-18 12.34.58.579000000 PM"
-      }
-   ],
-   "id": "Gp0111287",
-   "name": "Permafrost soil microbial communities from the Arctic, to analyse light accelerated degradation of dissolved organic matter (DOM) - Permafrost soil replicate 3 DNA2013-192",
-   "description": "Decoding DOM degradation: Permafrost soil sample from the Arctic, to analyse light accelerated degradation of dissolved organic matter (DOM) - Permafrost soil replicate 3 DNA2013-192"
 }, {
    "part_of": [
       "Gs0114298"
