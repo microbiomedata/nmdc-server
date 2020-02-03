@@ -51,33 +51,66 @@
             </div>
             <div>{{ results[0].description }}</div>
             <v-list>
-              <v-tooltip
-                v-for="field in displayFields"
-                :key="field"
-                bottom
-              >
-                <template v-slot:activator="{ on }">
-                  <v-list-item
-                    @click="selectField(field)"
-                    v-on="on"
-                  >
-                    <v-list-item-avatar>
-                      <v-icon>
-                        {{ fields[field] ? fields[field].icon : 'mdi-text' }}
-                      </v-icon>
-                    </v-list-item-avatar>
-                    <v-list-item-content>
-                      <v-list-item-title>
-                        {{ fieldDisplayName(field) }}
-                      </v-list-item-title>
-                      <v-list-item-subtitle>
-                        {{ valueDisplayName(field, results[0][field]) }}
-                      </v-list-item-subtitle>
-                    </v-list-item-content>
-                  </v-list-item>
-                </template>
-                <span>Click to select {{ typeWithCardinality(type, 2) }} with this value</span>
-              </v-tooltip>
+              <template v-for="field in displayFields">
+                <v-tooltip
+                  v-if="field.includes('link')"
+                  :key="field"
+                  bottom
+                >
+                  <template v-slot:activator="{ on }">
+                    <v-list-item
+                      @click="openLink(results[0][field])"
+                      v-on="on"
+                    >
+                      <v-list-item-avatar>
+                        <v-icon>
+                          mdi-open-in-new
+                        </v-icon>
+                      </v-list-item-avatar>
+                      <v-list-item-content>
+                        <v-list-item-title>
+                          {{ fieldDisplayName(field) }}
+                        </v-list-item-title>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
+                  <span>Click to follow link</span>
+                </v-tooltip>
+                <v-tooltip
+                  v-else
+                  :key="field"
+                  bottom
+                >
+                  <template v-slot:activator="{ on }">
+                    <v-list-item
+                      @click="selectField(field)"
+                      v-on="on"
+                    >
+                      <v-list-item-avatar>
+                        <v-icon>
+                          {{ fields[field] ? fields[field].icon : 'mdi-text' }}
+                        </v-icon>
+                      </v-list-item-avatar>
+                      <v-list-item-content>
+                        <v-list-item-title>
+                          {{ fieldDisplayName(field) }}
+                        </v-list-item-title>
+                        <v-list-item-subtitle>
+                          {{ valueDisplayName(field, results[0][field]) }}
+                        </v-list-item-subtitle>
+                      </v-list-item-content>
+                    </v-list-item>
+                  </template>
+                  <span>Click to select {{ typeWithCardinality(type, 2) }} with this value</span>
+                </v-tooltip>
+              </template>
+              <!-- <v-list-item-content>
+                <v-list-item-title>
+                  <a :href="valueDisplayName(field, results[0][field])">
+                    {{ fieldDisplayName(field) }}
+                  </a>
+                </v-list-item-title>
+              </v-list-item-content> -->
             </v-list>
             <template v-for="relatedType in ['study', 'project', 'sample']">
               <v-btn
@@ -170,6 +203,9 @@ export default {
     relatedTypeDescription(relatedType) {
       const n = valueCardinality(this.results[0][`${relatedType}_id`]);
       return `${n} ${typeWithCardinality(relatedType, n)}`;
+    },
+    openLink(url) {
+      window.open(url, '_blank');
     },
   },
 };
