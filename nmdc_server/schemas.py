@@ -24,6 +24,3 @@ class SearchQuery(BaseModel):
 class SearchResponse(BaseModel):
     # TODO stub
     pass
-
-
-

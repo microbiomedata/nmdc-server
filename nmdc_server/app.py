@@ -20,18 +20,14 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
         name="Search for biosamples",
         description="Faceted search of biosample data.",
         responses={
-            400: {
-                "description": "The search query was invalid.",
-                "model": schemas.ErrorSchema,
-            },
+            400: {"description": "The search query was invalid.", "model": schemas.ErrorSchema},
             500: {
                 "description": "An unexpected error occurred.",
                 "model": schemas.InternalErrorSchema,
             },
         },
     )
-    async def get_file(query: schemas.SearchQuery):
+    async def search(query: schemas.SearchQuery):
         return {}  # TODO stub
 
     return app
-

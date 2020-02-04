@@ -18,4 +18,3 @@ def log_extras(req: Request) -> Dict[str, Any]:
         "method": req.method,
         "url": req.url,
     }
-
