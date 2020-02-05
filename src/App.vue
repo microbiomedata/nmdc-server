@@ -32,6 +32,8 @@
           {{ `${
             type === t && count(t) > results.length ? `${results.length} of ` : ''
           }${count(t)} ${types[t].plural}` }}
+          {{ t === 'data_object' ?
+            ` (${filesize(totalDataObjectSize)})` : '' }}
         </v-btn>
       </v-btn-toggle>
 
@@ -127,8 +129,9 @@
 </template>
 
 <script>
+import filesize from 'filesize';
 import { fieldDisplayName, valueDisplayName } from './util';
-import { types } from './components/encoding';
+import { types } from './encoding';
 import DataAPI from './data/DataAPI';
 import FacetedSearch from './components/FacetedSearch.vue';
 import SearchResults from './components/SearchResults.vue';
@@ -154,6 +157,13 @@ export default {
     results() {
       return api.query(this.type, this.conditions);
     },
+    totalDataObjectSize() {
+      let dataObjects = this.results;
+      if (this.type !== 'data_object') {
+        dataObjects = api.query('data_object', []);
+      }
+      return dataObjects.reduce((prev, cur) => prev + (cur.file_size || 0), 0);
+    },
   },
   watch: {
     $route: {
@@ -168,8 +178,6 @@ export default {
         } else {
           this.conditions = [];
         }
-        // eslint-disable-next-line no-console
-        console.log(to);
       },
       immediate: true,
     },
@@ -187,6 +195,7 @@ export default {
   methods: {
     fieldDisplayName,
     valueDisplayName,
+    filesize,
     count(type) {
       return api.count(type);
     },

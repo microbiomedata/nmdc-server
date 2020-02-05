@@ -104,15 +104,8 @@
                   <span>Click to select {{ typeWithCardinality(type, 2) }} with this value</span>
                 </v-tooltip>
               </template>
-              <!-- <v-list-item-content>
-                <v-list-item-title>
-                  <a :href="valueDisplayName(field, results[0][field])">
-                    {{ fieldDisplayName(field) }}
-                  </a>
-                </v-list-item-title>
-              </v-list-item-content> -->
             </v-list>
-            <template v-for="relatedType in ['study', 'project', 'sample']">
+            <template v-for="relatedType in ['study', 'project', 'sample', 'data_object']">
               <v-btn
                 v-if="type !== relatedType"
                 :key="relatedType"
@@ -142,7 +135,7 @@ import { isObject } from 'lodash';
 import {
   typeWithCardinality, valueCardinality, fieldDisplayName, valueDisplayName,
 } from '../util';
-import { types, fields } from './encoding';
+import { types, fields } from '../encoding';
 
 export default {
   props: {
@@ -167,20 +160,6 @@ export default {
   computed: {
     singleton() {
       return this.results.length === 1 && this.conditions.findIndex((cond) => cond.field === 'id' && cond.op === '==') >= 0;
-    },
-    childType() {
-      const childTypes = {
-        study: 'project',
-        project: 'sample',
-      };
-      return childTypes[this.type];
-    },
-    parentType() {
-      const parentTypes = {
-        project: 'study',
-        sample: 'project',
-      };
-      return parentTypes[this.type];
     },
     displayFields() {
       return Object.keys(this.results[0]).filter((field) => {

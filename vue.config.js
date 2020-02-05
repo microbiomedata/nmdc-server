@@ -11,4 +11,14 @@ module.exports = {
       errors: true,
     },
   },
+  configureWebpack: {
+    module: {
+      rules: [
+        {
+          test: /\.tsv$/i,
+          use: 'raw-loader',
+        },
+      ],
+    },
+  },
 };

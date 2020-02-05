@@ -1,21 +1,25 @@
-import colors from '../colors';
+import colors from './colors';
 
 export const types = {
   study: {
     icon: 'mdi-book',
+    name: 'study',
     plural: 'studies',
   },
   project: {
     icon: 'mdi-dna',
+    name: 'project',
     plural: 'projects',
   },
   sample: {
     icon: 'mdi-test-tube',
+    name: 'sample',
     plural: 'samples',
   },
-  file: {
+  data_object: {
     icon: 'mdi-file',
-    plural: 'files',
+    name: 'data object',
+    plural: 'data objects',
   },
 };
 
