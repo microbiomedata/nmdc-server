@@ -9,9 +9,6 @@ Vue.use(VueRouter);
 
 Vue.config.productionTip = false;
 
-// eslint-disable-next-line no-console
-console.log(process.env);
-
 const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,

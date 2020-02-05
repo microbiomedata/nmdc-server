@@ -1,9 +1,74 @@
 import moment from 'moment';
 import { isObject } from 'lodash';
 
+import { tsvParseRows } from 'd3-dsv';
+
 import biosamples from './biosample.json';
 import projects from './project.json';
 import studies from './study.json';
+import projectFiles from './ficus_project_files_v1.tsv';
+
+function parseDataObjectCSV(data) {
+  const fields = [
+    {
+      name: 'project_id',
+      description: 'This should map to the ids in the projects.json you have.',
+      include: true,
+      type: 'string',
+    },
+    {
+      name: 'id',
+      description: 'unique file identifier (JAMO hash id)',
+      include: true,
+      type: 'string',
+    },
+    {
+      name: 'description',
+      description: 'File name, not necessarily unique',
+      include: true,
+      type: 'string',
+    },
+    {
+      name: 'category',
+      description: 'This is derived from a field used by JGI\'s Genome Portal',
+      include: true,
+      type: 'string',
+    },
+    {
+      name: 'its_sequencing_project_id',
+      description: 'I have it for mapping, should not be used in NMDC',
+      include: false,
+      type: 'string',
+    },
+    {
+      name: 'its_final_deliverable_id',
+      description: 'Another internal entity ID, not for use in NMDC',
+      include: false,
+      type: 'string',
+    },
+    {
+      name: 'file_type',
+      description: 'Doesn\'t look useful for display, I may use it to filter',
+      include: false,
+      type: 'string',
+    },
+    {
+      name: 'file_size',
+      description: 'Useful for display',
+      include: true,
+      type: 'number',
+    },
+  ];
+  return tsvParseRows(data).map((row) => {
+    const record = {};
+    row.forEach((d, i) => {
+      if (fields[i].include) {
+        record[fields[i].name] = fields[i].type === 'number' ? +d : d;
+      }
+    });
+    return record;
+  });
+}
 
 function parseAnnotation(a) {
   const value = a.has_raw_value;
@@ -94,29 +159,22 @@ function meetsAllConditions(d, fieldConditions) {
 export default class DataAPI {
   constructor() {
     this.sample = parseNamedThings(biosamples, 'project');
-    this.sampleMap = idMap(this.sample);
+    this.sample_map = idMap(this.sample);
     this.project = parseNamedThings(projects, 'study');
-    this.projectMap = idMap(this.project);
+    this.project_map = idMap(this.project);
     this.study = parseNamedThings(studies);
-    this.studyMap = idMap(this.study);
-    this.file = [{ id: '0', name: 'Test' }];
-    this.fileMap = idMap(this.file);
+    this.study_map = idMap(this.study);
+    this.data_object = parseDataObjectCSV(projectFiles);
+    this.data_object_map = idMap(this.data_object);
     this.backPopulate('study', 'project');
     this.backPopulate('project', 'sample');
+    this.backPopulate('project', 'data_object');
+    this.transitivePopulate('study', 'project', 'sample');
+    this.transitivePopulate('study', 'project', 'data_object');
+    this.siblingPopulate('project', 'sample', 'data_object');
+    this.siblingPopulate('project', 'data_object', 'sample');
 
-    // Build transitive link between sample/study through project
-    for (let i = 0; i < this.study.length; i += 1) {
-      this.study[i].sample_id = [];
-    }
-    for (let i = 0; i < this.sample.length; i += 1) {
-      const s = this.sample[i];
-      if (this.projectMap[s.project_id]) {
-        s.study_id = this.projectMap[s.project_id].study_id;
-        if (this.studyMap[s.study_id]) {
-          this.studyMap[s.study_id].sample_id.push(s.id);
-        }
-      }
-    }
+    // Construct web links
     for (let i = 0; i < this.sample.length; i += 1) {
       const s = this.sample[i];
       s.jgi_gold_link = `https://gold.jgi.doe.gov/biosample?id=${s.id}`;
@@ -132,7 +190,7 @@ export default class DataAPI {
   }
 
   backPopulate(parentType, childType) {
-    const parentMap = this[`${parentType}Map`];
+    const parentMap = this[`${parentType}_map`];
     const parents = this[parentType];
     const children = this[childType];
     parents.forEach((p) => {
@@ -146,6 +204,38 @@ export default class DataAPI {
         parent[`${childType}_id`].push(c.id);
       }
     });
+  }
+
+  siblingPopulate(parent, child1, child2) {
+    // Build transitive link between child1/child2 through parent
+    const parentMap = {};
+    for (let i = 0; i < this[child1].length; i += 1) {
+      const c1 = this[child1][i];
+      if (!parentMap[c1[`${parent}_id`]]) {
+        parentMap[c1[`${parent}_id`]] = [];
+      }
+      parentMap[c1[`${parent}_id`]].push(c1.id);
+    }
+    for (let i = 0; i < this[child2].length; i += 1) {
+      const c2 = this[child2][i];
+      c2[`${child1}_id`] = parentMap[c2[`${parent}_id`]] || [];
+    }
+  }
+
+  transitivePopulate(grandparent, parent, child) {
+    // Build transitive link between grandparent/child through parent
+    for (let i = 0; i < this[grandparent].length; i += 1) {
+      this[grandparent][i][`${child}_id`] = [];
+    }
+    for (let i = 0; i < this[child].length; i += 1) {
+      const s = this[child][i];
+      if (this[`${parent}_map`][s[`${parent}_id`]]) {
+        s[`${grandparent}_id`] = this[`${parent}_map`][s[`${parent}_id`]][`${grandparent}_id`];
+        if (this[`${grandparent}_map`][s[`${grandparent}_id`]]) {
+          this[`${grandparent}_map`][s[`${grandparent}_id`]][`${child}_id`].push(s.id);
+        }
+      }
+    }
   }
 
   primitiveFields(type) {

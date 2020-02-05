@@ -1,4 +1,6 @@
 import moment from 'moment';
+import filesize from 'filesize';
+import { types } from './encoding';
 
 export function valueCardinality(value) {
   if (Array.isArray(value)) {
@@ -9,14 +11,9 @@ export function valueCardinality(value) {
 
 export function typeWithCardinality(type, cardinality) {
   if (cardinality === 1) {
-    return type;
+    return types[type].name;
   }
-  return {
-    study: 'studies',
-    project: 'projects',
-    sample: 'samples',
-    file: 'files',
-  }[type];
+  return types[type].plural;
 }
 
 export function capitalizeAcronyms(word) {
@@ -40,6 +37,9 @@ export function fieldDisplayName(field) {
 export function valueDisplayName(field, value) {
   if (field.includes('date')) {
     return moment.utc(value).format('YYYY-MM-DD, hh:mm:ss');
+  }
+  if (field === 'file_size') {
+    return filesize(value);
   }
   return `${value}`;
 }
