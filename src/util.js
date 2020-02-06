@@ -17,7 +17,7 @@ export function typeWithCardinality(type, cardinality) {
 }
 
 export function capitalizeAcronyms(word) {
-  if (['id', 'ncbi', 'gold', 'jgi'].includes(word.toLowerCase())) {
+  if (['id', 'ncbi', 'gold', 'jgi', 'doi'].includes(word.toLowerCase())) {
     return word.toUpperCase();
   }
   return word;
