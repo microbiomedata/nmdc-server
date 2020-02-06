@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { isObject } from 'lodash';
-
+import filesize from 'filesize';
 import { tsvParseRows } from 'd3-dsv';
 
 import biosamples from './biosample.json';
@@ -23,7 +23,7 @@ function parseDataObjectCSV(data) {
       type: 'string',
     },
     {
-      name: 'description',
+      name: 'name',
       description: 'File name, not necessarily unique',
       include: true,
       type: 'string',
@@ -66,6 +66,7 @@ function parseDataObjectCSV(data) {
         record[fields[i].name] = fields[i].type === 'number' ? +d : d;
       }
     });
+    record.description = filesize(record.file_size);
     return record;
   });
 }
