@@ -1,5 +1,77 @@
 [
 {
+   "id": "Gs0114663",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA",
+   "description": "A metagenomic study to couple microbial communities to carbon and contaminant biogeochemistry in the groundwater-surface water interaction zone",
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "12-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "08-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "gold_study_name"
+         },
+         "has_raw_value": "Microbial communities from the groundwater-surface water interaction zone near Columbia River, Washington, USA and their role in carbon and contaminant biogeochemistry"
+      },
+      {
+         "has_characteristic": {
+            "name": "ecosystem"
+         },
+         "has_raw_value": "Environmental"
+      },
+      {
+         "has_characteristic": {
+            "name": "ecosystem_category"
+         },
+         "has_raw_value": "Aquatic"
+      },
+      {
+         "has_characteristic": {
+            "name": "ecosystem_type"
+         },
+         "has_raw_value": "Freshwater"
+      },
+      {
+         "has_characteristic": {
+            "name": "ecosystem_subtype"
+         },
+         "has_raw_value": "Groundwater"
+      },
+      {
+         "has_characteristic": {
+            "name": "specific_ecosystem"
+         },
+         "has_raw_value": "Unclassified"
+      },
+      {
+         "has_characteristic": {
+            "name": "ecosystem_path_id"
+         },
+         "has_raw_value": 4165
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "James Stegen"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1487765"
+      }
+   ]
+}, {
    "id": "Gs0114298",
    "name": "Permafrost soil microbial communities from the Arctic, to analyse light accelerated degradation of dissolved organic matter (DOM)",
    "description": "The goal of the proposed research is to develop a predictive understanding of how and why photochemical alterations of permafrost dissolved organic carbon (DOC) lead to increased respiration rates by bacteria. The proposal will use metagenomic and metatranscriptomic sequencing of expressed bacterial genes to identify the genome-encoded, functional metabolic pathways actively used by DOC-degrading bacteria in permafrost soils and to determine how these pathways change when soil DOC is exposed to sunlight in surface waters. The proposal will then compare these results to DOC characterization by low and high-resolution mass spectrometry, and 13C-NMR of compounds that are produced or lost  during the exposure to light. The proposal also aims to determine genes that are differentially expressed and DOC compounds that are differentially modified and respired following light exposure, compared to DOC kept in the dark. The effects of light exposure on DOC metabolism to the concurrently measured rates of bacterial respiration and production will be related to develop a predictive understanding of the controls on soil C degradation in the Arctic.",
@@ -51,6 +123,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 4234
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Byron Crump"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1487766"
       }
    ]
 }, {
@@ -111,6 +195,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 3948
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Mary Firestone"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1487760"
       }
    ]
 }, {
@@ -171,6 +267,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 4318
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Matthias Hess"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1487758"
       }
    ]
 }, {
@@ -231,6 +339,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 4206
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Virginia Rich"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1487764"
       }
    ]
 }, {
@@ -285,6 +405,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 4245
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Kelly Wrighton"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1487763"
       }
    ]
 }, {
@@ -339,6 +471,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 4024
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Victoria Orphan"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1488208"
       }
    ]
 }, {
@@ -393,6 +537,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 4234
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Virginia Rich"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1488217"
       }
    ]
 }, {
@@ -447,6 +603,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 4205
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Jeffrey Blanchard"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1488215"
       }
    ]
 }, {
@@ -501,6 +669,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 4212
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Eoin Brodie"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1488224"
       }
    ]
 }, {
@@ -555,6 +735,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 4012
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Jennifer Bowen"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1487491"
       }
    ]
 }, {
@@ -609,6 +801,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 3937
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Rebecca Neumann"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1488209"
       }
    ]
 }, {
@@ -662,6 +866,18 @@
             "name": "ecosystem_path_id"
          },
          "has_raw_value": 4003
+      },
+      {
+         "has_characteristic": {
+            "name": "principal_investigator_name"
+         },
+         "has_raw_value": "Frederick Colwell"
+      },
+      {
+         "has_characteristic": {
+            "name": "doi"
+         },
+         "has_raw_value": "10.25585/1488205"
       }
    ]
 }

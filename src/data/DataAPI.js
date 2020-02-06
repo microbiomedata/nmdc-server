@@ -178,15 +178,16 @@ export default class DataAPI {
     // Construct web links
     for (let i = 0; i < this.sample.length; i += 1) {
       const s = this.sample[i];
-      s.jgi_gold_link = `https://gold.jgi.doe.gov/biosample?id=${s.id}`;
+      s.open_in_gold = `https://gold.jgi.doe.gov/biosample?id=${s.id}`;
     }
     for (let i = 0; i < this.project.length; i += 1) {
       const p = this.project[i];
-      p.jgi_gold_link = `https://gold.jgi.doe.gov/project?id=${p.id}`;
+      p.open_in_gold = `https://gold.jgi.doe.gov/project?id=${p.id}`;
     }
     for (let i = 0; i < this.study.length; i += 1) {
       const s = this.study[i];
-      s.jgi_gold_link = `https://gold.jgi.doe.gov/study?id=${s.id}`;
+      s.open_in_gold = `https://gold.jgi.doe.gov/study?id=${s.id}`;
+      s.open_doi = `https://doi.org/${s.doi}`;
     }
   }
 

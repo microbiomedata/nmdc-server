@@ -69,6 +69,12 @@ export const fields = {
   community: {
     icon: 'mdi-google-circles-communities',
   },
+  principal_investigator_name: {
+    icon: 'mdi-account',
+  },
+  doi: {
+    icon: 'mdi-file-document-outline',
+  },
 };
 
 export const ecosystems = [

@@ -53,7 +53,7 @@
             <v-list>
               <template v-for="field in displayFields">
                 <v-tooltip
-                  v-if="field.includes('link')"
+                  v-if="field.startsWith('open_')"
                   :key="field"
                   bottom
                 >

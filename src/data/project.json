@@ -2985,6 +2985,1356 @@
    "description": "Metatranscriptome of continental margin sediment microbial communities from North Atlantic Ocean, United States"
 }, {
    "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.27.28.718000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T2_23-Sept-14"
+      }
+   ],
+   "id": "Gp0115663",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T2_23-Sept-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.28.00.600000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T2_25-Nov-14"
+      }
+   ],
+   "id": "Gp0115664",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T2_25-Nov-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.27.42.069000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T2_30-Apr-14"
+      }
+   ],
+   "id": "Gp0115665",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T2_30-Apr-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.28.01.685000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T3_23-Sept-14"
+      }
+   ],
+   "id": "Gp0115666",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T3_23-Sept-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.28.02.545000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T3_25-Nov-14"
+      }
+   ],
+   "id": "Gp0115667",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T3_25-Nov-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.27.48.686000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T3_30-Apr-14"
+      }
+   ],
+   "id": "Gp0115668",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T3_30-Apr-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.28.10.411000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_1-July-14"
+      }
+   ],
+   "id": "Gp0115669",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_1-July-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.27.53.891000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_10-June-14"
+      }
+   ],
+   "id": "Gp0115670",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_10-June-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.28.26.372000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_12-Aug-14"
+      }
+   ],
+   "id": "Gp0115671",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_12-Aug-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.28.03.420000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_14-Oct-14"
+      }
+   ],
+   "id": "Gp0115672",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_14-Oct-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.27.42.936000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_2-Sept-14"
+      }
+   ],
+   "id": "Gp0115673",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_2-Sept-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.27.43.717000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_21-May-14"
+      }
+   ],
+   "id": "Gp0115674",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_21-May-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.27.54.708000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry- GW-RW metaG T4_22-July-14"
+      }
+   ],
+   "id": "Gp0115675",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry- GW-RW metaG T4_22-July-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.27.44.400000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_23-Sept-14"
+      }
+   ],
+   "id": "Gp0115676",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_23-Sept-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "29-APR-19 01.49.15.735000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_25-Nov-14"
+      }
+   ],
+   "id": "Gp0115677",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_25-Nov-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "03-NOV-19 09.28.27.241000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_30-Apr-14"
+      }
+   ],
+   "id": "Gp0115678",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_30-Apr-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "28-MAY-15 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "29-APR-19 01.49.32.104000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_4-Nov-14"
+      }
+   ],
+   "id": "Gp0115679",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA, for microbe roles in carbon and contaminant biogeochemistry - GW-RW metaG T4_4-Nov-14",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.43.06.992000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_20_30"
+      }
+   ],
+   "id": "Gp0127623",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_20_30",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.43.06.090000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_10_20"
+      }
+   ],
+   "id": "Gp0127624",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_10_20",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.43.07.894000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N1_20_30"
+      }
+   ],
+   "id": "Gp0127625",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N1_20_30",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.43.06.528000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_40_50"
+      }
+   ],
+   "id": "Gp0127626",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_40_50",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.43.08.370000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_40_50"
+      }
+   ],
+   "id": "Gp0127627",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_40_50",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.48.58.491000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_30_40"
+      }
+   ],
+   "id": "Gp0127630",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_30_40",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.49.04.530000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_20_30"
+      }
+   ],
+   "id": "Gp0127631",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_20_30",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.49.05.281000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_40_50"
+      }
+   ],
+   "id": "Gp0127632",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_40_50",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.18.104000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_30_40"
+      }
+   ],
+   "id": "Gp0127633",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_30_40",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.13.299000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N2_50_60"
+      }
+   ],
+   "id": "Gp0127634",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N2_50_60",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.15.137000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N1_10_20"
+      }
+   ],
+   "id": "Gp0127635",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N1_10_20",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.13.759000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N2_30_40"
+      }
+   ],
+   "id": "Gp0127636",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N2_30_40",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.16.532000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_0_10"
+      }
+   ],
+   "id": "Gp0127637",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_0_10",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.14.678000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N2_40_50"
+      }
+   ],
+   "id": "Gp0127638",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N2_40_50",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.17.319000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N1_30_40"
+      }
+   ],
+   "id": "Gp0127639",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N1_30_40",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.15.611000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_50_60"
+      }
+   ],
+   "id": "Gp0127640",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_50_60",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.16.056000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_10_20"
+      }
+   ],
+   "id": "Gp0127641",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_10_20",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.18.485000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N2_0_30"
+      }
+   ],
+   "id": "Gp0127642",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N2_0_30",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.17.713000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N1_0_10"
+      }
+   ],
+   "id": "Gp0127643",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N1_0_10",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.49.03.766000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_0_10"
+      }
+   ],
+   "id": "Gp0127653",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_0_10",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.49.00.137000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_40_50"
+      }
+   ],
+   "id": "Gp0127654",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_40_50",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.49.00.979000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_20_30"
+      }
+   ],
+   "id": "Gp0127655",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_20_30",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 02.49.20.492000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_30_40"
+      }
+   ],
+   "id": "Gp0127656",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_30_40",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.43.07.444000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_0_10"
+      }
+   ],
+   "id": "Gp0127628",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_0_10",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.43.05.688000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_10_20"
+      }
+   ],
+   "id": "Gp0127629",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_10_20",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.14.217000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_30_40"
+      }
+   ],
+   "id": "Gp0127644",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_30_40",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.57.16.931000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N1_40_50"
+      }
+   ],
+   "id": "Gp0127645",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N1_40_50",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.48.55.398000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_0_10"
+      }
+   ],
+   "id": "Gp0127646",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_0_10",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.48.59.304000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_10_20"
+      }
+   ],
+   "id": "Gp0127647",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_10_20",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.48.56.093000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_50_60"
+      }
+   ],
+   "id": "Gp0127648",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S1_50_60",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.48.57.684000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_50_60"
+      }
+   ],
+   "id": "Gp0127649",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S2_50_60",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.48.56.904000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_20_30"
+      }
+   ],
+   "id": "Gp0127651",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW N3_20_30",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
+      "Gs0114663"
+   ],
+   "annotations": [
+      {
+         "has_characteristic": {
+            "name": "add_date"
+         },
+         "has_raw_value": "11-JAN-16 12.00.00.000000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "mod_date"
+         },
+         "has_raw_value": "19-NOV-19 01.49.03.036000000 AM"
+      },
+      {
+         "has_characteristic": {
+            "name": "ncbi_project_name"
+         },
+         "has_raw_value": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_50_60"
+      }
+   ],
+   "id": "Gp0127652",
+   "name": "Groundwater microbial communities from the Columbia River, Washington, USA - GW-RW S3_50_60",
+   "description": "Coupling Microbial Communities to Carbon and Contaminant Biogeochemistry in the Groundwater-Surface Water Interaction Zone"
+}, {
+   "part_of": [
       "Gs0114298"
    ],
    "annotations": [
