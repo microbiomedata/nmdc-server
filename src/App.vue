@@ -110,6 +110,18 @@
             </v-card>
           </v-col>
         </v-row>
+        <v-row
+          v-show="['study', 'sample'].includes(type)"
+        >
+          <v-col :cols="12">
+            <v-card>
+              <EcosystemSankey
+                :data="results"
+                @selected="addSelected($event)"
+              />
+            </v-card>
+          </v-col>
+        </v-row>
         <v-row>
           <v-col :cols="12">
             <v-card>
@@ -137,6 +149,7 @@ import FacetedSearch from './components/FacetedSearch.vue';
 import SearchResults from './components/SearchResults.vue';
 import LocationMap from './components/LocationMap.vue';
 import EcosystemChart from './components/EcosystemChart.vue';
+import EcosystemSankey from './components/EcosystemSankey.vue';
 
 const api = new DataAPI();
 
@@ -147,6 +160,7 @@ export default {
     SearchResults,
     LocationMap,
     EcosystemChart,
+    EcosystemSankey,
   },
   data: () => ({
     type: 'study',
