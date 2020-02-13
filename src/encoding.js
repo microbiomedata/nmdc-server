@@ -3,23 +3,31 @@ import colors from './colors';
 export const types = {
   study: {
     icon: 'mdi-book',
+    heading: 'Studies',
     name: 'study',
     plural: 'studies',
+    visible: true,
   },
   project: {
-    icon: 'mdi-dna',
+    icon: 'mdi-file-table-box-multiple-outline',
+    heading: 'Omics Types',
     name: 'project',
     plural: 'projects',
+    visible: true,
   },
   sample: {
-    icon: 'mdi-test-tube',
+    icon: 'mdi-earth',
+    heading: 'Habitats',
     name: 'sample',
     plural: 'samples',
+    visible: true,
   },
   data_object: {
-    icon: 'mdi-file',
+    icon: 'mdi-file-table-outline',
+    heading: 'Data Types',
     name: 'data object',
     plural: 'data objects',
+    visible: false,
   },
 };
 
@@ -41,27 +49,35 @@ export const fields = {
   },
   add_date: {
     icon: 'mdi-calendar',
+    hide: true,
   },
   mod_date: {
     icon: 'mdi-calendar',
+    hide: true,
   },
   ecosystem: {
     icon: 'mdi-pine-tree',
+    hide: true,
   },
   ecosystem_category: {
     icon: 'mdi-pine-tree',
+    hide: true,
   },
   ecosystem_type: {
     icon: 'mdi-pine-tree',
+    hide: true,
   },
   ecosystem_subtype: {
     icon: 'mdi-pine-tree',
+    hide: true,
   },
   specific_ecosystem: {
     icon: 'mdi-pine-tree',
+    hide: true,
   },
   ecosystem_path_id: {
     icon: 'mdi-pine-tree',
+    hide: true,
   },
   habitat: {
     icon: 'mdi-pine-tree',
@@ -74,6 +90,7 @@ export const fields = {
   },
   doi: {
     icon: 'mdi-file-document-outline',
+    hide: true,
   },
 };
 

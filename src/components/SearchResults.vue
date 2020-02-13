@@ -1,14 +1,18 @@
 <template>
   <div v-if="!singleton">
     <v-pagination
+      v-if="Math.ceil(results.length / resultsPerPage) > 1"
       v-model="page"
-      :length="Math.ceil(results.length / 10)"
+      :length="Math.ceil(results.length / resultsPerPage)"
       :total-visible="7"
     />
     <v-list
       two-line
+      class="pa-0"
     >
-      <template v-for="(result, resultIndex) in results.slice(10*(page-1), 10*page)">
+      <template
+        v-for="(result, resultIndex) in results.slice(resultsPerPage*(page-1), resultsPerPage*page)"
+      >
         <v-divider
           v-if="resultIndex > 0"
           :key="`${result.id}-divider`"
@@ -154,6 +158,7 @@ export default {
   },
   data: () => ({
     page: 1,
+    resultsPerPage: 15,
     types,
     fields,
   }),
