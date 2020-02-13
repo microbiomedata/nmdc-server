@@ -1,0 +1,174 @@
+<template>
+  <v-container fluid>
+    <v-row>
+      <v-col
+        class="flex-grow-1"
+      >
+        <v-container fluid>
+          <v-row>
+            <v-col
+              class="flex-grow-0"
+            >
+              <v-avatar :size="200">
+                <v-img
+                  :src="`pis/${item.principal_investigator_name}.jpg`"
+                />
+              </v-avatar>
+            </v-col>
+            <v-col
+              class="flex-grow-1"
+            >
+              <v-row
+                align="center"
+                justify="start"
+                style="height: 100%"
+              >
+                <v-card flat>
+                  <div class="headline">
+                    {{ item.principal_investigator_name }}
+                  </div>
+                  <div class="caption">
+                    Principal investigator
+                  </div>
+                  <div
+                    v-for="site in item.principal_investigator_websites"
+                    :key="site"
+                    class="caption"
+                  >
+                    <a
+                      :href="site"
+                      target="_blank"
+                    >{{ site }}</a>
+                  </div>
+                </v-card>
+              </v-row>
+            </v-col>
+          </v-row>
+        </v-container>
+        <div class="headline">
+          {{ item.proposal_title }}
+        </div>
+        <div class="mt-3">
+          <span class="font-weight-bold">Scientific objective: </span>
+          {{ item.scientific_objective }}
+        </div>
+      </v-col>
+      <v-col class="flex-grow-1">
+        <v-subheader>Citation</v-subheader>
+        <v-list>
+          <v-list-item>
+            <v-list-item-content v-text="doiCitation" />
+            <v-list-item-action>
+              <v-tooltip top>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    icon
+                    v-on="on"
+                    @click="openLink(`https://doi.org/${item.doi}`)"
+                  >
+                    <v-icon>mdi-open-in-new</v-icon>
+                  </v-btn>
+                </template>
+                <span>Visit site</span>
+              </v-tooltip>
+            </v-list-item-action>
+          </v-list-item>
+        </v-list>
+        <v-subheader v-if="publications.length > 0">
+          Other publications
+        </v-subheader>
+        <v-list>
+          <v-list-item
+            v-for="(pub, pubIndex) in publications"
+            :key="pubIndex"
+          >
+            <v-list-item-content
+              v-text="pub"
+            />
+            <v-list-item-action>
+              <v-tooltip top>
+                <template v-slot:activator="{ on }">
+                  <v-btn
+                    icon
+                    v-on="on"
+                    @click="openLink(`https://doi.org/${item.publication_dois[pubIndex]}`)"
+                  >
+                    <v-icon>mdi-open-in-new</v-icon>
+                  </v-btn>
+                </template>
+                <span>Visit site</span>
+              </v-tooltip>
+            </v-list-item-action>
+          </v-list-item>
+        </v-list>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+<script>
+import { isObject } from 'lodash';
+import Cite from 'citation-js';
+import {
+  typeWithCardinality, valueCardinality, fieldDisplayName, valueDisplayName,
+} from '../util';
+import { types, fields } from '../encoding';
+
+export default {
+  props: {
+    item: {
+      type: Object,
+      default: () => {},
+    },
+  },
+  data: () => ({
+    types,
+    fields,
+    doiCitation: '',
+    publications: [],
+  }),
+  computed: {
+    displayFields() {
+      return Object.keys(this.item).filter((field) => {
+        const value = this.item[field];
+        if (['name', 'description'].includes(field)) {
+          return false;
+        }
+        return !isObject(value);
+      });
+    },
+  },
+  watch: {
+    item: {
+      async handler() {
+        const citationPromises = this.item.publication_dois.map(Cite.async);
+        this.publications = (await Promise.all(citationPromises)).map((c) => this.formatAPA(c));
+        this.doiCitation = this.formatAPA(await Cite.async(this.item.doi));
+      },
+      immediate: true,
+    },
+  },
+  methods: {
+    fieldDisplayName,
+    valueDisplayName,
+    typeWithCardinality,
+    selectField(field) {
+      this.$emit('unselected', { value: this.item.id });
+      this.$emit('selected', { field, value: this.item[field] });
+    },
+    relatedTypeDescription(relatedType) {
+      const n = valueCardinality(this.item[`${relatedType}_id`]);
+      return `${n} ${typeWithCardinality(relatedType, n)}`;
+    },
+    openLink(url) {
+      window.open(url, '_blank');
+    },
+    formatAPA(citation) {
+      return citation.format('bibliography', {
+        format: 'text',
+        template: 'apa',
+        lang: 'en-US',
+      });
+    },
+  },
+};
+</script>

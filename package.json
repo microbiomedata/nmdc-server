@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "citation-js": "^0.5.0-alpha.4",
     "core-js": "^3.4.4",
     "d3-dsv": "^1.2.0",
     "dexie": "^2.0.4",

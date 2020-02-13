@@ -6,6 +6,7 @@ import { tsvParseRows } from 'd3-dsv';
 import biosamples from './biosample.json';
 import projects from './project.json';
 import studies from './study.json';
+import studyAdditional from './study_additional.json';
 import projectFiles from './ficus_project_files_v1.tsv';
 
 function parseDataObjectCSV(data) {
@@ -187,8 +188,20 @@ export default class DataAPI {
     for (let i = 0; i < this.study.length; i += 1) {
       const s = this.study[i];
       s.open_in_gold = `https://gold.jgi.doe.gov/study?id=${s.id}`;
-      s.open_doi = `https://doi.org/${s.doi}`;
     }
+
+    this.importAdditionalStudyFields();
+  }
+
+  importAdditionalStudyFields() {
+    studyAdditional.forEach((d) => {
+      const s = this.study_map[d.id];
+      Object.assign(s, d);
+      s.gold_description = s.description;
+      s.gold_name = s.name;
+      s.name = d.proposal_title;
+      s.description = `Principal investigator: ${s.principal_investigator_name}`;
+    });
   }
 
   backPopulate(parentType, childType) {
