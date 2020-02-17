@@ -158,7 +158,7 @@ function meetsAllConditions(d, fieldConditions) {
   return true;
 }
 
-export default class DataAPI {
+class DataAPI {
   constructor() {
     this.sample = parseNamedThings(biosamples, 'project');
     this.sample_map = idMap(this.sample);
@@ -269,14 +269,21 @@ export default class DataAPI {
     return this[type].filter((d) => meetsAllConditions(d, groupConditionsByField(conditions)));
   }
 
-  facetSummary(type, field, conditions) {
+  facetSummary({
+    type, field, conditions = [], useMatchingConditions = false,
+  }) {
     const valueMap = new Map();
-    // Don't filter by conditions that match the field.
-    // This seems odd, but enables checking multiple boxes
-    // for the same field as an "or".
-    const paredConditions = groupConditionsByField(
-      conditions.filter((cond) => cond.field !== field),
-    );
+    let paredConditions = null;
+    if (useMatchingConditions) {
+      paredConditions = groupConditionsByField(conditions);
+    } else {
+      // Don't filter by conditions that match the field.
+      // This seems odd, but enables checking multiple boxes
+      // for the same field as an "or".
+      paredConditions = groupConditionsByField(
+        conditions.filter((cond) => cond.field !== field),
+      );
+    }
     this[type].forEach((d) => {
       if (d[field] === undefined) {
         return;
@@ -294,3 +301,5 @@ export default class DataAPI {
       .sort((a, b) => b.all - a.all);
   }
 }
+
+export default new DataAPI();

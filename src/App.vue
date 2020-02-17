@@ -4,28 +4,26 @@
       app
       color="white"
       clipped-left
+      elevation="1"
     >
-      <v-btn-toggle
-        v-model="type"
-        :style="{'margin-left': '245px'}"
-        background-color="transparent"
-        tile
-        group
-      >
+      <div :style="{'margin-left': '245px'}">
         <v-btn
           v-for="t in Object.keys(types)"
-          v-show="types[t].visible"
+          v-show="types[t].visible || type === t"
           :key="t"
           :value="t"
-          text
-          color="primary"
+          :text="type !== t"
+          elevation="0"
+          :color="type === t ? 'primary' : 'primary'"
+          class="mx-2"
+          @click="type = t"
         >
           <v-icon left>
             {{ types[t].icon }}
           </v-icon>
           {{ types[t].heading }}
         </v-btn>
-      </v-btn-toggle>
+      </div>
 
       <template v-slot:extension>
         <img
@@ -83,11 +81,18 @@
               v-if="type === 'study'"
               :item="results[0]"
             />
+            <Sample
+              v-if="type === 'sample'"
+              :item="results[0]"
+            />
+            <Project
+              v-if="type === 'project'"
+              :item="results[0]"
+            />
             <AttributeList
               :type="type"
               :item="results[0]"
-              @selected="addSelected($event)"
-              @unselected="removeSelected($event)"
+              @selected="setSelected($event)"
             />
           </v-container>
         </v-content>
@@ -109,21 +114,19 @@
             <v-row
               v-show="['sample'].includes(type)"
             >
-              <v-col :cols="12">
+              <v-col :cols="4">
                 <v-card>
-                  <LocationMap
+                  <EcosystemChart
+                    :type="type"
                     :data="results"
                     @selected="addSelected($event)"
                   />
                 </v-card>
               </v-col>
-            </v-row>
-            <v-row
-              v-show="['sample'].includes(type)"
-            >
-              <v-col :cols="12">
+              <v-col :cols="8">
                 <v-card>
-                  <EcosystemChart
+                  <LocationMap
+                    :type="type"
                     :data="results"
                     @selected="addSelected($event)"
                   />
@@ -136,7 +139,76 @@
               <v-col :cols="12">
                 <v-card>
                   <EcosystemSankey
+                    :type="type"
                     :data="results"
+                    @selected="addSelected($event)"
+                  />
+                </v-card>
+              </v-col>
+            </v-row>
+            <v-row
+              v-show="['sample'].includes(type)"
+            >
+              <v-col rows="12">
+                <v-card>
+                  <v-container fluid>
+                    <v-row>
+                      <v-col
+                        v-for="field in ecosystemFields"
+                        :key="field"
+                        class="flex-grow-1"
+                      >
+                        <FacetChart
+                          :type="type"
+                          :field="field"
+                          chart="pie"
+                          :conditions="conditions"
+                          @selected="addSelected($event)"
+                        />
+                      </v-col>
+                    </v-row>
+                  </v-container>
+                </v-card>
+              </v-col>
+            </v-row>
+            <v-row
+              v-show="['sample'].includes(type)"
+            >
+              <v-col rows="12">
+                <v-card>
+                  <v-container fluid>
+                    <v-row>
+                      <v-col
+                        v-for="field in ecosystemFields"
+                        :key="field"
+                        class="flex-grow-1"
+                      >
+                        <FacetChart
+                          :type="type"
+                          :field="field"
+                          chart="bar"
+                          :conditions="conditions"
+                          @selected="addSelected($event)"
+                        />
+                      </v-col>
+                    </v-row>
+                  </v-container>
+                </v-card>
+              </v-col>
+            </v-row>
+            <v-row
+              v-show="['project'].includes(type)"
+            >
+              <v-col :cols="4">
+                <v-card>
+                  <FacetChart
+                    :type="type"
+                    field="sequencing_strategy"
+                    chart="bar"
+                    :conditions="conditions"
+                    :show-title="false"
+                    :show-baseline="false"
+                    :left-margin="150"
                     @selected="addSelected($event)"
                   />
                 </v-card>
@@ -149,7 +221,7 @@
                     :type="type"
                     :results="results"
                     :conditions="conditions"
-                    @selected="addSelected($event)"
+                    @selected="setSelected($event)"
                     @unselected="removeSelected($event)"
                   />
                 </v-card>
@@ -168,6 +240,7 @@
           <Welcome
             :samples="allSamples"
             :stats="stats"
+            @type="type = $event"
           />
         </v-container>
       </v-content>
@@ -179,17 +252,18 @@
 import filesize from 'filesize';
 import { fieldDisplayName, valueDisplayName } from './util';
 import { types } from './encoding';
-import DataAPI from './data/DataAPI';
+import api from './data/api';
 import FacetedSearch from './components/FacetedSearch.vue';
 import SearchResults from './components/SearchResults.vue';
 import LocationMap from './components/LocationMap.vue';
 import EcosystemChart from './components/EcosystemChart.vue';
+import FacetChart from './components/FacetChart.vue';
 import EcosystemSankey from './components/EcosystemSankey.vue';
 import Welcome from './components/Welcome.vue';
+import Sample from './components/Sample.vue';
 import Study from './components/Study.vue';
+import Project from './components/Project.vue';
 import AttributeList from './components/AttributeList.vue';
-
-const api = new DataAPI();
 
 export default {
   name: 'App',
@@ -197,9 +271,12 @@ export default {
     FacetedSearch,
     SearchResults,
     LocationMap,
+    FacetChart,
     EcosystemChart,
     EcosystemSankey,
+    Project,
     Welcome,
+    Sample,
     Study,
     AttributeList,
   },
@@ -207,17 +284,24 @@ export default {
     type: null,
     types,
     conditions: [],
+    ecosystemFields: [
+      'ecosystem',
+      'ecosystem_category',
+      'ecosystem_type',
+      'ecosystem_subtype',
+      'specific_ecosystem',
+    ],
     stats: [
       {
         value: api.count('study'),
         label: 'Studies',
       },
       {
-        value: api.facetSummary('sample', 'latitude', []).length,
+        value: api.facetSummary({ type: 'sample', field: 'latitude' }).length,
         label: 'Locations',
       },
       {
-        value: api.facetSummary('sample', 'ecosystem_path_id', []).length,
+        value: api.facetSummary({ type: 'sample', field: 'ecosystem_path_id' }).length,
         label: 'Habitats',
       },
       {
@@ -273,6 +357,7 @@ export default {
     },
     type: {
       handler() {
+        this.conditions = [];
         this.navigateIfChanged();
       },
     },
@@ -289,13 +374,21 @@ export default {
     count(type) {
       return api.count(type);
     },
-    async addSelected({ type = this.type, value, field = 'id' }) {
+    async addSelected({ type, conditions }) {
       if (type !== this.type) {
         this.type = type;
         this.conditions = [];
         await this.$nextTick();
       }
-      this.conditions.push({ field, op: '==', value });
+      this.conditions = [...this.conditions, ...conditions];
+    },
+    async setSelected({ type, conditions }) {
+      if (type !== this.type) {
+        this.type = type;
+        this.conditions = [];
+        await this.$nextTick();
+      }
+      this.conditions = conditions;
     },
     removeSelected({ type = this.type, value, field = 'id' }) {
       if (type !== this.type) {

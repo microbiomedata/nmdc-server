@@ -3,9 +3,46 @@
     flat
     class="ma-3"
   >
-    <div class="display-3">
-      National Microbiome Data Collaborative
-    </div>
+    <v-container fluid>
+      <v-row
+        class="headline"
+        justify="center"
+      >
+        Explore NMDC data
+      </v-row>
+      <v-row
+        class="my-6"
+        justify="center"
+      >
+        <v-btn
+          x-large
+          color="primary"
+          elevation="0"
+          class="ma-4"
+          @click="$emit('type', 'study')"
+        >
+          Browse studies
+        </v-btn>
+        <v-btn
+          x-large
+          color="primary"
+          elevation="0"
+          class="ma-4"
+          @click="$emit('type', 'project')"
+        >
+          Search by omics type
+        </v-btn>
+        <v-btn
+          x-large
+          color="primary"
+          elevation="0"
+          class="ma-4"
+          @click="$emit('type', 'sample')"
+        >
+          Explore habitats
+        </v-btn>
+      </v-row>
+    </v-container>
     <LocationMap
       :data="samples"
       @selected="addSelected($event)"

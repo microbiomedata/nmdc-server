@@ -19,6 +19,10 @@ export default {
     GChart,
   },
   props: {
+    type: {
+      type: String,
+      default: null,
+    },
     data: {
       type: Array,
       default: () => [],
@@ -37,7 +41,10 @@ export default {
             if (['Aquatic', 'Terrestrial'].includes(value)) {
               field = 'ecosystem_category';
             }
-            this.$emit('selected', { field, value });
+            this.$emit('selected', {
+              type: this.type,
+              conditions: [{ field, op: '==', value }],
+            });
           }
         },
       },
@@ -59,21 +66,30 @@ export default {
         hist[colorIndex] += 1;
       });
       return [
-        ['Category', 'Samples', { role: 'style' }],
+        ['Category', 'Samples', { role: 'style' }, { role: 'annotation' }],
         ...Object.keys(hist).map(
-          (bin) => [this.ecosystems[+bin].name, hist[bin], this.ecosystems[+bin].color],
+          (bin) => [this.ecosystems[+bin].name, hist[bin], this.ecosystems[+bin].color, hist[bin]],
         ),
       ];
     },
     barChartOptions() {
       return {
+        height: 400,
+        bar: { groupWidth: 30 },
         chartArea: {
-          left: 200, top: 10, width: '90%', height: '90%',
+          left: 100, right: 50, top: 100, width: '90%', height: '50%',
         },
         hAxis: {
           textStyle: {
             fontName: 'Roboto',
           },
+          gridlines: {
+            count: 0,
+          },
+          ticks: [],
+          baseline: 0,
+          baselineColor: 'transparent',
+          viewWindowMode: 'maximized',
         },
         vAxis: {
           textStyle: {
@@ -81,6 +97,7 @@ export default {
           },
         },
         legend: { position: 'none' },
+        annotations: { alwaysOutside: true, stem: { color: 'transparent' } },
       };
     },
   },

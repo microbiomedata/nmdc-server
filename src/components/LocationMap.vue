@@ -22,6 +22,10 @@ export default {
     GChart,
   },
   props: {
+    type: {
+      type: String,
+      default: null,
+    },
     data: {
       type: Array,
       default: () => [],
@@ -36,8 +40,13 @@ export default {
           const selection = chart.getSelection();
           if (selection.length === 1) {
             const [lat, lon] = this.geoChartMarkerData[selection[0].row + 1];
-            this.$emit('selected', { field: 'latitude', value: lat });
-            this.$emit('selected', { field: 'longitude', value: lon });
+            this.$emit('selected', {
+              type: this.type,
+              conditions: [
+                { field: 'latitude', op: '==', value: lat },
+                { field: 'longitude', op: '==', value: lon },
+              ],
+            });
           }
         },
       },

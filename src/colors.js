@@ -1,11 +1,25 @@
 import colors from 'vuetify/lib/util/colors';
 
+const red = '#ED5338';
+const orange = '#E88320';
+const green = colors.lightGreen.darken2;
+const blue = '#00AAE7';
+const purple = '#4F3B80';
+
 export default {
-  primary: '#4F3B80',
-  secondary: '#ED5338',
-  accent: '#E88320',
-  aquatic: '#00AAE7',
-  terrestrial: colors.lightGreen.darken2,
-  hostAssociated: '#ED5338',
-  engineered: '#E88320',
+  red,
+  orange,
+  green,
+  blue,
+  purple,
+  primary: purple,
+  secondary: red,
+  accent: orange,
+  aquatic: blue,
+  terrestrial: green,
+  hostAssociated: red,
+  engineered: orange,
+  metagenome: blue,
+  metatranscriptome: green,
+  sequencing: red,
 };

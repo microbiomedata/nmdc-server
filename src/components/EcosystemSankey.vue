@@ -22,6 +22,10 @@ export default {
     GChart,
   },
   props: {
+    type: {
+      type: String,
+      default: null,
+    },
     data: {
       type: Array,
       default: () => [],
@@ -59,7 +63,10 @@ export default {
               field = 'specific_ecosystem';
               value = val.substring(4);
             }
-            this.$emit('selected', { field, value });
+            this.$emit('selected', {
+              type: this.type,
+              conditions: [{ field, op: '==', value }],
+            });
           }
         },
       },
@@ -123,7 +130,7 @@ export default {
           },
           node: {
             interactivity: true,
-            colors: [colors.terrestrial],
+            colors: colors.primary,
           },
         },
       };

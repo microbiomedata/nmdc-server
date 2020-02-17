@@ -1,6 +1,6 @@
 import colors from './colors';
 
-export const types = {
+const types = {
   study: {
     icon: 'mdi-book',
     heading: 'Studies',
@@ -15,6 +15,20 @@ export const types = {
     plural: 'projects',
     visible: true,
   },
+  Metagenome: {
+    icon: 'mdi-dna',
+    heading: 'Metagenome',
+    name: 'metagenome',
+    plural: 'metagenomes',
+    visible: false,
+  },
+  Metatranscriptome: {
+    icon: 'mdi-file-table-box-multiple-outline',
+    heading: 'Metatranscriptomes',
+    name: 'metatranscriptome',
+    plural: 'metatranscriptomes',
+    visible: false,
+  },
   sample: {
     icon: 'mdi-earth',
     heading: 'Habitats',
@@ -24,14 +38,14 @@ export const types = {
   },
   data_object: {
     icon: 'mdi-file-table-outline',
-    heading: 'Data Types',
+    heading: 'Data Objects',
     name: 'data object',
     plural: 'data objects',
     visible: false,
   },
 };
 
-export const fields = {
+const fields = {
   location: {
     icon: 'mdi-earth',
   },
@@ -94,7 +108,7 @@ export const fields = {
   },
 };
 
-export const ecosystems = [
+const ecosystems = [
   {
     name: 'Host-associated',
     color: colors.hostAssociated,
@@ -113,8 +127,106 @@ export const ecosystems = [
   },
 ];
 
-// eslint-disable-next-line camelcase
-export const ecosystem_category = {
+const omicsTypes = {
+  Metagenome: {
+    color: colors.metagenome,
+  },
+  Metatranscriptome: {
+    color: colors.metatranscriptome,
+  },
+  'Whole Genome Sequencing': {
+    color: colors.sequencing,
+  },
+};
+
+const values = {
+  Metagenome: {
+    color: colors.metagenome,
+  },
+  Metatranscriptome: {
+    color: colors.metatranscriptome,
+  },
+  'Whole Genome Sequencing': {
+    color: colors.sequencing,
+  },
+  Environmental: {
+    color: colors.terrestrial,
+  },
+  Terrestrial: {
+    color: colors.terrestrial,
+  },
+  Soil: {
+    color: colors.terrestrial,
+  },
+  'Deep subsurface': {
+    color: colors.terrestrial,
+  },
+  Sand: {
+    color: colors.terrestrial,
+  },
+  Wetlands: {
+    color: colors.terrestrial,
+  },
+  'Fracking water': {
+    color: colors.terrestrial,
+  },
+  'Forest Soil': {
+    color: colors.terrestrial,
+  },
+  Permafrost: {
+    color: colors.terrestrial,
+  },
+  'Host-associated': {
+    color: colors.hostAssociated,
+  },
+  Plants: {
+    color: colors.hostAssociated,
+  },
+  Microbial: {
+    color: colors.hostAssociated,
+  },
+  Bacteria: {
+    color: colors.hostAssociated,
+  },
+  Rhizosphere: {
+    color: colors.hostAssociated,
+  },
+  Phylloplane: {
+    color: colors.hostAssociated,
+  },
+  Epiphytes: {
+    color: colors.hostAssociated,
+  },
+  Aquatic: {
+    color: colors.aquatic,
+  },
+  Marine: {
+    color: colors.aquatic,
+  },
+  'Cold seeps': {
+    color: colors.aquatic,
+  },
+  Sediment: {
+    color: colors.aquatic,
+  },
+  'Intertidal zone': {
+    color: colors.aquatic,
+  },
+  'Salt marsh': {
+    color: colors.aquatic,
+  },
+  Engineered: {
+    color: colors.engineered,
+  },
+  'Lab enrichment': {
+    color: colors.engineered,
+  },
+  'Defined media': {
+    color: colors.engineered,
+  },
+};
+
+const ecosystemCategory = {
   Bioreactor: {
     icon: 'test-tube-empty',
     color: 'green',
@@ -283,4 +395,13 @@ export const ecosystem_category = {
     icon: 'water',
     color: 'indigo',
   },
+};
+
+export {
+  types,
+  fields,
+  ecosystems,
+  omicsTypes,
+  values,
+  ecosystemCategory,
 };
