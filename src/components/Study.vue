@@ -33,12 +33,18 @@
                   <div
                     v-for="site in item.principal_investigator_websites"
                     :key="site"
-                    class="caption"
+                    class="caption primary--text"
+                    style="cursor: pointer"
+                    @click="openLink(site)"
                   >
-                    <a
-                      :href="site"
-                      target="_blank"
-                    >{{ site }}</a>
+                    <v-icon
+                      small
+                      left
+                      color="primary"
+                    >
+                      mdi-link
+                    </v-icon>
+                    {{ site }}
                   </div>
                 </v-card>
               </v-row>
@@ -53,9 +59,10 @@
           {{ item.scientific_objective }}
         </div>
       </v-col>
-      <v-col class="flex-grow-1">
+      <v-col class="flex-grow-1 grey lighten-4 px-0 pb-0">
         <v-subheader>Citation</v-subheader>
-        <v-list>
+        <v-list class="transparent">
+          <v-divider />
           <v-list-item>
             <v-list-item-content v-text="doiCitation" />
             <v-list-item-action>
@@ -77,29 +84,33 @@
         <v-subheader v-if="publications.length > 0">
           Other publications
         </v-subheader>
-        <v-list>
-          <v-list-item
+        <v-list class="transparent">
+          <template
             v-for="(pub, pubIndex) in publications"
-            :key="pubIndex"
           >
-            <v-list-item-content
-              v-text="pub"
-            />
-            <v-list-item-action>
-              <v-tooltip top>
-                <template v-slot:activator="{ on }">
-                  <v-btn
-                    icon
-                    v-on="on"
-                    @click="openLink(`https://doi.org/${item.publication_dois[pubIndex]}`)"
-                  >
-                    <v-icon>mdi-open-in-new</v-icon>
-                  </v-btn>
-                </template>
-                <span>Visit site</span>
-              </v-tooltip>
-            </v-list-item-action>
-          </v-list-item>
+            <v-divider :key="`${pubIndex}-divider`" />
+            <v-list-item
+              :key="pubIndex"
+            >
+              <v-list-item-content
+                v-text="pub"
+              />
+              <v-list-item-action>
+                <v-tooltip top>
+                  <template v-slot:activator="{ on }">
+                    <v-btn
+                      icon
+                      v-on="on"
+                      @click="openLink(`https://doi.org/${item.publication_dois[pubIndex]}`)"
+                    >
+                      <v-icon>mdi-open-in-new</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Visit site</span>
+                </v-tooltip>
+              </v-list-item-action>
+            </v-list-item>
+          </template>
         </v-list>
       </v-col>
     </v-row>
@@ -152,8 +163,10 @@ export default {
     valueDisplayName,
     typeWithCardinality,
     selectField(field) {
-      this.$emit('unselected', { value: this.item.id });
-      this.$emit('selected', { field, value: this.item[field] });
+      this.$emit('selected', {
+        type: 'study',
+        conditions: [{ field, op: '==', value: this.item[field] }],
+      });
     },
     relatedTypeDescription(relatedType) {
       const n = valueCardinality(this.item[`${relatedType}_id`]);

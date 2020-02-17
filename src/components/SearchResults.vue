@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!singleton">
+  <div>
     <v-pagination
       v-if="Math.ceil(results.length / resultsPerPage) > 1"
       v-model="page"
@@ -19,7 +19,9 @@
         />
         <v-list-item
           :key="result.id"
-          @click="$emit('selected', { value: result.id })"
+          @click="$emit('selected', {
+            type: type,
+            conditions: [{ field: 'id', op: '==', value: result.id }]})"
         >
           <v-list-item-avatar>
             <v-icon
@@ -38,114 +40,15 @@
       </template>
     </v-list>
   </div>
-  <div v-else>
-    <v-card>
-      <v-container fluid>
-        <v-row>
-          <v-col class="flex-grow-0 pr-0">
-            <v-icon
-              x-large
-            >
-              {{ types[type].icon }}
-            </v-icon>
-          </v-col>
-          <v-col class="flex-grow-1">
-            <div class="headline">
-              {{ results[0].name }}
-            </div>
-            <div>{{ results[0].description }}</div>
-            <v-list>
-              <template v-for="field in displayFields">
-                <v-tooltip
-                  v-if="field.startsWith('open_')"
-                  :key="field"
-                  bottom
-                >
-                  <template v-slot:activator="{ on }">
-                    <v-list-item
-                      @click="openLink(results[0][field])"
-                      v-on="on"
-                    >
-                      <v-list-item-avatar>
-                        <v-icon>
-                          mdi-open-in-new
-                        </v-icon>
-                      </v-list-item-avatar>
-                      <v-list-item-content>
-                        <v-list-item-title>
-                          {{ fieldDisplayName(field) }}
-                        </v-list-item-title>
-                      </v-list-item-content>
-                    </v-list-item>
-                  </template>
-                  <span>Click to follow link</span>
-                </v-tooltip>
-                <v-tooltip
-                  v-else
-                  :key="field"
-                  bottom
-                >
-                  <template v-slot:activator="{ on }">
-                    <v-list-item
-                      @click="selectField(field)"
-                      v-on="on"
-                    >
-                      <v-list-item-avatar>
-                        <v-icon>
-                          {{ fields[field] ? fields[field].icon : 'mdi-text' }}
-                        </v-icon>
-                      </v-list-item-avatar>
-                      <v-list-item-content>
-                        <v-list-item-title>
-                          {{ fieldDisplayName(field) }}
-                        </v-list-item-title>
-                        <v-list-item-subtitle>
-                          {{ valueDisplayName(field, results[0][field]) }}
-                        </v-list-item-subtitle>
-                      </v-list-item-content>
-                    </v-list-item>
-                  </template>
-                  <span>Click to select {{ typeWithCardinality(type, 2) }} with this value</span>
-                </v-tooltip>
-              </template>
-            </v-list>
-            <template v-for="relatedType in ['study', 'project', 'sample', 'data_object']">
-              <v-btn
-                v-if="type !== relatedType"
-                :key="relatedType"
-                outlined
-                class="mr-3"
-                @click="$emit('selected', {
-                  type: relatedType,
-                  field: `${type}_id`,
-                  value: results[0].id,
-                })"
-              >
-                <v-icon left>
-                  {{ types[relatedType].icon }}
-                </v-icon>
-                {{ relatedTypeDescription(relatedType) }}
-              </v-btn>
-            </template>
-          </v-col>
-        </v-row>
-      </v-container>
-    </v-card>
-  </div>
 </template>
 <script>
-import { isObject } from 'lodash';
-
-import {
-  typeWithCardinality, valueCardinality, fieldDisplayName, valueDisplayName,
-} from '../util';
-import { types, fields } from '../encoding';
+import { types } from '../encoding';
 
 export default {
   props: {
     type: {
       type: String,
-      default: 'study',
+      default: null,
     },
     results: {
       type: Array,
@@ -160,37 +63,6 @@ export default {
     page: 1,
     resultsPerPage: 15,
     types,
-    fields,
   }),
-  computed: {
-    singleton() {
-      return this.results.length === 1 && this.conditions.findIndex((cond) => cond.field === 'id' && cond.op === '==') >= 0;
-    },
-    displayFields() {
-      return Object.keys(this.results[0]).filter((field) => {
-        const value = this.results[0][field];
-        if (['name', 'description'].includes(field)) {
-          return false;
-        }
-        return !isObject(value);
-      });
-    },
-  },
-  methods: {
-    fieldDisplayName,
-    valueDisplayName,
-    typeWithCardinality,
-    selectField(field) {
-      this.$emit('unselected', { value: this.results[0].id });
-      this.$emit('selected', { field, value: this.results[0][field] });
-    },
-    relatedTypeDescription(relatedType) {
-      const n = valueCardinality(this.results[0][`${relatedType}_id`]);
-      return `${n} ${typeWithCardinality(relatedType, n)}`;
-    },
-    openLink(url) {
-      window.open(url, '_blank');
-    },
-  },
 };
 </script>

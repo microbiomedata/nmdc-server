@@ -55,9 +55,8 @@
 </template>
 <script>
 import { fieldDisplayName, valueDisplayName } from '../util';
-import DataAPI from '../data/DataAPI';
+import api from '../data/api';
 
-const api = new DataAPI();
 export default {
   props: {
     type: {
@@ -140,7 +139,7 @@ export default {
       this.facets = api.primitiveFields(this.type)
         .map((field) => ({
           field,
-          values: api.facetSummary(this.type, field, this.conditions),
+          values: api.facetSummary({ type: this.type, field, conditions: this.conditions }),
         }));
     },
     fieldDisplayName,
