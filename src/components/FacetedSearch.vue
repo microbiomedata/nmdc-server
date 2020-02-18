@@ -5,7 +5,10 @@
     class="compact"
   >
     <template v-for="facet in facets">
-      <template v-if="facet.values.length && facet.values[0].count > 1">
+      <template
+        v-if="!(fields[facet.field] && (fields[facet.field].hide || fields[facet.field].hideFacet))
+          && facet.values.length && facet.values[0].count > 1"
+      >
         <v-subheader :key="facet.field">
           {{ fieldDisplayName(facet.field) }}
         </v-subheader>
@@ -58,6 +61,7 @@
 <script>
 import { fieldDisplayName, valueDisplayName } from '../util';
 import api from '../data/api';
+import * as encoding from '../encoding';
 
 export default {
   props: {
@@ -74,6 +78,7 @@ export default {
     facets: [],
     selected: {},
     valueCount: {},
+    fields: encoding.fields,
   }),
   computed: {
     conditions() {
