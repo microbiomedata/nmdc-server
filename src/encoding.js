@@ -51,9 +51,23 @@ const fields = {
   },
   latitude: {
     icon: 'mdi-earth',
+    hideFacet: true,
   },
   longitude: {
     icon: 'mdi-earth',
+    hideFacet: true,
+  },
+  identifier: {
+    icon: 'mdi-text',
+    hideFacet: true,
+  },
+  file_size: {
+    icon: 'mdi-text',
+    hideFacet: true,
+  },
+  description: {
+    icon: 'mdi-text',
+    hideFacet: true,
   },
   sample_collection_site: {
     icon: 'mdi-earth',
