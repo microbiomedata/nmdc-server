@@ -48,26 +48,48 @@
       @selected="addSelected($event)"
     />
     <v-container fluid>
-      <v-row>
-        <template
-          v-for="(stat, index) in stats"
+      <template
+        v-for="(statsLine, statsLineIndex) in stats"
+      >
+        <v-row
+          :key="statsLineIndex"
         >
-          <v-divider
-            v-if="index !== 0"
-            :key="`${stat.label}-divider`"
-            class="mx-4"
-            vertical
-          />
-          <v-col :key="stat.label">
-            <div class="headline text-center">
-              {{ stat.value }}
-            </div>
-            <div class="title text-center">
-              {{ stat.label }}
-            </div>
-          </v-col>
-        </template>
-      </v-row>
+          <template
+            v-for="(stat) in statsLine"
+          >
+            <v-col :key="stat.label">
+              <v-card
+                height="150"
+                outlined
+              >
+                <v-container
+                  fluid
+                  style="height: 100%"
+                >
+                  <v-row
+                    align="center"
+                    align-content="center"
+                    style="height: 100%"
+                  >
+                    <v-col
+                      cols="12"
+                      class="display-1 text-center py-1"
+                    >
+                      {{ stat.value }}
+                    </v-col>
+                    <v-col
+                      cols="12"
+                      class="title text-center py-1"
+                    >
+                      {{ stat.label }}
+                    </v-col>
+                  </v-row>
+                </v-container>
+              </v-card>
+            </v-col>
+          </template>
+        </v-row>
+      </template>
     </v-container>
   </v-card>
 </template>
