@@ -5,51 +5,53 @@
     class="compact"
   >
     <template v-for="facet in facets">
-      <v-subheader :key="facet.field">
-        {{ fieldDisplayName(facet.field) }}
-      </v-subheader>
-      <v-list-item-group
-        :key="`${facet.field}-item`"
-        v-model="selected[facet.field]"
-        multiple
-      >
+      <template v-if="facet.values.length && facet.values[0].count > 1">
+        <v-subheader :key="facet.field">
+          {{ fieldDisplayName(facet.field) }}
+        </v-subheader>
+        <v-list-item-group
+          :key="`${facet.field}-item`"
+          v-model="selected[facet.field]"
+          multiple
+        >
+          <v-list-item
+            v-for="val in facet.values.slice(0, valueCount[facet.field])"
+            :key="val.value"
+            :disabled="val.count === 0"
+            :value="val.value"
+            class="overflow"
+          >
+            <v-list-item-content>
+              {{ valueDisplayName(facet.field, val.value) }}
+            </v-list-item-content>
+            <v-list-item-action>
+              <v-list-item-action-text v-text="val.count" />
+            </v-list-item-action>
+          </v-list-item>
+        </v-list-item-group>
         <v-list-item
-          v-for="val in facet.values.slice(0, valueCount[facet.field])"
-          :key="val.value"
-          :disabled="val.count === 0"
-          :value="val.value"
-          class="overflow"
+          v-if="valueCount[facet.field] < facet.values.length"
+          :key="`${facet.field}-more`"
+          @click="valueCount[facet.field] += 10"
         >
-          <v-list-item-content>
-            {{ valueDisplayName(facet.field, val.value) }}
+          <v-list-item-content
+            class="blue--text text--darken-4 caption"
+          >
+            more
           </v-list-item-content>
-          <v-list-item-action>
-            <v-list-item-action-text v-text="val.count" />
-          </v-list-item-action>
         </v-list-item>
-      </v-list-item-group>
-      <v-list-item
-        v-if="valueCount[facet.field] < facet.values.length"
-        :key="`${facet.field}-more`"
-        @click="valueCount[facet.field] += 10"
-      >
-        <v-list-item-content
-          class="blue--text text--darken-4 caption"
+        <v-list-item
+          v-if="valueCount[facet.field] > 5"
+          :key="`${facet.field}-less`"
+          @click="valueCount[facet.field] = 5"
         >
-          more
-        </v-list-item-content>
-      </v-list-item>
-      <v-list-item
-        v-if="valueCount[facet.field] > 5"
-        :key="`${facet.field}-less`"
-        @click="valueCount[facet.field] = 5"
-      >
-        <v-list-item-content
-          class="blue--text text--darken-4 caption"
-        >
-          less
-        </v-list-item-content>
-      </v-list-item>
+          <v-list-item-content
+            class="blue--text text--darken-4 caption"
+          >
+            less
+          </v-list-item-content>
+        </v-list-item>
+      </template>
     </template>
   </v-list>
 </template>
