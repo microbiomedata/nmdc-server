@@ -292,34 +292,54 @@ export default {
       'specific_ecosystem',
     ],
     stats: [
-      {
-        value: api.count('study'),
-        label: 'Studies',
-      },
-      {
-        value: api.facetSummary({ type: 'sample', field: 'latitude' }).length,
-        label: 'Locations',
-      },
-      {
-        value: api.facetSummary({ type: 'sample', field: 'ecosystem_path_id' }).length,
-        label: 'Habitats',
-      },
-      {
-        value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Metagenome' }]).length,
-        label: 'Metagenomes',
-      },
-      {
-        value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Metatranscriptome' }]).length,
-        label: 'Metatranscriptomes',
-      },
-      {
-        value: filesize(
-          api.query('data_object', []).reduce(
-            (prev, cur) => prev + (cur.file_size || 0), 0,
-          ),
-        ),
-        label: 'Data',
-      },
+      [
+        {
+          value: api.count('study'),
+          label: 'Studies',
+        },
+        {
+          value: api.facetSummary({ type: 'sample', field: 'latitude' }).length,
+          label: 'Locations',
+        },
+        {
+          value: api.facetSummary({ type: 'sample', field: 'ecosystem_path_id' }).length,
+          label: 'Habitats',
+        },
+        {
+          value: filesize(
+            api.query('data_object', []).reduce(
+              (prev, cur) => prev + (cur.file_size || 0), 0,
+            ),
+          ).replace(/\s+/g, ''),
+          label: 'Data',
+        },
+      ],
+      [
+        {
+          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Metagenome' }]).length,
+          label: 'Metagenomes',
+        },
+        {
+          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Metatranscriptome' }]).length,
+          label: 'Metatranscriptomes',
+        },
+        {
+          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Proteomics' }]).length,
+          label: 'Proteomics',
+        },
+        {
+          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Metabolomics' }]).length,
+          label: 'Metabolomics',
+        },
+        {
+          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Lipidomics' }]).length,
+          label: 'Lipidomics',
+        },
+        {
+          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Organic Matter Characterization' }]).length,
+          label: 'Organic Matter Characterization',
+        },
+      ],
     ],
   }),
   computed: {
