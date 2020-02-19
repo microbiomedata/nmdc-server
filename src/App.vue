@@ -89,6 +89,10 @@
               v-if="type === 'project'"
               :item="results[0]"
             />
+            <DataObject
+              v-if="type === 'data_object'"
+              :item="results[0]"
+            />
             <AttributeList
               :type="type"
               :item="results[0]"
@@ -203,7 +207,7 @@
                 <v-card>
                   <FacetChart
                     :type="type"
-                    field="sequencing_strategy"
+                    field="omics_type"
                     chart="bar"
                     :conditions="conditions"
                     :show-title="false"
@@ -262,6 +266,7 @@ import EcosystemSankey from './components/EcosystemSankey.vue';
 import Welcome from './components/Welcome.vue';
 import Sample from './components/Sample.vue';
 import Study from './components/Study.vue';
+import DataObject from './components/DataObject.vue';
 import Project from './components/Project.vue';
 import AttributeList from './components/AttributeList.vue';
 
@@ -275,6 +280,7 @@ export default {
     EcosystemChart,
     EcosystemSankey,
     Project,
+    DataObject,
     Welcome,
     Sample,
     Study,
@@ -316,27 +322,27 @@ export default {
       ],
       [
         {
-          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Metagenome' }]).length,
+          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Metagenome' }]).length,
           label: 'Metagenomes',
         },
         {
-          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Metatranscriptome' }]).length,
+          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Metatranscriptome' }]).length,
           label: 'Metatranscriptomes',
         },
         {
-          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Proteomics' }]).length,
+          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Proteomics' }]).length,
           label: 'Proteomics',
         },
         {
-          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Metabolomics' }]).length,
+          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Metabolomics' }]).length,
           label: 'Metabolomics',
         },
         {
-          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Lipidomics' }]).length,
+          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Lipidomics' }]).length,
           label: 'Lipidomics',
         },
         {
-          value: api.query('project', [{ field: 'sequencing_strategy', op: '==', value: 'Organic Matter Characterization' }]).length,
+          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Organic Matter Characterization' }]).length,
           label: 'Organic Matter Characterization',
         },
       ],

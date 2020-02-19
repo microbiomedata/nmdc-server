@@ -1,76 +1,12 @@
 import moment from 'moment';
 import { isObject } from 'lodash';
-import filesize from 'filesize';
-import { tsvParseRows } from 'd3-dsv';
+// import filesize from 'filesize';
 
 import biosamples from './biosample.json';
-import projects from './project.json';
+import projects from './omics_processing.json';
 import studies from './study.json';
+import dataObjects from './data_objects.json';
 import studyAdditional from './study_additional.json';
-import projectFiles from './ficus_project_files_v1.tsv';
-
-function parseDataObjectCSV(data) {
-  const fields = [
-    {
-      name: 'project_id',
-      description: 'This should map to the ids in the projects.json you have.',
-      include: true,
-      type: 'string',
-    },
-    {
-      name: 'id',
-      description: 'unique file identifier (JAMO hash id)',
-      include: true,
-      type: 'string',
-    },
-    {
-      name: 'name',
-      description: 'File name, not necessarily unique',
-      include: true,
-      type: 'string',
-    },
-    {
-      name: 'category',
-      description: 'This is derived from a field used by JGI\'s Genome Portal',
-      include: true,
-      type: 'string',
-    },
-    {
-      name: 'its_sequencing_project_id',
-      description: 'I have it for mapping, should not be used in NMDC',
-      include: false,
-      type: 'string',
-    },
-    {
-      name: 'its_final_deliverable_id',
-      description: 'Another internal entity ID, not for use in NMDC',
-      include: false,
-      type: 'string',
-    },
-    {
-      name: 'file_type',
-      description: 'Doesn\'t look useful for display, I may use it to filter',
-      include: false,
-      type: 'string',
-    },
-    {
-      name: 'file_size',
-      description: 'Useful for display',
-      include: true,
-      type: 'number',
-    },
-  ];
-  return tsvParseRows(data).map((row) => {
-    const record = {};
-    row.forEach((d, i) => {
-      if (fields[i].include) {
-        record[fields[i].name] = fields[i].type === 'number' ? +d : d;
-      }
-    });
-    record.description = filesize(record.file_size);
-    return record;
-  });
-}
 
 function parseAnnotation(a) {
   const value = a.has_raw_value;
@@ -80,7 +16,7 @@ function parseAnnotation(a) {
   return value;
 }
 
-function parseNamedThings(arr, parentType) {
+function parseNamedThings(arr, { parentType = null, outputType = null } = {}) {
   return arr.map((d) => {
     const datum = {
       id: d.id,
@@ -92,6 +28,13 @@ function parseNamedThings(arr, parentType) {
         [datum[`${parentType}_id`]] = d.part_of;
       } else {
         datum[`${parentType}_id`] = 'None';
+      }
+    }
+    if (outputType !== undefined) {
+      if (d.has_output !== undefined) {
+        datum[`${outputType}_id`] = d.has_output;
+      } else {
+        datum[`${outputType}_id`] = [];
       }
     }
     d.annotations.forEach((a) => {
@@ -160,17 +103,17 @@ function meetsAllConditions(d, fieldConditions) {
 
 class DataAPI {
   constructor() {
-    this.sample = parseNamedThings(biosamples, 'project');
+    this.sample = parseNamedThings(biosamples, { parentType: 'project' });
     this.sample_map = idMap(this.sample);
-    this.project = parseNamedThings(projects, 'study');
+    this.project = parseNamedThings(projects, { parentType: 'study', outputType: 'data_object' });
     this.project_map = idMap(this.project);
     this.study = parseNamedThings(studies);
     this.study_map = idMap(this.study);
-    this.data_object = parseDataObjectCSV(projectFiles);
+    this.data_object = parseNamedThings(dataObjects);
     this.data_object_map = idMap(this.data_object);
     this.backPopulate('study', 'project');
     this.backPopulate('project', 'sample');
-    this.backPopulate('project', 'data_object');
+    this.forwardPopulate('project', 'data_object');
     this.transitivePopulate('study', 'project', 'sample');
     this.transitivePopulate('study', 'project', 'data_object');
     this.siblingPopulate('project', 'sample', 'data_object');
@@ -188,6 +131,12 @@ class DataAPI {
     for (let i = 0; i < this.study.length; i += 1) {
       const s = this.study[i];
       s.open_in_gold = `https://gold.jgi.doe.gov/study?id=${s.id}`;
+    }
+
+    // Project description
+    for (let i = 0; i < this.project.length; i += 1) {
+      const p = this.project[i];
+      p.description = p.omics_type;
     }
 
     this.importAdditionalStudyFields();
@@ -218,6 +167,17 @@ class DataAPI {
       if (parent !== undefined) {
         parent[`${childType}_id`].push(c.id);
       }
+    });
+  }
+
+  forwardPopulate(parentType, childType) {
+    const childMap = this[`${childType}_map`];
+    const parents = this[parentType];
+    parents.forEach((p) => {
+      p[`${childType}_id`].forEach((c) => {
+        const child = childMap[c];
+        child[`${parentType}_id`] = p.id;
+      });
     });
   }
 

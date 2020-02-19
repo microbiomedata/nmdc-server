@@ -57,7 +57,10 @@
           <template
             v-for="(stat) in statsLine"
           >
-            <v-col :key="stat.label">
+            <v-col
+              v-if="stat.value !== 0"
+              :key="stat.label"
+            >
               <v-card
                 height="150"
                 outlined

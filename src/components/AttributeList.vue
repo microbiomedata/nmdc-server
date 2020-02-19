@@ -135,8 +135,8 @@ export default {
     ],
     relatedTypes: [
       { type: 'study' },
-      { type: 'project', conditions: [{ field: 'sequencing_strategy', op: '==', value: 'Metagenome' }] },
-      { type: 'project', conditions: [{ field: 'sequencing_strategy', op: '==', value: 'Metatranscriptome' }] },
+      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metagenome' }] },
+      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metatranscriptome' }] },
       { type: 'sample' },
       { type: 'data_object' },
     ],
