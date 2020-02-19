@@ -7,7 +7,7 @@
             {{ item.name }}
           </div>
           <div class="subtitle-1">
-            {{ item.omics_type }}
+            {{ item.description }}
           </div>
         </v-card>
       </v-col>
