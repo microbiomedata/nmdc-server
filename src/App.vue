@@ -203,7 +203,7 @@
             <v-row
               v-show="['project'].includes(type)"
             >
-              <v-col :cols="4">
+              <v-col :cols="12">
                 <v-card>
                   <FacetChart
                     :type="type"

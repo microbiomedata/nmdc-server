@@ -5,7 +5,7 @@
         v-if="type !== relatedType.type && relatedTypeCount(relatedType) > 0"
         :key="relatedTypeIndex"
         outlined
-        class="mr-3"
+        class="mr-3 mt-3"
         @click="$emit('selected', {
           type: relatedType.type,
           conditions: relatedTypeConditions(relatedType),
@@ -137,6 +137,10 @@ export default {
       { type: 'study' },
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metagenome' }] },
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metatranscriptome' }] },
+      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Proteomics' }] },
+      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metabolomics' }] },
+      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Lipidomics' }] },
+      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Organic Matter Characterization' }] },
       { type: 'sample' },
       { type: 'data_object' },
     ],
