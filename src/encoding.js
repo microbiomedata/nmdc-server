@@ -29,6 +29,34 @@ const types = {
     plural: 'metatranscriptomes',
     visible: false,
   },
+  Proteomics: {
+    icon: 'mdi-file-table-box-multiple-outline',
+    heading: 'Proteomics',
+    name: 'proteomics',
+    plural: 'proteomics',
+    visible: false,
+  },
+  Metabolomics: {
+    icon: 'mdi-file-table-box-multiple-outline',
+    heading: 'Metabolomics',
+    name: 'metabolomics',
+    plural: 'metabolomics',
+    visible: false,
+  },
+  Lipidomics: {
+    icon: 'mdi-file-table-box-multiple-outline',
+    heading: 'Lipidomics',
+    name: 'lipidomics',
+    plural: 'lipidomics',
+    visible: false,
+  },
+  'Organic Matter Characterization': {
+    icon: 'mdi-file-table-box-multiple-outline',
+    heading: 'Organic Matter Characterization',
+    name: 'organic matter characterization',
+    plural: 'organic matter characterizations',
+    visible: false,
+  },
   sample: {
     icon: 'mdi-earth',
     heading: 'Habitats',
@@ -143,25 +171,49 @@ const ecosystems = [
 
 const omicsTypes = {
   Metagenome: {
-    color: colors.metagenome,
+    color: colors.blue,
   },
   Metatranscriptome: {
-    color: colors.metatranscriptome,
+    color: colors.blue,
   },
   'Whole Genome Sequencing': {
-    color: colors.sequencing,
+    color: colors.blue,
+  },
+  Proteomics: {
+    color: colors.blue,
+  },
+  Metabolomics: {
+    color: colors.blue,
+  },
+  Lipidomics: {
+    color: colors.blue,
+  },
+  'Organic Matter Characterization': {
+    color: colors.blue,
   },
 };
 
 const values = {
   Metagenome: {
-    color: colors.metagenome,
+    color: colors.primary,
   },
   Metatranscriptome: {
-    color: colors.metatranscriptome,
+    color: colors.primary,
   },
   'Whole Genome Sequencing': {
-    color: colors.sequencing,
+    color: colors.primary,
+  },
+  Proteomics: {
+    color: colors.primary,
+  },
+  Metabolomics: {
+    color: colors.primary,
+  },
+  Lipidomics: {
+    color: colors.primary,
+  },
+  'Organic Matter Characterization': {
+    color: colors.primary,
   },
   Environmental: {
     color: colors.terrestrial,
