@@ -5,5 +5,5 @@ setup(
     version="0.1",
     packages=find_packages(),
     python_requires=">=3.6.0",
-    install_requires=["fastapi"],
+    install_requires=["alembic", "fastapi", "python-dotenv", "sqlalchemy",],
 )
