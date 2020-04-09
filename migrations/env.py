@@ -4,6 +4,8 @@ from alembic import context
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
+from nmdc_server import models  # noqa
+from nmdc_server.config import settings
 from nmdc_server.database import Base
 
 
@@ -25,6 +27,7 @@ target_metadata = Base.metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+config.set_main_option("sqlalchemy.url", settings.database_uri)
 
 
 def run_migrations_offline():
