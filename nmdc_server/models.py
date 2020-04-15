@@ -1,8 +1,13 @@
+from typing import Type
+
 from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from nmdc_server.database import Base
+
+
+ModelType = Type["AnnotatedModel"]
 
 
 class AnnotatedModel:

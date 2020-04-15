@@ -3,7 +3,11 @@ from typing import Dict, Union
 
 from pydantic import BaseModel, Field
 
-AnnotationValue = Union[int, float, str, datetime]
+# The order in the this union is significant... it will coerce
+# valid datetime strings into datetime objects while falling
+# back to ordinary strings.  Also, we never want numeric types
+# to be interpreted as dates.
+AnnotationValue = Union[int, float, datetime, str]
 
 
 class ErrorSchema(BaseModel):
