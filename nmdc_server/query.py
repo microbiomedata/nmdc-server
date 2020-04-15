@@ -27,17 +27,41 @@ class Operation(Enum):
 
 
 class Table(Enum):
-    data_object = models.DataObject
-    project = models.Project
-    sample = models.Biosample
-    study = models.Study
+    data_object = "data_object"
+    project = "project"
+    sample = "sample"
+    study = "study"
+
+    @property
+    def model(self):
+        return _table_to_model[self]
+
+
+_table_to_model = {
+    Table.data_object: models.DataObject,
+    Table.project: models.Project,
+    Table.sample: models.Biosample,
+    Table.study: models.Study,
+}
 
 
 class ForeignKeys(Enum):
-    data_object_id = models.DataObject
-    project_id = models.Project
-    sample_id = models.Biosample
-    study_id = models.Study
+    data_object_id = "data_object_id"
+    project_id = "project_id"
+    sample_id = "sample_id"
+    study_id = "study_id"
+
+    @property
+    def model(self):
+        return _key_to_model[self]
+
+
+_key_to_model = {
+    ForeignKeys.data_object_id: models.DataObject,
+    ForeignKeys.project_id: models.Project,
+    ForeignKeys.sample_id: models.Biosample,
+    ForeignKeys.study_id: models.Study,
+}
 
 
 class ConditionSchema(BaseModel):
@@ -45,13 +69,15 @@ class ConditionSchema(BaseModel):
     field: str
     value: AnnotationValue
 
-    def filter(self, model: models.AnnotatedModel):
+    def filter(self, table: Table):
         if self.field in ForeignKeys.__members__:
             if self.op != Operation.equal:
                 raise InvalidQuery(f'Invalid foreign key operator "{self.op.name}"')
 
-            return ForeignKeys(self.field).value.id == self.value
+            foreign_model = ForeignKeys(self.field).model
+            return foreign_model.id == self.value
 
+        model = table.model
         value = self.value
         if isinstance(value, datetime):
             value = value.isoformat()
@@ -98,13 +124,13 @@ class QuerySchema(BaseModel):
         return query.join(foreign_model)
 
     def execute(self, db: Session) -> "Query":
-        query = db.query(self.table.value)
+        query = db.query(self.table.model)
 
         joins: Set[models.ModelType] = set()
-        for field, conditions in self.groups.items():
+        for field, conditions in self.groups:
             # look for foreign keys and add join conditions
             if field in ForeignKeys.__members__:
-                foreign_model = ForeignKeys(field).value
+                foreign_model = ForeignKeys(field).model
                 query = self.join(query, foreign_model, joins)
 
             for condition in conditions:

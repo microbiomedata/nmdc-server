@@ -26,18 +26,18 @@ class Project(Base, AnnotatedModel):
     __tablename__ = "project"
 
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
-    study = relationship("Study")
+    study = relationship("Study", backref="projects")
 
 
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
 
     project_id = Column(String, ForeignKey("project.id"), nullable=False)
-    project = relationship("Project")
+    project = relationship("Project", backref="biosamples")
 
 
 class DataObject(Base, AnnotatedModel):
     __tablename__ = "data_object"
 
     project_id = Column(String, ForeignKey("project.id"), nullable=False)
-    project = relationship("Project")
+    project = relationship("Project", backref="data_objects")
