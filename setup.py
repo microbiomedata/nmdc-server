@@ -5,5 +5,12 @@ setup(
     version="0.1",
     packages=find_packages(),
     python_requires=">=3.6.0",
-    install_requires=["alembic", "fastapi", "psycopg2-binary", "python-dotenv", "sqlalchemy",],
+    install_requires=[
+        "alembic",
+        "fastapi",
+        "factory-boy",
+        "psycopg2-binary",
+        "python-dotenv",
+        "sqlalchemy",
+    ],
 )
