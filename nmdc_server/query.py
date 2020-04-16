@@ -83,15 +83,15 @@ class ConditionSchema(BaseModel):
             value = value.isoformat()
         json_value = json.dumps(value)
         if self.op == Operation.equal:
-            return model.annotations[self.field] == json_value  # type: ignore
+            return model.annotations[self.field] == json_value
         if self.op == Operation.less:
-            return model.annotations[self.field] < json_value  # type: ignore
+            return model.annotations[self.field] < json_value
         if self.op == Operation.less_equal:
-            return model.annotations[self.field] <= json_value  # type: ignore
+            return model.annotations[self.field] <= json_value
         if self.op == Operation.greater:
-            return model.annotations[self.field] > json_value  # type: ignore
+            return model.annotations[self.field] > json_value
         if self.op == Operation.greater_equal:
-            return model.annotations[self.field] >= json_value  # type: ignore
+            return model.annotations[self.field] >= json_value
         raise Exception("Unknown operator")
 
 
