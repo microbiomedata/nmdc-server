@@ -1,10 +1,9 @@
-from datetime import datetime
 from enum import Enum
 from itertools import groupby
-import json
 from typing import List, Set, TYPE_CHECKING
 
 from pydantic import BaseModel
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
@@ -24,6 +23,7 @@ class Operation(Enum):
     greater_equal = ">="
     less = "<"
     less_equal = "<="
+    not_equal = "!="
 
 
 class Table(Enum):
@@ -77,22 +77,9 @@ class ConditionSchema(BaseModel):
             foreign_model = ForeignKeys(self.field).model
             return foreign_model.id == self.value
 
-        model = table.model
-        value = self.value
-        if isinstance(value, datetime):
-            value = value.isoformat()
-        json_value = json.dumps(value)
-        if self.op == Operation.equal:
-            return model.annotations[self.field] == json_value
-        if self.op == Operation.less:
-            return model.annotations[self.field] < json_value
-        if self.op == Operation.less_equal:
-            return model.annotations[self.field] <= json_value
-        if self.op == Operation.greater:
-            return model.annotations[self.field] > json_value
-        if self.op == Operation.greater_equal:
-            return model.annotations[self.field] >= json_value
-        raise Exception("Unknown operator")
+        return func.nmdc_compare(
+            table.model.annotations[self.field].astext, self.op.value, self.value
+        )
 
 
 class QuerySchema(BaseModel):

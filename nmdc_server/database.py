@@ -16,16 +16,16 @@ Base = declarative_base()
 
 listen(
     Base.metadata,
-    'before_create',
-    DDL("""
-create or replace function nmdc_compare (lhs jsonb, op text, rhs text)
+    "before_create",
+    DDL(
+        """
+create or replace function nmdc_compare (lhs text, op text, rhs text)
 returns boolean as $$
     declare
         result boolean;
-        lhs_ text;
+        lhs_ alias for lhs;
         rhs_ alias for rhs;
     begin
-        lhs_ := cast(lhs as text);
         select
             case
                 when op = '==' then (lhs_ = rhs_)
@@ -41,7 +41,7 @@ $$
 language plpgsql
 immutable;
 
-create or replace function nmdc_compare (lhs jsonb, op text, rhs numeric)
+create or replace function nmdc_compare (lhs text, op text, rhs numeric)
 returns boolean as $$
     declare
         result boolean;
@@ -64,7 +64,7 @@ $$
 language plpgsql
 immutable;
 
-create or replace function nmdc_compare (lhs jsonb, op text, rhs timestamp)
+create or replace function nmdc_compare (lhs text, op text, rhs timestamp)
 returns boolean as $$
     declare
         result boolean;
@@ -84,5 +84,7 @@ returns boolean as $$
         return result;
     end;
 $$
-language plpgsql
-"""))
+language plpgsql;
+"""
+    ),
+)
