@@ -9,9 +9,9 @@ from alembic.config import Config
 from sqlalchemy.orm import Session
 from typing_extensions import TypedDict
 
-from nmdc_server import database, models, schemas
-from nmdc_server.config import settings
-from nmdc_server.database import Base, engine
+from nmdc_server import models, schemas
+from nmdc_server.config import Settings
+from nmdc_server.database import Base, create_session
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
@@ -29,7 +29,7 @@ class Annotation(TypedDict):
     has_raw_value: Union[str, int, float]
 
 
-def create_tables():
+def create_tables(engine, settings):
     Base.metadata.create_all(engine)
     alembic_cfg = Config(str(HERE / "alembic.ini"))
     alembic_cfg.set_main_option("sqlalchemy.url", settings.database_uri)
@@ -118,12 +118,13 @@ def ingest_data_objects(db: Session, data_object_map: Dict[str, str]):
 
 
 def main():
-    create_tables()
-    db = database.SessionLocal()
-    ingest_studies(db)
-    data_object_map = ingest_projects(db)
-    ingest_biosamples(db)
-    ingest_data_objects(db, data_object_map)
+    settings = Settings()
+    with create_session(settings) as db:
+        create_tables(db.bind, settings)
+        ingest_studies(db)
+        data_object_map = ingest_projects(db)
+        ingest_biosamples(db)
+        ingest_data_objects(db, data_object_map)
 
 
 if __name__ == "__main__":

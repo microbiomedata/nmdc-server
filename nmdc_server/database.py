@@ -1,16 +1,15 @@
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import DDL
 
-from nmdc_server.config import settings
+from nmdc_server.config import Settings
 
 
-SQLALCHEMY_DATABASE_URL = settings.database_uri
-
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False)
 
 Base = declarative_base()
 
@@ -88,3 +87,16 @@ language plpgsql;
 """
     ),
 )
+
+
+@contextmanager
+def create_session(settings: Settings):
+    engine = create_engine(settings.database_uri)
+    SessionLocal.configure(bind=engine)
+    Base.metadata.bind = engine
+
+    try:
+        db = SessionLocal()
+        yield db
+    finally:
+        db.close()

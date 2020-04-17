@@ -4,10 +4,9 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_uri: str = "postgres://localhost:5432/nmdc"
+    database_uri: str = "postgresql://localhost:5432/nmdc"
+    testing_database_uri: str = "postgresql://localhost:5432/nmdc_testing"
 
     class Config:
         env_prefix = "nmdc_"
-
-
-settings = Settings(_env_file=os.getenv("DOTENV_PATH", ".env"))  # type: ignore
+        env_file = os.getenv("DOTENV_PATH", ".env")

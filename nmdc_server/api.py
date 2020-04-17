@@ -2,19 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from . import crud, schemas
-from .database import SessionLocal
+from .config import Settings
+from .database import create_session
 
 
 router = APIRouter()
 
 
 # Dependency
-def get_db():
-    try:
-        db = SessionLocal()
+def get_settings():
+    yield Settings()
+
+
+def get_db(settings: Settings = Depends(get_settings)):
+    with create_session(settings) as db:
         yield db
-    finally:
-        db.close()
 
 
 @router.post(
