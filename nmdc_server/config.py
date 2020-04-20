@@ -10,3 +10,6 @@ class Settings(BaseSettings):
     class Config:
         env_prefix = "nmdc_"
         env_file = os.getenv("DOTENV_PATH", ".env")
+
+
+settings = Settings()

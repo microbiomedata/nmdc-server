@@ -3,12 +3,13 @@ from typing import Dict
 from factory import Faker, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import lorem, python
+from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
 from nmdc_server.database import SessionLocal
 from nmdc_server.schemas import AnnotationValue
 
-db = SessionLocal()
+db = scoped_session(SessionLocal)
 Faker.add_provider(lorem)
 Faker.add_provider(python)
 

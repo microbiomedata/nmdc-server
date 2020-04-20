@@ -15,7 +15,7 @@ def get_settings():
 
 
 def get_db(settings: Settings = Depends(get_settings)):
-    with create_session(settings) as db:
+    with create_session() as db:
         yield db
 
 

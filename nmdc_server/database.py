@@ -1,15 +1,16 @@
 from contextlib import contextmanager
 from datetime import datetime
 import json
-from typing import Any
+from typing import Any, Iterator
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine as _create_engine
+from sqlalchemy.engine import Engine
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.schema import DDL
 
-from nmdc_server.config import Settings
+from nmdc_server.config import settings
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False)
@@ -96,14 +97,22 @@ def json_serializer(data: Any) -> str:
     def default_(val: Any) -> str:
         if isinstance(val, datetime):
             return val.isoformat()
-        raise TypeError(f'Cannot serialize {val}')
+        raise TypeError(f"Cannot serialize {val}")
+
     return json.dumps(data, default=default_)
 
 
+def create_engine(testing=False) -> Engine:
+    uri = settings.database_uri
+    if testing:
+        uri = settings.testing_database_uri
+    return _create_engine(uri, json_serializer=json_serializer)
+
+
 @contextmanager
-def create_session(settings: Settings):
-    engine = create_engine(settings.database_uri, json_serializer=json_serializer)
-    session.configure(bind=engine)
+def create_session() -> Iterator[Session]:
+    engine = create_engine()
+    SessionLocal.configure(bind=engine)
     Base.metadata.bind = engine
 
     try:
