@@ -1,4 +1,7 @@
 from contextlib import contextmanager
+from datetime import datetime
+import json
+from typing import Any
 
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
@@ -89,10 +92,18 @@ language plpgsql;
 )
 
 
+def json_serializer(data: Any) -> str:
+    def default_(val: Any) -> str:
+        if isinstance(val, datetime):
+            return val.isoformat()
+        raise TypeError(f'Cannot serialize {val}')
+    return json.dumps(data, default=default_)
+
+
 @contextmanager
 def create_session(settings: Settings):
-    engine = create_engine(settings.database_uri)
-    SessionLocal.configure(bind=engine)
+    engine = create_engine(settings.database_uri, json_serializer=json_serializer)
+    session.configure(bind=engine)
     Base.metadata.bind = engine
 
     try:
