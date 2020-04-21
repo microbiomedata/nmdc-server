@@ -72,3 +72,21 @@ def test_date_query(db: Session, condition, expected):
 
     q = query.QuerySchema(table="sample", conditions=[condition])
     assert {s.id for s in q.execute(db)} == expected
+
+
+@pytest.mark.parametrize(
+    "table,condition,expected",
+    [
+        ("project", {"field": "sample_id", "value": "sample1", "op": "=="}, {"project1"}),
+        ("sample", {"field": "project_id", "value": "project1", "op": "=="}, {"sample1"}),
+        ("sample", {"field": "study_id", "value": "study1", "op": "=="}, {"sample2"}),
+    ],
+)
+def test_foreign_key_search(db: Session, table, condition, expected):
+    fakes.BiosampleFactory(id="sample1", project__id="project1")
+    project = fakes.ProjectFactory(id="project2", study__id="study1")
+    fakes.BiosampleFactory(id="sample2", project=project)
+    db.commit()
+
+    q = query.QuerySchema(table=table, conditions=[condition])
+    assert {r.id for r in q.execute(db)} == expected
