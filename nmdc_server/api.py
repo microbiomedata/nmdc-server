@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from . import crud, schemas
+from . import crud, query, schemas
 from .config import Settings
 from .database import create_session
 
@@ -21,20 +21,13 @@ def get_db(settings: Settings = Depends(get_settings)):
 
 @router.post(
     "/biosample/search",
-    response_model=schemas.SearchResponse,
+    response_model=query.BiosampleSearchResponse,
     tags=["biosample"],
     name="Search for biosamples",
     description="Faceted search of biosample data.",
-    responses={
-        400: {"description": "The search query was invalid.", "model": schemas.ErrorSchema,},
-        500: {
-            "description": "An unexpected error occurred.",
-            "model": schemas.InternalErrorSchema,
-        },
-    },
 )
-async def search(query: schemas.SearchQuery):
-    return {}  # TODO stub
+async def search(query: query.BiosampleSearchQuery, db: Session = Depends(get_db)):
+    return {"results": list(crud.search_biosample(db, query.conditions))}
 
 
 @router.get("/study/{study_id}", response_model=schemas.Study)

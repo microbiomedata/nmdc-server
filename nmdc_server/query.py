@@ -6,8 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from nmdc_server import models
-from nmdc_server.schemas import AnnotationValue
+from nmdc_server import models, schemas
 
 if TYPE_CHECKING:
     from sqlalchemy_stubs.orm.query import Query
@@ -67,7 +66,7 @@ _key_to_model = {
 class ConditionSchema(BaseModel):
     op: Operation
     field: str
-    value: AnnotationValue
+    value: schemas.AnnotationValue
 
     def filter(self, table: Table):
         if self.field in ForeignKeys.__members__:
@@ -124,3 +123,11 @@ class QuerySchema(BaseModel):
                 query = query.filter(condition.filter(self.table))
 
         return query
+
+
+class BiosampleSearchResponse(BaseModel):
+    results: List[schemas.Biosample]
+
+
+class BiosampleSearchQuery(BaseModel):
+    conditions: List[ConditionSchema]

@@ -3,6 +3,7 @@ from typing import Dict, Union
 
 from pydantic import BaseModel, Field
 
+
 # The order in the this union is significant... it will coerce
 # valid datetime strings into datetime objects while falling
 # back to ordinary strings.  Also, we never want numeric types
@@ -25,14 +26,6 @@ class InternalErrorSchema(ErrorSchema):
     )
 
 
-class SearchResponse(BaseModel):
-    pass
-
-
-class SearchQuery(BaseModel):
-    pass
-
-
 class AnnotatedBase(BaseModel):
     id: str
     name: str
@@ -40,6 +33,7 @@ class AnnotatedBase(BaseModel):
     annotations: Dict[str, AnnotationValue] = {}
 
 
+# study
 class StudyBase(AnnotatedBase):
     pass
 
@@ -53,6 +47,7 @@ class Study(StudyBase):
         orm_mode = True
 
 
+# project
 class ProjectBase(AnnotatedBase):
     pass
 
@@ -68,6 +63,7 @@ class Project(ProjectBase):
         orm_mode = True
 
 
+# biosample
 class BiosampleBase(AnnotatedBase):
     pass
 
@@ -83,6 +79,7 @@ class Biosample(BiosampleBase):
         orm_mode = True
 
 
+# data_object
 class DataObjectBase(AnnotatedBase):
     pass
 
