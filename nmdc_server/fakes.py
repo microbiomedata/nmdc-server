@@ -2,7 +2,7 @@ from typing import Dict
 
 from factory import Faker, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
-from faker.providers import lorem, python
+from faker.providers import geo, lorem, python
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
@@ -10,6 +10,7 @@ from nmdc_server.database import SessionLocal
 from nmdc_server.schemas import AnnotationValue
 
 db = scoped_session(SessionLocal)
+Faker.add_provider(geo)
 Faker.add_provider(lorem)
 Faker.add_provider(python)
 
@@ -43,6 +44,8 @@ class BiosampleFactory(AnnotatedFactory):
         model = models.Biosample
         sqlalchemy_session = db
 
+    latitude = Faker("latitude")
+    longitude = Faker("longitude")
     project = SubFactory(ProjectFactory)
 
 

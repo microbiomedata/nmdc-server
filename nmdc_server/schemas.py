@@ -65,7 +65,9 @@ class Project(ProjectBase):
 
 # biosample
 class BiosampleBase(AnnotatedBase):
-    pass
+    # https://github.com/samuelcolvin/pydantic/issues/156
+    longitude: float = Field(..., gt=-180, le=180)
+    latitude: float = Field(..., ge=-90, le=90)
 
 
 class BiosampleCreate(BiosampleBase):

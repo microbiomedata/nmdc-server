@@ -1,6 +1,6 @@
 from typing import Type
 
-from sqlalchemy import Column, ForeignKey, String
+from sqlalchemy import Column, Float, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
@@ -31,6 +31,9 @@ class Project(Base, AnnotatedModel):
 
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
+
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
 
     project_id = Column(String, ForeignKey("project.id"), nullable=False)
     project = relationship("Project", backref="biosamples")

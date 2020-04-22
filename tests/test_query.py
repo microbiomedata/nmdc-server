@@ -90,3 +90,24 @@ def test_foreign_key_search(db: Session, table, condition, expected):
 
     q = query.QuerySchema(table=table, conditions=[condition])
     assert {r.id for r in q.execute(db)} == expected
+
+
+@pytest.mark.parametrize(
+    "op,value,expected",
+    [
+        ("==", 0, {"sample1"}),
+        ("<", 0, {"sample3"}),
+        (">=", 0, {"sample1", "sample2"}),
+        ("!=", 0, {"sample2", "sample3"}),
+    ],
+)
+def test_latitude_query(db: Session, op, value, expected):
+    fakes.BiosampleFactory(id="sample1", latitude=0)
+    fakes.BiosampleFactory(id="sample2", latitude=10)
+    fakes.BiosampleFactory(id="sample3", latitude=-10)
+    db.commit()
+
+    q = query.QuerySchema(
+        table="sample", conditions=[{"field": "latitude", "op": op, "value": value}]
+    )
+    assert {r.id for r in q.execute(db)} == expected
