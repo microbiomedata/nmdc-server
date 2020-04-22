@@ -6,7 +6,7 @@ from sqlalchemy import pool
 
 from nmdc_server import models  # noqa
 from nmdc_server.config import Settings
-from nmdc_server.database import Base
+from nmdc_server.database import metadata
 
 
 # this is the Alembic Config object, which provides
@@ -19,9 +19,7 @@ fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-# from myapp import mymodel
-# target_metadata = mymodel.Base.metadata
-target_metadata = Base.metadata
+target_metadata = metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:

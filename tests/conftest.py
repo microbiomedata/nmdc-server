@@ -15,14 +15,14 @@ def connection():
     settings = Settings()
     settings.testing_database_uri = settings.testing_database_uri
     engine = create_engine(testing=True)
-    database.Base.metadata.bind = engine
+    database.metadata.bind = engine
     _db.configure(bind=engine)
     try:
-        database.Base.metadata.create_all()
+        database.metadata.create_all()
         yield _db
     finally:
         _db.rollback()
-        database.Base.metadata.drop_all()
+        database.metadata.drop_all()
         _db.remove()
 
 
@@ -30,7 +30,7 @@ def connection():
 def db(connection):
     yield connection
     connection.rollback()
-    for table in reversed(database.Base.metadata.sorted_tables):
+    for table in reversed(database.metadata.sorted_tables):
         connection.execute(table.delete())
     connection.commit()
 

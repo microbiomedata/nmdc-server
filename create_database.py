@@ -11,7 +11,7 @@ from typing_extensions import TypedDict
 
 from nmdc_server import models, schemas
 from nmdc_server.config import Settings
-from nmdc_server.database import Base, create_session
+from nmdc_server.database import create_session, metadata
 
 HERE = Path(__file__).parent
 DATA = HERE / "data"
@@ -30,7 +30,7 @@ class Annotation(TypedDict):
 
 
 def create_tables(engine, settings):
-    Base.metadata.create_all(engine)
+    metadata.create_all(engine)
     alembic_cfg = Config(str(HERE / "alembic.ini"))
     alembic_cfg.set_main_option("sqlalchemy.url", settings.database_uri)
     command.stamp(alembic_cfg, "head")
@@ -119,7 +119,7 @@ def ingest_data_objects(db: Session, data_object_map: Dict[str, str]):
 
 def main():
     settings = Settings()
-    with create_session(settings) as db:
+    with create_session() as db:
         create_tables(db.bind, settings)
         ingest_studies(db)
         data_object_map = ingest_projects(db)

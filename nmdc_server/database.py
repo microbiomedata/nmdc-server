@@ -8,17 +8,30 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.schema import DDL
+from sqlalchemy.schema import DDL, MetaData
 
 from nmdc_server.config import settings
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False)
 
-Base = declarative_base()
+# This is to avoid having to manually name all constraints
+# See: http://alembic.zzzcomputing.com/en/latest/naming.html
+metadata = MetaData(
+    naming_convention={
+        "pk": "pk_%(table_name)s",
+        "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
+        "ix": "ix_%(table_name)s_%(column_0_name)s",
+        "uq": "uq_%(table_name)s_%(column_0_name)s",
+        "ck": "ck_%(table_name)s_%(constraint_name)s",
+    }
+)
+
+Base = declarative_base(metadata=metadata)
+
 
 listen(
-    Base.metadata,
+    metadata,
     "before_create",
     DDL(
         """
@@ -113,7 +126,7 @@ def create_engine(testing=False) -> Engine:
 def create_session() -> Iterator[Session]:
     engine = create_engine()
     SessionLocal.configure(bind=engine)
-    Base.metadata.bind = engine
+    metadata.bind = engine
 
     try:
         db = SessionLocal()
