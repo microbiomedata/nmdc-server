@@ -75,7 +75,24 @@ class ConditionSchema(BaseModel):
 
             foreign_model = ForeignKeys(self.field).model
             return foreign_model.id == self.value
+        return self.compare(table)
 
+    def compare(self, table: Table):
+        model = table.model
+        if self.field in model.__table__.columns:
+            field = getattr(model, self.field)
+            if self.op == Operation.equal:
+                return field == self.value
+            elif self.op == Operation.greater:
+                return field > self.value
+            elif self.op == Operation.greater_equal:
+                return field >= self.value
+            elif self.op == Operation.less:
+                return field < self.value
+            elif self.op == Operation.less_equal:
+                return field <= self.value
+            elif self.op == Operation.not_equal:
+                return field != self.value
         return func.nmdc_compare(
             table.model.annotations[self.field].astext, self.op.value, self.value
         )
