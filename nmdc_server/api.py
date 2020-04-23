@@ -54,6 +54,22 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
     return db_biosample
 
 
+@router.delete("/biosample/{biosample_id}", status_code=204)
+async def delete_biosample(biosample_id: str, db: Session = Depends(get_db)):
+    db_biosample = crud.get_biosample(db, biosample_id)
+    if db_biosample is None:
+        raise HTTPException(status_code=404, detail="Biosample not found")
+    crud.delete_biosample(db, db_biosample)
+
+
+@router.post("/biosample", response_model=schemas.Biosample)
+async def create_biosample(biosample: schemas.BiosampleCreate, db: Session = Depends(get_db)):
+    if crud.get_project(db, biosample.project_id) is None:
+        raise HTTPException(status_code=400, detail="Project does not exist")
+
+    return crud.create_biosample(db, biosample)
+
+
 @router.get("/data_object/{data_object_id}", response_model=schemas.DataObject)
 async def get_data_object(data_object_id: str, db: Session = Depends(get_db)):
     db_data_object = crud.get_data_object(db, data_object_id)
