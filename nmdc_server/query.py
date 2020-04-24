@@ -146,5 +146,17 @@ class BiosampleSearchResponse(BaseModel):
     results: List[schemas.Biosample]
 
 
-class BiosampleSearchQuery(BaseModel):
+class SearchQuery(BaseModel):
     conditions: List[ConditionSchema]
+
+
+class StudySearchResponse(BaseModel):
+    results: List[schemas.Study]
+
+
+class ProjectSearchResponse(BaseModel):
+    results: List[schemas.Project]
+
+
+class DataObjectSearchResponse(BaseModel):
+    results: List[schemas.DataObject]
