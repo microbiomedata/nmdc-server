@@ -5,16 +5,14 @@ from starlette.testclient import TestClient
 
 from nmdc_server import database
 from nmdc_server.app import create_app
-from nmdc_server.config import Settings
 from nmdc_server.database import create_engine
 from nmdc_server.fakes import db as _db
 
 
 @pytest.fixture(scope="module")
 def connection():
-    settings = Settings()
-    settings.testing_database_uri = settings.testing_database_uri
-    engine = create_engine(testing=True)
+    database.testing = True
+    engine = create_engine()
     database.metadata.bind = engine
     _db.configure(bind=engine)
     try:
@@ -24,6 +22,7 @@ def connection():
         _db.rollback()
         database.metadata.drop_all()
         _db.remove()
+        database.testing = False
 
 
 @pytest.fixture

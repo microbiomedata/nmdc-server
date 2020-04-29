@@ -105,6 +105,12 @@ language plpgsql;
     ),
 )
 
+#: This variable configures whether or not we are connecting to the testing
+#  database or not.  This isn't really ideal, but I can't find a way to shim
+#  the configuration into fastapi dependencies more cleanly in a way that also
+#  supports factory-boy's scoped sessions.
+testing = False
+
 
 def json_serializer(data: Any) -> str:
     def default_(val: Any) -> str:
@@ -115,7 +121,7 @@ def json_serializer(data: Any) -> str:
     return json.dumps(data, default=default_)
 
 
-def create_engine(testing=False) -> Engine:
+def create_engine() -> Engine:
     uri = settings.database_uri
     if testing:
         uri = settings.testing_database_uri
