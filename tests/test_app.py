@@ -11,7 +11,7 @@ from nmdc_server import fakes
 
 def assert_status(response: Response, status: int = 200):
     __tracebackhide__ = True
-    if response.headers['Content-Type'] != 'application/json':
+    if response.headers["Content-Type"] != "application/json":
         print(response.content)
     elif response.status_code != status:
         print(json.dumps(response.json(), indent=2))

@@ -94,9 +94,11 @@ def ingest_biosamples(db: Session):
         biosample = {
             'id': p['id'],
             'name': p['name'],
-            'project_id': p['part_of'][0]
+            'project_id': p['part_of'][0],
         }
         biosample['annotations'] = load_annotations(p['annotations'])
+        biosample['latitude'] = float(biosample['annotations'].pop('latitude'))
+        biosample['longitude'] = float(biosample['annotations'].pop('longitude'))
         biosample_db = models.Biosample(**biosample)
         db.add(biosample_db)
     db.commit()
