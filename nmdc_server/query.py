@@ -1,6 +1,6 @@
 from enum import Enum
 from itertools import groupby
-from typing import List, Set, TYPE_CHECKING
+from typing import Dict, List, Optional, Set, TYPE_CHECKING
 
 from pydantic import BaseModel
 from sqlalchemy import func, or_
@@ -126,8 +126,9 @@ class QuerySchema(BaseModel):
         joins.add(foreign_model)
         return query.join(foreign_model)
 
-    def execute(self, db: Session) -> "Query":
-        query = db.query(self.table.model)
+    def execute(self, db: Session, query: Optional["Query"] = None) -> "Query":
+        if query is None:
+            query = db.query(self.table.model)
 
         joins: Set[models.ModelType] = set()
         for field, conditions in self.groups:
@@ -136,12 +137,20 @@ class QuerySchema(BaseModel):
                 foreign_model = ForeignKeys(field).model
                 query = self.join(query, foreign_model, joins)
 
-            expressions = [
-                condition.filter(self.table) for condition in conditions
-            ]
+            expressions = [condition.filter(self.table) for condition in conditions]
             query = query.filter(or_(*expressions))
 
         return query
+
+    def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
+        model = self.table.model
+        if attribute in model.__table__.columns:
+            column = getattr(self.table.model, attribute)
+        else:
+            column = model.annotations[attribute]
+
+        query = self.execute(db, query=db.query(column, func.count(column)))
+        return {value: count for value, count in query.group_by(column)}
 
 
 class BiosampleSearchResponse(BaseModel):
