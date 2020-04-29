@@ -150,7 +150,8 @@ class QuerySchema(BaseModel):
             column = model.annotations[attribute]
 
         query = self.execute(db, query=db.query(column, func.count(column)))
-        return {value: count for value, count in query.group_by(column)}
+        rows = query.group_by(column)
+        return {value: count for value, count in rows if value is not None}
 
 
 class BiosampleSearchResponse(BaseModel):

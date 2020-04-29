@@ -139,3 +139,8 @@ def test_faceted_query(db: Session):
     q = query.QuerySchema(table="sample", conditions=[])
     assert q.facet(db, "key1") == {"value1": 2, "value4": 1}
     assert q.facet(db, "key2") == {"value2": 2, "value3": 1}
+
+
+def test_faceted_query_with_no_results(db: Session):
+    q = query.QuerySchema(table="sample", conditions=[])
+    assert q.facet(db, "key1") == {}
