@@ -111,3 +111,17 @@ def test_latitude_query(db: Session, op, value, expected):
         table="sample", conditions=[{"field": "latitude", "op": op, "value": value}]
     )
     assert {r.id for r in q.execute(db)} == expected
+
+
+def test_grouped_query(db: Session):
+    fakes.BiosampleFactory(id="sample1", annotations={"key1": "value1", "key2": "value2"})
+    fakes.BiosampleFactory(id="sample2", annotations={"key1": "value1", "key2": "value3"})
+    fakes.BiosampleFactory(id="sample3", annotations={"key1": "value4", "key2": "value2"})
+    db.commit()
+
+    q = query.QuerySchema(table="sample", conditions=[
+        {"field": "key2", "value": "value2", "op": "=="},
+        {"field": "key1", "value": "value1", "op": "=="},
+        {"field": "key2", "value": "value3", "op": "=="},
+    ])
+    assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}

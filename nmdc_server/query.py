@@ -3,7 +3,7 @@ from itertools import groupby
 from typing import List, Set, TYPE_CHECKING
 
 from pydantic import BaseModel
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from nmdc_server import models, schemas
@@ -136,8 +136,10 @@ class QuerySchema(BaseModel):
                 foreign_model = ForeignKeys(field).model
                 query = self.join(query, foreign_model, joins)
 
-            for condition in conditions:
-                query = query.filter(condition.filter(self.table))
+            expressions = [
+                condition.filter(self.table) for condition in conditions
+            ]
+            query = query.filter(or_(*expressions))
 
         return query
 
