@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from . import crud, query, schemas
-from .config import Settings
+from .config import Settings, settings
 from .database import create_session
 
 
@@ -11,7 +11,7 @@ router = APIRouter()
 
 # Dependency
 def get_settings():
-    yield Settings()
+    yield settings
 
 
 def get_db(settings: Settings = Depends(get_settings)):
