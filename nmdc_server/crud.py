@@ -3,7 +3,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from nmdc_server import models, schemas
-from nmdc_server.query import ConditionSchema, QuerySchema
+from nmdc_server.query import ConditionSchema, FacetResponse, QuerySchema
 
 
 # study
@@ -29,6 +29,11 @@ def search_study(db: Session, conditions: List[ConditionSchema]) -> List[models.
     return query.execute(db)
 
 
+def facet_study(db: Session, attribute: str, conditions: List[ConditionSchema]) -> FacetResponse:
+    query = QuerySchema(table="study", conditions=conditions)
+    return FacetResponse(facets=query.facet(db, attribute))
+
+
 # project
 def get_project(db: Session, project_id: str) -> Optional[models.Project]:
     return db.query(models.Project).filter(models.Project.id == project_id).first()
@@ -50,6 +55,11 @@ def delete_project(db: Session, project: models.Project) -> None:
 def search_project(db: Session, conditions: List[ConditionSchema]) -> List[models.Project]:
     query = QuerySchema(table="project", conditions=conditions)
     return query.execute(db)
+
+
+def facet_project(db: Session, attribute: str, conditions: List[ConditionSchema]) -> FacetResponse:
+    query = QuerySchema(table="project", conditions=conditions)
+    return FacetResponse(facets=query.facet(db, attribute))
 
 
 # biosample
@@ -75,6 +85,13 @@ def search_biosample(db: Session, conditions: List[ConditionSchema]) -> List[mod
     return query.execute(db)
 
 
+def facet_biosample(
+    db: Session, attribute: str, conditions: List[ConditionSchema]
+) -> FacetResponse:
+    query = QuerySchema(table="sample", conditions=conditions)
+    return FacetResponse(facets=query.facet(db, attribute))
+
+
 # data object
 def get_data_object(db: Session, data_object_id: str) -> Optional[models.DataObject]:
     return db.query(models.DataObject).filter(models.DataObject.id == data_object_id).first()
@@ -96,3 +113,10 @@ def delete_data_object(db: Session, data_object: models.DataObject) -> None:
 def search_data_object(db: Session, conditions: List[ConditionSchema]) -> List[models.DataObject]:
     query = QuerySchema(table="data_object", conditions=conditions)
     return query.execute(db)
+
+
+def facet_data_object(
+    db: Session, attribute: str, conditions: List[ConditionSchema]
+) -> FacetResponse:
+    query = QuerySchema(table="data_object", conditions=conditions)
+    return FacetResponse(facets=query.facet(db, attribute))

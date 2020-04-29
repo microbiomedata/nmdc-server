@@ -161,6 +161,10 @@ class SearchQuery(BaseModel):
     conditions: List[ConditionSchema]
 
 
+class FacetQuery(SearchQuery):
+    attribute: str
+
+
 class StudySearchResponse(BaseModel):
     results: List[schemas.Study]
 
@@ -171,3 +175,7 @@ class ProjectSearchResponse(BaseModel):
 
 class DataObjectSearchResponse(BaseModel):
     results: List[schemas.DataObject]
+
+
+class FacetResponse(BaseModel):
+    facets: Dict[schemas.AnnotationValue, int]
