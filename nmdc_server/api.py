@@ -41,6 +41,16 @@ async def search_biosample(query: query.SearchQuery, db: Session = Depends(get_d
     return {"results": list(crud.search_biosample(db, query.conditions))}
 
 
+@router.post(
+    "/biosample/facet",
+    response_model=query.FacetResponse,
+    tags=["biosample"],
+    name="Get all values of an attribute",
+)
+async def facet_biosample(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_biosample(db, query.attribute, query.conditions)
+
+
 @router.get(
     "/biosample/{biosample_id}", response_model=schemas.Biosample, tags=["biosample"],
 )
@@ -78,6 +88,16 @@ async def create_study(study: schemas.StudyCreate, db: Session = Depends(get_db)
 )
 async def search_study(query: query.SearchQuery, db: Session = Depends(get_db)):
     return {"results": list(crud.search_study(db, query.conditions))}
+
+
+@router.post(
+    "/study/facet",
+    response_model=query.FacetResponse,
+    tags=["study"],
+    name="Get all values of an attribute",
+)
+async def facet_study(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_study(db, query.attribute, query.conditions)
 
 
 @router.get(
@@ -119,6 +139,16 @@ async def search_project(query: query.SearchQuery, db: Session = Depends(get_db)
     return {"results": list(crud.search_project(db, query.conditions))}
 
 
+@router.post(
+    "/project/facet",
+    response_model=query.FacetResponse,
+    tags=["project"],
+    name="Get all values of an attribute",
+)
+async def facet_project(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_project(db, query.attribute, query.conditions)
+
+
 @router.get(
     "/project/{project_id}", response_model=schemas.Project, tags=["project"],
 )
@@ -156,6 +186,16 @@ async def create_data_object(data_object: schemas.DataObjectCreate, db: Session 
 )
 async def search_data_object(query: query.SearchQuery, db: Session = Depends(get_db)):
     return {"results": list(crud.search_data_object(db, query.conditions))}
+
+
+@router.post(
+    "/data_object/facet",
+    response_model=query.FacetResponse,
+    tags=["data_object"],
+    name="Get all values of an attribute",
+)
+async def facet_data_object(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_data_object(db, query.attribute, query.conditions)
 
 
 @router.get(
