@@ -4,8 +4,8 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    database_uri: str = "postgresql://localhost:5432/nmdc"
-    testing_database_uri: str = "postgresql://localhost:5432/nmdc_testing"
+    database_uri: str = "postgresql:///nmdc"
+    testing_database_uri: str = "postgresql:///nmdc_testing"
 
     class Config:
         env_prefix = "nmdc_"
