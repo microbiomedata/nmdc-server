@@ -4,7 +4,28 @@ Requires Python 3.6+
 
 ```
 pip install -e .
-pip install uvicorn
+pip install uvicorn tox
+```
+
+### Configuration
+
+```
+cp .env.example .env
+```
+
+Edit values in `.env` to point to existing postgresql databases.
+
+### Initialization
+
+```
+python create_database.py
+```
+
+### Apply migrations
+
+If any new migrations have been created, upgrade the schema with
+```
+alembic upgrade head
 ```
 
 ### Run (development)
@@ -13,4 +34,9 @@ pip install uvicorn
 uvicorn nmdc_server.asgi:app --reload
 ```
 
-Test with `http://localhost:8000/docs`
+View swagger page at `http://localhost:8000/docs`.
+
+### Testing
+```
+tox
+```
