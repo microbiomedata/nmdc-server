@@ -43,6 +43,8 @@ class StudyCreate(StudyBase):
 
 
 class Study(StudyBase):
+    open_in_gold: str
+
     class Config:
         orm_mode = True
 
@@ -58,6 +60,7 @@ class ProjectCreate(ProjectBase):
 
 class Project(ProjectBase):
     study: Study
+    open_in_gold: str
 
     class Config:
         orm_mode = True
@@ -76,6 +79,7 @@ class BiosampleCreate(BiosampleBase):
 
 class Biosample(BiosampleBase):
     project: Project
+    open_in_gold: str
 
     class Config:
         orm_mode = True
