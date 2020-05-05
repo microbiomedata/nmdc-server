@@ -58,21 +58,19 @@ def ingest_studies(db: Session):
     with (DATA / "study.json").open("r") as f:
         data = json.load(f)
     for study in data:
-        study['annotations'] = load_annotations(study['annotations'])
-        study['gold_name'] = study['name']
-        if 'description' in study:
-            study['gold_description'] = study['description']
-        if 'principal_investigator_name' in study:
-            study['description'] = (
-                f"Principal investigator: {study['principal_investigator_name']}"
-            )
+        study["annotations"] = load_annotations(study["annotations"])
+        study["gold_name"] = study["name"]
+        if "description" in study:
+            study["gold_description"] = study["description"]
+        if "principal_investigator_name" in study:
+            study["description"] = f"Principal investigator: {study['principal_investigator_name']}"
 
-        if study['id'] in additional_data:
-            a = additional_data[study['id']]
-            study['name'] = a['proposal_title']
-            study['principal_investigator_websites'] = a['principal_investigator_websites']
-            study['publication_dois'] = a['publication_dois']
-            study['scientific_objective'] = a['scientific_objective']
+        if study["id"] in additional_data:
+            a = additional_data[study["id"]]
+            study["name"] = a["proposal_title"]
+            study["principal_investigator_websites"] = a["principal_investigator_websites"]
+            study["publication_dois"] = a["publication_dois"]
+            study["scientific_objective"] = a["scientific_objective"]
 
         crud.create_study(db, schemas.StudyCreate(**study))
     db.commit()
@@ -83,12 +81,17 @@ def ingest_projects(db: Session) -> Dict[str, str]:
     with (DATA / "omics_processing.json").open("r") as f:
         data = json.load(f)
     for p in data:
-        assert len(p['part_of']) == 1
-        project = {'id': p['id'], 'name': p['name'], 'study_id': p['part_of'][0]}
-        for key in p.get('has_output', []):
-            data_objects[key] = p['id']
+        assert len(p["part_of"]) == 1
+        project = {
+            "id": p["id"],
+            "name": p["name"],
+            "study_id": p["part_of"][0],
+            "description": p.get("omics_type", ""),
+        }
+        for key in p.get("has_output", []):
+            data_objects[key] = p["id"]
 
-        project['annotations'] = load_annotations(p['annotations'])
+        project["annotations"] = load_annotations(p["annotations"])
         project_db = models.Project(**project)
         db.add(project_db)
     db.commit()
@@ -100,15 +103,15 @@ def ingest_biosamples(db: Session):
     with (DATA / "biosample.json").open("r") as f:
         data = json.load(f)
     for p in data:
-        assert len(p['part_of']) == 1
+        assert len(p["part_of"]) == 1
         biosample = {
-            'id': p['id'],
-            'name': p['name'],
-            'project_id': p['part_of'][0],
+            "id": p["id"],
+            "name": p["name"],
+            "project_id": p["part_of"][0],
         }
-        biosample['annotations'] = load_annotations(p['annotations'])
-        biosample['latitude'] = float(biosample['annotations'].pop('latitude'))
-        biosample['longitude'] = float(biosample['annotations'].pop('longitude'))
+        biosample["annotations"] = load_annotations(p["annotations"])
+        biosample["latitude"] = float(biosample["annotations"].pop("latitude"))
+        biosample["longitude"] = float(biosample["annotations"].pop("longitude"))
         biosample_db = models.Biosample(**biosample)
         db.add(biosample_db)
     db.commit()
@@ -118,8 +121,8 @@ def ingest_data_objects(db: Session, data_object_map: Dict[str, str]):
     with (DATA / "data_objects.json").open("r") as f:
         data = json.load(f)
     for p in data:
-        data_object = {'id': p['id'], 'name': p['name'], 'project_id': data_object_map[p['id']]}
-        data_object['annotations'] = load_annotations(p['annotations'])
+        data_object = {"id": p["id"], "name": p["name"], "project_id": data_object_map[p["id"]]}
+        data_object["annotations"] = load_annotations(p["annotations"])
         data_object_db = models.DataObject(**data_object)
         db.add(data_object_db)
     db.commit()
