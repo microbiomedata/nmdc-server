@@ -1,7 +1,8 @@
 from typing import Type, Union
+from uuid import uuid4
 
 from sqlalchemy import Column, Float, ForeignKey, String
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from nmdc_server.database import Base
@@ -20,6 +21,9 @@ class Study(Base, AnnotatedModel):
 
     gold_name = Column(String)
     gold_description = Column(String)
+
+    principal_investigator_websites = relationship("StudyWebsite", cascade="all", lazy="joined")
+    publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
 
     @property
     def open_in_gold(self):
@@ -59,3 +63,35 @@ class DataObject(Base, AnnotatedModel):
 
 
 ModelType = Union[Type[Study], Type[Project], Type[Biosample], Type[DataObject]]
+
+
+class Website(Base):
+    __tablename__ = "website"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    url = Column(String, nullable=False, unique=True)
+
+
+class StudyWebsite(Base):
+    __tablename__ = "study_website"
+
+    study_id = Column(String, ForeignKey("study.id"), primary_key=True)
+    website_id = Column(UUID, ForeignKey("website.id"), primary_key=True)
+
+    website = relationship(Website, cascade="all")
+
+
+class Publication(Base):
+    __tablename__ = "publication"
+
+    id = Column(UUID, primary_key=True, default=uuid4)
+    doi = Column(String, nullable=False, unique=True)
+
+
+class StudyPublication(Base):
+    __tablename__ = "study_publication"
+
+    study_id = Column(String, ForeignKey("study.id"), primary_key=True)
+    publication_id = Column(UUID, ForeignKey("publication.id"), primary_key=True)
+
+    publication = relationship(Publication, cascade="all")
