@@ -2,8 +2,7 @@ from typing import List, Optional
 
 from sqlalchemy.orm import Session
 
-from nmdc_server import models, schemas
-from nmdc_server.query import ConditionSchema, FacetResponse, QuerySchema
+from nmdc_server import models, query, schemas
 
 
 # study
@@ -24,14 +23,15 @@ def delete_study(db: Session, study: models.Study) -> None:
     db.commit()
 
 
-def search_study(db: Session, conditions: List[ConditionSchema]) -> List[models.Study]:
-    query = QuerySchema(table="study", conditions=conditions)
-    return query.execute(db)
+def search_study(db: Session, conditions: List[query.ConditionSchema]) -> List[models.Study]:
+    return list(query.StudyQuerySchema(conditions=conditions).execute(db))
 
 
-def facet_study(db: Session, attribute: str, conditions: List[ConditionSchema]) -> FacetResponse:
-    query = QuerySchema(table="study", conditions=conditions)
-    return FacetResponse(facets=query.facet(db, attribute))
+def facet_study(
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.StudyQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)
 
 
 # project
@@ -52,14 +52,15 @@ def delete_project(db: Session, project: models.Project) -> None:
     db.commit()
 
 
-def search_project(db: Session, conditions: List[ConditionSchema]) -> List[models.Project]:
-    query = QuerySchema(table="project", conditions=conditions)
-    return query.execute(db)
+def search_project(db: Session, conditions: List[query.ConditionSchema]) -> List[models.Project]:
+    return list(query.ProjectQuerySchema(conditions=conditions).execute(db))
 
 
-def facet_project(db: Session, attribute: str, conditions: List[ConditionSchema]) -> FacetResponse:
-    query = QuerySchema(table="project", conditions=conditions)
-    return FacetResponse(facets=query.facet(db, attribute))
+def facet_project(
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.ProjectQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)
 
 
 # biosample
@@ -80,16 +81,17 @@ def delete_biosample(db: Session, biosample: models.Biosample) -> None:
     db.commit()
 
 
-def search_biosample(db: Session, conditions: List[ConditionSchema]) -> List[models.Biosample]:
-    query = QuerySchema(table="sample", conditions=conditions)
-    return query.execute(db)
+def search_biosample(
+    db: Session, conditions: List[query.ConditionSchema]
+) -> List[models.Biosample]:
+    return list(query.BiosampleQuerySchema(conditions=conditions).execute(db))
 
 
 def facet_biosample(
-    db: Session, attribute: str, conditions: List[ConditionSchema]
-) -> FacetResponse:
-    query = QuerySchema(table="sample", conditions=conditions)
-    return FacetResponse(facets=query.facet(db, attribute))
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.BiosampleQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)
 
 
 # data object
@@ -110,13 +112,14 @@ def delete_data_object(db: Session, data_object: models.DataObject) -> None:
     db.commit()
 
 
-def search_data_object(db: Session, conditions: List[ConditionSchema]) -> List[models.DataObject]:
-    query = QuerySchema(table="data_object", conditions=conditions)
-    return query.execute(db)
+def search_data_object(
+    db: Session, conditions: List[query.ConditionSchema]
+) -> List[models.DataObject]:
+    return list(query.DataObjectQuerySchema(conditions=conditions).execute(db))
 
 
 def facet_data_object(
-    db: Session, attribute: str, conditions: List[ConditionSchema]
-) -> FacetResponse:
-    query = QuerySchema(table="data_object", conditions=conditions)
-    return FacetResponse(facets=query.facet(db, attribute))
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.DataObjectQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)

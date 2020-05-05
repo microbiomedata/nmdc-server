@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any
 
 import pytest
 from sqlalchemy.orm.session import Session
@@ -28,7 +29,7 @@ def test_string_query(db: Session, condition, expected):
         fakes.BiosampleFactory()
     db.commit()
 
-    q = query.QuerySchema(table="sample", conditions=[condition])
+    q = query.BiosampleQuerySchema(conditions=[condition])
     assert {s.id for s in q.execute(db)} == expected
 
 
@@ -49,7 +50,7 @@ def test_numeric_query(db: Session, condition, expected):
         fakes.BiosampleFactory()
     db.commit()
 
-    q = query.QuerySchema(table="sample", conditions=[condition])
+    q = query.BiosampleQuerySchema(conditions=[condition])
     assert {s.id for s in q.execute(db)} == expected
 
 
@@ -70,7 +71,7 @@ def test_date_query(db: Session, condition, expected):
         fakes.BiosampleFactory()
     db.commit()
 
-    q = query.QuerySchema(table="sample", conditions=[condition])
+    q = query.BiosampleQuerySchema(conditions=[condition])
     assert {s.id for s in q.execute(db)} == expected
 
 
@@ -88,7 +89,13 @@ def test_foreign_key_search(db: Session, table, condition, expected):
     fakes.BiosampleFactory(id="sample2", project=project)
     db.commit()
 
-    q = query.QuerySchema(table=table, conditions=[condition])
+    q: Any
+    if table == "project":
+        q = query.ProjectQuerySchema
+    else:
+        q = query.BiosampleQuerySchema
+
+    q = q(conditions=[condition])
     assert {r.id for r in q.execute(db)} == expected
 
 
@@ -107,9 +114,7 @@ def test_latitude_query(db: Session, op, value, expected):
     fakes.BiosampleFactory(id="sample3", latitude=-10)
     db.commit()
 
-    q = query.QuerySchema(
-        table="sample", conditions=[{"field": "latitude", "op": op, "value": value}]
-    )
+    q = query.BiosampleQuerySchema(conditions=[{"field": "latitude", "op": op, "value": value}])
     assert {r.id for r in q.execute(db)} == expected
 
 
@@ -119,8 +124,7 @@ def test_grouped_query(db: Session):
     fakes.BiosampleFactory(id="sample3", annotations={"key1": "value4", "key2": "value2"})
     db.commit()
 
-    q = query.QuerySchema(
-        table="sample",
+    q = query.BiosampleQuerySchema(
         conditions=[
             {"field": "key2", "value": "value2", "op": "=="},
             {"field": "key1", "value": "value1", "op": "=="},
@@ -136,11 +140,11 @@ def test_faceted_query(db: Session):
     fakes.BiosampleFactory(id="sample3", annotations={"key1": "value4", "key2": "value2"})
     db.commit()
 
-    q = query.QuerySchema(table="sample", conditions=[])
+    q = query.BiosampleQuerySchema(conditions=[])
     assert q.facet(db, "key1") == {"value1": 2, "value4": 1}
     assert q.facet(db, "key2") == {"value2": 2, "value3": 1}
 
 
 def test_faceted_query_with_no_results(db: Session):
-    q = query.QuerySchema(table="sample", conditions=[])
+    q = query.BiosampleQuerySchema(conditions=[])
     assert q.facet(db, "key1") == {}

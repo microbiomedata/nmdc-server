@@ -1,13 +1,10 @@
-from typing import Type
+from typing import Type, Union
 
 from sqlalchemy import Column, Float, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 
 from nmdc_server.database import Base
-
-
-ModelType = Type["AnnotatedModel"]
 
 
 class AnnotatedModel:
@@ -59,3 +56,6 @@ class DataObject(Base, AnnotatedModel):
 
     project_id = Column(String, ForeignKey("project.id"), nullable=False)
     project = relationship("Project", backref="data_objects")
+
+
+ModelType = Union[Type[Study], Type[Project], Type[Biosample], Type[DataObject]]
