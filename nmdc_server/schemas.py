@@ -1,7 +1,9 @@
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict, List, Union
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
+
+from nmdc_server import models
 
 
 # The order in the this union is significant... it will coerce
@@ -44,9 +46,19 @@ class StudyCreate(StudyBase):
 
 class Study(StudyBase):
     open_in_gold: str
+    principal_investigator_websites: List[str]
+    publication_dois: List[str]
 
     class Config:
         orm_mode = True
+
+    @validator("principal_investigator_websites", pre=True, each_item=True)
+    def replace_websites(cls, study_website: models.StudyWebsite) -> str:
+        return study_website.website.url
+
+    @validator("publication_dois", pre=True, each_item=True)
+    def replace_dois(cls, study_publication: models.StudyPublication) -> str:
+        return study_publication.publication.doi
 
 
 # project
