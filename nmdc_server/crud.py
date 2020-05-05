@@ -1,8 +1,26 @@
-from typing import List, Optional
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
 from sqlalchemy.orm import Session
 
 from nmdc_server import models, query, schemas
+
+T = TypeVar("T", bound=models.Base)
+
+
+# See: https://docs.djangoproject.com/en/3.0/ref/models/querysets/#get-or-create
+def get_or_create(
+    db: Session, model: Type[T], defaults: Optional[Dict[str, Any]] = None, **kwargs
+) -> Tuple[T, bool]:
+    """Get a model instance or create a new one if it does not exist."""
+    instance = db.query(model).filter_by(**kwargs).first()
+    if instance:
+        return instance, False
+    else:
+        params = dict(**kwargs)
+        params.update(defaults or {})
+        instance = model(**params)  # type: ignore
+        db.add(instance)
+        return instance, True
 
 
 # study
@@ -11,7 +29,23 @@ def get_study(db: Session, study_id: str) -> Optional[models.Study]:
 
 
 def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
-    db_study = models.Study(**study.dict())
+    study_dict = study.dict()
+
+    websites = study_dict.pop("principal_investigator_websites")
+    publications = study_dict.pop("publication_dois")
+
+    db_study = models.Study(**study_dict)
+
+    for url in websites:
+        website, _ = get_or_create(db, models.Website, url=url)
+        study_website = models.StudyWebsite(website=website)
+        db_study.principal_investigator_websites.append(study_website)  # type: ignore
+
+    for doi in publications:
+        publication, _ = get_or_create(db, models.Publication, doi=doi)
+        study_publication = models.StudyPublication(publication=publication)
+        db_study.publication_dois.append(study_publication)  # type: ignore
+
     db.add(db_study)
     db.commit()
     db.refresh(db_study)

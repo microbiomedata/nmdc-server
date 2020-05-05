@@ -9,7 +9,7 @@ from alembic.config import Config
 from sqlalchemy.orm import Session
 from typing_extensions import TypedDict
 
-from nmdc_server import models, schemas
+from nmdc_server import crud, models, schemas
 from nmdc_server.config import Settings
 from nmdc_server.database import create_session, metadata
 
@@ -50,24 +50,31 @@ def load_annotations(annotations: List[Annotation],) -> Dict[str, schemas.Annota
 
 
 def ingest_studies(db: Session):
+    with (DATA / "study_additional.json").open("r") as f:
+        data = json.load(f)
+
+    additional_data = {d["id"]: d for d in data}
+
     with (DATA / "study.json").open("r") as f:
         data = json.load(f)
     for study in data:
         study['annotations'] = load_annotations(study['annotations'])
-        study_db = models.Study(**study)
-        db.add(study_db)
-
-    with (DATA / "study_additional.json").open("r") as f:
-        data = json.load(f)
-    for additional in data:
-        study = db.query(models.Study).get(additional["id"])
-        if study:
-            study.gold_name = study.name
-            study.name = additional.proposal_title
-            study.gold_description = study.description
-            study.description = (
-                f"Principal investigator: {additional['principal_investigator_name']}"
+        study['gold_name'] = study['name']
+        if 'description' in study:
+            study['gold_description'] = study['description']
+        if 'principal_investigator_name' in study:
+            study['description'] = (
+                f"Principal investigator: {study['principal_investigator_name']}"
             )
+
+        if study['id'] in additional_data:
+            a = additional_data[study['id']]
+            study['name'] = a['proposal_title']
+            study['principal_investigator_websites'] = a['principal_investigator_websites']
+            study['publication_dois'] = a['publication_dois']
+            study['scientific_objective'] = a['scientific_objective']
+
+        crud.create_study(db, schemas.StudyCreate(**study))
     db.commit()
 
 
