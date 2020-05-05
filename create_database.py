@@ -45,13 +45,8 @@ def coerce_value(value: Union[str, int, float]) -> schemas.AnnotationValue:
     return value
 
 
-def load_annotations(
-    annotations: List[Annotation],
-) -> Dict[str, schemas.AnnotationValue]:
-    return {
-        a["has_characteristic"]["name"]: coerce_value(a["has_raw_value"])
-        for a in annotations
-    }
+def load_annotations(annotations: List[Annotation],) -> Dict[str, schemas.AnnotationValue]:
+    return {a["has_characteristic"]["name"]: coerce_value(a["has_raw_value"]) for a in annotations}
 
 
 def ingest_studies(db: Session):
@@ -61,6 +56,18 @@ def ingest_studies(db: Session):
         study['annotations'] = load_annotations(study['annotations'])
         study_db = models.Study(**study)
         db.add(study_db)
+
+    with (DATA / "study_additional.json").open("r") as f:
+        data = json.load(f)
+    for additional in data:
+        study = db.query(models.Study).get(additional["id"])
+        if study:
+            study.gold_name = study.name
+            study.name = additional.proposal_title
+            study.gold_description = study.description
+            study.description = (
+                f"Principal investigator: {additional['principal_investigator_name']}"
+            )
     db.commit()
 
 
@@ -70,11 +77,7 @@ def ingest_projects(db: Session) -> Dict[str, str]:
         data = json.load(f)
     for p in data:
         assert len(p['part_of']) == 1
-        project = {
-            'id': p['id'],
-            'name': p['name'],
-            'study_id': p['part_of'][0]
-        }
+        project = {'id': p['id'], 'name': p['name'], 'study_id': p['part_of'][0]}
         for key in p.get('has_output', []):
             data_objects[key] = p['id']
 
@@ -108,11 +111,7 @@ def ingest_data_objects(db: Session, data_object_map: Dict[str, str]):
     with (DATA / "data_objects.json").open("r") as f:
         data = json.load(f)
     for p in data:
-        data_object = {
-            'id': p['id'],
-            'name': p['name'],
-            'project_id': data_object_map[p['id']]
-        }
+        data_object = {'id': p['id'], 'name': p['name'], 'project_id': data_object_map[p['id']]}
         data_object['annotations'] = load_annotations(p['annotations'])
         data_object_db = models.DataObject(**data_object)
         db.add(data_object_db)

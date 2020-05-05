@@ -21,12 +21,23 @@ class AnnotatedModel:
 class Study(Base, AnnotatedModel):
     __tablename__ = "study"
 
+    gold_name = Column(String)
+    gold_description = Column(String)
+
+    @property
+    def open_in_gold(self):
+        return f"https://gold.jgi.doe.gov/study?id={self.id}"
+
 
 class Project(Base, AnnotatedModel):
     __tablename__ = "project"
 
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     study = relationship("Study", backref="projects")
+
+    @property
+    def open_in_gold(self):
+        return f"https://gold.jgi.doe.gov/project?id={self.id}"
 
 
 class Biosample(Base, AnnotatedModel):
@@ -37,6 +48,10 @@ class Biosample(Base, AnnotatedModel):
 
     project_id = Column(String, ForeignKey("project.id"), nullable=False)
     project = relationship("Project", backref="biosamples")
+
+    @property
+    def open_in_gold(self):
+        return f"https://gold.jgi.doe.gov/biosample?id={self.id}"
 
 
 class DataObject(Base, AnnotatedModel):
