@@ -37,7 +37,8 @@ class AnnotatedBase(BaseModel):
 
 # study
 class StudyBase(AnnotatedBase):
-    pass
+    principal_investigator_websites: List[str] = Field(default_factory=list)
+    publication_dois: List[str] = Field(default_factory=list)
 
 
 class StudyCreate(StudyBase):
@@ -46,8 +47,6 @@ class StudyCreate(StudyBase):
 
 class Study(StudyBase):
     open_in_gold: str
-    principal_investigator_websites: List[str]
-    publication_dois: List[str]
 
     class Config:
         orm_mode = True
