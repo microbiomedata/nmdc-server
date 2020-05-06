@@ -56,6 +56,14 @@ class StudyBase(AnnotatedBase):
     gold_description: str = ""
     scientific_objective: str = ""
 
+    @validator("principal_investigator_websites", pre=True, each_item=True)
+    def replace_websites(cls, study_website: models.StudyWebsite) -> str:
+        return study_website.website.url
+
+    @validator("publication_dois", pre=True, each_item=True)
+    def replace_dois(cls, study_publication: models.StudyPublication) -> str:
+        return study_publication.publication.doi
+
 
 class StudyCreate(StudyBase):
     pass
@@ -66,14 +74,6 @@ class Study(StudyBase):
 
     class Config:
         orm_mode = True
-
-    @validator("principal_investigator_websites", pre=True, each_item=True)
-    def replace_websites(cls, study_website: models.StudyWebsite) -> str:
-        return study_website.website.url
-
-    @validator("publication_dois", pre=True, each_item=True)
-    def replace_dois(cls, study_publication: models.StudyPublication) -> str:
-        return study_publication.publication.doi
 
 
 # project

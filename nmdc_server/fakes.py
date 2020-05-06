@@ -1,16 +1,31 @@
 from typing import Dict
+from uuid import uuid4
 
-from factory import Faker, SubFactory
+from factory import Faker, post_generation, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
-from faker.providers import geo, lorem, python
+from faker.providers import BaseProvider, geo, internet, lorem, python
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
 from nmdc_server.database import SessionLocal
 from nmdc_server.schemas import AnnotationValue
 
+
+class DoiProvider(BaseProvider):
+    def doi(self):
+        num = self.random_int(min=1000, max=999999999)
+        post_size = self.random_int(min=1, max=10)
+        post = self.bothify("?" * post_size).lower()
+        return f"10.{num}/{post}"
+
+    def uuid(self):
+        return uuid4()
+
+
 db = scoped_session(SessionLocal)
+Faker.add_provider(DoiProvider)
 Faker.add_provider(geo)
+Faker.add_provider(internet)
 Faker.add_provider(lorem)
 Faker.add_provider(python)
 
@@ -25,6 +40,24 @@ class AnnotatedFactory(SQLAlchemyModelFactory):
     )
 
 
+class WebsiteFactory(SQLAlchemyModelFactory):
+    id = Faker("uuid")
+    url = Faker("uri")
+
+    class Meta:
+        model = models.Website
+        sqlalchemy_session = db
+
+
+class PublicationFactory(SQLAlchemyModelFactory):
+    id = Faker("uuid")
+    doi = Faker("doi")
+
+    class Meta:
+        model = models.Publication
+        sqlalchemy_session = db
+
+
 class StudyFactory(AnnotatedFactory):
     gold_name = Faker("word")
     gold_description = Faker("sentence")
@@ -32,6 +65,44 @@ class StudyFactory(AnnotatedFactory):
 
     class Meta:
         model = models.Study
+        sqlalchemy_session = db
+
+    @post_generation
+    def principal_investigator_websites(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if not extracted:
+            extracted = [StudyWebsiteFactory(), StudyWebsiteFactory()]
+
+        for website in extracted:
+            self.principal_investigator_websites.append(website)
+
+    @post_generation
+    def publication_dois(self, create, extracted, **kwargs):
+        if not create:
+            return
+
+        if not extracted:
+            extracted = [StudyPublicationFactory(), StudyPublicationFactory()]
+
+        for publication in extracted:
+            self.publication_dois.append(publication)
+
+
+class StudyWebsiteFactory(SQLAlchemyModelFactory):
+    website = SubFactory(WebsiteFactory)
+
+    class Meta:
+        model = models.StudyWebsite
+        sqlalchemy_session = db
+
+
+class StudyPublicationFactory(SQLAlchemyModelFactory):
+    publication = SubFactory(PublicationFactory)
+
+    class Meta:
+        model = models.StudyPublication
         sqlalchemy_session = db
 
 
