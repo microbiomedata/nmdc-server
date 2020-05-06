@@ -35,6 +35,19 @@ class AnnotatedBase(BaseModel):
     annotations: Dict[str, AnnotationValue] = {}
 
 
+# summary
+class TableSummary(BaseModel):
+    attributes: Dict[str, int]
+    total: int
+
+
+class DatabaseSummary(BaseModel):
+    study: TableSummary
+    project: TableSummary
+    biosample: TableSummary
+    data_object: TableSummary
+
+
 # study
 class StudyBase(AnnotatedBase):
     principal_investigator_websites: List[str] = Field(default_factory=list)
