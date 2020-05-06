@@ -19,6 +19,12 @@ def get_db(settings: Settings = Depends(get_settings)):
         yield db
 
 
+# database summary
+@router.get("/summary", response_model=schemas.DatabaseSummary, tags=["summary"])
+async def get_database_summary(db: Session = Depends(get_db)):
+    return crud.get_database_summary(db)
+
+
 # biosample
 @router.post(
     "/biosample", response_model=schemas.Biosample, tags=["biosample"],

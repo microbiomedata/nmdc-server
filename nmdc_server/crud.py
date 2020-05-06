@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from nmdc_server import models, query, schemas
@@ -21,6 +22,29 @@ def get_or_create(
         instance = model(**params)  # type: ignore
         db.add(instance)
         return instance, True
+
+
+# summary
+def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSummary:
+    count = db.query(model).count()
+    attribute = func.jsonb_object_keys(model.annotations)
+    q = db.query(attribute, func.count()).group_by(attribute)
+
+    attributes = {row[0]: row[1] for row in q}
+    for column in model.__table__.columns:
+        if column.name != "annotations":
+            attributes[column.name] = count
+
+    return schemas.TableSummary(total=count, attributes=attributes)
+
+
+def get_database_summary(db: Session) -> schemas.DatabaseSummary:
+    return schemas.DatabaseSummary(
+        study=get_table_summary(db, models.Study),
+        project=get_table_summary(db, models.Project),
+        biosample=get_table_summary(db, models.Biosample),
+        data_object=get_table_summary(db, models.DataObject),
+    )
 
 
 # study
