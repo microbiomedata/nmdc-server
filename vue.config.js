@@ -10,6 +10,7 @@ module.exports = {
       warnings: true,
       errors: true,
     },
+    proxy: 'http://localhost:8000',
   },
   configureWebpack: {
     module: {

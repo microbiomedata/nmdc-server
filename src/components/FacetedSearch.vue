@@ -130,30 +130,34 @@ export default {
     },
     immediate: true,
   },
-  created() {
-    this.initializeType();
-    this.updateResults();
+  async created() {
+    await this.initializeType();
+    await this.updateResults();
   },
   methods: {
-    initializeType() {
+    async initializeType() {
       this.valueCount = {};
-      api.primitiveFields(this.type).forEach((field) => {
+      const pf = await api.primitiveFields(this.type);
+      pf.forEach((field) => {
         this.$set(this.valueCount, field, 5);
       });
-      this.syncSelectedWithConditions();
+      await this.syncSelectedWithConditions();
     },
-    updateResults() {
-      this.facets = api.primitiveFields(this.type)
-        .map((field) => ({
-          field,
-          values: api.facetSummary({ type: this.type, field, conditions: this.conditions }),
-        }));
+    async summarizeFacet(field) {
+      return {
+        field,
+        values: await api.facetSummary({ type: this.type, field, conditions: this.conditions }),
+      };
+    },
+    async updateResults() {
+      const pf = await api.primitiveFields(this.type);
+      this.facets = await Promise.all(pf.map((field) => this.summarizeFacet(field)));
     },
     fieldDisplayName,
     valueDisplayName,
-    syncSelectedWithConditions() {
+    async syncSelectedWithConditions() {
       const sel = {};
-      api.primitiveFields(this.type).forEach((field) => { sel[field] = []; });
+      (await api.primitiveFields(this.type)).forEach((field) => { sel[field] = []; });
       this.conditions.forEach((condition) => {
         if (condition.op === '==') {
           if (sel[condition.field] === undefined) {

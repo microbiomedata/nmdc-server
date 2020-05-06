@@ -67,15 +67,20 @@ export default {
       },
     };
   },
-  computed: {
-    facets() {
-      return api.facetSummary({
-        type: this.type,
-        field: this.field,
-        conditions: this.conditions,
-        useMatchingConditions: true,
-      }).filter((d) => d.count > 0);
+  asyncComputed: {
+    facets: {
+      async get() {
+        return (await api.facetSummary({
+          type: this.type,
+          field: this.field,
+          conditions: this.conditions,
+          useMatchingConditions: true,
+        })).filter((d) => d.count > 0);
+      },
+      default: [],
     },
+  },
+  computed: {
     chartData() {
       return [
         [fieldDisplayName(this.field), 'Count', { role: 'style' }, { role: 'annotation' }],

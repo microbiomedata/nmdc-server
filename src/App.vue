@@ -242,6 +242,7 @@
           style="background: white; height: 100%"
         >
           <Welcome
+            v-if="stats"
             :samples="allSamples"
             :stats="stats"
             @type="type = $event"
@@ -286,87 +287,109 @@ export default {
     Study,
     AttributeList,
   },
-  data: () => ({
-    type: null,
-    types,
-    conditions: [],
-    ecosystemFields: [
-      'ecosystem',
-      'ecosystem_category',
-      'ecosystem_type',
-      'ecosystem_subtype',
-      'specific_ecosystem',
-    ],
-    stats: [
-      [
-        {
-          value: api.count('study'),
-          label: 'Studies',
-        },
-        {
-          value: api.facetSummary({ type: 'sample', field: 'latitude' }).length,
-          label: 'Locations',
-        },
-        {
-          value: api.facetSummary({ type: 'sample', field: 'ecosystem_path_id' }).length,
-          label: 'Habitats',
-        },
-        {
-          value: filesize(
-            api.query('data_object', []).reduce(
-              (prev, cur) => prev + (cur.file_size || 0), 0,
-            ),
-          ).replace(/\s+/g, ''),
-          label: 'Data',
-        },
+  data() {
+    return {
+      type: null,
+      types,
+      conditions: [],
+      ecosystemFields: [
+        'ecosystem',
+        'ecosystem_category',
+        'ecosystem_type',
+        'ecosystem_subtype',
+        'specific_ecosystem',
       ],
-      [
-        {
-          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Metagenome' }]).length,
-          label: 'Metagenomes',
-        },
-        {
-          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Metatranscriptome' }]).length,
-          label: 'Metatranscriptomes',
-        },
-        {
-          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Proteomics' }]).length,
-          label: 'Proteomics',
-        },
-        {
-          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Metabolomics' }]).length,
-          label: 'Metabolomics',
-        },
-        {
-          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Lipidomics' }]).length,
-          label: 'Lipidomics',
-        },
-        {
-          value: api.query('project', [{ field: 'omics_type', op: '==', value: 'Organic Matter Characterization' }]).length,
-          label: 'Organic Matter Characterization',
-        },
-      ],
-    ],
-  }),
+    };
+  },
   computed: {
-    results() {
-      if (this.type === null) {
-        return [];
-      }
-      return api.query(this.type, this.conditions);
-    },
     singleton() {
       return this.results.length === 1 && this.conditions.findIndex((cond) => cond.field === 'id' && cond.op === '==') >= 0;
     },
-    allSamples() {
-      return api.query('sample', []);
+  },
+  asyncComputed: {
+    results: {
+      get() {
+        if (this.type === null) {
+          return [];
+        }
+        return api.query(this.type, this.conditions);
+      },
+      default: [],
     },
-    totalDataObjectSize() {
-      let dataObjects = this.results;
-      if (this.type !== 'data_object') {
-        dataObjects = api.query('data_object', []);
-      }
-      return dataObjects.reduce((prev, cur) => prev + (cur.file_size || 0), 0);
+    allSamples: {
+      get() {
+        return api.query('sample', []);
+      },
+      default: [],
+    },
+    totalDataObjectSize: {
+      async get() {
+        /* TODO: Fix this */
+        let dataObjects = this.results;
+        if (this.type !== 'data_object') {
+          dataObjects = await api.query('data_object', []);
+        }
+        return dataObjects.reduce((prev, cur) => prev + (cur.file_size || 0), 0);
+      },
+    },
+    stats: {
+      async get() {
+        const [databaseSummary, omicsSummary] = await Promise.all([
+          api.databaseSummary(),
+          api.facetSummary({ type: 'project', field: 'omics_type', conditions: [] }),
+        ]);
+        return [
+          [
+            {
+              value: databaseSummary.study.total,
+              label: 'Studies',
+            },
+            {
+              value: databaseSummary.biosample.attributes.latitude,
+              label: 'Locations',
+            },
+            {
+              value: databaseSummary.biosample.attributes.ecosystem_path_id,
+              label: 'Habitats',
+            },
+            {
+              value: -1, /* filesize(
+                api.query('data_object', []).reduce(
+                  (prev, cur) => prev + (cur.file_size || 0), 0,
+                ),
+              ).replace(/\s+/g, ''), */
+              label: 'Data',
+            },
+          ],
+          [
+            {
+              value: omicsSummary.Metagenome,
+              label: 'Metagenomes',
+            },
+            {
+              value: omicsSummary.Metatranscriptome,
+              label: 'Metatranscriptomes',
+            },
+            {
+              value: omicsSummary.Proteomics,
+              label: 'Proteomics',
+            },
+            {
+              value: omicsSummary.Metabolomics,
+              label: 'Metabolomics',
+            },
+            {
+              value: omicsSummary.Lipidomics,
+              label: 'Lipidomics',
+            },
+            {
+              value: omicsSummary['Organic Matter Characterization'],
+              label: 'Organic Matter Characterization',
+            },
+          ],
+        ];
+      },
+      default: null,
     },
   },
   watch: {
@@ -397,9 +420,6 @@ export default {
     fieldDisplayName,
     valueDisplayName,
     filesize,
-    count(type) {
-      return api.count(type);
-    },
     async addSelected({ type, conditions }) {
       if (type !== this.type) {
         this.type = type;
