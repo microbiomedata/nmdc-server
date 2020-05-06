@@ -26,6 +26,10 @@ class AnnotatedFactory(SQLAlchemyModelFactory):
 
 
 class StudyFactory(AnnotatedFactory):
+    gold_name = Faker("word")
+    gold_description = Faker("sentence")
+    scientific_objective = Faker("sentence")
+
     class Meta:
         model = models.Study
         sqlalchemy_session = db

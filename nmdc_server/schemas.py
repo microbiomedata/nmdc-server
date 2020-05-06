@@ -39,6 +39,9 @@ class AnnotatedBase(BaseModel):
 class StudyBase(AnnotatedBase):
     principal_investigator_websites: List[str] = Field(default_factory=list)
     publication_dois: List[str] = Field(default_factory=list)
+    gold_name: str = ""
+    gold_description: str = ""
+    scientific_objective: str = ""
 
 
 class StudyCreate(StudyBase):

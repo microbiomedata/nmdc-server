@@ -19,9 +19,9 @@ class AnnotatedModel:
 class Study(Base, AnnotatedModel):
     __tablename__ = "study"
 
-    gold_name = Column(String)
-    gold_description = Column(String)
-    scientific_objective = Column(String)
+    gold_name = Column(String, nullable=False, default="")
+    gold_description = Column(String, nullable=False, default="")
+    scientific_objective = Column(String, nullable=False, default="")
 
     principal_investigator_websites = relationship("StudyWebsite", cascade="all", lazy="joined")
     publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
