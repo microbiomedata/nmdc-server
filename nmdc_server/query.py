@@ -59,20 +59,29 @@ class BaseQuerySchema(BaseModel):
     def groups(self) -> Iterator[Tuple[str, Iterator[ConditionSchema]]]:
         return groupby(self.sorted_conditions, key=lambda c: c.field)
 
-    def _execute(
-        self, query: Query, fields: Dict[str, Tuple[models.ModelType, List[ConditionSchema]]],
-    ) -> Query:
-        for field, (model, conditions) in fields.items():
+    def parse_fields(
+        self,
+    ) -> Tuple[Set[models.ModelType], Dict[str, Tuple[models.ModelType, List[ConditionSchema]]]]:
+        raise NotImplementedError()
+
+    def filter_and_join(self, query: Query) -> Query:
+        joins, filters = self.parse_fields()
+        for model in joins:
+            query = query.join(model)
+        for field, (model, conditions) in filters.items():
             query = query.filter(
                 or_(*[condition.compare(model, field) for condition in conditions])
             )
         return query
 
+    def _execute(self, query: Query,) -> Query:
+        return self.filter_and_join(query)
+
     def execute(self, db: Session) -> Query:
         raise NotImplementedError()
 
     def _facet(
-        self, db: Session, model: models.ModelType, attribute: str
+        self, db: Session, model: models.ModelType, attribute: str,
     ) -> Dict[schemas.AnnotationValue, int]:
         if attribute in model.__table__.columns:
             column = getattr(model, attribute)
@@ -80,6 +89,7 @@ class BaseQuerySchema(BaseModel):
             column = model.annotations[attribute]  # type: ignore
 
         query = db.query(column, func.count(column))
+        query = self.filter_and_join(query)
         rows = query.group_by(column)
         return {value: count for value, count in rows if value is not None}
 
@@ -88,7 +98,9 @@ class BaseQuerySchema(BaseModel):
 
 
 class StudyQuerySchema(BaseQuerySchema):
-    def execute(self, db: Session) -> Query:
+    def parse_fields(
+        self,
+    ) -> Tuple[Set[models.ModelType], Dict[str, Tuple[models.ModelType, List[ConditionSchema]]]]:
         fields: Dict[str, Tuple[models.ModelType, List[ConditionSchema]]] = {}
         joins: Set[models.ModelType] = set()
 
@@ -106,18 +118,19 @@ class StudyQuerySchema(BaseQuerySchema):
                 fields["id"] = models.DataObject, list(conditions)
             else:
                 fields[field] = models.Study, list(conditions)
+        return joins, fields
 
-        query = db.query(models.Study)
-        for model in joins:
-            query = query.join(model)
-        return self._execute(query, fields)
+    def execute(self, db: Session) -> Query:
+        return self._execute(db.query(models.Study))
 
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
-        return self._facet(db, models.Biosample, attribute)
+        return self._facet(db, models.Study, attribute)
 
 
 class ProjectQuerySchema(BaseQuerySchema):
-    def execute(self, db: Session) -> Query:
+    def parse_fields(
+        self,
+    ) -> Tuple[Set[models.ModelType], Dict[str, Tuple[models.ModelType, List[ConditionSchema]]]]:
         fields: Dict[str, Tuple[models.ModelType, List[ConditionSchema]]] = {}
         joins: Set[models.ModelType] = set()
 
@@ -130,18 +143,19 @@ class ProjectQuerySchema(BaseQuerySchema):
                 fields["id"] = models.DataObject, list(conditions)
             else:
                 fields[field] = models.Project, list(conditions)
+        return joins, fields
 
-        query = db.query(models.Project)
-        for model in joins:
-            query = query.join(model)
-        return self._execute(query, fields)
+    def execute(self, db: Session) -> Query:
+        return self._execute(db.query(models.Project))
 
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
         return self._facet(db, models.Project, attribute)
 
 
 class BiosampleQuerySchema(BaseQuerySchema):
-    def execute(self, db: Session) -> Query:
+    def parse_fields(
+        self,
+    ) -> Tuple[Set[models.ModelType], Dict[str, Tuple[models.ModelType, List[ConditionSchema]]]]:
         fields: Dict[str, Tuple[models.ModelType, List[ConditionSchema]]] = {}
         joins: Set[models.ModelType] = set()
 
@@ -156,17 +170,19 @@ class BiosampleQuerySchema(BaseQuerySchema):
             else:
                 fields[field] = models.Biosample, list(conditions)
 
-        query = db.query(models.Biosample)
-        for model in joins:
-            query = query.join(model)
-        return self._execute(query, fields)
+        return joins, fields
+
+    def execute(self, db: Session) -> Query:
+        return self._execute(db.query(models.Biosample))
 
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
         return self._facet(db, models.Biosample, attribute)
 
 
 class DataObjectQuerySchema(BaseQuerySchema):
-    def execute(self, db: Session) -> Query:
+    def parse_fields(
+        self,
+    ) -> Tuple[Set[models.ModelType], Dict[str, Tuple[models.ModelType, List[ConditionSchema]]]]:
         fields: Dict[str, Tuple[models.ModelType, List[ConditionSchema]]] = {}
         joins: Set[models.ModelType] = set()
 
@@ -180,11 +196,10 @@ class DataObjectQuerySchema(BaseQuerySchema):
                 fields["id"] = models.Biosample, list(conditions)
             else:
                 fields[field] = models.DataObject, list(conditions)
+        return joins, fields
 
-        query = db.query(models.DataObject)
-        for model in joins:
-            query = query.join(model)
-        return self._execute(query, fields)
+    def execute(self, db: Session) -> Query:
+        return self._execute(db.query(models.DataObject))
 
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
         return self._facet(db, models.DataObject, attribute)

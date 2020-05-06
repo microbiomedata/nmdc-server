@@ -145,6 +145,17 @@ def test_faceted_query(db: Session):
     assert q.facet(db, "key2") == {"value2": 2, "value3": 1}
 
 
+def test_faceted_filtered_query(db: Session):
+    fakes.BiosampleFactory(id="sample1", annotations={"key1": "value1", "key2": "value2"})
+    fakes.BiosampleFactory(id="sample2", annotations={"key1": "value1", "key2": "value3"})
+    fakes.BiosampleFactory(id="sample3", annotations={"key1": "value4", "key2": "value2"})
+    db.commit()
+
+    q = query.BiosampleQuerySchema(conditions=[{"field": "id", "op": "==", "value": "sample2"}])
+    assert q.facet(db, "key1") == {"value1": 1}
+    assert q.facet(db, "key2") == {"value3": 1}
+
+
 def test_faceted_query_with_no_results(db: Session):
     q = query.BiosampleQuerySchema(conditions=[])
     assert q.facet(db, "key1") == {}
