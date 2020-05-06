@@ -78,15 +78,15 @@ class Study(StudyBase):
 
 # project
 class ProjectBase(AnnotatedBase):
-    pass
-
-
-class ProjectCreate(ProjectBase):
     study_id: str
 
 
+class ProjectCreate(ProjectBase):
+    pass
+
+
 class Project(ProjectBase):
-    study: Study
+    study_id: str
     open_in_gold: str
 
     class Config:
@@ -95,17 +95,17 @@ class Project(ProjectBase):
 
 # biosample
 class BiosampleBase(AnnotatedBase):
+    project_id: str
     # https://github.com/samuelcolvin/pydantic/issues/156
     longitude: float = Field(..., gt=-180, le=180)
     latitude: float = Field(..., ge=-90, le=90)
 
 
 class BiosampleCreate(BiosampleBase):
-    project_id: str
+    pass
 
 
 class Biosample(BiosampleBase):
-    project: Project
     open_in_gold: str
 
     class Config:
@@ -114,11 +114,11 @@ class Biosample(BiosampleBase):
 
 # data_object
 class DataObjectBase(AnnotatedBase):
-    pass
+    project_id: str
 
 
 class DataObjectCreate(DataObjectBase):
-    project_id: str
+    pass
 
 
 class DataObject(DataObjectBase):
