@@ -1,4 +1,13 @@
-### Installation
+### Running in Docker
+
+```
+docker-compose up
+```
+
+View swagger page at `http://localhost:8000/docs`.
+
+
+### Development Installation
 
 Requires Python 3.6+
 
