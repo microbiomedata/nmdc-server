@@ -57,11 +57,15 @@ class StudyBase(AnnotatedBase):
     scientific_objective: str = ""
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
-    def replace_websites(cls, study_website: models.StudyWebsite) -> str:
+    def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
+        if isinstance(study_website, str):
+            return study_website
         return study_website.website.url
 
     @validator("publication_dois", pre=True, each_item=True)
-    def replace_dois(cls, study_publication: models.StudyPublication) -> str:
+    def replace_dois(cls, study_publication: Union[models.StudyPublication, str]) -> str:
+        if isinstance(study_publication, str):
+            return study_publication
         return study_publication.publication.doi
 
 
