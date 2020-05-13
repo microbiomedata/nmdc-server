@@ -12,5 +12,6 @@ setup(
         "psycopg2-binary",
         "python-dotenv",
         "sqlalchemy",
+        "typing-extensions",
     ],
 )
