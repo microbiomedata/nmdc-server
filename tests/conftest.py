@@ -1,5 +1,6 @@
 import os
 
+from factory import random
 import pytest
 from starlette.testclient import TestClient
 
@@ -7,6 +8,11 @@ from nmdc_server import database
 from nmdc_server.app import create_app
 from nmdc_server.database import create_engine
 from nmdc_server.fakes import db as _db
+
+
+@pytest.fixture(autouse=True)
+def set_seed(connection):
+    random.reseed_random("nmdc")
 
 
 @pytest.fixture(scope="module")

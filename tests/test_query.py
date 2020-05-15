@@ -134,6 +134,15 @@ def test_grouped_query(db: Session):
     assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
 
 
+def test_indirect_join(db: Session):
+    study = fakes.StudyFactory(id="study1")
+    fakes.BiosampleFactory(id="sample1", project__study=study)
+    db.commit()
+
+    q = query.StudyQuerySchema(conditions=[{"field": "sample_id", "value": "sample1", "op": "=="}])
+    assert {s.id for s in q.execute(db)} == {"study1"}
+
+
 def test_faceted_query(db: Session):
     fakes.BiosampleFactory(id="sample1", annotations={"key1": "value1", "key2": "value2"})
     fakes.BiosampleFactory(id="sample2", annotations={"key1": "value1", "key2": "value3"})

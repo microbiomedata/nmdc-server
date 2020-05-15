@@ -66,6 +66,9 @@ class BaseQuerySchema(BaseModel):
 
     def filter_and_join(self, query: Query) -> Query:
         joins, filters = self.parse_fields()
+        if models.Project in joins:
+            query = query.join(models.Project)
+            joins.remove(models.Project)
         for model in joins:
             query = query.join(model)
         for field, (model, conditions) in filters.items():
