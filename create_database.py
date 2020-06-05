@@ -29,11 +29,21 @@ class Annotation(TypedDict):
     has_raw_value: Union[str, int, float]
 
 
-def create_tables(engine, settings):
+def create_tables(db, settings):
+    engine = db.bind
     metadata.create_all(engine)
     alembic_cfg = Config(str(HERE / "alembic.ini"))
     alembic_cfg.set_main_option("sqlalchemy.url", settings.database_uri)
     command.stamp(alembic_cfg, "head")
+
+    db.query(models.DataObject).delete()
+    db.query(models.Biosample).delete()
+    db.query(models.Project).delete()
+    db.query(models.StudyWebsite).delete()
+    db.query(models.StudyPublication).delete()
+    db.query(models.Website).delete()
+    db.query(models.Publication).delete()
+    db.query(models.Study).delete()
 
 
 def coerce_value(value: Union[str, int, float]) -> schemas.AnnotationValue:
@@ -112,6 +122,15 @@ def ingest_biosamples(db: Session):
         biosample["annotations"] = load_annotations(p["annotations"])
         biosample["latitude"] = float(biosample["annotations"].pop("latitude"))
         biosample["longitude"] = float(biosample["annotations"].pop("longitude"))
+
+        # TODO: this is just a temporary mapping to envo until data is updated
+        biosample["env_broad_scale"] = biosample["annotations"].pop("ecosystem_category")
+        biosample["env_local_scale"] = biosample["annotations"].pop("ecosystem_type")
+        biosample["env_medium"] = biosample["annotations"].pop("habitat")
+
+        if "depth" in biosample["annotations"]:
+            biosample["depth"] = biosample["annotations"].pop("depth")
+
         biosample_db = models.Biosample(**biosample)
         db.add(biosample_db)
     db.commit()
@@ -131,7 +150,7 @@ def ingest_data_objects(db: Session, data_object_map: Dict[str, str]):
 def main():
     settings = Settings()
     with create_session() as db:
-        create_tables(db.bind, settings)
+        create_tables(db, settings)
         ingest_studies(db)
         data_object_map = ingest_projects(db)
         ingest_biosamples(db)

@@ -13,6 +13,7 @@ class AnnotatedModel:
     name = Column(String, nullable=False)
     description = Column(String, nullable=False, default="")
 
+    alternate_identifiers = Column(JSONB, nullable=False, default=list)
     annotations = Column(JSONB, nullable=False, default=dict)
 
 
@@ -45,6 +46,10 @@ class Project(Base, AnnotatedModel):
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
 
+    depth = Column(Float, nullable=True)
+    env_broad_scale = Column(String, nullable=False)
+    env_local_scale = Column(String, nullable=False)
+    env_medium = Column(String, nullable=False)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
 

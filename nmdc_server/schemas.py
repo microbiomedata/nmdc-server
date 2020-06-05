@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, validator
 
@@ -32,6 +32,7 @@ class AnnotatedBase(BaseModel):
     id: str
     name: str
     description: str = ""
+    alternate_identifiers: List[str] = []
     annotations: Dict[str, AnnotationValue] = {}
 
 
@@ -100,6 +101,10 @@ class Project(ProjectBase):
 # biosample
 class BiosampleBase(AnnotatedBase):
     project_id: str
+    depth: Optional[float]
+    env_broad_scale: str
+    env_local_scale: str
+    env_medium: str
     # https://github.com/samuelcolvin/pydantic/issues/156
     longitude: float = Field(..., gt=-180, le=180)
     latitude: float = Field(..., ge=-90, le=90)
