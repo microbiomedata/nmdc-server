@@ -35,6 +35,7 @@ class AnnotatedFactory(SQLAlchemyModelFactory):
     name: str = Faker("word")
     description: str = Faker("sentence")
 
+    alternate_identifiers = Faker("pylist", nb_elements=2, value_types=[str])
     annotations: Dict[str, AnnotationValue] = Faker(
         "pydict", value_types=["int", "float", "date_time", "str"]
     )
@@ -119,6 +120,10 @@ class BiosampleFactory(AnnotatedFactory):
         model = models.Biosample
         sqlalchemy_session = db
 
+    depth = Faker("random_number", digits=3)
+    env_broad_scale = Faker("word")
+    env_local_scale = Faker("word")
+    env_medium = Faker("word")
     latitude = Faker("latitude")
     longitude = Faker("longitude")
     project = SubFactory(ProjectFactory)
