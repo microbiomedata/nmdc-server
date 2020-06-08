@@ -9,7 +9,7 @@ View swagger page at `http://localhost:8000/docs`.
 
 ### Development Installation
 
-Requires Python 3.6+
+Requires Python 3.7+
 
 ```
 pip install -e .
