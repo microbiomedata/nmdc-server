@@ -30,7 +30,9 @@ def test_string_query(db: Session, condition, expected):
     db.commit()
 
     q = query.BiosampleQuerySchema(conditions=[condition])
-    assert {s.id for s in q.execute(db)} == expected
+    results = {s.id for s in q.execute(db)}
+    assert q.count(db) == len(results)
+    assert results == expected
 
 
 @pytest.mark.parametrize(

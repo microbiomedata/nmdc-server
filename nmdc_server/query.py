@@ -78,9 +78,15 @@ class BaseQuerySchema(BaseModel):
         return query
 
     def _execute(self, query: Query,) -> Query:
-        return self.filter_and_join(query)
+        return self.filter_and_join(query).order_by("id")
+
+    def _count(self, query: Query) -> int:
+        return self.filter_and_join(query).count()
 
     def execute(self, db: Session) -> Query:
+        raise NotImplementedError()
+
+    def count(self, db: Session) -> int:
         raise NotImplementedError()
 
     def _facet(
@@ -126,6 +132,9 @@ class StudyQuerySchema(BaseQuerySchema):
     def execute(self, db: Session) -> Query:
         return self._execute(db.query(models.Study))
 
+    def count(self, db: Session) -> int:
+        return self._count(db.query(models.Study))
+
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
         return self._facet(db, models.Study, attribute)
 
@@ -150,6 +159,9 @@ class ProjectQuerySchema(BaseQuerySchema):
 
     def execute(self, db: Session) -> Query:
         return self._execute(db.query(models.Project))
+
+    def count(self, db: Session) -> int:
+        return self._count(db.query(models.Project))
 
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
         return self._facet(db, models.Project, attribute)
@@ -178,6 +190,9 @@ class BiosampleQuerySchema(BaseQuerySchema):
     def execute(self, db: Session) -> Query:
         return self._execute(db.query(models.Biosample))
 
+    def count(self, db: Session) -> int:
+        return self._count(db.query(models.Biosample))
+
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
         return self._facet(db, models.Biosample, attribute)
 
@@ -204,31 +219,38 @@ class DataObjectQuerySchema(BaseQuerySchema):
     def execute(self, db: Session) -> Query:
         return self._execute(db.query(models.DataObject))
 
+    def count(self, db: Session) -> int:
+        return self._count(db.query(models.DataObject))
+
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
         return self._facet(db, models.DataObject, attribute)
 
 
-class BiosampleSearchResponse(BaseModel):
+class BaseSearchResponse(BaseModel):
+    count: int
+
+
+class BiosampleSearchResponse(BaseSearchResponse):
     results: List[schemas.Biosample]
 
 
 class SearchQuery(BaseModel):
-    conditions: List[ConditionSchema]
+    conditions: List[ConditionSchema] = []
 
 
 class FacetQuery(SearchQuery):
     attribute: str
 
 
-class StudySearchResponse(BaseModel):
+class StudySearchResponse(BaseSearchResponse):
     results: List[schemas.Study]
 
 
-class ProjectSearchResponse(BaseModel):
+class ProjectSearchResponse(BaseSearchResponse):
     results: List[schemas.Project]
 
 
-class DataObjectSearchResponse(BaseModel):
+class DataObjectSearchResponse(BaseSearchResponse):
     results: List[schemas.DataObject]
 
 
