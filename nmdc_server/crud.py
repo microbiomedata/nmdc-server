@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Query, Session
 
 from nmdc_server import models, query, schemas
 
@@ -81,8 +81,8 @@ def delete_study(db: Session, study: models.Study) -> None:
     db.commit()
 
 
-def search_study(db: Session, conditions: List[query.ConditionSchema]) -> List[models.Study]:
-    return list(query.StudyQuerySchema(conditions=conditions).execute(db))
+def search_study(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.StudyQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_study(
@@ -110,8 +110,8 @@ def delete_project(db: Session, project: models.Project) -> None:
     db.commit()
 
 
-def search_project(db: Session, conditions: List[query.ConditionSchema]) -> List[models.Project]:
-    return list(query.ProjectQuerySchema(conditions=conditions).execute(db))
+def search_project(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.ProjectQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_project(
@@ -139,10 +139,8 @@ def delete_biosample(db: Session, biosample: models.Biosample) -> None:
     db.commit()
 
 
-def search_biosample(
-    db: Session, conditions: List[query.ConditionSchema]
-) -> List[models.Biosample]:
-    return list(query.BiosampleQuerySchema(conditions=conditions).execute(db))
+def search_biosample(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.BiosampleQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_biosample(
@@ -170,10 +168,8 @@ def delete_data_object(db: Session, data_object: models.DataObject) -> None:
     db.commit()
 
 
-def search_data_object(
-    db: Session, conditions: List[query.ConditionSchema]
-) -> List[models.DataObject]:
-    return list(query.DataObjectQuerySchema(conditions=conditions).execute(db))
+def search_data_object(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.DataObjectQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_data_object(

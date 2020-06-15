@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from . import crud, query, schemas
 from .config import Settings, settings
 from .database import create_session
+from .pagination import Pagination
 
 
 router = APIRouter()
@@ -29,7 +30,11 @@ async def get_database_summary(db: Session = Depends(get_db)):
 @router.post(
     "/biosample", response_model=schemas.Biosample, tags=["biosample"],
 )
-async def create_biosample(biosample: schemas.BiosampleCreate, db: Session = Depends(get_db)):
+async def create_biosample(
+    biosample: schemas.BiosampleCreate,
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
     if crud.get_project(db, biosample.project_id) is None:
         raise HTTPException(status_code=400, detail="Project does not exist")
 
@@ -43,8 +48,12 @@ async def create_biosample(biosample: schemas.BiosampleCreate, db: Session = Dep
     name="Search for biosamples",
     description="Faceted search of biosample data.",
 )
-async def search_biosample(query: query.SearchQuery, db: Session = Depends(get_db)):
-    return {"results": list(crud.search_biosample(db, query.conditions))}
+async def search_biosample(
+    query: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
+    return pagination.response(crud.search_biosample(db, query.conditions))
 
 
 @router.post(
@@ -92,8 +101,12 @@ async def create_study(study: schemas.StudyCreate, db: Session = Depends(get_db)
     name="Search for studies",
     description="Faceted search of study data.",
 )
-async def search_study(query: query.SearchQuery, db: Session = Depends(get_db)):
-    return {"results": list(crud.search_study(db, query.conditions))}
+async def search_study(
+    query: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
+    return pagination.response(crud.search_study(db, query.conditions))
 
 
 @router.post(
@@ -141,8 +154,12 @@ async def create_project(project: schemas.ProjectCreate, db: Session = Depends(g
     name="Search for studies",
     description="Faceted search of project data.",
 )
-async def search_project(query: query.SearchQuery, db: Session = Depends(get_db)):
-    return {"results": list(crud.search_project(db, query.conditions))}
+async def search_project(
+    query: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
+    return pagination.response(crud.search_project(db, query.conditions))
 
 
 @router.post(
@@ -190,8 +207,12 @@ async def create_data_object(data_object: schemas.DataObjectCreate, db: Session 
     name="Search for studies",
     description="Faceted search of data object data.",
 )
-async def search_data_object(query: query.SearchQuery, db: Session = Depends(get_db)):
-    return {"results": list(crud.search_data_object(db, query.conditions))}
+async def search_data_object(
+    query: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
+    return pagination.response(crud.search_data_object(db, query.conditions))
 
 
 @router.post(
