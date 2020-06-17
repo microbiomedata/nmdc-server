@@ -1,7 +1,7 @@
 from contextlib import contextmanager
 from datetime import datetime
 import json
-from typing import Any, Iterator
+from typing import Any, Iterator, Optional
 
 from sqlalchemy import create_engine as _create_engine
 from sqlalchemy.engine import Engine
@@ -13,6 +13,7 @@ from sqlalchemy.schema import DDL, MetaData
 from nmdc_server.config import settings
 
 
+_engine: Optional[Engine] = None
 SessionLocal = sessionmaker(autocommit=False, autoflush=False)
 
 # This is to avoid having to manually name all constraints
@@ -122,10 +123,16 @@ def json_serializer(data: Any) -> str:
 
 
 def create_engine() -> Engine:
-    uri = settings.database_uri
-    if testing:
-        uri = settings.testing_database_uri
-    return _create_engine(uri, json_serializer=json_serializer)
+    global _engine
+
+    if testing or _engine is None:
+        uri = settings.database_uri
+        if testing:
+            uri = settings.testing_database_uri
+
+        _engine = _create_engine(uri, json_serializer=json_serializer)
+
+    return _engine
 
 
 @contextmanager
