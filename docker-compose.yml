@@ -23,6 +23,18 @@ services:
     ports:
       - "8000:8000"
 
+  web:
+    depends_on: 
+      - backend
+    build:
+      context: web/
+      dockerfile: Dockerfile
+    networks:
+      - public
+      - default
+    ports:
+      - "8080:80"
+
 volumes:
   app-db-data:
 
