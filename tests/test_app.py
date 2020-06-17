@@ -41,7 +41,7 @@ def test_api_query(db: Session, client: TestClient, condition, expected):
         fakes.BiosampleFactory()
     db.commit()
 
-    resp = client.post("/biosample/search", json={"conditions": [condition]})
+    resp = client.post("/api/biosample/search", json={"conditions": [condition]})
     assert_status(resp)
     results = resp.json()["results"]
     assert {s["id"] for s in results} == expected
@@ -53,10 +53,10 @@ def test_api_faceting(db: Session, client: TestClient):
     fakes.BiosampleFactory(id="sample3", annotations={"key1": "value4", "key2": "value2"})
     db.commit()
 
-    resp = client.post("/biosample/facet", json={"conditions": [], "attribute": "key1"})
+    resp = client.post("/api/biosample/facet", json={"conditions": [], "attribute": "key1"})
     assert_status(resp)
     assert resp.json()["facets"] == {"value1": 2, "value4": 1}
 
-    resp = client.post("/biosample/facet", json={"conditions": [], "attribute": "key2"})
+    resp = client.post("/api/biosample/facet", json={"conditions": [], "attribute": "key2"})
     assert_status(resp)
     assert resp.json()["facets"] == {"value2": 2, "value3": 1}

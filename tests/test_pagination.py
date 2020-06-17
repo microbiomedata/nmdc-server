@@ -23,7 +23,7 @@ def test_all_results(db: Session, client: TestClient):
         fakes.BiosampleFactory()
     db.commit()
 
-    resp = client.post("/biosample/search?limit=20")
+    resp = client.post("/api/biosample/search?limit=20")
     assert len(resp.json()["results"]) == 10
     assert resp.json()["count"] == 10
     assert int(resp.headers["Resource-Count"]) == 10
@@ -34,7 +34,7 @@ def test_first_page(db: Session, client: TestClient):
         fakes.BiosampleFactory()
     db.commit()
 
-    resp = client.post("/biosample/search?limit=9")
+    resp = client.post("/api/biosample/search?limit=9")
     assert len(resp.json()["results"]) == 9
     assert resp.json()["count"] == 10
     assert int(resp.headers["Resource-Count"]) == 10
@@ -50,7 +50,7 @@ def test_last_page(db: Session, client: TestClient):
         fakes.BiosampleFactory()
     db.commit()
 
-    resp = client.post("/biosample/search?limit=9&offset=9")
+    resp = client.post("/api/biosample/search?limit=9&offset=9")
     assert len(resp.json()["results"]) == 1
     assert resp.json()["count"] == 10
     assert int(resp.headers["Resource-Count"]) == 10
