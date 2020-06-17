@@ -4,7 +4,7 @@
 docker-compose up
 ```
 
-View swagger page at `http://localhost:8000/docs`.
+View main application at `http://localhost:8080/` and the swagger page at `http://localhost:8080/docs`.
 
 
 ### Development Installation
