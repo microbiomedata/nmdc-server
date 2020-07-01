@@ -8,8 +8,10 @@ done
 
 # TODO: This drops the data base on every start and re-ingests.  At some
 #       point we should decide how to do migrations correctly.
+PGDATABASE=postgres psql -c "drop database if exists nmdc;"
+
 echo 'Ingesting data'
-PGDATABASE=postgres psql -c "drop database if exists nmdc; create database nmdc;"
+PGDATABASE=postgres psql -c "create database nmdc;"
 python /app/create_database.py
 
 echo 'Upgrading schema'
