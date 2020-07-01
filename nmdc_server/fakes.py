@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from factory import Faker, post_generation, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
-from faker.providers import BaseProvider, geo, internet, lorem, python
+from faker.providers import BaseProvider, date_time, geo, internet, lorem, python
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
@@ -24,6 +24,7 @@ class DoiProvider(BaseProvider):
 
 db = scoped_session(SessionLocal)
 Faker.add_provider(DoiProvider)
+Faker.add_provider(date_time)
 Faker.add_provider(geo)
 Faker.add_provider(internet)
 Faker.add_provider(lorem)
@@ -60,6 +61,8 @@ class PublicationFactory(SQLAlchemyModelFactory):
 
 
 class StudyFactory(AnnotatedFactory):
+    add_date = Faker("date_time")
+    mod_date = Faker("date_time")
     gold_name = Faker("word")
     gold_description = Faker("sentence")
     scientific_objective = Faker("sentence")
@@ -112,6 +115,8 @@ class ProjectFactory(AnnotatedFactory):
         model = models.Project
         sqlalchemy_session = db
 
+    add_date = Faker("date_time")
+    mod_date = Faker("date_time")
     study = SubFactory(StudyFactory)
 
 
@@ -120,6 +125,8 @@ class BiosampleFactory(AnnotatedFactory):
         model = models.Biosample
         sqlalchemy_session = db
 
+    add_date = Faker("date_time")
+    mod_date = Faker("date_time")
     depth = Faker("random_number", digits=3)
     env_broad_scale = Faker("word")
     env_local_scale = Faker("word")
@@ -134,4 +141,5 @@ class DataObjectFactory(AnnotatedFactory):
         model = models.DataObject
         sqlalchemy_session = db
 
+    file_size_bytes = Faker("pyint")
     project = SubFactory(ProjectFactory)
