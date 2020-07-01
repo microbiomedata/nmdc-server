@@ -1,11 +1,19 @@
 from typing import Type, Union
 from uuid import uuid4
 
-from sqlalchemy import Column, Float, ForeignKey, String
+from sqlalchemy import BigInteger, Column, DateTime, Float, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import relationship
 
 from nmdc_server.database import Base
+
+
+class EnvoTerm(Base):
+    __tablename__ = "envo_term"
+
+    id = Column(String, primary_key=True)
+    label = Column(String, nullable=False)
+    data = Column(JSONB, nullable=False)
 
 
 class AnnotatedModel:
@@ -20,6 +28,8 @@ class AnnotatedModel:
 class Study(Base, AnnotatedModel):
     __tablename__ = "study"
 
+    add_date = Column(DateTime, nullable=False)
+    mod_date = Column(DateTime, nullable=False)
     gold_name = Column(String, nullable=False, default="")
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
@@ -35,6 +45,8 @@ class Study(Base, AnnotatedModel):
 class Project(Base, AnnotatedModel):
     __tablename__ = "project"
 
+    add_date = Column(DateTime, nullable=False)
+    mod_date = Column(DateTime, nullable=False)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     study = relationship("Study", backref="projects")
 
@@ -46,6 +58,8 @@ class Project(Base, AnnotatedModel):
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
 
+    add_date = Column(DateTime, nullable=False)
+    mod_date = Column(DateTime, nullable=False)
     depth = Column(Float, nullable=True)
     env_broad_scale = Column(String, nullable=False)
     env_local_scale = Column(String, nullable=False)
@@ -65,6 +79,7 @@ class DataObject(Base, AnnotatedModel):
     __tablename__ = "data_object"
 
     project_id = Column(String, ForeignKey("project.id"), nullable=False)
+    file_size_bytes = Column(BigInteger, nullable=False)
     project = relationship("Project", backref="data_objects")
 
 

@@ -78,7 +78,7 @@ class BaseQuerySchema(BaseModel):
         return query
 
     def _execute(self, query: Query,) -> Query:
-        return self.filter_and_join(query).order_by("id")
+        return self.filter_and_join(query)
 
     def _count(self, query: Query) -> int:
         return self.filter_and_join(query).count()
@@ -130,7 +130,7 @@ class StudyQuerySchema(BaseQuerySchema):
         return joins, fields
 
     def execute(self, db: Session) -> Query:
-        return self._execute(db.query(models.Study))
+        return self._execute(db.query(models.Study)).order_by(models.Study.id)
 
     def count(self, db: Session) -> int:
         return self._count(db.query(models.Study))
@@ -158,7 +158,7 @@ class ProjectQuerySchema(BaseQuerySchema):
         return joins, fields
 
     def execute(self, db: Session) -> Query:
-        return self._execute(db.query(models.Project))
+        return self._execute(db.query(models.Project)).order_by(models.Project.id)
 
     def count(self, db: Session) -> int:
         return self._count(db.query(models.Project))
@@ -188,7 +188,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
         return joins, fields
 
     def execute(self, db: Session) -> Query:
-        return self._execute(db.query(models.Biosample))
+        return self._execute(db.query(models.Biosample)).order_by(models.Biosample.id)
 
     def count(self, db: Session) -> int:
         return self._count(db.query(models.Biosample))
@@ -217,7 +217,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
         return joins, fields
 
     def execute(self, db: Session) -> Query:
-        return self._execute(db.query(models.DataObject))
+        return self._execute(db.query(models.DataObject)).order_by(models.DataObject.id)
 
     def count(self, db: Session) -> int:
         return self._count(db.query(models.DataObject))

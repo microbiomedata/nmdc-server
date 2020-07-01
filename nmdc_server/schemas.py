@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, validator
 
@@ -26,6 +26,11 @@ class InternalErrorSchema(ErrorSchema):
         "administrators if you are reporting an error.",
         example="dd4c4fa3-8d22-4768-8b0d-0923140d9f8a",
     )
+
+
+class EnvoTerm(BaseModel):
+    id: str
+    data: Dict[str, Any]
 
 
 class AnnotatedBase(BaseModel):
@@ -56,6 +61,8 @@ class StudyBase(AnnotatedBase):
     gold_name: str = ""
     gold_description: str = ""
     scientific_objective: str = ""
+    add_date: datetime
+    mod_date: datetime
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
@@ -84,6 +91,8 @@ class Study(StudyBase):
 # project
 class ProjectBase(AnnotatedBase):
     study_id: str
+    add_date: datetime
+    mod_date: datetime
 
 
 class ProjectCreate(ProjectBase):
@@ -108,6 +117,8 @@ class BiosampleBase(AnnotatedBase):
     # https://github.com/samuelcolvin/pydantic/issues/156
     longitude: float = Field(..., gt=-180, le=180)
     latitude: float = Field(..., ge=-90, le=90)
+    add_date: datetime
+    mod_date: datetime
 
 
 class BiosampleCreate(BiosampleBase):
@@ -124,6 +135,7 @@ class Biosample(BiosampleBase):
 # data_object
 class DataObjectBase(AnnotatedBase):
     project_id: str
+    file_size_bytes: int
 
 
 class DataObjectCreate(DataObjectBase):
