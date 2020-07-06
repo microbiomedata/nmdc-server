@@ -3,7 +3,7 @@ from itertools import groupby
 from typing import cast, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, validator
-from sqlalchemy import and_, func, or_
+from sqlalchemy import and_, distinct, func, or_
 from sqlalchemy.orm import Query, Session
 
 from nmdc_server import models, schemas
@@ -44,28 +44,28 @@ class Table(Enum):
     def query(self, db: Session) -> Query:
         if self == Table.biosample:
             return (
-                db.query(models.Biosample)
+                db.query(distinct(models.Biosample.id).label("id"))
                 .join(models.Project)
                 .join(models.DataObject, isouter=True)
                 .join(models.Study)
             )
         elif self == Table.study:
             return (
-                db.query(models.Study)
+                db.query(distinct(models.Study.id).label("id"))
                 .join(models.Project, isouter=True)
                 .join(models.Biosample, isouter=True)
                 .join(models.DataObject, isouter=True)
             )
         elif self == Table.project:
             return (
-                db.query(models.Project)
+                db.query(distinct(models.Project.id).label("id"))
                 .join(models.Study)
                 .join(models.Biosample, isouter=True)
                 .join(models.DataObject, isouter=True)
             )
         elif self == Table.data_object:
             return (
-                db.query(models.DataObject)
+                db.query(distinct(models.DataObject.id).label("id"))
                 .join(models.Project)
                 .join(models.Biosample, isouter=True)
                 .join(models.Study)
@@ -176,7 +176,9 @@ class BaseQuerySchema(BaseModel):
         return query
 
     def execute(self, db: Session) -> Query:
-        return self.query(db)
+        model = self.table.model
+        subquery = self.query(db).subquery()
+        return db.query(model).join(subquery, model.id == subquery.c.id)
 
     def count(self, db: Session) -> int:
         return self.query(db).count()
@@ -188,7 +190,8 @@ class BaseQuerySchema(BaseModel):
         else:
             column = model.annotations[attribute]  # type: ignore
 
-        query = self.query(db, db.query(column, func.count(column)))
+        subquery = self.query(db).subquery()
+        query = db.query(column, func.count(column)).join(subquery, model.id == subquery.c.id)
         rows = query.group_by(column)
         return {value: count for value, count in rows if value is not None}
 
