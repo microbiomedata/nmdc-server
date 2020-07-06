@@ -196,3 +196,15 @@ def test_between_query_annotations(db: Session):
         conditions=[{"field": "number", "op": "between", "value": [0.5, 10]}]
     )
     assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
+
+
+def test_distinct_results(db: Session):
+    project = fakes.ProjectFactory(id="project1")
+    fakes.BiosampleFactory(id="sample1", project=project)
+    fakes.BiosampleFactory(id="sample2", project=project)
+    fakes.BiosampleFactory(id="sample3", project=project)
+    fakes.BiosampleFactory(id="sample4", project=project)
+    db.commit()
+
+    q = query.ProjectQuerySchema(conditions=[])
+    assert len(q.execute(db).all()) == 1
