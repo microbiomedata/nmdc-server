@@ -1,6 +1,6 @@
 from enum import Enum
 from itertools import groupby
-from typing import Dict, Iterator, List, Set, Tuple
+from typing import Dict, Iterator, List, Optional, Tuple
 
 from pydantic import BaseModel
 from sqlalchemy import func, or_
@@ -22,15 +22,78 @@ class Operation(Enum):
     not_equal = "!="
 
 
+class Table(Enum):
+    biosample = "biosample"
+    study = "study"
+    project = "project"
+    data_object = "data_object"
+
+    @property
+    def model(self) -> models.ModelType:
+        if self == Table.biosample:
+            return models.Biosample
+        elif self == Table.study:
+            return models.Study
+        elif self == Table.project:
+            return models.Project
+        elif self == Table.data_object:
+            return models.Project
+        raise Exception("Unknown table")
+
+    def query(self, db: Session) -> Query:
+        if self == Table.biosample:
+            return (
+                db.query(models.Biosample)
+                .join(models.Project)
+                .join(models.DataObject, isouter=True)
+                .join(models.Study)
+            )
+        elif self == Table.study:
+            return (
+                db.query(models.Study)
+                .join(models.Project, isouter=True)
+                .join(models.Biosample, isouter=True)
+                .join(models.DataObject, isouter=True)
+            )
+        elif self == Table.project:
+            return (
+                db.query(models.Project)
+                .join(models.Study)
+                .join(models.Biosample, isouter=True)
+                .join(models.DataObject, isouter=True)
+            )
+        elif self == Table.data_object:
+            return (
+                db.query(models.DataObject)
+                .join(models.Project)
+                .join(models.Biosample, isouter=True)
+                .join(models.Study)
+            )
+        raise Exception("Unknown table")
+
+
+_foreign_keys: Dict[str, Table] = {
+    "study_id": Table.study,
+    "sample_id": Table.biosample,
+    "project_id": Table.project,
+    "data_object_id": Table.data_object,
+}
+
+
 class ConditionSchema(BaseModel):
     op: Operation
     field: str
     value: schemas.AnnotationValue
+    table: Optional[Table]
 
-    def compare(self, model: models.ModelType, field_override: str = None):
-        field = field_override or self.field
-        if field in model.__table__.columns:
-            column = getattr(model, field)
+
+class Condition(ConditionSchema):
+    table: Table
+
+    def compare(self):
+        model = self.table.model
+        if self.field in model.__table__.columns:
+            column = getattr(model, self.field)
             if self.op == Operation.equal:
                 return column == self.value
             elif self.op == Operation.greater:
@@ -44,186 +107,89 @@ class ConditionSchema(BaseModel):
             elif self.op == Operation.not_equal:
                 return column != self.value
         return func.nmdc_compare(
-            model.annotations[field].astext, self.op.value, self.value  # type: ignore
+            model.annotations[self.field].astext, self.op.value, self.value  # type: ignore
         )
+
+    @property
+    def key(self) -> str:
+        return f"{self.table}:{self.field}"
+
+    @classmethod
+    def from_schema(cls, condition: ConditionSchema, default_table: Table) -> "Condition":
+        kwargs = condition.dict()
+        if not condition.table:
+            if condition.field in _foreign_keys:
+                kwargs["table"] = _foreign_keys[condition.field]
+                kwargs["field"] = "id"
+            else:
+                kwargs["table"] = default_table
+        return cls(**kwargs)
 
 
 class BaseQuerySchema(BaseModel):
     conditions: List[ConditionSchema]
 
     @property
-    def sorted_conditions(self) -> List[ConditionSchema]:
-        return sorted(self.conditions, key=lambda c: c.field)
+    def table(self) -> Table:
+        raise Exception("Abstract method")
 
     @property
-    def groups(self) -> Iterator[Tuple[str, Iterator[ConditionSchema]]]:
-        return groupby(self.sorted_conditions, key=lambda c: c.field)
+    def sorted_conditions(self) -> List[Condition]:
+        conditions = [Condition.from_schema(c, self.table) for c in self.conditions]
+        return sorted(conditions, key=lambda c: c.key)
 
-    def parse_fields(
-        self,
-    ) -> Tuple[Set[models.ModelType], Dict[str, Tuple[models.ModelType, List[ConditionSchema]]]]:
-        raise NotImplementedError()
+    @property
+    def groups(self) -> Iterator[Tuple[str, Iterator[Condition]]]:
+        return groupby(self.sorted_conditions, key=lambda c: c.key)
 
-    def filter_and_join(self, query: Query) -> Query:
-        joins, filters = self.parse_fields()
-        if models.Project in joins:
-            query = query.join(models.Project)
-            joins.remove(models.Project)
-        for model in joins:
-            query = query.join(model)
-        for field, (model, conditions) in filters.items():
-            query = query.filter(
-                or_(*[condition.compare(model, field) for condition in conditions])
-            )
+    def query(self, db, base_query: Query = None) -> Query:
+        query = base_query or self.table.query(db)
+        for _, conditions in self.groups:
+            filters = [c.compare() for c in conditions]
+            query = query.filter(or_(*filters))
+
         return query
 
-    def _execute(self, query: Query,) -> Query:
-        return self.filter_and_join(query)
-
-    def _count(self, query: Query) -> int:
-        return self.filter_and_join(query).count()
-
     def execute(self, db: Session) -> Query:
-        raise NotImplementedError()
+        return self.query(db)
 
     def count(self, db: Session) -> int:
-        raise NotImplementedError()
+        return self.query(db).count()
 
-    def _facet(
-        self, db: Session, model: models.ModelType, attribute: str,
-    ) -> Dict[schemas.AnnotationValue, int]:
+    def facet(self, db: Session, attribute: str,) -> Dict[schemas.AnnotationValue, int]:
+        model = self.table.model
         if attribute in model.__table__.columns:
             column = getattr(model, attribute)
         else:
             column = model.annotations[attribute]  # type: ignore
 
-        query = db.query(column, func.count(column))
-        query = self.filter_and_join(query)
+        query = self.query(db, db.query(column, func.count(column)))
         rows = query.group_by(column)
         return {value: count for value, count in rows if value is not None}
 
-    def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
-        raise NotImplementedError()
-
 
 class StudyQuerySchema(BaseQuerySchema):
-    def parse_fields(
-        self,
-    ) -> Tuple[Set[models.ModelType], Dict[str, Tuple[models.ModelType, List[ConditionSchema]]]]:
-        fields: Dict[str, Tuple[models.ModelType, List[ConditionSchema]]] = {}
-        joins: Set[models.ModelType] = set()
-
-        for field, conditions in self.groups:
-            if field == "project_id":
-                joins.add(models.Project)
-                fields["id"] = models.Project, list(conditions)
-            elif field == "sample_id":
-                joins.add(models.Project)
-                joins.add(models.Biosample)
-                fields["id"] = models.Biosample, list(conditions)
-            elif field == "data_object_id":
-                joins.add(models.Project)
-                joins.add(models.DataObject)
-                fields["id"] = models.DataObject, list(conditions)
-            else:
-                fields[field] = models.Study, list(conditions)
-        return joins, fields
-
-    def execute(self, db: Session) -> Query:
-        return self._execute(db.query(models.Study)).order_by(models.Study.id)
-
-    def count(self, db: Session) -> int:
-        return self._count(db.query(models.Study))
-
-    def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
-        return self._facet(db, models.Study, attribute)
+    @property
+    def table(self) -> Table:
+        return Table.study
 
 
 class ProjectQuerySchema(BaseQuerySchema):
-    def parse_fields(
-        self,
-    ) -> Tuple[Set[models.ModelType], Dict[str, Tuple[models.ModelType, List[ConditionSchema]]]]:
-        fields: Dict[str, Tuple[models.ModelType, List[ConditionSchema]]] = {}
-        joins: Set[models.ModelType] = set()
-
-        for field, conditions in self.groups:
-            if field == "sample_id":
-                joins.add(models.Biosample)
-                fields["id"] = models.Biosample, list(conditions)
-            elif field == "data_object_id":
-                joins.add(models.DataObject)
-                fields["id"] = models.DataObject, list(conditions)
-            else:
-                fields[field] = models.Project, list(conditions)
-        return joins, fields
-
-    def execute(self, db: Session) -> Query:
-        return self._execute(db.query(models.Project)).order_by(models.Project.id)
-
-    def count(self, db: Session) -> int:
-        return self._count(db.query(models.Project))
-
-    def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
-        return self._facet(db, models.Project, attribute)
+    @property
+    def table(self) -> Table:
+        return Table.project
 
 
 class BiosampleQuerySchema(BaseQuerySchema):
-    def parse_fields(
-        self,
-    ) -> Tuple[Set[models.ModelType], Dict[str, Tuple[models.ModelType, List[ConditionSchema]]]]:
-        fields: Dict[str, Tuple[models.ModelType, List[ConditionSchema]]] = {}
-        joins: Set[models.ModelType] = set()
-
-        for field, conditions in self.groups:
-            if field == "study_id":
-                joins.add(models.Project)
-                fields[field] = models.Project, list(conditions)
-            elif field == "data_object_id":
-                joins.add(models.Project)
-                joins.add(models.DataObject)
-                fields["id"] = models.DataObject, list(conditions)
-            else:
-                fields[field] = models.Biosample, list(conditions)
-
-        return joins, fields
-
-    def execute(self, db: Session) -> Query:
-        return self._execute(db.query(models.Biosample)).order_by(models.Biosample.id)
-
-    def count(self, db: Session) -> int:
-        return self._count(db.query(models.Biosample))
-
-    def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
-        return self._facet(db, models.Biosample, attribute)
+    @property
+    def table(self) -> Table:
+        return Table.biosample
 
 
 class DataObjectQuerySchema(BaseQuerySchema):
-    def parse_fields(
-        self,
-    ) -> Tuple[Set[models.ModelType], Dict[str, Tuple[models.ModelType, List[ConditionSchema]]]]:
-        fields: Dict[str, Tuple[models.ModelType, List[ConditionSchema]]] = {}
-        joins: Set[models.ModelType] = set()
-
-        for field, conditions in self.groups:
-            if field == "study_id":
-                joins.add(models.Project)
-                fields[field] = models.Project, list(conditions)
-            elif field == "sample_id":
-                joins.add(models.Project)
-                joins.add(models.Biosample)
-                fields["id"] = models.Biosample, list(conditions)
-            else:
-                fields[field] = models.DataObject, list(conditions)
-        return joins, fields
-
-    def execute(self, db: Session) -> Query:
-        return self._execute(db.query(models.DataObject)).order_by(models.DataObject.id)
-
-    def count(self, db: Session) -> int:
-        return self._count(db.query(models.DataObject))
-
-    def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
-        return self._facet(db, models.DataObject, attribute)
+    @property
+    def table(self) -> Table:
+        return Table.data_object
 
 
 class BaseSearchResponse(BaseModel):
