@@ -170,3 +170,29 @@ def test_faceted_filtered_query(db: Session):
 def test_faceted_query_with_no_results(db: Session):
     q = query.BiosampleQuerySchema(conditions=[])
     assert q.facet(db, "key1") == {}
+
+
+def test_between_query_column(db: Session):
+    fakes.BiosampleFactory(id="sample0", depth=0)
+    fakes.BiosampleFactory(id="sample1", depth=1)
+    fakes.BiosampleFactory(id="sample2", depth=10)
+    fakes.BiosampleFactory(id="sample3", depth=100)
+    db.commit()
+
+    q = query.BiosampleQuerySchema(
+        conditions=[{"field": "depth", "op": "between", "value": [0.5, 10]}]
+    )
+    assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
+
+
+def test_between_query_annotations(db: Session):
+    fakes.BiosampleFactory(id="sample0", annotations={"number": 0})
+    fakes.BiosampleFactory(id="sample1", annotations={"number": 1})
+    fakes.BiosampleFactory(id="sample2", annotations={"number": 10})
+    fakes.BiosampleFactory(id="sample3", annotations={"number": 100})
+    db.commit()
+
+    q = query.BiosampleQuerySchema(
+        conditions=[{"field": "number", "op": "between", "value": [0.5, 10]}]
+    )
+    assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}

@@ -1,9 +1,9 @@
 from enum import Enum
 from itertools import groupby
-from typing import Dict, Iterator, List, Optional, Tuple
+from typing import cast, Dict, Iterator, List, Optional, Tuple, Union
 
-from pydantic import BaseModel
-from sqlalchemy import func, or_
+from pydantic import BaseModel, validator
+from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Query, Session
 
 from nmdc_server import models, schemas
@@ -20,6 +20,7 @@ class Operation(Enum):
     less = "<"
     less_equal = "<="
     not_equal = "!="
+    between = "between"
 
 
 class Table(Enum):
@@ -81,10 +82,21 @@ _foreign_keys: Dict[str, Table] = {
 
 
 class ConditionSchema(BaseModel):
-    op: Operation
+    op: Operation = Operation.equal
     field: str
-    value: schemas.AnnotationValue
+    value: Union[schemas.AnnotationValue, Tuple[float, float]]
     table: Optional[Table]
+
+    @validator("value")
+    def validate_value_type(cls, v, values):
+        if values["op"] == Operation.between:
+            if not isinstance(v, tuple):
+                raise ValueError("between operator requires a tuple value")
+            if v[0] > v[1]:
+                raise ValueError("lower bound must be less than upper bound")
+        elif isinstance(v, tuple):
+            raise ValueError("tuple values are only valid for between conditions")
+        return v
 
 
 class Condition(ConditionSchema):
@@ -106,6 +118,19 @@ class Condition(ConditionSchema):
                 return column <= self.value
             elif self.op == Operation.not_equal:
                 return column != self.value
+            elif self.op == Operation.between:
+                value = cast(Tuple[float, float], self.value)
+                return and_(column >= value[0], column <= value[1])
+        if self.op == Operation.between:
+            value = cast(Tuple[float, float], self.value)
+            return and_(
+                func.nmdc_compare(
+                    model.annotations[self.field].astext, ">=", value[0]  # type: ignore
+                ),
+                func.nmdc_compare(
+                    model.annotations[self.field].astext, "<=", value[1]  # type: ignore
+                ),
+            )
         return func.nmdc_compare(
             model.annotations[self.field].astext, self.op.value, self.value  # type: ignore
         )
