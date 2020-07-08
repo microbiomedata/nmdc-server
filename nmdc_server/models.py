@@ -61,14 +61,18 @@ class Biosample(Base, AnnotatedModel):
     add_date = Column(DateTime, nullable=False)
     mod_date = Column(DateTime, nullable=False)
     depth = Column(Float, nullable=True)
-    env_broad_scale = Column(String, nullable=False)
-    env_local_scale = Column(String, nullable=False)
-    env_medium = Column(String, nullable=False)
+    env_broad_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
+    env_local_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
+    env_medium_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
 
     project_id = Column(String, ForeignKey("project.id"), nullable=False)
     project = relationship("Project", backref="biosamples")
+
+    env_broad_scale = relationship(EnvoTerm, foreign_keys=[env_broad_scale_id], lazy="joined")
+    env_local_scale = relationship(EnvoTerm, foreign_keys=[env_local_scale_id], lazy="joined")
+    env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
 
     @property
     def open_in_gold(self):

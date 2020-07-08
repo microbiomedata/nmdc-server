@@ -30,7 +30,11 @@ class InternalErrorSchema(ErrorSchema):
 
 class EnvoTerm(BaseModel):
     id: str
+    label: str
     data: Dict[str, Any]
+
+    class Config:
+        orm_mode = True
 
 
 class AnnotatedBase(BaseModel):
@@ -111,9 +115,9 @@ class Project(ProjectBase):
 class BiosampleBase(AnnotatedBase):
     project_id: str
     depth: Optional[float]
-    env_broad_scale: str
-    env_local_scale: str
-    env_medium: str
+    env_broad_scale_id: Optional[str]
+    env_local_scale_id: Optional[str]
+    env_medium_id: Optional[str]
     # https://github.com/samuelcolvin/pydantic/issues/156
     longitude: float = Field(..., gt=-180, le=180)
     latitude: float = Field(..., ge=-90, le=90)
@@ -127,6 +131,9 @@ class BiosampleCreate(BiosampleBase):
 
 class Biosample(BiosampleBase):
     open_in_gold: str
+    env_broad_scale: Optional[EnvoTerm]
+    env_local_scale: Optional[EnvoTerm]
+    env_medium: Optional[EnvoTerm]
 
     class Config:
         orm_mode = True

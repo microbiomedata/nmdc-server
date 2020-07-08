@@ -85,6 +85,7 @@ def create_tables(db, settings):
     db.query(models.Website).delete()
     db.query(models.Publication).delete()
     db.query(models.Study).delete()
+    db.query(models.EnvoTerm).delete()
 
 
 def populate_envo(db):
@@ -92,10 +93,11 @@ def populate_envo(db):
         envo_data = json.load(r)
 
     for graph in envo_data["graphs"]:
-        for node in envo_data["nodes"]:
+        for node in graph["nodes"]:
             id = node["id"].split("/")[-1]
             label = node.pop("lbl", "")
             db.add(models.EnvoTerm(id=id, label=label, data=node))
+    db.commit()
 
 
 def ingest_studies(db: Session):
@@ -152,14 +154,17 @@ def ingest_biosamples(db: Session):
         biosample = load_common_fields(p)
         assert len(p["part_of"]) == 1
         lat, lon = p.pop("lat_lon").split(" ")
+        env_broad_scale = db.query(models.EnvoTerm).get(p.pop("env_broad_scale"))
+        env_local_scale = db.query(models.EnvoTerm).get(p.pop("env_local_scale"))
+        env_medium = db.query(models.EnvoTerm).get(p.pop("env_medium"))
         biosample.update(
             {
                 "project_id": coerce_id(p.pop("part_of")[0]),
                 "latitude": float(lat),
                 "longitude": float(lon),
-                "env_broad_scale": p.pop("env_broad_scale"),
-                "env_local_scale": p.pop("env_local_scale"),
-                "env_medium": p.pop("env_medium"),
+                "env_broad_scale": env_broad_scale,
+                "env_local_scale": env_local_scale,
+                "env_medium": env_medium,
                 "annotations": p,
             }
         )
@@ -199,6 +204,7 @@ def main():
     settings = Settings()
     with create_session() as db:
         create_tables(db, settings)
+        populate_envo(db)
         ingest_studies(db)
         data_object_map = ingest_projects(db)
         ingest_biosamples(db)

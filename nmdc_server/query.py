@@ -4,9 +4,24 @@ from typing import cast, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, validator
 from sqlalchemy import and_, distinct, func, or_
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.orm import aliased, Query, Session
+from sqlalchemy.orm.util import AliasedClass
 
 from nmdc_server import models, schemas
+
+EnvBroadScale = aliased(models.EnvoTerm)
+EnvLocalScale = aliased(models.EnvoTerm)
+EnvMedium = aliased(models.EnvoTerm)
+
+
+def _join_envo(query: Query) -> Query:
+    return (
+        query.join(
+            EnvBroadScale, models.Biosample.env_broad_scale_id == EnvBroadScale.id, isouter=True
+        )
+        .join(EnvLocalScale, models.Biosample.env_local_scale_id == EnvLocalScale.id, isouter=True)
+        .join(EnvMedium, models.Biosample.env_medium, isouter=True)
+    )
 
 
 class InvalidQuery(Exception):
@@ -28,9 +43,12 @@ class Table(Enum):
     study = "study"
     project = "project"
     data_object = "data_object"
+    env_broad_scale = "env_broad_scale"
+    env_local_scale = "env_local_scale"
+    env_medium = "env_medium"
 
     @property
-    def model(self) -> models.ModelType:
+    def model(self) -> Union[models.ModelType, AliasedClass]:
         if self == Table.biosample:
             return models.Biosample
         elif self == Table.study:
@@ -39,45 +57,61 @@ class Table(Enum):
             return models.Project
         elif self == Table.data_object:
             return models.Project
+        elif self == Table.env_broad_scale:
+            return EnvBroadScale
+        elif self == Table.env_local_scale:
+            return EnvLocalScale
+        elif self == Table.env_medium:
+            return EnvMedium
         raise Exception("Unknown table")
 
     def query(self, db: Session) -> Query:
         if self == Table.biosample:
-            return (
+            query = (
                 db.query(distinct(models.Biosample.id).label("id"))
                 .join(models.Project)
                 .join(models.DataObject, isouter=True)
                 .join(models.Study)
             )
         elif self == Table.study:
-            return (
+            query = (
                 db.query(distinct(models.Study.id).label("id"))
                 .join(models.Project, isouter=True)
                 .join(models.Biosample, isouter=True)
                 .join(models.DataObject, isouter=True)
             )
         elif self == Table.project:
-            return (
+            query = (
                 db.query(distinct(models.Project.id).label("id"))
                 .join(models.Study)
                 .join(models.Biosample, isouter=True)
                 .join(models.DataObject, isouter=True)
             )
         elif self == Table.data_object:
-            return (
+            query = (
                 db.query(distinct(models.DataObject.id).label("id"))
                 .join(models.Project)
                 .join(models.Biosample, isouter=True)
                 .join(models.Study)
             )
-        raise Exception("Unknown table")
+        else:
+            raise Exception("Unknown table")
+        return _join_envo(query)
 
 
-_foreign_keys: Dict[str, Table] = {
-    "study_id": Table.study,
-    "sample_id": Table.biosample,
-    "project_id": Table.project,
-    "data_object_id": Table.data_object,
+_envo_keys: Dict[str, Tuple[Table, str]] = {
+    "env_broad_scale": (Table.env_broad_scale, "label"),
+    "env_local_scale": (Table.env_local_scale, "label"),
+    "env_medium": (Table.env_medium, "label"),
+}
+
+_special_keys: Dict[str, Tuple[Table, str]] = {
+    "study_id": (Table.study, "id"),
+    "sample_id": (Table.biosample, "id"),
+    "biosample_id": (Table.biosample, "id"),
+    "project_id": (Table.project, "id"),
+    "data_object_id": (Table.data_object, "id"),
+    **_envo_keys,
 }
 
 
@@ -142,12 +176,10 @@ class Condition(ConditionSchema):
     @classmethod
     def from_schema(cls, condition: ConditionSchema, default_table: Table) -> "Condition":
         kwargs = condition.dict()
-        if not condition.table:
-            if condition.field in _foreign_keys:
-                kwargs["table"] = _foreign_keys[condition.field]
-                kwargs["field"] = "id"
-            else:
-                kwargs["table"] = default_table
+        if condition.field in _special_keys:
+            kwargs["table"], kwargs["field"] = _special_keys[condition.field]
+        elif not condition.table:
+            kwargs["table"] = default_table
         return cls(**kwargs)
 
 
@@ -185,13 +217,22 @@ class BaseQuerySchema(BaseModel):
 
     def facet(self, db: Session, attribute: str,) -> Dict[schemas.AnnotationValue, int]:
         model = self.table.model
-        if attribute in model.__table__.columns:
-            column = getattr(model, attribute)
+        if attribute in _special_keys:
+            table, field = _special_keys[attribute]
+            column = getattr(table.model, field)
         else:
-            column = model.annotations[attribute]  # type: ignore
+            if attribute in model.__table__.columns:
+                column = getattr(model, attribute)
+            else:
+                column = model.annotations[attribute]  # type: ignore
 
         subquery = self.query(db).subquery()
-        query = db.query(column, func.count(column)).join(subquery, model.id == subquery.c.id)
+        query = db.query(column, func.count(column))
+        if attribute in _envo_keys:
+            query = query.join(
+                models.Biosample, getattr(models.Biosample, f"{attribute}_id") == table.model.id
+            )
+        query = query.join(subquery, model.id == subquery.c.id)
         rows = query.group_by(column)
         return {value: count for value, count in rows if value is not None}
 
