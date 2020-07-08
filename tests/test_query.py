@@ -208,3 +208,39 @@ def test_distinct_results(db: Session):
 
     q = query.ProjectQuerySchema(conditions=[])
     assert len(q.execute(db).all()) == 1
+
+
+@pytest.mark.parametrize(
+    "condition,expected",
+    [
+        ({"field": "env_broad_scale", "value": "broad1"}, "sample2"),
+        ({"field": "env_local_scale", "value": "local1"}, "sample1"),
+        ({"field": "env_medium", "value": "medium1"}, "sample3"),
+    ],
+)
+def test_query_envo(db: Session, condition, expected):
+    env_local = fakes.EnvoTermFactory(label="local1")
+    env_broad = fakes.EnvoTermFactory(label="broad1")
+    env_medium = fakes.EnvoTermFactory(label="medium1")
+    fakes.BiosampleFactory(id="sample1", env_local_scale=env_local)
+    fakes.BiosampleFactory(id="sample2", env_broad_scale=env_broad)
+    fakes.BiosampleFactory(id="sample3", env_medium=env_medium)
+    db.commit()
+
+    q = query.BiosampleQuerySchema(conditions=[condition])
+    assert [s.id for s in q.execute(db).all()] == [expected]
+
+
+def test_facet_envo(db: Session):
+    env_local1 = fakes.EnvoTermFactory(label="local1")
+    env_local2 = fakes.EnvoTermFactory(label="local2")
+    fakes.BiosampleFactory(id="sample1", env_local_scale=env_local1)
+    fakes.BiosampleFactory(id="sample2", env_local_scale=env_local2)
+    fakes.BiosampleFactory(id="sample3", env_local_scale=env_local2)
+    db.commit()
+
+    q = query.BiosampleQuerySchema(conditions=[])
+    assert q.facet(db, "env_local_scale") == {
+        "local1": 1,
+        "local2": 2,
+    }

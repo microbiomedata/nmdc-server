@@ -60,6 +60,16 @@ class PublicationFactory(SQLAlchemyModelFactory):
         sqlalchemy_session = db
 
 
+class EnvoTermFactory(SQLAlchemyModelFactory):
+    id = Faker("pystr")
+    label = Faker("word")
+    data = Faker("pydict", value_types=["str"])
+
+    class Meta:
+        model = models.EnvoTerm
+        sqlalchemy_session = db
+
+
 class StudyFactory(AnnotatedFactory):
     add_date = Faker("date_time")
     mod_date = Faker("date_time")
@@ -128,9 +138,9 @@ class BiosampleFactory(AnnotatedFactory):
     add_date = Faker("date_time")
     mod_date = Faker("date_time")
     depth = Faker("random_number", digits=3)
-    env_broad_scale = Faker("word")
-    env_local_scale = Faker("word")
-    env_medium = Faker("word")
+    env_broad_scale = SubFactory(EnvoTermFactory)
+    env_local_scale = SubFactory(EnvoTermFactory)
+    env_medium = SubFactory(EnvoTermFactory)
     latitude = Faker("latitude")
     longitude = Faker("longitude")
     project = SubFactory(ProjectFactory)
