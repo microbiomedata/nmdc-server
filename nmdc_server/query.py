@@ -56,7 +56,7 @@ class Table(Enum):
         elif self == Table.project:
             return models.Project
         elif self == Table.data_object:
-            return models.Project
+            return models.DataObject
         elif self == Table.env_broad_scale:
             return EnvBroadScale
         elif self == Table.env_local_scale:
@@ -184,7 +184,7 @@ class Condition(ConditionSchema):
 
 
 class BaseQuerySchema(BaseModel):
-    conditions: List[ConditionSchema]
+    conditions: List[ConditionSchema] = []
 
     @property
     def table(self) -> Table:
