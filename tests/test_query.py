@@ -186,10 +186,10 @@ def test_faceted_query_with_no_results(db: Session):
 
 
 def test_between_query_column(db: Session):
-    fakes.BiosampleFactory(id="sample0", depth=0)
-    fakes.BiosampleFactory(id="sample1", depth=1)
-    fakes.BiosampleFactory(id="sample2", depth=10)
-    fakes.BiosampleFactory(id="sample3", depth=100)
+    fakes.BiosampleFactory(id="sample0", depth=0, add_date=date0)
+    fakes.BiosampleFactory(id="sample1", depth=1, add_date=date1)
+    fakes.BiosampleFactory(id="sample2", depth=10, add_date=date2)
+    fakes.BiosampleFactory(id="sample3", depth=100, add_date=date3)
     db.commit()
 
     q = query.BiosampleQuerySchema(
@@ -197,16 +197,26 @@ def test_between_query_column(db: Session):
     )
     assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
 
+    q = query.BiosampleQuerySchema(
+        conditions=[{"field": "add_date", "op": "between", "value": [date0, date2]}]
+    )
+    assert {s.id for s in q.execute(db)} == {"sample0", "sample1", "sample2"}
+
 
 def test_between_query_annotations(db: Session):
-    fakes.BiosampleFactory(id="sample0", annotations={"number": 0})
-    fakes.BiosampleFactory(id="sample1", annotations={"number": 1})
-    fakes.BiosampleFactory(id="sample2", annotations={"number": 10})
-    fakes.BiosampleFactory(id="sample3", annotations={"number": 100})
+    fakes.BiosampleFactory(id="sample0", annotations={"number": 0, "string": "a"})
+    fakes.BiosampleFactory(id="sample1", annotations={"number": 1, "string": "c"})
+    fakes.BiosampleFactory(id="sample2", annotations={"number": 10, "string": "e"})
+    fakes.BiosampleFactory(id="sample3", annotations={"number": 100, "string": "t"})
     db.commit()
 
     q = query.BiosampleQuerySchema(
         conditions=[{"field": "number", "op": "between", "value": [0.5, 10]}]
+    )
+    assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
+
+    q = query.BiosampleQuerySchema(
+        conditions=[{"field": "string", "op": "between", "value": ["b", "e"]}]
     )
     assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
 

@@ -10,7 +10,7 @@ from nmdc_server import models
 # valid datetime strings into datetime objects while falling
 # back to ordinary strings.  Also, we never want numeric types
 # to be interpreted as dates.
-AnnotationValue = Union[int, float, datetime, str]
+AnnotationValue = Union[float, int, datetime, str]
 
 
 class ErrorSchema(BaseModel):
