@@ -118,7 +118,7 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
 class ConditionSchema(BaseModel):
     op: Operation = Operation.equal
     field: str
-    value: Union[schemas.AnnotationValue, Tuple[float, float]]
+    value: Union[schemas.AnnotationValue, Tuple[schemas.AnnotationValue, schemas.AnnotationValue]]
     table: Optional[Table]
 
     @validator("value")
@@ -153,10 +153,10 @@ class Condition(ConditionSchema):
             elif self.op == Operation.not_equal:
                 return column != self.value
             elif self.op == Operation.between:
-                value = cast(Tuple[float, float], self.value)
+                value = cast(Tuple[schemas.AnnotationValue, schemas.AnnotationValue], self.value)
                 return and_(column >= value[0], column <= value[1])
         if self.op == Operation.between:
-            value = cast(Tuple[float, float], self.value)
+            value = cast(Tuple[schemas.AnnotationValue, schemas.AnnotationValue], self.value)
             return and_(
                 func.nmdc_compare(
                     model.annotations[self.field].astext, ">=", value[0]  # type: ignore
