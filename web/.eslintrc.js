@@ -7,19 +7,31 @@ module.exports = {
     browser: true,
   },
   parserOptions: {
-    parser: 'babel-eslint',
+    parser: '@typescript-eslint/parser',
     // specifying a module sourcetype prevent eslint from marking import statements as errors
     sourceType: 'module',
   },
   extends: [
-    // use the recommended rule set for both plain javascript and vue
-    // 'eslint:recommended',
+    'eslint:recommended',
     'plugin:vue/recommended',
-    'airbnb',
+    '@vue/airbnb',
   ],
   rules: {
+    'no-underscore-dangle': 0,
+    'spaced-comment': 'off',
+    'camelcase': 0,
     // we should always disable console logs and debugging in production
     'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
     'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
   },
+  overrides: [
+    {
+      files: [
+        '**/*.ts',
+      ],
+      extends: [
+        '@vue/typescript',
+      ],
+    },
+  ],
 };

@@ -14,8 +14,8 @@
 <script>
 import { GChart } from 'vue-google-charts';
 
-import colors from '../colors';
-import { ecosystems } from '../encoding';
+import colors from '@/colors';
+import { ecosystems } from '@/encoding';
 
 export default {
   components: {

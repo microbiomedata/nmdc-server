@@ -11,9 +11,9 @@
 <script>
 import { GChart } from 'vue-google-charts';
 
-import api from '../data/api';
-import * as encoding from '../encoding';
-import { fieldDisplayName } from '../util';
+import { api } from '@/data/api';
+import * as encoding from '@/encoding';
+import { fieldDisplayName } from '@/util';
 
 export default {
   name: 'FacetChart',
@@ -70,12 +70,9 @@ export default {
   asyncComputed: {
     facets: {
       async get() {
-        return (await api.facetSummary({
-          type: this.type,
-          field: this.field,
-          conditions: this.conditions,
-          useMatchingConditions: true,
-        })).filter((d) => d.count > 0);
+        return (await api.getFacetSummary(
+          this.type, this.field, this.conditions,
+        )).filter((d) => d.count > 0);
       },
       default: [],
     },

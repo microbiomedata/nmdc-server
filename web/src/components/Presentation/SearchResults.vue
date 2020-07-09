@@ -19,9 +19,7 @@
         />
         <v-list-item
           :key="result.id"
-          @click="$emit('selected', {
-            type: type,
-            conditions: [{ field: 'id', op: '==', value: result.id }]})"
+          @click="$emit('selected', result.id)"
         >
           <v-list-item-avatar>
             <v-icon
@@ -42,7 +40,7 @@
   </div>
 </template>
 <script>
-import { types } from '../encoding';
+import { types } from '@/encoding';
 
 export default {
   props: {

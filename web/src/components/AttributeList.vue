@@ -106,11 +106,11 @@
 <script>
 import { isObject } from 'lodash';
 
+import { types, fields, ecosystemFields } from '@/encoding';
+import { api } from '@/data/api';
 import {
   typeWithCardinality, fieldDisplayName, valueDisplayName,
-} from '../util';
-import { types, fields } from '../encoding';
-import api from '../data/api';
+} from '@/util';
 
 export default {
   props: {
@@ -126,13 +126,7 @@ export default {
   data: () => ({
     types,
     fields,
-    ecosystemFields: [
-      'ecosystem',
-      'ecosystem_category',
-      'ecosystem_type',
-      'ecosystem_subtype',
-      'specific_ecosystem',
-    ],
+    ecosystemFields,
     relatedTypes: [
       { type: 'study' },
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metagenome' }] },
@@ -141,7 +135,7 @@ export default {
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metabolomics' }] },
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Lipidomics' }] },
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Organic Matter Characterization' }] },
-      { type: 'sample' },
+      { type: 'biosample' },
       { type: 'data_object' },
     ],
   }),
@@ -177,7 +171,7 @@ export default {
       ];
     },
     relatedTypeCount(relatedType) {
-      return api.query(relatedType.type, this.relatedTypeConditions(relatedType)).length;
+      return api.searchCount(relatedType.type, this.relatedTypeConditions(relatedType));
     },
     relatedTypeDescription(relatedType) {
       const n = this.relatedTypeCount(relatedType);

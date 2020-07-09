@@ -19,7 +19,7 @@
           color="primary"
           elevation="0"
           class="ma-4"
-          @click="$emit('type', 'study')"
+          @click="$emit('set-type', 'study')"
         >
           Browse studies
         </v-btn>
@@ -28,7 +28,7 @@
           color="primary"
           elevation="0"
           class="ma-4"
-          @click="$emit('type', 'project')"
+          @click="$emit('set-type', 'project')"
         >
           Search by omics type
         </v-btn>
@@ -37,7 +37,7 @@
           color="primary"
           elevation="0"
           class="ma-4"
-          @click="$emit('type', 'sample')"
+          @click="$emit('set-type', 'sample')"
         >
           Explore habitats
         </v-btn>
@@ -98,7 +98,6 @@
 </template>
 <script>
 import LocationMap from './LocationMap.vue';
-import { types } from '../encoding';
 
 export default {
   components: {
@@ -113,11 +112,6 @@ export default {
       type: Array,
       default: () => [],
     },
-  },
-  data() {
-    return {
-      types,
-    };
   },
 };
 </script>
