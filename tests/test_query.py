@@ -257,3 +257,16 @@ def test_facet_envo(db: Session):
         "local1": 1,
         "local2": 2,
     }
+
+
+def test_facet_foreign_table(db: Session):
+    env_local1 = fakes.EnvoTermFactory(label="local1")
+    env_local2 = fakes.EnvoTermFactory(label="local2")
+    fakes.BiosampleFactory(id="sample1", env_local_scale=env_local1)
+    fakes.BiosampleFactory(id="sample2", env_local_scale=env_local2)
+    fakes.BiosampleFactory(id="sample3", env_local_scale=env_local2)
+    db.commit()
+
+    q = query.StudyQuerySchema(conditions=[])
+    assert q.facet(db, "env_local_scale") == {}
+    assert q.facet(db, "sample_id") == {}

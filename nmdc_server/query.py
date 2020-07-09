@@ -217,9 +217,11 @@ class BaseQuerySchema(BaseModel):
 
     def facet(self, db: Session, attribute: str,) -> Dict[schemas.AnnotationValue, int]:
         model = self.table.model
-        if attribute in _special_keys:
-            table, field = _special_keys[attribute]
+        join_envo = False
+        if attribute in _envo_keys and self.table == Table.biosample:
+            table, field = _envo_keys[attribute]
             column = getattr(table.model, field)
+            join_envo = True
         else:
             if attribute in model.__table__.columns:
                 column = getattr(model, attribute)
@@ -228,7 +230,7 @@ class BaseQuerySchema(BaseModel):
 
         subquery = self.query(db).subquery()
         query = db.query(column, func.count(column))
-        if attribute in _envo_keys:
+        if join_envo:
             query = query.join(
                 models.Biosample, getattr(models.Biosample, f"{attribute}_id") == table.model.id
             )
