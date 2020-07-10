@@ -31,6 +31,7 @@ class InternalErrorSchema(ErrorSchema):
 class EnvoTerm(BaseModel):
     id: str
     label: str
+    url: str
     data: Dict[str, Any]
 
     class Config:
@@ -134,6 +135,9 @@ class Biosample(BiosampleBase):
     env_broad_scale: Optional[EnvoTerm]
     env_local_scale: Optional[EnvoTerm]
     env_medium: Optional[EnvoTerm]
+    env_broad_scale_terms: List[str]
+    env_local_scale_terms: List[str]
+    env_medium_terms: List[str]
 
     class Config:
         orm_mode = True

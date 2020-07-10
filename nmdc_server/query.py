@@ -10,18 +10,60 @@ from sqlalchemy.orm.util import AliasedClass
 from nmdc_server import models, schemas
 
 EnvBroadScale = aliased(models.EnvoTerm)
+EnvBroadScaleAncestor = aliased(models.EnvoAncestor)
+EnvBroadScaleTerm = aliased(models.EnvoTerm)
 EnvLocalScale = aliased(models.EnvoTerm)
+EnvLocalScaleAncestor = aliased(models.EnvoAncestor)
+EnvLocalScaleTerm = aliased(models.EnvoTerm)
 EnvMedium = aliased(models.EnvoTerm)
+EnvMediumAncestor = aliased(models.EnvoAncestor)
+EnvMediumTerm = aliased(models.EnvoTerm)
 
 
 def _join_envo(query: Query) -> Query:
     return (
         query.join(
-            EnvBroadScale, models.Biosample.env_broad_scale_id == EnvBroadScale.id, isouter=True
+            EnvBroadScaleAncestor,
+            models.Biosample.env_broad_scale_id == EnvBroadScaleAncestor.id,
+            isouter=True,
         )
-        .join(EnvLocalScale, models.Biosample.env_local_scale_id == EnvLocalScale.id, isouter=True)
-        .join(EnvMedium, models.Biosample.env_medium, isouter=True)
+        .join(
+            EnvBroadScaleTerm,
+            EnvBroadScaleAncestor.ancestor_id == EnvBroadScaleTerm.id,
+            isouter=True,
+        )
+        .join(
+            EnvLocalScaleAncestor,
+            models.Biosample.env_local_scale_id == EnvLocalScaleAncestor.id,
+            isouter=True,
+        )
+        .join(
+            EnvLocalScaleTerm,
+            EnvLocalScaleAncestor.ancestor_id == EnvLocalScaleTerm.id,
+            isouter=True,
+        )
+        .join(
+            EnvMediumAncestor, models.Biosample.env_medium_id == EnvMediumAncestor.id, isouter=True
+        )
+        .join(EnvMediumTerm, EnvMediumAncestor.ancestor_id == EnvMediumTerm.id, isouter=True)
     )
+
+
+def _join_envo_facet(query: Query, attribute: str) -> Query:
+    if attribute == "env_broad_scale":
+        return query.join(
+            EnvBroadScaleAncestor, EnvBroadScaleTerm.id == EnvBroadScaleAncestor.ancestor_id
+        ).join(models.Biosample, models.Biosample.env_broad_scale_id == EnvBroadScaleAncestor.id)
+    elif attribute == "env_local_scale":
+        return query.join(
+            EnvLocalScaleAncestor, EnvLocalScaleTerm.id == EnvLocalScaleAncestor.ancestor_id
+        ).join(models.Biosample, models.Biosample.env_local_scale_id == EnvLocalScaleAncestor.id)
+    elif attribute == "env_medium":
+        return query.join(
+            EnvMediumAncestor, EnvMediumTerm.id == EnvMediumAncestor.ancestor_id
+        ).join(models.Biosample, models.Biosample.env_medium_id == EnvMediumAncestor.id)
+    else:
+        raise Exception("Unknown envo attribute")
 
 
 class InvalidQuery(Exception):
@@ -58,11 +100,11 @@ class Table(Enum):
         elif self == Table.data_object:
             return models.DataObject
         elif self == Table.env_broad_scale:
-            return EnvBroadScale
+            return EnvBroadScaleTerm
         elif self == Table.env_local_scale:
-            return EnvLocalScale
+            return EnvLocalScaleTerm
         elif self == Table.env_medium:
-            return EnvMedium
+            return EnvMediumTerm
         raise Exception("Unknown table")
 
     def query(self, db: Session) -> Query:
@@ -231,9 +273,7 @@ class BaseQuerySchema(BaseModel):
         subquery = self.query(db).subquery()
         query = db.query(column, func.count(column))
         if join_envo:
-            query = query.join(
-                models.Biosample, getattr(models.Biosample, f"{attribute}_id") == table.model.id
-            )
+            query = _join_envo_facet(query, attribute)
         query = query.join(subquery, model.id == subquery.c.id)
         rows = query.group_by(column)
         return {value: count for value, count in rows if value is not None}

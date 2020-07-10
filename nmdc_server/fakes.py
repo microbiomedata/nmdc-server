@@ -1,3 +1,4 @@
+from collections import OrderedDict
 from typing import Dict
 from uuid import uuid4
 
@@ -67,6 +68,22 @@ class EnvoTermFactory(SQLAlchemyModelFactory):
 
     class Meta:
         model = models.EnvoTerm
+        sqlalchemy_session = db
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        term = models.EnvoTerm(*args, **kwargs)
+        db.add(models.EnvoAncestor(term=term, ancestor=term, direct=False))
+        return term
+
+
+class EnvoAncestorFactory(SQLAlchemyModelFactory):
+    term = SubFactory(EnvoTermFactory)
+    ancestor = SubFactory(EnvoTermFactory)
+    direct = Faker("random_element", elements=OrderedDict([(True, 0.1), (False, 0.9)]))
+
+    class Meta:
+        model = models.EnvoAncestor
         sqlalchemy_session = db
 
 

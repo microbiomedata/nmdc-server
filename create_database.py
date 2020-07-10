@@ -1,12 +1,14 @@
+from collections import defaultdict
 from datetime import datetime
 import json
 from pathlib import Path
 import re
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Set, Union
 from urllib import request
 
 from alembic import command
 from alembic.config import Config
+from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from nmdc_server import crud, models, schemas
@@ -85,18 +87,69 @@ def create_tables(db, settings):
     db.query(models.Website).delete()
     db.query(models.Publication).delete()
     db.query(models.Study).delete()
+    db.query(models.EnvoAncestor).delete()
     db.query(models.EnvoTerm).delete()
 
 
-def populate_envo(db):
+def populate_envo_ancestor(
+    db: Session,
+    term_id: str,
+    node: str,
+    edges: Dict[str, Set[str]],
+    direct: bool,
+    visited: Set[str],
+):
+    if node in visited:
+        raise Exception("Cyclic graph detected")
+    if node not in edges:
+        return
+    visited = visited.union({node})
+    for parent in edges[node]:
+        statement = insert(models.EnvoAncestor.__table__).values(
+            id=term_id, ancestor_id=parent, direct=direct
+        )
+        if direct:
+            statement = statement.on_conflict_do_update(
+                index_elements=["id", "ancestor_id"], set_={"direct": True}
+            )
+        else:
+            statement = statement.on_conflict_do_nothing(index_elements=["id", "ancestor_id"])
+        db.execute(statement)
+    for parent in edges[node]:
+        populate_envo_ancestor(db, term_id, parent, edges, False, visited)
+
+
+def populate_envo(db: Session):
     with request.urlopen(envo_url) as r:
         envo_data = json.load(r)
 
     for graph in envo_data["graphs"]:
+        direct_ancestors: Dict[str, Set[str]] = defaultdict(set)
+        for edge in graph["edges"]:
+            if edge["pred"] != "is_a":
+                continue
+
+            id = edge["sub"].split("/")[-1]
+            parent = edge["obj"].split("/")[-1]
+            if id != parent:
+                direct_ancestors[id].add(parent)
+
+        ids: List[str] = []
         for node in graph["nodes"]:
+            if not node["id"].startswith("http://purl.obolibrary.org/obo/"):
+                continue
+
             id = node["id"].split("/")[-1]
             label = node.pop("lbl", "")
-            db.add(models.EnvoTerm(id=id, label=label, data=node))
+            data = node.get("meta", {})
+            db.add(models.EnvoTerm(id=id, label=label, data=data))
+            ids.append(id)
+
+        db.flush()
+        for node in ids:
+            db.add(models.EnvoAncestor(id=node, ancestor_id=node, direct=False))
+            populate_envo_ancestor(db, node, node, direct_ancestors, True, set())
+
     db.commit()
 
 

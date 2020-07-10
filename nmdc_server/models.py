@@ -1,8 +1,18 @@
-from typing import Type, Union
+from typing import List, Type, Union
 from uuid import uuid4
 
-from sqlalchemy import BigInteger, Column, DateTime, Float, ForeignKey, String
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    String,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import relationship
 
 from nmdc_server.database import Base
@@ -14,6 +24,40 @@ class EnvoTerm(Base):
     id = Column(String, primary_key=True)
     label = Column(String, nullable=False)
     data = Column(JSONB, nullable=False)
+
+    ancestor_entities = relationship(
+        "EnvoTerm",
+        primaryjoin="EnvoAncestor.id == EnvoTerm.id",
+        secondary=lambda: EnvoAncestor.__table__,
+        secondaryjoin="EnvoAncestor.ancestor_id == EnvoTerm.id",
+        uselist=True,
+    )
+    parent_entities = relationship(
+        "EnvoTerm",
+        primaryjoin="EnvoAncestor.id == EnvoTerm.id",
+        secondary=lambda: EnvoAncestor.__table__,
+        secondaryjoin="and_(EnvoAncestor.ancestor_id == EnvoTerm.id, EnvoAncestor.direct)",
+        uselist=True,
+    )
+
+    ancestors = association_proxy("ancestor_entities", "label")
+    parents = association_proxy("parent_entities", "label")
+
+    @property
+    def url(self) -> str:
+        return f"http://purl.obolibrary.org/obo/{self.id}"
+
+
+class EnvoAncestor(Base):
+    __tablename__ = "envo_ancestor"
+    __table_args__ = (UniqueConstraint("id", "ancestor_id"),)
+
+    id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
+    ancestor_id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
+    direct = Column(Boolean, nullable=False, default=lambda: False)
+
+    term = relationship(EnvoTerm, foreign_keys=[id], lazy="joined",)
+    ancestor = relationship(EnvoTerm, foreign_keys=[ancestor_id], lazy="joined")
 
 
 class AnnotatedModel:
@@ -73,6 +117,18 @@ class Biosample(Base, AnnotatedModel):
     env_broad_scale = relationship(EnvoTerm, foreign_keys=[env_broad_scale_id], lazy="joined")
     env_local_scale = relationship(EnvoTerm, foreign_keys=[env_local_scale_id], lazy="joined")
     env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
+
+    @property
+    def env_broad_scale_terms(self) -> List[str]:
+        return list(self.env_broad_scale.ancestors)
+
+    @property
+    def env_local_scale_terms(self) -> List[str]:
+        return list(self.env_local_scale.ancestors)
+
+    @property
+    def env_medium_terms(self) -> List[str]:
+        return list(self.env_medium.ancestors)
 
     @property
     def open_in_gold(self):
