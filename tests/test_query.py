@@ -280,3 +280,50 @@ def test_facet_foreign_table(db: Session):
     q = query.StudyQuerySchema(conditions=[])
     assert q.facet(db, "env_local_scale") == {}
     assert q.facet(db, "sample_id") == {}
+
+
+def test_envo_ancestor_query(db: Session):
+    env_local1 = fakes.EnvoTermFactory(label="local1")
+    env_local2 = fakes.EnvoTermFactory(label="local2")
+    fakes.EnvoAncestorFactory(term=env_local1, ancestor=env_local2)
+    fakes.BiosampleFactory(id="sample1", env_local_scale=env_local1)
+    fakes.BiosampleFactory(id="sample2", env_local_scale=env_local2)
+    fakes.BiosampleFactory(id="sample3", env_local_scale=env_local2)
+    db.commit()
+
+    q = query.BiosampleQuerySchema(conditions=[{"field": "env_local_scale", "value": "local1"}])
+    assert {s.id for s in q.execute(db)} == {"sample1"}
+
+    q = query.BiosampleQuerySchema(conditions=[{"field": "env_local_scale", "value": "local2"}])
+    assert {s.id for s in q.execute(db)} == {"sample1", "sample2", "sample3"}
+
+
+def test_envo_ancestor_facet(db: Session):
+    env_local1 = fakes.EnvoTermFactory(label="local1")
+    env_local2 = fakes.EnvoTermFactory(label="local2")
+    env_local3 = fakes.EnvoTermFactory(label="local3")
+    fakes.EnvoAncestorFactory(term=env_local1, ancestor=env_local2)
+    fakes.BiosampleFactory(id="sample1", env_local_scale=env_local1)
+    fakes.BiosampleFactory(id="sample2", env_local_scale=env_local2)
+    fakes.BiosampleFactory(id="sample3", env_local_scale=env_local2)
+    fakes.BiosampleFactory(id="sample4", env_local_scale=env_local3)
+    db.commit()
+
+    q = query.BiosampleQuerySchema(conditions=[])
+    assert q.facet(db, "env_local_scale") == {
+        "local1": 1,
+        "local2": 3,
+        "local3": 1,
+    }
+
+    q = query.BiosampleQuerySchema(conditions=[{"field": "env_local_scale", "value": "local1"}])
+    assert q.facet(db, "env_local_scale") == {
+        "local1": 1,
+        "local2": 1,
+    }
+
+    q = query.BiosampleQuerySchema(conditions=[{"field": "env_local_scale", "value": "local2"}])
+    assert q.facet(db, "env_local_scale") == {
+        "local1": 1,
+        "local2": 3,
+    }
