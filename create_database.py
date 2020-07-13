@@ -21,7 +21,9 @@ NOW = datetime.now().isoformat()
 date_re = re.compile(r"^\d{2}$")
 # 23-FEB-18 01.10.55.869000000 PM
 date_fmt = r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M"
-envo_url = "http://purl.obolibrary.org/obo/envo.json"
+envo_url = (
+    "https://raw.githubusercontent.com/EnvironmentOntology/envo/master/subsets/envo-basic.json"
+)
 
 JsonValueType = Dict[str, str]
 JsonObjectType = Dict[str, Any]
@@ -96,6 +98,7 @@ def populate_envo_ancestor(
     term_id: str,
     node: str,
     edges: Dict[str, Set[str]],
+    all_nodes: Set[str],
     direct: bool,
     visited: Set[str],
 ):
@@ -105,6 +108,9 @@ def populate_envo_ancestor(
         return
     visited = visited.union({node})
     for parent in edges[node]:
+        if parent not in all_nodes:
+            continue  # skip ancestors outside the simplified hierarchy
+
         statement = insert(models.EnvoAncestor.__table__).values(
             id=term_id, ancestor_id=parent, direct=direct
         )
@@ -116,7 +122,10 @@ def populate_envo_ancestor(
             statement = statement.on_conflict_do_nothing(index_elements=["id", "ancestor_id"])
         db.execute(statement)
     for parent in edges[node]:
-        populate_envo_ancestor(db, term_id, parent, edges, False, visited)
+        if parent not in all_nodes:
+            continue  # skip ancestors outside the simplified hierarchy
+
+        populate_envo_ancestor(db, term_id, parent, edges, all_nodes, False, visited)
 
 
 def populate_envo(db: Session):
@@ -134,7 +143,7 @@ def populate_envo(db: Session):
             if id != parent:
                 direct_ancestors[id].add(parent)
 
-        ids: List[str] = []
+        ids: Set[str] = set()
         for node in graph["nodes"]:
             if not node["id"].startswith("http://purl.obolibrary.org/obo/"):
                 continue
@@ -143,12 +152,12 @@ def populate_envo(db: Session):
             label = node.pop("lbl", "")
             data = node.get("meta", {})
             db.add(models.EnvoTerm(id=id, label=label, data=data))
-            ids.append(id)
+            ids.add(id)
 
         db.flush()
         for node in ids:
             db.add(models.EnvoAncestor(id=node, ancestor_id=node, direct=False))
-            populate_envo_ancestor(db, node, node, direct_ancestors, True, set())
+            populate_envo_ancestor(db, node, node, direct_ancestors, ids, True, set())
 
     db.commit()
 
