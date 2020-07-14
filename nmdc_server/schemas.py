@@ -61,8 +61,8 @@ class DatabaseSummary(BaseModel):
 
 # study
 class StudyBase(AnnotatedBase):
-    principal_investigator_websites: List[str] = Field(default_factory=list)
-    publication_dois: List[str] = Field(default_factory=list)
+    principal_investigator_websites: List[str] = []
+    publication_dois: List[str] = []
     gold_name: str = ""
     gold_description: str = ""
     scientific_objective: str = ""

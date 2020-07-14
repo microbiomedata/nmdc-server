@@ -22,6 +22,7 @@ def connection():
     database.metadata.bind = engine
     _db.configure(bind=engine)
     try:
+        database.metadata.drop_all()
         database.metadata.create_all()
         yield _db
     finally:

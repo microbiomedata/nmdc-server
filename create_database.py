@@ -11,7 +11,7 @@ from alembic.config import Config
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from nmdc_server import crud, models, schemas
+from nmdc_server import crud, database, models, schemas
 from nmdc_server.config import Settings
 from nmdc_server.database import create_session, metadata
 
@@ -262,7 +262,8 @@ def ingest_data_objects(db: Session, data_object_map: Dict[str, str]):
     db.commit()
 
 
-def main():
+def main(*args):
+    database.testing = "--testing" in args
     settings = Settings()
     with create_session() as db:
         create_tables(db, settings)
@@ -274,4 +275,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main(*sys.argv[1:])

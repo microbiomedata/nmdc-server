@@ -1,7 +1,8 @@
-from typing import Any, Dict, List, TypedDict
+from typing import Any, Dict, List
 
 from fastapi import Query, Request, Response
 from sqlalchemy import orm
+from typing_extensions import TypedDict
 
 
 class PaginatedResponse(TypedDict):
