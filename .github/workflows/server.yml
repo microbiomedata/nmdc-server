@@ -32,6 +32,3 @@ jobs:
         pip install tox tox-gh-actions
     - name: Test with tox
       run: tox
-    - name: Test data ingest
-      run: |
-        python create_database.py
