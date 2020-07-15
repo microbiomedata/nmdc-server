@@ -11,7 +11,7 @@
 <script>
 import { GChart } from 'vue-google-charts';
 
-import { ecosystems } from '../encoding';
+import { ecosystems } from '@/encoding';
 
 export default {
   name: 'EcosystemChart',

@@ -46,7 +46,7 @@
         </v-list-item-content>
       </v-list-item>
       <template v-for="field in displayFields">
-        <template v-if="!fields[field] || !fields[field].hide">
+        <template v-if="!getField(field) || getField(field).hide">
           <v-tooltip
             v-if="field.startsWith('open_')"
             :key="field"
@@ -82,8 +82,8 @@
                 v-on="on"
               >
                 <v-list-item-avatar>
-                  <v-icon>
-                    {{ fields[field] ? fields[field].icon : 'mdi-text' }}
+                  <v-icon v-if="getField(field)">
+                    {{ getField(field).icon || 'mdi-text' }}
                   </v-icon>
                 </v-list-item-avatar>
                 <v-list-item-content>
@@ -106,11 +106,11 @@
 <script>
 import { isObject } from 'lodash';
 
+import { types, ecosystemFields, getField } from '@/encoding';
+import { api } from '@/data/api';
 import {
   typeWithCardinality, fieldDisplayName, valueDisplayName,
-} from '../util';
-import { types, fields } from '../encoding';
-import api from '../data/api';
+} from '@/util';
 
 export default {
   props: {
@@ -125,14 +125,7 @@ export default {
   },
   data: () => ({
     types,
-    fields,
-    ecosystemFields: [
-      'ecosystem',
-      'ecosystem_category',
-      'ecosystem_type',
-      'ecosystem_subtype',
-      'specific_ecosystem',
-    ],
+    ecosystemFields,
     relatedTypes: [
       { type: 'study' },
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metagenome' }] },
@@ -141,7 +134,7 @@ export default {
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metabolomics' }] },
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Lipidomics' }] },
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Organic Matter Characterization' }] },
-      { type: 'sample' },
+      { type: 'biosample' },
       { type: 'data_object' },
     ],
   }),
@@ -157,12 +150,12 @@ export default {
     },
   },
   methods: {
+    getField,
     fieldDisplayName,
     valueDisplayName,
     typeWithCardinality,
     selectField(field) {
       this.$emit('selected', {
-        type: this.type,
         conditions: [{ field, op: '==', value: this.item[field] }],
       });
     },
@@ -177,7 +170,7 @@ export default {
       ];
     },
     relatedTypeCount(relatedType) {
-      return api.query(relatedType.type, this.relatedTypeConditions(relatedType)).length;
+      return api.searchCount(relatedType.type, this.relatedTypeConditions(relatedType));
     },
     relatedTypeDescription(relatedType) {
       const n = this.relatedTypeCount(relatedType);

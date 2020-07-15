@@ -57,7 +57,7 @@ const types = {
     plural: 'organic matter characterizations',
     visible: false,
   },
-  sample: {
+  biosample: {
     icon: 'mdi-earth',
     heading: 'Habitats',
     name: 'sample',
@@ -113,15 +113,12 @@ const fields = {
   },
   ecosystem: {
     icon: 'mdi-pine-tree',
-    hide: true,
   },
   ecosystem_category: {
     icon: 'mdi-pine-tree',
-    hide: true,
   },
   ecosystem_type: {
     icon: 'mdi-pine-tree',
-    hide: true,
   },
   ecosystem_subtype: {
     icon: 'mdi-pine-tree',
@@ -463,11 +460,36 @@ const ecosystemCategory = {
   },
 };
 
+const tables = [
+  'study',
+  'data_object',
+  'sample',
+  'project',
+];
+
+const ecosystemFields = [
+  'ecosystem',
+  'ecosystem_category',
+  'ecosystem_type',
+  'ecosystem_subtype',
+  'specific_ecosystem',
+];
+
+function getField(name) {
+  if (name in fields) {
+    return fields[name];
+  }
+  return null;
+}
+
 export {
   types,
+  tables,
   fields,
   ecosystems,
   omicsTypes,
   values,
   ecosystemCategory,
+  ecosystemFields,
+  getField,
 };

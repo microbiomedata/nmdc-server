@@ -10,14 +10,10 @@ module.exports = {
     },
     proxy: 'http://localhost:8000',
   },
-  configureWebpack: {
-    module: {
-      rules: [
-        {
-          test: /\.tsv$/i,
-          use: 'raw-loader',
-        },
-      ],
-    },
+  chainWebpack: (config) => {
+    // https://webpack.js.org/configuration/output/#outputstrictmoduleexceptionhandling
+    config.output.strictModuleExceptionHandling(true);
+    // Required for https://classic.yarnpkg.com/en/docs/cli/link/
+    config.resolve.symlinks(false);
   },
 };

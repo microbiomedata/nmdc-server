@@ -121,8 +121,8 @@ import { isObject } from 'lodash';
 import Cite from 'citation-js';
 import {
   typeWithCardinality, valueCardinality, fieldDisplayName, valueDisplayName,
-} from '../util';
-import { types, fields } from '../encoding';
+} from '@/util';
+import { fields } from '@/encoding';
 
 export default {
   props: {
@@ -132,7 +132,6 @@ export default {
     },
   },
   data: () => ({
-    types,
     fields,
     doiCitation: '',
     publications: [],
