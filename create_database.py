@@ -6,8 +6,8 @@ import re
 from typing import Any, Dict, List, Set, Union
 from urllib import request
 
-from alembic import command
-from alembic.config import Config
+# from alembic import command
+# from alembic.config import Config
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -76,10 +76,11 @@ def load_common_fields(json_object: JsonObjectType, include_dates: bool = True) 
 
 def create_tables(db, settings):
     engine = db.bind
+    metadata.drop_all()
     metadata.create_all(engine)
-    alembic_cfg = Config(str(HERE / "alembic.ini"))
-    alembic_cfg.set_main_option("sqlalchemy.url", settings.database_uri)
-    command.stamp(alembic_cfg, "head")
+    # alembic_cfg = Config(str(HERE / "alembic.ini"))
+    # alembic_cfg.set_main_option("sqlalchemy.url", settings.database_uri)
+    # command.stamp(alembic_cfg, "head")
 
     db.query(models.DataObject).delete()
     db.query(models.Biosample).delete()
