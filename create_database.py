@@ -255,7 +255,6 @@ def ingest_data_objects(db: Session, data_object_map: Dict[str, str]):
                 {
                     "project_id": data_object_map[data_object["id"]],
                     "file_size_bytes": int(p.pop("file_size_bytes")),
-                    "annotations": p,
                 }
             )
             data_object_db = models.DataObject(**data_object)

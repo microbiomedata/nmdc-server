@@ -9,11 +9,14 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     String,
+    Table,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base
 
@@ -135,12 +138,99 @@ class Biosample(Base, AnnotatedModel):
         return f"https://gold.jgi.doe.gov/biosample?id={self.id}"
 
 
-class DataObject(Base, AnnotatedModel):
+class DataObject(Base):
     __tablename__ = "data_object"
 
-    project_id = Column(String, ForeignKey("project.id"), nullable=False)
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=False, default="")
     file_size_bytes = Column(BigInteger, nullable=False)
+    md5_checksum = Column(String, nullable=True)
+
+    project_id = Column(String, ForeignKey("project.id"), nullable=False)
     project = relationship("Project", backref="data_objects")
+
+
+class PipelineStep:
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    git_url = Column(String, nullable=False)
+    started_at_time = Column(DateTime, nullable=False)
+    ended_at_time = Column(DateTime, nullable=False)
+    execution_resource = Column(String, nullable=False)
+
+    @declared_attr
+    def project_id(cls):
+        return Column(String, ForeignKey("project.id"), nullable=False)
+
+    @declared_attr
+    def project(cls):
+        return relationship("Project")
+
+    stats = Column(JSONB, nullable=False, default=dict)
+
+    has_inputs = association_proxy("inputs", "id")
+    has_outpus = association_proxy("outputs", "id")
+
+    @classmethod
+    def input_association(cls, table: str) -> Table:
+        return Table(
+            f"{table}_input_association",
+            Base.metadata,
+            Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
+            Column("data_object_id", String, ForeignKey("data_object.id")),
+        )
+
+    @classmethod
+    def input_relationship(cls, association: Table) -> "RelationshipProperty[DataObject]":
+        return relationship("DataObject", secondary=association,)
+
+    @classmethod
+    def output_association(cls, table: str) -> Table:
+        return Table(
+            f"{table}_output_association",
+            Base.metadata,
+            Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
+            Column("data_object_id", String, ForeignKey("data_object.id")),
+        )
+
+    @classmethod
+    def output_relationship(cls, association: Table) -> "RelationshipProperty[DataObject]":
+        return relationship("DataObject", secondary=association,)
+
+
+reads_qc_input_association = PipelineStep.input_association("reads_qc")
+reads_qc_output_association = PipelineStep.output_association("reads_qc")
+
+
+class ReadsQC(Base, PipelineStep):
+    __tablename__ = "reads_qc"
+
+    inputs = PipelineStep.input_relationship(reads_qc_input_association)
+    outputs = PipelineStep.output_relationship(reads_qc_output_association)
+
+
+metagenome_assembly_input_association = PipelineStep.input_association("metagenome_assembly")
+metagenome_assembly_output_association = PipelineStep.output_association("metagenome_assembly")
+
+
+class MetagenomeAssembly(Base, PipelineStep):
+    __tablename__ = "metagenome_assembly"
+
+    inputs = PipelineStep.input_relationship(metagenome_assembly_input_association)
+    outputs = PipelineStep.output_relationship(metagenome_assembly_output_association)
+
+
+metagenome_annotation_input_association = PipelineStep.input_association("metagenome_annotation")
+metagenome_annotation_output_association = PipelineStep.output_association("metagenome_annotation")
+
+
+class MetagenomeAnnotation(Base, PipelineStep):
+    __tablename__ = "metagenome_annotation"
+
+    inputs = PipelineStep.input_relationship(metagenome_annotation_input_association)
+    outputs = PipelineStep.output_relationship(metagenome_annotation_output_association)
 
 
 ModelType = Union[Type[Study], Type[Project], Type[Biosample], Type[DataObject]]

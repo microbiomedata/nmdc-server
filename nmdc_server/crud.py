@@ -27,10 +27,13 @@ def get_or_create(
 # summary
 def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSummary:
     count = db.query(model).count()
-    attribute = func.jsonb_object_keys(model.annotations)
-    q = db.query(attribute, func.count()).group_by(attribute)
+    attributes: Dict[str, Any] = {}
+    annotations = getattr(model, "annotations", None)
+    if annotations:
+        attribute = func.jsonb_object_keys(annotations)
+        q = db.query(attribute, func.count()).group_by(attribute)
+        attributes.update({row[0]: row[1] for row in q})
 
-    attributes = {row[0]: row[1] for row in q}
     for column in model.__table__.columns:
         if column.name not in ["annotations", "alternate_identifiers"] and "_id" not in column.name:
             attributes[column.name] = count

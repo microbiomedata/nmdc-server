@@ -4,7 +4,7 @@ from uuid import uuid4
 
 from factory import Faker, post_generation, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
-from faker.providers import BaseProvider, date_time, geo, internet, lorem, python
+from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, python
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
@@ -29,6 +29,7 @@ Faker.add_provider(date_time)
 Faker.add_provider(geo)
 Faker.add_provider(internet)
 Faker.add_provider(lorem)
+Faker.add_provider(misc)
 Faker.add_provider(python)
 
 
@@ -163,10 +164,14 @@ class BiosampleFactory(AnnotatedFactory):
     project = SubFactory(ProjectFactory)
 
 
-class DataObjectFactory(AnnotatedFactory):
+class DataObjectFactory(SQLAlchemyModelFactory):
     class Meta:
         model = models.DataObject
         sqlalchemy_session = db
 
+    id: str = Faker("pystr")
+    name: str = Faker("word")
+    description: str = Faker("sentence")
     file_size_bytes = Faker("pyint")
+    md5_checksum = Faker("md5", raw_output=False)
     project = SubFactory(ProjectFactory)
