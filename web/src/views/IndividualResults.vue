@@ -58,7 +58,7 @@ export default {
       <AttributeList
         :type="type"
         :item="result"
-        @selected="setSelected($event)"
+        @selected="$router.push({ name: 'Search', query: $event })"
       />
     </v-container>
   </v-main>

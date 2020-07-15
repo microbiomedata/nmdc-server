@@ -83,9 +83,9 @@ export default {
         [fieldDisplayName(this.field), 'Count', { role: 'style' }, { role: 'annotation' }],
         ...this.facets.map(
           (facet) => [
-            facet.value,
+            facet.facet,
             facet.count,
-            encoding.values[facet.value] ? encoding.values[facet.value].color : 'grey',
+            encoding.values[facet.facet] ? encoding.values[facet.facet].color : 'grey',
             facet.count,
           ],
         ),
@@ -128,7 +128,7 @@ export default {
         },
         legend: 'none',
         pieSliceText: 'label',
-        slices: this.facets.map((facet) => ({ color: encoding.values[facet.value] ? encoding.values[facet.value].color : 'grey' })),
+        slices: this.facets.map((facet) => ({ color: encoding.values[facet.facet] ? encoding.values[facet.facet].color : 'grey' })),
         title: this.showTitle ? fieldDisplayName(this.field) : null,
       };
     },

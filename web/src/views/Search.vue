@@ -35,14 +35,10 @@ export default {
 
   watch: {
     type() { this.$store.dispatch('refreshAll'); },
-    conditions() {
-      console.log('conditions');
-      this.$store.dispatch('refreshAll');
-    },
+    conditions() { this.$store.dispatch('refreshAll'); },
   },
 
   async created() {
-    console.log('here');
     await this.$store.dispatch('load');
     this.$store.dispatch('refreshAll');
   },

@@ -57,7 +57,7 @@ const types = {
     plural: 'organic matter characterizations',
     visible: false,
   },
-  sample: {
+  biosample: {
     icon: 'mdi-earth',
     heading: 'Habitats',
     name: 'sample',
@@ -475,6 +475,13 @@ const ecosystemFields = [
   'specific_ecosystem',
 ];
 
+function getField(name) {
+  if (name in fields) {
+    return fields[name];
+  }
+  return null;
+}
+
 export {
   types,
   tables,
@@ -484,4 +491,5 @@ export {
   values,
   ecosystemCategory,
   ecosystemFields,
+  getField,
 };

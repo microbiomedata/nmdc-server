@@ -84,7 +84,7 @@ export default new Vuex.Store<State>({
     },
     type: (state): entityType => {
       const routerType = state.route.params.type;
-      return asType(routerType);
+      return routerType ? asType(routerType) : undefined;
     },
     conditions: (state): Condition[] => state.route.query.conditions || [],
   },
@@ -152,7 +152,6 @@ export default new Vuex.Store<State>({
         default:
           throw new Error(`Unexpected type: ${type}`);
       }
-      console.log(type, results);
       commit('setResults', { type, results });
     },
     async refreshAll({ dispatch, state, commit }) {

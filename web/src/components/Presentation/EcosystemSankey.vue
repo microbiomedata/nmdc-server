@@ -77,8 +77,8 @@ export default {
       const hist = {};
       this.data.forEach((sample) => {
         const habitat = [
-          sample.ecosystem,
-          ` ${sample.ecosystem_category}`,
+          sample.annotations.ecosystem,
+          ` ${sample.annotations.ecosystem_category}`,
         ].join(':');
         if (hist[habitat] === undefined) {
           hist[habitat] = 0;
@@ -87,8 +87,8 @@ export default {
       });
       this.data.forEach((sample) => {
         const habitat = [
-          ` ${sample.ecosystem_category}`,
-          `  ${sample.ecosystem_type}`,
+          ` ${sample.annotations.ecosystem_category}`,
+          `  ${sample.annotations.ecosystem_type}`,
         ].join(':');
         if (hist[habitat] === undefined) {
           hist[habitat] = 0;
@@ -97,8 +97,8 @@ export default {
       });
       this.data.forEach((sample) => {
         const habitat = [
-          `  ${sample.ecosystem_type}`,
-          `   ${sample.ecosystem_subtype}`,
+          `  ${sample.annotations.ecosystem_type}`,
+          `   ${sample.annotations.ecosystem_subtype}`,
         ].join(':');
         if (hist[habitat] === undefined) {
           hist[habitat] = 0;
@@ -107,8 +107,8 @@ export default {
       });
       this.data.forEach((sample) => {
         const habitat = [
-          `   ${sample.ecosystem_subtype}`,
-          `    ${sample.specific_ecosystem}`,
+          `   ${sample.annotations.ecosystem_subtype}`,
+          `    ${sample.annotations.specific_ecosystem}`,
         ].join(':');
         if (hist[habitat] === undefined) {
           hist[habitat] = 0;
