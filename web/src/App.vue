@@ -57,6 +57,8 @@ export default {
         >
       </router-link>
     </v-app-bar>
-    <router-view />
+    <keep-alive>
+      <router-view />
+    </keep-alive>
   </v-app>
 </template>

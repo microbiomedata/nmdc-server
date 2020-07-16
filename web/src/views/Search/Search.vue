@@ -25,7 +25,7 @@ export default {
   data: () => ({ ecosystemFields }),
 
   computed: {
-    ...mapState(['results', 'facetSummaries']),
+    ...mapState(['results']),
     ...mapGetters(['type', 'conditions']),
     typeResults() {
       const tr = this.results[this.type];

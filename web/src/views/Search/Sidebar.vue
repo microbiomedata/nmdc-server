@@ -1,29 +1,28 @@
 <script>
-import { mapGetters, mapActions } from 'vuex';
+import { mapGetters } from 'vuex';
 import { types } from '@/encoding';
+import { fieldDisplayName } from '@/util';
+
 import FacetedSearch from '@/components/Presentation/FacetedSearch.vue';
+import MatchList from './MatchList.vue';
 
 export default {
-  components: { FacetedSearch },
+  components: {
+    FacetedSearch,
+    MatchList,
+  },
   data: () => ({
     types,
-    tableHeaders: [
-      {
-        text: 'Facet', value: 'facet', sortable: true,
-      },
-      {
-        text: 'Count', value: 'count', sortable: true, width: 90,
-      },
-    ],
-
   }),
   computed: {
-    ...mapGetters(['type', 'conditions', 'primitiveFields', 'facetSummary']),
+    ...mapGetters(['type', 'conditions', 'primitiveFields']),
     typeFields() {
       return this.primitiveFields(this.type);
     },
   },
-  methods: mapActions(['fetchFacetSummary']),
+  methods: {
+    fieldDisplayName,
+  },
 };
 </script>
 
@@ -69,12 +68,15 @@ export default {
       :fields="typeFields"
     >
       <template #menu="{ field, isOpen }">
-        <v-data-table
-          v-if="isOpen && fetchFacetSummary(field) && facetSummary(type)[field]"
-          dense
-          :items="facetSummary(type)[field]"
-          :headers="tableHeaders"
-        />
+        <div>
+          <v-card-title class="pb-0">
+            {{ fieldDisplayName(field) }}
+          </v-card-title>
+          <MatchList
+            v-if="isOpen"
+            :field="field"
+          />
+        </div>
       </template>
     </FacetedSearch>
   </v-navigation-drawer>

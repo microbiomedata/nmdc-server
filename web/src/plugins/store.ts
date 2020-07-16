@@ -82,9 +82,6 @@ export default new Vuex.Store<State>({
       }
       return undefined;
     },
-    facetSummary: (state) => (type: string) => (
-      state.facetSummaries[asType(type)]
-    ),
     type: (state): entityType | undefined => {
       const routerType = state.route.params.type;
       return routerType ? asType(routerType) : undefined;
@@ -126,7 +123,8 @@ export default new Vuex.Store<State>({
         commit('setDBSummary', summary);
       }
     },
-    async fetchFacetSummary({ commit, state, getters }, field) {
+    async fetchFacetSummary({ commit, state, getters }, { field, conditions }) {
+      console.log('fetchFacetSummary', field, conditions);
       /* Fetch facet summaries for a given field, and cache it */
       const type = asType(getters.type);
       const existing = state.facetSummaries[type][field];
@@ -136,7 +134,6 @@ export default new Vuex.Store<State>({
       const loadingname = `${field}-summary`;
       if (!state.loading[loadingname]) {
         commit('setLoading', { name: loadingname, loading: true });
-        const { conditions } = getters;
         try {
           const summary = await api.getFacetSummary(type, field, conditions);
           commit('setFacetSummary', { type, field, summary });
@@ -171,11 +168,13 @@ export default new Vuex.Store<State>({
     async refreshAll({
       dispatch, state, commit, getters,
     }) {
+      console.log('refreshAll', state.loading);
       if (!state.loading.all) {
         commit('setLoading', { name: 'all', loading: true });
         try {
           await dispatch('refreshResults');
         } finally {
+          console.log('here');
           commit('resetFacetSummaries', getters.type);
           commit('setLoading', { name: 'all', loading: false });
         }

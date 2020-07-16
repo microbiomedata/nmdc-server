@@ -25,6 +25,7 @@
           <v-menu
             :key="field"
             offset-x
+            :close-on-content-click="false"
             @input="toggleMenu(field, $event)"
           >
             <template #activator="{ on }">
@@ -37,7 +38,10 @@
                 </v-list-item-icon>
               </v-list-item>
             </template>
-            <v-card width="500">
+            <v-card
+              width="500"
+              max-height="90vh"
+            >
               <slot
                 name="menu"
                 v-bind="{ field, isOpen: menuState[field] }"
@@ -116,7 +120,8 @@ export default {
   computed: {
     filteredFields() {
       if (this.filterText) {
-        return this.fields.filter((f) => f.indexOf(this.filterText) >= 0);
+        return this.fields.filter((f) => f.toLowerCase()
+          .indexOf(this.filterText.toLowerCase()) >= 0);
       }
       return this.fields;
     },
