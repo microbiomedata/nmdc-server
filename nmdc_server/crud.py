@@ -51,7 +51,6 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         study=get_table_summary(db, models.Study),
         project=get_table_summary(db, models.Project),
         biosample=get_table_summary(db, models.Biosample),
-        data_object=get_table_summary(db, models.DataObject),
     )
 
 
@@ -174,14 +173,3 @@ def create_data_object(db: Session, data_object: schemas.DataObjectCreate) -> mo
 def delete_data_object(db: Session, data_object: models.DataObject) -> None:
     db.delete(data_object)
     db.commit()
-
-
-def search_data_object(db: Session, conditions: List[query.ConditionSchema]) -> Query:
-    return query.DataObjectQuerySchema(conditions=conditions).execute(db)
-
-
-def facet_data_object(
-    db: Session, attribute: str, conditions: List[query.ConditionSchema]
-) -> query.FacetResponse:
-    facets = query.DataObjectQuerySchema(conditions=conditions).facet(db, attribute)
-    return query.FacetResponse(facets=facets)

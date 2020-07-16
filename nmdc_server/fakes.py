@@ -174,4 +174,3 @@ class DataObjectFactory(SQLAlchemyModelFactory):
     description: str = Faker("sentence")
     file_size_bytes = Faker("pyint")
     md5_checksum = Faker("md5", raw_output=False)
-    project = SubFactory(ProjectFactory)

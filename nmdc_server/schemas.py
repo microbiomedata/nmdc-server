@@ -56,7 +56,6 @@ class DatabaseSummary(BaseModel):
     study: TableSummary
     project: TableSummary
     biosample: TableSummary
-    data_object: TableSummary
 
 
 # study
@@ -107,6 +106,7 @@ class ProjectCreate(ProjectBase):
 class Project(ProjectBase):
     study_id: str
     open_in_gold: str
+    has_outputs: List[str]
 
     class Config:
         orm_mode = True
@@ -144,9 +144,12 @@ class Biosample(BiosampleBase):
 
 
 # data_object
-class DataObjectBase(AnnotatedBase):
-    project_id: str
+class DataObjectBase(BaseModel):
+    id: str
+    name: str
+    description: str = ""
     file_size_bytes: int
+    md5_checksum: Optional[str]
 
 
 class DataObjectCreate(DataObjectBase):
@@ -154,7 +157,49 @@ class DataObjectCreate(DataObjectBase):
 
 
 class DataObject(DataObjectBase):
-    project: Project
+    class Config:
+        orm_mode = True
+
+
+class PipelineStepBase(BaseModel):
+    id: str
+    name: str
+    type: str
+    git_url: str
+    started_at_time: datetime
+    ended_at_time: datetime
+    execution_resource: str
+    project_id: str
+    stats: Dict[str, Union[int, float]]
+
+
+class PipelineStep(PipelineStepBase):
+    has_inputs: List[str]
+    has_outputs: List[str]
 
     class Config:
         orm_mode = True
+
+
+class ReadsQCBase(PipelineStepBase):
+    pass
+
+
+class ReadsQc(PipelineStep):
+    pass
+
+
+class MetagenomeAssemblyBase(PipelineStepBase):
+    pass
+
+
+class MetagenomeAssembly(PipelineStep):
+    pass
+
+
+class MetagenomeAnnotationBase(PipelineStepBase):
+    pass
+
+
+class MetagenomeAnnotation(PipelineStep):
+    pass

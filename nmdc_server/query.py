@@ -84,10 +84,12 @@ class Table(Enum):
     biosample = "biosample"
     study = "study"
     project = "project"
-    data_object = "data_object"
     env_broad_scale = "env_broad_scale"
     env_local_scale = "env_local_scale"
     env_medium = "env_medium"
+    reads_qc = "reads_qc"
+    metagenome_assembly = "metagenome_assemby"
+    metagenome_annotation = "metagenome_annotation"
 
     @property
     def model(self) -> Union[models.ModelType, AliasedClass]:
@@ -97,14 +99,18 @@ class Table(Enum):
             return models.Study
         elif self == Table.project:
             return models.Project
-        elif self == Table.data_object:
-            return models.DataObject
         elif self == Table.env_broad_scale:
             return EnvBroadScaleTerm
         elif self == Table.env_local_scale:
             return EnvLocalScaleTerm
         elif self == Table.env_medium:
             return EnvMediumTerm
+        elif self == Table.reads_qc:
+            return models.ReadsQC
+        elif self == Table.metagenome_assembly:
+            return models.MetagenomeAssembly
+        elif self == Table.metagenome_annotation:
+            return models.MetagenomeAnnotation
         raise Exception("Unknown table")
 
     def query(self, db: Session) -> Query:
@@ -112,7 +118,6 @@ class Table(Enum):
             query = (
                 db.query(distinct(models.Biosample.id).label("id"))
                 .join(models.Project)
-                .join(models.DataObject, isouter=True)
                 .join(models.Study)
             )
         elif self == Table.study:
@@ -120,21 +125,12 @@ class Table(Enum):
                 db.query(distinct(models.Study.id).label("id"))
                 .join(models.Project, isouter=True)
                 .join(models.Biosample, isouter=True)
-                .join(models.DataObject, isouter=True)
             )
         elif self == Table.project:
             query = (
                 db.query(distinct(models.Project.id).label("id"))
                 .join(models.Study)
                 .join(models.Biosample, isouter=True)
-                .join(models.DataObject, isouter=True)
-            )
-        elif self == Table.data_object:
-            query = (
-                db.query(distinct(models.DataObject.id).label("id"))
-                .join(models.Project)
-                .join(models.Biosample, isouter=True)
-                .join(models.Study)
             )
         else:
             raise Exception("Unknown table")
@@ -152,7 +148,6 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
     "sample_id": (Table.biosample, "id"),
     "biosample_id": (Table.biosample, "id"),
     "project_id": (Table.project, "id"),
-    "data_object_id": (Table.data_object, "id"),
     **_envo_keys,
 }
 
@@ -297,12 +292,6 @@ class BiosampleQuerySchema(BaseQuerySchema):
         return Table.biosample
 
 
-class DataObjectQuerySchema(BaseQuerySchema):
-    @property
-    def table(self) -> Table:
-        return Table.data_object
-
-
 class BaseSearchResponse(BaseModel):
     count: int
 
@@ -325,10 +314,6 @@ class StudySearchResponse(BaseSearchResponse):
 
 class ProjectSearchResponse(BaseSearchResponse):
     results: List[schemas.Project]
-
-
-class DataObjectSearchResponse(BaseSearchResponse):
-    results: List[schemas.DataObject]
 
 
 class FacetResponse(BaseModel):

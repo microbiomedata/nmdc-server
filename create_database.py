@@ -192,24 +192,30 @@ def ingest_studies(db: Session):
     db.commit()
 
 
-def ingest_projects(db: Session) -> Dict[str, str]:
-    data_objects: Dict[str, str] = {}
+def ingest_projects(db: Session):
     projects = []
 
     for p in load_json_objects(DATA / "gold_omics_processing.json"):
         assert len(p["part_of"]) == 1
         project = load_common_fields(p)
         project["study_id"] = coerce_id(p.pop("part_of")[0])
-        for key in p.pop("has_output", []):
-            data_objects[coerce_id(key)] = project["id"]
+        data_objects = p.pop("has_output", [])
 
         project["annotations"] = p
         projects.append(project)
         project_db = models.Project(**project)
-        db.add(project_db)
-    db.commit()
 
-    return data_objects
+        # https://stackoverflow.com/a/21670302
+        db.add(project_db)
+        if data_objects:
+            db.flush()
+            db.execute(
+                models.project_output_association.insert().values(
+                    [(project_db.id, d) for d in data_objects]
+                )
+            )
+
+    db.commit()
 
 
 def ingest_biosamples(db: Session):
@@ -240,7 +246,7 @@ def ingest_biosamples(db: Session):
     db.commit()
 
 
-def ingest_data_objects(db: Session, data_object_map: Dict[str, str]):
+def ingest_data_objects(db: Session):
     data_object_files = [
         DATA / "faa_fna_fastq_data_objects.json",
         DATA / "emsl_data_objects.json",
@@ -248,14 +254,8 @@ def ingest_data_objects(db: Session, data_object_map: Dict[str, str]):
     for file in data_object_files:
         for p in load_json_objects(file):
             data_object = load_common_fields(p, include_dates=False)
-            if data_object["id"] not in data_object_map:
-                # this is a data object with no known project
-                continue
             data_object.update(
-                {
-                    "project_id": data_object_map[data_object["id"]],
-                    "file_size_bytes": int(p.pop("file_size_bytes")),
-                }
+                {"file_size_bytes": int(p.pop("file_size_bytes")),}
             )
             data_object_db = models.DataObject(**data_object)
             db.add(data_object_db)
@@ -268,10 +268,10 @@ def main(*args):
     with create_session() as db:
         create_tables(db, settings)
         populate_envo(db)
+        ingest_data_objects(db)
         ingest_studies(db)
-        data_object_map = ingest_projects(db)
+        ingest_projects(db)
         ingest_biosamples(db)
-        ingest_data_objects(db, data_object_map)
 
 
 if __name__ == "__main__":

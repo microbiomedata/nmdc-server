@@ -101,13 +101,12 @@ def test_foreign_key_search(db: Session, table, condition, expected):
     assert {r.id for r in q.execute(db)} == expected
 
 
-@pytest.mark.parametrize("table", ["study", "project", "biosample", "data_object",])
+@pytest.mark.parametrize("table", ["study", "project", "biosample",])
 def test_basic_query(db: Session, table):
     tests: Dict[str, Tuple[fakes.AnnotatedFactory, query.BaseQuerySchema]] = {
         "study": (fakes.StudyFactory(), query.StudyQuerySchema()),
         "project": (fakes.ProjectFactory(), query.ProjectQuerySchema()),
         "biosample": (fakes.BiosampleFactory(), query.BiosampleQuerySchema()),
-        "data_object": (fakes.DataObjectFactory(), query.DataObjectQuerySchema()),
     }
     db.commit()
     q = tests[table][1].execute(db)

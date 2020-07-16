@@ -21,6 +21,34 @@ from sqlalchemy.orm.relationships import RelationshipProperty
 from nmdc_server.database import Base
 
 
+def input_association(table: str) -> Table:
+    return Table(
+        f"{table}_input_association",
+        Base.metadata,
+        Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
+        Column("data_object_id", String, ForeignKey("data_object.id")),
+        UniqueConstraint(f"{table}_id", "data_object_id"),
+    )
+
+
+def input_relationship(association: Table) -> "RelationshipProperty[DataObject]":
+    return relationship("DataObject", secondary=association,)
+
+
+def output_association(table: str) -> Table:
+    return Table(
+        f"{table}_output_association",
+        Base.metadata,
+        Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
+        Column("data_object_id", String, ForeignKey("data_object.id")),
+        UniqueConstraint(f"{table}_id", "data_object_id"),
+    )
+
+
+def output_relationship(association: Table) -> "RelationshipProperty[DataObject]":
+    return relationship("DataObject", secondary=association,)
+
+
 class EnvoTerm(Base):
     __tablename__ = "envo_term"
 
@@ -89,6 +117,9 @@ class Study(Base, AnnotatedModel):
         return f"https://gold.jgi.doe.gov/study?id={self.id}"
 
 
+project_output_association = output_association("project")
+
+
 class Project(Base, AnnotatedModel):
     __tablename__ = "project"
 
@@ -96,6 +127,8 @@ class Project(Base, AnnotatedModel):
     mod_date = Column(DateTime, nullable=False)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     study = relationship("Study", backref="projects")
+
+    outputs = output_relationship(project_output_association)
 
     @property
     def open_in_gold(self):
@@ -147,9 +180,6 @@ class DataObject(Base):
     file_size_bytes = Column(BigInteger, nullable=False)
     md5_checksum = Column(String, nullable=True)
 
-    project_id = Column(String, ForeignKey("project.id"), nullable=False)
-    project = relationship("Project", backref="data_objects")
-
 
 class PipelineStep:
     id = Column(String, primary_key=True)
@@ -159,6 +189,7 @@ class PipelineStep:
     started_at_time = Column(DateTime, nullable=False)
     ended_at_time = Column(DateTime, nullable=False)
     execution_resource = Column(String, nullable=False)
+    stats = Column(JSONB, nullable=False, default=dict)
 
     @declared_attr
     def project_id(cls):
@@ -168,72 +199,51 @@ class PipelineStep:
     def project(cls):
         return relationship("Project")
 
-    stats = Column(JSONB, nullable=False, default=dict)
-
     has_inputs = association_proxy("inputs", "id")
     has_outpus = association_proxy("outputs", "id")
 
-    @classmethod
-    def input_association(cls, table: str) -> Table:
-        return Table(
-            f"{table}_input_association",
-            Base.metadata,
-            Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
-            Column("data_object_id", String, ForeignKey("data_object.id")),
-        )
 
-    @classmethod
-    def input_relationship(cls, association: Table) -> "RelationshipProperty[DataObject]":
-        return relationship("DataObject", secondary=association,)
-
-    @classmethod
-    def output_association(cls, table: str) -> Table:
-        return Table(
-            f"{table}_output_association",
-            Base.metadata,
-            Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
-            Column("data_object_id", String, ForeignKey("data_object.id")),
-        )
-
-    @classmethod
-    def output_relationship(cls, association: Table) -> "RelationshipProperty[DataObject]":
-        return relationship("DataObject", secondary=association,)
-
-
-reads_qc_input_association = PipelineStep.input_association("reads_qc")
-reads_qc_output_association = PipelineStep.output_association("reads_qc")
+reads_qc_input_association = input_association("reads_qc")
+reads_qc_output_association = output_association("reads_qc")
 
 
 class ReadsQC(Base, PipelineStep):
     __tablename__ = "reads_qc"
 
-    inputs = PipelineStep.input_relationship(reads_qc_input_association)
-    outputs = PipelineStep.output_relationship(reads_qc_output_association)
+    inputs = input_relationship(reads_qc_input_association)
+    outputs = output_relationship(reads_qc_output_association)
 
 
-metagenome_assembly_input_association = PipelineStep.input_association("metagenome_assembly")
-metagenome_assembly_output_association = PipelineStep.output_association("metagenome_assembly")
+metagenome_assembly_input_association = input_association("metagenome_assembly")
+metagenome_assembly_output_association = output_association("metagenome_assembly")
 
 
 class MetagenomeAssembly(Base, PipelineStep):
     __tablename__ = "metagenome_assembly"
 
-    inputs = PipelineStep.input_relationship(metagenome_assembly_input_association)
-    outputs = PipelineStep.output_relationship(metagenome_assembly_output_association)
+    inputs = input_relationship(metagenome_assembly_input_association)
+    outputs = output_relationship(metagenome_assembly_output_association)
 
 
-metagenome_annotation_input_association = PipelineStep.input_association("metagenome_annotation")
-metagenome_annotation_output_association = PipelineStep.output_association("metagenome_annotation")
+metagenome_annotation_input_association = input_association("metagenome_annotation")
+metagenome_annotation_output_association = output_association("metagenome_annotation")
 
 
 class MetagenomeAnnotation(Base, PipelineStep):
     __tablename__ = "metagenome_annotation"
 
-    inputs = PipelineStep.input_relationship(metagenome_annotation_input_association)
-    outputs = PipelineStep.output_relationship(metagenome_annotation_output_association)
+    inputs = input_relationship(metagenome_annotation_input_association)
+    outputs = output_relationship(metagenome_annotation_output_association)
 
 
-ModelType = Union[Type[Study], Type[Project], Type[Biosample], Type[DataObject]]
+ModelType = Union[
+    Type[Study],
+    Type[Project],
+    Type[Biosample],
+    Type[ReadsQC],
+    Type[MetagenomeAssembly],
+    Type[MetagenomeAnnotation],
+]
 
 
 class Website(Base):
