@@ -5,21 +5,21 @@ import { ecosystemFields } from '@/encoding';
 import removeCondition from '@/data/utils';
 
 import FacetChart from '@/components/FacetChart.vue';
-
 import EcosystemChart from '@/components/Presentation/EcosystemChart.vue';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
-import FacetedSearch from '@/components/Presentation/FacetedSearch.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
 import SearchResults from '@/components/Presentation/SearchResults.vue';
 
+import Sidebar from './Sidebar.vue';
+
 export default {
   components: {
-    FacetedSearch,
     FacetChart,
     SearchResults,
     LocationMap,
     EcosystemChart,
     EcosystemSankey,
+    Sidebar,
   },
 
   data: () => ({ ecosystemFields }),
@@ -74,18 +74,7 @@ export default {
 
 <template>
   <div>
-    <v-navigation-drawer
-      app
-      clipped
-      permanent
-    >
-      <FacetedSearch
-        :conditions="conditions"
-        :type="type"
-        :facet-summaries="facetSummaries[type]"
-      />
-    </v-navigation-drawer>
-
+    <sidebar />
     <v-main>
       <v-container fluid>
         <v-row v-if="['biosample'].includes(type)">

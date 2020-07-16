@@ -1,12 +1,12 @@
 <script>
 import { mapGetters } from 'vuex';
 
-import AttributeList from '@/components/AttributeList.vue';
-
 import Sample from '@/components/Presentation/Sample.vue';
 import Study from '@/components/Presentation/Study.vue';
 import DataObject from '@/components/Presentation/DataObject.vue';
 import Project from '@/components/Presentation/Project.vue';
+
+import AttributeList from './AttributeList.vue';
 
 export default {
   components: {
@@ -58,7 +58,11 @@ export default {
       <AttributeList
         :type="type"
         :item="result"
-        @selected="$router.push({ name: 'Search', query: $event })"
+        @selected="$router.push({
+          name: 'Search',
+          params: { type: $event.type },
+          query: { conditions: $event.conditions },
+        })"
       />
     </v-container>
   </v-main>
