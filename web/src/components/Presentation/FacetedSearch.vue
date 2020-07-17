@@ -1,63 +1,65 @@
 <template>
-  <v-list
-    ref="list"
-    dense
-    class="compact"
-  >
-    <template v-for="(values, field) in facetSummaries">
-      <template
-        v-if="!(fields[field] && (fields[field].hide || fields[field].hideFacet))
-          && values.length && values[0].count > 1"
-      >
-        <v-subheader :key="field">
-          {{ fieldDisplayName(field) }}
-        </v-subheader>
-        <v-list-item-group
-          :key="`${field}-item`"
-          multiple
+  <div>
+    <v-text-field
+      v-model="filterText"
+      solo
+      label="search"
+      clearable
+      class="px-2"
+      dense
+      hide-details
+      outlined
+      flat
+      append-icon="mdi-magnify"
+    />
+    <v-list
+      ref="list"
+      dense
+      shaped
+      class="compact"
+    >
+      <template v-for="field in filteredFields">
+        <template
+          v-if="!(fieldmeta[field] && (fieldmeta[field].hide || fieldmeta[field].hideFacet))"
         >
-          <v-list-item
-            v-for="val in values.slice(0, valueCount[field])"
-            :key="val.facet"
-            :disabled="val.count === 0"
-            :value="val.facet"
-            class="overflow"
+          <v-menu
+            :key="field"
+            offset-x
+            :close-on-content-click="false"
+            @input="toggleMenu(field, $event)"
           >
-            <v-list-item-content>
-              {{ valueDisplayName(field, val.facet) }}
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-list-item-action-text v-text="val.count" />
-            </v-list-item-action>
-          </v-list-item>
-        </v-list-item-group>
-        <v-list-item
-          v-if="valueCount[field] < values.length"
-          :key="`${field}-more`"
-          @click="valueCount[field] += 10"
-        >
-          <v-list-item-content
-            class="blue--text text--darken-4 caption"
-          >
-            more
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item
-          v-if="valueCount[field] > 5"
-          :key="`${field}-less`"
-          @click="valueCount[field] = 5"
-        >
-          <v-list-item-content
-            class="blue--text text--darken-4 caption"
-          >
-            less
-          </v-list-item-content>
-        </v-list-item>
+            <template #activator="{ on }">
+              <v-list-item
+                v-show="!hasActiveConditions(field)"
+                v-on="on"
+              >
+                <v-list-item-content>
+                  <v-list-item-title> {{ fieldDisplayName(field) }} </v-list-item-title>
+                </v-list-item-content>
+                <v-list-item-icon>
+                  <v-icon> mdi-play </v-icon>
+                </v-list-item-icon>
+              </v-list-item>
+            </template>
+            <v-card
+              width="500"
+              max-height="90vh"
+            >
+              <slot
+                name="menu"
+                v-bind="{ field, isOpen: menuState[field] }"
+              />
+            </v-card>
+          </v-menu>
+        </template>
       </template>
-    </template>
-  </v-list>
+    </v-list>
+  </div>
 </template>
+
 <script>
+import Vue from 'vue';
+
 import { fieldDisplayName, valueDisplayName } from '@/util';
 import * as encoding from '@/encoding';
 
@@ -71,35 +73,35 @@ export default {
       type: Array,
       default: () => [],
     },
-    facetSummaries: {
-      type: Object,
-      default: () => ({}),
+    fields: {
+      type: Array,
+      default: () => [],
     },
   },
   data: () => ({
     valueCount: {},
-    fields: encoding.fields,
+    fieldmeta: encoding.fields,
+    filterText: '',
+    menuState: {},
   }),
+  computed: {
+    filteredFields() {
+      if (this.filterText) {
+        return this.fields.filter((f) => f.toLowerCase()
+          .indexOf(this.filterText.toLowerCase()) >= 0);
+      }
+      return this.fields;
+    },
+  },
   methods: {
     fieldDisplayName,
     valueDisplayName,
+    toggleMenu(category, value) {
+      Vue.set(this.menuState, category, value);
+    },
+    hasActiveConditions(category) {
+      return this.conditions.some((cond) => cond.field === category);
+    },
   },
 };
 </script>
-<style scoped>
-.overflow {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.v-list--dense.compact .v-list-item {
-  min-height: 10px;
-}
-.v-list--dense.compact .v-list-item .v-list-item__content {
-  padding: 0;
-}
-.v-list--dense.compact .v-list-item .v-list-item__action {
-  margin: 0 0 0 16px;
-}
-</style>

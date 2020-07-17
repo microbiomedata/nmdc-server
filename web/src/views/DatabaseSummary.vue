@@ -77,20 +77,15 @@ export default {
       default: [],
     },
   },
-
-  methods: {
-    changeType(newtype) {
-      this.$store.commit('setType', newtype);
-      this.$router.push({ name: 'Search', params: { type: newtype } });
-    },
-  },
 };
 </script>
 
 <template>
-  <Welcome
-    :samples="samples"
-    :stats="stats"
-    @set-type="changeType($event)"
-  />
+  <v-main>
+    <Welcome
+      :samples="samples"
+      :stats="stats"
+      @set-type="$store.dispatch('route', { name: 'Search', type: $event, conditions: [] })"
+    />
+  </v-main>
 </template>

@@ -33,7 +33,7 @@ interface State {
   };
   results: Results;
   route: any;
-  loading: boolean;
+  loading: Record<string, boolean>;
 }
 
 function asType(type: any) {
@@ -61,7 +61,7 @@ export default new Vuex.Store<State>({
       data_object: null,
     },
     route: undefined,
-    loading: false,
+    loading: {},
   },
   getters: {
     primitiveFields: (state) => (type: string) => {
@@ -82,11 +82,11 @@ export default new Vuex.Store<State>({
       }
       return undefined;
     },
-    type: (state): entityType => {
+    type: (state): entityType | undefined => {
       const routerType = state.route.params.type;
       return routerType ? asType(routerType) : undefined;
     },
-    conditions: (state): Condition[] => state.route.query.conditions || [],
+    conditions: (state): Condition[] => state.route.query.c || [],
   },
   mutations: {
     setDBSummary(state, resp: DatabaseSummaryResponse) {
@@ -103,8 +103,11 @@ export default new Vuex.Store<State>({
     }) {
       Vue.set(state.facetSummaries[type], field, summary);
     },
-    setLoading(state, loading) {
-      state.loading = loading;
+    resetFacetSummaries(state, type) {
+      Vue.set(state.facetSummaries, type, {});
+    },
+    setLoading(state, { name, loading }) {
+      Vue.set(state.loading, name, loading);
     },
   },
   actions: {
@@ -120,15 +123,22 @@ export default new Vuex.Store<State>({
         commit('setDBSummary', summary);
       }
     },
-    async refreshFacetSummaries({ commit, state, getters }) {
-      const { dbsummary } = state;
-      if (dbsummary) {
-        const type = asType(getters.type);
-        const { conditions } = getters;
-        Object.keys(dbsummary[type].attributes).forEach(async (field) => {
+    async fetchFacetSummary({ commit, state, getters }, { field, conditions }) {
+      /* Fetch facet summaries for a given field, and cache it */
+      const type = asType(getters.type);
+      const existing = state.facetSummaries[type][field];
+      if (existing) {
+        return;
+      }
+      const loadingname = `${field}-summary`;
+      if (!state.loading[loadingname]) {
+        commit('setLoading', { name: loadingname, loading: true });
+        try {
           const summary = await api.getFacetSummary(type, field, conditions);
           commit('setFacetSummary', { type, field, summary });
-        });
+        } finally {
+          commit('setLoading', { name: loadingname, loading: false });
+        }
       }
     },
     async refreshResults({ commit, getters }) {
@@ -154,23 +164,43 @@ export default new Vuex.Store<State>({
       }
       commit('setResults', { type, results });
     },
-    async refreshAll({ dispatch, state, commit }) {
-      if (!state.loading) {
-        commit('setLoading', true);
-        await Promise.all([
-          dispatch('refreshResults'),
-          dispatch('refreshFacetSummaries'),
-        ]).finally(() => {
-          commit('setLoading', false);
-        });
+    async refreshAll({
+      dispatch, state, commit, getters,
+    }) {
+      if (!state.loading.all) {
+        commit('setLoading', { name: 'all', loading: true });
+        try {
+          await dispatch('refreshResults');
+        } finally {
+          commit('resetFacetSummaries', getters.type);
+          commit('setLoading', { name: 'all', loading: false });
+        }
       }
     },
     async load({ dispatch }) {
-      /* TODO: Load type and conditions from router */
       await Promise.all([
         dispatch('fetchAllSamples'),
         dispatch('fetchDBSummary'),
       ]);
+    },
+    async route({ dispatch, state }, { name, type, conditions }) {
+      /**
+       * Use the vuex route action when a route change
+       * involves a change in type or conditions
+       */
+      if (name || type) {
+        router.push({
+          name,
+          params: { type },
+          query: { c: conditions },
+        });
+      } else {
+        // Only change the query params to avoid double-routing
+        router.push({
+          query: { c: conditions },
+        });
+      }
+      dispatch('refreshAll');
     },
   },
 });

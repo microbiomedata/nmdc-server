@@ -3,8 +3,8 @@ import VueRouter from 'vue-router';
 
 import qs from 'qs';
 import DatabaseSummary from '@/views/DatabaseSummary.vue';
-import IndividualResults from '@/views/IndividualResults.vue';
-import Search from '@/views/Search.vue';
+import IndividualResults from '@/views/IndividualResults/IndividualResults.vue';
+import Search from '@/views/Search/Search.vue';
 
 Vue.use(VueRouter);
 

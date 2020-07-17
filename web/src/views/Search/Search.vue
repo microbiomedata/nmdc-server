@@ -5,27 +5,27 @@ import { ecosystemFields } from '@/encoding';
 import removeCondition from '@/data/utils';
 
 import FacetChart from '@/components/FacetChart.vue';
-
 import EcosystemChart from '@/components/Presentation/EcosystemChart.vue';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
-import FacetedSearch from '@/components/Presentation/FacetedSearch.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
 import SearchResults from '@/components/Presentation/SearchResults.vue';
 
+import Sidebar from './Sidebar.vue';
+
 export default {
   components: {
-    FacetedSearch,
     FacetChart,
     SearchResults,
     LocationMap,
     EcosystemChart,
     EcosystemSankey,
+    Sidebar,
   },
 
   data: () => ({ ecosystemFields }),
 
   computed: {
-    ...mapState(['results', 'facetSummaries']),
+    ...mapState(['results']),
     ...mapGetters(['type', 'conditions']),
     typeResults() {
       const tr = this.results[this.type];
@@ -33,39 +33,30 @@ export default {
     },
   },
 
-  watch: {
-    type() { this.$store.dispatch('refreshAll'); },
-    conditions() { this.$store.dispatch('refreshAll'); },
-  },
-
-  async created() {
-    await this.$store.dispatch('load');
+  created() {
+    this.$store.dispatch('load');
     this.$store.dispatch('refreshAll');
   },
 
   methods: {
     addSelected({ conditions }) {
-      this.$router.push({
-        query: {
-          conditions: [
-            ...this.conditions,
-            ...conditions,
-          ],
-        },
+      this.$store.dispatch('route', {
+        conditions: [
+          ...this.conditions,
+          ...conditions,
+        ],
       });
     },
     removeCondition(c) {
-      this.$router.push({ query: { conditions: removeCondition(this.conditions, c) } });
+      this.$store.dispatch('route', {
+        conditions: removeCondition(this.conditions, c),
+      });
     },
     navigateToSelected(id) {
-      this.$router.push({
+      this.$store.dispatch('route', {
         name: 'Individual Result',
-        params: {
-          type: this.type,
-        },
-        query: {
-          conditions: [{ field: 'id', op: '==', value: id }],
-        },
+        type: this.type,
+        conditions: [{ field: 'id', op: '==', value: id }],
       });
     },
   },
@@ -74,18 +65,7 @@ export default {
 
 <template>
   <div>
-    <v-navigation-drawer
-      app
-      clipped
-      permanent
-    >
-      <FacetedSearch
-        :conditions="conditions"
-        :type="type"
-        :facet-summaries="facetSummaries[type]"
-      />
-    </v-navigation-drawer>
-
+    <sidebar />
     <v-main>
       <v-container fluid>
         <v-row v-if="['biosample'].includes(type)">
