@@ -33,11 +33,6 @@ export default {
     },
   },
 
-  created() {
-    this.$store.dispatch('load');
-    this.$store.dispatch('refreshAll');
-  },
-
   methods: {
     addSelected({ conditions }) {
       this.$store.dispatch('route', {

@@ -43,7 +43,7 @@ function asType(type: any) {
   return t;
 }
 
-export default new Vuex.Store<State>({
+const store = new Vuex.Store<State>({
   state: {
     allSamples: undefined,
     dbsummary: undefined,
@@ -139,10 +139,9 @@ export default new Vuex.Store<State>({
       }
     },
     async refreshResults({ commit, getters }) {
-      const { conditions } = getters;
+      const { conditions, type } = getters;
       const params = { conditions };
       let results: ResultUnion;
-      const type = asType(getters.type);
       switch (type) {
         case 'study':
           results = await api.searchStudy(params);
@@ -194,7 +193,18 @@ export default new Vuex.Store<State>({
           query: { c: conditions },
         });
       }
-      dispatch('refreshAll');
     },
   },
 });
+
+router.afterEach((to, from) => {
+  if (to.name === 'Search') {
+    Vue.nextTick(() => {
+      // after hook still happens before vuex sync has a chance to capture the state.
+      // wait a tick before dispatch
+      store.dispatch('refreshAll');
+    });
+  }
+});
+
+export default store;
