@@ -32,8 +32,13 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
 
     attributes = {row[0]: row[1] for row in q}
     for column in model.__table__.columns:
-        if column.name not in ["annotations", "alternate_identifiers"]:
+        if column.name not in ["annotations", "alternate_identifiers"] and "_id" not in column.name:
             attributes[column.name] = count
+
+    if model == models.Biosample:
+        attributes["env_medium"] = count
+        attributes["env_local_scale"] = count
+        attributes["env_broad_scale"] = count
 
     return schemas.TableSummary(total=count, attributes=attributes)
 
