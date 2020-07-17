@@ -33,39 +33,29 @@ export default {
     },
   },
 
-  watch: {
-    type() { this.$store.dispatch('refreshAll'); },
-    conditions() { this.$store.dispatch('refreshAll'); },
-  },
-
-  async created() {
-    await this.$store.dispatch('load');
+  created() {
     this.$store.dispatch('refreshAll');
   },
 
   methods: {
     addSelected({ conditions }) {
-      this.$router.push({
-        query: {
-          conditions: [
-            ...this.conditions,
-            ...conditions,
-          ],
-        },
+      this.$store.dispatch('route', {
+        conditions: [
+          ...this.conditions,
+          ...conditions,
+        ],
       });
     },
     removeCondition(c) {
-      this.$router.push({ query: { conditions: removeCondition(this.conditions, c) } });
+      this.$store.dispatch('route', {
+        conditions: removeCondition(this.conditions, c),
+      });
     },
     navigateToSelected(id) {
-      this.$router.push({
+      this.$store.dispatch('route', {
         name: 'Individual Result',
-        params: {
-          type: this.type,
-        },
-        query: {
-          conditions: [{ field: 'id', op: '==', value: id }],
-        },
+        type: this.type,
+        conditions: [{ field: 'id', op: '==', value: id }],
       });
     },
   },

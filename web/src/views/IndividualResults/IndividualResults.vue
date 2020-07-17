@@ -58,10 +58,10 @@ export default {
       <AttributeList
         :type="type"
         :item="result"
-        @selected="$router.push({
+        @selected="$store.dispatch('route', {
           name: 'Search',
-          params: { type: $event.type },
-          query: { conditions: $event.conditions },
+          type: $event.type,
+          conditions: $event.conditions,
         })"
       />
     </v-container>

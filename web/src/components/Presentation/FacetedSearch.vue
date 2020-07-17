@@ -29,7 +29,10 @@
             @input="toggleMenu(field, $event)"
           >
             <template #activator="{ on }">
-              <v-list-item v-on="on">
+              <v-list-item
+                v-show="!hasActiveConditions(field)"
+                v-on="on"
+              >
                 <v-list-item-content>
                   <v-list-item-title> {{ fieldDisplayName(field) }} </v-list-item-title>
                 </v-list-item-content>
@@ -52,47 +55,11 @@
       </template>
     </v-list>
   </div>
-  <!-- <v-list-item
-            v-for="val in values.slice(0, valueCount[field])"
-            :key="val.facet"
-            :disabled="val.count === 0"
-            :value="val.facet"
-            class="overflow"
-          >
-            <v-list-item-content>
-              {{ valueDisplayName(field, val.facet) }}
-            </v-list-item-content>
-            <v-list-item-action>
-              <v-list-item-action-text v-text="val.count" />
-            </v-list-item-action>
-          </v-list-item>
-        </v-list-item-group>
-        <v-list-item
-          v-if="valueCount[field] < values.length"
-          :key="`${field}-more`"
-          @click="valueCount[field] += 10"
-        >
-          <v-list-item-content
-            class="blue--text text--darken-4 caption"
-          >
-            more
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item
-          v-if="valueCount[field] > 5"
-          :key="`${field}-less`"
-          @click="valueCount[field] = 5"
-        >
-          <v-list-item-content
-            class="blue--text text--darken-4 caption"
-          >
-            less
-          </v-list-item-content>
-        </v-list-item> -->
 </template>
 
 <script>
 import Vue from 'vue';
+
 import { fieldDisplayName, valueDisplayName } from '@/util';
 import * as encoding from '@/encoding';
 
@@ -131,6 +98,9 @@ export default {
     valueDisplayName,
     toggleMenu(category, value) {
       Vue.set(this.menuState, category, value);
+    },
+    hasActiveConditions(category) {
+      return this.conditions.some((cond) => cond.field === category);
     },
   },
 };

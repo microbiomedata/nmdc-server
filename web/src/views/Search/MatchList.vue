@@ -81,7 +81,7 @@ export default {
         conditions = this.conditions
           .filter((c) => !(c.field === this.field && c.value === item.facet));
       }
-      this.$router.push({ query: { conditions } });
+      this.$store.dispatch('route', { conditions });
     },
   },
 };

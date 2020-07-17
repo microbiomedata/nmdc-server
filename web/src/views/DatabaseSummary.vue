@@ -85,7 +85,7 @@ export default {
     <Welcome
       :samples="samples"
       :stats="stats"
-      @set-type="$router.push({ name: 'Search', params: { type: $event } })"
+      @set-type="$store.dispatch('route', { name: 'Search', type: $event, conditions: [] })"
     />
   </v-main>
 </template>

@@ -86,7 +86,7 @@ export default new Vuex.Store<State>({
       const routerType = state.route.params.type;
       return routerType ? asType(routerType) : undefined;
     },
-    conditions: (state): Condition[] => state.route.query.conditions || [],
+    conditions: (state): Condition[] => state.route.query.c || [],
   },
   mutations: {
     setDBSummary(state, resp: DatabaseSummaryResponse) {
@@ -124,7 +124,6 @@ export default new Vuex.Store<State>({
       }
     },
     async fetchFacetSummary({ commit, state, getters }, { field, conditions }) {
-      console.log('fetchFacetSummary', field, conditions);
       /* Fetch facet summaries for a given field, and cache it */
       const type = asType(getters.type);
       const existing = state.facetSummaries[type][field];
@@ -168,24 +167,40 @@ export default new Vuex.Store<State>({
     async refreshAll({
       dispatch, state, commit, getters,
     }) {
-      console.log('refreshAll', state.loading);
       if (!state.loading.all) {
         commit('setLoading', { name: 'all', loading: true });
         try {
           await dispatch('refreshResults');
         } finally {
-          console.log('here');
           commit('resetFacetSummaries', getters.type);
           commit('setLoading', { name: 'all', loading: false });
         }
       }
     },
     async load({ dispatch }) {
-      /* TODO: Load type and conditions from router */
       await Promise.all([
         dispatch('fetchAllSamples'),
         dispatch('fetchDBSummary'),
       ]);
+    },
+    async route({ dispatch, state }, { name, type, conditions }) {
+      /**
+       * Use the vuex route action when a route change
+       * involves a change in type or conditions
+       */
+      if (name || type) {
+        router.push({
+          name,
+          params: { type },
+          query: { c: conditions },
+        });
+      } else {
+        // Only change the query params to avoid double-routing
+        router.push({
+          query: { c: conditions },
+        });
+      }
+      dispatch('refreshAll');
     },
   },
 });

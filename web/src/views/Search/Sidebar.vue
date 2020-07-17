@@ -3,11 +3,14 @@ import { mapGetters } from 'vuex';
 import { types } from '@/encoding';
 import { fieldDisplayName } from '@/util';
 
+import ConditionChips from '@/components/Presentation/ConditionChips.vue';
 import FacetedSearch from '@/components/Presentation/FacetedSearch.vue';
+
 import MatchList from './MatchList.vue';
 
 export default {
   components: {
+    ConditionChips,
     FacetedSearch,
     MatchList,
   },
@@ -31,6 +34,7 @@ export default {
     app
     clipped
     permanent
+    width="320"
   >
     <div class="ma-3">
       <div class="text-subtitle-2 primary--text">
@@ -51,7 +55,7 @@ export default {
             :color="type === t ? 'primary' : 'inherit'"
             :class="{ 'white--text': type === t }"
             x-small
-            @click="$router.push({ name: 'Search', params: { type: t } })"
+            @click="$store.dispatch('route', { name: 'Search', type: t, conditions })"
           >
             {{ types[t].heading }}
           </v-btn>
@@ -61,6 +65,22 @@ export default {
         That match the following
       </div>
     </div>
+    <ConditionChips
+      :conditions="conditions"
+      class="ma-3"
+    >
+      <template #menu="{ field, isOpen }">
+        <div>
+          <v-card-title class="pb-0">
+            {{ fieldDisplayName(field) }}
+          </v-card-title>
+          <MatchList
+            v-if="isOpen"
+            :field="field"
+          />
+        </div>
+      </template>
+    </ConditionChips>
     <v-divider class="my-3" />
     <FacetedSearch
       :conditions="conditions"
