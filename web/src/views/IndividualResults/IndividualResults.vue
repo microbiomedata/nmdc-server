@@ -23,10 +23,6 @@ export default {
       return list ? list[0] : null;
     },
   },
-
-  created() {
-    this.$store.dispatch('refreshAll');
-  },
 };
 </script>
 

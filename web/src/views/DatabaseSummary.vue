@@ -39,10 +39,6 @@ export default {
     },
   },
 
-  created() {
-    this.$store.dispatch('load');
-  },
-
   asyncComputed: {
     omicsStats: {
       async get() {

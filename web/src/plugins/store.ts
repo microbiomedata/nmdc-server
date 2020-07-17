@@ -43,7 +43,7 @@ function asType(type: any) {
   return t;
 }
 
-export default new Vuex.Store<State>({
+const store = new Vuex.Store<State>({
   state: {
     allSamples: undefined,
     dbsummary: undefined,
@@ -61,20 +61,20 @@ export default new Vuex.Store<State>({
     loading: {},
   },
   getters: {
-    primitiveFields: (state) => (type: string) => {
-      if (state.dbsummary) {
+    primitiveFields: (state) => (type: string | undefined) => {
+      if (type && state.dbsummary) {
         return Object.keys(state.dbsummary[asType(type)].attributes);
       }
       return [];
     },
-    count: (state) => (type: string) => {
-      if (state.dbsummary) {
+    count: (state) => (type: string | undefined) => {
+      if (type && state.dbsummary) {
         return state.dbsummary[asType(type)].total;
       }
       return 0;
     },
-    typeResults: (state) => (type: string) => {
-      if (state.results[asType(type)] !== null) {
+    typeResults: (state) => (type: string | undefined) => {
+      if (type && state.results[asType(type)] !== null) {
         return state.results[asType(type)]?.results;
       }
       return undefined;
@@ -120,7 +120,7 @@ export default new Vuex.Store<State>({
         commit('setDBSummary', summary);
       }
     },
-    async fetchFacetSummary({ commit, state, getters }, { field, conditions, type: t }) {
+    async fetchFacetSummary({ commit, state }, { field, conditions, type: t }) {
       /* Fetch facet summaries for a given field, and cache it */
       const type = asType(t);
       const existing = state.facetSummaries[type][field];
@@ -139,10 +139,9 @@ export default new Vuex.Store<State>({
       }
     },
     async refreshResults({ commit, getters }) {
-      const { conditions } = getters;
+      const { conditions, type } = getters;
       const params = { conditions };
       let results: ResultUnion;
-      const type = asType(getters.type);
       switch (type) {
         case 'study':
           results = await api.searchStudy(params);
@@ -194,7 +193,18 @@ export default new Vuex.Store<State>({
           query: { c: conditions },
         });
       }
-      dispatch('refreshAll');
     },
   },
 });
+
+router.afterEach((to) => {
+  if (to.name === 'Search') {
+    Vue.nextTick(() => {
+      // after hook still happens before vuex sync has a chance to capture the state.
+      // wait a tick before dispatch
+      store.dispatch('refreshAll');
+    });
+  }
+});
+
+export default store;
