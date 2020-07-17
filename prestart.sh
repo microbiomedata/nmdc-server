@@ -1,6 +1,6 @@
 #!/bin/sh
 source /app/.env
-export PGUSER PGPASSWORD PGDATABASE POSTGRES_URI
+export PGUSER PGPASSWORD PGDATABASE PGHOST POSTGRES_URI
 
 while ! PGDATABASE=postgres psql --quiet -c "select * from user" ; do
     sleep 1;
