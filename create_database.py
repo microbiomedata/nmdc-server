@@ -3,7 +3,7 @@ from datetime import datetime
 import json
 from pathlib import Path
 import re
-from typing import Any, Dict, List, Set, Union
+from typing import Any, Dict, List, Set, Type, Union
 from urllib import request
 
 # from alembic import command
@@ -246,11 +246,15 @@ def ingest_biosamples(db: Session):
     db.commit()
 
 
-def ingest_data_objects(db: Session):
+def ingest_data_objects(db: Session) -> Set[str]:
     data_object_files = [
         DATA / "faa_fna_fastq_data_objects.json",
         DATA / "emsl_data_objects.json",
+        DATA / "readQC_data_objects.json",
+        DATA / "metagenome_assembly_data_objects.json",
+        DATA / "metagenome_annotation_data_objects.json",
     ]
+    data_object_ids: Set[str] = set()
     for file in data_object_files:
         for p in load_json_objects(file):
             data_object = load_common_fields(p, include_dates=False)
@@ -259,6 +263,42 @@ def ingest_data_objects(db: Session):
             )
             data_object_db = models.DataObject(**data_object)
             db.add(data_object_db)
+            data_object_ids.add(data_object_db.id)
+    db.commit()
+    return data_object_ids
+
+
+def ingest_pipeline(
+    db: Session, file: Path, model: Type[models.PipelineStep], data_objects: Set[str]
+):
+    table_name = model.__tablename__  # type: ignore
+    date_fmt = "%Y-%m-%d"
+    with file.open() as f:
+        objects = json.load(f)
+        for d in objects:
+            inputs = [id for id in d.pop("has_input", []) if id in data_objects]
+            outputs = [id for id in d.pop("has_output", []) if id in data_objects]
+            d["project_id"] = d.pop("was_informed_by")
+            d["started_at_time"] = datetime.strptime(d["started_at_time"], date_fmt)
+            d["ended_at_time"] = datetime.strptime(d["ended_at_time"], date_fmt)
+            step = model(**d)  # type: ignore
+            db.add(step)
+
+            if inputs:
+                db.flush()
+                db.execute(
+                    getattr(models, f"{table_name}_input_association")
+                    .insert()
+                    .values([(step.id, f) for f in inputs])
+                )
+
+            if outputs:
+                db.flush()
+                db.execute(
+                    getattr(models, f"{table_name}_output_association")
+                    .insert()
+                    .values([(step.id, f) for f in outputs])
+                )
     db.commit()
 
 
@@ -268,10 +308,17 @@ def main(*args):
     with create_session() as db:
         create_tables(db, settings)
         populate_envo(db)
-        ingest_data_objects(db)
+        data_objects = ingest_data_objects(db)
         ingest_studies(db)
         ingest_projects(db)
         ingest_biosamples(db)
+        # ingest_pipeline(db, Path(DATA / "readQC_activities.json"), models.ReadsQC)
+        ingest_pipeline(
+            db,
+            Path(DATA / "metagenome_assembly_activities.json"),
+            models.MetagenomeAssembly,
+            data_objects,
+        )
 
 
 if __name__ == "__main__":

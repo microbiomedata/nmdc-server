@@ -189,7 +189,6 @@ class PipelineStep:
     started_at_time = Column(DateTime, nullable=False)
     ended_at_time = Column(DateTime, nullable=False)
     execution_resource = Column(String, nullable=False)
-    stats = Column(JSONB, nullable=False, default=dict)
 
     @declared_attr
     def project_id(cls):
@@ -220,6 +219,35 @@ metagenome_assembly_output_association = output_association("metagenome_assembly
 
 class MetagenomeAssembly(Base, PipelineStep):
     __tablename__ = "metagenome_assembly"
+
+    scaffolds = Column(BigInteger, nullable=False)
+    contigs = Column(BigInteger, nullable=False)
+    scaf_bp = Column(BigInteger, nullable=False)
+    contig_bp = Column(BigInteger, nullable=False)
+    scaf_N50 = Column(BigInteger, nullable=False)
+    scaf_L50 = Column(BigInteger, nullable=False)
+    ctg_N50 = Column(BigInteger, nullable=False)
+    ctg_L50 = Column(BigInteger, nullable=False)
+    scaf_N90 = Column(BigInteger, nullable=False)
+    scaf_L90 = Column(BigInteger, nullable=False)
+    ctg_N90 = Column(BigInteger, nullable=False)
+    ctg_L90 = Column(BigInteger, nullable=False)
+    scaf_max = Column(BigInteger, nullable=False)
+    ctg_max = Column(BigInteger, nullable=False)
+    scaf_n_gt50K = Column(BigInteger, nullable=False)
+    scaf_l_gt50k = Column(BigInteger, nullable=False)
+    scaf_pct_gt50K = Column(BigInteger, nullable=False)
+    num_input_reads = Column(BigInteger, nullable=False)
+    num_aligned_reads = Column(BigInteger, nullable=False)
+
+    scaf_logsum = Column(Float, nullable=False)
+    scaf_powsum = Column(Float, nullable=False)
+    ctg_logsum = Column(Float, nullable=False)
+    ctg_powsum = Column(Float, nullable=False)
+    asm_score = Column(Float, nullable=False)
+    gap_pct = Column(Float, nullable=False)
+    gc_avg = Column(Float, nullable=False)
+    gc_std = Column(Float, nullable=False)
 
     inputs = input_relationship(metagenome_assembly_input_association)
     outputs = output_relationship(metagenome_assembly_output_association)

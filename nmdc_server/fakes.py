@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime
-from typing import Dict, Union
+from typing import Dict
 from uuid import uuid4
 
 from factory import Faker, post_generation, SubFactory
@@ -185,7 +185,6 @@ class PipelineStepBase(SQLAlchemyModelFactory):
     started_at_time: datetime = Faker("date_time")
     ended_at_time: datetime = Faker("date_time")
     execution_resource: str = Faker("word")
-    stats: Dict[str, Union[int, float]] = Faker("pydict", value_types=["int", "float"])
     project: models.Project = SubFactory(ProjectFactory)
 
 
@@ -194,11 +193,44 @@ class ReadsQCFactory(PipelineStepBase):
         model = models.ReadsQC
         sqlalchemy_session = db
 
+    input_read_count: int = Faker("pyint")
+    input_read_bases: int = Faker("pyint")
+    output_read_count: int = Faker("pyint")
+    output_read_bases: int = Faker("pyint")
+
 
 class MetagenomeAssemblyFactory(PipelineStepBase):
     class Meta:
         model = models.MetagenomeAssembly
         sqlalchemy_session = db
+
+    scaffolds: int = Faker("pyint")
+    contigs: int = Faker("pyint")
+    scaf_bp: int = Faker("pyint")
+    contig_bp: int = Faker("pyint")
+    scaf_N50: int = Faker("pyint")
+    scaf_L50: int = Faker("pyint")
+    ctg_N50: int = Faker("pyint")
+    ctg_L50: int = Faker("pyint")
+    scaf_N90: int = Faker("pyint")
+    scaf_L90: int = Faker("pyint")
+    ctg_N90: int = Faker("pyint")
+    ctg_L90: int = Faker("pyint")
+    scaf_max: int = Faker("pyint")
+    ctg_max: int = Faker("pyint")
+    scaf_n_gt50K: int = Faker("pyint")
+    scaf_l_gt50k: int = Faker("pyint")
+    scaf_pct_gt50K: int = Faker("pyint")
+    num_input_reads: int = Faker("pyint")
+    num_aligned_reads: int = Faker("pyint")
+    scaf_logsum: float = Faker("pyfloat")
+    scaf_powsum: float = Faker("pyfloat")
+    ctg_logsum: float = Faker("pyfloat")
+    ctg_powsum: float = Faker("pyfloat")
+    asm_score: float = Faker("pyfloat")
+    gap_pct: float = Faker("pyfloat")
+    gc_avg: float = Faker("pyfloat")
+    gc_std: float = Faker("pyfloat")
 
 
 class MetagenomeAnnotationFactory(PipelineStepBase):

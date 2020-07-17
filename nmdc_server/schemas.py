@@ -182,7 +182,10 @@ class PipelineStep(PipelineStepBase):
 
 
 class ReadsQCBase(PipelineStepBase):
-    pass
+    input_read_count: int
+    input_read_bases: int
+    output_read_count: int
+    output_read_bases: int
 
 
 class ReadsQC(PipelineStep):
@@ -190,7 +193,33 @@ class ReadsQC(PipelineStep):
 
 
 class MetagenomeAssemblyBase(PipelineStepBase):
-    pass
+    scaffolds: int
+    contigs: int
+    scaf_bp: int
+    contig_bp: int
+    scaf_N50: int
+    scaf_L50: int
+    ctg_N50: int
+    ctg_L50: int
+    scaf_N90: int
+    scaf_L90: int
+    ctg_N90: int
+    ctg_L90: int
+    scaf_max: int
+    ctg_max: int
+    scaf_n_gt50K: int
+    scaf_l_gt50k: int
+    scaf_pct_gt50K: int
+    num_input_reads: int
+    num_aligned_reads: int
+    scaf_logsum: float
+    scaf_powsum: float
+    ctg_logsum: float
+    ctg_powsum: float
+    asm_score: float
+    gap_pct: float
+    gc_avg: float
+    gc_std: float
 
 
 class MetagenomeAssembly(PipelineStep):
