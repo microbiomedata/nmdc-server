@@ -16,16 +16,12 @@ export default {
           label: 'Studies',
         },
         {
-          value: this.dbsummary.biosample.attributes.latitude,
+          value: this.dbsummary.project.total,
           label: 'Locations',
         },
         {
-          value: this.dbsummary.biosample.attributes.ecosystem_path_id,
+          value: this.dbsummary.biosample.total,
           label: 'Habitats',
-        },
-        {
-          value: -1,
-          label: 'Data',
         },
       ] : [];
     },
@@ -42,33 +38,11 @@ export default {
   asyncComputed: {
     omicsStats: {
       async get() {
-        const omicsSummary = await api.getFacetSummary('project', 'omics_type', []);
-        return [
-          {
-            value: omicsSummary.Metagenome,
-            label: 'Metagenomes',
-          },
-          {
-            value: omicsSummary.Metatranscriptome,
-            label: 'Metatranscriptomes',
-          },
-          {
-            value: omicsSummary.Proteomics,
-            label: 'Proteomics',
-          },
-          {
-            value: omicsSummary.Metabolomics,
-            label: 'Metabolomics',
-          },
-          {
-            value: omicsSummary.Lipidomics,
-            label: 'Lipidomics',
-          },
-          {
-            value: omicsSummary['Organic Matter Characterization'],
-            label: 'Organic Matter Characterization',
-          },
-        ];
+        const summaries = await api.getFacetSummary('project', 'omics_type', []);
+        return summaries.map((fsm) => ({
+          label: fsm.facet,
+          value: fsm.count,
+        }));
       },
       default: [],
     },
