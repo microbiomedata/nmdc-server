@@ -51,6 +51,9 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         study=get_table_summary(db, models.Study),
         project=get_table_summary(db, models.Project),
         biosample=get_table_summary(db, models.Biosample),
+        reads_qc=get_table_summary(db, models.ReadsQC),
+        metagenome_assembly=get_table_summary(db, models.MetagenomeAssembly),
+        metagenome_annotation=get_table_summary(db, models.MetagenomeAnnotation),
     )
 
 
