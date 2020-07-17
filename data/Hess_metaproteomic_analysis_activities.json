@@ -1,0 +1,1314 @@
+[
+  {
+    "id": "nmdc:df3cc1ecaf5ebd0769ffa235bff99afb",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404590",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404590",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:e0c70280a7a23c7c5cc1e589f72e896e"
+    ]
+  },
+  {
+    "id": "nmdc:02e892c5dfa7bea19725360dd74a7599",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404522",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404522",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:9e9c67b475898264dd9358dd07fb197c"
+    ]
+  },
+  {
+    "id": "nmdc:fec8e260bc8bb94da61f7d3247860758",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404510",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404510",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:1d8c306f0b8f9bc128a6b4b715207251"
+    ]
+  },
+  {
+    "id": "nmdc:56b36b764c1d7d24f49db74989ae7268",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404577",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404577",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:248e44e751637a4ec979f40f2afb1203"
+    ]
+  },
+  {
+    "id": "nmdc:2bef313b644658ae490b914cc4571f31",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404531",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404531",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:b0b7e0b19874c5a2c8378e49b7ef51b8"
+    ]
+  },
+  {
+    "id": "nmdc:df434a731b97decb1097d93ca65b164a",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404518",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404518",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:065186470de9ce2508bff132661c0bf1"
+    ]
+  },
+  {
+    "id": "nmdc:23dabf09ff544286df1cbc6cc5225d3f",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404433",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404433",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:69ffc949a740e54e111ffc893cc78ce9"
+    ]
+  },
+  {
+    "id": "nmdc:45bd1a9672e468ca70ad1cf33d3375ae",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404445",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404445",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:c8cf271ed2c449637b4b61983bf74615"
+    ]
+  },
+  {
+    "id": "nmdc:655150fa807b6a16849ab56dbbb16542",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404514",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404514",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:607ed487aa5e0779c6f537f2e49ca6ba"
+    ]
+  },
+  {
+    "id": "nmdc:c876aad6a26ee8771da6e11f6ae756a8",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404535",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404535",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:77ef1265c104630679292de4ea832a99"
+    ]
+  },
+  {
+    "id": "nmdc:df0cfb0706e956dc42ec002fa3bfce6c",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404418",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404418",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:4158cb20d60ec2dcbf81cc770ec913ec"
+    ]
+  },
+  {
+    "id": "nmdc:6b13816af4deb591a3d341e5d49b83a3",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404422",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404422",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:782efcba413dd88b680ef6946dedcf6c"
+    ]
+  },
+  {
+    "id": "nmdc:a4e8b0524796d6e191d2063ed96075a6",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404352",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404352",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:174bf4ea92389c622803062180657fae"
+    ]
+  },
+  {
+    "id": "nmdc:be4634ae4dda98a175b5a470704852df",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404365",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404365",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:7632b24a0da5d7dd83c25fdd83cf5de8"
+    ]
+  },
+  {
+    "id": "nmdc:872af63bb25d2ef87dc1665f8b3b4a67",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:404390",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404390",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:374439b88dc1c41e976ac0e3a7e1effa"
+    ]
+  },
+  {
+    "id": "nmdc:e4d872ab5540c2034152ccad06e483f2",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:367262",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_367262",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:7a3e0236f604c728b4a83b8b8ed04e86"
+    ]
+  },
+  {
+    "id": "nmdc:a252ec30ffc82dcb81f8d1fcb09667b9",
+    "name": "Metagenome:1393_65601:1045042",
+    "was_informed_by": "emsl:367259",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_367259",
+      "nmdc:da016a0cbbb4d592257f4a025ab61f17"
+    ],
+    "has_output": [
+      "nmdc:c964302bef0dfab2e3c1fe3e24b88ba0"
+    ]
+  },
+  {
+    "id": "nmdc:32966ae0a5190c70015c3915e5434891",
+    "name": "Metagenome:1393_65602:1045045",
+    "was_informed_by": "emsl:367505",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0"
+  },
+  {
+    "id": "nmdc:b9ac9a8ed51bdf0d3d37724ff4620da8",
+    "name": "Metagenome:1393_65602:1045045",
+    "was_informed_by": "emsl:367504",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0"
+  },
+  {
+    "id": "nmdc:45b76efcefb529f12ef3be7abf5adb6c",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404637",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404637",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:8a1f01c5b7c6899e90fd4d473eb75494"
+    ]
+  },
+  {
+    "id": "nmdc:410271a7ac06edff434bea0b92410043",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404602",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404602",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:eb47a9ca078405d0db57cc3b9f44fe6b"
+    ]
+  },
+  {
+    "id": "nmdc:fde13f8fae4d14d2f9432d1aa4f00bae",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:405162",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405162",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:3b3b708ef01e0dfa461877a603982cbf"
+    ]
+  },
+  {
+    "id": "nmdc:5fdfd5ed70d2dc12ec878215708ac694",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404646",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404646",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:53df4219aa80e7ede23a6058a1d5ee18"
+    ]
+  },
+  {
+    "id": "nmdc:e964c08dfab3a56ad41ce23816936ac0",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404769",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404769",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:affd2435f6612283687848f22cd317b2"
+    ]
+  },
+  {
+    "id": "nmdc:8f19e13c95256380ef39b5c46986c7d1",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404669",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404669",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:bdf3ff233a601b95bcec60836a6fb48f"
+    ]
+  },
+  {
+    "id": "nmdc:73d4a7ddcf9897c8f664d37346dfc775",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404757",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404757",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:a6ef43f46a71cd31499e4f4f0aedca12"
+    ]
+  },
+  {
+    "id": "nmdc:c3ca15881d64f5a1474aa1c69e0352bf",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:405192",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405192",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:c3fc5f6339fbea4434d85f1bebfc56a3"
+    ]
+  },
+  {
+    "id": "nmdc:f0cd6330f2eb7e8e6598fa49140c4a2c",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404616",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404616",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:6f171adc18f3f63af37979cc2af5dfdf"
+    ]
+  },
+  {
+    "id": "nmdc:3da80f5320d792193b84c57a5df153a1",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404799",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404799",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:3ae0ea2f92e969b7706ee1bd9381a929"
+    ]
+  },
+  {
+    "id": "nmdc:805521f307864d2c25be073c2eae8902",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404816",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404816",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:84867a6dd5c3571581f76e9603654669"
+    ]
+  },
+  {
+    "id": "nmdc:04a3904bb3817a314fecc6d2638f56d6",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404789",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404789",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:0e2a8195f34722a4bacf9f9f6b1a08c3"
+    ]
+  },
+  {
+    "id": "nmdc:8f6002d7a7bf64a15be782891644208b",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404779",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404779",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:5293b2db7f584b2e4c0bcc2150799d9b"
+    ]
+  },
+  {
+    "id": "nmdc:3900bef01e394c5d0623f64ec13a74f7",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404321",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404321",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:9792c4e6ed9942c091f8e7c01349cf28"
+    ]
+  },
+  {
+    "id": "nmdc:ac5cc7faf69c3698d76d5829b4ec1d72",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404359",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404359",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:314d3457c2f07268daf21294ef916b99"
+    ]
+  },
+  {
+    "id": "nmdc:4c28db9095acc226f713df4556317e34",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:404386",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404386",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:3cb4a17685cd78051ddfdcdac680f89c"
+    ]
+  },
+  {
+    "id": "nmdc:014dda6dc076b05a26f22645e13e41b1",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:367506",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_367506",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:0c1ad98cd77697c146ef61471314a33a"
+    ]
+  },
+  {
+    "id": "nmdc:8f66c0007f73e192efae1189f7b24ab1",
+    "name": "Metagenome:1393_65603:1045048",
+    "was_informed_by": "emsl:367260",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_367260",
+      "nmdc:d95016340de632ab7da9822f62d7d532"
+    ],
+    "has_output": [
+      "nmdc:baa03356a66f2ff70997bea0b960eaac"
+    ]
+  },
+  {
+    "id": "nmdc:7c134e1b7c461087243fd6cfa1fc1693",
+    "name": "Metagenome:1393_65597:1045026",
+    "was_informed_by": "emsl:404241",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404241",
+      "nmdc:b1eb2d186c809f9b82eb1d3f7b02dfbc"
+    ],
+    "has_output": [
+      "nmdc:869c18bdb64946b604bea85fe94062b6"
+    ]
+  },
+  {
+    "id": "nmdc:50f5c8c73f7557425821ae87e1139a92",
+    "name": "Metagenome:1393_65597:1045026",
+    "was_informed_by": "emsl:404254",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404254",
+      "nmdc:b1eb2d186c809f9b82eb1d3f7b02dfbc"
+    ],
+    "has_output": [
+      "nmdc:d276bbd4e40fa3e670419852e88b6ac7"
+    ]
+  },
+  {
+    "id": "nmdc:667bb79a708ca695bfd69f0c8da654a5",
+    "name": "Metagenome:1393_65597:1045026",
+    "was_informed_by": "emsl:404305",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404305",
+      "nmdc:b1eb2d186c809f9b82eb1d3f7b02dfbc"
+    ],
+    "has_output": [
+      "nmdc:60463b4b768e013db1f34f60491401b6"
+    ]
+  },
+  {
+    "id": "nmdc:ad2486c2407aedac1192d3f5c65f49f7",
+    "name": "Metagenome:1393_65598:1045030",
+    "was_informed_by": "emsl:404227",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404227",
+      "nmdc:c1a557ab082bcd0136d72fa182fb8e34"
+    ],
+    "has_output": [
+      "nmdc:7b9e93dbca0bb8d3fcf67cbb8e9c2180"
+    ]
+  },
+  {
+    "id": "nmdc:2a2302f2824c3be476a957059c4c9228",
+    "name": "Metagenome:1393_65598:1045030",
+    "was_informed_by": "emsl:404248",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404248",
+      "nmdc:c1a557ab082bcd0136d72fa182fb8e34"
+    ],
+    "has_output": [
+      "nmdc:8446361c67a17e18ca0fce10cea3590d"
+    ]
+  },
+  {
+    "id": "nmdc:6704b69ee7f6ed15c2ac928377e74efc",
+    "name": "Metagenome:1393_65598:1045030",
+    "was_informed_by": "emsl:404311",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404311",
+      "nmdc:c1a557ab082bcd0136d72fa182fb8e34"
+    ],
+    "has_output": [
+      "nmdc:b69064c328bd8a5d8bec842d32edecb1"
+    ]
+  },
+  {
+    "id": "nmdc:ebe07b161fcf4a7907772a4a6076d48b",
+    "name": "Metagenome:1393_65599:1045034",
+    "was_informed_by": "emsl:404232",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404232",
+      "nmdc:3be5d3f56343f2f4fb62f1c602da49d2"
+    ],
+    "has_output": [
+      "nmdc:00c8161d2a3708c442a0fe65103bc98b"
+    ]
+  },
+  {
+    "id": "nmdc:8a4ec2bdcf86b5918919af82f51bd343",
+    "name": "Metagenome:1393_65599:1045034",
+    "was_informed_by": "emsl:404266",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404266",
+      "nmdc:3be5d3f56343f2f4fb62f1c602da49d2"
+    ],
+    "has_output": [
+      "nmdc:6c8d69fd8af3a79a281e06b8823395c8"
+    ]
+  },
+  {
+    "id": "nmdc:1672c5aab8ef95913e6ac19c35517238",
+    "name": "Metagenome:1393_65599:1045034",
+    "was_informed_by": "emsl:404276",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404276",
+      "nmdc:3be5d3f56343f2f4fb62f1c602da49d2"
+    ],
+    "has_output": [
+      "nmdc:379366a2562f2d4dbdcbc5b2a59ab57b"
+    ]
+  },
+  {
+    "id": "nmdc:21f2756ae45b4641b9a5b52d467a39e5",
+    "name": "Metagenome:1393_65600:1045038",
+    "was_informed_by": "emsl:404237",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404237",
+      "nmdc:69f5cf8874b1ad40840f1b2a25549c4c"
+    ],
+    "has_output": [
+      "nmdc:a5cf0c4ff58ed86a1d53fa17f67442aa"
+    ]
+  },
+  {
+    "id": "nmdc:142d0cf9580a249e658052541f0db5c4",
+    "name": "Metagenome:1393_65600:1045038",
+    "was_informed_by": "emsl:404259",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404259",
+      "nmdc:69f5cf8874b1ad40840f1b2a25549c4c"
+    ],
+    "has_output": [
+      "nmdc:5dad1804366358327874e7c52b74a901"
+    ]
+  },
+  {
+    "id": "nmdc:767956d61453fe5ae72636e6d0fc366a",
+    "name": "Metagenome:1393_65600:1045038",
+    "was_informed_by": "emsl:404270",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404270",
+      "nmdc:69f5cf8874b1ad40840f1b2a25549c4c"
+    ],
+    "has_output": [
+      "nmdc:4b33b7e3aa1ec1bc2f65558c21f40081"
+    ]
+  },
+  {
+    "id": "nmdc:2bc70a43e615243e271c2801fa4fec0c",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405262",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405262",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:319068f320db25b7b922e9510fbbeb44"
+    ]
+  },
+  {
+    "id": "nmdc:1c3db6a4737bd6e11b938a165355b4c6",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405278",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405278",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:1ebc780c6a939c6676923d002d8deba3"
+    ]
+  },
+  {
+    "id": "nmdc:5cc03a2fd7d6dbc611fb384a4573f2b7",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405200",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405200",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:8b77d983f5a05b74be8d6f02c16c6a89"
+    ]
+  },
+  {
+    "id": "nmdc:60e5be713c596a4e493b563d0265a40b",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405204",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405204",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:4655127940d86326ee33d907ead79d47"
+    ]
+  },
+  {
+    "id": "nmdc:352de5ca4340a69efce2d2a74b979b5f",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405274",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405274",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:ea8045bba6ad87db5890218a86ffb011"
+    ]
+  },
+  {
+    "id": "nmdc:451da83b2683f86636e777d069669556",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405255",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405255",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:c768869e1d2567337f1f48bee0242eee"
+    ]
+  },
+  {
+    "id": "nmdc:0879f0bf15f73cfd166accd124b7273c",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405266",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405266",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:13ad1ad5f2eaf5c224b1dc8cef42d027"
+    ]
+  },
+  {
+    "id": "nmdc:0f8196c855ac65837bfeaf14d6355f07",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405251",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405251",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:78b6f3a3f8b16494d0d67a5b2497a0da"
+    ]
+  },
+  {
+    "id": "nmdc:423aeeb6a2d9d93a7ab94ee258898c4f",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405259",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405259",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:91fec9243bf511e8613406785e9a84b6"
+    ]
+  },
+  {
+    "id": "nmdc:dc3528fec69480c7718f9dda995899d9",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405270",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405270",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:4923bcd291170ea648d12b40ceac8c86"
+    ]
+  },
+  {
+    "id": "nmdc:dff64a749695c0310bbc8277ff950400",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405196",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405196",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:1979ee32b3583338a1772e3baa19e342"
+    ]
+  },
+  {
+    "id": "nmdc:6184daeb609f33b8bcf5af6f55dfd329",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405228",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405228",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:b7aecd525890ba9e836d4d42d4f11817"
+    ]
+  },
+  {
+    "id": "nmdc:afae05e21a469d7ffc30a3967f697770",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:404347",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404347",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:6f7eeeb061c50a35f16e7e5ed55bc467"
+    ]
+  },
+  {
+    "id": "nmdc:f53fb3532f5784b31e5a1c8e877cc41f",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:404372",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404372",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:9621c5dbc3b6e87fd2c863f1e7002fb7"
+    ]
+  },
+  {
+    "id": "nmdc:3683894c995e6cef2818b4a5dac6bb0d",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:404379",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_404379",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:31fa5f72f4996a55908805ac03fd0d6b"
+    ]
+  },
+  {
+    "id": "nmdc:ab2657733f6fa14c9d00f7b0310715ea",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405287",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405287",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:463ba516cbc2af6bbd2cd6e4790c5d84"
+    ]
+  },
+  {
+    "id": "nmdc:f14d049dea2500fe7938a1b8d36083ac",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405299",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405299",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:efbc4217b68925b6dc55d85a30873260"
+    ]
+  },
+  {
+    "id": "nmdc:914e5a2f8140e6cca850060f0149ce18",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405307",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405307",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:bdcfcb3ca916cdba6039436af95fa704"
+    ]
+  },
+  {
+    "id": "nmdc:39787755e72cde4b248b2a6d3d7e469c",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405330",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405330",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:388f3d1f05e5c4f7b779b12019faf986"
+    ]
+  },
+  {
+    "id": "nmdc:a9698652dcc5c4a02366cb2af76096d0",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405285",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405285",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:230679d5b16c1e8178de6a933595cebb"
+    ]
+  },
+  {
+    "id": "nmdc:8f9638460f0e7b5fd6c3f54e235ade4b",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405342",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405342",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:8cfa0c3e6d939360a3081ef875261844"
+    ]
+  },
+  {
+    "id": "nmdc:a204689929a7a09f25a373a58b6cd201",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405311",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405311",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:06b4bc343cc96ce7f6eca873a9011ebc"
+    ]
+  },
+  {
+    "id": "nmdc:b7fa6621826e6eb5b80821955c275c3c",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405313",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405313",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:794329ae8bb4aba3ce67450fda2bc788"
+    ]
+  },
+  {
+    "id": "nmdc:f948f2225fb4f66db92b866d57a0a5f7",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405309",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405309",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:885a66154dbe3e3cb13094ca387ab88b"
+    ]
+  },
+  {
+    "id": "nmdc:06927da2c103d8e014bd4e156a663db4",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405346",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405346",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:d927165aad2bbe9ed63157693b49ec82"
+    ]
+  },
+  {
+    "id": "nmdc:9e46c58cb3e86863fb686b37f63afab0",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405282",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405282",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:9317c5bfb462884976b01e5e3224dd20"
+    ]
+  },
+  {
+    "id": "nmdc:152c5d97006cb11971c49a4ca9e0f93d",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:405315",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_405315",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:1f12207b101623798ace07a8be98bdcc"
+    ]
+  },
+  {
+    "id": "nmdc:fe5bf7d03511ab6d068d2451b29bf4e8",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:367261",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_367261",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:be5c64d5d759b168f68288e993d51f60"
+    ]
+  },
+  {
+    "id": "nmdc:a70aeecf286095f5f489935588a3158a",
+    "name": "Metagenome:1393_65604:1045051",
+    "was_informed_by": "emsl:367258",
+    "started_at_time": "2020-07-17",
+    "ended_at_time": "2020-07-17",
+    "type": "nmdc:MetaProteomicAnalysis",
+    "execution_resource": "EMSL",
+    "git_url": "https://github.com/microbiomedata/metaPro/releases/tag/1.0.0",
+    "has_input": [
+      "emsl:output_367258",
+      "nmdc:a63ef1afaf33c3231ea2688668991b92"
+    ],
+    "has_output": [
+      "nmdc:bca70ee023952ec543c64cf089898426"
+    ]
+  }
+]

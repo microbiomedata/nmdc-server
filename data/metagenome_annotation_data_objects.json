@@ -1,0 +1,3460 @@
+[
+  {
+    "file_size_bytes": 883872, 
+    "description": "KO TSV File for gold:Gp0095966", 
+    "id": "nmdc:749ff7a21de61359f78c52648b472539", 
+    "md5_checksum": "749ff7a21de61359f78c52648b472539", 
+    "name": "gold:Gp0095966_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 472241, 
+    "description": "EC TSV File for gold:Gp0095966", 
+    "id": "nmdc:071da0907650de9024c225da758d2f16", 
+    "md5_checksum": "071da0907650de9024c225da758d2f16", 
+    "name": "gold:Gp0095966_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 8354406, 
+    "description": "Protein FAA for gold:Gp0095966", 
+    "id": "nmdc:b1eb2d186c809f9b82eb1d3f7b02dfbc", 
+    "md5_checksum": "b1eb2d186c809f9b82eb1d3f7b02dfbc", 
+    "name": "gold:Gp0095966_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 6803302, 
+    "description": "Functional annotation GFF file for gold:Gp0095966", 
+    "id": "nmdc:d184ae225006c3cf9282775289aa0c06", 
+    "md5_checksum": "d184ae225006c3cf9282775289aa0c06", 
+    "name": "gold:Gp0095966_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3501793, 
+    "description": "Structural annotation GFF file for gold:Gp0095966", 
+    "id": "nmdc:bfcf65ba9992cd019c6e88427efac84c", 
+    "md5_checksum": "bfcf65ba9992cd019c6e88427efac84c", 
+    "name": "gold:Gp0095966_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1312869, 
+    "description": "KO TSV File for gold:Gp0095967", 
+    "id": "nmdc:d4dbb7b34652f1ff7a50e5478aa99dfe", 
+    "md5_checksum": "d4dbb7b34652f1ff7a50e5478aa99dfe", 
+    "name": "gold:Gp0095967_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 705417, 
+    "description": "EC TSV File for gold:Gp0095967", 
+    "id": "nmdc:9e6e96602abf283db692530a2d21aebe", 
+    "md5_checksum": "9e6e96602abf283db692530a2d21aebe", 
+    "name": "gold:Gp0095967_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 11540859, 
+    "description": "Protein FAA for gold:Gp0095967", 
+    "id": "nmdc:c1a557ab082bcd0136d72fa182fb8e34", 
+    "md5_checksum": "c1a557ab082bcd0136d72fa182fb8e34", 
+    "name": "gold:Gp0095967_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 9703057, 
+    "description": "Functional annotation GFF file for gold:Gp0095967", 
+    "id": "nmdc:cda8b935443d68a54d9ba6f67fb05e81", 
+    "md5_checksum": "cda8b935443d68a54d9ba6f67fb05e81", 
+    "name": "gold:Gp0095967_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 5030137, 
+    "description": "Structural annotation GFF file for gold:Gp0095967", 
+    "id": "nmdc:9c57f6f6249a66a10e0b988930c9b1e3", 
+    "md5_checksum": "9c57f6f6249a66a10e0b988930c9b1e3", 
+    "name": "gold:Gp0095967_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 895179, 
+    "description": "KO TSV File for gold:Gp0095968", 
+    "id": "nmdc:8116ba720460297120d7a881771d9c2b", 
+    "md5_checksum": "8116ba720460297120d7a881771d9c2b", 
+    "name": "gold:Gp0095968_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 496079, 
+    "description": "EC TSV File for gold:Gp0095968", 
+    "id": "nmdc:64686209c9068b7695c416b463e69dd1", 
+    "md5_checksum": "64686209c9068b7695c416b463e69dd1", 
+    "name": "gold:Gp0095968_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 7964816, 
+    "description": "Protein FAA for gold:Gp0095968", 
+    "id": "nmdc:3be5d3f56343f2f4fb62f1c602da49d2", 
+    "md5_checksum": "3be5d3f56343f2f4fb62f1c602da49d2", 
+    "name": "gold:Gp0095968_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 6499115, 
+    "description": "Functional annotation GFF file for gold:Gp0095968", 
+    "id": "nmdc:1232a233c1245b24a07aa37d1126e50d", 
+    "md5_checksum": "1232a233c1245b24a07aa37d1126e50d", 
+    "name": "gold:Gp0095968_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3319366, 
+    "description": "Structural annotation GFF file for gold:Gp0095968", 
+    "id": "nmdc:969c416acf49f4b186b1902ec2f418d6", 
+    "md5_checksum": "969c416acf49f4b186b1902ec2f418d6", 
+    "name": "gold:Gp0095968_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 864414, 
+    "description": "KO TSV File for gold:Gp0095969", 
+    "id": "nmdc:45fa6778a903459fcd368348dfc1889e", 
+    "md5_checksum": "45fa6778a903459fcd368348dfc1889e", 
+    "name": "gold:Gp0095969_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 440053, 
+    "description": "EC TSV File for gold:Gp0095969", 
+    "id": "nmdc:1bdf125764a4ddc4d4a2f78d9c3df0ac", 
+    "md5_checksum": "1bdf125764a4ddc4d4a2f78d9c3df0ac", 
+    "name": "gold:Gp0095969_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 8887848, 
+    "description": "Protein FAA for gold:Gp0095969", 
+    "id": "nmdc:69f5cf8874b1ad40840f1b2a25549c4c", 
+    "md5_checksum": "69f5cf8874b1ad40840f1b2a25549c4c", 
+    "name": "gold:Gp0095969_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 7062574, 
+    "description": "Functional annotation GFF file for gold:Gp0095969", 
+    "id": "nmdc:81e0c77ad9d88b6bbcf2f39f59f98171", 
+    "md5_checksum": "81e0c77ad9d88b6bbcf2f39f59f98171", 
+    "name": "gold:Gp0095969_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3660939, 
+    "description": "Structural annotation GFF file for gold:Gp0095969", 
+    "id": "nmdc:3dd518c93f7aed6ef7eadf0a3c11bf63", 
+    "md5_checksum": "3dd518c93f7aed6ef7eadf0a3c11bf63", 
+    "name": "gold:Gp0095969_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1794927, 
+    "description": "KO TSV File for gold:Gp0095970", 
+    "id": "nmdc:8db8bedde3df9785a4249d58b4163925", 
+    "md5_checksum": "8db8bedde3df9785a4249d58b4163925", 
+    "name": "gold:Gp0095970_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 1065075, 
+    "description": "EC TSV File for gold:Gp0095970", 
+    "id": "nmdc:f68ea71eddb1d87bedadb9c855285a45", 
+    "md5_checksum": "f68ea71eddb1d87bedadb9c855285a45", 
+    "name": "gold:Gp0095970_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 19194105, 
+    "description": "Protein FAA for gold:Gp0095970", 
+    "id": "nmdc:da016a0cbbb4d592257f4a025ab61f17", 
+    "md5_checksum": "da016a0cbbb4d592257f4a025ab61f17", 
+    "name": "gold:Gp0095970_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 15026820, 
+    "description": "Functional annotation GFF file for gold:Gp0095970", 
+    "id": "nmdc:4c05ed1937c08d9aa49f1de288331e85", 
+    "md5_checksum": "4c05ed1937c08d9aa49f1de288331e85", 
+    "name": "gold:Gp0095970_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 7983328, 
+    "description": "Structural annotation GFF file for gold:Gp0095970", 
+    "id": "nmdc:10cd804a23aec2f55fd9fa957d625ded", 
+    "md5_checksum": "10cd804a23aec2f55fd9fa957d625ded", 
+    "name": "gold:Gp0095970_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3881870, 
+    "description": "KO TSV File for gold:Gp0095972", 
+    "id": "nmdc:6d8e38ab85971f34a20ce3906c275c24", 
+    "md5_checksum": "6d8e38ab85971f34a20ce3906c275c24", 
+    "name": "gold:Gp0095972_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2302132, 
+    "description": "EC TSV File for gold:Gp0095972", 
+    "id": "nmdc:d65739feff1c9c4ef1b8425ee29cf8c1", 
+    "md5_checksum": "d65739feff1c9c4ef1b8425ee29cf8c1", 
+    "name": "gold:Gp0095972_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 49146113, 
+    "description": "Protein FAA for gold:Gp0095972", 
+    "id": "nmdc:d95016340de632ab7da9822f62d7d532", 
+    "md5_checksum": "d95016340de632ab7da9822f62d7d532", 
+    "name": "gold:Gp0095972_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 39208892, 
+    "description": "Functional annotation GFF file for gold:Gp0095972", 
+    "id": "nmdc:3ac69e793c3dee878350dacc3f6c289c", 
+    "md5_checksum": "3ac69e793c3dee878350dacc3f6c289c", 
+    "name": "gold:Gp0095972_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 21118460, 
+    "description": "Structural annotation GFF file for gold:Gp0095972", 
+    "id": "nmdc:34e2687ce6d7ba6d33955350b4af086b", 
+    "md5_checksum": "34e2687ce6d7ba6d33955350b4af086b", 
+    "name": "gold:Gp0095972_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 5332564, 
+    "description": "KO TSV File for gold:Gp0095973", 
+    "id": "nmdc:4d2a671dbee5dc68bc5f30f437720741", 
+    "md5_checksum": "4d2a671dbee5dc68bc5f30f437720741", 
+    "name": "gold:Gp0095973_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 3029734, 
+    "description": "EC TSV File for gold:Gp0095973", 
+    "id": "nmdc:fb38443111abc323338e3d791e7a185d", 
+    "md5_checksum": "fb38443111abc323338e3d791e7a185d", 
+    "name": "gold:Gp0095973_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 52717861, 
+    "description": "Protein FAA for gold:Gp0095973", 
+    "id": "nmdc:a63ef1afaf33c3231ea2688668991b92", 
+    "md5_checksum": "a63ef1afaf33c3231ea2688668991b92", 
+    "name": "gold:Gp0095973_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 35347467, 
+    "description": "Functional annotation GFF file for gold:Gp0095973", 
+    "id": "nmdc:134fa4e4106c41930de83f86face7e15", 
+    "md5_checksum": "134fa4e4106c41930de83f86face7e15", 
+    "name": "gold:Gp0095973_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 17008575, 
+    "description": "Structural annotation GFF file for gold:Gp0095973", 
+    "id": "nmdc:df679fcca8d81f943068f9c49c8dad5e", 
+    "md5_checksum": "df679fcca8d81f943068f9c49c8dad5e", 
+    "name": "gold:Gp0095973_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 4448774, 
+    "description": "KO TSV File for gold:Gp0095971", 
+    "id": "nmdc:f71eb8eea45289ce408eb18ff27180ba", 
+    "md5_checksum": "f71eb8eea45289ce408eb18ff27180ba", 
+    "name": "gold:Gp0095971_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2643789, 
+    "description": "EC TSV File for gold:Gp0095971", 
+    "id": "nmdc:65ead3533c7648ae9b0469c18b764f92", 
+    "md5_checksum": "65ead3533c7648ae9b0469c18b764f92", 
+    "name": "gold:Gp0095971_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 39944081, 
+    "description": "Protein FAA for gold:Gp0095971", 
+    "id": "nmdc:3fa1403e223deb8e0a7a2d46899b1332", 
+    "md5_checksum": "3fa1403e223deb8e0a7a2d46899b1332", 
+    "name": "gold:Gp0095971_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 28654558, 
+    "description": "Functional annotation GFF file for gold:Gp0095971", 
+    "id": "nmdc:b35cc3141691592a8386a811e8c17bda", 
+    "md5_checksum": "b35cc3141691592a8386a811e8c17bda", 
+    "name": "gold:Gp0095971_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 13927287, 
+    "description": "Structural annotation GFF file for gold:Gp0095971", 
+    "id": "nmdc:fa48e6ae18386f689c0406454999179c", 
+    "md5_checksum": "fa48e6ae18386f689c0406454999179c", 
+    "name": "gold:Gp0095971_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 179862, 
+    "description": "KO TSV File for gold:Gp0153825", 
+    "id": "nmdc:f27a7ddec437c66e25336a49d7a75eea", 
+    "md5_checksum": "f27a7ddec437c66e25336a49d7a75eea", 
+    "name": "gold:Gp0153825_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 109148, 
+    "description": "EC TSV File for gold:Gp0153825", 
+    "id": "nmdc:3c9d0205bcec2dffcaf470c19dbc3d62", 
+    "md5_checksum": "3c9d0205bcec2dffcaf470c19dbc3d62", 
+    "name": "gold:Gp0153825_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 1418516, 
+    "description": "Protein FAA for gold:Gp0153825", 
+    "id": "nmdc:b0c95a815d1476be6fcc03009a496919", 
+    "md5_checksum": "b0c95a815d1476be6fcc03009a496919", 
+    "name": "gold:Gp0153825_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 1100355, 
+    "description": "Functional annotation GFF file for gold:Gp0153825", 
+    "id": "nmdc:39e75025991bf143c8afeb26bef43f2f", 
+    "md5_checksum": "39e75025991bf143c8afeb26bef43f2f", 
+    "name": "gold:Gp0153825_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 529855, 
+    "description": "Structural annotation GFF file for gold:Gp0153825", 
+    "id": "nmdc:029f7e3e865362a73ae05b8eea6064ea", 
+    "md5_checksum": "029f7e3e865362a73ae05b8eea6064ea", 
+    "name": "gold:Gp0153825_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1080456, 
+    "description": "KO TSV File for gold:Gp0119849", 
+    "id": "nmdc:e13160c26515071e3a52ca770817c95f", 
+    "md5_checksum": "e13160c26515071e3a52ca770817c95f", 
+    "name": "gold:Gp0119849_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 662036, 
+    "description": "EC TSV File for gold:Gp0119849", 
+    "id": "nmdc:0f71cbb5c0e78499d65fcf6347bb91ba", 
+    "md5_checksum": "0f71cbb5c0e78499d65fcf6347bb91ba", 
+    "name": "gold:Gp0119849_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 7234182, 
+    "description": "Protein FAA for gold:Gp0119849", 
+    "id": "nmdc:f7ca20c415e258a5b9671e0c21c1e9c1", 
+    "md5_checksum": "f7ca20c415e258a5b9671e0c21c1e9c1", 
+    "name": "gold:Gp0119849_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 6587436, 
+    "description": "Functional annotation GFF file for gold:Gp0119849", 
+    "id": "nmdc:abab6020b6823a014799efa5a2833194", 
+    "md5_checksum": "abab6020b6823a014799efa5a2833194", 
+    "name": "gold:Gp0119849_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3370492, 
+    "description": "Structural annotation GFF file for gold:Gp0119849", 
+    "id": "nmdc:4cbee33024ffafa7d3aa7c6c18eb5eb7", 
+    "md5_checksum": "4cbee33024ffafa7d3aa7c6c18eb5eb7", 
+    "name": "gold:Gp0119849_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 934810, 
+    "description": "KO TSV File for gold:Gp0119850", 
+    "id": "nmdc:ba325a7be34a4754f5f08aa2a8b90464", 
+    "md5_checksum": "ba325a7be34a4754f5f08aa2a8b90464", 
+    "name": "gold:Gp0119850_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 564714, 
+    "description": "EC TSV File for gold:Gp0119850", 
+    "id": "nmdc:e22faf3c2a791263caa6c42bcae90338", 
+    "md5_checksum": "e22faf3c2a791263caa6c42bcae90338", 
+    "name": "gold:Gp0119850_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 5871242, 
+    "description": "Protein FAA for gold:Gp0119850", 
+    "id": "nmdc:c867ddc1a93328b2c437ef6cd00b8b61", 
+    "md5_checksum": "c867ddc1a93328b2c437ef6cd00b8b61", 
+    "name": "gold:Gp0119850_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 5360118, 
+    "description": "Functional annotation GFF file for gold:Gp0119850", 
+    "id": "nmdc:3d2b046f7bf680d38599d3e8da88652a", 
+    "md5_checksum": "3d2b046f7bf680d38599d3e8da88652a", 
+    "name": "gold:Gp0119850_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 2678623, 
+    "description": "Structural annotation GFF file for gold:Gp0119850", 
+    "id": "nmdc:d78cab3b1f6df603dedafc7fab91bdc0", 
+    "md5_checksum": "d78cab3b1f6df603dedafc7fab91bdc0", 
+    "name": "gold:Gp0119850_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1183798, 
+    "description": "KO TSV File for gold:Gp0119851", 
+    "id": "nmdc:4293a2522198bfe25ece66b70a46ad0f", 
+    "md5_checksum": "4293a2522198bfe25ece66b70a46ad0f", 
+    "name": "gold:Gp0119851_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 711205, 
+    "description": "EC TSV File for gold:Gp0119851", 
+    "id": "nmdc:396aff2b4e040b9e59866fb9717d18b8", 
+    "md5_checksum": "396aff2b4e040b9e59866fb9717d18b8", 
+    "name": "gold:Gp0119851_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 8749246, 
+    "description": "Protein FAA for gold:Gp0119851", 
+    "id": "nmdc:0fbe9c1e4c428b08f9437b2de1c81c9b", 
+    "md5_checksum": "0fbe9c1e4c428b08f9437b2de1c81c9b", 
+    "name": "gold:Gp0119851_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 7382555, 
+    "description": "Functional annotation GFF file for gold:Gp0119851", 
+    "id": "nmdc:c573754031c6a4de819896ac9855d739", 
+    "md5_checksum": "c573754031c6a4de819896ac9855d739", 
+    "name": "gold:Gp0119851_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3734713, 
+    "description": "Structural annotation GFF file for gold:Gp0119851", 
+    "id": "nmdc:01e120e745c504e4d7a71f847d917869", 
+    "md5_checksum": "01e120e745c504e4d7a71f847d917869", 
+    "name": "gold:Gp0119851_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 773199, 
+    "description": "KO TSV File for gold:Gp0119852", 
+    "id": "nmdc:aa7e8a11c0c5157e41d438d51487953b", 
+    "md5_checksum": "aa7e8a11c0c5157e41d438d51487953b", 
+    "name": "gold:Gp0119852_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 472968, 
+    "description": "EC TSV File for gold:Gp0119852", 
+    "id": "nmdc:93cbaa526013e8c3389d71ec666df8df", 
+    "md5_checksum": "93cbaa526013e8c3389d71ec666df8df", 
+    "name": "gold:Gp0119852_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 4840336, 
+    "description": "Protein FAA for gold:Gp0119852", 
+    "id": "nmdc:94b089411ead35f81fae11ae87ced78b", 
+    "md5_checksum": "94b089411ead35f81fae11ae87ced78b", 
+    "name": "gold:Gp0119852_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 4357453, 
+    "description": "Functional annotation GFF file for gold:Gp0119852", 
+    "id": "nmdc:22e2b1e17437920b3eead05eb2b6133e", 
+    "md5_checksum": "22e2b1e17437920b3eead05eb2b6133e", 
+    "name": "gold:Gp0119852_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 2138377, 
+    "description": "Structural annotation GFF file for gold:Gp0119852", 
+    "id": "nmdc:123e7c768e6de4bc167efdf1c35848f2", 
+    "md5_checksum": "123e7c768e6de4bc167efdf1c35848f2", 
+    "name": "gold:Gp0119852_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1973069, 
+    "description": "KO TSV File for gold:Gp0119853", 
+    "id": "nmdc:5ff70d3756a172b31319e08dee885c77", 
+    "md5_checksum": "5ff70d3756a172b31319e08dee885c77", 
+    "name": "gold:Gp0119853_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 1185851, 
+    "description": "EC TSV File for gold:Gp0119853", 
+    "id": "nmdc:57158b2b8d5b40854005964b2bc53ba7", 
+    "md5_checksum": "57158b2b8d5b40854005964b2bc53ba7", 
+    "name": "gold:Gp0119853_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 15403151, 
+    "description": "Protein FAA for gold:Gp0119853", 
+    "id": "nmdc:1c4849e129c7149ac35cb11927a9d4e0", 
+    "md5_checksum": "1c4849e129c7149ac35cb11927a9d4e0", 
+    "name": "gold:Gp0119853_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 12429307, 
+    "description": "Functional annotation GFF file for gold:Gp0119853", 
+    "id": "nmdc:4eaeca092a82d4a4da2158cdbff35a24", 
+    "md5_checksum": "4eaeca092a82d4a4da2158cdbff35a24", 
+    "name": "gold:Gp0119853_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6213457, 
+    "description": "Structural annotation GFF file for gold:Gp0119853", 
+    "id": "nmdc:5eb91781f9f336fea64e5a3f29af3831", 
+    "md5_checksum": "5eb91781f9f336fea64e5a3f29af3831", 
+    "name": "gold:Gp0119853_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1771154, 
+    "description": "KO TSV File for gold:Gp0119854", 
+    "id": "nmdc:d84b65a05ab83b8ec7c885accc9e57f4", 
+    "md5_checksum": "d84b65a05ab83b8ec7c885accc9e57f4", 
+    "name": "gold:Gp0119854_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 1077410, 
+    "description": "EC TSV File for gold:Gp0119854", 
+    "id": "nmdc:fb35dbdd22eb4e703ae050c83b5658c0", 
+    "md5_checksum": "fb35dbdd22eb4e703ae050c83b5658c0", 
+    "name": "gold:Gp0119854_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 13282060, 
+    "description": "Protein FAA for gold:Gp0119854", 
+    "id": "nmdc:3fe087a93fcc069db3d7283210745a0e", 
+    "md5_checksum": "3fe087a93fcc069db3d7283210745a0e", 
+    "name": "gold:Gp0119854_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 10872847, 
+    "description": "Functional annotation GFF file for gold:Gp0119854", 
+    "id": "nmdc:bdaf88f69e4c05789d1c10797597b807", 
+    "md5_checksum": "bdaf88f69e4c05789d1c10797597b807", 
+    "name": "gold:Gp0119854_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 5385833, 
+    "description": "Structural annotation GFF file for gold:Gp0119854", 
+    "id": "nmdc:13b67df55471b9c8d81ae5ab6c350168", 
+    "md5_checksum": "13b67df55471b9c8d81ae5ab6c350168", 
+    "name": "gold:Gp0119854_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1808800, 
+    "description": "KO TSV File for gold:Gp0119855", 
+    "id": "nmdc:93545728ed983547f443b29ad6291de9", 
+    "md5_checksum": "93545728ed983547f443b29ad6291de9", 
+    "name": "gold:Gp0119855_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 1084928, 
+    "description": "EC TSV File for gold:Gp0119855", 
+    "id": "nmdc:01009880aecd068cb5d0b087f4c385de", 
+    "md5_checksum": "01009880aecd068cb5d0b087f4c385de", 
+    "name": "gold:Gp0119855_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 13828585, 
+    "description": "Protein FAA for gold:Gp0119855", 
+    "id": "nmdc:4bdb155e0d4461187eaa4aa0011ace7a", 
+    "md5_checksum": "4bdb155e0d4461187eaa4aa0011ace7a", 
+    "name": "gold:Gp0119855_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 11190259, 
+    "description": "Functional annotation GFF file for gold:Gp0119855", 
+    "id": "nmdc:465fe365428d8b2f4a1078f4de53c95a", 
+    "md5_checksum": "465fe365428d8b2f4a1078f4de53c95a", 
+    "name": "gold:Gp0119855_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 5537188, 
+    "description": "Structural annotation GFF file for gold:Gp0119855", 
+    "id": "nmdc:ea6602b7f5d2d59d935b5b61ee9ec9f0", 
+    "md5_checksum": "ea6602b7f5d2d59d935b5b61ee9ec9f0", 
+    "name": "gold:Gp0119855_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1248532, 
+    "description": "KO TSV File for gold:Gp0119856", 
+    "id": "nmdc:54774dd8b8b64d9e3a2bcefbf32ad4e7", 
+    "md5_checksum": "54774dd8b8b64d9e3a2bcefbf32ad4e7", 
+    "name": "gold:Gp0119856_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 784295, 
+    "description": "EC TSV File for gold:Gp0119856", 
+    "id": "nmdc:e4497322da4fe029f14887a03686e717", 
+    "md5_checksum": "e4497322da4fe029f14887a03686e717", 
+    "name": "gold:Gp0119856_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 8034246, 
+    "description": "Protein FAA for gold:Gp0119856", 
+    "id": "nmdc:ea335b6e160c795a1a265db8b33d34ac", 
+    "md5_checksum": "ea335b6e160c795a1a265db8b33d34ac", 
+    "name": "gold:Gp0119856_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 8001715, 
+    "description": "Functional annotation GFF file for gold:Gp0119856", 
+    "id": "nmdc:34664c626681cc58c34ff0f5171700e6", 
+    "md5_checksum": "34664c626681cc58c34ff0f5171700e6", 
+    "name": "gold:Gp0119856_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 4222833, 
+    "description": "Structural annotation GFF file for gold:Gp0119856", 
+    "id": "nmdc:5b2e3d9d6e6656bb3c3857c370766a8e", 
+    "md5_checksum": "5b2e3d9d6e6656bb3c3857c370766a8e", 
+    "name": "gold:Gp0119856_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 920960, 
+    "description": "KO TSV File for gold:Gp0119857", 
+    "id": "nmdc:01cde04adc043435b05217b784cd3499", 
+    "md5_checksum": "01cde04adc043435b05217b784cd3499", 
+    "name": "gold:Gp0119857_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 554347, 
+    "description": "EC TSV File for gold:Gp0119857", 
+    "id": "nmdc:0c42a0dff7a1503cef8b47ac18817b22", 
+    "md5_checksum": "0c42a0dff7a1503cef8b47ac18817b22", 
+    "name": "gold:Gp0119857_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 6740737, 
+    "description": "Protein FAA for gold:Gp0119857", 
+    "id": "nmdc:aafac98d31f252776fe64fa325773c43", 
+    "md5_checksum": "aafac98d31f252776fe64fa325773c43", 
+    "name": "gold:Gp0119857_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 5746478, 
+    "description": "Functional annotation GFF file for gold:Gp0119857", 
+    "id": "nmdc:8852256736a74d4b519097e8b05aae37", 
+    "md5_checksum": "8852256736a74d4b519097e8b05aae37", 
+    "name": "gold:Gp0119857_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 2935649, 
+    "description": "Structural annotation GFF file for gold:Gp0119857", 
+    "id": "nmdc:0d069ee431e7e198bee59bb231d9f701", 
+    "md5_checksum": "0d069ee431e7e198bee59bb231d9f701", 
+    "name": "gold:Gp0119857_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 475998, 
+    "description": "KO TSV File for gold:Gp0119858", 
+    "id": "nmdc:a6f6303c4037bd4ef8cc4f33dfc927f2", 
+    "md5_checksum": "a6f6303c4037bd4ef8cc4f33dfc927f2", 
+    "name": "gold:Gp0119858_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 285759, 
+    "description": "EC TSV File for gold:Gp0119858", 
+    "id": "nmdc:8d702e0b51ac1ef8d1a2c2d85537d60f", 
+    "md5_checksum": "8d702e0b51ac1ef8d1a2c2d85537d60f", 
+    "name": "gold:Gp0119858_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 3707135, 
+    "description": "Protein FAA for gold:Gp0119858", 
+    "id": "nmdc:3b094cedb14a2b3f55db22059ee428fd", 
+    "md5_checksum": "3b094cedb14a2b3f55db22059ee428fd", 
+    "name": "gold:Gp0119858_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 3016673, 
+    "description": "Functional annotation GFF file for gold:Gp0119858", 
+    "id": "nmdc:3dd42c975d3d44829afc3e6e72d50806", 
+    "md5_checksum": "3dd42c975d3d44829afc3e6e72d50806", 
+    "name": "gold:Gp0119858_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1501166, 
+    "description": "Structural annotation GFF file for gold:Gp0119858", 
+    "id": "nmdc:d0cee083dbd8bd4c3a6299c176f31578", 
+    "md5_checksum": "d0cee083dbd8bd4c3a6299c176f31578", 
+    "name": "gold:Gp0119858_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 409334, 
+    "description": "KO TSV File for gold:Gp0119859", 
+    "id": "nmdc:be958aa2b6ee35d8b6021003d469b7c8", 
+    "md5_checksum": "be958aa2b6ee35d8b6021003d469b7c8", 
+    "name": "gold:Gp0119859_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 239325, 
+    "description": "EC TSV File for gold:Gp0119859", 
+    "id": "nmdc:630e8577e54ce83a7c790c720c27ab1a", 
+    "md5_checksum": "630e8577e54ce83a7c790c720c27ab1a", 
+    "name": "gold:Gp0119859_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 3807944, 
+    "description": "Protein FAA for gold:Gp0119859", 
+    "id": "nmdc:42a6603f83cf75e34bf4d072793696bb", 
+    "md5_checksum": "42a6603f83cf75e34bf4d072793696bb", 
+    "name": "gold:Gp0119859_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 2781708, 
+    "description": "Functional annotation GFF file for gold:Gp0119859", 
+    "id": "nmdc:6d69e07381bb8d1da993e1c68477b717", 
+    "md5_checksum": "6d69e07381bb8d1da993e1c68477b717", 
+    "name": "gold:Gp0119859_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1367906, 
+    "description": "Structural annotation GFF file for gold:Gp0119859", 
+    "id": "nmdc:8c7fcfda19ef0fdaee1308aefdff2b38", 
+    "md5_checksum": "8c7fcfda19ef0fdaee1308aefdff2b38", 
+    "name": "gold:Gp0119859_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 433502, 
+    "description": "KO TSV File for gold:Gp0119860", 
+    "id": "nmdc:a1bea22c69e17cad4b4c510d5086c0c9", 
+    "md5_checksum": "a1bea22c69e17cad4b4c510d5086c0c9", 
+    "name": "gold:Gp0119860_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 253810, 
+    "description": "EC TSV File for gold:Gp0119860", 
+    "id": "nmdc:81abecb3ec966b8b59eacd0a22591174", 
+    "md5_checksum": "81abecb3ec966b8b59eacd0a22591174", 
+    "name": "gold:Gp0119860_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 3960053, 
+    "description": "Protein FAA for gold:Gp0119860", 
+    "id": "nmdc:40eed453b6c08b31759361fda1e4834c", 
+    "md5_checksum": "40eed453b6c08b31759361fda1e4834c", 
+    "name": "gold:Gp0119860_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 2930373, 
+    "description": "Functional annotation GFF file for gold:Gp0119860", 
+    "id": "nmdc:fe0159a49e1dddffcc7ed37e17768a27", 
+    "md5_checksum": "fe0159a49e1dddffcc7ed37e17768a27", 
+    "name": "gold:Gp0119860_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1440816, 
+    "description": "Structural annotation GFF file for gold:Gp0119860", 
+    "id": "nmdc:ec0bc06b260e281826aa3acf1d4a79b1", 
+    "md5_checksum": "ec0bc06b260e281826aa3acf1d4a79b1", 
+    "name": "gold:Gp0119860_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 323283, 
+    "description": "KO TSV File for gold:Gp0119861", 
+    "id": "nmdc:c008d542d740404df0bdd857aa63a79e", 
+    "md5_checksum": "c008d542d740404df0bdd857aa63a79e", 
+    "name": "gold:Gp0119861_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 192248, 
+    "description": "EC TSV File for gold:Gp0119861", 
+    "id": "nmdc:0c95e6334b84d45a1f926d85c3bca92d", 
+    "md5_checksum": "0c95e6334b84d45a1f926d85c3bca92d", 
+    "name": "gold:Gp0119861_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 3063757, 
+    "description": "Protein FAA for gold:Gp0119861", 
+    "id": "nmdc:bac418775edef4e44fc708f0077d0185", 
+    "md5_checksum": "bac418775edef4e44fc708f0077d0185", 
+    "name": "gold:Gp0119861_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 2295968, 
+    "description": "Functional annotation GFF file for gold:Gp0119861", 
+    "id": "nmdc:25e47bba0ac3dd8354fcc7f1b391b05f", 
+    "md5_checksum": "25e47bba0ac3dd8354fcc7f1b391b05f", 
+    "name": "gold:Gp0119861_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1144696, 
+    "description": "Structural annotation GFF file for gold:Gp0119861", 
+    "id": "nmdc:da705a82b56b8cd3b6fe4f267656bcdd", 
+    "md5_checksum": "da705a82b56b8cd3b6fe4f267656bcdd", 
+    "name": "gold:Gp0119861_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 549284, 
+    "description": "KO TSV File for gold:Gp0119862", 
+    "id": "nmdc:8d4cbb57044cd7441b7e7cb6401975af", 
+    "md5_checksum": "8d4cbb57044cd7441b7e7cb6401975af", 
+    "name": "gold:Gp0119862_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 322349, 
+    "description": "EC TSV File for gold:Gp0119862", 
+    "id": "nmdc:5f27f71a8a92000ce57a51a2befb782e", 
+    "md5_checksum": "5f27f71a8a92000ce57a51a2befb782e", 
+    "name": "gold:Gp0119862_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 4345591, 
+    "description": "Protein FAA for gold:Gp0119862", 
+    "id": "nmdc:83e3f302abd3adb4f19d291055b6350a", 
+    "md5_checksum": "83e3f302abd3adb4f19d291055b6350a", 
+    "name": "gold:Gp0119862_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 3477696, 
+    "description": "Functional annotation GFF file for gold:Gp0119862", 
+    "id": "nmdc:fa3fe812d11f1f2d81690955b7abfe98", 
+    "md5_checksum": "fa3fe812d11f1f2d81690955b7abfe98", 
+    "name": "gold:Gp0119862_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1715899, 
+    "description": "Structural annotation GFF file for gold:Gp0119862", 
+    "id": "nmdc:988755567c66c6d411ec9214dd1354d6", 
+    "md5_checksum": "988755567c66c6d411ec9214dd1354d6", 
+    "name": "gold:Gp0119862_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 325799, 
+    "description": "KO TSV File for gold:Gp0119863", 
+    "id": "nmdc:2c1dcb14eb342ea861382c06e02f949a", 
+    "md5_checksum": "2c1dcb14eb342ea861382c06e02f949a", 
+    "name": "gold:Gp0119863_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 192524, 
+    "description": "EC TSV File for gold:Gp0119863", 
+    "id": "nmdc:47036ce184f03bcfb20b86ae7d9bef11", 
+    "md5_checksum": "47036ce184f03bcfb20b86ae7d9bef11", 
+    "name": "gold:Gp0119863_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 2878161, 
+    "description": "Protein FAA for gold:Gp0119863", 
+    "id": "nmdc:4ceecaf1eecccbfe2cd6e9cb444be606", 
+    "md5_checksum": "4ceecaf1eecccbfe2cd6e9cb444be606", 
+    "name": "gold:Gp0119863_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 2274676, 
+    "description": "Functional annotation GFF file for gold:Gp0119863", 
+    "id": "nmdc:1381fe5809d72a5a4ca49a02f01e035c", 
+    "md5_checksum": "1381fe5809d72a5a4ca49a02f01e035c", 
+    "name": "gold:Gp0119863_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1148817, 
+    "description": "Structural annotation GFF file for gold:Gp0119863", 
+    "id": "nmdc:83bd191d644ec7d8566706441aaa5ed3", 
+    "md5_checksum": "83bd191d644ec7d8566706441aaa5ed3", 
+    "name": "gold:Gp0119863_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 15442450, 
+    "description": "KO TSV File for gold:Gp0119864", 
+    "id": "nmdc:7598bce5a091fe9dab92032dda3f76a0", 
+    "md5_checksum": "7598bce5a091fe9dab92032dda3f76a0", 
+    "name": "gold:Gp0119864_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 11063342, 
+    "description": "EC TSV File for gold:Gp0119864", 
+    "id": "nmdc:671a024656a56f7ffccab24942a4d0a4", 
+    "md5_checksum": "671a024656a56f7ffccab24942a4d0a4", 
+    "name": "gold:Gp0119864_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 106842300, 
+    "description": "Protein FAA for gold:Gp0119864", 
+    "id": "nmdc:b457f9b4e5dcb2491873e8222c750b5d", 
+    "md5_checksum": "b457f9b4e5dcb2491873e8222c750b5d", 
+    "name": "gold:Gp0119864_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 104711744, 
+    "description": "Functional annotation GFF file for gold:Gp0119864", 
+    "id": "nmdc:aa5c1f6a055e3dfaf1b1af0df243027a", 
+    "md5_checksum": "aa5c1f6a055e3dfaf1b1af0df243027a", 
+    "name": "gold:Gp0119864_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 54981177, 
+    "description": "Structural annotation GFF file for gold:Gp0119864", 
+    "id": "nmdc:9d46a69fcd2734531d74c99b99188199", 
+    "md5_checksum": "9d46a69fcd2734531d74c99b99188199", 
+    "name": "gold:Gp0119864_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 27390385, 
+    "description": "KO TSV File for gold:Gp0119865", 
+    "id": "nmdc:20c3a3e2b87b71618c5c94fd82b449ce", 
+    "md5_checksum": "20c3a3e2b87b71618c5c94fd82b449ce", 
+    "name": "gold:Gp0119865_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 19606725, 
+    "description": "EC TSV File for gold:Gp0119865", 
+    "id": "nmdc:d15cd8aba3ade1df7d5c09402c593814", 
+    "md5_checksum": "d15cd8aba3ade1df7d5c09402c593814", 
+    "name": "gold:Gp0119865_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 214387404, 
+    "description": "Protein FAA for gold:Gp0119865", 
+    "id": "nmdc:6550f9ca218f9c4fd7776152c3c171ab", 
+    "md5_checksum": "6550f9ca218f9c4fd7776152c3c171ab", 
+    "name": "gold:Gp0119865_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 195396254, 
+    "description": "Functional annotation GFF file for gold:Gp0119865", 
+    "id": "nmdc:c851489fe96208f9d1ef9f3b07ca3a69", 
+    "md5_checksum": "c851489fe96208f9d1ef9f3b07ca3a69", 
+    "name": "gold:Gp0119865_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 102430999, 
+    "description": "Structural annotation GFF file for gold:Gp0119865", 
+    "id": "nmdc:a510d3977b40f11380fd71123205b8ad", 
+    "md5_checksum": "a510d3977b40f11380fd71123205b8ad", 
+    "name": "gold:Gp0119865_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 30138753, 
+    "description": "KO TSV File for gold:Gp0119866", 
+    "id": "nmdc:fb65b8fb8a4b8c2dfa2b1e8090deadf9", 
+    "md5_checksum": "fb65b8fb8a4b8c2dfa2b1e8090deadf9", 
+    "name": "gold:Gp0119866_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 21148830, 
+    "description": "EC TSV File for gold:Gp0119866", 
+    "id": "nmdc:0af249ec467efff6d01ca5322d2976ea", 
+    "md5_checksum": "0af249ec467efff6d01ca5322d2976ea", 
+    "name": "gold:Gp0119866_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 215982362, 
+    "description": "Protein FAA for gold:Gp0119866", 
+    "id": "nmdc:271c7aa8d384129a7b7da3149b3a04b2", 
+    "md5_checksum": "271c7aa8d384129a7b7da3149b3a04b2", 
+    "name": "gold:Gp0119866_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 194576022, 
+    "description": "Functional annotation GFF file for gold:Gp0119866", 
+    "id": "nmdc:40d1c9d041244299479e6497375020cc", 
+    "md5_checksum": "40d1c9d041244299479e6497375020cc", 
+    "name": "gold:Gp0119866_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 100150433, 
+    "description": "Structural annotation GFF file for gold:Gp0119866", 
+    "id": "nmdc:8b1f158f8f62d09176ed15191f1c4c80", 
+    "md5_checksum": "8b1f158f8f62d09176ed15191f1c4c80", 
+    "name": "gold:Gp0119866_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 16797334, 
+    "description": "KO TSV File for gold:Gp0119867", 
+    "id": "nmdc:7d6139f84839865ff5105705f8e0576a", 
+    "md5_checksum": "7d6139f84839865ff5105705f8e0576a", 
+    "name": "gold:Gp0119867_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 12022519, 
+    "description": "EC TSV File for gold:Gp0119867", 
+    "id": "nmdc:3d13fbb013ac40ce2b86a7e691557bff", 
+    "md5_checksum": "3d13fbb013ac40ce2b86a7e691557bff", 
+    "name": "gold:Gp0119867_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 118930948, 
+    "description": "Protein FAA for gold:Gp0119867", 
+    "id": "nmdc:ecffae724679f548f018f2a79014f3c4", 
+    "md5_checksum": "ecffae724679f548f018f2a79014f3c4", 
+    "name": "gold:Gp0119867_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 108288955, 
+    "description": "Functional annotation GFF file for gold:Gp0119867", 
+    "id": "nmdc:77afdfb16fdb74b90a31fd6cf8a6f31c", 
+    "md5_checksum": "77afdfb16fdb74b90a31fd6cf8a6f31c", 
+    "name": "gold:Gp0119867_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 55733065, 
+    "description": "Structural annotation GFF file for gold:Gp0119867", 
+    "id": "nmdc:b3b297d4273c6f94fa930c25e4e4f8b9", 
+    "md5_checksum": "b3b297d4273c6f94fa930c25e4e4f8b9", 
+    "name": "gold:Gp0119867_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 56644068, 
+    "description": "KO TSV File for gold:Gp0119868", 
+    "id": "nmdc:5c12d87d15c435f8364f0926da11158d", 
+    "md5_checksum": "5c12d87d15c435f8364f0926da11158d", 
+    "name": "gold:Gp0119868_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 36549790, 
+    "description": "EC TSV File for gold:Gp0119868", 
+    "id": "nmdc:fe13ce7914bd486b5fca86373ffbb2f6", 
+    "md5_checksum": "fe13ce7914bd486b5fca86373ffbb2f6", 
+    "name": "gold:Gp0119868_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 422941279, 
+    "description": "Protein FAA for gold:Gp0119868", 
+    "id": "nmdc:f7f9ea5eb415407562d362401e5c67ed", 
+    "md5_checksum": "f7f9ea5eb415407562d362401e5c67ed", 
+    "name": "gold:Gp0119868_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 422627569, 
+    "description": "Functional annotation GFF file for gold:Gp0119868", 
+    "id": "nmdc:3be103ff5fd044a66e282a4b92d73bf6", 
+    "md5_checksum": "3be103ff5fd044a66e282a4b92d73bf6", 
+    "name": "gold:Gp0119868_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 223659177, 
+    "description": "Structural annotation GFF file for gold:Gp0119868", 
+    "id": "nmdc:cb3e0e5e66b95ebf1f96d60a0f2a73eb", 
+    "md5_checksum": "cb3e0e5e66b95ebf1f96d60a0f2a73eb", 
+    "name": "gold:Gp0119868_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 150397, 
+    "description": "KO TSV File for gold:Gp0119869", 
+    "id": "nmdc:6d5e4db4f7cedc512fc2ffe2a315df53", 
+    "md5_checksum": "6d5e4db4f7cedc512fc2ffe2a315df53", 
+    "name": "gold:Gp0119869_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 88193, 
+    "description": "EC TSV File for gold:Gp0119869", 
+    "id": "nmdc:eefe2cb2a06b3eb3d3e8fbb5754036f8", 
+    "md5_checksum": "eefe2cb2a06b3eb3d3e8fbb5754036f8", 
+    "name": "gold:Gp0119869_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 1273128, 
+    "description": "Protein FAA for gold:Gp0119869", 
+    "id": "nmdc:bbda88fceb919634dfd3481d24b000f6", 
+    "md5_checksum": "bbda88fceb919634dfd3481d24b000f6", 
+    "name": "gold:Gp0119869_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 931502, 
+    "description": "Functional annotation GFF file for gold:Gp0119869", 
+    "id": "nmdc:92b0d4ba67d4011c0222acb6e26ebe19", 
+    "md5_checksum": "92b0d4ba67d4011c0222acb6e26ebe19", 
+    "name": "gold:Gp0119869_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 440191, 
+    "description": "Structural annotation GFF file for gold:Gp0119869", 
+    "id": "nmdc:a1b4533f2c6f02ebeba3eaff415167c0", 
+    "md5_checksum": "a1b4533f2c6f02ebeba3eaff415167c0", 
+    "name": "gold:Gp0119869_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 17634646, 
+    "description": "KO TSV File for gold:Gp0119870", 
+    "id": "nmdc:a21597411cb162b711ce7c814e5a0f37", 
+    "md5_checksum": "a21597411cb162b711ce7c814e5a0f37", 
+    "name": "gold:Gp0119870_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 11036311, 
+    "description": "EC TSV File for gold:Gp0119870", 
+    "id": "nmdc:2f62f296435f3be0894cbadc181acbb2", 
+    "md5_checksum": "2f62f296435f3be0894cbadc181acbb2", 
+    "name": "gold:Gp0119870_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 164522366, 
+    "description": "Protein FAA for gold:Gp0119870", 
+    "id": "nmdc:1b23ca3cf394e590fbf999117e7c816b", 
+    "md5_checksum": "1b23ca3cf394e590fbf999117e7c816b", 
+    "name": "gold:Gp0119870_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 128382475, 
+    "description": "Functional annotation GFF file for gold:Gp0119870", 
+    "id": "nmdc:c785fbfe23e434fe49f954db8a886c0b", 
+    "md5_checksum": "c785fbfe23e434fe49f954db8a886c0b", 
+    "name": "gold:Gp0119870_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 65691588, 
+    "description": "Structural annotation GFF file for gold:Gp0119870", 
+    "id": "nmdc:c068f017170867e3a1d5900d852a7ee2", 
+    "md5_checksum": "c068f017170867e3a1d5900d852a7ee2", 
+    "name": "gold:Gp0119870_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 19275884, 
+    "description": "KO TSV File for gold:Gp0119871", 
+    "id": "nmdc:d9fc4978d1b8e436e7af2bd9e23a0fa0", 
+    "md5_checksum": "d9fc4978d1b8e436e7af2bd9e23a0fa0", 
+    "name": "gold:Gp0119871_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 12451063, 
+    "description": "EC TSV File for gold:Gp0119871", 
+    "id": "nmdc:52c029494de6ee460c89f5a9a1a53c31", 
+    "md5_checksum": "52c029494de6ee460c89f5a9a1a53c31", 
+    "name": "gold:Gp0119871_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 163764533, 
+    "description": "Protein FAA for gold:Gp0119871", 
+    "id": "nmdc:cfb68ff789915097ccda1b7d1d724a7e", 
+    "md5_checksum": "cfb68ff789915097ccda1b7d1d724a7e", 
+    "name": "gold:Gp0119871_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 140553694, 
+    "description": "Functional annotation GFF file for gold:Gp0119871", 
+    "id": "nmdc:5f22652ac11a6dd7a1f988e29c46f795", 
+    "md5_checksum": "5f22652ac11a6dd7a1f988e29c46f795", 
+    "name": "gold:Gp0119871_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 72463464, 
+    "description": "Structural annotation GFF file for gold:Gp0119871", 
+    "id": "nmdc:177665daa3c567ec3df4873306185720", 
+    "md5_checksum": "177665daa3c567ec3df4873306185720", 
+    "name": "gold:Gp0119871_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3493289, 
+    "description": "KO TSV File for gold:Gp0108335", 
+    "id": "nmdc:f445ffbd34e3780499011c21a58d2e77", 
+    "md5_checksum": "f445ffbd34e3780499011c21a58d2e77", 
+    "name": "gold:Gp0108335_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2385557, 
+    "description": "EC TSV File for gold:Gp0108335", 
+    "id": "nmdc:7dd9a71084eff4f619067b7c62f2666f", 
+    "md5_checksum": "7dd9a71084eff4f619067b7c62f2666f", 
+    "name": "gold:Gp0108335_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 33273591, 
+    "description": "Protein FAA for gold:Gp0108335", 
+    "id": "nmdc:dc3dd449838881164ba91bef8b97e527", 
+    "md5_checksum": "dc3dd449838881164ba91bef8b97e527", 
+    "name": "gold:Gp0108335_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 35955057, 
+    "description": "Functional annotation GFF file for gold:Gp0108335", 
+    "id": "nmdc:3c6c109c5160398a4f7662e506eadc57", 
+    "md5_checksum": "3c6c109c5160398a4f7662e506eadc57", 
+    "name": "gold:Gp0108335_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 20037252, 
+    "description": "Structural annotation GFF file for gold:Gp0108335", 
+    "id": "nmdc:e0df046733dac5bbc1ea5bf7c19ca6c9", 
+    "md5_checksum": "e0df046733dac5bbc1ea5bf7c19ca6c9", 
+    "name": "gold:Gp0108335_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 116726, 
+    "description": "KO TSV File for gold:Gp0108340", 
+    "id": "nmdc:ce49f5ea65c07f438a3b1f4864883223", 
+    "md5_checksum": "ce49f5ea65c07f438a3b1f4864883223", 
+    "name": "gold:Gp0108340_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 82005, 
+    "description": "EC TSV File for gold:Gp0108340", 
+    "id": "nmdc:ba4ab38ad21931a6ee4fb5caa38cfbb3", 
+    "md5_checksum": "ba4ab38ad21931a6ee4fb5caa38cfbb3", 
+    "name": "gold:Gp0108340_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 1069703, 
+    "description": "Protein FAA for gold:Gp0108340", 
+    "id": "nmdc:b71cdab4724f5045b97ea25bf95744d0", 
+    "md5_checksum": "b71cdab4724f5045b97ea25bf95744d0", 
+    "name": "gold:Gp0108340_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 1241467, 
+    "description": "Functional annotation GFF file for gold:Gp0108340", 
+    "id": "nmdc:2f0fcf7524586b2ace092df82ae37c17", 
+    "md5_checksum": "2f0fcf7524586b2ace092df82ae37c17", 
+    "name": "gold:Gp0108340_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 695019, 
+    "description": "Structural annotation GFF file for gold:Gp0108340", 
+    "id": "nmdc:980737e36870cdeb97a75522c5e9e360", 
+    "md5_checksum": "980737e36870cdeb97a75522c5e9e360", 
+    "name": "gold:Gp0108340_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 10209017, 
+    "description": "KO TSV File for gold:Gp0108341", 
+    "id": "nmdc:f334582289317edf63d15890523eebd3", 
+    "md5_checksum": "f334582289317edf63d15890523eebd3", 
+    "name": "gold:Gp0108341_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 7075050, 
+    "description": "EC TSV File for gold:Gp0108341", 
+    "id": "nmdc:6cb751b63cf3804da1cb9bce487d87d6", 
+    "md5_checksum": "6cb751b63cf3804da1cb9bce487d87d6", 
+    "name": "gold:Gp0108341_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 96168044, 
+    "description": "Protein FAA for gold:Gp0108341", 
+    "id": "nmdc:9b85480693f6b99019c14fb188fd0c1f", 
+    "md5_checksum": "9b85480693f6b99019c14fb188fd0c1f", 
+    "name": "gold:Gp0108341_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 110717036, 
+    "description": "Functional annotation GFF file for gold:Gp0108341", 
+    "id": "nmdc:8fde8eb6b526f14fca585bfa07d37396", 
+    "md5_checksum": "8fde8eb6b526f14fca585bfa07d37396", 
+    "name": "gold:Gp0108341_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 62873443, 
+    "description": "Structural annotation GFF file for gold:Gp0108341", 
+    "id": "nmdc:08d3b9b27ad694a817d14183d4ab03b3", 
+    "md5_checksum": "08d3b9b27ad694a817d14183d4ab03b3", 
+    "name": "gold:Gp0108341_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 167547, 
+    "description": "KO TSV File for gold:Gp0108342", 
+    "id": "nmdc:7345c9a71b4fddfcc7b4ec522f46a98a", 
+    "md5_checksum": "7345c9a71b4fddfcc7b4ec522f46a98a", 
+    "name": "gold:Gp0108342_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 113243, 
+    "description": "EC TSV File for gold:Gp0108342", 
+    "id": "nmdc:510c651a9804b4361808c347da8d09c5", 
+    "md5_checksum": "510c651a9804b4361808c347da8d09c5", 
+    "name": "gold:Gp0108342_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 1663926, 
+    "description": "Protein FAA for gold:Gp0108342", 
+    "id": "nmdc:e021603e547dc968aae2c5de33ce6254", 
+    "md5_checksum": "e021603e547dc968aae2c5de33ce6254", 
+    "name": "gold:Gp0108342_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 1981100, 
+    "description": "Functional annotation GFF file for gold:Gp0108342", 
+    "id": "nmdc:e94ddf1fa9e0e12b4447f8826b7dfa98", 
+    "md5_checksum": "e94ddf1fa9e0e12b4447f8826b7dfa98", 
+    "name": "gold:Gp0108342_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1122931, 
+    "description": "Structural annotation GFF file for gold:Gp0108342", 
+    "id": "nmdc:bd32e7e81b62bf0f0e73baf917b2c689", 
+    "md5_checksum": "bd32e7e81b62bf0f0e73baf917b2c689", 
+    "name": "gold:Gp0108342_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 21452392, 
+    "description": "KO TSV File for gold:Gp0108344", 
+    "id": "nmdc:8ad8a576ca51455b5cf455c5f8fccf4b", 
+    "md5_checksum": "8ad8a576ca51455b5cf455c5f8fccf4b", 
+    "name": "gold:Gp0108344_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 14643744, 
+    "description": "EC TSV File for gold:Gp0108344", 
+    "id": "nmdc:cffab71d8e21b60feec6002a4da718da", 
+    "md5_checksum": "cffab71d8e21b60feec6002a4da718da", 
+    "name": "gold:Gp0108344_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 208376238, 
+    "description": "Protein FAA for gold:Gp0108344", 
+    "id": "nmdc:aaa10bec4adf01aee2811a37cc431a87", 
+    "md5_checksum": "aaa10bec4adf01aee2811a37cc431a87", 
+    "name": "gold:Gp0108344_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 222049029, 
+    "description": "Functional annotation GFF file for gold:Gp0108344", 
+    "id": "nmdc:e2cb8a34cd2faafe85eb0028a2ba2d29", 
+    "md5_checksum": "e2cb8a34cd2faafe85eb0028a2ba2d29", 
+    "name": "gold:Gp0108344_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 124026103, 
+    "description": "Structural annotation GFF file for gold:Gp0108344", 
+    "id": "nmdc:afc47e209d97d89d1a1fdda92bba9ed5", 
+    "md5_checksum": "afc47e209d97d89d1a1fdda92bba9ed5", 
+    "name": "gold:Gp0108344_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 11180946, 
+    "description": "KO TSV File for gold:Gp0108345", 
+    "id": "nmdc:e33c6604c4f35c119add733c043248fa", 
+    "md5_checksum": "e33c6604c4f35c119add733c043248fa", 
+    "name": "gold:Gp0108345_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 7657445, 
+    "description": "EC TSV File for gold:Gp0108345", 
+    "id": "nmdc:51a77eabe0246bdcadbf187d2d86b2b1", 
+    "md5_checksum": "51a77eabe0246bdcadbf187d2d86b2b1", 
+    "name": "gold:Gp0108345_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 99704906, 
+    "description": "Protein FAA for gold:Gp0108345", 
+    "id": "nmdc:4c09ae18d4a570f460eedfd73f1c4a58", 
+    "md5_checksum": "4c09ae18d4a570f460eedfd73f1c4a58", 
+    "name": "gold:Gp0108345_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 109051141, 
+    "description": "Functional annotation GFF file for gold:Gp0108345", 
+    "id": "nmdc:12c2df1c05f794557600ea46db721d9b", 
+    "md5_checksum": "12c2df1c05f794557600ea46db721d9b", 
+    "name": "gold:Gp0108345_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 61073234, 
+    "description": "Structural annotation GFF file for gold:Gp0108345", 
+    "id": "nmdc:340d4baa8f188b4d35a90b5e6b2086db", 
+    "md5_checksum": "340d4baa8f188b4d35a90b5e6b2086db", 
+    "name": "gold:Gp0108345_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 7404, 
+    "description": "KO TSV File for gold:Gp0146715", 
+    "id": "nmdc:51a33ed89c68e4e034fae3a5a54e0dd2", 
+    "md5_checksum": "51a33ed89c68e4e034fae3a5a54e0dd2", 
+    "name": "gold:Gp0146715_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 1669, 
+    "description": "EC TSV File for gold:Gp0146715", 
+    "id": "nmdc:62a5553bfa8a927197a3fd8f1affd399", 
+    "md5_checksum": "62a5553bfa8a927197a3fd8f1affd399", 
+    "name": "gold:Gp0146715_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 12258, 
+    "description": "KO TSV File for gold:Gp0146716", 
+    "id": "nmdc:58775c87dcaf7120171b425766a766de", 
+    "md5_checksum": "58775c87dcaf7120171b425766a766de", 
+    "name": "gold:Gp0146716_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 5580, 
+    "description": "EC TSV File for gold:Gp0146716", 
+    "id": "nmdc:429d8dab04439c70f85de5964b12a94d", 
+    "md5_checksum": "429d8dab04439c70f85de5964b12a94d", 
+    "name": "gold:Gp0146716_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 71891, 
+    "description": "KO TSV File for gold:Gp0146717", 
+    "id": "nmdc:855d3ca388a65a276fc97b07deeea1da", 
+    "md5_checksum": "855d3ca388a65a276fc97b07deeea1da", 
+    "name": "gold:Gp0146717_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 40350, 
+    "description": "EC TSV File for gold:Gp0146717", 
+    "id": "nmdc:9705ee589d2714a2491f545c0d46e5d9", 
+    "md5_checksum": "9705ee589d2714a2491f545c0d46e5d9", 
+    "name": "gold:Gp0146717_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 62284, 
+    "description": "KO TSV File for gold:Gp0146718", 
+    "id": "nmdc:7ade23027efb99d7b9e7952acd4b08b8", 
+    "md5_checksum": "7ade23027efb99d7b9e7952acd4b08b8", 
+    "name": "gold:Gp0146718_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 33719, 
+    "description": "EC TSV File for gold:Gp0146718", 
+    "id": "nmdc:b928d1295eadf1b1bc8f7c144c558ab8", 
+    "md5_checksum": "b928d1295eadf1b1bc8f7c144c558ab8", 
+    "name": "gold:Gp0146718_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 23359, 
+    "description": "KO TSV File for gold:Gp0146719", 
+    "id": "nmdc:769a77410cb876d8d87f72d652b8a82b", 
+    "md5_checksum": "769a77410cb876d8d87f72d652b8a82b", 
+    "name": "gold:Gp0146719_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 12877, 
+    "description": "EC TSV File for gold:Gp0146719", 
+    "id": "nmdc:f8c5d7373c31c95e82a96f56391fb50f", 
+    "md5_checksum": "f8c5d7373c31c95e82a96f56391fb50f", 
+    "name": "gold:Gp0146719_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 4146815, 
+    "description": "KO TSV File for gold:Gp0127623", 
+    "id": "nmdc:e03aa782844f8dcd5e53f8fddb18e0ca", 
+    "md5_checksum": "e03aa782844f8dcd5e53f8fddb18e0ca", 
+    "name": "gold:Gp0127623_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2834879, 
+    "description": "EC TSV File for gold:Gp0127623", 
+    "id": "nmdc:1e8b460a781d983858605bf7bc0525e7", 
+    "md5_checksum": "1e8b460a781d983858605bf7bc0525e7", 
+    "name": "gold:Gp0127623_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 31678178, 
+    "description": "Protein FAA for gold:Gp0127623", 
+    "id": "nmdc:3859c2ef117662f517ed6520e0be75d4", 
+    "md5_checksum": "3859c2ef117662f517ed6520e0be75d4", 
+    "name": "gold:Gp0127623_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 34050411, 
+    "description": "Functional annotation GFF file for gold:Gp0127623", 
+    "id": "nmdc:412f7b0b0e5f0215fd360d4daa144dbf", 
+    "md5_checksum": "412f7b0b0e5f0215fd360d4daa144dbf", 
+    "name": "gold:Gp0127623_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 18287794, 
+    "description": "Structural annotation GFF file for gold:Gp0127623", 
+    "id": "nmdc:87952ea562851899c67d9cfd63725291", 
+    "md5_checksum": "87952ea562851899c67d9cfd63725291", 
+    "name": "gold:Gp0127623_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6925798, 
+    "description": "KO TSV File for gold:Gp0127624", 
+    "id": "nmdc:727a7fafb88b8d14229ffd01e4fae7d4", 
+    "md5_checksum": "727a7fafb88b8d14229ffd01e4fae7d4", 
+    "name": "gold:Gp0127624_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4622659, 
+    "description": "EC TSV File for gold:Gp0127624", 
+    "id": "nmdc:144479caed29b000daf92804c8701fef", 
+    "md5_checksum": "144479caed29b000daf92804c8701fef", 
+    "name": "gold:Gp0127624_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 54538016, 
+    "description": "Protein FAA for gold:Gp0127624", 
+    "id": "nmdc:50762c4d6b792aeebe35d531767443de", 
+    "md5_checksum": "50762c4d6b792aeebe35d531767443de", 
+    "name": "gold:Gp0127624_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 57566590, 
+    "description": "Functional annotation GFF file for gold:Gp0127624", 
+    "id": "nmdc:fab7f94494af1dc96a2371789d7eb23a", 
+    "md5_checksum": "fab7f94494af1dc96a2371789d7eb23a", 
+    "name": "gold:Gp0127624_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 30843020, 
+    "description": "Structural annotation GFF file for gold:Gp0127624", 
+    "id": "nmdc:b09baa267cd44db8254c858b7f9f3948", 
+    "md5_checksum": "b09baa267cd44db8254c858b7f9f3948", 
+    "name": "gold:Gp0127624_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 11478061, 
+    "description": "KO TSV File for gold:Gp0127625", 
+    "id": "nmdc:f8e75396d98bd8bf13c6b4a49b2a093b", 
+    "md5_checksum": "f8e75396d98bd8bf13c6b4a49b2a093b", 
+    "name": "gold:Gp0127625_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 7640560, 
+    "description": "EC TSV File for gold:Gp0127625", 
+    "id": "nmdc:2f70e870b195a807352218a88415675d", 
+    "md5_checksum": "2f70e870b195a807352218a88415675d", 
+    "name": "gold:Gp0127625_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 94554158, 
+    "description": "Protein FAA for gold:Gp0127625", 
+    "id": "nmdc:0eb7e1ee958c36d18f20b4dd915f0d02", 
+    "md5_checksum": "0eb7e1ee958c36d18f20b4dd915f0d02", 
+    "name": "gold:Gp0127625_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 96115966, 
+    "description": "Functional annotation GFF file for gold:Gp0127625", 
+    "id": "nmdc:62a55b5220bb6f70b5b8fa93843584cf", 
+    "md5_checksum": "62a55b5220bb6f70b5b8fa93843584cf", 
+    "name": "gold:Gp0127625_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 51323665, 
+    "description": "Structural annotation GFF file for gold:Gp0127625", 
+    "id": "nmdc:3250721276d0fefb82ed986bdddf1485", 
+    "md5_checksum": "3250721276d0fefb82ed986bdddf1485", 
+    "name": "gold:Gp0127625_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3670544, 
+    "description": "KO TSV File for gold:Gp0127626", 
+    "id": "nmdc:90e68f527128ca84e6e5b3724cb81b69", 
+    "md5_checksum": "90e68f527128ca84e6e5b3724cb81b69", 
+    "name": "gold:Gp0127626_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2449878, 
+    "description": "EC TSV File for gold:Gp0127626", 
+    "id": "nmdc:c85737e80110fd9b6ccb99a3bd0abd68", 
+    "md5_checksum": "c85737e80110fd9b6ccb99a3bd0abd68", 
+    "name": "gold:Gp0127626_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 27667376, 
+    "description": "Protein FAA for gold:Gp0127626", 
+    "id": "nmdc:29f77fb8d1192e6fabf407b692a7bd9a", 
+    "md5_checksum": "29f77fb8d1192e6fabf407b692a7bd9a", 
+    "name": "gold:Gp0127626_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 30058315, 
+    "description": "Functional annotation GFF file for gold:Gp0127626", 
+    "id": "nmdc:02d9b4126558a6057950507a9508dedd", 
+    "md5_checksum": "02d9b4126558a6057950507a9508dedd", 
+    "name": "gold:Gp0127626_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 16177732, 
+    "description": "Structural annotation GFF file for gold:Gp0127626", 
+    "id": "nmdc:c0bf2073b90795c8b30966c2c391a24e", 
+    "md5_checksum": "c0bf2073b90795c8b30966c2c391a24e", 
+    "name": "gold:Gp0127626_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1702486, 
+    "description": "KO TSV File for gold:Gp0127627", 
+    "id": "nmdc:d32983f34e83a2419ef5d23c61e11035", 
+    "md5_checksum": "d32983f34e83a2419ef5d23c61e11035", 
+    "name": "gold:Gp0127627_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 1129032, 
+    "description": "EC TSV File for gold:Gp0127627", 
+    "id": "nmdc:314781758a1386a9524d57139eb19fa5", 
+    "md5_checksum": "314781758a1386a9524d57139eb19fa5", 
+    "name": "gold:Gp0127627_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 11923333, 
+    "description": "Protein FAA for gold:Gp0127627", 
+    "id": "nmdc:e40f3c8669e9b8cd31ce9e2229288c7f", 
+    "md5_checksum": "e40f3c8669e9b8cd31ce9e2229288c7f", 
+    "name": "gold:Gp0127627_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 13484825, 
+    "description": "Functional annotation GFF file for gold:Gp0127627", 
+    "id": "nmdc:2400c80f1b01c8999964678e0e9e4813", 
+    "md5_checksum": "2400c80f1b01c8999964678e0e9e4813", 
+    "name": "gold:Gp0127627_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 7355223, 
+    "description": "Structural annotation GFF file for gold:Gp0127627", 
+    "id": "nmdc:ca2ac2a2cf97261cd43e8c81d3bd7f44", 
+    "md5_checksum": "ca2ac2a2cf97261cd43e8c81d3bd7f44", 
+    "name": "gold:Gp0127627_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 5639552, 
+    "description": "KO TSV File for gold:Gp0127628", 
+    "id": "nmdc:efab7e1dac6527a96cb10550505bf9f4", 
+    "md5_checksum": "efab7e1dac6527a96cb10550505bf9f4", 
+    "name": "gold:Gp0127628_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 3744930, 
+    "description": "EC TSV File for gold:Gp0127628", 
+    "id": "nmdc:6943e72bbed2de773f6a100225d3e551", 
+    "md5_checksum": "6943e72bbed2de773f6a100225d3e551", 
+    "name": "gold:Gp0127628_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 42824603, 
+    "description": "Protein FAA for gold:Gp0127628", 
+    "id": "nmdc:00e9c150288d6c969d9874c02ef0735c", 
+    "md5_checksum": "00e9c150288d6c969d9874c02ef0735c", 
+    "name": "gold:Gp0127628_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 45849106, 
+    "description": "Functional annotation GFF file for gold:Gp0127628", 
+    "id": "nmdc:cc930eefd8d4f1a51d9e8da343ab823f", 
+    "md5_checksum": "cc930eefd8d4f1a51d9e8da343ab823f", 
+    "name": "gold:Gp0127628_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 24631797, 
+    "description": "Structural annotation GFF file for gold:Gp0127628", 
+    "id": "nmdc:0bc897356465ef055369a1f455befc80", 
+    "md5_checksum": "0bc897356465ef055369a1f455befc80", 
+    "name": "gold:Gp0127628_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 7838681, 
+    "description": "KO TSV File for gold:Gp0127629", 
+    "id": "nmdc:0172c0731f6c5b308fcc47c26a926ea9", 
+    "md5_checksum": "0172c0731f6c5b308fcc47c26a926ea9", 
+    "name": "gold:Gp0127629_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 5267648, 
+    "description": "EC TSV File for gold:Gp0127629", 
+    "id": "nmdc:ed7c6912f708880a7817ba029b709b67", 
+    "md5_checksum": "ed7c6912f708880a7817ba029b709b67", 
+    "name": "gold:Gp0127629_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 61210812, 
+    "description": "Protein FAA for gold:Gp0127629", 
+    "id": "nmdc:9eda64bce5951cdf6e2280a69320a137", 
+    "md5_checksum": "9eda64bce5951cdf6e2280a69320a137", 
+    "name": "gold:Gp0127629_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 63946615, 
+    "description": "Functional annotation GFF file for gold:Gp0127629", 
+    "id": "nmdc:da447e2182091b5e955050a27482c9bd", 
+    "md5_checksum": "da447e2182091b5e955050a27482c9bd", 
+    "name": "gold:Gp0127629_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 34169753, 
+    "description": "Structural annotation GFF file for gold:Gp0127629", 
+    "id": "nmdc:bfbcdd5acdced8e67d5d1ac11512875f", 
+    "md5_checksum": "bfbcdd5acdced8e67d5d1ac11512875f", 
+    "name": "gold:Gp0127629_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 4337903, 
+    "description": "KO TSV File for gold:Gp0127630", 
+    "id": "nmdc:0277d421b883773f978a0e34849143ec", 
+    "md5_checksum": "0277d421b883773f978a0e34849143ec", 
+    "name": "gold:Gp0127630_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2893262, 
+    "description": "EC TSV File for gold:Gp0127630", 
+    "id": "nmdc:56c5b96a6f22ab56ab649a52abc5c4a8", 
+    "md5_checksum": "56c5b96a6f22ab56ab649a52abc5c4a8", 
+    "name": "gold:Gp0127630_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 33654258, 
+    "description": "Protein FAA for gold:Gp0127630", 
+    "id": "nmdc:805289821e9d3de60cdbba08f02df945", 
+    "md5_checksum": "805289821e9d3de60cdbba08f02df945", 
+    "name": "gold:Gp0127630_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 36377655, 
+    "description": "Functional annotation GFF file for gold:Gp0127630", 
+    "id": "nmdc:7c93ae433262e7d01dac9974a7f486f6", 
+    "md5_checksum": "7c93ae433262e7d01dac9974a7f486f6", 
+    "name": "gold:Gp0127630_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 19618463, 
+    "description": "Structural annotation GFF file for gold:Gp0127630", 
+    "id": "nmdc:4e71697e3234f2c1cd4fe3bc72c0c1a3", 
+    "md5_checksum": "4e71697e3234f2c1cd4fe3bc72c0c1a3", 
+    "name": "gold:Gp0127630_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 8579516, 
+    "description": "KO TSV File for gold:Gp0127631", 
+    "id": "nmdc:6f04eab65327910f4185525b7060954e", 
+    "md5_checksum": "6f04eab65327910f4185525b7060954e", 
+    "name": "gold:Gp0127631_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 5656908, 
+    "description": "EC TSV File for gold:Gp0127631", 
+    "id": "nmdc:cf54ae35eec72c365afff4bd7924c50c", 
+    "md5_checksum": "cf54ae35eec72c365afff4bd7924c50c", 
+    "name": "gold:Gp0127631_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 71770035, 
+    "description": "Protein FAA for gold:Gp0127631", 
+    "id": "nmdc:b46a8d7fc6089cc5fceba1dfc6f3282d", 
+    "md5_checksum": "b46a8d7fc6089cc5fceba1dfc6f3282d", 
+    "name": "gold:Gp0127631_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 73970954, 
+    "description": "Functional annotation GFF file for gold:Gp0127631", 
+    "id": "nmdc:afabc4fe1b6f58118548b835e64e9994", 
+    "md5_checksum": "afabc4fe1b6f58118548b835e64e9994", 
+    "name": "gold:Gp0127631_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 39854765, 
+    "description": "Structural annotation GFF file for gold:Gp0127631", 
+    "id": "nmdc:b7f486728d38891945db6c8f07734cfc", 
+    "md5_checksum": "b7f486728d38891945db6c8f07734cfc", 
+    "name": "gold:Gp0127631_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 4513053, 
+    "description": "KO TSV File for gold:Gp0127632", 
+    "id": "nmdc:f2a5c0550537040ed3200625ffc126b0", 
+    "md5_checksum": "f2a5c0550537040ed3200625ffc126b0", 
+    "name": "gold:Gp0127632_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 3014780, 
+    "description": "EC TSV File for gold:Gp0127632", 
+    "id": "nmdc:f81515aa40056e14ad2b16e61a0a7a58", 
+    "md5_checksum": "f81515aa40056e14ad2b16e61a0a7a58", 
+    "name": "gold:Gp0127632_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 35069060, 
+    "description": "Protein FAA for gold:Gp0127632", 
+    "id": "nmdc:b414f46557772585fb40665a1dbbc0b0", 
+    "md5_checksum": "b414f46557772585fb40665a1dbbc0b0", 
+    "name": "gold:Gp0127632_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 37849895, 
+    "description": "Functional annotation GFF file for gold:Gp0127632", 
+    "id": "nmdc:c8051c06aa78287bed1adbcecc16dde5", 
+    "md5_checksum": "c8051c06aa78287bed1adbcecc16dde5", 
+    "name": "gold:Gp0127632_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 20427316, 
+    "description": "Structural annotation GFF file for gold:Gp0127632", 
+    "id": "nmdc:62087ae64a40745f54558df784be17eb", 
+    "md5_checksum": "62087ae64a40745f54558df784be17eb", 
+    "name": "gold:Gp0127632_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 10164866, 
+    "description": "KO TSV File for gold:Gp0127633", 
+    "id": "nmdc:ac7dc6e904ffa1e32cb581434ef1541f", 
+    "md5_checksum": "ac7dc6e904ffa1e32cb581434ef1541f", 
+    "name": "gold:Gp0127633_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 6686090, 
+    "description": "EC TSV File for gold:Gp0127633", 
+    "id": "nmdc:393cad3190928b87957bde309fe73e4c", 
+    "md5_checksum": "393cad3190928b87957bde309fe73e4c", 
+    "name": "gold:Gp0127633_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 84528518, 
+    "description": "Protein FAA for gold:Gp0127633", 
+    "id": "nmdc:a1014c5ce294d3550304c4bf24e9e8af", 
+    "md5_checksum": "a1014c5ce294d3550304c4bf24e9e8af", 
+    "name": "gold:Gp0127633_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 86433598, 
+    "description": "Functional annotation GFF file for gold:Gp0127633", 
+    "id": "nmdc:e41116cb05b73db692d4e7c1bb7d1759", 
+    "md5_checksum": "e41116cb05b73db692d4e7c1bb7d1759", 
+    "name": "gold:Gp0127633_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 46309626, 
+    "description": "Structural annotation GFF file for gold:Gp0127633", 
+    "id": "nmdc:53a76d2a048078de808941a97af3ec55", 
+    "md5_checksum": "53a76d2a048078de808941a97af3ec55", 
+    "name": "gold:Gp0127633_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6306027, 
+    "description": "KO TSV File for gold:Gp0127634", 
+    "id": "nmdc:1117b60f26f0008720f469e45cfd9172", 
+    "md5_checksum": "1117b60f26f0008720f469e45cfd9172", 
+    "name": "gold:Gp0127634_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4206454, 
+    "description": "EC TSV File for gold:Gp0127634", 
+    "id": "nmdc:edd268de523b5e11797008bca6e4c00a", 
+    "md5_checksum": "edd268de523b5e11797008bca6e4c00a", 
+    "name": "gold:Gp0127634_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 48794628, 
+    "description": "Protein FAA for gold:Gp0127634", 
+    "id": "nmdc:837895088072fc96bc7e46ff09810bde", 
+    "md5_checksum": "837895088072fc96bc7e46ff09810bde", 
+    "name": "gold:Gp0127634_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 51964733, 
+    "description": "Functional annotation GFF file for gold:Gp0127634", 
+    "id": "nmdc:b51df579c57479b1b88f8790be682c34", 
+    "md5_checksum": "b51df579c57479b1b88f8790be682c34", 
+    "name": "gold:Gp0127634_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 27897937, 
+    "description": "Structural annotation GFF file for gold:Gp0127634", 
+    "id": "nmdc:d67e487ef030d7dfe483425b812b861b", 
+    "md5_checksum": "d67e487ef030d7dfe483425b812b861b", 
+    "name": "gold:Gp0127634_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 7664096, 
+    "description": "KO TSV File for gold:Gp0127635", 
+    "id": "nmdc:25d70c8e4647fffb641f6642dcef0298", 
+    "md5_checksum": "25d70c8e4647fffb641f6642dcef0298", 
+    "name": "gold:Gp0127635_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 5071376, 
+    "description": "EC TSV File for gold:Gp0127635", 
+    "id": "nmdc:978995a093edab65b7748435a4808e4b", 
+    "md5_checksum": "978995a093edab65b7748435a4808e4b", 
+    "name": "gold:Gp0127635_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 62133790, 
+    "description": "Protein FAA for gold:Gp0127635", 
+    "id": "nmdc:b073470c7771fceec835d52388871218", 
+    "md5_checksum": "b073470c7771fceec835d52388871218", 
+    "name": "gold:Gp0127635_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 64206756, 
+    "description": "Functional annotation GFF file for gold:Gp0127635", 
+    "id": "nmdc:82371a4ccf642d9220b9c8e4fb64fd88", 
+    "md5_checksum": "82371a4ccf642d9220b9c8e4fb64fd88", 
+    "name": "gold:Gp0127635_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 34360662, 
+    "description": "Structural annotation GFF file for gold:Gp0127635", 
+    "id": "nmdc:e0f3e65e5d595c1b69e64f2c604e18b5", 
+    "md5_checksum": "e0f3e65e5d595c1b69e64f2c604e18b5", 
+    "name": "gold:Gp0127635_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3045521, 
+    "description": "KO TSV File for gold:Gp0127636", 
+    "id": "nmdc:6282de249d965fac3af5528a7bcb642b", 
+    "md5_checksum": "6282de249d965fac3af5528a7bcb642b", 
+    "name": "gold:Gp0127636_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2007306, 
+    "description": "EC TSV File for gold:Gp0127636", 
+    "id": "nmdc:ac12788d49fd7f536d6047b1b6e1470a", 
+    "md5_checksum": "ac12788d49fd7f536d6047b1b6e1470a", 
+    "name": "gold:Gp0127636_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 23053426, 
+    "description": "Protein FAA for gold:Gp0127636", 
+    "id": "nmdc:f8fcf9886ccce9b1bb14938da23459c5", 
+    "md5_checksum": "f8fcf9886ccce9b1bb14938da23459c5", 
+    "name": "gold:Gp0127636_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 25594335, 
+    "description": "Functional annotation GFF file for gold:Gp0127636", 
+    "id": "nmdc:d8212274d2dfac6f731dae58bacc8989", 
+    "md5_checksum": "d8212274d2dfac6f731dae58bacc8989", 
+    "name": "gold:Gp0127636_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 13962194, 
+    "description": "Structural annotation GFF file for gold:Gp0127636", 
+    "id": "nmdc:ba8d6409c725336221ab892a4dbb653d", 
+    "md5_checksum": "ba8d6409c725336221ab892a4dbb653d", 
+    "name": "gold:Gp0127636_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 8019976, 
+    "description": "KO TSV File for gold:Gp0127637", 
+    "id": "nmdc:7302fcae4721d3592f2a647cc272d437", 
+    "md5_checksum": "7302fcae4721d3592f2a647cc272d437", 
+    "name": "gold:Gp0127637_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 5313572, 
+    "description": "EC TSV File for gold:Gp0127637", 
+    "id": "nmdc:9f5c8fd59bccd5d33f15b296cfc2cd7d", 
+    "md5_checksum": "9f5c8fd59bccd5d33f15b296cfc2cd7d", 
+    "name": "gold:Gp0127637_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 65187518, 
+    "description": "Protein FAA for gold:Gp0127637", 
+    "id": "nmdc:5cd59496c108e0b191bdbce123977e93", 
+    "md5_checksum": "5cd59496c108e0b191bdbce123977e93", 
+    "name": "gold:Gp0127637_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 67250042, 
+    "description": "Functional annotation GFF file for gold:Gp0127637", 
+    "id": "nmdc:be66456fda1d0224b2c1b2be49e4ce9b", 
+    "md5_checksum": "be66456fda1d0224b2c1b2be49e4ce9b", 
+    "name": "gold:Gp0127637_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 35942289, 
+    "description": "Structural annotation GFF file for gold:Gp0127637", 
+    "id": "nmdc:5afc1d7f6216e1cc9c22b672bcd10932", 
+    "md5_checksum": "5afc1d7f6216e1cc9c22b672bcd10932", 
+    "name": "gold:Gp0127637_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6426406, 
+    "description": "KO TSV File for gold:Gp0127638", 
+    "id": "nmdc:21fe6088f59947ce386605e230fb2c11", 
+    "md5_checksum": "21fe6088f59947ce386605e230fb2c11", 
+    "name": "gold:Gp0127638_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4323658, 
+    "description": "EC TSV File for gold:Gp0127638", 
+    "id": "nmdc:15ec30c52cbf95480c17f81370f1a85c", 
+    "md5_checksum": "15ec30c52cbf95480c17f81370f1a85c", 
+    "name": "gold:Gp0127638_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 48411162, 
+    "description": "Protein FAA for gold:Gp0127638", 
+    "id": "nmdc:d1d65a59291736f70ff328ce2237f11b", 
+    "md5_checksum": "d1d65a59291736f70ff328ce2237f11b", 
+    "name": "gold:Gp0127638_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 51251693, 
+    "description": "Functional annotation GFF file for gold:Gp0127638", 
+    "id": "nmdc:b00099316fc249b6cdff043259684543", 
+    "md5_checksum": "b00099316fc249b6cdff043259684543", 
+    "name": "gold:Gp0127638_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 27305806, 
+    "description": "Structural annotation GFF file for gold:Gp0127638", 
+    "id": "nmdc:abda7fc3712e87cd5e3f98f301eae644", 
+    "md5_checksum": "abda7fc3712e87cd5e3f98f301eae644", 
+    "name": "gold:Gp0127638_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 8318588, 
+    "description": "KO TSV File for gold:Gp0127639", 
+    "id": "nmdc:866f90bd7937c393853f30dc63e878d0", 
+    "md5_checksum": "866f90bd7937c393853f30dc63e878d0", 
+    "name": "gold:Gp0127639_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 5516981, 
+    "description": "EC TSV File for gold:Gp0127639", 
+    "id": "nmdc:ec325fa02547932d59feff5c1eac81ac", 
+    "md5_checksum": "ec325fa02547932d59feff5c1eac81ac", 
+    "name": "gold:Gp0127639_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 66505078, 
+    "description": "Protein FAA for gold:Gp0127639", 
+    "id": "nmdc:9481aca617c2c186c091cd90991b175a", 
+    "md5_checksum": "9481aca617c2c186c091cd90991b175a", 
+    "name": "gold:Gp0127639_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 67959242, 
+    "description": "Functional annotation GFF file for gold:Gp0127639", 
+    "id": "nmdc:bad6e9184130082c0c952cd9aedffc9a", 
+    "md5_checksum": "bad6e9184130082c0c952cd9aedffc9a", 
+    "name": "gold:Gp0127639_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 36122875, 
+    "description": "Structural annotation GFF file for gold:Gp0127639", 
+    "id": "nmdc:73bcd6f33bc6e0f8d5d0ed80d3be1f6e", 
+    "md5_checksum": "73bcd6f33bc6e0f8d5d0ed80d3be1f6e", 
+    "name": "gold:Gp0127639_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3458145, 
+    "description": "KO TSV File for gold:Gp0127640", 
+    "id": "nmdc:b47894d59c709426a0707005b2f3c361", 
+    "md5_checksum": "b47894d59c709426a0707005b2f3c361", 
+    "name": "gold:Gp0127640_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2284130, 
+    "description": "EC TSV File for gold:Gp0127640", 
+    "id": "nmdc:a1ff51ccce3476edf197add59c32742a", 
+    "md5_checksum": "a1ff51ccce3476edf197add59c32742a", 
+    "name": "gold:Gp0127640_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 26161269, 
+    "description": "Protein FAA for gold:Gp0127640", 
+    "id": "nmdc:e4b50f17db056090ca6aa48b5fd5ef95", 
+    "md5_checksum": "e4b50f17db056090ca6aa48b5fd5ef95", 
+    "name": "gold:Gp0127640_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 28980610, 
+    "description": "Functional annotation GFF file for gold:Gp0127640", 
+    "id": "nmdc:8b642f33d0317d7d1039149e0e329b42", 
+    "md5_checksum": "8b642f33d0317d7d1039149e0e329b42", 
+    "name": "gold:Gp0127640_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 15766182, 
+    "description": "Structural annotation GFF file for gold:Gp0127640", 
+    "id": "nmdc:14bb68fd06fafafc892d2da29654a5db", 
+    "md5_checksum": "14bb68fd06fafafc892d2da29654a5db", 
+    "name": "gold:Gp0127640_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6940159, 
+    "description": "KO TSV File for gold:Gp0127641", 
+    "id": "nmdc:710ab029e0ee9ae8b25f707c03d01ea7", 
+    "md5_checksum": "710ab029e0ee9ae8b25f707c03d01ea7", 
+    "name": "gold:Gp0127641_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4582655, 
+    "description": "EC TSV File for gold:Gp0127641", 
+    "id": "nmdc:5253e06758f744e723a9224fb3c9d216", 
+    "md5_checksum": "5253e06758f744e723a9224fb3c9d216", 
+    "name": "gold:Gp0127641_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 56824921, 
+    "description": "Protein FAA for gold:Gp0127641", 
+    "id": "nmdc:31e2da818dab8e73ddde07a0d262c0b8", 
+    "md5_checksum": "31e2da818dab8e73ddde07a0d262c0b8", 
+    "name": "gold:Gp0127641_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 58831419, 
+    "description": "Functional annotation GFF file for gold:Gp0127641", 
+    "id": "nmdc:eb1c13235c75c5244c3b0fdeda41167c", 
+    "md5_checksum": "eb1c13235c75c5244c3b0fdeda41167c", 
+    "name": "gold:Gp0127641_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 31563499, 
+    "description": "Structural annotation GFF file for gold:Gp0127641", 
+    "id": "nmdc:cff8f267ed7e9667d3224a01ce774fa8", 
+    "md5_checksum": "cff8f267ed7e9667d3224a01ce774fa8", 
+    "name": "gold:Gp0127641_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3495467, 
+    "description": "KO TSV File for gold:Gp0127642", 
+    "id": "nmdc:d00c76ca1623002dd544ca42c8a52904", 
+    "md5_checksum": "d00c76ca1623002dd544ca42c8a52904", 
+    "name": "gold:Gp0127642_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2343308, 
+    "description": "EC TSV File for gold:Gp0127642", 
+    "id": "nmdc:0f2eac9317cd66cd9d9bde412027c861", 
+    "md5_checksum": "0f2eac9317cd66cd9d9bde412027c861", 
+    "name": "gold:Gp0127642_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 26234801, 
+    "description": "Protein FAA for gold:Gp0127642", 
+    "id": "nmdc:fec52dd68b2d83569ce9487cce90d5c4", 
+    "md5_checksum": "fec52dd68b2d83569ce9487cce90d5c4", 
+    "name": "gold:Gp0127642_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 28840608, 
+    "description": "Functional annotation GFF file for gold:Gp0127642", 
+    "id": "nmdc:d13cd1501fbeacdf8f1b5183d53413d8", 
+    "md5_checksum": "d13cd1501fbeacdf8f1b5183d53413d8", 
+    "name": "gold:Gp0127642_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 15559250, 
+    "description": "Structural annotation GFF file for gold:Gp0127642", 
+    "id": "nmdc:bf77e2fafe89ce2a3ed7076ebdb9cd47", 
+    "md5_checksum": "bf77e2fafe89ce2a3ed7076ebdb9cd47", 
+    "name": "gold:Gp0127642_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 7603874, 
+    "description": "KO TSV File for gold:Gp0127643", 
+    "id": "nmdc:6d5b2dd837e14ec34887498797cd5412", 
+    "md5_checksum": "6d5b2dd837e14ec34887498797cd5412", 
+    "name": "gold:Gp0127643_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4974527, 
+    "description": "EC TSV File for gold:Gp0127643", 
+    "id": "nmdc:0ef5275ad53238deeab8c8560fb829d7", 
+    "md5_checksum": "0ef5275ad53238deeab8c8560fb829d7", 
+    "name": "gold:Gp0127643_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 62870775, 
+    "description": "Protein FAA for gold:Gp0127643", 
+    "id": "nmdc:60fccafeb3a2918307e2645567655dfc", 
+    "md5_checksum": "60fccafeb3a2918307e2645567655dfc", 
+    "name": "gold:Gp0127643_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 64832381, 
+    "description": "Functional annotation GFF file for gold:Gp0127643", 
+    "id": "nmdc:a5c2a5efb13c4da5a4f6f46f311a2d3d", 
+    "md5_checksum": "a5c2a5efb13c4da5a4f6f46f311a2d3d", 
+    "name": "gold:Gp0127643_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 34848560, 
+    "description": "Structural annotation GFF file for gold:Gp0127643", 
+    "id": "nmdc:5d8b98675a29ddcf2fe9297e1acbb9be", 
+    "md5_checksum": "5d8b98675a29ddcf2fe9297e1acbb9be", 
+    "name": "gold:Gp0127643_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1732536, 
+    "description": "KO TSV File for gold:Gp0127644", 
+    "id": "nmdc:fc7e5331e7649991cf41e29be937680c", 
+    "md5_checksum": "fc7e5331e7649991cf41e29be937680c", 
+    "name": "gold:Gp0127644_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 1179118, 
+    "description": "EC TSV File for gold:Gp0127644", 
+    "id": "nmdc:2dcda8f4941667dda49132dcf5c621ec", 
+    "md5_checksum": "2dcda8f4941667dda49132dcf5c621ec", 
+    "name": "gold:Gp0127644_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 12629586, 
+    "description": "Protein FAA for gold:Gp0127644", 
+    "id": "nmdc:173eef3ad2a3d2de8c28305aea038111", 
+    "md5_checksum": "173eef3ad2a3d2de8c28305aea038111", 
+    "name": "gold:Gp0127644_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 13620306, 
+    "description": "Functional annotation GFF file for gold:Gp0127644", 
+    "id": "nmdc:3b8bede5e40f638132b71f46b7e823fd", 
+    "md5_checksum": "3b8bede5e40f638132b71f46b7e823fd", 
+    "name": "gold:Gp0127644_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 7234630, 
+    "description": "Structural annotation GFF file for gold:Gp0127644", 
+    "id": "nmdc:b06e43efd04c8790a96c41ed9c3398bb", 
+    "md5_checksum": "b06e43efd04c8790a96c41ed9c3398bb", 
+    "name": "gold:Gp0127644_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3763057, 
+    "description": "KO TSV File for gold:Gp0127645", 
+    "id": "nmdc:0921d8ccc8d5a630fdcb1215c194ff27", 
+    "md5_checksum": "0921d8ccc8d5a630fdcb1215c194ff27", 
+    "name": "gold:Gp0127645_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2572251, 
+    "description": "EC TSV File for gold:Gp0127645", 
+    "id": "nmdc:40b300a32fb863d8dbc4ceab5dac93ec", 
+    "md5_checksum": "40b300a32fb863d8dbc4ceab5dac93ec", 
+    "name": "gold:Gp0127645_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 28525666, 
+    "description": "Protein FAA for gold:Gp0127645", 
+    "id": "nmdc:35fa160fdc3c4bba36909149d9b0d7a5", 
+    "md5_checksum": "35fa160fdc3c4bba36909149d9b0d7a5", 
+    "name": "gold:Gp0127645_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 30734471, 
+    "description": "Functional annotation GFF file for gold:Gp0127645", 
+    "id": "nmdc:463e2814625ff84293b54e77ceeb6e91", 
+    "md5_checksum": "463e2814625ff84293b54e77ceeb6e91", 
+    "name": "gold:Gp0127645_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 16527101, 
+    "description": "Structural annotation GFF file for gold:Gp0127645", 
+    "id": "nmdc:91d45532963d9ed112720e1eb4419131", 
+    "md5_checksum": "91d45532963d9ed112720e1eb4419131", 
+    "name": "gold:Gp0127645_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 2523575, 
+    "description": "KO TSV File for gold:Gp0127646", 
+    "id": "nmdc:a717aaf1c22de26612b369e53143ed44", 
+    "md5_checksum": "a717aaf1c22de26612b369e53143ed44", 
+    "name": "gold:Gp0127646_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 1665487, 
+    "description": "EC TSV File for gold:Gp0127646", 
+    "id": "nmdc:e15d3fd358318aed017679671630fa70", 
+    "md5_checksum": "e15d3fd358318aed017679671630fa70", 
+    "name": "gold:Gp0127646_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 18544605, 
+    "description": "Protein FAA for gold:Gp0127646", 
+    "id": "nmdc:d5e66e9ce3ce750adc6941139a71898f", 
+    "md5_checksum": "d5e66e9ce3ce750adc6941139a71898f", 
+    "name": "gold:Gp0127646_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 20734495, 
+    "description": "Functional annotation GFF file for gold:Gp0127646", 
+    "id": "nmdc:a797274f016c323d85f438c74dcf48ba", 
+    "md5_checksum": "a797274f016c323d85f438c74dcf48ba", 
+    "name": "gold:Gp0127646_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 11375970, 
+    "description": "Structural annotation GFF file for gold:Gp0127646", 
+    "id": "nmdc:770f2864fbf1dfc905ebee26e8288283", 
+    "md5_checksum": "770f2864fbf1dfc905ebee26e8288283", 
+    "name": "gold:Gp0127646_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3103995, 
+    "description": "KO TSV File for gold:Gp0127647", 
+    "id": "nmdc:bf1086527bc1dc035f82a199fa615115", 
+    "md5_checksum": "bf1086527bc1dc035f82a199fa615115", 
+    "name": "gold:Gp0127647_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2039884, 
+    "description": "EC TSV File for gold:Gp0127647", 
+    "id": "nmdc:741a09871460e82dffff0347c4c29d35", 
+    "md5_checksum": "741a09871460e82dffff0347c4c29d35", 
+    "name": "gold:Gp0127647_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 23162282, 
+    "description": "Protein FAA for gold:Gp0127647", 
+    "id": "nmdc:9aaaa5557010fd0a87cd2dd064283549", 
+    "md5_checksum": "9aaaa5557010fd0a87cd2dd064283549", 
+    "name": "gold:Gp0127647_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 25514112, 
+    "description": "Functional annotation GFF file for gold:Gp0127647", 
+    "id": "nmdc:fb1a1372570074c945bad1f73eb66bcc", 
+    "md5_checksum": "fb1a1372570074c945bad1f73eb66bcc", 
+    "name": "gold:Gp0127647_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 13933702, 
+    "description": "Structural annotation GFF file for gold:Gp0127647", 
+    "id": "nmdc:b2bdef9a5314628d228256152d3e643c", 
+    "md5_checksum": "b2bdef9a5314628d228256152d3e643c", 
+    "name": "gold:Gp0127647_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 5251448, 
+    "description": "KO TSV File for gold:Gp0127648", 
+    "id": "nmdc:60b10b85b002ab3be65985ba475252d0", 
+    "md5_checksum": "60b10b85b002ab3be65985ba475252d0", 
+    "name": "gold:Gp0127648_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 3490244, 
+    "description": "EC TSV File for gold:Gp0127648", 
+    "id": "nmdc:be3a79231a6694b3edd13ad5bf676c38", 
+    "md5_checksum": "be3a79231a6694b3edd13ad5bf676c38", 
+    "name": "gold:Gp0127648_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 39437410, 
+    "description": "Protein FAA for gold:Gp0127648", 
+    "id": "nmdc:a22268a9ed337dcb32aaeaacf1bf3ce9", 
+    "md5_checksum": "a22268a9ed337dcb32aaeaacf1bf3ce9", 
+    "name": "gold:Gp0127648_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 42559877, 
+    "description": "Functional annotation GFF file for gold:Gp0127648", 
+    "id": "nmdc:99e6e84f6cceee7dbe5fec25e7e24cd3", 
+    "md5_checksum": "99e6e84f6cceee7dbe5fec25e7e24cd3", 
+    "name": "gold:Gp0127648_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 22888402, 
+    "description": "Structural annotation GFF file for gold:Gp0127648", 
+    "id": "nmdc:d0a3b68741b9992fc34c0c3265365b8b", 
+    "md5_checksum": "d0a3b68741b9992fc34c0c3265365b8b", 
+    "name": "gold:Gp0127648_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6988672, 
+    "description": "KO TSV File for gold:Gp0127649", 
+    "id": "nmdc:74dc5761479bc0c931941786e03a9587", 
+    "md5_checksum": "74dc5761479bc0c931941786e03a9587", 
+    "name": "gold:Gp0127649_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4673370, 
+    "description": "EC TSV File for gold:Gp0127649", 
+    "id": "nmdc:bf0a28bde8c8d09f29f525ee7634beff", 
+    "md5_checksum": "bf0a28bde8c8d09f29f525ee7634beff", 
+    "name": "gold:Gp0127649_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 54382822, 
+    "description": "Protein FAA for gold:Gp0127649", 
+    "id": "nmdc:fe2d7706a3cece1b80661707cee865a0", 
+    "md5_checksum": "fe2d7706a3cece1b80661707cee865a0", 
+    "name": "gold:Gp0127649_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 57282701, 
+    "description": "Functional annotation GFF file for gold:Gp0127649", 
+    "id": "nmdc:783bfca38fb5e12de7204c1304766001", 
+    "md5_checksum": "783bfca38fb5e12de7204c1304766001", 
+    "name": "gold:Gp0127649_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 30761397, 
+    "description": "Structural annotation GFF file for gold:Gp0127649", 
+    "id": "nmdc:d371cfb6a063e9aa315742e0e468a834", 
+    "md5_checksum": "d371cfb6a063e9aa315742e0e468a834", 
+    "name": "gold:Gp0127649_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6597374, 
+    "description": "KO TSV File for gold:Gp0127651", 
+    "id": "nmdc:37e126c011041071762e1e3689c3568a", 
+    "md5_checksum": "37e126c011041071762e1e3689c3568a", 
+    "name": "gold:Gp0127651_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4444646, 
+    "description": "EC TSV File for gold:Gp0127651", 
+    "id": "nmdc:6ea3d5494552cfcffa913d2f995992a8", 
+    "md5_checksum": "6ea3d5494552cfcffa913d2f995992a8", 
+    "name": "gold:Gp0127651_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 53488778, 
+    "description": "Protein FAA for gold:Gp0127651", 
+    "id": "nmdc:9f7d5e67cb8475a5a80559c53668f072", 
+    "md5_checksum": "9f7d5e67cb8475a5a80559c53668f072", 
+    "name": "gold:Gp0127651_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 55385451, 
+    "description": "Functional annotation GFF file for gold:Gp0127651", 
+    "id": "nmdc:6b5de609f2e53e0979e54829463a398c", 
+    "md5_checksum": "6b5de609f2e53e0979e54829463a398c", 
+    "name": "gold:Gp0127651_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 29679378, 
+    "description": "Structural annotation GFF file for gold:Gp0127651", 
+    "id": "nmdc:398278265cead14f0b7f62fea963d8f9", 
+    "md5_checksum": "398278265cead14f0b7f62fea963d8f9", 
+    "name": "gold:Gp0127651_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 8005038, 
+    "description": "KO TSV File for gold:Gp0127652", 
+    "id": "nmdc:32cf708f2ebcda045048c853d2bfa2e8", 
+    "md5_checksum": "32cf708f2ebcda045048c853d2bfa2e8", 
+    "name": "gold:Gp0127652_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 5311768, 
+    "description": "EC TSV File for gold:Gp0127652", 
+    "id": "nmdc:e4599f027f8969b28f467cd2e4006e8b", 
+    "md5_checksum": "e4599f027f8969b28f467cd2e4006e8b", 
+    "name": "gold:Gp0127652_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 65474585, 
+    "description": "Protein FAA for gold:Gp0127652", 
+    "id": "nmdc:f61ca8dea9e6b2eb3ebfa747c4311475", 
+    "md5_checksum": "f61ca8dea9e6b2eb3ebfa747c4311475", 
+    "name": "gold:Gp0127652_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 67286559, 
+    "description": "Functional annotation GFF file for gold:Gp0127652", 
+    "id": "nmdc:c529aab72003eb9fa55f280d877388ff", 
+    "md5_checksum": "c529aab72003eb9fa55f280d877388ff", 
+    "name": "gold:Gp0127652_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 36146537, 
+    "description": "Structural annotation GFF file for gold:Gp0127652", 
+    "id": "nmdc:884f803947768106240ba035970060e2", 
+    "md5_checksum": "884f803947768106240ba035970060e2", 
+    "name": "gold:Gp0127652_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 1507912, 
+    "description": "KO TSV File for gold:Gp0127653", 
+    "id": "nmdc:6b86a7ea649de1821a07c1d286c47635", 
+    "md5_checksum": "6b86a7ea649de1821a07c1d286c47635", 
+    "name": "gold:Gp0127653_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 984211, 
+    "description": "EC TSV File for gold:Gp0127653", 
+    "id": "nmdc:292e3c342f1b9d98204b3aa25f086b4e", 
+    "md5_checksum": "292e3c342f1b9d98204b3aa25f086b4e", 
+    "name": "gold:Gp0127653_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 10925055, 
+    "description": "Protein FAA for gold:Gp0127653", 
+    "id": "nmdc:6f6f777a5ac1513c76caf71d96176c9d", 
+    "md5_checksum": "6f6f777a5ac1513c76caf71d96176c9d", 
+    "name": "gold:Gp0127653_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 12430670, 
+    "description": "Functional annotation GFF file for gold:Gp0127653", 
+    "id": "nmdc:00776643a6c6983019b8a469590bd788", 
+    "md5_checksum": "00776643a6c6983019b8a469590bd788", 
+    "name": "gold:Gp0127653_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6838787, 
+    "description": "Structural annotation GFF file for gold:Gp0127653", 
+    "id": "nmdc:5762cddb5731541c3bbc1b6f1868b77d", 
+    "md5_checksum": "5762cddb5731541c3bbc1b6f1868b77d", 
+    "name": "gold:Gp0127653_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 7286201, 
+    "description": "KO TSV File for gold:Gp0127654", 
+    "id": "nmdc:500932a6e2f858974bc905e54ff6b56a", 
+    "md5_checksum": "500932a6e2f858974bc905e54ff6b56a", 
+    "name": "gold:Gp0127654_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4860339, 
+    "description": "EC TSV File for gold:Gp0127654", 
+    "id": "nmdc:7b63f582fa564354e447dc34b2f05d19", 
+    "md5_checksum": "7b63f582fa564354e447dc34b2f05d19", 
+    "name": "gold:Gp0127654_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 54213495, 
+    "description": "Protein FAA for gold:Gp0127654", 
+    "id": "nmdc:960f2e6972994e915ccd415e8ce3041f", 
+    "md5_checksum": "960f2e6972994e915ccd415e8ce3041f", 
+    "name": "gold:Gp0127654_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 58074824, 
+    "description": "Functional annotation GFF file for gold:Gp0127654", 
+    "id": "nmdc:81ec5d5b7d470ef239ad76cd0d7f114f", 
+    "md5_checksum": "81ec5d5b7d470ef239ad76cd0d7f114f", 
+    "name": "gold:Gp0127654_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 31179181, 
+    "description": "Structural annotation GFF file for gold:Gp0127654", 
+    "id": "nmdc:ec6f23a06725d9db91a0e247562c8b1d", 
+    "md5_checksum": "ec6f23a06725d9db91a0e247562c8b1d", 
+    "name": "gold:Gp0127654_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6680520, 
+    "description": "KO TSV File for gold:Gp0127655", 
+    "id": "nmdc:ef17cba84c69dc4b520ab8ec3667d55b", 
+    "md5_checksum": "ef17cba84c69dc4b520ab8ec3667d55b", 
+    "name": "gold:Gp0127655_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4396581, 
+    "description": "EC TSV File for gold:Gp0127655", 
+    "id": "nmdc:dc8c70822dc2c17fae14d311b561513f", 
+    "md5_checksum": "dc8c70822dc2c17fae14d311b561513f", 
+    "name": "gold:Gp0127655_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 53008133, 
+    "description": "Protein FAA for gold:Gp0127655", 
+    "id": "nmdc:f6759e5438def93f457b9d6d5266f589", 
+    "md5_checksum": "f6759e5438def93f457b9d6d5266f589", 
+    "name": "gold:Gp0127655_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 55549408, 
+    "description": "Functional annotation GFF file for gold:Gp0127655", 
+    "id": "nmdc:0e44d12b019601ac8b839c409879db94", 
+    "md5_checksum": "0e44d12b019601ac8b839c409879db94", 
+    "name": "gold:Gp0127655_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 29756897, 
+    "description": "Structural annotation GFF file for gold:Gp0127655", 
+    "id": "nmdc:24fb469c1420bc426f2f61ecce9681a0", 
+    "md5_checksum": "24fb469c1420bc426f2f61ecce9681a0", 
+    "name": "gold:Gp0127655_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6178665, 
+    "description": "KO TSV File for gold:Gp0127656", 
+    "id": "nmdc:c93f4a94c2481f148b1e2b5ae736decd", 
+    "md5_checksum": "c93f4a94c2481f148b1e2b5ae736decd", 
+    "name": "gold:Gp0127656_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4119547, 
+    "description": "EC TSV File for gold:Gp0127656", 
+    "id": "nmdc:b09ef7b7354cea173b03708bc481f1fa", 
+    "md5_checksum": "b09ef7b7354cea173b03708bc481f1fa", 
+    "name": "gold:Gp0127656_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 46157209, 
+    "description": "Protein FAA for gold:Gp0127656", 
+    "id": "nmdc:938c1b366494554957d41dce3ca47515", 
+    "md5_checksum": "938c1b366494554957d41dce3ca47515", 
+    "name": "gold:Gp0127656_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 49535156, 
+    "description": "Functional annotation GFF file for gold:Gp0127656", 
+    "id": "nmdc:16335667d098a9f62049499b8a2b3da0", 
+    "md5_checksum": "16335667d098a9f62049499b8a2b3da0", 
+    "name": "gold:Gp0127656_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 26590046, 
+    "description": "Structural annotation GFF file for gold:Gp0127656", 
+    "id": "nmdc:f0b1c3da4ae695878de6d0f46e731dd1", 
+    "md5_checksum": "f0b1c3da4ae695878de6d0f46e731dd1", 
+    "name": "gold:Gp0127656_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 2714862, 
+    "description": "KO TSV File for gold:Gp0115664", 
+    "id": "nmdc:027fef000d8c86d862b18bb985106f15", 
+    "md5_checksum": "027fef000d8c86d862b18bb985106f15", 
+    "name": "gold:Gp0115664_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 1779622, 
+    "description": "EC TSV File for gold:Gp0115664", 
+    "id": "nmdc:22535f6a7b86cb420a6160f01d629fe9", 
+    "md5_checksum": "22535f6a7b86cb420a6160f01d629fe9", 
+    "name": "gold:Gp0115664_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 20565625, 
+    "description": "Protein FAA for gold:Gp0115664", 
+    "id": "nmdc:a0796a18e8b6ca19dc1c9b8467567081", 
+    "md5_checksum": "a0796a18e8b6ca19dc1c9b8467567081", 
+    "name": "gold:Gp0115664_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 21789332, 
+    "description": "Functional annotation GFF file for gold:Gp0115664", 
+    "id": "nmdc:bdb14e987c0495b3bfcd373578ddd835", 
+    "md5_checksum": "bdb14e987c0495b3bfcd373578ddd835", 
+    "name": "gold:Gp0115664_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 11847481, 
+    "description": "Structural annotation GFF file for gold:Gp0115664", 
+    "id": "nmdc:11c33f15bfa68f864c3ef128cd69dbcd", 
+    "md5_checksum": "11c33f15bfa68f864c3ef128cd69dbcd", 
+    "name": "gold:Gp0115664_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3378233, 
+    "description": "KO TSV File for gold:Gp0115675", 
+    "id": "nmdc:bf674b3483faadea35cc63de872e4564", 
+    "md5_checksum": "bf674b3483faadea35cc63de872e4564", 
+    "name": "gold:Gp0115675_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2169299, 
+    "description": "EC TSV File for gold:Gp0115675", 
+    "id": "nmdc:4c254a2909697768324450cf77a468d8", 
+    "md5_checksum": "4c254a2909697768324450cf77a468d8", 
+    "name": "gold:Gp0115675_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 22914539, 
+    "description": "Protein FAA for gold:Gp0115675", 
+    "id": "nmdc:f41edc3101d6ba92a42005e48f1333cf", 
+    "md5_checksum": "f41edc3101d6ba92a42005e48f1333cf", 
+    "name": "gold:Gp0115675_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 23766126, 
+    "description": "Functional annotation GFF file for gold:Gp0115675", 
+    "id": "nmdc:ecb07d7ececb4dd32d54414710451fab", 
+    "md5_checksum": "ecb07d7ececb4dd32d54414710451fab", 
+    "name": "gold:Gp0115675_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 12585747, 
+    "description": "Structural annotation GFF file for gold:Gp0115675", 
+    "id": "nmdc:fdf2589c8ca86e1ef13dda555409ad13", 
+    "md5_checksum": "fdf2589c8ca86e1ef13dda555409ad13", 
+    "name": "gold:Gp0115675_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3912320, 
+    "description": "KO TSV File for gold:Gp0115673", 
+    "id": "nmdc:bfd6b487eb9184f231700155a9c8d8ed", 
+    "md5_checksum": "bfd6b487eb9184f231700155a9c8d8ed", 
+    "name": "gold:Gp0115673_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2520953, 
+    "description": "EC TSV File for gold:Gp0115673", 
+    "id": "nmdc:834551042132ce35b5352eb0eb71a4b0", 
+    "md5_checksum": "834551042132ce35b5352eb0eb71a4b0", 
+    "name": "gold:Gp0115673_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 26943981, 
+    "description": "Protein FAA for gold:Gp0115673", 
+    "id": "nmdc:d7cdc2e8cb1b2cf0647537d23802b780", 
+    "md5_checksum": "d7cdc2e8cb1b2cf0647537d23802b780", 
+    "name": "gold:Gp0115673_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 27439046, 
+    "description": "Functional annotation GFF file for gold:Gp0115673", 
+    "id": "nmdc:73ab397e24be86b0fb0e23bce44c5b5d", 
+    "md5_checksum": "73ab397e24be86b0fb0e23bce44c5b5d", 
+    "name": "gold:Gp0115673_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 14473966, 
+    "description": "Structural annotation GFF file for gold:Gp0115673", 
+    "id": "nmdc:84dcea0c6c6bae19294a2c2188c646f5", 
+    "md5_checksum": "84dcea0c6c6bae19294a2c2188c646f5", 
+    "name": "gold:Gp0115673_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 18268627, 
+    "description": "KO TSV File for gold:Gp0115677", 
+    "id": "nmdc:eb7d4ada1169e8a06c11986b7cd88c96", 
+    "md5_checksum": "eb7d4ada1169e8a06c11986b7cd88c96", 
+    "name": "gold:Gp0115677_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 11852003, 
+    "description": "EC TSV File for gold:Gp0115677", 
+    "id": "nmdc:869c5def1f147b5b5bda94c1961724c3", 
+    "md5_checksum": "869c5def1f147b5b5bda94c1961724c3", 
+    "name": "gold:Gp0115677_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 141536087, 
+    "description": "Protein FAA for gold:Gp0115677", 
+    "id": "nmdc:19890cd39df1ae22ae5f6b42237de74a", 
+    "md5_checksum": "19890cd39df1ae22ae5f6b42237de74a", 
+    "name": "gold:Gp0115677_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 150461686, 
+    "description": "Functional annotation GFF file for gold:Gp0115677", 
+    "id": "nmdc:568e2c9c63d46669f9fd2917c8c8dff9", 
+    "md5_checksum": "568e2c9c63d46669f9fd2917c8c8dff9", 
+    "name": "gold:Gp0115677_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 82453698, 
+    "description": "Structural annotation GFF file for gold:Gp0115677", 
+    "id": "nmdc:b9e0afee3c9f103a23044a15171cb365", 
+    "md5_checksum": "b9e0afee3c9f103a23044a15171cb365", 
+    "name": "gold:Gp0115677_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 12127956, 
+    "description": "KO TSV File for gold:Gp0115678", 
+    "id": "nmdc:9df44e60900e44b93abfca2fbfd5b280", 
+    "md5_checksum": "9df44e60900e44b93abfca2fbfd5b280", 
+    "name": "gold:Gp0115678_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 7782207, 
+    "description": "EC TSV File for gold:Gp0115678", 
+    "id": "nmdc:842bf5a3e5d6c80ff062f550fa27bd8f", 
+    "md5_checksum": "842bf5a3e5d6c80ff062f550fa27bd8f", 
+    "name": "gold:Gp0115678_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 107179197, 
+    "description": "Protein FAA for gold:Gp0115678", 
+    "id": "nmdc:855c43c4de786fd2bba7ab9fd455c797", 
+    "md5_checksum": "855c43c4de786fd2bba7ab9fd455c797", 
+    "name": "gold:Gp0115678_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 106497522, 
+    "description": "Functional annotation GFF file for gold:Gp0115678", 
+    "id": "nmdc:f67b83f99097bbc03efb835d5f4d03af", 
+    "md5_checksum": "f67b83f99097bbc03efb835d5f4d03af", 
+    "name": "gold:Gp0115678_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 58416574, 
+    "description": "Structural annotation GFF file for gold:Gp0115678", 
+    "id": "nmdc:f880574ec149db537d1eabf5b081702b", 
+    "md5_checksum": "f880574ec149db537d1eabf5b081702b", 
+    "name": "gold:Gp0115678_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 12247648, 
+    "description": "KO TSV File for gold:Gp0115665", 
+    "id": "nmdc:e2a570572f6a159c2d5f8528a1fff2c3", 
+    "md5_checksum": "e2a570572f6a159c2d5f8528a1fff2c3", 
+    "name": "gold:Gp0115665_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 7918645, 
+    "description": "EC TSV File for gold:Gp0115665", 
+    "id": "nmdc:3093deee9a44282b5526562cfcb8879e", 
+    "md5_checksum": "3093deee9a44282b5526562cfcb8879e", 
+    "name": "gold:Gp0115665_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 98705429, 
+    "description": "Protein FAA for gold:Gp0115665", 
+    "id": "nmdc:088d24a42a5034d02e5159ba9615a43f", 
+    "md5_checksum": "088d24a42a5034d02e5159ba9615a43f", 
+    "name": "gold:Gp0115665_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 98894917, 
+    "description": "Functional annotation GFF file for gold:Gp0115665", 
+    "id": "nmdc:0f65de81bfc18bb38c6aa82df9b7c69e", 
+    "md5_checksum": "0f65de81bfc18bb38c6aa82df9b7c69e", 
+    "name": "gold:Gp0115665_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 53678426, 
+    "description": "Structural annotation GFF file for gold:Gp0115665", 
+    "id": "nmdc:98e883b892c7b918dc86bb1b60563509", 
+    "md5_checksum": "98e883b892c7b918dc86bb1b60563509", 
+    "name": "gold:Gp0115665_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 4715826, 
+    "description": "KO TSV File for gold:Gp0115671", 
+    "id": "nmdc:eee4133f102bb03a017de190cdb71f8e", 
+    "md5_checksum": "eee4133f102bb03a017de190cdb71f8e", 
+    "name": "gold:Gp0115671_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 3031512, 
+    "description": "EC TSV File for gold:Gp0115671", 
+    "id": "nmdc:54a95d3f3dfcae8819c419b144941e34", 
+    "md5_checksum": "54a95d3f3dfcae8819c419b144941e34", 
+    "name": "gold:Gp0115671_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 32232831, 
+    "description": "Protein FAA for gold:Gp0115671", 
+    "id": "nmdc:2349220f623b83b390f75f65cc462157", 
+    "md5_checksum": "2349220f623b83b390f75f65cc462157", 
+    "name": "gold:Gp0115671_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 34000680, 
+    "description": "Functional annotation GFF file for gold:Gp0115671", 
+    "id": "nmdc:042875a91d19ed1589e4ebce26c78551", 
+    "md5_checksum": "042875a91d19ed1589e4ebce26c78551", 
+    "name": "gold:Gp0115671_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 18149659, 
+    "description": "Structural annotation GFF file for gold:Gp0115671", 
+    "id": "nmdc:d2ae4dd51d79bee6cd96066837403b82", 
+    "md5_checksum": "d2ae4dd51d79bee6cd96066837403b82", 
+    "name": "gold:Gp0115671_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 5274767, 
+    "description": "KO TSV File for gold:Gp0115666", 
+    "id": "nmdc:2692ef1055c8462c70bbf864fe063b02", 
+    "md5_checksum": "2692ef1055c8462c70bbf864fe063b02", 
+    "name": "gold:Gp0115666_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 3381618, 
+    "description": "EC TSV File for gold:Gp0115666", 
+    "id": "nmdc:2d7ed1df9154881b878f9695e22ce488", 
+    "md5_checksum": "2d7ed1df9154881b878f9695e22ce488", 
+    "name": "gold:Gp0115666_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 35002170, 
+    "description": "Protein FAA for gold:Gp0115666", 
+    "id": "nmdc:68af3d20b92f3fcd56e99e54636012d1", 
+    "md5_checksum": "68af3d20b92f3fcd56e99e54636012d1", 
+    "name": "gold:Gp0115666_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 35845972, 
+    "description": "Functional annotation GFF file for gold:Gp0115666", 
+    "id": "nmdc:d78573f89e07c70c50d6c3ca7e60d670", 
+    "md5_checksum": "d78573f89e07c70c50d6c3ca7e60d670", 
+    "name": "gold:Gp0115666_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 18885121, 
+    "description": "Structural annotation GFF file for gold:Gp0115666", 
+    "id": "nmdc:c84d7ca6429aff058cb66194aeb1f39a", 
+    "md5_checksum": "c84d7ca6429aff058cb66194aeb1f39a", 
+    "name": "gold:Gp0115666_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 4548831, 
+    "description": "KO TSV File for gold:Gp0115669", 
+    "id": "nmdc:131ff975ff7af6a23178ac56b2da5ce3", 
+    "md5_checksum": "131ff975ff7af6a23178ac56b2da5ce3", 
+    "name": "gold:Gp0115669_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2923008, 
+    "description": "EC TSV File for gold:Gp0115669", 
+    "id": "nmdc:7fb25e858175eb672b0d2abd13bb3c11", 
+    "md5_checksum": "7fb25e858175eb672b0d2abd13bb3c11", 
+    "name": "gold:Gp0115669_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 31870704, 
+    "description": "Protein FAA for gold:Gp0115669", 
+    "id": "nmdc:f4ed2c6c72b674886d2522b95d9d3924", 
+    "md5_checksum": "f4ed2c6c72b674886d2522b95d9d3924", 
+    "name": "gold:Gp0115669_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 32817134, 
+    "description": "Functional annotation GFF file for gold:Gp0115669", 
+    "id": "nmdc:08377faec3a7f72e197c1edab70608ee", 
+    "md5_checksum": "08377faec3a7f72e197c1edab70608ee", 
+    "name": "gold:Gp0115669_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 17514195, 
+    "description": "Structural annotation GFF file for gold:Gp0115669", 
+    "id": "nmdc:6bdd86f2782c85e52e07d1241abd2da5", 
+    "md5_checksum": "6bdd86f2782c85e52e07d1241abd2da5", 
+    "name": "gold:Gp0115669_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 3249696, 
+    "description": "KO TSV File for gold:Gp0115667", 
+    "id": "nmdc:658944679f1420eb85897bc704f576ff", 
+    "md5_checksum": "658944679f1420eb85897bc704f576ff", 
+    "name": "gold:Gp0115667_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 2084281, 
+    "description": "EC TSV File for gold:Gp0115667", 
+    "id": "nmdc:90f8b30c7aa856a563a1772a83c6fbdd", 
+    "md5_checksum": "90f8b30c7aa856a563a1772a83c6fbdd", 
+    "name": "gold:Gp0115667_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 30925056, 
+    "description": "Protein FAA for gold:Gp0115667", 
+    "id": "nmdc:48a766e3191b97a205450f774abbb6cd", 
+    "md5_checksum": "48a766e3191b97a205450f774abbb6cd", 
+    "name": "gold:Gp0115667_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 30754531, 
+    "description": "Functional annotation GFF file for gold:Gp0115667", 
+    "id": "nmdc:5730d89fb5cdf1566fe7b4555494958d", 
+    "md5_checksum": "5730d89fb5cdf1566fe7b4555494958d", 
+    "name": "gold:Gp0115667_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 17064510, 
+    "description": "Structural annotation GFF file for gold:Gp0115667", 
+    "id": "nmdc:9fc8156151620680d3677796b19a9c18", 
+    "md5_checksum": "9fc8156151620680d3677796b19a9c18", 
+    "name": "gold:Gp0115667_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 8710557, 
+    "description": "KO TSV File for gold:Gp0115676", 
+    "id": "nmdc:0639bf4a5a5a394ee8038868a210db43", 
+    "md5_checksum": "0639bf4a5a5a394ee8038868a210db43", 
+    "name": "gold:Gp0115676_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 5649192, 
+    "description": "EC TSV File for gold:Gp0115676", 
+    "id": "nmdc:71140bbef21e0160c235998095ae73ca", 
+    "md5_checksum": "71140bbef21e0160c235998095ae73ca", 
+    "name": "gold:Gp0115676_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 57970646, 
+    "description": "Protein FAA for gold:Gp0115676", 
+    "id": "nmdc:bb78ec81a8c417afe4be58e21e6395b5", 
+    "md5_checksum": "bb78ec81a8c417afe4be58e21e6395b5", 
+    "name": "gold:Gp0115676_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 58547261, 
+    "description": "Functional annotation GFF file for gold:Gp0115676", 
+    "id": "nmdc:20a8a2a6c80023e5a06fad32b8a0e3ed", 
+    "md5_checksum": "20a8a2a6c80023e5a06fad32b8a0e3ed", 
+    "name": "gold:Gp0115676_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 30699388, 
+    "description": "Structural annotation GFF file for gold:Gp0115676", 
+    "id": "nmdc:6be1c25393de7b4d27de83c54926f8f4", 
+    "md5_checksum": "6be1c25393de7b4d27de83c54926f8f4", 
+    "name": "gold:Gp0115676_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6282251, 
+    "description": "KO TSV File for gold:Gp0115668", 
+    "id": "nmdc:b26fd7dee5f6da44e442c3a295be6e65", 
+    "md5_checksum": "b26fd7dee5f6da44e442c3a295be6e65", 
+    "name": "gold:Gp0115668_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 3932149, 
+    "description": "EC TSV File for gold:Gp0115668", 
+    "id": "nmdc:1be54def8fde1f90add654943166c294", 
+    "md5_checksum": "1be54def8fde1f90add654943166c294", 
+    "name": "gold:Gp0115668_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 86244245, 
+    "description": "Protein FAA for gold:Gp0115668", 
+    "id": "nmdc:e9e4148d7bd9f663dfa6c82147069a59", 
+    "md5_checksum": "e9e4148d7bd9f663dfa6c82147069a59", 
+    "name": "gold:Gp0115668_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 82089826, 
+    "description": "Functional annotation GFF file for gold:Gp0115668", 
+    "id": "nmdc:50620185d0b39e485d99ed5228d7d974", 
+    "md5_checksum": "50620185d0b39e485d99ed5228d7d974", 
+    "name": "gold:Gp0115668_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 46640202, 
+    "description": "Structural annotation GFF file for gold:Gp0115668", 
+    "id": "nmdc:e3aa6e84045583845ed13e2f90dcffca", 
+    "md5_checksum": "e3aa6e84045583845ed13e2f90dcffca", 
+    "name": "gold:Gp0115668_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 5690816, 
+    "description": "KO TSV File for gold:Gp0115663", 
+    "id": "nmdc:8684e50e952ca7a6b6c499c643dc98f2", 
+    "md5_checksum": "8684e50e952ca7a6b6c499c643dc98f2", 
+    "name": "gold:Gp0115663_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 3767278, 
+    "description": "EC TSV File for gold:Gp0115663", 
+    "id": "nmdc:6a0b86202f7c5e871402773e735acb82", 
+    "md5_checksum": "6a0b86202f7c5e871402773e735acb82", 
+    "name": "gold:Gp0115663_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 49157368, 
+    "description": "Protein FAA for gold:Gp0115663", 
+    "id": "nmdc:157d6aed3d2b5327981b8c489b3d3f31", 
+    "md5_checksum": "157d6aed3d2b5327981b8c489b3d3f31", 
+    "name": "gold:Gp0115663_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 49232471, 
+    "description": "Functional annotation GFF file for gold:Gp0115663", 
+    "id": "nmdc:d36516c329b68f2612ab605283e6435d", 
+    "md5_checksum": "d36516c329b68f2612ab605283e6435d", 
+    "name": "gold:Gp0115663_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 26865708, 
+    "description": "Structural annotation GFF file for gold:Gp0115663", 
+    "id": "nmdc:b43662ffcb684b81c0e24886e77bc1b0", 
+    "md5_checksum": "b43662ffcb684b81c0e24886e77bc1b0", 
+    "name": "gold:Gp0115663_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6286033, 
+    "description": "KO TSV File for gold:Gp0115670", 
+    "id": "nmdc:652197d52a80621a655065d7ffccf44d", 
+    "md5_checksum": "652197d52a80621a655065d7ffccf44d", 
+    "name": "gold:Gp0115670_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4003469, 
+    "description": "EC TSV File for gold:Gp0115670", 
+    "id": "nmdc:f3429ac0c878aa75653e5749c9e04ac9", 
+    "md5_checksum": "f3429ac0c878aa75653e5749c9e04ac9", 
+    "name": "gold:Gp0115670_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 45162892, 
+    "description": "Protein FAA for gold:Gp0115670", 
+    "id": "nmdc:027d311d2b091664b2d695c459f3d727", 
+    "md5_checksum": "027d311d2b091664b2d695c459f3d727", 
+    "name": "gold:Gp0115670_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 45182527, 
+    "description": "Functional annotation GFF file for gold:Gp0115670", 
+    "id": "nmdc:18c39f218c49b2659a972efaefd5b2d2", 
+    "md5_checksum": "18c39f218c49b2659a972efaefd5b2d2", 
+    "name": "gold:Gp0115670_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 24037858, 
+    "description": "Structural annotation GFF file for gold:Gp0115670", 
+    "id": "nmdc:8e16054742ca7761535ee2dacc2876f4", 
+    "md5_checksum": "8e16054742ca7761535ee2dacc2876f4", 
+    "name": "gold:Gp0115670_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 10036520, 
+    "description": "KO TSV File for gold:Gp0115672", 
+    "id": "nmdc:ba5fc6c878d0d2684cbb7435d08da0e0", 
+    "md5_checksum": "ba5fc6c878d0d2684cbb7435d08da0e0", 
+    "name": "gold:Gp0115672_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 6446620, 
+    "description": "EC TSV File for gold:Gp0115672", 
+    "id": "nmdc:2f73e8d2f00cf6ebe46cb85293c3351a", 
+    "md5_checksum": "2f73e8d2f00cf6ebe46cb85293c3351a", 
+    "name": "gold:Gp0115672_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 70271661, 
+    "description": "Protein FAA for gold:Gp0115672", 
+    "id": "nmdc:d0d426554f72c222808b6179309143c8", 
+    "md5_checksum": "d0d426554f72c222808b6179309143c8", 
+    "name": "gold:Gp0115672_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 70115573, 
+    "description": "Functional annotation GFF file for gold:Gp0115672", 
+    "id": "nmdc:791a2d638e1997a8ed3b50954829f23a", 
+    "md5_checksum": "791a2d638e1997a8ed3b50954829f23a", 
+    "name": "gold:Gp0115672_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 36998661, 
+    "description": "Structural annotation GFF file for gold:Gp0115672", 
+    "id": "nmdc:7635cc87c72e8ff1367c76b3b38301dd", 
+    "md5_checksum": "7635cc87c72e8ff1367c76b3b38301dd", 
+    "name": "gold:Gp0115672_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 6079908, 
+    "description": "KO TSV File for gold:Gp0115674", 
+    "id": "nmdc:5c486c0fa4f1d980c20306596a5b283f", 
+    "md5_checksum": "5c486c0fa4f1d980c20306596a5b283f", 
+    "name": "gold:Gp0115674_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 3887975, 
+    "description": "EC TSV File for gold:Gp0115674", 
+    "id": "nmdc:055c830c60c273270ce5427f1086b88f", 
+    "md5_checksum": "055c830c60c273270ce5427f1086b88f", 
+    "name": "gold:Gp0115674_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 42806103, 
+    "description": "Protein FAA for gold:Gp0115674", 
+    "id": "nmdc:01a8b7f94261cd19e5712a8c432d9073", 
+    "md5_checksum": "01a8b7f94261cd19e5712a8c432d9073", 
+    "name": "gold:Gp0115674_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 42649086, 
+    "description": "Functional annotation GFF file for gold:Gp0115674", 
+    "id": "nmdc:0b85c4427469208de9bb70527901e869", 
+    "md5_checksum": "0b85c4427469208de9bb70527901e869", 
+    "name": "gold:Gp0115674_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 22563836, 
+    "description": "Structural annotation GFF file for gold:Gp0115674", 
+    "id": "nmdc:3f388c62f49faef72d97d7ad781a7b05", 
+    "md5_checksum": "3f388c62f49faef72d97d7ad781a7b05", 
+    "name": "gold:Gp0115674_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 17041929, 
+    "description": "KO TSV File for gold:Gp0115679", 
+    "id": "nmdc:b2746cfbd7efb60af06307ac4b78d8b8", 
+    "md5_checksum": "b2746cfbd7efb60af06307ac4b78d8b8", 
+    "name": "gold:Gp0115679_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 11252720, 
+    "description": "EC TSV File for gold:Gp0115679", 
+    "id": "nmdc:9fd89b8a4471674b32851ee4a0434acc", 
+    "md5_checksum": "9fd89b8a4471674b32851ee4a0434acc", 
+    "name": "gold:Gp0115679_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 147995540, 
+    "description": "Protein FAA for gold:Gp0115679", 
+    "id": "nmdc:2af7b2e9a957ed7fc8301d602b9e4f8e", 
+    "md5_checksum": "2af7b2e9a957ed7fc8301d602b9e4f8e", 
+    "name": "gold:Gp0115679_Protein FAA"
+  }, 
+  {
+    "file_size_bytes": 149137166, 
+    "description": "Functional annotation GFF file for gold:Gp0115679", 
+    "id": "nmdc:53b147d7739a4eb832c73a897148834a", 
+    "md5_checksum": "53b147d7739a4eb832c73a897148834a", 
+    "name": "gold:Gp0115679_Functional annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 81912757, 
+    "description": "Structural annotation GFF file for gold:Gp0115679", 
+    "id": "nmdc:4456ec46dac2d6cb90a000cfccaef022", 
+    "md5_checksum": "4456ec46dac2d6cb90a000cfccaef022", 
+    "name": "gold:Gp0115679_Structural annotation GFF file"
+  }, 
+  {
+    "file_size_bytes": 30684622, 
+    "description": "KO TSV File for gold:Gp0128139", 
+    "id": "nmdc:e30c335f594c58a4911b9916932e07e3", 
+    "md5_checksum": "e30c335f594c58a4911b9916932e07e3", 
+    "name": "gold:Gp0128139_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 18628217, 
+    "description": "EC TSV File for gold:Gp0128139", 
+    "id": "nmdc:fca1a6a02b3bb34783b5b51b64df1d20", 
+    "md5_checksum": "fca1a6a02b3bb34783b5b51b64df1d20", 
+    "name": "gold:Gp0128139_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 23869361, 
+    "description": "KO TSV File for gold:Gp0128140", 
+    "id": "nmdc:f445a610d5f1970b56b10c5d9a7251dd", 
+    "md5_checksum": "f445a610d5f1970b56b10c5d9a7251dd", 
+    "name": "gold:Gp0128140_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 14537062, 
+    "description": "EC TSV File for gold:Gp0128140", 
+    "id": "nmdc:ee6bd13c44bd08c1367521aadb553f3b", 
+    "md5_checksum": "ee6bd13c44bd08c1367521aadb553f3b", 
+    "name": "gold:Gp0128140_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 26728585, 
+    "description": "KO TSV File for gold:Gp0128141", 
+    "id": "nmdc:d4feb6570f6089837d4fbf710330f2a0", 
+    "md5_checksum": "d4feb6570f6089837d4fbf710330f2a0", 
+    "name": "gold:Gp0128141_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 16243899, 
+    "description": "EC TSV File for gold:Gp0128141", 
+    "id": "nmdc:1bd5d8fac13adf4c0f74f9c4f701c04e", 
+    "md5_checksum": "1bd5d8fac13adf4c0f74f9c4f701c04e", 
+    "name": "gold:Gp0128141_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 21490950, 
+    "description": "KO TSV File for gold:Gp0128142", 
+    "id": "nmdc:2f10af48877c02443453d89316764127", 
+    "md5_checksum": "2f10af48877c02443453d89316764127", 
+    "name": "gold:Gp0128142_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 13043519, 
+    "description": "EC TSV File for gold:Gp0128142", 
+    "id": "nmdc:9ff3bfb06908818be75d501b2ce50cce", 
+    "md5_checksum": "9ff3bfb06908818be75d501b2ce50cce", 
+    "name": "gold:Gp0128142_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 23878001, 
+    "description": "KO TSV File for gold:Gp0128143", 
+    "id": "nmdc:dfb3f15a21f6dc80a942b2b4843321ac", 
+    "md5_checksum": "dfb3f15a21f6dc80a942b2b4843321ac", 
+    "name": "gold:Gp0128143_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 14613287, 
+    "description": "EC TSV File for gold:Gp0128143", 
+    "id": "nmdc:8049354300c08020e3f2b7750a3ea2a1", 
+    "md5_checksum": "8049354300c08020e3f2b7750a3ea2a1", 
+    "name": "gold:Gp0128143_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 22099138, 
+    "description": "KO TSV File for gold:Gp0128144", 
+    "id": "nmdc:a6e3c7fd8509d052b074e51510a64399", 
+    "md5_checksum": "a6e3c7fd8509d052b074e51510a64399", 
+    "name": "gold:Gp0128144_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 13568883, 
+    "description": "EC TSV File for gold:Gp0128144", 
+    "id": "nmdc:6cbb2b50ab2ec6ee6062d6d874824c06", 
+    "md5_checksum": "6cbb2b50ab2ec6ee6062d6d874824c06", 
+    "name": "gold:Gp0128144_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 44785412, 
+    "description": "KO TSV File for gold:Gp0111277", 
+    "id": "nmdc:791c10f2da0a68a64186474d8b1f2d52", 
+    "md5_checksum": "791c10f2da0a68a64186474d8b1f2d52", 
+    "name": "gold:Gp0111277_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 29513204, 
+    "description": "EC TSV File for gold:Gp0111277", 
+    "id": "nmdc:642010b2eea3dee4c31d33441b13d3ee", 
+    "md5_checksum": "642010b2eea3dee4c31d33441b13d3ee", 
+    "name": "gold:Gp0111277_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 19391252, 
+    "description": "KO TSV File for gold:Gp0111278", 
+    "id": "nmdc:10fc729af8fc74937ce47d1e6b3bd29c", 
+    "md5_checksum": "10fc729af8fc74937ce47d1e6b3bd29c", 
+    "name": "gold:Gp0111278_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 12948335, 
+    "description": "EC TSV File for gold:Gp0111278", 
+    "id": "nmdc:e6f85e5960e6c08c788cde8fbfda6ce4", 
+    "md5_checksum": "e6f85e5960e6c08c788cde8fbfda6ce4", 
+    "name": "gold:Gp0111278_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 20817250, 
+    "description": "KO TSV File for gold:Gp0111279", 
+    "id": "nmdc:5d6e605daa22ac50c0fccadb8ac883a6", 
+    "md5_checksum": "5d6e605daa22ac50c0fccadb8ac883a6", 
+    "name": "gold:Gp0111279_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 13786921, 
+    "description": "EC TSV File for gold:Gp0111279", 
+    "id": "nmdc:74a0e5b5eef357b6804bdb9b064c22a0", 
+    "md5_checksum": "74a0e5b5eef357b6804bdb9b064c22a0", 
+    "name": "gold:Gp0111279_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 51073564, 
+    "description": "KO TSV File for gold:Gp0111280", 
+    "id": "nmdc:c8b7c861b9a0b8fb12d818247524d6bd", 
+    "md5_checksum": "c8b7c861b9a0b8fb12d818247524d6bd", 
+    "name": "gold:Gp0111280_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 33477331, 
+    "description": "EC TSV File for gold:Gp0111280", 
+    "id": "nmdc:ae0e61e40c7ed9310d9e4706bf670227", 
+    "md5_checksum": "ae0e61e40c7ed9310d9e4706bf670227", 
+    "name": "gold:Gp0111280_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 19326924, 
+    "description": "KO TSV File for gold:Gp0111282", 
+    "id": "nmdc:0ba016f31558bde777d3a282bdde764b", 
+    "md5_checksum": "0ba016f31558bde777d3a282bdde764b", 
+    "name": "gold:Gp0111282_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 11795426, 
+    "description": "EC TSV File for gold:Gp0111282", 
+    "id": "nmdc:e56dc2ae1c1bd6639ada7b3391b5bef6", 
+    "md5_checksum": "e56dc2ae1c1bd6639ada7b3391b5bef6", 
+    "name": "gold:Gp0111282_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 65408250, 
+    "description": "KO TSV File for gold:Gp0111284", 
+    "id": "nmdc:696e264ec6bbeeb784bb7aeccbc1ab7c", 
+    "md5_checksum": "696e264ec6bbeeb784bb7aeccbc1ab7c", 
+    "name": "gold:Gp0111284_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 44152508, 
+    "description": "EC TSV File for gold:Gp0111284", 
+    "id": "nmdc:b6863f1eb60482b763d92bb28288d6d5", 
+    "md5_checksum": "b6863f1eb60482b763d92bb28288d6d5", 
+    "name": "gold:Gp0111284_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 28274061, 
+    "description": "KO TSV File for gold:Gp0111285", 
+    "id": "nmdc:c44d9ba6ae5ae53b1452d0e584f75507", 
+    "md5_checksum": "c44d9ba6ae5ae53b1452d0e584f75507", 
+    "name": "gold:Gp0111285_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 19189495, 
+    "description": "EC TSV File for gold:Gp0111285", 
+    "id": "nmdc:b07a6baefa24f6ef2a4dd5d667256680", 
+    "md5_checksum": "b07a6baefa24f6ef2a4dd5d667256680", 
+    "name": "gold:Gp0111285_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 26451734, 
+    "description": "KO TSV File for gold:Gp0111286", 
+    "id": "nmdc:6b028f5a4e7abf7c75e46f2a886301ba", 
+    "md5_checksum": "6b028f5a4e7abf7c75e46f2a886301ba", 
+    "name": "gold:Gp0111286_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 17890995, 
+    "description": "EC TSV File for gold:Gp0111286", 
+    "id": "nmdc:203e1c0742efea01863553c2d823dd00", 
+    "md5_checksum": "203e1c0742efea01863553c2d823dd00", 
+    "name": "gold:Gp0111286_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 32604184, 
+    "description": "KO TSV File for gold:Gp0111288", 
+    "id": "nmdc:bff16922f5f0ee8f1d40967118e8a4c8", 
+    "md5_checksum": "bff16922f5f0ee8f1d40967118e8a4c8", 
+    "name": "gold:Gp0111288_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 21917585, 
+    "description": "EC TSV File for gold:Gp0111288", 
+    "id": "nmdc:3eed24ee3cb44ebb504f01e2d281b67d", 
+    "md5_checksum": "3eed24ee3cb44ebb504f01e2d281b67d", 
+    "name": "gold:Gp0111288_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 28049176, 
+    "description": "KO TSV File for gold:Gp0111289", 
+    "id": "nmdc:423b2fd16c19ad994b2fbe655fcc7a27", 
+    "md5_checksum": "423b2fd16c19ad994b2fbe655fcc7a27", 
+    "name": "gold:Gp0111289_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 17217073, 
+    "description": "EC TSV File for gold:Gp0111289", 
+    "id": "nmdc:6980282aad46e1b89be24c003c082585", 
+    "md5_checksum": "6980282aad46e1b89be24c003c082585", 
+    "name": "gold:Gp0111289_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 14639146, 
+    "description": "KO TSV File for gold:Gp0115954", 
+    "id": "nmdc:82e7932244ff5e15372239185029d837", 
+    "md5_checksum": "82e7932244ff5e15372239185029d837", 
+    "name": "gold:Gp0115954_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 7601038, 
+    "description": "EC TSV File for gold:Gp0115954", 
+    "id": "nmdc:e73576e448888d7f3fe2fc2a5e697de1", 
+    "md5_checksum": "e73576e448888d7f3fe2fc2a5e697de1", 
+    "name": "gold:Gp0115954_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 18284757, 
+    "description": "KO TSV File for gold:Gp0115955", 
+    "id": "nmdc:99810be5a2c09396848334c200be7836", 
+    "md5_checksum": "99810be5a2c09396848334c200be7836", 
+    "name": "gold:Gp0115955_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 10114247, 
+    "description": "EC TSV File for gold:Gp0115955", 
+    "id": "nmdc:8c213893993063c995515444715655ea", 
+    "md5_checksum": "8c213893993063c995515444715655ea", 
+    "name": "gold:Gp0115955_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 21204921, 
+    "description": "KO TSV File for gold:Gp0115956", 
+    "id": "nmdc:de8e854d4d10afad9d9dc20b590a8f0f", 
+    "md5_checksum": "de8e854d4d10afad9d9dc20b590a8f0f", 
+    "name": "gold:Gp0115956_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 10593889, 
+    "description": "EC TSV File for gold:Gp0115956", 
+    "id": "nmdc:5ddbc715b06d0ac58b1f65b4667d3fd9", 
+    "md5_checksum": "5ddbc715b06d0ac58b1f65b4667d3fd9", 
+    "name": "gold:Gp0115956_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 30394887, 
+    "description": "KO TSV File for gold:Gp0115957", 
+    "id": "nmdc:1b4f14c74fbe76285eb3249cbd79d399", 
+    "md5_checksum": "1b4f14c74fbe76285eb3249cbd79d399", 
+    "name": "gold:Gp0115957_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 16865698, 
+    "description": "EC TSV File for gold:Gp0115957", 
+    "id": "nmdc:c8027f8f87cf2b30150073a916f0b945", 
+    "md5_checksum": "c8027f8f87cf2b30150073a916f0b945", 
+    "name": "gold:Gp0115957_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 9457707, 
+    "description": "KO TSV File for gold:Gp0115958", 
+    "id": "nmdc:992c2b0a16fbc36b41e136d913d0d48f", 
+    "md5_checksum": "992c2b0a16fbc36b41e136d913d0d48f", 
+    "name": "gold:Gp0115958_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 4821103, 
+    "description": "EC TSV File for gold:Gp0115958", 
+    "id": "nmdc:72fdf31a775b84e5fb1f887c3bc75208", 
+    "md5_checksum": "72fdf31a775b84e5fb1f887c3bc75208", 
+    "name": "gold:Gp0115958_EC TSV File"
+  }, 
+  {
+    "file_size_bytes": 22336733, 
+    "description": "KO TSV File for gold:Gp0115959", 
+    "id": "nmdc:e635e423679ba6955bdd1aca10b7b5be", 
+    "md5_checksum": "e635e423679ba6955bdd1aca10b7b5be", 
+    "name": "gold:Gp0115959_KO TSV File"
+  }, 
+  {
+    "file_size_bytes": 12186102, 
+    "description": "EC TSV File for gold:Gp0115959", 
+    "id": "nmdc:d9f732662003ac86978933dde293c8e7", 
+    "md5_checksum": "d9f732662003ac86978933dde293c8e7", 
+    "name": "gold:Gp0115959_EC TSV File"
+  }
+]

@@ -1,0 +1,233 @@
+[
+  {
+    "id": "nmdc:73236222c457bc08e1f90b71da408b89",
+    "name": "500097_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 9742462,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:a64346d79687b26c6dca018e9d82cc14",
+    "name": "500094_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 10143128,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:3a18b5035e038f8d840f43d82dfa9268",
+    "name": "500162_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 10368974,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:fa26cf84a101f6f3261707f79040fb9e",
+    "name": "500837_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 11473649,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:feca6129580272b4f1bbe0b267fbe5aa",
+    "name": "500166_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 10974608,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:da5e085955b09f6a2ab1fc5535c24783",
+    "name": "500093_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 12517731,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:a8d83dcbcba23937c84684ee5e89e1e5",
+    "name": "500835_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 12477469,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:6d144d6bab21a9985106872ee55520b3",
+    "name": "500829_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 4298173,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:43f3cafe285760f4610a379ff6d4245f",
+    "name": "500160_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 11694737,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:15e934f19b36ce8afca2f37003b347ff",
+    "name": "500095_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 10263855,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:999003f00e3341dec85dc47dd9b6e585",
+    "name": "501132_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 9405410,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:3e35cb71b421127e838d7eb8492549dc",
+    "name": "500088_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 10287319,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:c86b14b083d7ba7e6cd2ceadacda2fe6",
+    "name": "500101_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 11657510,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:ec113178dd1dbcb9d61b9365e7642059",
+    "name": "500836_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 7693522,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:df0d2104d5872c4ea86ed987e633784e",
+    "name": "500164_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 7164787,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:f4662cc6450ca9c4c04e2b1b2b0485a4",
+    "name": "501128_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 11077287,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:b30fdb31102f8a511477dcf09cb20fe2",
+    "name": "500102_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 11081220,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:304a8ed4a4f3902d90d24471e0a40298",
+    "name": "500098_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 10825094,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:57891e4050e54e749d22293b27a8f2e0",
+    "name": "500096_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 12459152,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:2f7a79d8f51768cd634d71bc08c09924",
+    "name": "500831_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 11536629,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:4717d2663c619d77cfa355246abcefcd",
+    "name": "500163_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 6119132,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:ead0ba96bf4ef68c6968f60c4e489ccf",
+    "name": "500830_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 9895975,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:7936f22e23bc4860eb50d54e3f2ec170",
+    "name": "500165_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 7569451,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:36c6ac00e634a9bbe3744b1d683497ac",
+    "name": "500099_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 4367035,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:8f3494bac3361794c00a8aeee9755362",
+    "name": "500090_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 1762506,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:ee9113a6ff96b5458d25e3669c1e0366",
+    "name": "500103_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 11851177,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:043219d823a9e7b6e7f3aad507535163",
+    "name": "501138_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 10223332,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:a757e91214abbaf9d643396f0cbce520",
+    "name": "500091_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 5009022,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:76bc8ed3c6b48ba6ab3a5a5d3f7ccfed",
+    "name": "500833_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 10074511,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:a3a974c8d4feddbad608c45e494e5ab6",
+    "name": "500834_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 6635947,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:108ca44ae5a6c749725f04466c365ef5",
+    "name": "500100_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 11547769,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:45f9acb67c08d2d0a6f4f00288a5836d",
+    "name": "500161_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 9086976,
+    "type": "nmdc:DataObject"
+  },
+  {
+    "id": "nmdc:2434f79c08dace9676e46834bc2b7985",
+    "name": "500167_resultant.tsv",
+    "description": "Aggregation of analysis tools{MSGFplus, MASIC} results",
+    "file_size_bytes": 9420295,
+    "type": "nmdc:DataObject"
+  }
+]
