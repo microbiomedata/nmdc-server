@@ -1,5 +1,6 @@
 from collections import OrderedDict
-from typing import Dict
+from datetime import datetime
+from typing import Dict, Union
 from uuid import uuid4
 
 from factory import Faker, post_generation, SubFactory
@@ -174,3 +175,33 @@ class DataObjectFactory(SQLAlchemyModelFactory):
     description: str = Faker("sentence")
     file_size_bytes = Faker("pyint")
     md5_checksum = Faker("md5", raw_output=False)
+
+
+class PipelineStepBase(SQLAlchemyModelFactory):
+    id: str = Faker("pystr")
+    name: str = Faker("word")
+    type: str = Faker("word")
+    git_url: str = Faker("uri")
+    started_at_time: datetime = Faker("date_time")
+    ended_at_time: datetime = Faker("date_time")
+    execution_resource: str = Faker("word")
+    stats: Dict[str, Union[int, float]] = Faker("pydict", value_types=["int", "float"])
+    project: models.Project = SubFactory(ProjectFactory)
+
+
+class ReadsQCFactory(PipelineStepBase):
+    class Meta:
+        model = models.ReadsQC
+        sqlalchemy_session = db
+
+
+class MetagenomeAssemblyFactory(PipelineStepBase):
+    class Meta:
+        model = models.MetagenomeAssembly
+        sqlalchemy_session = db
+
+
+class MetagenomeAnnotationFactory(PipelineStepBase):
+    class Meta:
+        model = models.MetagenomeAnnotation
+        sqlalchemy_session = db

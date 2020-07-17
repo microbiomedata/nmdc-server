@@ -101,12 +101,24 @@ def test_foreign_key_search(db: Session, table, condition, expected):
     assert {r.id for r in q.execute(db)} == expected
 
 
-@pytest.mark.parametrize("table", ["study", "project", "biosample",])
+@pytest.mark.parametrize(
+    "table",
+    ["study", "project", "biosample", "reads_qc", "metagenome_assembly", "metagenome_annotation"],
+)
 def test_basic_query(db: Session, table):
     tests: Dict[str, Tuple[fakes.AnnotatedFactory, query.BaseQuerySchema]] = {
         "study": (fakes.StudyFactory(), query.StudyQuerySchema()),
         "project": (fakes.ProjectFactory(), query.ProjectQuerySchema()),
         "biosample": (fakes.BiosampleFactory(), query.BiosampleQuerySchema()),
+        "reads_qc": (fakes.ReadsQCFactory(), query.ReadsQCQuerySchema()),
+        "metagenome_assembly": (
+            fakes.MetagenomeAssemblyFactory(),
+            query.MetagenomeAssemblyQuerySchema(),
+        ),
+        "metagenome_annotation": (
+            fakes.MetagenomeAnnotationFactory(),
+            query.MetagenomeAnnotationQuerySchema(),
+        ),
     }
     db.commit()
     q = tests[table][1].execute(db)
@@ -326,3 +338,39 @@ def test_envo_ancestor_facet(db: Session):
         "local1": 1,
         "local2": 3,
     }
+
+
+@pytest.mark.parametrize("table", ["reads_qc", "assembly", "annotation"])
+def test_pipeline_query(db: Session, table):
+    project1 = fakes.ProjectFactory(name="project1")
+    project2 = fakes.ProjectFactory(name="project2")
+
+    fakes.ReadsQCFactory(project=project1, name="reads_qc1")
+    fakes.ReadsQCFactory(project=project1, name="reads_qc2")
+    fakes.ReadsQCFactory(project=project2, name="reads_qc3")
+
+    fakes.MetagenomeAssemblyFactory(project=project1, name="assembly1")
+    fakes.MetagenomeAssemblyFactory(project=project1, name="assembly2")
+    fakes.MetagenomeAssemblyFactory(project=project2, name="assembly3")
+
+    fakes.MetagenomeAnnotationFactory(project=project1, name="annotation1")
+    fakes.MetagenomeAnnotationFactory(project=project1, name="annotation2")
+    fakes.MetagenomeAnnotationFactory(project=project2, name="annotation3")
+    db.commit()
+
+    query_schema = {
+        "reads_qc": query.ReadsQCQuerySchema,
+        "assembly": query.MetagenomeAssemblyQuerySchema,
+        "annotation": query.MetagenomeAnnotationQuerySchema,
+    }[table]
+
+    q = query_schema()
+    assert {f"{table}{i}" for i in [1, 2, 3]} == {r.name for r in q.execute(db).all()}
+
+    q = query_schema(conditions=[{"table": "project", "field": "name", "value": "project1",}])
+    assert {f"{table}{i}" for i in [1, 2]} == {r.name for r in q.execute(db).all()}
+
+    q = query.ProjectQuerySchema(
+        conditions=[{"table": q.table.value, "field": "name", "value": f"{table}1"}]
+    )
+    assert ["project1"] == [r.name for r in q.execute(db).all()]

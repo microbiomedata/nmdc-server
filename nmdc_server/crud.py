@@ -173,3 +173,63 @@ def create_data_object(db: Session, data_object: schemas.DataObjectCreate) -> mo
 def delete_data_object(db: Session, data_object: models.DataObject) -> None:
     db.delete(data_object)
     db.commit()
+
+
+# readsqc
+def get_reads_qc(db: Session, reads_qc_id: str) -> Optional[models.ReadsQC]:
+    return db.query(models.ReadsQC).filter(models.ReadsQC.id == reads_qc_id).first()
+
+
+def search_reads_qc(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.ReadsQCQuerySchema(conditions=conditions).execute(db)
+
+
+def facet_reads_qc(
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.ReadsQCQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)
+
+
+# metagenome assembly
+def get_metagenome_assembly(
+    db: Session, metagenome_assembly_id: str
+) -> Optional[models.MetagenomeAssembly]:
+    return (
+        db.query(models.MetagenomeAssembly)
+        .filter(models.MetagenomeAssembly.id == metagenome_assembly_id)
+        .first()
+    )
+
+
+def search_metagenome_assembly(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.MetagenomeAssemblyQuerySchema(conditions=conditions).execute(db)
+
+
+def facet_metagenome_assembly(
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.MetagenomeAssemblyQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)
+
+
+# metagenome annotation
+def get_metagenome_annotation(
+    db: Session, metagenome_annotation_id: str
+) -> Optional[models.MetagenomeAnnotation]:
+    return (
+        db.query(models.MetagenomeAnnotation)
+        .filter(models.MetagenomeAnnotation.id == metagenome_annotation_id)
+        .first()
+    )
+
+
+def search_metagenome_annotation(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.MetagenomeAnnotationQuerySchema(conditions=conditions).execute(db)
+
+
+def facet_metagenome_annotation(
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.MetagenomeAnnotationQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)

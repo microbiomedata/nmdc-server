@@ -185,7 +185,7 @@ class ReadsQCBase(PipelineStepBase):
     pass
 
 
-class ReadsQc(PipelineStep):
+class ReadsQC(PipelineStep):
     pass
 
 

@@ -119,18 +119,54 @@ class Table(Enum):
                 db.query(distinct(models.Biosample.id).label("id"))
                 .join(models.Project)
                 .join(models.Study)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
             )
         elif self == Table.study:
             query = (
                 db.query(distinct(models.Study.id).label("id"))
                 .join(models.Project, isouter=True)
                 .join(models.Biosample, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
             )
         elif self == Table.project:
             query = (
                 db.query(distinct(models.Project.id).label("id"))
                 .join(models.Study)
                 .join(models.Biosample, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
+            )
+        elif self == Table.reads_qc:
+            query = (
+                db.query(distinct(models.ReadsQC.id).label("id"))
+                .join(models.Project)
+                .join(models.Study)
+                .join(models.Biosample, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
+            )
+        elif self == Table.metagenome_assembly:
+            query = (
+                db.query(distinct(models.MetagenomeAssembly.id).label("id"))
+                .join(models.Project)
+                .join(models.Study)
+                .join(models.Biosample, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
+            )
+        elif self == Table.metagenome_annotation:
+            query = (
+                db.query(distinct(models.MetagenomeAnnotation.id).label("id"))
+                .join(models.Project)
+                .join(models.Study)
+                .join(models.Biosample, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
             )
         else:
             raise Exception("Unknown table")
@@ -202,8 +238,14 @@ class Condition(ConditionSchema):
                     model.annotations[self.field].astext, "<=", value[1]  # type: ignore
                 ),
             )
+        if hasattr(model, "annotations"):
+            json_field = model.annotations  # type: ignore
+        elif hasattr(model, "stats"):
+            json_field = model.extra  # type: ignore
+        else:
+            raise Exception("Invalid field name")
         return func.nmdc_compare(
-            model.annotations[self.field].astext, self.op.value, self.value  # type: ignore
+            json_field[self.field].astext, self.op.value, self.value  # type: ignore
         )
 
     @property
@@ -292,6 +334,24 @@ class BiosampleQuerySchema(BaseQuerySchema):
         return Table.biosample
 
 
+class ReadsQCQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.reads_qc
+
+
+class MetagenomeAssemblyQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metagenome_assembly
+
+
+class MetagenomeAnnotationQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metagenome_annotation
+
+
 class BaseSearchResponse(BaseModel):
     count: int
 
@@ -314,6 +374,18 @@ class StudySearchResponse(BaseSearchResponse):
 
 class ProjectSearchResponse(BaseSearchResponse):
     results: List[schemas.Project]
+
+
+class ReadsQCSearchResponse(BaseSearchResponse):
+    results: List[schemas.ReadsQC]
+
+
+class MetagenomeAssemblySearchResponse(BaseSearchResponse):
+    results: List[schemas.MetagenomeAssembly]
+
+
+class MetagenomeAnnotationSearchResponse(BaseSearchResponse):
+    results: List[schemas.MetagenomeAnnotation]
 
 
 class FacetResponse(BaseModel):
