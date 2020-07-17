@@ -54,7 +54,7 @@ export default {
             :text="type !== t"
             :color="type === t ? 'primary' : 'inherit'"
             :class="{ 'white--text': type === t }"
-            x-small
+            small
             @click="$store.dispatch('route', { name: 'Search', type: t, conditions })"
           >
             {{ types[t].heading }}
