@@ -34,6 +34,7 @@ export default {
   },
 
   created() {
+    this.$store.dispatch('load');
     this.$store.dispatch('refreshAll');
   },
 

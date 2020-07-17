@@ -60,6 +60,7 @@ export default {
           close
           label
           class="ma-1"
+          @click:close="$emit('remove', cond)"
         >
           {{ cond.value }}
         </v-chip>

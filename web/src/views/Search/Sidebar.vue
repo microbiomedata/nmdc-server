@@ -65,6 +65,7 @@ export default {
         That match the following
       </div>
     </div>
+
     <ConditionChips
       :conditions="conditions"
       class="ma-3"
@@ -81,7 +82,9 @@ export default {
         </div>
       </template>
     </ConditionChips>
+
     <v-divider class="my-3" />
+
     <FacetedSearch
       :conditions="conditions"
       :type="type"
