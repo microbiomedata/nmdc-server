@@ -268,6 +268,10 @@ def ingest_data_objects(db: Session) -> Set[str]:
     return data_object_ids
 
 
+missing_data: Set[str] = set()
+duplicates: Set[str] = set()
+
+
 def ingest_pipeline(
     db: Session, file: Path, model: Type[models.PipelineStep], data_objects: Set[str]
 ):
@@ -276,11 +280,26 @@ def ingest_pipeline(
     with file.open() as f:
         objects = json.load(f)
         for d in objects:
-            inputs = [id for id in d.pop("has_input", []) if id in data_objects]
-            outputs = [id for id in d.pop("has_output", []) if id in data_objects]
+            inputs: List[str] = []
+            outputs: List[str] = []
+            for id in d.pop("has_input", []):
+                if id in data_objects:
+                    inputs.append(id)
+                else:
+                    missing_data.add(id)
+            for id in d.pop("has_output", []):
+                if id in data_objects:
+                    outputs.append(id)
+                else:
+                    missing_data.add(id)
             d["project_id"] = d.pop("was_informed_by")
             d["started_at_time"] = datetime.strptime(d["started_at_time"], date_fmt)
             d["ended_at_time"] = datetime.strptime(d["ended_at_time"], date_fmt)
+            # TODO: there are duplicates in the data
+            if db.query(model).get(d["id"]):
+                duplicates.add(f"{model.__tablename__} {d['id']}")  # type: ignore
+                continue
+
             step = model(**d)  # type: ignore
             db.add(step)
 
@@ -312,13 +331,24 @@ def main(*args):
         ingest_studies(db)
         ingest_projects(db)
         ingest_biosamples(db)
-        # ingest_pipeline(db, Path(DATA / "readQC_activities.json"), models.ReadsQC)
+        ingest_pipeline(db, Path(DATA / "readQC_activities.json"), models.ReadsQC, data_objects)
         ingest_pipeline(
             db,
             Path(DATA / "metagenome_assembly_activities.json"),
             models.MetagenomeAssembly,
             data_objects,
         )
+        ingest_pipeline(
+            db,
+            Path(DATA / "metagenome_annotation_activities.json"),
+            models.MetagenomeAnnotation,
+            data_objects,
+        )
+
+    print("Missing files:")
+    print("\n".join(missing_data))
+    print("Duplicates:")
+    print("\n".join(duplicates))
 
 
 if __name__ == "__main__":
