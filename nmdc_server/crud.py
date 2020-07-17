@@ -31,17 +31,17 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
     annotations = getattr(model, "annotations", None)
     if annotations:
         attribute = func.jsonb_object_keys(annotations)
-        q = db.query(attribute, func.count()).group_by(attribute)
-        attributes.update({row[0]: row[1] for row in q})
+        q = db.query(attribute).group_by(attribute)
+        attributes.update({row[0]: schemas.AttributeType.string for row in q})
 
     for column in model.__table__.columns:
         if column.name not in ["annotations", "alternate_identifiers"] and "_id" not in column.name:
-            attributes[column.name] = count
+            attributes[column.name] = schemas.AttributeType.from_column(column)
 
     if model == models.Biosample:
-        attributes["env_medium"] = count
-        attributes["env_local_scale"] = count
-        attributes["env_broad_scale"] = count
+        attributes["env_medium"] = schemas.AttributeType.string
+        attributes["env_local_scale"] = schemas.AttributeType.string
+        attributes["env_broad_scale"] = schemas.AttributeType.string
 
     return schemas.TableSummary(total=count, attributes=attributes)
 
