@@ -63,13 +63,12 @@ export default {
 <template>
   <div>
     <sidebar />
-    <v-main>
+    <v-main v-if="typeResults">
       <v-container fluid>
         <v-row v-if="['biosample'].includes(type)">
           <v-col :cols="4">
             <v-card>
               <EcosystemChart
-                v-if="typeResults"
                 :type="type"
                 :data="typeResults"
                 @selected="addSelected($event)"
@@ -79,7 +78,6 @@ export default {
           <v-col :cols="8">
             <v-card>
               <LocationMap
-                v-if="typeResults"
                 :type="type"
                 :data="typeResults"
                 @selected="addSelected($event)"
@@ -92,7 +90,6 @@ export default {
           <v-col :cols="12">
             <v-card>
               <EcosystemSankey
-                v-if="typeResults"
                 :type="type"
                 :data="typeResults"
                 @selected="addSelected($event)"
@@ -166,7 +163,7 @@ export default {
           </v-col>
         </v-row>
 
-        <v-row v-if="typeResults">
+        <v-row>
           <v-col :cols="12">
             <v-card>
               <SearchResults

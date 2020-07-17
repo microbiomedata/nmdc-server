@@ -61,20 +61,20 @@ const store = new Vuex.Store<State>({
     loading: {},
   },
   getters: {
-    primitiveFields: (state) => (type: string) => {
-      if (state.dbsummary) {
+    primitiveFields: (state) => (type: string | undefined) => {
+      if (type && state.dbsummary) {
         return Object.keys(state.dbsummary[asType(type)].attributes);
       }
       return [];
     },
-    count: (state) => (type: string) => {
-      if (state.dbsummary) {
+    count: (state) => (type: string | undefined) => {
+      if (type && state.dbsummary) {
         return state.dbsummary[asType(type)].total;
       }
       return 0;
     },
-    typeResults: (state) => (type: string) => {
-      if (state.results[asType(type)] !== null) {
+    typeResults: (state) => (type: string | undefined) => {
+      if (type && state.results[asType(type)] !== null) {
         return state.results[asType(type)]?.results;
       }
       return undefined;
@@ -120,7 +120,7 @@ const store = new Vuex.Store<State>({
         commit('setDBSummary', summary);
       }
     },
-    async fetchFacetSummary({ commit, state, getters }, { field, conditions, type: t }) {
+    async fetchFacetSummary({ commit, state }, { field, conditions, type: t }) {
       /* Fetch facet summaries for a given field, and cache it */
       const type = asType(t);
       const existing = state.facetSummaries[type][field];
@@ -197,7 +197,7 @@ const store = new Vuex.Store<State>({
   },
 });
 
-router.afterEach((to, from) => {
+router.afterEach((to) => {
   if (to.name === 'Search') {
     Vue.nextTick(() => {
       // after hook still happens before vuex sync has a chance to capture the state.
