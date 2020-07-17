@@ -29,7 +29,6 @@ interface State {
     biosample: FacetSummaryResponseMap;
     study: FacetSummaryResponseMap;
     project: FacetSummaryResponseMap;
-    data_object: FacetSummaryResponseMap;
   };
   results: Results;
   route: any;
@@ -52,13 +51,11 @@ export default new Vuex.Store<State>({
       biosample: {},
       study: {},
       project: {},
-      data_object: {},
     },
     results: {
       biosample: null,
       study: null,
       project: null,
-      data_object: null,
     },
     route: undefined,
     loading: {},
@@ -123,9 +120,9 @@ export default new Vuex.Store<State>({
         commit('setDBSummary', summary);
       }
     },
-    async fetchFacetSummary({ commit, state, getters }, { field, conditions }) {
+    async fetchFacetSummary({ commit, state, getters }, { field, conditions, type: t }) {
       /* Fetch facet summaries for a given field, and cache it */
-      const type = asType(getters.type);
+      const type = asType(t);
       const existing = state.facetSummaries[type][field];
       if (existing) {
         return;
@@ -152,9 +149,6 @@ export default new Vuex.Store<State>({
           break;
         case 'project':
           results = await api.searchProject(params);
-          break;
-        case 'data_object':
-          results = await api.searchBiosample(params);
           break;
         case 'biosample':
           results = await api.searchBiosample(params);

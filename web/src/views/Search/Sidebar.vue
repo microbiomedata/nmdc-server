@@ -25,6 +25,16 @@ export default {
   },
   methods: {
     fieldDisplayName,
+    removeCondition({ field, value, table }) {
+      this.$store.dispatch('route', {
+        conditions: this.conditions
+          .filter((c) => !(
+            c.field === field
+            && c.value === value
+            && c.table === table
+          )),
+      });
+    },
   },
 };
 </script>
@@ -36,7 +46,7 @@ export default {
     permanent
     width="320"
   >
-    <div class="ma-3">
+    <div class="mx-3 my-2">
       <div class="text-subtitle-2 primary--text">
         I am looking for...
       </div>
@@ -69,8 +79,9 @@ export default {
     <ConditionChips
       :conditions="conditions"
       class="ma-3"
+      @remove="removeCondition"
     >
-      <template #menu="{ field, isOpen }">
+      <template #menu="{ field, table, isOpen }">
         <div>
           <v-card-title class="pb-0">
             {{ fieldDisplayName(field) }}
@@ -78,6 +89,7 @@ export default {
           <MatchList
             v-if="isOpen"
             :field="field"
+            :type="table"
           />
         </div>
       </template>
@@ -98,6 +110,7 @@ export default {
           <MatchList
             v-if="isOpen"
             :field="field"
+            :type="type"
           />
         </div>
       </template>

@@ -4,13 +4,12 @@ const client = axios.create({
   baseURL: process.env.VUE_APP_BASE_URL || '/api',
 });
 
-export type entityType = 'biosample' | 'study' | 'project' | 'data_object';
+export type entityType = 'biosample' | 'study' | 'project';
 export const typeMap: Map<string, entityType> = new Map([
   ['sample', 'biosample'],
   ['biosample', 'biosample'],
   ['project', 'project'],
   ['study', 'study'],
-  ['data_object', 'data_object'],
 ]);
 
 interface BaseSearchResult {
@@ -76,7 +75,6 @@ export interface DatabaseSummaryResponse {
   study: AttributeSummary;
   project: AttributeSummary;
   biosample: AttributeSummary;
-  data_object: AttributeSummary;
 }
 
 export interface FacetSummaryResponse {
@@ -88,6 +86,7 @@ export interface Condition {
   field: string;
   op: string;
   value: string;
+  table: string;
 }
 
 interface SearchParams {
@@ -137,9 +136,6 @@ async function searchCount(type: entityType, params: SearchParams): Promise<numb
       break;
     case 'project':
       results = await searchProject(params);
-      break;
-    case 'data_object':
-      results = await searchBiosample(params);
       break;
     case 'biosample':
       results = await searchBiosample(params);
