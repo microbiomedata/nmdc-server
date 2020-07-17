@@ -64,13 +64,6 @@ const types = {
     plural: 'samples',
     visible: true,
   },
-  data_object: {
-    icon: 'mdi-file-table-outline',
-    heading: 'Data Objects',
-    name: 'data object',
-    plural: 'data objects',
-    visible: false,
-  },
 };
 
 const fields = {
@@ -462,8 +455,7 @@ const ecosystemCategory = {
 
 const tables = [
   'study',
-  'data_object',
-  'sample',
+  'biosample',
   'project',
 ];
 

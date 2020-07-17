@@ -8,6 +8,10 @@ export default {
       type: String,
       required: true,
     },
+    type: {
+      type: String,
+      required: true,
+    },
   },
   data: () => ({
     filterText: '',
@@ -30,15 +34,15 @@ export default {
 
   computed: {
     ...mapState(['facetSummaries']),
-    ...mapGetters(['type', 'conditions']),
+    ...mapGetters(['conditions']),
 
     otherConditions() {
       // conditions from OTHER fields
-      return this.conditions.filter((c) => (c.field !== this.field));
+      return this.conditions.filter((c) => (c.field !== this.field) || (c.table !== this.type));
     },
     myConditions() {
       // conditions that match our field.
-      return this.conditions.filter((c) => (c.field === this.field));
+      return this.conditions.filter((c) => (c.field === this.field) && (c.table === this.type));
     },
   },
 
@@ -62,18 +66,21 @@ export default {
       // get the summary for our facet, NOT including the conditions already selected
       // that pertain to our facet.  This is done so that all facet options for the current facet
       // will be visible (and selectable).  Counts will be wrong.
-      await this.fetchFacetSummary({ field: this.field, conditions: this.otherConditions });
+      await this.fetchFacetSummary({
+        field: this.field,
+        conditions: this.otherConditions,
+        type: this.type,
+      });
       // Results from the above action are cached in facetSummaries.
-      const items = this.facetSummaries[this.type][this.field];
+      const allFacets = this.facetSummaries[this.type][this.field];
       // if there were results, figure out which ones should be selected based on
       // the active list of conditions.
-      this.selected = this.myConditions.map((c) => ({
+      this.selected = this.myConditions.map(
         // In order for selection to work, each object must match for all key/value pairs
-        // so we have to get the right `count` value out of the item list
-        count: items.find((item) => item.facet.toLowerCase() === c.value.toLowerCase()).count,
-        facet: c.value,
-      }));
-      this.items = items.map((item) => ({
+        // so we have to get the right item from the item list where value matches
+        (c) => allFacets.find((item) => item.facet.toLowerCase() === c.value.toLowerCase()),
+      );
+      this.items = allFacets.map((item) => ({
         ...item,
         name: valueDisplayName(this.field, item.facet),
       }));
@@ -86,10 +93,15 @@ export default {
           op: '==',
           field: this.field,
           value: item.facet,
+          table: this.type,
         }];
       } else {
         conditions = this.conditions
-          .filter((c) => !(c.field === this.field && c.value === item.facet));
+          .filter((c) => !(
+            c.field === this.field
+            && c.value === item.facet
+            && c.table === this.type
+          ));
       }
       this.$store.dispatch('route', { conditions });
     },

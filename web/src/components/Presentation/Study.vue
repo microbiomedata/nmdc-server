@@ -122,7 +122,6 @@ import Cite from 'citation-js';
 import {
   typeWithCardinality, valueCardinality, fieldDisplayName, valueDisplayName,
 } from '@/util';
-import { fields } from '@/encoding';
 
 export default {
   props: {
@@ -132,7 +131,6 @@ export default {
     },
   },
   data: () => ({
-    fields,
     doiCitation: '',
     publications: [],
   }),
@@ -164,7 +162,9 @@ export default {
     selectField(field) {
       this.$emit('selected', {
         type: 'study',
-        conditions: [{ field, op: '==', value: this.item[field] }],
+        conditions: [{
+          field, op: '==', value: this.item[field], table: 'study',
+        }],
       });
     },
     relatedTypeDescription(relatedType) {

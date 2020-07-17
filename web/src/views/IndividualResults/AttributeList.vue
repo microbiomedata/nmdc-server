@@ -135,7 +135,6 @@ export default {
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Lipidomics' }] },
       { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Organic Matter Characterization' }] },
       { type: 'biosample' },
-      { type: 'data_object' },
     ],
   }),
   computed: {

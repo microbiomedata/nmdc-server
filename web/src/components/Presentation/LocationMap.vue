@@ -43,8 +43,12 @@ export default {
             this.$emit('selected', {
               type: this.type,
               conditions: [
-                { field: 'latitude', op: '==', value: lat },
-                { field: 'longitude', op: '==', value: lon },
+                {
+                  field: 'latitude', op: '==', value: lat, table: this.type,
+                },
+                {
+                  field: 'longitude', op: '==', value: lon, table: this.type,
+                },
               ],
             });
           }

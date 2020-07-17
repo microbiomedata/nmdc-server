@@ -65,7 +65,9 @@ export default {
             }
             this.$emit('selected', {
               type: this.type,
-              conditions: [{ field, op: '==', value }],
+              conditions: [{
+                field, op: '==', value, table: this.type,
+              }],
             });
           }
         },

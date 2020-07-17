@@ -5,7 +5,7 @@
       solo
       label="search"
       clearable
-      class="px-2"
+      class="mx-3"
       dense
       hide-details
       outlined

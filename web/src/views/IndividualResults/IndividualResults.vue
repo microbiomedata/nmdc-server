@@ -3,7 +3,6 @@ import { mapGetters } from 'vuex';
 
 import Sample from '@/components/Presentation/Sample.vue';
 import Study from '@/components/Presentation/Study.vue';
-import DataObject from '@/components/Presentation/DataObject.vue';
 import Project from '@/components/Presentation/Project.vue';
 
 import AttributeList from './AttributeList.vue';
@@ -11,7 +10,6 @@ import AttributeList from './AttributeList.vue';
 export default {
   components: {
     AttributeList,
-    DataObject,
     Project,
     Sample,
     Study,
@@ -49,10 +47,6 @@ export default {
       />
       <Project
         v-if="type === 'project'"
-        :item="result"
-      />
-      <DataObject
-        v-if="type === 'data_object'"
         :item="result"
       />
       <AttributeList

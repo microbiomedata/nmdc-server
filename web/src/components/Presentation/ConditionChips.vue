@@ -16,7 +16,18 @@ export default {
 
   computed: {
     conditionGroups() {
-      return groupBy(this.conditions, (c) => c.field);
+      return Object.entries(groupBy(
+        this.conditions,
+        (c) => JSON.stringify(({ field: c.field, table: c.table })),
+      )).map(([group, conditions]) => {
+        const parsed = JSON.parse(group);
+        return {
+          key: parsed.group + parsed.table,
+          field: parsed.field,
+          table: parsed.table,
+          conditions,
+        };
+      });
     },
   },
 
@@ -41,20 +52,20 @@ export default {
 <template>
   <div>
     <v-card
-      v-for="(conds, field) in conditionGroups"
-      :key="field"
+      v-for="group in conditionGroups"
+      :key="group.key"
       class="d-flex flex-row pa-1 my-2"
       color="primary lighten-5"
     >
       <div style="width: 94%">
         <span class="text-subtitle-2">
-          {{ fieldDisplayName(field) }}
+          {{ fieldDisplayName(group.field) }}
         </span>
         <span class="text-caption">
-          [{{ verb(conds[0].op) }}]
+          [{{ verb(group.conditions[0].op) }}]
         </span>
         <v-chip
-          v-for="cond in conds"
+          v-for="cond in group.conditions"
           :key="cond.value"
           small
           close
@@ -68,7 +79,7 @@ export default {
       <v-menu
         offset-x
         :close-on-content-click="false"
-        @input="toggleMenu(field, $event)"
+        @input="toggleMenu(group.key, $event)"
       >
         <template #activator="{ on }">
           <div
@@ -87,7 +98,11 @@ export default {
         >
           <slot
             name="menu"
-            v-bind="{ field, isOpen: menuState[field] }"
+            v-bind="{
+              field: group.field,
+              table: group.table,
+              isOpen: menuState[group.key],
+            }"
           />
         </v-card>
       </v-menu>

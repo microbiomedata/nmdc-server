@@ -56,7 +56,9 @@ export default {
       this.$store.dispatch('route', {
         name: 'Individual Result',
         type: this.type,
-        conditions: [{ field: 'id', op: '==', value: id }],
+        conditions: [{
+          field: 'id', op: '==', value: id, table: this.type,
+        }],
       });
     },
   },

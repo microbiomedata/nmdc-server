@@ -60,7 +60,12 @@ export default {
             const [value] = this.chartData[selection[0].row + 1];
             this.$emit('selected', {
               type: this.type,
-              conditions: [{ field: this.field, op: '==', value }],
+              conditions: [{
+                field: this.field,
+                op: '==',
+                value,
+                table: this.type,
+              }],
             });
           }
         },
