@@ -56,7 +56,10 @@ class DatabaseSummary(BaseModel):
     study: TableSummary
     project: TableSummary
     biosample: TableSummary
-    data_object: TableSummary
+    reads_qc: TableSummary
+    metagenome_assembly: TableSummary
+    metagenome_annotation: TableSummary
+    metaproteomic_analysis: TableSummary
 
 
 # study
@@ -107,6 +110,7 @@ class ProjectCreate(ProjectBase):
 class Project(ProjectBase):
     study_id: str
     open_in_gold: str
+    has_outputs: List[str]
 
     class Config:
         orm_mode = True
@@ -144,9 +148,12 @@ class Biosample(BiosampleBase):
 
 
 # data_object
-class DataObjectBase(AnnotatedBase):
-    project_id: str
+class DataObjectBase(BaseModel):
+    id: str
+    name: str
+    description: str = ""
     file_size_bytes: int
+    md5_checksum: Optional[str]
 
 
 class DataObjectCreate(DataObjectBase):
@@ -154,7 +161,86 @@ class DataObjectCreate(DataObjectBase):
 
 
 class DataObject(DataObjectBase):
-    project: Project
+    class Config:
+        orm_mode = True
+
+
+class PipelineStepBase(BaseModel):
+    id: str
+    name: str
+    type: str
+    git_url: str
+    started_at_time: datetime
+    ended_at_time: datetime
+    execution_resource: str
+    project_id: str
+    stats: Dict[str, Union[int, float]]
+
+
+class PipelineStep(PipelineStepBase):
+    has_inputs: List[str]
+    has_outputs: List[str]
 
     class Config:
         orm_mode = True
+
+
+class ReadsQCBase(PipelineStepBase):
+    input_read_count: int
+    input_read_bases: int
+    output_read_count: int
+    output_read_bases: int
+
+
+class ReadsQC(PipelineStep):
+    pass
+
+
+class MetagenomeAssemblyBase(PipelineStepBase):
+    scaffolds: int
+    contigs: int
+    scaf_bp: int
+    contig_bp: int
+    scaf_N50: int
+    scaf_L50: int
+    ctg_N50: int
+    ctg_L50: int
+    scaf_N90: int
+    scaf_L90: int
+    ctg_N90: int
+    ctg_L90: int
+    scaf_max: int
+    ctg_max: int
+    scaf_n_gt50K: int
+    scaf_l_gt50k: int
+    scaf_pct_gt50K: int
+    num_input_reads: int
+    num_aligned_reads: int
+    scaf_logsum: float
+    scaf_powsum: float
+    ctg_logsum: float
+    ctg_powsum: float
+    asm_score: float
+    gap_pct: float
+    gc_avg: float
+    gc_std: float
+
+
+class MetagenomeAssembly(PipelineStep):
+    pass
+
+
+class MetagenomeAnnotationBase(PipelineStepBase):
+    pass
+
+
+class MetagenomeAnnotation(PipelineStep):
+    pass
+
+
+class MetaproteomicAnalysisBase(PipelineStepBase):
+    pass
+
+
+class MetaproteomicAnalysis(PipelineStep):
+    pass

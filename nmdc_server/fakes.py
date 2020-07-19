@@ -1,10 +1,11 @@
 from collections import OrderedDict
+from datetime import datetime
 from typing import Dict
 from uuid import uuid4
 
 from factory import Faker, post_generation, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
-from faker.providers import BaseProvider, date_time, geo, internet, lorem, python
+from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, python
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
@@ -29,6 +30,7 @@ Faker.add_provider(date_time)
 Faker.add_provider(geo)
 Faker.add_provider(internet)
 Faker.add_provider(lorem)
+Faker.add_provider(misc)
 Faker.add_provider(python)
 
 
@@ -163,10 +165,81 @@ class BiosampleFactory(AnnotatedFactory):
     project = SubFactory(ProjectFactory)
 
 
-class DataObjectFactory(AnnotatedFactory):
+class DataObjectFactory(SQLAlchemyModelFactory):
     class Meta:
         model = models.DataObject
         sqlalchemy_session = db
 
+    id: str = Faker("pystr")
+    name: str = Faker("word")
+    description: str = Faker("sentence")
     file_size_bytes = Faker("pyint")
-    project = SubFactory(ProjectFactory)
+    md5_checksum = Faker("md5", raw_output=False)
+
+
+class PipelineStepBase(SQLAlchemyModelFactory):
+    id: str = Faker("pystr")
+    name: str = Faker("word")
+    type: str = Faker("word")
+    git_url: str = Faker("uri")
+    started_at_time: datetime = Faker("date_time")
+    ended_at_time: datetime = Faker("date_time")
+    execution_resource: str = Faker("word")
+    project: models.Project = SubFactory(ProjectFactory)
+
+
+class ReadsQCFactory(PipelineStepBase):
+    class Meta:
+        model = models.ReadsQC
+        sqlalchemy_session = db
+
+    input_read_count: int = Faker("pyint")
+    input_read_bases: int = Faker("pyint")
+    output_read_count: int = Faker("pyint")
+    output_read_bases: int = Faker("pyint")
+
+
+class MetagenomeAssemblyFactory(PipelineStepBase):
+    class Meta:
+        model = models.MetagenomeAssembly
+        sqlalchemy_session = db
+
+    scaffolds: int = Faker("pyint")
+    contigs: int = Faker("pyint")
+    scaf_bp: int = Faker("pyint")
+    contig_bp: int = Faker("pyint")
+    scaf_N50: int = Faker("pyint")
+    scaf_L50: int = Faker("pyint")
+    ctg_N50: int = Faker("pyint")
+    ctg_L50: int = Faker("pyint")
+    scaf_N90: int = Faker("pyint")
+    scaf_L90: int = Faker("pyint")
+    ctg_N90: int = Faker("pyint")
+    ctg_L90: int = Faker("pyint")
+    scaf_max: int = Faker("pyint")
+    ctg_max: int = Faker("pyint")
+    scaf_n_gt50K: int = Faker("pyint")
+    scaf_l_gt50k: int = Faker("pyint")
+    scaf_pct_gt50K: int = Faker("pyint")
+    num_input_reads: int = Faker("pyint")
+    num_aligned_reads: int = Faker("pyint")
+    scaf_logsum: float = Faker("pyfloat")
+    scaf_powsum: float = Faker("pyfloat")
+    ctg_logsum: float = Faker("pyfloat")
+    ctg_powsum: float = Faker("pyfloat")
+    asm_score: float = Faker("pyfloat")
+    gap_pct: float = Faker("pyfloat")
+    gc_avg: float = Faker("pyfloat")
+    gc_std: float = Faker("pyfloat")
+
+
+class MetagenomeAnnotationFactory(PipelineStepBase):
+    class Meta:
+        model = models.MetagenomeAnnotation
+        sqlalchemy_session = db
+
+
+class MetaproteomicAnalysisFactory(PipelineStepBase):
+    class Meta:
+        model = models.MetaproteomicAnalysis
+        sqlalchemy_session = db

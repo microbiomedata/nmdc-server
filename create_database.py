@@ -3,11 +3,11 @@ from datetime import datetime
 import json
 from pathlib import Path
 import re
-from typing import Any, Dict, List, Set, Union
+from typing import Any, Dict, List, Set, Type, Union
 from urllib import request
 
-from alembic import command
-from alembic.config import Config
+# from alembic import command
+# from alembic.config import Config
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -76,21 +76,11 @@ def load_common_fields(json_object: JsonObjectType, include_dates: bool = True) 
 
 def create_tables(db, settings):
     engine = db.bind
+    metadata.drop_all()
     metadata.create_all(engine)
-    alembic_cfg = Config(str(HERE / "alembic.ini"))
-    alembic_cfg.set_main_option("sqlalchemy.url", settings.database_uri)
-    command.stamp(alembic_cfg, "head")
-
-    db.query(models.DataObject).delete()
-    db.query(models.Biosample).delete()
-    db.query(models.Project).delete()
-    db.query(models.StudyWebsite).delete()
-    db.query(models.StudyPublication).delete()
-    db.query(models.Website).delete()
-    db.query(models.Publication).delete()
-    db.query(models.Study).delete()
-    db.query(models.EnvoAncestor).delete()
-    db.query(models.EnvoTerm).delete()
+    # alembic_cfg = Config(str(HERE / "alembic.ini"))
+    # alembic_cfg.set_main_option("sqlalchemy.url", settings.database_uri)
+    # command.stamp(alembic_cfg, "head")
 
 
 def populate_envo_ancestor(
@@ -191,24 +181,52 @@ def ingest_studies(db: Session):
     db.commit()
 
 
-def ingest_projects(db: Session) -> Dict[str, str]:
-    data_objects: Dict[str, str] = {}
-    projects = []
-
+def ingest_projects(db: Session):
     for p in load_json_objects(DATA / "gold_omics_processing.json"):
         assert len(p["part_of"]) == 1
         project = load_common_fields(p)
         project["study_id"] = coerce_id(p.pop("part_of")[0])
-        for key in p.pop("has_output", []):
-            data_objects[coerce_id(key)] = project["id"]
+        data_objects = p.pop("has_output", [])
 
         project["annotations"] = p
-        projects.append(project)
         project_db = models.Project(**project)
+
+        # https://stackoverflow.com/a/21670302
         db.add(project_db)
+        if data_objects:
+            db.flush()
+            db.execute(
+                models.project_output_association.insert().values(
+                    [(project_db.id, d) for d in data_objects]
+                )
+            )
+
     db.commit()
 
-    return data_objects
+
+def ingest_emsl_projects(db: Session):
+    with open(DATA / "emsl_omics_processing.json") as f:
+        for p in json.load(f):
+            assert len(p["part_of"]) == 1
+            project = {
+                "id": p.pop("id"),
+                "name": p.pop("name"),
+                "description": p.pop("description", ""),
+            }
+            project["study_id"] = coerce_id(p.pop("part_of")[0])
+            data_objects = p.pop("has_output", [])
+
+            project["annotations"] = p
+            project_db = models.Project(**project)
+
+            db.add(project_db)
+            if data_objects:
+                db.flush()
+                db.execute(
+                    models.project_output_association.insert().values(
+                        [(project_db.id, d) for d in data_objects]
+                    )
+                )
 
 
 def ingest_biosamples(db: Session):
@@ -239,26 +257,80 @@ def ingest_biosamples(db: Session):
     db.commit()
 
 
-def ingest_data_objects(db: Session, data_object_map: Dict[str, str]):
+def ingest_data_objects(db: Session) -> Set[str]:
     data_object_files = [
         DATA / "faa_fna_fastq_data_objects.json",
         DATA / "emsl_data_objects.json",
+        DATA / "readQC_data_objects.json",
+        DATA / "metagenome_assembly_data_objects.json",
+        DATA / "metagenome_annotation_data_objects.json",
+        DATA / "Hess_emsl_analysis_data_objects.json",
+        DATA / "Stegen_emsl_analysis_data_objects.json",
     ]
+    data_object_ids: Set[str] = set()
     for file in data_object_files:
         for p in load_json_objects(file):
             data_object = load_common_fields(p, include_dates=False)
-            if data_object["id"] not in data_object_map:
-                # this is a data object with no known project
-                continue
             data_object.update(
-                {
-                    "project_id": data_object_map[data_object["id"]],
-                    "file_size_bytes": int(p.pop("file_size_bytes")),
-                    "annotations": p,
-                }
+                {"file_size_bytes": int(p.pop("file_size_bytes")),}
             )
             data_object_db = models.DataObject(**data_object)
             db.add(data_object_db)
+            data_object_ids.add(data_object_db.id)
+    db.commit()
+    return data_object_ids
+
+
+missing_data: Set[str] = set()
+duplicates: Set[str] = set()
+
+
+def ingest_pipeline(
+    db: Session, file: Path, model: Type[models.PipelineStep], data_objects: Set[str]
+):
+    table_name = model.__tablename__  # type: ignore
+    date_fmt = "%Y-%m-%d"
+    with file.open() as f:
+        objects = json.load(f)
+        for d in objects:
+            inputs: List[str] = []
+            outputs: List[str] = []
+            for id in d.pop("has_input", []):
+                if id in data_objects:
+                    inputs.append(id)
+                else:
+                    missing_data.add(id)
+            for id in d.pop("has_output", []):
+                if id in data_objects:
+                    outputs.append(id)
+                else:
+                    missing_data.add(id)
+            d["project_id"] = d.pop("was_informed_by")
+            d["started_at_time"] = datetime.strptime(d["started_at_time"], date_fmt)
+            d["ended_at_time"] = datetime.strptime(d["ended_at_time"], date_fmt)
+            # TODO: there are duplicates in the data
+            if db.query(model).get(d["id"]):
+                duplicates.add(f"{model.__tablename__} {d['id']}")  # type: ignore
+                continue
+
+            step = model(**d)  # type: ignore
+            db.add(step)
+
+            if inputs:
+                db.flush()
+                db.execute(
+                    getattr(models, f"{table_name}_input_association")
+                    .insert()
+                    .values([(step.id, f) for f in inputs])
+                )
+
+            if outputs:
+                db.flush()
+                db.execute(
+                    getattr(models, f"{table_name}_output_association")
+                    .insert()
+                    .values([(step.id, f) for f in outputs])
+                )
     db.commit()
 
 
@@ -268,10 +340,41 @@ def main(*args):
     with create_session() as db:
         create_tables(db, settings)
         populate_envo(db)
+        data_objects = ingest_data_objects(db)
         ingest_studies(db)
-        data_object_map = ingest_projects(db)
+        ingest_projects(db)
+        ingest_emsl_projects(db)
         ingest_biosamples(db)
-        ingest_data_objects(db, data_object_map)
+        ingest_pipeline(db, Path(DATA / "readQC_activities.json"), models.ReadsQC, data_objects)
+        ingest_pipeline(
+            db,
+            Path(DATA / "metagenome_assembly_activities.json"),
+            models.MetagenomeAssembly,
+            data_objects,
+        )
+        ingest_pipeline(
+            db,
+            Path(DATA / "metagenome_annotation_activities.json"),
+            models.MetagenomeAnnotation,
+            data_objects,
+        )
+        ingest_pipeline(
+            db,
+            Path(DATA / "Hess_metaproteomic_analysis_activities.json"),
+            models.MetaproteomicAnalysis,
+            data_objects,
+        )
+        ingest_pipeline(
+            db,
+            Path(DATA / "Stegen_metaproteomic_analysis_activities.json"),
+            models.MetaproteomicAnalysis,
+            data_objects,
+        )
+
+    print("Missing files:")
+    print("\n".join(missing_data))
+    print("Duplicates:")
+    print("\n".join(duplicates))
 
 
 if __name__ == "__main__":

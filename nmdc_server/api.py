@@ -200,31 +200,6 @@ async def create_data_object(data_object: schemas.DataObjectCreate, db: Session 
     return crud.create_data_object(db, data_object)
 
 
-@router.post(
-    "/data_object/search",
-    response_model=query.DataObjectSearchResponse,
-    tags=["data object"],
-    name="Search for studies",
-    description="Faceted search of data object data.",
-)
-async def search_data_object(
-    query: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-    pagination: Pagination = Depends(),
-):
-    return pagination.response(crud.search_data_object(db, query.conditions))
-
-
-@router.post(
-    "/data_object/facet",
-    response_model=query.FacetResponse,
-    tags=["data_object"],
-    name="Get all values of an attribute",
-)
-async def facet_data_object(query: query.FacetQuery, db: Session = Depends(get_db)):
-    return crud.facet_data_object(db, query.attribute, query.conditions)
-
-
 @router.get(
     "/data_object/{data_object_id}", response_model=schemas.DataObject, tags=["data object"],
 )
@@ -243,3 +218,137 @@ async def delete_data_object(data_object_id: str, db: Session = Depends(get_db))
     if db_data_object is None:
         raise HTTPException(status_code=404, detail="DataObject not found")
     crud.delete_data_object(db, db_data_object)
+
+
+# reads_qc
+@router.post(
+    "/reads_qc/search",
+    response_model=query.ReadsQCSearchResponse,
+    tags=["reads_qc"],
+    name="Search for studies",
+    description="Faceted search of reads_qc data.",
+)
+async def search_reads_qc(
+    query: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
+    return pagination.response(crud.search_reads_qc(db, query.conditions))
+
+
+@router.post(
+    "/reads_qc/facet",
+    response_model=query.FacetResponse,
+    tags=["reads_qc"],
+    name="Get all values of an attribute",
+)
+async def facet_reads_qc(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_reads_qc(db, query.attribute, query.conditions)
+
+
+@router.get(
+    "/reads_qc/{reads_qc_id}", response_model=schemas.ReadsQC, tags=["reads_qc"],
+)
+async def get_reads_qc(reads_qc_id: str, db: Session = Depends(get_db)):
+    db_reads_qc = crud.get_reads_qc(db, reads_qc_id)
+    if db_reads_qc is None:
+        raise HTTPException(status_code=404, detail="ReadsQC not found")
+    return db_reads_qc
+
+
+# metagenome_assembly
+@router.post(
+    "/metagenome_assembly/search",
+    response_model=query.MetagenomeAssemblySearchResponse,
+    tags=["metagenome_assembly"],
+    name="Search for studies",
+    description="Faceted search of metagenome_assembly data.",
+)
+async def search_metagenome_assembly(
+    query: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
+    return pagination.response(crud.search_metagenome_assembly(db, query.conditions))
+
+
+@router.post(
+    "/metagenome_assembly/facet",
+    response_model=query.FacetResponse,
+    tags=["metagenome_assembly"],
+    name="Get all values of an attribute",
+)
+async def facet_metagenome_assembly(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_metagenome_assembly(db, query.attribute, query.conditions)
+
+
+@router.get(
+    "/metagenome_assembly/{metagenome_assembly_id}",
+    response_model=schemas.MetagenomeAssembly,
+    tags=["metagenome_assembly"],
+)
+async def get_metagenome_assembly(metagenome_assembly_id: str, db: Session = Depends(get_db)):
+    db_metagenome_assembly = crud.get_metagenome_assembly(db, metagenome_assembly_id)
+    if db_metagenome_assembly is None:
+        raise HTTPException(status_code=404, detail="MetagenomeAssembly not found")
+    return db_metagenome_assembly
+
+
+# metagenome_annotation
+@router.post(
+    "/metagenome_annotation/search",
+    response_model=query.MetagenomeAnnotationSearchResponse,
+    tags=["metagenome_annotation"],
+    name="Search for studies",
+    description="Faceted search of metagenome_annotation data.",
+)
+async def search_metagenome_annotation(
+    query: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
+    return pagination.response(crud.search_metagenome_annotation(db, query.conditions))
+
+
+@router.post(
+    "/metagenome_annotation/facet",
+    response_model=query.FacetResponse,
+    tags=["metagenome_annotation"],
+    name="Get all values of an attribute",
+)
+async def facet_metagenome_annotation(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_metagenome_annotation(db, query.attribute, query.conditions)
+
+
+@router.get(
+    "/metagenome_annotation/{metagenome_annotation_id}",
+    response_model=schemas.MetagenomeAnnotation,
+    tags=["metagenome_annotation"],
+)
+async def get_metagenome_annotation(metagenome_annotation_id: str, db: Session = Depends(get_db)):
+    db_metagenome_annotation = crud.get_metagenome_annotation(db, metagenome_annotation_id)
+    if db_metagenome_annotation is None:
+        raise HTTPException(status_code=404, detail="MetagenomeAnnotation not found")
+    return db_metagenome_annotation
+
+
+@router.post(
+    "/metaproteomic_analysis/facet",
+    response_model=query.FacetResponse,
+    tags=["metaproteomic_analysis"],
+    name="Get all values of an attribute",
+)
+async def facet_metaproteomic_analysis(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_metaproteomic_analysis(db, query.attribute, query.conditions)
+
+
+@router.get(
+    "/metaproteomic_analysis/{metaproteomic_analysis_id}",
+    response_model=schemas.MetaproteomicAnalysis,
+    tags=["metaproteomic_analysis"],
+)
+async def get_metaproteomic_analysis(metaproteomic_analysis_id: str, db: Session = Depends(get_db)):
+    db_metaproteomic_analysis = crud.get_metaproteomic_analysis(db, metaproteomic_analysis_id)
+    if db_metaproteomic_analysis is None:
+        raise HTTPException(status_code=404, detail="MetaproteomicAnalysis not found")
+    return db_metaproteomic_analysis

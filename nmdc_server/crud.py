@@ -27,10 +27,13 @@ def get_or_create(
 # summary
 def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSummary:
     count = db.query(model).count()
-    attribute = func.jsonb_object_keys(model.annotations)
-    q = db.query(attribute, func.count()).group_by(attribute)
+    attributes: Dict[str, Any] = {}
+    annotations = getattr(model, "annotations", None)
+    if annotations:
+        attribute = func.jsonb_object_keys(annotations)
+        q = db.query(attribute, func.count()).group_by(attribute)
+        attributes.update({row[0]: row[1] for row in q})
 
-    attributes = {row[0]: row[1] for row in q}
     for column in model.__table__.columns:
         if column.name not in ["annotations", "alternate_identifiers"] and "_id" not in column.name:
             attributes[column.name] = count
@@ -48,7 +51,10 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         study=get_table_summary(db, models.Study),
         project=get_table_summary(db, models.Project),
         biosample=get_table_summary(db, models.Biosample),
-        data_object=get_table_summary(db, models.DataObject),
+        reads_qc=get_table_summary(db, models.ReadsQC),
+        metagenome_assembly=get_table_summary(db, models.MetagenomeAssembly),
+        metagenome_annotation=get_table_summary(db, models.MetagenomeAnnotation),
+        metaproteomic_analysis=get_table_summary(db, models.MetaproteomicAnalysis),
     )
 
 
@@ -173,12 +179,83 @@ def delete_data_object(db: Session, data_object: models.DataObject) -> None:
     db.commit()
 
 
-def search_data_object(db: Session, conditions: List[query.ConditionSchema]) -> Query:
-    return query.DataObjectQuerySchema(conditions=conditions).execute(db)
+# readsqc
+def get_reads_qc(db: Session, reads_qc_id: str) -> Optional[models.ReadsQC]:
+    return db.query(models.ReadsQC).filter(models.ReadsQC.id == reads_qc_id).first()
 
 
-def facet_data_object(
+def search_reads_qc(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.ReadsQCQuerySchema(conditions=conditions).execute(db)
+
+
+def facet_reads_qc(
     db: Session, attribute: str, conditions: List[query.ConditionSchema]
 ) -> query.FacetResponse:
-    facets = query.DataObjectQuerySchema(conditions=conditions).facet(db, attribute)
+    facets = query.ReadsQCQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)
+
+
+# metagenome assembly
+def get_metagenome_assembly(
+    db: Session, metagenome_assembly_id: str
+) -> Optional[models.MetagenomeAssembly]:
+    return (
+        db.query(models.MetagenomeAssembly)
+        .filter(models.MetagenomeAssembly.id == metagenome_assembly_id)
+        .first()
+    )
+
+
+def search_metagenome_assembly(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.MetagenomeAssemblyQuerySchema(conditions=conditions).execute(db)
+
+
+def facet_metagenome_assembly(
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.MetagenomeAssemblyQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)
+
+
+# metagenome annotation
+def get_metagenome_annotation(
+    db: Session, metagenome_annotation_id: str
+) -> Optional[models.MetagenomeAnnotation]:
+    return (
+        db.query(models.MetagenomeAnnotation)
+        .filter(models.MetagenomeAnnotation.id == metagenome_annotation_id)
+        .first()
+    )
+
+
+def search_metagenome_annotation(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.MetagenomeAnnotationQuerySchema(conditions=conditions).execute(db)
+
+
+def facet_metagenome_annotation(
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.MetagenomeAnnotationQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)
+
+
+# metaproteomic analysis
+def get_metaproteomic_analysis(
+    db: Session, metaproteomic_analysis_id: str
+) -> Optional[models.MetaproteomicAnalysis]:
+    return (
+        db.query(models.MetaproteomicAnalysis)
+        .filter(models.MetaproteomicAnalysis.id == metaproteomic_analysis_id)
+        .first()
+    )
+
+
+def search_metaproteomic_analysis(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.MetaproteomicAnalysisQuerySchema(conditions=conditions).execute(db)
+
+
+def facet_metaproteomic_analysis(
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.MetaproteomicAnalysisQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)

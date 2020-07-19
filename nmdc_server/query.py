@@ -84,10 +84,13 @@ class Table(Enum):
     biosample = "biosample"
     study = "study"
     project = "project"
-    data_object = "data_object"
     env_broad_scale = "env_broad_scale"
     env_local_scale = "env_local_scale"
     env_medium = "env_medium"
+    reads_qc = "reads_qc"
+    metagenome_assembly = "metagenome_assemby"
+    metagenome_annotation = "metagenome_annotation"
+    metaproteomic_analysis = "metaproteomic_analysis"
 
     @property
     def model(self) -> Union[models.ModelType, AliasedClass]:
@@ -97,14 +100,20 @@ class Table(Enum):
             return models.Study
         elif self == Table.project:
             return models.Project
-        elif self == Table.data_object:
-            return models.DataObject
         elif self == Table.env_broad_scale:
             return EnvBroadScaleTerm
         elif self == Table.env_local_scale:
             return EnvLocalScaleTerm
         elif self == Table.env_medium:
             return EnvMediumTerm
+        elif self == Table.reads_qc:
+            return models.ReadsQC
+        elif self == Table.metagenome_assembly:
+            return models.MetagenomeAssembly
+        elif self == Table.metagenome_annotation:
+            return models.MetagenomeAnnotation
+        elif self == Table.metaproteomic_analysis:
+            return models.MetaproteomicAnalysis
         raise Exception("Unknown table")
 
     def query(self, db: Session) -> Query:
@@ -112,29 +121,71 @@ class Table(Enum):
             query = (
                 db.query(distinct(models.Biosample.id).label("id"))
                 .join(models.Project)
-                .join(models.DataObject, isouter=True)
                 .join(models.Study)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
             )
         elif self == Table.study:
             query = (
                 db.query(distinct(models.Study.id).label("id"))
                 .join(models.Project, isouter=True)
                 .join(models.Biosample, isouter=True)
-                .join(models.DataObject, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
             )
         elif self == Table.project:
             query = (
                 db.query(distinct(models.Project.id).label("id"))
                 .join(models.Study)
                 .join(models.Biosample, isouter=True)
-                .join(models.DataObject, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
             )
-        elif self == Table.data_object:
+        elif self == Table.reads_qc:
             query = (
-                db.query(distinct(models.DataObject.id).label("id"))
+                db.query(distinct(models.ReadsQC.id).label("id"))
                 .join(models.Project)
-                .join(models.Biosample, isouter=True)
                 .join(models.Study)
+                .join(models.Biosample, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
+            )
+        elif self == Table.metagenome_assembly:
+            query = (
+                db.query(distinct(models.MetagenomeAssembly.id).label("id"))
+                .join(models.Project)
+                .join(models.Study)
+                .join(models.Biosample, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
+            )
+        elif self == Table.metagenome_annotation:
+            query = (
+                db.query(distinct(models.MetagenomeAnnotation.id).label("id"))
+                .join(models.Project)
+                .join(models.Study)
+                .join(models.Biosample, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
+            )
+        elif self == Table.metaproteomic_analysis:
+            query = (
+                db.query(distinct(models.MetaproteomicAnalysis.id).label("id"))
+                .join(models.Project)
+                .join(models.Study)
+                .join(models.Biosample, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
             )
         else:
             raise Exception("Unknown table")
@@ -152,7 +203,6 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
     "sample_id": (Table.biosample, "id"),
     "biosample_id": (Table.biosample, "id"),
     "project_id": (Table.project, "id"),
-    "data_object_id": (Table.data_object, "id"),
     **_envo_keys,
 }
 
@@ -207,8 +257,14 @@ class Condition(ConditionSchema):
                     model.annotations[self.field].astext, "<=", value[1]  # type: ignore
                 ),
             )
+        if hasattr(model, "annotations"):
+            json_field = model.annotations  # type: ignore
+        elif hasattr(model, "stats"):
+            json_field = model.extra  # type: ignore
+        else:
+            raise Exception("Invalid field name")
         return func.nmdc_compare(
-            model.annotations[self.field].astext, self.op.value, self.value  # type: ignore
+            json_field[self.field].astext, self.op.value, self.value  # type: ignore
         )
 
     @property
@@ -297,10 +353,28 @@ class BiosampleQuerySchema(BaseQuerySchema):
         return Table.biosample
 
 
-class DataObjectQuerySchema(BaseQuerySchema):
+class ReadsQCQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
-        return Table.data_object
+        return Table.reads_qc
+
+
+class MetagenomeAssemblyQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metagenome_assembly
+
+
+class MetagenomeAnnotationQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metagenome_annotation
+
+
+class MetaproteomicAnalysisQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metaproteomic_analysis
 
 
 class BaseSearchResponse(BaseModel):
@@ -327,8 +401,20 @@ class ProjectSearchResponse(BaseSearchResponse):
     results: List[schemas.Project]
 
 
-class DataObjectSearchResponse(BaseSearchResponse):
-    results: List[schemas.DataObject]
+class ReadsQCSearchResponse(BaseSearchResponse):
+    results: List[schemas.ReadsQC]
+
+
+class MetagenomeAssemblySearchResponse(BaseSearchResponse):
+    results: List[schemas.MetagenomeAssembly]
+
+
+class MetagenomeAnnotationSearchResponse(BaseSearchResponse):
+    results: List[schemas.MetagenomeAnnotation]
+
+
+class MetaproteomicAnalysisSearchResponse(BaseSearchResponse):
+    results: List[schemas.MetaproteomicAnalysis]
 
 
 class FacetResponse(BaseModel):

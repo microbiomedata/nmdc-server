@@ -9,13 +9,44 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     String,
+    Table,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
+from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import relationship
+from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base
+
+
+def input_association(table: str) -> Table:
+    return Table(
+        f"{table}_input_association",
+        Base.metadata,
+        Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
+        Column("data_object_id", String, ForeignKey("data_object.id")),
+        UniqueConstraint(f"{table}_id", "data_object_id"),
+    )
+
+
+def input_relationship(association: Table) -> "RelationshipProperty[DataObject]":
+    return relationship("DataObject", secondary=association,)
+
+
+def output_association(table: str) -> Table:
+    return Table(
+        f"{table}_output_association",
+        Base.metadata,
+        Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
+        Column("data_object_id", String, ForeignKey("data_object.id")),
+        UniqueConstraint(f"{table}_id", "data_object_id"),
+    )
+
+
+def output_relationship(association: Table) -> "RelationshipProperty[DataObject]":
+    return relationship("DataObject", secondary=association,)
 
 
 class EnvoTerm(Base):
@@ -86,13 +117,18 @@ class Study(Base, AnnotatedModel):
         return f"https://gold.jgi.doe.gov/study?id={self.id}"
 
 
+project_output_association = output_association("project")
+
+
 class Project(Base, AnnotatedModel):
     __tablename__ = "project"
 
-    add_date = Column(DateTime, nullable=False)
-    mod_date = Column(DateTime, nullable=False)
+    add_date = Column(DateTime, nullable=True)
+    mod_date = Column(DateTime, nullable=True)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     study = relationship("Study", backref="projects")
+
+    outputs = output_relationship(project_output_association)
 
     @property
     def open_in_gold(self):
@@ -135,15 +171,124 @@ class Biosample(Base, AnnotatedModel):
         return f"https://gold.jgi.doe.gov/biosample?id={self.id}"
 
 
-class DataObject(Base, AnnotatedModel):
+class DataObject(Base):
     __tablename__ = "data_object"
 
-    project_id = Column(String, ForeignKey("project.id"), nullable=False)
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=False, default="")
     file_size_bytes = Column(BigInteger, nullable=False)
-    project = relationship("Project", backref="data_objects")
+    md5_checksum = Column(String, nullable=True)
 
 
-ModelType = Union[Type[Study], Type[Project], Type[Biosample], Type[DataObject]]
+class PipelineStep:
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    type = Column(String, nullable=False)
+    git_url = Column(String, nullable=False)
+    started_at_time = Column(DateTime, nullable=False)
+    ended_at_time = Column(DateTime, nullable=False)
+    execution_resource = Column(String, nullable=False)
+
+    @declared_attr
+    def project_id(cls):
+        return Column(String, ForeignKey("project.id"), nullable=False)
+
+    @declared_attr
+    def project(cls):
+        return relationship("Project")
+
+    has_inputs = association_proxy("inputs", "id")
+    has_outpus = association_proxy("outputs", "id")
+
+
+reads_qc_input_association = input_association("reads_qc")
+reads_qc_output_association = output_association("reads_qc")
+
+
+class ReadsQC(Base, PipelineStep):
+    __tablename__ = "reads_qc"
+
+    input_read_count = Column(BigInteger, nullable=False)
+    input_read_bases = Column(BigInteger, nullable=False)
+    output_read_count = Column(BigInteger, nullable=False)
+    output_read_bases = Column(BigInteger, nullable=False)
+
+    inputs = input_relationship(reads_qc_input_association)
+    outputs = output_relationship(reads_qc_output_association)
+
+
+metagenome_assembly_input_association = input_association("metagenome_assembly")
+metagenome_assembly_output_association = output_association("metagenome_assembly")
+
+
+class MetagenomeAssembly(Base, PipelineStep):
+    __tablename__ = "metagenome_assembly"
+
+    scaffolds = Column(BigInteger, nullable=False)
+    contigs = Column(BigInteger, nullable=False)
+    scaf_bp = Column(BigInteger, nullable=False)
+    contig_bp = Column(BigInteger, nullable=False)
+    scaf_N50 = Column(BigInteger, nullable=False)
+    scaf_L50 = Column(BigInteger, nullable=False)
+    ctg_N50 = Column(BigInteger, nullable=False)
+    ctg_L50 = Column(BigInteger, nullable=False)
+    scaf_N90 = Column(BigInteger, nullable=False)
+    scaf_L90 = Column(BigInteger, nullable=False)
+    ctg_N90 = Column(BigInteger, nullable=False)
+    ctg_L90 = Column(BigInteger, nullable=False)
+    scaf_max = Column(BigInteger, nullable=False)
+    ctg_max = Column(BigInteger, nullable=False)
+    scaf_n_gt50K = Column(BigInteger, nullable=False)
+    scaf_l_gt50k = Column(BigInteger, nullable=False)
+    scaf_pct_gt50K = Column(BigInteger, nullable=False)
+    num_input_reads = Column(BigInteger, nullable=False)
+    num_aligned_reads = Column(BigInteger, nullable=False)
+
+    scaf_logsum = Column(Float, nullable=False)
+    scaf_powsum = Column(Float, nullable=False)
+    ctg_logsum = Column(Float, nullable=False)
+    ctg_powsum = Column(Float, nullable=False)
+    asm_score = Column(Float, nullable=False)
+    gap_pct = Column(Float, nullable=False)
+    gc_avg = Column(Float, nullable=False)
+    gc_std = Column(Float, nullable=False)
+
+    inputs = input_relationship(metagenome_assembly_input_association)
+    outputs = output_relationship(metagenome_assembly_output_association)
+
+
+metagenome_annotation_input_association = input_association("metagenome_annotation")
+metagenome_annotation_output_association = output_association("metagenome_annotation")
+
+
+class MetagenomeAnnotation(Base, PipelineStep):
+    __tablename__ = "metagenome_annotation"
+
+    inputs = input_relationship(metagenome_annotation_input_association)
+    outputs = output_relationship(metagenome_annotation_output_association)
+
+
+metaproteomic_analysis_input_association = input_association("metaproteomic_analysis")
+metaproteomic_analysis_output_association = output_association("metaproteomic_analysis")
+
+
+class MetaproteomicAnalysis(Base, PipelineStep):
+    __tablename__ = "metaproteomic_analysis"
+
+    inputs = input_relationship(metaproteomic_analysis_input_association)
+    outputs = output_relationship(metaproteomic_analysis_output_association)
+
+
+ModelType = Union[
+    Type[Study],
+    Type[Project],
+    Type[Biosample],
+    Type[ReadsQC],
+    Type[MetagenomeAssembly],
+    Type[MetagenomeAnnotation],
+    Type[MetaproteomicAnalysis],
+]
 
 
 class Website(Base):
