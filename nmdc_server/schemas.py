@@ -68,8 +68,15 @@ class AnnotatedBase(BaseModel):
 
 
 # summary
+class AttributeSummary(BaseModel):
+    count: int
+    min: Optional[Union[float, datetime]]
+    max: Optional[Union[float, datetime]]
+    type: AttributeType
+
+
 class TableSummary(BaseModel):
-    attributes: Dict[str, AttributeType]
+    attributes: Dict[str, AttributeSummary]
     total: int
 
 

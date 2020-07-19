@@ -21,7 +21,12 @@ def get_db(settings: Settings = Depends(get_settings)):
 
 
 # database summary
-@router.get("/summary", response_model=schemas.DatabaseSummary, tags=["summary"])
+@router.get(
+    "/summary",
+    response_model=schemas.DatabaseSummary,
+    tags=["summary"],
+    response_model_exclude_unset=True,
+)
 async def get_database_summary(db: Session = Depends(get_db)):
     return crud.get_database_summary(db)
 

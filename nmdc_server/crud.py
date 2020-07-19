@@ -1,9 +1,8 @@
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 
-from sqlalchemy import func
 from sqlalchemy.orm import Query, Session
 
-from nmdc_server import models, query, schemas
+from nmdc_server import aggregations, models, query, schemas
 
 T = TypeVar("T", bound=models.Base)
 
@@ -25,36 +24,15 @@ def get_or_create(
 
 
 # summary
-def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSummary:
-    count = db.query(model).count()
-    attributes: Dict[str, Any] = {}
-    annotations = getattr(model, "annotations", None)
-    if annotations:
-        attribute = func.jsonb_object_keys(annotations)
-        q = db.query(attribute).group_by(attribute)
-        attributes.update({row[0]: schemas.AttributeType.string for row in q})
-
-    for column in model.__table__.columns:
-        if column.name not in ["annotations", "alternate_identifiers"] and "_id" not in column.name:
-            attributes[column.name] = schemas.AttributeType.from_column(column)
-
-    if model == models.Biosample:
-        attributes["env_medium"] = schemas.AttributeType.string
-        attributes["env_local_scale"] = schemas.AttributeType.string
-        attributes["env_broad_scale"] = schemas.AttributeType.string
-
-    return schemas.TableSummary(total=count, attributes=attributes)
-
-
 def get_database_summary(db: Session) -> schemas.DatabaseSummary:
     return schemas.DatabaseSummary(
-        study=get_table_summary(db, models.Study),
-        project=get_table_summary(db, models.Project),
-        biosample=get_table_summary(db, models.Biosample),
-        reads_qc=get_table_summary(db, models.ReadsQC),
-        metagenome_assembly=get_table_summary(db, models.MetagenomeAssembly),
-        metagenome_annotation=get_table_summary(db, models.MetagenomeAnnotation),
-        metaproteomic_analysis=get_table_summary(db, models.MetaproteomicAnalysis),
+        study=aggregations.get_table_summary(db, models.Study),
+        project=aggregations.get_table_summary(db, models.Project),
+        biosample=aggregations.get_table_summary(db, models.Biosample),
+        reads_qc=aggregations.get_table_summary(db, models.ReadsQC),
+        metagenome_assembly=aggregations.get_table_summary(db, models.MetagenomeAssembly),
+        metagenome_annotation=aggregations.get_table_summary(db, models.MetagenomeAnnotation),
+        metaproteomic_analysis=aggregations.get_table_summary(db, models.MetaproteomicAnalysis),
     )
 
 
