@@ -1,7 +1,9 @@
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 
 from pydantic import BaseModel, Field, validator
+from sqlalchemy import BigInteger, Column, DateTime, Float, String
 
 from nmdc_server import models
 
@@ -28,6 +30,25 @@ class InternalErrorSchema(ErrorSchema):
     )
 
 
+class AttributeType(Enum):
+    string = "string"
+    integer = "integer"
+    float_ = "float"
+    date = "date"
+
+    @classmethod
+    def from_column(cls, column: Column) -> "AttributeType":
+        if isinstance(column.type, DateTime):
+            return AttributeType.date
+        elif isinstance(column.type, Float):
+            return AttributeType.float_
+        elif isinstance(column.type, BigInteger):
+            return AttributeType.integer
+        elif isinstance(column.type, String):
+            return AttributeType.string
+        raise Exception("Unknown column type")
+
+
 class EnvoTerm(BaseModel):
     id: str
     label: str
@@ -47,8 +68,15 @@ class AnnotatedBase(BaseModel):
 
 
 # summary
+class AttributeSummary(BaseModel):
+    count: int
+    min: Optional[Union[float, datetime]]
+    max: Optional[Union[float, datetime]]
+    type: AttributeType
+
+
 class TableSummary(BaseModel):
-    attributes: Dict[str, int]
+    attributes: Dict[str, AttributeSummary]
     total: int
 
 
