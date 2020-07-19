@@ -103,7 +103,15 @@ def test_foreign_key_search(db: Session, table, condition, expected):
 
 @pytest.mark.parametrize(
     "table",
-    ["study", "project", "biosample", "reads_qc", "metagenome_assembly", "metagenome_annotation"],
+    [
+        "study",
+        "project",
+        "biosample",
+        "reads_qc",
+        "metagenome_assembly",
+        "metagenome_annotation",
+        "metaproteomic_analysis",
+    ],
 )
 def test_basic_query(db: Session, table):
     tests: Dict[str, Tuple[fakes.AnnotatedFactory, query.BaseQuerySchema]] = {
@@ -118,6 +126,10 @@ def test_basic_query(db: Session, table):
         "metagenome_annotation": (
             fakes.MetagenomeAnnotationFactory(),
             query.MetagenomeAnnotationQuerySchema(),
+        ),
+        "metaproteomic_analysis": (
+            fakes.MetaproteomicAnalysisFactory(),
+            query.MetaproteomicAnalysisQuerySchema(),
         ),
     }
     db.commit()
@@ -340,7 +352,7 @@ def test_envo_ancestor_facet(db: Session):
     }
 
 
-@pytest.mark.parametrize("table", ["reads_qc", "assembly", "annotation"])
+@pytest.mark.parametrize("table", ["reads_qc", "assembly", "annotation", "analysis"])
 def test_pipeline_query(db: Session, table):
     project1 = fakes.ProjectFactory(name="project1")
     project2 = fakes.ProjectFactory(name="project2")
@@ -356,12 +368,17 @@ def test_pipeline_query(db: Session, table):
     fakes.MetagenomeAnnotationFactory(project=project1, name="annotation1")
     fakes.MetagenomeAnnotationFactory(project=project1, name="annotation2")
     fakes.MetagenomeAnnotationFactory(project=project2, name="annotation3")
+
+    fakes.MetaproteomicAnalysisFactory(project=project1, name="analysis1")
+    fakes.MetaproteomicAnalysisFactory(project=project1, name="analysis2")
+    fakes.MetaproteomicAnalysisFactory(project=project2, name="analysis3")
     db.commit()
 
     query_schema = {
         "reads_qc": query.ReadsQCQuerySchema,
         "assembly": query.MetagenomeAssemblyQuerySchema,
         "annotation": query.MetagenomeAnnotationQuerySchema,
+        "analysis": query.MetaproteomicAnalysisQuerySchema,
     }[table]
 
     q = query_schema()

@@ -54,6 +54,7 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         reads_qc=get_table_summary(db, models.ReadsQC),
         metagenome_assembly=get_table_summary(db, models.MetagenomeAssembly),
         metagenome_annotation=get_table_summary(db, models.MetagenomeAnnotation),
+        metaproteomic_analysis=get_table_summary(db, models.MetaproteomicAnalysis),
     )
 
 
@@ -235,4 +236,26 @@ def facet_metagenome_annotation(
     db: Session, attribute: str, conditions: List[query.ConditionSchema]
 ) -> query.FacetResponse:
     facets = query.MetagenomeAnnotationQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)
+
+
+# metaproteomic analysis
+def get_metaproteomic_analysis(
+    db: Session, metaproteomic_analysis_id: str
+) -> Optional[models.MetaproteomicAnalysis]:
+    return (
+        db.query(models.MetaproteomicAnalysis)
+        .filter(models.MetaproteomicAnalysis.id == metaproteomic_analysis_id)
+        .first()
+    )
+
+
+def search_metaproteomic_analysis(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.MetaproteomicAnalysisQuerySchema(conditions=conditions).execute(db)
+
+
+def facet_metaproteomic_analysis(
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.MetaproteomicAnalysisQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)

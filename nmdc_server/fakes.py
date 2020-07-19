@@ -237,3 +237,9 @@ class MetagenomeAnnotationFactory(PipelineStepBase):
     class Meta:
         model = models.MetagenomeAnnotation
         sqlalchemy_session = db
+
+
+class MetaproteomicAnalysisFactory(PipelineStepBase):
+    class Meta:
+        model = models.MetaproteomicAnalysis
+        sqlalchemy_session = db

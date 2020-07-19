@@ -59,6 +59,7 @@ class DatabaseSummary(BaseModel):
     reads_qc: TableSummary
     metagenome_assembly: TableSummary
     metagenome_annotation: TableSummary
+    metaproteomic_analysis: TableSummary
 
 
 # study
@@ -234,4 +235,12 @@ class MetagenomeAnnotationBase(PipelineStepBase):
 
 
 class MetagenomeAnnotation(PipelineStep):
+    pass
+
+
+class MetaproteomicAnalysisBase(PipelineStepBase):
+    pass
+
+
+class MetaproteomicAnalysis(PipelineStep):
     pass

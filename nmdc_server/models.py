@@ -123,8 +123,8 @@ project_output_association = output_association("project")
 class Project(Base, AnnotatedModel):
     __tablename__ = "project"
 
-    add_date = Column(DateTime, nullable=False)
-    mod_date = Column(DateTime, nullable=False)
+    add_date = Column(DateTime, nullable=True)
+    mod_date = Column(DateTime, nullable=True)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     study = relationship("Study", backref="projects")
 
@@ -269,6 +269,17 @@ class MetagenomeAnnotation(Base, PipelineStep):
     outputs = output_relationship(metagenome_annotation_output_association)
 
 
+metaproteomic_analysis_input_association = input_association("metaproteomic_analysis")
+metaproteomic_analysis_output_association = output_association("metaproteomic_analysis")
+
+
+class MetaproteomicAnalysis(Base, PipelineStep):
+    __tablename__ = "metaproteomic_analysis"
+
+    inputs = input_relationship(metaproteomic_analysis_input_association)
+    outputs = output_relationship(metaproteomic_analysis_output_association)
+
+
 ModelType = Union[
     Type[Study],
     Type[Project],
@@ -276,6 +287,7 @@ ModelType = Union[
     Type[ReadsQC],
     Type[MetagenomeAssembly],
     Type[MetagenomeAnnotation],
+    Type[MetaproteomicAnalysis],
 ]
 
 

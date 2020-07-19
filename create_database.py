@@ -82,17 +82,6 @@ def create_tables(db, settings):
     # alembic_cfg.set_main_option("sqlalchemy.url", settings.database_uri)
     # command.stamp(alembic_cfg, "head")
 
-    db.query(models.DataObject).delete()
-    db.query(models.Biosample).delete()
-    db.query(models.Project).delete()
-    db.query(models.StudyWebsite).delete()
-    db.query(models.StudyPublication).delete()
-    db.query(models.Website).delete()
-    db.query(models.Publication).delete()
-    db.query(models.Study).delete()
-    db.query(models.EnvoAncestor).delete()
-    db.query(models.EnvoTerm).delete()
-
 
 def populate_envo_ancestor(
     db: Session,
@@ -193,8 +182,6 @@ def ingest_studies(db: Session):
 
 
 def ingest_projects(db: Session):
-    projects = []
-
     for p in load_json_objects(DATA / "gold_omics_processing.json"):
         assert len(p["part_of"]) == 1
         project = load_common_fields(p)
@@ -202,7 +189,6 @@ def ingest_projects(db: Session):
         data_objects = p.pop("has_output", [])
 
         project["annotations"] = p
-        projects.append(project)
         project_db = models.Project(**project)
 
         # https://stackoverflow.com/a/21670302
@@ -216,6 +202,31 @@ def ingest_projects(db: Session):
             )
 
     db.commit()
+
+
+def ingest_emsl_projects(db: Session):
+    with open(DATA / "emsl_omics_processing.json") as f:
+        for p in json.load(f):
+            assert len(p["part_of"]) == 1
+            project = {
+                "id": p.pop("id"),
+                "name": p.pop("name"),
+                "description": p.pop("description", ""),
+            }
+            project["study_id"] = coerce_id(p.pop("part_of")[0])
+            data_objects = p.pop("has_output", [])
+
+            project["annotations"] = p
+            project_db = models.Project(**project)
+
+            db.add(project_db)
+            if data_objects:
+                db.flush()
+                db.execute(
+                    models.project_output_association.insert().values(
+                        [(project_db.id, d) for d in data_objects]
+                    )
+                )
 
 
 def ingest_biosamples(db: Session):
@@ -253,6 +264,8 @@ def ingest_data_objects(db: Session) -> Set[str]:
         DATA / "readQC_data_objects.json",
         DATA / "metagenome_assembly_data_objects.json",
         DATA / "metagenome_annotation_data_objects.json",
+        DATA / "Hess_emsl_analysis_data_objects.json",
+        DATA / "Stegen_emsl_analysis_data_objects.json",
     ]
     data_object_ids: Set[str] = set()
     for file in data_object_files:
@@ -330,6 +343,7 @@ def main(*args):
         data_objects = ingest_data_objects(db)
         ingest_studies(db)
         ingest_projects(db)
+        ingest_emsl_projects(db)
         ingest_biosamples(db)
         ingest_pipeline(db, Path(DATA / "readQC_activities.json"), models.ReadsQC, data_objects)
         ingest_pipeline(
@@ -342,6 +356,18 @@ def main(*args):
             db,
             Path(DATA / "metagenome_annotation_activities.json"),
             models.MetagenomeAnnotation,
+            data_objects,
+        )
+        ingest_pipeline(
+            db,
+            Path(DATA / "Hess_metaproteomic_analysis_activities.json"),
+            models.MetaproteomicAnalysis,
+            data_objects,
+        )
+        ingest_pipeline(
+            db,
+            Path(DATA / "Stegen_metaproteomic_analysis_activities.json"),
+            models.MetaproteomicAnalysis,
             data_objects,
         )
 

@@ -90,6 +90,7 @@ class Table(Enum):
     reads_qc = "reads_qc"
     metagenome_assembly = "metagenome_assemby"
     metagenome_annotation = "metagenome_annotation"
+    metaproteomic_analysis = "metaproteomic_analysis"
 
     @property
     def model(self) -> Union[models.ModelType, AliasedClass]:
@@ -111,6 +112,8 @@ class Table(Enum):
             return models.MetagenomeAssembly
         elif self == Table.metagenome_annotation:
             return models.MetagenomeAnnotation
+        elif self == Table.metaproteomic_analysis:
+            return models.MetaproteomicAnalysis
         raise Exception("Unknown table")
 
     def query(self, db: Session) -> Query:
@@ -122,6 +125,7 @@ class Table(Enum):
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
             )
         elif self == Table.study:
             query = (
@@ -131,6 +135,7 @@ class Table(Enum):
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
             )
         elif self == Table.project:
             query = (
@@ -140,6 +145,7 @@ class Table(Enum):
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
             )
         elif self == Table.reads_qc:
             query = (
@@ -149,6 +155,7 @@ class Table(Enum):
                 .join(models.Biosample, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
             )
         elif self == Table.metagenome_assembly:
             query = (
@@ -158,6 +165,7 @@ class Table(Enum):
                 .join(models.Biosample, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
             )
         elif self == Table.metagenome_annotation:
             query = (
@@ -167,6 +175,17 @@ class Table(Enum):
                 .join(models.Biosample, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
+            )
+        elif self == Table.metaproteomic_analysis:
+            query = (
+                db.query(distinct(models.MetaproteomicAnalysis.id).label("id"))
+                .join(models.Project)
+                .join(models.Study)
+                .join(models.Biosample, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
             )
         else:
             raise Exception("Unknown table")
@@ -352,6 +371,12 @@ class MetagenomeAnnotationQuerySchema(BaseQuerySchema):
         return Table.metagenome_annotation
 
 
+class MetaproteomicAnalysisQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metaproteomic_analysis
+
+
 class BaseSearchResponse(BaseModel):
     count: int
 
@@ -386,6 +411,10 @@ class MetagenomeAssemblySearchResponse(BaseSearchResponse):
 
 class MetagenomeAnnotationSearchResponse(BaseSearchResponse):
     results: List[schemas.MetagenomeAnnotation]
+
+
+class MetaproteomicAnalysisSearchResponse(BaseSearchResponse):
+    results: List[schemas.MetaproteomicAnalysis]
 
 
 class FacetResponse(BaseModel):

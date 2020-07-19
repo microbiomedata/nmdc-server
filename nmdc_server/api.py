@@ -330,3 +330,25 @@ async def get_metagenome_annotation(metagenome_annotation_id: str, db: Session =
     if db_metagenome_annotation is None:
         raise HTTPException(status_code=404, detail="MetagenomeAnnotation not found")
     return db_metagenome_annotation
+
+
+@router.post(
+    "/metaproteomic_analysis/facet",
+    response_model=query.FacetResponse,
+    tags=["metaproteomic_analysis"],
+    name="Get all values of an attribute",
+)
+async def facet_metaproteomic_analysis(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_metaproteomic_analysis(db, query.attribute, query.conditions)
+
+
+@router.get(
+    "/metaproteomic_analysis/{metaproteomic_analysis_id}",
+    response_model=schemas.MetaproteomicAnalysis,
+    tags=["metaproteomic_analysis"],
+)
+async def get_metaproteomic_analysis(metaproteomic_analysis_id: str, db: Session = Depends(get_db)):
+    db_metaproteomic_analysis = crud.get_metaproteomic_analysis(db, metaproteomic_analysis_id)
+    if db_metaproteomic_analysis is None:
+        raise HTTPException(status_code=404, detail="MetaproteomicAnalysis not found")
+    return db_metaproteomic_analysis
