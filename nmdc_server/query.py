@@ -20,6 +20,15 @@ EnvMediumAncestor = aliased(models.EnvoAncestor)
 EnvMediumTerm = aliased(models.EnvoTerm)
 
 
+class InvalidAttributeException(Exception):
+    def __init__(self, table: str, attribute: str):
+        self.table = table
+        self.attribute = attribute
+        super(InvalidAttributeException, self).__init__(
+            f"Attribute {self.attribute} not found in table {self.table}"
+        )
+
+
 def _join_envo(query: Query) -> Query:
     return (
         query.join(
@@ -247,7 +256,7 @@ class Condition(ConditionSchema):
             elif self.op == Operation.between:
                 value = cast(Tuple[schemas.AnnotationValue, schemas.AnnotationValue], self.value)
                 return and_(column >= value[0], column <= value[1])
-        if self.op == Operation.between:
+        if self.op == Operation.between and hasattr(model, "annotations"):
             value = cast(Tuple[schemas.AnnotationValue, schemas.AnnotationValue], self.value)
             return and_(
                 func.nmdc_compare(
@@ -259,10 +268,8 @@ class Condition(ConditionSchema):
             )
         if hasattr(model, "annotations"):
             json_field = model.annotations  # type: ignore
-        elif hasattr(model, "stats"):
-            json_field = model.extra  # type: ignore
         else:
-            raise Exception("Invalid field name")
+            raise InvalidAttributeException(self.table.value, self.field)
         return func.nmdc_compare(
             json_field[self.field].astext, self.op.value, self.value  # type: ignore
         )
@@ -323,8 +330,10 @@ class BaseQuerySchema(BaseModel):
         else:
             if attribute in model.__table__.columns:
                 column = getattr(model, attribute)
-            else:
+            elif hasattr(model, "annotations"):
                 column = model.annotations[attribute]  # type: ignore
+            else:
+                raise InvalidAttributeException(self.table.value, attribute)
 
         subquery = self.query(db).subquery()
         query = db.query(column, func.count(column))
