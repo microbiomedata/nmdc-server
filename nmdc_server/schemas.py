@@ -127,8 +127,8 @@ class Study(StudyBase):
 # project
 class ProjectBase(AnnotatedBase):
     study_id: str
-    add_date: datetime
-    mod_date: datetime
+    add_date: Optional[datetime]
+    mod_date: Optional[datetime]
 
 
 class ProjectCreate(ProjectBase):
@@ -138,7 +138,7 @@ class ProjectCreate(ProjectBase):
 class Project(ProjectBase):
     study_id: str
     open_in_gold: str
-    has_outputs: List[str]
+    # has_outputs: List[str] = []
 
     class Config:
         orm_mode = True
@@ -206,8 +206,8 @@ class PipelineStepBase(BaseModel):
 
 
 class PipelineStep(PipelineStepBase):
-    has_inputs: List[str]
-    has_outputs: List[str]
+    # has_inputs: List[str]
+    # has_outputs: List[str]
 
     class Config:
         orm_mode = True
