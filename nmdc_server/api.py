@@ -344,6 +344,22 @@ async def get_metagenome_annotation(metagenome_annotation_id: str, db: Session =
     return db_metagenome_annotation
 
 
+# metagenome_annotation
+@router.post(
+    "/metaproteomic_analysis/search",
+    response_model=query.MetaproteomicAnalysisSearchResponse,
+    tags=["metaproteomic_analysis"],
+    name="Search for studies",
+    description="Faceted search of metaproteomic_analysis data.",
+)
+async def search_metaproteomic_analysis(
+    query: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
+    return pagination.response(crud.search_metaproteomic_analysis(db, query.conditions))
+
+
 @router.post(
     "/metaproteomic_analysis/facet",
     response_model=query.FacetResponse,

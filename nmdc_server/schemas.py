@@ -215,7 +215,6 @@ class PipelineStepBase(BaseModel):
     ended_at_time: datetime
     execution_resource: str
     project_id: str
-    stats: Dict[str, Union[int, float]]
 
 
 class PipelineStep(PipelineStepBase):
