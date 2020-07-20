@@ -10,6 +10,7 @@ export function valueCardinality(value) {
 }
 
 export function typeWithCardinality(type, cardinality) {
+  console.log(type, cardinality);
   if (cardinality === 1) {
     return types[type].name;
   }

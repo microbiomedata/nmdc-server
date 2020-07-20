@@ -19,8 +19,8 @@ const types = {
     icon: 'mdi-dna',
     heading: 'Metagenome',
     name: 'metagenome',
-    plural: 'metagenomes',
-    visible: false,
+    plural: 'Metagenomes',
+    visible: true,
   },
   Metatranscriptome: {
     icon: 'mdi-file-table-box-multiple-outline',
@@ -64,6 +64,26 @@ const types = {
     plural: 'samples',
     visible: true,
   },
+  reads_qc: {
+    heading: 'Reads QC',
+    name: 'reads_qc',
+    plural: 'Reads QC',
+    visible: true,
+  },
+  metagenome_assembly: {
+    icon: 'mdi-dna',
+    heading: 'Metagenome Assembly',
+    name: 'metagenome_assembly',
+    plural: 'Metagenome assembly',
+    visible: true,
+  },
+  metagenome_annotation: {
+    icon: 'mdi-dna',
+    heading: 'Metagenome Annotation',
+    name: 'metagenome_annotation',
+    plural: 'Metagenome annotation',
+    visible: true,
+  },
 };
 
 const fields = {
@@ -72,11 +92,11 @@ const fields = {
   },
   latitude: {
     icon: 'mdi-earth',
-    hideFacet: true,
+    hideFacet: false,
   },
   longitude: {
     icon: 'mdi-earth',
-    hideFacet: true,
+    hideFacet: false,
   },
   identifier: {
     icon: 'mdi-text',

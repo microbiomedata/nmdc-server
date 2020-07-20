@@ -18,19 +18,13 @@ import router from './router';
 
 Vue.use(Vuex);
 
-type Results = Record<entityType, ResultUnion>;
 type FacetSummaryResponseMap = Record<string, FacetSummaryResponse[]>;
 
-/* TODO: use router for type and conditions, and make them into getters */
 interface State {
   allSamples?: SearchResponse<BiosampleSearchResult>;
   dbsummary?: DatabaseSummaryResponse;
-  facetSummaries: {
-    biosample: FacetSummaryResponseMap;
-    study: FacetSummaryResponseMap;
-    project: FacetSummaryResponseMap;
-  };
-  results: Results;
+  facetSummaries: Record<entityType, FacetSummaryResponseMap>;
+  results: Record<entityType, ResultUnion>;
   route: any;
   loading: Record<string, boolean>;
 }
@@ -51,11 +45,17 @@ const store = new Vuex.Store<State>({
       biosample: {},
       study: {},
       project: {},
+      reads_qc: {},
+      metagenome_assembly: {},
+      metagenome_annotation: {},
     },
     results: {
       biosample: null,
       study: null,
       project: null,
+      reads_qc: null,
+      metagenome_assembly: null,
+      metagenome_annotation: null,
     },
     route: undefined,
     loading: {},
@@ -152,6 +152,15 @@ const store = new Vuex.Store<State>({
         case 'biosample':
           results = await api.searchBiosample(params);
           break;
+        case 'metagenome_assembly':
+          results = await api.searchMetagenomeAssembly(params);
+          break;
+        case 'metagenome_annotation':
+          results = await api.searchMetagenomeAnnotation(params);
+          break;
+        case 'reads_qc':
+          results = await api.searchReadsQC(params);
+          break;
         default:
           throw new Error(`Unexpected type: ${type}`);
       }
@@ -198,7 +207,7 @@ const store = new Vuex.Store<State>({
 });
 
 router.afterEach((to) => {
-  if (to.name === 'Search') {
+  if (to.name === 'Search' || to.name === 'Individual Result') {
     Vue.nextTick(() => {
       // after hook still happens before vuex sync has a chance to capture the state.
       // wait a tick before dispatch

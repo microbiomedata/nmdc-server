@@ -1,20 +1,20 @@
 <template>
   <div>
-    <template v-for="(relatedType, relatedTypeIndex) in relatedTypes">
+    <template v-for="(relatedType, relatedTypeIndex) in relatedTypeData">
       <v-btn
-        v-if="type !== relatedType.type && relatedTypeCount(relatedType) > 0"
+        v-if="type !== relatedType.type && relatedType.count > 0"
         :key="relatedTypeIndex"
         outlined
         class="mr-3 mt-3"
         @click="$emit('selected', {
           type: relatedType.type,
-          conditions: relatedTypeConditions(relatedType),
+          conditions: relatedType.conditions,
         })"
       >
         <v-icon left>
           {{ types[relatedType.type].icon }}
         </v-icon>
-        {{ relatedTypeDescription(relatedType) }}
+        {{ relatedType.description }}
       </v-btn>
     </template>
     <v-list>
@@ -148,6 +148,20 @@ export default {
       });
     },
   },
+  asyncComputed: {
+    async relatedTypeData() {
+      return Promise.all(this.relatedTypes.map(async (r) => {
+        const conditions = this.relatedTypeConditions(r);
+        const results = await api.search(r.type, conditions);
+        return {
+          ...r,
+          conditions,
+          description: this.relatedTypeDescription(r, results.count),
+          count: results.count,
+        };
+      }));
+    },
+  },
   methods: {
     getField,
     fieldDisplayName,
@@ -168,11 +182,7 @@ export default {
         ...(relatedType.conditions || []),
       ];
     },
-    relatedTypeCount(relatedType) {
-      return api.searchCount(relatedType.type, this.relatedTypeConditions(relatedType));
-    },
-    relatedTypeDescription(relatedType) {
-      const n = this.relatedTypeCount(relatedType);
+    relatedTypeDescription(relatedType, n) {
       if (relatedType.conditions && relatedType.conditions.length > 0) {
         return `${n} ${typeWithCardinality(relatedType.conditions[0].value, n)}`;
       }

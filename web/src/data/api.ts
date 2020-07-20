@@ -4,12 +4,15 @@ const client = axios.create({
   baseURL: process.env.VUE_APP_BASE_URL || '/api',
 });
 
-export type entityType = 'biosample' | 'study' | 'project';
+export type entityType = 'biosample' | 'study' | 'project' | 'reads_qc' | 'metagenome_assembly' | 'metagenome_annotation';
 export const typeMap: Map<string, entityType> = new Map([
   ['sample', 'biosample'],
   ['biosample', 'biosample'],
   ['project', 'project'],
   ['study', 'study'],
+  ['reads_qc', 'reads_qc'],
+  ['metagenome_assembly', 'metagenome_assembly'],
+  ['metagenome_annotation', 'metagenome_annotation'],
 ]);
 
 interface BaseSearchResult {
@@ -66,15 +69,56 @@ export interface ProjectSearchResult extends BaseSearchResult {
   open_in_gold: string;
 }
 
+interface DerivedDataResult extends BaseSearchResult {
+  type: string;
+  git_url: string;
+  started_at_time: string;
+  ended_at_time: string;
+  execution_resource: string;
+  project_id: string;
+  stats: object;
+  has_inputs: string[];
+  has_output: string[];
+}
+
+export interface ReadsQCResult extends DerivedDataResult {}
+
+export interface MetagenomeAssembyResult extends BaseSearchResult {}
+
+export interface MetagenomeAnnotationResult extends BaseSearchResult {}
+
 interface AttributeSummary {
+  count: number;
+  type: 'string' | 'date' | 'integer' | 'float';
+  min?: string | number;
+  max?: string | number;
+}
+
+interface TableSummary {
   total: number;
-  attributes: Record<string, number>;
+  attributes: Record<string, AttributeSummary>;
 }
 
 export interface DatabaseSummaryResponse {
-  study: AttributeSummary;
-  project: AttributeSummary;
-  biosample: AttributeSummary;
+  study: TableSummary;
+  project: TableSummary;
+  biosample: TableSummary;
+  reads_qc: TableSummary;
+  metagenome_assembly: TableSummary;
+  metagenome_annotation: TableSummary;
+}
+
+export interface DatabaseStats {
+  studies: number;
+  locations: number;
+  habitats: number;
+  data_size: number;
+  metagenomes: number;
+  metatranscriptomes: number;
+  proteomics: number;
+  metabolomics: number;
+  lipodomics: number;
+  organic_matter_characterization: number;
 }
 
 export interface FacetSummaryResponse {
@@ -124,11 +168,28 @@ async function searchProject(params: SearchParams) {
   return _search<ProjectSearchResult>('project', params);
 }
 
-export type ResultUnion = (SearchResponse<BiosampleSearchResult>
-  | SearchResponse<ProjectSearchResult>
-  | SearchResponse<StudySearchResults> | null);
+async function searchReadsQC(params: SearchParams) {
+  return _search<ReadsQCResult>('reads_qc', params);
+}
 
-async function searchCount(type: entityType, params: SearchParams): Promise<number> {
+async function searchMetagenomeAssembly(params: SearchParams) {
+  return _search<MetagenomeAssembyResult>('reads_qc', params);
+}
+
+async function searchMetagenomeAnnotation(params: SearchParams) {
+  return _search<MetagenomeAnnotationResult>('reads_qc', params);
+}
+
+export type ResultUnion = (
+  SearchResponse<BiosampleSearchResult>
+  | SearchResponse<ProjectSearchResult>
+  | SearchResponse<StudySearchResults>
+  | SearchResponse<ReadsQCResult>
+  | SearchResponse<MetagenomeAssembyResult>
+  | SearchResponse<MetagenomeAnnotationResult>
+  | null);
+
+async function search(type: entityType, params: SearchParams) {
   let results: ResultUnion;
   switch (type) {
     case 'study':
@@ -140,10 +201,19 @@ async function searchCount(type: entityType, params: SearchParams): Promise<numb
     case 'biosample':
       results = await searchBiosample(params);
       break;
+    case 'metagenome_assembly':
+      results = await searchMetagenomeAssembly(params);
+      break;
+    case 'metagenome_annotation':
+      results = await searchMetagenomeAnnotation(params);
+      break;
+    case 'reads_qc':
+      results = await searchReadsQC(params);
+      break;
     default:
       throw new Error(`Unexpected type: ${type}`);
   }
-  return results.count;
+  return results;
 }
 
 async function getFacetSummary(
@@ -170,13 +240,22 @@ async function getDatabaseSummary() {
   return data;
 }
 
+async function getDatabaseStats() {
+  const { data } = await client.get<DatabaseStats>('stats');
+  return data;
+}
+
 const api = {
   getDatabaseSummary,
+  getDatabaseStats,
   getFacetSummary,
   searchBiosample,
   searchProject,
   searchStudy,
-  searchCount,
+  searchReadsQC,
+  searchMetagenomeAssembly,
+  searchMetagenomeAnnotation,
+  search,
 };
 
 export {
