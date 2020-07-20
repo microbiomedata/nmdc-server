@@ -55,9 +55,7 @@ def load_json_object(json_object: JsonObjectType) -> AnnotatedObjectType:
     return {k: extract_value(v) for k, v in json_object.items() if k != "type"}
 
 
-def load_json_objects(json_file: Path) -> List[AnnotatedObjectType]:
-    with json_file.open("r") as f:
-        json_objects = json.load(f)
+def load_json_objects(json_objects: List[Dict[str, JsonObjectType]]) -> List[AnnotatedObjectType]:
     return [load_json_object(o) for o in json_objects]
 
 
@@ -69,8 +67,12 @@ def load_common_fields(json_object: JsonObjectType, include_dates: bool = True) 
     }
     if include_dates:
         obj.update(
-            {"add_date": json_object.pop("add_date"), "mod_date": json_object.pop("mod_date", NOW),}
+            {
+                "add_date": json_object.pop("add_date", None),
+                "mod_date": json_object.pop("mod_date", None),
+            }
         )
+    json_object.pop("type", None)
     return obj
 
 
@@ -128,8 +130,8 @@ def populate_envo(db: Session):
             if edge["pred"] != "is_a":
                 continue
 
-            id = edge["sub"].split("/")[-1]
-            parent = edge["obj"].split("/")[-1]
+            id = edge["sub"].split("/")[-1].replace("_", ":")
+            parent = edge["obj"].split("/")[-1].replace("_", ":")
             if id != parent:
                 direct_ancestors[id].add(parent)
 
@@ -138,7 +140,7 @@ def populate_envo(db: Session):
             if not node["id"].startswith("http://purl.obolibrary.org/obo/"):
                 continue
 
-            id = node["id"].split("/")[-1]
+            id = node["id"].split("/")[-1].replace("_", ":")
             label = node.pop("lbl", "")
             data = node.get("meta", {})
             db.add(models.EnvoTerm(id=id, label=label, data=data))
@@ -152,15 +154,11 @@ def populate_envo(db: Session):
     db.commit()
 
 
-def ingest_studies(db: Session):
+def ingest_studies(db: Session, data: List[Dict[str, Any]]):
     with Path("study_additional.json").open("r") as f:
-        data = json.load(f)
+        additional_data = {f"gold:{d['id']}": d for d in json.load(f)}
 
-    additional_data = {f"gold:{d['id']}": d for d in data}
-
-    studies = []
-    data = load_json_objects(DATA / "gold_study.json")
-    for raw_study in data:
+    for raw_study in load_json_objects(data):
         study = load_common_fields(raw_study)
         study["gold_description"] = study["description"]
         study[
@@ -176,17 +174,19 @@ def ingest_studies(db: Session):
             study["publication_dois"].extend(a["publication_dois"])
             study["scientific_objective"] = a["scientific_objective"]
 
-        studies.append(study)
         crud.create_study(db, schemas.StudyCreate(**study))
     db.commit()
 
 
-def ingest_projects(db: Session):
-    for p in load_json_objects(DATA / "gold_omics_processing.json"):
+def ingest_projects(db: Session, data) -> Dict[str, str]:
+    biosample_projects: Dict[str, str] = {}
+    for p in load_json_objects(data):
         assert len(p["part_of"]) == 1
         project = load_common_fields(p)
         project["study_id"] = coerce_id(p.pop("part_of")[0])
         data_objects = p.pop("has_output", [])
+        for id in p.pop("has_input", []):
+            biosample_projects[id] = project["id"]
 
         project["annotations"] = p
         project_db = models.Project(**project)
@@ -202,44 +202,19 @@ def ingest_projects(db: Session):
             )
 
     db.commit()
+    return biosample_projects
 
 
-def ingest_emsl_projects(db: Session):
-    with open(DATA / "emsl_omics_processing.json") as f:
-        for p in json.load(f):
-            assert len(p["part_of"]) == 1
-            project = {
-                "id": p.pop("id"),
-                "name": p.pop("name"),
-                "description": p.pop("description", ""),
-            }
-            project["study_id"] = coerce_id(p.pop("part_of")[0])
-            data_objects = p.pop("has_output", [])
-
-            project["annotations"] = p
-            project_db = models.Project(**project)
-
-            db.add(project_db)
-            if data_objects:
-                db.flush()
-                db.execute(
-                    models.project_output_association.insert().values(
-                        [(project_db.id, d) for d in data_objects]
-                    )
-                )
-
-
-def ingest_biosamples(db: Session):
-    for p in load_json_objects(DATA / "biosample.json"):
+def ingest_biosamples(db: Session, data, biosample_projects):
+    for p in load_json_objects(data):
         biosample = load_common_fields(p)
-        assert len(p["part_of"]) == 1
         lat, lon = p.pop("lat_lon").split(" ")
         env_broad_scale = db.query(models.EnvoTerm).get(p.pop("env_broad_scale"))
         env_local_scale = db.query(models.EnvoTerm).get(p.pop("env_local_scale"))
         env_medium = db.query(models.EnvoTerm).get(p.pop("env_medium"))
         biosample.update(
             {
-                "project_id": coerce_id(p.pop("part_of")[0]),
+                "project_id": biosample_projects[biosample["id"]],
                 "latitude": float(lat),
                 "longitude": float(lon),
                 "env_broad_scale": env_broad_scale,
@@ -250,33 +225,23 @@ def ingest_biosamples(db: Session):
         )
 
         if "depth" in biosample["annotations"]:
-            biosample["depth"] = float(biosample["annotations"].pop("depth"))
+            biosample["depth"] = float(biosample["annotations"].pop("depth").rstrip(" m"))
 
         biosample_db = models.Biosample(**biosample)
         db.add(biosample_db)
     db.commit()
 
 
-def ingest_data_objects(db: Session) -> Set[str]:
-    data_object_files = [
-        DATA / "faa_fna_fastq_data_objects.json",
-        DATA / "emsl_data_objects.json",
-        DATA / "readQC_data_objects.json",
-        DATA / "metagenome_assembly_data_objects.json",
-        DATA / "metagenome_annotation_data_objects.json",
-        DATA / "Hess_emsl_analysis_data_objects.json",
-        DATA / "Stegen_emsl_analysis_data_objects.json",
-    ]
+def ingest_data_objects(db: Session, data) -> Set[str]:
     data_object_ids: Set[str] = set()
-    for file in data_object_files:
-        for p in load_json_objects(file):
-            data_object = load_common_fields(p, include_dates=False)
-            data_object.update(
-                {"file_size_bytes": int(p.pop("file_size_bytes")),}
-            )
-            data_object_db = models.DataObject(**data_object)
-            db.add(data_object_db)
-            data_object_ids.add(data_object_db.id)
+    for p in load_json_objects(data):
+        data_object = load_common_fields(p, include_dates=False)
+        data_object.update(
+            {"file_size_bytes": int(p.pop("file_size_bytes")),}
+        )
+        data_object_db = models.DataObject(**data_object)
+        db.add(data_object_db)
+        data_object_ids.add(data_object_db.id)
     db.commit()
     return data_object_ids
 
@@ -285,52 +250,49 @@ missing_data: Set[str] = set()
 duplicates: Set[str] = set()
 
 
-def ingest_pipeline(
-    db: Session, file: Path, model: Type[models.PipelineStep], data_objects: Set[str]
-):
+def ingest_pipeline(db: Session, objects, model: Type[models.PipelineStep], data_objects: Set[str]):
     table_name = model.__tablename__  # type: ignore
     date_fmt = "%Y-%m-%d"
-    with file.open() as f:
-        objects = json.load(f)
-        for d in objects:
-            inputs: List[str] = []
-            outputs: List[str] = []
-            for id in d.pop("has_input", []):
-                if id in data_objects:
-                    inputs.append(id)
-                else:
-                    missing_data.add(id)
-            for id in d.pop("has_output", []):
-                if id in data_objects:
-                    outputs.append(id)
-                else:
-                    missing_data.add(id)
-            d["project_id"] = d.pop("was_informed_by")
-            d["started_at_time"] = datetime.strptime(d["started_at_time"], date_fmt)
-            d["ended_at_time"] = datetime.strptime(d["ended_at_time"], date_fmt)
-            # TODO: there are duplicates in the data
-            if db.query(model).get(d["id"]):
-                duplicates.add(f"{model.__tablename__} {d['id']}")  # type: ignore
-                continue
 
-            step = model(**d)  # type: ignore
-            db.add(step)
+    for d in objects:
+        inputs: List[str] = []
+        outputs: List[str] = []
+        for id in d.pop("has_input", []):
+            if id in data_objects:
+                inputs.append(id)
+            else:
+                missing_data.add(id)
+        for id in d.pop("has_output", []):
+            if id in data_objects:
+                outputs.append(id)
+            else:
+                missing_data.add(id)
+        d["project_id"] = d.pop("was_informed_by")
+        d["started_at_time"] = datetime.strptime(d["started_at_time"], date_fmt)
+        d["ended_at_time"] = datetime.strptime(d["ended_at_time"], date_fmt)
+        # TODO: there are duplicates in the data
+        if db.query(model).get(d["id"]):
+            duplicates.add(f"{model.__tablename__} {d['id']}")  # type: ignore
+            continue
 
-            if inputs:
-                db.flush()
-                db.execute(
-                    getattr(models, f"{table_name}_input_association")
-                    .insert()
-                    .values([(step.id, f) for f in inputs])
-                )
+        step = model(**d)  # type: ignore
+        db.add(step)
 
-            if outputs:
-                db.flush()
-                db.execute(
-                    getattr(models, f"{table_name}_output_association")
-                    .insert()
-                    .values([(step.id, f) for f in outputs])
-                )
+        if inputs:
+            db.flush()
+            db.execute(
+                getattr(models, f"{table_name}_input_association")
+                .insert()
+                .values([(step.id, f) for f in inputs])
+            )
+
+        if outputs:
+            db.flush()
+            db.execute(
+                getattr(models, f"{table_name}_output_association")
+                .insert()
+                .values([(step.id, f) for f in outputs])
+            )
     db.commit()
 
 
@@ -338,37 +300,32 @@ def main(*args):
     database.testing = "--testing" in args
     settings = Settings()
     with create_session() as db:
+        with open(Path(DATA) / "nmdc_database.json") as f:
+            data = json.load(f)
+
         create_tables(db, settings)
         populate_envo(db)
-        data_objects = ingest_data_objects(db)
-        ingest_studies(db)
-        ingest_projects(db)
-        ingest_emsl_projects(db)
-        ingest_biosamples(db)
-        ingest_pipeline(db, Path(DATA / "readQC_activities.json"), models.ReadsQC, data_objects)
+        ingest_studies(db, data["study_set"])
+        data_objects = ingest_data_objects(db, data["data_object_set"])
+        biosample_projects = ingest_projects(db, data["omics_processing_set"])
+        ingest_biosamples(db, data["biosample_set"], biosample_projects)
+
+        pipeline = [d for d in data["activity_set"] if d["type"] == "nmdc:ReadQCAnalysisActivity"]
+        ingest_pipeline(db, pipeline, models.ReadsQC, data_objects)
+
+        pipeline = [d for d in data["activity_set"] if d["type"] == "nmdc:MetagenomeAssembly"]
         ingest_pipeline(
-            db,
-            Path(DATA / "metagenome_assembly_activities.json"),
-            models.MetagenomeAssembly,
-            data_objects,
+            db, pipeline, models.MetagenomeAssembly, data_objects,
         )
+
+        pipeline = [d for d in data["activity_set"] if d["type"] == "nmdc:MetagenomeAnnotation"]
         ingest_pipeline(
-            db,
-            Path(DATA / "metagenome_annotation_activities.json"),
-            models.MetagenomeAnnotation,
-            data_objects,
+            db, pipeline, models.MetagenomeAnnotation, data_objects,
         )
+
+        pipeline = [d for d in data["activity_set"] if d["type"] == "nmdc:MetaProteomicAnalysis"]
         ingest_pipeline(
-            db,
-            Path(DATA / "Hess_metaproteomic_analysis_activities.json"),
-            models.MetaproteomicAnalysis,
-            data_objects,
-        )
-        ingest_pipeline(
-            db,
-            Path(DATA / "Stegen_metaproteomic_analysis_activities.json"),
-            models.MetaproteomicAnalysis,
-            data_objects,
+            db, pipeline, models.MetaproteomicAnalysis, data_objects,
         )
 
     print("Missing files:")

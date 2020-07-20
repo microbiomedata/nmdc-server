@@ -109,8 +109,8 @@ class AnnotatedModel:
 class Study(Base, AnnotatedModel):
     __tablename__ = "study"
 
-    add_date = Column(DateTime, nullable=False)
-    mod_date = Column(DateTime, nullable=False)
+    add_date = Column(DateTime, nullable=True)
+    mod_date = Column(DateTime, nullable=True)
     gold_name = Column(String, nullable=False, default="")
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
