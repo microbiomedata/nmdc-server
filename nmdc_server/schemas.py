@@ -118,7 +118,7 @@ class StudyCreate(StudyBase):
 
 
 class Study(StudyBase):
-    open_in_gold: str
+    open_in_gold: Optional[str]
 
     class Config:
         orm_mode = True
@@ -137,7 +137,7 @@ class ProjectCreate(ProjectBase):
 
 class Project(ProjectBase):
     study_id: str
-    open_in_gold: str
+    open_in_gold: Optional[str]
     # has_outputs: List[str] = []
 
     class Config:
@@ -163,7 +163,7 @@ class BiosampleCreate(BiosampleBase):
 
 
 class Biosample(BiosampleBase):
-    open_in_gold: str
+    open_in_gold: Optional[str]
     env_broad_scale: Optional[EnvoTerm]
     env_local_scale: Optional[EnvoTerm]
     env_medium: Optional[EnvoTerm]

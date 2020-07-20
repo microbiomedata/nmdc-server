@@ -1,4 +1,4 @@
-from typing import List, Type, Union
+from typing import List, Optional, Type, Union
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -19,6 +19,12 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base
+
+
+def gold_url(base: str, id: str) -> Optional[str]:
+    if id.startswith("gold:"):
+        return f"{base}{id[5:]}"
+    return None
 
 
 def input_association(table: str) -> Table:
@@ -113,8 +119,8 @@ class Study(Base, AnnotatedModel):
     publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
 
     @property
-    def open_in_gold(self):
-        return f"https://gold.jgi.doe.gov/study?id={self.id}"
+    def open_in_gold(self) -> Optional[str]:
+        return gold_url("https://gold.jgi.doe.gov/study?id=", self.id)
 
 
 project_output_association = output_association("project")
@@ -132,8 +138,8 @@ class Project(Base, AnnotatedModel):
     has_outputs = association_proxy("outputs", "id")
 
     @property
-    def open_in_gold(self):
-        return f"https://gold.jgi.doe.gov/project?id={self.id}"
+    def open_in_gold(self) -> Optional[str]:
+        return gold_url("https://gold.jgi.doe.gov/project?id=", self.id)
 
 
 class Biosample(Base, AnnotatedModel):
@@ -168,8 +174,8 @@ class Biosample(Base, AnnotatedModel):
         return list(self.env_medium.ancestors)
 
     @property
-    def open_in_gold(self):
-        return f"https://gold.jgi.doe.gov/biosample?id={self.id}"
+    def open_in_gold(self) -> Optional[str]:
+        return gold_url("https://gold.jgi.doe.gov/biosample?id=", self.id)
 
 
 class DataObject(Base):
