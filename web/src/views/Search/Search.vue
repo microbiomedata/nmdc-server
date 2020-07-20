@@ -109,7 +109,7 @@ export default {
                     class="flex-grow-1"
                   >
                     <FacetChart
-                      :type="type"
+                      type="biosample"
                       :field="field"
                       chart="pie"
                       :conditions="conditions"
@@ -133,7 +133,7 @@ export default {
                     class="flex-grow-1"
                   >
                     <FacetChart
-                      :type="type"
+                      type="biosample"
                       :field="field"
                       chart="bar"
                       :conditions="conditions"
@@ -146,11 +146,11 @@ export default {
           </v-col>
         </v-row>
 
-        <v-row v-show="['project'].includes(type)">
+        <v-row v-if="['project'].includes(type)">
           <v-col :cols="12">
             <v-card>
               <FacetChart
-                :type="type"
+                type="project"
                 field="omics_type"
                 chart="bar"
                 :conditions="conditions"

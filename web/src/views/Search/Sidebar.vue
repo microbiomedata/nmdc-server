@@ -44,33 +44,31 @@ export default {
     app
     clipped
     permanent
-    width="300"
+    width="320"
   >
     <div class="mx-3 my-2">
       <div class="text-subtitle-2 primary--text">
         I am looking for...
       </div>
-      <v-btn-toggle
+      <v-chip-group
         :value="type"
         mandatory
-        dense
-        class="my-3"
+        column
+        class="my-1"
       >
         <template v-for="t in Object.keys(types)">
-          <v-btn
+          <v-chip
             v-if="types[t].visible || type === t"
             :key="t"
             :value="t"
-            :text="type !== t"
             :color="type === t ? 'primary' : 'inherit'"
-            :class="{ 'white--text': type === t }"
-            x-small
+            small
             @click="$store.dispatch('route', { name: 'Search', type: t, conditions })"
           >
             {{ types[t].heading }}
-          </v-btn>
+          </v-chip>
         </template>
-      </v-btn-toggle>
+      </v-chip-group>
       <div class="text-subtitle-2 primary--text">
         That match the following
       </div>
