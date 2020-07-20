@@ -20,7 +20,7 @@ const types = {
     heading: 'Metagenome',
     name: 'metagenome',
     plural: 'Metagenomes',
-    visible: true,
+    visible: false,
   },
   Metatranscriptome: {
     icon: 'mdi-file-table-box-multiple-outline',
