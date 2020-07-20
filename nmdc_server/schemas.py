@@ -110,8 +110,8 @@ class StudyBase(AnnotatedBase):
     gold_name: str = ""
     gold_description: str = ""
     scientific_objective: str = ""
-    add_date: datetime
-    mod_date: datetime
+    add_date: Optional[datetime]
+    mod_date: Optional[datetime]
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
