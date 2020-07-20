@@ -129,6 +129,7 @@ class Project(Base, AnnotatedModel):
     study = relationship("Study", backref="projects")
 
     outputs = output_relationship(project_output_association)
+    has_outputs = association_proxy("outputs", "id")
 
     @property
     def open_in_gold(self):
