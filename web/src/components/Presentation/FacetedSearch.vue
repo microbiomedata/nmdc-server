@@ -43,7 +43,6 @@
             </template>
             <v-card
               width="500"
-              max-height="90vh"
             >
               <slot
                 name="menu"

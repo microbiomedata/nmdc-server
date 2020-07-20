@@ -21,6 +21,7 @@ export default {
       {
         text: 'Facet',
         value: 'name',
+        width: '300',
         sortable: true,
       },
       {
@@ -110,7 +111,7 @@ export default {
 </script>
 
 <template>
-  <div>
+  <div class="match-list-table">
     <v-text-field
       :value="filterText"
       solo
@@ -128,7 +129,8 @@ export default {
       :value="selected"
       dense
       show-select
-      :items-per-page="20"
+      height="355px"
+      :items-per-page="10"
       :search="filterText"
       :item-key="'facet'"
       :items="items"
@@ -137,3 +139,19 @@ export default {
     />
   </div>
 </template>
+
+<style lang="scss">
+.match-list-table {
+  .v-data-table {
+    table {
+      table-layout: fixed;
+    }
+
+    td {
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+  }
+}
+</style>

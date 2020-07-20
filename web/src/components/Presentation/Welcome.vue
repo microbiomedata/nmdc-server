@@ -39,7 +39,7 @@
           class="ma-4"
           @click="$emit('set-type', 'sample')"
         >
-          Explore habitats
+          Explore environments
         </v-btn>
       </v-row>
     </v-container>

@@ -21,7 +21,7 @@ export default {
         },
         {
           value: this.dbsummary.biosample.total,
-          label: 'Habitats',
+          label: 'Environments',
         },
       ] : [];
     },

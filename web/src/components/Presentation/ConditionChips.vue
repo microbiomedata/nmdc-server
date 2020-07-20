@@ -78,6 +78,7 @@ export default {
       </div>
       <v-menu
         offset-x
+        top
         :close-on-content-click="false"
         @input="toggleMenu(group.key, $event)"
       >
@@ -94,7 +95,6 @@ export default {
         </template>
         <v-card
           width="500"
-          max-height="90vh"
         >
           <slot
             name="menu"

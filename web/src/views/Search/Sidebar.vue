@@ -44,7 +44,7 @@ export default {
     app
     clipped
     permanent
-    width="320"
+    width="300"
   >
     <div class="mx-3 my-2">
       <div class="text-subtitle-2 primary--text">
@@ -64,7 +64,7 @@ export default {
             :text="type !== t"
             :color="type === t ? 'primary' : 'inherit'"
             :class="{ 'white--text': type === t }"
-            small
+            x-small
             @click="$store.dispatch('route', { name: 'Search', type: t, conditions })"
           >
             {{ types[t].heading }}
