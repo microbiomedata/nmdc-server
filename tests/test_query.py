@@ -391,3 +391,17 @@ def test_pipeline_query(db: Session, table):
         conditions=[{"table": q.table.value, "field": "name", "value": f"{table}1"}]
     )
     assert ["project1"] == [r.name for r in q.execute(db).all()]
+
+
+def test_query_invalid_attribute(db: Session):
+    q = query.ReadsQCQuerySchema(
+        conditions=[{"table": "reads_qc", "field": "bad value", "value": ""}]
+    )
+    with pytest.raises(query.InvalidAttributeException):
+        q.execute(db)
+
+
+def test_facet_invalid_attribute(db: Session):
+    q = query.ReadsQCQuerySchema()
+    with pytest.raises(query.InvalidAttributeException):
+        q.facet(db, "bad value")
