@@ -1,6 +1,6 @@
 import moment from 'moment';
 import filesize from 'filesize';
-import { types } from './encoding';
+import { types, fields } from './encoding';
 
 export function valueCardinality(value) {
   if (Array.isArray(value)) {
@@ -28,6 +28,9 @@ export function toSentenceCase(word) {
 }
 
 export function fieldDisplayName(field) {
+  if (field in fields && 'name' in fields[field]) {
+    return fields[field].name;
+  }
   return field.split('_')
     .map((word, i) => (i === 0 ? toSentenceCase(word) : word))
     .map((word) => capitalizeAcronyms(word))

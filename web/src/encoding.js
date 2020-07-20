@@ -59,7 +59,7 @@ const types = {
   },
   biosample: {
     icon: 'mdi-earth',
-    heading: 'Habitats',
+    heading: 'Environments',
     name: 'sample',
     plural: 'samples',
     visible: true,
@@ -137,6 +137,15 @@ const fields = {
   doi: {
     icon: 'mdi-file-document-outline',
     hide: true,
+  },
+  env_broad_scale: {
+    name: 'Environmental biome',
+  },
+  env_local_scale: {
+    name: 'Environmental feature',
+  },
+  env_medium: {
+    name: 'Environmental material',
   },
 };
 
