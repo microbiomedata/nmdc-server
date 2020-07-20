@@ -90,6 +90,19 @@ class DatabaseSummary(BaseModel):
     metaproteomic_analysis: TableSummary
 
 
+class AggregationSummary(BaseModel):
+    studies: int
+    locations: int
+    habitats: int
+    data_size: int
+    metagenomes: int
+    metatranscriptomes: int
+    proteomics: int
+    metabolomics: int
+    lipodomics: int
+    organic_matter_characterization: int
+
+
 # study
 class StudyBase(AnnotatedBase):
     principal_investigator_websites: List[str] = []
@@ -127,8 +140,8 @@ class Study(StudyBase):
 # project
 class ProjectBase(AnnotatedBase):
     study_id: str
-    add_date: datetime
-    mod_date: datetime
+    add_date: Optional[datetime]
+    mod_date: Optional[datetime]
 
 
 class ProjectCreate(ProjectBase):

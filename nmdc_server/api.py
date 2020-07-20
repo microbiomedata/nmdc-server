@@ -31,6 +31,13 @@ async def get_database_summary(db: Session = Depends(get_db)):
     return crud.get_database_summary(db)
 
 
+@router.get(
+    "/stats", response_model=schemas.AggregationSummary, tags=["summary"],
+)
+async def get_aggregated_stats(db: Session = Depends(get_db)):
+    return crud.get_aggregated_stats(db)
+
+
 # biosample
 @router.post(
     "/biosample", response_model=schemas.Biosample, tags=["biosample"],

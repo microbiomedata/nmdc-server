@@ -60,3 +60,16 @@ def test_api_faceting(db: Session, client: TestClient):
     resp = client.post("/api/biosample/facet", json={"conditions": [], "attribute": "key2"})
     assert_status(resp)
     assert resp.json()["facets"] == {"value2": 2, "value3": 1}
+
+
+def test_api_summary(db: Session, client: TestClient):
+    # TODO: This would be better queried against the real data
+    for _ in range(10):
+        fakes.BiosampleFactory()
+        fakes.MetagenomeAnnotationFactory()
+        fakes.MetagenomeAssemblyFactory()
+        fakes.MetaproteomicAnalysisFactory()
+        fakes.DataObjectFactory()
+    db.commit()
+    assert_status(client.get("/api/summary"))
+    assert_status(client.get("/api/stats"))

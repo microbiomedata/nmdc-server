@@ -70,3 +70,30 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
         )
 
     return schemas.TableSummary(total=count, attributes=attributes)
+
+
+def get_aggregation_summary(db: Session):
+    q = db.query
+
+    def distinct(a):
+        return q(func.distinct(func.lower(a.astext))).count()
+
+    def omics_category(c):
+        return (
+            q(models.Project)
+            .filter(func.lower(models.Project.annotations["omics_type"].astext) == c)
+            .count()
+        )
+
+    return schemas.AggregationSummary(
+        studies=q(models.Study).count(),
+        locations=distinct(models.Biosample.annotations["location"]),
+        habitats=distinct(models.Biosample.annotations["habitat"]),
+        data_size=q(func.sum(models.DataObject.file_size_bytes)).scalar(),
+        metagenomes=omics_category("metagenome"),
+        metatranscriptomes=omics_category("metatranscriptome"),
+        proteomics=omics_category("proteomics"),
+        metabolomics=omics_category("metabolomics"),
+        lipodomics=omics_category("lipidomics"),
+        organic_matter_characterization=omics_category("organic matter characterization"),
+    )

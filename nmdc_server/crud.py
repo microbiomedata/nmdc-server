@@ -23,7 +23,7 @@ def get_or_create(
         return instance, True
 
 
-# summary
+# summaries
 def get_database_summary(db: Session) -> schemas.DatabaseSummary:
     return schemas.DatabaseSummary(
         study=aggregations.get_table_summary(db, models.Study),
@@ -34,6 +34,10 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         metagenome_annotation=aggregations.get_table_summary(db, models.MetagenomeAnnotation),
         metaproteomic_analysis=aggregations.get_table_summary(db, models.MetaproteomicAnalysis),
     )
+
+
+def get_aggregated_stats(db: Session) -> schemas.AggregationSummary:
+    return aggregations.get_aggregation_summary(db)
 
 
 # study
