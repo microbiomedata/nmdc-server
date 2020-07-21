@@ -9,7 +9,7 @@ module.exports = {
   parserOptions: {
     parser: '@typescript-eslint/parser',
     // specifying a module sourcetype prevent eslint from marking import statements as errors
-    sourceType: 'module',
+    ecmaVersion: 2020,
   },
   extends: [
     'eslint:recommended',
@@ -28,10 +28,14 @@ module.exports = {
     {
       files: [
         '**/*.ts',
+        '**/*.vue',
       ],
       extends: [
         '@vue/typescript',
       ],
+      rules: {
+        '@typescript-eslint/no-unused-vars': 2,
+      },
     },
   ],
 };

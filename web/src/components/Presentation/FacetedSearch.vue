@@ -46,7 +46,11 @@
             >
               <slot
                 name="menu"
-                v-bind="{ field, isOpen: menuState[field] }"
+                v-bind="{
+                  field,
+                  isOpen: menuState[field],
+                  summary: summaryMap[field],
+                }"
               />
             </v-card>
           </v-menu>
@@ -59,7 +63,7 @@
 <script>
 import Vue from 'vue';
 
-import { fieldDisplayName, valueDisplayName } from '@/util';
+import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
 
 export default {
@@ -70,11 +74,15 @@ export default {
     },
     conditions: {
       type: Array,
-      default: () => [],
+      required: true,
     },
     fields: {
       type: Array,
-      default: () => [],
+      required: true,
+    },
+    summaryMap: {
+      type: Object,
+      required: true,
     },
   },
   data: () => ({
@@ -94,7 +102,6 @@ export default {
   },
   methods: {
     fieldDisplayName,
-    valueDisplayName,
     toggleMenu(category, value) {
       Vue.set(this.menuState, category, value);
     },

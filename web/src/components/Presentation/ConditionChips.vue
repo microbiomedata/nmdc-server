@@ -1,13 +1,19 @@
 <script>
 import Vue from 'vue';
 import { groupBy } from 'lodash';
-
-import { fieldDisplayName, valueDisplayName } from '@/util';
+import { opMap } from '@/data/api';
+import { fieldDisplayName } from '@/util';
 
 export default {
   props: {
     conditions: {
+      // api.Condition[]
       type: Array,
+      required: true,
+    },
+    summaryMap: {
+      // Record<field, api.AttributeSummary>
+      type: Object,
       required: true,
     },
   },
@@ -22,7 +28,7 @@ export default {
       )).map(([group, conditions]) => {
         const parsed = JSON.parse(group);
         return {
-          key: parsed.group + parsed.table,
+          key: parsed.field + parsed.table,
           field: parsed.field,
           table: parsed.table,
           conditions,
@@ -33,14 +39,15 @@ export default {
 
   methods: {
     fieldDisplayName,
-    valueDisplayName,
     verb(op) {
-      switch (op) {
-        case '==':
-          return 'is';
-        default:
-          return op;
+      return opMap[op];
+    },
+    valueTransform(val, type) {
+      if (typeof val === 'object') {
+        const inner = val.map((v) => this.valueTransform(v, type)).join(', ');
+        return `(${inner})`;
       }
+      return val;
     },
     toggleMenu(category, value) {
       Vue.set(this.menuState, category, value);
@@ -66,14 +73,14 @@ export default {
         </span>
         <v-chip
           v-for="cond in group.conditions"
-          :key="cond.value"
+          :key="JSON.stringify(cond.value)"
           small
           close
           label
           class="ma-1"
           @click:close="$emit('remove', cond)"
         >
-          {{ cond.value }}
+          {{ valueTransform(cond.value, '') }}
         </v-chip>
       </div>
       <v-menu
@@ -102,6 +109,7 @@ export default {
               field: group.field,
               table: group.table,
               isOpen: menuState[group.key],
+              summary: summaryMap[group.field],
             }"
           />
         </v-card>

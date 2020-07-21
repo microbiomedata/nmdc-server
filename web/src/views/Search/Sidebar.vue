@@ -1,36 +1,40 @@
 <script>
 import { mapGetters } from 'vuex';
 import { types } from '@/encoding';
-import { fieldDisplayName } from '@/util';
 
 import ConditionChips from '@/components/Presentation/ConditionChips.vue';
 import FacetedSearch from '@/components/Presentation/FacetedSearch.vue';
 
-import MatchList from './MatchList.vue';
+import MenuContent from './MenuContent.vue';
 
 export default {
   components: {
     ConditionChips,
     FacetedSearch,
-    MatchList,
+    MenuContent,
   },
+
   data: () => ({
     types,
   }),
+
   computed: {
-    ...mapGetters(['type', 'conditions', 'primitiveFields']),
+    ...mapGetters(['type', 'typeSummary', 'conditions', 'primitiveFields']),
     typeFields() {
       return this.primitiveFields(this.type);
     },
+    summaryMap() {
+      return this.typeSummary(this.type);
+    },
   },
+
   methods: {
-    fieldDisplayName,
     removeCondition({ field, value, table }) {
       this.$store.dispatch('route', {
         conditions: this.conditions
           .filter((c) => !(
             c.field === field
-            && c.value === value
+            && (value ? c.value === value : true)
             && c.table === table
           )),
       });
@@ -76,20 +80,20 @@ export default {
 
     <ConditionChips
       :conditions="conditions"
+      :summary-map="summaryMap"
       class="ma-3"
       @remove="removeCondition"
     >
-      <template #menu="{ field, table, isOpen }">
-        <div>
-          <v-card-title class="pb-0">
-            {{ fieldDisplayName(field) }}
-          </v-card-title>
-          <MatchList
-            v-if="isOpen"
-            :field="field"
-            :type="table"
-          />
-        </div>
+      <template #menu="{ field, table, isOpen, summary }">
+        <MenuContent
+          v-bind="{
+            field,
+            type: table,
+            isOpen,
+            summary,
+            conditions,
+          }"
+        />
       </template>
     </ConditionChips>
 
@@ -97,20 +101,20 @@ export default {
 
     <FacetedSearch
       :conditions="conditions"
+      :summary-map="summaryMap"
       :type="type"
       :fields="typeFields"
     >
-      <template #menu="{ field, isOpen }">
-        <div>
-          <v-card-title class="pb-0">
-            {{ fieldDisplayName(field) }}
-          </v-card-title>
-          <MatchList
-            v-if="isOpen"
-            :field="field"
-            :type="type"
-          />
-        </div>
+      <template #menu="{ field, isOpen, summary }">
+        <MenuContent
+          v-bind="{
+            field,
+            type,
+            isOpen,
+            summary,
+            conditions,
+          }"
+        />
       </template>
     </FacetedSearch>
   </v-navigation-drawer>
