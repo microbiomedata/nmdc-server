@@ -8,6 +8,7 @@ import {
   entityType,
   Condition,
   DatabaseSummaryResponse,
+  DatabaseStatsResponse,
   BiosampleSearchResult,
   SearchResponse,
   FacetSummaryResponse,
@@ -23,6 +24,7 @@ type FacetSummaryResponseMap = Record<string, FacetSummaryResponse[]>;
 interface State {
   allSamples?: SearchResponse<BiosampleSearchResult>;
   dbsummary?: DatabaseSummaryResponse;
+  dbstats?: DatabaseStatsResponse;
   facetSummaries: Record<entityType, FacetSummaryResponseMap>;
   results: Record<entityType, ResultUnion>;
   route: any;
@@ -41,6 +43,7 @@ const store = new Vuex.Store<State>({
   state: {
     allSamples: undefined,
     dbsummary: undefined,
+    dbstats: undefined,
     facetSummaries: {
       biosample: {},
       study: {},
@@ -89,6 +92,9 @@ const store = new Vuex.Store<State>({
     setDBSummary(state, resp: DatabaseSummaryResponse) {
       state.dbsummary = resp;
     },
+    setDBStats(state, resp: DatabaseStatsResponse) {
+      state.dbstats = resp;
+    },
     setAllSamples(state, results: SearchResponse<BiosampleSearchResult>) {
       state.allSamples = results;
     },
@@ -118,6 +124,12 @@ const store = new Vuex.Store<State>({
       if (state.dbsummary === undefined) {
         const summary = await api.getDatabaseSummary();
         commit('setDBSummary', summary);
+      }
+    },
+    async fetchDBStats({ commit, state }) {
+      if (state.dbstats === undefined) {
+        const stats = await api.getDatabaseStats();
+        commit('setDBStats', stats);
       }
     },
     async fetchFacetSummary({ commit, state }, { field, conditions, type: t }) {
