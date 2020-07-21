@@ -1,6 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
+from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
 from sqlalchemy import BigInteger, Column, DateTime, Float, String
@@ -127,11 +128,13 @@ class StudyBase(AnnotatedBase):
 
 
 class StudyCreate(StudyBase):
-    pass
+    principal_investigator_id: UUID
 
 
 class Study(StudyBase):
     open_in_gold: Optional[str]
+    principal_investigator_name: str
+    principal_investigator_image_url: str
 
     class Config:
         orm_mode = True

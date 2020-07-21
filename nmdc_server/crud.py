@@ -1,4 +1,5 @@
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
+from uuid import UUID
 
 from sqlalchemy.orm import Query, Session
 
@@ -241,3 +242,11 @@ def facet_metaproteomic_analysis(
 ) -> query.FacetResponse:
     facets = query.MetaproteomicAnalysisQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
+
+
+# principal investigator
+def get_pi_image(db: Session, principal_investigator_id: UUID) -> Optional[bytes]:
+    pi = db.query(models.PrincipalInvestigator).get(principal_investigator_id)
+    if pi is not None:
+        return pi.image
+    return None

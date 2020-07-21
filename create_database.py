@@ -160,19 +160,28 @@ def ingest_studies(db: Session, data: List[Dict[str, Any]]):
 
     for raw_study in load_json_objects(data):
         study = load_common_fields(raw_study)
+        assert study["id"] in additional_data
+
+        pi = raw_study.pop("principal_investigator_name")
         study["gold_description"] = study["description"]
-        study[
-            "description"
-        ] = f"Principal investigator: {raw_study.pop('principal_investigator_name')}"
+        study["description"] = f"Principal investigator: {pi}"
         study["publication_dois"] = [raw_study.pop("doi")]
         study["annotations"] = raw_study
 
-        if study["id"] in additional_data:
-            a = additional_data[study["id"]]
-            study["name"] = a["proposal_title"]
-            study["principal_investigator_websites"] = a["principal_investigator_websites"]
-            study["publication_dois"].extend(a["publication_dois"])
-            study["scientific_objective"] = a["scientific_objective"]
+        with (DATA / "pis" / f"{pi}.jpg").open("rb") as image_file:
+            image = image_file.read()
+
+        principal_investigator, _ = crud.get_or_create(
+            db, models.PrincipalInvestigator, {"image": image,}, name=pi
+        )
+        db.flush()
+
+        a = additional_data[study["id"]]
+        study["principal_investigator_id"] = principal_investigator.id
+        study["name"] = a["proposal_title"]
+        study["principal_investigator_websites"] = a["principal_investigator_websites"]
+        study["publication_dois"].extend(a["publication_dois"])
+        study["scientific_objective"] = a["scientific_objective"]
 
         crud.create_study(db, schemas.StudyCreate(**study))
     db.commit()
