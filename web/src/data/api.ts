@@ -106,7 +106,7 @@ export interface MetagenomeAnnotationResult extends DerivedDataResult {
 
 export type MetaproteomicAnalysisResult = DerivedDataResult
 
-interface AttributeSummary {
+export interface AttributeSummary {
   count: number;
   type: 'string' | 'date' | 'integer' | 'float';
   min?: string | number;

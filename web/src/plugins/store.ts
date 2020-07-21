@@ -5,6 +5,7 @@ import {
   api,
   typeMap,
   /* Types */
+  AttributeSummary,
   entityType,
   Condition,
   DatabaseSummaryResponse,
@@ -20,6 +21,24 @@ import router from './router';
 Vue.use(Vuex);
 
 type FacetSummaryResponseMap = Record<string, FacetSummaryResponse[]>;
+
+/* a stringified condition loaded from the router query that requires parsing */
+interface RouterCondition {
+  op: string;
+  field: string;
+  table: string;
+  value: string | string[];
+}
+
+function loadValue(value: string | string[], type: string) {
+  if (['float', 'integer'].includes(type)) {
+    if (typeof value === 'object') {
+      return value.map((v) => parseFloat(v));
+    }
+    return parseFloat(value);
+  }
+  return value;
+}
 
 interface State {
   allSamples?: SearchResponse<BiosampleSearchResult>;
@@ -69,7 +88,7 @@ const store = new Vuex.Store<State>({
     primitiveFields: (state, getters) => (type: string | undefined) => (
       Object.keys(getters.typeSummary(type))
     ),
-    typeSummary: (state) => (type: string | undefined) => {
+    typeSummary: (state) => (type: string | undefined): Record<string, AttributeSummary> => {
       if (type && state.dbsummary) {
         return state.dbsummary[asType(type)].attributes;
       }
@@ -85,7 +104,18 @@ const store = new Vuex.Store<State>({
       const routerType = state.route.params.type;
       return routerType ? asType(routerType) : undefined;
     },
-    conditions: (state): Condition[] => state.route.query.c || [],
+    conditions: (state, getters): Condition[] => {
+      if (state.dbsummary && state.route.query.c) {
+        return state.route.query.c.map((c: RouterCondition) => {
+          const summaryDetails: AttributeSummary = getters.typeSummary(c.table)[c.field];
+          return {
+            ...c,
+            value: loadValue(c.value, summaryDetails.type),
+          };
+        });
+      }
+      return [];
+    },
   },
   mutations: {
     setDBSummary(state, resp: DatabaseSummaryResponse) {
@@ -186,7 +216,10 @@ const store = new Vuex.Store<State>({
       if (!state.loading.all) {
         commit('setLoading', { name: 'all', loading: true });
         try {
-          await dispatch('refreshResults');
+          await Promise.all([
+            dispatch('load'),
+            dispatch('refreshResults'),
+          ]);
         } finally {
           commit('resetFacetSummaries', getters.type);
           commit('setLoading', { name: 'all', loading: false });
