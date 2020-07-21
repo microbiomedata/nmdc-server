@@ -127,7 +127,7 @@ class Study(Base, AnnotatedModel):
     principal_investigator_id = Column(
         UUID(as_uuid=True), ForeignKey("principal_investigator.id"), nullable=False
     )
-    principal_investigator = relationship("PrincipalInvestigator", cascade="all", lazy="joined")
+    principal_investigator = relationship("PrincipalInvestigator", cascade="all")
     principal_investigator_name = association_proxy("principal_investigator", "name")
 
     @property

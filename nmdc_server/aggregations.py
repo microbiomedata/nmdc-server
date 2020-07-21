@@ -43,16 +43,13 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
                     type=schemas.AttributeType.from_column(column),
                 )
             else:
-                count, min, max = (
+                count_, min, max = (
                     db.query(func.count(), func.min(column), func.max(column))
                     .filter(column != None)
                     .first()
                 )
                 attributes[column.name] = schemas.AttributeSummary(
-                    count=get_column_count(db, column),
-                    min=min,
-                    max=max,
-                    type=schemas.AttributeType.from_column(column),
+                    count=count_, min=min, max=max, type=schemas.AttributeType.from_column(column),
                 )
 
     if model == models.Biosample:
@@ -68,6 +65,12 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
             count=get_column_count(db, models.Biosample.env_broad_scale_id),
             type=schemas.AttributeType.string,
         )
+    # TODO: enable when query works
+    # if model == models.Study:
+    #     attributes["principal_investigator_name"] = schemas.AttributeSummary(
+    #         count=count,
+    #         type=schemas.AttributeType.string,
+    #     )
 
     return schemas.TableSummary(total=count, attributes=attributes)
 
