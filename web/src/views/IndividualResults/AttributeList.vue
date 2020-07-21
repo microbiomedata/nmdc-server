@@ -152,7 +152,7 @@ export default {
     async relatedTypeData() {
       return Promise.all(this.relatedTypes.map(async (r) => {
         const conditions = this.relatedTypeConditions(r);
-        const results = await api.search(r.type, conditions);
+        const results = await api.search(r.type, { conditions });
         return {
           ...r,
           conditions,

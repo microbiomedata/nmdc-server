@@ -11,11 +11,6 @@ export default {
       type: Array,
       required: true,
     },
-    summaryMap: {
-      // Record<field, api.AttributeSummary>
-      type: Object,
-      required: true,
-    },
   },
 
   data: () => ({ menuState: {} }),
@@ -109,7 +104,6 @@ export default {
               field: group.field,
               table: group.table,
               isOpen: menuState[group.key],
-              summary: summaryMap[group.field],
             }"
           />
         </v-card>
