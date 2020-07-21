@@ -51,6 +51,7 @@ const store = new Vuex.Store<State>({
       reads_qc: {},
       metagenome_assembly: {},
       metagenome_annotation: {},
+      metaproteomic_analysis: {},
     },
     results: {
       biosample: null,
@@ -59,6 +60,7 @@ const store = new Vuex.Store<State>({
       reads_qc: null,
       metagenome_assembly: null,
       metagenome_annotation: null,
+      metaproteomic_analysis: null,
     },
     route: undefined,
     loading: {},
@@ -172,6 +174,9 @@ const store = new Vuex.Store<State>({
           break;
         case 'reads_qc':
           results = await api.searchReadsQC(params);
+          break;
+        case 'metaproteomic_analysis':
+          results = await api.searchMetaproteomicAnalysis(params);
           break;
         default:
           throw new Error(`Unexpected type: ${type}`);

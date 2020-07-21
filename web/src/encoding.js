@@ -84,6 +84,13 @@ const types = {
     plural: 'Metagenome annotation',
     visible: true,
   },
+  metaproteomic_analysis: {
+    icon: 'mdi-dna',
+    heading: 'Metaproteomic Analysis',
+    name: 'metaproteomic_analysis',
+    plural: 'Metaproteomic analysis',
+    visible: true,
+  },
 };
 
 const fields = {
