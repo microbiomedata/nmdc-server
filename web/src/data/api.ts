@@ -193,11 +193,11 @@ async function searchReadsQC(params: SearchParams) {
 }
 
 async function searchMetagenomeAssembly(params: SearchParams) {
-  return _search<MetagenomeAssembyResult>('reads_qc', params);
+  return _search<MetagenomeAssembyResult>('metagenome_assembly', params);
 }
 
 async function searchMetagenomeAnnotation(params: SearchParams) {
-  return _search<MetagenomeAnnotationResult>('reads_qc', params);
+  return _search<MetagenomeAnnotationResult>('metagenome_annotation', params);
 }
 
 async function searchMetaproteomicAnalysis(params: SearchParams) {
