@@ -97,7 +97,7 @@ class Table(Enum):
     env_local_scale = "env_local_scale"
     env_medium = "env_medium"
     reads_qc = "reads_qc"
-    metagenome_assembly = "metagenome_assemby"
+    metagenome_assembly = "metagenome_assembly"
     metagenome_annotation = "metagenome_annotation"
     metaproteomic_analysis = "metaproteomic_analysis"
 
