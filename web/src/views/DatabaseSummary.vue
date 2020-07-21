@@ -1,15 +1,21 @@
-<script>
+<script lang="ts">
+import Vue from 'vue';
 import { mapState } from 'vuex';
 
 import Welcome from '@/components/Presentation/Welcome.vue';
 
-export default {
+interface Stats {
+  value: number;
+  label: string;
+}
+
+export default Vue.extend({
   components: { Welcome },
 
   computed: {
     ...mapState(['dbstats', 'allSamples']),
 
-    stats() {
+    stats(): Stats[][] {
       const { dbstats } = this;
       return dbstats ? [[
         {
@@ -60,7 +66,7 @@ export default {
   created() {
     this.$store.dispatch('fetchDBStats');
   },
-};
+});
 </script>
 
 <template>

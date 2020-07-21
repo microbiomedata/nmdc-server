@@ -4,7 +4,14 @@ const client = axios.create({
   baseURL: process.env.VUE_APP_BASE_URL || '/api',
 });
 
-export type entityType = 'biosample' | 'study' | 'project' | 'reads_qc' | 'metagenome_assembly' | 'metagenome_annotation';
+export type entityType = 'biosample'
+  | 'study'
+  | 'project'
+  | 'reads_qc'
+  | 'metagenome_assembly'
+  | 'metagenome_annotation'
+  | 'metaproteomic_analysis';
+
 export const typeMap: Map<string, entityType> = new Map([
   ['sample', 'biosample'],
   ['biosample', 'biosample'],
@@ -13,6 +20,7 @@ export const typeMap: Map<string, entityType> = new Map([
   ['reads_qc', 'reads_qc'],
   ['metagenome_assembly', 'metagenome_assembly'],
   ['metagenome_annotation', 'metagenome_annotation'],
+  ['metaproteomic_analysis', 'metaproteomic_analysis'],
 ]);
 
 interface BaseSearchResult {
@@ -76,16 +84,27 @@ interface DerivedDataResult extends BaseSearchResult {
   ended_at_time: string;
   execution_resource: string;
   project_id: string;
+}
+
+export interface ReadsQCResult extends DerivedDataResult {
   stats: object;
   has_inputs: string[];
   has_output: string[];
 }
 
-export interface ReadsQCResult extends DerivedDataResult {}
+export interface MetagenomeAssembyResult extends DerivedDataResult {
+  stats: object;
+  has_inputs: string[];
+  has_output: string[];
+}
 
-export interface MetagenomeAssembyResult extends BaseSearchResult {}
+export interface MetagenomeAnnotationResult extends DerivedDataResult {
+  stats: object;
+  has_inputs: string[];
+  has_output: string[];
+}
 
-export interface MetagenomeAnnotationResult extends BaseSearchResult {}
+export interface MetaproteomicAnalysisResult extends DerivedDataResult {}
 
 interface AttributeSummary {
   count: number;
@@ -106,6 +125,7 @@ export interface DatabaseSummaryResponse {
   reads_qc: TableSummary;
   metagenome_assembly: TableSummary;
   metagenome_annotation: TableSummary;
+  metaproteomic_analysis: TableSummary;
 }
 
 export interface DatabaseStatsResponse {
@@ -180,13 +200,18 @@ async function searchMetagenomeAnnotation(params: SearchParams) {
   return _search<MetagenomeAnnotationResult>('reads_qc', params);
 }
 
+async function searchMetaproteomicAnalysis(params: SearchParams) {
+  return _search<MetaproteomicAnalysisResult>('metaproteomic_analysis', params);
+}
+
 export type ResultUnion = (
-  SearchResponse<BiosampleSearchResult>
+    SearchResponse<BiosampleSearchResult>
   | SearchResponse<ProjectSearchResult>
   | SearchResponse<StudySearchResults>
   | SearchResponse<ReadsQCResult>
   | SearchResponse<MetagenomeAssembyResult>
   | SearchResponse<MetagenomeAnnotationResult>
+  | SearchResponse<MetaproteomicAnalysisResult>
   | null);
 
 async function search(type: entityType, params: SearchParams) {
@@ -255,6 +280,7 @@ const api = {
   searchReadsQC,
   searchMetagenomeAssembly,
   searchMetagenomeAnnotation,
+  searchMetaproteomicAnalysis,
   search,
 };
 
