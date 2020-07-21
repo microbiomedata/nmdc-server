@@ -104,7 +104,7 @@ export interface MetagenomeAnnotationResult extends DerivedDataResult {
   has_output: string[];
 }
 
-export interface MetaproteomicAnalysisResult extends DerivedDataResult {}
+export type MetaproteomicAnalysisResult = DerivedDataResult
 
 interface AttributeSummary {
   count: number;
@@ -146,10 +146,21 @@ export interface FacetSummaryResponse {
   count: number;
 }
 
+export type opType = 'between' | '<' | '<=' | '>' | '>=' | '==' | '!=';
+export const opMap: Record<opType, string> = {
+  between: 'between',
+  '<': 'less',
+  '<=': 'lte',
+  '>': 'greater',
+  '>=': 'gte',
+  '!=': 'not',
+  '==': 'is',
+};
+
 export interface Condition {
   field: string;
-  op: string;
-  value: string;
+  op: opType;
+  value: string | number | [number, number];
   table: string;
 }
 

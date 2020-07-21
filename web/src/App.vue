@@ -22,8 +22,6 @@ export default {
         >
       </router-link>
     </v-app-bar>
-    <keep-alive>
-      <router-view />
-    </keep-alive>
+    <router-view />
   </v-app>
 </template>

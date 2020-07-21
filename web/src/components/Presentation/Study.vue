@@ -120,7 +120,7 @@
 import { isObject } from 'lodash';
 import Cite from 'citation-js';
 import {
-  typeWithCardinality, valueCardinality, fieldDisplayName, valueDisplayName,
+  typeWithCardinality, valueCardinality, fieldDisplayName,
 } from '@/util';
 
 export default {
@@ -157,7 +157,6 @@ export default {
   },
   methods: {
     fieldDisplayName,
-    valueDisplayName,
     typeWithCardinality,
     selectField(field) {
       this.$emit('selected', {

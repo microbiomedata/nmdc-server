@@ -66,17 +66,14 @@ const store = new Vuex.Store<State>({
     loading: {},
   },
   getters: {
-    primitiveFields: (state) => (type: string | undefined) => {
+    primitiveFields: (state, getters) => (type: string | undefined) => (
+      Object.keys(getters.typeSummary(type))
+    ),
+    typeSummary: (state) => (type: string | undefined) => {
       if (type && state.dbsummary) {
-        return Object.keys(state.dbsummary[asType(type)].attributes);
+        return state.dbsummary[asType(type)].attributes;
       }
-      return [];
-    },
-    count: (state) => (type: string | undefined) => {
-      if (type && state.dbsummary) {
-        return state.dbsummary[asType(type)].total;
-      }
-      return 0;
+      return {};
     },
     typeResults: (state) => (type: string | undefined) => {
       if (type && state.results[asType(type)] !== null) {
@@ -202,7 +199,8 @@ const store = new Vuex.Store<State>({
         dispatch('fetchDBSummary'),
       ]);
     },
-    async route({ dispatch, state }, { name, type, conditions }) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    async route({ state }, { name, type, conditions }) {
       /**
        * Use the vuex route action when a route change
        * involves a change in type or conditions
