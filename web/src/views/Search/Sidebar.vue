@@ -23,9 +23,6 @@ export default {
     typeFields() {
       return this.primitiveFields(this.type);
     },
-    summaryMap() {
-      return this.typeSummary(this.type);
-    },
   },
 
   methods: {
@@ -80,11 +77,10 @@ export default {
 
     <ConditionChips
       :conditions="conditions"
-      :summary-map="summaryMap"
       class="ma-3"
       @remove="removeCondition"
     >
-      <template #menu="{ field, table, isOpen, summary }">
+      <template #menu="{ field, table, isOpen }">
         <MenuContent
           v-bind="{
             field,
@@ -92,6 +88,7 @@ export default {
             isOpen,
             summary,
             conditions,
+            summary: typeSummary(table)[field],
           }"
         />
       </template>
@@ -101,17 +98,16 @@ export default {
 
     <FacetedSearch
       :conditions="conditions"
-      :summary-map="summaryMap"
       :type="type"
       :fields="typeFields"
     >
-      <template #menu="{ field, isOpen, summary }">
+      <template #menu="{ field, isOpen }">
         <MenuContent
           v-bind="{
             field,
             type,
             isOpen,
-            summary,
+            summary: typeSummary(type)[field],
             conditions,
           }"
         />

@@ -49,7 +49,6 @@
                 v-bind="{
                   field,
                   isOpen: menuState[field],
-                  summary: summaryMap[field],
                 }"
               />
             </v-card>
@@ -78,10 +77,6 @@ export default {
     },
     fields: {
       type: Array,
-      required: true,
-    },
-    summaryMap: {
-      type: Object,
       required: true,
     },
   },
