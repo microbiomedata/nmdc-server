@@ -73,3 +73,15 @@ def test_api_summary(db: Session, client: TestClient):
     db.commit()
     assert_status(client.get("/api/summary"))
     assert_status(client.get("/api/stats"))
+
+
+def test_get_pi_image(db: Session, client: TestClient):
+    pi = fakes.PrincipalInvestigator()
+    fakes.StudyFactory(principal_investigator=pi, id="study1")
+    db.commit()
+    resp = client.get("/api/study/study1")
+    assert_status(resp)
+
+    resp = client.get(resp.json()["principal_investigator_image_url"])
+    assert_status(resp)
+    assert resp.headers["Content-Type"] == "image/jpeg"

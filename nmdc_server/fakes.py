@@ -5,7 +5,7 @@ from uuid import uuid4
 
 from factory import Faker, post_generation, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
-from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, python
+from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
@@ -31,6 +31,7 @@ Faker.add_provider(geo)
 Faker.add_provider(internet)
 Faker.add_provider(lorem)
 Faker.add_provider(misc)
+Faker.add_provider(person)
 Faker.add_provider(python)
 
 
@@ -89,12 +90,23 @@ class EnvoAncestorFactory(SQLAlchemyModelFactory):
         sqlalchemy_session = db
 
 
+class PrincipalInvestigator(SQLAlchemyModelFactory):
+    id = Faker("uuid")
+    name = Faker("name")
+    image = Faker("binary", length=64)
+
+    class Meta:
+        model = models.PrincipalInvestigator
+        sqlalchemy_session = db
+
+
 class StudyFactory(AnnotatedFactory):
     add_date = Faker("date_time")
     mod_date = Faker("date_time")
     gold_name = Faker("word")
     gold_description = Faker("sentence")
     scientific_objective = Faker("sentence")
+    principal_investigator = SubFactory(PrincipalInvestigator)
 
     class Meta:
         model = models.Study

@@ -1,5 +1,9 @@
+from io import BytesIO
+from uuid import UUID
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from starlette.responses import StreamingResponse
 
 from . import crud, query, schemas
 from .config import Settings, settings
@@ -380,3 +384,12 @@ async def get_metaproteomic_analysis(metaproteomic_analysis_id: str, db: Session
     if db_metaproteomic_analysis is None:
         raise HTTPException(status_code=404, detail="MetaproteomicAnalysis not found")
     return db_metaproteomic_analysis
+
+
+@router.get("/principal_investigator/{principal_investigator_id}",)
+async def get_pi_image(principal_investigator_id: UUID, db: Session = Depends(get_db)):
+    image = crud.get_pi_image(db, principal_investigator_id)
+    if image is None:
+        raise HTTPException(status_code=404, detail="Principal investigator  not found")
+
+    return StreamingResponse(BytesIO(image), media_type="image/jpeg")

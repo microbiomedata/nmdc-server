@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    LargeBinary,
     String,
     Table,
     UniqueConstraint,
@@ -97,6 +98,14 @@ class EnvoAncestor(Base):
     ancestor = relationship(EnvoTerm, foreign_keys=[ancestor_id], lazy="joined")
 
 
+class PrincipalInvestigator(Base):
+    __tablename__ = "principal_investigator"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    name = Column(String, nullable=False)
+    image = Column(LargeBinary, nullable=False)
+
+
 class AnnotatedModel:
     id = Column(String, primary_key=True)
     name = Column(String, nullable=False)
@@ -114,6 +123,16 @@ class Study(Base, AnnotatedModel):
     gold_name = Column(String, nullable=False, default="")
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
+
+    principal_investigator_id = Column(
+        UUID(as_uuid=True), ForeignKey("principal_investigator.id"), nullable=False
+    )
+    principal_investigator = relationship("PrincipalInvestigator", cascade="all", lazy="joined")
+    principal_investigator_name = association_proxy("principal_investigator", "name")
+
+    @property
+    def principal_investigator_image_url(self):
+        return f"/api/principal_investigator/{self.principal_investigator_id}"
 
     principal_investigator_websites = relationship("StudyWebsite", cascade="all", lazy="joined")
     publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
