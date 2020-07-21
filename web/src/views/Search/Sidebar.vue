@@ -86,7 +86,6 @@ export default {
             field,
             type: table,
             isOpen,
-            summary,
             conditions,
             summary: typeSummary(table)[field],
           }"
