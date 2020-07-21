@@ -1,51 +1,64 @@
 <script>
 import { mapState } from 'vuex';
-import { api } from '@/data/api';
+
 import Welcome from '@/components/Presentation/Welcome.vue';
 
 export default {
   components: { Welcome },
 
   computed: {
-    ...mapState(['dbsummary', 'allSamples']),
+    ...mapState(['dbstats', 'allSamples']),
 
-    dbStats() {
-      return this.dbsummary ? [
+    stats() {
+      const { dbstats } = this;
+      return dbstats ? [[
         {
-          value: this.dbsummary.study.total,
+          value: dbstats.studies,
           label: 'Studies',
         },
         {
-          value: this.dbsummary.project.total,
+          value: dbstats.locations,
           label: 'Locations',
         },
         {
-          value: this.dbsummary.biosample.total,
+          value: dbstats.habitats,
           label: 'Environments',
         },
-      ] : [];
+      ], [
+        {
+          value: dbstats.metagenomes,
+          label: 'Metagenomes',
+        },
+        {
+          value: dbstats.metatranscriptomes,
+          label: 'Metatranscriptomes',
+        },
+        {
+          value: dbstats.proteomics,
+          label: 'Proteomics',
+        },
+        {
+          value: dbstats.metabolomics,
+          label: 'Metabolomics',
+        },
+        {
+          value: dbstats.lipodomics,
+          label: 'Lipodomics',
+        },
+        {
+          value: dbstats.organic_matter_characterization,
+          label: 'Organic Matter Characterization',
+        },
+      ]] : [[], []];
     },
 
     samples() {
       return this.allSamples ? this.allSamples.results : [];
     },
-
-    stats() {
-      return [this.dbStats, this.omicsStats];
-    },
   },
 
-  asyncComputed: {
-    omicsStats: {
-      async get() {
-        const summaries = await api.getFacetSummary('project', 'omics_type', []);
-        return summaries.map((fsm) => ({
-          label: fsm.facet,
-          value: fsm.count,
-        }));
-      },
-      default: [],
-    },
+  created() {
+    this.$store.dispatch('fetchDBStats');
   },
 };
 </script>

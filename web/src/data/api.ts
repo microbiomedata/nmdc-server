@@ -108,7 +108,7 @@ export interface DatabaseSummaryResponse {
   metagenome_annotation: TableSummary;
 }
 
-export interface DatabaseStats {
+export interface DatabaseStatsResponse {
   studies: number;
   locations: number;
   habitats: number;
@@ -241,7 +241,7 @@ async function getDatabaseSummary() {
 }
 
 async function getDatabaseStats() {
-  const { data } = await client.get<DatabaseStats>('stats');
+  const { data } = await client.get<DatabaseStatsResponse>('stats');
   return data;
 }
 
