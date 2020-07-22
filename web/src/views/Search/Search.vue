@@ -33,12 +33,22 @@ export default {
 
   methods: {
     addSelected({ conditions }) {
-      this.$store.dispatch('route', {
-        conditions: [
-          ...this.conditions,
-          ...conditions,
-        ],
+      const newConditions = conditions.filter((c) => {
+        const match = this.conditions.filter((d) => (
+          c.table === d.table
+            && c.op === d.op
+            && c.value === d.value
+            && c.field === d.field));
+        return match.length === 0;
       });
+      if (newConditions.length > 0) {
+        this.$store.dispatch('route', {
+          conditions: [
+            ...newConditions,
+            ...this.conditions,
+          ],
+        });
+      }
     },
     removeCondition(c) {
       this.$store.dispatch('route', {
