@@ -120,6 +120,26 @@ export default {
       }
       this.$store.dispatch('route', { conditions });
     },
+
+    toggleSelectAll({ items, value }) {
+      if (value) {
+        this.$store.dispatch('route', {
+          conditions: [
+            ...this.otherConditions,
+            ...items
+              .filter((item) => item.isSelectable)
+              .map((item) => ({
+                op: '==',
+                field: this.field,
+                value: item.facet,
+                table: this.type,
+              })),
+          ],
+        });
+      } else {
+        this.$store.dispatch('route', { conditions: this.otherConditions });
+      }
+    },
   },
 };
 </script>
@@ -149,6 +169,7 @@ export default {
       :items="items"
       :headers="tableHeaders"
       @item-selected="setSelected"
+      @toggle-select-all="toggleSelectAll"
     >
       <template v-slot:item.name="{ item }">
         <span :class="{ 'grey--text': !item.isSelectable }">

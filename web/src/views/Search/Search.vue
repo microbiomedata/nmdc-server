@@ -94,7 +94,8 @@ export default {
                 :conditions="conditions"
                 :show-title="false"
                 :show-baseline="false"
-                :left-margin="150"
+                :left-margin="120"
+                :right-margin="80"
                 @selected="addSelected($event)"
               />
             </v-card>
@@ -174,7 +175,8 @@ export default {
                 :conditions="conditions"
                 :show-title="false"
                 :show-baseline="false"
-                :left-margin="150"
+                :left-margin="280"
+                :right-margin="80"
                 @selected="addSelected($event)"
               />
             </v-card>

@@ -1,5 +1,5 @@
 <script>
-import { mapGetters } from 'vuex';
+import { mapGetters, mapState } from 'vuex';
 import { types } from '@/encoding';
 
 import ConditionChips from '@/components/Presentation/ConditionChips.vue';
@@ -19,9 +19,14 @@ export default {
   }),
 
   computed: {
+    ...mapState(['results']),
     ...mapGetters(['type', 'typeSummary', 'conditions', 'primitiveFields']),
     typeFields() {
       return this.primitiveFields(this.type);
+    },
+    typeResultsCount() {
+      const tr = this.results[this.type];
+      return tr ? tr.count : 0;
     },
   },
 
@@ -70,8 +75,11 @@ export default {
           </v-chip>
         </template>
       </v-chip-group>
-      <div class="text-subtitle-2 primary--text">
-        That match the following
+      <div
+        v-if="conditions.length"
+        class="text-subtitle-2 primary--text"
+      >
+        That match the following conditions
       </div>
     </div>
 
@@ -92,6 +100,10 @@ export default {
         />
       </template>
     </ConditionChips>
+
+    <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
+      Found {{ typeResultsCount }} results.
+    </div>
 
     <v-divider class="my-3" />
 
