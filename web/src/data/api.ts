@@ -146,6 +146,19 @@ export interface FacetSummaryResponse {
   count: number;
 }
 
+interface EnvironmentSankeyEntity {
+  count: number;
+  ecosystem: string;
+  ecosystem_category: string;
+  ecosystem_type: string;
+  ecosystem_subtype: string;
+  specific_ecosystem: string;
+}
+
+export interface EnvironmentSankeyResponse {
+  [index: number]: EnvironmentSankeyEntity;
+}
+
 export type opType = 'between' | '<' | '<=' | '>' | '>=' | '==' | '!=';
 export const opMap: Record<opType, string> = {
   between: 'between',
@@ -281,9 +294,21 @@ async function getDatabaseStats() {
   return data;
 }
 
+async function getEnvironmentSankeyAggregation(
+  conditions: Condition[],
+): Promise<EnvironmentSankeyResponse> {
+  const { data } = await client.post<EnvironmentSankeyResponse>(
+    'environment/sankey', {
+      conditions,
+    },
+  );
+  return data;
+}
+
 const api = {
   getDatabaseSummary,
   getDatabaseStats,
+  getEnvironmentSankeyAggregation,
   getFacetSummary,
   searchBiosample,
   searchProject,

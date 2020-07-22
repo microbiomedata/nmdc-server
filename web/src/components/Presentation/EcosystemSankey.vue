@@ -15,6 +15,7 @@
 import { GChart } from 'vue-google-charts';
 
 import colors from '@/colors';
+import { api } from '@/data/api';
 import { ecosystems } from '@/encoding';
 
 export default {
@@ -26,7 +27,7 @@ export default {
       type: String,
       default: null,
     },
-    data: {
+    conditions: {
       type: Array,
       default: () => [],
     },
@@ -74,54 +75,57 @@ export default {
       },
     };
   },
-  computed: {
-    sankeyData() {
+  asyncComputed: {
+    async sankeyData() {
+      const data = await api.getEnvironmentSankeyAggregation(this.conditions);
       const hist = {};
-      this.data.forEach((sample) => {
+      data.forEach((sample) => {
         const habitat = [
-          sample.annotations.ecosystem,
-          ` ${sample.annotations.ecosystem_category}`,
+          sample.ecosystem,
+          ` ${sample.ecosystem_category}`,
         ].join(':');
         if (hist[habitat] === undefined) {
           hist[habitat] = 0;
         }
-        hist[habitat] += 1;
+        hist[habitat] += sample.count;
       });
-      this.data.forEach((sample) => {
+      data.forEach((sample) => {
         const habitat = [
-          ` ${sample.annotations.ecosystem_category}`,
-          `  ${sample.annotations.ecosystem_type}`,
+          ` ${sample.ecosystem_category}`,
+          `  ${sample.ecosystem_type}`,
         ].join(':');
         if (hist[habitat] === undefined) {
           hist[habitat] = 0;
         }
-        hist[habitat] += 1;
+        hist[habitat] += sample.count;
       });
-      this.data.forEach((sample) => {
+      data.forEach((sample) => {
         const habitat = [
-          `  ${sample.annotations.ecosystem_type}`,
-          `   ${sample.annotations.ecosystem_subtype}`,
+          `  ${sample.ecosystem_type}`,
+          `   ${sample.ecosystem_subtype}`,
         ].join(':');
         if (hist[habitat] === undefined) {
           hist[habitat] = 0;
         }
-        hist[habitat] += 1;
+        hist[habitat] += sample.count;
       });
-      this.data.forEach((sample) => {
+      data.forEach((sample) => {
         const habitat = [
-          `   ${sample.annotations.ecosystem_subtype}`,
-          `    ${sample.annotations.specific_ecosystem}`,
+          `   ${sample.ecosystem_subtype}`,
+          `    ${sample.specific_ecosystem}`,
         ].join(':');
         if (hist[habitat] === undefined) {
           hist[habitat] = 0;
         }
-        hist[habitat] += 1;
+        hist[habitat] += sample.count;
       });
       return [
         ['From', 'To', 'Samples'],
         ...Object.keys(hist).map((habitat) => [...habitat.split(':'), hist[habitat]]),
       ];
     },
+  },
+  computed: {
     sankeyOptions() {
       return {
         height: 300,

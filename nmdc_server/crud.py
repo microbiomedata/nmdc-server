@@ -41,6 +41,12 @@ def get_aggregated_stats(db: Session) -> schemas.AggregationSummary:
     return aggregations.get_aggregation_summary(db)
 
 
+def get_environmental_sankey(
+    db: Session, query: query.BiosampleQuerySchema
+) -> List[schemas.EnvironmentSankeyAggregation]:
+    return aggregations.get_sankey_aggregation(db, query)
+
+
 # study
 def get_study(db: Session, study_id: str) -> Optional[models.Study]:
     return db.query(models.Study).filter(models.Study.id == study_id).first()
