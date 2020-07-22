@@ -15,7 +15,7 @@
     "dexie": "^2.0.4",
     "filesize": "^6.0.1",
     "lodash": "^4.17.19",
-    "moment": "^2.24.0",
+    "moment": "^2.27.0",
     "qs": "^6.9.4",
     "vue": "^2.6.10",
     "vue-async-computed": "^3.8.2",

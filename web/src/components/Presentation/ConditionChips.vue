@@ -1,4 +1,5 @@
 <script>
+import moment from 'moment';
 import Vue from 'vue';
 import { groupBy } from 'lodash';
 import { opMap } from '@/data/api';
@@ -38,9 +39,18 @@ export default {
       return opMap[op];
     },
     valueTransform(val, type) {
+      // If it's not primitive
       if (typeof val === 'object') {
         const inner = val.map((v) => this.valueTransform(v, type)).join(', ');
         return `(${inner})`;
+      }
+      // If it will parse strictly as a number;
+      if (!Number.isNaN(Number(val))) {
+        return val;
+      }
+      // If it parses as a date;
+      if (!Number.isNaN(Date.parse(val))) {
+        return moment(val).format('MM/DD/YYYY');
       }
       return val;
     },
