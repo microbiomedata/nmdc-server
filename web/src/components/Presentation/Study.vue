@@ -52,7 +52,7 @@
           </v-row>
         </v-container>
         <div class="headline">
-          {{ item.proposal_title }}
+          {{ item.name }}
         </div>
         <div class="mt-3">
           <span class="font-weight-bold">Scientific objective: </span>
@@ -148,9 +148,11 @@ export default {
   watch: {
     item: {
       async handler() {
+        this.doiCitation = null;
+        this.publications = [];
         const citationPromises = this.item.publication_dois.map(Cite.async);
-        this.publications = (await Promise.all(citationPromises)).map((c) => this.formatAPA(c));
-        this.doiCitation = this.formatAPA(await Cite.async(this.item.doi));
+        [this.doiCitation, ...this.publications] = (await Promise.all(citationPromises))
+          .map((c) => this.formatAPA(c));
       },
       immediate: true,
     },
