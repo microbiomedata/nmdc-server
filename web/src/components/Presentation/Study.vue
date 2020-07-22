@@ -150,7 +150,10 @@ export default {
       async handler() {
         this.doiCitation = null;
         this.publications = [];
-        const citationPromises = this.item.publication_dois.map(Cite.async);
+        const citationPromises = [
+          Cite.async(this.item.doi),
+          ...this.item.publication_dois.map(Cite.async),
+        ];
         [this.doiCitation, ...this.publications] = (await Promise.all(citationPromises))
           .map((c) => this.formatAPA(c));
       },

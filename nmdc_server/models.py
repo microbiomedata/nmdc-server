@@ -123,6 +123,7 @@ class Study(Base, AnnotatedModel):
     gold_name = Column(String, nullable=False, default="")
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
+    doi = Column(String, nullable=False)
 
     principal_investigator_id = Column(
         UUID(as_uuid=True), ForeignKey("principal_investigator.id"), nullable=False
