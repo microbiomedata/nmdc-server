@@ -35,7 +35,7 @@ export default {
   }),
 
   computed: {
-    ...mapState(['facetSummaries']),
+    ...mapState(['facetSummaries', 'facetSummariesUnconditional']),
     ...mapGetters(['conditions']),
 
     otherConditions() {
@@ -74,18 +74,31 @@ export default {
         type: this.type,
       });
       // Results from the above action are cached in facetSummaries.
-      const allFacets = this.facetSummaries[this.type][this.field];
+      const filteredFacets = this.facetSummaries[this.type][this.field];
+      const unconditionalFacets = this.facetSummariesUnconditional[this.type][this.field];
       // if there were results, figure out which ones should be selected based on
       // the active list of conditions.
       this.selected = this.myConditions.map(
         // In order for selection to work, each object must match for all key/value pairs
         // so we have to get the right item from the item list where value matches
-        (c) => allFacets.find((item) => item.facet.toLowerCase() === c.value.toLowerCase()),
+        (c) => filteredFacets.find((item) => item.facet.toLowerCase() === c.value.toLowerCase()),
       );
-      this.items = allFacets.map((item) => ({
-        ...item,
-        name: valueDisplayName(this.field, item.facet),
-      }));
+      this.items = filteredFacets
+        .map((item) => ({
+          ...item,
+          isSelectable: true,
+          name: valueDisplayName(this.field, item.facet),
+        }))
+        .concat(unconditionalFacets
+          // filter out facets contained in filteredFacets
+          .filter((item1) => filteredFacets
+            .find((item2) => item1.facet === item2.facet) === undefined)
+          .map((item) => ({
+            ...item,
+            count: 0,
+            isSelectable: false,
+            name: valueDisplayName(this.field, item.facet),
+          })));
     },
 
     setSelected({ item, value }) {
@@ -136,7 +149,13 @@ export default {
       :items="items"
       :headers="tableHeaders"
       @item-selected="setSelected"
-    />
+    >
+      <template v-slot:item.name="{ item }">
+        <span :class="{ 'grey--text': !item.isSelectable }">
+          {{ item.name }}
+        </span>
+      </template>
+    </v-data-table>
   </div>
 </template>
 

@@ -26,6 +26,7 @@ interface State {
   dbsummary?: DatabaseSummaryResponse;
   dbstats?: DatabaseStatsResponse;
   facetSummaries: Record<entityType, FacetSummaryResponseMap>;
+  facetSummariesUnconditional: Record<entityType, FacetSummaryResponseMap>;
   results: Record<entityType, ResultUnion>;
   route: any;
   loading: Record<string, boolean>;
@@ -45,6 +46,15 @@ const store = new Vuex.Store<State>({
     dbsummary: undefined,
     dbstats: undefined,
     facetSummaries: {
+      biosample: {},
+      study: {},
+      project: {},
+      reads_qc: {},
+      metagenome_assembly: {},
+      metagenome_annotation: {},
+      metaproteomic_analysis: {},
+    },
+    facetSummariesUnconditional: {
       biosample: {},
       study: {},
       project: {},
@@ -105,8 +115,14 @@ const store = new Vuex.Store<State>({
     }) {
       Vue.set(state.facetSummaries[type], field, summary);
     },
+    setFacetSummaryUnconditional(state, { type, field, summary }: {
+      type: entityType; field: string; summary: FacetSummaryResponse[];
+    }) {
+      Vue.set(state.facetSummariesUnconditional[type], field, summary);
+    },
     resetFacetSummaries(state, type) {
       Vue.set(state.facetSummaries, type, {});
+      Vue.set(state.facetSummariesUnconditional, type, {});
     },
     setLoading(state, { name, loading }) {
       Vue.set(state.loading, name, loading);
@@ -142,8 +158,19 @@ const store = new Vuex.Store<State>({
       if (!state.loading[loadingname]) {
         commit('setLoading', { name: loadingname, loading: true });
         try {
-          const summary = await api.getFacetSummary(type, field, conditions);
-          commit('setFacetSummary', { type, field, summary });
+          // Check if we need to fetch unconditional facets
+          let existingUnconditional = state.facetSummariesUnconditional[type][field];
+          if (!existingUnconditional) {
+            existingUnconditional = await api.getFacetSummary(type, field, []);
+            commit('setFacetSummaryUnconditional',
+              { type, field, summary: existingUnconditional });
+          }
+          if (conditions.length > 0) {
+            const summary = await api.getFacetSummary(type, field, conditions);
+            commit('setFacetSummary', { type, field, summary });
+          } else {
+            commit('setFacetSummary', { type, field, summary: existingUnconditional });
+          }
         } finally {
           commit('setLoading', { name: loadingname, loading: false });
         }
