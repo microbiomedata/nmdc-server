@@ -124,7 +124,7 @@ export default {
     },
     sankeyOptions() {
       return {
-        height: 400,
+        height: 300,
         sankey: {
           link: {
             colorMode: 'source',
