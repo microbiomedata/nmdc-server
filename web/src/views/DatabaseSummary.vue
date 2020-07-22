@@ -30,6 +30,10 @@ export default Vue.extend({
           value: dbstats.habitats,
           label: 'Environments',
         },
+        {
+          value: `${(dbstats.data_size / 1024 / 1024 / 1024 / 1024).toFixed(1)}TB`,
+          label: 'Data',
+        },
       ], [
         {
           value: dbstats.metagenomes,
