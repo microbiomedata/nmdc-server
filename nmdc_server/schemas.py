@@ -136,6 +136,7 @@ class StudyBase(AnnotatedBase):
     scientific_objective: str = ""
     add_date: Optional[datetime]
     mod_date: Optional[datetime]
+    doi: str
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:

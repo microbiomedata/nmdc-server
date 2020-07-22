@@ -165,7 +165,7 @@ def ingest_studies(db: Session, data: List[Dict[str, Any]]):
         pi = raw_study.pop("principal_investigator_name")
         study["gold_description"] = study["description"]
         study["description"] = f"Principal investigator: {pi}"
-        study["publication_dois"] = [raw_study.pop("doi")]
+        study["doi"] = raw_study.pop("doi")
         study["annotations"] = raw_study
 
         with (DATA / "pis" / f"{pi}.jpg").open("rb") as image_file:
@@ -180,7 +180,7 @@ def ingest_studies(db: Session, data: List[Dict[str, Any]]):
         study["principal_investigator_id"] = principal_investigator.id
         study["name"] = a["proposal_title"]
         study["principal_investigator_websites"] = a["principal_investigator_websites"]
-        study["publication_dois"].extend(a["publication_dois"])
+        study["publication_dois"] = a["publication_dois"]
         study["scientific_objective"] = a["scientific_objective"]
 
         crud.create_study(db, schemas.StudyCreate(**study))

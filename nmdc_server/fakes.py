@@ -106,6 +106,7 @@ class StudyFactory(AnnotatedFactory):
     gold_name = Faker("word")
     gold_description = Faker("sentence")
     scientific_objective = Faker("sentence")
+    doi = Faker("doi")
     principal_investigator = SubFactory(PrincipalInvestigator)
 
     class Meta:
