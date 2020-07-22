@@ -49,6 +49,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    height: {
+      type: Number,
+      default: 200,
+    },
   },
   data() {
     return {
@@ -98,7 +102,7 @@ export default {
     },
     barChartOptions() {
       return {
-        height: 300,
+        height: this.height,
         chartArea: {
           left: this.leftMargin, right: 40, top: 15, width: '90%', height: '90%',
         },
@@ -126,10 +130,10 @@ export default {
     },
     pieChartOptions() {
       return {
-        height: 300,
+        height: this.height,
         chartArea: {
-          width: '55%',
-          height: '55%',
+          width: '90%',
+          height: '75%',
         },
         legend: 'none',
         pieSliceText: 'label',

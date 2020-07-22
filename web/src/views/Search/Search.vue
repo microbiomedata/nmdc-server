@@ -5,7 +5,6 @@ import { ecosystemFields } from '@/encoding';
 import removeCondition from '@/data/utils';
 
 import FacetChart from '@/components/FacetChart.vue';
-import EcosystemChart from '@/components/Presentation/EcosystemChart.vue';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
 import SearchResults from '@/components/Presentation/SearchResults.vue';
@@ -17,7 +16,6 @@ export default {
     FacetChart,
     SearchResults,
     LocationMap,
-    EcosystemChart,
     EcosystemSankey,
     Sidebar,
   },
@@ -66,20 +64,26 @@ export default {
     <v-main v-if="typeResults">
       <v-container fluid>
         <v-row v-if="['biosample'].includes(type)">
-          <v-col :cols="4">
+          <v-col :cols="8">
             <v-card>
-              <EcosystemChart
+              <LocationMap
                 :type="type"
                 :data="typeResults"
                 @selected="addSelected($event)"
               />
             </v-card>
           </v-col>
-          <v-col :cols="8">
+          <v-col :cols="4">
             <v-card>
-              <LocationMap
-                :type="type"
-                :data="typeResults"
+              <FacetChart
+                type="biosample"
+                field="ecosystem_category"
+                chart="bar"
+                :height="400"
+                :conditions="conditions"
+                :show-title="false"
+                :show-baseline="false"
+                :left-margin="150"
                 @selected="addSelected($event)"
               />
             </v-card>
@@ -99,14 +103,16 @@ export default {
         </v-row>
 
         <v-row v-if="['biosample'].includes(type)">
-          <v-col rows="12">
-            <v-card>
-              <v-container fluid>
-                <v-row>
+          <v-col>
+            <v-card class="pa-0">
+              <v-container
+                fluid
+              >
+                <v-row justify="space-between">
                   <v-col
                     v-for="field in ecosystemFields"
                     :key="field"
-                    class="flex-grow-1"
+                    cols="2"
                   >
                     <FacetChart
                       type="biosample"
@@ -123,14 +129,14 @@ export default {
         </v-row>
 
         <v-row v-if="['biosample'].includes(type)">
-          <v-col rows="12">
+          <v-col>
             <v-card>
               <v-container fluid>
-                <v-row>
+                <v-row justify="space-between">
                   <v-col
                     v-for="field in ecosystemFields"
                     :key="field"
-                    class="flex-grow-1"
+                    cols="2"
                   >
                     <FacetChart
                       type="biosample"
@@ -147,7 +153,7 @@ export default {
         </v-row>
 
         <v-row v-if="['project'].includes(type)">
-          <v-col :cols="12">
+          <v-col>
             <v-card>
               <FacetChart
                 type="project"
@@ -164,7 +170,7 @@ export default {
         </v-row>
 
         <v-row>
-          <v-col :cols="12">
+          <v-col>
             <v-card>
               <SearchResults
                 :type="type"
