@@ -83,9 +83,12 @@ export default {
           close
           label
           class="ma-1"
+          style="max-width: 90%;"
           @click:close="$emit('remove', cond)"
         >
-          {{ valueTransform(cond.value, '') }}
+          <span class="chip-content">
+            {{ valueTransform(cond.value, '') }}
+          </span>
         </v-chip>
       </div>
       <v-menu
@@ -124,8 +127,11 @@ export default {
 
 <style scoped>
 .expand {
-  border-left: 1px solid gray;
+  border-left: 1px solid grey;
   border-radius: 0 !important;
   cursor: pointer;
+}
+.chip-content {
+  overflow: hidden;
 }
 </style>

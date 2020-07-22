@@ -31,7 +31,11 @@ export default {
     },
     leftMargin: {
       type: Number,
-      default: 50,
+      default: 80,
+    },
+    rightMargin: {
+      type: Number,
+      default: 40,
     },
     chart: {
       type: String,
@@ -104,7 +108,11 @@ export default {
       return {
         height: this.height,
         chartArea: {
-          left: this.leftMargin, right: 40, top: 15, width: '90%', height: '90%',
+          left: this.leftMargin,
+          right: this.rightMargin,
+          top: 15,
+          width: '90%',
+          height: '80%',
         },
         hAxis: {
           textStyle: {
