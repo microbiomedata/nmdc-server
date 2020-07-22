@@ -1,4 +1,5 @@
 from io import BytesIO
+from typing import List
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -28,7 +29,7 @@ def get_db(settings: Settings = Depends(get_settings)):
 @router.get(
     "/summary",
     response_model=schemas.DatabaseSummary,
-    tags=["summary"],
+    tags=["aggregation"],
     response_model_exclude_unset=True,
 )
 async def get_database_summary(db: Session = Depends(get_db)):
@@ -36,10 +37,21 @@ async def get_database_summary(db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/stats", response_model=schemas.AggregationSummary, tags=["summary"],
+    "/stats", response_model=schemas.AggregationSummary, tags=["aggregation"],
 )
 async def get_aggregated_stats(db: Session = Depends(get_db)):
     return crud.get_aggregated_stats(db)
+
+
+@router.post(
+    "/environment/sankey",
+    response_model=List[schemas.EnvironmentSankeyAggregation],
+    tags=["aggregation"],
+)
+async def get_environmental_sankey(
+    query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(), db: Session = Depends(get_db)
+):
+    return crud.get_environmental_sankey(db, query)
 
 
 # biosample

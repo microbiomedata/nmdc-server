@@ -1,9 +1,9 @@
-from typing import cast, Dict, Type
+from typing import cast, Dict, List, Type
 
 from sqlalchemy import Column, func
 from sqlalchemy.orm import Session
 
-from nmdc_server import models, schemas
+from nmdc_server import models, query, schemas
 
 
 def get_annotation_summary(
@@ -100,3 +100,27 @@ def get_aggregation_summary(db: Session):
         lipodomics=omics_category("lipidomics"),
         organic_matter_characterization=omics_category("organic matter characterization"),
     )
+
+
+def get_sankey_aggregation(
+    db: Session, biosample_query: query.BiosampleQuerySchema,
+) -> List[schemas.EnvironmentSankeyAggregation]:
+    annotations = models.Biosample.annotations
+    columns = [
+        annotations[e].astext.label(e)
+        for e in [
+            "ecosystem",
+            "ecosystem_category",
+            "ecosystem_type",
+            "ecosystem_subtype",
+            "ecosystem_subtype",
+            "specific_ecosystem",
+        ]
+    ]
+    subquery = biosample_query.query(db).subquery()
+    rows = (
+        db.query(func.count().label("count"), *columns)
+        .join(subquery, models.Biosample.id == subquery.c.id)
+        .group_by(*columns)
+    )
+    return [schemas.EnvironmentSankeyAggregation.from_orm(r) for r in rows]

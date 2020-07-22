@@ -68,7 +68,7 @@ class AnnotatedBase(BaseModel):
     annotations: Dict[str, AnnotationValue] = {}
 
 
-# summary
+# aggregations
 class AttributeSummary(BaseModel):
     count: int
     min: Optional[Union[float, datetime]]
@@ -102,6 +102,18 @@ class AggregationSummary(BaseModel):
     metabolomics: int
     lipodomics: int
     organic_matter_characterization: int
+
+
+class EnvironmentSankeyAggregation(BaseModel):
+    count: int
+    ecosystem: str
+    ecosystem_category: str
+    ecosystem_type: str
+    ecosystem_subtype: str
+    specific_ecosystem: str
+
+    class Config:
+        orm_mode = True
 
 
 # study
