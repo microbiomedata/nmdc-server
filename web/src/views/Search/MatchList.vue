@@ -29,6 +29,7 @@ export default {
         value: 'count',
         sortable: true,
         width: 90,
+        filterable: false,
       },
     ],
   }),
@@ -113,7 +114,7 @@ export default {
 <template>
   <div class="match-list-table">
     <v-text-field
-      :value="filterText"
+      v-model="filterText"
       solo
       label="search"
       clearable
@@ -123,7 +124,6 @@ export default {
       outlined
       flat
       append-icon="mdi-magnify"
-      @input="$set(filterText, field, $event)"
     />
     <v-data-table
       :value="selected"
