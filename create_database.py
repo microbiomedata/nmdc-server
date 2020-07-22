@@ -255,10 +255,6 @@ def ingest_data_objects(db: Session, data) -> Set[str]:
     return data_object_ids
 
 
-missing_data: Set[str] = set()
-duplicates: Set[str] = set()
-
-
 def ingest_pipeline(db: Session, objects, model: Type[models.PipelineStep], data_objects: Set[str]):
     table_name = model.__tablename__  # type: ignore
     date_fmt = "%Y-%m-%d"
@@ -267,22 +263,12 @@ def ingest_pipeline(db: Session, objects, model: Type[models.PipelineStep], data
         inputs: List[str] = []
         outputs: List[str] = []
         for id in d.pop("has_input", []):
-            if id in data_objects:
-                inputs.append(id)
-            else:
-                missing_data.add(id)
+            inputs.append(id)
         for id in d.pop("has_output", []):
-            if id in data_objects:
-                outputs.append(id)
-            else:
-                missing_data.add(id)
+            outputs.append(id)
         d["project_id"] = d.pop("was_informed_by")
         d["started_at_time"] = datetime.strptime(d["started_at_time"], date_fmt)
         d["ended_at_time"] = datetime.strptime(d["ended_at_time"], date_fmt)
-        # TODO: there are duplicates in the data
-        if db.query(model).get(d["id"]):
-            duplicates.add(f"{model.__tablename__} {d['id']}")  # type: ignore
-            continue
 
         step = model(**d)  # type: ignore
         db.add(step)
@@ -336,11 +322,6 @@ def main(*args):
         ingest_pipeline(
             db, pipeline, models.MetaproteomicAnalysis, data_objects,
         )
-
-    print("Missing files:")
-    print("\n".join(missing_data))
-    print("Duplicates:")
-    print("\n".join(duplicates))
 
 
 if __name__ == "__main__":
