@@ -87,12 +87,21 @@ def test_get_pi_image(db: Session, client: TestClient):
     assert resp.headers["Content-Type"] == "image/jpeg"
 
 
-def test_get_sankey_aggregation(db: Session, client: TestClient):
+def test_get_environmental_aggregation(db: Session, client: TestClient):
     for _ in range(10):
         fakes.BiosampleFactory()
+
     assert_status(client.post("/api/environment/sankey"))
     resp = client.post(
         "/api/environment/sankey",
+        json={"conditions": [{"table": "study", "field": "id", "value": "not a study",}]},
+    )
+    assert_status(resp)
+    assert resp.json() == []
+
+    assert_status(client.post("/api/environment/geospatial"))
+    resp = client.post(
+        "/api/environment/geospatial",
         json={"conditions": [{"table": "study", "field": "id", "value": "not a study",}]},
     )
     assert_status(resp)
