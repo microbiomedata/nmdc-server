@@ -116,6 +116,17 @@ class EnvironmentSankeyAggregation(BaseModel):
         orm_mode = True
 
 
+class EnvironmentGeospatialAggregation(BaseModel):
+    count: int
+    latitude: float
+    longitude: float
+    ecosystem: str
+    ecosystem_category: str
+
+    class Config:
+        orm_mode = True
+
+
 # study
 class StudyBase(AnnotatedBase):
     principal_investigator_websites: List[str] = []

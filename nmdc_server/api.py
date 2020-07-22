@@ -54,6 +54,17 @@ async def get_environmental_sankey(
     return crud.get_environmental_sankey(db, query)
 
 
+@router.post(
+    "/environment/geospatial",
+    response_model=List[schemas.EnvironmentGeospatialAggregation],
+    tags=["aggregation"],
+)
+async def get_environmental_geospatial(
+    query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(), db: Session = Depends(get_db)
+):
+    return crud.get_environmental_geospatial(db, query)
+
+
 # biosample
 @router.post(
     "/biosample", response_model=schemas.Biosample, tags=["biosample"],

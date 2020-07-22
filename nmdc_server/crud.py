@@ -47,6 +47,12 @@ def get_environmental_sankey(
     return aggregations.get_sankey_aggregation(db, query)
 
 
+def get_environmental_geospatial(
+    db: Session, query: query.BiosampleQuerySchema
+) -> List[schemas.EnvironmentGeospatialAggregation]:
+    return aggregations.get_geospatial_aggregation(db, query)
+
+
 # study
 def get_study(db: Session, study_id: str) -> Optional[models.Study]:
     return db.query(models.Study).filter(models.Study.id == study_id).first()

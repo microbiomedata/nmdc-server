@@ -79,6 +79,7 @@ export default {
               <LocationMap
                 :type="type"
                 :data="typeResults"
+                :conditions="conditions"
                 @selected="addSelected($event)"
               />
             </v-card>

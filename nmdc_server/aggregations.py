@@ -124,3 +124,21 @@ def get_sankey_aggregation(
         .group_by(*columns)
     )
     return [schemas.EnvironmentSankeyAggregation.from_orm(r) for r in rows]
+
+
+def get_geospatial_aggregation(
+    db: Session, biosample_query: query.BiosampleQuerySchema,
+) -> List[schemas.EnvironmentGeospatialAggregation]:
+    columns = [
+        models.Biosample.latitude,
+        models.Biosample.longitude,
+        models.Biosample.annotations["ecosystem"].label("ecosystem"),
+        models.Biosample.annotations["ecosystem_category"].label("ecosystem_category"),
+    ]
+    subquery = biosample_query.query(db).subquery()
+    rows = (
+        db.query(func.count().label("count"), *columns)
+        .join(subquery, models.Biosample.id == subquery.c.id)
+        .group_by(*columns)
+    )
+    return [schemas.EnvironmentGeospatialAggregation.from_orm(r) for r in rows]

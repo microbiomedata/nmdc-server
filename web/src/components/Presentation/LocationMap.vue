@@ -14,6 +14,7 @@
 <script>
 import { GChart } from 'vue-google-charts';
 
+import { api } from '@/data/api';
 import { ecosystems } from '@/encoding';
 
 export default {
@@ -26,7 +27,7 @@ export default {
       type: String,
       default: null,
     },
-    data: {
+    conditions: {
       type: Array,
       default: () => [],
     },
@@ -56,26 +57,26 @@ export default {
       },
     };
   },
-  computed: {
-    geoChartMarkerData() {
+  asyncComputed: {
+    async geoChartMarkerData() {
       const hist = {};
-      this.data.forEach((sample) => {
-        if (sample.latitude === undefined || sample.longitude === undefined) {
-          return;
-        }
+      const data = await api.getEnvironmentGeospatialAggregation(this.conditions);
+      data.forEach((sample) => {
         const latLon = `${sample.latitude}:${sample.longitude}:${this.ecosystems.findIndex(
           (eco) => (eco.name === sample.ecosystem) || (eco.name === sample.ecosystem_category),
         )}`;
         if (hist[latLon] === undefined) {
           hist[latLon] = 0;
         }
-        hist[latLon] += 1;
+        hist[latLon] += sample.count;
       });
       return [
         ['Latitude', 'Longitude', 'Color', 'Size'],
         ...Object.keys(hist).map((latLon) => [...latLon.split(':').map((d) => +d), hist[latLon]]),
       ];
     },
+  },
+  computed: {
     geoChartMarkerOptions() {
       return {
         displayMode: 'markers',
