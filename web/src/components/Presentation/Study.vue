@@ -11,7 +11,7 @@
             >
               <v-avatar :size="200">
                 <v-img
-                  :src="`pis/${item.principal_investigator_name}.jpg`"
+                  :src="item.principal_investigator_image_url"
                 />
               </v-avatar>
             </v-col>
