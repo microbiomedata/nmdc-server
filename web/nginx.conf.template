@@ -14,7 +14,7 @@ http {
         server_name localhost;
         
         location / {
-            try_files $uri $uri/ /index.html;
+            try_files ${DOLLAR}uri ${DOLLAR}uri/ /index.html;
         }
 
         location /index.html {
@@ -22,7 +22,7 @@ http {
         }
 
         location ~ ^/(api|docs|openapi.json) {
-            proxy_pass http://backend:8000;
+            proxy_pass ${BACKEND_URL};
         }
     }
 }

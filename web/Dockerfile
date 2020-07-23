@@ -7,7 +7,7 @@ RUN yarn run build
 
 FROM nginx:stable-alpine as production-stage
 RUN rm -v /etc/nginx/nginx.conf
-ADD nginx.conf /etc/nginx/
+ADD nginx.conf.template /etc/nginx/
 COPY --from=build-stage /app/dist /www/data
 EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
+CMD /bin/sh -c "DOLLAR='$' envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
