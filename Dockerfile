@@ -6,7 +6,7 @@ RUN apk update && \
     apk add curl
 
 COPY . /app
-COPY .docker-env /app/.env
+COPY .env.production /app/.env
 WORKDIR /app/
 ENV MODULE_NAME nmdc_server.asgi
 ENV PORT 8000
