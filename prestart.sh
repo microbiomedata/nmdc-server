@@ -10,7 +10,8 @@ done
 # PGDATABASE=postgres psql -c "drop database if exists nmdc;"
 
 echo 'Ingesting data'
-PGDATABASE=postgres psql -c "create database nmdc;"
+# in spin the database already exists
+PGDATABASE=postgres psql -c "create database nmdc;" || true
 python /app/create_database.py
 
 echo 'Upgrading schema'
