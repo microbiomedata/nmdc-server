@@ -87,12 +87,12 @@ def delete_study(db: Session, study: models.Study) -> None:
     db.commit()
 
 
-def search_study(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+def search_study(db: Session, conditions: List[query.Condition]) -> Query:
     return query.StudyQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_study(
-    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+    db: Session, attribute: query.StudyAttribute, conditions: List[query.Condition]
 ) -> query.FacetResponse:
     facets = query.StudyQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
@@ -116,12 +116,12 @@ def delete_project(db: Session, project: models.Project) -> None:
     db.commit()
 
 
-def search_project(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+def search_project(db: Session, conditions: List[query.Condition]) -> Query:
     return query.ProjectQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_project(
-    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+    db: Session, attribute: query.ProjectAttribute, conditions: List[query.Condition]
 ) -> query.FacetResponse:
     facets = query.ProjectQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
@@ -145,12 +145,12 @@ def delete_biosample(db: Session, biosample: models.Biosample) -> None:
     db.commit()
 
 
-def search_biosample(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+def search_biosample(db: Session, conditions: List[query.Condition]) -> Query:
     return query.BiosampleQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_biosample(
-    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+    db: Session, attribute: query.BiosampleAttribute, conditions: List[query.Condition]
 ) -> query.FacetResponse:
     facets = query.BiosampleQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
@@ -179,12 +179,12 @@ def get_reads_qc(db: Session, reads_qc_id: str) -> Optional[models.ReadsQC]:
     return db.query(models.ReadsQC).filter(models.ReadsQC.id == reads_qc_id).first()
 
 
-def search_reads_qc(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+def search_reads_qc(db: Session, conditions: List[query.Condition]) -> Query:
     return query.ReadsQCQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_reads_qc(
-    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+    db: Session, attribute: query.ReadsQCAttribute, conditions: List[query.Condition]
 ) -> query.FacetResponse:
     facets = query.ReadsQCQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
@@ -201,12 +201,12 @@ def get_metagenome_assembly(
     )
 
 
-def search_metagenome_assembly(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+def search_metagenome_assembly(db: Session, conditions: List[query.Condition]) -> Query:
     return query.MetagenomeAssemblyQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_metagenome_assembly(
-    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+    db: Session, attribute: query.MetagenomeAssemblyAttribute, conditions: List[query.Condition]
 ) -> query.FacetResponse:
     facets = query.MetagenomeAssemblyQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
@@ -223,12 +223,12 @@ def get_metagenome_annotation(
     )
 
 
-def search_metagenome_annotation(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+def search_metagenome_annotation(db: Session, conditions: List[query.Condition]) -> Query:
     return query.MetagenomeAnnotationQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_metagenome_annotation(
-    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+    db: Session, attribute: query.MetagenomeAnnotationAttribute, conditions: List[query.Condition]
 ) -> query.FacetResponse:
     facets = query.MetagenomeAnnotationQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
@@ -245,12 +245,12 @@ def get_metaproteomic_analysis(
     )
 
 
-def search_metaproteomic_analysis(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+def search_metaproteomic_analysis(db: Session, conditions: List[query.Condition]) -> Query:
     return query.MetaproteomicAnalysisQuerySchema(conditions=conditions).execute(db)
 
 
 def facet_metaproteomic_analysis(
-    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+    db: Session, attribute: query.MetaproteomicAnalysisAttribute, conditions: List[query.Condition]
 ) -> query.FacetResponse:
     facets = query.MetaproteomicAnalysisQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)

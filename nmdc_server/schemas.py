@@ -1,10 +1,9 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Literal, Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
-from sqlalchemy import BigInteger, Column, DateTime, Float, String
 
 from nmdc_server import models
 
@@ -37,17 +36,16 @@ class AttributeType(Enum):
     float_ = "float"
     date = "date"
 
-    @classmethod
-    def from_column(cls, column: Column) -> "AttributeType":
-        if isinstance(column.type, DateTime):
-            return AttributeType.date
-        elif isinstance(column.type, Float):
-            return AttributeType.float_
-        elif isinstance(column.type, BigInteger):
-            return AttributeType.integer
-        elif isinstance(column.type, String):
-            return AttributeType.string
-        raise Exception("Unknown column type")
+
+class AttributeInfo(BaseModel):
+    name: str
+    description: str = ""
+    type: AttributeType = AttributeType.string
+    column: Any
+    group: Optional[str]
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class EnvoTerm(BaseModel):
@@ -69,11 +67,39 @@ class AnnotatedBase(BaseModel):
 
 
 # aggregations
-class AttributeSummary(BaseModel):
-    count: int
-    min: Optional[Union[float, datetime]]
-    max: Optional[Union[float, datetime]]
+class BaseAttributeSummary(BaseModel):
+    name: str
+    description: str
     type: AttributeType
+    group: Optional[str]
+    count: int
+
+
+class StrAttributeSummary(BaseAttributeSummary):
+    type: Literal[AttributeType.string]
+
+
+class IntAttributeSummary(BaseAttributeSummary):
+    type: Literal[AttributeType.integer]
+    min: int
+    max: int
+
+
+class FloatAttributeSummary(BaseAttributeSummary):
+    type: Literal[AttributeType.float_]
+    min: float
+    max: float
+
+
+class DateAttributeSummary(BaseAttributeSummary):
+    type: Literal[AttributeType.date]
+    min: datetime
+    max: datetime
+
+
+AttributeSummary = Union[
+    IntAttributeSummary, FloatAttributeSummary, DateAttributeSummary, StrAttributeSummary,
+]
 
 
 class TableSummary(BaseModel):

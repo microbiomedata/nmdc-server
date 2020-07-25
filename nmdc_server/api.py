@@ -101,7 +101,7 @@ async def search_biosample(
     tags=["biosample"],
     name="Get all values of an attribute",
 )
-async def facet_biosample(query: query.FacetQuery, db: Session = Depends(get_db)):
+async def facet_biosample(query: query.BiosampleFacetQuery, db: Session = Depends(get_db)):
     return crud.facet_biosample(db, query.attribute, query.conditions)
 
 
@@ -154,7 +154,7 @@ async def search_study(
     tags=["study"],
     name="Get all values of an attribute",
 )
-async def facet_study(query: query.FacetQuery, db: Session = Depends(get_db)):
+async def facet_study(query: query.StudyFacetQuery, db: Session = Depends(get_db)):
     return crud.facet_study(db, query.attribute, query.conditions)
 
 
@@ -207,7 +207,7 @@ async def search_project(
     tags=["project"],
     name="Get all values of an attribute",
 )
-async def facet_project(query: query.FacetQuery, db: Session = Depends(get_db)):
+async def facet_project(query: query.ProjectFacetQuery, db: Session = Depends(get_db)):
     return crud.facet_project(db, query.attribute, query.conditions)
 
 
@@ -281,7 +281,7 @@ async def search_reads_qc(
     tags=["reads_qc"],
     name="Get all values of an attribute",
 )
-async def facet_reads_qc(query: query.FacetQuery, db: Session = Depends(get_db)):
+async def facet_reads_qc(query: query.ReadsQCFacetQuery, db: Session = Depends(get_db)):
     return crud.facet_reads_qc(db, query.attribute, query.conditions)
 
 
@@ -317,7 +317,9 @@ async def search_metagenome_assembly(
     tags=["metagenome_assembly"],
     name="Get all values of an attribute",
 )
-async def facet_metagenome_assembly(query: query.FacetQuery, db: Session = Depends(get_db)):
+async def facet_metagenome_assembly(
+    query: query.MetagenomeAssemblyFacetQuery, db: Session = Depends(get_db)
+):
     return crud.facet_metagenome_assembly(db, query.attribute, query.conditions)
 
 
@@ -355,7 +357,9 @@ async def search_metagenome_annotation(
     tags=["metagenome_annotation"],
     name="Get all values of an attribute",
 )
-async def facet_metagenome_annotation(query: query.FacetQuery, db: Session = Depends(get_db)):
+async def facet_metagenome_annotation(
+    query: query.MetagenomeAnnotationFacetQuery, db: Session = Depends(get_db)
+):
     return crud.facet_metagenome_annotation(db, query.attribute, query.conditions)
 
 
@@ -393,7 +397,9 @@ async def search_metaproteomic_analysis(
     tags=["metaproteomic_analysis"],
     name="Get all values of an attribute",
 )
-async def facet_metaproteomic_analysis(query: query.FacetQuery, db: Session = Depends(get_db)):
+async def facet_metaproteomic_analysis(
+    query: query.MetaproteomicAnalysisFacetQuery, db: Session = Depends(get_db)
+):
     return crud.facet_metaproteomic_analysis(db, query.attribute, query.conditions)
 
 

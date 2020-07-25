@@ -1,23 +1,32 @@
 from enum import Enum
 from itertools import groupby
-from typing import cast, Dict, Iterator, List, Optional, Tuple, Union
+from typing import cast, Dict, Iterator, List, Literal, Tuple, Union
 
 from pydantic import BaseModel, validator
 from sqlalchemy import and_, distinct, func, or_
-from sqlalchemy.orm import aliased, Query, Session
+from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import Query, Session
 from sqlalchemy.orm.util import AliasedClass
 
 from nmdc_server import models, schemas
-
-EnvBroadScale = aliased(models.EnvoTerm)
-EnvBroadScaleAncestor = aliased(models.EnvoAncestor)
-EnvBroadScaleTerm = aliased(models.EnvoTerm)
-EnvLocalScale = aliased(models.EnvoTerm)
-EnvLocalScaleAncestor = aliased(models.EnvoAncestor)
-EnvLocalScaleTerm = aliased(models.EnvoTerm)
-EnvMedium = aliased(models.EnvoTerm)
-EnvMediumAncestor = aliased(models.EnvoAncestor)
-EnvMediumTerm = aliased(models.EnvoTerm)
+from nmdc_server.models import (
+    EnvBroadScaleAncestor,
+    EnvBroadScaleTerm,
+    EnvLocalScaleAncestor,
+    EnvLocalScaleTerm,
+    EnvMediumAncestor,
+    EnvMediumTerm,
+)
+from nmdc_server.query_fields import (
+    AttributeInfo,
+    BiosampleAttribute,
+    MetagenomeAnnotationAttribute,
+    MetagenomeAssemblyAttribute,
+    MetaproteomicAnalysisAttribute,
+    ProjectAttribute,
+    ReadsQCAttribute,
+    StudyAttribute,
+)
 
 
 class InvalidAttributeException(Exception):
@@ -56,23 +65,6 @@ def _join_envo(query: Query) -> Query:
         )
         .join(EnvMediumTerm, EnvMediumAncestor.ancestor_id == EnvMediumTerm.id, isouter=True)
     )
-
-
-def _join_envo_facet(query: Query, attribute: str) -> Query:
-    if attribute == "env_broad_scale":
-        return query.join(
-            EnvBroadScaleAncestor, EnvBroadScaleTerm.id == EnvBroadScaleAncestor.ancestor_id
-        ).join(models.Biosample, models.Biosample.env_broad_scale_id == EnvBroadScaleAncestor.id)
-    elif attribute == "env_local_scale":
-        return query.join(
-            EnvLocalScaleAncestor, EnvLocalScaleTerm.id == EnvLocalScaleAncestor.ancestor_id
-        ).join(models.Biosample, models.Biosample.env_local_scale_id == EnvLocalScaleAncestor.id)
-    elif attribute == "env_medium":
-        return query.join(
-            EnvMediumAncestor, EnvMediumTerm.id == EnvMediumAncestor.ancestor_id
-        ).join(models.Biosample, models.Biosample.env_medium_id == EnvMediumAncestor.id)
-    else:
-        raise Exception("Unknown envo attribute")
 
 
 class InvalidQuery(Exception):
@@ -201,26 +193,22 @@ class Table(Enum):
         return _join_envo(query)
 
 
-_envo_keys: Dict[str, Tuple[Table, str]] = {
-    "env_broad_scale": (Table.env_broad_scale, "label"),
-    "env_local_scale": (Table.env_local_scale, "label"),
-    "env_medium": (Table.env_medium, "label"),
-}
-
-_special_keys: Dict[str, Tuple[Table, str]] = {
-    "study_id": (Table.study, "id"),
-    "sample_id": (Table.biosample, "id"),
-    "biosample_id": (Table.biosample, "id"),
-    "project_id": (Table.project, "id"),
-    **_envo_keys,
-}
+AttributeType = Union[
+    BiosampleAttribute,
+    MetagenomeAnnotationAttribute,
+    MetagenomeAssemblyAttribute,
+    MetaproteomicAnalysisAttribute,
+    ProjectAttribute,
+    ReadsQCAttribute,
+    StudyAttribute,
+]
 
 
-class ConditionSchema(BaseModel):
+class BaseCondition(BaseModel):
     op: Operation = Operation.equal
-    field: str
+    field: AttributeType
     value: Union[schemas.AnnotationValue, Tuple[schemas.AnnotationValue, schemas.AnnotationValue]]
-    table: Optional[Table]
+    table: Table
 
     @validator("value")
     def validate_value_type(cls, v, values):
@@ -233,72 +221,99 @@ class ConditionSchema(BaseModel):
             raise ValueError("tuple values are only valid for between conditions")
         return v
 
-
-class Condition(ConditionSchema):
-    table: Table
-
     def compare(self):
-        model = self.table.model
-        if self.field in model.__table__.columns:
-            column = getattr(model, self.field)
-            if self.op == Operation.equal:
-                return column == self.value
-            elif self.op == Operation.greater:
-                return column > self.value
-            elif self.op == Operation.greater_equal:
-                return column >= self.value
-            elif self.op == Operation.less:
-                return column < self.value
-            elif self.op == Operation.less_equal:
-                return column <= self.value
-            elif self.op == Operation.not_equal:
-                return column != self.value
-            elif self.op == Operation.between:
-                value = cast(Tuple[schemas.AnnotationValue, schemas.AnnotationValue], self.value)
-                return and_(column >= value[0], column <= value[1])
-        if self.op == Operation.between and hasattr(model, "annotations"):
-            value = cast(Tuple[schemas.AnnotationValue, schemas.AnnotationValue], self.value)
+        info: AttributeInfo = self.field.info()
+        column = info.column
+        if isinstance(column, JSONB) and self.op == Operation.between:
+            json_field = self.column.astext  # type: ignore
+            min_value = self.value[0]  # type: ignore
+            max_value = self.value[0]  # type: ignore
             return and_(
-                func.nmdc_compare(
-                    model.annotations[self.field].astext, ">=", value[0]  # type: ignore
-                ),
-                func.nmdc_compare(
-                    model.annotations[self.field].astext, "<=", value[1]  # type: ignore
-                ),
+                func.nmdc_compare(json_field, ">=", min_value),
+                func.nmdc_compare(json_field, "<=", max_value),
             )
-        if hasattr(model, "annotations"):
-            json_field = model.annotations  # type: ignore
-        else:
-            raise InvalidAttributeException(self.table.value, self.field)
-        return func.nmdc_compare(
-            json_field[self.field].astext, self.op.value, self.value  # type: ignore
-        )
+        elif isinstance(column, JSONB):
+            json_field = self.column.astext  # type: ignore
+            return func.nmdc_compare(func.nmdc_compare(json_field, self.op.value, self.value))
+        elif self.op == Operation.equal:
+            return column == self.value
+        elif self.op == Operation.greater:
+            return column > self.value
+        elif self.op == Operation.greater_equal:
+            return column >= self.value
+        elif self.op == Operation.less:
+            return column < self.value
+        elif self.op == Operation.less_equal:
+            return column <= self.value
+        elif self.op == Operation.not_equal:
+            return column != self.value
+        elif self.op == Operation.between:
+            min_value, max_value = cast(
+                Tuple[schemas.AnnotationValue, schemas.AnnotationValue], self.value
+            )
+            return and_(column >= min_value, column <= max_value)
 
     @property
     def key(self) -> str:
         return f"{self.table}:{self.field}"
 
-    @classmethod
-    def from_schema(cls, condition: ConditionSchema, default_table: Table) -> "Condition":
-        kwargs = condition.dict()
-        if condition.field in _special_keys:
-            kwargs["table"], kwargs["field"] = _special_keys[condition.field]
-        elif not condition.table:
-            kwargs["table"] = default_table
-        return cls(**kwargs)
+
+class StudyCondition(BaseCondition):
+    field: StudyAttribute
+    table: Literal[Table.study] = Table.study
+
+
+class ProjectCondition(BaseCondition):
+    field: ProjectAttribute
+    table: Literal[Table.project] = Table.project
+
+
+class BiosampleCondition(BaseCondition):
+    field: BiosampleAttribute
+    table: Literal[Table.project] = Table.project
+
+
+class ReadsQCCondition(BaseCondition):
+    field: ReadsQCAttribute
+    table: Literal[Table.project] = Table.project
+
+
+class MetagenomeAssemblyCondition(BaseCondition):
+    field: MetagenomeAssemblyAttribute
+    table: Literal[Table.project] = Table.project
+
+
+class MetagenomeAnnotationCondition(BaseCondition):
+    field: MetagenomeAnnotationAttribute
+    table: Literal[Table.project] = Table.project
+
+
+class MetaproteomicAnalysisCondition(BaseCondition):
+    field: MetaproteomicAnalysisAttribute
+    table: Literal[Table.project] = Table.project
+
+
+Condition = Union[
+    BiosampleCondition,
+    MetagenomeAnnotationCondition,
+    MetagenomeAssemblyCondition,
+    MetaproteomicAnalysisCondition,
+    ProjectCondition,
+    ReadsQCCondition,
+    StudyCondition,
+]
 
 
 class BaseQuerySchema(BaseModel):
-    conditions: List[ConditionSchema] = []
+    conditions: List[Condition] = []
 
     @property
     def table(self) -> Table:
-        raise Exception("Abstract method")
+        raise Exception("Abstract class")
 
     @property
     def sorted_conditions(self) -> List[Condition]:
-        conditions = [Condition.from_schema(c, self.table) for c in self.conditions]
-        return sorted(conditions, key=lambda c: c.key)
+        return sorted(self.conditions, key=lambda c: c.key)
 
     @property
     def groups(self) -> Iterator[Tuple[str, Iterator[Condition]]]:
@@ -320,26 +335,14 @@ class BaseQuerySchema(BaseModel):
     def count(self, db: Session) -> int:
         return self.query(db).count()
 
-    def facet(self, db: Session, attribute: str,) -> Dict[schemas.AnnotationValue, int]:
-        model = self.table.model
-        join_envo = False
-        if attribute in _envo_keys and self.table == Table.biosample:
-            table, field = _envo_keys[attribute]
-            column = getattr(table.model, field)
-            join_envo = True
-        else:
-            if attribute in model.__table__.columns:
-                column = getattr(model, attribute)
-            elif hasattr(model, "annotations"):
-                column = model.annotations[attribute]  # type: ignore
-            else:
-                raise InvalidAttributeException(self.table.value, attribute)
+    def facet_query_join(self, query: Query, attribute: AttributeType) -> Query:
+        return query
 
+    def facet(self, db: Session, attribute: AttributeType) -> Dict[schemas.AnnotationValue, int]:
         subquery = self.query(db).subquery()
-        query = db.query(column, func.count(column))
-        if join_envo:
-            query = _join_envo_facet(query, attribute)
-        query = query.join(subquery, model.id == subquery.c.id)
+        column = attribute.info().column
+        query = self.facet_query_join(db.query(column, func.count(column)), attribute)
+        query = query.join(subquery, self.table.model.id == subquery.c.id)
         rows = query.group_by(column)
         return {value: count for value, count in rows if value is not None}
 
@@ -360,6 +363,26 @@ class BiosampleQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
         return Table.biosample
+
+    def facet_query_join(self, query: Query, attribute: BiosampleAttribute):  # type: ignore
+        if attribute == BiosampleAttribute.env_broad_scale:
+            return query.join(
+                EnvBroadScaleAncestor, EnvBroadScaleTerm.id == EnvBroadScaleAncestor.ancestor_id
+            ).join(
+                models.Biosample, models.Biosample.env_broad_scale_id == EnvBroadScaleAncestor.id
+            )
+        elif attribute == BiosampleAttribute.env_local_scale:
+            return query.join(
+                EnvLocalScaleAncestor, EnvLocalScaleTerm.id == EnvLocalScaleAncestor.ancestor_id
+            ).join(
+                models.Biosample, models.Biosample.env_local_scale_id == EnvLocalScaleAncestor.id
+            )
+        elif attribute == BiosampleAttribute.env_medium:
+            return query.join(
+                EnvMediumAncestor, EnvMediumTerm.id == EnvMediumAncestor.ancestor_id
+            ).join(models.Biosample, models.Biosample.env_medium_id == EnvMediumAncestor.id)
+        else:
+            return query
 
 
 class ReadsQCQuerySchema(BaseQuerySchema):
@@ -395,11 +418,35 @@ class BiosampleSearchResponse(BaseSearchResponse):
 
 
 class SearchQuery(BaseModel):
-    conditions: List[ConditionSchema] = []
+    conditions: List[Condition] = []
 
 
-class FacetQuery(SearchQuery):
-    attribute: str
+class StudyFacetQuery(SearchQuery):
+    attribute: StudyAttribute
+
+
+class ProjectFacetQuery(SearchQuery):
+    attribute: ProjectAttribute
+
+
+class BiosampleFacetQuery(SearchQuery):
+    attribute: BiosampleAttribute
+
+
+class ReadsQCFacetQuery(SearchQuery):
+    attribute: ReadsQCAttribute
+
+
+class MetagenomeAssemblyFacetQuery(SearchQuery):
+    attribute: MetagenomeAssemblyAttribute
+
+
+class MetagenomeAnnotationFacetQuery(SearchQuery):
+    attribute: MetagenomeAnnotationAttribute
+
+
+class MetaproteomicAnalysisFacetQuery(SearchQuery):
+    attribute: MetaproteomicAnalysisAttribute
 
 
 class StudySearchResponse(BaseSearchResponse):
@@ -427,4 +474,4 @@ class MetaproteomicAnalysisSearchResponse(BaseSearchResponse):
 
 
 class FacetResponse(BaseModel):
-    facets: Dict[schemas.AnnotationValue, int]
+    facets: Dict[str, int]

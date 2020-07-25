@@ -16,7 +16,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import aliased, Query, relationship
 from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base
@@ -54,6 +54,33 @@ def output_association(table: str) -> Table:
 
 def output_relationship(association: Table) -> "RelationshipProperty[DataObject]":
     return relationship("DataObject", secondary=association,)
+
+
+def _join_envo(query: Query) -> Query:
+    return (
+        query.join(
+            EnvBroadScaleAncestor,
+            Biosample.env_broad_scale_id == EnvBroadScaleAncestor.id,
+            isouter=True,
+        )
+        .join(
+            EnvBroadScaleTerm,
+            EnvBroadScaleAncestor.ancestor_id == EnvBroadScaleTerm.id,
+            isouter=True,
+        )
+        .join(
+            EnvLocalScaleAncestor,
+            Biosample.env_local_scale_id == EnvLocalScaleAncestor.id,
+            isouter=True,
+        )
+        .join(
+            EnvLocalScaleTerm,
+            EnvLocalScaleAncestor.ancestor_id == EnvLocalScaleTerm.id,
+            isouter=True,
+        )
+        .join(EnvMediumAncestor, Biosample.env_medium_id == EnvMediumAncestor.id, isouter=True)
+        .join(EnvMediumTerm, EnvMediumAncestor.ancestor_id == EnvMediumTerm.id, isouter=True)
+    )
 
 
 class EnvoTerm(Base):
@@ -96,6 +123,17 @@ class EnvoAncestor(Base):
 
     term = relationship(EnvoTerm, foreign_keys=[id], lazy="joined",)
     ancestor = relationship(EnvoTerm, foreign_keys=[ancestor_id], lazy="joined")
+
+
+EnvBroadScale = aliased(EnvoTerm)
+EnvBroadScaleAncestor = aliased(EnvoAncestor)
+EnvBroadScaleTerm = aliased(EnvoTerm)
+EnvLocalScale = aliased(EnvoTerm)
+EnvLocalScaleAncestor = aliased(EnvoAncestor)
+EnvLocalScaleTerm = aliased(EnvoTerm)
+EnvMedium = aliased(EnvoTerm)
+EnvMediumAncestor = aliased(EnvoAncestor)
+EnvMediumTerm = aliased(EnvoTerm)
 
 
 class PrincipalInvestigator(Base):
@@ -151,6 +189,7 @@ class Project(Base, AnnotatedModel):
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
+
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     study = relationship("Study", backref="projects")
 

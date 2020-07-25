@@ -4,73 +4,49 @@ from sqlalchemy import Column, func
 from sqlalchemy.orm import Session
 
 from nmdc_server import models, query, schemas
-
-
-def get_annotation_summary(
-    db: Session, model: Type[models.AnnotatedModel],
-) -> Dict[str, schemas.AttributeSummary]:
-    attribute = func.jsonb_object_keys(model.annotations)
-
-    # TODO: Figure out the correct type, or remove json aggregations
-    q = db.query(attribute, func.count(),).group_by(attribute)
-
-    attributes: Dict[str, schemas.AttributeSummary] = {}
-    for r in q:
-        attributes[r[0]] = schemas.AttributeSummary(count=r[1], type=schemas.AttributeType.string,)
-
-    return attributes
+from nmdc_server.query_fields import TableAttribute
 
 
 def get_column_count(db: Session, column: Column) -> int:
     return db.query(func.count()).filter(column != None).scalar()
 
 
-def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSummary:
+def get_table_summary(
+    db: Session, model: models.Base, attributes: Type[TableAttribute]
+) -> schemas.TableSummary:
     count = db.query(model).count()
-    attributes: Dict[str, schemas.AttributeSummary] = {}
-    if isinstance(model(), models.AnnotatedModel):
-        attributes.update(get_annotation_summary(db, cast(Type[models.AnnotatedModel], model)))
-
-    for column in model.__table__.columns:
-        if (
-            column.name not in ["id", "annotations", "alternate_identifiers"]
-            and "_id" not in column.name
-        ):
-            type_ = schemas.AttributeType.from_column(column)
-            if type_ == schemas.AttributeType.string:
-                attributes[column.name] = schemas.AttributeSummary(
-                    count=get_column_count(db, column),
-                    type=schemas.AttributeType.from_column(column),
-                )
-            else:
-                count_, min, max = (
-                    db.query(func.count(), func.min(column), func.max(column))
-                    .filter(column != None)
-                    .first()
-                )
-                attributes[column.name] = schemas.AttributeSummary(
-                    count=count_, min=min, max=max, type=schemas.AttributeType.from_column(column),
-                )
-
-    if model == models.Biosample:
-        attributes["env_medium"] = schemas.AttributeSummary(
-            count=get_column_count(db, models.Biosample.env_medium_id),
-            type=schemas.AttributeType.string,
+    summary: Dict[str, schemas.AttributeSummary] = {}
+    for attribute in attributes:
+        attribute = cast(TableAttribute, attribute)
+        info: schemas.AttributeInfo = attribute.info()
+        column = info.column
+        kwargs = info.dict(exclude={"column"}, exclude_unset=True)
+        count_, min, max = (
+            db.query(func.count(), func.min(column), func.max(column))
+            .filter(column != None)
+            .first()
         )
-        attributes["env_local_scale"] = schemas.AttributeSummary(
-            count=get_column_count(db, models.Biosample.env_local_scale_id),
-            type=schemas.AttributeType.string,
-        )
-        attributes["env_broad_scale"] = schemas.AttributeSummary(
-            count=get_column_count(db, models.Biosample.env_broad_scale_id),
-            type=schemas.AttributeType.string,
-        )
-    # TODO: enable when query works
-    # if model == models.Study:
-    #     attributes["principal_investigator_name"] = schemas.AttributeSummary(
-    #         count=count,
-    #         type=schemas.AttributeType.string,
-    #     )
+        kwargs["count"] = count_
+        if info.type == schemas.AttributeType.string:
+            summary[attribute.value] = schemas.StrAttributeSummary(**kwargs)
+        elif info.type == schemas.AttributeType.date:
+            summary[attribute.value] = schemas.DateAttributeSummary(
+                min=min,
+                max=max,
+                **kwargs
+            )
+        elif info.type == schemas.AttributeType.integer:
+            summary[attribute.value] = schemas.IntAttributeSummary(
+                min=min,
+                max=max,
+                **kwargs
+            )
+        elif info.type == schemas.AttributeType.integer:
+            summary[attribute.value] = schemas.FloatAttributeSummary(
+                min=min,
+                max=max,
+                **kwargs
+            )
 
     return schemas.TableSummary(total=count, attributes=attributes)
 
