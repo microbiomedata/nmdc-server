@@ -405,3 +405,31 @@ def test_facet_invalid_attribute(db: Session):
     q = query.ReadsQCQuerySchema()
     with pytest.raises(query.InvalidAttributeException):
         q.facet(db, "bad value")
+
+
+def test_query_pi(db: Session):
+    study1 = fakes.StudyFactory(id="study1", principal_investigator__name="John Doe")
+    study2 = fakes.StudyFactory(id="study2", principal_investigator__name="Jane Doe")
+    fakes.ProjectFactory(id="project1", study=study1)
+    fakes.ProjectFactory(id="project2", study=study2)
+    db.commit()
+
+    q = query.StudyQuerySchema()
+    assert q.facet(db, "principal_investigator_name") == {
+        "John Doe": 1,
+        "Jane Doe": 1,
+    }
+
+    q = query.StudyQuerySchema(
+        conditions=[
+            {"table": "study", "field": "principal_investigator_name", "value": "John Doe",}
+        ]
+    )
+    assert ["study1"] == [r.id for r in q.execute(db)]
+
+    qp = query.ProjectQuerySchema(
+        conditions=[
+            {"table": "study", "field": "principal_investigator_name", "value": "John Doe",}
+        ]
+    )
+    assert ["project1"] == [r.id for r in qp.execute(db)]

@@ -1,9 +1,9 @@
 from enum import Enum
 from itertools import groupby
-from typing import cast, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, cast, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, validator
-from sqlalchemy import and_, distinct, func, or_
+from sqlalchemy import and_, distinct, func, inspect, or_
 from sqlalchemy.orm import aliased, Query, Session
 from sqlalchemy.orm.util import AliasedClass
 
@@ -100,6 +100,7 @@ class Table(Enum):
     metagenome_assembly = "metagenome_assembly"
     metagenome_annotation = "metagenome_annotation"
     metaproteomic_analysis = "metaproteomic_analysis"
+    principal_investigator = "principal_investigator"
 
     @property
     def model(self) -> Union[models.ModelType, AliasedClass]:
@@ -131,6 +132,7 @@ class Table(Enum):
                 db.query(distinct(models.Biosample.id).label("id"))
                 .join(models.Project)
                 .join(models.Study)
+                .join(models.PrincipalInvestigator)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
@@ -139,6 +141,7 @@ class Table(Enum):
         elif self == Table.study:
             query = (
                 db.query(distinct(models.Study.id).label("id"))
+                .join(models.PrincipalInvestigator)
                 .join(models.Project, isouter=True)
                 .join(models.Biosample, isouter=True)
                 .join(models.ReadsQC, isouter=True)
@@ -150,6 +153,7 @@ class Table(Enum):
             query = (
                 db.query(distinct(models.Project.id).label("id"))
                 .join(models.Study)
+                .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
@@ -161,6 +165,7 @@ class Table(Enum):
                 db.query(distinct(models.ReadsQC.id).label("id"))
                 .join(models.Project)
                 .join(models.Study)
+                .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
@@ -171,6 +176,7 @@ class Table(Enum):
                 db.query(distinct(models.MetagenomeAssembly.id).label("id"))
                 .join(models.Project)
                 .join(models.Study)
+                .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
@@ -181,6 +187,7 @@ class Table(Enum):
                 db.query(distinct(models.MetagenomeAnnotation.id).label("id"))
                 .join(models.Project)
                 .join(models.Study)
+                .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
@@ -191,6 +198,7 @@ class Table(Enum):
                 db.query(distinct(models.MetaproteomicAnalysis.id).label("id"))
                 .join(models.Project)
                 .join(models.Study)
+                .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
@@ -205,6 +213,10 @@ _envo_keys: Dict[str, Tuple[Table, str]] = {
     "env_broad_scale": (Table.env_broad_scale, "label"),
     "env_local_scale": (Table.env_local_scale, "label"),
     "env_medium": (Table.env_medium, "label"),
+}
+
+_association_proxy_keys: Dict[str, Tuple[Any, Any]] = {
+    "principal_investigator_name": (models.Study, models.PrincipalInvestigator.name),
 }
 
 _special_keys: Dict[str, Tuple[Table, str]] = {
@@ -237,9 +249,15 @@ class ConditionSchema(BaseModel):
 class Condition(ConditionSchema):
     table: Table
 
+    def is_column(self) -> bool:
+        m = self.table.model
+        if isinstance(m, AliasedClass):
+            m = inspect(m).class_
+        return self.field in inspect(m).all_orm_descriptors.keys()
+
     def compare(self):
         model = self.table.model
-        if self.field in model.__table__.columns:
+        if self.is_column():
             column = getattr(model, self.field)
             if self.op == Operation.equal:
                 return column == self.value
@@ -321,24 +339,29 @@ class BaseQuerySchema(BaseModel):
         return self.query(db).count()
 
     def facet(self, db: Session, attribute: str,) -> Dict[schemas.AnnotationValue, int]:
-        model = self.table.model
+        model: Any = self.table.model
         join_envo = False
+        join_ap = False
         if attribute in _envo_keys and self.table == Table.biosample:
             table, field = _envo_keys[attribute]
             column = getattr(table.model, field)
             join_envo = True
+        elif attribute in inspect(model).columns.keys():
+            column = getattr(model, attribute)
+        elif attribute in _association_proxy_keys:
+            model, column = _association_proxy_keys[attribute]
+            join_ap = True
+        elif hasattr(model, "annotations"):
+            column = model.annotations[attribute]
         else:
-            if attribute in model.__table__.columns:
-                column = getattr(model, attribute)
-            elif hasattr(model, "annotations"):
-                column = model.annotations[attribute]  # type: ignore
-            else:
-                raise InvalidAttributeException(self.table.value, attribute)
+            raise InvalidAttributeException(self.table.value, attribute)
 
         subquery = self.query(db).subquery()
         query = db.query(column, func.count(column))
         if join_envo:
             query = _join_envo_facet(query, attribute)
+        elif join_ap:
+            query = query.join(model)
         query = query.join(subquery, model.id == subquery.c.id)
         rows = query.group_by(column)
         return {value: count for value, count in rows if value is not None}
