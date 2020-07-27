@@ -18,50 +18,56 @@
       shaped
       class="compact"
     >
-      <template v-for="field in filteredFields">
-        <template
-          v-if="!(fieldmeta[field] && (fieldmeta[field].hide || fieldmeta[field].hideFacet))"
+      <div
+        v-for="[groupname, filteredFields] in groupedFields"
+        :key="groupname"
+      >
+        <v-subheader
+          v-show="groupedFields.length > 1 && filteredFields.length > 0"
         >
-          <v-menu
-            :key="field"
-            offset-x
-            :close-on-content-click="false"
-            @input="toggleMenu(field, $event)"
-          >
-            <template #activator="{ on }">
-              <v-list-item
-                v-show="!hasActiveConditions(field)"
-                v-on="on"
-              >
-                <v-list-item-content>
-                  <v-list-item-title> {{ fieldDisplayName(field) }} </v-list-item-title>
-                </v-list-item-content>
-                <v-list-item-icon>
-                  <v-icon> mdi-play </v-icon>
-                </v-list-item-icon>
-              </v-list-item>
-            </template>
-            <v-card
-              width="500"
+          {{ groupname !== 'undefined' ? groupname : 'Other' }}
+        </v-subheader>
+        <v-menu
+          v-for="field in filteredFields"
+          v-show="!(field.hideAttrs || field.hideFacet)"
+          :key="field.name"
+          offset-x
+          :close-on-content-click="false"
+          @input="toggleMenu(field.name, $event)"
+        >
+          <template #activator="{ on }">
+            <v-list-item
+              v-show="!hasActiveConditions(field.name)"
+              v-on="on"
             >
-              <slot
-                name="menu"
-                v-bind="{
-                  field,
-                  isOpen: menuState[field],
-                }"
-              />
-            </v-card>
-          </v-menu>
-        </template>
-      </template>
+              <v-list-item-content>
+                <v-list-item-title> {{ fieldDisplayName(field.name) }} </v-list-item-title>
+              </v-list-item-content>
+              <v-list-item-icon>
+                <v-icon> mdi-play </v-icon>
+              </v-list-item-icon>
+            </v-list-item>
+          </template>
+          <v-card
+            width="500"
+          >
+            <slot
+              name="menu"
+              v-bind="{
+                field: field.name,
+                isOpen: menuState[field.name],
+              }"
+            />
+          </v-card>
+        </v-menu>
+      </div>
     </v-list>
   </div>
 </template>
 
 <script>
 import Vue from 'vue';
-
+import { groupBy } from 'lodash';
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
 
@@ -87,12 +93,17 @@ export default {
     menuState: {},
   }),
   computed: {
-    filteredFields() {
+    _filteredFields() {
       if (this.filterText) {
         return this.fields.filter((f) => f.toLowerCase()
           .indexOf(this.filterText.toLowerCase()) >= 0);
       }
       return this.fields;
+    },
+    groupedFields() {
+      const fieldsWithMeta = this._filteredFields.map((f) => ({ name: f, ...encoding.fields[f] }));
+
+      return Object.entries(groupBy(fieldsWithMeta, 'group')).sort((a) => ((a[0] === 'undefined') ? 0 : -1));
     },
   },
   methods: {

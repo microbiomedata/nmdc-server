@@ -15,48 +15,6 @@ const types = {
     plural: 'projects',
     visible: true,
   },
-  Metagenome: {
-    icon: 'mdi-dna',
-    heading: 'Metagenome',
-    name: 'metagenome',
-    plural: 'Metagenomes',
-    visible: false,
-  },
-  Metatranscriptome: {
-    icon: 'mdi-file-table-box-multiple-outline',
-    heading: 'Metatranscriptomes',
-    name: 'metatranscriptome',
-    plural: 'metatranscriptomes',
-    visible: false,
-  },
-  Proteomics: {
-    icon: 'mdi-file-table-box-multiple-outline',
-    heading: 'Proteomics',
-    name: 'proteomics',
-    plural: 'proteomics',
-    visible: false,
-  },
-  Metabolomics: {
-    icon: 'mdi-file-table-box-multiple-outline',
-    heading: 'Metabolomics',
-    name: 'metabolomics',
-    plural: 'metabolomics',
-    visible: false,
-  },
-  Lipidomics: {
-    icon: 'mdi-file-table-box-multiple-outline',
-    heading: 'Lipidomics',
-    name: 'lipidomics',
-    plural: 'lipidomics',
-    visible: false,
-  },
-  'Organic Matter Characterization': {
-    icon: 'mdi-file-table-box-multiple-outline',
-    heading: 'Organic Matter Characterization',
-    name: 'organic matter characterization',
-    plural: 'organic matter characterizations',
-    visible: false,
-  },
   biosample: {
     icon: 'mdi-earth',
     heading: 'Environments',
@@ -125,32 +83,39 @@ const fields = {
   },
   add_date: {
     icon: 'mdi-calendar',
-    hide: true,
+    hideAttr: true,
   },
   mod_date: {
     icon: 'mdi-calendar',
-    hide: true,
+    hideAttr: true,
   },
+  /* GOLD ecosystem type */
   ecosystem: {
     icon: 'mdi-pine-tree',
+    group: 'GOLD Ecosystems',
   },
   ecosystem_category: {
     icon: 'mdi-pine-tree',
+    group: 'GOLD Ecosystems',
   },
   ecosystem_type: {
     icon: 'mdi-pine-tree',
+    group: 'GOLD Ecosystems',
   },
   ecosystem_subtype: {
     icon: 'mdi-pine-tree',
-    hide: true,
+    group: 'GOLD Ecosystems',
+    hideAttr: true,
   },
   specific_ecosystem: {
     icon: 'mdi-pine-tree',
-    hide: true,
+    group: 'GOLD Ecosystems',
+    hideAttr: true,
   },
+  /* END GOLD ecosystem type */
   ecosystem_path_id: {
     icon: 'mdi-pine-tree',
-    hide: true,
+    hideAttr: true,
   },
   habitat: {
     icon: 'mdi-pine-tree',
@@ -163,16 +128,19 @@ const fields = {
   },
   doi: {
     icon: 'mdi-file-document-outline',
-    hide: true,
+    hideAttr: true,
   },
   env_broad_scale: {
     name: 'Environmental biome',
+    group: 'ENVO',
   },
   env_local_scale: {
     name: 'Environmental feature',
+    group: 'ENVO',
   },
   env_medium: {
     name: 'Environmental material',
+    group: 'ENVO',
   },
 };
 
