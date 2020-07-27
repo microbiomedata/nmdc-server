@@ -46,7 +46,7 @@
         </v-list-item-content>
       </v-list-item>
       <template v-for="field in displayFields">
-        <template v-if="!getField(field) || getField(field).hide">
+        <template v-if="!getField(field) || getField(field).hideAttr">
           <v-tooltip
             v-if="field.startsWith('open_')"
             :key="field"
