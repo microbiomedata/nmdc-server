@@ -1,6 +1,6 @@
 POSTGRES_PASSWORD=postgres
 PGHOST=db
 PGUSER=postgres
-PGPASSWORD="${POSTGRES_PASSWORD}"
+PGPASSWORD=postgres
 PGDATABASE=nmdc
-POSTGRES_URI="postgresql://${PGUSER}:${PGPASSWORD}@${PGHOST}/${PGDATABASE}"
+POSTGRES_URI="postgresql://postgres:postgres@postgres/nmdc"

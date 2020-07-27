@@ -26,6 +26,8 @@ services:
   web:
     depends_on: 
       - backend
+    env_file:
+      - .docker-env
     environment:
       BACKEND_URL: "http://backend:8000"
     build:
