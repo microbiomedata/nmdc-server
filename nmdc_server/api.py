@@ -115,14 +115,14 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
     return db_biosample
 
 
-@router.delete(
-    "/biosample/{biosample_id}", status_code=204, tags=["biosample"],
-)
-async def delete_biosample(biosample_id: str, db: Session = Depends(get_db)):
-    db_biosample = crud.get_biosample(db, biosample_id)
-    if db_biosample is None:
-        raise HTTPException(status_code=404, detail="Biosample not found")
-    crud.delete_biosample(db, db_biosample)
+# @router.delete(
+#     "/biosample/{biosample_id}", status_code=204, tags=["biosample"],
+# )
+# async def delete_biosample(biosample_id: str, db: Session = Depends(get_db)):
+#     db_biosample = crud.get_biosample(db, biosample_id)
+#     if db_biosample is None:
+#         raise HTTPException(status_code=404, detail="Biosample not found")
+#     crud.delete_biosample(db, db_biosample)
 
 
 # study
@@ -168,14 +168,14 @@ async def get_study(study_id: str, db: Session = Depends(get_db)):
     return db_study
 
 
-@router.delete(
-    "/study/{study_id}", status_code=204, tags=["study"],
-)
-async def delete_study(study_id: str, db: Session = Depends(get_db)):
-    db_study = crud.get_study(db, study_id)
-    if db_study is None:
-        raise HTTPException(status_code=404, detail="Study not found")
-    crud.delete_study(db, db_study)
+# @router.delete(
+#     "/study/{study_id}", status_code=204, tags=["study"],
+# )
+# async def delete_study(study_id: str, db: Session = Depends(get_db)):
+#     db_study = crud.get_study(db, study_id)
+#     if db_study is None:
+#         raise HTTPException(status_code=404, detail="Study not found")
+#     crud.delete_study(db, db_study)
 
 
 # project
@@ -221,14 +221,14 @@ async def get_project(project_id: str, db: Session = Depends(get_db)):
     return db_project
 
 
-@router.delete(
-    "/project/{project_id}", status_code=204, tags=["project"],
-)
-async def delete_project(project_id: str, db: Session = Depends(get_db)):
-    db_project = crud.get_project(db, project_id)
-    if db_project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
-    crud.delete_project(db, db_project)
+# @router.delete(
+#     "/project/{project_id}", status_code=204, tags=["project"],
+# )
+# async def delete_project(project_id: str, db: Session = Depends(get_db)):
+#     db_project = crud.get_project(db, project_id)
+#     if db_project is None:
+#         raise HTTPException(status_code=404, detail="Project not found")
+#     crud.delete_project(db, db_project)
 
 
 # data object
@@ -249,14 +249,14 @@ async def get_data_object(data_object_id: str, db: Session = Depends(get_db)):
     return db_data_object
 
 
-@router.delete(
-    "/data_object/{data_object_id}", status_code=204, tags=["data_object"],
-)
-async def delete_data_object(data_object_id: str, db: Session = Depends(get_db)):
-    db_data_object = crud.get_data_object(db, data_object_id)
-    if db_data_object is None:
-        raise HTTPException(status_code=404, detail="DataObject not found")
-    crud.delete_data_object(db, db_data_object)
+# @router.delete(
+#     "/data_object/{data_object_id}", status_code=204, tags=["data_object"],
+# )
+# async def delete_data_object(data_object_id: str, db: Session = Depends(get_db)):
+#     db_data_object = crud.get_data_object(db, data_object_id)
+#     if db_data_object is None:
+#         raise HTTPException(status_code=404, detail="DataObject not found")
+#     crud.delete_data_object(db, db_data_object)
 
 
 @router.post(
