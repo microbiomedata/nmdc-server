@@ -1,4 +1,4 @@
-name: dockerhub
+name: deploy
 
 on: 
   push:
@@ -25,7 +25,7 @@ jobs:
           tags: latest
 
       - name: Deploy server
-        uses: fjogeleit/http-request-action@1.3.3
+        uses: fjogeleit/http-request-action@v1.3.3
         if: ${{ matrix.image == 'server' }}
         with:
           url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:backend?action=redeploy'
@@ -44,7 +44,7 @@ jobs:
           path: web
 
       - name: Deploy client
-        uses: fjogeleit/http-request-action@1.3.3
+        uses: fjogeleit/http-request-action@v1.3.3
         if: ${{ matrix.image == 'client' }}
         with:
           url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:frontend?action=redeploy'
