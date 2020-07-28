@@ -10,6 +10,9 @@ export function valueCardinality(value) {
 }
 
 export function typeWithCardinality(type, cardinality) {
+  if (types[type] === undefined) {
+    return type;
+  }
   if (cardinality === 1) {
     return types[type].name;
   }
