@@ -30,18 +30,18 @@
         <v-menu
           v-for="field in filteredFields"
           v-show="!(field.hideAttrs || field.hideFacet)"
-          :key="field.name"
+          :key="field.key"
           offset-x
           :close-on-content-click="false"
-          @input="toggleMenu(field.name, $event)"
+          @input="toggleMenu(field.key, $event)"
         >
           <template #activator="{ on }">
             <v-list-item
-              v-show="!hasActiveConditions(field.name)"
+              v-show="!hasActiveConditions(field.key)"
               v-on="on"
             >
               <v-list-item-content>
-                <v-list-item-title> {{ fieldDisplayName(field.name) }} </v-list-item-title>
+                <v-list-item-title> {{ fieldDisplayName(field.key) }} </v-list-item-title>
               </v-list-item-content>
               <v-list-item-icon>
                 <v-icon> mdi-play </v-icon>
@@ -54,8 +54,8 @@
             <slot
               name="menu"
               v-bind="{
-                field: field.name,
-                isOpen: menuState[field.name],
+                field: field.key,
+                isOpen: menuState[field.key],
               }"
             />
           </v-card>
@@ -101,7 +101,7 @@ export default {
       return this.fields;
     },
     groupedFields() {
-      const fieldsWithMeta = this._filteredFields.map((f) => ({ name: f, ...encoding.fields[f] }));
+      const fieldsWithMeta = this._filteredFields.map((f) => ({ key: f, ...encoding.fields[f] }));
 
       return Object.entries(groupBy(fieldsWithMeta, 'group')).sort((a) => ((a[0] === 'undefined') ? 0 : -1));
     },
