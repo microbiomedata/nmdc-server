@@ -233,14 +233,14 @@ async def delete_project(project_id: str, db: Session = Depends(get_db)):
 
 # data object
 @router.post(
-    "/data_object", response_model=schemas.DataObject, tags=["data object"],
+    "/data_object", response_model=schemas.DataObject, tags=["data_object"],
 )
 async def create_data_object(data_object: schemas.DataObjectCreate, db: Session = Depends(get_db)):
     return crud.create_data_object(db, data_object)
 
 
 @router.get(
-    "/data_object/{data_object_id}", response_model=schemas.DataObject, tags=["data object"],
+    "/data_object/{data_object_id}", response_model=schemas.DataObject, tags=["data_object"],
 )
 async def get_data_object(data_object_id: str, db: Session = Depends(get_db)):
     db_data_object = crud.get_data_object(db, data_object_id)
@@ -250,7 +250,7 @@ async def get_data_object(data_object_id: str, db: Session = Depends(get_db)):
 
 
 @router.delete(
-    "/data_object/{data_object_id}", status_code=204, tags=["data object"],
+    "/data_object/{data_object_id}", status_code=204, tags=["data_object"],
 )
 async def delete_data_object(data_object_id: str, db: Session = Depends(get_db)):
     db_data_object = crud.get_data_object(db, data_object_id)
