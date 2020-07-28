@@ -40,7 +40,7 @@ export default {
     verb(op) {
       return opMap[op];
     },
-    valueTransform(cond, val, field, type) {
+    valueTransform(val, field, type) {
       // If it's not primitive
       if (val && typeof val === 'object') {
         const inner = val.map((v) => this.valueTransform(v, field, type)).join(', ');
@@ -91,7 +91,7 @@ export default {
           @click:close="$emit('remove', cond)"
         >
           <span class="chip-content">
-            {{ valueTransform(cond, cond.value, cond.field, cond.table) }}
+            {{ valueTransform(cond.value, cond.field, cond.table) }}
           </span>
         </v-chip>
       </div>
