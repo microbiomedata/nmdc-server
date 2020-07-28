@@ -26,7 +26,7 @@ date_fmt = r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M"
 envo_url = (
     "https://raw.githubusercontent.com/EnvironmentOntology/envo/master/subsets/envo-basic.json"
 )
-nmdc_metadata_sha = "6417a4d57dc68673dc3b1c7ab71812a794bf2c40"
+nmdc_metadata_sha = "40900ef07383bf16debcef4c97059e59a646b028"
 nmdc_data_url = (
     "https://github.com/microbiomedata/nmdc-metadata/raw/"
     f"{nmdc_metadata_sha}"
