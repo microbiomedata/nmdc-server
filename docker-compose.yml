@@ -30,6 +30,7 @@ services:
       - .docker-env
     environment:
       BACKEND_URL: "http://backend:8000"
+      DNS_ADDRESS: "127.0.0.11"
     build:
       context: web/
       dockerfile: Dockerfile
