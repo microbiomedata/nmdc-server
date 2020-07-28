@@ -318,7 +318,7 @@ def main(*args):
     with create_session() as db:
         with request.urlopen(nmdc_data_url) as r:
             with ZipFile(BytesIO(r.read())) as f:
-                data = json.load(f.open('nmdc_database.json'))
+                data = json.load(f.open("nmdc_database.json"))
 
         create_tables(db, settings)
         populate_envo(db)
