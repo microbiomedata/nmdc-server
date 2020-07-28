@@ -259,6 +259,31 @@ async def delete_data_object(data_object_id: str, db: Session = Depends(get_db))
     crud.delete_data_object(db, db_data_object)
 
 
+@router.post(
+    "/data_object/search",
+    response_model=query.DataObjectSearchResponse,
+    tags=["data_object"],
+    name="Search for studies",
+    description="Faceted search of data_object data.",
+)
+async def search_data_object(
+    query: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
+    return pagination.response(crud.search_data_object(db, query.conditions))
+
+
+@router.post(
+    "/data_object/facet",
+    response_model=query.FacetResponse,
+    tags=["data_object"],
+    name="Get all values of an attribute",
+)
+async def facet_data_object(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_data_object(db, query.attribute, query.conditions)
+
+
 # reads_qc
 @router.post(
     "/reads_qc/search",

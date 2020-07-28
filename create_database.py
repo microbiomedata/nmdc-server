@@ -210,6 +210,11 @@ def ingest_projects(db: Session, data) -> Dict[str, str]:
                     [(project_db.id, d) for d in data_objects]
                 )
             )
+            db.execute(
+                models.DataObject.__table__.update()
+                .where(models.DataObject.id.in_(data_objects))
+                .values({"project_id": project["id"]})
+            )
 
     db.commit()
     return biosample_projects
@@ -289,6 +294,13 @@ def ingest_pipeline(db: Session, objects, model: Type[models.PipelineStep], data
                 .insert()
                 .values([(step.id, f) for f in outputs])
             )
+
+        db.execute(
+            models.DataObject.__table__.update()
+            .where(models.DataObject.id.in_(inputs + outputs))
+            .values({"project_id": d["project_id"]})
+        )
+
     db.commit()
 
 
