@@ -194,6 +194,7 @@ def ingest_projects(db: Session, data) -> Dict[str, str]:
         project = load_common_fields(p)
         project["study_id"] = coerce_id(p.pop("part_of")[0])
         data_objects = p.pop("has_output", [])
+        p.pop("principal_investigator_name", None)
         for id in p.pop("has_input", []):
             biosample_projects[id] = project["id"]
 
