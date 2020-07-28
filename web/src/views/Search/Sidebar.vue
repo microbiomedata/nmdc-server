@@ -2,9 +2,9 @@
 import { mapGetters, mapState } from 'vuex';
 import { types } from '@/encoding';
 
-import ConditionChips from '@/components/Presentation/ConditionChips.vue';
 import FacetedSearch from '@/components/Presentation/FacetedSearch.vue';
 
+import ConditionChips from './ConditionChips.vue';
 import MenuContent from './MenuContent.vue';
 
 export default {

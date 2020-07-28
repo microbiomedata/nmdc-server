@@ -169,7 +169,9 @@ export default {
     typeWithCardinality,
     selectField(field) {
       this.$emit('selected', {
-        conditions: [{ field, op: '==', value: this.item[field] }],
+        conditions: [{
+          field, op: '==', value: this.item[field], table: this.type,
+        }],
       });
     },
     relatedTypeConditions(relatedType) {

@@ -1,6 +1,7 @@
 <script>
 import moment from 'moment';
 import Vue from 'vue';
+import { mapGetters } from 'vuex';
 import { groupBy } from 'lodash';
 import { opMap } from '@/data/api';
 import { fieldDisplayName } from '@/util';
@@ -17,6 +18,7 @@ export default {
   data: () => ({ menuState: {} }),
 
   computed: {
+    ...mapGetters(['typeSummary']),
     conditionGroups() {
       return Object.entries(groupBy(
         this.conditions,
@@ -38,19 +40,21 @@ export default {
     verb(op) {
       return opMap[op];
     },
-    valueTransform(val, type) {
+    valueTransform(cond, val, field, type) {
       // If it's not primitive
-      if (typeof val === 'object') {
-        const inner = val.map((v) => this.valueTransform(v, type)).join(', ');
+      if (val && typeof val === 'object') {
+        const inner = val.map((v) => this.valueTransform(v, field, type)).join(', ');
         return `(${inner})`;
       }
-      // If it will parse strictly as a number;
-      if (!Number.isNaN(Number(val))) {
-        return val;
-      }
-      // If it parses as a date;
-      if (!Number.isNaN(Date.parse(val))) {
-        return moment(val).format('MM/DD/YYYY');
+      const summary = this.typeSummary(type)[field];
+      if (summary) {
+        if (['float', 'number', 'string'].includes(summary.type)) {
+          return val;
+        }
+        if (['date'].includes(summary.type)) {
+          return moment(val).format('MM/DD/YYYY');
+        }
+        throw new Error(`Unknown entity type for ${type}: ${field}: ${summary.type}`);
       }
       return val;
     },
@@ -87,7 +91,7 @@ export default {
           @click:close="$emit('remove', cond)"
         >
           <span class="chip-content">
-            {{ valueTransform(cond.value, '') }}
+            {{ valueTransform(cond, cond.value, cond.field, cond.table) }}
           </span>
         </v-chip>
       </div>
