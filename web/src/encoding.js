@@ -49,6 +49,13 @@ const types = {
     plural: 'Metaproteomic analysis',
     visible: true,
   },
+  data_object: {
+    icon: 'mdi-database',
+    heading: 'Data Object',
+    name: 'data_object',
+    plural: 'Data objects',
+    visible: false,
+  },
 };
 
 const fields = {
@@ -83,11 +90,11 @@ const fields = {
   },
   add_date: {
     icon: 'mdi-calendar',
-    hideAttr: true,
+    hideFacet: true,
   },
   mod_date: {
     icon: 'mdi-calendar',
-    hideAttr: true,
+    hideFacet: true,
   },
   /* GOLD ecosystem type */
   ecosystem: {
@@ -105,17 +112,15 @@ const fields = {
   ecosystem_subtype: {
     icon: 'mdi-pine-tree',
     group: 'GOLD Ecosystems',
-    hideAttr: true,
   },
   specific_ecosystem: {
     icon: 'mdi-pine-tree',
     group: 'GOLD Ecosystems',
-    hideAttr: true,
   },
   /* END GOLD ecosystem type */
   ecosystem_path_id: {
     icon: 'mdi-pine-tree',
-    hideAttr: true,
+    hideFacet: true,
   },
   habitat: {
     icon: 'mdi-pine-tree',
@@ -128,7 +133,7 @@ const fields = {
   },
   doi: {
     icon: 'mdi-file-document-outline',
-    hideAttr: true,
+    hideFacet: true,
   },
   env_broad_scale: {
     name: 'Environmental biome',
@@ -141,6 +146,22 @@ const fields = {
   env_medium: {
     name: 'Environmental material',
     group: 'ENVO',
+  },
+  /* disable uniques */
+  scientific_objective: {
+    hideFacet: true,
+  },
+  gold_name: {
+    hideFacet: true,
+  },
+  gold_description: {
+    hideFacet: true,
+  },
+  name: {
+    hideFacet: true,
+  },
+  ncbi_project_name: {
+    hideFacet: true,
   },
 };
 

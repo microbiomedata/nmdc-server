@@ -10,7 +10,8 @@ export type entityType = 'biosample'
   | 'reads_qc'
   | 'metagenome_assembly'
   | 'metagenome_annotation'
-  | 'metaproteomic_analysis';
+  | 'metaproteomic_analysis'
+  | 'data_object';
 
 export const typeMap: Map<string, entityType> = new Map([
   ['sample', 'biosample'],
@@ -57,6 +58,11 @@ export interface BiosampleSearchResult extends BaseSearchResult {
     label: string;
     data: string;
   };
+}
+
+export interface DataObjectSearchResult extends BaseSearchResult {
+  file_size_bytes: number;
+  md5_checksum: string;
 }
 
 export interface StudySearchResults extends BaseSearchResult {
@@ -126,6 +132,7 @@ export interface DatabaseSummaryResponse {
   metagenome_assembly: TableSummary;
   metagenome_annotation: TableSummary;
   metaproteomic_analysis: TableSummary;
+  data_object: TableSummary;
 }
 
 export interface DatabaseStatsResponse {
@@ -240,6 +247,10 @@ async function searchMetaproteomicAnalysis(params: SearchParams) {
   return _search<MetaproteomicAnalysisResult>('metaproteomic_analysis', params);
 }
 
+async function searchDataObject(params: SearchParams) {
+  return _search<DataObjectSearchResult>('data_object', params);
+}
+
 export type ResultUnion = (
     SearchResponse<BiosampleSearchResult>
   | SearchResponse<ProjectSearchResult>
@@ -248,6 +259,7 @@ export type ResultUnion = (
   | SearchResponse<MetagenomeAssembyResult>
   | SearchResponse<MetagenomeAnnotationResult>
   | SearchResponse<MetaproteomicAnalysisResult>
+  | SearchResponse<DataObjectSearchResult>
   | null);
 
 async function search(type: entityType, params: SearchParams) {
@@ -270,6 +282,9 @@ async function search(type: entityType, params: SearchParams) {
       break;
     case 'reads_qc':
       results = await searchReadsQC(params);
+      break;
+    case 'data_object':
+      results = await searchDataObject(params);
       break;
     default:
       throw new Error(`Unexpected type: ${type}`);

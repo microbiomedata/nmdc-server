@@ -27,39 +27,39 @@
         >
           {{ groupname !== 'undefined' ? groupname : 'Other' }}
         </v-subheader>
-        <v-menu
-          v-for="field in filteredFields"
-          v-show="!(field.hideAttrs || field.hideFacet)"
-          :key="field.key"
-          offset-x
-          :close-on-content-click="false"
-          @input="toggleMenu(field.key, $event)"
-        >
-          <template #activator="{ on }">
-            <v-list-item
-              v-show="!hasActiveConditions(field.key)"
-              v-on="on"
-            >
-              <v-list-item-content>
-                <v-list-item-title> {{ fieldDisplayName(field.key) }} </v-list-item-title>
-              </v-list-item-content>
-              <v-list-item-icon>
-                <v-icon> mdi-play </v-icon>
-              </v-list-item-icon>
-            </v-list-item>
-          </template>
-          <v-card
-            width="500"
+        <template v-for="field in filteredFields">
+          <v-menu
+            :key="field.key"
+            offset-x
+            :close-on-content-click="false"
+            @input="toggleMenu(field.key, $event)"
           >
-            <slot
-              name="menu"
-              v-bind="{
-                field: field.key,
-                isOpen: menuState[field.key],
-              }"
-            />
-          </v-card>
-        </v-menu>
+            <template #activator="{ on }">
+              <v-list-item
+                v-show="!hasActiveConditions(field.key)"
+                v-on="on"
+              >
+                <v-list-item-content>
+                  <v-list-item-title> {{ fieldDisplayName(field.key) }} </v-list-item-title>
+                </v-list-item-content>
+                <v-list-item-icon>
+                  <v-icon> mdi-play </v-icon>
+                </v-list-item-icon>
+              </v-list-item>
+            </template>
+            <v-card
+              width="500"
+            >
+              <slot
+                name="menu"
+                v-bind="{
+                  field: field.key,
+                  isOpen: menuState[field.key],
+                }"
+              />
+            </v-card>
+          </v-menu>
+        </template>
       </div>
     </v-list>
   </div>
@@ -101,8 +101,9 @@ export default {
       return this.fields;
     },
     groupedFields() {
-      const fieldsWithMeta = this._filteredFields.map((f) => ({ key: f, ...encoding.fields[f] }));
-
+      const fieldsWithMeta = this._filteredFields
+        .map((f) => ({ key: f, ...encoding.fields[f] }))
+        .filter((f) => !f.hideFacet);
       return Object.entries(groupBy(fieldsWithMeta, 'group')).sort((a) => ((a[0] === 'undefined') ? 0 : -1));
     },
   },

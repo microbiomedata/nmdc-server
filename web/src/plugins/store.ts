@@ -53,6 +53,7 @@ const store = new Vuex.Store<State>({
       metagenome_assembly: {},
       metagenome_annotation: {},
       metaproteomic_analysis: {},
+      data_object: {},
     },
     facetSummariesUnconditional: {
       biosample: {},
@@ -62,6 +63,7 @@ const store = new Vuex.Store<State>({
       metagenome_assembly: {},
       metagenome_annotation: {},
       metaproteomic_analysis: {},
+      data_object: {},
     },
     results: {
       biosample: null,
@@ -71,6 +73,7 @@ const store = new Vuex.Store<State>({
       metagenome_assembly: null,
       metagenome_annotation: null,
       metaproteomic_analysis: null,
+      data_object: null,
     },
     route: undefined,
     loading: {},

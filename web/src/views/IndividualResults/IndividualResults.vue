@@ -50,7 +50,7 @@ export default {
         :item="result"
         @selected="$store.dispatch('route', {
           name: 'Search',
-          type,
+          type: $event.type || type,
           conditions: $event.conditions,
         })"
       />
