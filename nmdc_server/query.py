@@ -93,6 +93,7 @@ class Table(Enum):
     biosample = "biosample"
     study = "study"
     project = "project"
+    data_object = "data_object"
     env_broad_scale = "env_broad_scale"
     env_local_scale = "env_local_scale"
     env_medium = "env_medium"
@@ -110,6 +111,8 @@ class Table(Enum):
             return models.Study
         elif self == Table.project:
             return models.Project
+        elif self == Table.data_object:
+            return models.DataObject
         elif self == Table.env_broad_scale:
             return EnvBroadScaleTerm
         elif self == Table.env_local_scale:
@@ -131,6 +134,7 @@ class Table(Enum):
             query = (
                 db.query(distinct(models.Biosample.id).label("id"))
                 .join(models.Project)
+                .join(models.DataObject, isouter=True)
                 .join(models.Study)
                 .join(models.PrincipalInvestigator)
                 .join(models.ReadsQC, isouter=True)
@@ -143,6 +147,7 @@ class Table(Enum):
                 db.query(distinct(models.Study.id).label("id"))
                 .join(models.PrincipalInvestigator)
                 .join(models.Project, isouter=True)
+                .join(models.DataObject, isouter=True)
                 .join(models.Biosample, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
@@ -152,6 +157,7 @@ class Table(Enum):
         elif self == Table.project:
             query = (
                 db.query(distinct(models.Project.id).label("id"))
+                .join(models.DataObject, isouter=True)
                 .join(models.Study)
                 .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
@@ -164,6 +170,7 @@ class Table(Enum):
             query = (
                 db.query(distinct(models.ReadsQC.id).label("id"))
                 .join(models.Project)
+                .join(models.DataObject, isouter=True)
                 .join(models.Study)
                 .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
@@ -175,6 +182,7 @@ class Table(Enum):
             query = (
                 db.query(distinct(models.MetagenomeAssembly.id).label("id"))
                 .join(models.Project)
+                .join(models.DataObject, isouter=True)
                 .join(models.Study)
                 .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
@@ -186,6 +194,7 @@ class Table(Enum):
             query = (
                 db.query(distinct(models.MetagenomeAnnotation.id).label("id"))
                 .join(models.Project)
+                .join(models.DataObject, isouter=True)
                 .join(models.Study)
                 .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
@@ -197,6 +206,7 @@ class Table(Enum):
             query = (
                 db.query(distinct(models.MetaproteomicAnalysis.id).label("id"))
                 .join(models.Project)
+                .join(models.DataObject, isouter=True)
                 .join(models.Study)
                 .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
@@ -204,6 +214,19 @@ class Table(Enum):
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
             )
+        elif self == Table.data_object:
+            query = (
+                db.query(distinct(models.DataObject.id).label("id"))
+                .join(models.Project)
+                .join(models.Study)
+                .join(models.PrincipalInvestigator)
+                .join(models.Biosample, isouter=True)
+                .join(models.ReadsQC, isouter=True)
+                .join(models.MetagenomeAssembly, isouter=True)
+                .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.MetaproteomicAnalysis, isouter=True)
+            )
+
         else:
             raise Exception("Unknown table")
         return _join_envo(query)
@@ -379,6 +402,12 @@ class ProjectQuerySchema(BaseQuerySchema):
         return Table.project
 
 
+class DataObjectQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.data_object
+
+
 class BiosampleQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
@@ -431,6 +460,10 @@ class StudySearchResponse(BaseSearchResponse):
 
 class ProjectSearchResponse(BaseSearchResponse):
     results: List[schemas.Project]
+
+
+class DataObjectSearchResponse(BaseSearchResponse):
+    results: List[schemas.DataObject]
 
 
 class ReadsQCSearchResponse(BaseSearchResponse):

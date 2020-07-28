@@ -174,6 +174,17 @@ def delete_data_object(db: Session, data_object: models.DataObject) -> None:
     db.commit()
 
 
+def search_data_object(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.DataObjectQuerySchema(conditions=conditions).execute(db)
+
+
+def facet_data_object(
+    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+) -> query.FacetResponse:
+    facets = query.DataObjectQuerySchema(conditions=conditions).facet(db, attribute)
+    return query.FacetResponse(facets=facets)
+
+
 # readsqc
 def get_reads_qc(db: Session, reads_qc_id: str) -> Optional[models.ReadsQC]:
     return db.query(models.ReadsQC).filter(models.ReadsQC.id == reads_qc_id).first()

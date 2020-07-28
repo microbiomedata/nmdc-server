@@ -209,6 +209,7 @@ class DataObject(Base):
 
     # denormalized relationship representing the source project
     project_id = Column(String, ForeignKey("project.id"), nullable=True)
+    project = relationship(Project)
 
 
 class PipelineStep:
@@ -313,6 +314,7 @@ class MetaproteomicAnalysis(Base, PipelineStep):
 ModelType = Union[
     Type[Study],
     Type[Project],
+    Type[DataObject],
     Type[Biosample],
     Type[ReadsQC],
     Type[MetagenomeAssembly],
