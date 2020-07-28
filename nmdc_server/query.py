@@ -348,7 +348,10 @@ class BaseQuerySchema(BaseModel):
             join_envo = True
         elif attribute in inspect(model).columns.keys():
             column = getattr(model, attribute)
-        elif attribute in _association_proxy_keys:
+        elif (
+            attribute in _association_proxy_keys
+            and self.table.model == _association_proxy_keys[attribute][0]
+        ):
             model, column = _association_proxy_keys[attribute]
             join_ap = True
         elif hasattr(model, "annotations"):
