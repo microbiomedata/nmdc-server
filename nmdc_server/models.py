@@ -207,6 +207,9 @@ class DataObject(Base):
     file_size_bytes = Column(BigInteger, nullable=False)
     md5_checksum = Column(String, nullable=True)
 
+    # denormalized relationship representing the source project
+    project_id = Column(String, ForeignKey("project.id"), nullable=True)
+
 
 class PipelineStep:
     id = Column(String, primary_key=True)
