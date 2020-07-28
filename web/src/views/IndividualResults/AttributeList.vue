@@ -6,6 +6,7 @@
         :key="relatedTypeIndex"
         outlined
         class="mr-3 mt-3"
+        :disabled="relatedType.disabled"
         @click="$emit('selected', {
           type: relatedType.type,
           conditions: relatedType.conditions,
@@ -32,7 +33,7 @@
               :key="field"
               class="primary--text"
               style="cursor: pointer"
-              @click="selectField(field)"
+              @click="selectField(type, field)"
             >
               <v-icon
                 v-if="fieldIndex > 0"
@@ -46,7 +47,7 @@
         </v-list-item-content>
       </v-list-item>
       <template v-for="field in displayFields">
-        <template v-if="!getField(field) || getField(field).hideAttr">
+        <template v-if="!getField(field) || getField(field).hideFacet">
           <v-tooltip
             v-if="field.startsWith('open_')"
             :key="field"
@@ -78,7 +79,7 @@
           >
             <template v-slot:activator="{ on }">
               <v-list-item
-                @click="selectField(field)"
+                @click="selectField(type, field)"
                 v-on="on"
               >
                 <v-list-item-avatar>
@@ -127,14 +128,57 @@ export default {
     types,
     ecosystemFields,
     relatedTypes: [
-      { type: 'study' },
-      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metagenome' }] },
-      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metatranscriptome' }] },
-      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Proteomics' }] },
-      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Metabolomics' }] },
-      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Lipidomics' }] },
-      { type: 'project', conditions: [{ field: 'omics_type', op: '==', value: 'Organic Matter Characterization' }] },
-      { type: 'biosample' },
+      {
+        type: 'study',
+        for: ['study', 'project', 'biosample'],
+        disabled: false,
+      },
+      {
+        type: 'project',
+        conditions: [{ field: 'omics_type', op: '==', value: 'Metagenome' }],
+        for: ['study'],
+        disabled: false,
+      },
+      {
+        type: 'project',
+        conditions: [{ field: 'omics_type', op: '==', value: 'Metatranscriptome' }],
+        for: ['study'],
+        disabled: false,
+      },
+      {
+        type: 'project',
+        conditions: [{ field: 'omics_type', op: '==', value: 'Proteomics' }],
+        for: ['study'],
+        disabled: false,
+      },
+      {
+        type: 'project',
+        conditions: [{ field: 'omics_type', op: '==', value: 'Metabolomics' }],
+        for: ['study'],
+        disabled: false,
+      },
+      {
+        type: 'project',
+        conditions: [{ field: 'omics_type', op: '==', value: 'Lipidomics' }],
+        for: ['study'],
+        disabled: false,
+      },
+      {
+        type: 'project',
+        conditions: [{ field: 'omics_type', op: '==', value: 'Organic Matter Characterization' }],
+        for: ['study'],
+        disabled: false,
+      },
+      {
+        type: 'biosample',
+        for: ['study', 'project'],
+        disabled: false,
+      },
+      {
+        type: 'data_object',
+        for: ['study', 'project', 'biosample'],
+        disabled: true,
+      },
     ],
   }),
   computed: {
@@ -150,16 +194,18 @@ export default {
   },
   asyncComputed: {
     async relatedTypeData() {
-      return Promise.all(this.relatedTypes.map(async (r) => {
-        const conditions = this.relatedTypeConditions(r);
-        const results = await api.search(r.type, { conditions });
-        return {
-          ...r,
-          conditions,
-          description: this.relatedTypeDescription(r, results.count),
-          count: results.count,
-        };
-      }));
+      return Promise.all(this.relatedTypes
+        .filter((r) => !r.for || r.for.includes(this.type))
+        .map(async (r) => {
+          const conditions = this.relatedTypeConditions(r);
+          const results = await api.search(r.type, { conditions });
+          return {
+            ...r,
+            conditions,
+            description: this.relatedTypeDescription(r, results.count),
+            count: results.count,
+          };
+        }));
     },
   },
   methods: {
@@ -167,8 +213,9 @@ export default {
     fieldDisplayName,
     valueDisplayName,
     typeWithCardinality,
-    selectField(field) {
+    selectField(type, field) {
       this.$emit('selected', {
+        type,
         conditions: [{
           field, op: '==', value: this.item[field], table: this.type,
         }],
