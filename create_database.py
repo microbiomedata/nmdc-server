@@ -1,10 +1,12 @@
 from collections import defaultdict
 from datetime import datetime
+from io import BytesIO
 import json
 from pathlib import Path
 import re
 from typing import Any, Dict, List, Set, Type, Union
 from urllib import request
+from zipfile import ZipFile
 
 # from alembic import command
 # from alembic.config import Config
@@ -23,6 +25,12 @@ date_re = re.compile(r"^\d{2}$")
 date_fmt = r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M"
 envo_url = (
     "https://raw.githubusercontent.com/EnvironmentOntology/envo/master/subsets/envo-basic.json"
+)
+nmdc_metadata_sha = "6417a4d57dc68673dc3b1c7ab71812a794bf2c40"
+nmdc_data_url = (
+    "https://github.com/microbiomedata/nmdc-metadata/raw/"
+    f"{nmdc_metadata_sha}"
+    "/metadata-translation/src/data/nmdc_database.json.zip"
 )
 
 JsonValueType = Dict[str, str]
@@ -308,8 +316,9 @@ def main(*args):
     database.testing = "--testing" in args
     settings = Settings()
     with create_session() as db:
-        with open(Path(DATA) / "nmdc_database.json") as f:
-            data = json.load(f)
+        with request.urlopen(nmdc_data_url) as r:
+            with ZipFile(BytesIO(r.read())) as f:
+                data = json.load(f.open('nmdc_database.json'))
 
         create_tables(db, settings)
         populate_envo(db)
