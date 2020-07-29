@@ -106,3 +106,33 @@ def test_get_environmental_aggregation(db: Session, client: TestClient):
     )
     assert_status(resp)
     assert resp.json() == []
+
+
+@pytest.mark.parametrize(
+    "endpoint",
+    [
+        "project",
+        "reads_qc",
+        "metagenome_assembly",
+        "metagenome_annotation",
+        "metaproteomic_analysis",
+    ],
+)
+def test_list_data_objects(db: Session, client: TestClient, endpoint: str):
+    data_object = fakes.DataObjectFactory(id="do")
+    project = fakes.ProjectFactory(id="1")
+    reads_qc = fakes.ReadsQCFactory(id="1")
+    assembly = fakes.MetagenomeAssemblyFactory(id="1")
+    annotation = fakes.MetagenomeAnnotationFactory(id="1")
+    analysis = fakes.MetaproteomicAnalysisFactory(id="1")
+
+    project.outputs = [data_object]
+    reads_qc.outputs = [data_object]
+    assembly.outputs = [data_object]
+    annotation.outputs = [data_object]
+    analysis.outputs = [data_object]
+    db.commit()
+
+    resp = client.get(f"/api/{endpoint}/1/outputs")
+    assert_status(resp)
+    assert ["do"] == [r["id"] for r in resp.json()]

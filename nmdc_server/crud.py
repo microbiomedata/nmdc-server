@@ -30,6 +30,7 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         study=aggregations.get_table_summary(db, models.Study),
         project=aggregations.get_table_summary(db, models.Project),
         biosample=aggregations.get_table_summary(db, models.Biosample),
+        data_object=aggregations.get_table_summary(db, models.DataObject),
         reads_qc=aggregations.get_table_summary(db, models.ReadsQC),
         metagenome_assembly=aggregations.get_table_summary(db, models.MetagenomeAssembly),
         metagenome_annotation=aggregations.get_table_summary(db, models.MetagenomeAnnotation),
@@ -127,6 +128,14 @@ def facet_project(
     return query.FacetResponse(facets=facets)
 
 
+def list_project_data_objects(db: Session, id: str) -> Query:
+    return (
+        db.query(models.DataObject)
+        .join(models.project_output_association)
+        .filter(models.project_output_association.c.project_id == id)
+    )
+
+
 # biosample
 def get_biosample(db: Session, biosample_id: str) -> Optional[models.Biosample]:
     return db.query(models.Biosample).filter(models.Biosample.id == biosample_id).first()
@@ -201,6 +210,14 @@ def facet_reads_qc(
     return query.FacetResponse(facets=facets)
 
 
+def list_reads_qc_data_objects(db: Session, id: str) -> Query:
+    return (
+        db.query(models.DataObject)
+        .join(models.reads_qc_output_association)
+        .filter(models.reads_qc_output_association.c.reads_qc_id == id)
+    )
+
+
 # metagenome assembly
 def get_metagenome_assembly(
     db: Session, metagenome_assembly_id: str
@@ -221,6 +238,14 @@ def facet_metagenome_assembly(
 ) -> query.FacetResponse:
     facets = query.MetagenomeAssemblyQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
+
+
+def list_metagenome_assembly_data_objects(db: Session, id: str) -> Query:
+    return (
+        db.query(models.DataObject)
+        .join(models.metagenome_assembly_output_association)
+        .filter(models.metagenome_assembly_output_association.c.metagenome_assembly_id == id)
+    )
 
 
 # metagenome annotation
@@ -245,6 +270,14 @@ def facet_metagenome_annotation(
     return query.FacetResponse(facets=facets)
 
 
+def list_metagenome_annotation_data_objects(db: Session, id: str) -> Query:
+    return (
+        db.query(models.DataObject)
+        .join(models.metagenome_annotation_output_association)
+        .filter(models.metagenome_annotation_output_association.c.metagenome_annotation_id == id)
+    )
+
+
 # metaproteomic analysis
 def get_metaproteomic_analysis(
     db: Session, metaproteomic_analysis_id: str
@@ -265,6 +298,14 @@ def facet_metaproteomic_analysis(
 ) -> query.FacetResponse:
     facets = query.MetaproteomicAnalysisQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
+
+
+def list_metaproteomic_analysis_data_objects(db: Session, id: str) -> Query:
+    return (
+        db.query(models.DataObject)
+        .join(models.metaproteomic_analysis_output_association)
+        .filter(models.metaproteomic_analysis_output_association.c.metaproteomic_analysis_id == id)
+    )
 
 
 # principal investigator
