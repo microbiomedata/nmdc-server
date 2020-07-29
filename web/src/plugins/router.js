@@ -3,6 +3,7 @@ import VueRouter from 'vue-router';
 
 import qs from 'qs';
 import DatabaseSummary from '@/views/DatabaseSummary.vue';
+import DataObjectsList from '@/views/DataObjectsList.vue';
 import IndividualResults from '@/views/IndividualResults/IndividualResults.vue';
 import Search from '@/views/Search/Search.vue';
 
@@ -26,6 +27,11 @@ export default new VueRouter({
       path: '/type/:type/search',
       name: 'Search',
       component: Search,
+    },
+    {
+      path: '/type/:type/data_objects/:id',
+      name: 'Data Objects',
+      component: DataObjectsList,
     },
   ],
 

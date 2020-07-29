@@ -176,8 +176,8 @@ export default {
       },
       {
         type: 'data_object',
-        for: ['study', 'project', 'biosample'],
-        disabled: true,
+        for: ['project', 'reads_qc', 'metagenome_assembly', 'metagenome_annotation', 'metaproteomic_analysis'],
+        disabled: false,
       },
     ],
   }),
