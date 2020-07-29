@@ -98,6 +98,7 @@ const store = new Vuex.Store<State>({
       const routerType = state.route.params.type;
       return routerType ? asType(routerType) : undefined;
     },
+    id: (state): string | undefined => state.route.params.id,
     conditions: (state): Condition[] => state.route.query.c || [],
   },
   mutations: {

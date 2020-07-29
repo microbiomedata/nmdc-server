@@ -1,5 +1,11 @@
 <template>
   <div>
+    <div
+      v-if="hasRelatedTypeData"
+      class="display-1 mt-4 mb-2"
+    >
+      Related Links
+    </div>
     <template v-for="(relatedType, relatedTypeIndex) in relatedTypeData">
       <v-btn
         v-if="type !== relatedType.type && relatedType.count > 0"
@@ -18,6 +24,9 @@
         {{ relatedType.description }}
       </v-btn>
     </template>
+    <div class="display-1 mt-4 mb-2">
+      Item Attributes
+    </div>
     <v-list>
       <v-list-item v-if="item.ecosystem">
         <v-list-item-avatar>
@@ -47,7 +56,10 @@
         </v-list-item-content>
       </v-list-item>
       <template v-for="field in displayFields">
-        <template v-if="!getField(field) || getField(field).hideFacet">
+        <template
+          v-if="!getField(field)
+            || (getField(field).hideFacet && !getField(field).hideAttr)"
+        >
           <v-tooltip
             v-if="field.startsWith('open_')"
             :key="field"
@@ -174,11 +186,6 @@ export default {
         for: ['study', 'project'],
         disabled: false,
       },
-      {
-        type: 'data_object',
-        for: ['study', 'project', 'biosample'],
-        disabled: true,
-      },
     ],
   }),
   computed: {
@@ -206,6 +213,9 @@ export default {
             count: results.count,
           };
         }));
+    },
+    async hasRelatedTypeData() {
+      return this.relatedTypeData && this.relatedTypeData.some((d) => d.count > 0);
     },
   },
   methods: {

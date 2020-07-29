@@ -343,9 +343,19 @@ async function getEnvironmentSankeyAggregation(
   return data;
 }
 
+async function getDataObjectList(
+  parentType: string,
+  parentId: string,
+): Promise<DataObjectSearchResult[]> {
+  const path = typeMap.get(parentType) || parentType;
+  const { data } = await client.get<DataObjectSearchResult[]>(`${path}/${parentId}/outputs`);
+  return data;
+}
+
 const api = {
   getDatabaseSummary,
   getDatabaseStats,
+  getDataObjectList,
   getEnvironmentGeospatialAggregation,
   getEnvironmentSankeyAggregation,
   getFacetSummary,

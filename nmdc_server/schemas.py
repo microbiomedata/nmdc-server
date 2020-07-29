@@ -85,6 +85,7 @@ class DatabaseSummary(BaseModel):
     study: TableSummary
     project: TableSummary
     biosample: TableSummary
+    data_object: TableSummary
     reads_qc: TableSummary
     metagenome_assembly: TableSummary
     metagenome_annotation: TableSummary

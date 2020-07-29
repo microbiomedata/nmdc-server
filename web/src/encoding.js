@@ -59,6 +59,22 @@ const types = {
 };
 
 const fields = {
+  id: {
+    icon: 'mdi-key',
+    hideFacet: true,
+  },
+  study_id: {
+    icon: 'mdi-key-link',
+    hideFacet: true,
+  },
+  project_id: {
+    icon: 'mdi-key-link',
+    hideFacet: true,
+  },
+  git_url: {
+    icon: 'mdi-git',
+    hideFacet: true,
+  },
   location: {
     icon: 'mdi-earth',
   },
@@ -162,6 +178,10 @@ const fields = {
   },
   ncbi_project_name: {
     hideFacet: true,
+  },
+  principal_investigator_image_url: {
+    hideFacet: true,
+    hideAttr: true,
   },
 };
 

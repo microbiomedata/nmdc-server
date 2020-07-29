@@ -231,6 +231,13 @@ async def get_project(project_id: str, db: Session = Depends(get_db)):
 #     crud.delete_project(db, db_project)
 
 
+@router.get(
+    "/project/{project_id}/outputs", response_model=List[schemas.DataObject], tags=["project"],
+)
+async def list_project_data_objects(project_id: str, db: Session = Depends(get_db)):
+    return crud.list_project_data_objects(db, project_id).all()
+
+
 # data object
 @router.post(
     "/data_object", response_model=schemas.DataObject, tags=["data_object"],
@@ -320,6 +327,13 @@ async def get_reads_qc(reads_qc_id: str, db: Session = Depends(get_db)):
     return db_reads_qc
 
 
+@router.get(
+    "/reads_qc/{reads_qc_id}/outputs", response_model=List[schemas.DataObject], tags=["reads_qc"],
+)
+async def list_reads_qc_data_objects(reads_qc_id: str, db: Session = Depends(get_db)):
+    return crud.list_reads_qc_data_objects(db, reads_qc_id).all()
+
+
 # metagenome_assembly
 @router.post(
     "/metagenome_assembly/search",
@@ -356,6 +370,17 @@ async def get_metagenome_assembly(metagenome_assembly_id: str, db: Session = Dep
     if db_metagenome_assembly is None:
         raise HTTPException(status_code=404, detail="MetagenomeAssembly not found")
     return db_metagenome_assembly
+
+
+@router.get(
+    "/metagenome_assembly/{metagenome_assembly_id}/outputs",
+    response_model=List[schemas.DataObject],
+    tags=["metagenome_assembly"],
+)
+async def list_metagenome_assembly_data_objects(
+    metagenome_assembly_id: str, db: Session = Depends(get_db)
+):
+    return crud.list_metagenome_assembly_data_objects(db, metagenome_assembly_id).all()
 
 
 # metagenome_annotation
@@ -396,6 +421,17 @@ async def get_metagenome_annotation(metagenome_annotation_id: str, db: Session =
     return db_metagenome_annotation
 
 
+@router.get(
+    "/metagenome_annotation/{metagenome_annotation_id}/outputs",
+    response_model=List[schemas.DataObject],
+    tags=["metagenome_annotation"],
+)
+async def list_metagenome_annotation_data_objects(
+    metagenome_annotation_id: str, db: Session = Depends(get_db)
+):
+    return crud.list_metagenome_annotation_data_objects(db, metagenome_annotation_id).all()
+
+
 # metagenome_annotation
 @router.post(
     "/metaproteomic_analysis/search",
@@ -434,7 +470,18 @@ async def get_metaproteomic_analysis(metaproteomic_analysis_id: str, db: Session
     return db_metaproteomic_analysis
 
 
-@router.get("/principal_investigator/{principal_investigator_id}",)
+@router.get(
+    "/metaproteomic_analysis/{metaproteomic_analysis_id}/outputs",
+    response_model=List[schemas.DataObject],
+    tags=["metaproteomic_analysis"],
+)
+async def list_metaproteomic_analysis_data_objects(
+    metaproteomic_analysis_id: str, db: Session = Depends(get_db)
+):
+    return crud.list_metaproteomic_analysis_data_objects(db, metaproteomic_analysis_id).all()
+
+
+@router.get("/principal_investigator/{principal_investigator_id}", tags=["principal_investigator"])
 async def get_pi_image(principal_investigator_id: UUID, db: Session = Depends(get_db)):
     image = crud.get_pi_image(db, principal_investigator_id)
     if image is None:
