@@ -115,56 +115,6 @@ export default {
           </v-col>
         </v-row>
 
-        <v-row v-if="['biosample'].includes(type)">
-          <v-col>
-            <v-card class="pa-0">
-              <v-container
-                fluid
-              >
-                <v-row justify="space-between">
-                  <v-col
-                    v-for="field in ecosystemFields"
-                    :key="field"
-                    cols="2"
-                  >
-                    <FacetChart
-                      type="biosample"
-                      :field="field"
-                      chart="pie"
-                      :conditions="conditions"
-                      @selected="addSelected($event)"
-                    />
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card>
-          </v-col>
-        </v-row>
-
-        <v-row v-if="['biosample'].includes(type)">
-          <v-col>
-            <v-card>
-              <v-container fluid>
-                <v-row justify="space-between">
-                  <v-col
-                    v-for="field in ecosystemFields"
-                    :key="field"
-                    cols="2"
-                  >
-                    <FacetChart
-                      type="biosample"
-                      :field="field"
-                      chart="bar"
-                      :conditions="conditions"
-                      @selected="addSelected($event)"
-                    />
-                  </v-col>
-                </v-row>
-              </v-container>
-            </v-card>
-          </v-col>
-        </v-row>
-
         <v-row v-if="['project'].includes(type)">
           <v-col>
             <v-card>
