@@ -11,7 +11,6 @@
 <script>
 import { GChart } from 'vue-google-charts';
 
-import { api } from '@/data/api';
 import * as encoding from '@/encoding';
 import { fieldDisplayName } from '@/util';
 
@@ -49,13 +48,21 @@ export default {
       type: String,
       default: null,
     },
-    conditions: {
-      type: Array,
-      default: () => [],
-    },
     height: {
       type: Number,
       default: 200,
+    },
+    stacked: {
+      type: [Boolean, String],
+      default: true,
+    },
+    facetSummary: {
+      type: Array,
+      required: true,
+    },
+    facetSummaryUnconditional: {
+      type: Array,
+      required: true,
     },
   },
   data() {
@@ -80,26 +87,31 @@ export default {
       },
     };
   },
-  asyncComputed: {
-    facets: {
-      async get() {
-        return (await api.getFacetSummary(
-          this.type, this.field, this.conditions,
-        )).filter((d) => d.count > 0);
-      },
-      default: [],
-    },
-  },
   computed: {
     chartData() {
       return [
-        [fieldDisplayName(this.field), 'Count', { role: 'style' }, { role: 'annotation' }],
-        ...this.facets.map(
+        [
+          { label: fieldDisplayName(this.field) },
+          { label: 'Match', role: 'data' },
+          { role: 'scope' },
+          { role: 'style' },
+          { label: 'No Match', role: 'data' },
+          { role: 'scope' },
+          { role: 'style' },
+          { role: 'annotation' },
+        ],
+        ...this.facetSummaryUnconditional.map(
           (facet) => [
             facet.facet,
-            facet.count,
+            (this.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0,
+            true,
             encoding.values[facet.facet] ? encoding.values[facet.facet].color : 'grey',
-            facet.count,
+            facet.count - ((this.facetSummary.find(
+              (e) => e.facet === facet.facet,
+            ) || {}).count || 0),
+            false,
+            'grey',
+            (this.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0,
           ],
         ),
       ];
@@ -134,19 +146,7 @@ export default {
         legend: { position: 'none' },
         annotations: { alwaysOutside: true, stem: { color: 'transparent' } },
         title: this.showTitle ? fieldDisplayName(this.field) : null,
-      };
-    },
-    pieChartOptions() {
-      return {
-        height: this.height,
-        chartArea: {
-          width: '90%',
-          height: '75%',
-        },
-        legend: 'none',
-        pieSliceText: 'label',
-        slices: this.facets.map((facet) => ({ color: encoding.values[facet.facet] ? encoding.values[facet.facet].color : 'grey' })),
-        title: this.showTitle ? fieldDisplayName(this.field) : null,
+        isStacked: true,
       };
     },
   },

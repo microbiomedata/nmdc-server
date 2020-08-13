@@ -1,5 +1,5 @@
 <script>
-import { mapState, mapGetters } from 'vuex';
+import { mapState, mapGetters, mapActions } from 'vuex';
 
 import { ecosystemFields } from '@/encoding';
 import removeCondition from '@/data/utils';
@@ -23,7 +23,7 @@ export default {
   data: () => ({ ecosystemFields }),
 
   computed: {
-    ...mapState(['results']),
+    ...mapState(['results', 'facetSummaries', 'facetSummariesUnconditional']),
     ...mapGetters(['type', 'conditions']),
     typeResults() {
       const tr = this.results[this.type];
@@ -31,7 +31,32 @@ export default {
     },
   },
 
+  watch: {
+    // Vuex will invalidate this cache when necessary,
+    // so we can listen to the object to know when to reload.
+    facetSummaries: {
+      handler: 'updateFacetCharts',
+      deep: true,
+    },
+  },
+
   methods: {
+    ...mapActions(['fetchFacetSummary']),
+    updateFacetCharts() {
+      if (this.type === 'biosample') {
+        this.fetchFacetSummary({
+          field: 'ecosystem_category',
+          type: 'biosample',
+          conditions: this.conditions,
+        });
+      } else if (this.type === 'project') {
+        this.fetchFacetSummary({
+          field: 'omics_type',
+          type: 'project',
+          conditions: this.conditions,
+        });
+      }
+    },
     addSelected({ conditions }) {
       const newConditions = conditions.filter((c) => {
         const match = this.conditions.filter((d) => (
@@ -90,8 +115,10 @@ export default {
                 type="biosample"
                 field="ecosystem_category"
                 chart="bar"
+                :facet-summary="facetSummaries['biosample']['ecosystem_category'] || []"
+                :facet-summary-unconditional="
+                  facetSummariesUnconditional['biosample']['ecosystem_category'] || []"
                 :height="400"
-                :conditions="conditions"
                 :show-title="false"
                 :show-baseline="false"
                 :left-margin="120"
@@ -122,7 +149,9 @@ export default {
                 type="project"
                 field="omics_type"
                 chart="bar"
-                :conditions="conditions"
+                :facet-summary="facetSummaries['project']['omics_type'] || []"
+                :facet-summary-unconditional="
+                  facetSummariesUnconditional['project']['omics_type'] || []"
                 :show-title="false"
                 :show-baseline="false"
                 :left-margin="280"
