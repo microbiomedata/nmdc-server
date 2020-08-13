@@ -112,28 +112,6 @@ const fields = {
     icon: 'mdi-calendar',
     hideFacet: true,
   },
-  /* GOLD ecosystem type */
-  ecosystem: {
-    icon: 'mdi-pine-tree',
-    group: 'GOLD Ecosystems',
-  },
-  ecosystem_category: {
-    icon: 'mdi-pine-tree',
-    group: 'GOLD Ecosystems',
-  },
-  ecosystem_type: {
-    icon: 'mdi-pine-tree',
-    group: 'GOLD Ecosystems',
-  },
-  ecosystem_subtype: {
-    icon: 'mdi-pine-tree',
-    group: 'GOLD Ecosystems',
-  },
-  specific_ecosystem: {
-    icon: 'mdi-pine-tree',
-    group: 'GOLD Ecosystems',
-  },
-  /* END GOLD ecosystem type */
   ecosystem_path_id: {
     icon: 'mdi-pine-tree',
     hideFacet: true,
@@ -151,18 +129,50 @@ const fields = {
     icon: 'mdi-file-document-outline',
     hideFacet: true,
   },
+  /* GOLD ecosystem type */
+  ecosystem: {
+    icon: 'mdi-pine-tree',
+    group: 'GOLD Ecosystems',
+    sortKey: 1,
+  },
+  ecosystem_category: {
+    icon: 'mdi-pine-tree',
+    group: 'GOLD Ecosystems',
+    sortKey: 2,
+  },
+  ecosystem_type: {
+    icon: 'mdi-pine-tree',
+    group: 'GOLD Ecosystems',
+    sortKey: 3,
+  },
+  ecosystem_subtype: {
+    icon: 'mdi-pine-tree',
+    group: 'GOLD Ecosystems',
+    sortKey: 4,
+  },
+  specific_ecosystem: {
+    icon: 'mdi-pine-tree',
+    group: 'GOLD Ecosystems',
+    sortKey: 5,
+  },
+  /* END GOLD ecosystem type */
+  /* ENVO terms */
   env_broad_scale: {
     name: 'Environmental biome',
     group: 'ENVO',
+    sortKey: 1,
   },
   env_local_scale: {
     name: 'Environmental feature',
     group: 'ENVO',
+    sortKey: 2,
   },
   env_medium: {
     name: 'Environmental material',
     group: 'ENVO',
+    sortKey: 3,
   },
+  /* END ENVO terms */
   /* disable uniques */
   scientific_objective: {
     hideFacet: true,
@@ -183,6 +193,7 @@ const fields = {
     hideFacet: true,
     hideAttr: true,
   },
+  /* END disable uniques */
 };
 
 const ecosystems = [

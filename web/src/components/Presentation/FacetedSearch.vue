@@ -103,8 +103,10 @@ export default {
     groupedFields() {
       const fieldsWithMeta = this._filteredFields
         .map((f) => ({ key: f, ...encoding.fields[f] }))
-        .filter((f) => !f.hideFacet);
-      return Object.entries(groupBy(fieldsWithMeta, 'group')).sort((a) => ((a[0] === 'undefined') ? 0 : -1));
+        .filter((f) => !f.hideFacet)
+        .sort(((a, b) => (a.sortKey || 0) - (b.sortKey || 0)));
+      return Object.entries(groupBy(fieldsWithMeta, 'group'))
+        .sort((a) => ((a[0] === 'undefined') ? 0 : -1));
     },
   },
   methods: {
