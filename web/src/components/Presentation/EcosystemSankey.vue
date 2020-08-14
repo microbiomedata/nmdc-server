@@ -18,6 +18,17 @@ import colors from '@/colors';
 import { api } from '@/data/api';
 import { ecosystems } from '@/encoding';
 
+function generateLayer(data, heirarchy, depth) {
+  const [from, to] = heirarchy.slice(depth, depth + 2);
+  const histogram = {};
+  data.forEach((item) => {
+    const key = `${' '.repeat(depth + 1)}${item[from]}:${' '.repeat(depth + 2)}${item[to]}`;
+    histogram[key] = (histogram[key] || 0) + item.count;
+  });
+  return Object.entries(histogram)
+    .map(([key, value]) => [...key.split(':'), value]);
+}
+
 export default {
   components: {
     GChart,
@@ -31,6 +42,10 @@ export default {
       type: Array,
       default: () => [],
     },
+    heirarchy: {
+      type: Array,
+      default: () => ['ecosystem', 'ecosystem_category', 'ecosystem_type', 'ecosystem_subtype', 'specific_ecosystem'],
+    },
   },
   data() {
     return {
@@ -39,38 +54,19 @@ export default {
         select: () => {
           const chart = this.$refs.chart.chartObject;
           const selection = chart.getSelection();
-          if (selection.length === 1) {
-            let val;
-            if (selection[0].name) {
-              val = selection[0].name;
-            } else {
-              [, val] = this.sankeyData[selection[0].row + 1];
-            }
-            let value = val;
-            let field = 'ecosystem';
-            if (val[0] === ' ') {
-              field = 'ecosystem_category';
-              value = val.substring(1);
-            }
-            if (val[1] === ' ') {
-              field = 'ecosystem_type';
-              value = val.substring(2);
-            }
-            if (val[2] === ' ') {
-              field = 'ecosystem_subtype';
-              value = val.substring(3);
-            }
-            if (val[3] === ' ') {
-              field = 'specific_ecosystem';
-              value = val.substring(4);
-            }
-            this.$emit('selected', {
-              type: this.type,
-              conditions: [{
-                field, op: '==', value, table: this.type,
-              }],
-            });
-          }
+          if (selection.length === 0) return;
+          const [, val] = this.sankeyData[selection[0].row + 1];
+          // use prefixed number of spaces to indicate index in the heirarchy
+          const prefix = val.match(/^([\s]+)/g)[0].length - 1;
+          this.$emit('selected', {
+            type: this.type,
+            conditions: [{
+              field: this.heirarchy[prefix],
+              op: '==',
+              value: val.trim(),
+              table: this.type,
+            }],
+          });
         },
       },
     };
@@ -78,57 +74,19 @@ export default {
   asyncComputed: {
     async sankeyData() {
       const data = await api.getEnvironmentSankeyAggregation(this.conditions);
-      const hist = {};
-      data.forEach((sample) => {
-        const habitat = [
-          sample.ecosystem,
-          ` ${sample.ecosystem_category}`,
-        ].join(':');
-        if (hist[habitat] === undefined) {
-          hist[habitat] = 0;
-        }
-        hist[habitat] += sample.count;
-      });
-      data.forEach((sample) => {
-        const habitat = [
-          ` ${sample.ecosystem_category}`,
-          `  ${sample.ecosystem_type}`,
-        ].join(':');
-        if (hist[habitat] === undefined) {
-          hist[habitat] = 0;
-        }
-        hist[habitat] += sample.count;
-      });
-      data.forEach((sample) => {
-        const habitat = [
-          `  ${sample.ecosystem_type}`,
-          `   ${sample.ecosystem_subtype}`,
-        ].join(':');
-        if (hist[habitat] === undefined) {
-          hist[habitat] = 0;
-        }
-        hist[habitat] += sample.count;
-      });
-      data.forEach((sample) => {
-        const habitat = [
-          `   ${sample.ecosystem_subtype}`,
-          `    ${sample.specific_ecosystem}`,
-        ].join(':');
-        if (hist[habitat] === undefined) {
-          hist[habitat] = 0;
-        }
-        hist[habitat] += sample.count;
-      });
       return [
         ['From', 'To', 'Samples'],
-        ...Object.keys(hist).map((habitat) => [...habitat.split(':'), hist[habitat]]),
+        ...generateLayer(data, this.heirarchy, 0),
+        ...generateLayer(data, this.heirarchy, 1),
+        ...generateLayer(data, this.heirarchy, 2),
+        ...generateLayer(data, this.heirarchy, 3),
       ];
     },
   },
   computed: {
     sankeyOptions() {
       return {
-        height: 300,
+        height: 500,
         sankey: {
           link: {
             colorMode: 'source',
