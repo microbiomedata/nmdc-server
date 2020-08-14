@@ -347,9 +347,22 @@ async function getDataObjectList(
   parentType: string,
   parentId: string,
 ): Promise<DataObjectSearchResult[]> {
-  const path = typeMap.get(parentType) || parentType;
-  const { data } = await client.get<DataObjectSearchResult[]>(`${path}/${parentId}/outputs`);
-  return data;
+  const type = typeMap.get(parentType);
+  if (type === undefined) {
+    return [];
+  }
+  const supportedTypes: entityType[] = [
+    'project',
+    'reads_qc',
+    'metagenome_assembly',
+    'metagenome_annotation',
+    'metaproteomic_analysis',
+  ];
+  if (supportedTypes.indexOf(type) >= 0) {
+    const { data } = await client.get<DataObjectSearchResult[]>(`${type}/${parentId}/outputs`);
+    return data;
+  }
+  return [];
 }
 
 const api = {

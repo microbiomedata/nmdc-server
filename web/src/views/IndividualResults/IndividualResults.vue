@@ -57,13 +57,6 @@ export default {
         })"
       />
       <data-object-list
-        v-if="[
-          'project',
-          'reads_qc',
-          'metagenome_assembly',
-          'metagenome_annotation',
-          'metaproteomic_analysis',
-        ].includes(type)"
         :id="result.id"
         :type="type"
       />

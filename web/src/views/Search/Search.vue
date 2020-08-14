@@ -1,19 +1,21 @@
 <script>
-import { mapState, mapGetters, mapActions } from 'vuex';
+import { mapState, mapGetters } from 'vuex';
 
 import { ecosystemFields } from '@/encoding';
 import removeCondition from '@/data/utils';
 
-import FacetChart from '@/components/FacetChart.vue';
+import FacetChart from '@/components/Presentation/FacetChart.vue';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
 import SearchResults from '@/components/Presentation/SearchResults.vue';
+import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
 
 import Sidebar from './Sidebar.vue';
 
 export default {
   components: {
     FacetChart,
+    FacetSummaryWrapper,
     SearchResults,
     LocationMap,
     EcosystemSankey,
@@ -23,7 +25,7 @@ export default {
   data: () => ({ ecosystemFields }),
 
   computed: {
-    ...mapState(['results', 'facetSummaries', 'facetSummariesUnconditional']),
+    ...mapState(['results']),
     ...mapGetters(['type', 'conditions']),
     typeResults() {
       const tr = this.results[this.type];
@@ -31,32 +33,7 @@ export default {
     },
   },
 
-  watch: {
-    // Vuex will invalidate this cache when necessary,
-    // so we can listen to the object to know when to reload.
-    facetSummaries: {
-      handler: 'updateFacetCharts',
-      deep: true,
-    },
-  },
-
   methods: {
-    ...mapActions(['fetchFacetSummary']),
-    updateFacetCharts() {
-      if (this.type === 'biosample') {
-        this.fetchFacetSummary({
-          field: 'ecosystem_category',
-          type: 'biosample',
-          conditions: this.conditions,
-        });
-      } else if (this.type === 'project') {
-        this.fetchFacetSummary({
-          field: 'omics_type',
-          type: 'project',
-          conditions: this.conditions,
-        });
-      }
-    },
     addSelected({ conditions }) {
       const newConditions = conditions.filter((c) => {
         const match = this.conditions.filter((d) => (
@@ -111,20 +88,22 @@ export default {
           </v-col>
           <v-col :cols="4">
             <v-card>
-              <FacetChart
-                type="biosample"
+              <facet-summary-wrapper
+                table="biosample"
                 field="ecosystem_category"
-                chart="bar"
-                :facet-summary="facetSummaries['biosample']['ecosystem_category'] || []"
-                :facet-summary-unconditional="
-                  facetSummariesUnconditional['biosample']['ecosystem_category'] || []"
-                :height="400"
-                :show-title="false"
-                :show-baseline="false"
-                :left-margin="120"
-                :right-margin="80"
-                @selected="addSelected($event)"
-              />
+              >
+                <template #default="props">
+                  <FacetChart
+                    v-bind="props"
+                    :height="400"
+                    :show-title="false"
+                    :show-baseline="false"
+                    :left-margin="120"
+                    :right-margin="80"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
             </v-card>
           </v-col>
         </v-row>
@@ -145,19 +124,22 @@ export default {
         <v-row v-if="['project'].includes(type)">
           <v-col>
             <v-card>
-              <FacetChart
-                type="project"
+              <facet-summary-wrapper
+                table="project"
                 field="omics_type"
-                chart="bar"
-                :facet-summary="facetSummaries['project']['omics_type'] || []"
-                :facet-summary-unconditional="
-                  facetSummariesUnconditional['project']['omics_type'] || []"
-                :show-title="false"
-                :show-baseline="false"
-                :left-margin="280"
-                :right-margin="80"
-                @selected="addSelected($event)"
-              />
+              >
+                <template #default="props">
+                  <FacetChart
+                    v-bind="props"
+                    :height="250"
+                    :show-title="false"
+                    :show-baseline="false"
+                    :left-margin="240"
+                    :right-margin="80"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
             </v-card>
           </v-col>
         </v-row>

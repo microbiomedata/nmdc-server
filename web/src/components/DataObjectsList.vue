@@ -1,4 +1,8 @@
 <script lang="ts">
+/**
+ * Component for listing the data objects associated with a
+ * given entity.  Only some entity types are supported.
+ */
 import Vue, { PropType } from 'vue';
 
 import { api, DataObjectSearchResult } from '@/data/api';
@@ -31,7 +35,7 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div>
+  <div v-if="results.length">
     <div class="display-1 my-4">
       Data Objects
     </div>

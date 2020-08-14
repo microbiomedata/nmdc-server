@@ -1,9 +1,9 @@
 <template>
   <GChart
     ref="chart"
-    :type="chart === 'bar' ? 'BarChart' : 'PieChart'"
+    type="BarChart"
     :data="chartData"
-    :options="chart === 'bar' ? barChartOptions : pieChartOptions"
+    :options="barChartOptions"
     :events="chartEvents"
   />
 </template>
@@ -40,7 +40,7 @@ export default {
       type: String,
       default: null,
     },
-    type: {
+    table: {
       type: String,
       default: null,
     },
@@ -74,12 +74,12 @@ export default {
           if (selection.length === 1) {
             const [value] = this.chartData[selection[0].row + 1];
             this.$emit('selected', {
-              type: this.type,
+              type: this.table,
               conditions: [{
                 field: this.field,
                 op: '==',
                 value,
-                table: this.type,
+                table: this.table,
               }],
             });
           }
@@ -110,7 +110,7 @@ export default {
               (e) => e.facet === facet.facet,
             ) || {}).count || 0),
             false,
-            'grey',
+            'lightgrey',
             (this.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0,
           ],
         ),
