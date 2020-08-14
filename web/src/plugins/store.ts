@@ -126,7 +126,6 @@ const store = new Vuex.Store<State>({
     },
     resetFacetSummaries(state, type) {
       Vue.set(state.facetSummaries, type, {});
-      Vue.set(state.facetSummariesUnconditional, type, {});
     },
     setLoading(state, { name, loading }) {
       Vue.set(state.loading, name, loading);

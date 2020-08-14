@@ -4,16 +4,18 @@ import { mapState, mapGetters } from 'vuex';
 import { ecosystemFields } from '@/encoding';
 import removeCondition from '@/data/utils';
 
-import FacetChart from '@/components/FacetChart.vue';
+import FacetChart from '@/components/Presentation/FacetChart.vue';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
 import SearchResults from '@/components/Presentation/SearchResults.vue';
+import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
 
 import Sidebar from './Sidebar.vue';
 
 export default {
   components: {
     FacetChart,
+    FacetSummaryWrapper,
     SearchResults,
     LocationMap,
     EcosystemSankey,
@@ -86,18 +88,22 @@ export default {
           </v-col>
           <v-col :cols="4">
             <v-card>
-              <FacetChart
-                type="biosample"
+              <facet-summary-wrapper
+                table="biosample"
                 field="ecosystem_category"
-                chart="bar"
-                :height="400"
-                :conditions="conditions"
-                :show-title="false"
-                :show-baseline="false"
-                :left-margin="120"
-                :right-margin="80"
-                @selected="addSelected($event)"
-              />
+              >
+                <template #default="props">
+                  <FacetChart
+                    v-bind="props"
+                    :height="400"
+                    :show-title="false"
+                    :show-baseline="false"
+                    :left-margin="120"
+                    :right-margin="80"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
             </v-card>
           </v-col>
         </v-row>
@@ -118,17 +124,22 @@ export default {
         <v-row v-if="['project'].includes(type)">
           <v-col>
             <v-card>
-              <FacetChart
-                type="project"
+              <facet-summary-wrapper
+                table="project"
                 field="omics_type"
-                chart="bar"
-                :conditions="conditions"
-                :show-title="false"
-                :show-baseline="false"
-                :left-margin="280"
-                :right-margin="80"
-                @selected="addSelected($event)"
-              />
+              >
+                <template #default="props">
+                  <FacetChart
+                    v-bind="props"
+                    :height="250"
+                    :show-title="false"
+                    :show-baseline="false"
+                    :left-margin="240"
+                    :right-margin="80"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
             </v-card>
           </v-col>
         </v-row>
