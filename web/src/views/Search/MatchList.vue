@@ -1,22 +1,24 @@
 <script>
-import { mapGetters, mapActions, mapState } from 'vuex';
-import { valueDisplayName } from '@/util';
+import FacetSummary from '@/mixins/FacetSummary';
 
 export default {
+  mixins: [FacetSummary],
+
   props: {
     field: {
       type: String,
       required: true,
     },
-    type: {
+    table: {
       type: String,
       required: true,
     },
   },
+
   data: () => ({
     filterText: '',
-    items: [],
     selected: [],
+    filterOther: true,
     tableHeaders: [
       {
         text: 'Facet',
@@ -34,73 +36,7 @@ export default {
     ],
   }),
 
-  computed: {
-    ...mapState(['facetSummaries', 'facetSummariesUnconditional']),
-    ...mapGetters(['conditions']),
-
-    otherConditions() {
-      // conditions from OTHER fields
-      return this.conditions.filter((c) => (c.field !== this.field) || (c.table !== this.type));
-    },
-    myConditions() {
-      // conditions that match our field.
-      return this.conditions.filter((c) => (c.field === this.field) && (c.table === this.type));
-    },
-  },
-
-  watch: {
-    // Vuex will invalidate this cache when necessary,
-    // so we can listen to the object to know when to reload.
-    facetSummaries: {
-      handler: 'updateSelected',
-      deep: true,
-    },
-  },
-
-  created() {
-    this.updateSelected();
-  },
-
   methods: {
-    ...mapActions(['fetchFacetSummary']),
-
-    async updateSelected() {
-      // get the summary for our facet, NOT including the conditions already selected
-      // that pertain to our facet.  This is done so that all facet options for the current facet
-      // will be visible (and selectable).  Counts will be wrong.
-      await this.fetchFacetSummary({
-        field: this.field,
-        conditions: this.otherConditions,
-        type: this.type,
-      });
-      // Results from the above action are cached in facetSummaries.
-      const filteredFacets = this.facetSummaries[this.type][this.field];
-      const unconditionalFacets = this.facetSummariesUnconditional[this.type][this.field];
-      // if there were results, figure out which ones should be selected based on
-      // the active list of conditions.
-      this.selected = this.myConditions.map(
-        // In order for selection to work, each object must match for all key/value pairs
-        // so we have to get the right item from the item list where value matches
-        (c) => filteredFacets.find((item) => item.facet.toLowerCase() === c.value.toLowerCase()),
-      );
-      this.items = filteredFacets
-        .map((item) => ({
-          ...item,
-          isSelectable: true,
-          name: valueDisplayName(this.field, item.facet),
-        }))
-        .concat(unconditionalFacets
-          // filter out facets contained in filteredFacets
-          .filter((item1) => filteredFacets
-            .find((item2) => item1.facet === item2.facet) === undefined)
-          .map((item) => ({
-            ...item,
-            count: 0,
-            isSelectable: false,
-            name: valueDisplayName(this.field, item.facet),
-          })));
-    },
-
     setSelected({ item, value }) {
       let conditions;
       if (value) {
@@ -108,14 +44,14 @@ export default {
           op: '==',
           field: this.field,
           value: item.facet,
-          table: this.type,
+          table: this.table,
         }];
       } else {
         conditions = this.conditions
           .filter((c) => !(
             c.field === this.field
             && c.value === item.facet
-            && c.table === this.type
+            && c.table === this.table
           ));
       }
       this.$store.dispatch('route', { conditions });
@@ -132,7 +68,7 @@ export default {
                 op: '==',
                 field: this.field,
                 value: item.facet,
-                table: this.type,
+                table: this.table,
               })),
           ],
         });
@@ -166,7 +102,7 @@ export default {
       :items-per-page="10"
       :search="filterText"
       :item-key="'facet'"
-      :items="items"
+      :items="facetSummaryAggregate"
       :headers="tableHeaders"
       @item-selected="setSelected"
       @toggle-select-all="toggleSelectAll"

@@ -44,7 +44,6 @@
       </v-row>
     </v-container>
     <LocationMap
-      :data="samples"
       @selected="addSelected($event)"
     />
     <v-container fluid>
@@ -104,10 +103,6 @@ export default {
     LocationMap,
   },
   props: {
-    samples: {
-      type: Array,
-      default: () => [],
-    },
     stats: {
       type: Array,
       default: () => [],

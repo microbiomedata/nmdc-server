@@ -1,58 +1,28 @@
 <script>
-import { mapState, mapGetters } from 'vuex';
+import Vue from 'vue';
+import FacetSummary from '@/mixins/FacetSummary';
 
-export default {
+export default Vue.extend({
+  mixins: [FacetSummary],
   props: {
-    table: {
-      type: String,
-      required: true,
-    },
     field: {
       type: String,
       required: true,
     },
-  },
-
-  data() {
-    return {
-      facetSummary: [],
-      facetSummaryUnconditional: [],
-    };
-  },
-
-  computed: {
-    ...mapState(['facetSummaries', 'facetSummariesUnconditional']),
-    ...mapGetters(['conditions']),
-  },
-
-  watch: {
-    // Vuex will invalidate this cache when necessary,
-    // so we can listen to the object to know when to reload.
-    facetSummaries: {
-      handler: 'updateFacetCharts',
-      deep: true,
+    table: {
+      type: String,
+      required: true,
     },
   },
-
-  methods: {
-    async updateFacetCharts() {
-      this.$store.dispatch('fetchFacetSummary', {
-        field: this.field,
-        type: this.table,
-        conditions: this.conditions,
-      });
-      const newFacetSummary = this.facetSummaries[this.table][this.field];
-      if (newFacetSummary) {
-        this.facetSummary = newFacetSummary;
-        this.facetSummaryUnconditional = this.facetSummariesUnconditional[this.table][this.field];
-      }
-    },
-  },
-};
+});
 </script>
 
 <template>
   <div>
-    <slot v-bind="{ facetSummary, facetSummaryUnconditional, table, field }" />
+    <slot
+      v-bind="{
+        facetSummaryAggregate, facetSummary, facetSummaryUnconditional, field, table,
+      }"
+    />
   </div>
 </template>

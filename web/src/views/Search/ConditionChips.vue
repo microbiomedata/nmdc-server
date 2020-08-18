@@ -9,7 +9,6 @@ import { fieldDisplayName } from '@/util';
 export default {
   props: {
     conditions: {
-      // api.Condition[]
       type: Array,
       required: true,
     },
