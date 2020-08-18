@@ -7,11 +7,15 @@ setup(
     python_requires=">=3.6.0",
     install_requires=[
         "alembic",
+        "authlib",
         "fastapi",
         "factory-boy",
+        "httpx",
+        "itsdangerous",
         "psycopg2-binary",
         "python-dotenv",
         "sqlalchemy",
+        "starlette",
         "typing-extensions",
     ],
 )

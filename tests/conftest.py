@@ -2,12 +2,23 @@ import os
 
 from factory import random
 import pytest
+from starlette.requests import Request
 from starlette.testclient import TestClient
 
-from nmdc_server import database
+from nmdc_server import auth, database
 from nmdc_server.app import create_app
 from nmdc_server.database import create_engine
-from nmdc_server.fakes import db as _db
+from nmdc_server.fakes import db as _db, TokenFactory
+
+
+@auth.router.post("/test-session", include_in_schema=False)
+async def create_test_session(request: Request) -> auth.Token:
+    token = TokenFactory()
+    data = token.dict()
+    data["access_token"] = str(data["access_token"])
+    data["refresh_token"] = str(data["refresh_token"])
+    request.session["token"] = data
+    return token
 
 
 @pytest.fixture(autouse=True)
@@ -49,3 +60,9 @@ def app(db):
 @pytest.fixture
 def client(app):
     return TestClient(app)
+
+
+@pytest.fixture
+def token(client):
+    resp = client.post("/test-session")
+    return auth.Token(**resp.json())

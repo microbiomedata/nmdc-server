@@ -1,15 +1,17 @@
 from io import BytesIO
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from starlette.requests import Request
 from starlette.responses import StreamingResponse
 
-from . import crud, query, schemas
-from .config import Settings, settings
-from .database import create_session
-from .pagination import Pagination
+from nmdc_server import crud, query, schemas
+from nmdc_server.auth import get_current_user, login_required, login_required_responses, Token
+from nmdc_server.config import Settings, settings
+from nmdc_server.database import create_session
+from nmdc_server.pagination import Pagination
 
 
 router = APIRouter()
@@ -23,6 +25,12 @@ def get_settings():
 def get_db(settings: Settings = Depends(get_settings)):
     with create_session() as db:
         yield db
+
+
+# get the current user information
+@router.get("/me", tags=["user"], name="Return the current user name")
+async def me(request: Request, user: str = Depends(get_current_user)) -> Optional[str]:
+    return user
 
 
 # database summary
@@ -49,7 +57,7 @@ async def get_aggregated_stats(db: Session = Depends(get_db)):
     tags=["aggregation"],
 )
 async def get_environmental_sankey(
-    query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(), db: Session = Depends(get_db)
+    query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(), db: Session = Depends(get_db),
 ):
     return crud.get_environmental_sankey(db, query)
 
@@ -67,12 +75,15 @@ async def get_environmental_geospatial(
 
 # biosample
 @router.post(
-    "/biosample", response_model=schemas.Biosample, tags=["biosample"],
+    "/biosample",
+    response_model=schemas.Biosample,
+    tags=["biosample"],
+    responses=login_required_responses,
 )
 async def create_biosample(
     biosample: schemas.BiosampleCreate,
     db: Session = Depends(get_db),
-    pagination: Pagination = Depends(),
+    token: Token = Depends(login_required),
 ):
     if crud.get_project(db, biosample.project_id) is None:
         raise HTTPException(status_code=400, detail="Project does not exist")
@@ -127,9 +138,13 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
 
 # study
 @router.post(
-    "/study", response_model=schemas.Study, tags=["study"],
+    "/study", response_model=schemas.Study, tags=["study"], responses=login_required_responses,
 )
-async def create_study(study: schemas.StudyCreate, db: Session = Depends(get_db)):
+async def create_study(
+    study: schemas.StudyCreate,
+    db: Session = Depends(get_db),
+    token: Token = Depends(login_required),
+):
     return crud.create_study(db, study)
 
 
@@ -180,9 +195,16 @@ async def get_study(study_id: str, db: Session = Depends(get_db)):
 
 # project
 @router.post(
-    "/project", response_model=schemas.Project, tags=["project"],
+    "/project",
+    response_model=schemas.Project,
+    tags=["project"],
+    responses=login_required_responses,
 )
-async def create_project(project: schemas.ProjectCreate, db: Session = Depends(get_db)):
+async def create_project(
+    project: schemas.ProjectCreate,
+    db: Session = Depends(get_db),
+    token: Token = Depends(login_required),
+):
     return crud.create_project(db, project)
 
 
@@ -240,9 +262,16 @@ async def list_project_data_objects(project_id: str, db: Session = Depends(get_d
 
 # data object
 @router.post(
-    "/data_object", response_model=schemas.DataObject, tags=["data_object"],
+    "/data_object",
+    response_model=schemas.DataObject,
+    tags=["data_object"],
+    responses=login_required_responses,
 )
-async def create_data_object(data_object: schemas.DataObjectCreate, db: Session = Depends(get_db)):
+async def create_data_object(
+    data_object: schemas.DataObjectCreate,
+    db: Session = Depends(get_db),
+    token: Token = Depends(login_required),
+):
     return crud.create_data_object(db, data_object)
 
 
