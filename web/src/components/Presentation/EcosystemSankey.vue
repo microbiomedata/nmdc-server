@@ -86,7 +86,7 @@ export default {
   computed: {
     sankeyOptions() {
       return {
-        height: 500,
+        height: 400,
         sankey: {
           link: {
             colorMode: 'source',
