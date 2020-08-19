@@ -74,7 +74,7 @@ router = APIRouter()
 
 
 # authentication
-@router.post("/login", include_in_schema=False)
+@router.get("/login", include_in_schema=False)
 async def login_via_orcid(request: Request):
     redirect_uri = request.url_for("token")
     return await oauth2_client.orcid.authorize_redirect(request, redirect_uri)
@@ -87,8 +87,9 @@ async def authorize(request: Request):
     return RedirectResponse(url="/")
 
 
-@router.post(
+@router.get(
     "/logout", tags=["user"], name="Log out of the current session",
 )
 async def logout(request: Request):
     request.session.pop("token", None)
+    return RedirectResponse(url="/")
