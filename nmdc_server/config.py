@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 
 from pydantic import BaseSettings
 from starlette.config import Config
@@ -14,6 +15,7 @@ class Settings(BaseSettings):
     oauth_scope: str = "/authenticate"
     oauth_authorization_endpoint: str = "https://orcid.org/oauth/authorize"
     oauth_token_endpoint: str = "https://orcid.org/oauth/token"
+    host: Optional[str] = None
 
     class Config:
         env_prefix = "nmdc_"

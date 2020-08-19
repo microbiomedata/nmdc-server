@@ -77,6 +77,8 @@ router = APIRouter()
 @router.get("/login", include_in_schema=False)
 async def login_via_orcid(request: Request):
     redirect_uri = request.url_for("token")
+    if settings.host:
+        redirect_uri = f"{settings.host.rstrip('/')}/token"
     return await oauth2_client.orcid.authorize_redirect(request, redirect_uri)
 
 
