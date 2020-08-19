@@ -22,7 +22,7 @@ http {
         }
 
         # https://stackoverflow.com/a/52319161
-        location ~ ^/(api|docs|openapi.json) {
+        location ~ ^/(api|docs|login|logout|token|openapi.json) {
             resolver $DNS_ADDRESS;
             set ${DOLLAR}backend ${BACKEND_URL};
             proxy_pass ${DOLLAR}backend;
