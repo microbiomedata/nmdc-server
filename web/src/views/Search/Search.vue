@@ -77,84 +77,74 @@ export default {
       <v-container fluid>
         <v-row v-if="['biosample'].includes(type)">
           <v-col :cols="8">
-            <v-card>
-              <LocationMap
-                :type="type"
-                :conditions="conditions"
-                @selected="addSelected($event)"
-              />
-            </v-card>
+            <LocationMap
+              :type="type"
+              :conditions="conditions"
+              @selected="addSelected($event)"
+            />
           </v-col>
           <v-col :cols="4">
-            <v-card>
-              <facet-summary-wrapper
-                table="biosample"
-                field="ecosystem_category"
-              >
-                <template #default="props">
-                  <FacetChart
-                    v-bind="props"
-                    :height="400"
-                    :show-title="false"
-                    :show-baseline="false"
-                    :left-margin="120"
-                    :right-margin="80"
-                    @selected="addSelected($event)"
-                  />
-                </template>
-              </facet-summary-wrapper>
-            </v-card>
+            <facet-summary-wrapper
+              table="biosample"
+              field="ecosystem_category"
+            >
+              <template #default="props">
+                <FacetChart
+                  v-bind="props"
+                  :height="400"
+                  :show-title="false"
+                  :show-baseline="false"
+                  :left-margin="120"
+                  :right-margin="80"
+                  @selected="addSelected($event)"
+                />
+              </template>
+            </facet-summary-wrapper>
           </v-col>
         </v-row>
 
         <v-row v-if="['biosample'].includes(type)">
           <v-col :cols="12">
-            <v-card>
-              <EcosystemSankey
-                :type="type"
-                :conditions="conditions"
-                @selected="addSelected($event)"
-              />
-            </v-card>
+            <EcosystemSankey
+              :type="type"
+              :conditions="conditions"
+              @selected="addSelected($event)"
+            />
           </v-col>
         </v-row>
 
         <v-row v-if="['project'].includes(type)">
           <v-col>
-            <v-card>
-              <facet-summary-wrapper
-                table="project"
-                field="omics_type"
-              >
-                <template #default="props">
-                  <FacetChart
-                    v-bind="props"
-                    :height="250"
-                    :show-title="false"
-                    :show-baseline="false"
-                    :left-margin="240"
-                    :right-margin="80"
-                    @selected="addSelected($event)"
-                  />
-                </template>
-              </facet-summary-wrapper>
-            </v-card>
+            <facet-summary-wrapper
+              table="project"
+              field="omics_type"
+            >
+              <template #default="props">
+                <FacetChart
+                  v-bind="props"
+                  :height="250"
+                  :show-title="false"
+                  :show-baseline="false"
+                  :left-margin="240"
+                  :right-margin="80"
+                  @selected="addSelected($event)"
+                />
+              </template>
+            </facet-summary-wrapper>
           </v-col>
         </v-row>
 
         <v-row>
           <v-col>
-            <v-card>
-              <SearchResults
-                :count="typeResults.count"
-                :icon="types[type].icon"
-                :items-per-page="pageSize"
-                :results="typeResults.results"
-                :page="page"
-                @set-page="refreshResults({ page: $event })"
-                @selected="navigateToSelected($event)"
-              />
-            </v-card>
+            <SearchResults
+              :count="typeResults.count"
+              :icon="types[type].icon"
+              :items-per-page="pageSize"
+              :results="typeResults.results"
+              :page="page"
+              @set-page="refreshResults({ page: $event })"
+              @selected="navigateToSelected($event)"
+            />
           </v-col>
         </v-row>
       </v-container>

@@ -87,7 +87,7 @@ const store = new Vuex.Store<State>({
       if (newPage > 1 && newPage > Math.ceil((state.results[type]?.count || 0) / newPageSize)) {
         return;
       }
-      commit('setPagination', { page: newPage, pageSize: newPageSize });
+
       const limit = newPageSize;
       const offset = newPageSize * (newPage - 1);
       const params = { conditions, limit, offset };
@@ -118,6 +118,7 @@ const store = new Vuex.Store<State>({
         default:
           throw new Error(`Unexpected type: ${type}`);
       }
+      commit('setPagination', { page: newPage, pageSize: newPageSize });
       commit('setResults', { type, results });
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
