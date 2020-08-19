@@ -1,7 +1,6 @@
 <script>
 import moment from 'moment';
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
 import { groupBy } from 'lodash';
 import { opMap } from '@/data/api';
 import { fieldDisplayName } from '@/util';
@@ -12,12 +11,15 @@ export default {
       type: Array,
       required: true,
     },
+    dbSummary: {
+      type: Object,
+      required: true,
+    },
   },
 
   data: () => ({ menuState: {} }),
 
   computed: {
-    ...mapGetters(['typeSummary']),
     conditionGroups() {
       return Object.entries(groupBy(
         this.conditions,
@@ -45,7 +47,7 @@ export default {
         const inner = val.map((v) => this.valueTransform(v, field, type)).join(', ');
         return `(${inner})`;
       }
-      const summary = this.typeSummary(type)[field];
+      const summary = ((this.dbSummary[type] || {}).attributes || {})[field];
       if (summary) {
         if (['float', 'number', 'string'].includes(summary.type)) {
           return val;

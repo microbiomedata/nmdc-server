@@ -7,7 +7,6 @@ import {
   /* Types */
   entityType,
   Condition,
-  DatabaseSummaryResponse,
   ResultUnion,
 } from '@/data/api';
 
@@ -16,10 +15,8 @@ import router from './router';
 Vue.use(Vuex);
 
 interface State {
-  dbsummary?: DatabaseSummaryResponse;
   results: Record<entityType, ResultUnion>;
   route: any;
-  loading: Record<string, boolean>;
 }
 
 function asType(type: any) {
@@ -32,7 +29,6 @@ function asType(type: any) {
 
 const store = new Vuex.Store<State>({
   state: {
-    dbsummary: undefined,
     results: {
       biosample: null,
       study: null,
@@ -44,18 +40,8 @@ const store = new Vuex.Store<State>({
       data_object: null,
     },
     route: undefined,
-    loading: {},
   },
   getters: {
-    primitiveFields: (state, getters) => (type: string | undefined) => (
-      Object.keys(getters.typeSummary(type))
-    ),
-    typeSummary: (state) => (type: string | undefined) => {
-      if (type && state.dbsummary) {
-        return state.dbsummary[asType(type)].attributes;
-      }
-      return {};
-    },
     typeResults: (state) => (type: string | undefined) => {
       if (type && state.results[asType(type)] !== null) {
         return state.results[asType(type)]?.results;
@@ -70,24 +56,13 @@ const store = new Vuex.Store<State>({
     conditions: (state): Condition[] => state.route.query.c || [],
   },
   mutations: {
-    setDBSummary(state, resp: DatabaseSummaryResponse) {
-      state.dbsummary = resp;
-    },
     setResults(state, { type, results }: { type: entityType; results: ResultUnion }) {
       state.results[type] = results;
     },
-    setLoading(state, { name, loading }) {
-      Vue.set(state.loading, name, loading);
-    },
   },
   actions: {
-    async fetchDBSummary({ commit, state }) {
-      if (state.dbsummary === undefined) {
-        const summary = await api.getDatabaseSummary();
-        commit('setDBSummary', summary);
-      }
-    },
     async refreshResults({ commit, getters }) {
+      console.log('refresh');
       const { conditions, type } = getters;
       const params = { conditions };
       let results: ResultUnion;
@@ -118,17 +93,8 @@ const store = new Vuex.Store<State>({
       }
       commit('setResults', { type, results });
     },
-    async refreshAll({
-      dispatch, state, commit,
-    }) {
-      if (!state.loading.all) {
-        commit('setLoading', { name: 'all', loading: true });
-        try {
-          await dispatch('refreshResults');
-        } finally {
-          commit('setLoading', { name: 'all', loading: false });
-        }
-      }
+    async refreshAll({ dispatch }) {
+      await dispatch('refreshResults');
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async route({ state }, { name, type, conditions }) {
