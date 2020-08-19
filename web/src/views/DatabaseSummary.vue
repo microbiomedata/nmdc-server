@@ -1,7 +1,6 @@
 <script lang="ts">
 import Vue from 'vue';
-import { mapState } from 'vuex';
-
+import { api } from '@/data/api';
 import Welcome from '@/components/Presentation/Welcome.vue';
 
 interface Stats {
@@ -13,9 +12,11 @@ export default Vue.extend({
   components: { Welcome },
 
   computed: {
-    ...mapState(['dbstats', 'allSamples']),
 
     stats(): Stats[][] {
+      // TODO: typescript hates asyncComputed.
+      // refactor to watchEffect in vue 3 later
+      // @ts-ignore
       const { dbstats } = this;
       return dbstats ? [[
         {
@@ -61,14 +62,13 @@ export default Vue.extend({
         },
       ]] : [[], []];
     },
-
-    samples() {
-      return this.allSamples ? this.allSamples.results : [];
-    },
   },
 
-  created() {
-    this.$store.dispatch('fetchDBStats');
+  asyncComputed: {
+    dbstats: {
+      get() { return api.getDatabaseStats(); },
+      default: [],
+    },
   },
 });
 </script>
@@ -76,7 +76,6 @@ export default Vue.extend({
 <template>
   <v-main>
     <Welcome
-      :samples="samples"
       :stats="stats"
       @set-type="$store.dispatch('route', { name: 'Search', type: $event, conditions: [] })"
     />

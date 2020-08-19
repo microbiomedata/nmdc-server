@@ -7,11 +7,6 @@ import {
   /* Types */
   entityType,
   Condition,
-  DatabaseSummaryResponse,
-  DatabaseStatsResponse,
-  BiosampleSearchResult,
-  SearchResponse,
-  FacetSummaryResponse,
   ResultUnion,
 } from '@/data/api';
 
@@ -19,17 +14,9 @@ import router from './router';
 
 Vue.use(Vuex);
 
-type FacetSummaryResponseMap = Record<string, FacetSummaryResponse[]>;
-
 interface State {
-  allSamples?: SearchResponse<BiosampleSearchResult>;
-  dbsummary?: DatabaseSummaryResponse;
-  dbstats?: DatabaseStatsResponse;
-  facetSummaries: Record<entityType, FacetSummaryResponseMap>;
-  facetSummariesUnconditional: Record<entityType, FacetSummaryResponseMap>;
   results: Record<entityType, ResultUnion>;
   route: any;
-  loading: Record<string, boolean>;
 }
 
 function asType(type: any) {
@@ -42,29 +29,6 @@ function asType(type: any) {
 
 const store = new Vuex.Store<State>({
   state: {
-    allSamples: undefined,
-    dbsummary: undefined,
-    dbstats: undefined,
-    facetSummaries: {
-      biosample: {},
-      study: {},
-      project: {},
-      reads_qc: {},
-      metagenome_assembly: {},
-      metagenome_annotation: {},
-      metaproteomic_analysis: {},
-      data_object: {},
-    },
-    facetSummariesUnconditional: {
-      biosample: {},
-      study: {},
-      project: {},
-      reads_qc: {},
-      metagenome_assembly: {},
-      metagenome_annotation: {},
-      metaproteomic_analysis: {},
-      data_object: {},
-    },
     results: {
       biosample: null,
       study: null,
@@ -76,18 +40,8 @@ const store = new Vuex.Store<State>({
       data_object: null,
     },
     route: undefined,
-    loading: {},
   },
   getters: {
-    primitiveFields: (state, getters) => (type: string | undefined) => (
-      Object.keys(getters.typeSummary(type))
-    ),
-    typeSummary: (state) => (type: string | undefined) => {
-      if (type && state.dbsummary) {
-        return state.dbsummary[asType(type)].attributes;
-      }
-      return {};
-    },
     typeResults: (state) => (type: string | undefined) => {
       if (type && state.results[asType(type)] !== null) {
         return state.results[asType(type)]?.results;
@@ -102,83 +56,11 @@ const store = new Vuex.Store<State>({
     conditions: (state): Condition[] => state.route.query.c || [],
   },
   mutations: {
-    setDBSummary(state, resp: DatabaseSummaryResponse) {
-      state.dbsummary = resp;
-    },
-    setDBStats(state, resp: DatabaseStatsResponse) {
-      state.dbstats = resp;
-    },
-    setAllSamples(state, results: SearchResponse<BiosampleSearchResult>) {
-      state.allSamples = results;
-    },
     setResults(state, { type, results }: { type: entityType; results: ResultUnion }) {
       state.results[type] = results;
     },
-    setFacetSummary(state, { type, field, summary }: {
-      type: entityType; field: string; summary: FacetSummaryResponse[];
-    }) {
-      Vue.set(state.facetSummaries[type], field, summary);
-    },
-    setFacetSummaryUnconditional(state, { type, field, summary }: {
-      type: entityType; field: string; summary: FacetSummaryResponse[];
-    }) {
-      Vue.set(state.facetSummariesUnconditional[type], field, summary);
-    },
-    resetFacetSummaries(state, type) {
-      Vue.set(state.facetSummaries, type, {});
-    },
-    setLoading(state, { name, loading }) {
-      Vue.set(state.loading, name, loading);
-    },
   },
   actions: {
-    async fetchAllSamples({ commit, state }) {
-      if (state.allSamples === undefined) {
-        const results = await api.searchBiosample({ conditions: [] });
-        commit('setAllSamples', results);
-      }
-    },
-    async fetchDBSummary({ commit, state }) {
-      if (state.dbsummary === undefined) {
-        const summary = await api.getDatabaseSummary();
-        commit('setDBSummary', summary);
-      }
-    },
-    async fetchDBStats({ commit, state }) {
-      if (state.dbstats === undefined) {
-        const stats = await api.getDatabaseStats();
-        commit('setDBStats', stats);
-      }
-    },
-    async fetchFacetSummary({ commit, state }, { field, conditions, type: t }) {
-      /* Fetch facet summaries for a given field, and cache it */
-      const type = asType(t);
-      const existing = state.facetSummaries[type][field];
-      if (existing) {
-        return;
-      }
-      const loadingname = `${field}-summary`;
-      if (!state.loading[loadingname]) {
-        commit('setLoading', { name: loadingname, loading: true });
-        try {
-          // Check if we need to fetch unconditional facets
-          let existingUnconditional = state.facetSummariesUnconditional[type][field];
-          if (!existingUnconditional) {
-            existingUnconditional = await api.getFacetSummary(type, field, []);
-            commit('setFacetSummaryUnconditional',
-              { type, field, summary: existingUnconditional });
-          }
-          if (conditions.length > 0) {
-            const summary = await api.getFacetSummary(type, field, conditions);
-            commit('setFacetSummary', { type, field, summary });
-          } else {
-            commit('setFacetSummary', { type, field, summary: existingUnconditional });
-          }
-        } finally {
-          commit('setLoading', { name: loadingname, loading: false });
-        }
-      }
-    },
     async refreshResults({ commit, getters }) {
       const { conditions, type } = getters;
       const params = { conditions };
@@ -210,24 +92,8 @@ const store = new Vuex.Store<State>({
       }
       commit('setResults', { type, results });
     },
-    async refreshAll({
-      dispatch, state, commit, getters,
-    }) {
-      if (!state.loading.all) {
-        commit('setLoading', { name: 'all', loading: true });
-        try {
-          await dispatch('refreshResults');
-        } finally {
-          commit('resetFacetSummaries', getters.type);
-          commit('setLoading', { name: 'all', loading: false });
-        }
-      }
-    },
-    async load({ dispatch }) {
-      await Promise.all([
-        dispatch('fetchAllSamples'),
-        dispatch('fetchDBSummary'),
-      ]);
+    async refreshAll({ dispatch }) {
+      await dispatch('refreshResults');
     },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async route({ state }, { name, type, conditions }) {

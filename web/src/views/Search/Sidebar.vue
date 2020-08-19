@@ -1,7 +1,7 @@
 <script>
 import { mapGetters, mapState } from 'vuex';
 import { types } from '@/encoding';
-
+import { api } from '@/data/api';
 import FacetedSearch from '@/components/Presentation/FacetedSearch.vue';
 
 import ConditionChips from './ConditionChips.vue';
@@ -18,11 +18,24 @@ export default {
     types,
   }),
 
+  asyncComputed: {
+    dbSummary: {
+      async get() { return api.getDatabaseSummary(); },
+      default: {},
+    },
+  },
+
   computed: {
     ...mapState(['results']),
-    ...mapGetters(['type', 'typeSummary', 'conditions', 'primitiveFields']),
-    typeFields() {
-      return this.primitiveFields(this.type);
+    ...mapGetters(['type', 'conditions']),
+    typeSummary() {
+      if (this.type in this.dbSummary) {
+        return this.dbSummary[this.type].attributes;
+      }
+      return {};
+    },
+    primitiveFields() {
+      return Object.keys(this.typeSummary);
     },
     typeResultsCount() {
       const tr = this.results[this.type];
@@ -85,6 +98,7 @@ export default {
 
     <ConditionChips
       :conditions="conditions"
+      :db-summary="dbSummary"
       class="ma-3"
       @remove="removeCondition"
     >
@@ -95,7 +109,7 @@ export default {
             type: table,
             isOpen,
             conditions,
-            summary: typeSummary(table)[field],
+            summary: typeSummary[field],
           }"
         />
       </template>
@@ -110,7 +124,7 @@ export default {
     <FacetedSearch
       :conditions="conditions"
       :type="type"
-      :fields="typeFields"
+      :fields="primitiveFields"
     >
       <template #menu="{ field, isOpen }">
         <MenuContent
@@ -118,7 +132,7 @@ export default {
             field,
             type,
             isOpen,
-            summary: typeSummary(type)[field],
+            summary: typeSummary[field],
             conditions,
           }"
         />

@@ -14,9 +14,6 @@ Vue.config.productionTip = false;
 
 sync(store, router);
 
-// Only call this once at page load
-store.dispatch('load');
-
 new Vue({
   router,
   store,

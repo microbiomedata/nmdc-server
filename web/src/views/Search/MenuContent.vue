@@ -47,12 +47,12 @@ export default {
     <v-card-title class="pb-0">
       {{ fieldDisplayName(field) }}
     </v-card-title>
-    <MatchList
+    <match-list
       v-if="['string'].includes(summary.type) && isOpen"
       :field="field"
-      :type="type"
+      :table="type"
     />
-    <DateFilter
+    <date-filter
       v-if="['date'].includes(summary.type)"
       v-bind="{
         field, type, conditions,
@@ -62,7 +62,7 @@ export default {
       class="pa-5"
       @select="$store.dispatch('route', $event)"
     />
-    <FloatFilter
+    <float-filter
       v-else-if="['float', 'integer'].includes(summary.type)"
       v-bind="{
         field, type, conditions,
