@@ -1,17 +1,46 @@
+<script lang="ts">
+export default {
+  props: {
+    page: {
+      type: Number,
+      required: true,
+    },
+    itemsPerPage: {
+      type: Number,
+      required: true,
+    },
+    count: {
+      type: Number,
+      required: true,
+    },
+    results: {
+      type: Array,
+      default: () => [],
+    },
+    icon: {
+      type: String,
+      default: 'mdi-book',
+    },
+  },
+};
+</script>
+
 <template>
   <div>
     <v-pagination
-      v-if="Math.ceil(results.length / resultsPerPage) > 1"
-      v-model="page"
-      :length="Math.ceil(results.length / resultsPerPage)"
+      v-if="count > itemsPerPage"
+      :value="page"
+      :length="Math.ceil(count / itemsPerPage)"
       :total-visible="7"
+      class="py-2 pt-3"
+      @input="$emit('set-page', $event)"
     />
     <v-list
       two-line
       class="pa-0"
     >
       <template
-        v-for="(result, resultIndex) in results.slice(resultsPerPage*(page-1), resultsPerPage*page)"
+        v-for="(result, resultIndex) in results"
       >
         <v-divider
           v-if="resultIndex > 0"
@@ -23,7 +52,7 @@
         >
           <v-list-item-avatar>
             <v-icon
-              v-text="types[type].icon"
+              v-text="icon"
             />
           </v-list-item-avatar>
           <v-list-item-content>
@@ -39,28 +68,3 @@
     </v-list>
   </div>
 </template>
-<script>
-import { types } from '@/encoding';
-
-export default {
-  props: {
-    type: {
-      type: String,
-      default: null,
-    },
-    results: {
-      type: Array,
-      default: () => [],
-    },
-    conditions: {
-      type: Array,
-      default: () => [],
-    },
-  },
-  data: () => ({
-    page: 1,
-    resultsPerPage: 15,
-    types,
-  }),
-};
-</script>

@@ -1,7 +1,7 @@
 <script>
-import { mapState, mapGetters } from 'vuex';
+import { mapActions, mapState, mapGetters } from 'vuex';
 
-import { ecosystemFields } from '@/encoding';
+import { ecosystemFields, types } from '@/encoding';
 import removeCondition from '@/data/utils';
 
 import FacetChart from '@/components/Presentation/FacetChart.vue';
@@ -22,18 +22,18 @@ export default {
     Sidebar,
   },
 
-  data: () => ({ ecosystemFields }),
+  data: () => ({ ecosystemFields, types }),
 
   computed: {
-    ...mapState(['results']),
+    ...mapState(['results', 'page', 'pageSize']),
     ...mapGetters(['type', 'conditions']),
     typeResults() {
-      const tr = this.results[this.type];
-      return tr ? tr.results : null;
+      return this.results[this.type] || null;
     },
   },
 
   methods: {
+    ...mapActions(['route', 'refreshResults']),
     addSelected({ conditions }) {
       const newConditions = conditions.filter((c) => {
         const match = this.conditions.filter((d) => (
@@ -44,7 +44,7 @@ export default {
         return match.length === 0;
       });
       if (newConditions.length > 0) {
-        this.$store.dispatch('route', {
+        this.route({
           conditions: [
             ...newConditions,
             ...this.conditions,
@@ -53,12 +53,12 @@ export default {
       }
     },
     removeCondition(c) {
-      this.$store.dispatch('route', {
+      this.route({
         conditions: removeCondition(this.conditions, c),
       });
     },
     navigateToSelected(id) {
-      this.$store.dispatch('route', {
+      this.route({
         name: 'Individual Result',
         type: this.type,
         conditions: [{
@@ -80,7 +80,6 @@ export default {
             <v-card>
               <LocationMap
                 :type="type"
-                :data="typeResults"
                 :conditions="conditions"
                 @selected="addSelected($event)"
               />
@@ -113,7 +112,6 @@ export default {
             <v-card>
               <EcosystemSankey
                 :type="type"
-                :data="typeResults"
                 :conditions="conditions"
                 @selected="addSelected($event)"
               />
@@ -148,11 +146,13 @@ export default {
           <v-col>
             <v-card>
               <SearchResults
-                :type="type"
-                :results="typeResults"
-                :conditions="conditions"
+                :count="typeResults.count"
+                :icon="types[type].icon"
+                :items-per-page="pageSize"
+                :results="typeResults.results"
+                :page="page"
+                @set-page="refreshResults({ page: $event })"
                 @selected="navigateToSelected($event)"
-                @unselected="removeCondition($event)"
               />
             </v-card>
           </v-col>

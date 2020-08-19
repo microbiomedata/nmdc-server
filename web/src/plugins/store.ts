@@ -15,6 +15,8 @@ import router from './router';
 Vue.use(Vuex);
 
 interface State {
+  page: number,
+  pageSize: number,
   results: Record<entityType, ResultUnion>;
   route: any;
 }
@@ -29,6 +31,8 @@ function asType(type: any) {
 
 const store = new Vuex.Store<State>({
   state: {
+    page: 1,
+    pageSize: 15,
     results: {
       biosample: null,
       study: null,
@@ -59,11 +63,35 @@ const store = new Vuex.Store<State>({
     setResults(state, { type, results }: { type: entityType; results: ResultUnion }) {
       state.results[type] = results;
     },
+    setPagination(state, { page, pageSize }: { page: number, pageSize: number }) {
+      state.page = page;
+      state.pageSize = pageSize;
+    },
   },
   actions: {
-    async refreshResults({ commit, getters }) {
-      const { conditions, type } = getters;
-      const params = { conditions };
+    async refreshResults(
+      { commit, getters, state },
+      { page, pageSize }: { page?: number, pageSize?: number },
+    ) {
+      const newPageSize = pageSize || state.pageSize;
+      const newPage = page || state.page;
+      const { type, conditions }: {
+        type: entityType | undefined,
+        conditions: Condition[] } = getters;
+      if (!type) {
+        throw new Error(`Unexpected type: ${type}`);
+      }
+      if (newPage < 1) {
+        throw new Error('Page must be > 1');
+      }
+      if (newPage > 1 && newPage > Math.ceil((state.results[type]?.count || 0) / newPageSize)) {
+        return;
+      }
+      commit('setPagination', { page: newPage, pageSize: newPageSize });
+      const limit = newPageSize;
+      const offset = newPageSize * (newPage - 1);
+      const params = { conditions, limit, offset };
+
       let results: ResultUnion;
       switch (type) {
         case 'study':
@@ -92,9 +120,6 @@ const store = new Vuex.Store<State>({
       }
       commit('setResults', { type, results });
     },
-    async refreshAll({ dispatch }) {
-      await dispatch('refreshResults');
-    },
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     async route({ state }, { name, type, conditions }) {
       /**
@@ -122,7 +147,7 @@ router.afterEach((to) => {
     Vue.nextTick(() => {
       // after hook still happens before vuex sync has a chance to capture the state.
       // wait a tick before dispatch
-      store.dispatch('refreshAll');
+      store.dispatch('refreshResults', { page: 1 });
     });
   }
 });

@@ -41,6 +41,9 @@ export default Vue.extend({
     </div>
     <search-results
       type="data_object"
+      :page="1"
+      :items-per-page="results.length"
+      :count="results.length"
       :results="results"
     />
   </div>
