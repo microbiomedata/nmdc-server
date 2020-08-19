@@ -62,7 +62,6 @@ const store = new Vuex.Store<State>({
   },
   actions: {
     async refreshResults({ commit, getters }) {
-      console.log('refresh');
       const { conditions, type } = getters;
       const params = { conditions };
       let results: ResultUnion;
