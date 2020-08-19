@@ -8,14 +8,14 @@ setup(
     install_requires=[
         "alembic",
         "authlib",
-        "fastapi",
+        "fastapi==0.61.0",
         "factory-boy",
         "httpx",
         "itsdangerous",
         "psycopg2-binary",
         "python-dotenv",
         "sqlalchemy",
-        "starlette",
+        "starlette==0.13.6",
         "typing-extensions",
     ],
 )

@@ -5,7 +5,7 @@ from nmdc_server.config import settings
 
 
 def test_login(client: TestClient):
-    resp = client.request(method="post", url="/login", allow_redirects=False)
+    resp = client.request(method="get", url="/login", allow_redirects=False)
 
     assert resp.status_code == 302
     assert resp.next.url.startswith(settings.oauth_authorization_endpoint)  # type: ignore
@@ -17,7 +17,7 @@ def test_current_user(client: TestClient, token: Token):
 
 
 def test_logout(client: TestClient, token: Token):
-    client.post("/logout")
+    client.get("/logout")
     resp = client.get("/api/me")
     assert resp.json() == None
 
