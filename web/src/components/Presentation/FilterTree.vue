@@ -1,9 +1,13 @@
 <script>
-import { flattenDeep, uniqWith } from 'lodash';
+import Treeselect from '@riophae/vue-treeselect';
+import '@riophae/vue-treeselect/dist/vue-treeselect.css';
+
 import { api } from '@/data/api';
 import { makeTree } from '@/util';
 
 export default {
+  components: { Treeselect },
+
   props: {
     field: {
       type: String,
@@ -57,15 +61,14 @@ export default {
 
   methods: {
     setSelected(nodeKeys) {
-      const fieldChains = nodeKeys.map((k) => k.split('.'));
       const conditions = [
         ...this.otherConditions,
-        ...uniqWith(flattenDeep(fieldChains.map((chain) => chain.map((field, depth) => ({
+        ...nodeKeys.map((key) => ({
           op: '==',
-          field: this.heirarchy[depth],
-          value: field,
+          field: this.treeData.nodeMap[key].heirarchyKey,
+          value: this.treeData.nodeMap[key].label,
           table: this.table,
-        })))), (a, b) => a.field === b.field && a.value === b.value),
+        })),
       ];
       this.$store.dispatch('route', { conditions });
     },
@@ -75,25 +78,11 @@ export default {
 
 <template>
   <div class="tree-overflow">
-    <v-text-field
-      v-model="filterText"
-      solo
-      label="search"
-      clearable
-      class="px-3 my-3"
-      dense
-      hide-details
-      outlined
-      flat
-      append-icon="mdi-magnify"
-    />
-    <v-treeview
-      :items="tree"
-      :search="filterText"
-      selectable
-      selected-color="primary"
-      open-on-click
-      dense
+    <treeselect
+      :options="tree"
+      multiple
+      always-open
+      class="ma-2"
       @input="setSelected"
     />
   </div>
