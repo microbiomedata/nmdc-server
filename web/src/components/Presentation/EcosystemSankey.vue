@@ -17,17 +17,7 @@ import { GChart } from 'vue-google-charts';
 import colors from '@/colors';
 import { api } from '@/data/api';
 import { ecosystems } from '@/encoding';
-
-function generateLayer(data, heirarchy, depth) {
-  const [from, to] = heirarchy.slice(depth, depth + 2);
-  const histogram = {};
-  data.forEach((item) => {
-    const key = `${' '.repeat(depth + 1)}${item[from]}:${' '.repeat(depth + 2)}${item[to]}`;
-    histogram[key] = (histogram[key] || 0) + item.count;
-  });
-  return Object.entries(histogram)
-    .map(([key, value]) => [...key.split(':'), value]);
-}
+import { makeTree } from '@/util';
 
 export default {
   components: {
@@ -74,12 +64,21 @@ export default {
   asyncComputed: {
     async sankeyData() {
       const data = await api.getEnvironmentSankeyAggregation(this.conditions);
+      const tree = makeTree(data, this.heirarchy);
       return [
         ['From', 'To', 'Samples'],
-        ...generateLayer(data, this.heirarchy, 0),
-        ...generateLayer(data, this.heirarchy, 1),
-        ...generateLayer(data, this.heirarchy, 2),
-        ...generateLayer(data, this.heirarchy, 3),
+        // generate sankey data from topological sort of sankey tree
+        ...tree.topoSort
+          // filter root node and root's direct children
+          .filter((node) => node.id !== '' && node.parent.id !== '')
+          .map(({
+            name, parent, count, depth,
+          }) => ([
+            // Add depth-dependent spacing so each level's unclassified is unique
+            ' '.repeat(depth - 1) + parent.name,
+            ' '.repeat(depth) + name,
+            count,
+          ])),
       ];
     },
   },

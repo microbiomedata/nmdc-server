@@ -17,7 +17,6 @@ export default {
 
   data: () => ({
     filterText: '',
-    selected: [],
     filterOther: true,
     tableHeaders: [
       {
@@ -35,6 +34,16 @@ export default {
       },
     ],
   }),
+
+  computed: {
+    selected() {
+      return this.myConditions.map(
+        // In order for selection to work, each object must match for all key/value pairs
+        // so we have to get the right item from the item list where value matches
+        (c) => this.facetSummary.find((item) => item.facet.toLowerCase() === c.value.toLowerCase()),
+      );
+    },
+  },
 
   methods: {
     setSelected({ item, value }) {

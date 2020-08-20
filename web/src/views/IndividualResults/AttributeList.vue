@@ -28,33 +28,6 @@
       Item Attributes
     </div>
     <v-list>
-      <v-list-item v-if="item.ecosystem">
-        <v-list-item-avatar>
-          <v-icon>mdi-text</v-icon>
-        </v-list-item-avatar>
-        <v-list-item-content>
-          <v-list-item-title>
-            Ecosystem
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            <span
-              v-for="(field, fieldIndex) in ecosystemFields"
-              :key="field"
-              class="primary--text"
-              style="cursor: pointer"
-              @click="selectField(type, field)"
-            >
-              <v-icon
-                v-if="fieldIndex > 0"
-                small
-              >
-                mdi-chevron-right
-              </v-icon>
-              {{ item[field] }}
-            </span>
-          </v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
       <template v-for="field in displayFields">
         <template
           v-if="!getField(field)
@@ -119,7 +92,7 @@
 <script>
 import { isObject } from 'lodash';
 
-import { types, ecosystemFields, getField } from '@/encoding';
+import { types, getField } from '@/encoding';
 import { api } from '@/data/api';
 import {
   typeWithCardinality, fieldDisplayName, valueDisplayName,
@@ -138,7 +111,6 @@ export default {
   },
   data: () => ({
     types,
-    ecosystemFields,
     relatedTypes: [
       {
         type: 'study',

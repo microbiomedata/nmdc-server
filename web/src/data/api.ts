@@ -1,3 +1,4 @@
+import { merge } from 'lodash';
 import axios from 'axios';
 
 const client = axios.create({
@@ -311,9 +312,29 @@ async function getFacetSummary(
     .sort((a, b) => b.count - a.count);
 }
 
-async function getDatabaseSummary() {
+async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
   const { data } = await client.get<DatabaseSummaryResponse>('summary');
-  return data;
+  // TODO: fix this on the server
+  // merge this object with summary response
+  const mergeSummary = {
+    biosample: {
+      attributes: {
+        gold_classification: {
+          type: 'tree',
+          count: -1,
+        },
+      },
+    },
+    study: {
+      attributes: {
+        gold_classification: {
+          type: 'tree',
+          count: -1,
+        },
+      },
+    },
+  };
+  return merge(data, mergeSummary);
 }
 
 async function getDatabaseStats() {

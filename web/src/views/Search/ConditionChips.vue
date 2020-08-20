@@ -98,7 +98,6 @@ export default {
       </div>
       <v-menu
         offset-x
-        top
         :close-on-content-click="false"
         @input="toggleMenu(group.key, $event)"
       >
