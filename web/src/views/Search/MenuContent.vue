@@ -1,15 +1,16 @@
 <script>
 import { fieldDisplayName } from '@/util';
-import DateFilter from '@/components/Presentation/DateFilter.vue';
-import FloatFilter from '@/components/Presentation/FloatFilter.vue';
-
-import MatchList from './MatchList.vue';
+import FilterDate from '@/components/Presentation/FilterDate.vue';
+import FilterFloat from '@/components/Presentation/FilterFloat.vue';
+import FilterList from '@/components/Presentation/FilterList.vue';
+import FilterTree from '@/components/Presentation/FilterTree.vue';
 
 export default {
   components: {
-    DateFilter,
-    FloatFilter,
-    MatchList,
+    FilterDate,
+    FilterFloat,
+    FilterList,
+    FilterTree,
   },
 
   props: {
@@ -47,12 +48,12 @@ export default {
     <v-card-title class="pb-0">
       {{ fieldDisplayName(field) }}
     </v-card-title>
-    <match-list
+    <filter-list
       v-if="['string'].includes(summary.type) && isOpen"
       :field="field"
       :table="type"
     />
-    <date-filter
+    <filter-date
       v-if="['date'].includes(summary.type)"
       v-bind="{
         field, type, conditions,
@@ -62,7 +63,7 @@ export default {
       class="pa-5"
       @select="$store.dispatch('route', $event)"
     />
-    <float-filter
+    <filter-float
       v-else-if="['float', 'integer'].includes(summary.type)"
       v-bind="{
         field, type, conditions,
@@ -70,6 +71,11 @@ export default {
         max: summary.max,
       }"
       class="pa-5"
+      @select="$store.dispatch('route', $event)"
+    />
+    <filter-tree
+      v-else-if="['tree'].includes(summary.type)"
+      v-bind="{ field, table: type, conditions }"
       @select="$store.dispatch('route', $event)"
     />
   </div>

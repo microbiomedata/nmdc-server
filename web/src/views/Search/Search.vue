@@ -1,7 +1,7 @@
 <script>
 import { mapActions, mapState, mapGetters } from 'vuex';
 
-import { ecosystemFields, types } from '@/encoding';
+import { types } from '@/encoding';
 import removeCondition from '@/data/utils';
 
 import FacetChart from '@/components/Presentation/FacetChart.vue';
@@ -22,7 +22,7 @@ export default {
     Sidebar,
   },
 
-  data: () => ({ ecosystemFields, types }),
+  data: () => ({ types }),
 
   computed: {
     ...mapState(['results', 'page', 'pageSize']),

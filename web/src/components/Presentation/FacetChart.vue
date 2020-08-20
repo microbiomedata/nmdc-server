@@ -10,9 +10,8 @@
 
 <script>
 import { GChart } from 'vue-google-charts';
-
-import * as encoding from '@/encoding';
 import { fieldDisplayName } from '@/util';
+import { ecosystems } from '@/encoding';
 
 export default {
   name: 'FacetChart',
@@ -105,7 +104,10 @@ export default {
             facet.facet,
             (this.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0,
             true,
-            encoding.values[facet.facet] ? encoding.values[facet.facet].color : 'grey',
+            (
+              ecosystems.find((e) => e.name === facet.facet)
+              || { color: this.$vuetify.theme.currentTheme.primary }
+            ).color,
             facet.count - ((this.facetSummary.find(
               (e) => e.facet === facet.facet,
             ) || {}).count || 0),

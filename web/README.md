@@ -16,7 +16,7 @@ This app uses `vuex-router-sync` so that Vuex getters and actions can treat the 
 * code in `src/components` is "functional": it relies only on the state of its props, and produces no side-effects other than emitted events.
 * code in `src/views` makes use of vuex and the api shims.
 
-Some components, like `src/views/Search/MatchList` use lazy-load of data that could have been prefetched based on the state of the store and router.  It does so using its own lifecycle hooks: It will dispatch an action to load and cache facet results when it gets created, then listen for global cache invalidations (caused primarily by routing changes) to re-fetch.  That specific component is the dialog content from a `v-menu`, which used to have native support for lazy-rendering, but now uses `v-if="isOpen"` to achieve the same effect since support was dropped in Vuetify.
+Some components, like `src/views/Search/FilterList` use lazy-load of data that could have been prefetched based on the state of the store and router.  It does so using its own lifecycle hooks: It will dispatch an action to load and cache facet results when it gets created, then listen for global cache invalidations (caused primarily by routing changes) to re-fetch.  That specific component is the dialog content from a `v-menu`, which used to have native support for lazy-rendering, but now uses `v-if="isOpen"` to achieve the same effect since support was dropped in Vuetify.
 
 ## Project setup
 ```
