@@ -74,7 +74,7 @@ export default {
       @select="$store.dispatch('route', $event)"
     />
     <filter-tree
-      v-else-if="['tree'].includes(summary.type)"
+      v-else-if="['tree'].includes(summary.type) && isOpen"
       v-bind="{ field, table: type, conditions }"
       @select="$store.dispatch('route', $event)"
     />

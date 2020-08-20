@@ -1,3 +1,5 @@
+import { differenceWith } from 'lodash';
+
 import Vue from 'vue';
 import Vuex from 'vuex';
 
@@ -121,8 +123,7 @@ const store = new Vuex.Store<State>({
       commit('setPagination', { page: newPage, pageSize: newPageSize });
       commit('setResults', { type, results });
     },
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    async route({ state }, { name, type, conditions }) {
+    async route({ getters }, { name, type, conditions }) {
       /**
        * Use the vuex route action when a route change
        * involves a change in type or conditions
@@ -135,9 +136,14 @@ const store = new Vuex.Store<State>({
         });
       } else {
         // Only change the query params to avoid double-routing
-        router.push({
-          query: { c: conditions },
-        });
+        const changed = differenceWith(getters.conditions, conditions,
+          (a: Condition, b: Condition) => a.field === b.field && a.value === b.value);
+        console.log(getters.conditions, conditions, changed);
+        if (changed.length || conditions.length > getters.conditions.length) {
+          router.push({
+            query: { c: conditions },
+          });
+        }
       }
     },
   },

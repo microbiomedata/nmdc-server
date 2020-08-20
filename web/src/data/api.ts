@@ -1,4 +1,3 @@
-// @ts-ignore
 import { merge } from 'lodash';
 import axios from 'axios';
 

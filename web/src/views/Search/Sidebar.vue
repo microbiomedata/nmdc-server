@@ -90,9 +90,16 @@ export default {
       </v-chip-group>
       <div
         v-if="conditions.length"
-        class="text-subtitle-2 primary--text"
+        class="text-subtitle-2 primary--text d-flex flex-row"
       >
-        That match the following conditions
+        <span class="grow">That match the following conditions</span>
+        <v-btn
+          icon
+          x-small
+          @click="$store.dispatch('route', { conditions: [] })"
+        >
+          <v-icon>mdi-filter-off</v-icon>
+        </v-btn>
       </div>
     </div>
 

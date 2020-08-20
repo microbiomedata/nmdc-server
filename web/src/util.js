@@ -111,3 +111,10 @@ export function makeTree(data, heirarchy) {
     root, nodeMap, topoSort,
   };
 }
+
+export function getChain(node) {
+  if (node) {
+    return getChain(node.parent).concat([node]);
+  }
+  return [];
+}
