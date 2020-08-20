@@ -91,6 +91,7 @@ export default {
       :items="tree"
       :search="filterText"
       selectable
+      selected-color="primary"
       open-on-click
       dense
       @input="setSelected"
