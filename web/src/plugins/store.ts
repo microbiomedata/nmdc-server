@@ -138,7 +138,6 @@ const store = new Vuex.Store<State>({
         // Only change the query params to avoid double-routing
         const changed = differenceWith(getters.conditions, conditions,
           (a: Condition, b: Condition) => a.field === b.field && a.value === b.value);
-        console.log(getters.conditions, conditions, changed);
         if (changed.length || conditions.length > getters.conditions.length) {
           router.push({
             query: { c: conditions },
