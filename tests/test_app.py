@@ -95,7 +95,15 @@ def test_get_environmental_aggregation(db: Session, client: TestClient):
     assert_status(client.post("/api/environment/sankey"))
     resp = client.post(
         "/api/environment/sankey",
-        json={"conditions": [{"table": "study", "field": "id", "value": "not a study",}]},
+        json={
+            "conditions": [
+                {
+                    "table": "study",
+                    "field": "id",
+                    "value": "not a study",
+                }
+            ]
+        },
     )
     assert_status(resp)
     assert resp.json() == []
@@ -103,7 +111,15 @@ def test_get_environmental_aggregation(db: Session, client: TestClient):
     assert_status(client.post("/api/environment/geospatial"))
     resp = client.post(
         "/api/environment/geospatial",
-        json={"conditions": [{"table": "study", "field": "id", "value": "not a study",}]},
+        json={
+            "conditions": [
+                {
+                    "table": "study",
+                    "field": "id",
+                    "value": "not a study",
+                }
+            ]
+        },
     )
     assert_status(resp)
     assert resp.json() == []

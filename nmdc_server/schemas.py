@@ -18,7 +18,9 @@ AnnotationValue = Union[float, int, datetime, str]
 
 class ErrorSchema(BaseModel):
     message: str = Field(
-        ..., description="Human-readable error message.", example="Something went wrong.",
+        ...,
+        description="Human-readable error message.",
+        example="Something went wrong.",
     )
 
 

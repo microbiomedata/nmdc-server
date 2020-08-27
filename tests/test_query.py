@@ -93,7 +93,11 @@ def test_date_query(db: Session, condition, expected):
             {"table": "project", "field": "id", "value": "project1", "op": "=="},
             {"sample1"},
         ),
-        ("sample", {"table": "study", "field": "id", "value": "study1", "op": "=="}, {"sample2"},),
+        (
+            "sample",
+            {"table": "study", "field": "id", "value": "study1", "op": "=="},
+            {"sample2"},
+        ),
     ],
 )
 def test_foreign_key_search(db: Session, table, condition, expected):
@@ -414,7 +418,15 @@ def test_pipeline_query(db: Session, table):
     q = query_schema()
     assert {f"{table}{i}" for i in [1, 2, 3]} == {r.name for r in q.execute(db).all()}
 
-    q = query_schema(conditions=[{"table": "project", "field": "name", "value": "project1",}])
+    q = query_schema(
+        conditions=[
+            {
+                "table": "project",
+                "field": "name",
+                "value": "project1",
+            }
+        ]
+    )
     assert {f"{table}{i}" for i in [1, 2]} == {r.name for r in q.execute(db).all()}
 
     q = query.ProjectQuerySchema(
@@ -452,14 +464,22 @@ def test_query_pi(db: Session):
 
     q = query.StudyQuerySchema(
         conditions=[
-            {"table": "study", "field": "principal_investigator_name", "value": "John Doe",}
+            {
+                "table": "study",
+                "field": "principal_investigator_name",
+                "value": "John Doe",
+            }
         ]
     )
     assert ["study1"] == [r.id for r in q.execute(db)]
 
     qp = query.ProjectQuerySchema(
         conditions=[
-            {"table": "study", "field": "principal_investigator_name", "value": "John Doe",}
+            {
+                "table": "study",
+                "field": "principal_investigator_name",
+                "value": "John Doe",
+            }
         ]
     )
     assert ["project1"] == [r.id for r in qp.execute(db)]
@@ -473,14 +493,29 @@ def test_query_data_object(db: Session):
     db.commit()
 
     q = query.DataObjectQuerySchema(
-        conditions=[{"table": "project", "field": "id", "value": "project",}]
+        conditions=[
+            {
+                "table": "project",
+                "field": "id",
+                "value": "project",
+            }
+        ]
     )
     assert {"file1", "file2"} == {r.id for r in q.execute(db)}
 
     q = query.DataObjectQuerySchema(
         conditions=[
-            {"table": "project", "field": "id", "value": "project",},
-            {"table": "data_object", "field": "file_size_bytes", "op": ">=", "value": 64,},
+            {
+                "table": "project",
+                "field": "id",
+                "value": "project",
+            },
+            {
+                "table": "data_object",
+                "field": "file_size_bytes",
+                "op": ">=",
+                "value": 64,
+            },
         ]
     )
     assert {"file2"} == {r.id for r in q.execute(db)}

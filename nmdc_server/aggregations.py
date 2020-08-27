@@ -7,16 +7,23 @@ from nmdc_server import models, query, schemas
 
 
 def get_annotation_summary(
-    db: Session, model: Type[models.AnnotatedModel],
+    db: Session,
+    model: Type[models.AnnotatedModel],
 ) -> Dict[str, schemas.AttributeSummary]:
     attribute = func.jsonb_object_keys(model.annotations)
 
     # TODO: Figure out the correct type, or remove json aggregations
-    q = db.query(attribute, func.count(),).group_by(attribute)
+    q = db.query(
+        attribute,
+        func.count(),
+    ).group_by(attribute)
 
     attributes: Dict[str, schemas.AttributeSummary] = {}
     for r in q:
-        attributes[r[0]] = schemas.AttributeSummary(count=r[1], type=schemas.AttributeType.string,)
+        attributes[r[0]] = schemas.AttributeSummary(
+            count=r[1],
+            type=schemas.AttributeType.string,
+        )
 
     return attributes
 
@@ -49,7 +56,10 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
                     .first()
                 )
                 attributes[column.name] = schemas.AttributeSummary(
-                    count=count_, min=min, max=max, type=schemas.AttributeType.from_column(column),
+                    count=count_,
+                    min=min,
+                    max=max,
+                    type=schemas.AttributeType.from_column(column),
                 )
 
     if model == models.Biosample:
@@ -67,7 +77,8 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
         )
     if model == models.Study:
         attributes["principal_investigator_name"] = schemas.AttributeSummary(
-            count=count, type=schemas.AttributeType.string,
+            count=count,
+            type=schemas.AttributeType.string,
         )
 
     return schemas.TableSummary(total=count, attributes=attributes)
@@ -101,7 +112,8 @@ def get_aggregation_summary(db: Session):
 
 
 def get_sankey_aggregation(
-    db: Session, biosample_query: query.BiosampleQuerySchema,
+    db: Session,
+    biosample_query: query.BiosampleQuerySchema,
 ) -> List[schemas.EnvironmentSankeyAggregation]:
     annotations = models.Biosample.annotations
     columns = [
@@ -125,7 +137,8 @@ def get_sankey_aggregation(
 
 
 def get_geospatial_aggregation(
-    db: Session, biosample_query: query.BiosampleQuerySchema,
+    db: Session,
+    biosample_query: query.BiosampleQuerySchema,
 ) -> List[schemas.EnvironmentGeospatialAggregation]:
     columns = [
         models.Biosample.latitude,

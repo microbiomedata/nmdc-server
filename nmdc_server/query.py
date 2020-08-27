@@ -357,7 +357,11 @@ class BaseQuerySchema(BaseModel):
     def count(self, db: Session) -> int:
         return self.query(db).count()
 
-    def facet(self, db: Session, attribute: str,) -> Dict[schemas.AnnotationValue, int]:
+    def facet(
+        self,
+        db: Session,
+        attribute: str,
+    ) -> Dict[schemas.AnnotationValue, int]:
         model: Any = self.table.model
         join_envo = False
         join_ap = False

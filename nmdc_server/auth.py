@@ -23,7 +23,9 @@ oauth2_client.register(
     client_id=settings.client_id,
     client_secret=settings.client_secret,
     server_metadata_url=settings.open_id_config_url,
-    client_kwargs={"scope": settings.oauth_scope,},
+    client_kwargs={
+        "scope": settings.oauth_scope,
+    },
 )
 
 oauth2_scheme = OAuth2AuthorizationCodeBearer(
@@ -90,7 +92,9 @@ async def authorize(request: Request):
 
 
 @router.get(
-    "/logout", tags=["user"], name="Log out of the current session",
+    "/logout",
+    tags=["user"],
+    name="Log out of the current session",
 )
 async def logout(request: Request):
     request.session.pop("token", None)
