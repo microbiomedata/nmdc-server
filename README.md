@@ -24,6 +24,18 @@ cp .env.example .env
 
 Edit values in `.env` to point to existing postgresql databases.
 
+#### OAuth setup
+
+See `nmdc_server/config` for configuration.  Env variable names begin with `nmdc_`.
+
+At minimum, after creating a new OrcID API, you'll need to set these.
+
+```
+nmdc_client_id=changeme
+nmdc_client_secret=changeme
+nmdc_host=http://localhost:8080
+```
+
 ### Initialization
 
 ```

@@ -1,6 +1,9 @@
 <script>
+import Auth from '@/components/Presentation/Auth.vue';
+
 export default {
   name: 'App',
+  components: { Auth },
 };
 </script>
 
@@ -21,6 +24,8 @@ export default {
           height="100%"
         >
       </router-link>
+      <v-spacer />
+      <auth />
     </v-app-bar>
     <router-view />
   </v-app>
