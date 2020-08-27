@@ -72,7 +72,7 @@ export default {
       v-for="group in conditionGroups"
       :key="group.key"
       class="d-flex flex-row pa-1 my-2"
-      color="primary lighten-5"
+      color="rgb(79, 59, 128, 0.2)"
     >
       <div style="width: 94%">
         <span class="text-subtitle-2">
@@ -87,7 +87,7 @@ export default {
           small
           close
           label
-          class="ma-1"
+          class="ma-1 chip"
           style="max-width: 90%;"
           @click:close="$emit('remove', cond)"
         >
@@ -134,6 +134,9 @@ export default {
   border-left: 1px solid grey;
   border-radius: 0 !important;
   cursor: pointer;
+}
+.chip {
+  border: 2px solid;
 }
 .chip-content {
   overflow: hidden;
