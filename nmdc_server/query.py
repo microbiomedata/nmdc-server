@@ -1,6 +1,6 @@
 from enum import Enum
 from itertools import groupby
-from typing import Any, cast, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, cast, Dict, Iterator, List, Tuple, Union
 
 from pydantic import BaseModel, validator
 from sqlalchemy import and_, distinct, func, inspect, or_
@@ -255,7 +255,7 @@ class ConditionSchema(BaseModel):
     op: Operation = Operation.equal
     field: str
     value: Union[schemas.AnnotationValue, Tuple[schemas.AnnotationValue, schemas.AnnotationValue]]
-    table: Optional[Table]
+    table: Table
 
     @validator("value")
     def validate_value_type(cls, v, values):
@@ -267,10 +267,6 @@ class ConditionSchema(BaseModel):
         elif isinstance(v, tuple):
             raise ValueError("tuple values are only valid for between conditions")
         return v
-
-
-class Condition(ConditionSchema):
-    table: Table
 
     def is_column(self) -> bool:
         m = self.table.model
@@ -320,7 +316,7 @@ class Condition(ConditionSchema):
         return f"{self.table}:{self.field}"
 
     @classmethod
-    def from_schema(cls, condition: ConditionSchema, default_table: Table) -> "Condition":
+    def from_schema(cls, condition: "ConditionSchema", default_table: Table) -> "ConditionSchema":
         kwargs = condition.dict()
         if condition.field in _special_keys:
             kwargs["table"], kwargs["field"] = _special_keys[condition.field]
@@ -337,12 +333,12 @@ class BaseQuerySchema(BaseModel):
         raise Exception("Abstract method")
 
     @property
-    def sorted_conditions(self) -> List[Condition]:
-        conditions = [Condition.from_schema(c, self.table) for c in self.conditions]
+    def sorted_conditions(self) -> List[ConditionSchema]:
+        conditions = [ConditionSchema.from_schema(c, self.table) for c in self.conditions]
         return sorted(conditions, key=lambda c: c.key)
 
     @property
-    def groups(self) -> Iterator[Tuple[str, Iterator[Condition]]]:
+    def groups(self) -> Iterator[Tuple[str, Iterator[ConditionSchema]]]:
         return groupby(self.sorted_conditions, key=lambda c: c.key)
 
     def query(self, db, base_query: Query = None) -> Query:
@@ -361,7 +357,11 @@ class BaseQuerySchema(BaseModel):
     def count(self, db: Session) -> int:
         return self.query(db).count()
 
-    def facet(self, db: Session, attribute: str,) -> Dict[schemas.AnnotationValue, int]:
+    def facet(
+        self,
+        db: Session,
+        attribute: str,
+    ) -> Dict[schemas.AnnotationValue, int]:
         model: Any = self.table.model
         join_envo = False
         join_ap = False

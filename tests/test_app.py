@@ -35,6 +35,7 @@ def test_api_spec(client: TestClient):
     ],
 )
 def test_api_query(db: Session, client: TestClient, condition, expected):
+    condition["table"] = "biosample"
     fakes.BiosampleFactory(id="sample1", annotations={"key1": "value1", "key2": "value2"})
     fakes.BiosampleFactory(id="sample2", annotations={"key1": "value1", "key2": "value3"})
     for _ in range(10):
@@ -94,7 +95,15 @@ def test_get_environmental_aggregation(db: Session, client: TestClient):
     assert_status(client.post("/api/environment/sankey"))
     resp = client.post(
         "/api/environment/sankey",
-        json={"conditions": [{"table": "study", "field": "id", "value": "not a study",}]},
+        json={
+            "conditions": [
+                {
+                    "table": "study",
+                    "field": "id",
+                    "value": "not a study",
+                }
+            ]
+        },
     )
     assert_status(resp)
     assert resp.json() == []
@@ -102,7 +111,15 @@ def test_get_environmental_aggregation(db: Session, client: TestClient):
     assert_status(client.post("/api/environment/geospatial"))
     resp = client.post(
         "/api/environment/geospatial",
-        json={"conditions": [{"table": "study", "field": "id", "value": "not a study",}]},
+        json={
+            "conditions": [
+                {
+                    "table": "study",
+                    "field": "id",
+                    "value": "not a study",
+                }
+            ]
+        },
     )
     assert_status(resp)
     assert resp.json() == []

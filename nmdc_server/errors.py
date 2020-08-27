@@ -14,7 +14,14 @@ def attach_error_handlers(app: FastAPI) -> None:
         exception_id = str(uuid.uuid4())
         logger.exception("Unhandled exception, ID=%s.", exception_id, extra=log_extras(req))
 
-        return JSONResponse(status_code=400, content={"detail": {"msg": str(exc),}},)
+        return JSONResponse(
+            status_code=400,
+            content={
+                "detail": {
+                    "msg": str(exc),
+                }
+            },
+        )
 
     @app.exception_handler(Exception)
     async def internal_exception_handler(req: Request, exc: Exception) -> JSONResponse:

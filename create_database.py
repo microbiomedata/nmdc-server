@@ -180,7 +180,12 @@ def ingest_studies(db: Session, data: List[Dict[str, Any]]):
             image = image_file.read()
 
         principal_investigator, _ = crud.get_or_create(
-            db, models.PrincipalInvestigator, {"image": image,}, name=pi
+            db,
+            models.PrincipalInvestigator,
+            {
+                "image": image,
+            },
+            name=pi,
         )
         db.flush()
 
@@ -260,7 +265,9 @@ def ingest_data_objects(db: Session, data) -> Set[str]:
     for p in load_json_objects(data):
         data_object = load_common_fields(p, include_dates=False)
         data_object.update(
-            {"file_size_bytes": int(p.pop("file_size_bytes")),}
+            {
+                "file_size_bytes": int(p.pop("file_size_bytes")),
+            }
         )
         data_object_db = models.DataObject(**data_object)
         db.add(data_object_db)
@@ -332,17 +339,26 @@ def main(*args):
 
         pipeline = [d for d in data["activity_set"] if d["type"] == "nmdc:MetagenomeAssembly"]
         ingest_pipeline(
-            db, pipeline, models.MetagenomeAssembly, data_objects,
+            db,
+            pipeline,
+            models.MetagenomeAssembly,
+            data_objects,
         )
 
         pipeline = [d for d in data["activity_set"] if d["type"] == "nmdc:MetagenomeAnnotation"]
         ingest_pipeline(
-            db, pipeline, models.MetagenomeAnnotation, data_objects,
+            db,
+            pipeline,
+            models.MetagenomeAnnotation,
+            data_objects,
         )
 
         pipeline = [d for d in data["activity_set"] if d["type"] == "nmdc:MetaProteomicAnalysis"]
         ingest_pipeline(
-            db, pipeline, models.MetaproteomicAnalysis, data_objects,
+            db,
+            pipeline,
+            models.MetaproteomicAnalysis,
+            data_objects,
         )
 
 

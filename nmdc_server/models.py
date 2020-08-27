@@ -39,7 +39,10 @@ def input_association(table: str) -> Table:
 
 
 def input_relationship(association: Table) -> "RelationshipProperty[DataObject]":
-    return relationship("DataObject", secondary=association,)
+    return relationship(
+        "DataObject",
+        secondary=association,
+    )
 
 
 def output_association(table: str) -> Table:
@@ -53,7 +56,10 @@ def output_association(table: str) -> Table:
 
 
 def output_relationship(association: Table) -> "RelationshipProperty[DataObject]":
-    return relationship("DataObject", secondary=association,)
+    return relationship(
+        "DataObject",
+        secondary=association,
+    )
 
 
 class EnvoTerm(Base):
@@ -94,7 +100,11 @@ class EnvoAncestor(Base):
     ancestor_id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
     direct = Column(Boolean, nullable=False, default=lambda: False)
 
-    term = relationship(EnvoTerm, foreign_keys=[id], lazy="joined",)
+    term = relationship(
+        EnvoTerm,
+        foreign_keys=[id],
+        lazy="joined",
+    )
     ancestor = relationship(EnvoTerm, foreign_keys=[ancestor_id], lazy="joined")
 
 

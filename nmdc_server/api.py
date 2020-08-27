@@ -45,7 +45,9 @@ async def get_database_summary(db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/stats", response_model=schemas.AggregationSummary, tags=["aggregation"],
+    "/stats",
+    response_model=schemas.AggregationSummary,
+    tags=["aggregation"],
 )
 async def get_aggregated_stats(db: Session = Depends(get_db)):
     return crud.get_aggregated_stats(db)
@@ -57,7 +59,8 @@ async def get_aggregated_stats(db: Session = Depends(get_db)):
     tags=["aggregation"],
 )
 async def get_environmental_sankey(
-    query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(), db: Session = Depends(get_db),
+    query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(),
+    db: Session = Depends(get_db),
 ):
     return crud.get_environmental_sankey(db, query)
 
@@ -117,7 +120,9 @@ async def facet_biosample(query: query.FacetQuery, db: Session = Depends(get_db)
 
 
 @router.get(
-    "/biosample/{biosample_id}", response_model=schemas.Biosample, tags=["biosample"],
+    "/biosample/{biosample_id}",
+    response_model=schemas.Biosample,
+    tags=["biosample"],
 )
 async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
     db_biosample = crud.get_biosample(db, biosample_id)
@@ -138,7 +143,10 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
 
 # study
 @router.post(
-    "/study", response_model=schemas.Study, tags=["study"], responses=login_required_responses,
+    "/study",
+    response_model=schemas.Study,
+    tags=["study"],
+    responses=login_required_responses,
 )
 async def create_study(
     study: schemas.StudyCreate,
@@ -174,7 +182,9 @@ async def facet_study(query: query.FacetQuery, db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/study/{study_id}", response_model=schemas.Study, tags=["study"],
+    "/study/{study_id}",
+    response_model=schemas.Study,
+    tags=["study"],
 )
 async def get_study(study_id: str, db: Session = Depends(get_db)):
     db_study = crud.get_study(db, study_id)
@@ -234,7 +244,9 @@ async def facet_project(query: query.FacetQuery, db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/project/{project_id}", response_model=schemas.Project, tags=["project"],
+    "/project/{project_id}",
+    response_model=schemas.Project,
+    tags=["project"],
 )
 async def get_project(project_id: str, db: Session = Depends(get_db)):
     db_project = crud.get_project(db, project_id)
@@ -254,7 +266,9 @@ async def get_project(project_id: str, db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/project/{project_id}/outputs", response_model=List[schemas.DataObject], tags=["project"],
+    "/project/{project_id}/outputs",
+    response_model=List[schemas.DataObject],
+    tags=["project"],
 )
 async def list_project_data_objects(project_id: str, db: Session = Depends(get_db)):
     return crud.list_project_data_objects(db, project_id).all()
@@ -276,7 +290,9 @@ async def create_data_object(
 
 
 @router.get(
-    "/data_object/{data_object_id}", response_model=schemas.DataObject, tags=["data_object"],
+    "/data_object/{data_object_id}",
+    response_model=schemas.DataObject,
+    tags=["data_object"],
 )
 async def get_data_object(data_object_id: str, db: Session = Depends(get_db)):
     db_data_object = crud.get_data_object(db, data_object_id)
@@ -347,7 +363,9 @@ async def facet_reads_qc(query: query.FacetQuery, db: Session = Depends(get_db))
 
 
 @router.get(
-    "/reads_qc/{reads_qc_id}", response_model=schemas.ReadsQC, tags=["reads_qc"],
+    "/reads_qc/{reads_qc_id}",
+    response_model=schemas.ReadsQC,
+    tags=["reads_qc"],
 )
 async def get_reads_qc(reads_qc_id: str, db: Session = Depends(get_db)):
     db_reads_qc = crud.get_reads_qc(db, reads_qc_id)
@@ -357,7 +375,9 @@ async def get_reads_qc(reads_qc_id: str, db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/reads_qc/{reads_qc_id}/outputs", response_model=List[schemas.DataObject], tags=["reads_qc"],
+    "/reads_qc/{reads_qc_id}/outputs",
+    response_model=List[schemas.DataObject],
+    tags=["reads_qc"],
 )
 async def list_reads_qc_data_objects(reads_qc_id: str, db: Session = Depends(get_db)):
     return crud.list_reads_qc_data_objects(db, reads_qc_id).all()
