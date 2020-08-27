@@ -35,6 +35,7 @@ def test_api_spec(client: TestClient):
     ],
 )
 def test_api_query(db: Session, client: TestClient, condition, expected):
+    condition["table"] = "biosample"
     fakes.BiosampleFactory(id="sample1", annotations={"key1": "value1", "key2": "value2"})
     fakes.BiosampleFactory(id="sample2", annotations={"key1": "value1", "key2": "value3"})
     for _ in range(10):

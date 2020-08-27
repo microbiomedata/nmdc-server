@@ -23,6 +23,7 @@ date3 = datetime(2000, 1, 3)
     ],
 )
 def test_string_query(db: Session, condition, expected):
+    condition["table"] = "biosample"
     fakes.BiosampleFactory(id="sample1", annotations={"key1": "value1", "key2": "value2"})
     fakes.BiosampleFactory(id="sample2", annotations={"key1": "value1", "key2": "value3"})
     for _ in range(10):
@@ -46,6 +47,7 @@ def test_string_query(db: Session, condition, expected):
     ],
 )
 def test_numeric_query(db: Session, condition, expected):
+    condition["table"] = "biosample"
     fakes.BiosampleFactory(id="sample1", annotations={"key1": 1, "key2": 2})
     fakes.BiosampleFactory(id="sample2", annotations={"key1": 1, "key2": 3})
     for _ in range(10):
@@ -67,6 +69,7 @@ def test_numeric_query(db: Session, condition, expected):
     ],
 )
 def test_date_query(db: Session, condition, expected):
+    condition["table"] = "biosample"
     fakes.BiosampleFactory(id="sample1", annotations={"key1": date1, "key2": date2})
     fakes.BiosampleFactory(id="sample2", annotations={"key1": date1, "key2": date3})
     for _ in range(10):
@@ -80,9 +83,17 @@ def test_date_query(db: Session, condition, expected):
 @pytest.mark.parametrize(
     "table,condition,expected",
     [
-        ("project", {"field": "sample_id", "value": "sample1", "op": "=="}, {"project1"}),
-        ("sample", {"field": "project_id", "value": "project1", "op": "=="}, {"sample1"}),
-        ("sample", {"field": "study_id", "value": "study1", "op": "=="}, {"sample2"}),
+        (
+            "project",
+            {"table": "biosample", "field": "id", "value": "sample1", "op": "=="},
+            {"project1"},
+        ),
+        (
+            "sample",
+            {"table": "project", "field": "id", "value": "project1", "op": "=="},
+            {"sample1"},
+        ),
+        ("sample", {"table": "study", "field": "id", "value": "study1", "op": "=="}, {"sample2"},),
     ],
 )
 def test_foreign_key_search(db: Session, table, condition, expected):
@@ -154,7 +165,9 @@ def test_latitude_query(db: Session, op, value, expected):
     fakes.BiosampleFactory(id="sample3", latitude=-10)
     db.commit()
 
-    q = query.BiosampleQuerySchema(conditions=[{"field": "latitude", "op": op, "value": value}])
+    q = query.BiosampleQuerySchema(
+        conditions=[{"table": "biosample", "field": "latitude", "op": op, "value": value}]
+    )
     assert {r.id for r in q.execute(db)} == expected
 
 
@@ -166,9 +179,9 @@ def test_grouped_query(db: Session):
 
     q = query.BiosampleQuerySchema(
         conditions=[
-            {"field": "key2", "value": "value2", "op": "=="},
-            {"field": "key1", "value": "value1", "op": "=="},
-            {"field": "key2", "value": "value3", "op": "=="},
+            {"table": "biosample", "field": "key2", "value": "value2", "op": "=="},
+            {"table": "biosample", "field": "key1", "value": "value1", "op": "=="},
+            {"table": "biosample", "field": "key2", "value": "value3", "op": "=="},
         ],
     )
     assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
@@ -179,7 +192,9 @@ def test_indirect_join(db: Session):
     fakes.BiosampleFactory(id="sample1", project__study=study)
     db.commit()
 
-    q = query.StudyQuerySchema(conditions=[{"field": "sample_id", "value": "sample1", "op": "=="}])
+    q = query.StudyQuerySchema(
+        conditions=[{"table": "biosample", "field": "id", "value": "sample1", "op": "=="}]
+    )
     assert {s.id for s in q.execute(db)} == {"study1"}
 
 
@@ -200,7 +215,9 @@ def test_faceted_filtered_query(db: Session):
     fakes.BiosampleFactory(id="sample3", annotations={"key1": "value4", "key2": "value2"})
     db.commit()
 
-    q = query.BiosampleQuerySchema(conditions=[{"field": "id", "op": "==", "value": "sample2"}])
+    q = query.BiosampleQuerySchema(
+        conditions=[{"table": "biosample", "field": "id", "op": "==", "value": "sample2"}]
+    )
     assert q.facet(db, "key1") == {"value1": 1}
     assert q.facet(db, "key2") == {"value3": 1}
 
@@ -218,12 +235,14 @@ def test_between_query_column(db: Session):
     db.commit()
 
     q = query.BiosampleQuerySchema(
-        conditions=[{"field": "depth", "op": "between", "value": [0.5, 10]}]
+        conditions=[{"table": "biosample", "field": "depth", "op": "between", "value": [0.5, 10]}]
     )
     assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
 
     q = query.BiosampleQuerySchema(
-        conditions=[{"field": "add_date", "op": "between", "value": [date0, date2]}]
+        conditions=[
+            {"table": "biosample", "field": "add_date", "op": "between", "value": [date0, date2]}
+        ]
     )
     assert {s.id for s in q.execute(db)} == {"sample0", "sample1", "sample2"}
 
@@ -236,12 +255,12 @@ def test_between_query_annotations(db: Session):
     db.commit()
 
     q = query.BiosampleQuerySchema(
-        conditions=[{"field": "number", "op": "between", "value": [0.5, 10]}]
+        conditions=[{"table": "biosample", "field": "number", "op": "between", "value": [0.5, 10]}]
     )
     assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
 
     q = query.BiosampleQuerySchema(
-        conditions=[{"field": "string", "op": "between", "value": ["b", "e"]}]
+        conditions=[{"table": "biosample", "field": "string", "op": "between", "value": ["b", "e"]}]
     )
     assert {s.id for s in q.execute(db)} == {"sample1", "sample2"}
 
@@ -267,6 +286,7 @@ def test_distinct_results(db: Session):
     ],
 )
 def test_query_envo(db: Session, condition, expected):
+    condition["table"] = "biosample"
     env_local = fakes.EnvoTermFactory(label="local1")
     env_broad = fakes.EnvoTermFactory(label="broad1")
     env_medium = fakes.EnvoTermFactory(label="medium1")
@@ -316,10 +336,14 @@ def test_envo_ancestor_query(db: Session):
     fakes.BiosampleFactory(id="sample3", env_local_scale=env_local2)
     db.commit()
 
-    q = query.BiosampleQuerySchema(conditions=[{"field": "env_local_scale", "value": "local1"}])
+    q = query.BiosampleQuerySchema(
+        conditions=[{"table": "biosample", "field": "env_local_scale", "value": "local1"}]
+    )
     assert {s.id for s in q.execute(db)} == {"sample1"}
 
-    q = query.BiosampleQuerySchema(conditions=[{"field": "env_local_scale", "value": "local2"}])
+    q = query.BiosampleQuerySchema(
+        conditions=[{"table": "biosample", "field": "env_local_scale", "value": "local2"}]
+    )
     assert {s.id for s in q.execute(db)} == {"sample1", "sample2", "sample3"}
 
 
@@ -341,13 +365,17 @@ def test_envo_ancestor_facet(db: Session):
         "local3": 1,
     }
 
-    q = query.BiosampleQuerySchema(conditions=[{"field": "env_local_scale", "value": "local1"}])
+    q = query.BiosampleQuerySchema(
+        conditions=[{"table": "biosample", "field": "env_local_scale", "value": "local1"}]
+    )
     assert q.facet(db, "env_local_scale") == {
         "local1": 1,
         "local2": 1,
     }
 
-    q = query.BiosampleQuerySchema(conditions=[{"field": "env_local_scale", "value": "local2"}])
+    q = query.BiosampleQuerySchema(
+        conditions=[{"table": "biosample", "field": "env_local_scale", "value": "local2"}]
+    )
     assert q.facet(db, "env_local_scale") == {
         "local1": 1,
         "local2": 3,
