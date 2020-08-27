@@ -386,6 +386,11 @@ async function getDataObjectList(
   return [];
 }
 
+async function me(): Promise<string> {
+  const { data } = await client.get<string>('me');
+  return data;
+}
+
 const api = {
   getDatabaseSummary,
   getDatabaseStats,
@@ -393,6 +398,7 @@ const api = {
   getEnvironmentGeospatialAggregation,
   getEnvironmentSankeyAggregation,
   getFacetSummary,
+  me,
   searchBiosample,
   searchProject,
   searchStudy,
