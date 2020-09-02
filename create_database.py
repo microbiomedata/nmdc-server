@@ -23,9 +23,7 @@ NOW = datetime.now().isoformat()
 date_re = re.compile(r"^\d{2}$")
 # 23-FEB-18 01.10.55.869000000 PM
 date_fmt = r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M"
-envo_url = (
-    "http://purl.obolibrary.org/obo/envo/subsets/envo-basic.json"
-)
+envo_url = "http://purl.obolibrary.org/obo/envo/subsets/envo-basic.json"
 nmdc_metadata_sha = "40900ef07383bf16debcef4c97059e59a646b028"
 nmdc_data_url = (
     "https://github.com/microbiomedata/nmdc-metadata/raw/"
