@@ -119,37 +119,67 @@ export default {
       },
       {
         type: 'project',
-        conditions: [{ field: 'omics_type', op: '==', value: 'Metagenome' }],
+        conditions: [{
+          table: 'project',
+          field: 'omics_type',
+          op: '==',
+          value: 'Metagenome',
+        }],
         for: ['study'],
         disabled: false,
       },
       {
         type: 'project',
-        conditions: [{ field: 'omics_type', op: '==', value: 'Metatranscriptome' }],
+        conditions: [{
+          table: 'project',
+          field: 'omics_type',
+          op: '==',
+          value: 'Metatranscriptome',
+        }],
         for: ['study'],
         disabled: false,
       },
       {
         type: 'project',
-        conditions: [{ field: 'omics_type', op: '==', value: 'Proteomics' }],
+        conditions: [{
+          table: 'project',
+          field: 'omics_type',
+          op: '==',
+          value: 'Proteomics',
+        }],
         for: ['study'],
         disabled: false,
       },
       {
         type: 'project',
-        conditions: [{ field: 'omics_type', op: '==', value: 'Metabolomics' }],
+        conditions: [{
+          table: 'project',
+          field: 'omics_type',
+          op: '==',
+          value: 'Metabolomics',
+        }],
         for: ['study'],
         disabled: false,
       },
       {
         type: 'project',
-        conditions: [{ field: 'omics_type', op: '==', value: 'Lipidomics' }],
+        conditions: [{
+          table: 'project',
+          field: 'omics_type',
+          op: '==',
+          value: 'Lipidomics',
+        }],
         for: ['study'],
         disabled: false,
       },
       {
         type: 'project',
-        conditions: [{ field: 'omics_type', op: '==', value: 'Organic Matter Characterization' }],
+        conditions: [{
+          table: 'project',
+          field: 'omics_type',
+          op: '==',
+          value: 'Organic Matter Characterization',
+        }],
         for: ['study'],
         disabled: false,
       },
@@ -206,7 +236,8 @@ export default {
     relatedTypeConditions(relatedType) {
       return [
         {
-          field: `${this.type}_id`,
+          table: this.type,
+          field: 'id',
           op: '==',
           value: this.item.id,
         },
