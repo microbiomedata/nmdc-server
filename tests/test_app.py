@@ -1,3 +1,4 @@
+from itertools import product
 import json
 
 from fastapi.testclient import TestClient
@@ -153,3 +154,125 @@ def test_list_data_objects(db: Session, client: TestClient, endpoint: str):
     resp = client.get(f"/api/{endpoint}/1/outputs")
     assert_status(resp)
     assert ["do"] == [r["id"] for r in resp.json()]
+
+
+@pytest.fixture
+def gold_tree_biosamples(db):
+    samples = []
+    iterator = product(
+        range(2),
+        range(2),
+        range(2),
+        range(2),
+        range(2),
+    )
+    for item in iterator:
+        id_ = "_".join([str(i) for i in item])
+        samples.append(
+            fakes.BiosampleFactory(
+                id=id_,
+                ecosystem=f"ecosystem_{item[0]}",
+                ecosystem_category=f"category_{item[1]}",
+                ecosystem_type=f"type_{item[2]}",
+                ecosystem_subtype=f"subtype_{item[3]}",
+                specific_ecosystem=f"specific_{item[4]}",
+            )
+        )
+    db.commit()
+    yield samples
+
+
+def _make_tree_query(client, query):
+    resp = client.post(
+        "/api/biosample/search",
+        json={
+            "conditions": query,
+        },
+    )
+    assert_status(resp)
+    return resp.json()
+
+
+def test_gold_tree_empty_query(gold_tree_biosamples, client: TestClient):
+    query = [{"table": "biosample", "field": "gold_tree", "op": "tree", "value": []}]
+    data = _make_tree_query(client, query)
+    assert data["count"] == len(gold_tree_biosamples)
+
+
+def test_gold_tree_simple_query(gold_tree_biosamples, client: TestClient):
+    query = [
+        {
+            "table": "biosample",
+            "field": "gold_tree",
+            "op": "tree",
+            "value": [
+                {
+                    "ecosystem": "ecosystem_0",
+                }
+            ],
+        }
+    ]
+    data = _make_tree_query(client, query)
+    assert data["count"] == len(gold_tree_biosamples) / 2
+    for d in data["results"]:
+        assert d["id"].startswith("0_")
+
+
+def test_gold_tree_nested_query(gold_tree_biosamples, client: TestClient):
+    query = [
+        {
+            "table": "biosample",
+            "field": "gold_tree",
+            "op": "tree",
+            "value": [
+                {
+                    "ecosystem": "ecosystem_0",
+                    "ecosystem_category": "category_0",
+                    "ecosystem_type": "type_0",
+                }
+            ],
+        }
+    ]
+    data = _make_tree_query(client, query)
+    assert data["count"] == len(gold_tree_biosamples) / 8
+    for d in data["results"]:
+        assert d["id"].startswith("0_0_0_")
+
+
+def test_gold_tree_complex_query(gold_tree_biosamples, client: TestClient):
+    query = [
+        {
+            "table": "biosample",
+            "field": "gold_tree",
+            "op": "tree",
+            "value": [
+                {
+                    "ecosystem": "ecosystem_0",
+                    "ecosystem_category": "category_0",
+                    "ecosystem_type": "type_0",
+                    "ecosystem_subtype": "subtype_0",
+                    "specific_ecosystem": "specific_0",
+                },
+                {
+                    "ecosystem": "ecosystem_0",
+                    "ecosystem_category": "category_0",
+                    "ecosystem_type": "type_1",
+                    "ecosystem_subtype": "subtype_0",
+                    "specific_ecosystem": "specific_0",
+                },
+                {
+                    "ecosystem": "ecosystem_0",
+                    "ecosystem_category": "category_0",
+                    "ecosystem_type": "type_1",
+                    "ecosystem_subtype": "subtype_1",
+                },
+            ],
+        }
+    ]
+    data = _make_tree_query(client, query)
+    assert {d["id"] for d in data["results"]} == {
+        "0_0_0_0_0",
+        "0_0_1_0_0",
+        "0_0_1_1_0",
+        "0_0_1_1_1",
+    }

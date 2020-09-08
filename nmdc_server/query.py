@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 from itertools import groupby
-from typing import Any, Dict, Iterator, List, Tuple, Union
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel
 from sqlalchemy import and_, distinct, func, inspect, or_
@@ -255,7 +255,17 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
 
 NumericValue = Union[float, int, datetime]
 RangeValue = Tuple[schemas.AnnotationValue, schemas.AnnotationValue]
-ConditionValue = Union[schemas.AnnotationValue, RangeValue]
+
+
+class GoldTreeValue(BaseModel):
+    ecosystem: Optional[str]
+    ecosystem_category: Optional[str]
+    ecosystem_type: Optional[str]
+    ecosystem_subtype: Optional[str]
+    specific_ecosystem: Optional[str]
+
+
+ConditionValue = Union[schemas.AnnotationValue, RangeValue, List[GoldTreeValue]]
 
 
 class BaseConditionSchema(BaseModel):
@@ -343,7 +353,24 @@ class RangeConditionSchema(BaseConditionSchema):
             raise InvalidAttributeException(self.table.value, self.field)
 
 
-ConditionSchema = Union[RangeConditionSchema, SimpleConditionSchema]
+class GoldConditionSchema(BaseConditionSchema):
+    table: Table  # can't do a Literal on an enum type
+    value: List[GoldTreeValue]
+    field: Literal["gold_tree"]
+    op: Literal["tree"]
+
+    def compare(self) -> ClauseElement:
+        or_args = []
+        for gold_tree in self.value:
+            and_args = []
+            for key, value in gold_tree.dict().items():
+                if value is not None:
+                    and_args.append(getattr(models.Biosample, key) == value)
+            or_args.append(and_(*and_args))
+        return or_(*or_args)
+
+
+ConditionSchema = Union[RangeConditionSchema, SimpleConditionSchema, GoldConditionSchema]
 
 
 class BaseQuerySchema(BaseModel):
