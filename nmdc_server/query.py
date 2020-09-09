@@ -1,11 +1,14 @@
+from datetime import datetime
 from enum import Enum
 from itertools import groupby
-from typing import Any, cast, Dict, Iterator, List, Tuple, Union
+from typing import Any, Dict, Iterator, List, Tuple, Union
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel
 from sqlalchemy import and_, distinct, func, inspect, or_
 from sqlalchemy.orm import aliased, Query, Session
 from sqlalchemy.orm.util import AliasedClass
+from sqlalchemy.sql.expression import ClauseElement
+from typing_extensions import Literal
 
 from nmdc_server import models, schemas
 
@@ -86,7 +89,6 @@ class Operation(Enum):
     less = "<"
     less_equal = "<="
     not_equal = "!="
-    between = "between"
 
 
 class Table(Enum):
@@ -251,22 +253,15 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
 }
 
 
-class ConditionSchema(BaseModel):
-    op: Operation = Operation.equal
-    field: str
-    value: Union[schemas.AnnotationValue, Tuple[schemas.AnnotationValue, schemas.AnnotationValue]]
-    table: Table
+NumericValue = Union[float, int, datetime]
+RangeValue = Tuple[schemas.AnnotationValue, schemas.AnnotationValue]
+ConditionValue = Union[schemas.AnnotationValue, RangeValue]
 
-    @validator("value")
-    def validate_value_type(cls, v, values):
-        if values["op"] == Operation.between:
-            if not isinstance(v, tuple):
-                raise ValueError("between operator requires a tuple value")
-            if v[0] > v[1]:
-                raise ValueError("lower bound must be less than upper bound")
-        elif isinstance(v, tuple):
-            raise ValueError("tuple values are only valid for between conditions")
-        return v
+
+class BaseConditionSchema(BaseModel):
+    field: str
+    value: ConditionValue
+    table: Table
 
     def is_column(self) -> bool:
         m = self.table.model
@@ -274,7 +269,32 @@ class ConditionSchema(BaseModel):
             m = inspect(m).class_
         return self.field in inspect(m).all_orm_descriptors.keys()
 
-    def compare(self):
+    def compare(self) -> ClauseElement:
+        raise NotImplementedError("Abstract class method")
+
+    @property
+    def key(self) -> str:
+        return f"{self.table}:{self.field}"
+
+    @classmethod
+    def from_schema(
+        cls, condition: "BaseConditionSchema", default_table: Table
+    ) -> "BaseConditionSchema":
+        kwargs = condition.dict()
+        if condition.field in _special_keys:
+            kwargs["table"], kwargs["field"] = _special_keys[condition.field]
+        elif not condition.table:
+            kwargs["table"] = default_table
+        return cls(**kwargs)
+
+
+class SimpleConditionSchema(BaseConditionSchema):
+    op: Operation = Operation.equal
+    field: str
+    value: schemas.AnnotationValue
+    table: Table
+
+    def compare(self) -> ClauseElement:
         model = self.table.model
         if self.is_column():
             column = getattr(model, self.field)
@@ -290,19 +310,6 @@ class ConditionSchema(BaseModel):
                 return column <= self.value
             elif self.op == Operation.not_equal:
                 return column != self.value
-            elif self.op == Operation.between:
-                value = cast(Tuple[schemas.AnnotationValue, schemas.AnnotationValue], self.value)
-                return and_(column >= value[0], column <= value[1])
-        if self.op == Operation.between and hasattr(model, "annotations"):
-            value = cast(Tuple[schemas.AnnotationValue, schemas.AnnotationValue], self.value)
-            return and_(
-                func.nmdc_compare(
-                    model.annotations[self.field].astext, ">=", value[0]  # type: ignore
-                ),
-                func.nmdc_compare(
-                    model.annotations[self.field].astext, "<=", value[1]  # type: ignore
-                ),
-            )
         if hasattr(model, "annotations"):
             json_field = model.annotations  # type: ignore
         else:
@@ -311,18 +318,32 @@ class ConditionSchema(BaseModel):
             json_field[self.field].astext, self.op.value, self.value  # type: ignore
         )
 
-    @property
-    def key(self) -> str:
-        return f"{self.table}:{self.field}"
 
-    @classmethod
-    def from_schema(cls, condition: "ConditionSchema", default_table: Table) -> "ConditionSchema":
-        kwargs = condition.dict()
-        if condition.field in _special_keys:
-            kwargs["table"], kwargs["field"] = _special_keys[condition.field]
-        elif not condition.table:
-            kwargs["table"] = default_table
-        return cls(**kwargs)
+class RangeConditionSchema(BaseConditionSchema):
+    op: Literal["between"]
+    field: str
+    value: RangeValue
+    table: Table
+
+    def compare(self) -> ClauseElement:
+        model = self.table.model
+        if self.is_column():
+            column = getattr(model, self.field)
+            return and_(column >= self.value[0], column <= self.value[1])
+        if hasattr(model, "annotations"):
+            return and_(
+                func.nmdc_compare(
+                    model.annotations[self.field].astext, ">=", self.value[0]  # type: ignore
+                ),
+                func.nmdc_compare(
+                    model.annotations[self.field].astext, "<=", self.value[1]  # type: ignore
+                ),
+            )
+        else:
+            raise InvalidAttributeException(self.table.value, self.field)
+
+
+ConditionSchema = Union[RangeConditionSchema, SimpleConditionSchema]
 
 
 class BaseQuerySchema(BaseModel):
@@ -333,12 +354,12 @@ class BaseQuerySchema(BaseModel):
         raise Exception("Abstract method")
 
     @property
-    def sorted_conditions(self) -> List[ConditionSchema]:
-        conditions = [ConditionSchema.from_schema(c, self.table) for c in self.conditions]
+    def sorted_conditions(self) -> List[BaseConditionSchema]:
+        conditions = [c.__class__.from_schema(c, self.table) for c in self.conditions]
         return sorted(conditions, key=lambda c: c.key)
 
     @property
-    def groups(self) -> Iterator[Tuple[str, Iterator[ConditionSchema]]]:
+    def groups(self) -> Iterator[Tuple[str, Iterator[BaseConditionSchema]]]:
         return groupby(self.sorted_conditions, key=lambda c: c.key)
 
     def query(self, db, base_query: Query = None) -> Query:
