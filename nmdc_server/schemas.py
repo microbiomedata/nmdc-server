@@ -213,6 +213,11 @@ class Biosample(BiosampleBase):
     env_broad_scale_terms: List[str] = []
     env_local_scale_terms: List[str] = []
     env_medium_terms: List[str] = []
+    ecosystem: str
+    ecosystem_category: str
+    ecosystem_type: str
+    ecosystem_subtype: str
+    specific_ecosystem: str
 
     class Config:
         orm_mode = True

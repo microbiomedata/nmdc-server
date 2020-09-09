@@ -190,6 +190,11 @@ class BiosampleFactory(AnnotatedFactory):
     latitude = Faker("latitude")
     longitude = Faker("longitude")
     project = SubFactory(ProjectFactory)
+    ecosystem = Faker("word")
+    ecosystem_category = Faker("word")
+    ecosystem_type = Faker("word")
+    ecosystem_subtype = Faker("word")
+    specific_ecosystem = Faker("word")
 
 
 class DataObjectFactory(SQLAlchemyModelFactory):

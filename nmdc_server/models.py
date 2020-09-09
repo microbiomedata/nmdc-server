@@ -184,6 +184,13 @@ class Biosample(Base, AnnotatedModel):
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
 
+    # gold terms
+    ecosystem = Column(String, nullable=False)
+    ecosystem_category = Column(String, nullable=False)
+    ecosystem_type = Column(String, nullable=False)
+    ecosystem_subtype = Column(String, nullable=False)
+    specific_ecosystem = Column(String, nullable=False)
+
     project_id = Column(String, ForeignKey("project.id"), nullable=False)
     project = relationship("Project", backref="biosamples")
 
