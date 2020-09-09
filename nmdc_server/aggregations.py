@@ -115,17 +115,13 @@ def get_sankey_aggregation(
     db: Session,
     biosample_query: query.BiosampleQuerySchema,
 ) -> List[schemas.EnvironmentSankeyAggregation]:
-    annotations = models.Biosample.annotations
     columns = [
-        annotations[e].astext.label(e)
-        for e in [
-            "ecosystem",
-            "ecosystem_category",
-            "ecosystem_type",
-            "ecosystem_subtype",
-            "ecosystem_subtype",
-            "specific_ecosystem",
-        ]
+        models.Biosample.ecosystem,
+        models.Biosample.ecosystem_category,
+        models.Biosample.ecosystem_type,
+        models.Biosample.ecosystem_subtype,
+        models.Biosample.ecosystem_subtype,
+        models.Biosample.specific_ecosystem,
     ]
     subquery = biosample_query.query(db).subquery()
     rows = (
@@ -143,8 +139,8 @@ def get_geospatial_aggregation(
     columns = [
         models.Biosample.latitude,
         models.Biosample.longitude,
-        models.Biosample.annotations["ecosystem"].label("ecosystem"),
-        models.Biosample.annotations["ecosystem_category"].label("ecosystem_category"),
+        models.Biosample.ecosystem,
+        models.Biosample.ecosystem_category,
     ]
     subquery = biosample_query.query(db).subquery()
     rows = (

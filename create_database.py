@@ -246,6 +246,11 @@ def ingest_biosamples(db: Session, data, biosample_projects):
                 "env_broad_scale": env_broad_scale,
                 "env_local_scale": env_local_scale,
                 "env_medium": env_medium,
+                "ecosystem": p.pop("ecosystem"),
+                "ecosystem_category": p.pop("ecosystem_category"),
+                "ecosystem_type": p.pop("ecosystem_type"),
+                "ecosystem_subtype": p.pop("ecosystem_subtype"),
+                "specific_ecosystem": p.pop("specific_ecosystem"),
                 "annotations": p,
             }
         )
