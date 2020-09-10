@@ -17,7 +17,6 @@ export default {
 
   data: () => ({
     filterText: '',
-    filterOther: true,
     tableHeaders: [
       {
         text: 'Facet',

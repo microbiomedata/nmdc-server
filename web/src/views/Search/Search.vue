@@ -4,11 +4,12 @@ import { mapActions, mapState, mapGetters } from 'vuex';
 import { types } from '@/encoding';
 import removeCondition from '@/data/utils';
 
-import FacetChart from '@/components/Presentation/FacetChart.vue';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
+import FacetChart from '@/components/Presentation/FacetChart.vue';
+import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
+import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
 import SearchResults from '@/components/Presentation/SearchResults.vue';
-import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
 
 import Sidebar from './Sidebar.vue';
 
@@ -16,6 +17,7 @@ export default {
   components: {
     FacetChart,
     FacetSummaryWrapper,
+    DateHistogram,
     SearchResults,
     LocationMap,
     EcosystemSankey,
@@ -104,6 +106,19 @@ export default {
         </v-row>
 
         <v-row v-if="['biosample'].includes(type)">
+          <v-col cols="12">
+            <facet-summary-wrapper
+              table="biosample"
+              field="collection_date"
+            >
+              <template #default="props">
+                <DateHistogram
+                  v-bind="props"
+                  @selected="addSelected($event)"
+                />
+              </template>
+            </facet-summary-wrapper>
+          </v-col>
           <v-col :cols="12">
             <EcosystemSankey
               :type="type"
