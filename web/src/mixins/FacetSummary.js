@@ -11,7 +11,6 @@ export default {
     return {
       facetSummary: [],
       facetSummaryUnconditional: [],
-      filterOther: false, // Override in your consumer component
     };
   },
 
