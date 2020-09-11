@@ -13,6 +13,10 @@ export default Vue.extend({
       type: String,
       required: true,
     },
+    useAllConditions: {
+      type: Boolean,
+      default: false,
+    },
   },
 });
 </script>
