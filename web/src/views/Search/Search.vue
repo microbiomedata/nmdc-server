@@ -89,6 +89,7 @@ export default {
             <facet-summary-wrapper
               table="biosample"
               field="ecosystem_category"
+              use-all-conditions
             >
               <template #default="props">
                 <FacetChart
@@ -110,6 +111,7 @@ export default {
             <facet-summary-wrapper
               table="biosample"
               field="collection_date"
+              use-all-conditions
             >
               <template #default="props">
                 <DateHistogram
@@ -133,6 +135,7 @@ export default {
             <facet-summary-wrapper
               table="project"
               field="omics_type"
+              use-all-conditions
             >
               <template #default="props">
                 <FacetChart

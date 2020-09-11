@@ -11,6 +11,7 @@ export default {
     return {
       facetSummary: [],
       facetSummaryUnconditional: [],
+      useAllConditions: false,
     };
   },
 
@@ -40,7 +41,8 @@ export default {
         return api.getFacetSummary(
           this.table,
           this.field,
-          this.otherConditions,
+          this.otherConditions
+            .concat(this.useAllConditions ? this.myConditions : []),
         );
       },
       default: [],

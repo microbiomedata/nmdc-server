@@ -74,7 +74,6 @@ export default {
         legend: {
           position: 'none',
         },
-        bar: { groupWidth: '200%' },
         annotations: { alwaysOutside: true, stem: { color: 'transparent' } },
         isStacked: true,
       };
