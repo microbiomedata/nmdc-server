@@ -183,6 +183,7 @@ class BiosampleFactory(AnnotatedFactory):
 
     add_date = Faker("date_time")
     mod_date = Faker("date_time")
+    collection_date = Faker("date_time")
     depth = Faker("random_number", digits=3)
     env_broad_scale = SubFactory(EnvoTermFactory)
     env_local_scale = SubFactory(EnvoTermFactory)

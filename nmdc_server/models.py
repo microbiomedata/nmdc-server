@@ -177,6 +177,7 @@ class Biosample(Base, AnnotatedModel):
 
     add_date = Column(DateTime, nullable=False)
     mod_date = Column(DateTime, nullable=False)
+    collection_date = Column(DateTime, nullable=True)
     depth = Column(Float, nullable=True)
     env_broad_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
     env_local_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
