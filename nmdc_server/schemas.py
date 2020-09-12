@@ -206,6 +206,7 @@ class BiosampleCreate(BiosampleBase):
 
 
 class Biosample(BiosampleBase):
+    collection_date: Optional[datetime]
     open_in_gold: Optional[str]
     env_broad_scale: Optional[EnvoTerm]
     env_local_scale: Optional[EnvoTerm]

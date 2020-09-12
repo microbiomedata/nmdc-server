@@ -251,6 +251,7 @@ def ingest_biosamples(db: Session, data, biosample_projects):
                 "ecosystem_type": p.pop("ecosystem_type"),
                 "ecosystem_subtype": p.pop("ecosystem_subtype"),
                 "specific_ecosystem": p.pop("specific_ecosystem"),
+                "collection_date": p.pop("collection_date", None),
                 "annotations": p,
             }
         )
