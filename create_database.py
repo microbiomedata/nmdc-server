@@ -8,10 +8,12 @@ from typing import Any, Dict, List, Set, Type, Union
 from urllib import request
 from zipfile import ZipFile
 
-# from alembic import command
-# from alembic.config import Config
+from alembic import command
+from alembic.config import Config
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import and_
+from sqlalchemy.sql.expression import update
 
 from nmdc_server import crud, database, models, schemas
 from nmdc_server.config import Settings
@@ -84,11 +86,14 @@ def load_common_fields(json_object: JsonObjectType, include_dates: bool = True) 
 
 def create_tables(db, settings):
     engine = db.bind
-    metadata.drop_all()
     metadata.create_all(engine)
-    # alembic_cfg = Config(str(HERE / "alembic.ini"))
-    # alembic_cfg.set_main_option("sqlalchemy.url", settings.database_uri)
-    # command.stamp(alembic_cfg, "head")
+    alembic_cfg = Config(str(HERE / "alembic.ini"))
+    alembic_cfg.set_main_option("sqlalchemy.url", settings.database_uri)
+    alembic_cfg.attributes["configure_logger"] = False
+    if command.current(alembic_cfg) is None:
+        command.stamp(alembic_cfg, "head")
+    else:
+        command.upgrade(alembic_cfg, "head")
 
 
 def populate_envo_ancestor(
@@ -127,6 +132,7 @@ def populate_envo_ancestor(
 
 
 def populate_envo(db: Session):
+    # TODO: might need to clear out old ancestor associations
     with request.urlopen(envo_url) as r:
         envo_data = json.load(r)
 
@@ -149,12 +155,18 @@ def populate_envo(db: Session):
             id = node["id"].split("/")[-1].replace("_", ":")
             label = node.pop("lbl", "")
             data = node.get("meta", {})
-            db.add(models.EnvoTerm(id=id, label=label, data=data))
+            envo_data = dict(id=id, label=label, data=data)
+            sql = insert(models.EnvoTerm.__table__).values(envo_data)
+            db.execute(sql.on_conflict_do_update(constraint="pk_envo_term", set_=envo_data))
             ids.add(id)
 
         db.flush()
+
         for node in ids:
-            db.add(models.EnvoAncestor(id=node, ancestor_id=node, direct=False))
+            ancestor_data = dict(id=node, ancestor_id=node, direct=False)
+            sql = insert(models.EnvoAncestor.__table__).values(ancestor_data)
+            db.execute(sql.on_conflict_do_nothing())
+            db.flush()
             populate_envo_ancestor(db, node, node, direct_ancestors, ids, True, set())
 
     db.commit()
@@ -194,7 +206,11 @@ def ingest_studies(db: Session, data: List[Dict[str, Any]]):
         study["publication_dois"] = a["publication_dois"]
         study["scientific_objective"] = a["scientific_objective"]
 
-        crud.create_study(db, schemas.StudyCreate(**study))
+        if db.query(models.Study).get(study["id"]) is None:
+            crud.create_study(db, schemas.StudyCreate(**study))
+        else:
+            # TODO: Update associated tables
+            update(models.Study.__table__).where(models.Study.id == study["id"]).values(**study)
     db.commit()
 
 
@@ -210,16 +226,23 @@ def ingest_projects(db: Session, data) -> Dict[str, str]:
             biosample_projects[id] = project["id"]
 
         project["annotations"] = p
-        project_db = models.Project(**project)
+        sql = insert(models.Project.__table__).values(project)
+        db.execute(sql.on_conflict_do_update(constraint="pk_project", set_=project))
+
+        models.project_output_association.delete().where(
+            and_(
+                models.project_output_association.c.project_id == project["id"],
+                models.project_output_association.c.data_object_id.notin_(data_objects),
+            )
+        )
 
         # https://stackoverflow.com/a/21670302
-        db.add(project_db)
         if data_objects:
             db.flush()
             db.execute(
-                models.project_output_association.insert().values(
-                    [(project_db.id, d) for d in data_objects]
-                )
+                insert(models.project_output_association)
+                .values([(project["id"], d) for d in data_objects])
+                .on_conflict_do_nothing()
             )
             db.execute(
                 models.DataObject.__table__.update()
@@ -238,14 +261,15 @@ def ingest_biosamples(db: Session, data, biosample_projects):
         env_broad_scale = db.query(models.EnvoTerm).get(p.pop("env_broad_scale"))
         env_local_scale = db.query(models.EnvoTerm).get(p.pop("env_local_scale"))
         env_medium = db.query(models.EnvoTerm).get(p.pop("env_medium"))
+
         biosample.update(
             {
                 "project_id": biosample_projects[biosample["id"]],
                 "latitude": float(lat),
                 "longitude": float(lon),
-                "env_broad_scale": env_broad_scale,
-                "env_local_scale": env_local_scale,
-                "env_medium": env_medium,
+                "env_broad_scale_id": env_broad_scale and env_broad_scale.id,
+                "env_local_scale_id": env_local_scale and env_local_scale.id,
+                "env_medium_id": env_medium and env_medium.id,
                 "ecosystem": p.pop("ecosystem"),
                 "ecosystem_category": p.pop("ecosystem_category"),
                 "ecosystem_type": p.pop("ecosystem_type"),
@@ -259,8 +283,8 @@ def ingest_biosamples(db: Session, data, biosample_projects):
         if "depth" in biosample["annotations"]:
             biosample["depth"] = float(biosample["annotations"].pop("depth").rstrip(" m"))
 
-        biosample_db = models.Biosample(**biosample)
-        db.add(biosample_db)
+        sql = insert(models.Biosample.__table__).values(biosample)
+        db.execute(sql.on_conflict_do_update(constraint="pk_biosample", set_=biosample))
     db.commit()
 
 
@@ -273,9 +297,9 @@ def ingest_data_objects(db: Session, data) -> Set[str]:
                 "file_size_bytes": int(p.pop("file_size_bytes")),
             }
         )
-        data_object_db = models.DataObject(**data_object)
-        db.add(data_object_db)
-        data_object_ids.add(data_object_db.id)
+
+        sql = insert(models.DataObject.__table__).values(data_object)
+        db.execute(sql.on_conflict_do_update(constraint="pk_data_object", set_=data_object))
     db.commit()
     return data_object_ids
 
@@ -295,25 +319,43 @@ def ingest_pipeline(db: Session, objects, model: Type[models.PipelineStep], data
         d["started_at_time"] = datetime.strptime(d["started_at_time"], date_fmt)
         d["ended_at_time"] = datetime.strptime(d["ended_at_time"], date_fmt)
 
-        step = model(**d)  # type: ignore
-        db.add(step)
+        sql = insert(model).values(d)
+        db.execute(sql.on_conflict_do_update(index_elements=[model.id], set_=d))
+        id_ = d["id"]
+
+        input_association = getattr(models, f"{table_name}_input_association")
+        output_association = getattr(models, f"{table_name}_output_association")
+
+        input_association.delete().where(
+            and_(
+                getattr(input_association.c, f"{table_name}_id") == id_,
+                input_association.c.data_object_id.notin_(inputs),
+            )
+        )
+        output_association.delete().where(
+            and_(
+                getattr(output_association.c, f"{table_name}_id") == id_,
+                output_association.c.data_object_id.notin_(outputs),
+            )
+        )
 
         if inputs:
             db.flush()
             db.execute(
-                getattr(models, f"{table_name}_input_association")
-                .insert()
-                .values([(step.id, f) for f in inputs])
+                insert(input_association)
+                .values([(id_, f) for f in inputs])
+                .on_conflict_do_nothing()
             )
 
         if outputs:
             db.flush()
             db.execute(
-                getattr(models, f"{table_name}_output_association")
-                .insert()
-                .values([(step.id, f) for f in outputs])
+                insert(output_association)
+                .values([(id_, f) for f in outputs])
+                .on_conflict_do_nothing()
             )
 
+        db.flush()
         db.execute(
             models.DataObject.__table__.update()
             .where(models.DataObject.id.in_(inputs + outputs))
