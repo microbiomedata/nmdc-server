@@ -7,11 +7,25 @@ import SegmentConditions from './SegmentConditions';
 export default {
   mixins: [SegmentConditions],
 
+  props: {
+    field: {
+      type: String,
+      required: true,
+    },
+    table: {
+      type: String,
+      required: true,
+    },
+    useAllConditions: {
+      type: Boolean,
+      default: false,
+    },
+  },
+
   data() {
     return {
       facetSummary: [],
       facetSummaryUnconditional: [],
-      useAllConditions: false,
     };
   },
 
