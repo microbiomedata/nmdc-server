@@ -129,7 +129,8 @@ const fields = {
     icon: 'mdi-file-document-outline',
     hideFacet: true,
   },
-  gold_classification: {
+  /* this field injected by the api layer */
+  gold_tree: {
     icon: 'mdi-pine-tree',
     group: 'GOLD Ecosystems',
     sortKey: 0,

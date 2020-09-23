@@ -1,13 +1,14 @@
 <script>
 import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
-import { uniqWith } from 'lodash';
+// import { uniqWith } from 'lodash';
 import { api } from '@/data/api';
 import { makeTree } from '@/util';
+import SegmentConditions from '@/mixins/SegmentConditions';
 
 export default {
   components: { Treeselect },
-
+  mixins: [SegmentConditions],
   props: {
     field: {
       type: String,
@@ -51,51 +52,40 @@ export default {
       // so recursive reactivity setup would cause a max depth exception
       return Object.freeze(this.treeData.root.children);
     },
-    otherConditions() {
-      return this.conditions
-        .filter((c) => (!this.heirarchy.includes(c.field)) || (c.table !== this.table));
-    },
-    myConditions() {
-      return this.conditions
-        .filter((c) => (this.heirarchy.includes(c.field)) && c.table === this.table);
-    },
-  },
-
-  watch: {
-    // treeData({ topoSort }) {
-    //   if (topoSort) {
-    //     const sel = [];
-    //     this.myConditions.forEach((c) => {
-    //       const node = this.treeData.topoSort
-    //         .find((n) => n.name === c.value && n.heirarchyKey === c.field);
-    //       sel.push(getChain(node)
-    //         .filter((n) => n.id !== '')
-    //         .map((n) => n.name)
-    //         .join('.'));
-    //     });
-    //     this.value = sel;
-    //   }
-    // },
   },
 
   methods: {
     async setSelected(nodeKeys) {
       const conditions = this.otherConditions;
-      nodeKeys.forEach((key) => {
+      const value = nodeKeys.map((key) => {
+        const treepath = {};
         let node = this.treeData.nodeMap[key];
         do {
-          conditions.push({
-            op: '==',
-            field: node.heirarchyKey,
-            value: node.label,
-            table: this.table,
-          });
+          treepath[node.heirarchyKey] = node.label;
           node = node.parent;
         } while (node.parent);
+        return treepath;
       });
-      this.$store.dispatch('route', {
-        conditions: uniqWith(conditions, (a, b) => a.field === b.field && a.value === b.value),
+      conditions.push({
+        table: this.table,
+        field: this.field,
+        op: 'tree',
+        value,
       });
+      console.log(nodeKeys, conditions);
+      // nodeKeys.forEach((key) => {
+      //   let node = this.treeData.nodeMap[key];
+      //   do {
+      //     conditions.push({
+      //       op: 'tree',
+      //       field: node.heirarchyKey,
+      //       value: node.label,
+      //       table: this.table,
+      //     });
+      //     node = node.parent;
+      //   } while (node.parent);
+      // });
+      this.$store.dispatch('route', { conditions });
     },
   },
 };

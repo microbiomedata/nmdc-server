@@ -43,17 +43,21 @@ export default {
     },
     valueTransform(val, field, type) {
       // If it's not primitive
-      if (val && typeof val === 'object') {
+      if (val && Array.isArray(val)) {
         const inner = val.map((v) => this.valueTransform(v, field, type)).join(', ');
         return `(${inner})`;
       }
       const summary = ((this.dbSummary[type] || {}).attributes || {})[field];
       if (summary) {
+        console.log(val);
         if (['float', 'number', 'string'].includes(summary.type)) {
           return val;
         }
         if (['date'].includes(summary.type)) {
           return moment(val).format('MM/DD/YYYY');
+        }
+        if (['tree'].includes(summary.type)) {
+          return Object.values(val).join('.');
         }
         throw new Error(`Unknown entity type for ${type}: ${field}: ${summary.type}`);
       }

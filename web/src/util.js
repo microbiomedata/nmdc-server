@@ -112,6 +112,18 @@ export function makeTree(data, heirarchy) {
   };
 }
 
+/**
+ * @param {string[]} data
+ * @param {string[]} heirarchy
+ */
+// export function reverseTree(data, heirarchy) {
+//   // Paths are the same shape as the input to makeTree
+//   const paths = [];
+//   data.forEach((path) => {
+
+//   })
+// }
+
 export function getChain(node) {
   if (node) {
     return getChain(node.parent).concat([node]);

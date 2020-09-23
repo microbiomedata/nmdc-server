@@ -179,9 +179,10 @@ export interface EnvironmentSankeyResponse {
   [index: number]: EnvironmentSankeyEntity;
 }
 
-export type opType = 'between' | '<' | '<=' | '>' | '>=' | '==' | '!=';
+export type opType = 'between' | '<' | '<=' | '>' | '>=' | '==' | '!=' | 'tree';
 export const opMap: Record<opType, string> = {
   between: 'between',
+  tree: 'tree',
   '<': 'less',
   '<=': 'lte',
   '>': 'greater',
@@ -319,7 +320,7 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
   const mergeSummary = {
     biosample: {
       attributes: {
-        gold_classification: {
+        gold_tree: {
           type: 'tree',
           count: -1,
         },
@@ -327,7 +328,7 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
     },
     study: {
       attributes: {
-        gold_classification: {
+        gold_tree: {
           type: 'tree',
           count: -1,
         },
