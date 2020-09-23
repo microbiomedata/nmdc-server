@@ -14,7 +14,7 @@ import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
 
 export default {
-  name: 'FacetChart',
+  name: 'FacetBarChart',
   components: {
     GChart,
   },

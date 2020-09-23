@@ -5,7 +5,8 @@ import { types } from '@/encoding';
 import removeCondition from '@/data/utils';
 
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
-import FacetChart from '@/components/Presentation/FacetChart.vue';
+import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
+import FacetHistogramChart from '@/components/Presentation/FacetHistogramChart.vue';
 import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
@@ -15,7 +16,8 @@ import Sidebar from './Sidebar.vue';
 
 export default {
   components: {
-    FacetChart,
+    FacetBarChart,
+    FacetHistogramChart,
     FacetSummaryWrapper,
     DateHistogram,
     SearchResults,
@@ -77,81 +79,134 @@ export default {
     <sidebar />
     <v-main v-if="typeResults">
       <v-container fluid>
-        <v-row v-if="['biosample'].includes(type)">
-          <v-col :cols="8">
-            <LocationMap
-              :type="type"
-              :conditions="conditions"
-              @selected="addSelected($event)"
-            />
-          </v-col>
-          <v-col :cols="4">
-            <facet-summary-wrapper
-              table="biosample"
-              field="ecosystem_category"
-              use-all-conditions
-            >
-              <template #default="props">
-                <FacetChart
-                  v-bind="props"
-                  :height="400"
-                  :show-title="false"
-                  :show-baseline="false"
-                  :left-margin="120"
-                  :right-margin="80"
-                  @selected="addSelected($event)"
-                />
-              </template>
-            </facet-summary-wrapper>
-          </v-col>
-        </v-row>
+        <!-- BIOSAMPLE CHARTS -->
+        <template v-if="type === 'biosample'">
+          <v-row>
+            <v-col :cols="8">
+              <LocationMap
+                :type="type"
+                :conditions="conditions"
+                @selected="addSelected($event)"
+              />
+            </v-col>
+            <v-col :cols="4">
+              <facet-summary-wrapper
+                table="biosample"
+                field="ecosystem_category"
+                use-all-conditions
+              >
+                <template #default="props">
+                  <FacetBarChart
+                    v-bind="props"
+                    :height="400"
+                    :show-title="false"
+                    :show-baseline="false"
+                    :left-margin="120"
+                    :right-margin="80"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col cols="12">
+              <facet-summary-wrapper
+                table="biosample"
+                field="collection_date"
+                use-all-conditions
+              >
+                <template #default="props">
+                  <DateHistogram
+                    v-bind="props"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
+            </v-col>
+            <v-col :cols="12">
+              <EcosystemSankey
+                :type="type"
+                :conditions="conditions"
+                @selected="addSelected($event)"
+              />
+            </v-col>
+          </v-row>
+        </template>
 
-        <v-row v-if="['biosample'].includes(type)">
-          <v-col cols="12">
-            <facet-summary-wrapper
-              table="biosample"
-              field="collection_date"
-              use-all-conditions
-            >
-              <template #default="props">
-                <DateHistogram
-                  v-bind="props"
-                  @selected="addSelected($event)"
-                />
-              </template>
-            </facet-summary-wrapper>
-          </v-col>
-          <v-col :cols="12">
-            <EcosystemSankey
-              :type="type"
-              :conditions="conditions"
-              @selected="addSelected($event)"
-            />
-          </v-col>
-        </v-row>
+        <!-- PROJECT CHARTS -->
+        <template v-if="type === 'project'">
+          <v-row>
+            <v-col>
+              <facet-summary-wrapper
+                table="project"
+                field="omics_type"
+                use-all-conditions
+              >
+                <template #default="props">
+                  <FacetBarChart
+                    v-bind="props"
+                    :height="250"
+                    :show-title="false"
+                    :show-baseline="false"
+                    :left-margin="240"
+                    :right-margin="80"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
+            </v-col>
+          </v-row>
+        </template>
 
-        <v-row v-if="['project'].includes(type)">
-          <v-col>
-            <facet-summary-wrapper
-              table="project"
-              field="omics_type"
-              use-all-conditions
-            >
-              <template #default="props">
-                <FacetChart
-                  v-bind="props"
-                  :height="250"
-                  :show-title="false"
-                  :show-baseline="false"
-                  :left-margin="240"
-                  :right-margin="80"
-                  @selected="addSelected($event)"
-                />
-              </template>
-            </facet-summary-wrapper>
-          </v-col>
-        </v-row>
+        <!-- METAGENOME ASSEMBY CHARTS -->
+        <template v-if="type === 'metagenome_assembly'">
+          <v-row v-if="typeResults.count">
+            <v-col>
+              <facet-summary-wrapper
+                table="metagenome_assembly"
+                field="contigs"
+                use-all-conditions
+              >
+                <template #default="props">
+                  <FacetHistogramChart
+                    v-bind="props"
+                    :height="230"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
+              <facet-summary-wrapper
+                table="metagenome_assembly"
+                field="contig_bp"
+                use-all-conditions
+              >
+                <template #default="props">
+                  <FacetHistogramChart
+                    v-bind="props"
+                    :height="230"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
+              <facet-summary-wrapper
+                table="metagenome_assembly"
+                field="num_input_reads"
+                use-all-conditions
+              >
+                <template #default="props">
+                  <FacetHistogramChart
+                    v-bind="props"
+                    :height="230"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
+            </v-col>
+          </v-row>
+        </template>
 
+        <!-- SEARCH RESULTS GENERIC -->
         <v-row>
           <v-col>
             <SearchResults
@@ -163,6 +218,9 @@ export default {
               @set-page="refreshResults({ page: $event })"
               @selected="navigateToSelected($event)"
             />
+            <h2 v-if="typeResults.count === 0">
+              No results for selected conditions in {{ type }}
+            </h2>
           </v-col>
         </v-row>
       </v-container>
