@@ -49,7 +49,7 @@ export default {
       }
       const summary = ((this.dbSummary[type] || {}).attributes || {})[field];
       if (summary) {
-        if (['float', 'number', 'string'].includes(summary.type)) {
+        if (['float', 'integer', 'string'].includes(summary.type)) {
           return val;
         }
         if (['date'].includes(summary.type)) {
