@@ -34,10 +34,6 @@ export default {
       type: Array,
       required: true,
     },
-    facetSummaryUnconditional: {
-      type: Array,
-      required: true,
-    },
   },
   computed: {
     chartData() {

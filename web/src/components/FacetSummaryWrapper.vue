@@ -11,7 +11,13 @@ export default Vue.extend({
   <div>
     <slot
       v-bind="{
-        facetSummaryAggregate, facetSummary, facetSummaryUnconditional, field, table,
+        facetSummary,
+        facetSummaryAggregate,
+        facetSummaryUnconditional,
+        field,
+        myConditions,
+        otherConditions,
+        table,
       }"
     />
   </div>

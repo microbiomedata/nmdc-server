@@ -9,10 +9,17 @@
   },
   "dependencies": {
     "@riophae/vue-treeselect": "^0.4.0",
+    "@types/d3-array": "^2.0.0",
+    "@types/d3-scale": "^2.2.0",
+    "@types/d3-time-format": "^2.1.1",
     "axios": "^0.19.2",
     "citation-js": "^0.5.0-alpha.4",
     "core-js": "^3.4.4",
+    "d3-array": "^2.8.0",
     "d3-dsv": "^1.2.0",
+    "d3-scale": "^3.2.3",
+    "d3-time": "^2.0.0",
+    "d3-time-format": "^3.0.0",
     "dexie": "^2.0.4",
     "filesize": "^6.0.1",
     "lodash": "^4.17.19",
@@ -53,7 +60,7 @@
     "last 2 versions"
   ],
   "resolutions": {
-     "serialize-javascript": "^3.1",
-     "http-proxy": "1.18.1"
+    "serialize-javascript": "^3.1",
+    "http-proxy": "1.18.1"
   }
 }
