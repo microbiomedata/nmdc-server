@@ -39,7 +39,8 @@ export default {
       range: [0, 100],
       min: 0,
       max: 100,
-      loaded: false,
+      /* Whether to reset the range based on an external update */
+      loadOnNextUpdate: true,
     };
   },
 
@@ -53,7 +54,7 @@ export default {
 
   watch: {
     facetSummary() {
-      if (!this.loaded) {
+      if (this.loadOnNextUpdate) {
         if (this.myConditions.length === 1) {
           const [condition] = this.myConditions;
           this.selectedOption = condition.op;
@@ -65,18 +66,21 @@ export default {
             });
           }
         }
-        this.loaded = true;
+        this.loadOnNextUpdate = false;
       }
     },
     myConditions() {
       if (this.myConditions.length === 0) {
         this.range = [0, 100];
+      } else {
+        this.loadOnNextUpdate = true;
       }
     },
   },
 
   methods: {
     afterDrag() {
+      this.loadOnNextUpdate = false;
       if (this.range[0] !== 0 || this.range[1] !== 100) {
         const values = this.$refs.histogram.scaledRange;
         this.$emit('select', {
