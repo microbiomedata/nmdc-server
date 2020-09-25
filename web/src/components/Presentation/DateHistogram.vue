@@ -1,23 +1,26 @@
-<template>
-  <GChart
-    ref="chart"
-    type="ColumnChart"
-    :data="chartData"
-    :events="chartEvents"
-    :options="barChartOptions"
-  />
-</template>
-
 <script>
-import { GChart } from 'vue-google-charts';
+import { flatten } from 'lodash';
+import moment from 'moment';
+
+import ChartContainer from '@/components/charts/ChartContainer.vue';
+import Histogram from '@/components/charts/Histogram/Histogram.vue';
 
 export default {
   name: 'DateHistogram',
   components: {
-    GChart,
+    ChartContainer,
+    Histogram,
   },
   props: {
     facetSummary: {
+      type: Array,
+      required: true,
+    },
+    otherConditions: {
+      type: Array,
+      required: true,
+    },
+    myConditions: {
       type: Array,
       required: true,
     },
@@ -30,54 +33,103 @@ export default {
       required: true,
     },
   },
+
+  data() {
+    return {
+      range: [0, 100],
+      min: 0,
+      max: 100,
+      loaded: false,
+    };
+  },
+
   computed: {
-    chartEvents() {
-      return {
-        select: () => {
-          const chart = this.$refs.chart.chartObject;
-          const selection = chart.getSelection();
-          if (selection.length === 1) {
-            const value = this.facetSummary[selection[0].row];
-            this.$emit('selected', {
-              type: this.table,
-              conditions: [{
-                field: this.field,
-                op: '==',
-                value: value.facet,
-                table: this.table,
-              }],
+    data() {
+      return flatten(this.facetSummary.map(
+        ({ facet, count }) => Array(count).fill(new Date(facet)),
+      ));
+    },
+  },
+
+  watch: {
+    facetSummary() {
+      if (!this.loaded) {
+        if (this.myConditions.length === 1) {
+          const [condition] = this.myConditions;
+          this.selectedOption = condition.op;
+          if (condition.op === 'between' && typeof condition.value === 'object') {
+            this.$nextTick(() => {
+              /* wait for the data change to propogate into the child */
+              const inverter = this.$refs.histogram.rangeScale.invert;
+              this.range = condition.value.map((c) => Math.round(inverter(new Date(c)).valueOf()));
             });
           }
-        },
-      };
+        }
+        this.loaded = true;
+      }
     },
-    chartData() {
-      return [
-        ['date', 'count'],
-        ...this.facetSummary.map(({ count, facet }) => [new Date(facet), count]),
-      ];
+    myConditions() {
+      if (this.myConditions.length === 0) {
+        this.range = [0, 100];
+      }
     },
-    barChartOptions() {
-      return {
-        height: 160,
-        chartArea: {
-          left: 50,
-          width: '100%',
-          height: '60%',
-        },
-        explorer: {
-          actions: ['dragToZoom', 'rightClickToReset'],
-          axis: 'horizontal',
-          keepInBounds: true,
-        },
-        colors: [this.$vuetify.theme.currentTheme.accent],
-        legend: {
-          position: 'none',
-        },
-        annotations: { alwaysOutside: true, stem: { color: 'transparent' } },
-        isStacked: true,
-      };
+  },
+
+  methods: {
+    afterDrag() {
+      if (this.range[0] !== 0 || this.range[1] !== 100) {
+        const values = this.$refs.histogram.scaledRange;
+        this.$emit('select', {
+          type: this.table,
+          conditions: [
+            ...this.otherConditions,
+            {
+              field: this.field,
+              op: 'between',
+              value: values.map((d) => moment(d).format('YYYY-MM-DDT00:00:00.000')),
+              table: this.table,
+            },
+          ],
+        });
+      } else if (this.myConditions.length) {
+        this.$emit('select', {
+          type: this.table,
+          conditions: this.otherConditions,
+        });
+      }
     },
   },
 };
 </script>
+
+<template>
+  <div class="histogram mb-6">
+    <ChartContainer
+      style="margin: 0 auto;"
+    >
+      <template #default="{ width, height }">
+        <Histogram
+          ref="histogram"
+          v-bind="{ width, height, data, range }"
+        />
+      </template>
+      <template #below>
+        <v-range-slider
+          v-model="range"
+          :max="max"
+          :min="min"
+          hide-details
+          class="align-center"
+          color="accent"
+          @end="afterDrag"
+        />
+      </template>
+    </ChartContainer>
+  </div>
+</template>
+
+<style scoped>
+.histogram {
+  width: 100%;
+}
+</style>

@@ -8,6 +8,7 @@ import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import FacetHistogramChart from '@/components/Presentation/FacetHistogramChart.vue';
 import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
+// import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
 import SearchResults from '@/components/Presentation/SearchResults.vue';
@@ -19,6 +20,7 @@ export default {
     FacetBarChart,
     FacetHistogramChart,
     FacetSummaryWrapper,
+    // DateHistogram,
     DateHistogram,
     SearchResults,
     LocationMap,
@@ -114,12 +116,11 @@ export default {
               <facet-summary-wrapper
                 table="biosample"
                 field="collection_date"
-                use-all-conditions
               >
                 <template #default="props">
                   <DateHistogram
                     v-bind="props"
-                    @selected="addSelected($event)"
+                    @select="$store.dispatch('route', $event)"
                   />
                 </template>
               </facet-summary-wrapper>
