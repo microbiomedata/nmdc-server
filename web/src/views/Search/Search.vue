@@ -207,6 +207,27 @@ export default {
           </v-row>
         </template>
 
+        <!-- READS QC CHARTS -->
+        <template v-if="type === 'reads_qc'">
+          <v-row v-if="typeResults.count">
+            <v-col>
+              <facet-summary-wrapper
+                table="reads_qc"
+                field="output_read_bases"
+                use-all-conditions
+              >
+                <template #default="props">
+                  <FacetHistogramChart
+                    v-bind="props"
+                    :height="230"
+                    @selected="addSelected($event)"
+                  />
+                </template>
+              </facet-summary-wrapper>
+            </v-col>
+          </v-row>
+        </template>
+
         <!-- SEARCH RESULTS GENERIC -->
         <v-row>
           <v-col>
