@@ -68,7 +68,10 @@ export default {
       return this.bin(this.dataValues);
     },
     binnedDomain() {
-      return this.binned.map((b) => b.length);
+      return this.binned.map((b) => ({
+        height: this.y(b.length),
+        key: b.x0,
+      }));
     },
     dataValuesRaw() {
       return this.data.map((d) => d.valueOf());
@@ -93,15 +96,20 @@ export default {
       return this.bands.step();
     },
     ticks() {
-      return ticks(this.scaledRange[0], this.scaledRange[1], 4)
+      return ticks(this.scaledRange[0], this.scaledRange[1], 6)
         .map((tick) => {
           const text = this.tickFormat(tick);
           const size = 12;
+          const left = this.x(tick) - (measureWidth(text, size, 'sans') / 2);
           return {
             raw: tick,
             text,
-            left: this.x(tick) - (measureWidth(text, size, 'sans') / 2),
-            style: { fontSize: `${size}px` },
+            key: (new Date(tick)).toLocaleString('en-US'),
+            left,
+            style: {
+              fontSize: `${size}px`,
+              transform: `translate(${left}px)`,
+            },
           };
         });
     },
@@ -128,7 +136,7 @@ export default {
   methods: {
     tickFormat(date) {
       const days = timeDay.count(...this.scaledRange);
-      if (days < 30) {
+      if (days < 120) {
         return timeFormat('%x')(date);
       }
       return timeFormat('%b %Y')(date);
@@ -138,33 +146,36 @@ export default {
 </script>
 
 <template>
-  <svg class="histogram">
-    <rect
-      v-for="(count, i) in binnedDomain"
-      :key="'rect' + i"
-      :x="bands(i)"
-      :width="bands.bandwidth()"
-      :y="height - y(count)"
-      :height="y(count) - chartDimensions.padding"
-      :fill="$vuetify.theme.currentTheme.accent"
-    />
-    <text
-      v-for="(tick, i) in ticks"
-      :key="'tick' + i"
-      :x="tick.left"
-      :y="height - 3"
-      :style="tick.style"
-    >
-      {{ tick.text }}
-    </text>
-  </svg>
+  <g>
+    <g class="histogram">
+      <rect
+        v-for="(bd, i) in binnedDomain"
+        :key="bd.key"
+        :x="bands(i)"
+        :width="bands.bandwidth()"
+        :y="height - bd.height"
+        :height="bd.height - chartDimensions.padding"
+        :fill="$vuetify.theme.currentTheme.accent"
+      />
+    </g>
+    <g class="axis">
+      <text
+        v-for="(tick) in ticks"
+        :key="tick.key"
+        :y="height - 3"
+        :style="tick.style"
+      >
+        {{ tick.text }}
+      </text>
+    </g>
+  </g>
 </template>
 
 <style scoped>
 .histogram rect {
-  transition: x 0.2s, y 0.4s, height 0.4s;
+  transition: all 0.2s;
 }
-.histogram text {
-  transition: x 1s;
+.axis text {
+  transition: all 0.2s;
 }
 </style>
