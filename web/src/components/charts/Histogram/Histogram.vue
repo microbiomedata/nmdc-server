@@ -123,7 +123,7 @@ export default {
     },
     y() {
       /* Find the tallest bar */
-      const yextent = extent(this.binnedDomain);
+      const yextent = extent(this.binned.map((b) => b.length));
       return scaleLinear()
         .domain([0, yextent[1]])
         .range([
