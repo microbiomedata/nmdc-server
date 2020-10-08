@@ -1,4 +1,5 @@
 import Vue from 'vue';
+import CompositionPlugin from '@vue/composition-api';
 import { sync } from 'vuex-router-sync';
 import AsyncComputed from 'vue-async-computed';
 
@@ -9,6 +10,7 @@ import vuetify from '@/plugins/vuetify';
 import App from './App.vue';
 
 Vue.use(AsyncComputed);
+Vue.use(CompositionPlugin);
 
 Vue.config.productionTip = false;
 
