@@ -40,7 +40,7 @@ export default {
     return {
       range: [0, new Date().valueOf()],
       min: 0,
-      max: 100,
+      max: (new Date()).valueOf(),
       /* Whether to reset the range based on an external update */
       loadOnNextUpdate: true,
     };
@@ -65,6 +65,7 @@ export default {
       let nextTick = () => {
         [this.min, this.max] = this.$refs.histogram.rangeScale.range();
         this.range = [this.min, this.max];
+        this.extent = this.range;
       };
       if (this.loadOnNextUpdate) {
         if (this.myConditions.length === 1) {
@@ -84,6 +85,8 @@ export default {
     myConditions() {
       if (this.myConditions.length !== 0) {
         this.loadOnNextUpdate = true;
+      } else {
+        this.range = [this.min, this.max];
       }
     },
   },
@@ -91,7 +94,7 @@ export default {
   methods: {
     afterDrag() {
       this.loadOnNextUpdate = false;
-      if (this.range[0] !== 0 || this.range[1] !== 100) {
+      if (this.range[0] !== this.min || this.range[1] !== this.max) {
         const values = this.$refs.histogram.scaledRange;
         this.$emit('select', {
           type: this.table,

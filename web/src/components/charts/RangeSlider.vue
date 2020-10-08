@@ -4,7 +4,7 @@ import {
 } from '@vue/composition-api';
 import { brushX, D3BrushEvent } from 'd3-brush';
 import { scaleLinear } from 'd3-scale';
-import { select } from 'd3-selection';
+import { select as d3select } from 'd3-selection';
 
 interface IProps {
   value: number[];
@@ -63,7 +63,7 @@ export default defineComponent<IProps>({
     /**
      * Construct the DOM elements in-memory once
      */
-    const g = select(document.createElementNS('http://www.w3.org/2000/svg', 'g'));
+    const g = d3select(document.createElementNS('http://www.w3.org/2000/svg', 'g'));
     const labelL = g.append('text')
       .attr('id', 'labelleft')
       .attr('x', 0);
@@ -103,7 +103,6 @@ export default defineComponent<IProps>({
     gBrush.call(brush);
     g.selectAll('.selection')
       .attr('fill', root.$vuetify.theme.currentTheme.accent as string);
-
     /**
      * Any attributes from reactive properties should be set in
      * this update function.
