@@ -4,12 +4,14 @@ import moment from 'moment';
 
 import ChartContainer from '@/components/charts/ChartContainer.vue';
 import Histogram from '@/components/charts/Histogram/Histogram.vue';
+import RangeSlider from '@/components/charts/RangeSlider.vue';
 
 export default {
   name: 'DateHistogram',
   components: {
     ChartContainer,
     Histogram,
+    RangeSlider,
   },
   props: {
     facetSummary: {
@@ -36,7 +38,7 @@ export default {
 
   data() {
     return {
-      range: [0, 100],
+      range: [0, new Date().valueOf()],
       min: 0,
       max: 100,
       /* Whether to reset the range based on an external update */
@@ -50,29 +52,37 @@ export default {
         ({ facet, count }) => Array(count).fill(new Date(facet)),
       ));
     },
+    tickfmt() {
+      return (d) => moment(d).format('l');
+    },
+    round() {
+      return (d) => (new Date(moment(d).format('YYYY-MM-DDT00:00:00.000'))).valueOf();
+    },
   },
 
   watch: {
     facetSummary() {
+      let nextTick = () => {
+        [this.min, this.max] = this.$refs.histogram.rangeScale.range();
+        this.range = [this.min, this.max];
+      };
       if (this.loadOnNextUpdate) {
         if (this.myConditions.length === 1) {
           const [condition] = this.myConditions;
           this.selectedOption = condition.op;
           if (condition.op === 'between' && typeof condition.value === 'object') {
-            this.$nextTick(() => {
-              /* wait for the data change to propogate into the child */
-              const inverter = this.$refs.histogram.rangeScale.invert;
-              this.range = condition.value.map((c) => Math.round(inverter(new Date(c)).valueOf()));
-            });
+            nextTick = () => {
+              [this.min, this.max] = this.$refs.histogram.rangeScale.range();
+              this.range = condition.value.map((c) => (new Date(c)).valueOf());
+            };
           }
         }
+        this.$nextTick(nextTick);
         this.loadOnNextUpdate = false;
       }
     },
     myConditions() {
-      if (this.myConditions.length === 0) {
-        this.range = [0, 100];
-      } else {
+      if (this.myConditions.length !== 0) {
         this.loadOnNextUpdate = true;
       }
     },
@@ -108,23 +118,22 @@ export default {
 
 <template>
   <div class="histogram mb-6">
-    <ChartContainer
-      style="margin: 0 auto;"
-    >
+    <ChartContainer v-if="data.length > 0">
       <template #default="{ width, height }">
         <Histogram
           ref="histogram"
           v-bind="{ width, height, data, range }"
         />
       </template>
-      <template #below>
-        <v-range-slider
+      <template #below="{ width }">
+        <range-slider
           v-model="range"
           :max="max"
           :min="min"
-          hide-details
-          class="align-center"
-          color="accent"
+          :width="width"
+          :height="40"
+          :fmt="tickfmt"
+          :round="round"
           @end="afterDrag"
         />
       </template>

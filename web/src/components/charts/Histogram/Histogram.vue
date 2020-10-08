@@ -37,24 +37,26 @@ export default {
 
   data() {
     return {
-      padding: 25,
+      xpadding: 40,
+      ypadding: 20,
     };
   },
 
   computed: {
     chartDimensions() {
       return {
-        width: this.width - this.padding * 2,
-        height: this.height - this.padding * 2,
-        padding: this.padding,
+        width: this.width - this.xpadding * 2,
+        height: this.height - this.ypadding * 2,
+        xpadding: this.xpadding,
+        ypadding: this.ypadding,
       };
     },
     bands() {
       return scaleBand()
         .domain(this.binned.map((d, i) => i))
         .rangeRound([
-          this.chartDimensions.padding,
-          this.chartDimensions.width + this.chartDimensions.padding,
+          this.chartDimensions.xpadding,
+          this.chartDimensions.width + this.chartDimensions.xpadding,
         ])
         .padding([0.2]);
     },
@@ -83,7 +85,7 @@ export default {
     rangeScale() {
       const outerExtent = extent(this.dataValuesRaw);
       return scaleLinear()
-        .domain([0, 100])
+        .domain(outerExtent)
         .range(outerExtent);
     },
     scaledRange() {
@@ -117,8 +119,8 @@ export default {
       return scaleLinear()
         .domain(this.scaledRange)
         .range([
-          this.chartDimensions.padding,
-          this.chartDimensions.width + this.chartDimensions.padding,
+          this.chartDimensions.xpadding,
+          this.chartDimensions.width + this.chartDimensions.xpadding,
         ]);
     },
     y() {
@@ -127,8 +129,8 @@ export default {
       return scaleLinear()
         .domain([0, yextent[1]])
         .range([
-          this.chartDimensions.padding,
-          this.chartDimensions.height + this.chartDimensions.padding,
+          this.chartDimensions.ypadding,
+          this.chartDimensions.height + this.chartDimensions.ypadding,
         ]);
     },
   },
@@ -154,7 +156,7 @@ export default {
         :x="bands(i)"
         :width="bands.bandwidth()"
         :y="height - bd.height"
-        :height="bd.height - chartDimensions.padding"
+        :height="bd.height - chartDimensions.ypadding"
         :fill="$vuetify.theme.currentTheme.accent"
       />
     </g>
@@ -173,9 +175,6 @@ export default {
 
 <style scoped>
 .histogram rect {
-  transition: all 0.2s;
-}
-.axis text {
   transition: all 0.2s;
 }
 </style>

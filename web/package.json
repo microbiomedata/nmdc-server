@@ -3,21 +3,26 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "vue-cli-service serve",
+    "serve": "rimraf -rf ./node_modules/.cache/vue-loader && vue-cli-service serve src/main.ts",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "@riophae/vue-treeselect": "^0.4.0",
     "@types/d3-array": "^2.0.0",
+    "@types/d3-brush": "^2.1.0",
     "@types/d3-scale": "^2.2.0",
+    "@types/d3-selection": "^2.0.0",
     "@types/d3-time-format": "^2.1.1",
+    "@vue/composition-api": "^1.0.0-beta.15",
     "axios": "^0.19.2",
     "citation-js": "^0.5.0-alpha.4",
     "core-js": "^3.4.4",
     "d3-array": "^2.8.0",
+    "d3-brush": "^2.1.0",
     "d3-dsv": "^1.2.0",
     "d3-scale": "^3.2.3",
+    "d3-selection": "^2.0.0",
     "d3-time": "^2.0.0",
     "d3-time-format": "^3.0.0",
     "dexie": "^2.0.4",
@@ -28,6 +33,7 @@
     "vue": "^2.6.10",
     "vue-async-computed": "^3.8.2",
     "vue-google-charts": "^0.3.2",
+    "vue-media-annotator": "^0.3.0",
     "vue-router": "^3.3.4",
     "vuetify": "^2.3.4",
     "vuex": "^3.5.1",
@@ -42,15 +48,15 @@
     "@vue/cli-plugin-eslint": "^4.4.0",
     "@vue/cli-plugin-typescript": "^4.4.6",
     "@vue/cli-service": "^4.1.0",
-    "@vue/eslint-config-airbnb": "^5.0.2",
-    "@vue/eslint-config-typescript": "^5.0.2",
+    "@vue/eslint-config-airbnb": "^5.1.0",
+    "@vue/eslint-config-typescript": "^5.1.0",
     "babel-eslint": "^10.0.3",
     "eslint": "^6.7.2",
     "eslint-plugin-import": "^2.20.2",
     "eslint-plugin-vue": "^6.2.2",
     "sass": "^1.26.3",
     "sass-loader": "^8.0.2",
-    "typescript": "^3.9.6",
+    "typescript": "^4.0.3",
     "vue-cli-plugin-vuetify": "^2.0.6",
     "vue-template-compiler": "^2.6.10",
     "vuetify-loader": "^1.5.0"
@@ -62,5 +68,56 @@
   "resolutions": {
     "serialize-javascript": "^3.1",
     "http-proxy": "1.18.1"
+  },
+  "eslintConfig": {
+    "root": true,
+    "env": {
+      "node": true
+    },
+    "extends": [
+      "eslint:recommended",
+      "plugin:vue/recommended",
+      "@vue/airbnb"
+    ],
+    "rules": {
+      "no-underscore-dangle": 0,
+      "spaced-comment": "off",
+      "no-useless-constructor": "off",
+      "@typescript-eslint/no-useless-constructor": "error",
+      "no-console": [
+        "warn",
+        {
+          "allow": [
+            "warn",
+            "error"
+          ]
+        }
+      ],
+      "semi": "off",
+      "@typescript-eslint/semi": [
+        "error"
+      ]
+    },
+    "settings": {
+      "import/resolver": {
+        "typescript": {}
+      }
+    },
+    "overrides": [
+      {
+        "files": [
+          "**/*.ts",
+          "**/*.vue"
+        ],
+        "extends": [
+          "@vue/typescript",
+          "@vue/typescript/recommended"
+        ]
+      }
+    ],
+    "parserOptions": {
+      "parser": "@typescript-eslint/parser",
+      "ecmaVersion": 2020
+    }
   }
 }
