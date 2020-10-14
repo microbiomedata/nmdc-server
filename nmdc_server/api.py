@@ -119,6 +119,16 @@ async def facet_biosample(query: query.FacetQuery, db: Session = Depends(get_db)
     return crud.facet_biosample(db, query.attribute, query.conditions)
 
 
+@router.post(
+    "/biosample/binned_facet",
+    response_model=query.BinnedFacetResponse,
+    tags=["biosample"],
+    name="Get all values of a non-string attribute with binning",
+)
+async def binned_facet_biosample(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
+    return crud.binned_facet_biosample(db, **query.dict())
+
+
 @router.get(
     "/biosample/{biosample_id}",
     response_model=schemas.Biosample,

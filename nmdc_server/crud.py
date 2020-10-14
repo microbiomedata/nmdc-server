@@ -5,6 +5,7 @@ from sqlalchemy.orm import Query, Session
 
 from nmdc_server import aggregations, models, query, schemas
 
+NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)
 
 
@@ -159,10 +160,22 @@ def search_biosample(db: Session, conditions: List[query.ConditionSchema]) -> Qu
 
 
 def facet_biosample(
-    db: Session, attribute: str, conditions: List[query.ConditionSchema]
+    db: Session, attribute: str, conditions: List[query.ConditionSchema], **kwargs
 ) -> query.FacetResponse:
     facets = query.BiosampleQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
+
+
+def binned_facet_biosample(
+    db: Session,
+    attribute: str,
+    conditions: List[query.ConditionSchema],
+    **kwargs,
+) -> query.BinnedFacetResponse:
+    bins, facets = query.BiosampleQuerySchema(conditions=conditions).binned_facet(
+        db, attribute, **kwargs
+    )
+    return query.BinnedFacetResponse(bins=bins, facets=facets)
 
 
 # data object

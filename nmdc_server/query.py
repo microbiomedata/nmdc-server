@@ -3,14 +3,15 @@ from enum import Enum
 from itertools import groupby
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
-from pydantic import BaseModel
-from sqlalchemy import and_, distinct, func, inspect, or_
+from pydantic import BaseModel, PositiveInt
+from sqlalchemy import and_, ARRAY, cast, Column, distinct, func, inspect, or_
 from sqlalchemy.orm import aliased, Query, Session
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement
 from typing_extensions import Literal
 
-from nmdc_server import models, schemas
+from nmdc_server import binning, models, schemas
+from nmdc_server.binning import DateBinResolution
 
 EnvBroadScale = aliased(models.EnvoTerm)
 EnvBroadScaleAncestor = aliased(models.EnvoAncestor)
@@ -30,6 +31,10 @@ class InvalidAttributeException(Exception):
         super(InvalidAttributeException, self).__init__(
             f"Attribute {self.attribute} not found in table {self.table}"
         )
+
+
+class InvalidFacetException(Exception):
+    pass
 
 
 def _join_envo(query: Query) -> Query:
@@ -405,11 +410,100 @@ class BaseQuerySchema(BaseModel):
     def count(self, db: Session) -> int:
         return self.query(db).count()
 
-    def facet(
+    def get_query_range(
+        self,
+        db: Session,
+        column: Column,
+        subquery: Any,
+        minimum: NumericValue = None,
+        maximum: NumericValue = None,
+    ) -> Tuple[NumericValue, NumericValue]:
+        if None in [minimum, maximum]:
+            row = (
+                db.query(func.min(column), func.max(column))
+                .join(subquery, self.table.model.id == subquery.c.id)
+                .first()
+            )
+            if row is None:
+                raise InvalidFacetException("No results in the query.")
+            minimum = row[0] if minimum is None else minimum
+            maximum = row[1] if maximum is None else maximum
+        return minimum, maximum  # type: ignore
+
+    def validate_binning_args(
+        self,
+        attribute: str,
+        minimum: NumericValue = None,
+        maximum: NumericValue = None,
+        resolution: DateBinResolution = None,
+    ):
+        # TODO: Validation like this should happen at the schema layer, but it requires refactoring
+        #       so that the schema contains the table information.
+        a = schemas.AttributeType
+        model = self.table.model
+
+        if attribute not in inspect(model).columns.keys():
+            raise InvalidAttributeException(self.table.value, attribute)
+
+        column = getattr(model, attribute)
+        column_type = a.from_column(column)
+
+        if column_type == a.string:
+            raise InvalidFacetException("Cannot perform binned faceting on string fields")
+
+        if minimum is not None:
+            if column_type in (a.float_, a.integer) and not isinstance(minimum, (float, int)):
+                raise InvalidFacetException("minimum value must be numeric")
+            if column_type == a.date and not isinstance(minimum, datetime):
+                raise InvalidFacetException("minimum value must be a date")
+
+        if maximum is not None:
+            if column_type in (a.float_, a.integer) and not isinstance(maximum, (float, int)):
+                raise InvalidFacetException("maximum value must be numeric")
+            if column_type == a.date and not isinstance(maximum, datetime):
+                raise InvalidFacetException("maximum value must be a date")
+
+        if resolution is not None and column_type != a.date:
+            raise InvalidFacetException("resolution argument only valid for date fields")
+
+    def binned_facet(
         self,
         db: Session,
         attribute: str,
-    ) -> Dict[schemas.AnnotationValue, int]:
+        minimum: NumericValue = None,
+        maximum: NumericValue = None,
+        **kwargs,
+    ) -> Tuple[List[NumericValue], Dict[NumericValue, int]]:
+        model: Any = self.table.model
+        self.validate_binning_args(attribute, minimum, maximum, kwargs.get("resolution"))
+
+        column = getattr(model, attribute)
+        subquery = self.query(db).subquery()
+
+        try:
+            min_, max_ = self.get_query_range(db, column, subquery, minimum, maximum)
+        except InvalidFacetException:
+            return [], {}
+
+        bins: List[NumericValue]
+        if "num_bins" in kwargs:
+            bins = binning.range_bins(min_, max_, kwargs["num_bins"])  # type: ignore
+        elif "resolution" in kwargs:
+            bins = binning.datetime_bins(min_, max_, kwargs["resolution"])  # type: ignore
+
+        bucket = func.width_bucket(column, cast(bins, ARRAY(column.type)))
+        query = db.query(bucket, func.count(column))
+        query = query.join(subquery, model.id == subquery.c.id)
+        rows = query.group_by(bucket)
+        result = {value - 1: count for value, count in rows if value is not None}
+
+        if maximum is None:
+            # include values equal exactly to the maximum value in the largest bin
+            result[len(bins) - 2] = result.pop(len(bins) - 2, 0) + result.pop(len(bins) - 1, 0)
+
+        return bins, result
+
+    def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
         model: Any = self.table.model
         join_envo = False
         join_ap = False
@@ -505,6 +599,21 @@ class FacetQuery(SearchQuery):
     attribute: str
 
 
+class BinnedRangeFacetQuery(FacetQuery):
+    minimum: Optional[NumericValue]
+    maximum: Optional[NumericValue]
+    num_bins: PositiveInt
+
+
+class BinnedDateFacetQuery(FacetQuery):
+    minimum: Optional[datetime]
+    maximum: Optional[datetime]
+    resolution: DateBinResolution
+
+
+BinnedFacetQuery = Union[BinnedRangeFacetQuery, BinnedDateFacetQuery]
+
+
 class StudySearchResponse(BaseSearchResponse):
     results: List[schemas.Study]
 
@@ -535,3 +644,8 @@ class MetaproteomicAnalysisSearchResponse(BaseSearchResponse):
 
 class FacetResponse(BaseModel):
     facets: Dict[schemas.AnnotationValue, int]
+
+
+class BinnedFacetResponse(BaseModel):
+    facets: Dict[int, int]
+    bins: List[NumericValue]
