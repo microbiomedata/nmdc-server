@@ -100,6 +100,18 @@ def facet_study(
     return query.FacetResponse(facets=facets)
 
 
+def binned_facet_study(
+    db: Session,
+    attribute: str,
+    conditions: List[query.ConditionSchema],
+    **kwargs,
+) -> query.BinnedFacetResponse:
+    bins, facets = query.StudyQuerySchema(conditions=conditions).binned_facet(
+        db, attribute, **kwargs
+    )
+    return query.BinnedFacetResponse(bins=bins, facets=facets)
+
+
 # project
 def get_project(db: Session, project_id: str) -> Optional[models.Project]:
     return db.query(models.Project).filter(models.Project.id == project_id).first()
@@ -127,6 +139,18 @@ def facet_project(
 ) -> query.FacetResponse:
     facets = query.ProjectQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
+
+
+def binned_facet_project(
+    db: Session,
+    attribute: str,
+    conditions: List[query.ConditionSchema],
+    **kwargs,
+) -> query.BinnedFacetResponse:
+    bins, facets = query.ProjectQuerySchema(conditions=conditions).binned_facet(
+        db, attribute, **kwargs
+    )
+    return query.BinnedFacetResponse(bins=bins, facets=facets)
 
 
 def list_project_data_objects(db: Session, id: str) -> Query:
@@ -207,6 +231,18 @@ def facet_data_object(
     return query.FacetResponse(facets=facets)
 
 
+def binned_facet_data_object(
+    db: Session,
+    attribute: str,
+    conditions: List[query.ConditionSchema],
+    **kwargs,
+) -> query.BinnedFacetResponse:
+    bins, facets = query.DataObjectQuerySchema(conditions=conditions).binned_facet(
+        db, attribute, **kwargs
+    )
+    return query.BinnedFacetResponse(bins=bins, facets=facets)
+
+
 # readsqc
 def get_reads_qc(db: Session, reads_qc_id: str) -> Optional[models.ReadsQC]:
     return db.query(models.ReadsQC).filter(models.ReadsQC.id == reads_qc_id).first()
@@ -221,6 +257,18 @@ def facet_reads_qc(
 ) -> query.FacetResponse:
     facets = query.ReadsQCQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
+
+
+def binned_facet_reads_qc(
+    db: Session,
+    attribute: str,
+    conditions: List[query.ConditionSchema],
+    **kwargs,
+) -> query.BinnedFacetResponse:
+    bins, facets = query.ReadsQCQuerySchema(conditions=conditions).binned_facet(
+        db, attribute, **kwargs
+    )
+    return query.BinnedFacetResponse(bins=bins, facets=facets)
 
 
 def list_reads_qc_data_objects(db: Session, id: str) -> Query:
@@ -253,6 +301,18 @@ def facet_metagenome_assembly(
     return query.FacetResponse(facets=facets)
 
 
+def binned_facet_metagenome_assembly(
+    db: Session,
+    attribute: str,
+    conditions: List[query.ConditionSchema],
+    **kwargs,
+) -> query.BinnedFacetResponse:
+    bins, facets = query.MetagenomeAssemblyQuerySchema(conditions=conditions).binned_facet(
+        db, attribute, **kwargs
+    )
+    return query.BinnedFacetResponse(bins=bins, facets=facets)
+
+
 def list_metagenome_assembly_data_objects(db: Session, id: str) -> Query:
     return (
         db.query(models.DataObject)
@@ -283,6 +343,18 @@ def facet_metagenome_annotation(
     return query.FacetResponse(facets=facets)
 
 
+def binned_facet_metagenome_annotation(
+    db: Session,
+    attribute: str,
+    conditions: List[query.ConditionSchema],
+    **kwargs,
+) -> query.BinnedFacetResponse:
+    bins, facets = query.MetagenomeAnnotationQuerySchema(conditions=conditions).binned_facet(
+        db, attribute, **kwargs
+    )
+    return query.BinnedFacetResponse(bins=bins, facets=facets)
+
+
 def list_metagenome_annotation_data_objects(db: Session, id: str) -> Query:
     return (
         db.query(models.DataObject)
@@ -311,6 +383,18 @@ def facet_metaproteomic_analysis(
 ) -> query.FacetResponse:
     facets = query.MetaproteomicAnalysisQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
+
+
+def binned_facet_metaproteomic_analysis(
+    db: Session,
+    attribute: str,
+    conditions: List[query.ConditionSchema],
+    **kwargs,
+) -> query.BinnedFacetResponse:
+    bins, facets = query.MetaproteomicAnalysisQuerySchema(conditions=conditions).binned_facet(
+        db, attribute, **kwargs
+    )
+    return query.BinnedFacetResponse(bins=bins, facets=facets)
 
 
 def list_metaproteomic_analysis_data_objects(db: Session, id: str) -> Query:
