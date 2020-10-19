@@ -473,7 +473,7 @@ class BaseQuerySchema(BaseModel):
         minimum: NumericValue = None,
         maximum: NumericValue = None,
         **kwargs,
-    ) -> Tuple[List[NumericValue], Dict[NumericValue, int]]:
+    ) -> Tuple[List[NumericValue], List[int]]:
         model: Any = self.table.model
         self.validate_binning_args(attribute, minimum, maximum, kwargs.get("resolution"))
 
@@ -483,7 +483,7 @@ class BaseQuerySchema(BaseModel):
         try:
             min_, max_ = self.get_query_range(db, column, subquery, minimum, maximum)
         except InvalidFacetException:
-            return [], {}
+            return [], []
 
         bins: List[NumericValue]
         if "num_bins" in kwargs:
@@ -495,11 +495,17 @@ class BaseQuerySchema(BaseModel):
         query = db.query(bucket, func.count(column))
         query = query.join(subquery, model.id == subquery.c.id)
         rows = query.group_by(bucket)
-        result = {value - 1: count for value, count in rows if value is not None}
+        result = [0] * (len(bins) - 1)
+
+        count_above_maximum = 0
+        for row in rows:
+            if row[0] is not None and 1 <= row[0] < len(bins):
+                result[row[0] - 1] = row[1]
+            if row[0] == len(bins):
+                count_above_maximum = row[1]
 
         if maximum is None:
-            # include values equal exactly to the maximum value in the largest bin
-            result[len(bins) - 2] = result.pop(len(bins) - 2, 0) + result.pop(len(bins) - 1, 0)
+            result[-1] += count_above_maximum
 
         return bins, result
 
@@ -647,5 +653,5 @@ class FacetResponse(BaseModel):
 
 
 class BinnedFacetResponse(BaseModel):
-    facets: Dict[int, int]
+    facets: List[int]
     bins: List[NumericValue]

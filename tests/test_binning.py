@@ -28,23 +28,22 @@ def test_range_bins(db: Session, biosamples):
     q = query.BiosampleQuerySchema()
     bins, result = q.binned_facet(db, "depth", minimum=0, maximum=30, num_bins=3)
     assert bins == [0, 10, 20, 30]
-    assert result == {0: 3, 1: 2, 2: 1}
+    assert result == [3, 2, 1]
 
 
 def test_range_bins_default_min_max(db: Session, biosamples):
     q = query.BiosampleQuerySchema()
     bins, result = q.binned_facet(db, "depth", num_bins=3)
     assert bins == [1, 8, 15, 22]
-    assert result == {0: 3, 1: 2, 2: 1}
+    assert result == [3, 2, 1]
 
 
 def test_date_range_bins_week(db: Session, biosamples):
     q = query.BiosampleQuerySchema()
     bins, result = q.binned_facet(db, "collection_date", resolution=DateBinResolution.week)
-    print(bins)
     assert len(bins) == 8
     assert bins[0] <= datetime(2020, 1, 1)  # type: ignore
-    assert result == {0: 3, 1: 1, 6: 2}
+    assert result == [3, 1, 0, 0, 0, 0, 2]
 
 
 def test_date_range_bins_month(db: Session, biosamples):
@@ -52,14 +51,14 @@ def test_date_range_bins_month(db: Session, biosamples):
     bins, result = q.binned_facet(db, "collection_date", resolution=DateBinResolution.month)
     assert len(bins) == 3
     assert bins[0] <= datetime(2020, 1, 1)  # type: ignore
-    assert result == {0: 4, 1: 2}
+    assert result == [4, 2]
 
 
 def test_date_range_bins_year(db: Session, biosamples):
     q = query.BiosampleQuerySchema()
     bins, result = q.binned_facet(db, "collection_date", resolution=DateBinResolution.year)
     assert len(bins) == 2
-    assert result == {0: 6}
+    assert result == [6]
 
 
 def test_filtered_bins(db: Session, biosamples):
@@ -75,7 +74,7 @@ def test_filtered_bins(db: Session, biosamples):
     )
     bins, result = q.binned_facet(db, "depth", num_bins=2)
     assert bins == [1, 6.5, 12]
-    assert result == {0: 3, 1: 2}
+    assert result == [3, 2]
 
 
 def test_filtered_bins_api(client: TestClient, biosamples):
@@ -97,7 +96,7 @@ def test_filtered_bins_api(client: TestClient, biosamples):
     assert resp.status_code == 200
     assert resp.json() == {
         "bins": [1, 6.5, 12],
-        "facets": {"0": 3, "1": 2},
+        "facets": [3, 2],
     }
 
 
@@ -106,7 +105,7 @@ def test_binned_api(client: TestClient, biosamples):
     assert resp.status_code == 200
     assert resp.json() == {
         "bins": [1, 8, 15, 22],
-        "facets": {"0": 3, "1": 2, "2": 1},
+        "facets": [3, 2, 1],
     }
 
 
@@ -116,7 +115,7 @@ def test_binned_date_api(client: TestClient, biosamples):
     )
     assert resp.status_code == 200
     assert len(resp.json()["bins"]) == 3
-    assert resp.json()["facets"] == {"0": 4, "1": 2}
+    assert resp.json()["facets"] == [4, 2]
 
 
 def test_invalid_date_api(client: TestClient, biosamples):
@@ -137,5 +136,5 @@ def test_metagenome_api(client: TestClient, db: Session):
     assert resp.status_code == 200
     assert resp.json() == {
         "bins": [0, 10, 20],
-        "facets": {"0": 2, "1": 2},
+        "facets": [2, 2],
     }
