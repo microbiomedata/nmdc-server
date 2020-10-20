@@ -13,6 +13,7 @@ setup(
         "httpx",
         "itsdangerous",
         "psycopg2-binary",
+        "python-dateutil",
         "python-dotenv",
         "sqlalchemy",
         "starlette==0.13.6",

@@ -119,6 +119,16 @@ async def facet_biosample(query: query.FacetQuery, db: Session = Depends(get_db)
     return crud.facet_biosample(db, query.attribute, query.conditions)
 
 
+@router.post(
+    "/biosample/binned_facet",
+    response_model=query.BinnedFacetResponse,
+    tags=["biosample"],
+    name="Get all values of a non-string attribute with binning",
+)
+async def binned_facet_biosample(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
+    return crud.binned_facet_biosample(db, **query.dict())
+
+
 @router.get(
     "/biosample/{biosample_id}",
     response_model=schemas.Biosample,
@@ -181,6 +191,16 @@ async def facet_study(query: query.FacetQuery, db: Session = Depends(get_db)):
     return crud.facet_study(db, query.attribute, query.conditions)
 
 
+@router.post(
+    "/study/binned_facet",
+    response_model=query.BinnedFacetResponse,
+    tags=["study"],
+    name="Get all values of a non-string attribute with binning",
+)
+async def binned_facet_study(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
+    return crud.binned_facet_study(db, **query.dict())
+
+
 @router.get(
     "/study/{study_id}",
     response_model=schemas.Study,
@@ -241,6 +261,16 @@ async def search_project(
 )
 async def facet_project(query: query.FacetQuery, db: Session = Depends(get_db)):
     return crud.facet_project(db, query.attribute, query.conditions)
+
+
+@router.post(
+    "/project/binned_facet",
+    response_model=query.BinnedFacetResponse,
+    tags=["project"],
+    name="Get all values of a non-string attribute with binning",
+)
+async def binned_facet_project(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
+    return crud.binned_facet_project(db, **query.dict())
 
 
 @router.get(
@@ -336,6 +366,16 @@ async def facet_data_object(query: query.FacetQuery, db: Session = Depends(get_d
     return crud.facet_data_object(db, query.attribute, query.conditions)
 
 
+@router.post(
+    "/data_object/binned_facet",
+    response_model=query.BinnedFacetResponse,
+    tags=["data_object"],
+    name="Get all values of a non-string attribute with binning",
+)
+async def binned_facet_data_object(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
+    return crud.binned_facet_data_object(db, **query.dict())
+
+
 # reads_qc
 @router.post(
     "/reads_qc/search",
@@ -360,6 +400,16 @@ async def search_reads_qc(
 )
 async def facet_reads_qc(query: query.FacetQuery, db: Session = Depends(get_db)):
     return crud.facet_reads_qc(db, query.attribute, query.conditions)
+
+
+@router.post(
+    "/reads_qc/binned_facet",
+    response_model=query.BinnedFacetResponse,
+    tags=["reads_qc"],
+    name="Get all values of a non-string attribute with binning",
+)
+async def binned_facet_reads_qc(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
+    return crud.binned_facet_reads_qc(db, **query.dict())
 
 
 @router.get(
@@ -407,6 +457,18 @@ async def search_metagenome_assembly(
 )
 async def facet_metagenome_assembly(query: query.FacetQuery, db: Session = Depends(get_db)):
     return crud.facet_metagenome_assembly(db, query.attribute, query.conditions)
+
+
+@router.post(
+    "/metagenome_assembly/binned_facet",
+    response_model=query.BinnedFacetResponse,
+    tags=["metagenome_assembly"],
+    name="Get all values of a non-string attribute with binning",
+)
+async def binned_facet_metagenome_assembly(
+    query: query.BinnedFacetQuery, db: Session = Depends(get_db)
+):
+    return crud.binned_facet_metagenome_assembly(db, **query.dict())
 
 
 @router.get(
@@ -458,6 +520,18 @@ async def facet_metagenome_annotation(query: query.FacetQuery, db: Session = Dep
     return crud.facet_metagenome_annotation(db, query.attribute, query.conditions)
 
 
+@router.post(
+    "/metagenome_annotation/binned_facet",
+    response_model=query.BinnedFacetResponse,
+    tags=["metagenome_annotation"],
+    name="Get all values of a non-string attribute with binning",
+)
+async def binned_facet_metagenome_annotation(
+    query: query.BinnedFacetQuery, db: Session = Depends(get_db)
+):
+    return crud.binned_facet_metagenome_annotation(db, **query.dict())
+
+
 @router.get(
     "/metagenome_annotation/{metagenome_annotation_id}",
     response_model=schemas.MetagenomeAnnotation,
@@ -505,6 +579,18 @@ async def search_metaproteomic_analysis(
 )
 async def facet_metaproteomic_analysis(query: query.FacetQuery, db: Session = Depends(get_db)):
     return crud.facet_metaproteomic_analysis(db, query.attribute, query.conditions)
+
+
+@router.post(
+    "/metaproteomic_analysis/binned_facet",
+    response_model=query.BinnedFacetResponse,
+    tags=["metaproteomic_analysis"],
+    name="Get all values of a non-string attribute with binning",
+)
+async def binned_facet_metaproteomic_analysis(
+    query: query.BinnedFacetQuery, db: Session = Depends(get_db)
+):
+    return crud.binned_facet_metaproteomic_analysis(db, **query.dict())
 
 
 @router.get(
