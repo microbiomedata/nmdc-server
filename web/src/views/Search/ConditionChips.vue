@@ -150,6 +150,9 @@ export default {
 .list-enter-active, .list-leave-active {
   transition: all 0.2s;
 }
+.list-leave-active {
+  position: absolute;
+}
 .list-enter {
   opacity: 0;
   transform: translateX(100px);
@@ -157,6 +160,9 @@ export default {
 .list-leave-to {
   opacity: 0;
   transform: translateX(-100px);
+}
+.list-move {
+  transition: transform 0.2s;
 }
 
 /* Transition styles for chip */
