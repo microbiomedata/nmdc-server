@@ -32,7 +32,7 @@ export default {
           table: parsed.table,
           conditions,
         };
-      });
+      }).sort((a, b) => a.key.localeCompare(b));
     },
   },
 
@@ -68,64 +68,68 @@ export default {
 
 <template>
   <div>
-    <v-card
-      v-for="group in conditionGroups"
-      :key="group.key"
-      class="d-flex flex-row pa-1 my-2"
-      color="rgb(79, 59, 128, 0.2)"
+    <transition-group
+      name="list"
     >
-      <div style="width: 94%">
-        <span class="text-subtitle-2">
-          {{ fieldDisplayName(group.field) }}
-        </span>
-        <span class="text-caption">
-          [{{ verb(group.conditions[0].op) }}]
-        </span>
-        <v-chip
-          v-for="cond in group.conditions"
-          :key="JSON.stringify(cond.value)"
-          small
-          close
-          label
-          class="ma-1 chip"
-          style="max-width: 90%;"
-          @click:close="$emit('remove', cond)"
-        >
-          <span class="chip-content">
-            {{ valueTransform(cond.value, cond.field, cond.table) }}
-          </span>
-        </v-chip>
-      </div>
-      <v-menu
-        offset-x
-        :close-on-content-click="false"
-        @input="toggleMenu(group.key, $event)"
+      <v-card
+        v-for="group in conditionGroups"
+        :key="group.key"
+        class="d-flex flex-row pa-1 my-2"
+        color="rgb(79, 59, 128, 0.2)"
       >
-        <template #activator="{ on }">
-          <div
-            class="expand d-flex flex-column justify-center"
-            style="width: 6%"
-            v-on="on"
+        <div style="width: 94%">
+          <span class="text-subtitle-2">
+            {{ fieldDisplayName(group.field) }}
+          </span>
+          <span class="text-caption">
+            [{{ verb(group.conditions[0].op) }}]
+          </span>
+          <v-chip
+            v-for="cond in group.conditions"
+            :key="JSON.stringify(cond.value)"
+            small
+            close
+            label
+            class="ma-1 chip"
+            style="max-width: 90%;"
+            @click:close="$emit('remove', cond)"
           >
-            <v-icon small>
-              mdi-play
-            </v-icon>
-          </div>
-        </template>
-        <v-card
-          width="500"
+            <span class="chip-content">
+              {{ valueTransform(cond.value, cond.field, cond.table) }}
+            </span>
+          </v-chip>
+        </div>
+        <v-menu
+          offset-x
+          :close-on-content-click="false"
+          @input="toggleMenu(group.key, $event)"
         >
-          <slot
-            name="menu"
-            v-bind="{
-              field: group.field,
-              table: group.table,
-              isOpen: menuState[group.key],
-            }"
-          />
-        </v-card>
-      </v-menu>
-    </v-card>
+          <template #activator="{ on }">
+            <div
+              class="expand d-flex flex-column justify-center"
+              style="width: 6%"
+              v-on="on"
+            >
+              <v-icon small>
+                mdi-play
+              </v-icon>
+            </div>
+          </template>
+          <v-card
+            width="500"
+          >
+            <slot
+              name="menu"
+              v-bind="{
+                field: group.field,
+                table: group.table,
+                isOpen: menuState[group.key],
+              }"
+            />
+          </v-card>
+        </v-menu>
+      </v-card>
+    </transition-group>
   </div>
 </template>
 
@@ -140,5 +144,18 @@ export default {
 }
 .chip-content {
   overflow: hidden;
+}
+
+/* Transition styles */
+.list-enter-active, .list-leave-active {
+  transition: all 0.2s;
+}
+.list-enter {
+  opacity: 0;
+  transform: translateX(100px);
+}
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(-100px);
 }
 </style>
