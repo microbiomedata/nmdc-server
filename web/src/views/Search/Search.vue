@@ -41,26 +41,31 @@ export default {
   methods: {
     ...mapActions(['route', 'refreshResults']),
     addSelected({ conditions }) {
+      const duplicates = [];
       const newConditions = conditions.filter((c) => {
         const match = this.conditions.filter((d) => (
           c.table === d.table
             && c.op === d.op
             && c.value === d.value
             && c.field === d.field));
-        return match.length === 0;
+        if (match.length === 0) {
+          return true; // this is a new condition
+        }
+        duplicates.push(c);
+        return false;
       });
-      if (newConditions.length > 0) {
+      if (newConditions.length > 0 || duplicates.length > 0) {
         this.route({
           conditions: [
             ...newConditions,
-            ...this.conditions,
+            ...removeCondition(this.conditions, duplicates),
           ],
         });
       }
     },
-    removeCondition(c) {
+    removeCondition(conds) {
       this.route({
-        conditions: removeCondition(this.conditions, c),
+        conditions: removeCondition(this.conditions, conds),
       });
     },
     navigateToSelected(id) {
