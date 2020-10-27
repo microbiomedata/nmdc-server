@@ -30,7 +30,7 @@ export default {
           key: parsed.field + parsed.table,
           field: parsed.field,
           table: parsed.table,
-          conditions,
+          conditions: conditions.sort((a, b) => a.value.localeCompare(b.value)),
         };
       }).sort((a, b) => a.key.localeCompare(b));
     },
@@ -68,9 +68,7 @@ export default {
 
 <template>
   <div>
-    <transition-group
-      name="list"
-    >
+    <transition-group name="list">
       <v-card
         v-for="group in conditionGroups"
         :key="group.key"
@@ -84,20 +82,22 @@ export default {
           <span class="text-caption">
             [{{ verb(group.conditions[0].op) }}]
           </span>
-          <v-chip
-            v-for="cond in group.conditions"
-            :key="JSON.stringify(cond.value)"
-            small
-            close
-            label
-            class="ma-1 chip"
-            style="max-width: 90%;"
-            @click:close="$emit('remove', cond)"
-          >
-            <span class="chip-content">
-              {{ valueTransform(cond.value, cond.field, cond.table) }}
-            </span>
-          </v-chip>
+          <transition-group name="chip">
+            <v-chip
+              v-for="cond in group.conditions"
+              :key="JSON.stringify(cond.value)"
+              small
+              close
+              label
+              class="ma-1 chip"
+              style="max-width: 90%;"
+              @click:close="$emit('remove', cond)"
+            >
+              <span class="chip-content">
+                {{ valueTransform(cond.value, cond.field, cond.table) }}
+              </span>
+            </v-chip>
+          </transition-group>
         </div>
         <v-menu
           offset-x
@@ -146,7 +146,7 @@ export default {
   overflow: hidden;
 }
 
-/* Transition styles */
+/* Transition styles for list */
 .list-enter-active, .list-leave-active {
   transition: all 0.2s;
 }
@@ -157,5 +157,24 @@ export default {
 .list-leave-to {
   opacity: 0;
   transform: translateX(-100px);
+}
+
+/* Transition styles for chip */
+.chip-enter-active  {
+  transition: all 0.2s;
+}
+.chip-leave-active {
+  position: absolute;
+}
+.chip-enter {
+  opacity: 0;
+  transform: translateX(100px);
+}
+.chip-leave-to {
+  opacity: 0;
+  transform: translateX(-50px);
+}
+.chip-move {
+  transition: transform 0.2s;
 }
 </style>
