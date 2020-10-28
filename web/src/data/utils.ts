@@ -1,12 +1,14 @@
 import { Condition } from './api';
 
-function removeCondition(conditions: Condition[], c: Condition) {
+function removeCondition(conditions: Condition[], conds: Condition[]) {
   const copy = conditions.slice();
-  const foundIndex = copy.findIndex((cond) => (
-    cond.field === c.field && cond.op === c.op && cond.value === c.value));
-  if (foundIndex >= 0) {
-    copy.splice(foundIndex, 1);
-  }
+  conds.forEach((c) => {
+    const foundIndex = copy.findIndex((cond) => (
+      cond.field === c.field && cond.op === c.op && cond.value === c.value));
+    if (foundIndex >= 0) {
+      copy.splice(foundIndex, 1);
+    }
+  });
   return copy;
 }
 
