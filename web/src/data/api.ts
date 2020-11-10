@@ -25,7 +25,7 @@ export const typeMap: Map<string, entityType> = new Map([
   ['metaproteomic_analysis', 'metaproteomic_analysis'],
 ]);
 
-interface BaseSearchResult {
+export interface BaseSearchResult {
   id: string;
   name: string;
   description: string;
@@ -208,6 +208,11 @@ export interface SearchResponse<T> {
   results: T[];
 }
 
+export interface BinResponse<T = string | number> {
+  bins: T[];
+  facets: number[];
+}
+
 async function _search<T>(
   table: string,
   { offset = 0, limit = 100, conditions }: SearchParams,
@@ -312,6 +317,22 @@ async function getFacetSummary(
     .sort((a, b) => b.count - a.count);
 }
 
+async function getBinnedFacet<T = string | number>(
+  table: entityType,
+  attribute: string,
+  conditions: Condition[],
+  numBins: number,
+  resolution: 'day' | 'week' | 'month' | 'year' = 'month',
+) {
+  const { data } = await client.post<BinResponse<T>>(`${table}/binned_facet`, {
+    attribute,
+    conditions,
+    resolution,
+    num_bins: numBins,
+  });
+  return data;
+}
+
 async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
   const { data } = await client.get<DatabaseSummaryResponse>('summary');
   // TODO: fix this on the server
@@ -392,6 +413,7 @@ async function me(): Promise<string> {
 }
 
 const api = {
+  getBinnedFacet,
   getDatabaseSummary,
   getDatabaseStats,
   getDataObjectList,

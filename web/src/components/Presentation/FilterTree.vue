@@ -1,11 +1,12 @@
 <script>
+import Vue from 'vue';
 import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
 import { uniqWith } from 'lodash';
 import { api } from '@/data/api';
 import { makeTree } from '@/util';
 
-export default {
+export default Vue.extend({
   components: { Treeselect },
 
   props: {
@@ -98,7 +99,7 @@ export default {
       });
     },
   },
-};
+});
 </script>
 
 <template>

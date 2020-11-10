@@ -1,7 +1,8 @@
 <script>
+import Vue from 'vue';
 import moment from 'moment';
 
-export default {
+export default Vue.extend({
   props: {
     value: {
       type: String,
@@ -29,7 +30,7 @@ export default {
       this.$emit('input', moment(event).format('YYYY-MM-DDT00:00:00.000'));
     },
   },
-};
+});
 </script>
 
 <template>

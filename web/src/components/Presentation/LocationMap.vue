@@ -12,12 +12,13 @@
 </template>
 
 <script>
+import Vue from 'vue';
 import { GChart } from 'vue-google-charts';
 
 import { api } from '@/data/api';
 import { ecosystems } from '@/encoding';
 
-export default {
+export default Vue.extend({
   name: 'LocationMap',
   components: {
     GChart,
@@ -93,5 +94,5 @@ export default {
       };
     },
   },
-};
+});
 </script>

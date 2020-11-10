@@ -1,3 +1,14 @@
+<script>
+export default {
+  props: {
+    item: {
+      type: Object,
+      default: () => {},
+    },
+  },
+};
+</script>
+
 <template>
   <v-container fluid>
     <v-row>
@@ -14,13 +25,3 @@
     </v-row>
   </v-container>
 </template>
-<script>
-export default {
-  props: {
-    item: {
-      type: Object,
-      default: () => {},
-    },
-  },
-};
-</script>

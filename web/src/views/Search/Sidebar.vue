@@ -1,4 +1,5 @@
 <script>
+import Vue from 'vue';
 import { mapGetters, mapState } from 'vuex';
 import { types } from '@/encoding';
 import { api } from '@/data/api';
@@ -7,7 +8,7 @@ import FacetedSearch from '@/components/Presentation/FacetedSearch.vue';
 import ConditionChips from './ConditionChips.vue';
 import MenuContent from './MenuContent.vue';
 
-export default {
+export default Vue.extend({
   components: {
     ConditionChips,
     FacetedSearch,
@@ -55,7 +56,7 @@ export default {
       });
     },
   },
-};
+});
 </script>
 
 <template>

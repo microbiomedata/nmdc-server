@@ -1,4 +1,5 @@
 <script>
+import Vue from 'vue';
 import { mapGetters } from 'vuex';
 
 import Sample from '@/components/Presentation/Sample.vue';
@@ -8,7 +9,7 @@ import DataObjectList from '@/components/DataObjectsList.vue';
 
 import AttributeList from './AttributeList.vue';
 
-export default {
+export default Vue.extend({
   components: {
     AttributeList,
     DataObjectList,
@@ -25,7 +26,7 @@ export default {
       return list ? list[0] : null;
     },
   },
-};
+});
 </script>
 
 <template>

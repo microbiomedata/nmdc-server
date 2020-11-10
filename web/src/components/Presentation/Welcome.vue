@@ -1,3 +1,20 @@
+<script>
+import Vue from 'vue';
+import LocationMap from './LocationMap.vue';
+
+export default Vue.extend({
+  components: {
+    LocationMap,
+  },
+  props: {
+    stats: {
+      type: Array,
+      default: () => [],
+    },
+  },
+});
+</script>
+
 <template>
   <v-card
     flat
@@ -43,18 +60,16 @@
         </v-btn>
       </v-row>
     </v-container>
-    <LocationMap
-      @selected="addSelected($event)"
-    />
+    <LocationMap />
     <v-container fluid>
       <template
-        v-for="(statsLine, statsLineIndex) in stats"
+        v-for="(statsLine, i) in stats"
       >
         <v-row
-          :key="statsLineIndex"
+          :key="i"
         >
           <template
-            v-for="(stat) in statsLine"
+            v-for="stat in statsLine"
           >
             <v-col
               v-if="stat.value !== 0"
@@ -95,18 +110,3 @@
     </v-container>
   </v-card>
 </template>
-<script>
-import LocationMap from './LocationMap.vue';
-
-export default {
-  components: {
-    LocationMap,
-  },
-  props: {
-    stats: {
-      type: Array,
-      default: () => [],
-    },
-  },
-};
-</script>

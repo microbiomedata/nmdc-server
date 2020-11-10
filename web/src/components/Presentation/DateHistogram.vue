@@ -1,21 +1,18 @@
 <script>
-import { flatten } from 'lodash';
 import moment from 'moment';
 
-import ChartContainer from '@/components/charts/ChartContainer.vue';
-import Histogram from '@/components/charts/Histogram/Histogram.vue';
-import RangeSlider from '@/components/charts/RangeSlider.vue';
+import ChartContainer from '@/components/Presentation/ChartContainer.vue';
+import Histogram2 from '@/components/Presentation/Histogram2.vue';
 
 export default {
   name: 'DateHistogram',
   components: {
     ChartContainer,
-    Histogram,
-    RangeSlider,
+    Histogram2,
   },
   props: {
     facetSummary: {
-      type: Array,
+      type: Object,
       required: true,
     },
     otherConditions: {
@@ -38,34 +35,21 @@ export default {
 
   data() {
     return {
-      range: [0, new Date().valueOf()],
+      range: [0, 100],
       min: 0,
-      max: (new Date()).valueOf(),
+      max: 100,
       /* Whether to reset the range based on an external update */
       loadOnNextUpdate: true,
+      moment,
     };
-  },
-
-  computed: {
-    data() {
-      return flatten(this.facetSummary.map(
-        ({ facet, count }) => Array(count).fill(new Date(facet)),
-      ));
-    },
-    tickfmt() {
-      return (d) => moment(d).format('l');
-    },
-    round() {
-      return (d) => (new Date(moment(d).format('YYYY-MM-DDT00:00:00.000'))).valueOf();
-    },
   },
 
   watch: {
     facetSummary() {
       let nextTick = () => {
-        [this.min, this.max] = this.$refs.histogram.rangeScale.range();
+        this.min = Date.parse(this.facetSummary.bins[0]);
+        this.max = Date.parse(this.facetSummary.bins[this.facetSummary.bins.length - 1]);
         this.range = [this.min, this.max];
-        this.extent = this.range;
       };
       if (this.loadOnNextUpdate) {
         if (this.myConditions.length === 1) {
@@ -73,12 +57,12 @@ export default {
           this.selectedOption = condition.op;
           if (condition.op === 'between' && typeof condition.value === 'object') {
             nextTick = () => {
-              [this.min, this.max] = this.$refs.histogram.rangeScale.range();
+              console.log('yo');
               this.range = condition.value.map((c) => (new Date(c)).valueOf());
             };
           }
         }
-        this.$nextTick(nextTick);
+        this.$nextTick(() => nextTick());
         this.loadOnNextUpdate = false;
       }
     },
@@ -86,6 +70,7 @@ export default {
       if (this.myConditions.length !== 0) {
         this.loadOnNextUpdate = true;
       } else {
+        console.log('here');
         this.range = [this.min, this.max];
       }
     },
@@ -95,7 +80,6 @@ export default {
     afterDrag() {
       this.loadOnNextUpdate = false;
       if (this.range[0] !== this.min || this.range[1] !== this.max) {
-        const values = this.$refs.histogram.scaledRange;
         this.$emit('select', {
           type: this.table,
           conditions: [
@@ -103,7 +87,7 @@ export default {
             {
               field: this.field,
               op: 'between',
-              value: values.map((d) => moment(d).format('YYYY-MM-DDT00:00:00.000')),
+              value: this.range.map((d) => moment(d).format('YYYY-MM-DDT00:00:00.000')),
               table: this.table,
             },
           ],
@@ -121,24 +105,30 @@ export default {
 
 <template>
   <div class="histogram mb-6">
-    <ChartContainer v-if="data.length > 0">
+    <ChartContainer v-if="facetSummary">
       <template #default="{ width, height }">
-        <Histogram
+        <Histogram2
           ref="histogram"
-          v-bind="{ width, height, data, range }"
+          v-bind="{ width, height, data: facetSummary, range }"
         />
       </template>
-      <template #below="{ width }">
-        <range-slider
-          v-model="range"
-          :max="max"
-          :min="min"
-          :width="width"
-          :height="40"
-          :fmt="tickfmt"
-          :round="round"
-          @end="afterDrag"
-        />
+      <template #below>
+        <div class="mx-4">
+          <v-range-slider
+            v-model="range"
+            :min="min"
+            :max="max"
+            hide-details
+            color="primary"
+            thumb-color="accent"
+            @change="afterDrag"
+          />
+          <div class="d-flex">
+            <span>{{ moment(range[0]).format('MM/DD/YYYY') }}</span>
+            <v-spacer />
+            <span>{{ moment(range[1]).format('MM/DD/YYYY') }}</span>
+          </div>
+        </div>
       </template>
     </ChartContainer>
   </div>

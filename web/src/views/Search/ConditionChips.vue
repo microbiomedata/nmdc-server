@@ -5,7 +5,7 @@ import { groupBy } from 'lodash';
 import { opMap } from '@/data/api';
 import { fieldDisplayName } from '@/util';
 
-export default {
+export default Vue.extend({
   props: {
     conditions: {
       type: Array,
@@ -63,7 +63,7 @@ export default {
       Vue.set(this.menuState, category, value);
     },
   },
-};
+});
 </script>
 
 <template>

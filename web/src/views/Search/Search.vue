@@ -1,4 +1,5 @@
 <script>
+import Vue from 'vue';
 import { mapActions, mapState, mapGetters } from 'vuex';
 
 import { types } from '@/encoding';
@@ -8,6 +9,7 @@ import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import FacetHistogramChart from '@/components/Presentation/FacetHistogramChart.vue';
 import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
+import BinnedSummaryWrapper from '@/components/BinnedSummaryWrapper.vue';
 // import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
@@ -15,8 +17,9 @@ import SearchResults from '@/components/Presentation/SearchResults.vue';
 
 import Sidebar from './Sidebar.vue';
 
-export default {
+export default Vue.extend({
   components: {
+    BinnedSummaryWrapper,
     FacetBarChart,
     FacetHistogramChart,
     FacetSummaryWrapper,
@@ -78,7 +81,7 @@ export default {
       });
     },
   },
-};
+});
 </script>
 
 <template>
@@ -118,9 +121,10 @@ export default {
           </v-row>
           <v-row>
             <v-col cols="12">
-              <facet-summary-wrapper
+              <binned-summary-wrapper
                 table="biosample"
                 field="collection_date"
+                use-all-conditions
               >
                 <template #default="props">
                   <DateHistogram
@@ -128,7 +132,7 @@ export default {
                     @select="$store.dispatch('route', $event)"
                   />
                 </template>
-              </facet-summary-wrapper>
+              </binned-summary-wrapper>
             </v-col>
             <v-col :cols="12">
               <EcosystemSankey
