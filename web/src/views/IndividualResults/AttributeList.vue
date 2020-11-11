@@ -91,6 +91,7 @@
 </template>
 <script>
 import { isObject } from 'lodash';
+import Vue from 'vue';
 
 import { types, getField } from '@/encoding';
 import { api } from '@/data/api';
@@ -98,7 +99,7 @@ import {
   typeWithCardinality, fieldDisplayName, valueDisplayName,
 } from '@/util';
 
-export default {
+export default Vue.extend({
   props: {
     type: {
       type: String,
@@ -254,5 +255,5 @@ export default {
       window.open(url, '_blank');
     },
   },
-};
+});
 </script>

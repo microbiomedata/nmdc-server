@@ -117,13 +117,14 @@
   </v-container>
 </template>
 <script>
+import Vue from 'vue';
 import { isObject } from 'lodash';
 import Cite from 'citation-js';
 import {
   typeWithCardinality, valueCardinality, fieldDisplayName,
 } from '@/util';
 
-export default {
+export default Vue.extend({
   props: {
     item: {
       type: Object,
@@ -186,5 +187,5 @@ export default {
       });
     },
   },
-};
+});
 </script>

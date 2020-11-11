@@ -1,5 +1,8 @@
 <script lang="ts">
-export default {
+import { BaseSearchResult } from '@/data/api';
+import Vue, { PropType } from 'vue';
+
+export default Vue.extend({
   props: {
     page: {
       type: Number,
@@ -14,7 +17,7 @@ export default {
       required: true,
     },
     results: {
-      type: Array,
+      type: Array as PropType<BaseSearchResult[]>,
       default: () => [],
     },
     icon: {
@@ -22,7 +25,7 @@ export default {
       default: 'mdi-book',
     },
   },
-};
+});
 </script>
 
 <template>
