@@ -41,5 +41,15 @@ export default {
       },
       default: {},
     },
+    facetSummaryUnconditional: {
+      get() {
+        return api.getBinnedFacet(
+          this.table,
+          this.field,
+          [],
+        );
+      },
+      default: {},
+    },
   },
 };

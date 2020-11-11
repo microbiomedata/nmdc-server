@@ -1,10 +1,11 @@
 <script>
+import Vue from 'vue';
 import moment from 'moment';
 
 import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 import Histogram2 from '@/components/Presentation/Histogram2.vue';
 
-export default {
+export default Vue.extend({
   name: 'DateHistogram',
   components: {
     ChartContainer,
@@ -12,6 +13,10 @@ export default {
   },
   props: {
     facetSummary: {
+      type: Object,
+      required: true,
+    },
+    facetSummaryUnconditional: {
       type: Object,
       required: true,
     },
@@ -35,42 +40,40 @@ export default {
 
   data() {
     return {
-      range: [0, 100],
+      range: null,
       min: 0,
       max: 100,
-      /* Whether to reset the range based on an external update */
-      loadOnNextUpdate: true,
       moment,
     };
   },
 
   watch: {
-    facetSummary() {
-      let nextTick = () => {
-        this.min = Date.parse(this.facetSummary.bins[0]);
-        this.max = Date.parse(this.facetSummary.bins[this.facetSummary.bins.length - 1]);
+    facetSummaryUnconditional() {
+      // Derive min/max from full range
+      const setMinMax = () => {
+        this.min = Date.parse(this.facetSummaryUnconditional.bins[0]);
+        this.max = Date.parse(
+          this.facetSummaryUnconditional.bins[this.facetSummaryUnconditional.bins.length - 1],
+        );
         this.range = [this.min, this.max];
       };
-      if (this.loadOnNextUpdate) {
-        if (this.myConditions.length === 1) {
-          const [condition] = this.myConditions;
-          this.selectedOption = condition.op;
-          if (condition.op === 'between' && typeof condition.value === 'object') {
-            nextTick = () => {
-              console.log('yo');
-              this.range = condition.value.map((c) => (new Date(c)).valueOf());
-            };
-          }
+      let nextTick = setMinMax;
+      if (this.myConditions.length === 1) {
+        const [condition] = this.myConditions;
+        if (condition.op === 'between' && typeof condition.value === 'object') {
+          // If range is already set, figure it out from the condition.
+          nextTick = () => {
+            // but get min/max from full range anyway.
+            setMinMax();
+            this.range = condition.value.map((c) => (new Date(c)).valueOf());
+          };
         }
-        this.$nextTick(() => nextTick());
-        this.loadOnNextUpdate = false;
       }
+      this.$nextTick(() => nextTick());
     },
     myConditions() {
-      if (this.myConditions.length !== 0) {
-        this.loadOnNextUpdate = true;
-      } else {
-        console.log('here');
+      if (this.myConditions.length === 0) {
+        // Otherwise, reset to min/max
         this.range = [this.min, this.max];
       }
     },
@@ -78,7 +81,6 @@ export default {
 
   methods: {
     afterDrag() {
-      this.loadOnNextUpdate = false;
       if (this.range[0] !== this.min || this.range[1] !== this.max) {
         this.$emit('select', {
           type: this.table,
@@ -100,12 +102,12 @@ export default {
       }
     },
   },
-};
+});
 </script>
 
 <template>
   <div class="histogram mb-6">
-    <ChartContainer v-if="facetSummary">
+    <ChartContainer v-if="facetSummary && range !== null">
       <template #default="{ width, height }">
         <Histogram2
           ref="histogram"

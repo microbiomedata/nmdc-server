@@ -29,41 +29,23 @@ export default defineComponent({
     },
     range: {
       type: Array,
-      default: () => [0, 100],
+      required: true,
     },
   },
 
-  setup(props) {
-    const root = ref(undefined);
+  setup(props, { root }) {
+    const svgRoot = ref(undefined);
+    // set the dimensions and margins of the graph
+    const margin = {
+      top: 20,
+      right: 30,
+      bottom: 30,
+      left: 30,
+    };
 
     function makeHistogram(data, el) {
-      // set the dimensions and margins of the graph
-      const margin = {
-        top: 10,
-        right: 30,
-        bottom: 30,
-        left: 30,
-      };
       const width = props.width - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
-
-      // parse the date / time
-      // const parseDate = timeParse('%d-%m-%Y');
-
-      // set the ranges
-      const x = scaleTime()
-        .domain([new Date(2012, 1, 1), new Date(2019, 0, 1)])
-        .rangeRound([0, width]);
-      const y = scaleLinear().range([height, 0]);
-
-      // append the svg object to the body of the page
-      // append a 'group' element to 'svg'
-      // moves the 'group' element to the top left margin
-      const svg = select(el)
-        .attr('width', width + margin.left + margin.right)
-        .attr('height', height + margin.top + margin.bottom)
-        .append('g')
-        .attr('transform', 'translate('.concat(margin.left, ',', margin.top, ')'));
 
       /**
        * Forge bins from this.data
@@ -78,6 +60,28 @@ export default defineComponent({
         });
       });
 
+      if (bins.length === 0) {
+        return;
+      }
+
+      // set the ranges
+      const x = scaleTime()
+        .domain(props.range)
+        .rangeRound([0, width]);
+      const y = scaleLinear().range([height, 0]);
+
+      // Reset the SVG
+      select(el).selectAll('g').remove();
+
+      // append the svg object to the body of the page
+      // append a 'group' element to 'svg'
+      // moves the 'group' element to the top left margin
+      const svg = select(el)
+        .attr('width', width + margin.left + margin.right)
+        .attr('height', height + margin.top + margin.bottom)
+        .append('g')
+        .attr('transform', 'translate('.concat(margin.left, ',', margin.top, ')'));
+
       // Scale the range of the data in the y domain
       y.domain([
         0,
@@ -85,18 +89,25 @@ export default defineComponent({
       ]);
 
       // append the bar rectangles to the svg element
-      svg
+      const enterSelection = svg
         .selectAll('rect')
         .data(bins)
-        .enter()
-        .append('rect')
+        .enter();
+      enterSelection.append('rect')
         .attr('class', 'bar')
         .attr('x', 1)
+        .attr('color', root.$vuetify.theme.currentTheme.primary)
         .attr('transform', (d) => 'translate('.concat(x(d.x0), ',', y(d.length), ')'))
         .attr('width', (d) => x(d.x1) - x(d.x0) - 3)
         .attr('height', (d) => ((d.length > 0) ? (height - y(d.length) + 1) : 0));
+      enterSelection
+        .filter((d) => d.length > 0)
+        .append('text')
+        .attr('x', 1)
+        .attr('transform', (d) => `translate(${x(d.x0)}, ${y(d.length) - 4})`)
+        .attr('font-size', '10px')
+        .html((d) => d.length);
 
-      // console.log(x(bins[0].))
       // add the x Axis
       svg
         .append('g')
@@ -110,21 +121,20 @@ export default defineComponent({
     }
 
     watchEffect(() => {
-      console.log('her2e');
       const { data } = props;
-      const el = root.value;
+      const el = svgRoot.value;
       if (data.bins && data.facets) {
         makeHistogram(data, el);
       }
     });
 
-    return { root };
+    return { svgRoot };
   },
 });
 </script>
 
 <template>
-  <svg ref="root" />
+  <svg ref="svgRoot" />
 </template>
 
 <style scoped>
