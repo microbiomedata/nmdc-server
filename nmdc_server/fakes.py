@@ -277,3 +277,13 @@ class MetaproteomicAnalysisFactory(PipelineStepBase):
     class Meta:
         model = models.MetaproteomicAnalysis
         sqlalchemy_session = db
+
+
+class KOTermFactory(SQLAlchemyModelFactory):
+    class Meta:
+        model = models.KOTerm
+        sqlalchemy_session = db
+
+    id: str = Faker("pystr")
+    project = SubFactory(ProjectFactory)
+    count = Faker("pyint")

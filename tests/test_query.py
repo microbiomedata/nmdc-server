@@ -519,3 +519,23 @@ def test_query_data_object(db: Session):
         ]
     )
     assert {"file2"} == {r.id for r in q.execute(db)}
+
+
+def test_query_ko_term(db: Session):
+    project1 = fakes.ProjectFactory(id="project1")
+    project2 = fakes.ProjectFactory(id="project2")
+    fakes.KOTermFactory(id="term1", project=project1, count=5)
+    fakes.KOTermFactory(id="term1", project=project2, count=1)
+    fakes.KOTermFactory(id="term2", project=project2, count=10)
+    db.commit()
+
+    q = query.ProjectQuerySchema(
+        conditions=[
+            {
+                "table": "ko_term",
+                "field": "id",
+                "value": "term2",
+            }
+        ]
+    )
+    assert {"project2"} == {r.id for r in q.execute(db)}

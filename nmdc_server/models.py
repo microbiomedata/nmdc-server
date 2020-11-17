@@ -329,6 +329,16 @@ class MetaproteomicAnalysis(Base, PipelineStep):
     outputs = output_relationship(metaproteomic_analysis_output_association)
 
 
+class KOTerm(Base):
+    __tablename__ = "ko_term"
+
+    id = Column(String, primary_key=True)
+    project_id = Column(String, ForeignKey("project.id"), primary_key=True)
+    count = Column(BigInteger)
+
+    project = relationship("Project")
+
+
 ModelType = Union[
     Type[Study],
     Type[Project],
@@ -338,6 +348,7 @@ ModelType = Union[
     Type[MetagenomeAssembly],
     Type[MetagenomeAnnotation],
     Type[MetaproteomicAnalysis],
+    Type[KOTerm],
 ]
 
 

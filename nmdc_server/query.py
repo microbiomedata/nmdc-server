@@ -109,31 +109,12 @@ class Table(Enum):
     metagenome_annotation = "metagenome_annotation"
     metaproteomic_analysis = "metaproteomic_analysis"
     principal_investigator = "principal_investigator"
+    ko_term = "ko_term"
 
     @property
     def model(self) -> Union[models.ModelType, AliasedClass]:
-        if self == Table.biosample:
-            return models.Biosample
-        elif self == Table.study:
-            return models.Study
-        elif self == Table.project:
-            return models.Project
-        elif self == Table.data_object:
-            return models.DataObject
-        elif self == Table.env_broad_scale:
-            return EnvBroadScaleTerm
-        elif self == Table.env_local_scale:
-            return EnvLocalScaleTerm
-        elif self == Table.env_medium:
-            return EnvMediumTerm
-        elif self == Table.reads_qc:
-            return models.ReadsQC
-        elif self == Table.metagenome_assembly:
-            return models.MetagenomeAssembly
-        elif self == Table.metagenome_annotation:
-            return models.MetagenomeAnnotation
-        elif self == Table.metaproteomic_analysis:
-            return models.MetaproteomicAnalysis
+        if self in _table_map:
+            return _table_map[self]
         raise Exception("Unknown table")
 
     def query(self, db: Session) -> Query:
@@ -148,6 +129,7 @@ class Table(Enum):
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
+                .join(models.KOTerm, isouter=True)
             )
         elif self == Table.study:
             query = (
@@ -160,6 +142,7 @@ class Table(Enum):
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
+                .join(models.KOTerm, isouter=True)
             )
         elif self == Table.project:
             query = (
@@ -172,6 +155,7 @@ class Table(Enum):
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
+                .join(models.KOTerm, isouter=True)
             )
         elif self == Table.reads_qc:
             query = (
@@ -184,6 +168,7 @@ class Table(Enum):
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
+                .join(models.KOTerm, isouter=True)
             )
         elif self == Table.metagenome_assembly:
             query = (
@@ -196,6 +181,7 @@ class Table(Enum):
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
+                .join(models.KOTerm, isouter=True)
             )
         elif self == Table.metagenome_annotation:
             query = (
@@ -208,6 +194,7 @@ class Table(Enum):
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
+                .join(models.KOTerm, isouter=True)
             )
         elif self == Table.metaproteomic_analysis:
             query = (
@@ -220,6 +207,7 @@ class Table(Enum):
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
+                .join(models.KOTerm, isouter=True)
             )
         elif self == Table.data_object:
             query = (
@@ -232,12 +220,28 @@ class Table(Enum):
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
+                .join(models.KOTerm, isouter=True)
             )
 
         else:
             raise Exception("Unknown table")
         return _join_envo(query)
 
+
+_table_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
+    Table.biosample: models.Biosample,
+    Table.study: models.Study,
+    Table.project: models.Project,
+    Table.data_object: models.DataObject,
+    Table.env_broad_scale: EnvBroadScaleTerm,
+    Table.env_local_scale: EnvLocalScaleTerm,
+    Table.env_medium: EnvMediumTerm,
+    Table.reads_qc: models.ReadsQC,
+    Table.metagenome_annotation: models.MetagenomeAnnotation,
+    Table.metagenome_assembly: models.MetagenomeAssembly,
+    Table.metaproteomic_analysis: models.MetaproteomicAnalysis,
+    Table.ko_term: models.KOTerm,
+}
 
 _envo_keys: Dict[str, Tuple[Table, str]] = {
     "env_broad_scale": (Table.env_broad_scale, "label"),

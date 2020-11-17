@@ -320,3 +320,12 @@ class MetaproteomicAnalysisBase(PipelineStepBase):
 
 class MetaproteomicAnalysis(PipelineStep):
     pass
+
+
+class KOTerm(BaseModel):
+    id: str
+    project_id: str
+    count: int
+
+    class Config:
+        orm_mode = True
