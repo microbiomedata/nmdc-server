@@ -53,7 +53,7 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
                 count_, min, max = (
                     db.query(func.count(), func.min(column), func.max(column))
                     .filter(column != None)
-                    .first()
+                    .first()  # type: ignore
                 )
                 attributes[column.name] = schemas.AttributeSummary(
                     count=count_,
