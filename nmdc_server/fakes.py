@@ -277,3 +277,20 @@ class MetaproteomicAnalysisFactory(PipelineStepBase):
     class Meta:
         model = models.MetaproteomicAnalysis
         sqlalchemy_session = db
+
+
+class GeneFunction(SQLAlchemyModelFactory):
+    class Meta:
+        model = models.GeneFunction
+        sqlalchemy_session = db
+
+    id: str = Faker("pystr")
+
+
+class MGAGeneFunction(SQLAlchemyModelFactory):
+    class Meta:
+        model = models.MGAGeneFunction
+        sqlalchemy_session = db
+
+    function = SubFactory(GeneFunction)
+    count = Faker("pyint")
