@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Integer,
     LargeBinary,
     String,
     Table,
@@ -314,6 +315,8 @@ metagenome_annotation_output_association = output_association("metagenome_annota
 class MetagenomeAnnotation(Base, PipelineStep):
     __tablename__ = "metagenome_annotation"
 
+    gene_functions = relationship("MGAGeneFunction")
+
     inputs = input_relationship(metagenome_annotation_input_association)
     outputs = output_relationship(metagenome_annotation_output_association)
 
@@ -371,3 +374,21 @@ class StudyPublication(Base):
     publication_id = Column(UUID(as_uuid=True), ForeignKey("publication.id"), primary_key=True)
 
     publication = relationship(Publication, cascade="all")
+
+
+class GeneFunction(Base):
+    __tablename__ = "gene_function"
+
+    id = Column(String, primary_key=True)
+
+
+class MGAGeneFunction(Base):  # metagenome annotation
+    __tablename__ = "mga_gene_function"
+
+    metagenome_annotation_id = Column(
+        String, ForeignKey("metagenome_annotation.id"), primary_key=True
+    )
+    gene_function_id = Column(String, ForeignKey("gene_function.id"), primary_key=True)
+    count = Column(Integer, default=1)
+
+    function = relationship(GeneFunction)

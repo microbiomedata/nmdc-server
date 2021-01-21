@@ -242,6 +242,21 @@ class DataObject(DataObjectBase):
         orm_mode = True
 
 
+class GeneFunction(BaseModel):
+    class Config:
+        orm_mode = True
+
+    id: str
+
+
+class MGAGeneFunction(BaseModel):
+    class Config:
+        orm_mode = True
+
+    gene_function_id: str
+    count: int
+
+
 class PipelineStepBase(BaseModel):
     id: str
     name: str
@@ -311,7 +326,7 @@ class MetagenomeAnnotationBase(PipelineStepBase):
 
 
 class MetagenomeAnnotation(PipelineStep):
-    pass
+    gene_functions: List[MGAGeneFunction]
 
 
 class MetaproteomicAnalysisBase(PipelineStepBase):
