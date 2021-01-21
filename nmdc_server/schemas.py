@@ -326,7 +326,7 @@ class MetagenomeAnnotationBase(PipelineStepBase):
 
 
 class MetagenomeAnnotation(PipelineStep):
-    gene_functions: List[GeneFunction]
+    gene_functions: List[MGAGeneFunction]
 
 
 class MetaproteomicAnalysisBase(PipelineStepBase):
