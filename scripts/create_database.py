@@ -19,7 +19,7 @@ from nmdc_server import crud, database, models, schemas
 from nmdc_server.config import Settings
 from nmdc_server.database import create_session, metadata
 
-HERE = Path(__file__).parent
+HERE = Path(__file__).parent.parent
 DATA = HERE / "data"
 NOW = datetime.now().isoformat()
 date_re = re.compile(r"^\d{2}$")

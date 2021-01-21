@@ -39,7 +39,7 @@ nmdc_host=http://localhost:8080
 ### Initialization
 
 ```
-python create_database.py
+python scripts/create_database.py
 ```
 
 ### Apply migrations

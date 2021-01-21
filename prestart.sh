@@ -12,7 +12,7 @@ done
 echo 'Ingesting data'
 # in spin the database already exists
 PGDATABASE=postgres psql -c "create database nmdc;" || true
-python /app/create_database.py
+python /app/scripts/create_database.py
 
 echo 'Upgrading schema'
 alembic upgrade head
