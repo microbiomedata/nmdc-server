@@ -17,7 +17,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import query_expression, relationship
 from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base
@@ -135,6 +135,10 @@ class Study(Base, AnnotatedModel):
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
     doi = Column(String, nullable=False)
+
+    # TODO: Specify a default expression so that sample counts are present in
+    #       non-search responses.
+    sample_count = query_expression()
 
     principal_investigator_id = Column(
         UUID(as_uuid=True), ForeignKey("principal_investigator.id"), nullable=False

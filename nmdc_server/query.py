@@ -5,7 +5,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, PositiveInt
 from sqlalchemy import and_, ARRAY, cast, Column, distinct, func, inspect, or_
-from sqlalchemy.orm import aliased, Query, Session
+from sqlalchemy.orm import aliased, Query, Session, with_expression
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement
 from typing_extensions import Literal
@@ -63,6 +63,15 @@ def _join_envo(query: Query) -> Query:
             EnvMediumAncestor, models.Biosample.env_medium_id == EnvMediumAncestor.id, isouter=True
         )
         .join(EnvMediumTerm, EnvMediumAncestor.ancestor_id == EnvMediumTerm.id, isouter=True)
+    )
+
+
+def _join_workflow_execution(query: Query) -> Query:
+    return (
+        query.join(models.ReadsQC, isouter=True)
+        .join(models.MetagenomeAssembly, isouter=True)
+        .join(models.MetagenomeAnnotation, isouter=True)
+        .join(models.MetaproteomicAnalysis, isouter=True)
     )
 
 
@@ -144,34 +153,22 @@ class Table(Enum):
                 .join(models.DataObject, isouter=True)
                 .join(models.Study)
                 .join(models.PrincipalInvestigator)
-                .join(models.ReadsQC, isouter=True)
-                .join(models.MetagenomeAssembly, isouter=True)
-                .join(models.MetagenomeAnnotation, isouter=True)
-                .join(models.MetaproteomicAnalysis, isouter=True)
             )
         elif self == Table.study:
-            query = (
+            query = _join_workflow_execution(
                 db.query(distinct(models.Study.id).label("id"))
                 .join(models.PrincipalInvestigator)
                 .join(models.Project, isouter=True)
                 .join(models.DataObject, isouter=True)
                 .join(models.Biosample, isouter=True)
-                .join(models.ReadsQC, isouter=True)
-                .join(models.MetagenomeAssembly, isouter=True)
-                .join(models.MetagenomeAnnotation, isouter=True)
-                .join(models.MetaproteomicAnalysis, isouter=True)
             )
         elif self == Table.project:
-            query = (
+            query = _join_workflow_execution(
                 db.query(distinct(models.Project.id).label("id"))
                 .join(models.DataObject, isouter=True)
                 .join(models.Study)
                 .join(models.PrincipalInvestigator)
                 .join(models.Biosample, isouter=True)
-                .join(models.ReadsQC, isouter=True)
-                .join(models.MetagenomeAssembly, isouter=True)
-                .join(models.MetagenomeAnnotation, isouter=True)
-                .join(models.MetaproteomicAnalysis, isouter=True)
             )
         elif self == Table.reads_qc:
             query = (
@@ -545,6 +542,26 @@ class StudyQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
         return Table.study
+
+    def execute(self, db: Session) -> Query:
+        sample_subquery = BiosampleQuerySchema(conditions=self.conditions).query(db).subquery()
+        sample_count = (
+            db.query(
+                models.Project.study_id.label("study_id"),
+                func.count(models.Biosample.id).label("sample_count"),
+            )
+            .join(models.Biosample)
+            .join(sample_subquery, models.Biosample.id == sample_subquery.c.id)
+            .group_by(models.Project.study_id)
+        ).subquery()
+        model = self.table.model
+        subquery = self.query(db).subquery()
+        return (
+            db.query(model)
+            .join(subquery, model.id == subquery.c.id)
+            .join(sample_count, model.id == sample_count.c.study_id, isouter=True)
+            .options(with_expression(models.Study.sample_count, sample_count.c.sample_count))
+        )
 
 
 class ProjectQuerySchema(BaseQuerySchema):
