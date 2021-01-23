@@ -15,7 +15,7 @@ setup(
         "psycopg2-binary",
         "python-dateutil",
         "python-dotenv",
-        "sqlalchemy",
+        "sqlalchemy>=1.3.18",
         "starlette==0.13.6",
         "typing-extensions",
     ],
