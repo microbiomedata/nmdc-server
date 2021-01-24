@@ -543,6 +543,46 @@ class StudyQuerySchema(BaseQuerySchema):
     def table(self) -> Table:
         return Table.study
 
+    def _count_omics_data_query(self, db: Session, query_schema: BaseQuerySchema) -> Query:
+        model = query_schema.table.model
+        table_name = model.__tablename__
+        subquery = query_schema.query(db).subquery()
+        return (
+            db.query(
+                models.Project.study_id.label(f"{table_name}_study_id"),
+                func.count(model.id).label(f"{table_name}_count"),
+            )
+            .join(model, isouter=True)
+            .join(subquery, model.project_id == models.Project.id, isouter=True)  # type: ignore
+            .group_by(models.Project.study_id)
+        )
+
+    def _inject_omics_data_summary(self, db: Session, query: Query) -> Query:
+        omics_classes = [
+            ReadsQCQuerySchema,
+            MetagenomeAssemblyQuerySchema,
+            MetagenomeAnnotationQuerySchema,
+            MetaproteomicAnalysisQuerySchema,
+        ]
+
+        aggs = []
+        for omics_class in omics_classes:
+            query_schema = omics_class(conditions=self.conditions)
+            table_name = query_schema.table.model.__tablename__
+            omics_subquery = self._count_omics_data_query(db, query_schema).subquery()
+            study_id = getattr(omics_subquery.c, f"{table_name}_study_id")
+            query = query.join(omics_subquery, self.table.model.id == study_id, isouter=True)
+            aggs.append(
+                func.json_build_object(
+                    "type", table_name, "count", getattr(omics_subquery.c, f"{table_name}_count")
+                )
+            )
+
+        aggregation = func.json_build_array(*aggs)
+        return query.populate_existing().options(
+            with_expression(models.Study.omics_counts, aggregation)
+        )
+
     def execute(self, db: Session) -> Query:
         sample_subquery = BiosampleQuerySchema(conditions=self.conditions).query(db).subquery()
         sample_count = (
@@ -556,11 +596,12 @@ class StudyQuerySchema(BaseQuerySchema):
         ).subquery()
         model = self.table.model
         subquery = self.query(db).subquery()
-        return (
+        return self._inject_omics_data_summary(
+            db,
             db.query(model)
             .join(subquery, model.id == subquery.c.id)
             .join(sample_count, model.id == sample_count.c.study_id, isouter=True)
-            .options(with_expression(models.Study.sample_count, sample_count.c.sample_count))
+            .options(with_expression(models.Study.sample_count, sample_count.c.sample_count)),
         )
 
 
