@@ -139,6 +139,7 @@ class Study(Base, AnnotatedModel):
     # TODO: Specify a default expression so that sample counts are present in
     #       non-search responses.
     sample_count = query_expression()
+    omics_counts = query_expression()
 
     principal_investigator_id = Column(
         UUID(as_uuid=True), ForeignKey("principal_investigator.id"), nullable=False

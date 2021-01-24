@@ -158,11 +158,17 @@ class StudyCreate(StudyBase):
     principal_investigator_id: UUID
 
 
+class OmicsCounts(BaseModel):
+    type: str
+    count: int
+
+
 class Study(StudyBase):
     open_in_gold: Optional[str]
     principal_investigator_name: str
     principal_investigator_image_url: str
     sample_count: Optional[int]
+    omics_counts: Optional[List[OmicsCounts]]
 
     class Config:
         orm_mode = True
