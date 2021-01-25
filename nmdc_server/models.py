@@ -1,4 +1,4 @@
-from typing import List, Optional, Type, Union
+from typing import Iterator, List, Optional, Type, Union
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -206,6 +206,18 @@ class Biosample(Base, AnnotatedModel):
     env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
 
     @property
+    def omics_data(self) -> Iterator["PipelineStep"]:
+        omics_types = [
+            "reads_qc",
+            "metagenome_annotation",
+            "metagenome_assembly",
+            "metaproteomic_analysis",
+        ]
+        for omics_type in omics_types:
+            for pipeline in getattr(self.project, omics_type):
+                yield pipeline
+
+    @property
     def env_broad_scale_terms(self) -> List[str]:
         return list(self.env_broad_scale.ancestors)
 
@@ -237,6 +249,8 @@ class DataObject(Base):
 
 
 class PipelineStep:
+    __tablename__ = "base_pipeline_step"
+
     id = Column(String, primary_key=True)
     name = Column(String, nullable=False)
     type = Column(String, nullable=False)
@@ -251,10 +265,10 @@ class PipelineStep:
 
     @declared_attr
     def project(cls):
-        return relationship("Project")
+        return relationship("Project", backref=cls.__tablename__)
 
     has_inputs = association_proxy("inputs", "id")
-    has_outpus = association_proxy("outputs", "id")
+    has_outputs = association_proxy("outputs", "id")
 
 
 reads_qc_input_association = input_association("reads_qc")
