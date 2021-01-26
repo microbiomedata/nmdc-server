@@ -13,10 +13,12 @@ setup(
         "httpx",
         "itsdangerous",
         "psycopg2-binary",
+        "pymongo",
         "python-dateutil",
         "python-dotenv",
         "sqlalchemy>=1.3.18",
         "starlette==0.13.6",
         "typing-extensions",
     ],
+    include_package_data=True,
 )

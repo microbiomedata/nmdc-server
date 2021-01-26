@@ -11,14 +11,15 @@ from alembic import op
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4b85f324a361'
-down_revision: Optional[str] = '9da3cb811a0e'
+revision: str = "4b85f324a361"
+down_revision: Optional[str] = "9da3cb811a0e"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
 
 def upgrade():
-    op.execute("""
+    op.execute(
+        """
 CREATE OR REPLACE FUNCTION truncate_tables() RETURNS void AS $$
 DECLARE
     statements CURSOR FOR
@@ -30,7 +31,8 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
-    """)
+    """
+    )
 
 
 def downgrade():

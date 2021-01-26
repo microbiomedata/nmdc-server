@@ -1,15 +1,15 @@
 from collections import defaultdict
 from datetime import datetime
-from io import BytesIO
 import json
+import os
 from pathlib import Path
 import re
-from typing import Any, Dict, List, Set, Type, Union
+from typing import Any, Dict, Iterable, List, Set, Type, Union
 from urllib import request
-from zipfile import ZipFile
 
 from alembic import command
 from alembic.config import Config
+from pymongo import MongoClient
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import and_
@@ -63,7 +63,9 @@ def load_json_object(json_object: JsonObjectType) -> AnnotatedObjectType:
     return {k: extract_value(v) for k, v in json_object.items() if k != "type"}
 
 
-def load_json_objects(json_objects: List[Dict[str, JsonObjectType]]) -> List[AnnotatedObjectType]:
+def load_json_objects(
+    json_objects: Iterable[Dict[str, JsonObjectType]]
+) -> List[AnnotatedObjectType]:
     return [load_json_object(o) for o in json_objects]
 
 
@@ -172,7 +174,7 @@ def populate_envo(db: Session):
     db.commit()
 
 
-def ingest_studies(db: Session, data: List[Dict[str, Any]]):
+def ingest_studies(db: Session, data: Iterable[Dict[str, Any]]):
     with Path("study_additional.json").open("r") as f:
         additional_data = {f"gold:{d['id']}": d for d in json.load(f)}
 
@@ -305,7 +307,7 @@ def ingest_data_objects(db: Session, data) -> Set[str]:
 
 
 def ingest_pipeline(db: Session, objects, model: Type[models.PipelineStep], data_objects: Set[str]):
-    table_name = model.__tablename__  # type: ignore
+    table_name = model.__tablename__
     date_fmt = "%Y-%m-%d"
 
     for d in objects:
@@ -369,13 +371,15 @@ def main(*args):
     database.testing = "--testing" in args
     settings = Settings()
     with create_session() as db:
-        with request.urlopen(nmdc_data_url) as r:
-            with ZipFile(BytesIO(r.read())) as f:
-                data = json.load(f.open("nmdc_database.json"))
+        data = MongoClient(
+            host=os.environ["NMDC_MONGO_HOST"],
+            username=os.environ["NMDC_MONGO_USER"],
+            password=os.environ["NMDC_MONGO_PASSWORD"],
+        )[os.environ["NMDC_MONGO_DATABASE"]]
 
         create_tables(db, settings)
         populate_envo(db)
-        ingest_studies(db, data["study_set"])
+        ingest_studies(db, data["study_set"].find())
         data_objects = ingest_data_objects(db, data["data_object_set"])
         biosample_projects = ingest_projects(db, data["omics_processing_set"])
         ingest_biosamples(db, data["biosample_set"], biosample_projects)

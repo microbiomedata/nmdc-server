@@ -181,8 +181,8 @@ class Project(Base, AnnotatedModel):
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
 
-    add_date = Column(DateTime, nullable=False)
-    mod_date = Column(DateTime, nullable=False)
+    add_date = Column(DateTime, nullable=True)
+    mod_date = Column(DateTime, nullable=True)
     collection_date = Column(DateTime, nullable=True)
     depth = Column(Float, nullable=True)
     env_broad_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
@@ -192,11 +192,11 @@ class Biosample(Base, AnnotatedModel):
     longitude = Column(Float, nullable=False)
 
     # gold terms
-    ecosystem = Column(String, nullable=False)
-    ecosystem_category = Column(String, nullable=False)
-    ecosystem_type = Column(String, nullable=False)
-    ecosystem_subtype = Column(String, nullable=False)
-    specific_ecosystem = Column(String, nullable=False)
+    ecosystem = Column(String, nullable=True)
+    ecosystem_category = Column(String, nullable=True)
+    ecosystem_type = Column(String, nullable=True)
+    ecosystem_subtype = Column(String, nullable=True)
+    specific_ecosystem = Column(String, nullable=True)
 
     project_id = Column(String, ForeignKey("project.id"), nullable=False)
     project = relationship("Project", backref="biosamples")
@@ -242,6 +242,7 @@ class DataObject(Base):
     description = Column(String, nullable=False, default="")
     file_size_bytes = Column(BigInteger, nullable=False)
     md5_checksum = Column(String, nullable=True)
+    url = Column(String, nullable=True)
 
     # denormalized relationship representing the source project
     project_id = Column(String, ForeignKey("project.id"), nullable=True)

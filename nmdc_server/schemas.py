@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
@@ -203,8 +203,8 @@ class BiosampleBase(AnnotatedBase):
     # https://github.com/samuelcolvin/pydantic/issues/156
     longitude: float = Field(..., gt=-180, le=180)
     latitude: float = Field(..., ge=-90, le=90)
-    add_date: datetime
-    mod_date: datetime
+    add_date: Optional[datetime]
+    mod_date: Optional[datetime]
 
 
 class BiosampleCreate(BiosampleBase):
@@ -220,11 +220,11 @@ class Biosample(BiosampleBase):
     env_broad_scale_terms: List[str] = []
     env_local_scale_terms: List[str] = []
     env_medium_terms: List[str] = []
-    ecosystem: str
-    ecosystem_category: str
-    ecosystem_type: str
-    ecosystem_subtype: str
-    specific_ecosystem: str
+    ecosystem: Optional[str]
+    ecosystem_category: Optional[str]
+    ecosystem_type: Optional[str]
+    ecosystem_subtype: Optional[str]
+    specific_ecosystem: Optional[str]
 
     omics_data: List["OmicsTypes"]
 
@@ -270,17 +270,16 @@ class PipelineStepBase(BaseModel):
     name: str
     type: str
     git_url: str
-    started_at_time: datetime
-    ended_at_time: datetime
+    started_at_time: Union[datetime, date]
+    ended_at_time: Union[datetime, date]
     execution_resource: str
     project_id: str
-
-    outputs: List[DataObject]
 
 
 class PipelineStep(PipelineStepBase):
     # has_inputs: List[str]
     # has_outputs: List[str]
+    outputs: List[DataObject]
 
     class Config:
         orm_mode = True
