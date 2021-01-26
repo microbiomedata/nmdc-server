@@ -27,5 +27,9 @@ http {
             set ${DOLLAR}backend ${BACKEND_URL};
             proxy_pass ${DOLLAR}backend;
         }
+
+        location /data/ {
+            proxy_pass http://data:8080/;
+        }
     }
 }
