@@ -6,6 +6,8 @@ import DatabaseSummary from '@/views/DatabaseSummary.vue';
 import IndividualResults from '@/views/IndividualResults/IndividualResults.vue';
 import Search from '@/views/Search/Search.vue';
 
+import V2Search from '@/v2/views/Search/Layout.vue';
+
 Vue.use(VueRouter);
 
 export default new VueRouter({
@@ -26,6 +28,11 @@ export default new VueRouter({
       path: '/type/:type/search',
       name: 'Search',
       component: Search,
+    },
+    {
+      path: '/v2/search',
+      name: 'V2Search',
+      component: V2Search,
     },
   ],
 

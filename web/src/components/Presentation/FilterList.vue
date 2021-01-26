@@ -1,7 +1,8 @@
 <script>
+import Vue from 'vue';
 import FacetSummary from '@/mixins/FacetSummary';
 
-export default {
+export default Vue.extend({
   mixins: [FacetSummary],
 
   props: {
@@ -62,12 +63,12 @@ export default {
             && c.table === this.table
           ));
       }
-      this.$store.dispatch('route', { conditions });
+      this.$emit('select', { conditions });
     },
 
     toggleSelectAll({ items, value }) {
       if (value) {
-        this.$store.dispatch('route', {
+        this.$emit('select', {
           conditions: [
             ...this.otherConditions,
             ...items
@@ -81,11 +82,11 @@ export default {
           ],
         });
       } else {
-        this.$store.dispatch('route', { conditions: this.otherConditions });
+        this.$emit('select', { conditions: this.otherConditions });
       }
     },
   },
-};
+});
 </script>
 
 <template>

@@ -54,7 +54,7 @@ export default Vue.extend({
           color="primary"
           elevation="0"
           class="ma-4"
-          @click="$emit('set-type', 'sample')"
+          @click="$emit('set-type', 'biosample')"
         >
           Explore environments
         </v-btn>
