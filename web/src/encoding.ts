@@ -1,6 +1,24 @@
 import colors from './colors';
+import { entityType } from './data/api';
 
-const types = {
+export interface EntityData {
+  icon: string;
+  heading: string;
+  name: string;
+  plural: string;
+  visible: boolean;
+}
+
+export interface FieldsData {
+  icon?: string;
+  hideFacet?: boolean;
+  sortKey?: number;
+  name?: string;
+  group?: string;
+  hideAttr?: boolean;
+}
+
+const types: Record<entityType, EntityData> = {
   study: {
     icon: 'mdi-book',
     heading: 'Studies',
@@ -23,6 +41,7 @@ const types = {
     visible: true,
   },
   reads_qc: {
+    icon: 'mdi-dna',
     heading: 'Reads QC',
     name: 'reads_qc',
     plural: 'Reads QC',
@@ -58,7 +77,7 @@ const types = {
   },
 };
 
-const fields = {
+const fields: Record<string, FieldsData> = {
   id: {
     icon: 'mdi-key',
     hideFacet: true,
@@ -225,7 +244,7 @@ const ecosystems = [
   },
 ];
 
-function getField(name) {
+function getField(name: string) {
   if (name in fields) {
     return fields[name];
   }

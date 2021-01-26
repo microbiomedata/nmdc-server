@@ -103,6 +103,7 @@ export default Vue.extend({
               <facet-summary-wrapper
                 table="biosample"
                 field="ecosystem_category"
+                :conditions="conditions"
                 use-all-conditions
               >
                 <template #default="props">
@@ -124,6 +125,7 @@ export default Vue.extend({
               <binned-summary-wrapper
                 table="biosample"
                 field="collection_date"
+                :conditions="conditions"
                 use-all-conditions
               >
                 <template #default="props">
@@ -151,6 +153,7 @@ export default Vue.extend({
               <facet-summary-wrapper
                 table="project"
                 field="omics_type"
+                :conditions="conditions"
                 use-all-conditions
               >
                 <template #default="props">
@@ -176,6 +179,7 @@ export default Vue.extend({
               <facet-summary-wrapper
                 table="metagenome_assembly"
                 field="contigs"
+                :conditions="conditions"
                 use-all-conditions
               >
                 <template #default="props">
@@ -189,6 +193,7 @@ export default Vue.extend({
               <facet-summary-wrapper
                 table="metagenome_assembly"
                 field="contig_bp"
+                :conditions="conditions"
                 use-all-conditions
               >
                 <template #default="props">
@@ -202,6 +207,7 @@ export default Vue.extend({
               <facet-summary-wrapper
                 table="metagenome_assembly"
                 field="num_input_reads"
+                :conditions="conditions"
                 use-all-conditions
               >
                 <template #default="props">
@@ -223,6 +229,7 @@ export default Vue.extend({
               <facet-summary-wrapper
                 table="reads_qc"
                 field="output_read_bases"
+                :conditions="conditions"
                 use-all-conditions
               >
                 <template #default="props">

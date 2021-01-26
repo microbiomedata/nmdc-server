@@ -94,7 +94,7 @@ export default Vue.extend({
           node = node.parent;
         } while (node.parent);
       });
-      this.$store.dispatch('route', {
+      this.$emit('select', {
         conditions: uniqWith(conditions, (a, b) => a.field === b.field && a.value === b.value),
       });
     },

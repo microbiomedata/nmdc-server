@@ -1,4 +1,3 @@
-import { mapGetters } from 'vuex';
 import { api } from '../data/api';
 
 import SegmentConditions from './SegmentConditions';
@@ -19,6 +18,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    conditions: {
+      type: Array,
+      default: () => [],
+    },
   },
 
   data() {
@@ -26,8 +29,6 @@ export default {
       facetSummary: [],
     };
   },
-
-  computed: mapGetters(['conditions']),
 
   asyncComputed: {
     facetSummary: {

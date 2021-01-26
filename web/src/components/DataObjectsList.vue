@@ -5,7 +5,7 @@
  */
 import Vue, { PropType } from 'vue';
 
-import { api, DataObjectSearchResult } from '@/data/api';
+import { api, DataObjectSearchResult, entityType } from '@/data/api';
 import SearchResults from '@/components/Presentation/SearchResults.vue';
 
 export default Vue.extend({
@@ -14,7 +14,7 @@ export default Vue.extend({
   },
   props: {
     type: {
-      type: String as PropType<string>,
+      type: String as PropType<entityType>,
       required: true,
     },
     id: {

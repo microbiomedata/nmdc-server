@@ -9,11 +9,12 @@
 </template>
 
 <script>
+import Vue from 'vue';
 import { GChart } from 'vue-google-charts';
 import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
 
-export default {
+export default Vue.extend({
   name: 'FacetBarChart',
   components: {
     GChart,
@@ -152,5 +153,5 @@ export default {
       };
     },
   },
-};
+});
 </script>

@@ -12,6 +12,7 @@
 </template>
 
 <script>
+import Vue from 'vue';
 import { GChart } from 'vue-google-charts';
 
 import colors from '@/colors';
@@ -19,7 +20,7 @@ import { api } from '@/data/api';
 import { ecosystems } from '@/encoding';
 import { makeTree } from '@/util';
 
-export default {
+export default Vue.extend({
   components: {
     GChart,
   },
@@ -99,5 +100,5 @@ export default {
       };
     },
   },
-};
+});
 </script>
