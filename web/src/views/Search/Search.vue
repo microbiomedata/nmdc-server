@@ -5,6 +5,7 @@ import { mapActions, mapState, mapGetters } from 'vuex';
 import { types } from '@/encoding';
 import removeCondition from '@/data/utils';
 
+import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import FacetHistogramChart from '@/components/Presentation/FacetHistogramChart.vue';
@@ -14,24 +15,47 @@ import BinnedSummaryWrapper from '@/components/BinnedSummaryWrapper.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
 import SearchResults from '@/components/Presentation/SearchResults.vue';
+import UpSet from '@/components/Presentation/UpSet.vue';
 
 import Sidebar from './Sidebar.vue';
 
 export default Vue.extend({
   components: {
     BinnedSummaryWrapper,
+    ChartContainer,
     FacetBarChart,
     FacetHistogramChart,
     FacetSummaryWrapper,
     // DateHistogram,
     DateHistogram,
     SearchResults,
+    UpSet,
     LocationMap,
     EcosystemSankey,
     Sidebar,
   },
 
-  data: () => ({ types }),
+  data: () => ({
+    types,
+    upSetData: [
+      {
+        sets: ['MG', 'MP'],
+        counts: { Samples: 33, Studies: 1 },
+      },
+      {
+        sets: ['MG', 'MP', 'MT', 'OM'],
+        counts: { Samples: 45, Studies: 1 },
+      },
+      {
+        sets: ['MG'],
+        counts: { Samples: 143, Studies: 3 },
+      },
+      {
+        sets: ['MB'],
+        counts: { Samples: 87, Studies: 3 },
+      },
+    ],
+  }),
 
   computed: {
     ...mapState(['results', 'page', 'pageSize']),
@@ -89,6 +113,15 @@ export default Vue.extend({
     <sidebar />
     <v-main v-if="typeResults">
       <v-container fluid>
+        <v-row>
+          <v-col :cols="12">
+            <ChartContainer>
+              <template #default="{ width, height }">
+                <UpSet v-bind="{ width, height, data: upSetData, order: 'Samples' }" />
+              </template>
+            </ChartContainer>
+          </v-col>
+        </v-row>
         <!-- BIOSAMPLE CHARTS -->
         <template v-if="type === 'biosample'">
           <v-row>
