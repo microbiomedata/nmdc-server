@@ -293,4 +293,4 @@ class MGAGeneFunction(SQLAlchemyModelFactory):
         sqlalchemy_session = db
 
     function = SubFactory(GeneFunction)
-    count = Faker("pyint")
+    subject = Faker("pystr")

@@ -9,7 +9,6 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
-    Integer,
     LargeBinary,
     String,
     Table,
@@ -406,11 +405,12 @@ class GeneFunction(Base):
 class MGAGeneFunction(Base):  # metagenome annotation
     __tablename__ = "mga_gene_function"
 
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     metagenome_annotation_id = Column(
-        String, ForeignKey("metagenome_annotation.id"), primary_key=True
+        String, ForeignKey("metagenome_annotation.id"), nullable=False
     )
-    gene_function_id = Column(String, ForeignKey("gene_function.id"), primary_key=True)
-    count = Column(Integer, default=1)
+    gene_function_id = Column(String, ForeignKey("gene_function.id"), nullable=False)
+    subject = Column(String, nullable=False)
 
     function = relationship(GeneFunction)
 

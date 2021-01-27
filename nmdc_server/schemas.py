@@ -263,7 +263,7 @@ class MGAGeneFunction(BaseModel):
         orm_mode = True
 
     gene_function_id: str
-    count: int
+    subject: str
 
 
 class PipelineStepBase(BaseModel):
