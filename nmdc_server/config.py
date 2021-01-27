@@ -17,6 +17,11 @@ class Settings(BaseSettings):
     oauth_token_endpoint: str = "https://orcid.org/oauth/token"
     host: Optional[str] = None
 
+    mongo_host: str = "nmdc-metadata.polyneme.xyz"
+    mongo_database: str = "dwinston_share"
+    mongo_user: str = ""
+    mongo_password: str = ""
+
     class Config:
         env_prefix = "nmdc_"
         env_file = os.getenv("DOTENV_PATH", ".env")

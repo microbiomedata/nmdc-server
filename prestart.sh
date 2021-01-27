@@ -12,7 +12,8 @@ done
 echo 'Ingesting data'
 # in spin the database already exists
 PGDATABASE=postgres psql -c "create database nmdc;" || true
-python /app/scripts/create_database.py
 
-echo 'Upgrading schema'
-alembic upgrade head
+echo 'Upgrading schema and ingesting data'
+nmdc-server truncate
+nmdc-server migrate
+nmdc-server ingest

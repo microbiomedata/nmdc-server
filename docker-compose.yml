@@ -1,5 +1,7 @@
 version: "3.3"
 services:
+  data:
+    image: nginx
   db:
     image: postgres:12
     volumes:
@@ -14,6 +16,7 @@ services:
       - db
     env_file:
       - .docker-env
+      - .env
     build:
       context: .
       dockerfile: Dockerfile
@@ -26,6 +29,7 @@ services:
   web:
     depends_on: 
       - backend
+      - data
     env_file:
       - .docker-env
     environment:

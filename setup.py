@@ -8,6 +8,7 @@ setup(
     install_requires=[
         "alembic",
         "authlib",
+        "click",
         "fastapi==0.61.0",
         "factory-boy",
         "httpx",
@@ -21,4 +22,8 @@ setup(
         "typing-extensions",
     ],
     include_package_data=True,
+    entry_points="""
+        [console_scripts]
+        nmdc-server = nmdc_server.cli:cli
+    """,
 )

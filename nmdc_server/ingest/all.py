@@ -1,18 +1,23 @@
 import logging
 
-from pymongo.database import Database
+from pymongo import MongoClient
 from sqlalchemy.orm import Session
 
+from nmdc_server.config import Settings
 from nmdc_server.ingest import biosample, data_object, envo, pipeline, project, study
 
 logger = logging.getLogger(__name__)
 
 
-def load(db: Session, mongodb: Database):
-    logger.info("Dropping existing data...")
-    for row in db.execute("select truncate_tables()"):
-        pass
+def load(db: Session):
+    settings = Settings()
+    if not (settings.mongo_user and settings.mongo_password):
+        raise Exception("Please set NMDC_MONGO_USER and NMDC_MONGO_PASSWORD")
 
+    client = MongoClient(
+        host=settings.mongo_host, username=settings.mongo_user, password=settings.mongo_password
+    )
+    mongodb = client[settings.mongo_database]
     logger.info("Loading envo terms...")
     envo.load(db)
     db.commit()
@@ -42,13 +47,13 @@ def load(db: Session, mongodb: Database):
     )
     db.commit()
 
-    logger.info("Loading read qc...")
-    pipeline.load(
-        db,
-        mongodb["activity_set"].find({"type": "nmdc:ReadQCAnalysisActivity"}),
-        pipeline.load_reads_qc,
-    )
-    db.commit()
+    # logger.info("Loading read qc...")
+    # pipeline.load(
+    #     db,
+    #     mongodb["activity_set"].find({"type": "nmdc:ReadQCAnalysisActivity"}),
+    #     pipeline.load_reads_qc,
+    # )
+    # db.commit()
 
     logger.info("Loading metaproteomic analysis...")
     pipeline.load(
@@ -58,10 +63,10 @@ def load(db: Session, mongodb: Database):
     )
     db.commit()
 
-    logger.info("Loading metagenome assembly...")
-    pipeline.load(
-        db,
-        mongodb["activity_set"].find({"type": "nmdc:MetagenomeAssembly"}),
-        pipeline.load_mg_assembly,
-    )
-    db.commit()
+    # logger.info("Loading metagenome assembly...")
+    # pipeline.load(
+    #     db,
+    #     mongodb["activity_set"].find({"type": "nmdc:MetagenomeAssembly"}),
+    #     pipeline.load_mg_assembly,
+    # )
+    # db.commit()

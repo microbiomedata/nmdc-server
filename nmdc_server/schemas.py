@@ -109,8 +109,8 @@ class AggregationSummary(BaseModel):
 
 class EnvironmentSankeyAggregation(BaseModel):
     count: int
-    ecosystem: str
-    ecosystem_category: str
+    ecosystem: Optional[str]
+    ecosystem_category: Optional[str]
     ecosystem_type: str
     ecosystem_subtype: str
     specific_ecosystem: str
@@ -123,8 +123,8 @@ class EnvironmentGeospatialAggregation(BaseModel):
     count: int
     latitude: float
     longitude: float
-    ecosystem: str
-    ecosystem_category: str
+    ecosystem: Optional[str]
+    ecosystem_category: Optional[str]
 
     class Config:
         orm_mode = True
@@ -206,13 +206,19 @@ class BiosampleBase(AnnotatedBase):
     add_date: Optional[datetime]
     mod_date: Optional[datetime]
 
+    collection_date: Union[datetime, date, None]
+    ecosystem: str
+    ecosystem_category: str
+    ecosystem_type: str
+    ecosystem_subtype: str
+    specific_ecosystem: str
+
 
 class BiosampleCreate(BiosampleBase):
     pass
 
 
 class Biosample(BiosampleBase):
-    collection_date: Optional[datetime]
     open_in_gold: Optional[str]
     env_broad_scale: Optional[EnvoTerm]
     env_local_scale: Optional[EnvoTerm]
@@ -220,11 +226,6 @@ class Biosample(BiosampleBase):
     env_broad_scale_terms: List[str] = []
     env_local_scale_terms: List[str] = []
     env_medium_terms: List[str] = []
-    ecosystem: Optional[str]
-    ecosystem_category: Optional[str]
-    ecosystem_type: Optional[str]
-    ecosystem_subtype: Optional[str]
-    specific_ecosystem: Optional[str]
 
     omics_data: List["OmicsTypes"]
 
