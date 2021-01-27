@@ -18,16 +18,15 @@ import { GChart } from 'vue-google-charts';
 import { api } from '@/data/api';
 import { ecosystems } from '@/encoding';
 
+// This vis only works for biosample;
+const table = 'biosample';
+
 export default Vue.extend({
   name: 'LocationMap',
   components: {
     GChart,
   },
   props: {
-    type: {
-      type: String,
-      default: null,
-    },
     conditions: {
       type: Array,
       default: () => [],
@@ -43,13 +42,12 @@ export default Vue.extend({
           if (selection.length === 1) {
             const [lat, lon] = this.geoChartMarkerData[selection[0].row + 1];
             this.$emit('selected', {
-              type: this.type,
               conditions: [
                 {
-                  field: 'latitude', op: '==', value: lat, table: this.type,
+                  field: 'latitude', op: '==', value: lat, table,
                 },
                 {
-                  field: 'longitude', op: '==', value: lon, table: this.type,
+                  field: 'longitude', op: '==', value: lon, table,
                 },
               ],
             });

@@ -7,6 +7,7 @@ import IndividualResults from '@/views/IndividualResults/IndividualResults.vue';
 import Search from '@/views/Search/Search.vue';
 
 import V2Search from '@/v2/views/Search/Layout.vue';
+import V2SamplePage from '@/v2/views/IndividualResults/SamplePage.vue';
 
 Vue.use(VueRouter);
 
@@ -33,6 +34,12 @@ export default new VueRouter({
       path: '/v2/search',
       name: 'V2Search',
       component: V2Search,
+    },
+    {
+      path: '/v2/sample/:id',
+      name: 'V2Sample',
+      component: V2SamplePage,
+      props: true,
     },
   ],
 

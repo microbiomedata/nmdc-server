@@ -49,6 +49,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
     label: string;
     data: string;
   };
+  omics_data: OmicsProcessingResult[];
 }
 
 export interface DataObjectSearchResult extends BaseSearchResult {
@@ -81,6 +82,10 @@ interface DerivedDataResult extends BaseSearchResult {
   ended_at_time: string;
   execution_resource: string;
   project_id: string;
+}
+
+export interface OmicsProcessingResult extends DerivedDataResult {
+  outputs: DataObjectSearchResult[];
 }
 
 export interface ReadsQCResult extends DerivedDataResult {
@@ -278,6 +283,15 @@ async function search(type: entityType, params: SearchParams) {
   return results;
 }
 
+async function _getById<T>(route: string, id: string): Promise<T> {
+  const { data } = await client.get<T>(`${route}/${id}`);
+  return data;
+}
+
+async function getBiosample(id: string): Promise<BiosampleSearchResult> {
+  return _getById<BiosampleSearchResult>('biosample', id);
+}
+
 async function getFacetSummary(
   type: string,
   field: string,
@@ -394,6 +408,7 @@ async function me(): Promise<string> {
 
 const api = {
   getBinnedFacet,
+  getBiosample,
   getDatabaseSummary,
   getDatabaseStats,
   getDataObjectList,
