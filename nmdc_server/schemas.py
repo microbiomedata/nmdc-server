@@ -349,3 +349,19 @@ class MetaproteomicAnalysis(PipelineStep):
 
 OmicsTypes = Union[ReadsQC, MetagenomeAnnotation, MetagenomeAssembly, MetaproteomicAnalysis]
 Biosample.update_forward_refs()
+
+
+class FileDownloadBase(BaseModel):
+    ip: str
+    user_agent: str
+    orcid: str
+    data_object_id: str
+
+
+class FileDownload(FileDownloadBase):
+    id: str
+    created: datetime
+
+
+class FileDownloadCreate(FileDownloadBase):
+    pass
