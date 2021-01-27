@@ -98,7 +98,7 @@ export default defineComponent({
         <v-btn
           icon
           x-small
-          @click="$store.dispatch('route', { conditions: [] })"
+          @click="removeConditions"
         >
           <v-icon>mdi-filter-off</v-icon>
         </v-btn>

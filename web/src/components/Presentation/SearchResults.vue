@@ -24,6 +24,14 @@ export default Vue.extend({
       type: String,
       default: 'mdi-book',
     },
+    disableNavigateOnClick: {
+      type: Boolean,
+      default: false,
+    },
+    disablePagination: {
+      type: Boolean,
+      default: false,
+    },
   },
 });
 </script>
@@ -31,17 +39,13 @@ export default Vue.extend({
 <template>
   <div>
     <v-pagination
-      v-if="count > itemsPerPage"
+      v-if="count > itemsPerPage && !disablePagination"
       :value="page"
       :length="Math.ceil(count / itemsPerPage)"
       :total-visible="7"
-      class="py-2 pt-3"
       @input="$emit('set-page', $event)"
     />
-    <v-list
-      two-line
-      class="pa-0"
-    >
+    <v-list>
       <template
         v-for="(result, resultIndex) in results"
       >
@@ -51,8 +55,16 @@ export default Vue.extend({
         />
         <v-list-item
           :key="result.id"
-          @click="$emit('selected', result.id)"
+          v-on="{
+            click: disableNavigateOnClick
+              ? null /* will warn, but /shrug */
+              : () => $emit('selected', result.id),
+          }"
         >
+          <slot
+            name="action"
+            v-bind="{ result }"
+          />
           <v-list-item-avatar>
             <v-icon
               v-text="icon"
@@ -65,6 +77,10 @@ export default Vue.extend({
             <v-list-item-subtitle>
               {{ result.description || 'No description' }}
             </v-list-item-subtitle>
+            <slot
+              name="item-content"
+              v-bind="{ result }"
+            />
           </v-list-item-content>
         </v-list-item>
       </template>

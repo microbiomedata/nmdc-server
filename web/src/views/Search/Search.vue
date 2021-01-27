@@ -3,7 +3,7 @@ import Vue from 'vue';
 import { mapActions, mapState, mapGetters } from 'vuex';
 
 import { types } from '@/encoding';
-import removeCondition from '@/data/utils';
+import { removeCondition } from '@/data/utils';
 
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
@@ -65,11 +65,6 @@ export default Vue.extend({
           ],
         });
       }
-    },
-    removeCondition(conds) {
-      this.route({
-        conditions: removeCondition(this.conditions, conds),
-      });
     },
     navigateToSelected(id) {
       this.route({

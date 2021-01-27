@@ -10,7 +10,9 @@ import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
 import BinnedSummaryWrapper from '@/components/BinnedSummaryWrapper.vue';
 // ENDTODO
 
-import { conditions, addConditions, removeConditions } from '@/v2/store';
+import {
+  conditions, addConditions, removeConditions, setConditions,
+} from '@/v2/store';
 
 export default defineComponent({
   name: 'SampleVisGroupV2',
@@ -27,6 +29,7 @@ export default defineComponent({
     return {
       conditions,
       addConditions,
+      setConditions,
       removeConditions,
     };
   },
@@ -37,46 +40,63 @@ export default defineComponent({
   <div>
     <v-row>
       <v-col :cols="8">
-        <LocationMap
-          :type="type"
-          :conditions="conditions"
-          @selected="addConditions($event.conditions)"
-        />
+        <v-card
+          outlined
+          class="pa-2"
+        >
+          <LocationMap
+            type="biosample"
+            :conditions="conditions"
+            @selected="addConditions($event.conditions)"
+          />
+        </v-card>
       </v-col>
       <v-col :cols="4">
-        <FacetSummaryWrapper
-          table="biosample"
-          field="ecosystem_category"
-          use-all-conditions
+        <v-card
+          outlined
+          class="pa-2"
         >
-          <template #default="props">
-            <FacetBarChart
-              v-bind="props"
-              :height="400"
-              :show-title="false"
-              :show-baseline="false"
-              :left-margin="120"
-              :right-margin="80"
-              @selected="addConditions($event.conditions)"
-            />
-          </template>
-        </FacetSummaryWrapper>
+          <FacetSummaryWrapper
+            table="biosample"
+            field="ecosystem_category"
+            :conditions="conditions"
+            use-all-conditions
+          >
+            <template #default="props">
+              <FacetBarChart
+                v-bind="props"
+                :height="400"
+                :show-title="false"
+                :show-baseline="false"
+                :left-margin="120"
+                :right-margin="80"
+                @selected="addConditions($event.conditions)"
+              />
+            </template>
+          </FacetSummaryWrapper>
+        </v-card>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="12">
-        <BinnedSummaryWrapper
-          table="biosample"
-          field="collection_date"
-          use-all-conditions
+        <v-card
+          outlined
+          class="py-2"
         >
-          <template #default="props">
-            <DateHistogram
-              v-bind="props"
-              @select="addConditions($event.conditions)"
-            />
-          </template>
-        </BinnedSummaryWrapper>
+          <BinnedSummaryWrapper
+            table="biosample"
+            field="collection_date"
+            :conditions="conditions"
+            use-all-conditions
+          >
+            <template #default="props">
+              <DateHistogram
+                v-bind="props"
+                @select="setConditions($event.conditions)"
+              />
+            </template>
+          </BinnedSummaryWrapper>
+        </v-card>
       </v-col>
       <!-- <v-col :cols="12">
         <EcosystemSankey

@@ -34,7 +34,7 @@ const types: Record<entityType, EntityData> = {
     visible: true,
   },
   biosample: {
-    icon: 'mdi-earth',
+    icon: 'mdi-test-tube',
     heading: 'Environments',
     name: 'sample',
     plural: 'samples',

@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import CompositionApi, { reactive, toRef } from '@vue/composition-api';
 
-import utilsRemoveCond from '@/data/utils';
+import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import { Condition } from '@/data/api';
 
 // TODO: Remove in version 3;
@@ -11,6 +11,26 @@ const state = reactive({
   conditions: [] as Condition[],
 });
 
+/**
+ * For each condition, remove all others with a similar table & field.
+ */
+function setConditions(conditions: Condition[]) {
+  let newConditions: Condition[] = [];
+  conditions.forEach((condition) => {
+    const others = state.conditions
+      .filter((c) => (c.field !== condition.field) || (c.table !== condition.table));
+    newConditions = [
+      ...others,
+      condition,
+    ];
+  });
+  state.conditions = newConditions;
+}
+
+/**
+ * If a condition exists, remove it,
+ * otherwise, add it.
+ */
 function addConditions(conditions: Condition[]) {
   const duplicates: Condition[] = [];
   const newConditions = conditions.filter((c) => {
@@ -25,6 +45,7 @@ function addConditions(conditions: Condition[]) {
     duplicates.push(c);
     return false;
   });
+  console.log(duplicates);
   if (newConditions.length > 0 || duplicates.length > 0) {
     state.conditions = [
       ...newConditions,
@@ -34,7 +55,11 @@ function addConditions(conditions: Condition[]) {
 }
 
 function removeConditions(conditions: Condition[]) {
-  state.conditions = utilsRemoveCond(state.conditions, conditions);
+  if (conditions.length) {
+    state.conditions = utilsRemoveCond(state.conditions, conditions);
+  } else {
+    state.conditions = [];
+  }
 }
 
 if (process.env.NODE_ENV !== 'production') {
@@ -48,4 +73,5 @@ export {
   conditions,
   addConditions,
   removeConditions,
+  setConditions,
 };
