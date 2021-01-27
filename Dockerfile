@@ -5,11 +5,12 @@ RUN apk update && \
     apk add postgresql-dev postgresql-client && \
     apk add py-cryptography
 
-COPY . /app
+COPY setup.py setup.cfg /app/
+RUN pip install -e /app
+
+COPY nmdc_server /app/nmdc_server
 COPY .env.production /app/.env
+COPY prestart.sh /app/prestart.sh
 WORKDIR /app/
 ENV MODULE_NAME nmdc_server.asgi
 ENV PORT 8000
-
-RUN pip install -e /app
-
