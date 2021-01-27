@@ -411,3 +411,13 @@ def get_pi_image(db: Session, principal_investigator_id: UUID) -> Optional[bytes
     if pi is not None:
         return pi.image
     return None
+
+
+def create_file_download(
+    db: Session, file_download: schemas.FileDownloadCreate
+) -> models.FileDownload:
+    db_file_download = models.FileDownload(**file_download.dict())
+    db.add(db_file_download)
+    db.commit()
+    db.refresh(db_file_download)
+    return db_file_download

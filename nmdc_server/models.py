@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Iterator, List, Optional, Type, Union
 from uuid import uuid4
 
@@ -412,3 +413,16 @@ class MGAGeneFunction(Base):  # metagenome annotation
     count = Column(Integer, default=1)
 
     function = relationship(GeneFunction)
+
+
+class FileDownload(Base):
+    __tablename__ = "file_download"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    data_object_id = Column(String, ForeignKey("data_object.id"), nullable=False)
+    ip = Column(String, nullable=False)
+    user_agent = Column(String, nullable=True)
+    orcid = Column(String, nullable=False)
+
+    data_object = relationship(DataObject)

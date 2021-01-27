@@ -2,10 +2,10 @@ from io import BytesIO
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException
 from sqlalchemy.orm import Session
 from starlette.requests import Request
-from starlette.responses import StreamingResponse
+from starlette.responses import RedirectResponse, StreamingResponse
 
 from nmdc_server import crud, query, schemas
 from nmdc_server.auth import get_current_user, login_required, login_required_responses, Token
@@ -374,6 +374,35 @@ async def facet_data_object(query: query.FacetQuery, db: Session = Depends(get_d
 )
 async def binned_facet_data_object(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
     return crud.binned_facet_data_object(db, **query.dict())
+
+
+@router.get(
+    "/data_object/{data_object_id}/download",
+    tags=["data_object"],
+    responses=login_required_responses,
+)
+async def download_data_object(
+    data_object_id: str,
+    user_agent: Optional[str] = Header(None),
+    x_real_ip: Optional[str] = Header(None),
+    db: Session = Depends(get_db),
+    token: Token = Depends(login_required),
+):
+    data_object = crud.get_data_object(db, data_object_id)
+    if data_object is None:
+        raise HTTPException(status_code=404, detail="DataObject not found")
+    url = data_object.url
+    if url is None:
+        raise HTTPException(status_code=404, detail="DataObject has no url reference")
+
+    file_download = schemas.FileDownloadCreate(
+        ip=x_real_ip,
+        user_agent=user_agent,
+        orcid=token.orcid,
+        data_object_id=data_object_id,
+    )
+    crud.create_file_download(db, file_download)
+    return RedirectResponse(url=url)
 
 
 # reads_qc
