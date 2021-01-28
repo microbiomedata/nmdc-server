@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from alembic import command
@@ -68,7 +69,19 @@ def truncate():
 
 
 @cli.command()
-def ingest():
+@click.option("-v", "--verbose", count=True)
+def ingest(verbose):
     """Ingest the latest data from mongo."""
+    level = logging.WARN
+    if verbose == 1:
+        level = logging.INFO
+    elif verbose > 1:
+        level = logging.DEBUG
+    logger = logging.getLogger()
+    logging.basicConfig(
+        level=level,
+        format="%(message)s",
+    )
+    logger.setLevel(logging.INFO)
     with create_session() as db:
         load(db)

@@ -1,17 +1,17 @@
 import json
 import logging
 import re
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
+from uuid import UUID, uuid4
 
-# from pymongo.collection import Collection
+from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from typing_extensions import Protocol
 
 from nmdc_server import models, schemas
-
-# from nmdc_server.crud import get_or_create
+from nmdc_server.crud import get_or_create
 
 DataObjectList = List[str]
 LoadObjectReturn = models.PipelineStep
@@ -31,19 +31,42 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
     db.flush()
 
     # TODO: fix populating gene functions
-    # annotations: Collection = kwargs['annotations']
+    annotations: Collection = kwargs["annotations"]
 
-    # query = annotations.find({
-    #     "was_generated_by": pipeline.id,
-    #     "has_function": {
-    #         "$regex": ko_regex, },
-    # })
-    # for gf in query:
-    #     gene_function, _ = get_or_create(db, models.GeneFunction, id=gf["has_function"])
-    #     mga_gene_function = models.MGAGeneFunction(
-    #         metagenome_annotation_id=pipeline.id, gene_function_id=gene_function.id, count=1
-    #     )
-    #     db.add(mga_gene_function)
+    query = annotations.find(
+        {
+            "was_generated_by": pipeline.id,
+            "has_function": {
+                "$regex": ko_regex,
+            },
+        }
+    )
+    if "function_limit" in kwargs:
+        query = query.limit(kwargs["function_limit"])
+
+    gene_functions: Dict[str, models.GeneFunction] = {}
+    mga_gene_functions: List[Tuple[UUID, str, str, str]] = []
+    for gf in query:
+        function_id = gf["has_function"]
+        if function_id not in gene_functions:
+            gene_functions[function_id] = get_or_create(
+                db, models.GeneFunction, id=gf["has_function"]
+            )[0]
+
+        gene_function = gene_functions[function_id]
+        db.add(gene_function)
+        mga_gene_functions.append(
+            (
+                uuid4(),
+                pipeline.id,
+                function_id,
+                gf["subject"],
+            )
+        )
+
+    if mga_gene_functions:
+        db.flush()
+        db.execute(insert(models.MGAGeneFunction).values(mga_gene_functions))
 
     return row
 

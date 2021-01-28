@@ -1,5 +1,6 @@
 import logging
 
+import click
 from pymongo import MongoClient
 from sqlalchemy.orm import Session
 
@@ -39,12 +40,18 @@ def load(db: Session):
     db.commit()
 
     logger.info("Loading metagenomes annotation...")
-    pipeline.load(
-        db,
-        mongodb["activity_set"].find({"type": "nmdc:MetagenomeAnnotation"}),
-        pipeline.load_mg_annotation,
-        annotations=mongodb["raw.functional_annotation_set"],
+    cursor = mongodb["activity_set"].find(
+        {"type": "nmdc:MetagenomeAnnotation"},
+        no_cursor_timeout=True,
     )
+    with click.progressbar(cursor, length=cursor.count()) as bar:
+        pipeline.load(
+            db,
+            bar,
+            pipeline.load_mg_annotation,
+            annotations=mongodb["raw.functional_annotation_set"],
+            function_limit=100,  # TODO: Remove to load all gene functions
+        )
     db.commit()
 
     # logger.info("Loading read qc...")
