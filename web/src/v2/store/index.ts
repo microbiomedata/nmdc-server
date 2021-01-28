@@ -45,7 +45,6 @@ function addConditions(conditions: Condition[]) {
     duplicates.push(c);
     return false;
   });
-  console.log(duplicates);
   if (newConditions.length > 0 || duplicates.length > 0) {
     state.conditions = [
       ...newConditions,
