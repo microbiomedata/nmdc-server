@@ -40,7 +40,9 @@ def migrate(obj):
         if command.current(alembic_cfg) is None:
             command.stamp(alembic_cfg, "head")
         else:
-            command.upgrade(alembic_cfg, "head")
+            # TODO: Figure out why this doesn't work
+            # command.upgrade(alembic_cfg, "head")
+            pass
 
 
 @cli.command()

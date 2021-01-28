@@ -174,30 +174,9 @@ class Study(StudyBase):
         orm_mode = True
 
 
-# project
-class ProjectBase(AnnotatedBase):
-    study_id: str
-    add_date: Optional[datetime]
-    mod_date: Optional[datetime]
-
-
-class ProjectCreate(ProjectBase):
-    pass
-
-
-class Project(ProjectBase):
-    study_id: str
-    open_in_gold: Optional[str]
-
-    omics_data: List["OmicsTypes"]
-
-    class Config:
-        orm_mode = True
-
-
 # biosample
 class BiosampleBase(AnnotatedBase):
-    project_id: str
+    study_id: str
     depth: Optional[float]
     env_broad_scale_id: Optional[str]
     env_local_scale_id: Optional[str]
@@ -229,7 +208,28 @@ class Biosample(BiosampleBase):
     env_local_scale_terms: List[str] = []
     env_medium_terms: List[str] = []
 
-    projects: List[Project]
+    projects: List["Project"]
+
+    class Config:
+        orm_mode = True
+
+
+# project
+class ProjectBase(AnnotatedBase):
+    study_id: Optional[str]
+    biosample_id: Optional[str]
+    add_date: Optional[datetime]
+    mod_date: Optional[datetime]
+
+
+class ProjectCreate(ProjectBase):
+    pass
+
+
+class Project(ProjectBase):
+    open_in_gold: Optional[str]
+
+    omics_data: List["OmicsTypes"]
 
     class Config:
         orm_mode = True
@@ -351,6 +351,7 @@ class MetaproteomicAnalysis(PipelineStep):
 
 OmicsTypes = Union[ReadsQC, MetagenomeAnnotation, MetagenomeAssembly, MetaproteomicAnalysis]
 Project.update_forward_refs()
+Biosample.update_forward_refs()
 
 
 class FileDownloadBase(BaseModel):

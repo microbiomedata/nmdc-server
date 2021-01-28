@@ -15,5 +15,6 @@ PGDATABASE=postgres psql -c "create database nmdc;" || true
 
 echo 'Upgrading schema and ingesting data'
 nmdc-server truncate
-nmdc-server migrate
+nmdc-server migrate  # to create the database if necessary
+alembic -c nmdc_server/alembic.ini upgrade head
 nmdc-server ingest

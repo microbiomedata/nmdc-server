@@ -159,6 +159,49 @@ class Study(Base, AnnotatedModel):
         return gold_url("https://gold.jgi.doe.gov/study?id=", self.id)
 
 
+class Biosample(Base, AnnotatedModel):
+    __tablename__ = "biosample"
+
+    add_date = Column(DateTime, nullable=True)
+    mod_date = Column(DateTime, nullable=True)
+    collection_date = Column(DateTime, nullable=True)
+    depth = Column(Float, nullable=True)
+    env_broad_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
+    env_local_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
+    env_medium_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    study_id = Column(String, ForeignKey("study.id"), nullable=False)
+
+    # gold terms
+    ecosystem = Column(String, nullable=True)
+    ecosystem_category = Column(String, nullable=True)
+    ecosystem_type = Column(String, nullable=True)
+    ecosystem_subtype = Column(String, nullable=True)
+    specific_ecosystem = Column(String, nullable=True)
+
+    study = relationship(Study, backref="biosamples")
+    env_broad_scale = relationship(EnvoTerm, foreign_keys=[env_broad_scale_id], lazy="joined")
+    env_local_scale = relationship(EnvoTerm, foreign_keys=[env_local_scale_id], lazy="joined")
+    env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
+
+    @property
+    def env_broad_scale_terms(self) -> List[str]:
+        return list(self.env_broad_scale.ancestors)
+
+    @property
+    def env_local_scale_terms(self) -> List[str]:
+        return list(self.env_local_scale.ancestors)
+
+    @property
+    def env_medium_terms(self) -> List[str]:
+        return list(self.env_medium.ancestors)
+
+    @property
+    def open_in_gold(self) -> Optional[str]:
+        return gold_url("https://gold.jgi.doe.gov/biosample?id=", self.id)
+
+
 project_output_association = output_association("project")
 
 
@@ -167,7 +210,9 @@ class Project(Base, AnnotatedModel):
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
-    study_id = Column(String, ForeignKey("study.id"), nullable=False)
+    biosample_id = Column(String, ForeignKey("biosample.id"), nullable=True)
+    biosample = relationship("Biosample", backref="projects")
+    study_id = Column(String, ForeignKey("study.id"), nullable=True)
     study = relationship("Study", backref="projects")
 
     outputs = output_relationship(project_output_association)
@@ -188,54 +233,6 @@ class Project(Base, AnnotatedModel):
         for omics_type in omics_types:
             for pipeline in getattr(self, omics_type):
                 yield pipeline
-
-
-class Biosample(Base, AnnotatedModel):
-    __tablename__ = "biosample"
-
-    add_date = Column(DateTime, nullable=True)
-    mod_date = Column(DateTime, nullable=True)
-    collection_date = Column(DateTime, nullable=True)
-    depth = Column(Float, nullable=True)
-    env_broad_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
-    env_local_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
-    env_medium_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
-    latitude = Column(Float, nullable=False)
-    longitude = Column(Float, nullable=False)
-
-    # gold terms
-    ecosystem = Column(String, nullable=True)
-    ecosystem_category = Column(String, nullable=True)
-    ecosystem_type = Column(String, nullable=True)
-    ecosystem_subtype = Column(String, nullable=True)
-    specific_ecosystem = Column(String, nullable=True)
-
-    project_id = Column(String, ForeignKey("project.id"), nullable=False)
-    project = relationship("Project", backref="biosamples")
-
-    env_broad_scale = relationship(EnvoTerm, foreign_keys=[env_broad_scale_id], lazy="joined")
-    env_local_scale = relationship(EnvoTerm, foreign_keys=[env_local_scale_id], lazy="joined")
-    env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
-
-    @property
-    def projects(self) -> List["Project"]:
-        return [self.project]
-
-    @property
-    def env_broad_scale_terms(self) -> List[str]:
-        return list(self.env_broad_scale.ancestors)
-
-    @property
-    def env_local_scale_terms(self) -> List[str]:
-        return list(self.env_local_scale.ancestors)
-
-    @property
-    def env_medium_terms(self) -> List[str]:
-        return list(self.env_medium.ancestors)
-
-    @property
-    def open_in_gold(self) -> Optional[str]:
-        return gold_url("https://gold.jgi.doe.gov/biosample?id=", self.id)
 
 
 class DataObject(Base):

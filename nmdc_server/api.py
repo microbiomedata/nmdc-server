@@ -88,8 +88,8 @@ async def create_biosample(
     db: Session = Depends(get_db),
     token: Token = Depends(login_required),
 ):
-    if crud.get_project(db, biosample.project_id) is None:
-        raise HTTPException(status_code=400, detail="Project does not exist")
+    if crud.get_project(db, biosample.study_id) is None:
+        raise HTTPException(status_code=400, detail="Study does not exist")
 
     return crud.create_biosample(db, biosample)
 

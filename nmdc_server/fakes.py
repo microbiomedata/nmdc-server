@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Dict
 from uuid import UUID, uuid4
 
-from factory import Factory, Faker, post_generation, SubFactory
+from factory import Factory, Faker, lazy_attribute, post_generation, SubFactory
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
 from sqlalchemy.orm.scoping import scoped_session
@@ -166,16 +166,6 @@ class StudyPublicationFactory(SQLAlchemyModelFactory):
         sqlalchemy_session = db
 
 
-class ProjectFactory(AnnotatedFactory):
-    class Meta:
-        model = models.Project
-        sqlalchemy_session = db
-
-    add_date = Faker("date_time")
-    mod_date = Faker("date_time")
-    study = SubFactory(StudyFactory)
-
-
 class BiosampleFactory(AnnotatedFactory):
     class Meta:
         model = models.Biosample
@@ -190,12 +180,26 @@ class BiosampleFactory(AnnotatedFactory):
     env_medium = SubFactory(EnvoTermFactory)
     latitude = Faker("latitude")
     longitude = Faker("longitude")
-    project = SubFactory(ProjectFactory)
+    study = SubFactory(StudyFactory)
     ecosystem = Faker("word")
     ecosystem_category = Faker("word")
     ecosystem_type = Faker("word")
     ecosystem_subtype = Faker("word")
     specific_ecosystem = Faker("word")
+
+
+class ProjectFactory(AnnotatedFactory):
+    class Meta:
+        model = models.Project
+        sqlalchemy_session = db
+
+    add_date = Faker("date_time")
+    mod_date = Faker("date_time")
+    biosample = SubFactory(BiosampleFactory)
+
+    @lazy_attribute
+    def study(self):
+        return self.biosample.study
 
 
 class DataObjectFactory(SQLAlchemyModelFactory):
