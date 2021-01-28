@@ -56,7 +56,7 @@ NMDC_MONGO_PASSWORD=changeme
 
 ```
 nmdc-server truncate
-nmdc-server migrate
+alembic -c nmdc_server/alembic.ini upgrade head
 nmdc-server ingest
 ```
 

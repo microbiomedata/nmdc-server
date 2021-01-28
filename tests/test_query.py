@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, Tuple
+from typing import Dict, Tuple
 
 import pytest
 from sqlalchemy.orm.session import Session
@@ -81,42 +81,6 @@ def test_date_query(db: Session, condition, expected):
 
 
 @pytest.mark.parametrize(
-    "table,condition,expected",
-    [
-        (
-            "project",
-            {"table": "biosample", "field": "id", "value": "sample1", "op": "=="},
-            {"project1"},
-        ),
-        (
-            "sample",
-            {"table": "project", "field": "id", "value": "project1", "op": "=="},
-            {"sample1"},
-        ),
-        (
-            "sample",
-            {"table": "study", "field": "id", "value": "study1", "op": "=="},
-            {"sample2"},
-        ),
-    ],
-)
-def test_foreign_key_search(db: Session, table, condition, expected):
-    fakes.BiosampleFactory(id="sample1", project__id="project1")
-    project = fakes.ProjectFactory(id="project2", study__id="study1")
-    fakes.BiosampleFactory(id="sample2", project=project)
-    db.commit()
-
-    q: Any
-    if table == "project":
-        q = query.ProjectQuerySchema
-    else:
-        q = query.BiosampleQuerySchema
-
-    q = q(conditions=[condition])
-    assert {r.id for r in q.execute(db)} == expected
-
-
-@pytest.mark.parametrize(
     "table",
     [
         "study",
@@ -193,11 +157,11 @@ def test_grouped_query(db: Session):
 
 def test_indirect_join(db: Session):
     study = fakes.StudyFactory(id="study1")
-    fakes.BiosampleFactory(id="sample1", project__study=study)
+    fakes.ProjectFactory(id="project1", biosample__study=study)
     db.commit()
 
     q = query.StudyQuerySchema(
-        conditions=[{"table": "biosample", "field": "id", "value": "sample1", "op": "=="}]
+        conditions=[{"table": "project", "field": "id", "value": "project1", "op": "=="}]
     )
     assert {s.id for s in q.execute(db)} == {"study1"}
 
@@ -270,14 +234,14 @@ def test_between_query_annotations(db: Session):
 
 
 def test_distinct_results(db: Session):
-    project = fakes.ProjectFactory(id="project1")
-    fakes.BiosampleFactory(id="sample1", project=project)
-    fakes.BiosampleFactory(id="sample2", project=project)
-    fakes.BiosampleFactory(id="sample3", project=project)
-    fakes.BiosampleFactory(id="sample4", project=project)
+    study = fakes.StudyFactory(id="study1")
+    fakes.BiosampleFactory(id="sample1", study=study)
+    fakes.BiosampleFactory(id="sample2", study=study)
+    fakes.BiosampleFactory(id="sample3", study=study)
+    fakes.BiosampleFactory(id="sample4", study=study)
     db.commit()
 
-    q = query.ProjectQuerySchema(conditions=[])
+    q = query.StudyQuerySchema(conditions=[])
     assert len(q.execute(db).all()) == 1
 
 
@@ -452,8 +416,8 @@ def test_facet_invalid_attribute(db: Session):
 def test_query_pi(db: Session):
     study1 = fakes.StudyFactory(id="study1", principal_investigator__name="John Doe")
     study2 = fakes.StudyFactory(id="study2", principal_investigator__name="Jane Doe")
-    fakes.ProjectFactory(id="project1", study=study1)
-    fakes.ProjectFactory(id="project2", study=study2)
+    fakes.BiosampleFactory(id="sample1", study=study1)
+    fakes.BiosampleFactory(id="sample2", study=study2)
     db.commit()
 
     q = query.StudyQuerySchema()
@@ -473,7 +437,7 @@ def test_query_pi(db: Session):
     )
     assert ["study1"] == [r.id for r in q.execute(db)]
 
-    qp = query.ProjectQuerySchema(
+    qp = query.BiosampleQuerySchema(
         conditions=[
             {
                 "table": "study",
@@ -482,7 +446,7 @@ def test_query_pi(db: Session):
             }
         ]
     )
-    assert ["project1"] == [r.id for r in qp.execute(db)]
+    assert ["sample1"] == [r.id for r in qp.execute(db)]
 
 
 def test_query_data_object(db: Session):

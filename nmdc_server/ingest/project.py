@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Dict
 
 from pydantic import root_validator, validator
 from pymongo.cursor import Cursor
@@ -20,10 +20,14 @@ class Project(ProjectCreate):
         return extract_extras(cls, values)
 
 
-def load_project(db: Session, obj: Dict[str, Any]) -> Tuple[models.Project, Dict[str, str]]:
-    obj["study_id"] = obj.pop("part_of")[0]
-    biosamples = obj.pop("has_input", [])
+def load_project(db: Session, obj: Dict[str, Any]):
+    obj["biosample_id"] = obj.pop("has_input", [None])[0]
     data_objects = obj.pop("has_output", [])
+    obj.pop("part_of", None)
+
+    if obj["biosample_id"] and db.query(models.Biosample).get(obj["biosample_id"]) is None:
+        logger.warn(f"Unknown biosample {obj['biosample_id']}")
+        obj.pop("biosample_id")
 
     project = models.Project(**Project(**obj).dict())
     for data_object_id in data_objects:
@@ -35,12 +39,9 @@ def load_project(db: Session, obj: Dict[str, Any]) -> Tuple[models.Project, Dict
         data_object.project = project
         db.add(data_object)
     db.add(project)
-    return project, {id: project.id for id in biosamples}
 
 
-def load(db: Session, cursor: Cursor) -> Dict[str, str]:
-    biosample_map: Dict[str, str] = {}
+def load(db: Session, cursor: Cursor):
     for obj in cursor:
-        project, biosamples = load_project(db, obj)
-        biosample_map.update(biosamples)
-    return biosample_map
+        load_project(db, obj)
+    db.commit()

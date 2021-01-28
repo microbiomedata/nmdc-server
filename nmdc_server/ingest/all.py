@@ -31,12 +31,14 @@ def load(db: Session):
     data_object.load(db, mongodb["data_object_set"].find())
     db.commit()
 
-    logger.info("Loading omics processing...")
-    biosample_project = project.load(db, mongodb["omics_processing_set"].find())
+    logger.info("Loading biosamples...")
+    biosample.load(
+        db, mongodb["biosample_set"].find(), omics_processing=mongodb["omics_processing_set"]
+    )
     db.commit()
 
-    logger.info("Loading biosamples...")
-    biosample.load(db, mongodb["biosample_set"].find(), biosample_project)
+    logger.info("Loading omics processing...")
+    project.load(db, mongodb["omics_processing_set"].find())
     db.commit()
 
     logger.info("Loading metagenomes annotation...")

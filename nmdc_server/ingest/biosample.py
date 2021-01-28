@@ -3,6 +3,7 @@ import logging
 from typing import Any, Dict
 
 from pydantic import root_validator, validator
+from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
@@ -33,7 +34,7 @@ class Biosample(BiosampleCreate):
         return value
 
 
-def load_biosample(db: Session, obj: Dict[str, Any], biosample_projects: Dict[str, str]):
+def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):
     env_broad_scale = db.query(models.EnvoTerm).get(obj.pop("env_broad_scale")["has_raw_value"])
     env_local_scale = db.query(models.EnvoTerm).get(obj.pop("env_local_scale")["has_raw_value"])
     env_medium = db.query(models.EnvoTerm).get(obj.pop("env_medium")["has_raw_value"])
@@ -45,16 +46,16 @@ def load_biosample(db: Session, obj: Dict[str, Any], biosample_projects: Dict[st
     if env_medium:
         obj["env_medium_id"] = env_medium.id
 
-    obj["project_id"] = biosample_projects[obj["id"]]
+    obj["study_id"] = omics_processing.find_one({"has_input": obj["id"]})["part_of"][0]
 
     biosample = Biosample(**obj)
     db.add(models.Biosample(**biosample.dict()))
 
 
-def load(db: Session, cursor: Cursor, biosample_projects):
+def load(db: Session, cursor: Cursor, omics_processing: Collection):
     for obj in cursor:
         try:
-            load_biosample(db, obj, biosample_projects)
+            load_biosample(db, obj, omics_processing)
         except Exception:
             logger.error("Error parsing biosample:")
             logger.error(json.dumps(obj, indent=2, default=str))
