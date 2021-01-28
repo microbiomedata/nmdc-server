@@ -177,6 +177,18 @@ class Project(Base, AnnotatedModel):
     def open_in_gold(self) -> Optional[str]:
         return gold_url("https://gold.jgi.doe.gov/project?id=", self.id)
 
+    @property
+    def omics_data(self) -> Iterator["PipelineStep"]:
+        omics_types = [
+            "reads_qc",
+            "metagenome_annotation",
+            "metagenome_assembly",
+            "metaproteomic_analysis",
+        ]
+        for omics_type in omics_types:
+            for pipeline in getattr(self, omics_type):
+                yield pipeline
+
 
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
@@ -206,16 +218,8 @@ class Biosample(Base, AnnotatedModel):
     env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
 
     @property
-    def omics_data(self) -> Iterator["PipelineStep"]:
-        omics_types = [
-            "reads_qc",
-            "metagenome_annotation",
-            "metagenome_assembly",
-            "metaproteomic_analysis",
-        ]
-        for omics_type in omics_types:
-            for pipeline in getattr(self.project, omics_type):
-                yield pipeline
+    def projects(self) -> List["Project"]:
+        return [self.project]
 
     @property
     def env_broad_scale_terms(self) -> List[str]:
