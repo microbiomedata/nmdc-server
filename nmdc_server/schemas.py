@@ -189,6 +189,8 @@ class Project(ProjectBase):
     study_id: str
     open_in_gold: Optional[str]
 
+    omics_data: List["OmicsTypes"]
+
     class Config:
         orm_mode = True
 
@@ -227,7 +229,7 @@ class Biosample(BiosampleBase):
     env_local_scale_terms: List[str] = []
     env_medium_terms: List[str] = []
 
-    omics_data: List["OmicsTypes"]
+    projects: List[Project]
 
     class Config:
         orm_mode = True
@@ -348,7 +350,7 @@ class MetaproteomicAnalysis(PipelineStep):
 
 
 OmicsTypes = Union[ReadsQC, MetagenomeAnnotation, MetagenomeAssembly, MetaproteomicAnalysis]
-Biosample.update_forward_refs()
+Project.update_forward_refs()
 
 
 class FileDownloadBase(BaseModel):
