@@ -44,8 +44,7 @@ class Study(StudyCreate):
 
 def load(db: Session, cursor: Cursor):
     for obj in cursor:
-        # TODO: Remove default once data is fixed.
-        pi_name = obj.pop("principal_investigator_name", "Kelly Wrighton")
+        pi_name = obj.pop("principal_investigator_name")["has_raw_value"]
         obj["principal_investigator_id"] = get_or_create_pi(db, pi_name)
 
         if obj["id"] in study_additional:
