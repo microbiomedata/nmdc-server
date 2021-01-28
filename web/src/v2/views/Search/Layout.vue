@@ -24,13 +24,19 @@ export default defineComponent({
 
   setup() {
     const expandedOmicsDetails = reactive({
-      id: null as string | null,
-      type: null as string | null,
+      resultId: '',
+      projectId: '',
     });
 
-    function setExpanded({ id, type }: { id: string; type: string; }) {
-      expandedOmicsDetails.id = id;
-      expandedOmicsDetails.type = type;
+    function setExpanded(resultId: string, projectId: string) {
+      if (expandedOmicsDetails.resultId !== resultId
+        || expandedOmicsDetails.projectId !== projectId) {
+        expandedOmicsDetails.resultId = resultId;
+        expandedOmicsDetails.projectId = projectId;
+      } else {
+        expandedOmicsDetails.resultId = '';
+        expandedOmicsDetails.projectId = '';
+      }
     }
 
     const biosampleType = types.biosample;
@@ -106,7 +112,7 @@ export default defineComponent({
                       result: props.result,
                       expanded: expandedOmicsDetails,
                     }"
-                    @open-details="setExpanded({ id: props.result.id, type: $event })"
+                    @open-details="setExpanded(props.result.id, $event)"
                   />
                 </template>
               </SearchResults>

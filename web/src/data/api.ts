@@ -49,7 +49,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
     label: string;
     data: string;
   };
-  omics_data: OmicsProcessingResult[];
+  projects: ProjectSearchResult[];
 }
 
 export interface DataObjectSearchResult extends BaseSearchResult {
@@ -68,24 +68,22 @@ export interface StudySearchResults extends BaseSearchResult {
   open_in_gold: string;
 }
 
-export interface ProjectSearchResult extends BaseSearchResult {
-  study_id: string;
-  add_date: string;
-  mod_date: string;
-  open_in_gold: string;
-}
-
-interface DerivedDataResult extends BaseSearchResult {
+export interface DerivedDataResult extends BaseSearchResult {
   type: string;
   git_url: string;
   started_at_time: string;
   ended_at_time: string;
   execution_resource: string;
   project_id: string;
+  outputs: DataObjectSearchResult[];
 }
 
-export interface OmicsProcessingResult extends DerivedDataResult {
-  outputs: DataObjectSearchResult[];
+export interface ProjectSearchResult extends BaseSearchResult {
+  study_id: string;
+  add_date: string;
+  mod_date: string;
+  open_in_gold: string;
+  omics_data: DerivedDataResult[];
 }
 
 export interface ReadsQCResult extends DerivedDataResult {
