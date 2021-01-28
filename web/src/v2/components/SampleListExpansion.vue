@@ -1,6 +1,6 @@
 <script lang="ts">
 import { BiosampleSearchResult } from '@/data/api';
-import { defineComponent, PropType, reactive } from '@vue/composition-api';
+import { defineComponent, PropType } from '@vue/composition-api';
 import DataObjectTable from './DataObjectTable.vue';
 // const OmicsTypeMap = {
 //   'nmdc:readqcanalysisactivity': 'ReadQC',
@@ -15,7 +15,7 @@ export default defineComponent({
       required: true,
     },
     expanded: {
-      type: Object as PropType<{ id: string | null; type: string | null; }>,
+      type: Object as PropType<{ resultId: string; projectId: string; }>,
       required: true,
     },
   },
@@ -24,42 +24,42 @@ export default defineComponent({
     DataObjectTable,
   },
 
-  setup() {
-    const data = reactive({
-      open: null as string | null,
-    });
-
-    return { data };
+  setup(props) {
+    function isOpen(projectId: string) {
+      return props.expanded.resultId === props.result.id
+        && props.expanded.projectId === projectId;
+    }
+    return { isOpen };
   },
 });
 </script>
 
 <template>
-  <div class="d-flex flex-column mt-2">
-    <div class="flex-row">
+  <div
+    v-if="result.projects.length"
+    class="d-flex flex-column mt-2"
+  >
+    <div class="flex-column">
       <v-btn
-        v-for="item in result.omics_data"
-        :key="item.id"
+        v-for="project in result.projects"
+        :key="project.id"
         small
-        :outlined="!(expanded.id === result.id && expanded.type === item.type)"
-        :color="expanded.id === result.id && expanded.type === item.type ? 'primary' : 'default'"
+        :outlined="!isOpen(project.id)"
+        :color="isOpen(project.id) ? 'primary' : 'default'"
         class="mr-2"
-        @click="() => $emit('open-details', item.type)"
+        @click="() => $emit('open-details', project.id)"
       >
-        {{ item.type }} ({{ item.outputs.length }})
+        {{ project.annotations.omics_type }} ({{ project.omics_data.length }})
         <v-icon>mdi-chevron-down</v-icon>
       </v-btn>
     </div>
-    <template v-for="item in result.omics_data">
-      <div
-        v-if="expanded.id === result.id && expanded.type === item.type"
-        :key="item.id"
+    <template v-for="project in result.projects">
+      <DataObjectTable
+        v-if="isOpen(project.id)"
+        :key="project.id"
         class="flex-row mt-2"
-      >
-        <DataObjectTable
-          :data="item"
-        />
-      </div>
+        :project="project"
+      />
     </template>
   </div>
 </template>

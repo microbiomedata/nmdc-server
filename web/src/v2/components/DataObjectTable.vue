@@ -1,8 +1,9 @@
 <script lang="ts">
 import { humanFileSize } from '@/data/utils';
-import { OmicsProcessingResult } from '@/data/api';
+import { ProjectSearchResult } from '@/data/api';
 import { defineComponent, PropType } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
+import { flattenDeep } from 'lodash';
 
 // const OmicsTypeMap = {
 //   'nmdc:readqcanalysisactivity': 'ReadQC',
@@ -12,27 +13,28 @@ import { DataTableHeader } from 'vuetify';
 
 export default defineComponent({
   props: {
-    data: {
-      type: Object as PropType<OmicsProcessingResult>,
+    project: {
+      type: Object as PropType<ProjectSearchResult>,
       required: true,
     },
   },
 
-  setup() {
+  setup(props) {
     const headers: DataTableHeader[] = [
-      // {
-      //   text: 'Type',
-      //   value: '',
-      // },
+      {
+        text: 'Project Id',
+        value: 'group_name',
+        sortable: false,
+      },
       {
         text: 'Data Object',
         value: 'name',
-        sortable: true,
+        sortable: false,
       },
       {
         text: 'File Size',
         value: 'file_size_bytes',
-        sortable: true,
+        sortable: false,
       },
       {
         text: 'Download',
@@ -42,7 +44,14 @@ export default defineComponent({
       },
     ];
 
-    return { headers, humanFileSize };
+    const items = flattenDeep(props.project.omics_data
+      .map((omics_data) => omics_data.outputs.map((data_object, i) => ({
+        ...data_object,
+        omics_data,
+        group_name: i === 0 ? omics_data.name : '↳',
+      }))));
+
+    return { headers, items, humanFileSize };
   },
 });
 </script>
@@ -51,7 +60,7 @@ export default defineComponent({
   <v-card outlined>
     <v-data-table
       :headers="headers"
-      :items="data.outputs"
+      :items="items"
       hide-default-footer
       dense
     >
