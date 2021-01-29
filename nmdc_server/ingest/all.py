@@ -41,9 +41,8 @@ def load(db: Session):
     project.load(db, mongodb["omics_processing_set"].find())
     db.commit()
 
-    logger.info("Loading metagenomes annotation...")
-    cursor = mongodb["activity_set"].find(
-        {"type": "nmdc:MetagenomeAnnotation"},
+    logger.info("Loading metagenome annotation...")
+    cursor = mongodb["metagenome_annotation_activity_set"].find(
         no_cursor_timeout=True,
     )
     with click.progressbar(cursor, length=cursor.count()) as bar:
@@ -56,26 +55,26 @@ def load(db: Session):
         )
     db.commit()
 
-    # logger.info("Loading read qc...")
-    # pipeline.load(
-    #     db,
-    #     mongodb["activity_set"].find({"type": "nmdc:ReadQCAnalysisActivity"}),
-    #     pipeline.load_reads_qc,
-    # )
-    # db.commit()
+    logger.info("Loading read qc...")
+    pipeline.load(
+        db,
+        mongodb["read_QC_analysis_activity_set"].find(),
+        pipeline.load_reads_qc,
+    )
+    db.commit()
 
     logger.info("Loading metaproteomic analysis...")
     pipeline.load(
         db,
-        mongodb["activity_set"].find({"type": "nmdc:MetaProteomicAnalysis"}),
+        mongodb["metaproteomics_analysis_activity_set"].find(),
         pipeline.load_mp_analysis,
     )
     db.commit()
 
-    # logger.info("Loading metagenome assembly...")
-    # pipeline.load(
-    #     db,
-    #     mongodb["activity_set"].find({"type": "nmdc:MetagenomeAssembly"}),
-    #     pipeline.load_mg_assembly,
-    # )
-    # db.commit()
+    logger.info("Loading metagenome assembly...")
+    pipeline.load(
+        db,
+        mongodb["metagenome_assembly_set"].find(),
+        pipeline.load_mg_assembly,
+    )
+    db.commit()
