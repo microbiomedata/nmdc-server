@@ -16,6 +16,14 @@ export default Vue.extend({
       type: Number,
       required: true,
     },
+    titleKey: {
+      type: String,
+      default: 'name',
+    },
+    subtitleKey: {
+      type: String,
+      default: 'description',
+    },
     results: {
       type: Array as PropType<BaseSearchResult[]>,
       default: () => [],
@@ -72,10 +80,15 @@ export default Vue.extend({
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>
-              {{ result.name }}
+              {{ result[titleKey] }}
             </v-list-item-title>
             <v-list-item-subtitle>
-              {{ result.description || 'No description' }}
+              <slot
+                name="subtitle"
+                v-bind="{ result }"
+              >
+                {{ result[subtitleKey] || 'No description' }}
+              </slot>
             </v-list-item-subtitle>
             <slot
               name="item-content"

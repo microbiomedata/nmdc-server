@@ -22,13 +22,13 @@ export default defineComponent({
   setup(props) {
     const headers: DataTableHeader[] = [
       {
-        text: 'Project Id',
+        text: 'Workflow Activity',
         value: 'group_name',
         sortable: false,
       },
       {
-        text: 'Data Object',
-        value: 'name',
+        text: 'Data Object Type',
+        value: 'object_description',
         sortable: false,
       },
       {
@@ -49,6 +49,9 @@ export default defineComponent({
         ...data_object,
         omics_data,
         group_name: i === 0 ? omics_data.name : '↳',
+        object_description: data_object.name
+          .replace(`${omics_data.project_id}_`, '')
+          .replace(/file/ig, ''),
       }))));
 
     return { headers, items, humanFileSize };
