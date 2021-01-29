@@ -41,6 +41,14 @@ def load(db: Session):
     project.load(db, mongodb["omics_processing_set"].find())
     db.commit()
 
+    logger.info("Loading metabolomics analysis...")
+    pipeline.load(
+        db,
+        mongodb["metabolomics_analysis_activity_set"].find(),
+        pipeline.load_metabolomics_analysis,
+    )
+    db.commit()
+
     logger.info("Loading read based analysis...")
     pipeline.load(
         db,

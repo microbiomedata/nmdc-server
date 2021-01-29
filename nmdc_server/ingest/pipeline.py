@@ -1,4 +1,3 @@
-import json
 import logging
 import re
 from typing import Any, Dict, List, Tuple
@@ -104,6 +103,9 @@ load_nom_analysis = generate_pipeline_loader(schemas.NOMAnalysisBase, models.NOM
 load_read_based_analysis = generate_pipeline_loader(
     schemas.ReadBasedAnalysisBase, models.ReadBasedAnalysis
 )
+load_metabolomics_analysis = generate_pipeline_loader(
+    schemas.MetabolomicsAnalysisBase, models.MetabolomicsAnalysis
+)
 
 
 def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
@@ -114,9 +116,10 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
 
         try:
             pipeline = load_object(db, obj, **kwargs)
+            db.commit()
         except Exception:
-            logger.error(json.dumps(obj, indent=2, default=str))
-            logger.exception("Error parsing pipeline")
+            logger.exception(f"Error parsing pipeline {obj['id']}")
+            db.rollback()
             continue
 
         id_ = pipeline.id

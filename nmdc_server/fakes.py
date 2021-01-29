@@ -328,6 +328,15 @@ class ReadBasedAnalysisFactory(PipelineStepBase):
         sqlalchemy_session = db
 
 
+class MetabolomicsAnalysisFactory(PipelineStepBase):
+    class Meta:
+        model = models.MetabolomicsAnalysis
+        sqlalchemy_session = db
+
+    used: str = Faker("word")
+    has_calibration: str = Faker("word")
+
+
 class GeneFunction(SQLAlchemyModelFactory):
     class Meta:
         model = models.GeneFunction
