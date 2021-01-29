@@ -103,9 +103,13 @@ export default defineComponent({
                 :items-per-page="biosample.data.limit"
                 :results="biosample.data.results.results"
                 :page="biosample.data.pageSync"
+                :subtitle-key="'study_id'"
                 @set-page="biosample.setPage($event)"
                 @selected="$router.push({ name: 'V2Sample', params: { id: $event }})"
               >
+                <template #subtitle="props">
+                  Study ID: {{ props.result.study_id }}
+                </template>
                 <template #item-content="props">
                   <SampleListExpansion
                     v-bind="{

@@ -39,7 +39,7 @@ export default defineComponent({
     v-if="result.projects.length"
     class="d-flex flex-column mt-2"
   >
-    <div class="flex-column">
+    <div class="d-flex flex-row">
       <v-btn
         v-for="project in result.projects"
         :key="project.id"
@@ -49,7 +49,7 @@ export default defineComponent({
         class="mr-2"
         @click="() => $emit('open-details', project.id)"
       >
-        {{ project.annotations.omics_type }} ({{ project.omics_data.length }})
+        {{ project.annotations.omics_type }}
         <v-icon>mdi-chevron-down</v-icon>
       </v-btn>
     </div>

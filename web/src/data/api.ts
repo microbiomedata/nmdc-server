@@ -1,6 +1,8 @@
 import { merge } from 'lodash';
 import axios from 'axios';
 
+import mockStudy from './studyExample.json';
+
 const client = axios.create({
   baseURL: process.env.VUE_APP_BASE_URL || '/api',
 });
@@ -21,6 +23,7 @@ export interface BaseSearchResult {
   description: string;
   alternate_ideantifiers: string[];
   annotations: Record<string, unknown>;
+  [key: string]: unknown; // possibly other things.
 }
 
 export interface BiosampleSearchResult extends BaseSearchResult {
@@ -213,8 +216,10 @@ async function searchBiosample(params: SearchParams) {
   return _search<BiosampleSearchResult>('biosample', params);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function searchStudy(params: SearchParams) {
-  return _search<StudySearchResults>('study', params);
+  // return _search<StudySearchResults>('study', params);
+  return Promise.resolve(mockStudy) as unknown as SearchResponse<StudySearchResults>;
 }
 
 async function searchProject(params: SearchParams) {

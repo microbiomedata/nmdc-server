@@ -1,0 +1,147 @@
+{
+  "count": 13,
+  "results": [
+    {
+      "id": "gold:Gs0110132",
+      "name": "FECB: A Functional Encyclopedia of Cyanobacteria",
+      "description": "We propose to utilize the unique resources at EMSL and the JGI to obtain a better understanding of the phylogenetic and functional diversity of cyanobacteria that have been collected from DOE mission relevant environments (e.g. alkaline and acidic hot springs, and hypersaline terrestrial and water habitats) and deposited in a culture collection that contains &gt;1,200 strains. The Cyanobacteria are one of the most metabolically and morphologically diverse bacterial phyla and it has been hypothesized that they are the origin of oxygenic photosynthesis. The project proposed here would complement and utilize the genomic information that was generated during JGI’s GEBA Cyano project to add valuable insights about the metabolic processes that are active in members of this phylum and that have been - and still are - key factors in shaping our planet. In contrast to the GEBA Cyano project, the project proposed here include mixed cultures of organisms that are recalcitrant to separation. A comprehensive omics approach of these simple consortia will allow us to develop tools for Systems Microbiology and for analyzing microbe-microbe and microbe-climate interactions and the single-cell and whole system level. Phylogenomics: We will request 16S rRNA data from our culture collections to classify phenotypes that are most promising for addressing questions related to carbon and nitrogen cycling and developing new chassis for biofuel production strains. To obtain a complete 16S rRNA-based inventory of the Cyanobacteria collection we would request ~40 Gb of iTag data from the JGI. In addition, we would request Fluorescence in situ hybridization (FISH) microscopy from EMSL for selected samples that contain more than one phylotype, to obtain a better understanding of the special organization within mixed populations. We will request an additional ~10 Gb of iTag data to monitor phylogenetic changes in mixed cultures with phenotypes that are in particular relevant to carbon and nitrogen cycling.   Single Cell Genomics and Metagenomics: We will request sorting of mixed cultures targeting ~100 single cells and genomic sequencing of the obtained isolates using JGI's PacBio pipeline (total of ~50 Gb genomic data). For mixed cultured from which no ? or only a fraction of the community - can be isolated as single cell, we will request a total of ~50 Gb of metagenomics data. This will provide us with the genomic data that will be necessary to reconstruct metabolic pathways of hitherto uncultured cyanobacteria and to identify the key factors that make the individual members of these mixed cultures recalcitrant to cultivation under axenic conditions. Physiology and chemistry: To determine the physical and chemical changes that occur during Cyanobacteria mediated carbon and nitrogen cycling, we will request access to cryo-transmission electron microscopy, scanning electron microscopy coupled with focused ion beam, X ray spectroscopy and electron diffraction analyses, confocal microscopy, Raman spectroscopy, synchrotron-based computed x-ray microtomography, nano secondary ion mass spectrometry, and high field Fourier transform ion cyclotron resonance mass spectrometry at EMSL.   Functional dynamics: To determine the dynamics of the genetic modules that are being transcribed into mRNA during Cyanobacteria mediated carbon and nitrogen cycling, we propose to generate expression profiles from 10 selected axenic and 10 mixed cultures. We will request a total of ~10 Gb and ~50 Gb of transcriptome and metatranscriptomic data from the JGI, respectively. To determine the dynamics of genetic modules being translated and converted into proteins and metabolites during Cyanobacteria mediated carbon and nitrogen cycling, we will generate metaproteomic and metametabolomic data from 10 selected axenic and 10 mixed cultures. We will request access and support to and with mass spectrometry, NMR spectrometry, and computation time on Chinook from EMSL.",
+      "alternate_identifiers": [],
+      "annotations": {
+        "ecosystem": "Host-associated",
+        "ecosystem_type": "Bacteria",
+        "ecosystem_subtype": "Unclassified",
+        "ecosystem_category": "Microbial",
+        "specific_ecosystem": "Unclassified"
+      },
+      "principal_investigator_websites": [
+        "https://orcid.org/0000-0003-0321-0380",
+        "https://hesslab.com"
+      ],
+      "publication_dois": [
+        "10.1101/427211"
+      ],
+      "gold_name": "",
+      "gold_description": "",
+      "scientific_objective": "To obtain a better understanding of the phylogenetic and functional diversity of cyanobacteria using a multi-omics approach of simple consortia that are recalcitrant to separation.",
+      "add_date": null,
+      "mod_date": null,
+      "doi": "10.25585/1487758",
+      "open_in_gold": "https://gold.jgi.doe.gov/study?id=Gs0110132",
+      "principal_investigator_name": "Matthias Hess",
+      "principal_investigator_image_url": "/api/principal_investigator/c343bba6-6aa0-40d4-a35f-66e2327cced1",
+      "sample_count": 8,
+      "omics_counts": [
+        {
+          "type": "reads_qc",
+          "count": 3240
+        },
+        {
+          "type": "metagenome_assembly",
+          "count": 3216
+        },
+        {
+          "type": "metagenome_annotation",
+          "count": 2168
+        },
+        {
+          "type": "metaproteomic_analysis",
+          "count": 8658
+        }
+      ]
+    },
+    {
+      "id": "gold:Gs0112340",
+      "name": "Systems-level insights into carbon transformations in thawing permafrost by parallel high-resolution organic matter and microbial community characterizations",
+      "description": "A fundamental challenge of microbial environmental science is to understand how earth systems will respond to climate change. A parallel challenge in biology is to unverstand how information encoded in organismal genes manifests as biogeochemical processes at ecosystem-to-global scales. These grand challenges intersect in the need to understand the glocal carbon (C) cycle, which is both mediated by biological processes and a key driver of climate through the greenhouse gases carbon dioxide (CO2) and methane (CH4). A key aspect of these challenges is the C cycle implications of the predicted dramatic shrinkage in northern permafrost in the coming century.  ",
+      "alternate_identifiers": [],
+      "annotations": {
+        "ecosystem": "Environmental",
+        "ecosystem_type": "Soil",
+        "ecosystem_subtype": "Wetlands",
+        "ecosystem_category": "Terrestrial",
+        "specific_ecosystem": "Permafrost"
+      },
+      "principal_investigator_websites": [
+        "https://orcid.org/0000-0003-0558-102X",
+        "https://openwetware.org/wiki/SWES-MEL"
+      ],
+      "publication_dois": [
+        "10.1038/s41586-018-0338-1"
+      ],
+      "gold_name": "",
+      "gold_description": "",
+      "scientific_objective": "To improve models of carbon cycling in a “model ecosystem” of permafrost thaw by linking microbial dynamics, organic geochemistry and trace gas production.",
+      "add_date": null,
+      "mod_date": null,
+      "doi": "10.25585/1487764",
+      "open_in_gold": "https://gold.jgi.doe.gov/study?id=Gs0112340",
+      "principal_investigator_name": "Virginia Rich",
+      "principal_investigator_image_url": "/api/principal_investigator/228de7d5-89e1-41d3-a205-b84f35dcbaa6",
+      "sample_count": 6,
+      "omics_counts": [
+        {
+          "type": "reads_qc",
+          "count": 2430
+        },
+        {
+          "type": "metagenome_assembly",
+          "count": 2412
+        },
+        {
+          "type": "metagenome_annotation",
+          "count": 1626
+        },
+        {
+          "type": "metaproteomic_analysis",
+          "count": 0
+        }
+      ]
+    },
+    {
+      "id": "gold:Gs0110115",
+      "name": "Mapping soil carbon from cradle to grave: using comparative transcriptomics, proteomics and metabolite analysis to identify the microbial blueprint for root-enhanced decomposition of organic matter.",
+      "description": "Using analytical expertise at both the JGI and EMSL, we plan to follow successional patterns of protein expression by root-associated microorganisms. This work builds on foundational research we are conducting with the common California grassland plant, Avena fatua, grown in Hopland, CA soil (FOA DE-PS02-09ER09-25). Using our 16-chamber 13C labeling facility at UC Berkeley, we have shown that elevated CO2 increased the amount of C allocated belowground, and increased the yield of root biomass. The rhizosphere microbial community undergoes a succession as the root grows, senesces, and dies. In elevated CO2 treatments, we also detect a greater amount of root-derived 13C in the mineral-associated heavy fraction of the soil, which is commonly assumed to reflect longer term stabilization. \\n \\nIn our JGI-EMSL project, we will follow over time how roots impact the functional capacity of the rhizosphere microbiome to enzymatically mediate decomposition processes. We hypothesize that root-exudate stimulation of soil microbial populations results in elevated expression of biomolecules (transcripts, enzymes, metabolites) for the decomposition of macromolecular C compounds.",
+      "alternate_identifiers": [],
+      "annotations": {
+        "ecosystem": "Host-associated",
+        "ecosystem_type": "Rhizosphere",
+        "ecosystem_subtype": "Soil",
+        "ecosystem_category": "Plants",
+        "specific_ecosystem": "Unclassified"
+      },
+      "principal_investigator_websites": [
+        "https://orcid.org/0000-0002-4289-3244",
+        "https://nature.berkeley.edu/firestonelab"
+      ],
+      "publication_dois": [],
+      "gold_name": "",
+      "gold_description": "",
+      "scientific_objective": "To determine how organic carbon transformation and decomposition in soil is altered by the interactions between plant roots and the soil microbial community (bacteria, archaea, fungi, microfauna).",
+      "add_date": null,
+      "mod_date": null,
+      "doi": "10.25585/1487760",
+      "open_in_gold": "https://gold.jgi.doe.gov/study?id=Gs0110115",
+      "principal_investigator_name": "Mary Firestone",
+      "principal_investigator_image_url": "/api/principal_investigator/2748e358-de3a-427a-89b2-f41001f06830",
+      "sample_count": 26,
+      "omics_counts": [
+        {
+          "type": "reads_qc",
+          "count": 10530
+        },
+        {
+          "type": "metagenome_assembly",
+          "count": 10452
+        },
+        {
+          "type": "metagenome_annotation",
+          "count": 0
+        },
+        {
+          "type": "metaproteomic_analysis",
+          "count": 0
+        }
+      ]
+    }
+  ]
+}
