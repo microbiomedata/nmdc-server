@@ -8,6 +8,7 @@ import { Condition, entityType } from '@/data/api';
 export interface SearchFacet {
   field: string;
   table: entityType;
+  group?: string;
 }
 
 type KeyedFieldData = encoding.FieldsData & SearchFacet & { key: string; };
