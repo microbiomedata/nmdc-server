@@ -314,6 +314,10 @@ class MAGFactory(SQLAlchemyModelFactory):
     mags_analysis = SubFactory(MAGsAnalysisFactory)
 
 
+class NOMAnalysisFactory(PipelineStepBase):
+    used: str = Faker("word")
+
+
 class GeneFunction(SQLAlchemyModelFactory):
     class Meta:
         model = models.GeneFunction
