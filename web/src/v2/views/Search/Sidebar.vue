@@ -22,6 +22,30 @@ const FunctionSearchFacets: SearchFacet[] = [
     field: 'depth',
     table: 'biosample',
   },
+  {
+    field: 'gold_classification',
+    table: 'biosample',
+  },
+  {
+    field: 'principal_investigator_name',
+    table: 'study',
+    group: 'Study',
+  },
+  {
+    field: 'instrument_name',
+    table: 'project',
+    group: 'Project',
+  },
+  {
+    field: 'omics_type',
+    table: 'project',
+    group: 'Project',
+  },
+  {
+    field: 'processing_institution',
+    table: 'project',
+    group: 'Project',
+  },
 ];
 
 export default defineComponent({

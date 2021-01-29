@@ -48,7 +48,7 @@ export default defineComponent({
       .map((omics_data) => omics_data.outputs.map((data_object, i) => ({
         ...data_object,
         omics_data,
-        group_name: i === 0 ? omics_data.name : '↳',
+        group_name: i === 0 ? omics_data.name : '',
         object_description: data_object.name
           .replace(`${omics_data.project_id}_`, '')
           .replace(/file/ig, ''),

@@ -1,11 +1,13 @@
 <script lang="ts">
-import { defineComponent, reactive } from '@vue/composition-api';
+import {
+  defineComponent, reactive, ref, watch,
+} from '@vue/composition-api';
 
 import SearchResults from '@/components/Presentation/SearchResults.vue';
 import { types } from '@/encoding';
-import { api } from '@/data/api';
+import { api, Condition } from '@/data/api';
 
-import { conditions } from '@/v2/store';
+import { conditions, addConditions, removeConditions } from '@/v2/store';
 import usePaginatedResults from '@/v2/use/usePaginatedResults';
 import SampleListExpansion from '@/v2/components/SampleListExpansion.vue';
 
@@ -26,6 +28,25 @@ export default defineComponent({
     const expandedOmicsDetails = reactive({
       resultId: '',
       projectId: '',
+    });
+
+    const studyCheckboxState = ref([]);
+
+    watch(studyCheckboxState, (current, old) => {
+      const newConditions: Condition[] = current.map((v) => ({
+        value: v,
+        table: 'study',
+        op: '==',
+        field: 'study_id',
+      }));
+      const oldConditiosn: Condition[] = old.map((v) => ({
+        value: v,
+        table: 'study',
+        op: '==',
+        field: 'study_id',
+      }));
+      removeConditions(oldConditiosn);
+      addConditions(newConditions);
     });
 
     function setExpanded(resultId: string, projectId: string) {
@@ -50,8 +71,10 @@ export default defineComponent({
       expandedOmicsDetails,
       biosampleType,
       biosample,
+      conditions,
       studyType,
       study,
+      studyCheckboxState,
       /* methods */
       setExpanded,
     };
@@ -85,9 +108,12 @@ export default defineComponent({
                 @set-page="study.setPage($event)"
                 @selected="$router.push({ name: 'V2Sample'})"
               >
-                <template #action>
+                <template #action="{ result }">
                   <v-list-item-action>
-                    <v-checkbox />
+                    <v-checkbox
+                      v-model="studyCheckboxState"
+                      :value="result.id"
+                    />
                   </v-list-item-action>
                 </template>
               </SearchResults>
