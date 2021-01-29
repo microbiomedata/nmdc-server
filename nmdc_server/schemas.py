@@ -271,7 +271,7 @@ class MGAGeneFunction(BaseModel):
 
 class PipelineStepBase(BaseModel):
     id: str
-    name: str
+    name: str = ""
     type: str
     git_url: str
     started_at_time: Union[datetime, date]
@@ -389,8 +389,31 @@ class MAGsAnalysis(PipelineStep):
     mags_list: List[MAG]
 
 
+class NOMAnalysisBase(PipelineStepBase):
+    type: str = "nmdc:MOMAnalysis"
+    used: str
+
+
+class NOMAnalysis(PipelineStep):
+    pass
+
+
+class ReadBasedAnalysisBase(PipelineStepBase):
+    type: str = "nmdc:ReadBasedAnalysis"
+
+
+class ReadBasedAnalysis(PipelineStep):
+    pass
+
+
 OmicsTypes = Union[
-    ReadsQC, MetagenomeAnnotation, MetagenomeAssembly, MetaproteomicAnalysis, MAGsAnalysis
+    ReadsQC,
+    MetagenomeAnnotation,
+    MetagenomeAssembly,
+    MetaproteomicAnalysis,
+    MAGsAnalysis,
+    NOMAnalysis,
+    ReadBasedAnalysis,
 ]
 Project.update_forward_refs()
 Biosample.update_forward_refs()

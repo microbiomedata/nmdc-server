@@ -389,6 +389,30 @@ class MAG(Base):
     mags_analysis = relationship(MAGsAnalysis, backref="mags_list")
 
 
+nom_analysis_input_association = input_association("nom_analysis")
+nom_analysis_output_association = output_association("nom_analysis")
+
+
+class NOMAnalysis(Base, PipelineStep):
+    __tablename__ = "nom_analysis"
+
+    used = Column(String, nullable=False)
+
+    inputs = input_relationship(nom_analysis_input_association)
+    outputs = output_relationship(nom_analysis_output_association)
+
+
+read_based_analysis_input_association = input_association("read_based_analysis")
+read_based_analysis_output_association = output_association("read_based_analysis")
+
+
+class ReadBasedAnalysis(Base, PipelineStep):
+    __tablename__ = "read_based_analysis"
+
+    inputs = input_relationship(read_based_analysis_input_association)
+    outputs = output_relationship(read_based_analysis_output_association)
+
+
 class Website(Base):
     __tablename__ = "website"
 

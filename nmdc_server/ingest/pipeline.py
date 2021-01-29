@@ -100,6 +100,10 @@ load_mp_analysis = generate_pipeline_loader(
     schemas.MetaproteomicAnalysisBase, models.MetaproteomicAnalysis
 )
 load_mags_base = generate_pipeline_loader(schemas.MAGsAnalysisBase, models.MAGsAnalysis)
+load_nom_analysis = generate_pipeline_loader(schemas.NOMAnalysisBase, models.NOMAnalysis)
+load_read_based_analysis = generate_pipeline_loader(
+    schemas.ReadBasedAnalysisBase, models.ReadBasedAnalysis
+)
 
 
 def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
