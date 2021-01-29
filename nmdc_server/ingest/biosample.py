@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models
 from nmdc_server.ingest.common import extract_extras, extract_value
+from nmdc_server.ingest.study import study_ids
 from nmdc_server.schemas import BiosampleCreate
 
 logger = logging.getLogger(__name__)
@@ -47,6 +48,8 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         obj["env_medium_id"] = env_medium.id
 
     obj["study_id"] = omics_processing.find_one({"has_input": obj["id"]})["part_of"][0]
+    if obj["study_id"] not in study_ids:
+        return
 
     biosample = Biosample(**obj)
     db.add(models.Biosample(**biosample.dict()))

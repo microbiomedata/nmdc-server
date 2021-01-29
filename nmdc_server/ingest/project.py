@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models
 from nmdc_server.ingest.common import extract_extras, extract_value
+from nmdc_server.ingest.study import study_ids
 from nmdc_server.schemas import ProjectCreate
 
 logger = logging.getLogger(__name__)
@@ -24,6 +25,8 @@ def load_project(db: Session, obj: Dict[str, Any]):
     obj["biosample_id"] = obj.pop("has_input", [None])[0]
     data_objects = obj.pop("has_output", [])
     obj["study_id"] = obj.pop("part_of", [None])[0]
+    if obj["study_id"] not in study_ids:
+        return
 
     if obj["biosample_id"] and db.query(models.Biosample).get(obj["biosample_id"]) is None:
         logger.warn(f"Unknown biosample {obj['biosample_id']}")
