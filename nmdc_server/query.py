@@ -84,7 +84,7 @@ def _join_gene_function(query: Query) -> Query:
 
 
 def _join_common(query: Query) -> Query:
-    return _join_envo(_join_gene_function(query))
+    return _join_envo(query)
 
 
 def _join_envo_facet(query: Query, attribute: str) -> Query:
@@ -408,6 +408,8 @@ class BaseQuerySchema(BaseModel):
 
     def query(self, db, base_query: Query = None) -> Query:
         query = base_query or self.table.query(db)
+        if any([c.table == Table.gene_function for c in self.conditions]):
+            query = _join_gene_function(query)
         for _, conditions in self.groups:
             filters = [c.compare() for c in conditions]
             query = query.filter(or_(*filters))
