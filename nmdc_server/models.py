@@ -413,6 +413,20 @@ class ReadBasedAnalysis(Base, PipelineStep):
     outputs = output_relationship(read_based_analysis_output_association)
 
 
+metabolomics_analysis_input_association = input_association("metabolomics_analysis")
+metabolomics_analysis_output_association = output_association("metabolomics_analysis")
+
+
+class MetabolomicsAnalysis(Base, PipelineStep):
+    __tablename__ = "metabolomics_analysis"
+
+    used = Column(String, nullable=False)
+    has_calibration = Column(String, nullable=False)
+
+    inputs = input_relationship(metabolomics_analysis_input_association)
+    outputs = output_relationship(metabolomics_analysis_output_association)
+
+
 class Website(Base):
     __tablename__ = "website"
 
@@ -487,5 +501,8 @@ ModelType = Union[
     Type[MetagenomeAnnotation],
     Type[MetaproteomicAnalysis],
     Type[MAGsAnalysis],
+    Type[ReadBasedAnalysis],
+    Type[NOMAnalysis],
+    Type[MetabolomicsAnalysis],
     Type[GeneFunction],
 ]

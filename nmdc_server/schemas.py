@@ -390,7 +390,7 @@ class MAGsAnalysis(PipelineStep):
 
 
 class NOMAnalysisBase(PipelineStepBase):
-    type: str = "nmdc:MOMAnalysis"
+    type: str = "nmdc:NOMAnalysis"
     used: str
 
 
@@ -406,6 +406,16 @@ class ReadBasedAnalysis(PipelineStep):
     pass
 
 
+class MetabolomicsAnalysisBase(PipelineStepBase):
+    type: str = "nmdc:MetabolomicsAnalysis"
+    used: str
+    has_calibration: str
+
+
+class MetabolomicsAnalysis(PipelineStep):
+    pass
+
+
 OmicsTypes = Union[
     ReadsQC,
     MetagenomeAnnotation,
@@ -414,6 +424,7 @@ OmicsTypes = Union[
     MAGsAnalysis,
     NOMAnalysis,
     ReadBasedAnalysis,
+    MetabolomicsAnalysis,
 ]
 Project.update_forward_refs()
 Biosample.update_forward_refs()
