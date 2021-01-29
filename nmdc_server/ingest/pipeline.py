@@ -109,10 +109,22 @@ load_metabolomics_analysis = generate_pipeline_loader(
 
 
 def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
+    remove_timezone_re = re.compile(r"Z\+\d+$", re.I)
+
     for obj in cursor:
         inputs = obj.pop("has_input", [])
         outputs = obj.pop("has_output", [])
         obj["project_id"] = obj.pop("was_informed_by")
+
+        # TODO: pydantic should parse datetime like this... need to look into it
+        #   2021-01-26T21:36:26.759770Z+0000
+        if "started_at_time" in obj:
+            obj["started_at_time"] = remove_timezone_re.sub("", obj["started_at_time"])
+        if "ended_at_time" in obj:
+            obj["ended_at_time"] = remove_timezone_re.sub("", obj["ended_at_time"])
+
+        if db.query(models.Project).get(obj["project_id"]) is None:
+            continue
 
         try:
             pipeline = load_object(db, obj, **kwargs)
