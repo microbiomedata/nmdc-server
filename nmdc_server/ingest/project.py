@@ -23,13 +23,14 @@ class Project(ProjectCreate):
 def load_project(db: Session, obj: Dict[str, Any]):
     obj["biosample_id"] = obj.pop("has_input", [None])[0]
     data_objects = obj.pop("has_output", [])
-    obj.pop("part_of", None)
+    obj["study_id"] = obj.pop("part_of", [None])[0]
 
     if obj["biosample_id"] and db.query(models.Biosample).get(obj["biosample_id"]) is None:
         logger.warn(f"Unknown biosample {obj['biosample_id']}")
         obj.pop("biosample_id")
 
     project = models.Project(**Project(**obj).dict())
+
     for data_object_id in data_objects:
         data_object = db.query(models.DataObject).get(data_object_id)
         if data_object is None:

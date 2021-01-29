@@ -372,6 +372,15 @@ def test_pipeline_query(db: Session, table):
     fakes.MetaproteomicAnalysisFactory(project=project2, name="analysis3")
     db.commit()
 
+    # test projects not associated with biosamples
+    project1.biosample_id = None
+    db.add(project1)
+
+    # test projects not associated with studies
+    project2.study_id = None
+    db.add(project2)
+    db.commit()
+
     query_schema = {
         "reads_qc": query.ReadsQCQuerySchema,
         "assembly": query.MetagenomeAssemblyQuerySchema,

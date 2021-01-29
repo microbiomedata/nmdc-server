@@ -166,7 +166,10 @@ class Table(Enum):
                 db.query(distinct(models.Biosample.id).label("id"))
                 .join(models.Project, isouter=True)
                 .join(models.DataObject, isouter=True)
-                .join(models.Study, models.Biosample.study_id == models.Study.id)
+                .join(
+                    models.Study,
+                    models.Biosample.study_id == models.Study.id,
+                )
                 .join(models.PrincipalInvestigator)
             )
         elif self == Table.study:
@@ -174,7 +177,7 @@ class Table(Enum):
                 db.query(distinct(models.Study.id).label("id"))
                 .join(models.PrincipalInvestigator)
                 .join(models.Biosample, models.Biosample.study_id == models.Study.id, isouter=True)
-                .join(models.Project, models.Biosample.study_id == models.Study.id, isouter=True)
+                .join(models.Project, models.Project.study_id == models.Study.id, isouter=True)
                 .join(models.DataObject, isouter=True)
             )
         elif self == Table.project:
@@ -191,8 +194,13 @@ class Table(Enum):
                 .join(models.Project)
                 .join(models.DataObject, isouter=True)
                 .join(models.Biosample, isouter=True)
-                .join(models.Study, models.Study.id == models.Project.study_id)
-                .join(models.PrincipalInvestigator)
+                .join(
+                    models.Study,
+                    models.Biosample.study_id == models.Study.id
+                    or models.Project.study_id == models.Study.id,
+                    isouter=True,
+                )
+                .join(models.PrincipalInvestigator, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
@@ -203,8 +211,13 @@ class Table(Enum):
                 .join(models.Project)
                 .join(models.DataObject, isouter=True)
                 .join(models.Biosample, isouter=True)
-                .join(models.Study, models.Study.id == models.Project.study_id)
-                .join(models.PrincipalInvestigator)
+                .join(
+                    models.Study,
+                    models.Biosample.study_id == models.Study.id
+                    or models.Project.study_id == models.Study.id,
+                    isouter=True,
+                )
+                .join(models.PrincipalInvestigator, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
@@ -215,8 +228,13 @@ class Table(Enum):
                 .join(models.Project)
                 .join(models.DataObject, isouter=True)
                 .join(models.Biosample, isouter=True)
-                .join(models.Study, models.Study.id == models.Project.study_id)
-                .join(models.PrincipalInvestigator)
+                .join(
+                    models.Study,
+                    models.Biosample.study_id == models.Study.id
+                    or models.Project.study_id == models.Study.id,
+                    isouter=True,
+                )
+                .join(models.PrincipalInvestigator, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
@@ -227,8 +245,13 @@ class Table(Enum):
                 .join(models.Project)
                 .join(models.DataObject, isouter=True)
                 .join(models.Biosample, isouter=True)
-                .join(models.Study, models.Study.id == models.Project.study_id)
-                .join(models.PrincipalInvestigator)
+                .join(
+                    models.Study,
+                    models.Biosample.study_id == models.Study.id
+                    or models.Project.study_id == models.Study.id,
+                    isouter=True,
+                )
+                .join(models.PrincipalInvestigator, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
@@ -238,8 +261,13 @@ class Table(Enum):
                 db.query(distinct(models.DataObject.id).label("id"))
                 .join(models.Project)
                 .join(models.Biosample, isouter=True)
-                .join(models.Study, models.Study.id == models.Project.study_id)
-                .join(models.PrincipalInvestigator)
+                .join(
+                    models.Study,
+                    models.Biosample.study_id == models.Study.id
+                    or models.Project.study_id == models.Study.id,
+                    isouter=True,
+                )
+                .join(models.PrincipalInvestigator, isouter=True)
                 .join(models.ReadsQC, isouter=True)
                 .join(models.MetagenomeAssembly, isouter=True)
                 .join(models.MetagenomeAnnotation, isouter=True)
