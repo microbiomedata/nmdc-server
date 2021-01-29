@@ -46,6 +46,10 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         metagenome_assembly=aggregations.get_table_summary(db, models.MetagenomeAssembly),
         metagenome_annotation=aggregations.get_table_summary(db, models.MetagenomeAnnotation),
         metaproteomic_analysis=aggregations.get_table_summary(db, models.MetaproteomicAnalysis),
+        mags_analysis=aggregations.get_table_summary(db, models.MAGsAnalysis),
+        read_based_analysis=aggregations.get_table_summary(db, models.ReadBasedAnalysis),
+        nom_analysis=aggregations.get_table_summary(db, models.NOMAnalysis),
+        metabolomics_analysis=aggregations.get_table_summary(db, models.MetabolomicsAnalysis),
         gene_function=gene_function,
     )
 

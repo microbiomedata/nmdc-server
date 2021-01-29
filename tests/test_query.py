@@ -350,7 +350,9 @@ def test_envo_ancestor_facet(db: Session):
     }
 
 
-@pytest.mark.parametrize("table", ["reads_qc", "assembly", "annotation", "analysis"])
+@pytest.mark.parametrize(
+    "table", ["reads_qc", "assembly", "annotation", "analysis", "mags", "reads", "nom", "metab"]
+)
 def test_pipeline_query(db: Session, table):
     project1 = fakes.ProjectFactory(name="project1")
     project2 = fakes.ProjectFactory(name="project2")
@@ -370,6 +372,22 @@ def test_pipeline_query(db: Session, table):
     fakes.MetaproteomicAnalysisFactory(project=project1, name="analysis1")
     fakes.MetaproteomicAnalysisFactory(project=project1, name="analysis2")
     fakes.MetaproteomicAnalysisFactory(project=project2, name="analysis3")
+
+    fakes.MAGsAnalysisFactory(project=project1, name="mags1")
+    fakes.MAGsAnalysisFactory(project=project1, name="mags2")
+    fakes.MAGsAnalysisFactory(project=project2, name="mags3")
+
+    fakes.ReadBasedAnalysisFactory(project=project1, name="reads1")
+    fakes.ReadBasedAnalysisFactory(project=project1, name="reads2")
+    fakes.ReadBasedAnalysisFactory(project=project2, name="reads3")
+
+    fakes.NOMAnalysisFactory(project=project1, name="nom1")
+    fakes.NOMAnalysisFactory(project=project1, name="nom2")
+    fakes.NOMAnalysisFactory(project=project2, name="nom3")
+
+    fakes.MetabolomicsAnalysisFactory(project=project1, name="metab1")
+    fakes.MetabolomicsAnalysisFactory(project=project1, name="metab2")
+    fakes.MetabolomicsAnalysisFactory(project=project2, name="metab3")
     db.commit()
 
     # test projects not associated with biosamples
@@ -386,6 +404,10 @@ def test_pipeline_query(db: Session, table):
         "assembly": query.MetagenomeAssemblyQuerySchema,
         "annotation": query.MetagenomeAnnotationQuerySchema,
         "analysis": query.MetaproteomicAnalysisQuerySchema,
+        "mags": query.MAGsAnalysisQuerySchema,
+        "reads": query.ReadBasedAnalysisQuerySchema,
+        "nom": query.NOMAnalysisQuerySchema,
+        "metab": query.MetabolomicsAnalysisQuerySchema,
     }[table]
 
     q = query_schema()

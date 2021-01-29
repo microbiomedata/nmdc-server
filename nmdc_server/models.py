@@ -224,14 +224,9 @@ class Project(Base, AnnotatedModel):
 
     @property
     def omics_data(self) -> Iterator["PipelineStep"]:
-        omics_types = [
-            "reads_qc",
-            "metagenome_annotation",
-            "metagenome_assembly",
-            "metaproteomic_analysis",
-        ]
-        for omics_type in omics_types:
-            for pipeline in getattr(self, omics_type):
+        for model in workflow_activity_types:
+            name = model.__tablename__  # type: ignore
+            for pipeline in getattr(self, name):
                 yield pipeline
 
 
@@ -505,4 +500,15 @@ ModelType = Union[
     Type[NOMAnalysis],
     Type[MetabolomicsAnalysis],
     Type[GeneFunction],
+]
+
+workflow_activity_types = [
+    ReadsQC,
+    MetagenomeAssembly,
+    MetagenomeAnnotation,
+    MetaproteomicAnalysis,
+    MAGsAnalysis,
+    ReadBasedAnalysis,
+    NOMAnalysis,
+    MetabolomicsAnalysis,
 ]
