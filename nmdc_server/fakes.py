@@ -283,6 +283,37 @@ class MetaproteomicAnalysisFactory(PipelineStepBase):
         sqlalchemy_session = db
 
 
+class MAGsAnalysisFactory(PipelineStepBase):
+    class Meta:
+        model = models.MAGsAnalysis
+        sqlalchemy_session = db
+
+    input_contig_num: int = Faker("pyint")
+    too_short_contig_num: int = Faker("pyint")
+    lowDepth_contig_num: int = Faker("pyint")
+    unbinned_contig_num: int = Faker("pyint")
+    binned_contig_num: int = Faker("pyint")
+
+
+class MAGFactory(SQLAlchemyModelFactory):
+    class Meta:
+        model = models.MAG
+        sqlalchemy_session = db
+
+    bin_name: str = Faker("word")
+    number_of_contig: int = Faker("pyint")
+    completeness: float = Faker("pyfloat")
+    contamination: float = Faker("pyfloat")
+    gene_count: int = Faker("pyint")
+    bin_quality: str = Faker("word")
+    num_16s: int = Faker("pyint")
+    num_5s: int = Faker("pyint")
+    num_23s: int = Faker("pyint")
+    num_tRNA: int = Faker("pyint")
+
+    mags_analysis = SubFactory(MAGsAnalysisFactory)
+
+
 class GeneFunction(SQLAlchemyModelFactory):
     class Meta:
         model = models.GeneFunction

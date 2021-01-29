@@ -352,9 +352,49 @@ class MetaproteomicAnalysis(PipelineStep):
     pass
 
 
-OmicsTypes = Union[ReadsQC, MetagenomeAnnotation, MetagenomeAssembly, MetaproteomicAnalysis]
+class MAG(BaseModel):
+    bin_name: str
+    number_of_contig: int
+    completeness: float
+    contamination: float
+    gene_count: int
+    bin_quality: str
+    num_16s: int
+    num_5s: int
+    num_23s: int
+    num_tRNA: int
+
+
+class MAGCreate(MAG):
+    mags_analysis: "MAGsAnalysis"
+
+
+class MAGsAnalysisBase(PipelineStepBase):
+    type: str = "nmdc:MAGsAnalysis"
+    input_contig_num: int
+    too_short_contig_num: int
+    lowDepth_contig_num: int
+    unbinned_contig_num: int
+    binned_contig_num: int
+
+
+class MAGsAnalysis(PipelineStep):
+    type: str = "nmdc:MAGsAnalysis"
+    input_contig_num: int
+    too_short_contig_num: int
+    lowDepth_contig_num: int
+    unbinned_contig_num: int
+    binned_contig_num: int
+
+    mags_list: List[MAG]
+
+
+OmicsTypes = Union[
+    ReadsQC, MetagenomeAnnotation, MetagenomeAssembly, MetaproteomicAnalysis, MAGsAnalysis
+]
 Project.update_forward_refs()
 Biosample.update_forward_refs()
+MAGCreate.update_forward_refs()
 
 
 class FileDownloadBase(BaseModel):
