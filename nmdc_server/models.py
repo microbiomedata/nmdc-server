@@ -353,6 +353,42 @@ class MetaproteomicAnalysis(Base, PipelineStep):
     outputs = output_relationship(metaproteomic_analysis_output_association)
 
 
+mags_analysis_input_association = input_association("mags_analysis")
+mags_analysis_output_association = output_association("mags_analysis")
+
+
+class MAGsAnalysis(Base, PipelineStep):
+    __tablename__ = "mags_analysis"
+
+    input_contig_num = Column(BigInteger, nullable=False)
+    too_short_contig_num = Column(BigInteger, nullable=False)
+    lowDepth_contig_num = Column(BigInteger, nullable=False)
+    unbinned_contig_num = Column(BigInteger, nullable=False)
+    binned_contig_num = Column(BigInteger, nullable=False)
+
+    inputs = input_relationship(mags_analysis_input_association)
+    outputs = output_relationship(mags_analysis_output_association)
+
+
+class MAG(Base):
+    __tablename__ = "mag"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    mags_analysis_id = Column(String, ForeignKey("mags_analysis.id"), nullable=False)
+    bin_name = Column(String, nullable=False)
+    number_of_contig = Column(BigInteger, nullable=False)
+    completeness = Column(Float, nullable=False)
+    contamination = Column(Float, nullable=False)
+    gene_count = Column(BigInteger, nullable=False)
+    bin_quality = Column(String, nullable=False)
+    num_16s = Column(BigInteger, nullable=False)
+    num_5s = Column(BigInteger, nullable=False)
+    num_23s = Column(BigInteger, nullable=False)
+    num_tRNA = Column(BigInteger, nullable=False)
+
+    mags_analysis = relationship(MAGsAnalysis, backref="mags_list")
+
+
 class Website(Base):
     __tablename__ = "website"
 
@@ -426,5 +462,6 @@ ModelType = Union[
     Type[MetagenomeAssembly],
     Type[MetagenomeAnnotation],
     Type[MetaproteomicAnalysis],
+    Type[MAGsAnalysis],
     Type[GeneFunction],
 ]

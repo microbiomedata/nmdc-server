@@ -41,6 +41,14 @@ def load(db: Session):
     project.load(db, mongodb["omics_processing_set"].find())
     db.commit()
 
+    logger.info("Loading MAGs...")
+    pipeline.load(
+        db,
+        mongodb["mags_activity_set"].find(),
+        pipeline.load_mags,
+    )
+    db.commit()
+
     logger.info("Loading metagenome annotation...")
     cursor = mongodb["metagenome_annotation_activity_set"].find(
         no_cursor_timeout=True,

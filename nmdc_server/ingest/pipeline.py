@@ -71,6 +71,16 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
     return row
 
 
+def load_mags(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
+    mags = obj.pop("mags_list", [])
+    mags_analysis = load_mags_base(db, obj, **kwargs)
+    for mag in mags:
+        mag_dict = schemas.MAG(**mag).dict()
+        mags_analysis.mags_list.append(models.MAG(**mag_dict))  # type: ignore
+
+    return mags_analysis
+
+
 def generate_pipeline_loader(schema, model) -> LoadObject:
     def loader(db: Session, obj: Dict[str, Any], **kwargs: Any) -> LoadObjectReturn:
         pipeline_dict = schema(**obj)
@@ -89,6 +99,7 @@ load_mg_assembly = generate_pipeline_loader(
 load_mp_analysis = generate_pipeline_loader(
     schemas.MetaproteomicAnalysisBase, models.MetaproteomicAnalysis
 )
+load_mags_base = generate_pipeline_loader(schemas.MAGsAnalysisBase, models.MAGsAnalysis)
 
 
 def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
