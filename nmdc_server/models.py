@@ -353,18 +353,6 @@ class MetaproteomicAnalysis(Base, PipelineStep):
     outputs = output_relationship(metaproteomic_analysis_output_association)
 
 
-ModelType = Union[
-    Type[Study],
-    Type[Project],
-    Type[DataObject],
-    Type[Biosample],
-    Type[ReadsQC],
-    Type[MetagenomeAssembly],
-    Type[MetagenomeAnnotation],
-    Type[MetaproteomicAnalysis],
-]
-
-
 class Website(Base):
     __tablename__ = "website"
 
@@ -427,3 +415,16 @@ class FileDownload(Base):
     orcid = Column(String, nullable=False)
 
     data_object = relationship(DataObject)
+
+
+ModelType = Union[
+    Type[Study],
+    Type[Project],
+    Type[DataObject],
+    Type[Biosample],
+    Type[ReadsQC],
+    Type[MetagenomeAssembly],
+    Type[MetagenomeAnnotation],
+    Type[MetaproteomicAnalysis],
+    Type[GeneFunction],
+]

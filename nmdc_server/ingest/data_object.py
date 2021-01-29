@@ -2,11 +2,13 @@ from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server.models import DataObject
+from nmdc_server.schemas import DataObjectCreate
 
 
 def load(db: Session, cursor: Cursor):
-    for obj in cursor:
-        obj.pop("_id")
+    fields = set(DataObjectCreate.__fields__.keys())
+    for obj_ in cursor:
+        obj = {key: obj_[key] for key in obj_.keys() & fields}
 
         # TODO: Remove once the source data is fixed.
         url = obj.get("url", "")

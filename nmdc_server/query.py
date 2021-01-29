@@ -75,6 +75,18 @@ def _join_workflow_execution(query: Query) -> Query:
     )
 
 
+def _join_gene_function(query: Query) -> Query:
+    return query.join(
+        models.MGAGeneFunction,
+        models.MGAGeneFunction.metagenome_annotation_id == models.MetagenomeAnnotation.id,
+        isouter=True,
+    ).join(models.GeneFunction, isouter=True)
+
+
+def _join_common(query: Query) -> Query:
+    return _join_envo(_join_gene_function(query))
+
+
 def _join_envo_facet(query: Query, attribute: str) -> Query:
     if attribute == "env_broad_scale":
         return query.join(
@@ -118,9 +130,10 @@ class Table(Enum):
     metagenome_annotation = "metagenome_annotation"
     metaproteomic_analysis = "metaproteomic_analysis"
     principal_investigator = "principal_investigator"
+    gene_function = "gene_function"
 
     @property
-    def model(self) -> Union[models.ModelType, AliasedClass]:
+    def model(self) -> Union[models.ModelType, AliasedClass]:  # noqa: fix complexity
         if self == Table.biosample:
             return models.Biosample
         elif self == Table.study:
@@ -143,11 +156,13 @@ class Table(Enum):
             return models.MetagenomeAnnotation
         elif self == Table.metaproteomic_analysis:
             return models.MetaproteomicAnalysis
+        elif self == Table.gene_function:
+            return models.GeneFunction
         raise Exception("Unknown table")
 
     def query(self, db: Session) -> Query:
         if self == Table.biosample:
-            query = (
+            query = _join_workflow_execution(
                 db.query(distinct(models.Biosample.id).label("id"))
                 .join(models.Project, isouter=True)
                 .join(models.DataObject, isouter=True)
@@ -233,7 +248,7 @@ class Table(Enum):
 
         else:
             raise Exception("Unknown table")
-        return _join_envo(query)
+        return _join_common(query)
 
 
 _envo_keys: Dict[str, Tuple[Table, str]] = {

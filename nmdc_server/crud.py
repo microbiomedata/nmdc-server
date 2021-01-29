@@ -27,6 +27,16 @@ def get_or_create(
 
 # summaries
 def get_database_summary(db: Session) -> schemas.DatabaseSummary:
+    gene_function_count = db.query(models.GeneFunction).count()
+    gene_function = schemas.TableSummary(
+        total=gene_function_count,
+        attributes={
+            "id": schemas.AttributeSummary(
+                count=gene_function_count,
+                type="string",
+            )
+        },
+    )
     return schemas.DatabaseSummary(
         study=aggregations.get_table_summary(db, models.Study),
         project=aggregations.get_table_summary(db, models.Project),
@@ -36,6 +46,7 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         metagenome_assembly=aggregations.get_table_summary(db, models.MetagenomeAssembly),
         metagenome_annotation=aggregations.get_table_summary(db, models.MetagenomeAnnotation),
         metaproteomic_analysis=aggregations.get_table_summary(db, models.MetaproteomicAnalysis),
+        gene_function=gene_function,
     )
 
 
