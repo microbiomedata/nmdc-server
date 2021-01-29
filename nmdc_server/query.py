@@ -72,6 +72,10 @@ def _join_workflow_execution(query: Query) -> Query:
         .join(models.MetagenomeAssembly, isouter=True)
         .join(models.MetagenomeAnnotation, isouter=True)
         .join(models.MetaproteomicAnalysis, isouter=True)
+        .join(models.MAGsAnalysis, isouter=True)
+        .join(models.ReadBasedAnalysis, isouter=True)
+        .join(models.NOMAnalysis, isouter=True)
+        .join(models.MetabolomicsAnalysis, isouter=True)
     )
 
 
@@ -104,6 +108,27 @@ def _join_envo_facet(query: Query, attribute: str) -> Query:
         raise Exception("Unknown envo attribute")
 
 
+def _query_pipeline(db: Session, table: "Table") -> Query:
+    query = (
+        db.query(distinct(table.model.id).label("id"))  # type: ignore
+        .join(models.Project)
+        .join(models.DataObject, isouter=True)
+        .join(models.Biosample, isouter=True)
+        .join(
+            models.Study,
+            models.Biosample.study_id == models.Study.id
+            or models.Project.study_id == models.Study.id,
+            isouter=True,
+        )
+        .join(models.PrincipalInvestigator, isouter=True)
+    )
+
+    for model in models.workflow_activity_types:
+        if model != table.model:
+            query = query.join(model, isouter=True)
+    return query
+
+
 class InvalidQuery(Exception):
     pass
 
@@ -120,6 +145,7 @@ class Operation(Enum):
 class Table(Enum):
     biosample = "biosample"
     study = "study"
+    principal_investigator = "principal_investigator"
     project = "project"
     data_object = "data_object"
     env_broad_scale = "env_broad_scale"
@@ -129,36 +155,17 @@ class Table(Enum):
     metagenome_assembly = "metagenome_assembly"
     metagenome_annotation = "metagenome_annotation"
     metaproteomic_analysis = "metaproteomic_analysis"
-    principal_investigator = "principal_investigator"
+    mags_analysis = "mags_analysis"
+    nom_analysis = "nom_analysis"
+    read_based_analysis = "read_based_analysis"
+    metabolomics_analysis = "metabolomics_analysis"
     gene_function = "gene_function"
 
     @property
-    def model(self) -> Union[models.ModelType, AliasedClass]:  # noqa: fix complexity
-        if self == Table.biosample:
-            return models.Biosample
-        elif self == Table.study:
-            return models.Study
-        elif self == Table.project:
-            return models.Project
-        elif self == Table.data_object:
-            return models.DataObject
-        elif self == Table.env_broad_scale:
-            return EnvBroadScaleTerm
-        elif self == Table.env_local_scale:
-            return EnvLocalScaleTerm
-        elif self == Table.env_medium:
-            return EnvMediumTerm
-        elif self == Table.reads_qc:
-            return models.ReadsQC
-        elif self == Table.metagenome_assembly:
-            return models.MetagenomeAssembly
-        elif self == Table.metagenome_annotation:
-            return models.MetagenomeAnnotation
-        elif self == Table.metaproteomic_analysis:
-            return models.MetaproteomicAnalysis
-        elif self == Table.gene_function:
-            return models.GeneFunction
-        raise Exception("Unknown table")
+    def model(self) -> Union[models.ModelType, AliasedClass]:
+        if self not in _table_model_map:
+            raise Exception("Unknown table")
+        return _table_model_map[self]
 
     def query(self, db: Session) -> Query:
         if self == Table.biosample:
@@ -188,74 +195,6 @@ class Table(Enum):
                 .join(models.Study, models.Study.id == models.Project.study_id, isouter=True)
                 .join(models.PrincipalInvestigator, isouter=True)
             )
-        elif self == Table.reads_qc:
-            query = (
-                db.query(distinct(models.ReadsQC.id).label("id"))
-                .join(models.Project)
-                .join(models.DataObject, isouter=True)
-                .join(models.Biosample, isouter=True)
-                .join(
-                    models.Study,
-                    models.Biosample.study_id == models.Study.id
-                    or models.Project.study_id == models.Study.id,
-                    isouter=True,
-                )
-                .join(models.PrincipalInvestigator, isouter=True)
-                .join(models.MetagenomeAssembly, isouter=True)
-                .join(models.MetagenomeAnnotation, isouter=True)
-                .join(models.MetaproteomicAnalysis, isouter=True)
-            )
-        elif self == Table.metagenome_assembly:
-            query = (
-                db.query(distinct(models.MetagenomeAssembly.id).label("id"))
-                .join(models.Project)
-                .join(models.DataObject, isouter=True)
-                .join(models.Biosample, isouter=True)
-                .join(
-                    models.Study,
-                    models.Biosample.study_id == models.Study.id
-                    or models.Project.study_id == models.Study.id,
-                    isouter=True,
-                )
-                .join(models.PrincipalInvestigator, isouter=True)
-                .join(models.ReadsQC, isouter=True)
-                .join(models.MetagenomeAnnotation, isouter=True)
-                .join(models.MetaproteomicAnalysis, isouter=True)
-            )
-        elif self == Table.metagenome_annotation:
-            query = (
-                db.query(distinct(models.MetagenomeAnnotation.id).label("id"))
-                .join(models.Project)
-                .join(models.DataObject, isouter=True)
-                .join(models.Biosample, isouter=True)
-                .join(
-                    models.Study,
-                    models.Biosample.study_id == models.Study.id
-                    or models.Project.study_id == models.Study.id,
-                    isouter=True,
-                )
-                .join(models.PrincipalInvestigator, isouter=True)
-                .join(models.ReadsQC, isouter=True)
-                .join(models.MetagenomeAssembly, isouter=True)
-                .join(models.MetaproteomicAnalysis, isouter=True)
-            )
-        elif self == Table.metaproteomic_analysis:
-            query = (
-                db.query(distinct(models.MetaproteomicAnalysis.id).label("id"))
-                .join(models.Project)
-                .join(models.DataObject, isouter=True)
-                .join(models.Biosample, isouter=True)
-                .join(
-                    models.Study,
-                    models.Biosample.study_id == models.Study.id
-                    or models.Project.study_id == models.Study.id,
-                    isouter=True,
-                )
-                .join(models.PrincipalInvestigator, isouter=True)
-                .join(models.ReadsQC, isouter=True)
-                .join(models.MetagenomeAssembly, isouter=True)
-                .join(models.MetagenomeAnnotation, isouter=True)
-            )
         elif self == Table.data_object:
             query = (
                 db.query(distinct(models.DataObject.id).label("id"))
@@ -273,11 +212,32 @@ class Table(Enum):
                 .join(models.MetagenomeAnnotation, isouter=True)
                 .join(models.MetaproteomicAnalysis, isouter=True)
             )
+        elif self.model in models.workflow_activity_types:
+            return _query_pipeline(db, self)
 
         else:
             raise Exception("Unknown table")
         return _join_common(query)
 
+
+_table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
+    Table.biosample: models.Biosample,
+    Table.study: models.Study,
+    Table.project: models.Project,
+    Table.data_object: models.DataObject,
+    Table.env_broad_scale: EnvBroadScaleTerm,
+    Table.env_local_scale: EnvLocalScaleTerm,
+    Table.env_medium: EnvMediumTerm,
+    Table.reads_qc: models.ReadsQC,
+    Table.metagenome_assembly: models.MetagenomeAssembly,
+    Table.metagenome_annotation: models.MetagenomeAnnotation,
+    Table.metaproteomic_analysis: models.MetaproteomicAnalysis,
+    Table.mags_analysis: models.MAGsAnalysis,
+    Table.nom_analysis: models.NOMAnalysis,
+    Table.read_based_analysis: models.ReadBasedAnalysis,
+    Table.metabolomics_analysis: models.MetabolomicsAnalysis,
+    Table.gene_function: models.GeneFunction,
+}
 
 _envo_keys: Dict[str, Tuple[Table, str]] = {
     "env_broad_scale": (Table.env_broad_scale, "label"),
@@ -591,29 +551,33 @@ class StudyQuerySchema(BaseQuerySchema):
     def _count_omics_data_query(self, db: Session, query_schema: BaseQuerySchema) -> Query:
         model = query_schema.table.model
         table_name = model.__tablename__
-        subquery = query_schema.query(db).subquery()
+
         return (
             db.query(
                 models.Project.study_id.label(f"{table_name}_study_id"),
                 func.count(model.id).label(f"{table_name}_count"),
             )
             .join(model, isouter=True)
-            .join(subquery, model.project_id == models.Project.id, isouter=True)  # type: ignore
+            .join(models.Biosample, isouter=True)
+            .join(
+                models.Study,
+                models.Biosample.study_id == models.Study.id
+                or models.Project.study_id == models.Study.id,
+                isouter=True,
+            )
+            .join(models.PrincipalInvestigator, isouter=True)
             .group_by(models.Project.study_id)
         )
 
     def _inject_omics_data_summary(self, db: Session, query: Query) -> Query:
-        omics_classes = [
-            ReadsQCQuerySchema,
-            MetagenomeAssemblyQuerySchema,
-            MetagenomeAnnotationQuerySchema,
-            MetaproteomicAnalysisQuerySchema,
-        ]
-
         aggs = []
-        for omics_class in omics_classes:
-            query_schema = omics_class(conditions=self.conditions)
-            table_name = query_schema.table.model.__tablename__
+        for omics_class in workflow_search_classes:
+            pipeline_model = omics_class().table.model
+            table_name = pipeline_model.__tablename__
+            filter_conditions = [
+                c for c in self.conditions if c.table in {"project", table_name, "biosample"}
+            ]
+            query_schema = omics_class(conditions=filter_conditions)
             omics_subquery = self._count_omics_data_query(db, query_schema).subquery()
             study_id = getattr(omics_subquery.c, f"{table_name}_study_id")
             query = query.join(omics_subquery, self.table.model.id == study_id, isouter=True)
@@ -691,6 +655,30 @@ class MetaproteomicAnalysisQuerySchema(BaseQuerySchema):
         return Table.metaproteomic_analysis
 
 
+class MAGsAnalysisQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.mags_analysis
+
+
+class ReadBasedAnalysisQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.read_based_analysis
+
+
+class NOMAnalysisQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.nom_analysis
+
+
+class MetabolomicsAnalysisQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metabolomics_analysis
+
+
 class BaseSearchResponse(BaseModel):
     count: int
 
@@ -750,6 +738,22 @@ class MetaproteomicAnalysisSearchResponse(BaseSearchResponse):
     results: List[schemas.MetaproteomicAnalysis]
 
 
+class MAGsAnalysisSearchResponse(BaseSearchResponse):
+    results: List[schemas.MAGsAnalysis]
+
+
+class ReadBasedAnalysisSearchResponse(BaseSearchResponse):
+    results: List[schemas.ReadBasedAnalysis]
+
+
+class NOMAnalysisSearchResponse(BaseSearchResponse):
+    results: List[schemas.NOMAnalysis]
+
+
+class MetabolomicsAnalysisSearchResponse(BaseSearchResponse):
+    results: List[schemas.MetabolomicsAnalysis]
+
+
 class FacetResponse(BaseModel):
     facets: Dict[schemas.AnnotationValue, int]
 
@@ -757,3 +761,15 @@ class FacetResponse(BaseModel):
 class BinnedFacetResponse(BaseModel):
     facets: List[int]
     bins: List[NumericValue]
+
+
+workflow_search_classes = [
+    ReadsQCQuerySchema,
+    MetagenomeAssemblyQuerySchema,
+    MetagenomeAnnotationQuerySchema,
+    MetaproteomicAnalysisQuerySchema,
+    MAGsAnalysisQuerySchema,
+    ReadBasedAnalysisQuerySchema,
+    NOMAnalysisQuerySchema,
+    MetabolomicsAnalysisQuerySchema,
+]

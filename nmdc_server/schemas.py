@@ -92,6 +92,10 @@ class DatabaseSummary(BaseModel):
     metagenome_assembly: TableSummary
     metagenome_annotation: TableSummary
     metaproteomic_analysis: TableSummary
+    mags_analysis: TableSummary
+    read_based_analysis: TableSummary
+    nom_analysis: TableSummary
+    metabolomics_analysis: TableSummary
     gene_function: TableSummary
 
 
