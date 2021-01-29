@@ -72,3 +72,18 @@ View swagger page at `http://localhost:8000/docs`.
 ```
 tox
 ```
+
+### Troubleshooting
+
+Occasionally, a migration will fail to run correctly.  This will cause data ingestion to fail.
+The fix is to drop the existing database and to restart the service.  In docker-compose, this
+can be done by running
+```
+docker-compose run backend psql postgres -c 'drop database nmdc;'
+```
+
+On Spin, you can use the web interface to start a shell on the `db` instance and run:
+```
+psql -U postgres postgres -c 'drop database nmdc;'
+```
+Then, redeploy the backend service.
