@@ -290,6 +290,7 @@ class PipelineStep(PipelineStepBase):
 
 
 class ReadsQCBase(PipelineStepBase):
+    type: str = "nmdc:ReadQCAnalysis"
     input_read_count: int
     input_read_bases: int
     output_read_count: int
@@ -301,6 +302,7 @@ class ReadsQC(PipelineStep):
 
 
 class MetagenomeAssemblyBase(PipelineStepBase):
+    type: str = "nmdc:MetagenomeAssembly"
     scaffolds: int
     contigs: int
     scaf_bp: int
@@ -335,7 +337,7 @@ class MetagenomeAssembly(PipelineStep):
 
 
 class MetagenomeAnnotationBase(PipelineStepBase):
-    pass
+    type: str = "nmdc:MetagenomeAnnotation"
 
 
 class MetagenomeAnnotation(PipelineStep):
@@ -343,7 +345,7 @@ class MetagenomeAnnotation(PipelineStep):
 
 
 class MetaproteomicAnalysisBase(PipelineStepBase):
-    pass
+    type: str = "nmdc:MetaproteomicAnalysis"
 
 
 class MetaproteomicAnalysis(PipelineStep):
