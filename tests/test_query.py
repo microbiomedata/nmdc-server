@@ -483,3 +483,32 @@ def test_query_data_object(db: Session):
         ]
     )
     assert {"file2"} == {r.id for r in q.execute(db)}
+
+
+def test_query_gene_function(db: Session):
+    sample1 = fakes.BiosampleFactory(id="sample1")
+    fakes.BiosampleFactory(id="sample2")
+    gene_functions = [fakes.MGAGeneFunction(function__id=f"function{i}") for i in range(10)]
+    fakes.MetagenomeAnnotationFactory(gene_functions=gene_functions, project__biosample=sample1)
+    db.commit()
+
+    q = query.BiosampleQuerySchema(
+        conditions=[
+            {
+                "table": "gene_function",
+                "field": "id",
+                "value": "function1",
+            }
+        ],
+    )
+    assert {r.id for r in q.execute(db)} == {"sample1"}
+    q = query.BiosampleQuerySchema(
+        conditions=[
+            {
+                "table": "gene_function",
+                "field": "id",
+                "value": "invalid",
+            }
+        ],
+    )
+    assert {r.id for r in q.execute(db)} == set()
