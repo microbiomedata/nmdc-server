@@ -398,6 +398,14 @@ class NOMAnalysis(PipelineStep):
     pass
 
 
+class ReadBasedAnalysisBase(PipelineStepBase):
+    type: str = "nmdc:ReadBasedAnalysis"
+
+
+class ReadBasedAnalysis(PipelineStep):
+    pass
+
+
 OmicsTypes = Union[
     ReadsQC,
     MetagenomeAnnotation,
@@ -405,6 +413,7 @@ OmicsTypes = Union[
     MetaproteomicAnalysis,
     MAGsAnalysis,
     NOMAnalysis,
+    ReadBasedAnalysis,
 ]
 Project.update_forward_refs()
 Biosample.update_forward_refs()

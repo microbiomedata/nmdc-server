@@ -402,6 +402,17 @@ class NOMAnalysis(Base, PipelineStep):
     outputs = output_relationship(nom_analysis_output_association)
 
 
+read_based_analysis_input_association = input_association("read_based_analysis")
+read_based_analysis_output_association = output_association("read_based_analysis")
+
+
+class ReadBasedAnalysis(Base, PipelineStep):
+    __tablename__ = "read_based_analysis"
+
+    inputs = input_relationship(read_based_analysis_input_association)
+    outputs = output_relationship(read_based_analysis_output_association)
+
+
 class Website(Base):
     __tablename__ = "website"
 

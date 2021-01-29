@@ -315,7 +315,17 @@ class MAGFactory(SQLAlchemyModelFactory):
 
 
 class NOMAnalysisFactory(PipelineStepBase):
+    class Meta:
+        model = models.NOMAnalysis
+        sqlalchemy_session = db
+
     used: str = Faker("word")
+
+
+class ReadBasedAnalysisFactory(PipelineStepBase):
+    class Meta:
+        model = models.ReadBasedAnalysis
+        sqlalchemy_session = db
 
 
 class GeneFunction(SQLAlchemyModelFactory):
