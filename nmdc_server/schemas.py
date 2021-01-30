@@ -356,6 +356,21 @@ class MetaproteomicAnalysis(PipelineStep):
     pass
 
 
+class PeptideMGAGeneFunction(BaseModel):
+    subject: str
+    gene_function: str
+
+
+class MetaprotemoicPeptide(BaseModel):
+    peptide_sequence: str
+    peptide_sum_masic_abundance: int
+    peptide_spectral_count: int
+    best_protein: str
+    min_q_value: float
+
+    best_protein_object: "MGAGeneFunction"
+
+
 class MAG(BaseModel):
     bin_name: str
     number_of_contig: int
@@ -433,6 +448,7 @@ OmicsTypes = Union[
 Project.update_forward_refs()
 Biosample.update_forward_refs()
 MAGCreate.update_forward_refs()
+MetaprotemoicPeptide.update_forward_refs()
 
 
 class FileDownloadBase(BaseModel):

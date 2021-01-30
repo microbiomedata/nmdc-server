@@ -352,6 +352,43 @@ mags_analysis_input_association = input_association("mags_analysis")
 mags_analysis_output_association = output_association("mags_analysis")
 
 
+class MetaproteomicPeptide(Base):
+    __tablename__ = "metaproteomic_peptide"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    metaproteomic_analysis_id = Column(
+        String, ForeignKey("metaproteomic_analysis.id"), nullable=False
+    )
+
+    peptide_sequence = Column(String, nullable=False)
+    peptide_sum_masic_abundance = Column(BigInteger, nullable=False)
+    peptide_spectral_count = Column(BigInteger, nullable=False)
+    best_protein = Column(String, ForeignKey("mga_gene_function.subject"), nullable=False)
+    min_q_value = Column(Float, nullable=False)
+
+    best_protein_object = relationship("MGAGeneFunction")
+    metaproteomic_analysis = relationship(
+        MetaproteomicAnalysis, backref="has_peptide_quantifications"
+    )
+
+
+class PeptideMGAGeneFunction(Base):
+    __tablename__ = "peptide_mga_gene_function"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    subject = Column(String, ForeignKey("mga_gene_function.subject"), nullable=False)
+    metaproteomic_peptide_id = Column(
+        UUID(as_uuid=True), ForeignKey("metaproteomic_peptide.id"), nullable=False
+    )
+
+    mga_gene_function = relationship("MGAGeneFunction")
+    metaproteomic_peptide = relationship("MetaproteomicPeptide")
+
+    @property
+    def gene_function(self) -> str:
+        return self.mga_gene_function.gene_function_id
+
+
 class MAGsAnalysis(Base, PipelineStep):
     __tablename__ = "mags_analysis"
 
@@ -468,7 +505,7 @@ class MGAGeneFunction(Base):  # metagenome annotation
         String, ForeignKey("metagenome_annotation.id"), nullable=False
     )
     gene_function_id = Column(String, ForeignKey("gene_function.id"), nullable=False)
-    subject = Column(String, nullable=False)
+    subject = Column(String, nullable=False, unique=True)
 
     function = relationship(GeneFunction)
 
