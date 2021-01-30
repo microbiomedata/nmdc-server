@@ -516,7 +516,7 @@ def test_query_data_object(db: Session):
     assert {"file2"} == {r.id for r in q.execute(db)}
 
 
-def test_query_gene_function(db: Session):
+def test_query_gene_function_biosample(db: Session):
     sample1 = fakes.BiosampleFactory(id="sample1")
     fakes.BiosampleFactory(id="sample2")
     gene_functions = [fakes.MGAGeneFunction(function__id=f"function{i}") for i in range(10)]
@@ -543,3 +543,64 @@ def test_query_gene_function(db: Session):
         ],
     )
     assert {r.id for r in q.execute(db)} == set()
+
+
+def test_query_gene_function_mga_metap(db: Session):
+    sample1 = fakes.BiosampleFactory(id="sample1")
+    fakes.BiosampleFactory(id="sample2")
+    gene_functions = [fakes.MGAGeneFunction(function__id=f"function{i}") for i in range(10)]
+    fakes.MetagenomeAnnotationFactory(
+        id="mga1", gene_functions=gene_functions, project__biosample=sample1
+    )
+    metap = fakes.MetaproteomicAnalysisFactory(id="metap1")
+    peptide = fakes.MetaproteomicPeptideFactory(
+        metaproteomic_analysis=metap, best_protein_object=gene_functions[2]
+    )
+    fakes.PeptideMGAGeneFunctionFactory(
+        mga_gene_function=gene_functions[1], metaproteomic_peptide=peptide
+    )
+    db.commit()
+
+    q = query.MetagenomeAnnotationQuerySchema(
+        conditions=[
+            {
+                "table": "gene_function",
+                "field": "id",
+                "value": "function1",
+            }
+        ],
+    )
+    assert {r.id for r in q.execute(db)} == {"mga1"}
+
+    q = query.MetagenomeAnnotationQuerySchema(
+        conditions=[
+            {
+                "table": "gene_function",
+                "field": "id",
+                "value": "invalid",
+            }
+        ],
+    )
+    assert {r.id for r in q.execute(db)} == set()
+
+    q1 = query.MetaproteomicAnalysisQuerySchema(
+        conditions=[
+            {
+                "table": "gene_function",
+                "field": "id",
+                "value": "function1",
+            }
+        ],
+    )
+    assert {r.id for r in q1.execute(db)} == {"metap1"}
+
+    q1 = query.MetaproteomicAnalysisQuerySchema(
+        conditions=[
+            {
+                "table": "gene_function",
+                "field": "id",
+                "value": "invalid",
+            }
+        ],
+    )
+    assert {r.id for r in q1.execute(db)} == set()

@@ -23,6 +23,8 @@ EnvMedium = aliased(models.EnvoTerm)
 EnvMediumAncestor = aliased(models.EnvoAncestor)
 EnvMediumTerm = aliased(models.EnvoTerm)
 
+MetaPGeneFunction = aliased(models.GeneFunction)
+
 
 class InvalidAttributeException(Exception):
     def __init__(self, table: str, attribute: str):
@@ -80,11 +82,37 @@ def _join_workflow_execution(query: Query) -> Query:
 
 
 def _join_gene_function(query: Query) -> Query:
-    return query.join(
-        models.MGAGeneFunction,
-        models.MGAGeneFunction.metagenome_annotation_id == models.MetagenomeAnnotation.id,
-        isouter=True,
-    ).join(models.GeneFunction, isouter=True)
+    aliased_mga_gene_function = aliased(models.MGAGeneFunction)
+    return (
+        query.join(
+            models.MGAGeneFunction,
+            models.MGAGeneFunction.metagenome_annotation_id == models.MetagenomeAnnotation.id,
+            isouter=True,
+        )
+        .join(models.GeneFunction, isouter=True)
+        .join(
+            models.MetaproteomicPeptide,
+            models.MetaproteomicPeptide.metaproteomic_analysis_id
+            == models.MetaproteomicAnalysis.id,
+            isouter=True,
+        )
+        .join(
+            models.PeptideMGAGeneFunction,
+            models.PeptideMGAGeneFunction.metaproteomic_peptide_id
+            == models.MetaproteomicPeptide.id,
+            isouter=True,
+        )
+        .join(
+            aliased_mga_gene_function,
+            models.PeptideMGAGeneFunction.subject == aliased_mga_gene_function.subject,
+            isouter=True,
+        )
+        .join(
+            MetaPGeneFunction,
+            MetaPGeneFunction.id == aliased_mga_gene_function.gene_function_id,
+            isouter=True,
+        )
+    )
 
 
 def _join_common(query: Query) -> Query:
@@ -160,6 +188,7 @@ class Table(Enum):
     read_based_analysis = "read_based_analysis"
     metabolomics_analysis = "metabolomics_analysis"
     gene_function = "gene_function"
+    metap_gene_function = "metap_gene_function"
 
     @property
     def model(self) -> Union[models.ModelType, AliasedClass]:
@@ -237,6 +266,7 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.read_based_analysis: models.ReadBasedAnalysis,
     Table.metabolomics_analysis: models.MetabolomicsAnalysis,
     Table.gene_function: models.GeneFunction,
+    Table.metap_gene_function: MetaPGeneFunction,
 }
 
 _envo_keys: Dict[str, Tuple[Table, str]] = {
@@ -398,8 +428,17 @@ class BaseQuerySchema(BaseModel):
         query = base_query or self.table.query(db)
         if any([c.table == Table.gene_function for c in self.conditions]):
             query = _join_gene_function(query)
-        for _, conditions in self.groups:
-            filters = [c.compare() for c in conditions]
+        for key, conditions in self.groups:
+            extra_conditions: List[BaseConditionSchema] = []
+            if key == "Table.gene_function:id":
+                for gf_condition in conditions:
+                    condition_dict = gf_condition.dict()
+                    condition_dict["table"] = Table.metap_gene_function
+                    print(condition_dict)
+                    extra_conditions += [gf_condition, SimpleConditionSchema(**condition_dict)]
+
+            all_conditions = list(conditions) + extra_conditions
+            filters = [c.compare() for c in all_conditions]
             query = query.filter(or_(*filters))
 
         return query

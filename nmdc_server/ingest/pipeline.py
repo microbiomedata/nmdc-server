@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import Any, Dict, List, Tuple
+from typing import Any, cast, Dict, List, Tuple
 from uuid import UUID, uuid4
 
 from pymongo.collection import Collection
@@ -80,6 +80,31 @@ def load_mags(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
     return mags_analysis
 
 
+def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
+    peptides = obj.pop("has_peptide_quantifications", [])
+    pipeline = cast(models.MetaproteomicAnalysis, load_mp_analysis_base(db, obj, **kwargs))
+
+    for p in peptides:
+        if not db.query(models.MGAGeneFunction).filter_by(subject=p["best_protein"]).first():
+            continue
+
+        proteins = p.pop("all_proteins", [])
+        peptide = models.MetaproteomicPeptide(metaproteomic_analysis=pipeline, **p)
+        db.add(peptide)
+
+        for protein in proteins:
+            if not db.query(models.MGAGeneFunction).filter_by(subject=protein).first():
+                continue
+            db.add(
+                models.PeptideMGAGeneFunction(
+                    subject=protein,
+                    metaproteomic_peptide=peptide,
+                )
+            )
+
+    return pipeline
+
+
 def generate_pipeline_loader(schema, model) -> LoadObject:
     def loader(db: Session, obj: Dict[str, Any], **kwargs: Any) -> LoadObjectReturn:
         pipeline_dict = schema(**obj)
@@ -95,7 +120,7 @@ load_reads_qc = generate_pipeline_loader(schemas.ReadsQCBase, models.ReadsQC)
 load_mg_assembly = generate_pipeline_loader(
     schemas.MetagenomeAssemblyBase, models.MetagenomeAssembly
 )
-load_mp_analysis = generate_pipeline_loader(
+load_mp_analysis_base = generate_pipeline_loader(
     schemas.MetaproteomicAnalysisBase, models.MetaproteomicAnalysis
 )
 load_mags_base = generate_pipeline_loader(schemas.MAGsAnalysisBase, models.MAGsAnalysis)
