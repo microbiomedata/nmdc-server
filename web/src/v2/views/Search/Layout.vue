@@ -5,6 +5,7 @@ import {
 
 import SearchResults from '@/components/Presentation/SearchResults.vue';
 import { types } from '@/encoding';
+import { fieldDisplayName } from '@/util';
 import { api } from '@/data/api';
 
 import { conditions, toggleConditions } from '@/v2/store';
@@ -33,7 +34,7 @@ export default defineComponent({
         .filter((c) => c.table === 'study' && c.field === 'study_id')
         .map((c) => c.value)
     ));
-    function setChecked(studyId) {
+    function setChecked(studyId: string) {
       toggleConditions([{
         value: studyId,
         table: 'study',
@@ -75,9 +76,11 @@ export default defineComponent({
       studyType,
       study,
       studyCheckboxState,
+      types,
       /* methods */
       setChecked,
       setExpanded,
+      fieldDisplayName,
     };
   },
 });
@@ -117,6 +120,22 @@ export default defineComponent({
                       @change="setChecked(result.id)"
                     />
                   </v-list-item-action>
+                </template>
+                <template #item-content="props">
+                  <div>
+                    <template
+                      v-for="item in props.result.omics_counts"
+                    >
+                      <v-chip
+                        v-if="item.count"
+                        :key="item.type"
+                        small
+                        class="mr-2 my-1"
+                      >
+                        {{ fieldDisplayName(item.type) }}: {{ item.count }}
+                      </v-chip>
+                    </template>
+                  </div>
                 </template>
               </SearchResults>
             </v-card>
