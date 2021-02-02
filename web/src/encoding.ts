@@ -1,6 +1,25 @@
 import colors from './colors';
+import { entityType } from './data/api';
 
-const types = {
+export interface EntityData {
+  icon: string;
+  heading: string;
+  name: string;
+  plural: string;
+  visible: boolean;
+}
+
+export interface FieldsData {
+  icon?: string;
+  hideFacet?: boolean;
+  sortKey?: number;
+  name?: string;
+  group?: string;
+  hideAttr?: boolean;
+  encode?: (input: string) => string,
+}
+
+const types: Record<entityType, EntityData> = {
   study: {
     icon: 'mdi-book',
     heading: 'Studies',
@@ -16,13 +35,14 @@ const types = {
     visible: true,
   },
   biosample: {
-    icon: 'mdi-earth',
+    icon: 'mdi-test-tube',
     heading: 'Environments',
     name: 'sample',
     plural: 'samples',
     visible: true,
   },
   reads_qc: {
+    icon: 'mdi-dna',
     heading: 'Reads QC',
     name: 'reads_qc',
     plural: 'Reads QC',
@@ -56,9 +76,16 @@ const types = {
     plural: 'Data objects',
     visible: false,
   },
+  gene_function: {
+    icon: 'mdi-dna',
+    heading: 'Gene Function',
+    name: 'gene_function',
+    plural: 'Gene functions',
+    visible: true,
+  },
 };
 
-const fields = {
+const fields: Record<string, FieldsData> = {
   id: {
     icon: 'mdi-key',
     hideFacet: true,
@@ -206,6 +233,33 @@ const fields = {
   /* END disable uniques */
 };
 
+/**
+ *  If any of the above overrides should only happen on a single entity,
+ * override them here
+ */
+const tableFields: Record<entityType, Record<string, FieldsData>> = {
+  gene_function: {
+    id: {
+      icon: 'mdi-dna',
+      group: 'Function',
+      name: 'KO term',
+      encode: (v: string) => {
+        const prefix = 'KEGG:ORTHOLOG';
+        if (v.startsWith(prefix)) return v;
+        return `${prefix}:${v}`;
+      },
+    },
+  },
+  biosample: {},
+  study: {},
+  project: {},
+  reads_qc: {},
+  metagenome_annotation: {},
+  metagenome_assembly: {},
+  metaproteomic_analysis: {},
+  data_object: {},
+};
+
 const ecosystems = [
   {
     name: 'Host-associated',
@@ -225,16 +279,20 @@ const ecosystems = [
   },
 ];
 
-function getField(name) {
+function getField(name: string, table?: entityType): FieldsData {
+  if (table && table in tableFields) {
+    if (name in tableFields[table]) {
+      return tableFields[table][name];
+    }
+  }
   if (name in fields) {
     return fields[name];
   }
-  return null;
+  return {};
 }
 
 export {
   types,
-  fields,
   ecosystems,
   getField,
 };

@@ -4,7 +4,10 @@ function removeCondition(conditions: Condition[], conds: Condition[]) {
   const copy = conditions.slice();
   conds.forEach((c) => {
     const foundIndex = copy.findIndex((cond) => (
-      cond.field === c.field && cond.op === c.op && cond.value === c.value));
+      cond.table === c.table
+      && cond.field === c.field
+      && cond.op === c.op
+      && cond.value === c.value));
     if (foundIndex >= 0) {
       copy.splice(foundIndex, 1);
     }
@@ -12,4 +15,38 @@ function removeCondition(conditions: Condition[], conds: Condition[]) {
   return copy;
 }
 
-export default removeCondition;
+/**
+ * Format bytes as human-readable text.
+ *
+ * @param bytes Number of bytes.
+ * @param si True to use metric (SI) units, aka powers of 1000. False to use
+ *           binary (IEC), aka powers of 1024.
+ * @param dp Number of decimal places to display.
+ *
+ * @return Formatted string.
+ *
+ * https://stackoverflow.com/questions/10420352/converting-file-size-in-bytes-to-human-readable-string
+ */
+function humanFileSize(bytes: number, si = false, dp = 1) {
+  const thresh = si ? 1000 : 1024;
+  if (Math.abs(bytes) < thresh) {
+    return `${bytes} B`;
+  }
+  const units = si
+    ? ['kB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB']
+    : ['KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB'];
+  let u = -1;
+  const r = 10 ** dp;
+  let _bytes = bytes;
+  do {
+    _bytes /= thresh;
+    u += 1;
+  } while (Math.round(Math.abs(_bytes) * r) / r >= thresh && u < units.length - 1);
+
+  return `${_bytes.toFixed(dp)} ${units[u]}`;
+}
+
+export {
+  humanFileSize,
+  removeCondition,
+};

@@ -9,11 +9,12 @@
 </template>
 
 <script>
+import Vue from 'vue';
 import { GChart } from 'vue-google-charts';
 import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
 
-export default {
+export default Vue.extend({
   name: 'FacetBarChart',
   components: {
     GChart,
@@ -73,7 +74,6 @@ export default {
           if (selection.length === 1) {
             const [value] = this.chartData[selection[0].row + 1];
             this.$emit('selected', {
-              type: this.table,
               conditions: [{
                 field: this.field,
                 op: '==',
@@ -152,5 +152,5 @@ export default {
       };
     },
   },
-};
+});
 </script>

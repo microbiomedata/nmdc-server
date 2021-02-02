@@ -4,9 +4,8 @@ import { mapGetters, mapState } from 'vuex';
 import { types } from '@/encoding';
 import { api } from '@/data/api';
 import FacetedSearch from '@/components/Presentation/FacetedSearch.vue';
-
-import ConditionChips from './ConditionChips.vue';
-import MenuContent from './MenuContent.vue';
+import ConditionChips from '@/components/Presentation/ConditionChips.vue';
+import MenuContent from '@/components/Presentation/MenuContent.vue';
 
 export default Vue.extend({
   components: {
@@ -68,7 +67,7 @@ export default Vue.extend({
   >
     <div class="mx-3 my-2">
       <div class="text-subtitle-2 primary--text">
-        I am looking for...
+        I want to search by...
       </div>
       <v-chip-group
         :value="type"
@@ -114,11 +113,12 @@ export default Vue.extend({
         <MenuContent
           v-bind="{
             field,
-            type: table,
+            table,
             isOpen,
             conditions,
-            summary: typeSummary[field],
+            summary: (dbSummary[table] || {})[field],
           }"
+          @select="$store.dispatch('route', $event)"
         />
       </template>
     </ConditionChips>
@@ -134,15 +134,16 @@ export default Vue.extend({
       :type="type"
       :fields="primitiveFields"
     >
-      <template #menu="{ field, isOpen }">
+      <template #menu="{ field, table, isOpen }">
         <MenuContent
           v-bind="{
             field,
-            type,
+            table,
             isOpen,
-            summary: typeSummary[field],
             conditions,
+            summary: typeSummary[field],
           }"
+          @select="$store.dispatch('route', $event)"
         />
       </template>
     </FacetedSearch>

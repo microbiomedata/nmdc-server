@@ -5,7 +5,6 @@ import Vuex from 'vuex';
 
 import {
   api,
-  typeMap,
   /* Types */
   entityType,
   Condition,
@@ -23,40 +22,30 @@ interface State {
   route: any;
 }
 
-function asType(type: any) {
-  const t = typeMap.get(type as string);
-  if (t === undefined) {
-    throw new Error(`${type} is not a valid type`);
-  }
-  return t;
-}
-
 const store = new Vuex.Store<State>({
   state: {
     page: 1,
     pageSize: 15,
     results: {
-      biosample: null,
-      study: null,
-      project: null,
-      reads_qc: null,
-      metagenome_assembly: null,
-      metagenome_annotation: null,
-      metaproteomic_analysis: null,
-      data_object: null,
+      biosample: { count: 0, results: [] },
+      study: { count: 0, results: [] },
+      project: { count: 0, results: [] },
+      reads_qc: { count: 0, results: [] },
+      metagenome_assembly: { count: 0, results: [] },
+      metagenome_annotation: { count: 0, results: [] },
+      metaproteomic_analysis: { count: 0, results: [] },
+      data_object: { count: 0, results: [] },
+      gene_function: { count: 0, results: [] },
     },
     route: undefined,
   },
   getters: {
-    typeResults: (state) => (type: string | undefined) => {
-      if (type && state.results[asType(type)] !== null) {
-        return state.results[asType(type)]?.results;
-      }
-      return undefined;
-    },
+    typeResults: (state) => (type: entityType | undefined) => (
+      type ? state.results[type].results : []
+    ),
     type: (state): entityType | undefined => {
       const routerType = state.route.params.type;
-      return routerType ? asType(routerType) : undefined;
+      return routerType;
     },
     id: (state): string | undefined => state.route.params.id,
     conditions: (state): Condition[] => state.route.query.c || [],
@@ -124,6 +113,10 @@ const store = new Vuex.Store<State>({
       commit('setResults', { type, results });
     },
     async route({ getters }, { name, type, conditions }) {
+      if (type === 'gene_function') {
+        router.push({ name: 'V2Search' });
+        return;
+      }
       /**
        * Use the vuex route action when a route change
        * involves a change in type or conditions
@@ -150,6 +143,9 @@ const store = new Vuex.Store<State>({
 
 router.afterEach((to) => {
   if (to.name === 'Search' || to.name === 'Individual Result') {
+    if (to.params.type === 'gene_function') {
+      return;
+    }
     Vue.nextTick(() => {
       // after hook still happens before vuex sync has a chance to capture the state.
       // wait a tick before dispatch

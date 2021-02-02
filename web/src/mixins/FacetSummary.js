@@ -1,4 +1,3 @@
-import { mapGetters } from 'vuex';
 import { valueDisplayName } from '@/util';
 import { api } from '@/data/api';
 
@@ -20,6 +19,10 @@ export default {
       type: Boolean,
       default: false,
     },
+    conditions: {
+      type: Array,
+      default: () => [],
+    },
   },
 
   data() {
@@ -30,7 +33,6 @@ export default {
   },
 
   computed: {
-    ...mapGetters(['conditions']),
     facetSummaryAggregate() {
       return this.facetSummary
         .map((item) => ({

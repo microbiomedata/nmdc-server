@@ -1,10 +1,13 @@
 import { merge } from 'lodash';
 import axios from 'axios';
 
+import mockStudy from './studyExample.json';
+
 const client = axios.create({
   baseURL: process.env.VUE_APP_BASE_URL || '/api',
 });
 
+/* The real entity types */
 export type entityType = 'biosample'
   | 'study'
   | 'project'
@@ -12,18 +15,8 @@ export type entityType = 'biosample'
   | 'metagenome_assembly'
   | 'metagenome_annotation'
   | 'metaproteomic_analysis'
-  | 'data_object';
-
-export const typeMap: Map<string, entityType> = new Map([
-  ['sample', 'biosample'],
-  ['biosample', 'biosample'],
-  ['project', 'project'],
-  ['study', 'study'],
-  ['reads_qc', 'reads_qc'],
-  ['metagenome_assembly', 'metagenome_assembly'],
-  ['metagenome_annotation', 'metagenome_annotation'],
-  ['metaproteomic_analysis', 'metaproteomic_analysis'],
-]);
+  | 'data_object'
+  | 'gene_function';
 
 export interface BaseSearchResult {
   id: string;
@@ -31,6 +24,7 @@ export interface BaseSearchResult {
   description: string;
   alternate_ideantifiers: string[];
   annotations: Record<string, unknown>;
+  [key: string]: unknown; // possibly other things.
 }
 
 export interface BiosampleSearchResult extends BaseSearchResult {
@@ -59,6 +53,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
     label: string;
     data: string;
   };
+  projects: ProjectSearchResult[];
 }
 
 export interface DataObjectSearchResult extends BaseSearchResult {
@@ -77,20 +72,22 @@ export interface StudySearchResults extends BaseSearchResult {
   open_in_gold: string;
 }
 
-export interface ProjectSearchResult extends BaseSearchResult {
-  study_id: string;
-  add_date: string;
-  mod_date: string;
-  open_in_gold: string;
-}
-
-interface DerivedDataResult extends BaseSearchResult {
+export interface DerivedDataResult extends BaseSearchResult {
   type: string;
   git_url: string;
   started_at_time: string;
   ended_at_time: string;
   execution_resource: string;
   project_id: string;
+  outputs: DataObjectSearchResult[];
+}
+
+export interface ProjectSearchResult extends BaseSearchResult {
+  study_id: string;
+  add_date: string;
+  mod_date: string;
+  open_in_gold: string;
+  omics_data: DerivedDataResult[];
 }
 
 export interface ReadsQCResult extends DerivedDataResult {
@@ -113,28 +110,19 @@ export interface MetagenomeAnnotationResult extends DerivedDataResult {
 
 export type MetaproteomicAnalysisResult = DerivedDataResult
 
-interface AttributeSummary {
+export interface AttributeSummary {
   count: number;
   type: 'string' | 'date' | 'integer' | 'float';
   min?: string | number;
   max?: string | number;
 }
 
-interface TableSummary {
+export interface TableSummary {
   total: number;
   attributes: Record<string, AttributeSummary>;
 }
 
-export interface DatabaseSummaryResponse {
-  study: TableSummary;
-  project: TableSummary;
-  biosample: TableSummary;
-  reads_qc: TableSummary;
-  metagenome_assembly: TableSummary;
-  metagenome_annotation: TableSummary;
-  metaproteomic_analysis: TableSummary;
-  data_object: TableSummary;
-}
+export type DatabaseSummaryResponse = Record<entityType, TableSummary>;
 
 export interface DatabaseStatsResponse {
   studies: number;
@@ -197,7 +185,7 @@ export interface Condition {
   table: string;
 }
 
-interface SearchParams {
+export interface SearchParams {
   offset?: number;
   limit?: number;
   conditions: Condition[];
@@ -229,8 +217,10 @@ async function searchBiosample(params: SearchParams) {
   return _search<BiosampleSearchResult>('biosample', params);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function searchStudy(params: SearchParams) {
-  return _search<StudySearchResults>('study', params);
+  // return _search<StudySearchResults>('study', params);
+  return Promise.resolve(mockStudy) as unknown as SearchResponse<StudySearchResults>;
 }
 
 async function searchProject(params: SearchParams) {
@@ -265,8 +255,7 @@ export type ResultUnion = (
   | SearchResponse<MetagenomeAssembyResult>
   | SearchResponse<MetagenomeAnnotationResult>
   | SearchResponse<MetaproteomicAnalysisResult>
-  | SearchResponse<DataObjectSearchResult>
-  | null);
+  | SearchResponse<DataObjectSearchResult>);
 
 async function search(type: entityType, params: SearchParams) {
   let results: ResultUnion;
@@ -298,12 +287,21 @@ async function search(type: entityType, params: SearchParams) {
   return results;
 }
 
+async function _getById<T>(route: string, id: string): Promise<T> {
+  const { data } = await client.get<T>(`${route}/${id}`);
+  return data;
+}
+
+async function getBiosample(id: string): Promise<BiosampleSearchResult> {
+  return _getById<BiosampleSearchResult>('biosample', id);
+}
+
 async function getFacetSummary(
   type: string,
   field: string,
   conditions: Condition[],
 ): Promise<FacetSummaryResponse[]> {
-  const path = typeMap.get(type) || type;
+  const path = type;
   const { data } = await client.post<{ facets: Record<string, number> }>(
     `${path}/facet`, {
       conditions, attribute: field,
@@ -354,6 +352,13 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
         },
       },
     },
+    gene_function: {
+      attributes: {
+        id: {
+          type: 'string_literal',
+        },
+      },
+    },
   };
   return merge(data, mergeSummary);
 }
@@ -386,10 +391,10 @@ async function getEnvironmentSankeyAggregation(
 }
 
 async function getDataObjectList(
-  parentType: string,
+  parentType: entityType,
   parentId: string,
 ): Promise<DataObjectSearchResult[]> {
-  const type = typeMap.get(parentType);
+  const type = parentType;
   if (type === undefined) {
     return [];
   }
@@ -414,6 +419,7 @@ async function me(): Promise<string> {
 
 const api = {
   getBinnedFacet,
+  getBiosample,
   getDatabaseSummary,
   getDatabaseStats,
   getDataObjectList,
