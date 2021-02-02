@@ -11,7 +11,7 @@ import BinnedSummaryWrapper from '@/components/BinnedSummaryWrapper.vue';
 // ENDTODO
 
 import {
-  conditions, addConditions, removeConditions, setConditions,
+  conditions, toggleConditions, removeConditions, setUniqueCondition,
 } from '@/v2/store';
 
 export default defineComponent({
@@ -28,8 +28,8 @@ export default defineComponent({
   setup() {
     return {
       conditions,
-      addConditions,
-      setConditions,
+      toggleConditions,
+      setUniqueCondition,
       removeConditions,
     };
   },
@@ -47,7 +47,7 @@ export default defineComponent({
           <LocationMap
             type="biosample"
             :conditions="conditions"
-            @selected="addConditions($event.conditions)"
+            @selected="toggleConditions($event.conditions)"
           />
         </v-card>
       </v-col>
@@ -70,7 +70,7 @@ export default defineComponent({
                 :show-baseline="false"
                 :left-margin="120"
                 :right-margin="80"
-                @selected="addConditions($event.conditions)"
+                @selected="toggleConditions($event.conditions)"
               />
             </template>
           </FacetSummaryWrapper>
@@ -92,7 +92,7 @@ export default defineComponent({
             <template #default="props">
               <DateHistogram
                 v-bind="props"
-                @select="setConditions($event.conditions)"
+                @select="setUniqueCondition('collection_date', 'biosample', $event.conditions)"
               />
             </template>
           </BinnedSummaryWrapper>
@@ -102,7 +102,7 @@ export default defineComponent({
         <EcosystemSankey
           :type="type"
           :conditions="conditions"
-          @selected="addConditions($event.conditions)"
+          @selected="toggleConditions($event.conditions)"
         />
       </v-col> -->
     </v-row>

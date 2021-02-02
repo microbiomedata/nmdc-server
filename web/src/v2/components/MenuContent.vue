@@ -1,16 +1,19 @@
-<script>
-import Vue from 'vue';
+<script lang="ts">
+import Vue, { PropType } from 'vue';
 import { fieldDisplayName } from '@/util';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
 import FilterTree from '@/components/Presentation/FilterTree.vue';
+import FilterStringLiteral from '@/v2/components/FilterStringLiteral.vue';
+import { AttributeSummary, Condition, entityType } from '@/data/api';
 
 export default Vue.extend({
   components: {
     FilterDate,
     FilterFloat,
     FilterList,
+    FilterStringLiteral,
     FilterTree,
   },
 
@@ -24,18 +27,15 @@ export default Vue.extend({
       required: true,
     },
     table: {
-      // api.entityType
-      type: String,
+      type: String as PropType<entityType>,
       required: true,
     },
     summary: {
-      // api.AttributeSummary
-      type: Object,
+      type: Object as PropType<AttributeSummary>,
       required: true,
     },
     conditions: {
-      // api.Condition[]
-      type: Array,
+      type: Array as PropType<Condition[]>,
       required: true,
     },
   },
@@ -47,17 +47,24 @@ export default Vue.extend({
 <template>
   <div>
     <v-card-title class="pb-0">
-      {{ fieldDisplayName(field) }}
+      {{ fieldDisplayName(field, table) }}
     </v-card-title>
     <filter-list
-      v-if="['string'].includes(summary.type) && isOpen"
+      v-if="summary.type === 'string' && isOpen"
+      :field="field"
+      :table="table"
+      :conditions="conditions"
+      @select="$emit('select', $event)"
+    />
+    <filter-string-literal
+      v-if="summary.type === 'string_literal' && isOpen"
       :field="field"
       :table="table"
       :conditions="conditions"
       @select="$emit('select', $event)"
     />
     <filter-date
-      v-if="['date'].includes(summary.type)"
+      v-if="summary.type === 'date'"
       v-bind="{
         field, type: table, conditions,
         min: summary.min,

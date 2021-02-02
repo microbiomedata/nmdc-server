@@ -113,7 +113,7 @@ export default Vue.extend({
         <MenuContent
           v-bind="{
             field,
-            type: table,
+            table,
             isOpen,
             conditions,
             summary: (dbSummary[table] || {})[field],
@@ -134,14 +134,14 @@ export default Vue.extend({
       :type="type"
       :fields="primitiveFields"
     >
-      <template #menu="{ field, isOpen }">
+      <template #menu="{ field, table, isOpen }">
         <MenuContent
           v-bind="{
             field,
-            type,
+            table,
             isOpen,
-            summary: typeSummary[field],
             conditions,
+            summary: typeSummary[field],
           }"
           @select="$store.dispatch('route', $event)"
         />

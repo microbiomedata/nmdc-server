@@ -4,7 +4,10 @@ function removeCondition(conditions: Condition[], conds: Condition[]) {
   const copy = conditions.slice();
   conds.forEach((c) => {
     const foundIndex = copy.findIndex((cond) => (
-      cond.field === c.field && cond.op === c.op && cond.value === c.value));
+      cond.table === c.table
+      && cond.field === c.field
+      && cond.op === c.op
+      && cond.value === c.value));
     if (foundIndex >= 0) {
       copy.splice(foundIndex, 1);
     }

@@ -35,6 +35,7 @@ const store = new Vuex.Store<State>({
       metagenome_annotation: { count: 0, results: [] },
       metaproteomic_analysis: { count: 0, results: [] },
       data_object: { count: 0, results: [] },
+      gene_function: { count: 0, results: [] },
     },
     route: undefined,
   },
@@ -112,6 +113,10 @@ const store = new Vuex.Store<State>({
       commit('setResults', { type, results });
     },
     async route({ getters }, { name, type, conditions }) {
+      if (type === 'gene_function') {
+        router.push({ name: 'V2Search' });
+        return;
+      }
       /**
        * Use the vuex route action when a route change
        * involves a change in type or conditions
@@ -138,6 +143,9 @@ const store = new Vuex.Store<State>({
 
 router.afterEach((to) => {
   if (to.name === 'Search' || to.name === 'Individual Result') {
+    if (to.params.type === 'gene_function') {
+      return;
+    }
     Vue.nextTick(() => {
       // after hook still happens before vuex sync has a chance to capture the state.
       // wait a tick before dispatch

@@ -1,6 +1,6 @@
 import moment from 'moment';
 import filesize from 'filesize';
-import { types, fields } from './encoding';
+import { types, getField } from './encoding';
 
 export function valueCardinality(value) {
   if (Array.isArray(value)) {
@@ -30,9 +30,10 @@ export function toSentenceCase(word) {
   return `${word[0].toUpperCase()}${word.slice(1)}`;
 }
 
-export function fieldDisplayName(field) {
-  if (field in fields && 'name' in fields[field]) {
-    return fields[field].name;
+export function fieldDisplayName(field, table) {
+  const fieldsname = getField(field, table);
+  if ('name' in fieldsname) {
+    return fieldsname.name;
   }
   return field.split('_')
     .map((word, i) => (i === 0 ? toSentenceCase(word) : word))

@@ -26,14 +26,14 @@ export default new VueRouter({
       component: IndividualResults,
     },
     {
+      path: '/type/gene_function/search',
+      name: 'V2Search',
+      component: V2Search,
+    },
+    {
       path: '/type/:type/search',
       name: 'Search',
       component: Search,
-    },
-    {
-      path: '/v2/search',
-      name: 'V2Search',
-      component: V2Search,
     },
     {
       path: '/v2/sample/:id',

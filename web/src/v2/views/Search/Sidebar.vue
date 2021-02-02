@@ -4,16 +4,20 @@ import { types } from '@/encoding';
 import { api, DatabaseSummaryResponse, entityType } from '@/data/api';
 
 import ConditionChips from '@/components/Presentation/ConditionChips.vue';
-import MenuContent from '@/components/Presentation/MenuContent.vue';
 
+import MenuContent from '@/v2/components/MenuContent.vue';
 import FacetedSearch, { SearchFacet } from '@/v2/components/FacetedSearch.vue';
 
-import { conditions, removeConditions } from '@/v2/store';
+import { conditions, removeConditions, setConditions } from '@/v2/store';
 
 /**
  * V2's sidebar has a fixed list of facets, possibly from different tables.
  */
 const FunctionSearchFacets: SearchFacet[] = [
+  {
+    field: 'id',
+    table: 'gene_function',
+  },
   {
     field: 'habitat',
     table: 'biosample',
@@ -73,6 +77,7 @@ export default defineComponent({
       return {};
     }
     return {
+      setConditions,
       FunctionSearchFacets,
       conditions,
       dbSummary,
@@ -139,11 +144,12 @@ export default defineComponent({
         <MenuContent
           v-bind="{
             field,
-            type: table,
+            table,
             isOpen,
             conditions,
             summary: dbSummaryForTable(table, field),
           }"
+          @select="setConditions($event.conditions)"
         />
       </template>
     </ConditionChips>
@@ -162,11 +168,12 @@ export default defineComponent({
         <MenuContent
           v-bind="{
             field,
-            type: table,
+            table,
             isOpen,
             summary: dbSummaryForTable(table, field),
             conditions,
           }"
+          @select="setConditions($event.conditions)"
         />
       </template>
     </FacetedSearch>

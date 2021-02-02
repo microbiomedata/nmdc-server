@@ -49,7 +49,7 @@ export default Vue.extend({
       }
       const summary = ((this.dbSummary[type] || {}).attributes || {})[field];
       if (summary) {
-        if (['float', 'integer', 'string'].includes(summary.type)) {
+        if (['float', 'integer', 'string', 'string_literal'].includes(summary.type)) {
           return val;
         }
         if (['date'].includes(summary.type)) {
@@ -77,7 +77,7 @@ export default Vue.extend({
       >
         <div style="width: 94%">
           <span class="text-subtitle-2">
-            {{ fieldDisplayName(group.field) }}
+            {{ fieldDisplayName(group.field, group.table) }}
           </span>
           <span class="text-caption">
             [{{ verb(group.conditions[0].op) }}]

@@ -16,6 +16,7 @@ export interface FieldsData {
   name?: string;
   group?: string;
   hideAttr?: boolean;
+  encode?: (input: string) => string,
 }
 
 const types: Record<entityType, EntityData> = {
@@ -74,6 +75,13 @@ const types: Record<entityType, EntityData> = {
     name: 'data_object',
     plural: 'Data objects',
     visible: false,
+  },
+  gene_function: {
+    icon: 'mdi-dna',
+    heading: 'Gene Function',
+    name: 'gene_function',
+    plural: 'Gene functions',
+    visible: true,
   },
 };
 
@@ -225,6 +233,33 @@ const fields: Record<string, FieldsData> = {
   /* END disable uniques */
 };
 
+/**
+ *  If any of the above overrides should only happen on a single entity,
+ * override them here
+ */
+const tableFields: Record<entityType, Record<string, FieldsData>> = {
+  gene_function: {
+    id: {
+      icon: 'mdi-dna',
+      group: 'Function',
+      name: 'KO term',
+      encode: (v: string) => {
+        const prefix = 'KEGG:ORTHOLOG';
+        if (v.startsWith(prefix)) return v;
+        return `${prefix}:${v}`;
+      },
+    },
+  },
+  biosample: {},
+  study: {},
+  project: {},
+  reads_qc: {},
+  metagenome_annotation: {},
+  metagenome_assembly: {},
+  metaproteomic_analysis: {},
+  data_object: {},
+};
+
 const ecosystems = [
   {
     name: 'Host-associated',
@@ -244,16 +279,20 @@ const ecosystems = [
   },
 ];
 
-function getField(name: string) {
+function getField(name: string, table?: entityType): FieldsData {
+  if (table && table in tableFields) {
+    if (name in tableFields[table]) {
+      return tableFields[table][name];
+    }
+  }
   if (name in fields) {
     return fields[name];
   }
-  return null;
+  return {};
 }
 
 export {
   types,
-  fields,
   ecosystems,
   getField,
 };

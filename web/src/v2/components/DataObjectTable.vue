@@ -77,7 +77,6 @@ export default defineComponent({
         >
           <v-icon>mdi-download</v-icon>
         </v-btn>
-        <span>(2)</span>
       </template>
     </v-data-table>
   </v-card>

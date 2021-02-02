@@ -26,7 +26,6 @@ export default Vue.extend({
   },
   data() {
     return {
-      fieldmeta: encoding.fields,
       filterText: '',
       menuState: {} as Record<string, boolean>,
     };
@@ -46,12 +45,12 @@ export default Vue.extend({
         .map((sf) => ({
           key: `${sf.table}_${sf.field}`,
           ...sf,
-          ...encoding.fields[sf.field],
+          ...encoding.getField(sf.field, sf.table),
         }))
         .filter(({ hideFacet }) => !hideFacet)
         .sort(((a, b) => (a.sortKey || 0) - (b.sortKey || 0)));
       return Object.entries(groupBy(fieldsWithMeta, 'group'))
-        .sort((a) => ((a[0] === 'undefined') ? 0 : -1));
+        .sort(([a], [b]) => a.localeCompare(b));
     },
   },
   methods: {
@@ -108,7 +107,9 @@ export default Vue.extend({
                 v-on="on"
               >
                 <v-list-item-content>
-                  <v-list-item-title> {{ fieldDisplayName(sf.key) }} </v-list-item-title>
+                  <v-list-item-title>
+                    {{ fieldDisplayName(sf.field, sf.table) }}
+                  </v-list-item-title>
                 </v-list-item-content>
                 <v-list-item-icon>
                   <v-icon> mdi-play </v-icon>

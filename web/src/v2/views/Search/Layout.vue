@@ -1,13 +1,13 @@
 <script lang="ts">
 import {
-  defineComponent, reactive, ref, watch,
+  defineComponent, reactive, computed,
 } from '@vue/composition-api';
 
 import SearchResults from '@/components/Presentation/SearchResults.vue';
 import { types } from '@/encoding';
-import { api, Condition } from '@/data/api';
+import { api } from '@/data/api';
 
-import { conditions, addConditions, removeConditions } from '@/v2/store';
+import { conditions, toggleConditions } from '@/v2/store';
 import usePaginatedResults from '@/v2/use/usePaginatedResults';
 import SampleListExpansion from '@/v2/components/SampleListExpansion.vue';
 
@@ -25,30 +25,30 @@ export default defineComponent({
   },
 
   setup() {
+    /**
+     * Study checkbox state logic
+     */
+    const studyCheckboxState = computed(() => (
+      conditions.value
+        .filter((c) => c.table === 'study' && c.field === 'study_id')
+        .map((c) => c.value)
+    ));
+    function setChecked(studyId) {
+      toggleConditions([{
+        value: studyId,
+        table: 'study',
+        op: '==',
+        field: 'study_id',
+      }]);
+    }
+
+    /**
+     * Expanded Omics details
+     */
     const expandedOmicsDetails = reactive({
       resultId: '',
       projectId: '',
     });
-
-    const studyCheckboxState = ref([]);
-
-    watch(studyCheckboxState, (current, old) => {
-      const newConditions: Condition[] = current.map((v) => ({
-        value: v,
-        table: 'study',
-        op: '==',
-        field: 'study_id',
-      }));
-      const oldConditiosn: Condition[] = old.map((v) => ({
-        value: v,
-        table: 'study',
-        op: '==',
-        field: 'study_id',
-      }));
-      removeConditions(oldConditiosn);
-      addConditions(newConditions);
-    });
-
     function setExpanded(resultId: string, projectId: string) {
       if (expandedOmicsDetails.resultId !== resultId
         || expandedOmicsDetails.projectId !== projectId) {
@@ -76,6 +76,7 @@ export default defineComponent({
       study,
       studyCheckboxState,
       /* methods */
+      setChecked,
       setExpanded,
     };
   },
@@ -111,14 +112,18 @@ export default defineComponent({
                 <template #action="{ result }">
                   <v-list-item-action>
                     <v-checkbox
-                      v-model="studyCheckboxState"
+                      :input-value="studyCheckboxState"
                       :value="result.id"
+                      @change="setChecked(result.id)"
                     />
                   </v-list-item-action>
                 </template>
               </SearchResults>
             </v-card>
-            <v-card class="my-4">
+            <v-card
+              outlined
+              class="my-4"
+            >
               <v-card-title class="pb-0">
                 Samples
               </v-card-title>

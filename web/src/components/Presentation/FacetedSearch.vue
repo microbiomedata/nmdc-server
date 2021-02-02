@@ -20,7 +20,6 @@ export default Vue.extend({
   },
   data() {
     return {
-      fieldmeta: encoding.fields,
       filterText: '',
       menuState: {} as Record<string, boolean>,
     };
@@ -37,7 +36,7 @@ export default Vue.extend({
     },
     groupedFields(): [string, KeyedFieldData[]][] {
       const fieldsWithMeta = this.privatefilteredFields
-        .map((f) => ({ key: f, ...encoding.fields[f] }))
+        .map((f) => ({ key: f, ...encoding.getField(f) }))
         .filter((f) => !f.hideFacet)
         .sort(((a, b) => (a.sortKey || 0) - (b.sortKey || 0)));
       return Object.entries(groupBy(fieldsWithMeta, 'group'))
@@ -112,6 +111,7 @@ export default Vue.extend({
                 name="menu"
                 v-bind="{
                   field: field.key,
+                  type: field.type,
                   isOpen: menuState[field.key],
                 }"
               />

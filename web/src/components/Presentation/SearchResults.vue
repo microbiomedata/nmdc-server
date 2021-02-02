@@ -63,9 +63,11 @@ export default Vue.extend({
         />
         <v-list-item
           :key="result.id"
+          :ripple="!disableNavigateOnClick"
+          :inactive="disableNavigateOnClick"
           v-on="{
             click: disableNavigateOnClick
-              ? null /* will warn, but /shrug */
+              ? () => {}
               : () => $emit('selected', result.id),
           }"
         >

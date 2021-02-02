@@ -1,5 +1,6 @@
 import Vue from 'vue';
 import CompositionApi, { reactive, toRef } from '@vue/composition-api';
+import { uniqWith } from 'lodash';
 
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import { Condition } from '@/data/api';
@@ -11,27 +12,38 @@ const state = reactive({
   conditions: [] as Condition[],
 });
 
-/**
- * For each condition, remove all others with a similar table & field.
+/*
+ * Set conditions directly, removing duplicates
  */
 function setConditions(conditions: Condition[]) {
-  let newConditions: Condition[] = [];
-  conditions.forEach((condition) => {
-    const others = state.conditions
-      .filter((c) => (c.field !== condition.field) || (c.table !== condition.table));
-    newConditions = [
-      ...others,
-      condition,
-    ];
-  });
-  state.conditions = newConditions;
+  state.conditions = uniqWith(
+    conditions, (a, b) => a.field === b.field
+      && a.value === b.value
+      && a.op === b.op
+      && a.table === b.table,
+  );
 }
 
 /**
- * If a condition exists, remove it,
- * otherwise, add it.
+ * For each condition, remove all others with a similar table & field.
  */
-function addConditions(conditions: Condition[]) {
+function setUniqueCondition(
+  field: string,
+  table: string,
+  conditions: Condition[],
+) {
+  const others = state.conditions.filter((c) => (c.field !== field) || (c.table !== table));
+  setConditions([
+    ...conditions,
+    ...others,
+  ]);
+}
+
+/**
+ * For each condition, if it already exists, remove it,
+ * otherwise, add it
+ */
+function toggleConditions(conditions: Condition[]) {
   const duplicates: Condition[] = [];
   const newConditions = conditions.filter((c) => {
     const match = state.conditions.filter((d) => (
@@ -46,15 +58,19 @@ function addConditions(conditions: Condition[]) {
     return false;
   });
   if (newConditions.length > 0 || duplicates.length > 0) {
-    state.conditions = [
+    const withoutDuplicates = utilsRemoveCond(state.conditions, duplicates);
+    setConditions([
       ...newConditions,
-      ...utilsRemoveCond(state.conditions, duplicates),
-    ];
+      ...withoutDuplicates,
+    ]);
   }
 }
 
+/**
+ * Remove a list of conditions
+ */
 function removeConditions(conditions: Condition[]) {
-  if (conditions.length) {
+  if (Array.isArray(conditions)) {
     state.conditions = utilsRemoveCond(state.conditions, conditions);
   } else {
     state.conditions = [];
@@ -70,7 +86,8 @@ const conditions = toRef(state, 'conditions');
 
 export {
   conditions,
-  addConditions,
+  toggleConditions,
   removeConditions,
+  setUniqueCondition,
   setConditions,
 };

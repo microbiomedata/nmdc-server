@@ -15,7 +15,8 @@ export type entityType = 'biosample'
   | 'metagenome_assembly'
   | 'metagenome_annotation'
   | 'metaproteomic_analysis'
-  | 'data_object';
+  | 'data_object'
+  | 'gene_function';
 
 export interface BaseSearchResult {
   id: string;
@@ -348,6 +349,13 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
         gold_classification: {
           type: 'tree',
           count: -1,
+        },
+      },
+    },
+    gene_function: {
+      attributes: {
+        id: {
+          type: 'string_literal',
         },
       },
     },
