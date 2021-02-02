@@ -244,7 +244,7 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
       group: 'Function',
       name: 'KO term',
       encode: (v: string) => {
-        const prefix = 'KEGG:ORTHOLOG';
+        const prefix = 'KEGG.ORTHOLOGY';
         if (v.startsWith(prefix)) return v;
         return `${prefix}:${v}`;
       },
