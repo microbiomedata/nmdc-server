@@ -39,10 +39,35 @@ export default defineComponent({
 <template>
   <div>
     <v-row>
-      <v-col :cols="8">
+      <v-col :cols="4">
         <v-card
           outlined
-          class="pa-2"
+          class="pa-1"
+        >
+          <FacetSummaryWrapper
+            table="project"
+            field="omics_type"
+            :conditions="conditions"
+            use-all-conditions
+          >
+            <template #default="props">
+              <FacetBarChart
+                v-bind="props"
+                :height="400"
+                :show-title="false"
+                :show-baseline="false"
+                :left-margin="120"
+                :right-margin="80"
+                @selected="toggleConditions($event.conditions)"
+              />
+            </template>
+          </FacetSummaryWrapper>
+        </v-card>
+      </v-col>
+      <v-col :cols="5">
+        <v-card
+          outlined
+          class="pa-1"
         >
           <LocationMap
             type="biosample"
@@ -51,10 +76,10 @@ export default defineComponent({
           />
         </v-card>
       </v-col>
-      <v-col :cols="4">
+      <v-col :cols="3">
         <v-card
           outlined
-          class="pa-2"
+          class="pa-1"
         >
           <FacetSummaryWrapper
             table="biosample"

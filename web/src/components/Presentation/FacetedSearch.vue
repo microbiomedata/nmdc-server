@@ -111,7 +111,6 @@ export default Vue.extend({
                 name="menu"
                 v-bind="{
                   field: field.key,
-                  type: field.type,
                   isOpen: menuState[field.key],
                 }"
               />

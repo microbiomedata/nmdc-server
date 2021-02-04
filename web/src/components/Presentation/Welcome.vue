@@ -42,7 +42,7 @@ export default Vue.extend({
         </v-btn>
         <v-btn
           x-large
-          color="primary"
+          color="accent"
           elevation="0"
           class="ma-4"
           @click="$emit('set-type', 'project')"
@@ -51,12 +51,23 @@ export default Vue.extend({
         </v-btn>
         <v-btn
           x-large
-          color="primary"
+          color="green"
+          dark
           elevation="0"
           class="ma-4"
           @click="$emit('set-type', 'biosample')"
         >
           Explore environments
+        </v-btn>
+        <v-btn
+          x-large
+          color="cyan darken-1"
+          dark
+          elevation="0"
+          class="ma-4"
+          :to="{ name: 'V2Search' }"
+        >
+          Search by Gene Function
         </v-btn>
       </v-row>
     </v-container>

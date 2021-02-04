@@ -90,6 +90,12 @@ export default defineComponent({
   <div>
     <sidebar :results-count="biosample.data.results.count" />
     <v-main>
+      <v-progress-linear
+        v-show="biosample.data.loading || study.data.loading"
+        indeterminate
+        background-opacity="0"
+        style="position: fixed; top: 64; z-index: 20;"
+      />
       <v-container
         fluid
         class="py-0"
@@ -109,6 +115,7 @@ export default defineComponent({
                 :items-per-page="study.data.limit"
                 :results="study.data.results.results"
                 :page="study.data.pageSync"
+                :loading="study.data.loading"
                 @set-page="study.setPage($event)"
                 @selected="$router.push({ name: 'V2Sample'})"
               >
@@ -154,6 +161,7 @@ export default defineComponent({
                 :results="biosample.data.results.results"
                 :page="biosample.data.pageSync"
                 :subtitle-key="'study_id'"
+                :loading="biosample.data.loading"
                 @set-page="biosample.setPage($event)"
                 @selected="$router.push({ name: 'V2Sample', params: { id: $event }})"
               >

@@ -134,11 +134,11 @@ export default Vue.extend({
       :type="type"
       :fields="primitiveFields"
     >
-      <template #menu="{ field, table, isOpen }">
+      <template #menu="{ field, isOpen }">
         <MenuContent
           v-bind="{
             field,
-            table,
+            table: type,
             isOpen,
             conditions,
             summary: typeSummary[field],
