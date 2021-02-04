@@ -118,8 +118,6 @@ export default defineComponent({
         const barX = scaleLinear()
           .domain([0, Math.max(...data.map((d) => d.counts[count]))])
           .range([0, countsX.bandwidth()]);
-        console.log(barX.domain());
-        console.log(barX.range());
 
         svg.append('g')
           .selectAll('rect')
