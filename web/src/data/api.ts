@@ -112,7 +112,7 @@ export type MetaproteomicAnalysisResult = DerivedDataResult
 
 export interface AttributeSummary {
   count: number;
-  type: 'string' | 'date' | 'integer' | 'float';
+  type: 'string' | 'date' | 'integer' | 'float' | 'string_literal';
   min?: string | number;
   max?: string | number;
 }

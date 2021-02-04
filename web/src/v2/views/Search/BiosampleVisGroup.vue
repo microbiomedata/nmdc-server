@@ -87,7 +87,7 @@ export default defineComponent({
           </FacetSummaryWrapper>
         </v-card>
       </v-col>
-      <v-col :cols="5">
+      <v-col :cols="8">
         <v-card
           outlined
           class="pa-1"
@@ -97,31 +97,6 @@ export default defineComponent({
             :conditions="conditions"
             @selected="toggleConditions($event.conditions)"
           />
-        </v-card>
-      </v-col>
-      <v-col :cols="3">
-        <v-card
-          outlined
-          class="pa-1"
-        >
-          <FacetSummaryWrapper
-            table="biosample"
-            field="ecosystem_category"
-            :conditions="conditions"
-            use-all-conditions
-          >
-            <template #default="props">
-              <FacetBarChart
-                v-bind="props"
-                :height="400"
-                :show-title="false"
-                :show-baseline="false"
-                :left-margin="120"
-                :right-margin="80"
-                @selected="toggleConditions($event.conditions)"
-              />
-            </template>
-          </FacetSummaryWrapper>
         </v-card>
       </v-col>
     </v-row>
