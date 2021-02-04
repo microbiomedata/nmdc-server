@@ -37,16 +37,16 @@ export default defineComponent({
 <template>
   <div
     v-if="result.projects.length"
-    class="d-flex flex-column mt-2"
+    class="d-flex flex-column mb-2"
   >
-    <div class="d-flex flex-row">
+    <div class="d-flex flex-row flex-wrap">
       <v-btn
         v-for="project in result.projects"
         :key="project.id"
-        small
+        x-small
         :outlined="!isOpen(project.id)"
         :color="isOpen(project.id) ? 'primary' : 'default'"
-        class="mr-2"
+        class="mr-2 mt-2"
         @click="() => $emit('open-details', project.id)"
       >
         {{ project.annotations.omics_type }}

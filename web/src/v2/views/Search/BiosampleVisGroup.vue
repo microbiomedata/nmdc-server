@@ -4,7 +4,8 @@ import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 import LocationMap from '@/components/Presentation/LocationMap.vue';
-
+import UpSet from '@/components/Presentation/UpSet.vue';
+import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 // TODO: replace with composition functions
 import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
 import BinnedSummaryWrapper from '@/components/BinnedSummaryWrapper.vue';
@@ -14,9 +15,29 @@ import {
   conditions, toggleConditions, removeConditions, setUniqueCondition,
 } from '@/v2/store';
 
+const staticUpsetData = [
+  {
+    sets: ['MG', 'MP'],
+    counts: { Samples: 33, Studies: 1 },
+  },
+  {
+    sets: ['MG', 'MP', 'MT', 'OM'],
+    counts: { Samples: 45, Studies: 1 },
+  },
+  {
+    sets: ['MG'],
+    counts: { Samples: 143, Studies: 3 },
+  },
+  {
+    sets: ['MB'],
+    counts: { Samples: 87, Studies: 3 },
+  },
+];
+
 export default defineComponent({
   name: 'SampleVisGroupV2',
   components: {
+    ChartContainer,
     DateHistogram,
     FacetBarChart,
     LocationMap,
@@ -24,6 +45,7 @@ export default defineComponent({
     // TODO replace with composition functions
     FacetSummaryWrapper,
     BinnedSummaryWrapper,
+    UpSet,
   },
   setup() {
     return {
@@ -31,6 +53,7 @@ export default defineComponent({
       toggleConditions,
       setUniqueCondition,
       removeConditions,
+      staticUpsetData,
     };
   },
 });
@@ -103,7 +126,7 @@ export default defineComponent({
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="12">
+      <v-col cols="8">
         <v-card
           outlined
           class="py-2"
@@ -123,13 +146,26 @@ export default defineComponent({
           </BinnedSummaryWrapper>
         </v-card>
       </v-col>
-      <!-- <v-col :cols="12">
-        <EcosystemSankey
-          :type="type"
-          :conditions="conditions"
-          @selected="toggleConditions($event.conditions)"
-        />
-      </v-col> -->
+      <v-col cols="4">
+        <v-card
+          outlined
+          height="100%"
+          class="py-2 d-flex flex-column justify-center"
+        >
+          <ChartContainer>
+            <template #default="{ width, height }">
+              <UpSet
+                v-bind="{
+                  width,
+                  height,
+                  data: staticUpsetData,
+                  order: 'Samples'
+                }"
+              />
+            </template>
+          </ChartContainer>
+        </v-card>
+      </v-col>
     </v-row>
   </div>
 </template>
