@@ -73,7 +73,9 @@ export default defineComponent({
       <template #[`item.action`]="{ item }">
         <v-btn
           icon
-          :href="item.name"
+          :href="`/api/data_object/${item.id}/download`"
+          target="_blank"
+          rel="noopener"
         >
           <v-icon>mdi-download</v-icon>
         </v-btn>
