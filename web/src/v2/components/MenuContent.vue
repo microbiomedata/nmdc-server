@@ -1,6 +1,8 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue';
 import { fieldDisplayName } from '@/util';
+import { getField } from '@/encoding';
+
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
@@ -40,14 +42,14 @@ export default Vue.extend({
     },
   },
 
-  methods: { fieldDisplayName },
+  methods: { fieldDisplayName, getField },
 });
 </script>
 
 <template>
   <div>
     <v-card-title class="pb-0">
-      {{ fieldDisplayName(field, table) }}
+      {{ fieldDisplayName(field, table) }} {{ getField(field, table).units }}
     </v-card-title>
     <filter-list
       v-if="summary.type === 'string' && isOpen"

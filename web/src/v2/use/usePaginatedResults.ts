@@ -13,6 +13,8 @@ export default function usePaginatedResult(
     offset: 0,
     limit, // same as pageSize
     pageSync: 1,
+    loading: false,
+    error: null as null | unknown,
   });
 
   const page = computed(() => {
@@ -23,12 +25,20 @@ export default function usePaginatedResult(
 
   // TODO replace with watchEffect
   async function fetchResults() {
-    data.results = await func({
-      limit: data.limit,
-      offset: data.offset,
-      conditions: conditions.value,
-    });
-    data.pageSync = Math.floor(data.offset / data.limit) + 1;
+    data.loading = true;
+    try {
+      data.results = await func({
+        limit: data.limit,
+        offset: data.offset,
+        conditions: conditions.value,
+      });
+      data.pageSync = Math.floor(data.offset / data.limit) + 1;
+      data.loading = false;
+    } catch (err) {
+      data.error = err;
+      data.loading = false;
+      throw err;
+    }
   }
   watch([conditions, toRef(data, 'offset'), toRef(data, 'limit')], fetchResults);
   fetchResults();

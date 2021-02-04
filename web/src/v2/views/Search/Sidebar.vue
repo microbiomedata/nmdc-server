@@ -18,23 +18,77 @@ const FunctionSearchFacets: SearchFacet[] = [
     field: 'id',
     table: 'gene_function',
   },
+  /** ENVO */
   {
-    field: 'habitat',
+    field: 'env_broad_scale',
     table: 'biosample',
   },
   {
-    field: 'depth',
+    field: 'env_local_scale',
     table: 'biosample',
   },
+  {
+    field: 'env_medium',
+    table: 'biosample',
+  },
+  /** GOLD */
   {
     field: 'gold_classification',
     table: 'biosample',
   },
+  /** Biosample */
+  {
+    field: 'location',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'community',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'geo_loc_name',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'sample_collection_site',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'habitat',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'ncbi_taxonomy_name',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'depth',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'latitude',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'longitude',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  /** Study */
   {
     field: 'principal_investigator_name',
     table: 'study',
     group: 'Study',
   },
+  /** Project (Omics Type) */
   {
     field: 'instrument_name',
     table: 'project',

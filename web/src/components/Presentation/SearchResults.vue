@@ -51,6 +51,7 @@ export default Vue.extend({
       :value="page"
       :length="Math.ceil(count / itemsPerPage)"
       :total-visible="7"
+      class="pt-3"
       @input="$emit('set-page', $event)"
     />
     <v-list>
