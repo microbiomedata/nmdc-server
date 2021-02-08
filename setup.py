@@ -9,6 +9,7 @@ setup(
         "alembic",
         "authlib",
         "click",
+        "cryptography==3.3.2",
         "fastapi==0.61.0",
         "factory-boy",
         "httpx",
