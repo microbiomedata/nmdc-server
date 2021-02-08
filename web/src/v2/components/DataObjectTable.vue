@@ -3,7 +3,7 @@ import { humanFileSize } from '@/data/utils';
 import { ProjectSearchResult } from '@/data/api';
 import { defineComponent, PropType } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
-import { flattenDeep } from 'lodash';
+import { flattenDeep, flatten } from 'lodash';
 
 // const OmicsTypeMap = {
 //   'nmdc:readqcanalysisactivity': 'ReadQC',
@@ -13,8 +13,12 @@ import { flattenDeep } from 'lodash';
 
 export default defineComponent({
   props: {
-    project: {
-      type: Object as PropType<ProjectSearchResult>,
+    projects: {
+      type: Array as PropType<ProjectSearchResult[]>,
+      required: true,
+    },
+    omicsType: {
+      type: String,
       required: true,
     },
   },
@@ -44,15 +48,19 @@ export default defineComponent({
       },
     ];
 
-    const items = flattenDeep(props.project.omics_data
-      .map((omics_data) => omics_data.outputs.map((data_object, i) => ({
-        ...data_object,
-        omics_data,
-        group_name: i === 0 ? omics_data.name : '',
-        object_description: data_object.name
-          .replace(`${omics_data.project_id}_`, '')
-          .replace(/file/ig, ''),
-      }))));
+    const items = flattenDeep(
+      flatten(props.projects.map((p) => p.omics_data))
+        .map((omics_data) => omics_data.outputs.map((data_object, i) => ({
+          ...data_object,
+          omics_data,
+          /* TODO Hack to replace metagenome with omics type name */
+          group_name: i === 0 ? omics_data.name
+            .replace('Metagenome', props.omicsType) : '',
+          object_description: data_object.name
+            .replace(`${omics_data.project_id}_`, '')
+            .replace(/file/ig, ''),
+        }))),
+    );
 
     return { headers, items, humanFileSize };
   },

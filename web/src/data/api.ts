@@ -23,7 +23,7 @@ export interface BaseSearchResult {
   name: string;
   description: string;
   alternate_ideantifiers: string[];
-  annotations: Record<string, unknown>;
+  annotations: Record<string, string>;
   [key: string]: unknown; // possibly other things.
 }
 
