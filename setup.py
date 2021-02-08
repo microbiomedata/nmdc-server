@@ -9,7 +9,7 @@ setup(
         "alembic",
         "authlib",
         "click",
-        "cryptography==3.3.2",
+        "cryptography==3.3.2",  # https://github.com/pyca/cryptography/issues/5771
         "fastapi==0.61.0",
         "factory-boy",
         "httpx",
