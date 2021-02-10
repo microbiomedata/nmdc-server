@@ -1,6 +1,7 @@
 from datetime import date, datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
+from urllib.parse import quote
 from uuid import UUID
 
 from pydantic import BaseModel, Field, validator
@@ -247,6 +248,7 @@ class DataObjectBase(BaseModel):
     description: str = ""
     file_size_bytes: int
     md5_checksum: Optional[str]
+    url: Optional[str]
 
 
 class DataObjectCreate(DataObjectBase):
@@ -256,6 +258,11 @@ class DataObjectCreate(DataObjectBase):
 class DataObject(DataObjectBase):
     class Config:
         orm_mode = True
+
+    @validator("url")
+    def replace_url(cls, url, values):
+        id_str = quote(values["id"])
+        return f"/api/data_object/{id_str}/download" if url else None
 
 
 class GeneFunction(BaseModel):
