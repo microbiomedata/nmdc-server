@@ -8,7 +8,7 @@ import { types } from '@/encoding';
 import { fieldDisplayName } from '@/util';
 import { api } from '@/data/api';
 
-import { conditions, toggleConditions } from '@/v2/store';
+import { stateRefs, toggleConditions } from '@/v2/store';
 import usePaginatedResults from '@/v2/use/usePaginatedResults';
 import SampleListExpansion from '@/v2/components/SampleListExpansion.vue';
 
@@ -30,7 +30,7 @@ export default defineComponent({
      * Study checkbox state logic
      */
     const studyCheckboxState = computed(() => (
-      conditions.value
+      stateRefs.conditions.value
         .filter((c) => c.table === 'study' && c.field === 'study_id')
         .map((c) => c.value)
     ));
@@ -62,17 +62,19 @@ export default defineComponent({
     }
 
     const biosampleType = types.biosample;
-    const biosample = usePaginatedResults(conditions, api.searchBiosample);
+    const biosample = usePaginatedResults(stateRefs.conditions, api.searchBiosample);
 
     const studyType = types.study;
-    const study = usePaginatedResults(conditions, api.searchStudy, 3);
+    const study = usePaginatedResults(stateRefs.conditions, api.searchStudy, 3);
+
+    const loggedInUser = computed(() => typeof stateRefs.user.value === 'string');
 
     return {
       /* data */
-      expandedOmicsDetails,
       biosampleType,
       biosample,
-      conditions,
+      expandedOmicsDetails,
+      loggedInUser,
       studyType,
       study,
       studyCheckboxState,
@@ -173,6 +175,7 @@ export default defineComponent({
                     v-bind="{
                       result: props.result,
                       expanded: expandedOmicsDetails,
+                      loggedInUser,
                     }"
                     @open-details="setExpanded(props.result.id, $event)"
                   />

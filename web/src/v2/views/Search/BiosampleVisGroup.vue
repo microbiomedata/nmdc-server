@@ -12,7 +12,7 @@ import BinnedSummaryWrapper from '@/components/BinnedSummaryWrapper.vue';
 // ENDTODO
 
 import {
-  conditions, toggleConditions, removeConditions, setUniqueCondition,
+  stateRefs, toggleConditions, removeConditions, setUniqueCondition,
 } from '@/v2/store';
 
 const staticUpsetData = [
@@ -49,7 +49,7 @@ export default defineComponent({
   },
   setup() {
     return {
-      conditions,
+      conditions: stateRefs.conditions,
       toggleConditions,
       setUniqueCondition,
       removeConditions,

@@ -5,6 +5,7 @@ import AsyncComputed from 'vue-async-computed';
 
 import router from '@/plugins/router';
 import store from '@/plugins/store';
+import { loadCurrentUser } from '@/v2/store';
 import vuetify from '@/plugins/vuetify';
 
 import App from './App.vue';
@@ -15,6 +16,8 @@ Vue.use(CompositionPlugin);
 Vue.config.productionTip = false;
 
 sync(store, router);
+
+loadCurrentUser();
 
 new Vue({
   router,
