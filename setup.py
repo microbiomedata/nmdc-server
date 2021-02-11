@@ -8,6 +8,7 @@ setup(
     install_requires=[
         "alembic",
         "authlib",
+        "celery[redis,librabbitmq]",
         "click",
         "cryptography<3.4",  # https://github.com/pyca/cryptography/issues/5771
         "fastapi==0.61.0",

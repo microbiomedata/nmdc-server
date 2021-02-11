@@ -1,0 +1,15 @@
+FROM python:3.8-alpine3.10
+
+RUN apk update && \
+    apk add --virtual build-deps gcc python-dev musl-dev libressl-dev libffi-dev && \
+    apk add postgresql-dev postgresql-client && \
+    apk add py-cryptography
+
+COPY setup.py setup.cfg /app/
+RUN pip install -e /app
+
+COPY nmdc_server /app/nmdc_server
+COPY .env.production /app/.env
+
+WORKDIR /app/
+CMD ["celery", "-b", "redis://redis:6379/0", "--result-backend", "redis://redis:6379/0", "-A", "nmdc_server.celery.celery_app", "worker", "-E", "-l", "INFO"]

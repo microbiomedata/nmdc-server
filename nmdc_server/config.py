@@ -6,6 +6,7 @@ from starlette.config import Config
 
 
 class Settings(BaseSettings):
+    environment: str = "production"
     database_uri: str = "postgresql:///nmdc"
     testing_database_uri: str = "postgresql:///nmdc_testing"
     secret_key: str = "secret"
@@ -21,6 +22,9 @@ class Settings(BaseSettings):
     mongo_database: str = "dwinston_share"
     mongo_user: str = ""
     mongo_password: str = ""
+
+    celery_backend: str = "redis://redis:6379/0"
+    celery_broker: str = "redis://redis:6379/0"
 
     class Config:
         env_prefix = "nmdc_"

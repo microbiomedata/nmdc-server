@@ -7,6 +7,7 @@ from starlette.testclient import TestClient
 
 from nmdc_server import auth, database
 from nmdc_server.app import create_app
+from nmdc_server.config import settings
 from nmdc_server.database import create_engine
 from nmdc_server.fakes import db as _db, TokenFactory
 
@@ -19,6 +20,12 @@ async def create_test_session(request: Request) -> auth.Token:
     data["refresh_token"] = str(data["refresh_token"])
     request.session["token"] = data
     return token
+
+
+@pytest.fixture(autouse=True)
+def testing_environment():
+    settings.environment = "testing"
+    return settings
 
 
 @pytest.fixture(autouse=True)

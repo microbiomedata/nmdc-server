@@ -7,8 +7,14 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
 
-from nmdc_server import crud, query, schemas
-from nmdc_server.auth import get_current_user, login_required, login_required_responses, Token
+from nmdc_server import crud, jobs, query, schemas
+from nmdc_server.auth import (
+    admin_required,
+    get_current_user,
+    login_required,
+    login_required_responses,
+    Token,
+)
 from nmdc_server.config import Settings, settings
 from nmdc_server.database import create_session
 from nmdc_server.pagination import Pagination
@@ -86,7 +92,7 @@ async def get_environmental_geospatial(
 async def create_biosample(
     biosample: schemas.BiosampleCreate,
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    token: Token = Depends(admin_required),
 ):
     if crud.get_project(db, biosample.study_id) is None:
         raise HTTPException(status_code=400, detail="Study does not exist")
@@ -161,7 +167,7 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
 async def create_study(
     study: schemas.StudyCreate,
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    token: Token = Depends(admin_required),
 ):
     return crud.create_study(db, study)
 
@@ -233,7 +239,7 @@ async def get_study(study_id: str, db: Session = Depends(get_db)):
 async def create_project(
     project: schemas.ProjectCreate,
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    token: Token = Depends(admin_required),
 ):
     return crud.create_project(db, project)
 
@@ -314,7 +320,7 @@ async def list_project_data_objects(project_id: str, db: Session = Depends(get_d
 async def create_data_object(
     data_object: schemas.DataObjectCreate,
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    token: Token = Depends(admin_required),
 ):
     return crud.create_data_object(db, data_object)
 
@@ -652,3 +658,15 @@ async def get_pi_image(principal_investigator_id: UUID, db: Session = Depends(ge
         raise HTTPException(status_code=404, detail="Principal investigator  not found")
 
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
+
+
+@router.post(
+    "/jobs/ping",
+    tags=["jobs"],
+    responses=login_required_responses,
+)
+async def ping_celery(token: Token = Depends(admin_required)) -> bool:
+    try:
+        return jobs.ping.delay().wait(timeout=0.5)
+    except TimeoutError:
+        return False
