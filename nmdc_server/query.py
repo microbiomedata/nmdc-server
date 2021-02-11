@@ -200,13 +200,15 @@ class Table(Enum):
         if self == Table.biosample:
             query = _join_workflow_execution(
                 db.query(distinct(models.Biosample.id).label("id"))
-                .join(models.Project, isouter=True)
-                .join(models.DataObject, isouter=True)
                 .join(
                     models.Study,
                     models.Biosample.study_id == models.Study.id,
                 )
                 .join(models.PrincipalInvestigator)
+                .join(
+                    models.Project,
+                    models.Project.biosample_id == models.Biosample.id, isouter=True,
+                )
             )
         elif self == Table.study:
             query = _join_workflow_execution(
@@ -214,7 +216,6 @@ class Table(Enum):
                 .join(models.PrincipalInvestigator)
                 .join(models.Biosample, models.Biosample.study_id == models.Study.id, isouter=True)
                 .join(models.Project, models.Project.study_id == models.Study.id, isouter=True)
-                .join(models.DataObject, isouter=True)
             )
         elif self == Table.project:
             query = _join_workflow_execution(
