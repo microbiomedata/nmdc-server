@@ -5,6 +5,7 @@ from uuid import uuid4
 from sqlalchemy import (
     BigInteger,
     Boolean,
+    CheckConstraint,
     Column,
     DateTime,
     Float,
@@ -521,6 +522,14 @@ class FileDownload(Base):
     orcid = Column(String, nullable=False)
 
     data_object = relationship(DataObject)
+
+
+class IngestLock(Base):
+    __tablename__ = "ingest_lock"
+    __table_args__ = (CheckConstraint("id", name="singleton"),)
+
+    id = Column(Boolean, primary_key=True, default=True)
+    started = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
 ModelType = Union[
