@@ -4,3 +4,5 @@ PGUSER=postgres
 PGPASSWORD=postgres
 PGDATABASE=nmdc
 POSTGRES_URI="postgresql://postgres:postgres@postgres/nmdc"
+NMDC_CELERY_BACKEND="redis://redis:6379/0"
+NMDC_CELERY_BROKER="redis://redis:6379/0"

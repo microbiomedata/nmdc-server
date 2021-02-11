@@ -1,5 +1,8 @@
 version: "3.3"
 services:
+  redis:
+    image: redis
+
   data:
     image: nginx
   db:
@@ -11,9 +14,20 @@ services:
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
 
+  worker:
+    depends_on:
+      - redis
+    env_file:
+      - .docker-env
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile.worker
+
   backend:
     depends_on:
       - db
+      - redis
     env_file:
       - .docker-env
       - .env

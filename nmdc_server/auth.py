@@ -11,6 +11,12 @@ from starlette.responses import RedirectResponse
 from nmdc_server.config import settings, starlette_config
 
 
+# A list of orcids with "admin" access to the server.  At some point, we
+# may want to add a user table with associated roles to handle this.
+_admin_users = {
+    "0000-0001-6717-226X",  # Jonathan Beezley
+}
+
 # The type is added to get around an error related to:
 #   https://github.com/python/mypy/issues/8477
 login_required_responses: Dict[Any, Any] = {
@@ -70,6 +76,18 @@ async def login_required(token: Optional[Token] = Depends(get_token)) -> Token:
             headers={"WWW-Authenticate": "Bearer"},
         )
     return token
+
+
+async def admin_required(token: Token = Depends(get_token)) -> Token:
+    if settings.environment in {"development", "testing"}:
+        return token
+    if token.orcid in _admin_users:
+        return token
+
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Must be a site admin",
+    )
 
 
 router = APIRouter()

@@ -9,12 +9,9 @@ done
 #       point we should decide how to do migrations correctly.
 # PGDATABASE=postgres psql -c "drop database if exists nmdc;"
 
-echo 'Ingesting data'
+echo 'Creating and migrating database'
 # in spin the database already exists
 PGDATABASE=postgres psql -c "create database nmdc;" || true
 
-echo 'Upgrading schema and ingesting data'
-nmdc-server truncate
 nmdc-server migrate  # to create the database if necessary
 alembic -c nmdc_server/alembic.ini upgrade head
-nmdc-server ingest
