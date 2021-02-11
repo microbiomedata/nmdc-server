@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        image: [server, client]
+        image: [server, client, worker]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -48,6 +48,24 @@ jobs:
         if: ${{ matrix.image == 'client' }}
         with:
           url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:frontend?action=redeploy'
+          method: 'POST'
+          username: ${{ secrets.SPIN_USER }}
+          password: ${{ secrets.SPIN_PASSWORD }}
+
+      - name: Build and push worker
+        uses: docker/build-push-action@v1
+        if: ${{ matrix.image == 'worker' }}
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+          repository: jbeezley/nmdc-worker
+          tags: latest
+
+      - name: Deploy worker
+        uses: fjogeleit/http-request-action@v1.3.3
+        if: ${{ matrix.image == 'worker' }}
+        with:
+          url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:worker?action=redeploy'
           method: 'POST'
           username: ${{ secrets.SPIN_USER }}
           password: ${{ secrets.SPIN_PASSWORD }}
