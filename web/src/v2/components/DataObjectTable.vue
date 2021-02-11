@@ -70,7 +70,6 @@ export default defineComponent({
     <v-data-table
       :headers="headers"
       :items="items"
-      hide-default-footer
       dense
     >
       <template #[`item.file_size_bytes`]="{ item }">
