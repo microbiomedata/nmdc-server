@@ -207,7 +207,8 @@ class Table(Enum):
                 .join(models.PrincipalInvestigator)
                 .join(
                     models.Project,
-                    models.Project.biosample_id == models.Biosample.id, isouter=True,
+                    models.Project.biosample_id == models.Biosample.id,
+                    isouter=True,
                 )
             )
         elif self == Table.study:
@@ -365,6 +366,19 @@ class SimpleConditionSchema(BaseConditionSchema):
         )
 
 
+class GeneFunctionConditionSchema(BaseConditionSchema):
+    op: Literal["=="]
+    field: Literal["id"]
+    table: Literal[Table.gene_function]
+    value: str
+
+    def compare(self) -> ClauseElement:
+        return or_(
+            models.GeneFunction.id == self.value,
+            MetaPGeneFunction.id == self.value,
+        )
+
+
 class RangeConditionSchema(BaseConditionSchema):
     op: Literal["between"]
     field: str
@@ -430,16 +444,7 @@ class BaseQuerySchema(BaseModel):
         if any([c.table == Table.gene_function for c in self.conditions]):
             query = _join_gene_function(query)
         for key, conditions in self.groups:
-            extra_conditions: List[BaseConditionSchema] = []
-            if key == "Table.gene_function:id":
-                for gf_condition in conditions:
-                    condition_dict = gf_condition.dict()
-                    condition_dict["table"] = Table.metap_gene_function
-                    print(condition_dict)
-                    extra_conditions += [gf_condition, SimpleConditionSchema(**condition_dict)]
-
-            all_conditions = list(conditions) + extra_conditions
-            filters = [c.compare() for c in all_conditions]
+            filters = [c.compare() for c in conditions]
             query = query.filter(or_(*filters))
 
         return query
