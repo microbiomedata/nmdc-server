@@ -140,7 +140,6 @@ def _query_pipeline(db: Session, table: "Table") -> Query:
     query = (
         db.query(distinct(table.model.id).label("id"))  # type: ignore
         .join(models.Project)
-        .join(models.DataObject, isouter=True)
         .join(models.Biosample, isouter=True)
         .join(
             models.Study,
@@ -200,13 +199,16 @@ class Table(Enum):
         if self == Table.biosample:
             query = _join_workflow_execution(
                 db.query(distinct(models.Biosample.id).label("id"))
-                .join(models.Project, isouter=True)
-                .join(models.DataObject, isouter=True)
                 .join(
                     models.Study,
                     models.Biosample.study_id == models.Study.id,
                 )
                 .join(models.PrincipalInvestigator)
+                .join(
+                    models.Project,
+                    models.Project.biosample_id == models.Biosample.id,
+                    isouter=True,
+                )
             )
         elif self == Table.study:
             query = _join_workflow_execution(
@@ -214,12 +216,10 @@ class Table(Enum):
                 .join(models.PrincipalInvestigator)
                 .join(models.Biosample, models.Biosample.study_id == models.Study.id, isouter=True)
                 .join(models.Project, models.Project.study_id == models.Study.id, isouter=True)
-                .join(models.DataObject, isouter=True)
             )
         elif self == Table.project:
             query = _join_workflow_execution(
                 db.query(distinct(models.Project.id).label("id"))
-                .join(models.DataObject, isouter=True)
                 .join(models.Biosample, isouter=True)  # until biosample_id is no longer nullable
                 .join(models.Study, models.Study.id == models.Project.study_id, isouter=True)
                 .join(models.PrincipalInvestigator, isouter=True)
@@ -340,6 +340,13 @@ class SimpleConditionSchema(BaseConditionSchema):
     table: Table
 
     def compare(self) -> ClauseElement:
+        if self.table == Table.gene_function:
+            if self.op != Operation.equal:
+                raise InvalidAttributeException(self.table.value, self.field)
+            return or_(
+                models.GeneFunction.id == self.value,
+                MetaPGeneFunction.id == self.value,
+            )
         model = self.table.model
         if self.is_column():
             column = getattr(model, self.field)
@@ -429,16 +436,7 @@ class BaseQuerySchema(BaseModel):
         if any([c.table == Table.gene_function for c in self.conditions]):
             query = _join_gene_function(query)
         for key, conditions in self.groups:
-            extra_conditions: List[BaseConditionSchema] = []
-            if key == "Table.gene_function:id":
-                for gf_condition in conditions:
-                    condition_dict = gf_condition.dict()
-                    condition_dict["table"] = Table.metap_gene_function
-                    print(condition_dict)
-                    extra_conditions += [gf_condition, SimpleConditionSchema(**condition_dict)]
-
-            all_conditions = list(conditions) + extra_conditions
-            filters = [c.compare() for c in all_conditions]
+            filters = [c.compare() for c in conditions]
             query = query.filter(or_(*filters))
 
         return query
