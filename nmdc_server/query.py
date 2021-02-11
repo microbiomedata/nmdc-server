@@ -140,7 +140,6 @@ def _query_pipeline(db: Session, table: "Table") -> Query:
     query = (
         db.query(distinct(table.model.id).label("id"))  # type: ignore
         .join(models.Project)
-        .join(models.DataObject, isouter=True)
         .join(models.Biosample, isouter=True)
         .join(
             models.Study,
@@ -221,7 +220,6 @@ class Table(Enum):
         elif self == Table.project:
             query = _join_workflow_execution(
                 db.query(distinct(models.Project.id).label("id"))
-                .join(models.DataObject, isouter=True)
                 .join(models.Biosample, isouter=True)  # until biosample_id is no longer nullable
                 .join(models.Study, models.Study.id == models.Project.study_id, isouter=True)
                 .join(models.PrincipalInvestigator, isouter=True)
@@ -342,6 +340,13 @@ class SimpleConditionSchema(BaseConditionSchema):
     table: Table
 
     def compare(self) -> ClauseElement:
+        if self.table == Table.gene_function:
+            if self.op != Operation.equal:
+                raise InvalidAttributeException(self.table.value, self.field)
+            return or_(
+                models.GeneFunction.id == self.value,
+                MetaPGeneFunction.id == self.value,
+            )
         model = self.table.model
         if self.is_column():
             column = getattr(model, self.field)
@@ -363,19 +368,6 @@ class SimpleConditionSchema(BaseConditionSchema):
             raise InvalidAttributeException(self.table.value, self.field)
         return func.nmdc_compare(
             json_field[self.field].astext, self.op.value, self.value  # type: ignore
-        )
-
-
-class GeneFunctionConditionSchema(BaseConditionSchema):
-    op: Literal["=="]
-    field: Literal["id"]
-    table: Literal[Table.gene_function]
-    value: str
-
-    def compare(self) -> ClauseElement:
-        return or_(
-            models.GeneFunction.id == self.value,
-            MetaPGeneFunction.id == self.value,
         )
 
 
