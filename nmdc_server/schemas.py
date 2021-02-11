@@ -236,6 +236,7 @@ class Project(ProjectBase):
     open_in_gold: Optional[str]
 
     omics_data: List["OmicsTypes"]
+    outputs: List["DataObject"]
 
     class Config:
         orm_mode = True
