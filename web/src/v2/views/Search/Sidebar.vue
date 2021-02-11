@@ -8,7 +8,7 @@ import ConditionChips from '@/components/Presentation/ConditionChips.vue';
 import MenuContent from '@/v2/components/MenuContent.vue';
 import FacetedSearch, { SearchFacet } from '@/v2/components/FacetedSearch.vue';
 
-import { conditions, removeConditions, setConditions } from '@/v2/store';
+import { stateRefs, removeConditions, setConditions } from '@/v2/store';
 
 /**
  * V2's sidebar has a fixed list of facets, possibly from different tables.
@@ -133,7 +133,7 @@ export default defineComponent({
     return {
       setConditions,
       FunctionSearchFacets,
-      conditions,
+      conditions: stateRefs.conditions,
       dbSummary,
       dbSummaryForTable,
       removeConditions,

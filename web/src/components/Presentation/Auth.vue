@@ -1,13 +1,14 @@
-<script>
-import { api } from '@/data/api';
+<script lang="ts">
+import { defineComponent } from '@vue/composition-api';
+import { stateRefs } from '@/v2/store';
 
-export default {
-  asyncComputed: {
-    async me() {
-      return api.me();
-    },
+export default defineComponent({
+  setup() {
+    return {
+      me: stateRefs.user,
+    };
   },
-};
+});
 </script>
 
 <template>

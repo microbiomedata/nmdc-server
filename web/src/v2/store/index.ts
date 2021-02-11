@@ -1,16 +1,25 @@
 import Vue from 'vue';
-import CompositionApi, { reactive, toRef } from '@vue/composition-api';
+import CompositionApi, { reactive, toRefs } from '@vue/composition-api';
 import { uniqWith } from 'lodash';
 
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
-import { Condition } from '@/data/api';
+import { api, Condition } from '@/data/api';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
 const state = reactive({
   conditions: [] as Condition[],
+  user: null as string | null,
 });
+const stateRefs = toRefs(state);
+
+/**
+ * load the current user on app start
+ */
+async function loadCurrentUser() {
+  state.user = await api.me();
+}
 
 /*
  * Set conditions directly, removing duplicates
@@ -77,17 +86,11 @@ function removeConditions(conditions: Condition[]) {
   }
 }
 
-if (process.env.NODE_ENV !== 'production') {
-  // @ts-ignore
-  window.appstate = state;
-}
-
-const conditions = toRef(state, 'conditions');
-
 export {
-  conditions,
-  toggleConditions,
+  stateRefs,
+  loadCurrentUser,
   removeConditions,
   setUniqueCondition,
   setConditions,
+  toggleConditions,
 };

@@ -5,12 +5,6 @@ import { defineComponent, PropType } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
 import { flattenDeep, flatten } from 'lodash';
 
-// const OmicsTypeMap = {
-//   'nmdc:readqcanalysisactivity': 'ReadQC',
-//   'nmdc:metagenomeannotation': 'Metagenome',
-//   'nmdc:'
-// }
-
 export default defineComponent({
   props: {
     projects: {
@@ -20,6 +14,10 @@ export default defineComponent({
     omicsType: {
       type: String,
       required: true,
+    },
+    loggedInUser: {
+      type: Boolean,
+      default: false,
     },
   },
 
@@ -72,21 +70,33 @@ export default defineComponent({
     <v-data-table
       :headers="headers"
       :items="items"
-      hide-default-footer
       dense
     >
       <template #[`item.file_size_bytes`]="{ item }">
         {{ humanFileSize(item.file_size_bytes ) }}
       </template>
       <template #[`item.action`]="{ item }">
-        <v-btn
-          icon
-          :href="`/api/data_object/${item.id}/download`"
-          target="_blank"
-          rel="noopener"
+        <v-tooltip
+          :disabled="loggedInUser"
+          bottom
         >
-          <v-icon>mdi-download</v-icon>
-        </v-btn>
+          <template #activator="{ on, attrs }">
+            <span v-on="on">
+              <v-btn
+                v-if="item.url"
+                icon
+                v-bind="attrs"
+                :href="item.url"
+                :disabled="!loggedInUser"
+                target="_blank"
+                rel="noopener"
+              >
+                <v-icon>mdi-download</v-icon>
+              </v-btn>
+            </span>
+          </template>
+          <span>You must be logged in</span>
+        </v-tooltip>
       </template>
     </v-data-table>
   </v-card>

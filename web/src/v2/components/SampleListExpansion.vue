@@ -18,6 +18,10 @@ export default defineComponent({
       type: Object as PropType<{ resultId: string; projectId: string; }>,
       required: true,
     },
+    loggedInUser: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   components: {
@@ -67,6 +71,7 @@ export default defineComponent({
         class="flex-row mt-2"
         :projects="projects"
         :omics-type="omicsType"
+        :logged-in-user="loggedInUser"
       />
     </template>
   </div>
