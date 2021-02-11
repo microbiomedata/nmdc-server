@@ -1,5 +1,6 @@
 from starlette.testclient import TestClient
 
+from nmdc_server import fakes
 from nmdc_server.auth import Token
 from nmdc_server.config import settings
 
@@ -22,6 +23,14 @@ def test_logout(client: TestClient, token: Token):
     assert resp.json() == None
 
 
-def test_login_required(client: TestClient):
+def test_admin_required(client: TestClient):
     resp = client.post("/api/study", json={"doi": "abc"})
+    assert resp.status_code == 401
+
+
+def test_login_required(db, client: TestClient):
+    fakes.DataObjectFactory(id="nmdc:id")
+    db.commit()
+
+    resp = client.get("/api/data_object/nmdc:id/download")
     assert resp.status_code == 401

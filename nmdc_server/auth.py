@@ -78,7 +78,7 @@ async def login_required(token: Optional[Token] = Depends(get_token)) -> Token:
     return token
 
 
-async def admin_required(token: Token = Depends(get_token)) -> Token:
+async def admin_required(token: Token = Depends(login_required)) -> Token:
     if settings.environment in {"development", "testing"}:
         return token
     if token.orcid in _admin_users:
