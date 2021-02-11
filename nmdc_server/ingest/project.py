@@ -42,6 +42,8 @@ def load_project(db: Session, obj: Dict[str, Any]):
 
         data_object.project = project
         db.add(data_object)
+        project.outputs.append(data_object)  # type: ignore
+
     db.add(project)
 
 
