@@ -17,6 +17,7 @@ from nmdc_server.auth import (
 )
 from nmdc_server.config import Settings, settings
 from nmdc_server.database import create_session
+from nmdc_server.models import IngestLock
 from nmdc_server.pagination import Pagination
 
 
@@ -670,3 +671,19 @@ async def ping_celery(token: Token = Depends(admin_required)) -> bool:
         return jobs.ping.delay().wait(timeout=0.5)
     except TimeoutError:
         return False
+
+
+@router.post(
+    "/jobs/ingest",
+    tags=["jobs"],
+    responses=login_required_responses,
+)
+async def run_ingest(token: Token = Depends(admin_required), db: Session = Depends(get_db)):
+    lock = db.query(IngestLock).first()
+    if lock:
+        raise HTTPException(
+            status_code=409,
+            detail=f"An ingest started at {lock.started} is already in progress",
+        )
+    jobs.ingest.delay()
+    return ""
