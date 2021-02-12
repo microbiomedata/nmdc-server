@@ -47,7 +47,9 @@ def load(db: Session, cursor: Cursor):
     for obj in cursor:
         if obj["id"] not in study_ids:
             continue
-        pi_name = obj.pop("principal_investigator_name")["has_raw_value"]
+        pi_name = obj.pop("principal_investigator_name", {"has_raw_value": "James Stegen"})[
+            "has_raw_value"
+        ]
         obj["principal_investigator_id"] = get_or_create_pi(db, pi_name)
 
         if obj["id"] in study_additional:

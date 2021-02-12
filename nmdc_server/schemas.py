@@ -330,7 +330,9 @@ class MetagenomeAssemblyBase(PipelineStepBase):
     scaf_max: int
     ctg_max: int
     scaf_n_gt50K: int
-    scaf_l_gt50k: int
+
+    # TODO: fix the data on ingest or make this optional on the schema
+    scaf_l_gt50k: int = 0
     scaf_pct_gt50K: int
     num_input_reads: int
     num_aligned_reads: int

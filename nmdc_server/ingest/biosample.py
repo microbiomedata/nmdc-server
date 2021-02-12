@@ -1,5 +1,7 @@
+from datetime import datetime
 import json
 import logging
+import re
 from typing import Any, Dict
 
 from pydantic import root_validator, validator
@@ -13,6 +15,7 @@ from nmdc_server.ingest.study import study_ids
 from nmdc_server.schemas import BiosampleCreate
 
 logger = logging.getLogger(__name__)
+date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
 
 
 class Biosample(BiosampleCreate):
@@ -34,11 +37,21 @@ class Biosample(BiosampleCreate):
             return float(value.split(" ")[0])
         return value
 
+    @validator("add_date", "mod_date", pre=True)
+    def coerce_date(cls, v):
+        if isinstance(v, str) and date_fmt.match(v):
+            return datetime.strptime(v, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()
+
 
 def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):
-    env_broad_scale = db.query(models.EnvoTerm).get(obj.pop("env_broad_scale")["has_raw_value"])
-    env_local_scale = db.query(models.EnvoTerm).get(obj.pop("env_local_scale")["has_raw_value"])
-    env_medium = db.query(models.EnvoTerm).get(obj.pop("env_medium")["has_raw_value"])
+    invalid = {"has_raw_value": ""}
+    env_broad_scale = db.query(models.EnvoTerm).get(
+        obj.pop("env_broad_scale", invalid)["has_raw_value"]
+    )
+    env_local_scale = db.query(models.EnvoTerm).get(
+        obj.pop("env_local_scale", invalid)["has_raw_value"]
+    )
+    env_medium = db.query(models.EnvoTerm).get(obj.pop("env_medium", invalid)["has_raw_value"])
 
     if env_broad_scale:
         obj["env_broad_scale_id"] = env_broad_scale.id
@@ -47,7 +60,10 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     if env_medium:
         obj["env_medium_id"] = env_medium.id
 
-    obj["study_id"] = omics_processing.find_one({"has_input": obj["id"]})["part_of"][0]
+    project = omics_processing.find_one({"has_input": obj["id"]})
+    if project is None:
+        return
+    obj["study_id"] = project["part_of"][0]
     if obj["study_id"] not in study_ids:
         return
 
@@ -62,4 +78,3 @@ def load(db: Session, cursor: Cursor, omics_processing: Collection):
         except Exception:
             logger.error("Error parsing biosample:")
             logger.error(json.dumps(obj, indent=2, default=str))
-            raise

@@ -32,10 +32,14 @@ def load(db: Session):
     db.commit()
 
     logger.info("Loading biosamples...")
-    biosample.load(
-        db, mongodb["biosample_set"].find(), omics_processing=mongodb["omics_processing_set"]
-    )
-    db.commit()
+    cursor = mongodb["biosample_set"].find(no_cursor_timeout=True)
+    with click.progressbar(cursor, length=cursor.count()) as bar:
+        biosample.load(
+            db,
+            bar,
+            omics_processing=mongodb["omics_processing_set"],
+        )
+        db.commit()
 
     logger.info("Loading omics processing...")
     project.load(db, mongodb["omics_processing_set"].find())
