@@ -546,6 +546,7 @@ ModelType = Union[
     Type[NOMAnalysis],
     Type[MetabolomicsAnalysis],
     Type[GeneFunction],
+    Type[Base],
 ]
 
 workflow_activity_types = [

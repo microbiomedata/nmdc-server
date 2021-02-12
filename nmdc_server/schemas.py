@@ -168,6 +168,10 @@ class OmicsCounts(BaseModel):
     type: str
     count: int
 
+    @validator("count", pre=True, always=True)
+    def insert_zero(cls, v):
+        return v or 0
+
 
 class Study(StudyBase):
     open_in_gold: Optional[str]

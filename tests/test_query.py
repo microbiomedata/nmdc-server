@@ -85,7 +85,6 @@ def test_date_query(db: Session, condition, expected):
     [
         "study",
         "project",
-        "data_object",
         "biosample",
         "reads_qc",
         "metagenome_assembly",
@@ -97,7 +96,6 @@ def test_basic_query(db: Session, table):
     tests: Dict[str, Tuple[fakes.AnnotatedFactory, query.BaseQuerySchema]] = {
         "study": (fakes.StudyFactory(), query.StudyQuerySchema()),
         "project": (fakes.ProjectFactory(), query.ProjectQuerySchema()),
-        "data_object": (fakes.DataObjectFactory(), query.DataObjectQuerySchema()),
         "biosample": (fakes.BiosampleFactory(), query.BiosampleQuerySchema()),
         "reads_qc": (fakes.ReadsQCFactory(), query.ReadsQCQuerySchema()),
         "metagenome_assembly": (
@@ -478,42 +476,6 @@ def test_query_pi(db: Session):
         ]
     )
     assert ["sample1"] == [r.id for r in qp.execute(db)]
-
-
-def test_query_data_object(db: Session):
-    project = fakes.ProjectFactory(id="project")
-    fakes.DataObjectFactory(id="file1", project=project, file_size_bytes=16)
-    fakes.DataObjectFactory(id="file2", project=project, file_size_bytes=1024)
-    fakes.DataObjectFactory(id="file3", file_size_bytes=2048)
-    db.commit()
-
-    q = query.DataObjectQuerySchema(
-        conditions=[
-            {
-                "table": "project",
-                "field": "id",
-                "value": "project",
-            }
-        ]
-    )
-    assert {"file1", "file2"} == {r.id for r in q.execute(db)}
-
-    q = query.DataObjectQuerySchema(
-        conditions=[
-            {
-                "table": "project",
-                "field": "id",
-                "value": "project",
-            },
-            {
-                "table": "data_object",
-                "field": "file_size_bytes",
-                "op": ">=",
-                "value": 64,
-            },
-        ]
-    )
-    assert {"file2"} == {r.id for r in q.execute(db)}
 
 
 def test_query_gene_function_biosample(db: Session):

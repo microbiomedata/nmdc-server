@@ -1,29 +1,28 @@
 from datetime import datetime
 from enum import Enum
 from itertools import groupby
+import re
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, PositiveInt
-from sqlalchemy import and_, ARRAY, cast, Column, distinct, func, inspect, or_
-from sqlalchemy.orm import aliased, Query, Session, with_expression
+from sqlalchemy import and_, ARRAY, cast, Column, func, inspect, or_
+from sqlalchemy.orm import Query, Session, with_expression
 from sqlalchemy.orm.util import AliasedClass
-from sqlalchemy.sql.expression import ClauseElement
+from sqlalchemy.sql.expression import ClauseElement, intersect
 from typing_extensions import Literal
 
 from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
-
-EnvBroadScale = aliased(models.EnvoTerm)
-EnvBroadScaleAncestor = aliased(models.EnvoAncestor)
-EnvBroadScaleTerm = aliased(models.EnvoTerm)
-EnvLocalScale = aliased(models.EnvoTerm)
-EnvLocalScaleAncestor = aliased(models.EnvoAncestor)
-EnvLocalScaleTerm = aliased(models.EnvoTerm)
-EnvMedium = aliased(models.EnvoTerm)
-EnvMediumAncestor = aliased(models.EnvoAncestor)
-EnvMediumTerm = aliased(models.EnvoTerm)
-
-MetaPGeneFunction = aliased(models.GeneFunction)
+from nmdc_server.filters import create_filter_class
+from nmdc_server.table import (
+    EnvBroadScaleAncestor,
+    EnvBroadScaleTerm,
+    EnvLocalScaleAncestor,
+    EnvLocalScaleTerm,
+    EnvMediumAncestor,
+    EnvMediumTerm,
+    Table,
+)
 
 
 class InvalidAttributeException(Exception):
@@ -37,86 +36,6 @@ class InvalidAttributeException(Exception):
 
 class InvalidFacetException(Exception):
     pass
-
-
-def _join_envo(query: Query) -> Query:
-    return (
-        query.join(
-            EnvBroadScaleAncestor,
-            models.Biosample.env_broad_scale_id == EnvBroadScaleAncestor.id,
-            isouter=True,
-        )
-        .join(
-            EnvBroadScaleTerm,
-            EnvBroadScaleAncestor.ancestor_id == EnvBroadScaleTerm.id,
-            isouter=True,
-        )
-        .join(
-            EnvLocalScaleAncestor,
-            models.Biosample.env_local_scale_id == EnvLocalScaleAncestor.id,
-            isouter=True,
-        )
-        .join(
-            EnvLocalScaleTerm,
-            EnvLocalScaleAncestor.ancestor_id == EnvLocalScaleTerm.id,
-            isouter=True,
-        )
-        .join(
-            EnvMediumAncestor, models.Biosample.env_medium_id == EnvMediumAncestor.id, isouter=True
-        )
-        .join(EnvMediumTerm, EnvMediumAncestor.ancestor_id == EnvMediumTerm.id, isouter=True)
-    )
-
-
-def _join_workflow_execution(query: Query) -> Query:
-    return (
-        query.join(models.ReadsQC, isouter=True)
-        .join(models.MetagenomeAssembly, isouter=True)
-        .join(models.MetagenomeAnnotation, isouter=True)
-        .join(models.MetaproteomicAnalysis, isouter=True)
-        .join(models.MAGsAnalysis, isouter=True)
-        .join(models.ReadBasedAnalysis, isouter=True)
-        .join(models.NOMAnalysis, isouter=True)
-        .join(models.MetabolomicsAnalysis, isouter=True)
-    )
-
-
-def _join_gene_function(query: Query) -> Query:
-    aliased_mga_gene_function = aliased(models.MGAGeneFunction)
-    return (
-        query.join(
-            models.MGAGeneFunction,
-            models.MGAGeneFunction.metagenome_annotation_id == models.MetagenomeAnnotation.id,
-            isouter=True,
-        )
-        .join(models.GeneFunction, isouter=True)
-        .join(
-            models.MetaproteomicPeptide,
-            models.MetaproteomicPeptide.metaproteomic_analysis_id
-            == models.MetaproteomicAnalysis.id,
-            isouter=True,
-        )
-        .join(
-            models.PeptideMGAGeneFunction,
-            models.PeptideMGAGeneFunction.metaproteomic_peptide_id
-            == models.MetaproteomicPeptide.id,
-            isouter=True,
-        )
-        .join(
-            aliased_mga_gene_function,
-            models.PeptideMGAGeneFunction.subject == aliased_mga_gene_function.subject,
-            isouter=True,
-        )
-        .join(
-            MetaPGeneFunction,
-            MetaPGeneFunction.id == aliased_mga_gene_function.gene_function_id,
-            isouter=True,
-        )
-    )
-
-
-def _join_common(query: Query) -> Query:
-    return _join_envo(query)
 
 
 def _join_envo_facet(query: Query, attribute: str) -> Query:
@@ -136,26 +55,6 @@ def _join_envo_facet(query: Query, attribute: str) -> Query:
         raise Exception("Unknown envo attribute")
 
 
-def _query_pipeline(db: Session, table: "Table") -> Query:
-    query = (
-        db.query(distinct(table.model.id).label("id"))  # type: ignore
-        .join(models.Project)
-        .join(models.Biosample, isouter=True)
-        .join(
-            models.Study,
-            models.Biosample.study_id == models.Study.id
-            or models.Project.study_id == models.Study.id,
-            isouter=True,
-        )
-        .join(models.PrincipalInvestigator, isouter=True)
-    )
-
-    for model in models.workflow_activity_types:
-        if model != table.model:
-            query = query.join(model, isouter=True)
-    return query
-
-
 class InvalidQuery(Exception):
     pass
 
@@ -168,106 +67,6 @@ class Operation(Enum):
     less_equal = "<="
     not_equal = "!="
 
-
-class Table(Enum):
-    biosample = "biosample"
-    study = "study"
-    principal_investigator = "principal_investigator"
-    project = "project"
-    data_object = "data_object"
-    env_broad_scale = "env_broad_scale"
-    env_local_scale = "env_local_scale"
-    env_medium = "env_medium"
-    reads_qc = "reads_qc"
-    metagenome_assembly = "metagenome_assembly"
-    metagenome_annotation = "metagenome_annotation"
-    metaproteomic_analysis = "metaproteomic_analysis"
-    mags_analysis = "mags_analysis"
-    nom_analysis = "nom_analysis"
-    read_based_analysis = "read_based_analysis"
-    metabolomics_analysis = "metabolomics_analysis"
-    gene_function = "gene_function"
-    metap_gene_function = "metap_gene_function"
-
-    @property
-    def model(self) -> Union[models.ModelType, AliasedClass]:
-        if self not in _table_model_map:
-            raise Exception("Unknown table")
-        return _table_model_map[self]
-
-    def query(self, db: Session) -> Query:
-        if self == Table.biosample:
-            query = _join_workflow_execution(
-                db.query(distinct(models.Biosample.id).label("id"))
-                .join(
-                    models.Study,
-                    models.Biosample.study_id == models.Study.id,
-                )
-                .join(models.PrincipalInvestigator)
-                .join(
-                    models.Project,
-                    models.Project.biosample_id == models.Biosample.id,
-                    isouter=True,
-                )
-            )
-        elif self == Table.study:
-            query = _join_workflow_execution(
-                db.query(distinct(models.Study.id).label("id"))
-                .join(models.PrincipalInvestigator)
-                .join(models.Biosample, models.Biosample.study_id == models.Study.id, isouter=True)
-                .join(models.Project, models.Project.study_id == models.Study.id, isouter=True)
-            )
-        elif self == Table.project:
-            query = _join_workflow_execution(
-                db.query(distinct(models.Project.id).label("id"))
-                .join(models.Biosample, isouter=True)  # until biosample_id is no longer nullable
-                .join(models.Study, models.Study.id == models.Project.study_id, isouter=True)
-                .join(models.PrincipalInvestigator, isouter=True)
-            )
-        elif self == Table.data_object:
-            query = (
-                db.query(distinct(models.DataObject.id).label("id"))
-                .join(models.Project)
-                .join(models.Biosample, isouter=True)
-                .join(
-                    models.Study,
-                    models.Biosample.study_id == models.Study.id
-                    or models.Project.study_id == models.Study.id,
-                    isouter=True,
-                )
-                .join(models.PrincipalInvestigator, isouter=True)
-                .join(models.ReadsQC, isouter=True)
-                .join(models.MetagenomeAssembly, isouter=True)
-                .join(models.MetagenomeAnnotation, isouter=True)
-                .join(models.MetaproteomicAnalysis, isouter=True)
-            )
-        elif self.model in models.workflow_activity_types:
-            return _query_pipeline(db, self)
-
-        else:
-            raise Exception("Unknown table")
-        return _join_common(query)
-
-
-_table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
-    Table.biosample: models.Biosample,
-    Table.study: models.Study,
-    Table.project: models.Project,
-    Table.data_object: models.DataObject,
-    Table.env_broad_scale: EnvBroadScaleTerm,
-    Table.env_local_scale: EnvLocalScaleTerm,
-    Table.env_medium: EnvMediumTerm,
-    Table.reads_qc: models.ReadsQC,
-    Table.metagenome_assembly: models.MetagenomeAssembly,
-    Table.metagenome_annotation: models.MetagenomeAnnotation,
-    Table.metaproteomic_analysis: models.MetaproteomicAnalysis,
-    Table.mags_analysis: models.MAGsAnalysis,
-    Table.nom_analysis: models.NOMAnalysis,
-    Table.read_based_analysis: models.ReadBasedAnalysis,
-    Table.metabolomics_analysis: models.MetabolomicsAnalysis,
-    Table.gene_function: models.GeneFunction,
-    Table.metap_gene_function: MetaPGeneFunction,
-}
 
 _envo_keys: Dict[str, Tuple[Table, str]] = {
     "env_broad_scale": (Table.env_broad_scale, "label"),
@@ -310,8 +109,8 @@ class BaseConditionSchema(BaseModel):
 
     def is_column(self) -> bool:
         m = self.table.model
-        if isinstance(m, AliasedClass):
-            m = inspect(m).class_
+        if isinstance(self.table.model, AliasedClass):
+            return hasattr(self.table.model, self.field)
         return self.field in inspect(m).all_orm_descriptors.keys()
 
     def compare(self) -> ClauseElement:
@@ -340,13 +139,6 @@ class SimpleConditionSchema(BaseConditionSchema):
     table: Table
 
     def compare(self) -> ClauseElement:
-        if self.table == Table.gene_function:
-            if self.op != Operation.equal:
-                raise InvalidAttributeException(self.table.value, self.field)
-            return or_(
-                models.GeneFunction.id == self.value,
-                MetaPGeneFunction.id == self.value,
-            )
         model = self.table.model
         if self.is_column():
             column = getattr(model, self.field)
@@ -366,9 +158,7 @@ class SimpleConditionSchema(BaseConditionSchema):
             json_field = model.annotations  # type: ignore
         else:
             raise InvalidAttributeException(self.table.value, self.field)
-        return func.nmdc_compare(
-            json_field[self.field].astext, self.op.value, self.value  # type: ignore
-        )
+        return func.nmdc_compare(json_field[self.field].astext, self.op.value, self.value)
 
 
 class RangeConditionSchema(BaseConditionSchema):
@@ -431,20 +221,34 @@ class BaseQuerySchema(BaseModel):
     def groups(self) -> Iterator[Tuple[str, Iterator[BaseConditionSchema]]]:
         return groupby(self.sorted_conditions, key=lambda c: c.key)
 
-    def query(self, db, base_query: Query = None) -> Query:
-        query = base_query or self.table.query(db)
-        if any([c.table == Table.gene_function for c in self.conditions]):
-            query = _join_gene_function(query)
+    def query(self, db) -> Query:
+        table_re = re.compile(r"Table.(.*):.*")
+        matches = [db.query(self.table.model.id.label("id"))]  # type: ignore
+        has_filters = False
         for key, conditions in self.groups:
-            filters = [c.compare() for c in conditions]
-            query = query.filter(or_(*filters))
+            has_filters = True
+            match = table_re.match(key)
+            if not match:
+                # Not an expected user error
+                raise Exception("Invalid group key")
+            table = Table(match.groups()[0])
 
+            filter = create_filter_class(table, conditions)
+            matches.append(filter.matches(db, self.table))
+
+        query = db.query(self.table.model.id.label("id"))  # type: ignore
+        if has_filters:
+            matches_query = intersect(*matches).alias("intersect")
+            query = query.join(
+                matches_query,
+                matches_query.c.id == self.table.model.id,  # type: ignore
+            )
         return query
 
     def execute(self, db: Session) -> Query:
         model = self.table.model
-        subquery = self.query(db).subquery()
-        return db.query(model).join(subquery, model.id == subquery.c.id)
+        subquery = self.query(db).subquery().alias("id_filter")
+        return db.query(model).join(subquery, model.id == subquery.c.id)  # type: ignore
 
     def count(self, db: Session) -> int:
         return self.query(db).count()
@@ -460,7 +264,7 @@ class BaseQuerySchema(BaseModel):
         if None in [minimum, maximum]:
             row = (
                 db.query(func.min(column), func.max(column))
-                .join(subquery, self.table.model.id == subquery.c.id)
+                .join(subquery, self.table.model.id == subquery.c.id)  # type: ignore
                 .first()
             )
             if row is None:
@@ -550,8 +354,8 @@ class BaseQuerySchema(BaseModel):
 
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
         model: Any = self.table.model
-        join_envo = False
         join_ap = False
+        join_envo = False
         if attribute in _envo_keys and self.table == Table.biosample:
             table, field = _envo_keys[attribute]
             column = getattr(table.model, field)
@@ -587,37 +391,38 @@ class StudyQuerySchema(BaseQuerySchema):
 
     def _count_omics_data_query(self, db: Session, query_schema: BaseQuerySchema) -> Query:
         model = query_schema.table.model
-        table_name = model.__tablename__
+        table_name = model.__tablename__  # type: ignore
 
-        return (
+        subquery = query_schema.query(db).subquery()
+
+        q = (
             db.query(
                 models.Project.study_id.label(f"{table_name}_study_id"),
-                func.count(model.id).label(f"{table_name}_count"),
+                func.count(model.id).label(f"{table_name}_count"),  # type: ignore
             )
             .join(model, isouter=True)
-            .join(models.Biosample, isouter=True)
-            .join(
-                models.Study,
-                models.Biosample.study_id == models.Study.id
-                or models.Project.study_id == models.Study.id,
-                isouter=True,
-            )
-            .join(models.PrincipalInvestigator, isouter=True)
+            .join(subquery, subquery.c.id == model.id)  # type: ignore
             .group_by(models.Project.study_id)
         )
+        return q
 
     def _inject_omics_data_summary(self, db: Session, query: Query) -> Query:
         aggs = []
         for omics_class in workflow_search_classes:
             pipeline_model = omics_class().table.model
-            table_name = pipeline_model.__tablename__
+            table_name = pipeline_model.__tablename__  # type: ignore
             filter_conditions = [
-                c for c in self.conditions if c.table in {"project", table_name, "biosample"}
+                c for c in self.conditions if c.table.value in {"project", table_name, "biosample"}
             ]
+
             query_schema = omics_class(conditions=filter_conditions)
             omics_subquery = self._count_omics_data_query(db, query_schema).subquery()
             study_id = getattr(omics_subquery.c, f"{table_name}_study_id")
-            query = query.join(omics_subquery, self.table.model.id == study_id, isouter=True)
+            query = query.join(
+                omics_subquery,
+                self.table.model.id == study_id,  # type: ignore
+                isouter=True,
+            )
             aggs.append(
                 func.json_build_object(
                     "type", table_name, "count", getattr(omics_subquery.c, f"{table_name}_count")
@@ -644,8 +449,8 @@ class StudyQuerySchema(BaseQuerySchema):
         return self._inject_omics_data_summary(
             db,
             db.query(model)
-            .join(subquery, model.id == subquery.c.id)
-            .join(sample_count, model.id == sample_count.c.study_id, isouter=True)
+            .join(subquery, model.id == subquery.c.id)  # type: ignore
+            .join(sample_count, model.id == sample_count.c.study_id, isouter=True)  # type: ignore
             .options(with_expression(models.Study.sample_count, sample_count.c.sample_count)),
         )
 
@@ -654,12 +459,6 @@ class ProjectQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
         return Table.project
-
-
-class DataObjectQuerySchema(BaseQuerySchema):
-    @property
-    def table(self) -> Table:
-        return Table.data_object
 
 
 class BiosampleQuerySchema(BaseQuerySchema):
