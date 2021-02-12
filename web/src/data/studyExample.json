@@ -29,8 +29,8 @@
       "doi": "10.25585/1487765",
       "open_in_gold": "https://gold.jgi.doe.gov/study?id=Gs0114663",
       "principal_investigator_name": "James Stegen",
-      "principal_investigator_image_url": "/api/principal_investigator/ea98f6d0-9504-44f1-b75a-101a4eeb31f5",
-      "sample_count": 50,
+      "principal_investigator_image_url": "/api/principal_investigator/50640135-7083-4085-8294-38a2f2a54991",
+      "sample_count": 85,
       "omics_counts": [
         {
           "type": "reads_qc",
@@ -46,7 +46,7 @@
         },
         {
           "type": "metaproteomic_analysis",
-          "count": 1
+          "count": 32
         },
         {
           "type": "mags_analysis",
@@ -93,7 +93,7 @@
       "doi": "10.25585/1487763",
       "open_in_gold": "https://gold.jgi.doe.gov/study?id=Gs0114675",
       "principal_investigator_name": "Kelly Wrighton",
-      "principal_investigator_image_url": "/api/principal_investigator/513c2626-8835-496c-9722-a533f023adf7",
+      "principal_investigator_image_url": "/api/principal_investigator/c5f85e4a-0d44-47cf-8385-3d83e6274ca2",
       "sample_count": 25,
       "omics_counts": [
         {
@@ -155,7 +155,7 @@
       "doi": "10.25585/1488224",
       "open_in_gold": "https://gold.jgi.doe.gov/study?id=Gs0135149",
       "principal_investigator_name": "Eoin Brodie",
-      "principal_investigator_image_url": "/api/principal_investigator/b4e9e3dc-52b3-4561-82c4-528d0f99be4b",
+      "principal_investigator_image_url": "/api/principal_investigator/7ecf1754-c425-4089-81e1-0ae44f070705",
       "sample_count": 48,
       "omics_counts": [
         {
