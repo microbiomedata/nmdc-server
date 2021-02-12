@@ -6,6 +6,7 @@ export default Vue.extend({
   mixins: [FacetSummary],
 
   data: () => ({
+    createdDelay: false,
     filterText: '',
     tableHeaders: [
       {
@@ -32,6 +33,11 @@ export default Vue.extend({
         (c) => this.facetSummary.find((item) => item.facet.toLowerCase() === c.value.toLowerCase()),
       );
     },
+  },
+
+  created() {
+    /* Enable loading bar after 2 seconds of no load, to avoid overly noisy facet dialogs */
+    window.setTimeout(() => { this.createdDelay = true; }, 2000);
   },
 
   methods: {
@@ -102,6 +108,9 @@ export default Vue.extend({
       :item-key="'facet'"
       :items="facetSummaryAggregate"
       :headers="tableHeaders"
+      :no-data-text="'Data is loading.'"
+      :loading="facetSummaryAggregate.length === 0 && createdDelay"
+      :loading-text="'Data is loading and could take a while.'"
       @item-selected="setSelected"
       @toggle-select-all="toggleSelectAll"
     >

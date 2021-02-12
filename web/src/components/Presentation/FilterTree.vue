@@ -35,6 +35,7 @@ export default Vue.extend({
   },
 
   data: () => ({
+    createdDelay: false,
     filterText: '',
     value: [],
   }),
@@ -62,21 +63,9 @@ export default Vue.extend({
     },
   },
 
-  watch: {
-    // treeData({ topoSort }) {
-    //   if (topoSort) {
-    //     const sel = [];
-    //     this.myConditions.forEach((c) => {
-    //       const node = this.treeData.topoSort
-    //         .find((n) => n.name === c.value && n.heirarchyKey === c.field);
-    //       sel.push(getChain(node)
-    //         .filter((n) => n.id !== '')
-    //         .map((n) => n.name)
-    //         .join('.'));
-    //     });
-    //     this.value = sel;
-    //   }
-    // },
+  created() {
+    /* Enable loading bar after 2 seconds of no load, to avoid overly noisy facet dialogs */
+    window.setTimeout(() => { this.createdDelay = true; }, 2000);
   },
 
   methods: {
@@ -104,11 +93,16 @@ export default Vue.extend({
 
 <template>
   <div class="tree-overflow">
+    <v-progress-linear
+      v-if="data === null && createdDelay"
+      indeterminate
+      style="position: absolute;"
+    />
     <treeselect
       :options="tree"
       multiple
       always-open
-      class="ma-2"
+      class="ma-2 mt-4"
       :value="value"
       @input="setSelected"
     >
