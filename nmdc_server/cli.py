@@ -72,7 +72,8 @@ def truncate():
 
 @cli.command()
 @click.option("-v", "--verbose", count=True)
-def ingest(verbose):
+@click.option("--function-limit", type=click.INT, default=100)
+def ingest(verbose, function_limit):
     """Ingest the latest data from mongo."""
     level = logging.WARN
     if verbose == 1:
@@ -86,4 +87,4 @@ def ingest(verbose):
     )
     logger.setLevel(logging.INFO)
     with create_session() as db:
-        load(db)
+        load(db, function_limit=function_limit)
