@@ -40,7 +40,7 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
             },
         }
     )
-    if "function_limit" in kwargs:
+    if kwargs.get("function_limit"):
         query = query.limit(kwargs["function_limit"])
 
     gene_functions: Dict[str, models.GeneFunction] = {}

@@ -10,7 +10,7 @@ from nmdc_server.ingest import biosample, data_object, envo, pipeline, project, 
 logger = logging.getLogger(__name__)
 
 
-def load(db: Session):
+def load(db: Session, function_limit=None):
     settings = Settings()
     if not (settings.mongo_user and settings.mongo_password):
         raise Exception("Please set NMDC_MONGO_USER and NMDC_MONGO_PASSWORD")
@@ -32,14 +32,20 @@ def load(db: Session):
     db.commit()
 
     logger.info("Loading biosamples...")
-    cursor = mongodb["biosample_set"].find(no_cursor_timeout=True)
-    with click.progressbar(cursor, length=cursor.count()) as bar:
-        biosample.load(
-            db,
-            bar,
-            omics_processing=mongodb["omics_processing_set"],
-        )
-        db.commit()
+    cursor = mongodb["biosample_set"].find(
+        {
+            "_study_id": {
+                "$in": list(study.study_ids),
+            },
+        },
+        no_cursor_timeout=True,
+    )
+    biosample.load(
+        db,
+        cursor,
+        omics_processing=mongodb["omics_processing_set"],
+    )
+    db.commit()
 
     logger.info("Loading omics processing...")
     project.load(db, mongodb["omics_processing_set"].find())
@@ -87,7 +93,7 @@ def load(db: Session):
             bar,
             pipeline.load_mg_annotation,
             annotations=mongodb["raw.functional_annotation_set"],
-            function_limit=100,  # TODO: Remove to load all gene functions
+            function_limit=function_limit,
         )
     db.commit()
 
