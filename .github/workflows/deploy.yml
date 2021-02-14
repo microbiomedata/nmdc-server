@@ -60,6 +60,7 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD }}
           repository: jbeezley/nmdc-worker
           tags: latest
+          dockerfile: ./Dockerfile.worker
 
       - name: Deploy worker
         uses: fjogeleit/http-request-action@v1.3.3
