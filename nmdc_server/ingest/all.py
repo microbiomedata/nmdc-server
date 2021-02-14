@@ -108,7 +108,9 @@ def load(db: Session, function_limit=None):
     logger.info("Loading metaproteomic analysis...")
     pipeline.load(
         db,
-        mongodb["metaproteomics_analysis_activity_set"].find(),
+        mongodb["metaproteomics_analysis_activity_set"].find(
+            no_cursor_timeout=True,
+        ),
         pipeline.load_mp_analysis,
     )
     db.commit()

@@ -38,7 +38,8 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
             "has_function": {
                 "$regex": ko_regex,
             },
-        }
+        },
+        no_cursor_timeout=True,
     )
     if kwargs.get("function_limit"):
         query = query.limit(kwargs["function_limit"])
