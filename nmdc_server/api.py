@@ -346,43 +346,6 @@ async def get_data_object(data_object_id: str, db: Session = Depends(get_db)):
 #     if db_data_object is None:
 #         raise HTTPException(status_code=404, detail="DataObject not found")
 #     crud.delete_data_object(db, db_data_object)
-
-
-@router.post(
-    "/data_object/search",
-    response_model=query.DataObjectSearchResponse,
-    tags=["data_object"],
-    name="Search for studies",
-    description="Faceted search of data_object data.",
-)
-async def search_data_object(
-    query: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-    pagination: Pagination = Depends(),
-):
-    return pagination.response(crud.search_data_object(db, query.conditions))
-
-
-@router.post(
-    "/data_object/facet",
-    response_model=query.FacetResponse,
-    tags=["data_object"],
-    name="Get all values of an attribute",
-)
-async def facet_data_object(query: query.FacetQuery, db: Session = Depends(get_db)):
-    return crud.facet_data_object(db, query.attribute, query.conditions)
-
-
-@router.post(
-    "/data_object/binned_facet",
-    response_model=query.BinnedFacetResponse,
-    tags=["data_object"],
-    name="Get all values of a non-string attribute with binning",
-)
-async def binned_facet_data_object(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
-    return crud.binned_facet_data_object(db, **query.dict())
-
-
 @router.get(
     "/data_object/{data_object_id}/download",
     tags=["data_object"],
