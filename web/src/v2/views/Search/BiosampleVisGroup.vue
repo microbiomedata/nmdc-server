@@ -17,20 +17,32 @@ import {
 
 const staticUpsetData = [
   {
-    sets: ['MG', 'MP'],
+    sets: ['MG'],
+    counts: { Samples: 42, Studies: 2 },
+  },
+  {
+    sets: ['MG', 'MP', 'MB'],
     counts: { Samples: 33, Studies: 1 },
   },
   {
-    sets: ['MG', 'MP', 'MT', 'OM'],
-    counts: { Samples: 45, Studies: 1 },
+    sets: ['OM', 'MT', 'MG'],
+    counts: { Samples: 43, Studies: 1 },
   },
   {
-    sets: ['MG'],
-    counts: { Samples: 143, Studies: 3 },
+    sets: ['MG', 'MT'],
+    counts: { Samples: 2, Studies: 1 },
   },
   {
-    sets: ['MB'],
-    counts: { Samples: 87, Studies: 3 },
+    sets: ['OM', 'MG'],
+    counts: { Samples: 3, Studies: 1 },
+  },
+  {
+    sets: ['MP', 'MB'],
+    counts: { Samples: 1, Studies: 1 },
+  },
+  {
+    sets: ['OM'],
+    counts: { Samples: 34, Studies: 1 },
   },
 ];
 
@@ -127,7 +139,7 @@ export default defineComponent({
           height="100%"
           class="py-2 d-flex flex-column justify-center"
         >
-          <ChartContainer>
+          <ChartContainer :height="200">
             <template #default="{ width, height }">
               <UpSet
                 v-bind="{
