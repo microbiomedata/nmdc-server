@@ -83,19 +83,23 @@ def load(db: Session, function_limit=None):
     )
     db.commit()
 
-    logger.info("Loading metagenome annotation...")
-    cursor = mongodb["metagenome_annotation_activity_set"].find(
-        no_cursor_timeout=True,
-    )
-    with click.progressbar(cursor, length=cursor.count()) as bar:
-        pipeline.load(
-            db,
-            bar,
-            pipeline.load_mg_annotation,
-            annotations=mongodb["raw.functional_annotation_set"],
-            function_limit=function_limit,
+    try:
+        logger.info("Loading metagenome annotation...")
+        cursor = mongodb["metagenome_annotation_activity_set"].find(
+            no_cursor_timeout=True,
         )
-    db.commit()
+        with click.progressbar(cursor, length=cursor.count()) as bar:
+            pipeline.load(
+                db,
+                bar,
+                pipeline.load_mg_annotation,
+                annotations=mongodb["raw.functional_annotation_set"],
+                function_limit=function_limit,
+            )
+    except Exception:
+        logger.exception("Failed during metag ingest.")
+    finally:
+        db.commit()
 
     logger.info("Loading read qc...")
     pipeline.load(
@@ -105,15 +109,20 @@ def load(db: Session, function_limit=None):
     )
     db.commit()
 
-    logger.info("Loading metaproteomic analysis...")
-    pipeline.load(
-        db,
-        mongodb["metaproteomics_analysis_activity_set"].find(
-            no_cursor_timeout=True,
-        ),
-        pipeline.load_mp_analysis,
-    )
-    db.commit()
+    try:
+        logger.info("Loading metaproteomic analysis...")
+        pipeline.load(
+            db,
+            mongodb["metaproteomics_analysis_activity_set"].find(
+                no_cursor_timeout=True,
+            ),
+            pipeline.load_mp_analysis,
+        )
+        db.commit()
+    except Exception:
+        logger.exception("Failed during metap ingest.")
+    finally:
+        db.commit()
 
     logger.info("Loading metagenome assembly...")
     pipeline.load(
