@@ -650,3 +650,21 @@ async def run_ingest(token: Token = Depends(admin_required), db: Session = Depen
         )
     jobs.ingest.delay()
     return ""
+
+
+@router.post(
+    "/jobs/populate_gene_functions",
+    tags=["jobs"],
+    responses=login_required_responses,
+)
+async def repopulate_gene_functions(
+    token: Token = Depends(admin_required), db: Session = Depends(get_db)
+):
+    lock = db.query(IngestLock).first()
+    if lock:
+        raise HTTPException(
+            status_code=409,
+            detail=f"An ingest started at {lock.started} is in progress",
+        )
+    jobs.populate_gene_functions.delay()
+    return ""

@@ -18,7 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import query_expression, relationship
+from sqlalchemy.orm import query_expression, relationship, Session
 from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base
@@ -559,3 +559,63 @@ workflow_activity_types = [
     NOMAnalysis,
     MetabolomicsAnalysis,
 ]
+
+
+# denormalized tables
+class MGAGeneFunctionAggregation(Base):
+    __tablename__ = "mga_gene_function_aggregation"
+
+    metagenome_annotation_id = Column(String, ForeignKey(MetagenomeAnnotation.id), primary_key=True)
+    gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
+    count = Column(BigInteger, nullable=False)
+
+    @classmethod
+    def populate(cls, db: Session):
+        db.execute(
+            f"""
+            INSERT INTO
+                {cls.__tablename__} (metagenome_annotation_id, gene_function_id, count)
+            SELECT metagenome_annotation_id, gene_function_id, count(*) as count
+            FROM mga_gene_function GROUP BY metagenome_annotation_id, gene_function_id
+            ON CONFLICT (metagenome_annotation_id, gene_function_id)
+            DO UPDATE SET count = excluded.count;
+        """
+        )
+
+
+class MetaPGeneFunctionAggregation(Base):
+    __tablename__ = "metap_gene_function_aggregation"
+
+    metaproteomic_analysis_id = Column(
+        String, ForeignKey("metaproteomic_analysis.id"), primary_key=True
+    )
+    gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
+    count = Column(BigInteger, nullable=False)
+    best_protein = Column(Boolean, nullable=False)
+
+    @classmethod
+    def populate(cls, db: Session):
+        db.execute(
+            f"""
+            INSERT INTO
+                {cls.__tablename__}
+                (metaproteomic_analysis_id, gene_function_id, count, best_protein)
+            SELECT
+                metaproteomic_analysis.id,
+                mga_gene_function.gene_function_id,
+                count(*) AS count,
+                bool_or(metaproteomic_peptide.best_protein = mga_gene_function.subject)
+                    AS best_protein
+            FROM metaproteomic_analysis
+            JOIN metaproteomic_peptide
+                ON metaproteomic_peptide.metaproteomic_analysis_id = metaproteomic_analysis.id
+            JOIN peptide_mga_gene_function
+                ON peptide_mga_gene_function.metaproteomic_peptide_id = metaproteomic_peptide.id
+            JOIN mga_gene_function
+                ON mga_gene_function.subject = peptide_mga_gene_function.subject
+            GROUP BY metaproteomic_analysis.id, mga_gene_function.gene_function_id
+            ON CONFLICT (metaproteomic_analysis_id, gene_function_id)
+            DO UPDATE
+            SET count = excluded.count, best_protein = excluded.best_protein;
+        """
+        )

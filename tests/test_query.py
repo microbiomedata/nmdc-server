@@ -4,7 +4,7 @@ from typing import Dict, Tuple
 import pytest
 from sqlalchemy.orm.session import Session
 
-from nmdc_server import fakes, query
+from nmdc_server import fakes, models, query
 
 date0 = datetime(1990, 1, 1)
 date1 = datetime(2000, 1, 1)
@@ -484,6 +484,9 @@ def test_query_gene_function_biosample(db: Session):
     gene_functions = [fakes.MGAGeneFunction(function__id=f"function{i}") for i in range(10)]
     fakes.MetagenomeAnnotationFactory(gene_functions=gene_functions, project__biosample=sample1)
     db.commit()
+    models.MGAGeneFunctionAggregation.populate(db)
+    models.MetaPGeneFunctionAggregation.populate(db)
+    db.commit()
 
     q = query.BiosampleQuerySchema(
         conditions=[
@@ -521,6 +524,9 @@ def test_query_gene_function_mga_metap(db: Session):
     fakes.PeptideMGAGeneFunctionFactory(
         mga_gene_function=gene_functions[1], metaproteomic_peptide=peptide
     )
+    db.commit()
+    models.MGAGeneFunctionAggregation.populate(db)
+    models.MetaPGeneFunctionAggregation.populate(db)
     db.commit()
 
     q = query.MetagenomeAnnotationQuerySchema(

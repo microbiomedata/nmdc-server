@@ -4,6 +4,7 @@ import click
 from pymongo import MongoClient
 from sqlalchemy.orm import Session
 
+from nmdc_server import models
 from nmdc_server.config import Settings
 from nmdc_server.ingest import biosample, data_object, envo, pipeline, project, study
 
@@ -130,4 +131,10 @@ def load(db: Session, function_limit=None):
         mongodb["metagenome_assembly_set"].find(),
         pipeline.load_mg_assembly,
     )
+    db.commit()
+
+    models.MGAGeneFunctionAggregation.populate(db)
+    db.commit()
+
+    models.MetaPGeneFunctionAggregation.populate(db)
     db.commit()

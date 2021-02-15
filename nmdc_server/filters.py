@@ -1,7 +1,7 @@
 from typing import Iterable, List, Type, TYPE_CHECKING
 
 from sqlalchemy import func, or_
-from sqlalchemy.orm import aliased, Query, Session
+from sqlalchemy.orm import Query, Session
 
 from nmdc_server import models
 from nmdc_server.table import (
@@ -242,9 +242,13 @@ class GeneFunctionFilter(ProjectFilter):
     def join(self, target_table: Table, query: Query) -> Query:
         if target_table == Table.metagenome_annotation:
             return query.join(
-                models.MGAGeneFunction,
-                models.MGAGeneFunction.metagenome_annotation_id == models.MetagenomeAnnotation.id,
-            ).join(models.GeneFunction)
+                models.MGAGeneFunctionAggregation,
+                models.MGAGeneFunctionAggregation.metagenome_annotation_id
+                == models.MetagenomeAnnotation.id,
+            ).join(
+                models.GeneFunction,
+                models.GeneFunction.id == models.MGAGeneFunctionAggregation.gene_function_id,
+            )
 
         query = super().join(target_table, query)
         return (
@@ -253,12 +257,13 @@ class GeneFunctionFilter(ProjectFilter):
                 models.MetagenomeAnnotation.project_id == models.Project.id,
             )
             .join(
-                models.MGAGeneFunction,
-                models.MGAGeneFunction.metagenome_annotation_id == models.MetagenomeAnnotation.id,
+                models.MGAGeneFunctionAggregation,
+                models.MGAGeneFunctionAggregation.metagenome_annotation_id
+                == models.MetagenomeAnnotation.id,
             )
             .join(
                 models.GeneFunction,
-                models.GeneFunction.id == models.MGAGeneFunction.gene_function_id,
+                models.GeneFunction.id == models.MGAGeneFunctionAggregation.gene_function_id,
             )
         )
 
@@ -270,25 +275,14 @@ class MetaPGeneFunctionFilter(ProjectFilter):
     table = Table.metap_gene_function
 
     def join(self, target_table: Table, query: Query) -> Query:
-        aliased_mga_gene_function = aliased(models.MGAGeneFunction)
-
         if target_table == Table.metaproteomic_analysis:
-            return (
-                query.join(
-                    models.MetaproteomicPeptide,
-                    models.MetaproteomicPeptide.metaproteomic_analysis_id
-                    == models.MetaproteomicAnalysis.id,
-                )
-                .join(
-                    models.PeptideMGAGeneFunction,
-                    models.PeptideMGAGeneFunction.metaproteomic_peptide_id
-                    == models.MetaproteomicPeptide.id,
-                )
-                .join(
-                    aliased_mga_gene_function,
-                    models.PeptideMGAGeneFunction.subject == aliased_mga_gene_function.subject,
-                )
-                .join(MetaPGeneFunction)
+            return query.join(
+                models.MetaPGeneFunctionAggregation,
+                models.MetaPGeneFunctionAggregation.metaproteomic_analysis_id
+                == models.MetaproteomicAnalysis.id,
+            ).join(
+                MetaPGeneFunction,
+                MetaPGeneFunction.id == models.MetaPGeneFunctionAggregation.gene_function_id,
             )
 
         query = super().join(target_table, query)
@@ -298,22 +292,13 @@ class MetaPGeneFunctionFilter(ProjectFilter):
                 models.MetaproteomicAnalysis.project_id == models.Project.id,
             )
             .join(
-                models.MetaproteomicPeptide,
-                models.MetaproteomicPeptide.metaproteomic_analysis_id
+                models.MetaPGeneFunctionAggregation,
+                models.MetaPGeneFunctionAggregation.metaproteomic_analysis_id
                 == models.MetaproteomicAnalysis.id,
             )
             .join(
-                models.PeptideMGAGeneFunction,
-                models.PeptideMGAGeneFunction.metaproteomic_peptide_id
-                == models.MetaproteomicPeptide.id,
-            )
-            .join(
-                aliased_mga_gene_function,
-                models.PeptideMGAGeneFunction.subject == aliased_mga_gene_function.subject,
-            )
-            .join(
                 MetaPGeneFunction,
-                MetaPGeneFunction.id == aliased_mga_gene_function.gene_function_id,
+                MetaPGeneFunction.id == models.MetaPGeneFunctionAggregation.gene_function_id,
             )
         )
 
