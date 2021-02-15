@@ -54,7 +54,7 @@ export default Vue.extend({
       class="pt-3"
       @input="$emit('set-page', $event)"
     />
-    <v-list>
+    <v-list dense>
       <template
         v-for="(result, resultIndex) in results"
       >

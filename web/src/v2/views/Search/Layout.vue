@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  defineComponent, reactive, computed,
+  defineComponent, reactive, computed, ref,
 } from '@vue/composition-api';
 
 import SearchResults from '@/components/Presentation/SearchResults.vue';
@@ -9,9 +9,11 @@ import { fieldDisplayName } from '@/util';
 import { api } from '@/data/api';
 
 import { stateRefs, toggleConditions } from '@/v2/store';
+import useFacetSummaryData from '@/v2/use/useFacetSummaryData';
 import usePaginatedResults from '@/v2/use/usePaginatedResults';
 import SampleListExpansion from '@/v2/components/SampleListExpansion.vue';
 
+import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
 import Sidebar from './Sidebar.vue';
 
@@ -20,6 +22,7 @@ export default defineComponent({
 
   components: {
     BiosampleVisGroup,
+    EnvironmentVisGroup,
     SampleListExpansion,
     SearchResults,
     Sidebar,
@@ -65,9 +68,16 @@ export default defineComponent({
     const biosample = usePaginatedResults(stateRefs.conditions, api.searchBiosample);
 
     const studyType = types.study;
-    const study = usePaginatedResults(stateRefs.conditions, api.searchStudy, 3);
+    const studySummaryData = useFacetSummaryData({
+      field: ref('study_id'),
+      table: ref('study'),
+      conditions: stateRefs.conditions,
+    });
+    const study = usePaginatedResults(studySummaryData.otherConditions, api.searchStudy, 3);
 
     const loggedInUser = computed(() => typeof stateRefs.user.value === 'string');
+
+    const vistab = ref('omics');
 
     return {
       /* data */
@@ -79,6 +89,7 @@ export default defineComponent({
       study,
       studyCheckboxState,
       types,
+      vistab,
       /* methods */
       setChecked,
       setExpanded,
@@ -104,7 +115,26 @@ export default defineComponent({
       >
         <v-row>
           <v-col>
-            <BiosampleVisGroup />
+            <v-tabs
+              v-model="vistab"
+              height="30px"
+            >
+              <v-tab key="omics">
+                Omics
+              </v-tab>
+              <v-tab key="environments">
+                Environment
+              </v-tab>
+            </v-tabs>
+            <v-tabs-items v-model="vistab">
+              <v-tab-item key="omics">
+                <BiosampleVisGroup />
+              </v-tab-item>
+              <v-tab-item key="environments">
+                <EnvironmentVisGroup />
+              </v-tab-item>
+            </v-tabs-items>
+
             <v-card outlined>
               <v-card-title class="pb-0">
                 Studies

@@ -145,9 +145,9 @@ export default defineComponent({
         <v-card
           outlined
           height="100%"
-          class="py-2 d-flex flex-column justify-center"
+          class="py-0 d-flex flex-column justify-center"
         >
-          <ChartContainer :height="200">
+          <ChartContainer :height="160">
             <template #default="{ width, height }">
               <UpSet
                 v-bind="{
