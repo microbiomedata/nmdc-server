@@ -9,6 +9,10 @@ export default defineComponent({
       type: Array,
       required: true,
     },
+    tooltips: {
+      type: Object,
+      required: true,
+    },
     order: {
       type: String,
       required: true,
@@ -92,7 +96,9 @@ export default defineComponent({
         .attr('text-anchor', 'middle')
         .attr('font-size', margin.top - 8)
         .text((d) => d)
-        .attr('fill', 'black');
+        .attr('fill', 'black')
+        .append('svg:title')
+        .text((s) => props.tooltips[s]);
 
       svg.selectAll('line.membership')
         .data(data)

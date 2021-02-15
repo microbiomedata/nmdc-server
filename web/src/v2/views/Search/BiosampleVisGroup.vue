@@ -45,6 +45,13 @@ const staticUpsetData = [
     counts: { Samples: 34, Studies: 1 },
   },
 ];
+const staticUpsetTooltips = {
+  MG: 'Metagenomics',
+  MP: 'Metaproteomics',
+  MB: 'Metabolomics',
+  MT: 'Metatranscriptomics',
+  OM: 'Organic Matter',
+};
 
 export default defineComponent({
   name: 'SampleVisGroupV2',
@@ -66,6 +73,7 @@ export default defineComponent({
       setUniqueCondition,
       removeConditions,
       staticUpsetData,
+      staticUpsetTooltips,
     };
   },
 });
@@ -146,6 +154,7 @@ export default defineComponent({
                   width,
                   height,
                   data: staticUpsetData,
+                  tooltips: staticUpsetTooltips,
                   order: 'Samples'
                 }"
               />
