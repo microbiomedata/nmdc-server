@@ -106,7 +106,7 @@ export default Vue.extend({
 </script>
 
 <template>
-  <div class="histogram mb-6">
+  <div class="histogram">
     <ChartContainer v-if="facetSummary && range !== null">
       <template #default="{ width, height }">
         <Histogram2

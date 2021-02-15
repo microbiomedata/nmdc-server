@@ -9,6 +9,10 @@ export default defineComponent({
       type: Array,
       required: true,
     },
+    tooltips: {
+      type: Object,
+      required: true,
+    },
     order: {
       type: String,
       required: true,
@@ -92,7 +96,9 @@ export default defineComponent({
         .attr('text-anchor', 'middle')
         .attr('font-size', margin.top - 8)
         .text((d) => d)
-        .attr('fill', 'black');
+        .attr('fill', 'black')
+        .append('svg:title')
+        .text((s) => props.tooltips[s]);
 
       svg.selectAll('line.membership')
         .data(data)
@@ -123,24 +129,22 @@ export default defineComponent({
           .selectAll('rect')
           .data(data)
           .enter()
-          .append('rect')
-          .attr('x', countsX(count))
-          .attr('y', (d, i) => y(i))
-          .attr('width', (d) => barX(d.counts[count]))
-          .attr('height', y.bandwidth())
-          .attr('fill', root.$vuetify.theme.currentTheme.blue);
+          .call((parent) => {
+            parent.append('rect')
+              .attr('x', countsX(count))
+              .attr('y', (d, i) => y(i))
+              .attr('width', (d) => barX(d.counts[count]))
+              .attr('height', y.bandwidth())
+              .attr('fill', root.$vuetify.theme.currentTheme.blue);
+            parent.append('text')
+              .attr('class', 'count')
+              .attr('x', (d) => countsX(count) + barX(d.counts[count]) + 3)
+              .attr('y', (d, i) => y(i) + 12)
+              .attr('font-size', margin.top - 8)
+              .text((d) => d.counts[count])
+              .attr('fill', 'black');
+          });
       });
-
-      svg.selectAll('text.count')
-        .data(uniqueCounts)
-        .enter()
-        .append('text')
-        .attr('class', 'count')
-        .attr('x', (d) => countsX(d))
-        .attr('y', -4)
-        .attr('font-size', margin.top - 8)
-        .text((d) => d)
-        .attr('fill', 'black');
     }
 
     watchEffect(() => {
