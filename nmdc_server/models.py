@@ -18,7 +18,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
-from sqlalchemy.orm import query_expression, relationship, Session
+from sqlalchemy.orm import backref, query_expression, relationship, Session
 from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base
@@ -186,6 +186,8 @@ class Biosample(Base, AnnotatedModel):
     env_local_scale = relationship(EnvoTerm, foreign_keys=[env_local_scale_id], lazy="joined")
     env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
 
+    projects = relationship("Project", lazy="joined")
+
     @property
     def env_broad_scale_terms(self) -> List[str]:
         return list(self.env_broad_scale.ancestors)
@@ -212,7 +214,7 @@ class Project(Base, AnnotatedModel):
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
     biosample_id = Column(String, ForeignKey("biosample.id"), nullable=True)
-    biosample = relationship("Biosample", backref="projects")
+    biosample = relationship("Biosample")
     study_id = Column(String, ForeignKey("study.id"), nullable=True)
     study = relationship("Study", backref="projects")
 
@@ -263,7 +265,7 @@ class PipelineStep:
 
     @declared_attr
     def project(cls):
-        return relationship("Project", backref=cls.__tablename__)
+        return relationship("Project", backref=backref(cls.__tablename__, lazy="joined"))
 
     has_inputs = association_proxy("inputs", "id")
     has_outputs = association_proxy("outputs", "id")
