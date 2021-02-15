@@ -225,16 +225,34 @@ class BaseQuerySchema(BaseModel):
         table_re = re.compile(r"Table.(.*):.*")
         matches = [db.query(self.table.model.id.label("id"))]  # type: ignore
         has_filters = False
-        for key, conditions in self.groups:
+
+        for key, _conditions in self.groups:
+            conditions = list(_conditions)
             has_filters = True
             match = table_re.match(key)
             if not match:
                 # Not an expected user error
                 raise Exception("Invalid group key")
             table = Table(match.groups()[0])
-
             filter = create_filter_class(table, conditions)
-            matches.append(filter.matches(db, self.table))
+
+            if table == Table.gene_function:
+                metag_matches = filter.matches(db, self.table)
+                metap_conditions = [
+                    SimpleConditionSchema(
+                        table=Table.metap_gene_function,
+                        field=c.field,
+                        value=c.value,
+                    )
+                    for c in conditions
+                ]
+                metap_filter = create_filter_class(
+                    Table.metap_gene_function,
+                    metap_conditions,
+                )
+                matches.append(metag_matches.union(metap_filter.matches(db, self.table)))
+            else:
+                matches.append(filter.matches(db, self.table))
 
         query = db.query(self.table.model.id.label("id"))  # type: ignore
         if has_filters:

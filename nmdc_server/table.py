@@ -13,6 +13,7 @@ EnvLocalScaleAncestor = aliased(models.EnvoAncestor)
 EnvLocalScaleTerm = aliased(models.EnvoTerm)
 EnvMediumAncestor = aliased(models.EnvoAncestor)
 EnvMediumTerm = aliased(models.EnvoTerm)
+MetaPGeneFunction = aliased(models.GeneFunction)
 
 
 class Table(Enum):
@@ -28,6 +29,7 @@ class Table(Enum):
     read_based_analysis = "read_based_analysis"
     metabolomics_analysis = "metabolomics_analysis"
     gene_function = "gene_function"
+    metap_gene_function = "metap_gene_function"
 
     env_broad_scale = "env_broad_scale"
     env_local_scale = "env_local_scale"
@@ -55,6 +57,7 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.read_based_analysis: models.ReadBasedAnalysis,
     Table.metabolomics_analysis: models.MetabolomicsAnalysis,
     Table.gene_function: models.GeneFunction,
+    Table.metap_gene_function: MetaPGeneFunction,
     Table.env_broad_scale: EnvBroadScaleTerm,
     Table.env_local_scale: EnvLocalScaleTerm,
     Table.env_medium: EnvMediumTerm,

@@ -11,6 +11,7 @@ from nmdc_server.table import (
     EnvLocalScaleTerm,
     EnvMediumAncestor,
     EnvMediumTerm,
+    MetaPGeneFunction,
     Table,
     workflow_execution_tables,
 )
@@ -239,14 +240,39 @@ class GeneFunctionFilter(ProjectFilter):
     table = Table.gene_function
 
     def join(self, target_table: Table, query: Query) -> Query:
-        aliased_mga_gene_function = aliased(models.MGAGeneFunction)
-
         if target_table == Table.metagenome_annotation:
             return query.join(
                 models.MGAGeneFunction,
                 models.MGAGeneFunction.metagenome_annotation_id == models.MetagenomeAnnotation.id,
             ).join(models.GeneFunction)
-        elif target_table == Table.metaproteomic_analysis:
+
+        query = super().join(target_table, query)
+        return (
+            query.join(
+                models.MetagenomeAnnotation,
+                models.MetagenomeAnnotation.project_id == models.Project.id,
+            )
+            .join(
+                models.MGAGeneFunction,
+                models.MGAGeneFunction.metagenome_annotation_id == models.MetagenomeAnnotation.id,
+            )
+            .join(
+                models.GeneFunction,
+                models.GeneFunction.id == models.MGAGeneFunction.gene_function_id,
+            )
+        )
+
+    def join_self(self, query: Query, parent: Table) -> Query:
+        return query
+
+
+class MetaPGeneFunctionFilter(ProjectFilter):
+    table = Table.metap_gene_function
+
+    def join(self, target_table: Table, query: Query) -> Query:
+        aliased_mga_gene_function = aliased(models.MGAGeneFunction)
+
+        if target_table == Table.metaproteomic_analysis:
             return (
                 query.join(
                     models.MetaproteomicPeptide,
@@ -262,52 +288,32 @@ class GeneFunctionFilter(ProjectFilter):
                     aliased_mga_gene_function,
                     models.PeptideMGAGeneFunction.subject == aliased_mga_gene_function.subject,
                 )
-                .join(models.GeneFunction)
+                .join(MetaPGeneFunction)
             )
 
         query = super().join(target_table, query)
         return (
-            query
-            # metagenome relations
-            .join(
-                models.MetagenomeAnnotation,
-                models.MetagenomeAnnotation.project_id == models.Project.id,
-                isouter=True,
-            )
-            .join(
-                models.MGAGeneFunction,
-                models.MGAGeneFunction.metagenome_annotation_id == models.MetagenomeAnnotation.id,
-                isouter=True,
-            )
-            # metaproteomic relations
-            .join(
+            query.join(
                 models.MetaproteomicAnalysis,
                 models.MetaproteomicAnalysis.project_id == models.Project.id,
-                isouter=True,
             )
             .join(
                 models.MetaproteomicPeptide,
                 models.MetaproteomicPeptide.metaproteomic_analysis_id
                 == models.MetaproteomicAnalysis.id,
-                isouter=True,
             )
             .join(
                 models.PeptideMGAGeneFunction,
                 models.PeptideMGAGeneFunction.metaproteomic_peptide_id
                 == models.MetaproteomicPeptide.id,
-                isouter=True,
             )
             .join(
                 aliased_mga_gene_function,
                 models.PeptideMGAGeneFunction.subject == aliased_mga_gene_function.subject,
-                isouter=True,
             )
             .join(
-                models.GeneFunction,
-                or_(
-                    models.GeneFunction.id == models.MGAGeneFunction.gene_function_id,
-                    models.GeneFunction.id == aliased_mga_gene_function.gene_function_id,
-                ),
+                MetaPGeneFunction,
+                MetaPGeneFunction.id == aliased_mga_gene_function.gene_function_id,
             )
         )
 
