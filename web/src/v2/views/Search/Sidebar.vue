@@ -151,40 +151,28 @@ export default defineComponent({
     width="320"
   >
     <div class="mx-3 my-2">
-      <!-- <div class="text-subtitle-2 primary--text">
-        I want to search by...
-      </div>
-      <v-chip-group
-        :value="type"
-        mandatory
-        column
-        class="my-1"
-      >
-        <template v-for="t in Object.keys(types)">
-          <v-chip
-            v-if="types[t].visible || type === t"
-            :key="t"
-            :value="t"
-            :color="type === t ? 'primary' : 'inherit'"
-            small
-            @click="$store.dispatch('route', { name: 'Search', type: t, conditions })"
-          >
-            {{ types[t].heading }}
-          </v-chip>
-        </template>
-      </v-chip-group> -->
       <div
         v-if="conditions.length"
         class="text-subtitle-2 primary--text d-flex flex-row"
       >
-        <span class="grow">That match the following conditions</span>
-        <v-btn
-          icon
-          x-small
-          @click="removeConditions"
+        <span class="grow">Active query terms</span>
+        <v-tooltip
+          bottom
+          open-delay="600"
         >
-          <v-icon>mdi-filter-off</v-icon>
-        </v-btn>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              icon
+              x-small
+              v-bind="attrs"
+              v-on="on"
+              @click="removeConditions"
+            >
+              <v-icon>mdi-filter-off</v-icon>
+            </v-btn>
+          </template>
+          <span>Clear query terms</span>
+        </v-tooltip>
       </div>
     </div>
 

@@ -58,7 +58,7 @@ export default Vue.extend({
         },
         {
           value: dbstats.organic_matter_characterization,
-          label: 'Organic Matter Characterization',
+          label: 'Organic Matter',
         },
       ]] : [[], []];
     },

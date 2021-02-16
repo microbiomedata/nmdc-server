@@ -27,6 +27,8 @@ export default {
       <v-spacer />
       <auth />
     </v-app-bar>
-    <router-view />
+    <keep-alive>
+      <router-view />
+    </keep-alive>
   </v-app>
 </template>

@@ -54,7 +54,7 @@ export default Vue.extend({
       class="pt-3"
       @input="$emit('set-page', $event)"
     />
-    <v-list>
+    <v-list dense>
       <template
         v-for="(result, resultIndex) in results"
       >
@@ -98,6 +98,10 @@ export default Vue.extend({
               v-bind="{ result }"
             />
           </v-list-item-content>
+          <slot
+            name="action-right"
+            v-bind="{ result }"
+          />
         </v-list-item>
       </template>
     </v-list>
