@@ -98,6 +98,10 @@ export default Vue.extend({
               v-bind="{ result }"
             />
           </v-list-item-content>
+          <slot
+            name="action-right"
+            v-bind="{ result }"
+          />
         </v-list-item>
       </template>
     </v-list>

@@ -1,9 +1,11 @@
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api';
+import { defineComponent, ref, watchEffect } from '@vue/composition-api';
 import { api, BiosampleSearchResult } from '@/data/api';
-import Sample from '@/components/Presentation/Sample.vue';
+
 import DataObjectList from '@/components/DataObjectsList.vue';
 import AttributeList from '@/views/IndividualResults/AttributeList.vue';
+
+import IndividualTitle from './IndividualTitle.vue';
 
 export default defineComponent({
   name: 'SamplePageV2',
@@ -11,7 +13,7 @@ export default defineComponent({
   components: {
     AttributeList,
     DataObjectList,
-    Sample,
+    IndividualTitle,
   },
 
   props: {
@@ -23,7 +25,10 @@ export default defineComponent({
 
   setup(props) {
     const result = ref({} as BiosampleSearchResult);
-    api.getBiosample(props.id).then((b) => { result.value = b; });
+
+    watchEffect(() => {
+      api.getBiosample(props.id).then((b) => { result.value = b; });
+    });
 
     return { result };
   },
@@ -33,12 +38,12 @@ export default defineComponent({
 <template>
   <v-main v-if="result.id">
     <v-container fluid>
-      <sample :item="result" />
-      <attribute-list
-        type="sample"
+      <IndividualTitle :item="result" />
+      <AttributeList
+        type="biosample"
         :item="result"
       />
-      <data-object-list
+      <DataObjectList
         :id="result.id"
         type="biosample"
       />

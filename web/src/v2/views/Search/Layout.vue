@@ -160,6 +160,19 @@ export default defineComponent({
                     />
                   </v-list-item-action>
                 </template>
+                <template #action-right="{ result }">
+                  <v-list-item-action>
+                    <v-btn
+                      icon
+                      plain
+                      :to="{ name: 'V2Study', params: { id: result.id } }"
+                    >
+                      <v-icon color="grey">
+                        mdi-information
+                      </v-icon>
+                    </v-btn>
+                  </v-list-item-action>
+                </template>
                 <template #item-content="props">
                   <div>
                     <template
@@ -209,6 +222,19 @@ export default defineComponent({
                     }"
                     @open-details="setExpanded(props.result.id, $event)"
                   />
+                </template>
+                <template #action-right="{ result }">
+                  <v-list-item-action>
+                    <v-btn
+                      icon
+                      plain
+                      :to="{ name: 'V2Sample', params: { id: result.id } }"
+                    >
+                      <v-icon color="grey">
+                        mdi-information
+                      </v-icon>
+                    </v-btn>
+                  </v-list-item-action>
                 </template>
               </SearchResults>
               <h2 v-if="biosample.data.results.count === 0">

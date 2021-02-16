@@ -292,6 +292,10 @@ async function getBiosample(id: string): Promise<BiosampleSearchResult> {
   return _getById<BiosampleSearchResult>('biosample', id);
 }
 
+async function getStudy(id: string): Promise<StudySearchResults> {
+  return _getById<StudySearchResults>('study', id);
+}
+
 async function getFacetSummary(
   type: string,
   field: string,
@@ -422,6 +426,7 @@ const api = {
   getEnvironmentGeospatialAggregation,
   getEnvironmentSankeyAggregation,
   getFacetSummary,
+  getStudy,
   me,
   searchBiosample,
   searchProject,
