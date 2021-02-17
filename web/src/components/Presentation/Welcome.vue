@@ -25,7 +25,7 @@ export default Vue.extend({
         class="headline"
         justify="center"
       >
-        Explore NMDC data
+        National Microbiome Data Collaborative
       </v-row>
       <v-row
         class="my-6"
@@ -39,7 +39,7 @@ export default Vue.extend({
           class="ma-4"
           :to="{ name: 'V2Search' }"
         >
-          Search by Gene Function
+          Search NMDC Data
         </v-btn>
       </v-row>
     </v-container>

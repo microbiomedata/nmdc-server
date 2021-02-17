@@ -38,7 +38,7 @@ export default Vue.extend({
     // @ts-ignore
     this.ro = (new ResizeObserver((entries: ResizeObserverEntry[]) => {
       entries.forEach((entry) => {
-        this.width = entry.contentRect.width;
+        this.width = entry.contentRect.width || 200;
       });
     })).observe(this.$refs.container);
   },

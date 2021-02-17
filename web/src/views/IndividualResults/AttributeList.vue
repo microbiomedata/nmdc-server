@@ -162,17 +162,17 @@ export default Vue.extend({
         for: ['study'],
         disabled: false,
       },
-      {
-        type: 'project',
-        conditions: [{
-          table: 'project',
-          field: 'omics_type',
-          op: '==',
-          value: 'Lipidomics',
-        }],
-        for: ['study'],
-        disabled: false,
-      },
+      // {
+      //   type: 'project',
+      //   conditions: [{
+      //     table: 'project',
+      //     field: 'omics_type',
+      //     op: '==',
+      //     value: 'Lipidomics',
+      //   }],
+      //   for: ['study'],
+      //   disabled: false,
+      // },
       {
         type: 'project',
         conditions: [{
@@ -198,7 +198,7 @@ export default Vue.extend({
         if (['name', 'description'].includes(field)) {
           return false;
         }
-        return !isObject(value);
+        return !isObject(value) && value;
       });
     },
   },

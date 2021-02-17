@@ -26,7 +26,7 @@ const staticUpsetData = [
     counts: { Samples: 33, Studies: 1 },
   },
   {
-    sets: ['OM', 'MT', 'MG'],
+    sets: ['NOM', 'MT', 'MG'],
     counts: { Samples: 43, Studies: 1 },
   },
   {
@@ -34,7 +34,7 @@ const staticUpsetData = [
     counts: { Samples: 2, Studies: 1 },
   },
   {
-    sets: ['OM', 'MG'],
+    sets: ['NOM', 'MG'],
     counts: { Samples: 3, Studies: 1 },
   },
   {
@@ -42,7 +42,7 @@ const staticUpsetData = [
     counts: { Samples: 1, Studies: 1 },
   },
   {
-    sets: ['OM'],
+    sets: ['NOM'],
     counts: { Samples: 34, Studies: 1 },
   },
 ];
@@ -51,7 +51,7 @@ const staticUpsetTooltips = {
   MP: 'Metaproteomics',
   MB: 'Metabolomics',
   MT: 'Metatranscriptomics',
-  OM: 'Organic Matter',
+  NOM: 'Natural Organic Matter',
 };
 
 export default defineComponent({

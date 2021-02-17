@@ -5,6 +5,19 @@ import { defineComponent, PropType } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
 import { flattenDeep, flatten } from 'lodash';
 
+const descriptionMap: Record<string, string> = {
+  'filterStats.txt': 'Reads QC summary statistics',
+  'filtered.fastq.gz': 'Reads QC result fastq (clean data)',
+  'mapping_stats.txt': 'Assembled contigs coverage information',
+  'assembly_contigs.fna': 'Final assembly contigs fasta',
+  'assembly_scaffolds.fna': 'Final assembly scaffolds fasta',
+  'assembly.agp': 'An AGP format file describes the assembly',
+  'pairedMapped_sorted.bam': 'Sorted bam file of reads mapping back to the final assembly',
+  'KO TSV': 'Tab delimited file for KO annotation.',
+  'EC TSV': 'Tab delimited file for EC annotation.',
+  'Protein FAA': 'FASTA amino acid file for annotated proteins.',
+};
+
 export default defineComponent({
   props: {
     projects: {
@@ -30,6 +43,11 @@ export default defineComponent({
       },
       {
         text: 'Data Object Type',
+        value: 'object_type',
+        sortable: false,
+      },
+      {
+        text: 'Data Object Description',
         value: 'object_description',
         sortable: false,
       },
@@ -48,19 +66,30 @@ export default defineComponent({
 
     const items = flattenDeep(
       flatten(props.projects.map((p) => p.omics_data))
-        .map((omics_data) => omics_data.outputs.map((data_object, i) => ({
-          ...data_object,
-          omics_data,
-          /* TODO Hack to replace metagenome with omics type name */
-          group_name: i === 0 ? omics_data.name
-            .replace('Metagenome', props.omicsType) : '',
-          object_description: data_object.name
+        .map((omics_data) => omics_data.outputs.map((data_object, i) => {
+          const object_type = data_object.name
             .replace(`${omics_data.project_id}_`, '')
-            .replace(/file/ig, ''),
-        }))),
+            .replace(/file/ig, '')
+            .replace(/(\d+_?)+\.?/ig, '')
+            .replace(/(^\s+|\s+$)/g, '');
+          return {
+            ...data_object,
+            omics_data,
+            /* TODO Hack to replace metagenome with omics type name */
+            group_name: i === 0 ? omics_data.name
+              .replace('Metagenome', props.omicsType) : '',
+            object_type,
+            object_description: descriptionMap[object_type] || '',
+          };
+        })),
     );
 
-    return { headers, items, humanFileSize };
+    return {
+      descriptionMap,
+      headers,
+      items,
+      humanFileSize,
+    };
   },
 });
 </script>

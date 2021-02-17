@@ -101,7 +101,7 @@ export default Vue.extend({
         ],
         ...this.facetSummaryUnconditional.map(
           (facet) => [
-            facet.facet,
+            fieldDisplayName(facet.facet),
             (this.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0,
             true,
             (
