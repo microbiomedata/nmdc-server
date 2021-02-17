@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent, PropType } from '@vue/composition-api';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
@@ -12,8 +12,9 @@ import BinnedSummaryWrapper from '@/components/BinnedSummaryWrapper.vue';
 // ENDTODO
 
 import {
-  stateRefs, toggleConditions, removeConditions, setUniqueCondition,
+  toggleConditions, removeConditions, setUniqueCondition,
 } from '@/v2/store';
+import { Condition } from '@/data/api';
 
 const staticUpsetData = [
   {
@@ -55,6 +56,12 @@ const staticUpsetTooltips = {
 
 export default defineComponent({
   name: 'SampleVisGroupV2',
+  props: {
+    conditions: {
+      type: Array as PropType<Condition[]>,
+      required: true,
+    },
+  },
   components: {
     ChartContainer,
     DateHistogram,
@@ -68,7 +75,6 @@ export default defineComponent({
   },
   setup() {
     return {
-      conditions: stateRefs.conditions,
       toggleConditions,
       setUniqueCondition,
       removeConditions,
