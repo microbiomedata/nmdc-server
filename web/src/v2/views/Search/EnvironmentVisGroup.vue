@@ -1,15 +1,22 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent, PropType } from '@vue/composition-api';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 // TODO: replace with composition functions
 import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 
 import {
-  stateRefs, toggleConditions,
+  toggleConditions,
 } from '@/v2/store';
+import { Condition } from '@/data/api';
 
 export default defineComponent({
+  props: {
+    conditions: {
+      type: Array as PropType<Condition[]>,
+      required: true,
+    },
+  },
   components: {
     EcosystemSankey,
     FacetSummaryWrapper,
@@ -18,7 +25,6 @@ export default defineComponent({
   setup() {
     return {
       toggleConditions,
-      conditions: stateRefs.conditions,
     };
   },
 });
@@ -29,7 +35,8 @@ export default defineComponent({
     <v-col :cols="9">
       <EcosystemSankey
         :conditions="conditions"
-        @selected="setUniqueCondition($event.conditions)"
+        style="width: 100%"
+        @selected="toggleConditions($event.conditions)"
       />
     </v-col>
     <v-col :cols="3">

@@ -11,6 +11,7 @@ import { api } from '@/data/api';
 import { stateRefs, toggleConditions } from '@/v2/store';
 import useFacetSummaryData from '@/v2/use/useFacetSummaryData';
 import usePaginatedResults from '@/v2/use/usePaginatedResults';
+import useClockGate from '@/v2/use/useClockGate';
 import SampleListExpansion from '@/v2/components/SampleListExpansion.vue';
 
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
@@ -77,13 +78,22 @@ export default defineComponent({
 
     const loggedInUser = computed(() => typeof stateRefs.user.value === 'string');
 
-    const vistab = ref('omics');
-
+    const vistab = ref(0);
+    const gatedOmicsVisConditions = useClockGate(
+      computed(() => (vistab.value === 0)),
+      stateRefs.conditions,
+    );
+    const gatedEnvironmentVisConditions = useClockGate(
+      computed(() => (vistab.value === 1)),
+      stateRefs.conditions,
+    );
     return {
       /* data */
       biosampleType,
       biosample,
       expandedOmicsDetails,
+      gatedEnvironmentVisConditions,
+      gatedOmicsVisConditions,
       loggedInUser,
       studyType,
       study,
@@ -126,12 +136,14 @@ export default defineComponent({
                 Environment
               </v-tab>
             </v-tabs>
-            <v-tabs-items v-model="vistab">
+            <v-tabs-items
+              v-model="vistab"
+            >
               <v-tab-item key="omics">
-                <BiosampleVisGroup />
+                <BiosampleVisGroup :conditions="gatedOmicsVisConditions" />
               </v-tab-item>
               <v-tab-item key="environments">
-                <EnvironmentVisGroup />
+                <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
               </v-tab-item>
             </v-tabs-items>
 

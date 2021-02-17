@@ -18,7 +18,7 @@ export default new VueRouter({
   routes: [
     /* V2 */
     {
-      path: '/type/gene_function/search',
+      path: '/v2/search',
       name: 'V2Search',
       component: V2Search,
     },
