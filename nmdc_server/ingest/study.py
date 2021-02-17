@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from nmdc_server.crud import create_study
 from nmdc_server.ingest.common import extract_extras, extract_value
+from nmdc_server.ingest.doi import upsert_doi
 from nmdc_server.models import PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
 
@@ -58,5 +59,9 @@ def load(db: Session, cursor: Cursor):
             obj["scientific_objective"] = a["scientific_objective"]
         else:
             raise Exception(f"not found {obj['id']}")
+
+        upsert_doi(db, obj["doi"])
+        for doi in obj["publication_dois"]:
+            upsert_doi(db, obj["doi"])
 
         create_study(db, Study(**obj))

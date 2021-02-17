@@ -49,6 +49,15 @@ class TokenFactory(Factory):
     expires_at: int = Faker("pyint", min_value=10000, max_value=99999)
 
 
+class DOIInfoFactory(SQLAlchemyModelFactory):
+    class Meta:
+        model = models.DOIInfo
+        sqlalchemy_session = db
+
+    id = Faker("doi")
+    info = Faker("pydict", value_types=["str"])
+
+
 class AnnotatedFactory(SQLAlchemyModelFactory):
     id: str = Faker("pystr")
     name: str = Faker("word")
@@ -71,7 +80,7 @@ class WebsiteFactory(SQLAlchemyModelFactory):
 
 class PublicationFactory(SQLAlchemyModelFactory):
     id = Faker("uuid")
-    doi = Faker("doi")
+    doi_object = SubFactory(DOIInfoFactory)
 
     class Meta:
         model = models.Publication
@@ -120,8 +129,8 @@ class StudyFactory(AnnotatedFactory):
     gold_name = Faker("word")
     gold_description = Faker("sentence")
     scientific_objective = Faker("sentence")
-    doi = Faker("doi")
     principal_investigator = SubFactory(PrincipalInvestigator)
+    doi_object = SubFactory(DOIInfoFactory)
 
     class Meta:
         model = models.Study

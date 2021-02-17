@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Iterator, List, Optional, Type, Union
+from typing import Any, Dict, Iterator, List, Optional, Type, Union
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -118,6 +118,13 @@ class PrincipalInvestigator(Base):
     image = Column(LargeBinary, nullable=False)
 
 
+class DOIInfo(Base):
+    __tablename__ = "doi_info"
+
+    id = Column(String, primary_key=True)
+    info = Column(JSONB, nullable=False, default=dict)
+
+
 class AnnotatedModel:
     id = Column(String, primary_key=True)
     name = Column(String, nullable=False)
@@ -135,7 +142,7 @@ class Study(Base, AnnotatedModel):
     gold_name = Column(String, nullable=False, default="")
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
-    doi = Column(String, nullable=False)
+    doi = Column(String, ForeignKey("doi_info.id"), nullable=False)
 
     # TODO: Specify a default expression so that sample counts are present in
     #       non-search responses.
@@ -154,10 +161,22 @@ class Study(Base, AnnotatedModel):
 
     principal_investigator_websites = relationship("StudyWebsite", cascade="all", lazy="joined")
     publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
+    doi_object = relationship("DOIInfo", cascade="all", lazy="joined")
+
+    doi_info = association_proxy("doi_object", "info")
 
     @property
     def open_in_gold(self) -> Optional[str]:
         return gold_url("https://gold.jgi.doe.gov/study?id=", self.id)
+
+    @property
+    def publication_doi_info(self) -> Dict[str, Any]:
+        doi_info = {
+            d.publication.doi: d.publication.doi_object.info
+            for d in self.publication_dois  # type: ignore
+        }
+        doi_info[self.doi] = self.doi_info
+        return doi_info
 
 
 class Biosample(Base, AnnotatedModel):
@@ -482,7 +501,9 @@ class Publication(Base):
     __tablename__ = "publication"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    doi = Column(String, nullable=False, unique=True)
+    doi = Column(String, ForeignKey("doi_info.id"), nullable=False, unique=True)
+
+    doi_object = relationship("DOIInfo", cascade="all", lazy="joined")
 
 
 class StudyPublication(Base):

@@ -179,6 +179,7 @@ class Study(StudyBase):
     principal_investigator_image_url: str
     sample_count: Optional[int]
     omics_counts: Optional[List[OmicsCounts]]
+    publication_doi_info: Dict[str, Any]
 
     class Config:
         orm_mode = True
