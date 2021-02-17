@@ -19,6 +19,7 @@ setup(
         "pymongo",
         "python-dateutil",
         "python-dotenv",
+        "requests",
         "sqlalchemy>=1.3.18",
         "starlette==0.13.6",
         "typing-extensions",
