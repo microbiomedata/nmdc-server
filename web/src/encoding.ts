@@ -155,6 +155,7 @@ const fields: Record<string, FieldsData> = {
     icon: 'mdi-google-circles-communities',
   },
   principal_investigator_name: {
+    name: 'PI Name',
     icon: 'mdi-account',
   },
   doi: {
@@ -236,6 +237,19 @@ const fields: Record<string, FieldsData> = {
     hideAttr: true,
   },
   /* END disable uniques */
+  /* Other non-facet terms to remap */
+  reads_qc: {
+    name: 'Reads QC',
+  },
+  mags_analysis: {
+    name: 'MAGs analysis',
+  },
+  nom_analysis: {
+    name: 'NOM analysis',
+  },
+  'Organic Matter Characterization': {
+    name: 'Organic Matter',
+  },
 };
 
 /**

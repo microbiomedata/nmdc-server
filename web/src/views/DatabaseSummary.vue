@@ -52,13 +52,13 @@ export default Vue.extend({
           value: dbstats.metabolomics,
           label: 'Metabolomics',
         },
-        {
-          value: dbstats.lipodomics,
-          label: 'Lipodomics',
-        },
+        // {
+        //   value: dbstats.lipodomics,
+        //   label: 'Lipodomics',
+        // },
         {
           value: dbstats.organic_matter_characterization,
-          label: 'Organic Matter',
+          label: 'Natural Organic Matter',
         },
       ]] : [[], []];
     },
