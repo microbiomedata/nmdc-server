@@ -48,27 +48,25 @@ export default defineComponent({
       },
     ];
 
-    function setSelected({ facet, value }: {
-      facet: string; value: boolean;
-    }) {
+    function addTerm() {
       const encode = getField(props.field, props.table)?.encode;
-      let newConditions;
-      if (value) {
-        newConditions = [...conditions.value, {
-          op: '==',
-          field: field.value,
-          value: encode ? encode(facet) : facet,
-          table: table.value,
-        }];
-        searchTerm.value = '';
-      } else {
-        newConditions = conditions.value
-          .filter((c) => !(
-            c.field === field.value
-            && c.value === facet
-            && c.table === table.value
-          ));
-      }
+      const newConditions = [...conditions.value, {
+        op: '==',
+        field: field.value,
+        value: encode ? encode(searchTerm.value) : searchTerm.value,
+        table: table.value,
+      }];
+      searchTerm.value = '';
+      emit('select', { conditions: newConditions });
+    }
+
+    function removeTerm(term: string) {
+      const newConditions = conditions.value
+        .filter((c) => !(
+          c.field === field.value
+          && c.value === term
+          && c.table === table.value
+        ));
       emit('select', { conditions: newConditions });
     }
 
@@ -76,7 +74,8 @@ export default defineComponent({
       headers,
       myConditions,
       searchTerm,
-      setSelected,
+      addTerm,
+      removeTerm,
     };
   },
 });
@@ -105,7 +104,7 @@ export default defineComponent({
         small
         color="primary"
         class="ml-1 mr-4 "
-        @click="setSelected({ facet: searchTerm, value: true })"
+        @click="addTerm"
       >
         <v-icon>mdi-plus</v-icon>
       </v-btn>
@@ -123,7 +122,7 @@ export default defineComponent({
           small
           depressed
           color="error"
-          @click="setSelected({ facet: item.value, value: false })"
+          @click="removeTerm(item.value)"
         >
           remove
         </v-btn>

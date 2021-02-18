@@ -102,7 +102,7 @@ export default defineComponent({
             <template #default="props">
               <FacetBarChart
                 v-bind="props"
-                :height="400"
+                :height="360"
                 :show-title="false"
                 :show-baseline="false"
                 :left-margin="120"

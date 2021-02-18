@@ -79,7 +79,7 @@ export default Vue.extend({
     geoChartMarkerOptions() {
       return {
         displayMode: 'markers',
-        height: 400,
+        height: 360,
         colorAxis: {
           minValue: 0,
           maxValue: 3,

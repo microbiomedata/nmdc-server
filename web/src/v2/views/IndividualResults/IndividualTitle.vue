@@ -1,6 +1,7 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue';
 import { BaseSearchResult } from '@/data/api';
+import { fieldDisplayName } from '@/util';
 
 export default Vue.extend({
   props: {
@@ -8,6 +9,13 @@ export default Vue.extend({
       type: Object as PropType<BaseSearchResult>,
       required: true,
     },
+    subtitleKey: {
+      type: String,
+      default: 'description',
+    },
+  },
+  setup() {
+    return { fieldDisplayName };
   },
 });
 </script>
@@ -28,8 +36,12 @@ export default Vue.extend({
         <div class="headline">
           {{ item.name }}
         </div>
-        <div class="subtitle-1">
-          {{ item.description }}
+        <div
+          v-if="item[subtitleKey]"
+          class="subtitle-1"
+        >
+          <span class="font-weight-bold">{{ fieldDisplayName(subtitleKey) }}</span>
+          {{ item[subtitleKey] }}
         </div>
       </v-col>
     </v-row>

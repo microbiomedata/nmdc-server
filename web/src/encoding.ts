@@ -142,6 +142,7 @@ const fields: Record<string, FieldsData> = {
   },
   mod_date: {
     icon: 'mdi-calendar',
+    name: 'Modification Date',
     hideFacet: true,
   },
   ecosystem_path_id: {
@@ -264,8 +265,11 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
       name: 'KO term',
       encode: (v: string) => {
         const prefix = 'KEGG.ORTHOLOGY';
-        if (v.startsWith(prefix)) return v;
-        return `${prefix}:${v}`;
+        let encoded = v.replace('KO', prefix);
+        if (!(encoded.startsWith(prefix))) {
+          encoded = `${prefix}:${encoded}`;
+        }
+        return encoded;
       },
     },
   },

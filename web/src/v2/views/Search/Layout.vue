@@ -180,7 +180,7 @@ export default defineComponent({
                       :to="{ name: 'V2Study', params: { id: result.id } }"
                     >
                       <v-icon color="grey">
-                        mdi-information
+                        mdi-chevron-right
                       </v-icon>
                     </v-btn>
                   </v-list-item-action>
@@ -243,7 +243,7 @@ export default defineComponent({
                       :to="{ name: 'V2Sample', params: { id: result.id } }"
                     >
                       <v-icon color="grey">
-                        mdi-information
+                        mdi-chevron-right
                       </v-icon>
                     </v-btn>
                   </v-list-item-action>
