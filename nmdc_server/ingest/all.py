@@ -1,7 +1,9 @@
 import logging
+from typing import Any, Dict, Iterator
 
 import click
 from pymongo import MongoClient
+from pymongo.collection import Collection
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
@@ -9,6 +11,21 @@ from nmdc_server.config import Settings
 from nmdc_server.ingest import biosample, data_object, envo, pipeline, project, study
 
 logger = logging.getLogger(__name__)
+
+
+def paginate_cursor(
+    collection: Collection, page_size: int = 100, **kwargs
+) -> Iterator[Dict[str, Any]]:
+    print("start iterator")
+    skip = 0
+    last_iteration_count = page_size
+    while last_iteration_count == page_size:
+        cursor = collection.find(**kwargs).limit(page_size).skip(skip)
+        last_iteration_count = 0
+        for obj in cursor:
+            last_iteration_count += 1
+            yield obj
+        skip = skip + page_size
 
 
 def load(db: Session, function_limit=None):
@@ -86,10 +103,13 @@ def load(db: Session, function_limit=None):
 
     try:
         logger.info("Loading metagenome annotation...")
-        cursor = mongodb["metagenome_annotation_activity_set"].find(
+        count = mongodb["metagenome_annotation_activity_set"].find().count()
+        iterator = paginate_cursor(
+            mongodb["metagenome_annotation_activity_set"],
+            page_size=1,  # prevent cursor from timing out
             no_cursor_timeout=True,
         )
-        with click.progressbar(cursor, length=cursor.count()) as bar:
+        with click.progressbar(iterator, length=count) as bar:
             pipeline.load(
                 db,
                 bar,

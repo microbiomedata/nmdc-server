@@ -62,6 +62,6 @@ def load(db: Session, cursor: Cursor):
 
         upsert_doi(db, obj["doi"])
         for doi in obj["publication_dois"]:
-            upsert_doi(db, obj["doi"])
+            upsert_doi(db, doi)
 
         create_study(db, Study(**obj))
