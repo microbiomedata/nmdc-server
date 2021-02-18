@@ -148,6 +148,7 @@ class Study(Base, AnnotatedModel):
     #       non-search responses.
     sample_count = query_expression()
     omics_counts = query_expression()
+    omics_processing_counts = query_expression()
 
     principal_investigator_id = Column(
         UUID(as_uuid=True), ForeignKey("principal_investigator.id"), nullable=False

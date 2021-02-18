@@ -424,6 +424,32 @@ class StudyQuerySchema(BaseQuerySchema):
         )
         return q
 
+    def _count_omics_processing_summary(
+        self, db: Session, conditions: List[ConditionSchema]
+    ) -> Query:
+        subquery = ProjectQuerySchema(conditions=conditions).query(db).subquery()
+        query = (
+            db.query(
+                models.Project.annotations["omics_type"].astext.label("omics_processing_type"),
+                func.count(models.Project.id).label("omics_processing_count"),
+                models.Project.study_id.label("omics_processing_study_id_sub"),
+            )
+            .join(subquery, subquery.c.id == models.Project.id)
+            .filter(models.Project.annotations["omics_type"] != None)
+            .group_by(models.Project.study_id, models.Project.annotations["omics_type"].astext)
+        ).subquery()
+        return db.query(
+            func.jsonb_agg(
+                func.jsonb_build_object(
+                    "type",
+                    query.c.omics_processing_type,
+                    "count",
+                    query.c.omics_processing_count,
+                )
+            ).label("omics_processing_summary"),
+            models.Project.study_id.label("omics_processing_study_id"),
+        ).group_by(models.Project.study_id)
+
     def _inject_omics_data_summary(self, db: Session, query: Query) -> Query:
         aggs = []
         for omics_class in workflow_search_classes:
@@ -447,9 +473,25 @@ class StudyQuerySchema(BaseQuerySchema):
                 )
             )
 
+        op_filter_conditions = [
+            c for c in self.conditions if c.table.value in {"project", "biosample"}
+        ]
+        op_summary_subquery = self._count_omics_processing_summary(
+            db, op_filter_conditions
+        ).subquery()
+        query = query.join(
+            op_summary_subquery,
+            op_summary_subquery.c.omics_processing_study_id == models.Study.id,
+            isouter=True,
+        )
+
         aggregation = func.json_build_array(*aggs)
         return query.populate_existing().options(
-            with_expression(models.Study.omics_counts, aggregation)
+            with_expression(models.Study.omics_counts, aggregation),
+            with_expression(
+                models.Study.omics_processing_counts,
+                op_summary_subquery.c.omics_processing_summary,
+            ),
         )
 
     def execute(self, db: Session) -> Query:
