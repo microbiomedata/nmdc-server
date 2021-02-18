@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models
 from nmdc_server.ingest.common import extract_extras, extract_value
+from nmdc_server.ingest.errors import errors, missing as missing_
 from nmdc_server.ingest.study import study_ids
 from nmdc_server.schemas import ProjectCreate
 
@@ -39,7 +40,7 @@ def load_project(db: Session, obj: Dict[str, Any]):
 
     if obj["biosample_id"] and db.query(models.Biosample).get(obj["biosample_id"]) is None:
         logger.warn(f"Unknown biosample {obj['biosample_id']}")
-        obj.pop("biosample_id")
+        missing_["biosample"].add(obj.pop("biosample_id"))
 
     project = models.Project(**Project(**obj).dict())
 
@@ -47,6 +48,7 @@ def load_project(db: Session, obj: Dict[str, Any]):
         data_object = db.query(models.DataObject).get(data_object_id)
         if data_object is None:
             logger.warning(f"Unknown data object {data_object_id}")
+            missing_["data_object"].add(data_object_id)
             continue
 
         data_object.project = project
@@ -63,4 +65,5 @@ def load(db: Session, cursor: Cursor):
         except Exception:
             logger.error("Error parsing project:")
             logger.error(json.dumps(obj, indent=2, default=str))
+            errors["project"].add(obj["id"])
     db.commit()
