@@ -25,7 +25,7 @@ export default Vue.extend({
     GChart,
   },
   props: {
-    type: {
+    table: {
       type: String,
       default: null,
     },
@@ -50,12 +50,11 @@ export default Vue.extend({
           // use prefixed number of spaces to indicate index in the heirarchy
           const prefix = val.match(/^([\s]+)/g)[0].length - 1;
           this.$emit('selected', {
-            type: this.type,
             conditions: [{
               field: this.heirarchy[prefix],
               op: '==',
               value: val.trim(),
-              table: this.type,
+              table: 'biosample',
             }],
           });
         },

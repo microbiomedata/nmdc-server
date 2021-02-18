@@ -11,7 +11,8 @@ import {
 } from '@/util';
 import { api, StudySearchResults } from '@/data/api';
 
-import AttributeList from '@/views/IndividualResults/AttributeList.vue';
+import AttributeList from '@/v2/components/AttributeList.vue';
+import IndividualTitle from '@/v2/views/IndividualResults/IndividualTitle.vue';
 
 export default defineComponent({
   props: {
@@ -23,6 +24,7 @@ export default defineComponent({
 
   components: {
     AttributeList,
+    IndividualTitle,
   },
 
   setup(props) {
@@ -101,63 +103,54 @@ export default defineComponent({
   <v-container fluid>
     <v-main v-if="item !== null">
       <v-row>
-        <v-col
-          class="flex-grow-1"
-        >
-          <v-container fluid>
-            <v-row>
-              <v-col
-                class="flex-grow-0"
+        <v-col>
+          <IndividualTitle :item="item" />
+          <v-row class="mx-2">
+            <v-col
+              class="shrink"
+              offset="1"
+            >
+              <v-avatar :size="200">
+                <v-img
+                  :src="item.principal_investigator_image_url"
+                />
+              </v-avatar>
+            </v-col>
+            <v-col
+              class="grow"
+            >
+              <v-row
+                align="center"
+                justify="start"
+                style="height: 100%"
               >
-                <v-avatar :size="200">
-                  <v-img
-                    :src="item.principal_investigator_image_url"
-                  />
-                </v-avatar>
-              </v-col>
-              <v-col
-                class="flex-grow-1"
-              >
-                <v-row
-                  align="center"
-                  justify="start"
-                  style="height: 100%"
-                >
-                  <v-card flat>
-                    <div class="headline">
-                      {{ item.principal_investigator_name }}
-                    </div>
-                    <div class="caption">
-                      Principal investigator
-                    </div>
-                    <div
-                      v-for="site in item.principal_investigator_websites"
-                      :key="site"
-                      class="caption primary--text"
-                      style="cursor: pointer"
-                      @click="openLink(site)"
+                <v-card flat>
+                  <div class="headline">
+                    {{ item.principal_investigator_name }}
+                  </div>
+                  <div class="caption">
+                    Principal investigator
+                  </div>
+                  <div
+                    v-for="site in item.principal_investigator_websites"
+                    :key="site"
+                    class="caption primary--text"
+                    style="cursor: pointer"
+                    @click="openLink(site)"
+                  >
+                    <v-icon
+                      small
+                      left
+                      color="primary"
                     >
-                      <v-icon
-                        small
-                        left
-                        color="primary"
-                      >
-                        mdi-link
-                      </v-icon>
-                      {{ site }}
-                    </div>
-                  </v-card>
-                </v-row>
-              </v-col>
-            </v-row>
-          </v-container>
-          <div class="headline">
-            {{ item.name }}
-          </div>
-          <div class="mt-3">
-            <span class="font-weight-bold">Scientific objective: </span>
-            {{ item.scientific_objective }}
-          </div>
+                      mdi-link
+                    </v-icon>
+                    {{ site }}
+                  </div>
+                </v-card>
+              </v-row>
+            </v-col>
+          </v-row>
         </v-col>
         <v-col class="flex-grow-1 grey lighten-4 px-0 pb-0">
           <v-subheader>Citation</v-subheader>
@@ -214,10 +207,14 @@ export default defineComponent({
           </v-list>
         </v-col>
       </v-row>
-      <AttributeList
-        :item="item"
-        type="study"
-      />
+      <v-row>
+        <v-col>
+          <AttributeList
+            :item="item"
+            type="study"
+          />
+        </v-col>
+      </v-row>
     </v-main>
   </v-container>
 </template>

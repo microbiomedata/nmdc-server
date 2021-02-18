@@ -100,21 +100,24 @@ export default Vue.extend({
           { role: 'annotation' },
         ],
         ...this.facetSummaryUnconditional.map(
-          (facet) => [
-            fieldDisplayName(facet.facet),
-            (this.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0,
-            true,
-            (
-              ecosystems.find((e) => e.name === facet.facet)
-              || { color: this.$vuetify.theme.currentTheme.primary }
-            ).color,
-            facet.count - ((this.facetSummary.find(
-              (e) => e.facet === facet.facet,
-            ) || {}).count || 0),
-            false,
-            'lightgrey',
-            (this.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0,
-          ],
+          (facet) => {
+            const count = (this.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0;
+            return [
+              fieldDisplayName(facet.facet),
+              count,
+              true,
+              (
+                ecosystems.find((e) => e.name === facet.facet)
+                || { color: this.$vuetify.theme.currentTheme.primary }
+              ).color,
+              facet.count - ((this.facetSummary.find(
+                (e) => e.facet === facet.facet,
+              ) || {}).count || 0),
+              false,
+              'lightgrey',
+              count > 0 ? `${count}` : 'No match',
+            ];
+          },
         ),
       ];
     },
@@ -124,9 +127,9 @@ export default Vue.extend({
         chartArea: {
           left: this.leftMargin,
           right: this.rightMargin,
-          top: 15,
-          width: '90%',
-          height: '80%',
+          top: 0,
+          width: '85%',
+          height: '100%',
         },
         hAxis: {
           textStyle: {
