@@ -92,7 +92,6 @@ function removeConditions(conditions: Condition[]) {
  * current browser session
  */
 function acceptTerms() {
-  console.log('acceptTerms');
   state.hasAcceptedTerms = true;
 }
 
