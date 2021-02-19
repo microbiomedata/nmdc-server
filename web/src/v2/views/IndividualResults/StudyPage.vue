@@ -72,15 +72,17 @@ export default defineComponent({
     }
 
     watch(item, async (_item) => {
-      if (_item) {
+      const publicationDoiInfo = _item?.publication_doi_info;
+      if (publicationDoiInfo) {
         data.doiCitation = null;
         data.publications = [];
-        const citationPromises = [
-          Cite.async(_item.doi),
-          ..._item.publication_dois.map(Cite.async),
-        ];
-        [data.doiCitation, ...data.publications] = (await Promise.all(citationPromises))
-          .map((c) => formatAPA(c));
+        const unformattedPublications = Object.values(publicationDoiInfo);
+        [data.doiCitation] = unformattedPublications
+          .filter((c) => c.type === 'dataset')
+          .map((c) => formatAPA(new Cite(c)));
+        [...data.publications] = unformattedPublications
+          .filter((c) => c.type !== 'dataset')
+          .map((c) => formatAPA(new Cite(c)));
       }
     });
 
@@ -105,6 +107,20 @@ export default defineComponent({
       <v-row>
         <v-col>
           <IndividualTitle :item="item" />
+          <div>
+            <template
+              v-for="item in item.omics_processing_counts"
+            >
+              <v-chip
+                v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                :key="item.type"
+                small
+                class="mr-2 my-1"
+              >
+                {{ fieldDisplayName(item.type) }}: {{ item.count }}
+              </v-chip>
+            </template>
+          </div>
           <v-row class="mx-2">
             <v-col
               class="shrink"
@@ -153,7 +169,7 @@ export default defineComponent({
           </v-row>
         </v-col>
         <v-col class="flex-grow-1 grey lighten-4 px-0 pb-0">
-          <v-subheader>Citation</v-subheader>
+          <v-subheader>Dataset Citation</v-subheader>
           <v-list class="transparent">
             <v-divider />
             <v-list-item>

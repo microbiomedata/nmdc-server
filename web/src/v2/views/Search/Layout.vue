@@ -188,10 +188,10 @@ export default defineComponent({
                 <template #item-content="props">
                   <div>
                     <template
-                      v-for="item in props.result.omics_counts"
+                      v-for="item in props.result.omics_processing_counts"
                     >
                       <v-chip
-                        v-if="item.count"
+                        v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
                         :key="item.type"
                         small
                         class="mr-2 my-1"

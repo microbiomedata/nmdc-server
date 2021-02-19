@@ -1,11 +1,20 @@
 <script lang="ts">
 import { groupBy } from 'lodash';
+import { fieldDisplayName } from '@/util';
 import { BiosampleSearchResult } from '@/data/api';
 import { computed, defineComponent, PropType } from '@vue/composition-api';
 import DataObjectTable from './DataObjectTable.vue';
 
 const hiddenOmicsTypes = [
   'lipidomics',
+];
+
+const buttonOrder = [
+  'metagenome',
+  'metatranscriptome',
+  'proteomics',
+  'metabolomics',
+  'organic matter characterization',
 ];
 
 export default defineComponent({
@@ -34,13 +43,21 @@ export default defineComponent({
         && props.expanded.projectId === projectId;
     }
 
-    const filteredProjects = computed(() => groupBy(
+    const filteredProjects = computed(() => Object.entries(groupBy(
       props.result.projects
         .filter((p) => hiddenOmicsTypes.indexOf(p.annotations.omics_type.toLowerCase()) === -1),
       (p) => p.annotations.omics_type,
-    ));
+    )).sort(([agroup], [bgroup]) => {
+      const ai = buttonOrder.indexOf(agroup.toLowerCase());
+      const bi = buttonOrder.indexOf(bgroup.toLowerCase());
+      return ai - bi;
+    }));
 
-    return { isOpen, filteredProjects };
+    return {
+      isOpen,
+      filteredProjects,
+      fieldDisplayName,
+    };
   },
 });
 </script>
@@ -52,7 +69,7 @@ export default defineComponent({
   >
     <div class="d-flex flex-row flex-wrap">
       <v-btn
-        v-for="(projects, omicsType) in filteredProjects"
+        v-for="[omicsType, projects] in filteredProjects"
         :key="projects[0].id"
         x-small
         :outlined="!isOpen(projects[0].id)"
@@ -60,11 +77,11 @@ export default defineComponent({
         class="mr-2 mt-2"
         @click="() => $emit('open-details', projects[0].id)"
       >
-        {{ omicsType }}
+        {{ fieldDisplayName(omicsType) }}
         <v-icon>mdi-chevron-down</v-icon>
       </v-btn>
     </div>
-    <template v-for="(projects, omicsType) in filteredProjects">
+    <template v-for="[omicsType, projects] in filteredProjects">
       <DataObjectTable
         v-if="isOpen(projects[0].id)"
         :key="projects[0].id"

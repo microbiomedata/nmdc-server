@@ -61,7 +61,18 @@ export interface DataObjectSearchResult extends BaseSearchResult {
 
 export interface StudySearchResults extends BaseSearchResult {
   principal_investigator_websites: string[];
+  publication_doi_info: Record<string, {
+    type: string;
+  }>,
   publication_dois: string[];
+  omics_counts: {
+    type: string;
+    count: number;
+  }[];
+  omics_processing_counts: {
+    type: string;
+    count: number;
+  }[];
   gold_name: string;
   gold_description: string;
   scientific_objective: string;

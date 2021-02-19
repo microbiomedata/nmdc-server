@@ -1,9 +1,15 @@
 <script lang="ts">
+import {
+  defineComponent, PropType, reactive,
+} from '@vue/composition-api';
+import { flattenDeep, flatten } from 'lodash';
+
 import { humanFileSize } from '@/data/utils';
 import { ProjectSearchResult } from '@/data/api';
-import { defineComponent, PropType } from '@vue/composition-api';
+import { stateRefs, acceptTerms } from '@/v2/store';
 import { DataTableHeader } from 'vuetify';
-import { flattenDeep, flatten } from 'lodash';
+
+import DownloadDialog from './DownloadDialog.vue';
 
 const descriptionMap: Record<string, string> = {
   'filterStats.txt': 'Reads QC summary statistics',
@@ -33,6 +39,8 @@ export default defineComponent({
       default: false,
     },
   },
+
+  components: { DownloadDialog },
 
   setup(props) {
     const headers: DataTableHeader[] = [
@@ -64,6 +72,11 @@ export default defineComponent({
       },
     ];
 
+    const termsDialog = reactive({
+      item: null as null | ProjectSearchResult,
+      value: false,
+    });
+
     const items = flattenDeep(
       flatten(props.projects.map((p) => p.omics_data))
         .map((omics_data) => omics_data.outputs.map((data_object, i) => {
@@ -84,11 +97,30 @@ export default defineComponent({
         })),
     );
 
+    function download(item: ProjectSearchResult) {
+      if (typeof item.url === 'string') {
+        if (stateRefs.hasAcceptedTerms.value) {
+          window.open(item.url, '_blank', 'noopener,noreferrer');
+        } else {
+          termsDialog.item = item;
+          termsDialog.value = true;
+        }
+      }
+    }
+
+    function onAcceptTerms() {
+      termsDialog.value = false;
+      acceptTerms();
+    }
+
     return {
+      onAcceptTerms,
+      download,
       descriptionMap,
       headers,
       items,
       humanFileSize,
+      termsDialog,
     };
   },
 });
@@ -96,6 +128,16 @@ export default defineComponent({
 
 <template>
   <v-card outlined>
+    <v-dialog
+      v-if="termsDialog.item"
+      v-model="termsDialog.value"
+      :width="400"
+    >
+      <DownloadDialog
+        :href="termsDialog.item.url"
+        @clicked="onAcceptTerms"
+      />
+    </v-dialog>
     <v-data-table
       :headers="headers"
       :items="items"
@@ -112,13 +154,10 @@ export default defineComponent({
           <template #activator="{ on, attrs }">
             <span v-on="on">
               <v-btn
-                v-if="item.url"
                 icon
-                v-bind="attrs"
-                :href="item.url"
                 :disabled="!loggedInUser"
-                target="_blank"
-                rel="noopener"
+                v-bind="attrs"
+                @click="download(item)"
               >
                 <v-icon>mdi-download</v-icon>
               </v-btn>

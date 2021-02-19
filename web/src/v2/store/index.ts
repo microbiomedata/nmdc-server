@@ -11,6 +11,7 @@ Vue.use(CompositionApi);
 const state = reactive({
   conditions: [] as Condition[],
   user: null as string | null,
+  hasAcceptedTerms: false,
 });
 const stateRefs = toRefs(state);
 
@@ -86,8 +87,17 @@ function removeConditions(conditions: Condition[]) {
   }
 }
 
+/**
+ * Note that a user has accepted the terms for the
+ * current browser session
+ */
+function acceptTerms() {
+  state.hasAcceptedTerms = true;
+}
+
 export {
   stateRefs,
+  acceptTerms,
   loadCurrentUser,
   removeConditions,
   setUniqueCondition,

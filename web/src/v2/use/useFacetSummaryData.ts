@@ -1,7 +1,6 @@
 import { computed, Ref } from '@vue/composition-api';
 import { Condition, entityType } from '@/data/api';
 
-// TODO implement
 export default function useFacetSummaryData({
   field,
   table,

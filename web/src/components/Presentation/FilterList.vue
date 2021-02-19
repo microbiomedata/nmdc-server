@@ -1,6 +1,7 @@
 <script>
 import Vue from 'vue';
 import FacetSummary from '@/mixins/FacetSummary';
+import { fieldDisplayName } from '@/util';
 
 export default Vue.extend({
   mixins: [FacetSummary],
@@ -41,6 +42,7 @@ export default Vue.extend({
   },
 
   methods: {
+    fieldDisplayName,
     setSelected({ item, value }) {
       let conditions;
       if (value) {
@@ -116,7 +118,7 @@ export default Vue.extend({
     >
       <template v-slot:item.name="{ item }">
         <span :class="{ 'grey--text': !item.isSelectable }">
-          {{ item.name }}
+          {{ fieldDisplayName(item.name) }}
         </span>
       </template>
     </v-data-table>
