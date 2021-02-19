@@ -5,6 +5,15 @@ import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
 import { Condition, entityType } from '@/data/api';
 
+const groupOrders = [
+  'function',
+  'gold ecosystems',
+  'envo',
+  'sample',
+  'study',
+  'project',
+];
+
 export interface SearchFacet {
   field: string;
   table: entityType;
@@ -50,7 +59,11 @@ export default Vue.extend({
         .filter(({ hideFacet }) => !hideFacet)
         .sort(((a, b) => (a.sortKey || 0) - (b.sortKey || 0)));
       return Object.entries(groupBy(fieldsWithMeta, 'group'))
-        .sort(([a], [b]) => a.localeCompare(b));
+        .sort(([a], [b]) => {
+          const ai = groupOrders.indexOf(a.toLowerCase());
+          const bi = groupOrders.indexOf(b.toLowerCase());
+          return ai - bi;
+        });
     },
   },
   methods: {
