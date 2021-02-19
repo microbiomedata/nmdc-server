@@ -102,19 +102,20 @@ export default Vue.extend({
         ...this.facetSummaryUnconditional.map(
           (facet) => {
             const count = (this.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0;
+            const excludedCount = facet.count - ((this.facetSummary.find(
+              (e) => e.facet === facet.facet,
+            ) || {}).count || 0);
             return [
               fieldDisplayName(facet.facet),
               count,
               true,
-              (
+              count > 0 ? (
                 ecosystems.find((e) => e.name === facet.facet)
                 || { color: this.$vuetify.theme.currentTheme.primary }
-              ).color,
-              facet.count - ((this.facetSummary.find(
-                (e) => e.facet === facet.facet,
-              ) || {}).count || 0),
+              ).color : 'lightgray',
+              excludedCount,
               false,
-              'lightgrey',
+              excludedCount > 0 ? 'lightgray' : this.$vuetify.theme.currentTheme.primary,
               count > 0 ? `${count}` : 'No match',
             ];
           },

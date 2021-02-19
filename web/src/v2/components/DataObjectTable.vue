@@ -6,6 +6,7 @@ import { flattenDeep, flatten } from 'lodash';
 
 import { humanFileSize } from '@/data/utils';
 import { ProjectSearchResult } from '@/data/api';
+import { stateRefs, acceptTerms } from '@/v2/store';
 import { DataTableHeader } from 'vuetify';
 
 import DownloadDialog from './DownloadDialog.vue';
@@ -37,15 +38,11 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    hasAcceptedTerms: {
-      type: Boolean,
-      default: false,
-    },
   },
 
   components: { DownloadDialog },
 
-  setup(props, { emit }) {
+  setup(props) {
     const headers: DataTableHeader[] = [
       {
         text: 'Workflow Activity',
@@ -101,21 +98,23 @@ export default defineComponent({
     );
 
     function download(item: ProjectSearchResult) {
-      if (props.hasAcceptedTerms) {
-        window.open(item.url, '_blank', ['noopener', 'noreferrer']);
-      } else {
-        termsDialog.item = item;
-        termsDialog.value = true;
+      if (typeof item.url === 'string') {
+        if (stateRefs.hasAcceptedTerms.value) {
+          window.open(item.url, '_blank', 'noopener,noreferrer');
+        } else {
+          termsDialog.item = item;
+          termsDialog.value = true;
+        }
       }
     }
 
-    function acceptTerms() {
-      emit('accept-terms');
+    function onAcceptTerms() {
       termsDialog.value = false;
+      acceptTerms();
     }
 
     return {
-      acceptTerms,
+      onAcceptTerms,
       download,
       descriptionMap,
       headers,
@@ -136,7 +135,7 @@ export default defineComponent({
     >
       <DownloadDialog
         :href="termsDialog.item.url"
-        @clicked="acceptTerms"
+        @clicked="onAcceptTerms"
       />
     </v-dialog>
     <v-data-table
