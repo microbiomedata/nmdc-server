@@ -11,6 +11,7 @@ from typing_extensions import Protocol
 
 from nmdc_server import models, schemas
 from nmdc_server.crud import get_or_create
+from nmdc_server.ingest.errors import errors, missing as missing_
 
 DataObjectList = List[str]
 LoadObjectReturn = models.PipelineStep
@@ -157,6 +158,7 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
             db.commit()
         except Exception:
             logger.exception(f"Error parsing pipeline {obj['id']}")
+            errors["pipeline"].add(obj["id"])
             db.rollback()
             continue
 
@@ -173,6 +175,7 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
         missing_list = set(inputs + outputs) - set(valid_inputs + valid_outputs)
         for missing in missing_list:
             logger.warning(f"Unknown data object {missing}")
+            missing_["data_object"].add(missing)
 
         inputs = valid_inputs
         outputs = valid_outputs

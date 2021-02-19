@@ -8,6 +8,7 @@ import click
 from nmdc_server import database, models  # noqa: ensure all models are initialized
 from nmdc_server.config import Settings
 from nmdc_server.database import create_session, metadata
+from nmdc_server.ingest import errors
 from nmdc_server.ingest.all import load
 
 HERE = Path(__file__).parent
@@ -88,3 +89,13 @@ def ingest(verbose, function_limit):
     logger.setLevel(logging.INFO)
     with create_session() as db:
         load(db, function_limit=function_limit)
+
+    for m, s in errors.missing.items():
+        click.echo(f"missing {m}:")
+        for id in s:
+            click.echo(id)
+
+    for m, s in errors.errors.items():
+        click.echo(f"errors {m}:")
+        for id in s:
+            click.echo(id)

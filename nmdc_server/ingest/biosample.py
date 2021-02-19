@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models
 from nmdc_server.ingest.common import extract_extras, extract_value
+from nmdc_server.ingest.errors import errors
 from nmdc_server.ingest.study import study_ids
 from nmdc_server.schemas import BiosampleCreate
 
@@ -78,3 +79,4 @@ def load(db: Session, cursor: Cursor, omics_processing: Collection):
         except Exception:
             logger.error("Error parsing biosample:")
             logger.error(json.dumps(obj, indent=2, default=str))
+            errors["biosample"].add(obj["id"])
