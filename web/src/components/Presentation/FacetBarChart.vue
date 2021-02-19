@@ -71,8 +71,8 @@ export default Vue.extend({
         select: () => {
           const chart = this.$refs.chart.chartObject;
           const selection = chart.getSelection();
+          const value = this.facetSummaryUnconditional[selection[0].row].facet;
           if (selection.length === 1) {
-            const [value] = this.chartData[selection[0].row + 1];
             this.$emit('selected', {
               conditions: [{
                 field: this.field,

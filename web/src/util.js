@@ -35,7 +35,7 @@ export function fieldDisplayName(field, table) {
   if ('name' in fieldsname) {
     return fieldsname.name;
   }
-  return field.split('_')
+  return `${field}`.split('_')
     .map((word, i) => (i === 0 ? toSentenceCase(word) : word))
     .map((word) => capitalizeAcronyms(word))
     .reduce((prev, cur) => `${prev}${prev === '' ? '' : ' '}${cur}`, '');

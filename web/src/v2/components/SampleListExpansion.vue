@@ -72,6 +72,7 @@ export default defineComponent({
         :projects="projects"
         :omics-type="omicsType"
         :logged-in-user="loggedInUser"
+        @accept-terms="emit('accept-terms')"
       />
     </template>
   </div>

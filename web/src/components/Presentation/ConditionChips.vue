@@ -50,7 +50,7 @@ export default Vue.extend({
       const summary = ((this.dbSummary[type] || {}).attributes || {})[field];
       if (summary) {
         if (['float', 'integer', 'string', 'string_literal'].includes(summary.type)) {
-          return val;
+          return fieldDisplayName(val);
         }
         if (['date'].includes(summary.type)) {
           return moment(val).format('MM/DD/YYYY');
