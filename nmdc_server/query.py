@@ -447,8 +447,8 @@ class StudyQuerySchema(BaseQuerySchema):
                     query.c.omics_processing_count,
                 )
             ).label("omics_processing_summary"),
-            models.Project.study_id.label("omics_processing_study_id"),
-        ).group_by(models.Project.study_id)
+            query.c.omics_processing_study_id_sub.label("omics_processing_study_id"),
+        ).group_by(query.c.omics_processing_study_id_sub)
 
     def _inject_omics_data_summary(self, db: Session, query: Query) -> Query:
         aggs = []
