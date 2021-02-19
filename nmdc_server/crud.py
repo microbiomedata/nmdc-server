@@ -72,7 +72,10 @@ def get_environmental_geospatial(
 
 # study
 def get_study(db: Session, study_id: str) -> Optional[models.Study]:
-    return db.query(models.Study).filter(models.Study.id == study_id).first()
+    return search_study(
+        db,
+        [{"table": "study", "field": "id", "value": study_id}],  # type: ignore
+    ).first()
 
 
 def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
