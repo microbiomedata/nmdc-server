@@ -12,7 +12,7 @@ import { DataTableHeader } from 'vuetify';
 import DownloadDialog from './DownloadDialog.vue';
 
 const descriptionMap: Record<string, string> = {
-  'fastq.gz': 'Raw input file',
+  'fastq.gz': 'Raw output file',
   'filterStats.txt': 'Reads QC summary statistics',
   'filtered.fastq.gz': 'Reads QC result fastq (clean data)',
   'mapping_stats.txt': 'Assembled contigs coverage information',
@@ -90,6 +90,7 @@ export default defineComponent({
             .replace(`${omics_data.project_id}_`, '')
             .replace(/file/ig, '')
             .replace(/([ACTG]+-?)+\./, '') /* Raw ACTG-ACTG.fastq.gz */
+            .replace('output: ', '')
             .replace(/(\d+_?)+\.?/ig, '') /* dddd_dddd */
             .replace(/(^\s+|\s+$)/g, ''); /* trim whitespace */
           return {
@@ -99,7 +100,7 @@ export default defineComponent({
             group_name: i === 0 ? omics_data.name
               .replace('Metagenome', props.omicsType) : '',
             object_type,
-            object_description: descriptionMap[object_type] || '',
+            object_description: descriptionMap[object_type] || data_object.description || '',
           };
         })),
     );
