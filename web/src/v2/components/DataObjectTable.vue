@@ -12,7 +12,7 @@ import { DataTableHeader } from 'vuetify';
 import DownloadDialog from './DownloadDialog.vue';
 
 const descriptionMap: Record<string, string> = {
-  'fastq.gz': 'RAW input file',
+  'fastq.gz': 'Raw input file',
   'filterStats.txt': 'Reads QC summary statistics',
   'filtered.fastq.gz': 'Reads QC result fastq (clean data)',
   'mapping_stats.txt': 'Assembled contigs coverage information',
@@ -81,7 +81,7 @@ export default defineComponent({
 
     const items = flattenDeep(
       flattenDeep(props.projects.map((p) => ([{
-        name: 'RAW',
+        name: 'Raw',
         project_id: p.project_id,
         outputs: p.outputs,
       }, p.omics_data])))
@@ -89,7 +89,7 @@ export default defineComponent({
           const object_type = data_object.name
             .replace(`${omics_data.project_id}_`, '')
             .replace(/file/ig, '')
-            .replace(/([ACTG]+-?)+\./, '') /* RAW ACTG-ACTG.fastq.gz */
+            .replace(/([ACTG]+-?)+\./, '') /* Raw ACTG-ACTG.fastq.gz */
             .replace(/(\d+_?)+\.?/ig, '') /* dddd_dddd */
             .replace(/(^\s+|\s+$)/g, ''); /* trim whitespace */
           return {
