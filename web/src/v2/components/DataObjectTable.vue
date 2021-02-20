@@ -2,7 +2,7 @@
 import {
   defineComponent, PropType, reactive,
 } from '@vue/composition-api';
-import { flattenDeep, flatten } from 'lodash';
+import { flattenDeep } from 'lodash';
 
 import { humanFileSize } from '@/data/utils';
 import { ProjectSearchResult } from '@/data/api';
@@ -12,6 +12,7 @@ import { DataTableHeader } from 'vuetify';
 import DownloadDialog from './DownloadDialog.vue';
 
 const descriptionMap: Record<string, string> = {
+  'fastq.gz': 'Raw input file',
   'filterStats.txt': 'Reads QC summary statistics',
   'filtered.fastq.gz': 'Reads QC result fastq (clean data)',
   'mapping_stats.txt': 'Assembled contigs coverage information',
@@ -62,6 +63,7 @@ export default defineComponent({
       {
         text: 'File Size',
         value: 'file_size_bytes',
+        width: 100,
         sortable: false,
       },
       {
@@ -78,13 +80,18 @@ export default defineComponent({
     });
 
     const items = flattenDeep(
-      flatten(props.projects.map((p) => p.omics_data))
+      flattenDeep(props.projects.map((p) => ([{
+        name: 'Raw',
+        project_id: p.project_id,
+        outputs: p.outputs,
+      }, p.omics_data])))
         .map((omics_data) => omics_data.outputs.map((data_object, i) => {
           const object_type = data_object.name
             .replace(`${omics_data.project_id}_`, '')
             .replace(/file/ig, '')
-            .replace(/(\d+_?)+\.?/ig, '')
-            .replace(/(^\s+|\s+$)/g, '');
+            .replace(/([ACTG]+-?)+\./, '') /* Raw ACTG-ACTG.fastq.gz */
+            .replace(/(\d+_?)+\.?/ig, '') /* dddd_dddd */
+            .replace(/(^\s+|\s+$)/g, ''); /* trim whitespace */
           return {
             ...data_object,
             omics_data,

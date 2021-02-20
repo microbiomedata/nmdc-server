@@ -106,21 +106,25 @@ export default defineComponent({
     <v-main v-if="item !== null">
       <v-row>
         <v-col>
-          <IndividualTitle :item="item" />
-          <div>
-            <template
-              v-for="item in item.omics_processing_counts"
-            >
-              <v-chip
-                v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
-                :key="item.type"
-                small
-                class="mr-2 my-1"
-              >
-                {{ fieldDisplayName(item.type) }}: {{ item.count }}
-              </v-chip>
+          <IndividualTitle :item="item">
+            <template #default>
+              <div>
+                <template
+                  v-for="item in item.omics_processing_counts"
+                >
+                  <v-chip
+                    v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                    :key="item.type"
+                    small
+                    class="mr-2 my-1"
+                  >
+                    {{ fieldDisplayName(item.type) }}: {{ item.count }}
+                  </v-chip>
+                </template>
+              </div>
             </template>
-          </div>
+          </IndividualTitle>
+
           <v-row class="mx-2">
             <v-col
               class="shrink"

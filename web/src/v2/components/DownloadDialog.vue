@@ -15,12 +15,19 @@ export default defineComponent({
   <v-card>
     <v-card-title>Terms and Conditions</v-card-title>
     <v-card-text>
-      Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor
-      incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud
-      exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute
-      irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat
-      nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa
-      qui officia deserunt mollit anim id est laborum.
+      <div class="mb-3">
+        These data are made available under the
+        <a href="https://creativecommons.org/licenses/by/4.0/">
+          Creative Commons Attribution 4.0 International license</a>.
+        The data may be used provided the original data
+        contributor is cited.
+      </div>
+      <div>
+        For more information on the NMDC Data Policy see
+        <a href="https://microbiomedata.org/nmdc-data-use-policy/">
+          https://microbiomedata.org/nmdc-data-use-policy/
+        </a>
+      </div>
     </v-card-text>
     <v-divider />
     <v-card-actions>
