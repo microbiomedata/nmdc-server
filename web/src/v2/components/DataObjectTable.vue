@@ -156,12 +156,13 @@ export default defineComponent({
       </template>
       <template #[`item.action`]="{ item }">
         <v-tooltip
-          :disabled="loggedInUser"
+          :disabled="loggedInUser && item.url"
           bottom
         >
           <template #activator="{ on, attrs }">
             <span v-on="on">
               <v-btn
+                v-if="item.url"
                 icon
                 :disabled="!loggedInUser"
                 v-bind="attrs"
@@ -169,9 +170,23 @@ export default defineComponent({
               >
                 <v-icon>mdi-download</v-icon>
               </v-btn>
+              <v-btn
+                v-else
+                icon
+                disabled
+              >
+                <v-icon>
+                  mdi-file-hidden
+                </v-icon>
+              </v-btn>
             </span>
           </template>
-          <span>You must be logged in</span>
+          <span v-if="item.url">
+            You must be logged in
+          </span>
+          <span v-else>
+            File unavailable
+          </span>
         </v-tooltip>
       </template>
     </v-data-table>
