@@ -1,9 +1,10 @@
 <script lang="ts">
-import Vue, { PropType } from 'vue';
+import { defineComponent, PropType } from '@vue/composition-api';
+
 import { BaseSearchResult } from '@/data/api';
 import { fieldDisplayName } from '@/util';
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     item: {
       type: Object as PropType<BaseSearchResult>,
@@ -43,6 +44,7 @@ export default Vue.extend({
           <span class="font-weight-bold">{{ fieldDisplayName(subtitleKey) }}</span>
           {{ item[subtitleKey] }}
         </div>
+        <slot />
       </v-col>
     </v-row>
   </v-container>

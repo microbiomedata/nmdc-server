@@ -97,6 +97,7 @@ export interface ProjectSearchResult extends BaseSearchResult {
   mod_date: string;
   open_in_gold: string;
   omics_data: DerivedDataResult[];
+  outputs: DataObjectSearchResult[]; // RAW outputs
 }
 
 export interface ReadsQCResult extends DerivedDataResult {
