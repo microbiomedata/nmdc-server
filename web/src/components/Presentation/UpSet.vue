@@ -120,12 +120,22 @@ export default defineComponent({
         .attr('r', 5)
         .attr('fill', root.$vuetify.theme.currentTheme.blue);
 
-      uniqueCounts.forEach((count) => {
+      const seriesTitles = ['Samples', 'Studies'];
+
+      uniqueCounts.forEach((count, _i) => {
         const barX = scaleLinear()
           .domain([0, Math.max(...data.map((d) => d.counts[count]))])
           .range([0, countsX.bandwidth()]);
 
         svg.append('g')
+          .call((parent) => {
+            parent.append('text')
+              .attr('x', countsX(count))
+              .attr('y', -4)
+              .attr('font-size', margin.top - 7)
+              .attr('fill', 'black')
+              .text(seriesTitles[_i]);
+          })
           .selectAll('rect')
           .data(data)
           .enter()

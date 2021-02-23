@@ -80,11 +80,13 @@ export default defineComponent({
     });
 
     const items = flattenDeep(
-      flattenDeep(props.projects.map((p) => ([{
-        name: 'Raw',
-        project_id: p.project_id,
-        outputs: p.outputs,
-      }, p.omics_data])))
+      flattenDeep(props.projects.map((p) => (
+        /* Uncomment (and wrap with array) to enable raw data objects */
+        /* {
+          name: 'Raw',
+          project_id: p.project_id,
+          outputs: p.outputs,
+        }, */ p.omics_data)))
         .map((omics_data) => omics_data.outputs.map((data_object, i) => {
           const object_type = data_object.name
             .replace(`${omics_data.project_id}_`, '')
@@ -100,7 +102,7 @@ export default defineComponent({
             group_name: i === 0 ? omics_data.name
               .replace('Metagenome', props.omicsType) : '',
             object_type,
-            object_description: descriptionMap[object_type] || data_object.description || '',
+            object_description: descriptionMap[object_type] || '',
           };
         })),
     );
