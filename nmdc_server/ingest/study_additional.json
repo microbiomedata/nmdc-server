@@ -109,12 +109,15 @@
   {
     "id": "Gs0135149",
     "principal_investigator_websites": [
-      "https://envmicro.wordpress.com",
-      "https://orcid.org/0000-0002-8453-8435"
+      "https://eesa.lbl.gov/profiles/eoin-brodie/",
+      "https://orcid.org/0000-0002-8453-8435",
+      "https://watershed.lbl.gov/"
     ],
     "proposal_title": "The synchronization of microbial and plant phenology in a mountainous watershed and its importance for nutrient retention under changing hydrologic regimes.",
     "scientific_objective": "To understand the response of mountainous watersheds to perturbation  through activation of microbial metabolic potential beneath the snowpack during winter and during the snowmelt period under the Watershed Function Scientific Focus Area.",
     "publication_dois": [
+      "10.15485/1577267",
+      "10.21952/WTR/1573029"
     ]
   },
   {
