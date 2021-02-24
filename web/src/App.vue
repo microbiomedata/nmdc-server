@@ -15,15 +15,15 @@ export default {
       clipped-left
       elevation="1"
     >
-      <router-link
-        to="/"
+      <a
+        href="https://microbiomedata.org/"
         style="height: 100%"
       >
         <img
           src="/NMDC_logo_long.jpg"
           height="100%"
         >
-      </router-link>
+      </a>
       <v-spacer />
       <auth />
     </v-app-bar>
