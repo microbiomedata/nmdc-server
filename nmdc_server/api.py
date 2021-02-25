@@ -354,10 +354,11 @@ async def get_data_object(data_object_id: str, db: Session = Depends(get_db)):
 async def download_data_object(
     data_object_id: str,
     user_agent: Optional[str] = Header(None),
-    x_real_ip: Optional[str] = Header(None),
+    x_forwarded_for: Optional[str] = Header(None),
     db: Session = Depends(get_db),
     token: Token = Depends(login_required),
 ):
+    ip = (x_forwarded_for or "").split(",")[0].strip()
     data_object = crud.get_data_object(db, data_object_id)
     if data_object is None:
         raise HTTPException(status_code=404, detail="DataObject not found")
@@ -366,7 +367,7 @@ async def download_data_object(
         raise HTTPException(status_code=404, detail="DataObject has no url reference")
 
     file_download = schemas.FileDownloadCreate(
-        ip=x_real_ip,
+        ip=ip,
         user_agent=user_agent,
         orcid=token.orcid,
         data_object_id=data_object_id,
