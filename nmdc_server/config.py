@@ -26,6 +26,8 @@ class Settings(BaseSettings):
     celery_backend: str = "redis://redis:6379/0"
     celery_broker: str = "redis://redis:6379/0"
 
+    sentry_dsn: Optional[str] = None
+
     class Config:
         env_prefix = "nmdc_"
         env_file = os.getenv("DOTENV_PATH", ".env")
