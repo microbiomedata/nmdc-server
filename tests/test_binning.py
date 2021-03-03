@@ -138,3 +138,21 @@ def test_metagenome_api(client: TestClient, db: Session):
         "bins": [0, 10, 20],
         "facets": [2, 2],
     }
+
+
+def test_binned_facet_no_result_numeric(client: TestClient):
+    resp = client.post(
+        "/api/metagenome_assembly/binned_facet",
+        json={"attribute": "contigs", "num_bins": 2},
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"facets": [], "bins": []}
+
+
+def test_binned_facet_no_result_datetime(client: TestClient):
+    resp = client.post(
+        "/api/biosample/binned_facet",
+        json={"attribute": "collection_date", "num_bins": 2},
+    )
+    assert resp.status_code == 200
+    assert resp.json() == {"facets": [], "bins": []}
