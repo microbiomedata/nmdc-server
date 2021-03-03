@@ -20,6 +20,7 @@ setup(
         "python-dateutil",
         "python-dotenv",
         "requests",
+        "sentry-sdk[celery,sqlalchemy]",
         "sqlalchemy>=1.3.18",
         "starlette==0.13.6",
         "typing-extensions",
