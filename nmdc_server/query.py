@@ -278,7 +278,7 @@ class BaseQuerySchema(BaseModel):
         subquery: Any,
         minimum: NumericValue = None,
         maximum: NumericValue = None,
-    ) -> Tuple[NumericValue, NumericValue]:
+    ) -> Tuple[Optional[NumericValue], Optional[NumericValue]]:
         if None in [minimum, maximum]:
             row = (
                 db.query(func.min(column), func.max(column))
@@ -289,7 +289,7 @@ class BaseQuerySchema(BaseModel):
                 raise InvalidFacetException("No results in the query.")
             minimum = row[0] if minimum is None else minimum
             maximum = row[1] if maximum is None else maximum
-        return minimum, maximum  # type: ignore
+        return minimum, maximum
 
     def validate_binning_args(
         self,
@@ -346,8 +346,12 @@ class BaseQuerySchema(BaseModel):
         except InvalidFacetException:
             return [], []
 
+        if min_ is None or max_ is None:
+            return [], []
+
         bins: List[NumericValue]
         if "num_bins" in kwargs:
+
             bins = binning.range_bins(min_, max_, kwargs["num_bins"])  # type: ignore
         elif "resolution" in kwargs:
             bins = binning.datetime_bins(min_, max_, kwargs["resolution"])  # type: ignore
