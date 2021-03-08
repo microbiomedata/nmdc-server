@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import CompositionPlugin from '@vue/composition-api';
-import VueAnalytics from 'vue-analytics';
+import VueGtag from 'vue-gtag';
 import { init as SentryInit } from '@sentry/vue';
 import { Integrations } from '@sentry/tracing';
 import { sync } from 'vuex-router-sync';
@@ -20,8 +20,10 @@ Vue.use(CompositionPlugin);
  * Enable instrumentation in production
  */
 if (process.env.NODE_ENV === 'production') {
-  Vue.use(VueAnalytics, {
-    id: 'UA-68089198-4',
+  const gaId = 'UA-68089198-4';
+  Vue.use(VueGtag, {
+    config: { id: gaId },
+    includes: [{ id: gaId }],
   });
   SentryInit({
     Vue,
