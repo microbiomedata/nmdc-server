@@ -24,7 +24,7 @@ if (process.env.NODE_ENV === 'production') {
   Vue.use(VueGtag, {
     config: { id: gaId },
     includes: [{ id: gaId }],
-  });
+  }, router);
   SentryInit({
     Vue,
     dsn: 'https://87132695029c4406afe033fb3b13b115@o267860.ingest.sentry.io/5658761',
