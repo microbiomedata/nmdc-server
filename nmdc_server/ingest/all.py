@@ -16,7 +16,6 @@ logger = logging.getLogger(__name__)
 def paginate_cursor(
     collection: Collection, page_size: int = 100, **kwargs
 ) -> Iterator[Dict[str, Any]]:
-    print("start iterator")
     skip = 0
     last_iteration_count = page_size
     while last_iteration_count == page_size:

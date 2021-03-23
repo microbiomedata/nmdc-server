@@ -5,7 +5,6 @@ from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from nmdc_server import models  # noqa
-from nmdc_server.config import Settings
 from nmdc_server.database import metadata
 
 
@@ -26,7 +25,8 @@ target_metadata = metadata
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
-config.set_main_option("sqlalchemy.url", Settings().database_uri)
+
+# config.set_main_option("sqlalchemy.url", Settings().database_uri)
 
 
 def run_migrations_offline():
@@ -65,7 +65,6 @@ def run_migrations_online():
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
-
     with connectable.connect() as connection:
         context.configure(connection=connection, target_metadata=target_metadata)
 

@@ -126,6 +126,7 @@ $$ LANGUAGE plpgsql;
 #  the configuration into fastapi dependencies more cleanly in a way that also
 #  supports factory-boy's scoped sessions.
 testing = False
+ingest = False
 
 
 def json_serializer(data: Any) -> str:
@@ -144,6 +145,8 @@ def create_engine() -> Engine:
         uri = settings.database_uri
         if testing:
             uri = settings.testing_database_uri
+        elif ingest:
+            uri = settings.ingest_database_uri
 
         _engine = _create_engine(uri, json_serializer=json_serializer)
 
@@ -151,8 +154,9 @@ def create_engine() -> Engine:
 
 
 @contextmanager
-def create_session() -> Iterator[Session]:
-    engine = create_engine()
+def create_session(engine=None) -> Iterator[Session]:
+    if engine is None:
+        engine = create_engine()
     SessionLocal.configure(bind=engine)
     metadata.bind = engine
 
