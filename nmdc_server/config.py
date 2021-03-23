@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     environment: str = "production"
     database_uri: str = "postgresql:///nmdc"
     testing_database_uri: str = "postgresql:///nmdc_testing"
+    ingest_database_uri: str = "postgresql:///nmdc_testing"
     secret_key: str = "secret"
     client_id: str = "oauth client id"
     client_secret: str = "oauth secret key"

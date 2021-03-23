@@ -1,17 +1,12 @@
 import logging
-from pathlib import Path
 
-from alembic import command
-from alembic.config import Config
 import click
 
-from nmdc_server import database, models  # noqa: ensure all models are initialized
+from nmdc_server import database, jobs
 from nmdc_server.config import Settings
-from nmdc_server.database import create_session, metadata
+from nmdc_server.database import create_session
 from nmdc_server.ingest import errors
 from nmdc_server.ingest.all import load
-
-HERE = Path(__file__).parent
 
 
 @click.group()
@@ -31,19 +26,7 @@ def cli(ctx, testing):
 @click.pass_obj
 def migrate(obj):
     """Upgrade the database schema."""
-    with create_session() as db:
-        engine = db.bind
-        metadata.create_all(engine)
-        alembic_cfg = Config(str(HERE / "alembic.ini"))
-        alembic_cfg.set_main_option("script_location", str(HERE / "migrations"))
-        alembic_cfg.set_main_option("sqlalchemy.url", obj["database_uri"])
-        alembic_cfg.attributes["configure_logger"] = False
-        if command.current(alembic_cfg) is None:
-            command.stamp(alembic_cfg, "head")
-        else:
-            # TODO: Figure out why this doesn't work
-            # command.upgrade(alembic_cfg, "head")
-            pass
+    jobs.migrate(obj["database_uri"])
 
 
 @cli.command()
