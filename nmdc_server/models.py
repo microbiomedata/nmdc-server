@@ -206,7 +206,7 @@ class Biosample(Base, AnnotatedModel):
     env_local_scale = relationship(EnvoTerm, foreign_keys=[env_local_scale_id], lazy="joined")
     env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
 
-    projects = relationship("Project", lazy="joined")
+    omics_processing = relationship("OmicsProcessing", lazy="joined")
 
     @property
     def env_broad_scale_terms(self) -> List[str]:
@@ -225,20 +225,20 @@ class Biosample(Base, AnnotatedModel):
         return gold_url("https://gold.jgi.doe.gov/biosample?id=", self.id)
 
 
-project_output_association = output_association("project")
+omics_processing_output_association = output_association("omics_processing")
 
 
-class Project(Base, AnnotatedModel):
-    __tablename__ = "project"
+class OmicsProcessing(Base, AnnotatedModel):
+    __tablename__ = "omics_processing"
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
     biosample_id = Column(String, ForeignKey("biosample.id"), nullable=True)
     biosample = relationship("Biosample")
     study_id = Column(String, ForeignKey("study.id"), nullable=True)
-    study = relationship("Study", backref="projects")
+    study = relationship("Study", backref="omics_processing")
 
-    outputs = output_relationship(project_output_association)
+    outputs = output_relationship(omics_processing_output_association)
     has_outputs = association_proxy("outputs", "id")
 
     @property
@@ -263,9 +263,9 @@ class DataObject(Base):
     md5_checksum = Column(String, nullable=True)
     url = Column(String, nullable=True)
 
-    # denormalized relationship representing the source project
-    project_id = Column(String, ForeignKey("project.id"), nullable=True)
-    project = relationship(Project)
+    # denormalized relationship representing the source omics_processing
+    omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
+    omics_processing = relationship(OmicsProcessing)
 
 
 class PipelineStep:
@@ -280,12 +280,12 @@ class PipelineStep:
     execution_resource = Column(String, nullable=False)
 
     @declared_attr
-    def project_id(cls):
-        return Column(String, ForeignKey("project.id"), nullable=False)
+    def omics_processing_id(cls):
+        return Column(String, ForeignKey("omics_processing.id"), nullable=False)
 
     @declared_attr
-    def project(cls):
-        return relationship("Project", backref=backref(cls.__tablename__, lazy="joined"))
+    def omics_processing(cls):
+        return relationship("OmicsProcessing", backref=backref(cls.__tablename__, lazy="joined"))
 
     has_inputs = association_proxy("inputs", "id")
     has_outputs = association_proxy("outputs", "id")
@@ -558,7 +558,7 @@ class IngestLock(Base):
 
 ModelType = Union[
     Type[Study],
-    Type[Project],
+    Type[OmicsProcessing],
     Type[DataObject],
     Type[Biosample],
     Type[ReadsQC],

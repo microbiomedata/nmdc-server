@@ -12,13 +12,13 @@ from nmdc_server import models
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.errors import errors, missing as missing_
 from nmdc_server.ingest.study import study_ids
-from nmdc_server.schemas import ProjectCreate
+from nmdc_server.schemas import OmicsProcessingCreate
 
 logger = logging.getLogger(__name__)
 date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
 
 
-class Project(ProjectCreate):
+class OmicsProcessing(OmicsProcessingCreate):
     _extract_value = validator("*", pre=True, allow_reuse=True)(extract_value)
 
     @root_validator(pre=True)
@@ -31,7 +31,7 @@ class Project(ProjectCreate):
             return datetime.strptime(v, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()
 
 
-def load_project(db: Session, obj: Dict[str, Any]):
+def load_omics_processing(db: Session, obj: Dict[str, Any]):
     obj["biosample_id"] = obj.pop("has_input", [None])[0]
     data_objects = obj.pop("has_output", [])
     obj["study_id"] = obj.pop("part_of", [None])[0]
@@ -42,7 +42,7 @@ def load_project(db: Session, obj: Dict[str, Any]):
         logger.warn(f"Unknown biosample {obj['biosample_id']}")
         missing_["biosample"].add(obj.pop("biosample_id"))
 
-    project = models.Project(**Project(**obj).dict())
+    omics_processing = models.OmicsProcessing(**OmicsProcessing(**obj).dict())
 
     for data_object_id in data_objects:
         data_object = db.query(models.DataObject).get(data_object_id)
@@ -51,19 +51,19 @@ def load_project(db: Session, obj: Dict[str, Any]):
             missing_["data_object"].add(data_object_id)
             continue
 
-        data_object.project = project
+        data_object.omics_processing = omics_processing
         db.add(data_object)
-        project.outputs.append(data_object)  # type: ignore
+        omics_processing.outputs.append(data_object)  # type: ignore
 
-    db.add(project)
+    db.add(omics_processing)
 
 
 def load(db: Session, cursor: Cursor):
     for obj in cursor:
         try:
-            load_project(db, obj)
+            load_omics_processing(db, obj)
         except Exception:
-            logger.error("Error parsing project:")
+            logger.error("Error parsing omics_processing:")
             logger.error(json.dumps(obj, indent=2, default=str))
-            errors["project"].add(obj["id"])
+            errors["omics_processing"].add(obj["id"])
     db.commit()

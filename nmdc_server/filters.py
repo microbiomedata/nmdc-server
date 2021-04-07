@@ -26,8 +26,8 @@ envo_tables = {
     Table.env_medium,
 }
 
-project_related_tables = {
-    Table.project,
+omics_processing_related_tables = {
+    Table.omics_processing,
     Table.gene_function,
 } | workflow_execution_tables
 
@@ -72,8 +72,8 @@ class BaseFilter:
         if target_table == self.table:
             return query
 
-        if target_table in project_related_tables:
-            return self._join_project_related_tables(target_table, query)
+        if target_table in omics_processing_related_tables:
+            return self._join_omics_processing_related_tables(target_table, query)
 
         if target_table in biosample_related_tables:
             return self._join_biosample_related_tables(target_table, query)
@@ -83,11 +83,11 @@ class BaseFilter:
 
         raise NotImplementedError()
 
-    def _join_project_related_tables(self, target_table: Table, query: Query) -> Query:
-        if target_table != Table.project:
-            query = query.join(models.Project)
+    def _join_omics_processing_related_tables(self, target_table: Table, query: Query) -> Query:
+        if target_table != Table.omics_processing:
+            query = query.join(models.OmicsProcessing)
 
-        return self.join_project(query)
+        return self.join_omics_processing(query)
 
     def _join_biosample_related_tables(self, target_table: Table, query: Query) -> Query:
         if target_table != Table.biosample:
@@ -139,7 +139,7 @@ class BaseFilter:
     def join_study(self, query: Query) -> Query:
         raise NotImplementedError()
 
-    def join_project(self, query: Query) -> Query:
+    def join_omics_processing(self, query: Query) -> Query:
         raise NotImplementedError()
 
     def join_biosample(self, query: Query) -> Query:
@@ -154,9 +154,9 @@ class BaseFilter:
 class StudyFilter(BaseFilter):
     table = Table.study
 
-    def join_project(self, query: Query) -> Query:
+    def join_omics_processing(self, query: Query) -> Query:
         return self.join_self(
-            query.join(models.Study, models.Project.study_id == models.Study.id),
+            query.join(models.Study, models.OmicsProcessing.study_id == models.Study.id),
             Table.study,
         )
 
@@ -177,9 +177,11 @@ class PrincipalInvestigatorFilter(StudyFilter):
 class BiosampleFilter(BaseFilter):
     table = Table.biosample
 
-    def join_project(self, query: Query) -> Query:
+    def join_omics_processing(self, query: Query) -> Query:
         return self.join_self(
-            query.join(models.Biosample, models.Project.biosample_id == models.Biosample.id),
+            query.join(
+                models.Biosample, models.OmicsProcessing.biosample_id == models.Biosample.id
+            ),
             Table.biosample,
         )
 
@@ -210,33 +212,35 @@ class EnvMediumFilter(BiosampleFilter):
     table = Table.env_medium
 
 
-class ProjectFilter(BaseFilter):
-    table = Table.project
+class OmicsProcessingFilter(BaseFilter):
+    table = Table.omics_processing
 
-    def join_project(self, query: Query) -> Query:
-        return self.join_self(query, Table.project)
+    def join_omics_processing(self, query: Query) -> Query:
+        return self.join_self(query, Table.omics_processing)
 
     def join_biosample(self, query: Query) -> Query:
         return self.join_self(
-            query.join(models.Project, models.Biosample.id == models.Project.biosample_id),
-            Table.project,
+            query.join(
+                models.OmicsProcessing, models.Biosample.id == models.OmicsProcessing.biosample_id
+            ),
+            Table.omics_processing,
         )
 
     def join_study(self, query: Query) -> Query:
         return self.join_self(
-            query.join(models.Project, models.Study.id == models.Project.study_id),
-            Table.project,
+            query.join(models.OmicsProcessing, models.Study.id == models.OmicsProcessing.study_id),
+            Table.omics_processing,
         )
 
 
-workflow_filter_classes: List[Type[ProjectFilter]] = []
+workflow_filter_classes: List[Type[OmicsProcessingFilter]] = []
 for table in workflow_execution_tables:
     workflow_filter_classes.append(
-        type(f"{table.value}_filter", (ProjectFilter,), {"table": table})
+        type(f"{table.value}_filter", (OmicsProcessingFilter,), {"table": table})
     )
 
 
-class GeneFunctionFilter(ProjectFilter):
+class GeneFunctionFilter(OmicsProcessingFilter):
     table = Table.gene_function
 
     def join(self, target_table: Table, query: Query) -> Query:
@@ -254,7 +258,7 @@ class GeneFunctionFilter(ProjectFilter):
         return (
             query.join(
                 models.MetagenomeAnnotation,
-                models.MetagenomeAnnotation.project_id == models.Project.id,
+                models.MetagenomeAnnotation.omics_processing_id == models.OmicsProcessing.id,
             )
             .join(
                 models.MGAGeneFunctionAggregation,
@@ -271,7 +275,7 @@ class GeneFunctionFilter(ProjectFilter):
         return query
 
 
-class MetaPGeneFunctionFilter(ProjectFilter):
+class MetaPGeneFunctionFilter(OmicsProcessingFilter):
     table = Table.metap_gene_function
 
     def join(self, target_table: Table, query: Query) -> Query:
@@ -289,7 +293,7 @@ class MetaPGeneFunctionFilter(ProjectFilter):
         return (
             query.join(
                 models.MetaproteomicAnalysis,
-                models.MetaproteomicAnalysis.project_id == models.Project.id,
+                models.MetaproteomicAnalysis.omics_processing_id == models.OmicsProcessing.id,
             )
             .join(
                 models.MetaPGeneFunctionAggregation,

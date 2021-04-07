@@ -197,9 +197,9 @@ class BiosampleFactory(AnnotatedFactory):
     specific_ecosystem = Faker("word")
 
 
-class ProjectFactory(AnnotatedFactory):
+class OmicsProcessingFactory(AnnotatedFactory):
     class Meta:
-        model = models.Project
+        model = models.OmicsProcessing
         sqlalchemy_session = db
 
     add_date = Faker("date_time")
@@ -221,7 +221,7 @@ class DataObjectFactory(SQLAlchemyModelFactory):
     description: str = Faker("sentence")
     file_size_bytes = Faker("pyint")
     md5_checksum = Faker("md5", raw_output=False)
-    project = SubFactory(ProjectFactory)
+    omics_processing = SubFactory(OmicsProcessingFactory)
 
 
 class PipelineStepBase(SQLAlchemyModelFactory):
@@ -232,7 +232,7 @@ class PipelineStepBase(SQLAlchemyModelFactory):
     started_at_time: datetime = Faker("date_time")
     ended_at_time: datetime = Faker("date_time")
     execution_resource: str = Faker("word")
-    project: models.Project = SubFactory(ProjectFactory)
+    omics_processing: models.OmicsProcessing = SubFactory(OmicsProcessingFactory)
 
 
 class ReadsQCFactory(PipelineStepBase):

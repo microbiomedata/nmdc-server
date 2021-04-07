@@ -82,7 +82,7 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
     "study_id": (Table.study, "id"),
     "sample_id": (Table.biosample, "id"),
     "biosample_id": (Table.biosample, "id"),
-    "project_id": (Table.project, "id"),
+    "omics_processing_id": (Table.omics_processing, "id"),
     **_envo_keys,
 }
 
@@ -419,28 +419,33 @@ class StudyQuerySchema(BaseQuerySchema):
 
         q = (
             db.query(
-                models.Project.study_id.label(f"{table_name}_study_id"),
+                models.OmicsProcessing.study_id.label(f"{table_name}_study_id"),
                 func.count(model.id).label(f"{table_name}_count"),  # type: ignore
             )
             .join(model, isouter=True)
             .join(subquery, subquery.c.id == model.id)  # type: ignore
-            .group_by(models.Project.study_id)
+            .group_by(models.OmicsProcessing.study_id)
         )
         return q
 
     def _count_omics_processing_summary(
         self, db: Session, conditions: List[ConditionSchema]
     ) -> Query:
-        subquery = ProjectQuerySchema(conditions=conditions).query(db).subquery()
+        subquery = OmicsProcessingQuerySchema(conditions=conditions).query(db).subquery()
         query = (
             db.query(
-                models.Project.annotations["omics_type"].astext.label("omics_processing_type"),
-                func.count(models.Project.id).label("omics_processing_count"),
-                models.Project.study_id.label("omics_processing_study_id_sub"),
+                models.OmicsProcessing.annotations["omics_type"].astext.label(
+                    "omics_processing_type"
+                ),
+                func.count(models.OmicsProcessing.id).label("omics_processing_count"),
+                models.OmicsProcessing.study_id.label("omics_processing_study_id_sub"),
             )
-            .join(subquery, subquery.c.id == models.Project.id)
-            .filter(models.Project.annotations["omics_type"] != None)
-            .group_by(models.Project.study_id, models.Project.annotations["omics_type"].astext)
+            .join(subquery, subquery.c.id == models.OmicsProcessing.id)
+            .filter(models.OmicsProcessing.annotations["omics_type"] != None)
+            .group_by(
+                models.OmicsProcessing.study_id,
+                models.OmicsProcessing.annotations["omics_type"].astext,
+            )
         ).subquery()
         return db.query(
             func.jsonb_agg(
@@ -460,7 +465,9 @@ class StudyQuerySchema(BaseQuerySchema):
             pipeline_model = omics_class().table.model
             table_name = pipeline_model.__tablename__  # type: ignore
             filter_conditions = [
-                c for c in self.conditions if c.table.value in {"project", table_name, "biosample"}
+                c
+                for c in self.conditions
+                if c.table.value in {"omics_processing", table_name, "biosample"}
             ]
 
             query_schema = omics_class(conditions=filter_conditions)
@@ -478,7 +485,7 @@ class StudyQuerySchema(BaseQuerySchema):
             )
 
         op_filter_conditions = [
-            c for c in self.conditions if c.table.value in {"project", "biosample"}
+            c for c in self.conditions if c.table.value in {"omics_processing", "biosample"}
         ]
         op_summary_subquery = self._count_omics_processing_summary(
             db, op_filter_conditions
@@ -519,10 +526,10 @@ class StudyQuerySchema(BaseQuerySchema):
         )
 
 
-class ProjectQuerySchema(BaseQuerySchema):
+class OmicsProcessingQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
-        return Table.project
+        return Table.omics_processing
 
 
 class BiosampleQuerySchema(BaseQuerySchema):
@@ -614,8 +621,8 @@ class StudySearchResponse(BaseSearchResponse):
     results: List[schemas.Study]
 
 
-class ProjectSearchResponse(BaseSearchResponse):
-    results: List[schemas.Project]
+class OmicsProcessingSearchResponse(BaseSearchResponse):
+    results: List[schemas.OmicsProcessing]
 
 
 class DataObjectSearchResponse(BaseSearchResponse):

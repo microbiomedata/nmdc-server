@@ -141,7 +141,7 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
     for obj in cursor:
         inputs = obj.pop("has_input", [])
         outputs = obj.pop("has_output", [])
-        obj["project_id"] = obj.pop("was_informed_by")
+        obj["omics_processing_id"] = obj.pop("was_informed_by")
 
         # TODO: pydantic should parse datetime like this... need to look into it
         #   2021-01-26T21:36:26.759770Z+0000
@@ -150,7 +150,7 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
         if "ended_at_time" in obj:
             obj["ended_at_time"] = remove_timezone_re.sub("", obj["ended_at_time"])
 
-        if db.query(models.Project).get(obj["project_id"]) is None:
+        if db.query(models.OmicsProcessing).get(obj["omics_processing_id"]) is None:
             continue
 
         try:
@@ -197,5 +197,5 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
         db.execute(
             models.DataObject.__table__.update()
             .where(models.DataObject.id.in_(inputs + outputs))
-            .values({"project_id": pipeline.project_id})
+            .values({"omics_processing_id": pipeline.omics_processing_id})
         )

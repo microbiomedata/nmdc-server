@@ -84,7 +84,7 @@ def test_date_query(db: Session, condition, expected):
     "table",
     [
         "study",
-        "project",
+        "omics_processing",
         "biosample",
         "reads_qc",
         "metagenome_assembly",
@@ -95,7 +95,7 @@ def test_date_query(db: Session, condition, expected):
 def test_basic_query(db: Session, table):
     tests: Dict[str, Tuple[fakes.AnnotatedFactory, query.BaseQuerySchema]] = {
         "study": (fakes.StudyFactory(), query.StudyQuerySchema()),
-        "project": (fakes.ProjectFactory(), query.ProjectQuerySchema()),
+        "omics_processing": (fakes.OmicsProcessingFactory(), query.OmicsProcessingQuerySchema()),
         "biosample": (fakes.BiosampleFactory(), query.BiosampleQuerySchema()),
         "reads_qc": (fakes.ReadsQCFactory(), query.ReadsQCQuerySchema()),
         "metagenome_assembly": (
@@ -155,11 +155,13 @@ def test_grouped_query(db: Session):
 
 def test_indirect_join(db: Session):
     study = fakes.StudyFactory(id="study1")
-    fakes.ProjectFactory(id="project1", biosample__study=study)
+    fakes.OmicsProcessingFactory(id="omics_processing1", biosample__study=study)
     db.commit()
 
     q = query.StudyQuerySchema(
-        conditions=[{"table": "project", "field": "id", "value": "project1", "op": "=="}]
+        conditions=[
+            {"table": "omics_processing", "field": "id", "value": "omics_processing1", "op": "=="}
+        ]
     )
     assert {s.id for s in q.execute(db)} == {"study1"}
 
@@ -352,49 +354,49 @@ def test_envo_ancestor_facet(db: Session):
     "table", ["reads_qc", "assembly", "annotation", "analysis", "mags", "reads", "nom", "metab"]
 )
 def test_pipeline_query(db: Session, table):
-    project1 = fakes.ProjectFactory(name="project1")
-    project2 = fakes.ProjectFactory(name="project2")
+    omics_processing1 = fakes.OmicsProcessingFactory(name="omics_processing1")
+    omics_processing2 = fakes.OmicsProcessingFactory(name="omics_processing2")
 
-    fakes.ReadsQCFactory(project=project1, name="reads_qc1")
-    fakes.ReadsQCFactory(project=project1, name="reads_qc2")
-    fakes.ReadsQCFactory(project=project2, name="reads_qc3")
+    fakes.ReadsQCFactory(omics_processing=omics_processing1, name="reads_qc1")
+    fakes.ReadsQCFactory(omics_processing=omics_processing1, name="reads_qc2")
+    fakes.ReadsQCFactory(omics_processing=omics_processing2, name="reads_qc3")
 
-    fakes.MetagenomeAssemblyFactory(project=project1, name="assembly1")
-    fakes.MetagenomeAssemblyFactory(project=project1, name="assembly2")
-    fakes.MetagenomeAssemblyFactory(project=project2, name="assembly3")
+    fakes.MetagenomeAssemblyFactory(omics_processing=omics_processing1, name="assembly1")
+    fakes.MetagenomeAssemblyFactory(omics_processing=omics_processing1, name="assembly2")
+    fakes.MetagenomeAssemblyFactory(omics_processing=omics_processing2, name="assembly3")
 
-    fakes.MetagenomeAnnotationFactory(project=project1, name="annotation1")
-    fakes.MetagenomeAnnotationFactory(project=project1, name="annotation2")
-    fakes.MetagenomeAnnotationFactory(project=project2, name="annotation3")
+    fakes.MetagenomeAnnotationFactory(omics_processing=omics_processing1, name="annotation1")
+    fakes.MetagenomeAnnotationFactory(omics_processing=omics_processing1, name="annotation2")
+    fakes.MetagenomeAnnotationFactory(omics_processing=omics_processing2, name="annotation3")
 
-    fakes.MetaproteomicAnalysisFactory(project=project1, name="analysis1")
-    fakes.MetaproteomicAnalysisFactory(project=project1, name="analysis2")
-    fakes.MetaproteomicAnalysisFactory(project=project2, name="analysis3")
+    fakes.MetaproteomicAnalysisFactory(omics_processing=omics_processing1, name="analysis1")
+    fakes.MetaproteomicAnalysisFactory(omics_processing=omics_processing1, name="analysis2")
+    fakes.MetaproteomicAnalysisFactory(omics_processing=omics_processing2, name="analysis3")
 
-    fakes.MAGsAnalysisFactory(project=project1, name="mags1")
-    fakes.MAGsAnalysisFactory(project=project1, name="mags2")
-    fakes.MAGsAnalysisFactory(project=project2, name="mags3")
+    fakes.MAGsAnalysisFactory(omics_processing=omics_processing1, name="mags1")
+    fakes.MAGsAnalysisFactory(omics_processing=omics_processing1, name="mags2")
+    fakes.MAGsAnalysisFactory(omics_processing=omics_processing2, name="mags3")
 
-    fakes.ReadBasedAnalysisFactory(project=project1, name="reads1")
-    fakes.ReadBasedAnalysisFactory(project=project1, name="reads2")
-    fakes.ReadBasedAnalysisFactory(project=project2, name="reads3")
+    fakes.ReadBasedAnalysisFactory(omics_processing=omics_processing1, name="reads1")
+    fakes.ReadBasedAnalysisFactory(omics_processing=omics_processing1, name="reads2")
+    fakes.ReadBasedAnalysisFactory(omics_processing=omics_processing2, name="reads3")
 
-    fakes.NOMAnalysisFactory(project=project1, name="nom1")
-    fakes.NOMAnalysisFactory(project=project1, name="nom2")
-    fakes.NOMAnalysisFactory(project=project2, name="nom3")
+    fakes.NOMAnalysisFactory(omics_processing=omics_processing1, name="nom1")
+    fakes.NOMAnalysisFactory(omics_processing=omics_processing1, name="nom2")
+    fakes.NOMAnalysisFactory(omics_processing=omics_processing2, name="nom3")
 
-    fakes.MetabolomicsAnalysisFactory(project=project1, name="metab1")
-    fakes.MetabolomicsAnalysisFactory(project=project1, name="metab2")
-    fakes.MetabolomicsAnalysisFactory(project=project2, name="metab3")
+    fakes.MetabolomicsAnalysisFactory(omics_processing=omics_processing1, name="metab1")
+    fakes.MetabolomicsAnalysisFactory(omics_processing=omics_processing1, name="metab2")
+    fakes.MetabolomicsAnalysisFactory(omics_processing=omics_processing2, name="metab3")
     db.commit()
 
-    # test projects not associated with biosamples
-    project1.biosample_id = None
-    db.add(project1)
+    # test omics_processing not associated with biosamples
+    omics_processing1.biosample_id = None
+    db.add(omics_processing1)
 
-    # test projects not associated with studies
-    project2.study_id = None
-    db.add(project2)
+    # test omics_processing not associated with studies
+    omics_processing2.study_id = None
+    db.add(omics_processing2)
     db.commit()
 
     query_schema = {
@@ -414,18 +416,18 @@ def test_pipeline_query(db: Session, table):
     q = query_schema(
         conditions=[
             {
-                "table": "project",
+                "table": "omics_processing",
                 "field": "name",
-                "value": "project1",
+                "value": "omics_processing1",
             }
         ]
     )
     assert {f"{table}{i}" for i in [1, 2]} == {r.name for r in q.execute(db).all()}
 
-    q = query.ProjectQuerySchema(
+    q = query.OmicsProcessingQuerySchema(
         conditions=[{"table": q.table.value, "field": "name", "value": f"{table}1"}]
     )
-    assert ["project1"] == [r.name for r in q.execute(db).all()]
+    assert ["omics_processing1"] == [r.name for r in q.execute(db).all()]
 
 
 def test_query_invalid_attribute(db: Session):
@@ -482,7 +484,9 @@ def test_query_gene_function_biosample(db: Session):
     sample1 = fakes.BiosampleFactory(id="sample1")
     fakes.BiosampleFactory(id="sample2")
     gene_functions = [fakes.MGAGeneFunction(function__id=f"function{i}") for i in range(10)]
-    fakes.MetagenomeAnnotationFactory(gene_functions=gene_functions, project__biosample=sample1)
+    fakes.MetagenomeAnnotationFactory(
+        gene_functions=gene_functions, omics_processing__biosample=sample1
+    )
     db.commit()
     models.MGAGeneFunctionAggregation.populate(db)
     models.MetaPGeneFunctionAggregation.populate(db)
@@ -515,7 +519,7 @@ def test_query_gene_function_mga_metap(db: Session):
     fakes.BiosampleFactory(id="sample2")
     gene_functions = [fakes.MGAGeneFunction(function__id=f"function{i}") for i in range(10)]
     fakes.MetagenomeAnnotationFactory(
-        id="mga1", gene_functions=gene_functions, project__biosample=sample1
+        id="mga1", gene_functions=gene_functions, omics_processing__biosample=sample1
     )
     metap = fakes.MetaproteomicAnalysisFactory(id="metap1")
     peptide = fakes.MetaproteomicPeptideFactory(
