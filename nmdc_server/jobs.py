@@ -2,6 +2,7 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+from alembic.migration import MigrationContext
 
 from nmdc_server import database, models
 from nmdc_server.celery import celery_app
@@ -23,12 +24,15 @@ def migrate(database_uri):
     database._engine = None
     with create_session() as db:
         engine = db.bind
-        metadata.create_all(engine)
         alembic_cfg = Config(str(HERE / "alembic.ini"))
         alembic_cfg.set_main_option("script_location", str(HERE / "migrations"))
         alembic_cfg.set_main_option("sqlalchemy.url", database_uri)
-        alembic_cfg.attributes["configure_logger"] = False
-        if command.current(alembic_cfg) is None:
+        alembic_cfg.attributes["configure_logger"] = True
+
+        context = MigrationContext.configure(db.connection())
+        head = context.get_current_revision()
+        if head is None:
+            metadata.create_all(engine)
             command.stamp(alembic_cfg, "head")
         else:
             command.upgrade(alembic_cfg, "head")
