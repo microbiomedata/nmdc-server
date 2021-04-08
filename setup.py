@@ -23,7 +23,7 @@ setup(
         "python-dotenv",
         "requests",
         "sentry-sdk[celery,sqlalchemy]",
-        "sqlalchemy>=1.3.18",
+        "sqlalchemy>=1.4",
         "starlette==0.13.6",
         "typing-extensions",
     ],
