@@ -6,7 +6,9 @@ setup(
     packages=find_packages(),
     python_requires=">=3.6.0",
     install_requires=[
-        "alembic",
+        # pinned because recent versions throw an error when upgrading through
+        # the api at nmdc_server/jobs.py:34
+        "alembic==1.5.8",
         "authlib",
         "celery[redis,librabbitmq]",
         "click",
