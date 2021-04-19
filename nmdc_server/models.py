@@ -237,7 +237,7 @@ class OmicsProcessing(Base, AnnotatedModel):
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
     biosample_id = Column(String, ForeignKey("biosample.id"), nullable=True)
-    biosample = relationship("Biosample", backref="projects")
+    biosample = relationship("Biosample", backref="omics_processing")
     study_id = Column(String, ForeignKey("study.id"), nullable=True)
     study = relationship("Study", backref="omics_processing")
 
