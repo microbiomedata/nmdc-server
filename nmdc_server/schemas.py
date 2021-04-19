@@ -86,7 +86,7 @@ class TableSummary(BaseModel):
 
 class DatabaseSummary(BaseModel):
     study: TableSummary
-    project: TableSummary
+    omics_processing: TableSummary
     biosample: TableSummary
     data_object: TableSummary
     reads_qc: TableSummary
@@ -220,25 +220,25 @@ class Biosample(BiosampleBase):
     env_local_scale_terms: List[str] = []
     env_medium_terms: List[str] = []
 
-    projects: List["Project"]
+    omics_processing: List["OmicsProcessing"]
 
     class Config:
         orm_mode = True
 
 
-# project
-class ProjectBase(AnnotatedBase):
+# omics_processing
+class OmicsProcessingBase(AnnotatedBase):
     study_id: Optional[str]
     biosample_id: Optional[str]
     add_date: Optional[datetime]
     mod_date: Optional[datetime]
 
 
-class ProjectCreate(ProjectBase):
+class OmicsProcessingCreate(OmicsProcessingBase):
     pass
 
 
-class Project(ProjectBase):
+class OmicsProcessing(OmicsProcessingBase):
     open_in_gold: Optional[str]
 
     omics_data: List["OmicsTypes"]
@@ -295,7 +295,7 @@ class PipelineStepBase(BaseModel):
     started_at_time: Union[datetime, date]
     ended_at_time: Union[datetime, date]
     execution_resource: str
-    project_id: str
+    omics_processing_id: str
 
 
 class PipelineStep(PipelineStepBase):
@@ -461,7 +461,7 @@ OmicsTypes = Union[
     ReadBasedAnalysis,
     MetabolomicsAnalysis,
 ]
-Project.update_forward_refs()
+OmicsProcessing.update_forward_refs()
 Biosample.update_forward_refs()
 MAGCreate.update_forward_refs()
 MetaprotemoicPeptide.update_forward_refs()

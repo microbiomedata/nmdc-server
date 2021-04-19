@@ -22,8 +22,8 @@ while params['offset'] < count:
         study_id = result['study_id']
         sample_id = result['id']
 
-        for project in result['projects']:
-            sample_set.add(project['annotations']['omics_type'].lower())
+        for omics_processing in result['omics_processing']:
+            sample_set.add(omics_processing['annotations']['omics_type'].lower())
         key = '_'.join(list(sample_set))
         if key not in sample_map:
             sample_map[key] = set()

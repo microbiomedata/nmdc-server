@@ -8,7 +8,7 @@ const client = axios.create({
 /* The real entity types */
 export type entityType = 'biosample'
   | 'study'
-  | 'project'
+  | 'omics_processing'
   | 'reads_qc'
   | 'metagenome_assembly'
   | 'metagenome_annotation'
@@ -26,7 +26,7 @@ export interface BaseSearchResult {
 }
 
 export interface BiosampleSearchResult extends BaseSearchResult {
-  project_id: string;
+  omics_processing_id: string;
   depth: number;
   env_broad_scale_id: string;
   env_local_scale_id: string;
@@ -51,7 +51,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
     label: string;
     data: string;
   };
-  projects: ProjectSearchResult[];
+  omics_processing: OmicsProcessingResult[];
 }
 
 export interface DataObjectSearchResult extends BaseSearchResult {
@@ -87,11 +87,11 @@ export interface DerivedDataResult extends BaseSearchResult {
   started_at_time: string;
   ended_at_time: string;
   execution_resource: string;
-  project_id: string;
+  omics_processing_id: string;
   outputs: DataObjectSearchResult[];
 }
 
-export interface ProjectSearchResult extends BaseSearchResult {
+export interface OmicsProcessingResult extends BaseSearchResult {
   study_id: string;
   add_date: string;
   mod_date: string;
@@ -231,8 +231,8 @@ async function searchStudy(params: SearchParams) {
   return _search<StudySearchResults>('study', params);
 }
 
-async function searchProject(params: SearchParams) {
-  return _search<ProjectSearchResult>('project', params);
+async function searchOmicsProcessing(params: SearchParams) {
+  return _search<OmicsProcessingResult>('omics_processing', params);
 }
 
 async function searchReadsQC(params: SearchParams) {
@@ -257,7 +257,7 @@ async function searchDataObject(params: SearchParams) {
 
 export type ResultUnion = (
     SearchResponse<BiosampleSearchResult>
-  | SearchResponse<ProjectSearchResult>
+  | SearchResponse<OmicsProcessingResult>
   | SearchResponse<StudySearchResults>
   | SearchResponse<ReadsQCResult>
   | SearchResponse<MetagenomeAssembyResult>
@@ -271,8 +271,8 @@ async function search(type: entityType, params: SearchParams) {
     case 'study':
       results = await searchStudy(params);
       break;
-    case 'project':
-      results = await searchProject(params);
+    case 'omics_processing':
+      results = await searchOmicsProcessing(params);
       break;
     case 'biosample':
       results = await searchBiosample(params);
@@ -413,7 +413,7 @@ async function getDataObjectList(
     return [];
   }
   const supportedTypes: entityType[] = [
-    'project',
+    'omics_processing',
     'reads_qc',
     'metagenome_assembly',
     'metagenome_annotation',
@@ -443,7 +443,7 @@ const api = {
   getStudy,
   me,
   searchBiosample,
-  searchProject,
+  searchOmicsProcessing,
   searchStudy,
   searchReadsQC,
   searchMetagenomeAssembly,

@@ -92,8 +92,8 @@ def get_aggregation_summary(db: Session):
 
     def omics_category(c):
         return (
-            q(models.Project)
-            .filter(func.lower(models.Project.annotations["omics_type"].astext) == c)
+            q(models.OmicsProcessing)
+            .filter(func.lower(models.OmicsProcessing.annotations["omics_type"].astext) == c)
             .count()
         )
 

@@ -19,7 +19,7 @@ MetaPGeneFunction = aliased(models.GeneFunction)
 class Table(Enum):
     biosample = "biosample"
     study = "study"
-    project = "project"
+    omics_processing = "omics_processing"
     reads_qc = "reads_qc"
     metagenome_assembly = "metagenome_assembly"
     metagenome_annotation = "metagenome_annotation"
@@ -47,7 +47,7 @@ class Table(Enum):
 _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.biosample: models.Biosample,
     Table.study: models.Study,
-    Table.project: models.Project,
+    Table.omics_processing: models.OmicsProcessing,
     Table.reads_qc: models.ReadsQC,
     Table.metagenome_assembly: models.MetagenomeAssembly,
     Table.metagenome_annotation: models.MetagenomeAnnotation,

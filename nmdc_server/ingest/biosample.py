@@ -63,10 +63,10 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     if env_medium:
         obj["env_medium_id"] = env_medium.id
 
-    project = omics_processing.find_one({"has_input": obj["id"]})
-    if project is None:
+    omics_processing = omics_processing.find_one({"has_input": obj["id"]})
+    if omics_processing is None:
         return
-    obj["study_id"] = project["part_of"][0]
+    obj["study_id"] = omics_processing["part_of"][0]
     if obj["study_id"] not in study_ids:
         return
 

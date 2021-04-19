@@ -95,7 +95,7 @@ async def create_biosample(
     db: Session = Depends(get_db),
     token: Token = Depends(admin_required),
 ):
-    if crud.get_project(db, biosample.study_id) is None:
+    if crud.get_omics_processing(db, biosample.study_id) is None:
         raise HTTPException(status_code=400, detail="Study does not exist")
 
     return crud.create_biosample(db, biosample)
@@ -230,85 +230,89 @@ async def get_study(study_id: str, db: Session = Depends(get_db)):
 #     crud.delete_study(db, db_study)
 
 
-# project
+# omics_processing
 @router.post(
-    "/project",
-    response_model=schemas.Project,
-    tags=["project"],
+    "/omics_processing",
+    response_model=schemas.OmicsProcessing,
+    tags=["omics_processing"],
     responses=login_required_responses,
 )
-async def create_project(
-    project: schemas.ProjectCreate,
+async def create_omics_processing(
+    omics_processing: schemas.OmicsProcessingCreate,
     db: Session = Depends(get_db),
     token: Token = Depends(admin_required),
 ):
-    return crud.create_project(db, project)
+    return crud.create_omics_processing(db, omics_processing)
 
 
 @router.post(
-    "/project/search",
-    response_model=query.ProjectSearchResponse,
-    tags=["project"],
+    "/omics_processing/search",
+    response_model=query.OmicsProcessingSearchResponse,
+    tags=["omics_processing"],
     name="Search for studies",
-    description="Faceted search of project data.",
+    description="Faceted search of omics_processing data.",
 )
-async def search_project(
+async def search_omics_processing(
     query: query.SearchQuery = query.SearchQuery(),
     db: Session = Depends(get_db),
     pagination: Pagination = Depends(),
 ):
-    return pagination.response(crud.search_project(db, query.conditions))
+    return pagination.response(crud.search_omics_processing(db, query.conditions))
 
 
 @router.post(
-    "/project/facet",
+    "/omics_processing/facet",
     response_model=query.FacetResponse,
-    tags=["project"],
+    tags=["omics_processing"],
     name="Get all values of an attribute",
 )
-async def facet_project(query: query.FacetQuery, db: Session = Depends(get_db)):
-    return crud.facet_project(db, query.attribute, query.conditions)
+async def facet_omics_processing(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_omics_processing(db, query.attribute, query.conditions)
 
 
 @router.post(
-    "/project/binned_facet",
+    "/omics_processing/binned_facet",
     response_model=query.BinnedFacetResponse,
-    tags=["project"],
+    tags=["omics_processing"],
     name="Get all values of a non-string attribute with binning",
 )
-async def binned_facet_project(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
-    return crud.binned_facet_project(db, **query.dict())
+async def binned_facet_omics_processing(
+    query: query.BinnedFacetQuery, db: Session = Depends(get_db)
+):
+    return crud.binned_facet_omics_processing(db, **query.dict())
 
 
 @router.get(
-    "/project/{project_id}",
-    response_model=schemas.Project,
-    tags=["project"],
+    "/omics_processing/{omics_processing_id}",
+    response_model=schemas.OmicsProcessing,
+    tags=["omics_processing"],
 )
-async def get_project(project_id: str, db: Session = Depends(get_db)):
-    db_project = crud.get_project(db, project_id)
-    if db_project is None:
-        raise HTTPException(status_code=404, detail="Project not found")
-    return db_project
+async def get_omics_processing(omics_processing_id: str, db: Session = Depends(get_db)):
+    db_omics_processing = crud.get_omics_processing(db, omics_processing_id)
+    if db_omics_processing is None:
+        raise HTTPException(status_code=404, detail="OmicsProcessing not found")
+    return db_omics_processing
 
 
 # @router.delete(
-#     "/project/{project_id}", status_code=204, tags=["project"],
+#     "/omics_processing/{omics_processing_id}", status_code=204, tags=["omics_processing"],
 # )
-# async def delete_project(project_id: str, db: Session = Depends(get_db)):
-#     db_project = crud.get_project(db, project_id)
-#     if db_project is None:
-#         raise HTTPException(status_code=404, detail="Project not found")
-#     crud.delete_project(db, db_project)
+# async def delete_omics_processing(omics_processing_id: str, db: Session = Depends(get_db)):
+#     db_omics_processing = crud.get_omics_processing(db, omics_processing_id)
+#     if db_omics_processing is None:
+#         raise HTTPException(status_code=404, detail="OmicsProcessing not found")
+#     crud.delete_omics_processing(db, db_omics_processing)
 
 
 @router.get(
-    "/project/{project_id}/outputs",
+    "/omics_processing/{omics_processing_id}/outputs",
     response_model=List[schemas.DataObject],
-    tags=["project"],
+    tags=["omics_processing"],
 )
-async def list_project_data_objects(project_id: str, db: Session = Depends(get_db)):
-    return crud.list_project_data_objects(db, project_id).all()
+async def list_omics_processing_data_objects(
+    omics_processing_id: str, db: Session = Depends(get_db)
+):
+    return crud.list_omics_processing_data_objects(db, omics_processing_id).all()
 
 
 # data object

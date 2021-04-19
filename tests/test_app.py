@@ -129,7 +129,7 @@ def test_get_environmental_aggregation(db: Session, client: TestClient):
 @pytest.mark.parametrize(
     "endpoint",
     [
-        "project",
+        "omics_processing",
         "reads_qc",
         "metagenome_assembly",
         "metagenome_annotation",
@@ -138,13 +138,13 @@ def test_get_environmental_aggregation(db: Session, client: TestClient):
 )
 def test_list_data_objects(db: Session, client: TestClient, endpoint: str):
     data_object = fakes.DataObjectFactory(id="do")
-    project = fakes.ProjectFactory(id="1")
+    omics_processing = fakes.OmicsProcessingFactory(id="1")
     reads_qc = fakes.ReadsQCFactory(id="1")
     assembly = fakes.MetagenomeAssemblyFactory(id="1")
     annotation = fakes.MetagenomeAnnotationFactory(id="1")
     analysis = fakes.MetaproteomicAnalysisFactory(id="1")
 
-    project.outputs = [data_object]
+    omics_processing.outputs = [data_object]
     reads_qc.outputs = [data_object]
     assembly.outputs = [data_object]
     annotation.outputs = [data_object]

@@ -9,7 +9,7 @@ NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)
 
 
-# See: https://docs.djangoproject.com/en/3.0/ref/models/querysets/#get-or-create
+# See: https://docs.djangoomics_processing.com/en/3.0/ref/models/querysets/#get-or-create
 def get_or_create(
     db: Session, model: Type[T], defaults: Optional[Dict[str, Any]] = None, **kwargs
 ) -> Tuple[T, bool]:
@@ -39,7 +39,7 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
     )
     return schemas.DatabaseSummary(
         study=aggregations.get_table_summary(db, models.Study),
-        project=aggregations.get_table_summary(db, models.Project),
+        omics_processing=aggregations.get_table_summary(db, models.OmicsProcessing),
         biosample=aggregations.get_table_summary(db, models.Biosample),
         data_object=aggregations.get_table_summary(db, models.DataObject),
         reads_qc=aggregations.get_table_summary(db, models.ReadsQC),
@@ -130,52 +130,58 @@ def binned_facet_study(
     return query.BinnedFacetResponse(bins=bins, facets=facets)
 
 
-# project
-def get_project(db: Session, project_id: str) -> Optional[models.Project]:
-    return db.query(models.Project).filter(models.Project.id == project_id).first()
+# omics_processing
+def get_omics_processing(db: Session, omics_processing_id: str) -> Optional[models.OmicsProcessing]:
+    return (
+        db.query(models.OmicsProcessing)
+        .filter(models.OmicsProcessing.id == omics_processing_id)
+        .first()
+    )
 
 
-def create_project(db: Session, project: schemas.ProjectCreate) -> models.Project:
-    db_project = models.Project(**project.dict())
-    db.add(db_project)
+def create_omics_processing(
+    db: Session, omics_processing: schemas.OmicsProcessingCreate
+) -> models.OmicsProcessing:
+    db_omics_processing = models.OmicsProcessing(**omics_processing.dict())
+    db.add(db_omics_processing)
     db.commit()
-    db.refresh(db_project)
-    return db_project
+    db.refresh(db_omics_processing)
+    return db_omics_processing
 
 
-def delete_project(db: Session, project: models.Project) -> None:
-    db.delete(project)
+def delete_omics_processing(db: Session, omics_processing: models.OmicsProcessing) -> None:
+    db.delete(omics_processing)
     db.commit()
 
 
-def search_project(db: Session, conditions: List[query.ConditionSchema]) -> Query:
-    return query.ProjectQuerySchema(conditions=conditions).execute(db)
+def search_omics_processing(db: Session, conditions: List[query.ConditionSchema]) -> Query:
+    return query.OmicsProcessingQuerySchema(conditions=conditions).execute(db)
 
 
-def facet_project(
+def facet_omics_processing(
     db: Session, attribute: str, conditions: List[query.ConditionSchema]
 ) -> query.FacetResponse:
-    facets = query.ProjectQuerySchema(conditions=conditions).facet(db, attribute)
+    facets = query.OmicsProcessingQuerySchema(conditions=conditions).facet(db, attribute)
     return query.FacetResponse(facets=facets)
 
 
-def binned_facet_project(
+def binned_facet_omics_processing(
     db: Session,
     attribute: str,
     conditions: List[query.ConditionSchema],
     **kwargs,
 ) -> query.BinnedFacetResponse:
-    bins, facets = query.ProjectQuerySchema(conditions=conditions).binned_facet(
+    bins, facets = query.OmicsProcessingQuerySchema(conditions=conditions).binned_facet(
         db, attribute, **kwargs
     )
     return query.BinnedFacetResponse(bins=bins, facets=facets)
 
 
-def list_project_data_objects(db: Session, id: str) -> Query:
+def list_omics_processing_data_objects(db: Session, id: str) -> Query:
     return (
         db.query(models.DataObject)
-        .join(models.project_output_association)
-        .filter(models.project_output_association.c.project_id == id)
+        .join(models.omics_processing_output_association)
+        .filter(models.omics_processing_output_association.c.omics_processing_id == id)
     )
 
 

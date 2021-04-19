@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models
 from nmdc_server.config import Settings
-from nmdc_server.ingest import biosample, data_object, envo, pipeline, project, study
+from nmdc_server.ingest import biosample, data_object, envo, omics_processing, pipeline, study
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ def load(db: Session, function_limit=None):
     db.commit()
 
     logger.info("Loading omics processing...")
-    project.load(db, mongodb["omics_processing_set"].find())
+    omics_processing.load(db, mongodb["omics_processing_set"].find())
     db.commit()
 
     logger.info("Loading metabolomics analysis...")

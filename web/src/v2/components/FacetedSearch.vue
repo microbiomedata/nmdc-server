@@ -11,7 +11,7 @@ const groupOrders = [
   'envo',
   'sample',
   'study',
-  'project',
+  'omics processing',
 ];
 
 export interface SearchFacet {

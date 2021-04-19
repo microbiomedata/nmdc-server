@@ -5,7 +5,7 @@ import {
 import { flattenDeep } from 'lodash';
 
 import { humanFileSize } from '@/data/utils';
-import { ProjectSearchResult } from '@/data/api';
+import { OmicsProcessingResult } from '@/data/api';
 import { stateRefs, acceptTerms } from '@/v2/store';
 import { DataTableHeader } from 'vuetify';
 
@@ -27,8 +27,8 @@ const descriptionMap: Record<string, string> = {
 
 export default defineComponent({
   props: {
-    projects: {
-      type: Array as PropType<ProjectSearchResult[]>,
+    omicsProcessing: {
+      type: Array as PropType<OmicsProcessingResult[]>,
       required: true,
     },
     omicsType: {
@@ -75,12 +75,12 @@ export default defineComponent({
     ];
 
     const termsDialog = reactive({
-      item: null as null | ProjectSearchResult,
+      item: null as null | OmicsProcessingResult,
       value: false,
     });
 
     const items = flattenDeep(
-      flattenDeep(props.projects.map((p) => (
+      flattenDeep(props.omicsProcessing.map((p) => (
         /* Uncomment (and wrap with array) to enable raw data objects */
         /* {
           name: 'Raw',
@@ -89,7 +89,7 @@ export default defineComponent({
         }, */ p.omics_data)))
         .map((omics_data) => omics_data.outputs.map((data_object, i) => {
           const object_type = data_object.name
-            .replace(`${omics_data.project_id}_`, '')
+            .replace(`${omics_data.omics_processing_id}_`, '')
             .replace(/file/ig, '')
             .replace(/([ACTG]+-?)+\./, '') /* Raw ACTG-ACTG.fastq.gz */
             .replace('output: ', '')
@@ -107,7 +107,7 @@ export default defineComponent({
         })),
     );
 
-    function download(item: ProjectSearchResult) {
+    function download(item: OmicsProcessingResult) {
       if (typeof item.url === 'string') {
         if (stateRefs.hasAcceptedTerms.value) {
           window.open(item.url, '_blank', 'noopener,noreferrer');
@@ -158,7 +158,7 @@ export default defineComponent({
       </template>
       <template #[`item.action`]="{ item }">
         <v-tooltip
-          :disabled="loggedInUser && item.url"
+          :disabled="!!(loggedInUser && item.url)"
           bottom
         >
           <template #activator="{ on, attrs }">

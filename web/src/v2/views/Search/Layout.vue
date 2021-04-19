@@ -52,16 +52,16 @@ export default defineComponent({
      */
     const expandedOmicsDetails = reactive({
       resultId: '',
-      projectId: '',
+      omicsProcessingId: '',
     });
-    function setExpanded(resultId: string, projectId: string) {
+    function setExpanded(resultId: string, omicsProcessingId: string) {
       if (expandedOmicsDetails.resultId !== resultId
-        || expandedOmicsDetails.projectId !== projectId) {
+        || expandedOmicsDetails.omicsProcessingId !== omicsProcessingId) {
         expandedOmicsDetails.resultId = resultId;
-        expandedOmicsDetails.projectId = projectId;
+        expandedOmicsDetails.omicsProcessingId = omicsProcessingId;
       } else {
         expandedOmicsDetails.resultId = '';
-        expandedOmicsDetails.projectId = '';
+        expandedOmicsDetails.omicsProcessingId = '';
       }
     }
 
