@@ -71,19 +71,24 @@ class EnvoTerm(Base):
     label = Column(String, nullable=False)
     data = Column(JSONB, nullable=False)
 
-    ancestor_entities = relationship(
+    # stubs don't yet know about "overlaps"
+    ancestor_entities = relationship(  # type: ignore
         "EnvoTerm",
         primaryjoin="EnvoAncestor.id == EnvoTerm.id",
         secondary=lambda: EnvoAncestor.__table__,
         secondaryjoin="EnvoAncestor.ancestor_id == EnvoTerm.id",
         uselist=True,
+        overlaps="parent_entities, id",
+        viewonly=True,
     )
-    parent_entities = relationship(
+    parent_entities = relationship(  # type: ignore
         "EnvoTerm",
         primaryjoin="EnvoAncestor.id == EnvoTerm.id",
         secondary=lambda: EnvoAncestor.__table__,
         secondaryjoin="and_(EnvoAncestor.ancestor_id == EnvoTerm.id, EnvoAncestor.direct)",
         uselist=True,
+        overlaps="ancestor_entities, id",
+        viewonly=True,
     )
 
     ancestors = association_proxy("ancestor_entities", "label")
@@ -206,8 +211,6 @@ class Biosample(Base, AnnotatedModel):
     env_local_scale = relationship(EnvoTerm, foreign_keys=[env_local_scale_id], lazy="joined")
     env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
 
-    omics_processing = relationship("OmicsProcessing", lazy="joined")
-
     @property
     def env_broad_scale_terms(self) -> List[str]:
         return list(self.env_broad_scale.ancestors)
@@ -234,7 +237,7 @@ class OmicsProcessing(Base, AnnotatedModel):
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
     biosample_id = Column(String, ForeignKey("biosample.id"), nullable=True)
-    biosample = relationship("Biosample")
+    biosample = relationship("Biosample", backref="omics_processing")
     study_id = Column(String, ForeignKey("study.id"), nullable=True)
     study = relationship("Study", backref="omics_processing")
 

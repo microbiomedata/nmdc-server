@@ -199,7 +199,9 @@ class GoldConditionSchema(BaseConditionSchema):
                 if value is not None:
                     and_args.append(getattr(models.Biosample, key) == value)
             or_args.append(and_(*and_args))
-        return or_(*or_args)
+        if or_args:
+            return or_(*or_args)
+        return or_(True)
 
 
 ConditionSchema = Union[RangeConditionSchema, SimpleConditionSchema, GoldConditionSchema]
