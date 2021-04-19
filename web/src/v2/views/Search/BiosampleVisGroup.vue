@@ -94,7 +94,7 @@ export default defineComponent({
           class="pa-1"
         >
           <FacetSummaryWrapper
-            table="project"
+            table="omics_processing"
             field="omics_type"
             :conditions="conditions"
             use-all-conditions

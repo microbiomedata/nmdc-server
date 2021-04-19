@@ -29,7 +29,7 @@ const store = new Vuex.Store<State>({
     results: {
       biosample: { count: 0, results: [] },
       study: { count: 0, results: [] },
-      project: { count: 0, results: [] },
+      omics_processing: { count: 0, results: [] },
       reads_qc: { count: 0, results: [] },
       metagenome_assembly: { count: 0, results: [] },
       metagenome_annotation: { count: 0, results: [] },
@@ -88,8 +88,8 @@ const store = new Vuex.Store<State>({
         case 'study':
           results = await api.searchStudy(params);
           break;
-        case 'project':
-          results = await api.searchProject(params);
+        case 'omics_processing':
+          results = await api.searchOmicsProcessing(params);
           break;
         case 'biosample':
           results = await api.searchBiosample(params);

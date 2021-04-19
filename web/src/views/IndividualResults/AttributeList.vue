@@ -115,13 +115,13 @@ export default Vue.extend({
     relatedTypes: [
       {
         type: 'study',
-        for: ['study', 'project', 'biosample'],
+        for: ['study', 'omics_processing', 'biosample'],
         disabled: false,
       },
       {
-        type: 'project',
+        type: 'omics_processing',
         conditions: [{
-          table: 'project',
+          table: 'omics_processing',
           field: 'omics_type',
           op: '==',
           value: 'Metagenome',
@@ -130,9 +130,9 @@ export default Vue.extend({
         disabled: false,
       },
       {
-        type: 'project',
+        type: 'omics_processing',
         conditions: [{
-          table: 'project',
+          table: 'omics_processing',
           field: 'omics_type',
           op: '==',
           value: 'Metatranscriptome',
@@ -141,9 +141,9 @@ export default Vue.extend({
         disabled: false,
       },
       {
-        type: 'project',
+        type: 'omics_processing',
         conditions: [{
-          table: 'project',
+          table: 'omics_processing',
           field: 'omics_type',
           op: '==',
           value: 'Proteomics',
@@ -152,9 +152,9 @@ export default Vue.extend({
         disabled: false,
       },
       {
-        type: 'project',
+        type: 'omics_processing',
         conditions: [{
-          table: 'project',
+          table: 'omics_processing',
           field: 'omics_type',
           op: '==',
           value: 'Metabolomics',
@@ -163,9 +163,9 @@ export default Vue.extend({
         disabled: false,
       },
       {
-        type: 'project',
+        type: 'omics_processing',
         conditions: [{
-          table: 'project',
+          table: 'omics_processing',
           field: 'omics_type',
           op: '==',
           value: 'Lipidomics',
@@ -174,9 +174,9 @@ export default Vue.extend({
         disabled: false,
       },
       {
-        type: 'project',
+        type: 'omics_processing',
         conditions: [{
-          table: 'project',
+          table: 'omics_processing',
           field: 'omics_type',
           op: '==',
           value: 'Organic Matter Characterization',
@@ -186,7 +186,7 @@ export default Vue.extend({
       },
       {
         type: 'biosample',
-        for: ['study', 'project'],
+        for: ['study', 'omics_processing'],
         disabled: false,
       },
     ],

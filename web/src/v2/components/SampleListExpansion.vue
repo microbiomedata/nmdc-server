@@ -24,7 +24,7 @@ export default defineComponent({
       required: true,
     },
     expanded: {
-      type: Object as PropType<{ resultId: string; projectId: string; }>,
+      type: Object as PropType<{ resultId: string; omicsProcessingId: string; }>,
       required: true,
     },
     loggedInUser: {
@@ -38,13 +38,13 @@ export default defineComponent({
   },
 
   setup(props) {
-    function isOpen(projectId: string) {
+    function isOpen(omicsProcessingId: string) {
       return props.expanded.resultId === props.result.id
-        && props.expanded.projectId === projectId;
+        && props.expanded.omicsProcessingId === omicsProcessingId;
     }
 
-    const filteredProjects = computed(() => Object.entries(groupBy(
-      props.result.projects
+    const filteredOmicsProcessing = computed(() => Object.entries(groupBy(
+      props.result.omics_processing
         .filter((p) => hiddenOmicsTypes.indexOf(p.annotations.omics_type.toLowerCase()) === -1),
       (p) => p.annotations.omics_type,
     )).sort(([agroup], [bgroup]) => {
@@ -55,7 +55,7 @@ export default defineComponent({
 
     return {
       isOpen,
-      filteredProjects,
+      filteredOmicsProcessing,
       fieldDisplayName,
     };
   },
@@ -64,12 +64,12 @@ export default defineComponent({
 
 <template>
   <div
-    v-if="result.projects.length"
+    v-if="result.omics_processing.length"
     class="d-flex flex-column mb-2"
   >
     <div class="d-flex flex-row flex-wrap">
       <v-btn
-        v-for="[omicsType, projects] in filteredProjects"
+        v-for="[omicsType, projects] in filteredOmicsProcessing"
         :key="projects[0].id"
         x-small
         :outlined="!isOpen(projects[0].id)"
@@ -81,12 +81,12 @@ export default defineComponent({
         <v-icon>mdi-chevron-down</v-icon>
       </v-btn>
     </div>
-    <template v-for="[omicsType, projects] in filteredProjects">
+    <template v-for="[omicsType, projects] in filteredOmicsProcessing">
       <DataObjectTable
         v-if="isOpen(projects[0].id)"
         :key="projects[0].id"
         class="flex-row mt-2"
-        :projects="projects"
+        :omics-processing="projects"
         :omics-type="omicsType"
         :logged-in-user="loggedInUser"
       />

@@ -4,7 +4,7 @@ import { mapGetters } from 'vuex';
 
 import Sample from '@/components/Presentation/Sample.vue';
 import Study from '@/components/Presentation/Study.vue';
-import Project from '@/components/Presentation/Project.vue';
+import OmicsProcessing from '@/components/Presentation/OmicsProcessing.vue';
 import DataObjectList from '@/components/DataObjectsList.vue';
 
 import AttributeList from './AttributeList.vue';
@@ -13,7 +13,7 @@ export default Vue.extend({
   components: {
     AttributeList,
     DataObjectList,
-    Project,
+    OmicsProcessing,
     Sample,
     Study,
   },
@@ -44,8 +44,8 @@ export default Vue.extend({
         v-if="type === 'biosample'"
         :item="result"
       />
-      <project
-        v-if="type === 'project'"
+      <omics-processing
+        v-if="type === 'omics_processing'"
         :item="result"
       />
       <attribute-list

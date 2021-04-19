@@ -143,12 +143,11 @@ export default Vue.extend({
           </v-row>
         </template>
 
-        <!-- PROJECT CHARTS -->
-        <template v-if="type === 'project'">
+        <template v-if="type === 'omics_processing'">
           <v-row>
             <v-col>
               <facet-summary-wrapper
-                table="project"
+                table="omics_processing"
                 field="omics_type"
                 :conditions="conditions"
                 use-all-conditions

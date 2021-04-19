@@ -28,11 +28,11 @@ const types: Record<entityType, EntityData> = {
     plural: 'studies',
     visible: true,
   },
-  project: {
+  omics_processing: {
     icon: 'mdi-file-table-box-multiple-outline',
     heading: 'Omics Types',
-    name: 'project',
-    plural: 'projects',
+    name: 'omics_processing',
+    plural: 'Omics Processing',
     visible: true,
   },
   biosample: {
@@ -95,7 +95,7 @@ const fields: Record<string, FieldsData> = {
     icon: 'mdi-key-link',
     hideFacet: true,
   },
-  project_id: {
+  omics_processing_id: {
     icon: 'mdi-key-link',
     hideFacet: true,
   },
@@ -275,7 +275,7 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
   },
   biosample: {},
   study: {},
-  project: {},
+  omics_processing: {},
   reads_qc: {},
   metagenome_annotation: {},
   metagenome_assembly: {},
