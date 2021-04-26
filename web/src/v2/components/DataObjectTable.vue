@@ -46,7 +46,7 @@ export default defineComponent({
   setup(props) {
     const headers: DataTableHeader[] = [
       {
-        text: 'Workflow Activity',
+        text: '',
         value: 'group_name',
         sortable: false,
       },
@@ -99,8 +99,8 @@ export default defineComponent({
             ...data_object,
             omics_data,
             /* TODO Hack to replace metagenome with omics type name */
-            group_name: i === 0 ? omics_data.name
-              .replace('Metagenome', props.omicsType) : '',
+            group_name: omics_data.name.replace('Metagenome', props.omicsType),
+            newgroup: i === 0,
             object_type,
             object_description: descriptionMap[object_type] || '',
           };
@@ -153,43 +153,57 @@ export default defineComponent({
       :items="items"
       dense
     >
-      <template #[`item.file_size_bytes`]="{ item }">
-        {{ humanFileSize(item.file_size_bytes ) }}
-      </template>
-      <template #[`item.action`]="{ item }">
-        <v-tooltip
-          :disabled="!!(loggedInUser && item.url)"
-          bottom
+      <template #item="{ item, index }">
+        <tr
+          v-if="(item.newgroup || index == 0) && item.group_name"
+          :style="{ 'background-color': '#e0e0e0' }"
         >
-          <template #activator="{ on, attrs }">
-            <span v-on="on">
-              <v-btn
-                v-if="item.url"
-                icon
-                :disabled="!loggedInUser"
-                v-bind="attrs"
-                @click="download(item)"
-              >
-                <v-icon>mdi-download</v-icon>
-              </v-btn>
-              <v-btn
-                v-else
-                icon
-                disabled
-              >
-                <v-icon>
-                  mdi-file-hidden
-                </v-icon>
-              </v-btn>
-            </span>
-          </template>
-          <span v-if="item.url">
-            You must be logged in
-          </span>
-          <span v-else>
-            File unavailable
-          </span>
-        </v-tooltip>
+          <td colspan="5">
+            <b>Workflow Activity:</b> {{ item.group_name }}
+          </td>
+        </tr>
+        <tr>
+          <td />
+          <td>{{ item.object_type }}</td>
+          <td>{{ item.object_description }}</td>
+          <td>{{ humanFileSize(item.file_size_bytes ) }}</td>
+          <td>
+            <v-tooltip
+              :disabled="!!(loggedInUser && item.url)"
+              bottom
+            >
+              <template #activator="{ on, attrs }">
+                <span v-on="on">
+                  <v-btn
+                    v-if="item.url"
+                    icon
+                    :disabled="!loggedInUser"
+                    v-bind="attrs"
+                    color="primary"
+                    @click="download(item)"
+                  >
+                    <v-icon>mdi-download</v-icon>
+                  </v-btn>
+                  <v-btn
+                    v-else
+                    icon
+                    disabled
+                  >
+                    <v-icon>
+                      mdi-file-hidden
+                    </v-icon>
+                  </v-btn>
+                </span>
+              </template>
+              <span v-if="item.url">
+                You must be logged in
+              </span>
+              <span v-else>
+                File unavailable
+              </span>
+            </v-tooltip>
+          </td>
+        </tr>
       </template>
     </v-data-table>
   </v-card>

@@ -10,11 +10,14 @@ import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
 import BinnedSummaryWrapper from '@/components/BinnedSummaryWrapper.vue';
 // ENDTODO
+import TooltipCard from '@/v2/components/TooltipCard.vue';
 
 import {
   toggleConditions, removeConditions, setUniqueCondition,
 } from '@/v2/store';
 import { Condition } from '@/data/api';
+
+const lipsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ';
 
 const staticUpsetData = [
   {
@@ -68,6 +71,7 @@ export default defineComponent({
     FacetBarChart,
     LocationMap,
     EcosystemSankey,
+    TooltipCard,
     // TODO replace with composition functions
     FacetSummaryWrapper,
     BinnedSummaryWrapper,
@@ -75,6 +79,7 @@ export default defineComponent({
   },
   setup() {
     return {
+      lipsum,
       toggleConditions,
       setUniqueCondition,
       removeConditions,
@@ -89,10 +94,7 @@ export default defineComponent({
   <div>
     <v-row>
       <v-col :cols="4">
-        <v-card
-          outlined
-          class="pa-1"
-        >
+        <TooltipCard :text="lipsum">
           <FacetSummaryWrapper
             table="omics_processing"
             field="omics_type"
@@ -111,11 +113,11 @@ export default defineComponent({
               />
             </template>
           </FacetSummaryWrapper>
-        </v-card>
+        </TooltipCard>
       </v-col>
       <v-col :cols="8">
-        <v-card
-          outlined
+        <TooltipCard
+          :text="lipsum"
           class="pa-1"
         >
           <LocationMap
@@ -123,13 +125,13 @@ export default defineComponent({
             :conditions="conditions"
             @selected="toggleConditions($event.conditions)"
           />
-        </v-card>
+        </TooltipCard>
       </v-col>
     </v-row>
     <v-row>
       <v-col cols="8">
-        <v-card
-          outlined
+        <TooltipCard
+          :text="lipsum"
           class="py-2"
         >
           <BinnedSummaryWrapper
@@ -145,11 +147,11 @@ export default defineComponent({
               />
             </template>
           </BinnedSummaryWrapper>
-        </v-card>
+        </TooltipCard>
       </v-col>
       <v-col cols="4">
-        <v-card
-          outlined
+        <TooltipCard
+          :text="lipsum"
           height="100%"
           class="py-0 d-flex flex-column justify-center"
         >
@@ -166,7 +168,7 @@ export default defineComponent({
               />
             </template>
           </ChartContainer>
-        </v-card>
+        </TooltipCard>
       </v-col>
     </v-row>
   </div>

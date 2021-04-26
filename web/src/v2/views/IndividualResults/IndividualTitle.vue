@@ -30,7 +30,7 @@ export default defineComponent({
           x-large
           @click="$router.go(-1)"
         >
-          <v-icon>mdi-arrow-left-circle</v-icon>
+          <v-icon>mdi-chevron-left-box</v-icon>
         </v-btn>
       </v-col>
       <v-col class="grow">
