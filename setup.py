@@ -17,6 +17,7 @@ setup(
         "factory-boy",
         "httpx",
         "itsdangerous",
+        "pint",
         "psycopg2-binary",
         "pymongo",
         "python-dateutil",

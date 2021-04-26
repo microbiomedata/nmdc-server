@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional, Union
 from urllib.parse import quote
 from uuid import UUID
 
+from pint import Unit
 from pydantic import BaseModel, Field, validator
 from sqlalchemy import BigInteger, Column, DateTime, Float, String
 
@@ -72,11 +73,44 @@ class AnnotatedBase(BaseModel):
 
 
 # aggregations
+class UnitDimensionality(BaseModel):
+    quantity: str
+    exponent: int
+
+
+class UnitInfo(BaseModel):
+    name: str
+    abbreviation: str
+    dimensionality: List[UnitDimensionality]
+
+    @classmethod
+    def from_unit(cls, unit: Optional[Unit]) -> Optional["UnitInfo"]:
+        if unit is None:
+            return None
+
+        dimensionality: List[UnitDimensionality] = []
+
+        for key, value in unit.dimensionality.items():
+            dimensionality.append(
+                UnitDimensionality(
+                    quantity=key,
+                    exponent=value,
+                )
+            )
+
+        return UnitInfo(
+            name=str(unit),
+            abbreviation=format(unit, "~"),
+            dimensionality=dimensionality,
+        )
+
+
 class AttributeSummary(BaseModel):
     count: int
     min: Optional[Union[float, datetime]]
     max: Optional[Union[float, datetime]]
     type: AttributeType
+    units: Optional[UnitInfo]
 
 
 class TableSummary(BaseModel):
