@@ -1,9 +1,10 @@
-from typing import cast, Dict, List, Type
+from typing import Any, cast, Dict, List, Type
 
 from sqlalchemy import Column, func
 from sqlalchemy.orm import Session
 
 from nmdc_server import models, query, schemas
+from nmdc_server.attribute_units import get_attribute_units
 
 
 def get_annotation_summary(
@@ -43,11 +44,18 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
             column.name not in ["id", "annotations", "alternate_identifiers"]
             and "_id" not in column.name
         ):
+            extra: Dict[str, Any] = {}
+            units = schemas.UnitInfo.from_unit(
+                get_attribute_units(model.__tablename__, column.name)  # type: ignore
+            )
+            if units:
+                extra["units"] = units
             type_ = schemas.AttributeType.from_column(column)
             if type_ == schemas.AttributeType.string:
                 attributes[column.name] = schemas.AttributeSummary(
                     count=get_column_count(db, column),
                     type=schemas.AttributeType.from_column(column),
+                    **extra,
                 )
             else:
                 count_, min, max = (
@@ -60,6 +68,7 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
                     min=min,
                     max=max,
                     type=schemas.AttributeType.from_column(column),
+                    **extra,
                 )
 
     if model == models.Biosample:
