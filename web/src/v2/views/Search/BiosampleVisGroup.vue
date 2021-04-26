@@ -152,8 +152,7 @@ export default defineComponent({
       <v-col cols="4">
         <TooltipCard
           :text="lipsum"
-          height="100%"
-          class="py-0 d-flex flex-column justify-center"
+          class="py-0 d-flex flex-column justify-center fill-height"
         >
           <ChartContainer :height="160">
             <template #default="{ width, height }">
