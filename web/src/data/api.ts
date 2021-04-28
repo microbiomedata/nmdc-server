@@ -135,7 +135,7 @@ export interface AttributeSummary {
   type: 'string' | 'date' | 'integer' | 'float' | 'string_literal';
   min?: string | number;
   max?: string | number;
-  units: UnitSchema;
+  units?: UnitSchema;
 }
 
 export interface TableSummary {
