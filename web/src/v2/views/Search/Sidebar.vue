@@ -182,7 +182,7 @@ export default defineComponent({
       class="ma-3"
       @remove="removeConditions([$event])"
     >
-      <template #menu="{ field, table, isOpen }">
+      <template #menu="{ field, table, isOpen, toggleMenu }">
         <MenuContent
           v-bind="{
             field,
@@ -192,6 +192,7 @@ export default defineComponent({
             summary: dbSummaryForTable(table, field),
           }"
           @select="setConditions($event.conditions)"
+          @close="toggleMenu(false)"
         />
       </template>
     </ConditionChips>
@@ -206,7 +207,7 @@ export default defineComponent({
       :conditions="conditions"
       :fields="FunctionSearchFacets"
     >
-      <template #menu="{ field, table, isOpen }">
+      <template #menu="{ field, table, isOpen, toggleMenu }">
         <MenuContent
           v-bind="{
             field,
@@ -216,6 +217,7 @@ export default defineComponent({
             conditions,
           }"
           @select="setConditions($event.conditions)"
+          @close="toggleMenu(false)"
         />
       </template>
     </FacetedSearch>

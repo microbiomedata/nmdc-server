@@ -12,6 +12,7 @@ export default {
   green,
   blue,
   purple,
+  grey: colors.grey,
   primary: purple,
   secondary: red,
   accent: orange,
