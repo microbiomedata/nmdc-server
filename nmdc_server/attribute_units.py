@@ -2,6 +2,7 @@ from typing import Dict, Optional
 
 from pint import Unit, UnitRegistry
 
+
 _registry = UnitRegistry()
 
 # TODO: This information should come from the upstream schema.  For now, we
