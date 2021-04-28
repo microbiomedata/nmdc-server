@@ -11,7 +11,7 @@ _registry = UnitRegistry()
 
 _unit_info: Dict[str, Dict[str, Unit]] = {
     "biosample": {
-        "depth": _registry("meters").units,
+        "depth": _registry("centimeters").units,
     }
 }
 

@@ -120,11 +120,22 @@ export interface MetagenomeAnnotationResult extends DerivedDataResult {
 
 export type MetaproteomicAnalysisResult = DerivedDataResult
 
+export interface UnitSchema {
+  /* https://github.com/microbiomedata/nmdc-server/pull/350 */
+  name: string;
+  abbreviation: string;
+  dimensionality: {
+    quantity: string;
+    exponent: 1;
+  }[];
+}
+
 export interface AttributeSummary {
   count: number;
   type: 'string' | 'date' | 'integer' | 'float' | 'string_literal';
   min?: string | number;
   max?: string | number;
+  units?: UnitSchema;
 }
 
 export interface TableSummary {
@@ -256,7 +267,7 @@ async function searchDataObject(params: SearchParams) {
 }
 
 export type ResultUnion = (
-    SearchResponse<BiosampleSearchResult>
+  SearchResponse<BiosampleSearchResult>
   | SearchResponse<OmicsProcessingResult>
   | SearchResponse<StudySearchResults>
   | SearchResponse<ReadsQCResult>

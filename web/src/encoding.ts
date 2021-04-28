@@ -16,7 +16,6 @@ export interface FieldsData {
   name?: string;
   group?: string;
   hideAttr?: boolean;
-  units?: string;
   encode?: (input: string) => string,
 }
 
@@ -128,7 +127,6 @@ const fields: Record<string, FieldsData> = {
   },
   depth: {
     icon: 'mdi-tape-measure',
-    units: '(cm)',
   },
   sample_collection_site: {
     icon: 'mdi-earth',

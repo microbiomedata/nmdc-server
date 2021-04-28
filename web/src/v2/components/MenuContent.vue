@@ -49,7 +49,13 @@ export default Vue.extend({
 <template>
   <div>
     <v-card-title class="pb-0">
-      {{ fieldDisplayName(field, table) }} {{ getField(field, table).units }}
+      {{ fieldDisplayName(field, table) }}
+      <span
+        v-if="summary.units"
+        class="pl-2"
+      >
+        ({{ summary.units.name }})
+      </span>
       <v-spacer />
       <v-btn
         icon
