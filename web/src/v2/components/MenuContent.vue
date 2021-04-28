@@ -49,7 +49,7 @@ export default Vue.extend({
 <template>
   <div>
     <v-card-title class="pb-0">
-      {{ fieldDisplayName(field, table) }} {{ getField(field, table).units }}
+      {{ fieldDisplayName(field, table) }} ({{ summary.units.name }})
     </v-card-title>
     <filter-list
       v-if="summary.type === 'string' && isOpen"
