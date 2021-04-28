@@ -50,6 +50,13 @@ export default Vue.extend({
   <div>
     <v-card-title class="pb-0">
       {{ fieldDisplayName(field, table) }} ({{ summary.units.name }})
+      <v-spacer />
+      <v-btn
+        icon
+        @click="$emit('close')"
+      >
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
     </v-card-title>
     <filter-list
       v-if="summary.type === 'string' && isOpen"

@@ -110,6 +110,7 @@ export default Vue.extend({
         <template v-for="sf in filteredFields">
           <v-menu
             :key="sf.key"
+            :value="menuState[sf.key]"
             offset-x
             :close-on-content-click="false"
             @input="toggleMenu(sf.key, $event)"
@@ -138,6 +139,7 @@ export default Vue.extend({
                   field: sf.field,
                   table: sf.table,
                   isOpen: menuState[sf.key],
+                  toggleMenu: (val) => toggleMenu(sf.key, val),
                 }"
               />
             </v-card>

@@ -124,6 +124,7 @@ export default Vue.extend({
                 field: group.field,
                 table: group.table,
                 isOpen: menuState[group.key],
+                toggleMenu: (val) => toggleMenu(group.key, val),
               }"
             />
           </v-card>

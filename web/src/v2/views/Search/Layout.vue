@@ -176,11 +176,11 @@ export default defineComponent({
                   <v-list-item-action>
                     <v-btn
                       icon
-                      plain
+                      large
                       :to="{ name: 'V2Study', params: { id: result.id } }"
                     >
-                      <v-icon color="grey">
-                        mdi-chevron-right
+                      <v-icon>
+                        mdi-chevron-right-box
                       </v-icon>
                     </v-btn>
                   </v-list-item-action>
@@ -239,11 +239,11 @@ export default defineComponent({
                   <v-list-item-action>
                     <v-btn
                       icon
-                      plain
+                      large
                       :to="{ name: 'V2Sample', params: { id: result.id } }"
                     >
-                      <v-icon color="grey">
-                        mdi-chevron-right
+                      <v-icon>
+                        mdi-chevron-right-box
                       </v-icon>
                     </v-btn>
                   </v-list-item-action>
