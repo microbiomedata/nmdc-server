@@ -50,12 +50,12 @@ export default defineComponent({
     <v-list>
       <template v-for="field in displayFields">
         <template
-          v-if="!getField(field)
-            || (getField(field).hideFacet && !getField(field).hideAttr)"
+          v-if="!getField(field) || !getField(field).hideAttr"
         >
           <v-list-item
             :key="field"
-            @click="selectField(type, field)"
+            :href="field.startsWith('open_in_') ? item[field] : undefined"
+            target="_blank"
           >
             <v-list-item-avatar>
               <v-icon v-if="getField(field)">

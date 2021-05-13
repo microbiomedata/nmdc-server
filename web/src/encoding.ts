@@ -214,6 +214,9 @@ const fields: Record<string, FieldsData> = {
     group: 'ENVO',
     sortKey: 3,
   },
+  open_in_gold: {
+    icon: 'mdi-link',
+  },
   /* END ENVO terms */
   /* disable uniques */
   scientific_objective: {
