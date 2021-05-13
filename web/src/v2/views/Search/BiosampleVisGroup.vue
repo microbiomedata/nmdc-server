@@ -17,7 +17,10 @@ import {
 } from '@/v2/store';
 import { Condition } from '@/data/api';
 
-const lipsum = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ';
+const helpBarchart = 'Displays the number of samples for each data type available. Click on a bar to filter by data type.';
+const helpMap = 'Displays geographical location (latitude, longitude) and sample size (as indicated by the size of the point). Click on a point to filter by a group of samples.';
+const helpTimeline = '	Scroll the slider to narrow in on a sample collection date range.';
+const helpUpset = 'This upset plot shows the number of samples with corresponding omic data associated. For example: there are 43 samples from 1 study that have metagenomics, metatranscriptomics, and natural organic matter characterizations.';
 
 const staticUpsetData = [
   {
@@ -79,7 +82,10 @@ export default defineComponent({
   },
   setup() {
     return {
-      lipsum,
+      helpBarchart,
+      helpMap,
+      helpTimeline,
+      helpUpset,
       toggleConditions,
       setUniqueCondition,
       removeConditions,
@@ -94,7 +100,7 @@ export default defineComponent({
   <div>
     <v-row>
       <v-col :cols="4">
-        <TooltipCard :text="lipsum">
+        <TooltipCard :text="helpBarchart">
           <FacetSummaryWrapper
             table="omics_processing"
             field="omics_type"
@@ -117,7 +123,7 @@ export default defineComponent({
       </v-col>
       <v-col :cols="8">
         <TooltipCard
-          :text="lipsum"
+          :text="helpMap"
           class="pa-1"
         >
           <LocationMap
@@ -131,7 +137,7 @@ export default defineComponent({
     <v-row>
       <v-col cols="8">
         <TooltipCard
-          :text="lipsum"
+          :text="helpTimeline"
           class="py-2"
         >
           <BinnedSummaryWrapper
@@ -151,7 +157,7 @@ export default defineComponent({
       </v-col>
       <v-col cols="4">
         <TooltipCard
-          :text="lipsum"
+          :text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"
         >
           <ChartContainer :height="160">
