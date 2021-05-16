@@ -14,6 +14,7 @@ from typing_extensions import Literal
 from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
 from nmdc_server.filters import create_filter_class
+from nmdc_server.multiomics import MultiomicsValue
 from nmdc_server.table import (
     EnvBroadScaleAncestor,
     EnvBroadScaleTerm,
@@ -204,7 +205,26 @@ class GoldConditionSchema(BaseConditionSchema):
         return or_(True)
 
 
-ConditionSchema = Union[RangeConditionSchema, SimpleConditionSchema, GoldConditionSchema]
+class MultiomicsConditionSchema(BaseConditionSchema):
+    table: Table
+    value: int
+    field: Literal["multiomics"]
+    op: Literal["has"]
+
+    def compare(self) -> ClauseElement:
+        and_args = [True]
+        for omics in MultiomicsValue:
+            if self.value & omics.value:
+                and_args.append(models.Biosample.multiomics.op("&")(omics.value) > 0)
+        return and_(*and_args)
+
+
+ConditionSchema = Union[
+    RangeConditionSchema,
+    SimpleConditionSchema,
+    GoldConditionSchema,
+    MultiomicsConditionSchema,
+]
 
 
 class BaseQuerySchema(BaseModel):

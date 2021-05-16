@@ -157,3 +157,6 @@ def load(db: Session, function_limit=None):
 
     models.MetaPGeneFunctionAggregation.populate(db)
     db.commit()
+
+    models.Biosample.populate_multiomics(db)
+    db.commit()
