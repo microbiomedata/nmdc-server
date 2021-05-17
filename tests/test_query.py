@@ -576,3 +576,39 @@ def test_query_gene_function_mga_metap(db: Session):
         ],
     )
     assert {r.id for r in q1.execute(db)} == set()
+
+
+@pytest.mark.parametrize(
+    "value,result",
+    [
+        (0, True),
+        (query.MultiomicsValue.mb.value, True),
+        (query.MultiomicsValue.mg.value, False),
+        (query.MultiomicsValue.mp.value, False),
+        (query.MultiomicsValue.mt.value, True),
+        (query.MultiomicsValue.om.value, False),
+        (query.MultiomicsValue.mb.value | query.MultiomicsValue.mt.value, True),
+        (query.MultiomicsValue.mb.value | query.MultiomicsValue.mg.value, False),
+        (
+            query.MultiomicsValue.mb.value
+            | query.MultiomicsValue.mt.value
+            | query.MultiomicsValue.mg.value,
+            False,
+        ),
+    ],
+)
+def test_query_multiomics(db: Session, value: int, result: bool):
+    biosample = fakes.BiosampleFactory()
+    fakes.OmicsProcessingFactory(annotations={"omics_type": "Metabolomics"}, biosample=biosample)
+    fakes.OmicsProcessingFactory(
+        annotations={"omics_type": "Metatranscriptome"}, biosample=biosample
+    )
+    db.commit()
+
+    models.Biosample.populate_multiomics(db)
+    db.commit()
+
+    qs = query.BiosampleQuerySchema(
+        conditions=[{"table": "biosample", "field": "multiomics", "op": "has", "value": value}]
+    )
+    assert bool(list(qs.execute(db))) is result

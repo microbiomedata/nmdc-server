@@ -6,7 +6,7 @@ from uuid import UUID
 
 from pint import Unit
 from pydantic import BaseModel, Field, validator
-from sqlalchemy import BigInteger, Column, DateTime, Float, String
+from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, String
 
 from nmdc_server import models
 
@@ -47,7 +47,7 @@ class AttributeType(Enum):
             return AttributeType.date
         elif isinstance(column.type, Float):
             return AttributeType.float_
-        elif isinstance(column.type, BigInteger):
+        elif isinstance(column.type, (BigInteger, Integer)):
             return AttributeType.integer
         elif isinstance(column.type, String):
             return AttributeType.string
@@ -255,6 +255,7 @@ class Biosample(BiosampleBase):
     env_medium_terms: List[str] = []
 
     omics_processing: List["OmicsProcessing"]
+    multiomics: int
 
     class Config:
         orm_mode = True

@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.schema import DDL, MetaData
 
 from nmdc_server.config import settings
+from nmdc_server.multiomics import MultiomicsValue
 
 
 _engine: Optional[Engine] = None
@@ -119,6 +120,32 @@ END;
 $$ LANGUAGE plpgsql;
 """
     ),
+)
+
+update_multiomics_sql = DDL(
+    f"""
+with m as (select
+    b.id as id,
+    bit_or(
+        case
+            when op.annotations->>'omics_type' = 'Metabolomics' then
+                b'{MultiomicsValue.mb.value:05b}'
+            when op.annotations->>'omics_type' = 'Metagenome' then
+                b'{MultiomicsValue.mg.value:05b}'
+            when op.annotations->>'omics_type' = 'Proteomics' then
+                b'{MultiomicsValue.mp.value:05b}'
+            when op.annotations->>'omics_type' = 'Metatranscriptome' then
+                b'{MultiomicsValue.mt.value:05b}'
+            when op.annotations->>'omics_type' = 'Organic Matter Characterization' then
+                b'{MultiomicsValue.om.value:05b}'
+        end
+    )::integer as multiomics
+from biosample b join omics_processing op on op.biosample_id = b.id
+group by b.id)
+update biosample set multiomics = m.multiomics
+from m
+where m.id = biosample.id;
+"""
 )
 
 #: This variable configures whether or not we are connecting to the testing

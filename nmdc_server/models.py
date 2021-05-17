@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     ForeignKey,
+    Integer,
     LargeBinary,
     String,
     Table,
@@ -21,7 +22,7 @@ from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.orm import backref, query_expression, relationship, Session
 from sqlalchemy.orm.relationships import RelationshipProperty
 
-from nmdc_server.database import Base
+from nmdc_server.database import Base, update_multiomics_sql
 
 
 def gold_url(base: str, id: str) -> Optional[str]:
@@ -198,6 +199,7 @@ class Biosample(Base, AnnotatedModel):
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
+    multiomics = Column(Integer, nullable=False, default=0)
 
     # gold terms
     ecosystem = Column(String, nullable=True)
@@ -226,6 +228,11 @@ class Biosample(Base, AnnotatedModel):
     @property
     def open_in_gold(self) -> Optional[str]:
         return gold_url("https://gold.jgi.doe.gov/biosample?id=", self.id)
+
+    @classmethod
+    def populate_multiomics(cls, db: Session):
+        db.execute(update_multiomics_sql)
+        db.commit()
 
 
 omics_processing_output_association = output_association("omics_processing")
