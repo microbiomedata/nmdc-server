@@ -1,11 +1,16 @@
 ### Running in Docker
 
-The docker container runs a data ingest on startup.  For this, you must
-create a `.env` file in the top level directory containing mongo credentials.
+In order to populate the database, you must create a `.env` file in the top
+level directory containing mongo credentials.
 ```
 # .env
 NMDC_MONGO_USER=changeme
 NMDC_MONGO_PASSWORD=changeme
+```
+With that file in place, populate the docker volume by running,
+```
+docker-compose run --rm backend nmdc-server migrate
+docker-compose run --rm backend nmdc-server ingest
 ```
 
 Then you can start up the services.
@@ -14,6 +19,15 @@ docker-compose up
 ```
 
 View main application at `http://localhost:8080/` and the swagger page at `http://localhost:8080/docs`.
+
+**NOTE**: If you have migration issues when starting up the server, you can purge the volume and start
+from scratch by running:
+```
+docker-compose down
+docker volume rm -f nmdc-server_app-db-data
+docker-compose run --rm backend nmdc-server migrate
+docker-compose run --rm backend nmdc-server ingest
+```
 
 
 ### Development Installation
