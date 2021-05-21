@@ -19,6 +19,7 @@ from sqlalchemy import (
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import backref, query_expression, relationship, Session
 from sqlalchemy.orm.relationships import RelationshipProperty
 
@@ -276,6 +277,10 @@ class DataObject(Base):
     # denormalized relationship representing the source omics_processing
     omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
     omics_processing = relationship(OmicsProcessing)
+
+    @hybrid_property
+    def downloads(self) -> int:
+        return len(self.download_entities)  # type: ignore
 
 
 class PipelineStep:
@@ -555,7 +560,7 @@ class FileDownload(Base):
     user_agent = Column(String, nullable=True)
     orcid = Column(String, nullable=False)
 
-    data_object = relationship(DataObject)
+    data_object = relationship(DataObject, backref="download_entities")
 
 
 class IngestLock(Base):

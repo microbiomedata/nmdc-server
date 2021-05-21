@@ -67,6 +67,12 @@ export default defineComponent({
         sortable: false,
       },
       {
+        text: 'Downloads',
+        value: 'downloads',
+        width: 80,
+        sortable: false,
+      },
+      {
         text: 'Download',
         value: 'action',
         width: 80,
@@ -158,7 +164,7 @@ export default defineComponent({
           v-if="(item.newgroup || index == 0) && item.group_name"
           :style="{ 'background-color': '#e0e0e0' }"
         >
-          <td colspan="5">
+          <td colspan="6">
             <b>Workflow Activity:</b> {{ item.group_name }}
           </td>
         </tr>
@@ -167,6 +173,7 @@ export default defineComponent({
           <td>{{ item.object_type }}</td>
           <td>{{ item.object_description }}</td>
           <td>{{ humanFileSize(item.file_size_bytes ) }}</td>
+          <td>{{ item.downloads }}</td>
           <td>
             <v-tooltip
               :disabled="!!(loggedInUser && item.url)"

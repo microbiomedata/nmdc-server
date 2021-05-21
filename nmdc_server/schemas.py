@@ -291,6 +291,7 @@ class DataObjectBase(BaseModel):
     file_size_bytes: int
     md5_checksum: Optional[str]
     url: Optional[str]
+    downloads: int
 
 
 class DataObjectCreate(DataObjectBase):
