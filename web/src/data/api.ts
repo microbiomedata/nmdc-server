@@ -57,6 +57,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
 export interface DataObjectSearchResult extends BaseSearchResult {
   file_size_bytes: number;
   md5_checksum: string;
+  downloads: number;
 }
 
 export interface StudySearchResults extends BaseSearchResult {
