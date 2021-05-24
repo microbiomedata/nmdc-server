@@ -215,6 +215,7 @@ class Study(StudyBase):
     omics_counts: Optional[List[OmicsCounts]]
     omics_processing_counts: Optional[List[OmicsCounts]]
     publication_doi_info: Dict[str, Any]
+    multiomics: int
 
     class Config:
         orm_mode = True
