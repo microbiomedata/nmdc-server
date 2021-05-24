@@ -145,6 +145,30 @@ group by b.id)
 update biosample set multiomics = m.multiomics
 from m
 where m.id = biosample.id;
+
+with m as (select
+    s.id as id,
+    bit_or(
+        case
+            when op.annotations->>'omics_type' = 'Metabolomics' then
+                b'{MultiomicsValue.mb.value:05b}'
+            when op.annotations->>'omics_type' = 'Metagenome' then
+                b'{MultiomicsValue.mg.value:05b}'
+            when op.annotations->>'omics_type' = 'Proteomics' then
+                b'{MultiomicsValue.mp.value:05b}'
+            when op.annotations->>'omics_type' = 'Metatranscriptome' then
+                b'{MultiomicsValue.mt.value:05b}'
+            when op.annotations->>'omics_type' = 'Organic Matter Characterization' then
+                b'{MultiomicsValue.om.value:05b}'
+        end
+    )::integer as multiomics
+from study s
+    join biosample b on s.id = b.study_id
+    join omics_processing op on op.biosample_id = b.id
+group by s.id)
+update study set multiomics = m.multiomics
+from m
+where m.id = study.id;
 """
 )
 

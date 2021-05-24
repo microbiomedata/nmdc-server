@@ -150,6 +150,7 @@ class Study(Base, AnnotatedModel):
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
     doi = Column(String, ForeignKey("doi_info.id"), nullable=False)
+    multiomics = Column(Integer, nullable=False, default=0)
 
     # TODO: Specify a default expression so that sample counts are present in
     #       non-search responses.
