@@ -15,43 +15,13 @@ import TooltipCard from '@/v2/components/TooltipCard.vue';
 import {
   toggleConditions, removeConditions, setUniqueCondition,
 } from '@/v2/store';
-import { Condition } from '@/data/api';
+import { api, Condition } from '@/data/api';
 
 const helpBarchart = 'Displays the number of samples for each data type available. Click on a bar to filter by data type.';
 const helpMap = 'Displays geographical location (latitude, longitude) and sample size (as indicated by the size of the point). Click on a point to filter by a group of samples.';
 const helpTimeline = 'Scroll the slider to narrow in on a sample collection date range.';
 const helpUpset = 'This upset plot shows the number of samples with corresponding omic data associated. For example: there are 43 samples from 1 study that have metagenomics, metatranscriptomics, and natural organic matter characterizations.';
 
-const staticUpsetData = [
-  {
-    sets: ['MG'],
-    counts: { Samples: 42, Studies: 2 },
-  },
-  {
-    sets: ['MG', 'MP', 'MB'],
-    counts: { Samples: 33, Studies: 1 },
-  },
-  {
-    sets: ['NOM', 'MT', 'MG'],
-    counts: { Samples: 43, Studies: 1 },
-  },
-  {
-    sets: ['MG', 'MT'],
-    counts: { Samples: 2, Studies: 1 },
-  },
-  {
-    sets: ['NOM', 'MG'],
-    counts: { Samples: 3, Studies: 1 },
-  },
-  {
-    sets: ['MP', 'MB'],
-    counts: { Samples: 1, Studies: 1 },
-  },
-  {
-    sets: ['NOM'],
-    counts: { Samples: 34, Studies: 1 },
-  },
-];
 const staticUpsetTooltips = {
   MG: 'Metagenomics',
   MP: 'Metaproteomics',
@@ -59,6 +29,29 @@ const staticUpsetTooltips = {
   MT: 'Metatranscriptomics',
   NOM: 'Natural Organic Matter',
 };
+
+function makeSetsFromBitmask(mask_str) {
+  const mask = parseInt(mask_str, 10); // the bitmask comes in as a string
+  const sets = [];
+
+  /* eslint-disable no-bitwise */
+  if (1 & mask) {
+    sets.push('NOM');
+  }
+  if ((1 << 1) & mask) {
+    sets.push('MT');
+  }
+  if ((1 << 2) & mask) {
+    sets.push('MP');
+  }
+  if ((1 << 3) & mask) {
+    sets.push('MG');
+  }
+  if ((1 << 4) & mask) {
+    sets.push('MB');
+  }
+  return sets;
+}
 
 export default defineComponent({
   name: 'SampleVisGroupV2',
@@ -89,9 +82,64 @@ export default defineComponent({
       toggleConditions,
       setUniqueCondition,
       removeConditions,
-      staticUpsetData,
       staticUpsetTooltips,
     };
+  },
+  computed: {
+    upsetData() {
+      const multiomicsObj = {};
+      this.sampleFacetSummary.forEach(({ facet, count }) => {
+        if (parseInt(facet, 10) === 0) {
+          return;
+        }
+        multiomicsObj[facet] = {
+          counts: {
+            Samples: count,
+            Studies: 0,
+          },
+          sets: makeSetsFromBitmask(facet),
+        };
+      });
+      this.studyFacetSummary.forEach(({ facet, count }) => {
+        if (parseInt(facet, 10) === 0) {
+          return;
+        }
+        if (!multiomicsObj[facet]) {
+          multiomicsObj[facet] = {
+            counts: {
+              Samples: 0,
+            },
+            sets: makeSetsFromBitmask(facet),
+          };
+        }
+        multiomicsObj[facet].counts.Studies = count;
+      });
+      return Object.keys(multiomicsObj)
+        .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+        .map((k) => multiomicsObj[k]);
+    },
+  },
+  asyncComputed: {
+    sampleFacetSummary: {
+      get() {
+        return api.getFacetSummary(
+          'biosample',
+          'multiomics',
+          this.conditions,
+        );
+      },
+      default: [],
+    },
+    studyFacetSummary: {
+      get() {
+        return api.getFacetSummary(
+          'study',
+          'multiomics',
+          this.conditions,
+        );
+      },
+      default: [],
+    },
   },
 });
 </script>
@@ -166,9 +214,9 @@ export default defineComponent({
                 v-bind="{
                   width,
                   height,
-                  data: staticUpsetData,
+                  data: upsetData,
                   tooltips: staticUpsetTooltips,
-                  order: 'Samples'
+                  order: 'Samples',
                 }"
               />
             </template>
