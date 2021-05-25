@@ -1,5 +1,5 @@
-<script lang="ts">
-import { defineComponent, PropType } from '@vue/composition-api';
+<script>
+import { defineComponent } from '@vue/composition-api';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
@@ -15,7 +15,7 @@ import TooltipCard from '@/v2/components/TooltipCard.vue';
 import {
   toggleConditions, removeConditions, setUniqueCondition,
 } from '@/v2/store';
-import { api, Condition } from '@/data/api';
+import { api } from '@/data/api';
 
 const helpBarchart = 'Displays the number of samples for each data type available. Click on a bar to filter by data type.';
 const helpMap = 'Displays geographical location (latitude, longitude) and sample size (as indicated by the size of the point). Click on a point to filter by a group of samples.';
@@ -57,7 +57,7 @@ export default defineComponent({
   name: 'SampleVisGroupV2',
   props: {
     conditions: {
-      type: Array as PropType<Condition[]>,
+      type: Array, //  as PropType<Condition[]>,
       required: true,
     },
   },
