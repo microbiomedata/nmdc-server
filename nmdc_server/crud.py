@@ -1,3 +1,4 @@
+from logging import getLogger
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
@@ -5,6 +6,7 @@ from sqlalchemy.orm import Query, Session
 
 from nmdc_server import aggregations, models, query, schemas
 
+logger = getLogger(__name__)
 NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)
 
@@ -422,3 +424,33 @@ def create_file_download(
     db.commit()
     db.refresh(db_file_download)
     return db_file_download
+
+
+def create_zip_download(db: Session, file_ids: List[str]) -> str:
+    content = []
+    for id_ in file_ids:
+        data_object = db.query(models.DataObject).get(id_)
+
+        # TODO: Support arbitrary urls
+        if (
+            data_object is None
+            or data_object.url is None
+            or not data_object.url.startswith("https://data.microbiomedata.org/data")
+        ):
+            logger.warning(f"Could not add {id_} to zip.")
+            if data_object is None:
+                logger.warning("Data object not found")
+            if data_object and data_object.url is None:
+                logger.warning("Data object url is empty")
+            if data_object and data_object.url is not None:
+                logger.warning(f"Data object url is {data_object.url}")
+            logger.warning("Could not add file to zip.")  # prevent sentry duplicates
+            continue
+
+        url = data_object.url.replace("https://data.microbiomedata.org", "")
+
+        # TODO: add crc checksums
+        # TODO: add directory structure and metadata
+        content.append(f"- {data_object.file_size_bytes} /{data_object.name} {url}")
+
+    return "\n".join(content) + "\n"
