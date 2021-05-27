@@ -2,7 +2,7 @@ from io import BytesIO
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException
+from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
@@ -673,3 +673,19 @@ async def repopulate_gene_functions(
         )
     jobs.populate_gene_functions.delay()
     return ""
+
+
+@router.post(
+    "/zip",
+    tags=["download"],
+    responses=login_required_responses,
+)
+async def download_zip_file(file_ids: List[str], db: Session = Depends(get_db)):
+    table = crud.create_zip_download(db, file_ids)
+    return Response(
+        content=table,
+        headers={
+            "X-Archive-Files": "zip",
+            "Content-Disposition": "attachment; filename=archive.zip",
+        },
+    )
