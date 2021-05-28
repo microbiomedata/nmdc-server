@@ -451,6 +451,6 @@ def create_zip_download(db: Session, file_ids: List[str]) -> str:
 
         # TODO: add crc checksums
         # TODO: add directory structure and metadata
-        content.append(f"- {data_object.file_size_bytes} /{data_object.name} {url}")
+        content.append(f"- {data_object.file_size_bytes} {url} {data_object.name}")
 
     return "\n".join(content) + "\n"
