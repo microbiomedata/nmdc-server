@@ -2,7 +2,7 @@ from io import BytesIO
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
@@ -675,12 +675,12 @@ async def repopulate_gene_functions(
     return ""
 
 
-@router.post(
+@router.get(
     "/zip",
     tags=["download"],
     responses=login_required_responses,
 )
-async def download_zip_file(file_ids: List[str], db: Session = Depends(get_db)):
+async def download_zip_file(file_ids: List[str] = Query(None), db: Session = Depends(get_db)):
     table = crud.create_zip_download(db, file_ids)
     return Response(
         content=table,
