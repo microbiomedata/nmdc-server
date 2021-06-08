@@ -55,10 +55,10 @@ class Pagination:
             "Resource-Count": str(count),
         }
 
-    def response(self, query: orm.Query) -> PaginatedResponse:
+    def response(self, query: orm.Query, processor=lambda x: x) -> PaginatedResponse:
         count = query.count()
         self._response.headers.update(self.headers(query, count))
         return {
-            "results": list(self.paginate(query, count)),
+            "results": [processor(x) for x in self.paginate(query, count)],
             "count": count,
         }

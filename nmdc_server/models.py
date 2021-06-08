@@ -274,6 +274,7 @@ class DataObject(Base):
     file_size_bytes = Column(BigInteger, nullable=False)
     md5_checksum = Column(String, nullable=True)
     url = Column(String, nullable=True)
+    # file_type = Column(String, nullable=True)
 
     # denormalized relationship representing the source omics_processing
     omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)

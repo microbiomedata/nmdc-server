@@ -13,6 +13,7 @@ from typing_extensions import Literal
 
 from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
+from nmdc_server.data_object_filters import DataObjectFilter
 from nmdc_server.filters import create_filter_class
 from nmdc_server.multiomics import MultiomicsValue
 from nmdc_server.table import (
@@ -555,9 +556,16 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
 
 
 class BiosampleQuerySchema(BaseQuerySchema):
+    data_object_filter: List[DataObjectFilter] = []
+
     @property
     def table(self) -> Table:
         return Table.biosample
+
+    def execute(self, db: Session) -> Query:
+        model = self.table.model
+        subquery = self.query(db).subquery()
+        return db.query(model).join(subquery, model.id == subquery.c.id)  # type: ignore
 
 
 class ReadsQCQuerySchema(BaseQuerySchema):
@@ -622,6 +630,10 @@ class SearchQuery(BaseModel):
 
 class FacetQuery(SearchQuery):
     attribute: str
+
+
+class BiosampleSearchQuery(SearchQuery):
+    data_object_filter: List[DataObjectFilter] = []
 
 
 class BinnedRangeFacetQuery(FacetQuery):

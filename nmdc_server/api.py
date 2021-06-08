@@ -16,6 +16,7 @@ from nmdc_server.auth import (
     Token,
 )
 from nmdc_server.config import Settings, settings
+from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import create_session
 from nmdc_server.models import IngestLock
 from nmdc_server.pagination import Pagination
@@ -109,11 +110,27 @@ async def create_biosample(
     description="Faceted search of biosample data.",
 )
 async def search_biosample(
-    query: query.SearchQuery = query.SearchQuery(),
+    query: query.BiosampleSearchQuery = query.BiosampleSearchQuery(),
     db: Session = Depends(get_db),
     pagination: Pagination = Depends(),
 ):
-    return pagination.response(crud.search_biosample(db, query.conditions))
+    data_object_filter = query.data_object_filter
+
+    def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
+        for op in biosample.omics_processing:
+            for da in op.outputs:
+                da.selected = schemas.DataObject.is_selected(
+                    WorkflowActivityTypeEnum.raw_data, da, data_object_filter
+                )
+            for od in op.omics_data:
+                workflow = WorkflowActivityTypeEnum(od.type)
+                for da in od.outputs:
+                    da.selected = schemas.DataObject.is_selected(workflow, da, data_object_filter)
+        return biosample
+
+    return pagination.response(
+        crud.search_biosample(db, query.conditions, data_object_filter), insert_selected
+    )
 
 
 @router.post(

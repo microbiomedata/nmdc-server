@@ -9,6 +9,7 @@ from pydantic import BaseModel, Field, validator
 from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, String
 
 from nmdc_server import models
+from nmdc_server.data_object_filters import DataObjectFilter, WorkflowActivityTypeEnum
 
 
 # The order in the this union is significant... it will coerce
@@ -300,6 +301,8 @@ class DataObjectCreate(DataObjectBase):
 
 
 class DataObject(DataObjectBase):
+    selected: Optional[bool] = None
+
     class Config:
         orm_mode = True
 
@@ -307,6 +310,33 @@ class DataObject(DataObjectBase):
     def replace_url(cls, url, values):
         id_str = quote(values["id"])
         return f"/api/data_object/{id_str}/download" if url else None
+
+    @classmethod
+    def is_selected(
+        cls,
+        workflow: WorkflowActivityTypeEnum,
+        data_object: "DataObject",
+        filters: List[DataObjectFilter],
+    ) -> bool:
+        # when no filters are provided, that means all data objects are selected
+        if not filters:
+            return True
+
+        def workflow_match(f, workflow) -> bool:
+            if f.workflow is None or f.workflow == workflow:
+                return True
+            return False
+
+        def file_type_match(f, file_type) -> bool:
+            if f.file_type is None:
+                return True
+            return True
+
+        for f in filters:
+            if workflow_match(f, workflow) and file_type_match(f, None):
+                return True
+
+        return False
 
 
 class GeneFunction(BaseModel):

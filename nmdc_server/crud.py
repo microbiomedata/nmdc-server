@@ -205,8 +205,14 @@ def delete_biosample(db: Session, biosample: models.Biosample) -> None:
     db.commit()
 
 
-def search_biosample(db: Session, conditions: List[query.ConditionSchema]) -> Query:
-    return query.BiosampleQuerySchema(conditions=conditions).execute(db)
+def search_biosample(
+    db: Session,
+    conditions: List[query.ConditionSchema],
+    data_object_filter: List[query.DataObjectFilter],
+) -> Query:
+    return query.BiosampleQuerySchema(
+        conditions=conditions, data_object_filter=data_object_filter
+    ).execute(db)
 
 
 def facet_biosample(
