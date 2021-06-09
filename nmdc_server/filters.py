@@ -199,6 +199,9 @@ class BiosampleFilter(BaseFilter):
             return self.join_envo(self.table, query)
         return super().join_self(query, parent)
 
+    def join_data_object(self, query: Query) -> Query:
+        return self.join_omics_processing(query)
+
 
 class EnvBroadScaleFilter(BiosampleFilter):
     table = Table.env_broad_scale
