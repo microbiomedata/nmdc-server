@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date, datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -534,7 +536,13 @@ MAGCreate.update_forward_refs()
 MetaprotemoicPeptide.update_forward_refs()
 
 
-class FileDownloadBase(BaseModel):
+class FileDownloadMetadata(BaseModel):
+    ip: str
+    user_agent: str
+    orcid: str
+
+
+class FileDownloadBase(FileDownloadMetadata):
     ip: str
     user_agent: str
     orcid: str

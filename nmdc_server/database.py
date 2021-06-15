@@ -1,5 +1,6 @@
 from contextlib import contextmanager
 from datetime import datetime
+from enum import Enum
 import json
 from typing import Any, Iterator, Optional
 
@@ -184,6 +185,8 @@ def json_serializer(data: Any) -> str:
     def default_(val: Any) -> str:
         if isinstance(val, datetime):
             return val.isoformat()
+        elif isinstance(val, Enum):
+            return val.value
         raise TypeError(f"Cannot serialize {val}")
 
     return json.dumps(data, default=default_)

@@ -681,7 +681,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
         row = db.query(func.count(subquery.c.id), func.sum(subquery.c.file_size_bytes)).first()
         if not row:
             return DataObjectAggregation(count=0, size=0)
-        return DataObjectAggregation(count=row[0], size=row[1])
+        return DataObjectAggregation(count=row[0] or 0, size=row[1] or 0)
 
     @property
     def table(self) -> Table:

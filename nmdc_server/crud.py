@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Query, Session
 
-from nmdc_server import aggregations, models, query, schemas
+from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 
 logger = getLogger(__name__)
 NumericValue = query.NumericValue
@@ -432,31 +432,91 @@ def create_file_download(
     return db_file_download
 
 
-def create_zip_download(db: Session, file_ids: List[str]) -> str:
+def construct_zip_file_path(data_object: models.DataObject) -> str:
+    """Return a path inside the zip file for the data object."""
+    # TODO:
+    #   - Users will most likely want more descriptive folder names
+    #   - Add metadata for parent entities in the zip file
+    #   - We probably want to reference the workflow activity but that
+    #     involves a complicated query... need a way to join that information
+    #     in the original query (possibly in the sqlalchemy relationship)
+    omics_processing = data_object.omics_processing
+    biosample = omics_processing.biosample
+    study = biosample.study
+
+    def safe_name(name: str) -> str:
+        return name.replace("/", "_").replace("\\", "_").replace(":", "_")
+
+    study_name = safe_name(study.id)
+    biosample_name = safe_name(biosample.id)
+    op_name = safe_name(omics_processing.id)
+    da_name = safe_name(data_object.name)
+    return f"{study_name}/{biosample_name}/{op_name}/{da_name}"
+
+
+def create_bulk_download(
+    db: Session, bulk_download: bulk_download_schema.BulkDownloadCreate
+) -> Optional[models.BulkDownload]:
+    data_object_query = query.DataObjectQuerySchema(
+        conditions=bulk_download.conditions,
+        data_object_filter=bulk_download.filter,
+    )
+    try:
+        bulk_download_model = models.BulkDownload(**bulk_download.dict())
+        db.add(bulk_download_model)
+
+        has_files = False
+        for data_object in data_object_query.execute(db):
+            if data_object.url is None:
+                logger.warning("Data object url is empty in bulk download")
+                continue
+
+            has_files = True
+
+            db.add(
+                models.BulkDownloadDataObject(
+                    bulk_download=bulk_download_model,
+                    data_object=data_object,
+                    path=construct_zip_file_path(data_object),
+                )
+            )
+
+        if not has_files:
+            db.rollback()
+            return None
+
+        db.commit()
+        return bulk_download_model
+
+    except Exception:
+        db.rollback()
+        raise
+
+
+def get_zip_download(db: Session, id: UUID) -> Optional[str]:
+    """Return a download table compatible with mod_zip."""
+    bulk_download = db.query(models.BulkDownload).get(id)
+    if bulk_download is None:
+        return None
     content = []
-    for id_ in file_ids:
-        data_object = db.query(models.DataObject).get(id_)
+
+    for file in bulk_download.files:  # type: ignore
+        data_object = file.data_object
 
         # TODO: Support arbitrary urls
-        if (
-            data_object is None
-            or data_object.url is None
-            or not data_object.url.startswith("https://data.microbiomedata.org/data")
+        if data_object.url is None or not data_object.url.startswith(
+            "https://data.microbiomedata.org/data"
         ):
-            logger.warning(f"Could not add {id_} to zip.")
-            if data_object is None:
-                logger.warning("Data object not found")
             if data_object and data_object.url is None:
                 logger.warning("Data object url is empty")
             if data_object and data_object.url is not None:
                 logger.warning(f"Data object url is {data_object.url}")
-            logger.warning("Could not add file to zip.")  # prevent sentry duplicates
             continue
 
         url = data_object.url.replace("https://data.microbiomedata.org", "")
 
-        # TODO: add crc checksums
+        # TODO: add crc checksums to support retries
         # TODO: add directory structure and metadata
-        content.append(f"- {data_object.file_size_bytes} {url} {data_object.name}")
+        content.append(f"- {data_object.file_size_bytes} {url} {file.path}")
 
     return "\n".join(content) + "\n"
