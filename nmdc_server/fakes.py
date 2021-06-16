@@ -219,6 +219,7 @@ class DataObjectFactory(SQLAlchemyModelFactory):
     id: str = Faker("pystr")
     name: str = Faker("word")
     description: str = Faker("sentence")
+    file_type: str = Faker("word")
     file_size_bytes = Faker("pyint")
     md5_checksum = Faker("md5", raw_output=False)
     omics_processing = SubFactory(OmicsProcessingFactory)
