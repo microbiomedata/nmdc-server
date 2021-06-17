@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models, query, schemas
 from nmdc_server.attribute_units import get_attribute_units
+from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 
 
 def get_annotation_summary(
@@ -158,3 +159,61 @@ def get_geospatial_aggregation(
         .group_by(*columns)
     )
     return [schemas.EnvironmentGeospatialAggregation.from_orm(r) for r in rows]
+
+
+def get_data_object_aggregation(
+    db: Session,
+    conditions: List[query.ConditionSchema],
+) -> schemas.DataObjectAggregation:
+    subquery = query.OmicsProcessingQuerySchema(conditions=conditions).query(db).subquery()
+    rows = (
+        db.query(
+            models.DataObject.workflow_type,
+            models.DataObject.file_type,
+            func.count(models.DataObject.id),
+        )
+        .filter(
+            models.DataObject.workflow_type != None,
+            models.DataObject.file_type != None,
+            subquery.c.id == models.DataObject.omics_processing_id,
+        )
+        .group_by(models.DataObject.workflow_type, models.DataObject.file_type)
+    )
+    agg: schemas.DataObjectAggregation = {
+        workflow.value: schemas.DataObjectAggregationElement()
+        for workflow in WorkflowActivityTypeEnum
+    }
+
+    # TODO: we could join this into one query with a union, but it might not be worthwhile
+    # aggregate workflows
+    rows = (
+        db.query(
+            models.DataObject.workflow_type,
+            func.count(models.DataObject.id),
+        )
+        .filter(
+            models.DataObject.workflow_type != None,
+            subquery.c.id == models.DataObject.omics_processing_id,
+        )
+        .group_by(models.DataObject.workflow_type)
+    )
+    for row in rows:
+        agg[row[0]].count = row[1]
+
+    # aggregate file_types
+    rows = (
+        db.query(
+            models.DataObject.workflow_type,
+            models.DataObject.file_type,
+            func.count(models.DataObject.id),
+        )
+        .filter(
+            models.DataObject.workflow_type != None,
+            models.DataObject.file_type != None,
+            subquery.c.id == models.DataObject.omics_processing_id,
+        )
+        .group_by(models.DataObject.workflow_type, models.DataObject.file_type)
+    )
+    for row in rows:
+        agg[row[0]].file_types[row[1]] = row[2]
+    return agg

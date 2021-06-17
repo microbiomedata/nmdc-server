@@ -402,6 +402,19 @@ async def download_data_object(
     return RedirectResponse(url=url)
 
 
+@router.post(
+    "/data_object/workflow_summary",
+    response_model=schemas.DataObjectAggregation,
+    tags=["data_object"],
+    name="Aggregate data objects by workflow",
+)
+def data_object_aggregation(
+    query: query.DataObjectQuerySchema = query.DataObjectQuerySchema(),
+    db: Session = Depends(get_db),
+):
+    return crud.aggregate_data_object_by_workflow(db, query.conditions)
+
+
 # reads_qc
 @router.post(
     "/reads_qc/search",

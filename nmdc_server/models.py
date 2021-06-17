@@ -276,6 +276,9 @@ class DataObject(Base):
     url = Column(String, nullable=True)
     file_type = Column(String, nullable=True)
 
+    # denormalized relationship with a workflow activity output
+    workflow_type = Column(String, nullable=True)
+
     # denormalized relationship representing the source omics_processing
     omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
     omics_processing = relationship(OmicsProcessing)

@@ -173,6 +173,14 @@ class EnvironmentGeospatialAggregation(BaseModel):
         orm_mode = True
 
 
+class DataObjectAggregationElement(BaseModel):
+    count: int = 0
+    file_types: Dict[str, int] = {}
+
+
+DataObjectAggregation = Dict[str, DataObjectAggregationElement]
+
+
 # study
 class StudyBase(AnnotatedBase):
     principal_investigator_websites: List[str] = []

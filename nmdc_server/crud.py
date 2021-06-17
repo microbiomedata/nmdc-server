@@ -252,6 +252,12 @@ def delete_data_object(db: Session, data_object: models.DataObject) -> None:
     db.commit()
 
 
+def aggregate_data_object_by_workflow(
+    db: Session, conditions: List[query.ConditionSchema]
+) -> schemas.DataObjectAggregation:
+    return aggregations.get_data_object_aggregation(db, conditions)
+
+
 # readsqc
 def get_reads_qc(db: Session, reads_qc_id: str) -> Optional[models.ReadsQC]:
     return db.query(models.ReadsQC).filter(models.ReadsQC.id == reads_qc_id).first()

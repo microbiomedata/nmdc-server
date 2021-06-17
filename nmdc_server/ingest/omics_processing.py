@@ -52,6 +52,7 @@ def load_omics_processing(db: Session, obj: Dict[str, Any]):
             continue
 
         data_object.omics_processing = omics_processing
+        data_object.workflow_type = "nmdc:RawData"
         db.add(data_object)
         omics_processing.outputs.append(data_object)  # type: ignore
 
