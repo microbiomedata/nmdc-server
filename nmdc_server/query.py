@@ -14,7 +14,7 @@ from typing_extensions import Literal
 
 from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
-from nmdc_server.data_object_filters import DataObjectFilter, WorkflowActivityTypeEnum
+from nmdc_server.data_object_filters import DataObjectFilter
 from nmdc_server.filters import create_filter_class
 from nmdc_server.multiomics import MultiomicsValue
 from nmdc_server.table import (
@@ -639,7 +639,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
         subqueries = [
             self._data_object_filter_subquery(db, f, op_cte) for f in self.data_object_filter
         ]
-        union_query = union(*subqueries)  # type: ignore
+        union_query = union(*subqueries).subquery()  # type: ignore
         return db.query(models.DataObject).join(
             union_query, models.DataObject.id == union_query.c.id
         )
@@ -650,30 +650,15 @@ class DataObjectQuerySchema(BaseQuerySchema):
     def _data_object_filter_subquery(
         self, db: Session, filter: DataObjectFilter, op_cte: CTE
     ) -> Query:
-        if filter.workflow is None:
-            query = db.query(models.DataObject.id.label("id")).join(
-                op_cte,
-                models.DataObject.omics_processing_id == op_cte.c.id,
-            )
-        elif filter.workflow == WorkflowActivityTypeEnum.raw_data:
-            query = (
-                db.query(models.DataObject.id.label("id"))
-                .join(
-                    models.omics_processing_output_association,
-                    models.omics_processing_output_association.c.data_object_id
-                    == models.DataObject.id,
-                )
-                .join(
-                    op_cte,
-                    models.omics_processing_output_association.c.omics_processing_id == op_cte.c.id,
-                )
-            )
-        else:
-            query = db.query(models.DataObject.id.label("id")).join(
-                filter.workflow.output_association,
-                filter.workflow.output_association.c.data_object_id == models.DataObject.id,
-            )
+        query = db.query(models.DataObject.id.label("id")).join(
+            op_cte,
+            models.DataObject.omics_processing_id == op_cte.c.id,
+        )
+        if filter.workflow:
+            query = query.filter(models.DataObject.workflow_type == filter.workflow.value)
 
+        if filter.file_type:
+            query = query.filter(models.DataObject.file_type == filter.file_type)
         return query
 
     def aggregate(self, db: Session) -> DataObjectAggregation:

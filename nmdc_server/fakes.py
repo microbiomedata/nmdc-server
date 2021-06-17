@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 from uuid import UUID, uuid4
 
 from factory import Factory, Faker, lazy_attribute, post_generation, SubFactory
@@ -223,6 +223,7 @@ class DataObjectFactory(SQLAlchemyModelFactory):
     file_size_bytes = Faker("pyint")
     md5_checksum = Faker("md5", raw_output=False)
     omics_processing = SubFactory(OmicsProcessingFactory)
+    workflow_type: Optional[str] = None
 
 
 class PipelineStepBase(SQLAlchemyModelFactory):

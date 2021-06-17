@@ -2,6 +2,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
 from nmdc_server import fakes, query
+from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 
 
 def test_bulk_download_query(db: Session):
@@ -9,11 +10,19 @@ def test_bulk_download_query(db: Session):
     op1 = fakes.OmicsProcessingFactory(biosample=sample)
     fakes.OmicsProcessingFactory(biosample=sample)
 
-    raw1 = fakes.DataObjectFactory(omics_processing=op1)
+    raw1 = fakes.DataObjectFactory(
+        url="https://data.microbiomedata.org/data/raw",
+        omics_processing=op1,
+        workflow_type=WorkflowActivityTypeEnum.raw_data.value,
+    )
     op1.outputs.append(raw1)
 
     metag = fakes.MetagenomeAnnotationFactory(omics_processing=op1)
-    metag_output = fakes.DataObjectFactory(omics_processing=op1)
+    metag_output = fakes.DataObjectFactory(
+        url="https://data.microbiomedata.org/data/metag",
+        omics_processing=op1,
+        workflow_type=WorkflowActivityTypeEnum.metagenome_annotation.value,
+    )
     metag.outputs.append(metag_output)
 
     db.commit()
@@ -38,13 +47,17 @@ def test_generate_bulk_download(db: Session, client: TestClient, token):
     fakes.OmicsProcessingFactory(biosample=sample)
 
     raw1 = fakes.DataObjectFactory(
-        omics_processing=op1, url="https://data.microbiomedata.org/data/raw"
+        url="https://data.microbiomedata.org/data/raw",
+        omics_processing=op1,
+        workflow_type=WorkflowActivityTypeEnum.raw_data.value,
     )
     op1.outputs.append(raw1)
 
     metag = fakes.MetagenomeAnnotationFactory(omics_processing=op1)
     metag_output = fakes.DataObjectFactory(
-        omics_processing=op1, url="https://data.microbiomedata.org/data/metag"
+        url="https://data.microbiomedata.org/data/metag",
+        omics_processing=op1,
+        workflow_type=WorkflowActivityTypeEnum.metagenome_annotation.value,
     )
     metag.outputs.append(metag_output)
 
@@ -71,13 +84,17 @@ def test_generate_bulk_download_filtered(db: Session, client: TestClient, token)
     fakes.OmicsProcessingFactory(biosample=sample)
 
     raw1 = fakes.DataObjectFactory(
-        omics_processing=op1, url="https://data.microbiomedata.org/data/raw"
+        url="https://data.microbiomedata.org/data/raw",
+        omics_processing=op1,
+        workflow_type=WorkflowActivityTypeEnum.raw_data.value,
     )
     op1.outputs.append(raw1)
 
     metag = fakes.MetagenomeAnnotationFactory(omics_processing=op1)
     metag_output = fakes.DataObjectFactory(
-        omics_processing=op1, url="https://data.microbiomedata.org/data/metag"
+        url="https://data.microbiomedata.org/data/metag",
+        omics_processing=op1,
+        workflow_type=WorkflowActivityTypeEnum.metagenome_annotation.value,
     )
     metag.outputs.append(metag_output)
 
