@@ -13,7 +13,7 @@ setup(
         "celery[redis,librabbitmq]",
         "click",
         "cryptography<3.4",  # https://github.com/pyca/cryptography/issues/5771
-        "fastapi==0.61.0",
+        "fastapi",
         "factory-boy",
         "httpx<0.18.2",
         "itsdangerous",
@@ -25,7 +25,7 @@ setup(
         "requests",
         "sentry-sdk[celery,sqlalchemy]",
         "sqlalchemy>=1.4",
-        "starlette==0.13.6",
+        "starlette",
         "typing-extensions",
     ],
     include_package_data=True,
