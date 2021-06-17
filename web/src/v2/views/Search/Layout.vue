@@ -3,7 +3,7 @@ import {
   defineComponent, reactive, computed, ref,
 } from '@vue/composition-api';
 
-import SearchResults from '@/components/Presentation/SearchResults.vue';
+import SearchResults from '@/v2/components/Presentation/SearchResults.vue';
 import { types } from '@/encoding';
 import { fieldDisplayName } from '@/util';
 import { api } from '@/data/api';

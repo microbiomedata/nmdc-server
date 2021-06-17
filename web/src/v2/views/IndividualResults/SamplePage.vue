@@ -2,7 +2,7 @@
 import { defineComponent, ref, watchEffect } from '@vue/composition-api';
 import { api, BiosampleSearchResult } from '@/data/api';
 
-import DataObjectList from '@/components/DataObjectsList.vue';
+import DataObjectList from '@/v2/components/DataObjectsList.vue';
 import AttributeList from '@/v2/components/AttributeList.vue';
 
 import IndividualTitle from './IndividualTitle.vue';

@@ -6,7 +6,7 @@
 import Vue, { PropType } from 'vue';
 
 import { api, DataObjectSearchResult, entityType } from '@/data/api';
-import SearchResults from '@/components/Presentation/SearchResults.vue';
+import SearchResults from '@/v2/components/Presentation/SearchResults.vue';
 
 export default Vue.extend({
   components: {
