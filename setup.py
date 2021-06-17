@@ -15,7 +15,7 @@ setup(
         "cryptography<3.4",  # https://github.com/pyca/cryptography/issues/5771
         "fastapi==0.61.0",
         "factory-boy",
-        "httpx",
+        "httpx<0.18.2",
         "itsdangerous",
         "pint",
         "psycopg2-binary",
