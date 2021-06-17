@@ -13,7 +13,7 @@ setup(
         "celery[redis,librabbitmq]",
         "click",
         "cryptography<3.4",  # https://github.com/pyca/cryptography/issues/5771
-        "fastapi==0.61.0",
+        "fastapi==0.65.2",
         "factory-boy",
         "httpx<0.18.2",
         "itsdangerous",
