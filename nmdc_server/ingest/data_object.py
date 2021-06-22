@@ -1,11 +1,14 @@
+from logging import getLogger
 from typing import Optional
 
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
+from nmdc_server.data_object_filters import get_local_data_url
 from nmdc_server.models import DataObject
 from nmdc_server.schemas import DataObjectCreate
 
+logger = getLogger(__name__)
 file_type_map = {
     "fastq.gz": "Raw output file",
     "filterStats.txt": "Reads QC summary statistics",
@@ -35,6 +38,10 @@ def load(db: Session, cursor: Cursor):
 
         # TODO: Remove once the source data is fixed.
         url = obj.get("url", "")
+        if url and not get_local_data_url(url):
+            logger.warning(
+                f"Unknown url host '{url}', it need to be added to nginx config for bulk download"
+            )
         if url.startswith("https://data.microbiomedata.org") and not url.startswith(
             "https://data.microbiomedata.org/data"
         ):

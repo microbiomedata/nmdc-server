@@ -38,5 +38,9 @@ http {
         location /data/ {
             proxy_pass http://data:8080/;
         }
+
+        location /nmdcdemo/ {
+            proxy_pass https://nmdcdemo.emsl.pnnl.gov/;
+        }
     }
 }

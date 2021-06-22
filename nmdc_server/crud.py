@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy.orm import Query, Session
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
+from nmdc_server.data_object_filters import get_local_data_url
 
 logger = getLogger(__name__)
 NumericValue = query.NumericValue
@@ -519,7 +520,10 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
                 logger.warning(f"Data object url is {data_object.url}")
             continue
 
-        url = data_object.url.replace("https://data.microbiomedata.org", "")
+        url = get_local_data_url(data_object.url)
+        if url is None:
+            logger.warning("Unknown host in data url")
+            continue
 
         # TODO: add crc checksums to support retries
         # TODO: add directory structure and metadata

@@ -328,6 +328,10 @@ class DataObject(DataObjectBase):
         data_object: "DataObject",
         filters: List[DataObjectFilter],
     ) -> bool:
+        # we can't download files without urls
+        if not data_object.url:
+            return False
+
         # when no filters are provided, that means all data objects are selected
         if not filters:
             return True
