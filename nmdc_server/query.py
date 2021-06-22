@@ -659,10 +659,12 @@ class DataObjectQuerySchema(BaseQuerySchema):
 
         if filter.file_type:
             query = query.filter(models.DataObject.file_type == filter.file_type)
+
+        query = query.filter(models.DataObject.url != None)  # noqa
         return query
 
     def aggregate(self, db: Session) -> DataObjectAggregation:
-        subquery = self.query(db).subquery()
+        subquery = self.query(db).filter(models.DataObject.url != None).subquery()
         row = db.query(func.count(subquery.c.id), func.sum(subquery.c.file_size_bytes)).first()
         if not row:
             return DataObjectAggregation(count=0, size=0)
