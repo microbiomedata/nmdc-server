@@ -8,11 +8,13 @@ from pydantic import BaseModel, PositiveInt
 from sqlalchemy import and_, ARRAY, cast, Column, func, inspect, or_
 from sqlalchemy.orm import Query, Session, with_expression
 from sqlalchemy.orm.util import AliasedClass
-from sqlalchemy.sql.expression import ClauseElement, intersect
+from sqlalchemy.sql.expression import ClauseElement, intersect, union
+from sqlalchemy.sql.selectable import CTE
 from typing_extensions import Literal
 
 from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
+from nmdc_server.data_object_filters import DataObjectFilter
 from nmdc_server.filters import create_filter_class
 from nmdc_server.multiomics import MultiomicsValue
 from nmdc_server.table import (
@@ -555,9 +557,16 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
 
 
 class BiosampleQuerySchema(BaseQuerySchema):
+    data_object_filter: List[DataObjectFilter] = []
+
     @property
     def table(self) -> Table:
         return Table.biosample
+
+    def execute(self, db: Session) -> Query:
+        model = self.table.model
+        subquery = self.query(db).subquery()
+        return db.query(model).join(subquery, model.id == subquery.c.id)  # type: ignore
 
 
 class ReadsQCQuerySchema(BaseQuerySchema):
@@ -608,6 +617,62 @@ class MetabolomicsAnalysisQuerySchema(BaseQuerySchema):
         return Table.metabolomics_analysis
 
 
+class DataObjectAggregation(BaseModel):
+    count: int
+    size: int
+
+
+class DataObjectQuerySchema(BaseQuerySchema):
+    data_object_filter: List[DataObjectFilter] = []
+
+    def query(self, db: Session) -> Query:
+        omics_processing_qs = OmicsProcessingQuerySchema(conditions=self.conditions)
+        op_cte = omics_processing_qs.query(db).cte()
+
+        if not self.data_object_filter:
+            # shortcut to send back *all* files associated with the omics processing
+            # this uses the denormalized omics_processing_id on the data object table
+            return db.query(models.DataObject).join(
+                op_cte, models.DataObject.omics_processing_id == op_cte.c.id
+            )
+
+        subqueries = [
+            self._data_object_filter_subquery(db, f, op_cte) for f in self.data_object_filter
+        ]
+        union_query = union(*subqueries).subquery()  # type: ignore
+        return db.query(models.DataObject).join(
+            union_query, models.DataObject.id == union_query.c.id
+        )
+
+    def execute(self, db: Session) -> Query:
+        return self.query(db)
+
+    def _data_object_filter_subquery(
+        self, db: Session, filter: DataObjectFilter, op_cte: CTE
+    ) -> Query:
+        query = db.query(models.DataObject.id.label("id")).join(
+            op_cte,
+            models.DataObject.omics_processing_id == op_cte.c.id,
+        )
+        if filter.workflow:
+            query = query.filter(models.DataObject.workflow_type == filter.workflow.value)
+
+        if filter.file_type:
+            query = query.filter(models.DataObject.file_type == filter.file_type)
+        return query
+
+    def aggregate(self, db: Session) -> DataObjectAggregation:
+        subquery = self.query(db).subquery()
+        row = db.query(func.count(subquery.c.id), func.sum(subquery.c.file_size_bytes)).first()
+        if not row:
+            return DataObjectAggregation(count=0, size=0)
+        return DataObjectAggregation(count=row[0] or 0, size=row[1] or 0)
+
+    @property
+    def table(self) -> Table:
+        return Table.data_object
+
+
 class BaseSearchResponse(BaseModel):
     count: int
 
@@ -622,6 +687,10 @@ class SearchQuery(BaseModel):
 
 class FacetQuery(SearchQuery):
     attribute: str
+
+
+class BiosampleSearchQuery(SearchQuery):
+    data_object_filter: List[DataObjectFilter] = []
 
 
 class BinnedRangeFacetQuery(FacetQuery):

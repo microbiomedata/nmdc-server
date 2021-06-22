@@ -274,6 +274,10 @@ class DataObject(Base):
     file_size_bytes = Column(BigInteger, nullable=False)
     md5_checksum = Column(String, nullable=True)
     url = Column(String, nullable=True)
+    file_type = Column(String, nullable=True)
+
+    # denormalized relationship with a workflow activity output
+    workflow_type = Column(String, nullable=True)
 
     # denormalized relationship representing the source omics_processing
     omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
@@ -659,3 +663,40 @@ class MetaPGeneFunctionAggregation(Base):
             SET count = excluded.count, best_protein = excluded.best_protein;
         """
         )
+
+
+# Used to store a reference to a user requested zip download.  This is stored
+# in a table primarily to avoid a large query string in the zip download GET
+# endpoint.
+# TODO: consider expiring rows from this table
+class BulkDownload(Base):
+    __tablename__ = "bulk_download"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+    # information about the requestor (as in the FileDownload table)
+    orcid = Column(String, nullable=False)
+    ip = Column(String, nullable=False)
+    user_agent = Column(String, nullable=True)
+
+    # the list of conditions on the biosample query `List[ConditionSchema]`
+    conditions = Column(JSONB, nullable=False)
+
+    # the filter on data objects `List[DataObjectFilter]`
+    filter = Column(JSONB, nullable=True)
+
+
+class BulkDownloadDataObject(Base):
+    __tablename__ = "bulk_download_data_object"
+
+    bulk_download_id = Column(UUID(as_uuid=True), ForeignKey(BulkDownload.id), primary_key=True)
+    data_object_id = Column(String, ForeignKey(DataObject.id), primary_key=True)
+
+    # the path inside the zip file
+    path = Column(String, nullable=False)
+
+    bulk_download = relationship(
+        BulkDownload, backref=backref("files", lazy="joined", cascade="all")
+    )
+    data_object = relationship(DataObject, lazy="joined", cascade="all")

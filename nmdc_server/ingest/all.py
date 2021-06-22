@@ -73,6 +73,7 @@ def load(db: Session, function_limit=None):
         db,
         mongodb["metabolomics_analysis_activity_set"].find(),
         pipeline.load_metabolomics_analysis,
+        "nmdc:MetabolomicsAnalysisActivity",
     )
     db.commit()
 
@@ -81,6 +82,7 @@ def load(db: Session, function_limit=None):
         db,
         mongodb["read_based_analysis_activity_set"].find(),
         pipeline.load_read_based_analysis,
+        "nmdc:ReadbasedAnalysis",
     )
     db.commit()
 
@@ -89,6 +91,7 @@ def load(db: Session, function_limit=None):
         db,
         mongodb["nom_analysis_activity_set"].find(),
         pipeline.load_nom_analysis,
+        "nmdc:NomAnalysisActivity",
     )
     db.commit()
 
@@ -97,6 +100,7 @@ def load(db: Session, function_limit=None):
         db,
         mongodb["mags_activity_set"].find(),
         pipeline.load_mags,
+        "nmdc:MAGsAnalysisActivity",
     )
     db.commit()
 
@@ -113,6 +117,7 @@ def load(db: Session, function_limit=None):
                 db,
                 bar,
                 pipeline.load_mg_annotation,
+                "nmdc:MetagenomeAnnotation",
                 annotations=mongodb["raw.functional_annotation_set"],
                 function_limit=function_limit,
             )
@@ -126,6 +131,7 @@ def load(db: Session, function_limit=None):
         db,
         mongodb["read_QC_analysis_activity_set"].find(),
         pipeline.load_reads_qc,
+        "nmdc:ReadQCAnalysisActivity",
     )
     db.commit()
 
@@ -137,6 +143,7 @@ def load(db: Session, function_limit=None):
                 no_cursor_timeout=True,
             ),
             pipeline.load_mp_analysis,
+            "nmdc:MetaProteomicAnalysis",
         )
         db.commit()
     except Exception:
@@ -149,6 +156,7 @@ def load(db: Session, function_limit=None):
         db,
         mongodb["metagenome_assembly_set"].find(),
         pipeline.load_mg_assembly,
+        "nmdc:MetagenomeAssembly",
     )
     db.commit()
 

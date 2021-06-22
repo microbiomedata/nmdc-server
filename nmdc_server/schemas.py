@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from datetime import date, datetime
 from enum import Enum
 from typing import Any, Dict, List, Optional, Union
@@ -9,6 +11,7 @@ from pydantic import BaseModel, Field, validator
 from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, String
 
 from nmdc_server import models
+from nmdc_server.data_object_filters import DataObjectFilter, WorkflowActivityTypeEnum
 
 
 # The order in the this union is significant... it will coerce
@@ -170,6 +173,14 @@ class EnvironmentGeospatialAggregation(BaseModel):
         orm_mode = True
 
 
+class DataObjectAggregationElement(BaseModel):
+    count: int = 0
+    file_types: Dict[str, int] = {}
+
+
+DataObjectAggregation = Dict[str, DataObjectAggregationElement]
+
+
 # study
 class StudyBase(AnnotatedBase):
     principal_investigator_websites: List[str] = []
@@ -300,6 +311,8 @@ class DataObjectCreate(DataObjectBase):
 
 
 class DataObject(DataObjectBase):
+    selected: Optional[bool] = None
+
     class Config:
         orm_mode = True
 
@@ -307,6 +320,37 @@ class DataObject(DataObjectBase):
     def replace_url(cls, url, values):
         id_str = quote(values["id"])
         return f"/api/data_object/{id_str}/download" if url else None
+
+    @classmethod
+    def is_selected(
+        cls,
+        workflow: WorkflowActivityTypeEnum,
+        data_object: "DataObject",
+        filters: List[DataObjectFilter],
+    ) -> bool:
+        # we can't download files without urls
+        if not data_object.url:
+            return False
+
+        # when no filters are provided, that means all data objects are selected
+        if not filters:
+            return True
+
+        def workflow_match(f, workflow) -> bool:
+            if f.workflow is None or f.workflow == workflow:
+                return True
+            return False
+
+        def file_type_match(f, file_type) -> bool:
+            if f.file_type is None or f.file_type == file_type:
+                return True
+            return False
+
+        for f in filters:
+            if workflow_match(f, workflow) and file_type_match(f, None):
+                return True
+
+        return False
 
 
 class GeneFunction(BaseModel):
@@ -504,7 +548,13 @@ MAGCreate.update_forward_refs()
 MetaprotemoicPeptide.update_forward_refs()
 
 
-class FileDownloadBase(BaseModel):
+class FileDownloadMetadata(BaseModel):
+    ip: str
+    user_agent: str
+    orcid: str
+
+
+class FileDownloadBase(FileDownloadMetadata):
     ip: str
     user_agent: str
     orcid: str

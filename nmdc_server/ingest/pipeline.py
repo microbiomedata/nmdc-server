@@ -135,7 +135,7 @@ load_metabolomics_analysis = generate_pipeline_loader(
 )
 
 
-def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
+def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: str, **kwargs):
     remove_timezone_re = re.compile(r"Z\+\d+$", re.I)
 
     for obj in cursor:
@@ -179,6 +179,10 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, **kwargs):
 
         inputs = valid_inputs
         outputs = valid_outputs
+
+        for output in outputs:
+            output.workflow_type = workflow_type
+            db.add(output)
 
         db.flush()
         if inputs:

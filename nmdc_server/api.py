@@ -2,7 +2,8 @@ from io import BytesIO
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Response
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
@@ -15,7 +16,9 @@ from nmdc_server.auth import (
     login_required_responses,
     Token,
 )
+from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import Settings, settings
+from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import create_session
 from nmdc_server.models import IngestLock
 from nmdc_server.pagination import Pagination
@@ -109,11 +112,30 @@ async def create_biosample(
     description="Faceted search of biosample data.",
 )
 async def search_biosample(
-    query: query.SearchQuery = query.SearchQuery(),
+    query: query.BiosampleSearchQuery = query.BiosampleSearchQuery(),
     db: Session = Depends(get_db),
     pagination: Pagination = Depends(),
 ):
-    return pagination.response(crud.search_biosample(db, query.conditions))
+    data_object_filter = query.data_object_filter
+
+    # Inject file object selection information before serialization.
+    # This could potentially be more efficient to do in the database query,
+    # but the code to generate the query would be much more complicated.
+    def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
+        for op in biosample.omics_processing:
+            for da in op.outputs:
+                da.selected = schemas.DataObject.is_selected(
+                    WorkflowActivityTypeEnum.raw_data, da, data_object_filter
+                )
+            for od in op.omics_data:
+                workflow = WorkflowActivityTypeEnum(od.type)
+                for da in od.outputs:
+                    da.selected = schemas.DataObject.is_selected(workflow, da, data_object_filter)
+        return biosample
+
+    return pagination.response(
+        crud.search_biosample(db, query.conditions, data_object_filter), insert_selected
+    )
 
 
 @router.post(
@@ -378,6 +400,19 @@ async def download_data_object(
     )
     crud.create_file_download(db, file_download)
     return RedirectResponse(url=url)
+
+
+@router.post(
+    "/data_object/workflow_summary",
+    response_model=schemas.DataObjectAggregation,
+    tags=["data_object"],
+    name="Aggregate data objects by workflow",
+)
+def data_object_aggregation(
+    query: query.DataObjectQuerySchema = query.DataObjectQuerySchema(),
+    db: Session = Depends(get_db),
+):
+    return crud.aggregate_data_object_by_workflow(db, query.conditions)
 
 
 # reads_qc
@@ -675,13 +710,59 @@ async def repopulate_gene_functions(
     return ""
 
 
+@router.post(
+    "/bulk_download",
+    tags=["download"],
+    response_model=BulkDownload,
+    responses=login_required_responses,
+    status_code=201,
+)
+async def create_bulk_download(
+    user_agent: Optional[str] = Header(None),
+    x_forwarded_for: Optional[str] = Header(None),
+    query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(),
+    db: Session = Depends(get_db),
+    token: Token = Depends(login_required),
+):
+    ip = (x_forwarded_for or "").split(",")[0].strip()
+    bulk_download = crud.create_bulk_download(
+        db,
+        BulkDownloadCreate(
+            ip=ip,
+            user_agent=user_agent,
+            orcid=token.orcid,
+            conditions=query.conditions,
+            filter=query.data_object_filter,
+        ),
+    )
+    if bulk_download is None:
+        return JSONResponse(status_code=400, content={"error": "no files matched the filter"})
+    return bulk_download
+
+
+@router.post(
+    "/bulk_download/summary",
+    tags=["download"],
+    response_model=query.DataObjectAggregation,
+)
+async def get_data_object_aggregation(
+    query: query.DataObjectQuerySchema = query.DataObjectQuerySchema(),
+    db: Session = Depends(get_db),
+):
+    return query.aggregate(db)
+
+
 @router.get(
-    "/zip",
+    "/bulk_download/{bulk_download_id}",
     tags=["download"],
     responses=login_required_responses,
 )
-async def download_zip_file(file_ids: List[str] = Query(None), db: Session = Depends(get_db)):
-    table = crud.create_zip_download(db, file_ids)
+async def download_zip_file(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+    token: Token = Depends(login_required),
+):
+    table = crud.get_zip_download(db, bulk_download_id)
     return Response(
         content=table,
         headers={

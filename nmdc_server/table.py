@@ -30,6 +30,7 @@ class Table(Enum):
     metabolomics_analysis = "metabolomics_analysis"
     gene_function = "gene_function"
     metap_gene_function = "metap_gene_function"
+    data_object = "data_object"
 
     env_broad_scale = "env_broad_scale"
     env_local_scale = "env_local_scale"
@@ -42,6 +43,16 @@ class Table(Enum):
         if self not in _table_model_map:
             raise Exception("Unknown table")
         return _table_model_map[self]
+
+
+DataObjectRaw = aliased(models.DataObject)
+DataObjectReadsQC = aliased(models.DataObject)
+DataObjectMetagenomeAssembly = aliased(models.DataObject)
+DataObjectMetagenomeAnnotation = aliased(models.DataObject)
+DataObjectMetaproteomicAnalysis = aliased(models.DataObject)
+DataObjectMagsAnalysis = aliased(models.DataObject)
+DataObjectReadBasedAnalysis = aliased(models.DataObject)
+DataObjectMetabolomicsAnalysis = aliased(models.DataObject)
 
 
 _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
@@ -62,6 +73,7 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.env_local_scale: EnvLocalScaleTerm,
     Table.env_medium: EnvMediumTerm,
     Table.principal_investigator: models.PrincipalInvestigator,
+    Table.data_object: models.DataObject,
 }
 
 workflow_execution_tables = {
