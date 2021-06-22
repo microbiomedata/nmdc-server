@@ -176,6 +176,7 @@ def get_data_object_aggregation(
             models.DataObject.workflow_type != None,
             models.DataObject.file_type != None,
             subquery.c.id == models.DataObject.omics_processing_id,
+            models.DataObject.url != None,
         )
         .group_by(models.DataObject.workflow_type, models.DataObject.file_type)
     )
@@ -194,6 +195,7 @@ def get_data_object_aggregation(
         .filter(
             models.DataObject.workflow_type != None,
             subquery.c.id == models.DataObject.omics_processing_id,
+            models.DataObject.url != None,
         )
         .group_by(models.DataObject.workflow_type)
     )
@@ -211,6 +213,7 @@ def get_data_object_aggregation(
             models.DataObject.workflow_type != None,
             models.DataObject.file_type != None,
             subquery.c.id == models.DataObject.omics_processing_id,
+            models.DataObject.url != None,
         )
         .group_by(models.DataObject.workflow_type, models.DataObject.file_type)
     )
