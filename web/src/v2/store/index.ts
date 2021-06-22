@@ -1,19 +1,31 @@
 import Vue from 'vue';
-import CompositionApi, { reactive, toRefs } from '@vue/composition-api';
+import CompositionApi, {
+  computed, ComputedRef, reactive, toRefs,
+} from '@vue/composition-api';
 import { uniqWith } from 'lodash';
 
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
-import { api, Condition } from '@/data/api';
+import { api, Condition, DataObjectFilter } from '@/data/api';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
 const state = reactive({
   conditions: [] as Condition[],
+  bulkDownloadSelected: [] as string[],
   user: null as string | null,
   hasAcceptedTerms: false,
 });
-const stateRefs = toRefs(state);
+
+/**
+ * An array of DataObjectFilter currently selected
+ */
+const dataObjectFilter: ComputedRef<DataObjectFilter[]> = computed(() => state
+  .bulkDownloadSelected.map((val) => {
+    /** See BulkDownload.vue for how this value is constructed */
+    const [workflow, file_type] = val.split('::');
+    return { workflow, file_type };
+  }));
 
 /**
  * load the current user on app start
@@ -95,8 +107,11 @@ function acceptTerms() {
   state.hasAcceptedTerms = true;
 }
 
+const stateRefs = toRefs(state);
+
 export {
   stateRefs,
+  dataObjectFilter,
   acceptTerms,
   loadCurrentUser,
   removeConditions,

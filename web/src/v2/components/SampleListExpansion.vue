@@ -89,6 +89,7 @@ export default defineComponent({
         :omics-processing="projects"
         :omics-type="omicsType"
         :logged-in-user="loggedInUser"
+        :show-bulk="loggedInUser"
       />
     </template>
   </div>

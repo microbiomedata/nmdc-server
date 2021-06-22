@@ -57,7 +57,12 @@ export interface BiosampleSearchResult extends BaseSearchResult {
 export interface DataObjectSearchResult extends BaseSearchResult {
   file_size_bytes: number;
   md5_checksum: string;
+
+  // download count
   downloads: number;
+
+  // indicates selected for bulk download
+  selected: boolean;
 }
 
 export interface StudySearchResults extends BaseSearchResult {
@@ -200,6 +205,17 @@ export const opMap: Record<opType, string> = {
   '==': 'is',
 };
 
+// See https://github.com/microbiomedata/nmdc-server/pull/403 for documentation
+export type BulkDownloadSummary = Record<string, {
+  count: number;
+  file_types: Record<string, number>,
+}>;
+
+export type BulkDownloadAggregateSummary = {
+  count: number;
+  size: number;
+}
+
 export interface Condition {
   field: string;
   op: opType;
@@ -207,10 +223,27 @@ export interface Condition {
   table: string;
 }
 
+export interface DataObjectFilter {
+  workflow: string;
+  file_type: string;
+}
+
+export interface BulkDownload {
+  ip: string;
+  user_agent: string;
+  orcid: string;
+  conditions: Condition[];
+  filter: DataObjectFilter[];
+  id: string;
+  created: string;
+  url: string;
+}
+
 export interface SearchParams {
   offset?: number;
   limit?: number;
   conditions: Condition[];
+  data_object_filter?: DataObjectFilter[];
 }
 
 export interface SearchResponse<T> {
@@ -225,10 +258,12 @@ export interface BinResponse<T = string | number> {
 
 async function _search<T>(
   table: string,
-  { offset = 0, limit = 100, conditions }: SearchParams,
+  {
+    offset = 0, limit = 100, conditions, data_object_filter,
+  }: SearchParams,
 ): Promise<SearchResponse<T>> {
   const { data } = await client.post<SearchResponse<T>>(`${table}/search`,
-    { conditions },
+    { conditions, data_object_filter },
     {
       params: { offset, limit },
     });
@@ -438,13 +473,48 @@ async function getDataObjectList(
   return [];
 }
 
+/**
+ * Bulk Download API
+ */
+async function getBulkDownloadSummary(conditions: Condition[]) {
+  const { data } = await client.post<BulkDownloadSummary>('data_object/workflow_summary', {
+    conditions,
+  });
+  return data;
+}
+
+async function getBulkDownloadAggregateSummary(
+  conditions: Condition[], dataObjectFilter: DataObjectFilter[],
+) {
+  const { data } = await client.post<BulkDownloadAggregateSummary>('bulk_download/summary', {
+    conditions,
+    data_object_filter: dataObjectFilter,
+  });
+  return data;
+}
+
+async function createBulkDownload(conditions: Condition[], dataObjectFilter: DataObjectFilter[]) {
+  const { data } = await client.post<BulkDownload>('bulk_download', {
+    conditions,
+    data_object_folder: dataObjectFilter,
+  });
+  return {
+    ...data,
+    /* Construct the URL to stream download this new bulk archive */
+    url: `${client.defaults.baseURL}/bulk_download/${data.id}`,
+  };
+}
+
 async function me(): Promise<string> {
   const { data } = await client.get<string>('me');
   return data;
 }
 
 const api = {
+  createBulkDownload,
   getBinnedFacet,
+  getBulkDownloadSummary,
+  getBulkDownloadAggregateSummary,
   getBiosample,
   getDatabaseSummary,
   getDatabaseStats,

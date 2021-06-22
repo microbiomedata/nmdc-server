@@ -29,7 +29,7 @@ export default defineComponent({
       <template #activator="{ on, attrs }">
         <v-icon
           v-bind="attrs"
-          style="position: absolute; right: 6px; top: 6px; z-index: 20;"
+          style="position: absolute; right: 6px; top: 6px; z-index: 2;"
           v-on="on"
         >
           mdi-help-circle

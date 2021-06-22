@@ -2,13 +2,13 @@ import logging
 from typing import Any, Dict, Iterator
 
 import click
+from nmdc_server import models
+from nmdc_server.config import Settings
+from nmdc_server.ingest import (biosample, data_object, envo, omics_processing,
+                                pipeline, study)
 from pymongo import MongoClient
 from pymongo.collection import Collection
 from sqlalchemy.orm import Session
-
-from nmdc_server import models
-from nmdc_server.config import Settings
-from nmdc_server.ingest import biosample, data_object, envo, omics_processing, pipeline, study
 
 logger = logging.getLogger(__name__)
 
