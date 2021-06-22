@@ -14,6 +14,7 @@ def test_bulk_download_query(db: Session):
         url="https://data.microbiomedata.org/data/raw",
         omics_processing=op1,
         workflow_type=WorkflowActivityTypeEnum.raw_data.value,
+        file_type="ftype1",
     )
     op1.outputs.append(raw1)
 
@@ -22,6 +23,7 @@ def test_bulk_download_query(db: Session):
         url="https://data.microbiomedata.org/data/metag",
         omics_processing=op1,
         workflow_type=WorkflowActivityTypeEnum.metagenome_annotation.value,
+        file_type="ftype2",
     )
     metag.outputs.append(metag_output)
 
@@ -36,6 +38,11 @@ def test_bulk_download_query(db: Session):
     }
 
     qs = query.DataObjectQuerySchema(data_object_filter=[{"workflow": "nmdc:RawData"}])
+    rows = qs.execute(db).all()
+    assert [raw1.id] == [d.id for d in rows]
+    assert qs.aggregate(db) == {"size": raw1.file_size_bytes, "count": 1}
+
+    qs = query.DataObjectQuerySchema(data_object_filter=[{"file_type": "ftype1"}])
     rows = qs.execute(db).all()
     assert [raw1.id] == [d.id for d in rows]
     assert qs.aggregate(db) == {"size": raw1.file_size_bytes, "count": 1}

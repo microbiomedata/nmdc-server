@@ -338,9 +338,9 @@ class DataObject(DataObjectBase):
             return False
 
         def file_type_match(f, file_type) -> bool:
-            if f.file_type is None:
+            if f.file_type is None or f.file_type == file_type:
                 return True
-            return True
+            return False
 
         for f in filters:
             if workflow_match(f, workflow) and file_type_match(f, None):
