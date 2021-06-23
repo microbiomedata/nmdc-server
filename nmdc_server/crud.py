@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Any, cast, Dict, List, Optional, Tuple, Type, TypeVar
 from uuid import UUID
 
 from sqlalchemy.orm import Query, Session
@@ -448,15 +448,22 @@ def construct_zip_file_path(data_object: models.DataObject) -> str:
     #     involves a complicated query... need a way to join that information
     #     in the original query (possibly in the sqlalchemy relationship)
     omics_processing = data_object.omics_processing
-    biosample = omics_processing.biosample
-    study = biosample.study
+    biosample = cast(Optional[models.Biosample], omics_processing.biosample)
 
     def safe_name(name: str) -> str:
         return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
-    study_name = safe_name(study.id)
-    biosample_name = safe_name(biosample.id)
     op_name = safe_name(omics_processing.id)
+
+    if biosample is not None:
+        biosample_name = safe_name(biosample.id)
+        study = biosample.study
+    else:
+        # Some emsl omics_processing are missing biosamples
+        biosample_name = "unknown"
+        study = omics_processing.study
+
+    study_name = safe_name(study.id)
     da_name = safe_name(data_object.name)
     return f"{study_name}/{biosample_name}/{op_name}/{da_name}"
 
