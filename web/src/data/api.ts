@@ -496,7 +496,7 @@ async function getBulkDownloadAggregateSummary(
 async function createBulkDownload(conditions: Condition[], dataObjectFilter: DataObjectFilter[]) {
   const { data } = await client.post<BulkDownload>('bulk_download', {
     conditions,
-    data_object_folder: dataObjectFilter,
+    data_object_filter: dataObjectFilter,
   });
   return {
     ...data,
