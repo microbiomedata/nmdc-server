@@ -304,6 +304,7 @@ class DataObjectBase(BaseModel):
     md5_checksum: Optional[str]
     url: Optional[str]
     downloads: int
+    file_type: Optional[str] = None
 
 
 class DataObjectCreate(DataObjectBase):
@@ -347,7 +348,7 @@ class DataObject(DataObjectBase):
             return False
 
         for f in filters:
-            if workflow_match(f, workflow) and file_type_match(f, None):
+            if workflow_match(f, workflow) and file_type_match(f, data_object.file_type):
                 return True
 
         return False
