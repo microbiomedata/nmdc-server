@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  defineComponent, PropType, reactive,
+  computed, defineComponent, PropType, reactive,
 } from '@vue/composition-api';
 import { flattenDeep } from 'lodash';
 
@@ -36,6 +36,10 @@ export default defineComponent({
       required: true,
     },
     loggedInUser: {
+      type: Boolean,
+      default: false,
+    },
+    showBulk: {
       type: Boolean,
       default: false,
     },
@@ -85,7 +89,7 @@ export default defineComponent({
       value: false,
     });
 
-    const items = flattenDeep(
+    const items = computed(() => flattenDeep(
       flattenDeep(props.omicsProcessing.map((p) => (
         /* Uncomment (and wrap with array) to enable raw data objects */
         /* {
@@ -111,7 +115,7 @@ export default defineComponent({
             object_description: descriptionMap[object_type] || '',
           };
         })),
-    );
+    ));
 
     function download(item: OmicsProcessingResult) {
       if (typeof item.url === 'string') {
@@ -169,7 +173,14 @@ export default defineComponent({
           </td>
         </tr>
         <tr>
-          <td />
+          <td>
+            <v-icon
+              v-if="showBulk"
+              :style="{ visibility: item.selected ? 'visible' : 'hidden'}"
+            >
+              mdi-checkbox-marked-circle-outline
+            </v-icon>
+          </td>
           <td>{{ item.object_type }}</td>
           <td>{{ item.object_description }}</td>
           <td>{{ humanFileSize(item.file_size_bytes ) }}</td>

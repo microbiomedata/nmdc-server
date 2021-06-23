@@ -1,11 +1,15 @@
 import {
-  reactive, toRef, watch, Ref, computed,
+  reactive, watch, Ref, computed, toRef,
 } from '@vue/composition-api';
-import { SearchParams, ResultUnion, Condition } from '@/data/api';
+import {
+  SearchParams, ResultUnion, Condition, DataObjectFilter,
+} from '@/data/api';
+import useRequest from './useRequest';
 
 export default function usePaginatedResult(
   conditions: Ref<Condition[]>,
   func: (param: SearchParams) => Promise<ResultUnion>,
+  dataObjectFilter?: Ref<DataObjectFilter[]>,
   limit = 15,
 ) {
   const data = reactive({
@@ -13,9 +17,8 @@ export default function usePaginatedResult(
     offset: 0,
     limit, // same as pageSize
     pageSync: 1,
-    loading: false,
-    error: null as null | unknown,
   });
+  const { error, loading, request } = useRequest();
 
   const page = computed(() => {
     const { offset, limit: l } = data;
@@ -25,22 +28,26 @@ export default function usePaginatedResult(
 
   // TODO replace with watchEffect
   async function fetchResults() {
-    data.loading = true;
-    try {
+    return request(async () => {
       data.results = await func({
         limit: data.limit,
         offset: data.offset,
         conditions: conditions.value,
+        data_object_filter: dataObjectFilter?.value,
       });
       data.pageSync = Math.floor(data.offset / data.limit) + 1;
-      data.loading = false;
-    } catch (err) {
-      data.error = err;
-      data.loading = false;
-      throw err;
-    }
+      return data.results;
+    });
   }
-  watch([conditions, toRef(data, 'offset'), toRef(data, 'limit')], fetchResults);
+
+  watch([
+    conditions,
+    toRef(data, 'offset'),
+    toRef(data, 'limit'),
+  ], fetchResults);
+  if (dataObjectFilter !== undefined) {
+    watch(dataObjectFilter, fetchResults, { deep: true });
+  }
   fetchResults();
   // ENDTODO
 
@@ -50,6 +57,8 @@ export default function usePaginatedResult(
 
   return {
     data,
+    error,
+    loading,
     page,
     setPage,
   };

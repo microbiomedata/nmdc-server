@@ -10,6 +10,7 @@ services:
     image: postgres:12
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
+      - ./nmdc.pgdump:/tmp/nmdc.pgdump
     env_file:
       - .docker-env
     environment:

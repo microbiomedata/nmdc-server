@@ -8,12 +8,13 @@ import { types } from '@/encoding';
 import { fieldDisplayName } from '@/util';
 import { api } from '@/data/api';
 
-import { stateRefs, toggleConditions } from '@/v2/store';
+import { stateRefs, toggleConditions, dataObjectFilter } from '@/v2/store';
 import useFacetSummaryData from '@/v2/use/useFacetSummaryData';
 import usePaginatedResults from '@/v2/use/usePaginatedResults';
 import useClockGate from '@/v2/use/useClockGate';
 import SampleListExpansion from '@/v2/components/SampleListExpansion.vue';
 
+import BulkDownload from '@/v2/components/BulkDownload.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
 import Sidebar from './Sidebar.vue';
@@ -23,6 +24,7 @@ export default defineComponent({
 
   components: {
     BiosampleVisGroup,
+    BulkDownload,
     EnvironmentVisGroup,
     SampleListExpansion,
     SearchResults,
@@ -66,7 +68,9 @@ export default defineComponent({
     }
 
     const biosampleType = types.biosample;
-    const biosample = usePaginatedResults(stateRefs.conditions, api.searchBiosample);
+    const biosample = usePaginatedResults(
+      stateRefs.conditions, api.searchBiosample, dataObjectFilter,
+    );
 
     const studyType = types.study;
     const studySummaryData = useFacetSummaryData({
@@ -74,7 +78,9 @@ export default defineComponent({
       table: ref('study'),
       conditions: stateRefs.conditions,
     });
-    const study = usePaginatedResults(studySummaryData.otherConditions, api.searchStudy, 3);
+    const study = usePaginatedResults(
+      studySummaryData.otherConditions, api.searchStudy, undefined, 3,
+    );
 
     const loggedInUser = computed(() => typeof stateRefs.user.value === 'string');
 
@@ -91,6 +97,7 @@ export default defineComponent({
       /* data */
       biosampleType,
       biosample,
+      dataObjectFilter,
       expandedOmicsDetails,
       gatedEnvironmentVisConditions,
       gatedOmicsVisConditions,
@@ -114,10 +121,10 @@ export default defineComponent({
     <sidebar :results-count="biosample.data.results.count" />
     <v-main>
       <v-progress-linear
-        v-show="biosample.data.loading || study.data.loading"
+        v-show="biosample.loading.value || study.loading.value"
         indeterminate
         background-opacity="0"
-        style="position: fixed; top: 64; z-index: 20;"
+        style="position: fixed; top: 64; z-index: 2;"
       />
       <v-container
         fluid
@@ -159,7 +166,7 @@ export default defineComponent({
                 :items-per-page="study.data.limit"
                 :results="study.data.results.results"
                 :page="study.data.pageSync"
-                :loading="study.data.loading"
+                :loading="study.loading.value"
                 @set-page="study.setPage($event)"
                 @selected="$router.push({ name: 'V2Sample'})"
               >
@@ -207,9 +214,19 @@ export default defineComponent({
               outlined
               class="my-4"
             >
-              <v-card-title class="pb-0">
-                Samples
-              </v-card-title>
+              <div class="ma-3">
+                <div class="d-flex align-center">
+                  <v-card-title class="grow py-0">
+                    Samples
+                  </v-card-title>
+                  <v-spacer />
+                  <template v-if="loggedInUser">
+                    <div style="width: 70%">
+                      <BulkDownload />
+                    </div>
+                  </template>
+                </div>
+              </div>
               <SearchResults
                 disable-navigate-on-click
                 :count="biosample.data.results.count"
@@ -218,7 +235,7 @@ export default defineComponent({
                 :results="biosample.data.results.results"
                 :page="biosample.data.pageSync"
                 :subtitle-key="'study_id'"
-                :loading="biosample.data.loading"
+                :loading="biosample.loading.value"
                 @set-page="biosample.setPage($event)"
                 @selected="$router.push({ name: 'V2Sample', params: { id: $event }})"
               >
@@ -231,6 +248,7 @@ export default defineComponent({
                       result: props.result,
                       expanded: expandedOmicsDetails,
                       loggedInUser,
+                      showBulk: dataObjectFilter.length > 0,
                     }"
                     @open-details="setExpanded(props.result.id, $event)"
                   />
