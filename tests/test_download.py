@@ -31,10 +31,10 @@ def test_bulk_download_query(db: Session):
 
     qs = query.DataObjectQuerySchema()
     rows = qs.execute(db).all()
-    assert len(rows) == 2
+    assert len(rows) == 0
     assert qs.aggregate(db) == {
-        "size": raw1.file_size_bytes + metag_output.file_size_bytes,
-        "count": 2,
+        "size": 0,
+        "count": 0,
     }
 
     qs = query.DataObjectQuerySchema(data_object_filter=[{"workflow": "nmdc:RawData"}])
@@ -72,17 +72,11 @@ def test_generate_bulk_download(db: Session, client: TestClient, token):
 
     resp = client.post("/api/bulk_download")
     print(resp.content)
-    assert resp.status_code == 201
-    assert resp.json()["id"]
-    id_ = resp.json()["id"]
+    assert resp.status_code == 400
 
     resp = client.post("/api/bulk_download/summary")
     assert resp.status_code == 200
-    assert resp.json()["count"] == 2
-
-    resp = client.get(f"/api/bulk_download/{id_}")
-    assert resp.status_code == 200
-    assert b"/raw" in resp.content and b"/metag" in resp.content
+    assert resp.json()["count"] == 0
 
 
 def test_generate_bulk_download_filtered(db: Session, client: TestClient, token):

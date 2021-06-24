@@ -333,10 +333,6 @@ class DataObject(DataObjectBase):
         if not data_object.url:
             return False
 
-        # when no filters are provided, that means all data objects are selected
-        if not filters:
-            return True
-
         def workflow_match(f, workflow) -> bool:
             if f.workflow is None or f.workflow == workflow:
                 return True

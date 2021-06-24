@@ -629,17 +629,13 @@ class DataObjectQuerySchema(BaseQuerySchema):
         omics_processing_qs = OmicsProcessingQuerySchema(conditions=self.conditions)
         op_cte = omics_processing_qs.query(db).cte()
 
-        if not self.data_object_filter:
-            # shortcut to send back *all* files associated with the omics processing
-            # this uses the denormalized omics_processing_id on the data object table
-            return db.query(models.DataObject).join(
-                op_cte, models.DataObject.omics_processing_id == op_cte.c.id
-            )
-
         subqueries = [
             self._data_object_filter_subquery(db, f, op_cte) for f in self.data_object_filter
         ]
-        union_query = union(*subqueries).subquery()  # type: ignore
+        union_query = union(
+            db.query(models.DataObject.id.label("id")).filter(False),  # type: ignore
+            *subqueries,  # type: ignore
+        ).subquery()
         return db.query(models.DataObject).join(
             union_query, models.DataObject.id == union_query.c.id
         )
