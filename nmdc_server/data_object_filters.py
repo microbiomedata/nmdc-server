@@ -1,4 +1,5 @@
 from enum import Enum
+import re
 from typing import Optional
 
 from pydantic import BaseModel
@@ -12,16 +13,16 @@ from nmdc_server import models
 # This means that we can only handle known prefixes.  This must be checked
 # on ingest and any additional hosts added to the nginx config.
 # TODO: There is probably a way to automate this using nginx pattern matching.
-data_url_hosts = {
-    "https://data.microbiomedata.org/data": "/data",
-    "https://nmdcdemo.emsl.pnnl.gov": "/nmdcdemo",
-}
+data_url_hosts = [
+    (re.compile("^https://data.microbiomedata.org(/data)?"), "/data"),
+    (re.compile("^https://nmdcdemo.emsl.pnnl.gov"), "/nmdcdemo"),
+]
 
 
 def get_local_data_url(url: str) -> Optional[str]:
-    for k, v in data_url_hosts.items():
-        if url.startswith(k):
-            return url.replace(k, v)
+    for r, v in data_url_hosts:
+        if r.match(url):
+            return r.sub(v, url)
     return None
 
 
