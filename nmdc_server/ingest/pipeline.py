@@ -180,10 +180,6 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: st
         inputs = valid_inputs
         outputs = valid_outputs
 
-        for output in outputs:
-            output.workflow_type = workflow_type
-            db.add(output)
-
         db.flush()
         if inputs:
             db.execute(
@@ -203,3 +199,9 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: st
             .where(models.DataObject.id.in_(inputs + outputs))
             .values({"omics_processing_id": pipeline.omics_processing_id})
         )
+
+        for id_ in outputs:
+            output = db.query(models.DataObject).get(id_)
+            assert output
+            output.workflow_type = workflow_type
+            db.add(output)
