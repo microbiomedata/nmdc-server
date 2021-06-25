@@ -25,6 +25,9 @@ from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base, update_multiomics_sql
 
+# The models in the file are a specialized representation of the domain objects
+# described by https://microbiomedata.github.io/nmdc-schema/.
+
 
 def gold_url(base: str, id: str) -> Optional[str]:
     if id.startswith("gold:"):
@@ -32,7 +35,11 @@ def gold_url(base: str, id: str) -> Optional[str]:
     return None
 
 
+# Many tables have "inputs" and "outputs" attributes that are many-to-many
+# relationships with a data_object.  These functions generate the sqlalchemy
+# constructs for these relationships in a consistent way.
 def input_association(table: str) -> Table:
+    """Generate a many-to-many relationship with data_objects for inputs."""
     return Table(
         f"{table}_input_association",
         Base.metadata,
@@ -50,6 +57,7 @@ def input_relationship(association: Table) -> "RelationshipProperty[DataObject]"
 
 
 def output_association(table: str) -> Table:
+    """Generate a many-to-many relationship with data_objects for outputs."""
     return Table(
         f"{table}_output_association",
         Base.metadata,
@@ -66,6 +74,7 @@ def output_relationship(association: Table) -> "RelationshipProperty[DataObject]
     )
 
 
+# Store ENVO related data loaded from http://www.obofoundry.org/ontology/envo.html
 class EnvoTerm(Base):
     __tablename__ = "envo_term"
 
@@ -101,12 +110,16 @@ class EnvoTerm(Base):
         return f"http://purl.obolibrary.org/obo/{self.id}"
 
 
+# This table stores denormalized envo hierarchy information so that we can
+# query all ancestor terms with a recursive query.
 class EnvoAncestor(Base):
     __tablename__ = "envo_ancestor"
     __table_args__ = (UniqueConstraint("id", "ancestor_id"),)
 
     id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
     ancestor_id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
+
+    # denotes that the ancestor is a direct parent of the linked term
     direct = Column(Boolean, nullable=False, default=lambda: False)
 
     term = relationship(
@@ -122,9 +135,13 @@ class PrincipalInvestigator(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String, nullable=False)
+
+    # a PI profile image... originally we didn't have a place to store static content
+    # so the image data is placed in the database.
     image = Column(LargeBinary, nullable=False)
 
 
+# Caches information from doi.org
 class DOIInfo(Base):
     __tablename__ = "doi_info"
 
@@ -152,6 +169,8 @@ class Study(Base, AnnotatedModel):
     doi = Column(String, ForeignKey("doi_info.id"), nullable=False)
     multiomics = Column(Integer, nullable=False, default=0)
 
+    # These query expressions are a way to inject additional aggregation information
+    # into the query at search time.  See `with_expression` usage in `query.py`.
     # TODO: Specify a default expression so that sample counts are present in
     #       non-search responses.
     sample_count = query_expression()
@@ -231,6 +250,9 @@ class Biosample(Base, AnnotatedModel):
     def open_in_gold(self) -> Optional[str]:
         return gold_url("https://gold.jgi.doe.gov/biosample?id=", self.id)
 
+    # Multiomics bit strings are denormalized information representing which
+    # omics types exist for each sample.  This information is updated from a
+    # sql query after ingestion.
     @classmethod
     def populate_multiomics(cls, db: Session):
         db.execute(update_multiomics_sql)
@@ -257,6 +279,11 @@ class OmicsProcessing(Base, AnnotatedModel):
     def open_in_gold(self) -> Optional[str]:
         return gold_url("https://gold.jgi.doe.gov/project?id=", self.id)
 
+    # This property injects information in the omics_processing result
+    # regarding output data from workflow processing runs.  Because there
+    # are no filters that filter out individual processing runs, this
+    # can be done outside of the main query.  For this reason, it does
+    # not have to be added as a `query_expression`.
     @property
     def omics_data(self) -> Iterator["PipelineStep"]:
         for model in workflow_activity_types:
@@ -288,6 +315,8 @@ class DataObject(Base):
         return len(self.download_entities)  # type: ignore
 
 
+# This is a base class for all workflow processing activities.
+# https://microbiomedata.github.io/nmdc-schema/WorkflowExecutionActivity.html
 class PipelineStep:
     __tablename__ = "base_pipeline_step"
 
@@ -536,6 +565,10 @@ class StudyPublication(Base):
     publication = relationship(Publication, cascade="all")
 
 
+# This table contains KO terms detected in metagenome and metaproteomic workflow
+# activities.  In terms of size, this table and particularly the MGAGeneFunction
+# table linking with workflow activities are orders of magnitude larger than
+# the other tables.
 class GeneFunction(Base):
     __tablename__ = "gene_function"
 
@@ -555,6 +588,7 @@ class MGAGeneFunction(Base):  # metagenome annotation
     function = relationship(GeneFunction)
 
 
+# Store references to individual downloads to provide download statistics information.
 class FileDownload(Base):
     __tablename__ = "file_download"
 
@@ -568,6 +602,7 @@ class FileDownload(Base):
     data_object = relationship(DataObject, backref="download_entities")
 
 
+# This is a basic mutex lock to ensure only 1 ingest job is queued at a time.
 class IngestLock(Base):
     __tablename__ = "ingest_lock"
     __table_args__ = (CheckConstraint("id", name="singleton"),)
@@ -606,6 +641,9 @@ workflow_activity_types = [
 
 
 # denormalized tables
+# To improve performance of gene function queries a denormalized representation of gene functions
+# detected in MetaG and MetaP workflow activies is generated after ingestion.  This is done using
+# the custom SQL embedded in the populate methods.
 class MGAGeneFunctionAggregation(Base):
     __tablename__ = "mga_gene_function_aggregation"
 

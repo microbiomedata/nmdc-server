@@ -1,3 +1,7 @@
+"""
+This module contains schemas that turn the query DSL into sqlalchemy query objects
+for both search and faceting aggregations.
+"""
 from datetime import datetime
 from enum import Enum
 from itertools import groupby
@@ -28,6 +32,7 @@ from nmdc_server.table import (
 )
 
 
+# Custom exceptions to provide better error responses in the API.
 class InvalidAttributeException(Exception):
     def __init__(self, table: str, attribute: str):
         self.table = table
@@ -71,6 +76,9 @@ class Operation(Enum):
     not_equal = "!="
 
 
+# These dicts serve to provide special logic when filter conditions
+# reference them.  They are not simple queries on attributes of the
+# provided table.
 _envo_keys: Dict[str, Tuple[Table, str]] = {
     "env_broad_scale": (Table.env_broad_scale, "label"),
     "env_local_scale": (Table.env_local_scale, "label"),
@@ -110,19 +118,29 @@ class BaseConditionSchema(BaseModel):
     value: ConditionValue
     table: Table
 
+    # Determines whether the field of this query condition is a column
+    # on the table or not.  For fields that are not, the query is generally
+    # passed on to the "annotations" jsonb field for models that have it.
     def is_column(self) -> bool:
         m = self.table.model
         if isinstance(self.table.model, AliasedClass):
             return hasattr(self.table.model, self.field)
         return self.field in inspect(m).all_orm_descriptors.keys()
 
+    # Generate sql clause representing the conditions.  This generally assumes
+    # the correct table has already been joined into the query.
     def compare(self) -> ClauseElement:
         raise NotImplementedError("Abstract class method")
 
     @property
     def key(self) -> str:
+        """Provide a unique key for grouping conditions on one field together."""
         return f"{self.table}:{self.field}"
 
+    # This method originally existed because the "table" attribute was optional.  It
+    # now serves to replace the table attribute for "special" fields.  For example,
+    # the API uses the `biosample` table for `env_medium`, where the property actually
+    # exists on a different table.
     @classmethod
     def from_schema(
         cls, condition: "BaseConditionSchema", default_table: Table
@@ -135,6 +153,9 @@ class BaseConditionSchema(BaseModel):
         return cls(**kwargs)
 
 
+# This condition type represents the original DSL for comparisons.  It
+# represents simple binary operators on scalar fields and is generally
+# compatible with all attributes.
 class SimpleConditionSchema(BaseConditionSchema):
     op: Operation = Operation.equal
     field: str
@@ -164,6 +185,7 @@ class SimpleConditionSchema(BaseConditionSchema):
         return func.nmdc_compare(json_field[self.field].astext, self.op.value, self.value)
 
 
+# A range query that can't be achieved with simple conditions (because they are "or"-ed together).
 class RangeConditionSchema(BaseConditionSchema):
     op: Literal["between"]
     field: str
@@ -188,6 +210,7 @@ class RangeConditionSchema(BaseConditionSchema):
             raise InvalidAttributeException(self.table.value, self.field)
 
 
+# A special condition type used on gold terms that supports hierarchical queries.
 class GoldConditionSchema(BaseConditionSchema):
     table: Table  # can't do a Literal on an enum type
     value: List[GoldTreeValue]
@@ -207,6 +230,7 @@ class GoldConditionSchema(BaseConditionSchema):
         return or_(True)
 
 
+# A special condition type on multiomics bitstrings
 class MultiomicsConditionSchema(BaseConditionSchema):
     table: Table
     value: int
@@ -229,11 +253,22 @@ ConditionSchema = Union[
 ]
 
 
+# This is the base class for all table specific queries.  It is responsible for performing
+# both searches and facet aggregations.  At a high level, the queries are generated as follows:
+#   1. group conditions by table/field
+#   2. join all tables necessary from the target table to the filter table
+#   3. generate a subquery collecting all target table id's that match any of the filters
+#   4. perform an intersection on all of the subqueries
+#
+# The above is used in several different queries.  To search matching entities
+# on the target table, you can join the id's contained in the intersection with
+# the table itself.  For aggregations, it uses special select and group by clauses.
 class BaseQuerySchema(BaseModel):
     conditions: List[ConditionSchema] = []
 
     @property
     def table(self) -> Table:
+        """Return the target table of the query."""
         raise Exception("Abstract method")
 
     @property
@@ -246,6 +281,7 @@ class BaseQuerySchema(BaseModel):
         return groupby(self.sorted_conditions, key=lambda c: c.key)
 
     def query(self, db) -> Query:
+        """Generate a query selecting all matching id's from the target table."""
         table_re = re.compile(r"Table.(.*):.*")
         matches = [db.query(self.table.model.id.label("id"))]  # type: ignore
         has_filters = False
@@ -260,6 +296,8 @@ class BaseQuerySchema(BaseModel):
             table = Table(match.groups()[0])
             filter = create_filter_class(table, conditions)
 
+            # Gene function queries are treated differently because they join
+            # in two different places (both metaG and metaP).
             if table == Table.gene_function:
                 metag_matches = filter.matches(db, self.table)
                 metap_conditions = [
@@ -288,11 +326,13 @@ class BaseQuerySchema(BaseModel):
         return query
 
     def execute(self, db: Session) -> Query:
+        """Search for entities in the target table."""
         model = self.table.model
         subquery = self.query(db).subquery().alias("id_filter")
         return db.query(model).join(subquery, model.id == subquery.c.id)  # type: ignore
 
     def count(self, db: Session) -> int:
+        """Return the number of matched entities for the query."""
         return self.query(db).count()
 
     def get_query_range(
@@ -303,6 +343,11 @@ class BaseQuerySchema(BaseModel):
         minimum: NumericValue = None,
         maximum: NumericValue = None,
     ) -> Tuple[Optional[NumericValue], Optional[NumericValue]]:
+        """Get the range of a numeric/datetime quantity matching the conditions.
+
+        The API allows specifying one or both of the min/max.  This method will only
+        compute the min/max if it isn't provided.
+        """
         if None in [minimum, maximum]:
             row = (
                 db.query(func.min(column), func.max(column))
@@ -322,6 +367,7 @@ class BaseQuerySchema(BaseModel):
         maximum: NumericValue = None,
         resolution: DateBinResolution = None,
     ):
+        """Raise an exception if binning arguments aren't valid for the data type."""
         # TODO: Validation like this should happen at the schema layer, but it requires refactoring
         #       so that the schema contains the table information.
         a = schemas.AttributeType
@@ -359,6 +405,7 @@ class BaseQuerySchema(BaseModel):
         maximum: NumericValue = None,
         **kwargs,
     ) -> Tuple[List[NumericValue], List[int]]:
+        """Perform a binned faceting aggregation on an attribute."""
         model: Any = self.table.model
         self.validate_binning_args(attribute, minimum, maximum, kwargs.get("resolution"))
 
@@ -370,22 +417,27 @@ class BaseQuerySchema(BaseModel):
         except InvalidFacetException:
             return [], []
 
+        # the only way for min/max to be none is if the were no matches to the query
         if min_ is None or max_ is None:
             return [], []
 
+        # Generate bins to use in the query
         bins: List[NumericValue]
         if "num_bins" in kwargs:
-
             bins = binning.range_bins(min_, max_, kwargs["num_bins"])  # type: ignore
         elif "resolution" in kwargs:
             bins = binning.datetime_bins(min_, max_, kwargs["resolution"])  # type: ignore
 
+        # generate the binned aggregation
         bucket = func.width_bucket(column, cast(bins, ARRAY(column.type)))
         query = db.query(bucket, func.count(column))
         query = query.join(subquery, model.id == subquery.c.id)
         rows = query.group_by(bucket)
         result = [0] * (len(bins) - 1)
 
+        # coerce the results into the output format... we need special handling for
+        # values outside the given min/max
+        # see documentation at https://www.postgresql.org/docs/12/functions-math.html
         count_above_maximum = 0
         for row in rows:
             if row[0] is not None and 1 <= row[0] < len(bins):
@@ -398,8 +450,15 @@ class BaseQuerySchema(BaseModel):
 
         return bins, result
 
+    # TODO: This method will always return all values of the attribute matching
+    # the query.  For attributes with a lot of unique values, this could be too
+    # much data.  Consider limiting the results in the future.
     def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
+        """Perform simple faceting on an attribute."""
         model: Any = self.table.model
+
+        # special joins need to be performed for faceting on either envo or
+        # association proxies.
         join_ap = False
         join_envo = False
         if attribute in _envo_keys and self.table == Table.biosample:
@@ -419,13 +478,19 @@ class BaseQuerySchema(BaseModel):
         else:
             raise InvalidAttributeException(self.table.value, attribute)
 
+        # generate the subquery of id's matching the filters and join with the
+        # aggregation query
         subquery = self.query(db).subquery()
         query = db.query(column, func.count(column))
+
+        # join additional tables if necessary
         if join_envo:
             query = _join_envo_facet(query, attribute)
         elif join_ap:
             query = query.join(model)
         query = query.join(subquery, model.id == subquery.c.id)
+
+        # collect the results
         rows = query.group_by(column)
         return {value: count for value, count in rows if value is not None}
 
@@ -435,7 +500,9 @@ class StudyQuerySchema(BaseQuerySchema):
     def table(self) -> Table:
         return Table.study
 
+    # The following private methods inject subqueries into Study `query_expressions`.
     def _count_omics_data_query(self, db: Session, query_schema: BaseQuerySchema) -> Query:
+        """Generate a query counting matching omics_processing types."""
         model = query_schema.table.model
         table_name = model.__tablename__  # type: ignore
 
@@ -455,6 +522,7 @@ class StudyQuerySchema(BaseQuerySchema):
     def _count_omics_processing_summary(
         self, db: Session, conditions: List[ConditionSchema]
     ) -> Query:
+        """Aggregate omics types into a custom jsonb response."""
         subquery = OmicsProcessingQuerySchema(conditions=conditions).query(db).subquery()
         query = (
             db.query(
@@ -484,6 +552,8 @@ class StudyQuerySchema(BaseQuerySchema):
         ).group_by(query.c.omics_processing_study_id_sub)
 
     def _inject_omics_data_summary(self, db: Session, query: Query) -> Query:
+        """Insert query expressions for custom aggregations."""
+        # Add an aggregation for each omics processing type.
         aggs = []
         for omics_class in workflow_search_classes:
             pipeline_model = omics_class().table.model
@@ -494,6 +564,7 @@ class StudyQuerySchema(BaseQuerySchema):
                 if c.table.value in {"omics_processing", table_name, "biosample"}
             ]
 
+            # generate a filtered subquery of the given omics type
             query_schema = omics_class(conditions=filter_conditions)
             omics_subquery = self._count_omics_data_query(db, query_schema).subquery()
             study_id = getattr(omics_subquery.c, f"{table_name}_study_id")
@@ -508,6 +579,8 @@ class StudyQuerySchema(BaseQuerySchema):
                 )
             )
 
+        # Here we only insert filter conditions that are actually relevant for
+        # this aggregation.  This reduces the complexity of subquery greatly.
         op_filter_conditions = [
             c for c in self.conditions if c.table.value in {"omics_processing", "biosample"}
         ]
@@ -625,6 +698,8 @@ class DataObjectAggregation(BaseModel):
 class DataObjectQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
 
+    # Perform the normal query operation, but adds in an additional filter on
+    # entities from data_object_filter.
     def query(self, db: Session) -> Query:
         omics_processing_qs = OmicsProcessingQuerySchema(conditions=self.conditions)
         op_cte = omics_processing_qs.query(db).cte()
@@ -643,9 +718,11 @@ class DataObjectQuerySchema(BaseQuerySchema):
     def execute(self, db: Session) -> Query:
         return self.query(db)
 
+    # WARNING: This logic is duplicated in the DataObject.is_selected method.
     def _data_object_filter_subquery(
         self, db: Session, filter: DataObjectFilter, op_cte: CTE
     ) -> Query:
+        """Create a subquery that selects from a data object filter condition."""
         query = db.query(models.DataObject.id.label("id")).join(
             op_cte,
             models.DataObject.omics_processing_id == op_cte.c.id,
@@ -660,6 +737,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
         return query
 
     def aggregate(self, db: Session) -> DataObjectAggregation:
+        """Return the number of files and total size of matched data objects."""
         subquery = self.query(db).filter(models.DataObject.url != None).subquery()
         row = db.query(func.count(subquery.c.id), func.sum(subquery.c.file_size_bytes)).first()
         if not row:

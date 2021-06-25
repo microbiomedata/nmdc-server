@@ -322,6 +322,9 @@ class DataObject(DataObjectBase):
         id_str = quote(values["id"])
         return f"/api/data_object/{id_str}/download" if url else None
 
+    # Determine if the data object is selected by the provided filter.
+    # WARNING: This logic is duplicated in the bulk download query
+    #          (see `_data_object_filter_subquery`)
     @classmethod
     def is_selected(
         cls,
