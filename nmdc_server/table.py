@@ -1,3 +1,7 @@
+"""
+This module contains enums that map from serialized table representations to
+actual database models (or aliased representations).
+"""
 from enum import Enum
 from typing import Dict, Union
 

@@ -1,3 +1,23 @@
+"""
+This module is responsible for joining between "target tables" and "filter
+tables" for the logic in query.py.
+
+In order to generate the subquery for a particular query condition, you need to
+be able to join all of the relations between those tables.  As an example if you
+are search for omics_processing and are filtering on a study property, this module
+provides the logic generates:
+
+select id from omics_procession
+join biosample ...
+join study ...
+
+The actual filters can then be added onto this as "where" clauses.
+
+In general, you would need to generate N^2 different join conditions mapping
+between all tables represented in `table.py`.  In practice, there is a lot of
+duplicated logic that is shared in subclasses in this module.  Also, many
+combinations of tables are never used and are thus unimplemented.
+"""
 from typing import Iterable, List, Type, TYPE_CHECKING
 
 from sqlalchemy import func, or_
