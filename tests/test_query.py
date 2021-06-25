@@ -86,10 +86,6 @@ def test_date_query(db: Session, condition, expected):
         "study",
         "omics_processing",
         "biosample",
-        "reads_qc",
-        "metagenome_assembly",
-        "metagenome_annotation",
-        "metaproteomic_analysis",
     ],
 )
 def test_basic_query(db: Session, table):
@@ -97,19 +93,6 @@ def test_basic_query(db: Session, table):
         "study": (fakes.StudyFactory(), query.StudyQuerySchema()),
         "omics_processing": (fakes.OmicsProcessingFactory(), query.OmicsProcessingQuerySchema()),
         "biosample": (fakes.BiosampleFactory(), query.BiosampleQuerySchema()),
-        "reads_qc": (fakes.ReadsQCFactory(), query.ReadsQCQuerySchema()),
-        "metagenome_assembly": (
-            fakes.MetagenomeAssemblyFactory(),
-            query.MetagenomeAssemblyQuerySchema(),
-        ),
-        "metagenome_annotation": (
-            fakes.MetagenomeAnnotationFactory(),
-            query.MetagenomeAnnotationQuerySchema(),
-        ),
-        "metaproteomic_analysis": (
-            fakes.MetaproteomicAnalysisFactory(),
-            query.MetaproteomicAnalysisQuerySchema(),
-        ),
     }
     db.commit()
     q = tests[table][1].execute(db)

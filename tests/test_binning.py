@@ -125,25 +125,10 @@ def test_invalid_date_api(client: TestClient, biosamples):
     assert resp.status_code == 400
 
 
-def test_metagenome_api(client: TestClient, db: Session):
-    for c in [0, 1, 10, 20]:
-        fakes.MetagenomeAssemblyFactory(contigs=c)
-    db.commit()
-    resp = client.post(
-        "/api/metagenome_assembly/binned_facet",
-        json={"attribute": "contigs", "num_bins": 2},
-    )
-    assert resp.status_code == 200
-    assert resp.json() == {
-        "bins": [0, 10, 20],
-        "facets": [2, 2],
-    }
-
-
 def test_binned_facet_no_result_numeric(client: TestClient):
     resp = client.post(
-        "/api/metagenome_assembly/binned_facet",
-        json={"attribute": "contigs", "num_bins": 2},
+        "/api/biosample/binned_facet",
+        json={"attribute": "depth", "num_bins": 2},
     )
     assert resp.status_code == 200
     assert resp.json() == {"facets": [], "bins": []}

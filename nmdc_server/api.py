@@ -88,23 +88,6 @@ async def get_environmental_geospatial(
 
 # biosample
 @router.post(
-    "/biosample",
-    response_model=schemas.Biosample,
-    tags=["biosample"],
-    responses=login_required_responses,
-)
-async def create_biosample(
-    biosample: schemas.BiosampleCreate,
-    db: Session = Depends(get_db),
-    token: Token = Depends(admin_required),
-):
-    if crud.get_omics_processing(db, biosample.study_id) is None:
-        raise HTTPException(status_code=400, detail="Study does not exist")
-
-    return crud.create_biosample(db, biosample)
-
-
-@router.post(
     "/biosample/search",
     response_model=query.BiosampleSearchResponse,
     tags=["biosample"],
@@ -170,31 +153,7 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
     return db_biosample
 
 
-# @router.delete(
-#     "/biosample/{biosample_id}", status_code=204, tags=["biosample"],
-# )
-# async def delete_biosample(biosample_id: str, db: Session = Depends(get_db)):
-#     db_biosample = crud.get_biosample(db, biosample_id)
-#     if db_biosample is None:
-#         raise HTTPException(status_code=404, detail="Biosample not found")
-#     crud.delete_biosample(db, db_biosample)
-
-
 # study
-@router.post(
-    "/study",
-    response_model=schemas.Study,
-    tags=["study"],
-    responses=login_required_responses,
-)
-async def create_study(
-    study: schemas.StudyCreate,
-    db: Session = Depends(get_db),
-    token: Token = Depends(admin_required),
-):
-    return crud.create_study(db, study)
-
-
 @router.post(
     "/study/search",
     response_model=query.StudySearchResponse,
@@ -242,31 +201,7 @@ async def get_study(study_id: str, db: Session = Depends(get_db)):
     return db_study
 
 
-# @router.delete(
-#     "/study/{study_id}", status_code=204, tags=["study"],
-# )
-# async def delete_study(study_id: str, db: Session = Depends(get_db)):
-#     db_study = crud.get_study(db, study_id)
-#     if db_study is None:
-#         raise HTTPException(status_code=404, detail="Study not found")
-#     crud.delete_study(db, db_study)
-
-
 # omics_processing
-@router.post(
-    "/omics_processing",
-    response_model=schemas.OmicsProcessing,
-    tags=["omics_processing"],
-    responses=login_required_responses,
-)
-async def create_omics_processing(
-    omics_processing: schemas.OmicsProcessingCreate,
-    db: Session = Depends(get_db),
-    token: Token = Depends(admin_required),
-):
-    return crud.create_omics_processing(db, omics_processing)
-
-
 @router.post(
     "/omics_processing/search",
     response_model=query.OmicsProcessingSearchResponse,
@@ -316,16 +251,6 @@ async def get_omics_processing(omics_processing_id: str, db: Session = Depends(g
     return db_omics_processing
 
 
-# @router.delete(
-#     "/omics_processing/{omics_processing_id}", status_code=204, tags=["omics_processing"],
-# )
-# async def delete_omics_processing(omics_processing_id: str, db: Session = Depends(get_db)):
-#     db_omics_processing = crud.get_omics_processing(db, omics_processing_id)
-#     if db_omics_processing is None:
-#         raise HTTPException(status_code=404, detail="OmicsProcessing not found")
-#     crud.delete_omics_processing(db, db_omics_processing)
-
-
 @router.get(
     "/omics_processing/{omics_processing_id}/outputs",
     response_model=List[schemas.DataObject],
@@ -338,20 +263,6 @@ async def list_omics_processing_data_objects(
 
 
 # data object
-@router.post(
-    "/data_object",
-    response_model=schemas.DataObject,
-    tags=["data_object"],
-    responses=login_required_responses,
-)
-async def create_data_object(
-    data_object: schemas.DataObjectCreate,
-    db: Session = Depends(get_db),
-    token: Token = Depends(admin_required),
-):
-    return crud.create_data_object(db, data_object)
-
-
 @router.get(
     "/data_object/{data_object_id}",
     response_model=schemas.DataObject,
@@ -364,14 +275,6 @@ async def get_data_object(data_object_id: str, db: Session = Depends(get_db)):
     return db_data_object
 
 
-# @router.delete(
-#     "/data_object/{data_object_id}", status_code=204, tags=["data_object"],
-# )
-# async def delete_data_object(data_object_id: str, db: Session = Depends(get_db)):
-#     db_data_object = crud.get_data_object(db, data_object_id)
-#     if db_data_object is None:
-#         raise HTTPException(status_code=404, detail="DataObject not found")
-#     crud.delete_data_object(db, db_data_object)
 @router.get(
     "/data_object/{data_object_id}/download",
     tags=["data_object"],
@@ -413,246 +316,6 @@ def data_object_aggregation(
     db: Session = Depends(get_db),
 ):
     return crud.aggregate_data_object_by_workflow(db, query.conditions)
-
-
-# reads_qc
-@router.post(
-    "/reads_qc/search",
-    response_model=query.ReadsQCSearchResponse,
-    tags=["reads_qc"],
-    name="Search for studies",
-    description="Faceted search of reads_qc data.",
-)
-async def search_reads_qc(
-    query: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-    pagination: Pagination = Depends(),
-):
-    return pagination.response(crud.search_reads_qc(db, query.conditions))
-
-
-@router.post(
-    "/reads_qc/facet",
-    response_model=query.FacetResponse,
-    tags=["reads_qc"],
-    name="Get all values of an attribute",
-)
-async def facet_reads_qc(query: query.FacetQuery, db: Session = Depends(get_db)):
-    return crud.facet_reads_qc(db, query.attribute, query.conditions)
-
-
-@router.post(
-    "/reads_qc/binned_facet",
-    response_model=query.BinnedFacetResponse,
-    tags=["reads_qc"],
-    name="Get all values of a non-string attribute with binning",
-)
-async def binned_facet_reads_qc(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
-    return crud.binned_facet_reads_qc(db, **query.dict())
-
-
-@router.get(
-    "/reads_qc/{reads_qc_id}",
-    response_model=schemas.ReadsQC,
-    tags=["reads_qc"],
-)
-async def get_reads_qc(reads_qc_id: str, db: Session = Depends(get_db)):
-    db_reads_qc = crud.get_reads_qc(db, reads_qc_id)
-    if db_reads_qc is None:
-        raise HTTPException(status_code=404, detail="ReadsQC not found")
-    return db_reads_qc
-
-
-@router.get(
-    "/reads_qc/{reads_qc_id}/outputs",
-    response_model=List[schemas.DataObject],
-    tags=["reads_qc"],
-)
-async def list_reads_qc_data_objects(reads_qc_id: str, db: Session = Depends(get_db)):
-    return crud.list_reads_qc_data_objects(db, reads_qc_id).all()
-
-
-# metagenome_assembly
-@router.post(
-    "/metagenome_assembly/search",
-    response_model=query.MetagenomeAssemblySearchResponse,
-    tags=["metagenome_assembly"],
-    name="Search for studies",
-    description="Faceted search of metagenome_assembly data.",
-)
-async def search_metagenome_assembly(
-    query: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-    pagination: Pagination = Depends(),
-):
-    return pagination.response(crud.search_metagenome_assembly(db, query.conditions))
-
-
-@router.post(
-    "/metagenome_assembly/facet",
-    response_model=query.FacetResponse,
-    tags=["metagenome_assembly"],
-    name="Get all values of an attribute",
-)
-async def facet_metagenome_assembly(query: query.FacetQuery, db: Session = Depends(get_db)):
-    return crud.facet_metagenome_assembly(db, query.attribute, query.conditions)
-
-
-@router.post(
-    "/metagenome_assembly/binned_facet",
-    response_model=query.BinnedFacetResponse,
-    tags=["metagenome_assembly"],
-    name="Get all values of a non-string attribute with binning",
-)
-async def binned_facet_metagenome_assembly(
-    query: query.BinnedFacetQuery, db: Session = Depends(get_db)
-):
-    return crud.binned_facet_metagenome_assembly(db, **query.dict())
-
-
-@router.get(
-    "/metagenome_assembly/{metagenome_assembly_id}",
-    response_model=schemas.MetagenomeAssembly,
-    tags=["metagenome_assembly"],
-)
-async def get_metagenome_assembly(metagenome_assembly_id: str, db: Session = Depends(get_db)):
-    db_metagenome_assembly = crud.get_metagenome_assembly(db, metagenome_assembly_id)
-    if db_metagenome_assembly is None:
-        raise HTTPException(status_code=404, detail="MetagenomeAssembly not found")
-    return db_metagenome_assembly
-
-
-@router.get(
-    "/metagenome_assembly/{metagenome_assembly_id}/outputs",
-    response_model=List[schemas.DataObject],
-    tags=["metagenome_assembly"],
-)
-async def list_metagenome_assembly_data_objects(
-    metagenome_assembly_id: str, db: Session = Depends(get_db)
-):
-    return crud.list_metagenome_assembly_data_objects(db, metagenome_assembly_id).all()
-
-
-# metagenome_annotation
-@router.post(
-    "/metagenome_annotation/search",
-    response_model=query.MetagenomeAnnotationSearchResponse,
-    tags=["metagenome_annotation"],
-    name="Search for studies",
-    description="Faceted search of metagenome_annotation data.",
-)
-async def search_metagenome_annotation(
-    query: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-    pagination: Pagination = Depends(),
-):
-    return pagination.response(crud.search_metagenome_annotation(db, query.conditions))
-
-
-@router.post(
-    "/metagenome_annotation/facet",
-    response_model=query.FacetResponse,
-    tags=["metagenome_annotation"],
-    name="Get all values of an attribute",
-)
-async def facet_metagenome_annotation(query: query.FacetQuery, db: Session = Depends(get_db)):
-    return crud.facet_metagenome_annotation(db, query.attribute, query.conditions)
-
-
-@router.post(
-    "/metagenome_annotation/binned_facet",
-    response_model=query.BinnedFacetResponse,
-    tags=["metagenome_annotation"],
-    name="Get all values of a non-string attribute with binning",
-)
-async def binned_facet_metagenome_annotation(
-    query: query.BinnedFacetQuery, db: Session = Depends(get_db)
-):
-    return crud.binned_facet_metagenome_annotation(db, **query.dict())
-
-
-@router.get(
-    "/metagenome_annotation/{metagenome_annotation_id}",
-    response_model=schemas.MetagenomeAnnotation,
-    tags=["metagenome_annotation"],
-)
-async def get_metagenome_annotation(metagenome_annotation_id: str, db: Session = Depends(get_db)):
-    db_metagenome_annotation = crud.get_metagenome_annotation(db, metagenome_annotation_id)
-    if db_metagenome_annotation is None:
-        raise HTTPException(status_code=404, detail="MetagenomeAnnotation not found")
-    return db_metagenome_annotation
-
-
-@router.get(
-    "/metagenome_annotation/{metagenome_annotation_id}/outputs",
-    response_model=List[schemas.DataObject],
-    tags=["metagenome_annotation"],
-)
-async def list_metagenome_annotation_data_objects(
-    metagenome_annotation_id: str, db: Session = Depends(get_db)
-):
-    return crud.list_metagenome_annotation_data_objects(db, metagenome_annotation_id).all()
-
-
-# metagenome_annotation
-@router.post(
-    "/metaproteomic_analysis/search",
-    response_model=query.MetaproteomicAnalysisSearchResponse,
-    tags=["metaproteomic_analysis"],
-    name="Search for studies",
-    description="Faceted search of metaproteomic_analysis data.",
-)
-async def search_metaproteomic_analysis(
-    query: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-    pagination: Pagination = Depends(),
-):
-    return pagination.response(crud.search_metaproteomic_analysis(db, query.conditions))
-
-
-@router.post(
-    "/metaproteomic_analysis/facet",
-    response_model=query.FacetResponse,
-    tags=["metaproteomic_analysis"],
-    name="Get all values of an attribute",
-)
-async def facet_metaproteomic_analysis(query: query.FacetQuery, db: Session = Depends(get_db)):
-    return crud.facet_metaproteomic_analysis(db, query.attribute, query.conditions)
-
-
-@router.post(
-    "/metaproteomic_analysis/binned_facet",
-    response_model=query.BinnedFacetResponse,
-    tags=["metaproteomic_analysis"],
-    name="Get all values of a non-string attribute with binning",
-)
-async def binned_facet_metaproteomic_analysis(
-    query: query.BinnedFacetQuery, db: Session = Depends(get_db)
-):
-    return crud.binned_facet_metaproteomic_analysis(db, **query.dict())
-
-
-@router.get(
-    "/metaproteomic_analysis/{metaproteomic_analysis_id}",
-    response_model=schemas.MetaproteomicAnalysis,
-    tags=["metaproteomic_analysis"],
-)
-async def get_metaproteomic_analysis(metaproteomic_analysis_id: str, db: Session = Depends(get_db)):
-    db_metaproteomic_analysis = crud.get_metaproteomic_analysis(db, metaproteomic_analysis_id)
-    if db_metaproteomic_analysis is None:
-        raise HTTPException(status_code=404, detail="MetaproteomicAnalysis not found")
-    return db_metaproteomic_analysis
-
-
-@router.get(
-    "/metaproteomic_analysis/{metaproteomic_analysis_id}/outputs",
-    response_model=List[schemas.DataObject],
-    tags=["metaproteomic_analysis"],
-)
-async def list_metaproteomic_analysis_data_objects(
-    metaproteomic_analysis_id: str, db: Session = Depends(get_db)
-):
-    return crud.list_metaproteomic_analysis_data_objects(db, metaproteomic_analysis_id).all()
 
 
 @router.get("/principal_investigator/{principal_investigator_id}", tags=["principal_investigator"])
