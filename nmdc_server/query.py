@@ -718,38 +718,6 @@ class DataObjectSearchResponse(BaseSearchResponse):
     results: List[schemas.DataObject]
 
 
-class ReadsQCSearchResponse(BaseSearchResponse):
-    results: List[schemas.ReadsQC]
-
-
-class MetagenomeAssemblySearchResponse(BaseSearchResponse):
-    results: List[schemas.MetagenomeAssembly]
-
-
-class MetagenomeAnnotationSearchResponse(BaseSearchResponse):
-    results: List[schemas.MetagenomeAnnotation]
-
-
-class MetaproteomicAnalysisSearchResponse(BaseSearchResponse):
-    results: List[schemas.MetaproteomicAnalysis]
-
-
-class MAGsAnalysisSearchResponse(BaseSearchResponse):
-    results: List[schemas.MAGsAnalysis]
-
-
-class ReadBasedAnalysisSearchResponse(BaseSearchResponse):
-    results: List[schemas.ReadBasedAnalysis]
-
-
-class NOMAnalysisSearchResponse(BaseSearchResponse):
-    results: List[schemas.NOMAnalysis]
-
-
-class MetabolomicsAnalysisSearchResponse(BaseSearchResponse):
-    results: List[schemas.MetabolomicsAnalysis]
-
-
 class FacetResponse(BaseModel):
     facets: Dict[schemas.AnnotationValue, int]
 

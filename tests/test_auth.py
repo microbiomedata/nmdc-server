@@ -24,7 +24,7 @@ def test_logout(client: TestClient, token: Token):
 
 
 def test_admin_required(client: TestClient):
-    resp = client.post("/api/study", json={"doi": "abc"})
+    resp = client.post("/api/jobs/ping")
     assert resp.status_code == 401
 
 

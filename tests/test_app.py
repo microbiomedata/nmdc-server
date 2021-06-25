@@ -130,10 +130,6 @@ def test_get_environmental_aggregation(db: Session, client: TestClient):
     "endpoint",
     [
         "omics_processing",
-        "reads_qc",
-        "metagenome_assembly",
-        "metagenome_annotation",
-        "metaproteomic_analysis",
     ],
 )
 def test_list_data_objects(db: Session, client: TestClient, endpoint: str):
@@ -275,18 +271,4 @@ def test_gold_tree_complex_query(gold_tree_biosamples, client: TestClient):
         "0_0_1_0_0",
         "0_0_1_1_0",
         "0_0_1_1_1",
-    }
-
-
-def test_mga_gene_functions(db: Session, client: TestClient):
-    gene_functions = [fakes.MGAGeneFunction(function__id=f"function{i}") for i in range(10)]
-    fakes.MetagenomeAnnotationFactory(gene_functions=gene_functions)
-    db.commit()
-
-    resp = client.post("/api/metagenome_annotation/search")
-    assert_status(resp)
-    data = resp.json()
-    assert len(data["results"]) == 1
-    assert {f["gene_function_id"] for f in data["results"][0]["gene_functions"]} == {
-        f"function{i}" for i in range(10)
     }
