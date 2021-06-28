@@ -312,7 +312,8 @@ class DataObject(Base):
 
     @hybrid_property
     def downloads(self) -> int:
-        return len(self.download_entities)  # type: ignore
+        # TODO: This can probably be done with a more efficient aggregation
+        return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
 
 
 # This is a base class for all workflow processing activities.
@@ -739,4 +740,6 @@ class BulkDownloadDataObject(Base):
     bulk_download = relationship(
         BulkDownload, backref=backref("files", lazy="joined", cascade="all")
     )
-    data_object = relationship(DataObject, lazy="joined", cascade="all")
+    data_object = relationship(
+        DataObject, lazy="joined", cascade="all", backref="bulk_download_entities"
+    )
