@@ -10,6 +10,7 @@ class IngestInProgress(Exception):
         self.created = created
 
 
+# This context manager acts as a mutex to avoid multiple simultaneous ingest jobs.
 @contextmanager
 def ingest_lock(db: Session):
     lock = db.query(IngestLock).first()

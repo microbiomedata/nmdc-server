@@ -24,13 +24,13 @@ class LoadObject(Protocol):
         ...
 
 
+# Load metagenome annotation as well as the gene function annotations produced.
 def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
     pipeline = schemas.MetagenomeAnnotationBase(**obj)
     row = models.MetagenomeAnnotation(**pipeline.dict())
     db.add(row)
     db.flush()
 
-    # TODO: fix populating gene functions
     annotations: Collection = kwargs["annotations"]
 
     query = annotations.find(
@@ -107,6 +107,8 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
     return pipeline
 
 
+# This is a loader for a generic workflow type that doesn't need any
+# additional processing.
 def generate_pipeline_loader(schema, model) -> LoadObject:
     def loader(db: Session, obj: Dict[str, Any], **kwargs: Any) -> LoadObjectReturn:
         pipeline_dict = schema(**obj)
@@ -135,6 +137,8 @@ load_metabolomics_analysis = generate_pipeline_loader(
 )
 
 
+# This is a generic function for load workflow execution objects.  Some workflow types require
+# custom processing arguments that get passed in as kwargs.
 def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: str, **kwargs):
     remove_timezone_re = re.compile(r"Z\+\d+$", re.I)
 
@@ -172,6 +176,9 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: st
         valid_inputs = [d for d in inputs if db.query(models.DataObject).get(d)]
         valid_outputs = [d for d in outputs if db.query(models.DataObject).get(d)]
 
+        # historically a lot of data objects listed in the workflow entities do
+        # not exist in the data_object collection... these are collected and
+        # reported at the end of the run
         missing_list = set(inputs + outputs) - set(valid_inputs + valid_outputs)
         for missing in missing_list:
             logger.warning(f"Unknown data object {missing}")

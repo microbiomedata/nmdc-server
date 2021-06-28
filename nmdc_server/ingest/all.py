@@ -13,6 +13,8 @@ from nmdc_server.ingest import biosample, data_object, envo, omics_processing, p
 logger = logging.getLogger(__name__)
 
 
+# Custom mongo cursor pagination.  This exists because some of the
+# queries timeout before all the results can be processed.
 def paginate_cursor(
     collection: Collection, page_size: int = 100, **kwargs
 ) -> Iterator[Dict[str, Any]]:
@@ -28,6 +30,16 @@ def paginate_cursor(
 
 
 def load(db: Session, function_limit=None):
+    """Ingest all data from the mongodb source.
+
+    Optionally, you can limit the number of gene functions per omics_processing
+    to allow for a faster ingest for testing.  The full result set takes several
+    hours to process.
+
+    This function is called both from the CLI (for development) and from the ingest
+    celery function (in production).  Watch for warnings during ingest for ignored
+    entities due to invalid foreign key references.
+    """
     settings = Settings()
     if not (settings.mongo_user and settings.mongo_password):
         raise Exception("Please set NMDC_MONGO_USER and NMDC_MONGO_PASSWORD")
@@ -48,6 +60,7 @@ def load(db: Session, function_limit=None):
     data_object.load(db, mongodb["data_object_set"].find())
     db.commit()
 
+    # Only grab biosamples associated with studies we are ingesting.
     logger.info("Loading biosamples...")
     cursor = mongodb["biosample_set"].find(
         {
@@ -105,7 +118,13 @@ def load(db: Session, function_limit=None):
     db.commit()
 
     try:
+        # This section has its own subprogress bar because it takes several
+        # hours to ingest all of the gene function products from the metag
+        # workflows.
         logger.info("Loading metagenome annotation...")
+
+        # This has historically been fast, but it is only for the progress bar.
+        # It can be removed if it becomes slow.
         count = mongodb["metagenome_annotation_activity_set"].find().count()
         iterator = paginate_cursor(
             mongodb["metagenome_annotation_activity_set"],
@@ -160,6 +179,7 @@ def load(db: Session, function_limit=None):
     )
     db.commit()
 
+    # all the data is loaded, so trigger denormalization updates
     models.MGAGeneFunctionAggregation.populate(db)
     db.commit()
 

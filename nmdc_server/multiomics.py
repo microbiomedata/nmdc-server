@@ -1,6 +1,7 @@
 from enum import Enum
 
 
+#: Bitmasks for omics types (see database.update_multiomics_sql)
 class MultiomicsValue(Enum):
     mb = 0b10000
     mg = 0b01000

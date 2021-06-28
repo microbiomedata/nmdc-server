@@ -21,6 +21,10 @@ def ping():
 
 
 def migrate(database_uri):
+    """Update the database to the latest HEAD.
+
+    This function will also create the schema if necessary.
+    """
     database._engine = None
     with create_session() as db:
         engine = db.bind
@@ -41,6 +45,7 @@ def migrate(database_uri):
 
 @celery_app.task
 def ingest():
+    """Truncate database and ingest all data from the mongo source."""
     database._engine = None
     database.ingest = False
     prod_engine = create_engine()
@@ -59,10 +64,20 @@ def ingest():
     with create_session() as db, create_session(prod_engine) as prod_db:
         with ingest_lock(db):
             try:
+                # truncate tables
                 for row in db.execute("select truncate_tables()"):
                     pass
+
+                # ingest data
                 load(db)
+
+                # copy persistent data from the production database over to the
+                # ingest database
                 for row in prod_db.query(models.FileDownload):
+                    db.merge(row)
+                for row in prod_db.query(models.BulkDownload):
+                    db.merge(row)
+                for row in prod_db.query(models.BulkDownloadDataObject):
                     db.merge(row)
                 db.commit()
             except Exception:
@@ -76,6 +91,7 @@ def ingest():
 
 @celery_app.task
 def populate_gene_functions():
+    """Populate denormalized gene function tables."""
     database._engine = None
     database.ingest = True
     with create_session() as db:
