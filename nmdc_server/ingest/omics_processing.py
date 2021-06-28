@@ -29,6 +29,7 @@ class OmicsProcessing(OmicsProcessingCreate):
     def coerce_date(cls, v):
         if isinstance(v, str) and date_fmt.match(v):
             return datetime.strptime(v, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()
+        return v
 
 
 def load_omics_processing(db: Session, obj: Dict[str, Any]):
@@ -52,6 +53,9 @@ def load_omics_processing(db: Session, obj: Dict[str, Any]):
             continue
 
         data_object.omics_processing = omics_processing
+
+        # add a custom workflow type for raw data (data that is the direct
+        # output of an omics_processing)
         data_object.workflow_type = "nmdc:RawData"
         db.add(data_object)
         omics_processing.outputs.append(data_object)  # type: ignore

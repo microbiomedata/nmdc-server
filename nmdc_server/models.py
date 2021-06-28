@@ -653,6 +653,7 @@ class MGAGeneFunctionAggregation(Base):
 
     @classmethod
     def populate(cls, db: Session):
+        """Populate denormalized gene function table."""
         db.execute(
             f"""
             INSERT INTO
@@ -677,6 +678,7 @@ class MetaPGeneFunctionAggregation(Base):
 
     @classmethod
     def populate(cls, db: Session):
+        """Populate denormalized gene function table."""
         db.execute(
             f"""
             INSERT INTO

@@ -2,12 +2,16 @@ from logging import getLogger
 from typing import Any, Dict
 
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from nmdc_server.models import DOIInfo
 
 logger = getLogger(__name__)
+retry_strategy = Retry(total=10)
+adapter = HTTPAdapter(max_retries=retry_strategy)
 
 
 def get_doi_info(doi: str) -> Dict[str, Any]:
@@ -15,10 +19,13 @@ def get_doi_info(doi: str) -> Dict[str, Any]:
     headers = {
         "Accept": "application/vnd.citationstyles.csl+json",
     }
+    http = requests.Session()
+    http.mount("https://", adapter)
     return requests.get(url, headers=headers).json()
 
 
 def upsert_doi(db: Session, doi: str):
+    # Try really hard to get doi data... the doi.org service is very unreliable.
     try:
         info = get_doi_info(doi)
     except Exception:

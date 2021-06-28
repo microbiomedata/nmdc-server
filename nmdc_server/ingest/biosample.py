@@ -42,6 +42,7 @@ class Biosample(BiosampleCreate):
     def coerce_date(cls, v):
         if isinstance(v, str) and date_fmt.match(v):
             return datetime.strptime(v, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()
+        return v
 
 
 def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):

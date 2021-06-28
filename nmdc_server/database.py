@@ -33,6 +33,7 @@ metadata = MetaData(
 Base = declarative_base(metadata=metadata)
 
 
+# define functions used for comparison between arbitrary types
 listen(
     metadata,
     "before_create",
@@ -105,6 +106,11 @@ returns boolean as $$
 $$
 language plpgsql;
 
+/*
+A convenience function to truncate all tables that get repopulated
+during an ingest.  Any tables storing persistent data should be
+added as an exception here.
+*/
 CREATE OR REPLACE FUNCTION truncate_tables() RETURNS void AS $$
 DECLARE
     statements CURSOR FOR
@@ -112,7 +118,9 @@ DECLARE
         WHERE schemaname = 'public'
             and tablename <> 'alembic_version'
             and tablename <> 'file_download'
-            and tablename <> 'ingest_lock';
+            and tablename <> 'ingest_lock'
+            and tablename <> 'bulk_download'
+            and tablename <> 'bulk_download_data_object';
 BEGIN
     FOR stmt IN statements LOOP
         EXECUTE 'TRUNCATE TABLE ' || quote_ident(stmt.tablename) || ' CASCADE;';
@@ -123,6 +131,7 @@ $$ LANGUAGE plpgsql;
     ),
 )
 
+# A SQL function used to populate denormalized multiomics bitmasks
 update_multiomics_sql = DDL(
     f"""
 with m as (select

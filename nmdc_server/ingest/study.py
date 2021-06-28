@@ -13,6 +13,8 @@ from nmdc_server.schemas import StudyCreate
 
 HERE = Path(__file__).parent
 IMAGES = HERE / "pis"
+
+# For now, we are only ingesting a subset of the studies.
 study_ids = {"gold:Gs0114663", "gold:Gs0135149", "gold:Gs0114675"}
 
 with (HERE / "study_additional.json").open("r") as f:
@@ -48,7 +50,7 @@ def load(db: Session, cursor: Cursor):
     for obj in cursor:
         if obj["id"] not in study_ids:
             continue
-        pi_name = obj.pop("principal_investigator_name")
+        pi_name = obj.pop("principal_investigator")["has_raw_value"]
         obj["principal_investigator_id"] = get_or_create_pi(db, pi_name)
 
         if obj["id"] in study_additional:
@@ -60,7 +62,7 @@ def load(db: Session, cursor: Cursor):
         else:
             raise Exception(f"not found {obj['id']}")
 
-        upsert_doi(db, obj["doi"])
+        upsert_doi(db, obj["doi"]["has_raw_value"])
         for doi in obj["publication_dois"]:
             upsert_doi(db, doi)
 

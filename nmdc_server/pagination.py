@@ -11,8 +11,12 @@ class PaginatedResponse(TypedDict):
 
 
 class Pagination:
+    """
+    This class is responsible for generating paged responses from sqlalchemy queries.
+    """
+
     DEFAULT_OFFSET = 0
-    DEFAULT_LIMIT = 100
+    DEFAULT_LIMIT = 25
 
     def __init__(
         self,
@@ -30,6 +34,11 @@ class Pagination:
         return query.limit(self.limit).offset(self.offset)
 
     def headers(self, query: orm.Query, count: int) -> Dict[str, str]:
+        """Generate pagination link headers.
+
+        https://datatracker.ietf.org/doc/html/rfc5988
+        """
+
         def url(name: str, offset: int) -> str:
             return (
                 f"<{self._request.url.include_query_params(limit=self.limit, offset=offset)}>; "
@@ -56,6 +65,11 @@ class Pagination:
         }
 
     def response(self, query: orm.Query, processor=lambda x: x) -> PaginatedResponse:
+        """Serialize a paged response from a query.
+
+        Optionally, pass in a function to perform extra processing on each item
+        prior to serialization.
+        """
         count = query.count()
         self._response.headers.update(self.headers(query, count))
         return {

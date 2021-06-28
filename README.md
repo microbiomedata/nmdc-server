@@ -101,3 +101,14 @@ On Spin, you can use the web interface to start a shell on the `db` instance and
 psql -U postgres postgres -c 'drop database nmdc;'
 ```
 Then, redeploy the backend service.
+
+### Generating new migrations
+
+The way this project [injects](nmdc_server/migrations/env.py) the database uri
+into alembic's configuration does not work when using alembic's CLI.  To
+generate a new migration, you must modify `nmdc_server/alembic.ini` and hard
+code your database uri to `sqlalchemy.url`.  After doing that, you can run alembic
+commands as usual, e.g.
+```
+alembic -c nmdc_server/alembic.ini revision --autogenerate
+```

@@ -7,9 +7,15 @@ from starlette.config import Config
 
 class Settings(BaseSettings):
     environment: str = "production"
+
+    # Several different database urls are configured for different
+    # environments.  In production, only database_uri and ingest_database_uri
+    # are used.
     database_uri: str = "postgresql:///nmdc"
     testing_database_uri: str = "postgresql:///nmdc_testing"
     ingest_database_uri: str = "postgresql:///nmdc_testing"
+
+    # for orcid oauth
     secret_key: str = "secret"
     client_id: str = "oauth client id"
     client_secret: str = "oauth secret key"
@@ -17,13 +23,15 @@ class Settings(BaseSettings):
     oauth_scope: str = "/authenticate"
     oauth_authorization_endpoint: str = "https://orcid.org/oauth/authorize"
     oauth_token_endpoint: str = "https://orcid.org/oauth/token"
-    host: Optional[str] = None
+    host: Optional[str] = None  # sets the host name for the oauth2 redirect
 
+    # mongo database used for ingest
     mongo_host: str = "nmdc-metadata.polyneme.xyz"
-    mongo_database: str = "dwinston_share"
+    mongo_database: str = "nmdc"
     mongo_user: str = ""
     mongo_password: str = ""
 
+    # celery broker for ingest/migration jobs
     celery_backend: str = "redis://redis:6379/0"
     celery_broker: str = "redis://redis:6379/0"
 

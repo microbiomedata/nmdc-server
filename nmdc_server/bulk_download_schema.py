@@ -7,6 +7,8 @@ from nmdc_server.query import ConditionSchema
 from nmdc_server.schemas import FileDownloadMetadata
 
 
+# schemas related to bulk download endpoints extracted
+# into a standalone module to prevent circular imports
 class BulkDownloadBase(FileDownloadMetadata):
     conditions: List[ConditionSchema] = []
     filter: List[DataObjectFilter] = []
