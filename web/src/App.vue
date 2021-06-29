@@ -25,6 +25,48 @@ export default {
         >
       </a>
       <v-spacer />
+      <v-btn
+        depressed
+        small
+        href="https://microbiomedata.org/"
+        class="mx-2"
+      >
+        NMDC Home
+        <v-icon
+          class="pl-2"
+          small
+        >
+          mdi-open-in-new
+        </v-icon>
+      </v-btn>
+      <v-btn
+        depressed
+        small
+        href="https://microbiomedata.org/metadata/"
+        class="mx-2"
+      >
+        Metadata Standards
+        <v-icon
+          class="pl-2"
+          small
+        >
+          mdi-open-in-new
+        </v-icon>
+      </v-btn>
+      <v-btn
+        depressed
+        small
+        href="https://microbiomedata.org/workflows/"
+        class="mx-2"
+      >
+        Bioinformatics Workflows
+        <v-icon
+          class="pl-2"
+          small
+        >
+          mdi-open-in-new
+        </v-icon>
+      </v-btn>
       <auth />
     </v-app-bar>
     <keep-alive>
