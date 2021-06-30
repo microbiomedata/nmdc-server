@@ -138,7 +138,7 @@ class PrincipalInvestigator(Base):
 
     # a PI profile image... originally we didn't have a place to store static content
     # so the image data is placed in the database.
-    image = Column(LargeBinary, nullable=False)
+    image = Column(LargeBinary, nullable=True)
 
 
 # Caches information from doi.org
