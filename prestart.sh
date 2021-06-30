@@ -5,12 +5,9 @@ while ! PGDATABASE=postgres psql --quiet -c "select * from user" ; do
     sleep 1;
 done
 
-# TODO: This drops the data base on every start and re-ingests.  At some
-#       point we should decide how to do migrations correctly.
-# PGDATABASE=postgres psql -c "drop database if exists nmdc;"
-
 echo 'Creating and migrating database'
 # in spin the database already exists
-PGDATABASE=postgres psql -c "create database nmdc;" || true
+PGDATABASE=postgres psql -c "create database nmdc_a;" || true
+PGDATABASE=postgres psql -c "create database nmdc_b;" || true
 
 nmdc-server migrate
