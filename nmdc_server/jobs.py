@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from alembic import command
@@ -46,6 +47,13 @@ def migrate(database_uri):
 @celery_app.task
 def ingest():
     """Truncate database and ingest all data from the mongo source."""
+    logger = logging.getLogger()
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(message)s",
+    )
+    logger.setLevel(logging.INFO)
+
     database._engine = None
     database.ingest = False
     prod_engine = create_engine()
