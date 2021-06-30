@@ -313,6 +313,7 @@ class DataObjectBase(BaseModel):
     url: Optional[str]
     downloads: int
     file_type: Optional[str] = None
+    file_type_description: Optional[str] = None
 
 
 class DataObjectCreate(DataObjectBase):

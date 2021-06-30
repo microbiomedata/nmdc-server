@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Any, Dict, List, Tuple
 
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
@@ -8,31 +8,15 @@ from nmdc_server.ingest.logger import get_logger
 from nmdc_server.models import DataObject
 from nmdc_server.schemas import DataObjectCreate
 
-file_type_map = {
-    "fastq.gz": "Raw output file",
-    "filterStats.txt": "Reads QC summary statistics",
-    "filtered.fastq.gz": "Reads QC result fastq (clean data)",
-    "mapping_stats.txt": "Assembled contigs coverage information",
-    "assembly_contigs.fna": "Final assembly contigs fasta",
-    "assembly_scaffolds.fna": "Final assembly scaffolds fasta",
-    "assembly.agp": "An AGP format file describes the assembly",
-    "pairedMapped_sorted.bam": "Sorted bam file of reads mapping back to the final assembly",
-    "KO TSV": "Tab delimited file for KO annotation.",
-    "EC TSV": "Tab delimited file for EC annotation.",
-    "Protein FAA": "FASTA amino acid file for annotated proteins.",
-}
+file_type_map: Dict[str, Tuple[str, str]] = {}
 
 
-def derive_file_type(name: str) -> Optional[str]:
-    for pattern in sorted(file_type_map, key=lambda n: len(n), reverse=True):
-        if pattern in name:
-            return file_type_map[pattern]
-    return None
-
-
-def load(db: Session, cursor: Cursor):
+def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
     logger = get_logger(__name__)
-    fields = set(DataObjectCreate.__fields__.keys())
+    fields = set(DataObjectCreate.__fields__.keys()) | {"data_object_type"}
+
+    file_type_map = {f["id"]: (f["name"], f["description"]) for f in file_types}
+
     for obj_ in cursor:
         obj = {key: obj_[key] for key in obj_.keys() & fields}
 
@@ -48,7 +32,9 @@ def load(db: Session, cursor: Cursor):
             obj["url"] = url.replace(
                 "https://data.microbiomedata.org", "https://data.microbiomedata.org/data"
             )
-        if "file_type" not in obj:
-            obj["file_type"] = derive_file_type(obj["name"])
+        if "data_object_type" in obj:
+            obj["file_type"], obj["file_type_description"] = file_type_map[
+                obj.pop("data_object_type")
+            ]
 
         db.add(DataObject(**obj))

@@ -302,6 +302,7 @@ class DataObject(Base):
     md5_checksum = Column(String, nullable=True)
     url = Column(String, nullable=True)
     file_type = Column(String, nullable=True)
+    file_type_description = Column(String, nullable=True)
 
     # denormalized relationship with a workflow activity output
     workflow_type = Column(String, nullable=True)
