@@ -20,6 +20,8 @@ from nmdc_server import models
 from nmdc_server.data_object_filters import DataObjectFilter, WorkflowActivityTypeEnum
 
 
+DateType = Union[datetime, date]
+
 # The order in the this union is significant... it will coerce
 # valid datetime strings into datetime objects while falling
 # back to ordinary strings.  Also, we never want numeric types
@@ -194,8 +196,8 @@ class StudyBase(AnnotatedBase):
     gold_name: str = ""
     gold_description: str = ""
     scientific_objective: str = ""
-    add_date: Optional[datetime]
-    mod_date: Optional[datetime]
+    add_date: Optional[DateType]
+    mod_date: Optional[DateType]
     doi: str
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
@@ -248,10 +250,10 @@ class BiosampleBase(AnnotatedBase):
     # https://github.com/samuelcolvin/pydantic/issues/156
     longitude: float = Field(..., gt=-180, le=180)
     latitude: float = Field(..., ge=-90, le=90)
-    add_date: Optional[datetime]
-    mod_date: Optional[datetime]
+    add_date: Optional[DateType]
+    mod_date: Optional[DateType]
 
-    collection_date: Union[datetime, date, None]
+    collection_date: Optional[DateType]
     ecosystem: str
     ecosystem_category: str
     ecosystem_type: str
@@ -283,8 +285,8 @@ class Biosample(BiosampleBase):
 class OmicsProcessingBase(AnnotatedBase):
     study_id: Optional[str]
     biosample_id: Optional[str]
-    add_date: Optional[datetime]
-    mod_date: Optional[datetime]
+    add_date: Optional[DateType]
+    mod_date: Optional[DateType]
 
 
 class OmicsProcessingCreate(OmicsProcessingBase):
@@ -379,8 +381,8 @@ class PipelineStepBase(BaseModel):
     name: str = ""
     type: str
     git_url: str
-    started_at_time: Union[datetime, date]
-    ended_at_time: Union[datetime, date]
+    started_at_time: DateType
+    ended_at_time: DateType
     execution_resource: str
     omics_processing_id: str
 
@@ -569,7 +571,7 @@ class FileDownloadBase(FileDownloadMetadata):
 
 class FileDownload(FileDownloadBase):
     id: str
-    created: datetime
+    created: DateType
 
 
 class FileDownloadCreate(FileDownloadBase):
