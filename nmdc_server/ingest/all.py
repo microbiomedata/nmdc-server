@@ -63,7 +63,7 @@ def load(db: Session, function_limit=None):
     db.commit()
 
     logger.info("Loading data objects...")
-    data_object.load(db, mongodb["data_object_set"].find())
+    data_object.load(db, mongodb["data_object_set"].find(), list(mongodb["file_type_enum"].find()))
     db.commit()
 
     # Only grab biosamples associated with studies we are ingesting.
