@@ -203,7 +203,8 @@ class Study(Base, AnnotatedModel):
             d.publication.doi: d.publication.doi_object.info
             for d in self.publication_dois  # type: ignore
         }
-        doi_info[self.doi] = self.doi_info
+        if self.doi:
+            doi_info[self.doi] = self.doi_info
         return doi_info
 
 
