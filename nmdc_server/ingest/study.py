@@ -10,14 +10,13 @@ from sqlalchemy.orm import Session
 from nmdc_server.crud import create_study
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.doi import upsert_doi
+from nmdc_server.ingest.logger import get_logger
 from nmdc_server.models import PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
 
 HERE = Path(__file__).parent
 IMAGES = HERE / "pis"
 
-# For now, we are only ingesting a subset of the studies.
-study_ids = {"gold:Gs0114663", "gold:Gs0135149", "gold:Gs0114675"}
 
 with (HERE / "study_additional.json").open("r") as f:
     study_additional = {f"gold:{d['id']}": d for d in json.load(f)}
@@ -50,9 +49,9 @@ class Study(StudyCreate):
 
 
 def load(db: Session, cursor: Cursor):
+    logger = get_logger(__name__)
+
     for obj in cursor:
-        if obj["id"] not in study_ids:
-            continue
         pi_obj = obj.pop("principal_investigator")
         pi_name = pi_obj["has_raw_value"]
         pi_url = pi_obj.get("profile_image_url")
@@ -65,10 +64,11 @@ def load(db: Session, cursor: Cursor):
             obj["publication_dois"] = a["publication_dois"]
             obj["scientific_objective"] = a["scientific_objective"]
         else:
-            raise Exception(f"not found {obj['id']}")
+            logger.warning(f"additional study data not found for {obj['id']}")
 
-        upsert_doi(db, obj["doi"]["has_raw_value"])
-        for doi in obj["publication_dois"]:
+        if "doi" in obj:
+            upsert_doi(db, obj["doi"]["has_raw_value"])
+        for doi in obj.get("publication_dois", []):
             upsert_doi(db, doi)
 
         create_study(db, Study(**obj))

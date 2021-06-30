@@ -69,11 +69,6 @@ def load(db: Session, function_limit=None):
     # Only grab biosamples associated with studies we are ingesting.
     logger.info("Loading biosamples...")
     cursor = mongodb["biosample_set"].find(
-        {
-            "_study_id": {
-                "$in": list(study.study_ids),
-            },
-        },
         no_cursor_timeout=True,
     )
     biosample.load(
