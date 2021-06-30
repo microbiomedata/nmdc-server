@@ -1,8 +1,10 @@
 import json
 from pathlib import Path
+from typing import Optional
 
 from pydantic import root_validator, validator
 from pymongo.cursor import Cursor
+import requests
 from sqlalchemy.orm import Session
 
 from nmdc_server.crud import create_study
@@ -21,17 +23,18 @@ with (HERE / "study_additional.json").open("r") as f:
     study_additional = {f"gold:{d['id']}": d for d in json.load(f)}
 
 
-def get_or_create_pi(db: Session, name: str) -> str:
+def get_or_create_pi(db: Session, name: str, url: Optional[str]) -> str:
     pi = db.query(PrincipalInvestigator).filter_by(name=name).first()
     if pi:
         return pi.id
 
-    image_name = IMAGES / f"{name}.jpg"
-    if not image_name.exists():
-        raise Exception(f"Unknown PI name {name}")
+    image_data = None
+    if url:
+        r = requests.get(url)
+        if r.ok:
+            image_data = r.content
 
-    with image_name.open("rb") as img:
-        pi = PrincipalInvestigator(name=name, image=img.read())
+    pi = PrincipalInvestigator(name=name, image=image_data)
 
     db.add(pi)
     db.flush()
@@ -50,8 +53,10 @@ def load(db: Session, cursor: Cursor):
     for obj in cursor:
         if obj["id"] not in study_ids:
             continue
-        pi_name = obj.pop("principal_investigator")["has_raw_value"]
-        obj["principal_investigator_id"] = get_or_create_pi(db, pi_name)
+        pi_obj = obj.pop("principal_investigator")
+        pi_name = pi_obj["has_raw_value"]
+        pi_url = pi_obj.get("profile_image_url")
+        obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url)
 
         if obj["id"] in study_additional:
             a = study_additional[obj["id"]]
