@@ -1,6 +1,5 @@
 from datetime import datetime
 import json
-import logging
 import re
 from typing import Any, Dict
 
@@ -12,10 +11,10 @@ from sqlalchemy.orm import Session
 from nmdc_server import models
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.errors import errors
+from nmdc_server.ingest.logger import get_logger
 from nmdc_server.ingest.study import study_ids
 from nmdc_server.schemas import BiosampleCreate
 
-logger = logging.getLogger(__name__)
 date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
 
 
@@ -76,6 +75,7 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
 
 
 def load(db: Session, cursor: Cursor, omics_processing: Collection):
+    logger = get_logger(__name__)
     for obj in cursor:
         try:
             load_biosample(db, obj, omics_processing)

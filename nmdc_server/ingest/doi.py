@@ -1,4 +1,3 @@
-from logging import getLogger
 from typing import Any, Dict
 
 import requests
@@ -7,9 +6,9 @@ from requests.packages.urllib3.util.retry import Retry
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from nmdc_server.ingest.logger import get_logger
 from nmdc_server.models import DOIInfo
 
-logger = getLogger(__name__)
 retry_strategy = Retry(total=10)
 adapter = HTTPAdapter(max_retries=retry_strategy)
 
@@ -25,6 +24,7 @@ def get_doi_info(doi: str) -> Dict[str, Any]:
 
 
 def upsert_doi(db: Session, doi: str):
+    logger = get_logger(__name__)
     # Try really hard to get doi data... the doi.org service is very unreliable.
     try:
         info = get_doi_info(doi)

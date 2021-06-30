@@ -1,4 +1,3 @@
-import logging
 import re
 from typing import Any, cast, Dict, List, Tuple
 from uuid import UUID, uuid4
@@ -12,11 +11,11 @@ from typing_extensions import Protocol
 from nmdc_server import models, schemas
 from nmdc_server.crud import get_or_create
 from nmdc_server.ingest.errors import errors, missing as missing_
+from nmdc_server.ingest.logger import get_logger
 
 DataObjectList = List[str]
 LoadObjectReturn = models.PipelineStep
 ko_regex = re.compile(r"^KEGG\.ORTHOLOGY")
-logger = logging.getLogger(__name__)
 
 
 class LoadObject(Protocol):
@@ -140,6 +139,7 @@ load_metabolomics_analysis = generate_pipeline_loader(
 # This is a generic function for load workflow execution objects.  Some workflow types require
 # custom processing arguments that get passed in as kwargs.
 def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: str, **kwargs):
+    logger = get_logger(__name__)
     remove_timezone_re = re.compile(r"Z\+\d+$", re.I)
 
     for obj in cursor:

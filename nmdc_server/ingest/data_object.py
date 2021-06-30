@@ -1,14 +1,13 @@
-from logging import getLogger
 from typing import Optional
 
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server.data_object_filters import get_local_data_url
+from nmdc_server.ingest.logger import get_logger
 from nmdc_server.models import DataObject
 from nmdc_server.schemas import DataObjectCreate
 
-logger = getLogger(__name__)
 file_type_map = {
     "fastq.gz": "Raw output file",
     "filterStats.txt": "Reads QC summary statistics",
@@ -32,6 +31,7 @@ def derive_file_type(name: str) -> Optional[str]:
 
 
 def load(db: Session, cursor: Cursor):
+    logger = get_logger(__name__)
     fields = set(DataObjectCreate.__fields__.keys())
     for obj_ in cursor:
         obj = {key: obj_[key] for key in obj_.keys() & fields}

@@ -1,4 +1,3 @@
-import logging
 from typing import Any, Dict, Iterator
 
 import click
@@ -8,9 +7,15 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models
 from nmdc_server.config import Settings
-from nmdc_server.ingest import biosample, data_object, envo, omics_processing, pipeline, study
-
-logger = logging.getLogger(__name__)
+from nmdc_server.ingest import (
+    biosample,
+    data_object,
+    envo,
+    omics_processing,
+    pipeline,
+    study,
+)
+from nmdc_server.ingest.logger import get_logger
 
 
 # Custom mongo cursor pagination.  This exists because some of the
@@ -40,6 +45,7 @@ def load(db: Session, function_limit=None):
     celery function (in production).  Watch for warnings during ingest for ignored
     entities due to invalid foreign key references.
     """
+    logger = get_logger(__name__)
     settings = Settings()
     if not (settings.mongo_user and settings.mongo_password):
         raise Exception("Please set NMDC_MONGO_USER and NMDC_MONGO_PASSWORD")
