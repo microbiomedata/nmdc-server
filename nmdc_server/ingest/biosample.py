@@ -12,7 +12,6 @@ from nmdc_server import models
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.errors import errors
 from nmdc_server.ingest.logger import get_logger
-from nmdc_server.ingest.study import study_ids
 from nmdc_server.schemas import BiosampleCreate
 
 date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
@@ -66,9 +65,12 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     omics_processing = omics_processing.find_one({"has_input": obj["id"]})
     if omics_processing is None:
         return
-    obj["study_id"] = omics_processing["part_of"][0]
-    if obj["study_id"] not in study_ids:
-        return
+    part_of = obj.pop("part_of", None)
+    if part_of is None:
+        part_of = omics_processing["part_of"]
+    obj["study_id"] = part_of[0]
+    if isinstance(obj.get("depth"), dict):
+        obj["depth"] = obj["depth"]["has_numeric_value"]
 
     biosample = Biosample(**obj)
     db.add(models.Biosample(**biosample.dict()))

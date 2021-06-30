@@ -166,7 +166,7 @@ class Study(Base, AnnotatedModel):
     gold_name = Column(String, nullable=False, default="")
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
-    doi = Column(String, ForeignKey("doi_info.id"), nullable=False)
+    doi = Column(String, ForeignKey("doi_info.id"), nullable=True)
     multiomics = Column(Integer, nullable=False, default=0)
 
     # These query expressions are a way to inject additional aggregation information

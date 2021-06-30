@@ -11,7 +11,6 @@ from nmdc_server import models
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.errors import errors, missing as missing_
 from nmdc_server.ingest.logger import get_logger
-from nmdc_server.ingest.study import study_ids
 from nmdc_server.schemas import OmicsProcessingCreate
 
 date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
@@ -36,8 +35,6 @@ def load_omics_processing(db: Session, obj: Dict[str, Any]):
     obj["biosample_id"] = obj.pop("has_input", [None])[0]
     data_objects = obj.pop("has_output", [])
     obj["study_id"] = obj.pop("part_of", [None])[0]
-    if obj["study_id"] not in study_ids:
-        return
 
     if obj["biosample_id"] and db.query(models.Biosample).get(obj["biosample_id"]) is None:
         logger.warn(f"Unknown biosample {obj['biosample_id']}")
