@@ -181,11 +181,16 @@ def load(db: Session, function_limit=None):
     db.commit()
 
     # all the data is loaded, so trigger denormalization updates
+    logger.info("Populating mga_gene_functions...")
     models.MGAGeneFunctionAggregation.populate(db)
     db.commit()
 
+    logger.info("Populating metap_gene_functions...")
     models.MetaPGeneFunctionAggregation.populate(db)
     db.commit()
 
+    logger.info("Populating multiomics...")
     models.Biosample.populate_multiomics(db)
     db.commit()
+
+    logger.info("Ingest finished successfully")
