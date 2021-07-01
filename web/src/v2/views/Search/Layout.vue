@@ -79,7 +79,7 @@ export default defineComponent({
       conditions: stateRefs.conditions,
     });
     const study = usePaginatedResults(
-      studySummaryData.otherConditions, api.searchStudy, undefined, 3,
+      studySummaryData.otherConditions, api.searchStudy, undefined, 8,
     );
 
     const loggedInUser = computed(() => typeof stateRefs.user.value === 'string');
