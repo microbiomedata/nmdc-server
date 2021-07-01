@@ -90,31 +90,14 @@ export default defineComponent({
     });
 
     const items = computed(() => flattenDeep(
-      flattenDeep(props.omicsProcessing.map((p) => (
-        /* Uncomment (and wrap with array) to enable raw data objects */
-        /* {
-          name: 'Raw',
-          project_id: p.project_id,
-          outputs: p.outputs,
-        }, */ p.omics_data)))
-        .map((omics_data) => omics_data.outputs.map((data_object, i) => {
-          const object_type = data_object.name
-            .replace(`${omics_data.omics_processing_id}_`, '')
-            .replace(/file/ig, '')
-            .replace(/([ACTG]+-?)+\./, '') /* Raw ACTG-ACTG.fastq.gz */
-            .replace('output: ', '')
-            .replace(/(\d+_?)+\.?/ig, '') /* dddd_dddd */
-            .replace(/(^\s+|\s+$)/g, ''); /* trim whitespace */
-          return {
-            ...data_object,
-            omics_data,
-            /* TODO Hack to replace metagenome with omics type name */
-            group_name: omics_data.name.replace('Metagenome', props.omicsType),
-            newgroup: i === 0,
-            object_type,
-            object_description: descriptionMap[object_type] || '',
-          };
-        })),
+      flattenDeep(props.omicsProcessing.map((p) => (p.omics_data)))
+        .map((omics_data) => omics_data.outputs.map((data_object, i) => ({
+          ...data_object,
+          omics_data,
+          /* TODO Hack to replace metagenome with omics type name */
+          group_name: omics_data.name.replace('Metagenome', props.omicsType),
+          newgroup: i === 0,
+        }))),
     ));
 
     function download(item: OmicsProcessingResult) {
@@ -190,8 +173,8 @@ export default defineComponent({
               <span>This file is included in the currently selected bulk download</span>
             </v-tooltip>
           </td>
-          <td>{{ item.object_type }}</td>
-          <td>{{ item.object_description }}</td>
+          <td>{{ item.file_type || item.name }}</td>
+          <td>{{ item.file_type_description || item.description }}</td>
           <td>{{ humanFileSize(item.file_size_bytes ) }}</td>
           <td>{{ item.downloads }}</td>
           <td>
