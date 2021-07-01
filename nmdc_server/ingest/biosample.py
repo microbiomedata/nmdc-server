@@ -44,6 +44,7 @@ class Biosample(BiosampleCreate):
 
 
 def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):
+    logger = get_logger(__name__)
     invalid = {"has_raw_value": ""}
     env_broad_scale = db.query(models.EnvoTerm).get(
         obj.pop("env_broad_scale", invalid)["has_raw_value"].replace("_", ":")
@@ -63,11 +64,13 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         obj["env_medium_id"] = env_medium.id
 
     omics_processing = omics_processing.find_one({"has_input": obj["id"]})
-    if omics_processing is None:
-        return
     part_of = obj.pop("part_of", None)
     if part_of is None:
+        if omics_processing is None:
+            logger.error(f"Could not determine study for biosample {obj['id']}")
+            return
         part_of = omics_processing["part_of"]
+
     obj["study_id"] = part_of[0]
     if isinstance(obj.get("depth"), dict):
         obj["depth"] = obj["depth"]["has_numeric_value"]
