@@ -70,7 +70,7 @@ def ingest():
     migrate(settings.ingest_database_uri)
 
     with create_session() as db, create_session(prod_engine) as prod_db:
-        with ingest_lock(db):
+        with ingest_lock(prod_db):
             try:
                 # truncate tables
                 for row in db.execute("select truncate_tables()"):
@@ -103,13 +103,12 @@ def populate_gene_functions():
     database._engine = None
     database.ingest = True
     with create_session() as db:
-        with ingest_lock(db):
-            try:
-                models.MGAGeneFunctionAggregation.populate(db)
-                models.MetaPGeneFunctionAggregation.populate(db)
-                db.commit()
-            except Exception:
-                db.rollback()
-                raise
+        try:
+            models.MGAGeneFunctionAggregation.populate(db)
+            models.MetaPGeneFunctionAggregation.populate(db)
+            db.commit()
+        except Exception:
+            db.rollback()
+            raise
     database._engine = None
     database.ingest = False
