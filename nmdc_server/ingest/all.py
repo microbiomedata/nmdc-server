@@ -138,7 +138,7 @@ def load(db: Session, function_limit=None):
                 bar,
                 pipeline.load_mg_annotation,
                 "nmdc:MetagenomeAnnotation",
-                annotations=mongodb["raw.functional_annotation_set"],
+                annotations=mongodb["functional_annotation_set"],
                 function_limit=function_limit,
             )
     except Exception:
