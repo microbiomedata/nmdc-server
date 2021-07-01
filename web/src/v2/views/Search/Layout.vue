@@ -220,9 +220,12 @@ export default defineComponent({
                     Samples
                   </v-card-title>
                   <v-spacer />
-                  <template v-if="loggedInUser">
+                  <template>
                     <div style="width: 70%">
-                      <BulkDownload />
+                      <BulkDownload
+                        :disabled="!loggedInUser"
+                        :search-result-count="biosample.data.results.count"
+                      />
                     </div>
                   </template>
                 </div>

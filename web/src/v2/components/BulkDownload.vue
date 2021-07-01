@@ -1,15 +1,34 @@
 <script lang="ts">
-import { computed, defineComponent } from '@vue/composition-api';
+import { computed, defineComponent, ref } from '@vue/composition-api';
 import { stateRefs, dataObjectFilter } from '@/v2/store';
 // @ts-ignore
 import Treeselect from '@riophae/vue-treeselect';
+import DownloadDialog from '@/v2/components/DownloadDialog.vue';
 import useBulkDownload from '@/v2/use/useBulkDownload';
 import { humanFileSize } from '@/data/utils';
 
 export default defineComponent({
-  components: { Treeselect },
+  props: {
+    disabled: {
+      type: Boolean,
+      default: false,
+    },
+    searchResultCount: {
+      type: Number,
+      default: 0,
+    },
+  },
+
+  components: {
+    DownloadDialog,
+    Treeselect,
+  },
+
   setup() {
+    const termsDialog = ref(false);
+
     const {
+      loading,
       downloadSummary,
       downloadOptions,
       download,
@@ -27,13 +46,16 @@ export default defineComponent({
 
     async function createAndDownload() {
       const val = await download();
+      termsDialog.value = false;
       window.location.assign(val.url);
     }
 
     return {
       bulkDownloadSelected: stateRefs.bulkDownloadSelected,
       options,
+      loading,
       downloadSummary,
+      termsDialog,
       createAndDownload,
       humanFileSize,
     };
@@ -50,11 +72,15 @@ export default defineComponent({
     <span
       class="text-caption font-weight-bold white--text"
     >
-      <template v-if="downloadSummary.count === 0">
+      <template v-if="disabled">
+        Log in with OrcID to use bulk download.
+      </template>
+      <template v-else-if="downloadSummary.count === 0">
         No files selected
       </template>
       <template v-else>
-        Total {{ downloadSummary.count }} files
+        Download {{ downloadSummary.count }} files
+        from {{ searchResultCount }} sample search results.
         (Download archive size {{ humanFileSize(downloadSummary.size) }})
       </template>
     </span>
@@ -90,18 +116,34 @@ export default defineComponent({
         value-consists-of="LEAF_PRIORITY"
         open-direction="below"
         :options="options"
+        :disabled="disabled"
+        :placeholder="disabled ? 'Log in to bulk download' : 'Select file type'"
       />
-      <v-btn
-        class="ml-3"
-        color="white"
-        depressed
-        @click="createAndDownload"
+      <v-dialog
+        v-if="!disabled"
+        v-model="termsDialog"
+        :width="400"
+        :disabled="downloadSummary.count === 0"
       >
-        Download ZIP
-        <v-icon class="pl-3">
-          mdi-download
-        </v-icon>
-      </v-btn>
+        <template #activator="{ on, attrs }">
+          <v-btn
+            class="ml-3"
+            color="white"
+            depressed
+            v-bind="attrs"
+            v-on="on"
+          >
+            Download ZIP
+            <v-icon class="pl-3">
+              mdi-download
+            </v-icon>
+          </v-btn>
+        </template>
+        <DownloadDialog
+          :loading="loading"
+          @clicked="createAndDownload"
+        />
+      </v-dialog>
     </div>
   </v-card>
 </template>

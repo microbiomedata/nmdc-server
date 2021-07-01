@@ -1,11 +1,15 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent, PropType } from '@vue/composition-api';
 
 export default defineComponent({
   props: {
     href: {
-      type: String,
-      required: true,
+      type: Object as PropType<string | undefined>,
+      default: undefined,
+    },
+    loading: {
+      type: Boolean,
+      default: false,
     },
   },
 });
@@ -36,6 +40,7 @@ export default defineComponent({
         color="primary"
         text
         :href="href"
+        :loading="loading"
         target="_blank"
         rel="noopener"
         @click="$emit('clicked')"
