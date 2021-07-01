@@ -174,12 +174,21 @@ export default defineComponent({
         </tr>
         <tr>
           <td>
-            <v-icon
+            <v-tooltip
               v-if="showBulk"
-              :style="{ visibility: item.selected ? 'visible' : 'hidden'}"
+              right
             >
-              mdi-checkbox-marked-circle-outline
-            </v-icon>
+              <template #activator="{on, attrs }">
+                <v-icon
+                  v-bind="attrs"
+                  :style="{ visibility: item.selected ? 'visible' : 'hidden'}"
+                  v-on="on"
+                >
+                  mdi-checkbox-marked-circle-outline
+                </v-icon>
+              </template>
+              <span>This file is included in the currently selected bulk download</span>
+            </v-tooltip>
           </td>
           <td>{{ item.object_type }}</td>
           <td>{{ item.object_description }}</td>
