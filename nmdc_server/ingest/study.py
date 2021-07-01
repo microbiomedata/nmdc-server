@@ -1,5 +1,3 @@
-import json
-from pathlib import Path
 from typing import Optional
 
 from pydantic import root_validator, validator
@@ -10,16 +8,8 @@ from sqlalchemy.orm import Session
 from nmdc_server.crud import create_study
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.doi import upsert_doi
-from nmdc_server.ingest.logger import get_logger
 from nmdc_server.models import PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
-
-HERE = Path(__file__).parent
-IMAGES = HERE / "pis"
-
-
-with (HERE / "study_additional.json").open("r") as f:
-    study_additional = {f"gold:{d['id']}": d for d in json.load(f)}
 
 
 def get_or_create_pi(db: Session, name: str, url: Optional[str]) -> str:
@@ -49,22 +39,15 @@ class Study(StudyCreate):
 
 
 def load(db: Session, cursor: Cursor):
-    logger = get_logger(__name__)
-
     for obj in cursor:
         pi_obj = obj.pop("principal_investigator")
         pi_name = pi_obj["has_raw_value"]
         pi_url = pi_obj.get("profile_image_url")
         obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url)
-
-        if obj["id"] in study_additional:
-            a = study_additional[obj["id"]]
-            obj["name"] = a["proposal_title"]
-            obj["principal_investigator_websites"] = a["principal_investigator_websites"]
-            obj["publication_dois"] = a["publication_dois"]
-            obj["scientific_objective"] = a["scientific_objective"]
-        else:
-            logger.warning(f"additional study data not found for {obj['id']}")
+        obj["principal_investigator_websites"] = obj.pop("websites", [])
+        obj["publication_dois"] = [
+            d.replace("https://doi.org/", "") for d in obj.pop("publications", [])
+        ]
 
         if "doi" in obj:
             upsert_doi(db, obj["doi"]["has_raw_value"])
