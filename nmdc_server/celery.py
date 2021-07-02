@@ -1,9 +1,9 @@
 import logging
 import sys
 
+import sentry_sdk
 from celery import Celery
 from celery.signals import after_setup_logger
-import sentry_sdk
 from sentry_sdk.integrations.celery import CeleryIntegration
 from sentry_sdk.integrations.redis import RedisIntegration
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration

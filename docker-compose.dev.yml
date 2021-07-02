@@ -1,0 +1,6 @@
+version: "3.3"
+services:
+  backend:
+    volumes:
+      - "./nmdc_server:/app/nmdc_server"
+    command: /start-reload.sh

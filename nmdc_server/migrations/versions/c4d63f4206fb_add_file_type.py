@@ -11,7 +11,6 @@ from alembic import op
 
 from nmdc_server.ingest.data_object import file_type_map
 
-
 # revision identifiers, used by Alembic.
 revision: str = "c4d63f4206fb"
 down_revision: Optional[str] = "7f9314e44f22"

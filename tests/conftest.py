@@ -1,7 +1,7 @@
 import os
 
-from factory import random
 import pytest
+from factory import random
 from starlette.requests import Request
 from starlette.testclient import TestClient
 
@@ -9,7 +9,8 @@ from nmdc_server import auth, database
 from nmdc_server.app import create_app
 from nmdc_server.config import settings
 from nmdc_server.database import create_engine
-from nmdc_server.fakes import db as _db, TokenFactory
+from nmdc_server.fakes import TokenFactory
+from nmdc_server.fakes import db as _db
 
 
 @auth.router.post("/test-session", include_in_schema=False)

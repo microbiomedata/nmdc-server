@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Any, cast, Dict, List, Optional, Tuple, Type, TypeVar
+from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from sqlalchemy.orm import Query, Session

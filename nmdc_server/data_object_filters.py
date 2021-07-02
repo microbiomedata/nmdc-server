@@ -1,11 +1,10 @@
-from enum import Enum
 import re
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
 
 from nmdc_server import models
-
 
 # Nginx's mod_zip can only server local files.  To get arround this limitation,
 # we set up local proxies to all remote hosts.

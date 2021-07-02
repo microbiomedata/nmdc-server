@@ -7,11 +7,10 @@ Create Date: 2021-05-16 00:22:03.125760
 """
 from typing import Optional
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 from nmdc_server.database import update_multiomics_sql
-
 
 # revision identifiers, used by Alembic.
 revision: str = "04137e962f0f"

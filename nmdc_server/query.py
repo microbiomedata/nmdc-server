@@ -2,14 +2,14 @@
 This module contains schemas that turn the query DSL into sqlalchemy query objects
 for both search and faceting aggregations.
 """
+import re
 from datetime import datetime
 from enum import Enum
 from itertools import groupby
-import re
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, PositiveInt
-from sqlalchemy import and_, ARRAY, cast, Column, func, inspect, or_
+from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
 from sqlalchemy.orm import Query, Session, with_expression
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement, intersect, union

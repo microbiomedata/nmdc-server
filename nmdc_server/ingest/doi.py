@@ -1,7 +1,8 @@
-from typing import Any, Dict
+import re
 
 import requests
 from requests.adapters import HTTPAdapter
+from requests.models import Response
 from requests.packages.urllib3.util.retry import Retry
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
@@ -13,21 +14,28 @@ retry_strategy = Retry(total=10)
 adapter = HTTPAdapter(max_retries=retry_strategy)
 
 
-def get_doi_info(doi: str) -> Dict[str, Any]:
+def get_doi_info(doi: str) -> Response:
     url = f"https://doi.org/{doi}"
     headers = {
         "Accept": "application/vnd.citationstyles.csl+json",
     }
     http = requests.Session()
     http.mount("https://", adapter)
-    return requests.get(url, headers=headers).json()
+    return requests.get(url, headers=headers)
 
 
 def upsert_doi(db: Session, doi: str):
     logger = get_logger(__name__)
     # Try really hard to get doi data... the doi.org service is very unreliable.
     try:
-        info = get_doi_info(doi)
+        # Search the doi string for an actual DOI, because it might be a URL or something else
+        matched_doi = re.search(r"10.\d{4,9}/[-._;()/:A-Z0-9]+", doi, flags=re.IGNORECASE)
+        if matched_doi is not None:
+            data = get_doi_info(matched_doi.group(0))
+            data.raise_for_status()
+            info = data.json()
+        else:
+            info = {}
     except Exception:
         logger.exception(f"Failed to fetch {doi}")
         # don't add an entry if it already exists

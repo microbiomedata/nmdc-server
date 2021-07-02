@@ -1,7 +1,7 @@
 import typing
 
-from fastapi import FastAPI
 import sentry_sdk
+from fastapi import FastAPI
 from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from starlette.middleware.sessions import SessionMiddleware

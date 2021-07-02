@@ -1,8 +1,8 @@
-from itertools import product
 import json
+from itertools import product
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 from requests.models import Response
 from sqlalchemy.orm.session import Session
 

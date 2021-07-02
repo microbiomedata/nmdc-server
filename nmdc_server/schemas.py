@@ -19,7 +19,6 @@ from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, String
 from nmdc_server import models
 from nmdc_server.data_object_filters import DataObjectFilter, WorkflowActivityTypeEnum
 
-
 DateType = Union[datetime, date]
 
 # The order in the this union is significant... it will coerce

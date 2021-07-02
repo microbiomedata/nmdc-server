@@ -9,7 +9,6 @@ from typing import Optional
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = "ef834f950de9"
 down_revision: Optional[str] = "430126297535"

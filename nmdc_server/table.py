@@ -10,7 +10,6 @@ from sqlalchemy.orm.util import AliasedClass
 
 from nmdc_server import models
 
-
 EnvBroadScaleAncestor = aliased(models.EnvoAncestor)
 EnvBroadScaleTerm = aliased(models.EnvoTerm)
 EnvLocalScaleAncestor = aliased(models.EnvoAncestor)
