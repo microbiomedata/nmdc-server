@@ -8,9 +8,8 @@ Create Date: 2021-06-30 16:56:11.573187
 """
 from typing import Optional
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "531c633b5d0b"

@@ -10,7 +10,6 @@ from starlette.responses import RedirectResponse
 
 from nmdc_server.config import settings, starlette_config
 
-
 # A list of orcids with "admin" access to the server.  At some point, we
 # may want to add a user table with associated roles to handle this.
 _admin_users = {

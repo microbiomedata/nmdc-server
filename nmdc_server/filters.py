@@ -18,7 +18,7 @@ between all tables represented in `table.py`.  In practice, there is a lot of
 duplicated logic that is shared in subclasses in this module.  Also, many
 combinations of tables are never used and are thus unimplemented.
 """
-from typing import Iterable, List, Type, TYPE_CHECKING
+from typing import TYPE_CHECKING, Iterable, List, Type
 
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Query, Session

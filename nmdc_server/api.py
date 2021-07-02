@@ -10,11 +10,11 @@ from starlette.responses import RedirectResponse, StreamingResponse
 
 from nmdc_server import crud, jobs, query, schemas
 from nmdc_server.auth import (
+    Token,
     admin_required,
     get_current_user,
     login_required,
     login_required_responses,
-    Token,
 )
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import Settings, settings
@@ -22,7 +22,6 @@ from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import create_session
 from nmdc_server.models import IngestLock
 from nmdc_server.pagination import Pagination
-
 
 router = APIRouter()
 

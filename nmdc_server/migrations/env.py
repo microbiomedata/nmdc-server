@@ -1,12 +1,10 @@
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import engine_from_config
-from sqlalchemy import pool
+from sqlalchemy import engine_from_config, pool
 
 from nmdc_server import models  # noqa
 from nmdc_server.database import metadata
-
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

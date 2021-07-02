@@ -1,14 +1,15 @@
 from typing import Optional
 
 import requests
+from pydantic import root_validator, validator
+from pymongo.cursor import Cursor
+from sqlalchemy.orm import Session
+
 from nmdc_server.crud import create_study
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.doi import upsert_doi
 from nmdc_server.models import PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
-from pydantic import root_validator, validator
-from pymongo.cursor import Cursor
-from sqlalchemy.orm import Session
 
 
 def get_or_create_pi(db: Session, name: str, url: Optional[str]) -> str:

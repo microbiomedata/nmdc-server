@@ -1,14 +1,14 @@
 import re
-from typing import Any, Dict
 
 import requests
-from nmdc_server.ingest.logger import get_logger
-from nmdc_server.models import DOIInfo
 from requests.adapters import HTTPAdapter
 from requests.models import Response
 from requests.packages.urllib3.util.retry import Retry
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
+
+from nmdc_server.ingest.logger import get_logger
+from nmdc_server.models import DOIInfo
 
 retry_strategy = Retry(total=10)
 adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -30,9 +30,12 @@ def upsert_doi(db: Session, doi: str):
     try:
         # Search the doi string for an actual DOI, because it might be a URL or something else
         matched_doi = re.search(r"10.\d{4,9}/[-._;()/:A-Z0-9]+", doi, flags=re.IGNORECASE)
-        data = get_doi_info(matched_doi.group(0))
-        data.raise_for_status()
-        info = data.json()
+        if matched_doi is not None:
+            data = get_doi_info(matched_doi.group(0))
+            data.raise_for_status()
+            info = data.json()
+        else:
+            info = {}
     except Exception:
         logger.exception(f"Failed to fetch {doi}")
         # don't add an entry if it already exists

@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Dict, Optional
 from uuid import UUID, uuid4
 
-from factory import Factory, Faker, lazy_attribute, post_generation, SubFactory
+from factory import Factory, Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
 from sqlalchemy.orm.scoping import scoped_session

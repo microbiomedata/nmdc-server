@@ -1,7 +1,7 @@
+import json
 from contextlib import contextmanager
 from datetime import datetime
 from enum import Enum
-import json
 from typing import Any, Iterator, Optional
 
 from sqlalchemy import create_engine as _create_engine
@@ -13,7 +13,6 @@ from sqlalchemy.schema import DDL, MetaData
 
 from nmdc_server.config import settings
 from nmdc_server.multiomics import MultiomicsValue
-
 
 _engine: Optional[Engine] = None
 SessionLocal = sessionmaker(autocommit=False, autoflush=False)

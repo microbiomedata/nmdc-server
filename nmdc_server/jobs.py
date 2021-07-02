@@ -12,7 +12,6 @@ from nmdc_server.database import create_engine, create_session, metadata
 from nmdc_server.ingest.all import load
 from nmdc_server.ingest.lock import ingest_lock
 
-
 HERE = Path(__file__).parent
 
 

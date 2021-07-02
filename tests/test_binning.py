@@ -1,7 +1,7 @@
 from datetime import datetime
 
-from fastapi.testclient import TestClient
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
 from nmdc_server import fakes, query

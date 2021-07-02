@@ -7,8 +7,8 @@ Create Date: 2021-05-24 12:05:09.339415
 """
 from typing import Optional
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 from nmdc_server.database import update_multiomics_sql
 

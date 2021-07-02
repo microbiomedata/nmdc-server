@@ -1,4 +1,4 @@
-from logging import getLogger, Logger
+from logging import Logger, getLogger
 
 from celery import current_task
 from celery.utils.log import get_task_logger

@@ -3,7 +3,7 @@ from enum import Enum
 from math import floor
 from typing import List, TypeVar
 
-from dateutil.relativedelta import relativedelta, SU
+from dateutil.relativedelta import SU, relativedelta
 
 BinnableValue = TypeVar("BinnableValue", float, int, datetime)
 

@@ -20,7 +20,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
-from sqlalchemy.orm import backref, query_expression, relationship, Session
+from sqlalchemy.orm import Session, backref, query_expression, relationship
 from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base, update_multiomics_sql
