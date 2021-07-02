@@ -13,7 +13,7 @@ from nmdc_server.config import settings, starlette_config
 # A list of orcids with "admin" access to the server.  At some point, we
 # may want to add a user table with associated roles to handle this.
 _admin_users = {
-    "0000-0001-6717-226X",  # Jonathan Beezley
+    "0000-0002-0716-5890",  # Brandon Davis
 }
 
 # The type is added to get around an error related to:
