@@ -51,9 +51,9 @@
             </v-col>
           </v-row>
         </v-container>
-        <div class="headline">
+        <!-- <div class="headline">
           {{ item.name }}
-        </div>
+        </div> -->
         <div class="mt-3">
           <span class="font-weight-bold">Scientific objective: </span>
           {{ item.scientific_objective }}
@@ -116,6 +116,7 @@
     </v-row>
   </v-container>
 </template>
+
 <script>
 import Vue from 'vue';
 import { isObject } from 'lodash';
