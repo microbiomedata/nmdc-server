@@ -6,7 +6,7 @@ import {
 import SearchResults from '@/components/Presentation/SearchResults.vue';
 import { types } from '@/encoding';
 import { fieldDisplayName } from '@/util';
-import { api } from '@/data/api';
+import { api, Condition } from '@/data/api';
 
 import { stateRefs, toggleConditions, dataObjectFilter } from '@/v2/store';
 import useFacetSummaryData from '@/v2/use/useFacetSummaryData';
@@ -40,13 +40,22 @@ export default defineComponent({
         .filter((c) => c.table === 'study' && c.field === 'study_id')
         .map((c) => c.value)
     ));
-    function setChecked(studyId: string) {
-      toggleConditions([{
+    function setChecked(studyId: string, omicsType: string = '') {
+      const conditions: Condition[] = [{
         value: studyId,
         table: 'study',
         op: '==',
         field: 'study_id',
-      }]);
+      }];
+      if (omicsType) {
+        conditions.push({
+          value: omicsType,
+          table: 'omics_processing',
+          field: 'omics_type',
+          op: '==',
+        });
+      }
+      toggleConditions(conditions);
     }
 
     /**
@@ -145,6 +154,7 @@ export default defineComponent({
             </v-tabs>
             <v-tabs-items
               v-model="vistab"
+              class="my-3"
             >
               <v-tab-item key="omics">
                 <BiosampleVisGroup :conditions="gatedOmicsVisConditions" />
@@ -193,7 +203,7 @@ export default defineComponent({
                   </v-list-item-action>
                 </template>
                 <template #item-content="props">
-                  <div>
+                  <div v-if="props.result.omics_processing_counts">
                     <template
                       v-for="item in props.result.omics_processing_counts"
                     >
@@ -202,10 +212,20 @@ export default defineComponent({
                         :key="item.type"
                         small
                         class="mr-2 my-1"
+                        @click="setChecked(props.result.id, item.type)"
                       >
                         {{ fieldDisplayName(item.type) }}: {{ item.count }}
                       </v-chip>
                     </template>
+                  </div>
+                  <div v-else>
+                    <v-chip
+                      small
+                      disabled
+                      class="my-1"
+                    >
+                      Omics data coming soon
+                    </v-chip>
                   </div>
                 </template>
               </SearchResults>

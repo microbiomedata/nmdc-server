@@ -41,10 +41,16 @@ export default function usePaginatedResult(
   }
 
   watch([
-    conditions,
-    toRef(data, 'offset'),
     toRef(data, 'limit'),
+    toRef(data, 'offset'),
   ], fetchResults);
+  watch([conditions], () => {
+    const doFetch = data.offset === 0;
+    data.offset = 0;
+    data.limit = limit;
+    if (doFetch) fetchResults();
+  });
+
   if (dataObjectFilter !== undefined) {
     watch(dataObjectFilter, fetchResults, { deep: true });
   }

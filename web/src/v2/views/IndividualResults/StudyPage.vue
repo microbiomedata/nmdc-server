@@ -108,7 +108,7 @@ export default defineComponent({
         <v-col>
           <IndividualTitle :item="item">
             <template #default>
-              <div>
+              <div v-if="item.omics_processing_counts">
                 <template
                   v-for="item in item.omics_processing_counts"
                 >
@@ -121,6 +121,15 @@ export default defineComponent({
                     {{ fieldDisplayName(item.type) }}: {{ item.count }}
                   </v-chip>
                 </template>
+              </div>
+              <div v-else>
+                <v-chip
+                  small
+                  disabled
+                  class="my-1"
+                >
+                  Omics data coming soon
+                </v-chip>
               </div>
             </template>
           </IndividualTitle>
