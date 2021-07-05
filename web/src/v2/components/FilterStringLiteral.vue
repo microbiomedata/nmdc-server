@@ -130,19 +130,3 @@ export default defineComponent({
     </v-data-table>
   </div>
 </template>
-
-<style lang="scss">
-.match-list-table {
-  .v-data-table {
-    table {
-      table-layout: fixed;
-    }
-
-    td {
-      white-space: nowrap;
-      text-overflow: ellipsis;
-      overflow: hidden;
-    }
-  }
-}
-</style>

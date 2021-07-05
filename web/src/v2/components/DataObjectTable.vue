@@ -98,7 +98,7 @@ export default defineComponent({
           group_name: omics_data.name.replace('Metagenome', props.omicsType),
           newgroup: i === 0,
         }))),
-    ));
+    ).filter((data) => data.file_type && data.file_type_description));
 
     function download(item: OmicsProcessingResult) {
       if (typeof item.url === 'string') {
@@ -173,8 +173,8 @@ export default defineComponent({
               <span>This file is included in the currently selected bulk download</span>
             </v-tooltip>
           </td>
-          <td>{{ item.file_type || item.name }}</td>
-          <td>{{ item.file_type_description || item.description }}</td>
+          <td>{{ item.file_type }}</td>
+          <td>{{ item.file_type_description }}</td>
           <td>{{ humanFileSize(item.file_size_bytes ) }}</td>
           <td>{{ item.downloads }}</td>
           <td>
