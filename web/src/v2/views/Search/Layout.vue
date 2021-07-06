@@ -90,6 +90,10 @@ export default defineComponent({
     const study = usePaginatedResults(
       studySummaryData.otherConditions, api.searchStudy, undefined, 8,
     );
+    const studyResults = computed(() => Object.values(study.data.results.results).map((r) => ({
+      ...r,
+      name: r.annotations.title || r.name,
+    })));
 
     const loggedInUser = computed(() => typeof stateRefs.user.value === 'string');
 
@@ -113,6 +117,7 @@ export default defineComponent({
       loggedInUser,
       studyType,
       study,
+      studyResults,
       studyCheckboxState,
       types,
       vistab,
@@ -174,7 +179,7 @@ export default defineComponent({
                 :count="study.data.results.count"
                 :icon="studyType.icon"
                 :items-per-page="study.data.limit"
-                :results="study.data.results.results"
+                :results="studyResults"
                 :page="study.data.pageSync"
                 :loading="study.loading.value"
                 @set-page="study.setPage($event)"

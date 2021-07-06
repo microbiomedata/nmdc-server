@@ -35,7 +35,7 @@ export default defineComponent({
       </v-col>
       <v-col class="grow">
         <div class="headline">
-          {{ item.name }}
+          {{ item.annotations.title || item.name }}
         </div>
         <div
           v-if="item[subtitleKey]"
