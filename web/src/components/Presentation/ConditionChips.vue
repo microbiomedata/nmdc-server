@@ -30,7 +30,7 @@ export default Vue.extend({
           key: parsed.field + parsed.table,
           field: parsed.field,
           table: parsed.table,
-          conditions: conditions.sort((a, b) => a.value.localeCompare(b.value)),
+          conditions,
         };
       }).sort((a, b) => a.key.localeCompare(b));
     },
