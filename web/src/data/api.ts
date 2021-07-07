@@ -172,16 +172,12 @@ export interface FacetSummaryResponse {
   count: number;
 }
 
-interface EnvironmentGeospatialEntity {
+export interface EnvironmentGeospatialEntity {
   count: number;
   ecosystem: string;
   ecosystem_category: string;
   latitude: number;
   longitude: number;
-}
-
-export interface EnvironmentGeospatialResponse {
-  [index: number]: EnvironmentGeospatialEntity;
 }
 
 interface EnvironmentSankeyEntity {
@@ -434,8 +430,8 @@ async function getDatabaseStats() {
 
 async function getEnvironmentGeospatialAggregation(
   conditions: Condition[],
-): Promise<EnvironmentGeospatialResponse> {
-  const { data } = await client.post<EnvironmentGeospatialResponse>(
+): Promise<EnvironmentGeospatialEntity[]> {
+  const { data } = await client.post<EnvironmentGeospatialEntity[]>(
     'environment/geospatial', {
       conditions,
     },
