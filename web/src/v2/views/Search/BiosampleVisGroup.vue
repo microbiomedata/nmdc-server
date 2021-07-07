@@ -3,7 +3,7 @@ import { defineComponent } from '@vue/composition-api';
 import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
-import LocationMap from '@/components/Presentation/LocationMap.vue';
+
 import UpSet from '@/components/Presentation/UpSet.vue';
 import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 // TODO: replace with composition functions
@@ -11,6 +11,7 @@ import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
 import BinnedSummaryWrapper from '@/components/BinnedSummaryWrapper.vue';
 // ENDTODO
 import TooltipCard from '@/v2/components/TooltipCard.vue';
+import ClusterMap from '@/v2/components/ClusterMap.vue';
 
 import {
   toggleConditions, removeConditions, setUniqueCondition,
@@ -65,7 +66,7 @@ export default defineComponent({
     ChartContainer,
     DateHistogram,
     FacetBarChart,
-    LocationMap,
+    ClusterMap,
     EcosystemSankey,
     TooltipCard,
     // TODO replace with composition functions
@@ -74,6 +75,10 @@ export default defineComponent({
     UpSet,
   },
   setup() {
+    function setBoundsFromMap(val) {
+      setUniqueCondition('latitude', 'biosample', [val[0]]);
+      setUniqueCondition('longitude', 'biosample', [val[1]]);
+    }
     return {
       helpBarchart,
       helpMap,
@@ -82,6 +87,7 @@ export default defineComponent({
       toggleConditions,
       setUniqueCondition,
       removeConditions,
+      setBoundsFromMap,
       staticUpsetTooltips,
     };
   },
@@ -147,7 +153,7 @@ export default defineComponent({
 <template>
   <div>
     <v-row>
-      <v-col :cols="4">
+      <v-col :cols="6">
         <TooltipCard :text="helpBarchart">
           <FacetSummaryWrapper
             table="omics_processing"
@@ -169,15 +175,15 @@ export default defineComponent({
           </FacetSummaryWrapper>
         </TooltipCard>
       </v-col>
-      <v-col :cols="8">
+      <v-col :cols="6">
         <TooltipCard
           :text="helpMap"
           class="pa-1"
         >
-          <LocationMap
-            type="biosample"
+          <ClusterMap
             :conditions="conditions"
-            @selected="toggleConditions($event.conditions)"
+            :height="360"
+            @selected="setBoundsFromMap($event)"
           />
         </TooltipCard>
       </v-col>
