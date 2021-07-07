@@ -142,6 +142,7 @@ export default defineComponent({
       :style="{
         height: `${height}px`,
         width: '100%',
+        zIndex: 1,
       }"
       @update:bounds="updateBounds"
     >
