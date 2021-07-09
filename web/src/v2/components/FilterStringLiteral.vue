@@ -49,6 +49,9 @@ export default defineComponent({
     ];
 
     function addTerm() {
+      if (searchTerm.value === '') {
+        return;
+      }
       const encode = getField(props.field, props.table)?.encode;
       const newConditions = [...conditions.value, {
         op: '==',
@@ -58,6 +61,12 @@ export default defineComponent({
       }];
       searchTerm.value = '';
       emit('select', { conditions: newConditions });
+    }
+
+    function keyDown(event: KeyboardEvent) {
+      if (event.key === 'Enter') {
+        addTerm();
+      }
     }
 
     function removeTerm(term: string) {
@@ -75,6 +84,7 @@ export default defineComponent({
       myConditions,
       searchTerm,
       addTerm,
+      keyDown,
       removeTerm,
     };
   },
@@ -87,6 +97,7 @@ export default defineComponent({
       no-gutters
       class="my-3"
     >
+      <slot name="subtitle" />
       <v-text-field
         v-model="searchTerm"
         solo
@@ -97,6 +108,7 @@ export default defineComponent({
         hide-details
         outlined
         flat
+        @keypress="keyDown"
       />
       <v-btn
         fab

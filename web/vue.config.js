@@ -8,7 +8,7 @@ module.exports = {
       warnings: true,
       errors: true,
     },
-    proxy: 'https://data.microbiomedata.org',
+    proxy: 'http://localhost:8000',
   },
   chainWebpack: (config) => {
     // https://webpack.js.org/configuration/output/#outputstrictmoduleexceptionhandling

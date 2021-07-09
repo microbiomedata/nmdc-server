@@ -50,11 +50,13 @@ function setConditions(conditions: Condition[]) {
  * For each condition, remove all others with a similar table & field.
  */
 function setUniqueCondition(
-  field: string,
-  table: string,
+  field: string[],
+  table: string[],
   conditions: Condition[],
 ) {
-  const others = state.conditions.filter((c) => (c.field !== field) || (c.table !== table));
+  const others = state.conditions.filter((c) => (
+    !field.includes(c.field)) || (!table.includes(c.table)
+  ));
   setConditions([
     ...conditions,
     ...others,

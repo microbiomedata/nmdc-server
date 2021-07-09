@@ -113,7 +113,6 @@ export default Vue.extend({
         dense
         flat
         outlined
-        :rules="[val => val >= min && val <= max]"
       />
       <template v-if="selectedOption === 'between'">
         <span class="px-4">and</span>
@@ -125,7 +124,6 @@ export default Vue.extend({
           dense
           flat
           outlined
-          :rules="[val => val >= min && val <= max]"
         />
       </template>
     </div>
