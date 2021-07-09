@@ -10,7 +10,8 @@ import {
   typeWithCardinality, valueCardinality, fieldDisplayName,
 } from '@/util';
 import { api, StudySearchResults } from '@/data/api';
-
+import { setUniqueCondition } from '@/v2/store';
+import { useRouter } from '@/v2/use/useRouter';
 import AttributeList from '@/v2/components/AttributeList.vue';
 import IndividualTitle from '@/v2/views/IndividualResults/IndividualTitle.vue';
 
@@ -71,17 +72,39 @@ export default defineComponent({
       });
     }
 
+    const router = useRouter();
+
+    function setChecked(omicsType: string = '') {
+      setUniqueCondition(
+        ['study_id', 'omics_type'],
+        ['study', 'omics_processing'], [{
+          value: props.id,
+          table: 'study',
+          op: '==',
+          field: 'study_id',
+        }, {
+          value: omicsType,
+          table: 'omics_processing',
+          field: 'omics_type',
+          op: '==',
+        }],
+      );
+      /* @ts-ignore */
+      router.go(-1);
+    }
+
     watch(item, async (_item) => {
       const publicationDoiInfo = _item?.publication_doi_info;
       if (publicationDoiInfo) {
         data.doiCitation = null;
         data.publications = [];
         const unformattedPublications = Object.values(publicationDoiInfo);
+
         [data.doiCitation] = unformattedPublications
-          .filter((c) => c.type === 'dataset')
+          .filter((c) => c.type === 'dataset' && c.type)
           .map((c) => formatAPA(new Cite(c)));
-        [...data.publications] = unformattedPublications
-          .filter((c) => c.type !== 'dataset')
+        data.publications = unformattedPublications
+          .filter((c) => c.type !== 'dataset' && c.type)
           .map((c) => formatAPA(new Cite(c)));
       }
     });
@@ -91,6 +114,7 @@ export default defineComponent({
       item,
       displayFields,
       /* Methods */
+      setChecked,
       relatedTypeDescription,
       openLink,
       formatAPA,
@@ -117,6 +141,7 @@ export default defineComponent({
                     :key="item.type"
                     small
                     class="mr-2 my-1"
+                    @click="setChecked(item.type)"
                   >
                     {{ fieldDisplayName(item.type) }}: {{ item.count }}
                   </v-chip>
@@ -186,7 +211,9 @@ export default defineComponent({
           <v-list class="transparent">
             <v-divider />
             <v-list-item>
-              <v-list-item-content v-text="data.doiCitation" />
+              <v-list-item-content
+                v-text="data.doiCitation || item.doi"
+              />
               <v-list-item-action>
                 <v-tooltip top>
                   <template v-slot:activator="{ on }">

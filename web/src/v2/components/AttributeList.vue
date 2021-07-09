@@ -30,11 +30,23 @@ export default defineComponent({
       return ret;
     });
 
+    function href(field: string) {
+      if (field.startsWith('open_in_')) {
+        return props.item[field];
+      }
+      const value = props.item[field] as string;
+      if (typeof value === 'string' && value.startsWith('http')) {
+        return props.item[field];
+      }
+      return undefined;
+    }
+
     return {
       // computed
       displayFields,
       // methods
       getField,
+      href,
       fieldDisplayName,
       valueDisplayName,
     };
@@ -54,7 +66,7 @@ export default defineComponent({
         >
           <v-list-item
             :key="field"
-            :href="field.startsWith('open_in_') ? item[field] : undefined"
+            :href="href(field)"
             target="_blank"
           >
             <v-list-item-avatar>

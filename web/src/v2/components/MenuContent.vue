@@ -64,6 +64,11 @@ export default Vue.extend({
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-card-title>
+    <v-card-text
+      v-if="getField(field, table).description"
+    >
+      {{ getField(field, table).description }}
+    </v-card-text>
     <filter-list
       v-if="summary.type === 'string' && isOpen"
       :field="field"

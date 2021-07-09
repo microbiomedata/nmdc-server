@@ -76,8 +76,7 @@ export default defineComponent({
   },
   setup() {
     function setBoundsFromMap(val) {
-      setUniqueCondition('latitude', 'biosample', [val[0]]);
-      setUniqueCondition('longitude', 'biosample', [val[1]]);
+      setUniqueCondition(['latitude', 'longitude'], ['biosample'], val);
     }
     return {
       helpBarchart,
