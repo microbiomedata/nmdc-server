@@ -3,13 +3,12 @@ import CompositionPlugin from '@vue/composition-api';
 import VueGtag from 'vue-gtag';
 import { init as SentryInit } from '@sentry/vue';
 import { Integrations } from '@sentry/tracing';
-import { sync } from 'vuex-router-sync';
 import AsyncComputed from 'vue-async-computed';
 
 import router from '@/plugins/router';
-import store from '@/plugins/store';
 import { loadCurrentUser } from '@/v2/store';
 import vuetify from '@/plugins/vuetify';
+import { provideRouter } from '@/v2/use/useRouter';
 
 import App from './App.vue';
 
@@ -35,13 +34,13 @@ if (process.env.NODE_ENV === 'production') {
 
 Vue.config.productionTip = false;
 
-sync(store, router);
-
 loadCurrentUser();
 
 new Vue({
   router,
-  store,
   vuetify,
   render: (h) => h(App),
+  setup() {
+    provideRouter(router);
+  },
 }).$mount('#app');

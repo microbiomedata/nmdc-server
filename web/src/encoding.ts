@@ -14,6 +14,7 @@ export interface FieldsData {
   hideFacet?: boolean;
   sortKey?: number;
   name?: string;
+  description?: string;
   group?: string;
   hideAttr?: boolean;
   encode?: (input: string) => string,
@@ -104,6 +105,7 @@ const fields: Record<string, FieldsData> = {
   },
   location: {
     icon: 'mdi-earth',
+    hideFacet: true,
   },
   latitude: {
     icon: 'mdi-earth',
@@ -130,8 +132,10 @@ const fields: Record<string, FieldsData> = {
   },
   sample_collection_site: {
     icon: 'mdi-earth',
+    hideFacet: true,
   },
-  geographic_location: {
+  geo_loc_name: {
+    name: 'Geographic Location Name',
     icon: 'mdi-earth',
   },
   add_date: {
@@ -149,9 +153,11 @@ const fields: Record<string, FieldsData> = {
   },
   habitat: {
     icon: 'mdi-pine-tree',
+    hideFacet: true,
   },
   community: {
     icon: 'mdi-google-circles-communities',
+    hideFacet: true,
   },
   principal_investigator_name: {
     name: 'PI Name',
@@ -231,6 +237,9 @@ const fields: Record<string, FieldsData> = {
   name: {
     hideFacet: true,
   },
+  ncbi_taxonomy_name: {
+    hideFacet: true,
+  },
   ncbi_project_name: {
     hideFacet: true,
   },
@@ -252,6 +261,9 @@ const fields: Record<string, FieldsData> = {
   'Organic Matter Characterization': {
     name: 'Organic Matter',
   },
+  multiomics: {
+    hideAttr: true,
+  },
 };
 
 /**
@@ -264,6 +276,7 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
       icon: 'mdi-dna',
       group: 'Function',
       name: 'KO term',
+      description: 'Kegg Orthology search filters results to samples that have at least one of the chosen KO terms.',
       encode: (v: string) => {
         const prefix = 'KEGG.ORTHOLOGY';
         let encoded = v.replace('KO', prefix);
