@@ -43,6 +43,8 @@ export default defineComponent({
       left: 30,
     };
 
+    console.log(root.$vuetify.theme.currentTheme.primary);
+
     function makeHistogram(data, el) {
       const width = props.width - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
@@ -96,17 +98,26 @@ export default defineComponent({
       enterSelection.append('rect')
         .attr('class', 'bar')
         .attr('x', 1)
-        .attr('color', root.$vuetify.theme.currentTheme.primary)
+        .attr('fill', root.$vuetify.theme.currentTheme.primary)
         .attr('transform', (d) => 'translate('.concat(x(d.x0), ',', y(d.length), ')'))
-        .attr('width', (d) => x(d.x1) - x(d.x0) - 3)
+        .attr('width', (d) => {
+          const w = x(d.x1) - x(d.x0);
+          const padding = w * 0.1;
+          return w - padding;
+        })
         .attr('height', (d) => ((d.length > 0) ? (height - y(d.length) + 1) : 0));
-      enterSelection
-        .filter((d) => d.length > 0)
-        .append('text')
-        .attr('x', 1)
-        .attr('transform', (d) => `translate(${x(d.x0)}, ${y(d.length) - 4})`)
-        .attr('font-size', '10px')
-        .html((d) => d.length);
+
+      const domain = x.domain();
+      const millisecondsPerYear = 3.154 * (10 ** 10);
+      if (domain[1] - domain[0] < (millisecondsPerYear * 4)) {
+        enterSelection
+          .filter((d) => d.length > 0)
+          .append('text')
+          .attr('x', 1)
+          .attr('transform', (d) => `translate(${x(d.x0)}, ${y(d.length) - 4})`)
+          .attr('font-size', '10px')
+          .html((d) => d.length);
+      }
 
       // add the x Axis
       svg
@@ -138,6 +149,10 @@ export default defineComponent({
 </template>
 
 <style scoped>
+.bar {
+  color: purple;
+}
+
 .histogram rect {
   transition: all 0.2s;
 }
