@@ -43,8 +43,6 @@ export default defineComponent({
       left: 30,
     };
 
-    console.log(root.$vuetify.theme.currentTheme.primary);
-
     function makeHistogram(data, el) {
       const width = props.width - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
