@@ -19,8 +19,8 @@ import {
 import { api } from '@/data/api';
 
 const helpBarchart = 'Displays the number of samples for each data type available. Click on a bar to filter by data type.';
-const helpMap = 'Displays geographical location (latitude, longitude) and sample size (as indicated by the size of the point). Click on a point to filter by a group of samples.';
-const helpTimeline = 'Scroll the slider to narrow in on a sample collection date range.';
+const helpMap = 'Displays geographical location (latitude, longitude) of sample collection sites. Click on a cluster to zoom in.  Click "Search this regon" to limit search to the current map bounds.';
+const helpTimeline = 'Displays sample collections grouped by collection month. Scroll the slider to narrow in on a sample collection date range.';
 const helpUpset = 'This upset plot shows the number of samples with corresponding omic data associated. For example: there are 43 samples from 1 study that have metagenomics, metatranscriptomics, and natural organic matter characterizations.';
 
 const staticUpsetTooltips = {
