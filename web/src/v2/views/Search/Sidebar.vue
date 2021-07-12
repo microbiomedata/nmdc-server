@@ -38,32 +38,7 @@ const FunctionSearchFacets: SearchFacet[] = [
   },
   /** Biosample */
   {
-    field: 'location',
-    table: 'biosample',
-    group: 'Sample',
-  },
-  {
-    field: 'community',
-    table: 'biosample',
-    group: 'Sample',
-  },
-  {
     field: 'geo_loc_name',
-    table: 'biosample',
-    group: 'Sample',
-  },
-  {
-    field: 'sample_collection_site',
-    table: 'biosample',
-    group: 'Sample',
-  },
-  {
-    field: 'habitat',
-    table: 'biosample',
-    group: 'Sample',
-  },
-  {
-    field: 'ncbi_taxonomy_name',
     table: 'biosample',
     group: 'Sample',
   },
