@@ -8,63 +8,64 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        image: [server, client, worker]
     steps:
-      - name: Checkout code
+      -
+        name: Checkout code
         uses: actions/checkout@v2
-
-      - name: Build and push server
-        uses: docker/build-push-action@v1
-        if: ${{ matrix.image == 'server' }}
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v1
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+#
+# SERVER
+#
+      -
+        name: Build and push server
+        uses: docker/build-push-action@v2
+        with:
           repository: jbeezley/nmdc-server
           tags: latest
-
-      - name: Deploy server
+      -
+        name: Deploy server
         uses: fjogeleit/http-request-action@v1.3.3
-        if: ${{ matrix.image == 'server' }}
         with:
           url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:backend?action=redeploy'
           method: 'POST'
           username: ${{ secrets.SPIN_USER }}
           password: ${{ secrets.SPIN_PASSWORD }}
-
-      - name: Build and push client
-        uses: docker/build-push-action@v1
-        if: ${{ matrix.image == 'client' }}
+#
+# CLIENT
+#
+      -
+        name: Build and push client
+        uses: docker/build-push-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
           repository: jbeezley/nmdc-client
           tags: latest
-          path: web
-
-      - name: Deploy client
+          context: web
+      -
+        name: Deploy client
         uses: fjogeleit/http-request-action@v1.3.3
-        if: ${{ matrix.image == 'client' }}
         with:
           url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:frontend?action=redeploy'
           method: 'POST'
           username: ${{ secrets.SPIN_USER }}
           password: ${{ secrets.SPIN_PASSWORD }}
-
-      - name: Build and push worker
-        uses: docker/build-push-action@v1
-        if: ${{ matrix.image == 'worker' }}
+#
+# WORKER
+#
+      -
+        name: Build and push worker
+        uses: docker/build-push-action@v2
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
           repository: jbeezley/nmdc-worker
           tags: latest
-          dockerfile: ./Dockerfile.worker
-
-      - name: Deploy worker
+          file: ./Dockerfile.worker
+      - 
+        name: Deploy worker
         uses: fjogeleit/http-request-action@v1.3.3
-        if: ${{ matrix.image == 'worker' }}
         with:
           url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:worker?action=redeploy'
           method: 'POST'
