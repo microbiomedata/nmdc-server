@@ -6,12 +6,12 @@ import * as encoding from '@/encoding';
 import { Condition, entityType } from '@/data/api';
 
 const groupOrders = [
-  'function',
+  'study',
+  'sample',
   'gold ecosystems',
   'envo',
-  'sample',
-  'study',
   'omics processing',
+  'function',
 ];
 
 export interface SearchFacet {

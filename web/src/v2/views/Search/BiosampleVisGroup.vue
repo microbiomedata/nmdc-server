@@ -152,7 +152,7 @@ export default defineComponent({
 <template>
   <div>
     <v-row>
-      <v-col :cols="6">
+      <v-col :cols="5">
         <TooltipCard :text="helpBarchart">
           <FacetSummaryWrapper
             table="omics_processing"
@@ -174,7 +174,7 @@ export default defineComponent({
           </FacetSummaryWrapper>
         </TooltipCard>
       </v-col>
-      <v-col :cols="6">
+      <v-col :cols="7">
         <TooltipCard
           :text="helpMap"
           class="pa-1"

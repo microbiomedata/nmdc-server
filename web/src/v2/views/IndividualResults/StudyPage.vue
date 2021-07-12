@@ -15,6 +15,13 @@ import { useRouter } from '@/v2/use/useRouter';
 import AttributeList from '@/v2/components/AttributeList.vue';
 import IndividualTitle from '@/v2/views/IndividualResults/IndividualTitle.vue';
 
+/**
+ * Override citations for certain DOIs
+ */
+const CitationOverrides = {
+  'https://doi.org/10.46936/10.25585/60000017': 'Doktycz, M. (2020) BioScales - Defining plant gene function and its connection to ecosystem nitrogen and carbon cycling [Data set]. DOE Joint Genome Institute. https://doi.org/10.46936/10.25585/60000017',
+};
+
 export default defineComponent({
   props: {
     id: {
@@ -110,6 +117,7 @@ export default defineComponent({
     });
 
     return {
+      CitationOverrides,
       data,
       item,
       displayFields,
@@ -133,9 +141,7 @@ export default defineComponent({
           <IndividualTitle :item="item">
             <template #default>
               <div v-if="item.omics_processing_counts">
-                <template
-                  v-for="item in item.omics_processing_counts"
-                >
+                <template v-for="item in item.omics_processing_counts">
                   <v-chip
                     v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
                     :key="item.type"
@@ -165,14 +171,10 @@ export default defineComponent({
               offset="1"
             >
               <v-avatar :size="200">
-                <v-img
-                  :src="item.principal_investigator_image_url"
-                />
+                <v-img :src="item.principal_investigator_image_url" />
               </v-avatar>
             </v-col>
-            <v-col
-              class="grow"
-            >
+            <v-col class="grow">
               <v-row
                 align="center"
                 justify="start"
@@ -212,7 +214,7 @@ export default defineComponent({
             <v-divider />
             <v-list-item>
               <v-list-item-content
-                v-text="data.doiCitation || item.doi"
+                v-text="data.doiCitation || CitationOverrides[item.doi] || item.doi"
               />
               <v-list-item-action>
                 <v-tooltip top>
@@ -234,16 +236,10 @@ export default defineComponent({
             Other publications
           </v-subheader>
           <v-list class="transparent">
-            <template
-              v-for="(pub, pubIndex) in data.publications"
-            >
+            <template v-for="(pub, pubIndex) in data.publications">
               <v-divider :key="`${pubIndex}-divider`" />
-              <v-list-item
-                :key="pubIndex"
-              >
-                <v-list-item-content
-                  v-text="pub"
-                />
+              <v-list-item :key="pubIndex">
+                <v-list-item-content v-text="pub" />
                 <v-list-item-action>
                   <v-tooltip top>
                     <template v-slot:activator="{ on }">

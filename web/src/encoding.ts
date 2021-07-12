@@ -98,6 +98,7 @@ const fields: Record<string, FieldsData> = {
   omics_processing_id: {
     icon: 'mdi-key-link',
     hideFacet: true,
+    sortKey: 0,
   },
   git_url: {
     icon: 'mdi-git',
@@ -110,10 +111,12 @@ const fields: Record<string, FieldsData> = {
   latitude: {
     icon: 'mdi-earth',
     hideFacet: false,
+    sortKey: 1,
   },
   longitude: {
     icon: 'mdi-earth',
     hideFacet: false,
+    sortKey: 2,
   },
   identifier: {
     icon: 'mdi-text',
@@ -129,6 +132,7 @@ const fields: Record<string, FieldsData> = {
   },
   depth: {
     icon: 'mdi-tape-measure',
+    sortKey: 0,
   },
   sample_collection_site: {
     icon: 'mdi-earth',
@@ -137,6 +141,7 @@ const fields: Record<string, FieldsData> = {
   geo_loc_name: {
     name: 'Geographic Location Name',
     icon: 'mdi-earth',
+    sortKey: 3,
   },
   add_date: {
     icon: 'mdi-calendar',
