@@ -3,7 +3,23 @@ name: Server
 on: [push]
 
 jobs:
-  build:
+
+  client:
+    defaults:
+      run:
+        working-directory: web
+    name: Client Tests
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-node@v1
+      with:
+        node-version: '14.x'
+    - run: yarn install --frozen-lockfile --network-timeout 300000
+    - run: yarn lint
+    - run: yarn build
+
+  server:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 4
