@@ -26,7 +26,7 @@ jobs:
         name: Build and push server
         uses: docker/build-push-action@v2
         with:
-          tags: microbiomedata/nmdc-server/server:latest
+          tags: ghcr.io/microbiomedata/nmdc-server/server:latest
           push: true
       # -
       #   name: Deploy server
@@ -43,7 +43,7 @@ jobs:
         name: Build and push client
         uses: docker/build-push-action@v2
         with:
-          tags: microbiomedata/nmdc-server/client:latest
+          tags: ghcr.io/microbiomedata/nmdc-server/client:latest
           context: web
           push: true
       # -
@@ -61,7 +61,7 @@ jobs:
         name: Build and push worker
         uses: docker/build-push-action@v2
         with:
-          tags: microbiomedata/nmdc-server/worker:latest
+          tags: ghcr.io/microbiomedata/nmdc-server/worker:latest
           file: ./Dockerfile.worker
           push: true
       # - 

@@ -65,6 +65,8 @@ RUN yarn run build
 
 
 FROM nginx:mainline-alpine as production-stage
+LABEL org.opencontainers.image.source=https://github.com/microbiomedata/nmdc-server
+
 ENV ENABLED_MODULES=modzip
 COPY --from=nginx_builder /tmp/packages /tmp/packages
 RUN set -ex \
