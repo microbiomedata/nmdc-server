@@ -3,7 +3,7 @@ name: deploy
 on: 
   push:
     branches:
-      - master
+      - main
 
 jobs:
   build:
@@ -25,16 +25,16 @@ jobs:
         name: Build and push server
         uses: docker/build-push-action@v2
         with:
-          repository: jbeezley/nmdc-server
+          repository: kitware/nmdc-server
           tags: latest
-      -
-        name: Deploy server
-        uses: fjogeleit/http-request-action@v1.3.3
-        with:
-          url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:backend?action=redeploy'
-          method: 'POST'
-          username: ${{ secrets.SPIN_USER }}
-          password: ${{ secrets.SPIN_PASSWORD }}
+      # -
+      #   name: Deploy server
+      #   uses: fjogeleit/http-request-action@v1.3.3
+      #   with:
+      #     url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:backend?action=redeploy'
+      #     method: 'POST'
+      #     username: ${{ secrets.SPIN_USER }}
+      #     password: ${{ secrets.SPIN_PASSWORD }}
 #
 # CLIENT
 #
@@ -42,17 +42,17 @@ jobs:
         name: Build and push client
         uses: docker/build-push-action@v2
         with:
-          repository: jbeezley/nmdc-client
+          repository: kitware/nmdc-client
           tags: latest
           context: web
-      -
-        name: Deploy client
-        uses: fjogeleit/http-request-action@v1.3.3
-        with:
-          url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:frontend?action=redeploy'
-          method: 'POST'
-          username: ${{ secrets.SPIN_USER }}
-          password: ${{ secrets.SPIN_PASSWORD }}
+      # -
+      #   name: Deploy client
+      #   uses: fjogeleit/http-request-action@v1.3.3
+      #   with:
+      #     url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:frontend?action=redeploy'
+      #     method: 'POST'
+      #     username: ${{ secrets.SPIN_USER }}
+      #     password: ${{ secrets.SPIN_PASSWORD }}
 #
 # WORKER
 #
@@ -60,14 +60,14 @@ jobs:
         name: Build and push worker
         uses: docker/build-push-action@v2
         with:
-          repository: jbeezley/nmdc-worker
+          repository: kitware/nmdc-worker
           tags: latest
           file: ./Dockerfile.worker
-      - 
-        name: Deploy worker
-        uses: fjogeleit/http-request-action@v1.3.3
-        with:
-          url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:worker?action=redeploy'
-          method: 'POST'
-          username: ${{ secrets.SPIN_USER }}
-          password: ${{ secrets.SPIN_PASSWORD }}
+      # - 
+      #   name: Deploy worker
+      #   uses: fjogeleit/http-request-action@v1.3.3
+      #   with:
+      #     url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:worker?action=redeploy'
+      #     method: 'POST'
+      #     username: ${{ secrets.SPIN_USER }}
+      #     password: ${{ secrets.SPIN_PASSWORD }}

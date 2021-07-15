@@ -14,7 +14,7 @@ Ingest into the staging database
 
 Execute the `POST /api/jobs/ingest` endpoint through the [swagger docs](https://data.microbiomedata.org/docs#/jobs/run_ingest_api_jobs_ingest_post).
 This endpoint requires being logged in and having a whitelisted ORCiD.  To add new users to the whitelist, see the code block in
-[`auth.py`](https://github.com/microbiomedata/nmdc-server/blob/master/nmdc_server/auth.py#L14-L18).
+[`auth.py`](https://github.com/microbiomedata/nmdc-server/blob/main/nmdc_server/auth.py#L14-L18).
 
 This job will take several hours to complete.  You should verify it completed successfully by looking at the logs
 in [the worker](https://rancher2.spin.nersc.gov/p/c-fwj56:p-nlxq2/workload/deployment:nmdc-dev:worker) before moving
