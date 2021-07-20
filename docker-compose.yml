@@ -27,6 +27,7 @@ services:
       - POSTGRES_DB=nmdc
 
   worker:
+    image: ghcr.io/microbiomedata/nmdc-server/worker:latest
     depends_on:
       - redis
       - db
@@ -39,6 +40,7 @@ services:
       dockerfile: Dockerfile.worker
 
   backend:
+    image: ghcr.io/microbiomedata/nmdc-server/server:latest
     depends_on:
       - db
       - redis
@@ -57,6 +59,7 @@ services:
       - "8000:8000"
 
   web:
+    image: ghcr.io/microbiomedata/nmdc-server/client:latest
     depends_on: 
       - backend
       - data
