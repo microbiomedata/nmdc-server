@@ -53,6 +53,7 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         read_based_analysis=aggregations.get_table_summary(db, models.ReadBasedAnalysis),
         nom_analysis=aggregations.get_table_summary(db, models.NOMAnalysis),
         metabolomics_analysis=aggregations.get_table_summary(db, models.MetabolomicsAnalysis),
+        metatranscriptome=aggregations.get_table_summary(db, models.Metatranscriptome),
         gene_function=gene_function,
     )
 

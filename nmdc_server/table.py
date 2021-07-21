@@ -31,6 +31,7 @@ class Table(Enum):
     nom_analysis = "nom_analysis"
     read_based_analysis = "read_based_analysis"
     metabolomics_analysis = "metabolomics_analysis"
+    metatranscriptome = "metatranscriptome"
     gene_function = "gene_function"
     metap_gene_function = "metap_gene_function"
     data_object = "data_object"
@@ -56,6 +57,7 @@ DataObjectMetaproteomicAnalysis = aliased(models.DataObject)
 DataObjectMagsAnalysis = aliased(models.DataObject)
 DataObjectReadBasedAnalysis = aliased(models.DataObject)
 DataObjectMetabolomicsAnalysis = aliased(models.DataObject)
+DataObjectMetatranscriptome = aliased(models.Metatranscriptome)
 
 
 _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
@@ -69,6 +71,7 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.mags_analysis: models.MAGsAnalysis,
     Table.nom_analysis: models.NOMAnalysis,
     Table.read_based_analysis: models.ReadBasedAnalysis,
+    Table.metatranscriptome: models.Metatranscriptome,
     Table.metabolomics_analysis: models.MetabolomicsAnalysis,
     Table.gene_function: models.GeneFunction,
     Table.metap_gene_function: MetaPGeneFunction,
@@ -88,4 +91,5 @@ workflow_execution_tables = {
     Table.nom_analysis,
     Table.read_based_analysis,
     Table.metabolomics_analysis,
+    Table.metatranscriptome,
 }

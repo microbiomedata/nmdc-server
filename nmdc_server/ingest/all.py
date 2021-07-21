@@ -47,6 +47,7 @@ def load(db: Session, function_limit=None):
         host=settings.mongo_host, username=settings.mongo_user, password=settings.mongo_password
     )
     mongodb = client[settings.mongo_database]
+
     logger.info("Loading envo terms...")
     envo.load(db)
     db.commit()
@@ -92,6 +93,14 @@ def load(db: Session, function_limit=None):
         "nmdc:ReadbasedAnalysis",
     )
     db.commit()
+
+    logger.info("Loading metatranscriptome activities...")
+    pipeline.load(
+        db,
+        mongodb["metatranscriptome_activity_set"].find(),
+        pipeline.load_metatranscriptome,
+        "nmdc:metaT",
+    )
 
     logger.info("Loading NOM analysis...")
     pipeline.load(

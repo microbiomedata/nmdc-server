@@ -135,6 +135,9 @@ load_read_based_analysis = generate_pipeline_loader(
 load_metabolomics_analysis = generate_pipeline_loader(
     schemas.MetabolomicsAnalysisBase, models.MetabolomicsAnalysis
 )
+load_metatranscriptome = generate_pipeline_loader(
+    schemas.MetatranscriptomeBase, models.Metatranscriptome
+)
 
 
 # This is a generic function for load workflow execution objects.  Some workflow types require
