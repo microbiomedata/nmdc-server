@@ -60,7 +60,7 @@ services:
 
   web:
     image: ghcr.io/microbiomedata/nmdc-server/client:latest
-    depends_on: 
+    depends_on:
       - backend
       - data
     env_file:
