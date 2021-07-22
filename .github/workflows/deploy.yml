@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+  release:
+      types: [published]
 
 jobs:
   build:
@@ -31,12 +33,12 @@ jobs:
         uses: docker/build-push-action@v2
         if: ${{ matrix.image == 'server' }}
         with:
-          tags: ghcr.io/microbiomedata/nmdc-server/server:latest
+          tags: ${{ format('ghcr.io/microbiomedata/nmdc-server/server:{0}', (github.event.release.tag_name || 'latest') }}
           push: true
       -
         name: Deploy server
         uses: fjogeleit/http-request-action@v1.3.3
-        if: ${{ matrix.image == 'server' }}
+        if: ${{ matrix.image == 'server' && github.event_name == 'push' }}
         with:
           url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:backend?action=redeploy'
           method: 'POST'
@@ -50,13 +52,13 @@ jobs:
         uses: docker/build-push-action@v2
         if: ${{ matrix.image == 'client' }}
         with:
-          tags: ghcr.io/microbiomedata/nmdc-server/client:latest
+          tags: ${{ format('ghcr.io/microbiomedata/nmdc-server/client:{0}', github.event.release.tag_name || 'latest') }}
           context: web
           push: true
       -
         name: Deploy client
         uses: fjogeleit/http-request-action@v1.3.3
-        if: ${{ matrix.image == 'client' }}
+        if: ${{ matrix.image == 'client' && github.event_name == 'push' }}
         with:
           url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:frontend?action=redeploy'
           method: 'POST'
@@ -70,13 +72,13 @@ jobs:
         uses: docker/build-push-action@v2
         if: ${{ matrix.image == 'worker' }}
         with:
-          tags: ghcr.io/microbiomedata/nmdc-server/worker:latest
+          tags: ${{ format('ghcr.io/microbiomedata/nmdc-server/worker:{0}', github.event.release.tag_name || 'latest') }}
           file: ./Dockerfile.worker
           push: true
       - 
         name: Deploy worker
         uses: fjogeleit/http-request-action@v1.3.3
-        if: ${{ matrix.image == 'worker' }}
+        if: ${{ matrix.image == 'worker' && github.event_name == 'push' }}
         with:
           url: 'https://rancher2.spin.nersc.gov/v3/project/c-fwj56:p-nlxq2/workloads/deployment:nmdc-dev:worker?action=redeploy'
           method: 'POST'
