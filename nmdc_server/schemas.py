@@ -530,6 +530,14 @@ class ReadBasedAnalysis(PipelineStep):
     pass
 
 
+class MetatranscriptomeBase(PipelineStepBase):
+    type: str = "nmdc:metaT"
+
+
+class Metatranscriptome(PipelineStep):
+    pass
+
+
 class MetabolomicsAnalysisBase(PipelineStepBase):
     type: str = "nmdc:MetabolomicsAnalysis"
     used: str
@@ -549,6 +557,7 @@ OmicsTypes = Union[
     NOMAnalysis,
     ReadBasedAnalysis,
     MetabolomicsAnalysis,
+    Metatranscriptome,
 ]
 OmicsProcessing.update_forward_refs()
 Biosample.update_forward_refs()

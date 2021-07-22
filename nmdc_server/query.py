@@ -648,6 +648,12 @@ class ReadsQCQuerySchema(BaseQuerySchema):
         return Table.reads_qc
 
 
+class MetatranscriptomeQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metatranscriptome
+
+
 class MetagenomeAssemblyQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
@@ -814,4 +820,5 @@ workflow_search_classes = [
     ReadBasedAnalysisQuerySchema,
     NOMAnalysisQuerySchema,
     MetabolomicsAnalysisQuerySchema,
+    MetatranscriptomeQuerySchema,
 ]

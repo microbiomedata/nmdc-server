@@ -520,6 +520,17 @@ class ReadBasedAnalysis(Base, PipelineStep):
     outputs = output_relationship(read_based_analysis_output_association)
 
 
+metatranscriptome_input_association = input_association("metatranscriptome")
+metatranscriptome_output_association = output_association("metatranscriptome")
+
+
+class Metatranscriptome(Base, PipelineStep):
+    __tablename__ = "metatranscriptome"
+
+    inputs = input_relationship(metatranscriptome_input_association)
+    outputs = output_relationship(metatranscriptome_output_association)
+
+
 metabolomics_analysis_input_association = input_association("metabolomics_analysis")
 metabolomics_analysis_output_association = output_association("metabolomics_analysis")
 
@@ -627,6 +638,7 @@ ModelType = Union[
     Type[ReadBasedAnalysis],
     Type[NOMAnalysis],
     Type[MetabolomicsAnalysis],
+    Type[Metatranscriptome],
     Type[GeneFunction],
     Type[Base],
 ]
@@ -640,6 +652,7 @@ workflow_activity_types = [
     ReadBasedAnalysis,
     NOMAnalysis,
     MetabolomicsAnalysis,
+    Metatranscriptome,
 ]
 
 
