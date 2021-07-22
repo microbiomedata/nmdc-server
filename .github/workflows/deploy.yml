@@ -33,7 +33,7 @@ jobs:
         uses: docker/build-push-action@v2
         if: ${{ matrix.image == 'server' }}
         with:
-          tags: ${{ format('ghcr.io/microbiomedata/nmdc-server/server:{0}', (github.event.release.tag_name || 'latest') }}
+          tags: ${{ format('ghcr.io/microbiomedata/nmdc-server/server:{0}', github.event.release.tag_name || 'latest') }}
           push: true
       -
         name: Deploy server
