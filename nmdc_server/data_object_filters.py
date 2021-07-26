@@ -35,6 +35,7 @@ class WorkflowActivityTypeEnum(Enum):
     nom_analysis = "nmdc:NomAnalysisActivity"
     metabolomics_analysis = "nmdc:MetabolomicsAnalysisActivity"
     raw_data = "nmdc:RawData"
+    metatranscriptome = "nmdc:metaT"
 
     @property
     def model(self):
@@ -55,6 +56,7 @@ _workflow_enum_to_model = {
     WorkflowActivityTypeEnum.nom_analysis: models.NOMAnalysis,
     WorkflowActivityTypeEnum.metabolomics_analysis: models.MetabolomicsAnalysis,
     WorkflowActivityTypeEnum.raw_data: models.OmicsProcessing,
+    WorkflowActivityTypeEnum.metatranscriptome: models.Metatranscriptome,
 }
 
 _mpa = WorkflowActivityTypeEnum.metaproteomic_analysis
@@ -69,6 +71,7 @@ _workflow_enum_to_output_association = {
     WorkflowActivityTypeEnum.nom_analysis: models.nom_analysis_output_association,
     WorkflowActivityTypeEnum.metabolomics_analysis: models.metabolomics_analysis_output_association,
     WorkflowActivityTypeEnum.raw_data: models.omics_processing_output_association,
+    WorkflowActivityTypeEnum.metatranscriptome: models.metabolomics_analysis_output_association,
 }
 
 
