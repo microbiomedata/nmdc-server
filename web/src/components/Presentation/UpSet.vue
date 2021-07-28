@@ -37,6 +37,8 @@ export default defineComponent({
       left: 30,
     };
 
+    const setOrder = ['MG', 'MT', 'MP', 'MB', 'NOM'];
+
     function makeUpSet(dataOrig, order, el) {
       const width = props.width - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
@@ -45,7 +47,7 @@ export default defineComponent({
 
       const uniqueSets = Array.from(
         new Set([].concat(...data.map((d) => d.sets))),
-      ).sort();
+      ).sort((a, b) => setOrder.indexOf(a) - setOrder.indexOf(b));
       const uniqueCounts = Array.from(
         new Set([].concat(...data.map((d) => Object.keys(d.counts)))),
       );

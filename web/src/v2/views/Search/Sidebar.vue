@@ -57,6 +57,11 @@ const FunctionSearchFacets: SearchFacet[] = [
     table: 'biosample',
     group: 'Sample',
   },
+  {
+    field: 'collection_date',
+    table: 'biosample',
+    group: 'Sample',
+  },
   /** Study */
   {
     field: 'principal_investigator_name',
