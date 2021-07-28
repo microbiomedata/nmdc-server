@@ -2,7 +2,7 @@ import logging
 
 import click
 
-from nmdc_server import database, jobs
+from nmdc_server import jobs
 from nmdc_server.config import Settings
 from nmdc_server.database import create_session
 from nmdc_server.ingest import errors
@@ -10,23 +10,20 @@ from nmdc_server.ingest.all import load
 
 
 @click.group()
-@click.option("--testing/--no-testing", help="Use the testing database")
 @click.pass_context
-def cli(ctx, testing):
-    database.testing = testing
+def cli(ctx):
     settings = Settings()
-    ctx.obj = {
-        "testing": testing,
-        "settings": settings,
-        "database_uri": settings.testing_database_uri if testing else settings.database_uri,
-    }
+    if settings.environment == "testing":
+        settings.database_uri = settings.testing_database_uri
+
+    ctx.obj = {"settings": settings}
 
 
 @cli.command()
 @click.pass_obj
 def migrate(obj):
     """Upgrade the database schema."""
-    jobs.migrate(obj["database_uri"])
+    jobs.migrate(obj["settings"].database_uri)
 
 
 @cli.command()
@@ -34,8 +31,7 @@ def truncate():
     """Remove all existing data."""
     with create_session() as db:
         try:
-            for row in db.execute("select truncate_tables()"):
-                pass
+            db.execute("select truncate_tables()").all()
             db.commit()
         except Exception:
             db.rollback()
@@ -65,11 +61,9 @@ def ingest(verbose, function_limit):
     elif verbose > 1:
         level = logging.DEBUG
     logger = logging.getLogger()
-    logging.basicConfig(
-        level=level,
-        format="%(message)s",
-    )
+    logging.basicConfig(level=level, format="%(message)s")
     logger.setLevel(logging.INFO)
+
     with create_session() as db:
         load(db, function_limit=function_limit)
 

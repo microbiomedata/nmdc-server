@@ -24,20 +24,14 @@ async def create_test_session(request: Request) -> auth.Token:
 
 
 @pytest.fixture(autouse=True)
-def testing_environment():
-    settings.environment = "testing"
-    return settings
-
-
-@pytest.fixture(autouse=True)
 def set_seed(connection):
     random.reseed_random("nmdc")
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="session")
 def connection():
-    database.testing = True
-    engine = create_engine()
+    assert settings.environment == "testing"
+    engine = create_engine(uri=settings.testing_database_uri)
     database.metadata.bind = engine
     _db.configure(bind=engine)
     try:
@@ -48,7 +42,6 @@ def connection():
         _db.rollback()
         database.metadata.drop_all()
         _db.remove()
-        database.testing = False
 
 
 @pytest.fixture
