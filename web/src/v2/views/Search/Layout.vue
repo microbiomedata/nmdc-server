@@ -171,7 +171,8 @@ export default defineComponent({
 
             <v-card outlined>
               <v-card-title class="pb-0">
-                Studies
+                {{ study.data.results.count }}
+                {{ study.data.results.count === 1 ? 'Study' : 'Studies' }}
               </v-card-title>
               <SearchResults
                 disable-pagination
@@ -242,7 +243,8 @@ export default defineComponent({
               <div class="ma-3">
                 <div class="d-flex align-center">
                   <v-card-title class="grow py-0">
-                    Samples
+                    {{ biosample.data.results.count }}
+                    {{ biosample.data.results.count === 1 ? 'Sample' : 'Samples' }}
                   </v-card-title>
                   <v-spacer />
                   <template>

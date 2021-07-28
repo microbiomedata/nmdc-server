@@ -146,11 +146,13 @@ const fields: Record<string, FieldsData> = {
   add_date: {
     icon: 'mdi-calendar',
     hideFacet: true,
+    hideAttr: true,
   },
   mod_date: {
     icon: 'mdi-calendar',
     name: 'Modification Date',
     hideFacet: true,
+    hideAttr: true,
   },
   ecosystem_path_id: {
     icon: 'mdi-pine-tree',
