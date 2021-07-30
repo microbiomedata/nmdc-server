@@ -8,7 +8,7 @@ from enum import Enum
 from itertools import groupby
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
-from pydantic import BaseModel, PositiveInt
+from pydantic import BaseModel, PositiveInt, conlist
 from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
 from sqlalchemy.orm import Query, Session, with_expression
 from sqlalchemy.orm.util import AliasedClass
@@ -99,7 +99,7 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
 
 
 NumericValue = Union[float, int, datetime]
-RangeValue = Tuple[schemas.AnnotationValue, schemas.AnnotationValue]
+RangeValue = conlist(schemas.AnnotationValue, min_items=2, max_items=2)
 
 
 class GoldTreeValue(BaseModel):
