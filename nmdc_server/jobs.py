@@ -25,8 +25,8 @@ def migrate(database_uri):
 
     This function will also create the schema if necessary.
     """
-    with create_session() as db:
-        engine = db.bind
+    engine = create_engine(database_uri)
+    with create_session(engine=engine) as db:
         alembic_cfg = Config(str(HERE / "alembic.ini"))
         alembic_cfg.set_main_option("script_location", str(HERE / "migrations"))
         alembic_cfg.set_main_option("sqlalchemy.url", database_uri)
