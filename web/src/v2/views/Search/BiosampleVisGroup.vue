@@ -39,17 +39,17 @@ function makeSetsFromBitmask(mask_str) {
   if (1 & mask) {
     sets.push('NOM');
   }
-  if ((1 << 1) & mask) {
-    sets.push('MT');
+  if ((1 << 4) & mask) {
+    sets.push('MB');
   }
   if ((1 << 2) & mask) {
     sets.push('MP');
   }
+  if ((1 << 1) & mask) {
+    sets.push('MT');
+  }
   if ((1 << 3) & mask) {
     sets.push('MG');
-  }
-  if ((1 << 4) & mask) {
-    sets.push('MB');
   }
   return sets;
 }
@@ -226,8 +226,28 @@ export default defineComponent({
               />
             </template>
           </ChartContainer>
+          <div
+            class="mx-5 upset-legend"
+          >
+            <span>MG: metagenomics</span>
+            <span>MT: metatranscriptomics</span>
+            <span>MP: metaproteomics</span>
+            <span>MB: metabolomics</span>
+            <span>NOM: natural organic matter</span>
+          </div>
         </TooltipCard>
       </v-col>
     </v-row>
   </div>
 </template>
+
+<style scoped>
+.upset-legend {
+  line-height: 0.9em;
+}
+.upset-legend > span {
+  font-size: 10px;
+  padding: 0 4px;
+  white-space: nowrap;
+}
+</style>

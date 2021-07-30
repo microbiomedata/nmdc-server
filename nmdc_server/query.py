@@ -8,13 +8,13 @@ from enum import Enum
 from itertools import groupby
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
-from pydantic import BaseModel, PositiveInt
+from pydantic import BaseModel, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
 from sqlalchemy.orm import Query, Session, with_expression
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement, intersect, union
 from sqlalchemy.sql.selectable import CTE
-from typing_extensions import Literal
+from typing_extensions import Annotated, Literal
 
 from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
@@ -99,7 +99,7 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
 
 
 NumericValue = Union[float, int, datetime]
-RangeValue = Tuple[schemas.AnnotationValue, schemas.AnnotationValue]
+RangeValue = Annotated[List[schemas.AnnotationValue], Field(min_items=2, max_items=2)]
 
 
 class GoldTreeValue(BaseModel):
