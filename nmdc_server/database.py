@@ -1,3 +1,4 @@
+import functools
 import json
 from contextlib import contextmanager
 from datetime import datetime
@@ -14,7 +15,6 @@ from sqlalchemy.schema import DDL, MetaData
 from nmdc_server.config import settings
 from nmdc_server.multiomics import MultiomicsValue
 
-_engine: Optional[Engine] = None
 SessionLocal = sessionmaker(autocommit=False, autoflush=False)
 
 # This is to avoid having to manually name all constraints
@@ -181,13 +181,6 @@ where m.id = study.id;
 """
 )
 
-#: This variable configures whether or not we are connecting to the testing
-#  database or not.  This isn't really ideal, but I can't find a way to shim
-#  the configuration into fastapi dependencies more cleanly in a way that also
-#  supports factory-boy's scoped sessions.
-testing = False
-ingest = False
-
 
 def json_serializer(data: Any) -> str:
     def default_(val: Any) -> str:
@@ -200,30 +193,18 @@ def json_serializer(data: Any) -> str:
     return json.dumps(data, default=default_)
 
 
-def create_engine() -> Engine:
-    global _engine
-
-    if testing or _engine is None:
-        uri = settings.database_uri
-        if testing:
-            uri = settings.testing_database_uri
-        elif ingest:
-            uri = settings.ingest_database_uri
-
-        _engine = _create_engine(uri, json_serializer=json_serializer)
-
-    return _engine
+@functools.lru_cache(maxsize=None)
+def create_engine(uri: str) -> Engine:
+    return _create_engine(uri, json_serializer=json_serializer)
 
 
 @contextmanager
-def create_session(engine=None) -> Iterator[Session]:
+def create_session(engine: Optional[Engine] = None) -> Iterator[Session]:
     if engine is None:
-        engine = create_engine()
+        engine = create_engine(uri=settings.current_db_uri)
+
     SessionLocal.configure(bind=engine)
     metadata.bind = engine
 
-    try:
-        db = SessionLocal()
+    with SessionLocal() as db:
         yield db
-    finally:
-        db.close()

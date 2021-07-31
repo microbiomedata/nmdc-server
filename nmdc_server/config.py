@@ -12,8 +12,8 @@ class Settings(BaseSettings):
     # environments.  In production, only database_uri and ingest_database_uri
     # are used.
     database_uri: str = "postgresql:///nmdc"
-    testing_database_uri: str = "postgresql:///nmdc_testing"
     ingest_database_uri: str = "postgresql:///nmdc_testing"
+    testing_database_uri: str = "postgresql:///nmdc_testing"
 
     # for orcid oauth
     secret_key: str = "secret"
@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     celery_broker: str = "redis://redis:6379/0"
 
     sentry_dsn: Optional[str] = None
+
+    @property
+    def current_db_uri(self) -> str:
+        if self.environment == "testing":
+            return self.testing_database_uri
+        return self.database_uri
 
     class Config:
         env_prefix = "nmdc_"
