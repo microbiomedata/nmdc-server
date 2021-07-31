@@ -14,6 +14,7 @@ from nmdc_server.config import settings, starlette_config
 # may want to add a user table with associated roles to handle this.
 _admin_users = {
     "0000-0002-0716-5890",  # Brandon Davis
+    "0000-0002-0553-6731",  # Zach Mullen
 }
 
 # The type is added to get around an error related to:
