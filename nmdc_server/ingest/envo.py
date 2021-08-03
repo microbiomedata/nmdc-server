@@ -1,12 +1,13 @@
 import functools
 import json
 from collections import defaultdict
-from typing import Dict, Set
+from typing import Dict, List, Optional, Set
 from urllib import request
 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from nmdc_server.database import create_session
 from nmdc_server.models import EnvoAncestor, EnvoTerm, EnvoTree
 
 envo_url = "http://purl.obolibrary.org/obo/envo/subsets/envo-basic.json"
@@ -78,7 +79,7 @@ def build_envo_tree(db: Session) -> None:
     """
     db.execute(f"truncate table {EnvoTree.__tablename__}")
 
-    # "ecosystem", "geographic feature", "environmental material"
+    # ["ecosystem", "geographic feature", "environmental material"]
     envo_roots = ["ENVO:01000254", "ENVO:00000000", "ENVO:00010483"]
     for root in envo_roots:
         statement = insert(EnvoTree.__table__).values(
@@ -92,12 +93,30 @@ def build_envo_tree(db: Session) -> None:
         _build_envo_subtree(db, root)
 
     db.commit()
+    nested_envo_tree.cache_clear()
+
+
+def _nested_envo_subtree(tree_map: dict, parent_id: Optional[str] = None) -> List[dict]:
+    return [
+        {
+            "parent_id": parent_id,
+            "id": node[0],
+            "label": node[1],
+            "children": _nested_envo_subtree(tree_map, node[0]),
+        }
+        for node in tree_map[parent_id]
+    ]
 
 
 @functools.lru_cache(maxsize=None)
-def nested_envo_tree() -> dict:
-    # TODO stub
-    pass
+def nested_envo_tree() -> List[dict]:
+    tree_map = defaultdict(list)
+    with create_session() as session:
+        query = session.query(EnvoTerm, EnvoTree).filter(EnvoTerm.id == EnvoTree.id)
+        for term, edge in query:
+            tree_map[edge.parent_id].append((edge.id, term.label))
+
+    return _nested_envo_subtree(tree_map)
 
 
 def load(db: Session):
