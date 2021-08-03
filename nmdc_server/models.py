@@ -758,3 +758,10 @@ class BulkDownloadDataObject(Base):
     data_object = relationship(
         DataObject, lazy="joined", cascade="all", backref="bulk_download_entities"
     )
+
+
+class EnvoTree(Base):
+    __tablename__ = "envo_tree"
+
+    id = Column(String, primary_key=True)
+    parent_id = Column(String, index=True)
