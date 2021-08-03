@@ -1,6 +1,7 @@
 import functools
 import json
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Dict, List, Optional, Set
 from urllib import request
 
@@ -9,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from nmdc_server.database import create_session
 from nmdc_server.models import EnvoAncestor, EnvoTerm, EnvoTree
+from nmdc_server.schemas import EnvoTreeNode
 
 envo_url = "http://purl.obolibrary.org/obo/envo/subsets/envo-basic.json"
 
@@ -70,9 +72,9 @@ def _build_envo_subtree(db: Session, parent_id: str) -> None:
         _build_envo_subtree(db, node.id)
 
 
-def build_envo_tree(db: Session) -> None:
+def build_envo_trees(db: Session) -> None:
     """
-    Convert the envo_ancestors graph into a tree, and store it (normalized).
+    Convert the envo_ancestors graph into trees, and store them (normalized).
 
     If a node is encountered more than once, we arbitrarily choose its first
     encountered location in the graph.
@@ -93,28 +95,36 @@ def build_envo_tree(db: Session) -> None:
         _build_envo_subtree(db, root)
 
     db.commit()
-    nested_envo_tree.cache_clear()
+    nested_envo_trees.cache_clear()
 
 
-def _nested_envo_subtree(tree_map: dict, parent_id: Optional[str] = None) -> List[dict]:
+@dataclass
+class _NodeInfo:
+    id: str
+    label: str
+
+
+def _nested_envo_subtree(
+    tree_map: Dict[Optional[str], List[_NodeInfo]], parent_id: Optional[str] = None
+) -> List[EnvoTreeNode]:
     return [
-        {
-            "parent_id": parent_id,
-            "id": node[0],
-            "label": node[1],
-            "children": _nested_envo_subtree(tree_map, node[0]),
-        }
+        EnvoTreeNode(
+            id=node.id,
+            label=node.label,
+            children=_nested_envo_subtree(tree_map, node.id),
+        )
         for node in tree_map[parent_id]
     ]
 
 
 @functools.lru_cache(maxsize=None)
-def nested_envo_tree() -> List[dict]:
+def nested_envo_trees() -> List[EnvoTreeNode]:
     tree_map = defaultdict(list)
+
     with create_session() as session:
         query = session.query(EnvoTerm, EnvoTree).filter(EnvoTerm.id == EnvoTree.id)
         for term, edge in query:
-            tree_map[edge.parent_id].append((edge.id, term.label))
+            tree_map[edge.parent_id].append(_NodeInfo(id=edge.id, label=term.label))
 
     return _nested_envo_subtree(tree_map)
 
@@ -159,4 +169,4 @@ def load(db: Session):
 
     db.commit()
 
-    build_envo_tree(db)
+    build_envo_trees(db)

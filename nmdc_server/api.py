@@ -20,6 +20,7 @@ from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import Settings, settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import create_session
+from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.models import IngestLock
 from nmdc_server.pagination import Pagination
 
@@ -150,6 +151,15 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
     if db_biosample is None:
         raise HTTPException(status_code=404, detail="Biosample not found")
     return db_biosample
+
+
+@router.get(
+    "/envo/tree",
+    response_model=schemas.EnvoTreeResponse,
+    tags=["envo"],
+)
+async def get_envo_tree():
+    return schemas.EnvoTreeResponse(trees=nested_envo_trees())
 
 
 # study
