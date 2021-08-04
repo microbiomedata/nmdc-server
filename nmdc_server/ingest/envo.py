@@ -1,12 +1,16 @@
+import functools
 import json
 from collections import defaultdict
-from typing import Dict, Set
+from dataclasses import dataclass
+from typing import Dict, List, Optional, Set
 from urllib import request
 
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from nmdc_server import models
+from nmdc_server.database import create_session
+from nmdc_server.models import EnvoAncestor, EnvoTerm, EnvoTree
+from nmdc_server.schemas import EnvoTreeNode
 
 envo_url = "http://purl.obolibrary.org/obo/envo/subsets/envo-basic.json"
 
@@ -29,7 +33,7 @@ def populate_envo_ancestor(
         if parent not in all_nodes:
             continue  # skip ancestors outside the simplified hierarchy
 
-        statement = insert(models.EnvoAncestor.__table__).values(
+        statement = insert(EnvoAncestor.__table__).values(
             id=term_id, ancestor_id=parent, direct=direct
         )
         if direct:
@@ -44,6 +48,85 @@ def populate_envo_ancestor(
             continue  # skip ancestors outside the simplified hierarchy
 
         populate_envo_ancestor(db, term_id, parent, edges, all_nodes, False, visited)
+
+
+def _build_envo_subtree(db: Session, parent_id: str) -> None:
+    query = (
+        db.query(EnvoAncestor)
+        .filter(EnvoAncestor.ancestor_id == parent_id)
+        .filter(EnvoAncestor.direct.is_(True))
+    )
+    for node in query:
+        statement = (
+            insert(EnvoTree.__table__)
+            .values(
+                {
+                    "id": node.id,
+                    "parent_id": parent_id,
+                }
+            )
+            .on_conflict_do_nothing()
+        )
+        db.execute(statement)
+
+        _build_envo_subtree(db, node.id)
+
+
+def build_envo_trees(db: Session) -> None:
+    """
+    Convert the envo_ancestors graph into trees, and store them (normalized).
+
+    If a node is encountered more than once, we arbitrarily choose its first
+    encountered location in the graph.
+    """
+    db.execute(f"truncate table {EnvoTree.__tablename__}")
+
+    # ["ecosystem", "geographic feature", "environmental material"]
+    envo_roots = ["ENVO:01000254", "ENVO:00000000", "ENVO:00010483"]
+    for root in envo_roots:
+        statement = insert(EnvoTree.__table__).values(
+            {
+                "id": root,
+                "parent_id": None,  # null parent_id indicates root node(s)
+            }
+        )
+        db.execute(statement)
+
+        _build_envo_subtree(db, root)
+
+    db.commit()
+    nested_envo_trees.cache_clear()
+
+
+@dataclass
+class _NodeInfo:
+    id: str
+    label: str
+
+
+def _nested_envo_subtree(
+    tree_map: Dict[Optional[str], List[_NodeInfo]], parent_id: Optional[str] = None
+) -> List[EnvoTreeNode]:
+    return [
+        EnvoTreeNode(
+            id=node.id,
+            label=node.label,
+            children=_nested_envo_subtree(tree_map, node.id),
+        )
+        for node in tree_map[parent_id]
+    ]
+
+
+@functools.lru_cache(maxsize=None)
+def nested_envo_trees() -> List[EnvoTreeNode]:
+    tree_map = defaultdict(list)
+
+    with create_session() as session:
+        query = session.query(EnvoTerm, EnvoTree).filter(EnvoTerm.id == EnvoTree.id)
+        for term, edge in query:
+            tree_map[edge.parent_id].append(_NodeInfo(id=edge.id, label=term.label))
+
+    return _nested_envo_subtree(tree_map)
 
 
 def load(db: Session):
@@ -71,7 +154,7 @@ def load(db: Session):
             label = node.pop("lbl", "")
             data = node.get("meta", {})
             envo_data = dict(id=id, label=label, data=data)
-            sql = insert(models.EnvoTerm.__table__).values(envo_data)
+            sql = insert(EnvoTerm.__table__).values(envo_data)
             db.execute(sql.on_conflict_do_update(constraint="pk_envo_term", set_=envo_data))
             ids.add(id)
 
@@ -79,9 +162,11 @@ def load(db: Session):
 
         for node in ids:
             ancestor_data = dict(id=node, ancestor_id=node, direct=False)
-            sql = insert(models.EnvoAncestor.__table__).values(ancestor_data)
+            sql = insert(EnvoAncestor.__table__).values(ancestor_data)
             db.execute(sql.on_conflict_do_nothing())
             db.flush()
             populate_envo_ancestor(db, node, node, direct_ancestors, ids, True, set())
 
     db.commit()
+
+    build_envo_trees(db)

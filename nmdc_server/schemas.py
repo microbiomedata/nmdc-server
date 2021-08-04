@@ -585,3 +585,16 @@ class FileDownload(FileDownloadBase):
 
 class FileDownloadCreate(FileDownloadBase):
     pass
+
+
+class EnvoTreeNode(BaseModel):
+    id: str
+    label: str
+    children: List[EnvoTreeNode]
+
+
+EnvoTreeNode.update_forward_refs()
+
+
+class EnvoTreeResponse(BaseModel):
+    trees: List[EnvoTreeNode]
