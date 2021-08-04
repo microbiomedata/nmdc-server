@@ -31,5 +31,7 @@ def envo_data(db: Session):
 def test_envo_tree(envo_data, db: Session):
     build_envo_trees(db)
     trees = nested_envo_trees()
-    assert len(trees) == 3
-    assert len(trees[0].children) > 0
+    assert set(trees.keys()) == {"env_broad_scale_id", "env_local_scale_id", "env_medium_id"}
+    assert trees["env_broad_scale_id"].label == "ecosystem"
+    assert trees["env_local_scale_id"].label == "geographic feature"
+    assert trees["env_medium_id"].label == "environmental material"

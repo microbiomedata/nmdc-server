@@ -13,6 +13,11 @@ from nmdc_server.models import EnvoAncestor, EnvoTerm, EnvoTree
 from nmdc_server.schemas import EnvoTreeNode
 
 envo_url = "http://purl.obolibrary.org/obo/envo/subsets/envo-basic.json"
+envo_roots = {
+    "ENVO:01001110": "env_broad_scale_id",  # "ecosystem"
+    "ENVO:00000000": "env_local_scale_id",  # "geographic feature"
+    "ENVO:00010483": "env_medium_id",  # "environmental material"
+}
 
 
 def populate_envo_ancestor(
@@ -81,8 +86,6 @@ def build_envo_trees(db: Session) -> None:
     """
     db.execute(f"truncate table {EnvoTree.__tablename__}")
 
-    # ["ecosystem", "geographic feature", "environmental material"]
-    envo_roots = ["ENVO:01000254", "ENVO:00000000", "ENVO:00010483"]
     for root in envo_roots:
         statement = insert(EnvoTree.__table__).values(
             {
@@ -118,7 +121,7 @@ def _nested_envo_subtree(
 
 
 @functools.lru_cache(maxsize=None)
-def nested_envo_trees() -> List[EnvoTreeNode]:
+def nested_envo_trees() -> Dict[str, EnvoTreeNode]:
     tree_map = defaultdict(list)
 
     with create_session() as session:
@@ -126,7 +129,8 @@ def nested_envo_trees() -> List[EnvoTreeNode]:
         for term, edge in query:
             tree_map[edge.parent_id].append(_NodeInfo(id=edge.id, label=term.label))
 
-    return _nested_envo_subtree(tree_map)
+    roots = _nested_envo_subtree(tree_map)
+    return {envo_roots[root.id]: root for root in roots}
 
 
 def load(db: Session):
