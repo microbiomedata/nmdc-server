@@ -597,4 +597,4 @@ EnvoTreeNode.update_forward_refs()
 
 
 class EnvoTreeResponse(BaseModel):
-    trees: List[EnvoTreeNode]
+    trees: Dict[str, EnvoTreeNode]
