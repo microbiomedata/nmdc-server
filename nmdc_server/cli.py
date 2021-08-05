@@ -61,8 +61,8 @@ def truncate(tables: List[str]):
 @cli.command()
 @click.option("-v", "--verbose", count=True)
 @click.option("--function-limit", type=click.INT, default=100)
-@click.argument("tables", type=click.STRING, nargs=-1, default=None)
-def ingest(verbose, function_limit, tables):
+@click.option("--cheap-only", type=click.BOOL, default=False)
+def ingest(verbose, function_limit, cheap_only):
     """Ingest the latest data from mongo."""
     level = logging.WARN
     if verbose == 1:
@@ -74,7 +74,7 @@ def ingest(verbose, function_limit, tables):
     logger.setLevel(logging.INFO)
 
     with create_session() as db:
-        load(db, function_limit=function_limit, tables=tables)
+        load(db, function_limit=function_limit, cheap_only=cheap_only)
 
     for m, s in errors.missing.items():
         click.echo(f"missing {m}:")

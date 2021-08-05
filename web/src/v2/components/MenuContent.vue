@@ -6,8 +6,9 @@ import { getField } from '@/encoding';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
-import FilterTree from '@/components/Presentation/FilterTree.vue';
+import FilterSankeyTree from '@/components/Presentation/FilterTree.vue';
 import FilterStringLiteral from '@/v2/components/FilterStringLiteral.vue';
+import FilterTree from '@/v2/components/FilterTree.vue';
 import { AttributeSummary, Condition, entityType } from '@/data/api';
 
 export default Vue.extend({
@@ -16,6 +17,7 @@ export default Vue.extend({
     FilterFloat,
     FilterList,
     FilterStringLiteral,
+    FilterSankeyTree,
     FilterTree,
   },
 
@@ -69,44 +71,51 @@ export default Vue.extend({
     >
       {{ getField(field, table).description }}
     </v-card-text>
-    <filter-list
-      v-if="summary.type === 'string' && isOpen"
-      :field="field"
-      :table="table"
-      :conditions="conditions"
-      @select="$emit('select', $event)"
-    />
-    <filter-string-literal
-      v-if="summary.type === 'string_literal' && isOpen"
-      :field="field"
-      :table="table"
-      :conditions="conditions"
-      @select="$emit('select', $event)"
-    />
-    <filter-date
-      v-if="summary.type === 'date'"
-      v-bind="{
-        field, type: table, conditions,
-        min: summary.min,
-        max: summary.max,
-      }"
-      class="pa-5"
-      @select="$emit('select', $event)"
-    />
-    <filter-float
-      v-else-if="['float', 'integer'].includes(summary.type)"
-      v-bind="{
-        field, type: table, conditions,
-        min: summary.min,
-        max: summary.max,
-      }"
-      class="pa-5"
-      @select="$emit('select', $event)"
-    />
-    <filter-tree
-      v-else-if="['tree'].includes(summary.type) && isOpen"
-      v-bind="{ field, table, conditions }"
-      @select="$emit('select', $event)"
-    />
+    <template v-if="isOpen">
+      <filter-list
+        v-if="summary.type === 'string'"
+        :field="field"
+        :table="table"
+        :conditions="conditions"
+        @select="$emit('select', $event)"
+      />
+      <filter-string-literal
+        v-if="summary.type === 'string_literal'"
+        :field="field"
+        :table="table"
+        :conditions="conditions"
+        @select="$emit('select', $event)"
+      />
+      <filter-date
+        v-if="summary.type === 'date'"
+        v-bind="{
+          field, type: table, conditions,
+          min: summary.min,
+          max: summary.max,
+        }"
+        class="pa-5"
+        @select="$emit('select', $event)"
+      />
+      <filter-float
+        v-else-if="['float', 'integer'].includes(summary.type)"
+        v-bind="{
+          field, type: table, conditions,
+          min: summary.min,
+          max: summary.max,
+        }"
+        class="pa-5"
+        @select="$emit('select', $event)"
+      />
+      <filter-sankey-tree
+        v-else-if="['sankey-tree'].includes(summary.type)"
+        v-bind="{ field, table, conditions }"
+        @select="$emit('select', $event)"
+      />
+      <filter-tree
+        v-else-if="['tree'].includes(summary.type)"
+        v-bind="{ field, table, conditions }"
+        @select="$emit('select', $event)"
+      />
+    </template>
   </div>
 </template>

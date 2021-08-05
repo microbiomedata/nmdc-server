@@ -102,6 +102,7 @@ export default Vue.extend({
         <v-menu
           offset-x
           :close-on-content-click="false"
+          :value="menuState[group.key]"
           @input="toggleMenu(group.key, $event)"
         >
           <template #activator="{ on }">
