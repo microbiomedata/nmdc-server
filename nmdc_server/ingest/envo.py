@@ -9,13 +9,14 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from nmdc_server.database import create_session
-from nmdc_server.models import EnvoAncestor, EnvoTerm, EnvoTree
+from nmdc_server.ingest.logger import get_logger
+from nmdc_server.models import Biosample, EnvoAncestor, EnvoTerm, EnvoTree
 from nmdc_server.schemas import EnvoTreeNode
 
 envo_url = "http://purl.obolibrary.org/obo/envo/subsets/envo-basic.json"
 envo_roots = {
     "ENVO:01001110": "env_broad_scale_id",  # "ecosystem"
-    "ENVO:00000000": "env_local_scale_id",  # "geographic feature"
+    "ENVO:01000813": "env_local_scale_id",  # "astronomical body part"
     "ENVO:00010483": "env_medium_id",  # "environmental material"
 }
 
@@ -77,7 +78,7 @@ def _build_envo_subtree(db: Session, parent_id: str) -> None:
         _build_envo_subtree(db, node.id)
 
 
-def build_envo_trees(db: Session) -> None:
+def build_envo_trees(db: Session, pare: bool = True) -> None:
     """
     Convert the envo_ancestors graph into trees, and store them (normalized).
 
@@ -98,38 +99,76 @@ def build_envo_trees(db: Session) -> None:
         _build_envo_subtree(db, root)
 
     db.commit()
+
     nested_envo_trees.cache_clear()
 
 
 @dataclass
 class _NodeInfo:
     id: str
+    parent_id: str
     label: str
+    visited: bool = False
+
+
+TreeChildren = Dict[Optional[str], List[_NodeInfo]]  # envo id -> child node list
+
+
+def _prune_subtree(tree_children: TreeChildren, node: _NodeInfo) -> None:
+    tree_children[node.id] = [child for child in tree_children[node.id] if child.visited]
+    for child in tree_children[node.id]:
+        _prune_subtree(tree_children, child)
 
 
 def _nested_envo_subtree(
-    tree_map: Dict[Optional[str], List[_NodeInfo]], parent_id: Optional[str] = None
+    tree_children: TreeChildren, parent_id: Optional[str] = None
 ) -> List[EnvoTreeNode]:
     return [
         EnvoTreeNode(
             id=node.id,
             label=node.label,
-            children=_nested_envo_subtree(tree_map, node.id),
+            children=_nested_envo_subtree(tree_children, node.id),
         )
-        for node in tree_map[parent_id]
+        for node in tree_children[parent_id]
     ]
 
 
 @functools.lru_cache(maxsize=None)
 def nested_envo_trees() -> Dict[str, EnvoTreeNode]:
-    tree_map = defaultdict(list)
+    logger = get_logger(__name__)
+    tree_children = defaultdict(list)
+    tree_nodes: Dict[str, _NodeInfo] = {}
 
     with create_session() as session:
         query = session.query(EnvoTerm, EnvoTree).filter(EnvoTerm.id == EnvoTree.id)
         for term, edge in query:
-            tree_map[edge.parent_id].append(_NodeInfo(id=edge.id, label=term.label))
+            node = _NodeInfo(id=edge.id, parent_id=edge.parent_id, label=term.label)
+            tree_children[edge.parent_id].append(node)
+            tree_nodes[edge.id] = node
 
-    roots = _nested_envo_subtree(tree_map)
+        # Find all envo terms present in the biosamples
+        broad_q = session.query(Biosample.env_broad_scale_id).distinct()
+        local_q = session.query(Biosample.env_local_scale_id).distinct()
+        medium_q = session.query(Biosample.env_medium_id).distinct()
+        present_terms = set(r[0] for r in broad_q.union(local_q, medium_q))
+
+    # Mark all nodes that are reachable from the set of present terms
+    for term in present_terms - {None}:
+        if term not in tree_nodes:
+            logger.warning("Not in expected trees:", term)  # TODO remove: fix our ontology
+            continue
+
+        node = tree_nodes[term]
+        node.visited = True
+        while node.parent_id is not None:
+            node = tree_nodes[node.parent_id]
+            node.visited = True
+
+    # Remove all unreachable nodes
+    for root in tree_children[None]:
+        _prune_subtree(tree_children, root)
+
+    roots = _nested_envo_subtree(tree_children)
     return {envo_roots[root.id]: root for root in roots}
 
 
