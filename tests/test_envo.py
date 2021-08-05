@@ -33,5 +33,5 @@ def test_envo_tree(envo_data, db: Session):
     trees = nested_envo_trees()
     assert set(trees.keys()) == {"env_broad_scale_id", "env_local_scale_id", "env_medium_id"}
     assert trees["env_broad_scale_id"].label == "ecosystem"
-    assert trees["env_local_scale_id"].label == "geographic feature"
+    assert trees["env_local_scale_id"].label == "astronomical body part"
     assert trees["env_medium_id"].label == "environmental material"
