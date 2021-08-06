@@ -14,4 +14,4 @@ COPY nmdc_server /app/nmdc_server
 COPY .env.production /app/.env
 
 WORKDIR /app/
-CMD ["celery", "-b", "redis://redis:6379/0", "--result-backend", "redis://redis:6379/0", "-A", "nmdc_server.celery.celery_app", "worker", "-E", "-l", "INFO"]
+CMD ["celery", "-b", "redis://redis:6379/0", "--result-backend", "redis://redis:6379/0", "-A", "nmdc_server.celery_config.celery_app", "worker", "-E", "-l", "INFO"]
