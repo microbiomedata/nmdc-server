@@ -429,12 +429,15 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
         },
         env_broad_scale: {
           type: 'tree',
+          count: -1,
         },
         env_local_scale: {
           type: 'tree',
+          count: -1,
         },
         env_medium: {
           type: 'tree',
+          count: -1,
         },
       },
     },

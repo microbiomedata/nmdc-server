@@ -1,14 +1,19 @@
 <script lang="ts">
-import { defineComponent, reactive, computed } from '@vue/composition-api';
+import {
+  defineComponent, reactive, computed, toRef, PropType,
+} from '@vue/composition-api';
 // @ts-ignore
 import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
-import { api, EnvoNode, EnvoTree } from '@/data/api';
-import FacetSummary from '@/mixins/FacetSummary';
+
+import {
+  Condition, entityType, EnvoNode,
+} from '@/data/api';
+import { unreactive, stateRefs, getTreeData } from '@/v2/store';
+import useFacetSummaryData from '@/v2/use/useFacetSummaryData';
+import { cloneDeep } from 'lodash';
 
 export default defineComponent({
-  mixins: [FacetSummary],
-
   components: { Treeselect },
 
   props: {
@@ -17,52 +22,63 @@ export default defineComponent({
       required: true,
     },
     table: {
-      type: String,
+      type: String as PropType<entityType>,
       required: true,
     },
     conditions: {
-      type: Array,
+      type: Array as PropType<Condition[]>,
       required: true,
     },
   },
 
-  setup(props) {
+  setup(props, { emit }) {
     const data = reactive({
       createdDelay: false,
-      treeData: null as EnvoTree | null,
-      value: [] as EnvoNode[],
     });
 
-    const getTreeData = async () => {
-      data.treeData = await api.getEnvoTrees();
-    };
+    const conditions = toRef(props, 'conditions');
+    const field = toRef(props, 'field');
+    const table = toRef(props, 'table');
+    const { otherConditions, myConditions } = useFacetSummaryData({ conditions, field, table });
+
+    const tree = computed(() => stateRefs.treeData.value?.trees[`${props.field}_id`].children);
+    const selected = computed(() => {
+      if (stateRefs.treeData.value === null) {
+        return [];
+      }
+      return myConditions.value.map((v) => unreactive.nodeMapLabel[v.value as string].id);
+    });
+
     getTreeData();
 
-    const tree = computed(() => data.treeData?.trees[`${props.field}_id`].children);
-
+    /* Enable loading bar after 2 seconds of no load, to avoid overly noisy facet dialogs */
     window.setTimeout(() => { data.createdDelay = true; }, 2000);
 
-    async function setSelected(nodes: EnvoNode[]) {
-      data.value = nodes;
-      // const conditions = root.otherConditions;
-      // nodeKeys.forEach((key) => {
-      //   let node = this.treeData.nodeMap[key];
-      //   do {
-      //     conditions.push({
-      //       op: '==',
-      //       field: node.heirarchyKey,
-      //       value: node.label,
-      //       table: props.table,
-      //     });
-      //     node = node.parent;
-      //   } while (node.parent);
-      // });
-      // emit('select', {
-      //   conditions: uniqWith(conditions, (a, b) => a.field === b.field && a.value === b.value),
-      // });
+    async function setSelected(values: string[]) {
+      // console.log(values);
+      const c = cloneDeep(otherConditions.value);
+      values.forEach((value) => {
+        c.push({
+          op: '==',
+          field: field.value,
+          value: unreactive.nodeMapId[value].label,
+          table: table.value,
+        });
+      });
+      emit('select', { conditions: c });
     }
 
-    return { data, tree, setSelected };
+    function normalizer(node: EnvoNode) {
+      return {
+        id: node.label,
+        label: node.label,
+        children: node.children,
+      };
+    }
+
+    return {
+      data, tree, selected, setSelected, normalizer,
+    };
   },
 });
 </script>
@@ -76,13 +92,13 @@ export default defineComponent({
     />
     <treeselect
       v-else-if="tree !== null"
-      :value="data.value"
+      :value="selected"
       :options="tree"
-      :max-height="410"
-      value-format="object"
+      :max-height="8000"
+      :normailzer="normalizer"
       multiple
       always-open
-      class="ma-2 mt-4"
+      class="ma-2"
       @input="setSelected"
     >
       <template #option-label="{ node }">
@@ -101,7 +117,8 @@ export default defineComponent({
 </style>
 
 <style>
-.vue-treeselect__menu {
+/* Hack the menu height */
+/* .vue-treeselect__menu {
   height: 410px;
-}
+} */
 </style>

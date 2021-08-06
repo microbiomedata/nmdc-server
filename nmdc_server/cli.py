@@ -61,7 +61,7 @@ def truncate(tables: List[str]):
 @cli.command()
 @click.option("-v", "--verbose", count=True)
 @click.option("--function-limit", type=click.INT, default=100)
-@click.option("--cheap-only", type=click.BOOL, default=False)
+@click.option("--cheap-only", is_flag=True, default=False)
 def ingest(verbose, function_limit, cheap_only):
     """Ingest the latest data from mongo."""
     level = logging.WARN
