@@ -55,7 +55,6 @@ export default defineComponent({
     window.setTimeout(() => { data.createdDelay = true; }, 2000);
 
     async function setSelected(values: string[]) {
-      // console.log(values);
       const c = cloneDeep(otherConditions.value);
       values.forEach((value) => {
         c.push({

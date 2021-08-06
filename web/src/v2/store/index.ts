@@ -61,7 +61,6 @@ async function getTreeData() {
  * Set conditions directly, removing duplicates
  */
 function setConditions(conditions: Condition[]) {
-  console.log(conditions);
   state.conditions = uniqWith(
     conditions, (a, b) => a.field === b.field
       && a.value === b.value
