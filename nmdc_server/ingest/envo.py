@@ -1,4 +1,5 @@
 import functools
+import itertools
 import json
 from collections import defaultdict
 from dataclasses import dataclass
@@ -9,16 +10,10 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from nmdc_server.database import create_session
-from nmdc_server.ingest.logger import get_logger
 from nmdc_server.models import Biosample, EnvoAncestor, EnvoTerm, EnvoTree
 from nmdc_server.schemas import EnvoTreeNode
 
 envo_url = "http://purl.obolibrary.org/obo/envo/subsets/envo-basic.json"
-envo_roots = {
-    "ENVO:01001110": "env_broad_scale_id",  # "ecosystem"
-    "ENVO:01000813": "env_local_scale_id",  # "astronomical body part"
-    "ENVO:00010483": "env_medium_id",  # "environmental material"
-}
 
 
 def populate_envo_ancestor(
@@ -56,6 +51,40 @@ def populate_envo_ancestor(
         populate_envo_ancestor(db, term_id, parent, edges, all_nodes, False, visited)
 
 
+def get_biosample_roots(db: Session) -> Dict[str, Set[str]]:
+    """
+    Find all reachable envo root terms from each biosample envo facet.
+
+    Returns a dict mapping facet name to the set of reachable roots.
+    """
+    parents: Dict[str, str] = {}
+    query = db.query(EnvoAncestor).filter(EnvoAncestor.direct.is_(True))
+    for ancestor in query:
+        parents[ancestor.id] = ancestor.ancestor_id
+
+    def reachable_roots(attr: str) -> Set[str]:
+        query = db.query(getattr(Biosample, attr)).distinct()
+        terms = set(r[0] for r in query) - {None}
+        roots = set()
+
+        for term in terms:
+            # traverse up the ancestors until reaching a root
+            if term not in parents:
+                roots.add(term)
+            else:
+                parent = parents[term]
+                while parent in parents:
+                    parent = parents[parent]
+                roots.add(parent)
+        return roots
+
+    # TODO should we store these results in the database?
+    return {
+        key: reachable_roots(key)
+        for key in ["env_broad_scale_id", "env_local_scale_id", "env_medium_id"]
+    }
+
+
 def _build_envo_subtree(db: Session, parent_id: str) -> None:
     query = (
         db.query(EnvoAncestor)
@@ -78,16 +107,20 @@ def _build_envo_subtree(db: Session, parent_id: str) -> None:
         _build_envo_subtree(db, node.id)
 
 
-def build_envo_trees(db: Session, pare: bool = True) -> None:
+def build_envo_trees(db: Session) -> None:
     """
     Convert the envo_ancestors graph into trees, and store them (normalized).
 
     If a node is encountered more than once, we arbitrarily choose its first
     encountered location in the graph.
+
+    This should only be called after biosamples have been ingested.
     """
     db.execute(f"truncate table {EnvoTree.__tablename__}")
 
-    for root in envo_roots:
+    roots = get_biosample_roots(db)
+    root_set = set(itertools.chain(*roots.values()))
+    for root in root_set:
         statement = insert(EnvoTree.__table__).values(
             {
                 "id": root,
@@ -134,8 +167,7 @@ def _nested_envo_subtree(
 
 
 @functools.lru_cache(maxsize=None)
-def nested_envo_trees() -> Dict[str, EnvoTreeNode]:
-    logger = get_logger(__name__)
+def nested_envo_trees() -> Dict[str, List[EnvoTreeNode]]:
     tree_children = defaultdict(list)
     tree_nodes: Dict[str, _NodeInfo] = {}
 
@@ -146,18 +178,16 @@ def nested_envo_trees() -> Dict[str, EnvoTreeNode]:
             tree_children[edge.parent_id].append(node)
             tree_nodes[edge.id] = node
 
+        biosample_roots = get_biosample_roots(session)
+
         # Find all envo terms present in the biosamples
         broad_q = session.query(Biosample.env_broad_scale_id).distinct()
         local_q = session.query(Biosample.env_local_scale_id).distinct()
         medium_q = session.query(Biosample.env_medium_id).distinct()
-        present_terms = set(r[0] for r in broad_q.union(local_q, medium_q))
+        present_terms = set(r[0] for r in broad_q.union(local_q, medium_q)) - {None}
 
     # Mark all nodes that are reachable from the set of present terms
-    for term in present_terms - {None}:
-        if term not in tree_nodes:
-            logger.warning("Not in expected trees:", term)  # TODO remove: fix our ontology
-            continue
-
+    for term in present_terms:
         node = tree_nodes[term]
         node.visited = True
         while node.parent_id is not None:
@@ -168,8 +198,19 @@ def nested_envo_trees() -> Dict[str, EnvoTreeNode]:
     for root in tree_children[None]:
         _prune_subtree(tree_children, root)
 
-    roots = _nested_envo_subtree(tree_children)
-    return {envo_roots[root.id]: root for root in roots}
+    # Recursively build the tree structure
+    root_nodes = _nested_envo_subtree(tree_children)
+
+    # Now awkwardly build the response object, mapping roots to the correct facets
+    nested: Dict[str, List[EnvoTreeNode]] = {}
+    for facet, roots in biosample_roots.items():
+        nested[facet] = []
+        for root_id in roots:
+            for root_node in root_nodes:
+                if root_node.id == root_id:
+                    nested[facet].append(root_node)
+                    break
+    return nested
 
 
 def load(db: Session):
@@ -211,5 +252,3 @@ def load(db: Session):
             populate_envo_ancestor(db, node, node, direct_ancestors, ids, True, set())
 
     db.commit()
-
-    build_envo_trees(db)

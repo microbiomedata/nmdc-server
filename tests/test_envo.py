@@ -32,6 +32,6 @@ def test_envo_tree(envo_data, db: Session):
     build_envo_trees(db)
     trees = nested_envo_trees()
     assert set(trees.keys()) == {"env_broad_scale_id", "env_local_scale_id", "env_medium_id"}
-    assert trees["env_broad_scale_id"].label == "ecosystem"
-    assert trees["env_local_scale_id"].label == "astronomical body part"
-    assert trees["env_medium_id"].label == "environmental material"
+    assert trees["env_broad_scale_id"][0].label == "environmental_system"
+    assert len(trees["env_local_scale_id"]) == 7  # local terms in our dataset fall under 7 roots
+    assert trees["env_medium_id"][0].label == "environmental material"
