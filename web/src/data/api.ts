@@ -1,8 +1,23 @@
 import { merge } from 'lodash';
 import axios from 'axios';
+import { setupCache } from 'axios-cache-adapter';
+
+const cache = setupCache({
+  key: (req) => req.url + JSON.stringify(req.params) + JSON.stringify(req.data),
+  maxAge: 15 * 60 * 1000,
+  exclude: {
+    query: false,
+    methods: ['delete'],
+    paths: [
+      /logout/,
+      /data_object\/.*/,
+    ],
+  },
+});
 
 const client = axios.create({
   baseURL: process.env.VUE_APP_BASE_URL || '/api',
+  adapter: cache.adapter,
 });
 
 /* The real entity types */
@@ -227,6 +242,16 @@ export interface DataObjectFilter {
   file_type: string;
 }
 
+export interface EnvoNode {
+  id: string;
+  label: string;
+  children: EnvoNode[];
+}
+
+export interface EnvoTree {
+  trees: Record<string, EnvoNode>;
+}
+
 export interface BulkDownload {
   ip: string;
   user_agent: string;
@@ -399,14 +424,18 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
     biosample: {
       attributes: {
         gold_classification: {
+          type: 'sankey-tree',
+          count: -1,
+        },
+        env_broad_scale: {
           type: 'tree',
           count: -1,
         },
-      },
-    },
-    study: {
-      attributes: {
-        gold_classification: {
+        env_local_scale: {
+          type: 'tree',
+          count: -1,
+        },
+        env_medium: {
           type: 'tree',
           count: -1,
         },
@@ -473,6 +502,14 @@ async function getDataObjectList(
 }
 
 /**
+ * ENVO Tree API
+ */
+async function getEnvoTrees() {
+  const { data } = await client.get<EnvoTree>('envo/tree');
+  return data;
+}
+
+/**
  * Bulk Download API
  */
 async function getBulkDownloadSummary(conditions: Condition[]) {
@@ -520,6 +557,7 @@ const api = {
   getDataObjectList,
   getEnvironmentGeospatialAggregation,
   getEnvironmentSankeyAggregation,
+  getEnvoTrees,
   getFacetSummary,
   getStudy,
   me,

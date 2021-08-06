@@ -55,6 +55,9 @@ export default Vue.extend({
         if (['date'].includes(summary.type)) {
           return moment(val).format('MM/DD/YYYY');
         }
+        if (['tree', 'sankey-tree'].includes(summary.type)) {
+          return val;
+        }
         throw new Error(`Unknown entity type for ${type}: ${field}: ${summary.type}`);
       }
       return val;
@@ -101,7 +104,9 @@ export default Vue.extend({
         </div>
         <v-menu
           offset-x
+          :nudge-right="10"
           :close-on-content-click="false"
+          :value="menuState[group.key]"
           @input="toggleMenu(group.key, $event)"
         >
           <template #activator="{ on }">

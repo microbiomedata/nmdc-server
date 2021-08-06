@@ -5,7 +5,9 @@ import CompositionApi, {
 import { uniqWith } from 'lodash';
 
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
-import { api, Condition, DataObjectFilter } from '@/data/api';
+import {
+  api, Condition, DataObjectFilter, EnvoNode, EnvoTree,
+} from '@/data/api';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -15,7 +17,12 @@ const state = reactive({
   bulkDownloadSelected: [] as string[],
   user: null as string | null,
   hasAcceptedTerms: false,
+  treeData: null as EnvoTree | null,
 });
+const unreactive = {
+  nodeMapId: {} as Record<string, EnvoNode>,
+  nodeMapLabel: {} as Record<string, EnvoNode>,
+};
 
 /**
  * An array of DataObjectFilter currently selected
@@ -32,6 +39,22 @@ const dataObjectFilter: ComputedRef<DataObjectFilter[]> = computed(() => state
  */
 async function loadCurrentUser() {
   state.user = await api.me();
+}
+
+/**
+ * Tree data
+ */
+function makeNodeMap(node: EnvoNode) {
+  unreactive.nodeMapId[node.id] = node;
+  unreactive.nodeMapLabel[node.label] = node;
+  node.children.forEach(makeNodeMap);
+}
+async function getTreeData() {
+  if (state.treeData === null) {
+    const resp = await api.getEnvoTrees();
+    state.treeData = resp;
+    Object.values(resp.trees).forEach(makeNodeMap);
+  }
 }
 
 /*
@@ -114,7 +137,9 @@ const stateRefs = toRefs(state);
 export {
   stateRefs,
   dataObjectFilter,
+  unreactive,
   acceptTerms,
+  getTreeData,
   loadCurrentUser,
   removeConditions,
   setUniqueCondition,
