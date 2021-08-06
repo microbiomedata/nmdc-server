@@ -27,7 +27,7 @@ def paginate_cursor(
         skip = skip + page_size
 
 
-def load(db: Session, function_limit=None, cheap_only=False):
+def load(db: Session, function_limit=None):
     """Ingest all data from the mongodb source.
 
     Optionally, you can limit the number of gene functions per omics_processing
@@ -51,10 +51,6 @@ def load(db: Session, function_limit=None, cheap_only=False):
     logger.info("Loading envo terms...")
     envo.load(db)
     db.commit()
-
-    if cheap_only:
-        logger.info("Cheap only ingested successfully.")
-        return
 
     logger.info("Loading studies...")
     study.load(db, mongodb["study_set"].find())
