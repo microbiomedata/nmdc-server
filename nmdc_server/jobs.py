@@ -6,7 +6,7 @@ from alembic.config import Config
 from alembic.migration import MigrationContext
 
 from nmdc_server import models
-from nmdc_server.celery import celery_app
+from nmdc_server.celery_config import celery_app
 from nmdc_server.config import settings
 from nmdc_server.database import create_engine, create_session, metadata
 from nmdc_server.ingest.all import load

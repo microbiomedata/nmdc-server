@@ -195,4 +195,7 @@ def load(db: Session, function_limit=None):
     models.Biosample.populate_multiomics(db)
     db.commit()
 
+    logger.info("Preprocessing envo term data")
+    envo.build_envo_trees(db)
+
     logger.info("Ingest finished successfully")
