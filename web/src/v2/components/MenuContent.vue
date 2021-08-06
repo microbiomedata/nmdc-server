@@ -44,6 +44,10 @@ export default Vue.extend({
     },
   },
 
+  beforeDestroy() {
+    this.$emit('close');
+  },
+
   methods: { fieldDisplayName, getField },
 });
 </script>
