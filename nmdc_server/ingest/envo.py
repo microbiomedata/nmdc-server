@@ -2,6 +2,7 @@ import functools
 import itertools
 import json
 from collections import defaultdict
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set
 from urllib import request
@@ -141,16 +142,15 @@ class _NodeInfo:
     id: str
     parent_id: str
     label: str
-    visited: bool = False
 
 
 TreeChildren = Dict[Optional[str], List[_NodeInfo]]  # envo id -> child node list
 
 
-def _prune_subtree(tree_children: TreeChildren, node: _NodeInfo) -> None:
-    tree_children[node.id] = [child for child in tree_children[node.id] if child.visited]
+def _prune_subtree(tree_children: TreeChildren, node: _NodeInfo, visited: Set[str]) -> None:
+    tree_children[node.id] = [child for child in tree_children[node.id] if child.id in visited]
     for child in tree_children[node.id]:
-        _prune_subtree(tree_children, child)
+        _prune_subtree(tree_children, child, visited)
 
 
 def _nested_envo_subtree(
@@ -164,6 +164,42 @@ def _nested_envo_subtree(
         )
         for node in tree_children[parent_id]
     ]
+
+
+def _get_trees_for_facet(
+    db: Session,
+    facet: str,
+    root_ids: Set[str],
+    tree_nodes: Dict[str, _NodeInfo],
+    tree_children: TreeChildren,
+) -> List[EnvoTreeNode]:
+    """
+    Get the pruned trees for each facet.
+
+    Warning: this function modifies the `tree_children` structure in-place.
+    """
+    query = db.query(getattr(Biosample, facet)).distinct()
+    present_terms = set(r[0] for r in query) - {None}
+    reachable: Set[str] = set()
+
+    # Find all nodes that are reachable from the set of present terms
+    for term in present_terms:
+        node = tree_nodes[term]
+        reachable.add(node.id)
+        while node.parent_id is not None:
+            node = tree_nodes[node.parent_id]
+            reachable.add(node.id)
+
+    # Remove all unreachable nodes
+    for root in tree_children[None]:
+        _prune_subtree(tree_children, root, reachable)
+
+    # Recursively build the tree structure
+    root_nodes = _nested_envo_subtree(tree_children)
+    root_map = {r.id: r for r in root_nodes}
+
+    # Return all matching root nodes
+    return [root_map[root_id] for root_id in root_ids]
 
 
 @functools.lru_cache(maxsize=None)
@@ -180,37 +216,12 @@ def nested_envo_trees() -> Dict[str, List[EnvoTreeNode]]:
 
         biosample_roots = get_biosample_roots(session)
 
-        # Find all envo terms present in the biosamples
-        broad_q = session.query(Biosample.env_broad_scale_id).distinct()
-        local_q = session.query(Biosample.env_local_scale_id).distinct()
-        medium_q = session.query(Biosample.env_medium_id).distinct()
-        present_terms = set(r[0] for r in broad_q.union(local_q, medium_q)) - {None}
-
-    # Mark all nodes that are reachable from the set of present terms
-    for term in present_terms:
-        node = tree_nodes[term]
-        node.visited = True
-        while node.parent_id is not None:
-            node = tree_nodes[node.parent_id]
-            node.visited = True
-
-    # Remove all unreachable nodes
-    for root in tree_children[None]:
-        _prune_subtree(tree_children, root)
-
-    # Recursively build the tree structure
-    root_nodes = _nested_envo_subtree(tree_children)
-
-    # Now awkwardly build the response object, mapping roots to the correct facets
-    nested: Dict[str, List[EnvoTreeNode]] = {}
-    for facet, roots in biosample_roots.items():
-        nested[facet] = []
-        for root_id in roots:
-            for root_node in root_nodes:
-                if root_node.id == root_id:
-                    nested[facet].append(root_node)
-                    break
-    return nested
+        return {
+            facet: _get_trees_for_facet(
+                session, facet, root_ids, tree_nodes, deepcopy(tree_children)
+            )
+            for facet, root_ids in biosample_roots.items()
+        }
 
 
 def load(db: Session):
