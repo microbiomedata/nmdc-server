@@ -2,7 +2,6 @@ import functools
 import itertools
 import json
 from collections import defaultdict
-from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set
 from urllib import request
@@ -147,22 +146,19 @@ class _NodeInfo:
 TreeChildren = Dict[Optional[str], List[_NodeInfo]]  # envo id -> child node list
 
 
-def _prune_subtree(tree_children: TreeChildren, node: _NodeInfo, visited: Set[str]) -> None:
-    tree_children[node.id] = [child for child in tree_children[node.id] if child.id in visited]
-    for child in tree_children[node.id]:
-        _prune_subtree(tree_children, child, visited)
-
-
 def _nested_envo_subtree(
-    tree_children: TreeChildren, parent_id: Optional[str] = None
+    tree_children: TreeChildren,
+    visited: Set[str],
+    parent_id: Optional[str] = None,
 ) -> List[EnvoTreeNode]:
     return [
         EnvoTreeNode(
             id=node.id,
             label=node.label,
-            children=_nested_envo_subtree(tree_children, node.id),
+            children=_nested_envo_subtree(tree_children, visited, node.id),
         )
         for node in tree_children[parent_id]
+        if node.id in visited
     ]
 
 
@@ -176,7 +172,7 @@ def _get_trees_for_facet(
     """
     Get the pruned trees for each facet.
 
-    Warning: this function modifies the `tree_children` structure in-place.
+    This is a pure function.
     """
     query = db.query(getattr(Biosample, facet)).distinct()
     present_terms = set(r[0] for r in query) - {None}
@@ -190,12 +186,8 @@ def _get_trees_for_facet(
             node = tree_nodes[node.parent_id]
             reachable.add(node.id)
 
-    # Remove all unreachable nodes
-    for root in tree_children[None]:
-        _prune_subtree(tree_children, root, reachable)
-
     # Recursively build the tree structure
-    root_nodes = _nested_envo_subtree(tree_children)
+    root_nodes = _nested_envo_subtree(tree_children, reachable)
     root_map = {r.id: r for r in root_nodes}
 
     # Return all matching root nodes
@@ -217,9 +209,7 @@ def nested_envo_trees() -> Dict[str, List[EnvoTreeNode]]:
         biosample_roots = get_biosample_roots(session)
 
         return {
-            facet: _get_trees_for_facet(
-                session, facet, root_ids, tree_nodes, deepcopy(tree_children)
-            )
+            facet: _get_trees_for_facet(session, facet, root_ids, tree_nodes, tree_children)
             for facet, root_ids in biosample_roots.items()
         }
 
