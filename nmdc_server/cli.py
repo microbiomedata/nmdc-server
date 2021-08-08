@@ -76,3 +76,33 @@ def ingest(verbose, function_limit):
         click.echo(f"errors {m}:")
         for id in s:
             click.echo(id)
+
+
+@cli.command()
+@click.option("--print-sql", is_flag=True, default=False)
+def shell(print_sql: bool):
+    from IPython import start_ipython
+    from traitlets.config import Config
+
+    imports = [
+        "from nmdc_server.database import create_session",
+        "from nmdc_server.config import settings",
+        "from nmdc_server.models import "
+        "Biosample, EnvoAncestor, EnvoTerm, EnvoTree, OmicsProcessing, Study",
+    ]
+
+    print("The following are auto-imported:")
+    for line in imports:
+        print(f"\033[1;32m{line}\033[0;0m")
+
+    exec_lines = ["%autoreload 2"] + imports
+
+    if print_sql:
+        exec_lines.append("settings.print_sql = True")
+        print("SQL debugging is ON")
+
+    c = Config()
+    c.InteractiveShellApp.exec_lines = exec_lines
+    c.InteractiveShellApp.extensions = ["autoreload"]
+
+    start_ipython(argv=[], config=c)

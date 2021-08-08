@@ -16,6 +16,7 @@ setup(
         "fastapi",
         "factory-boy",
         "httpx<0.18.2",
+        "ipython",
         "itsdangerous",
         "pint",
         "psycopg2-binary",

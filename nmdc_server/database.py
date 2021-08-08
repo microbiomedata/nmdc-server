@@ -195,7 +195,7 @@ def json_serializer(data: Any) -> str:
 
 @functools.lru_cache(maxsize=None)
 def create_engine(uri: str) -> Engine:
-    return _create_engine(uri, json_serializer=json_serializer)
+    return _create_engine(uri, json_serializer=json_serializer, echo=settings.print_sql)
 
 
 @contextmanager
