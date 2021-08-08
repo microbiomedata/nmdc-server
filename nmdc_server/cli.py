@@ -1,4 +1,6 @@
 import logging
+from pathlib import Path
+from typing import Optional
 
 import click
 
@@ -80,13 +82,14 @@ def ingest(verbose, function_limit):
 
 @cli.command()
 @click.option("--print-sql", is_flag=True, default=False)
-def shell(print_sql: bool):
+@click.argument("script", required=False, type=click.Path(exists=True, dir_okay=False))
+def shell(print_sql: bool, script: Optional[Path]):
     from IPython import start_ipython
     from traitlets.config import Config
 
     imports = [
-        "from nmdc_server.database import create_session",
         "from nmdc_server.config import settings",
+        "from nmdc_server.database import create_session",
         "from nmdc_server.models import "
         "Biosample, EnvoAncestor, EnvoTerm, EnvoTree, OmicsProcessing, Study",
     ]
@@ -104,5 +107,8 @@ def shell(print_sql: bool):
     c = Config()
     c.InteractiveShellApp.exec_lines = exec_lines
     c.InteractiveShellApp.extensions = ["autoreload"]
+
+    if script:
+        c.InteractiveShellApp.file_to_run = script
 
     start_ipython(argv=[], config=c)
