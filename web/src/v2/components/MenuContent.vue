@@ -3,6 +3,7 @@ import Vue, { PropType } from 'vue';
 import { fieldDisplayName } from '@/util';
 import { getField } from '@/encoding';
 
+import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
@@ -13,6 +14,7 @@ import { AttributeSummary, Condition, entityType } from '@/data/api';
 
 export default Vue.extend({
   components: {
+    FacetSummaryWrapper,
     FilterDate,
     FilterFloat,
     FilterList,
@@ -115,11 +117,17 @@ export default Vue.extend({
         v-bind="{ field, table, conditions }"
         @select="$emit('select', $event)"
       />
-      <filter-tree
+      <facet-summary-wrapper
         v-else-if="['tree'].includes(summary.type)"
-        v-bind="{ field, table, conditions }"
-        @select="$emit('select', $event)"
-      />
+        v-bind="{ table, field, conditions }"
+      >
+        <template #default="props">
+          <filter-tree
+            v-bind="props"
+            @select="$emit('select', $event)"
+          />
+        </template>
+      </facet-summary-wrapper>
     </template>
   </div>
 </template>

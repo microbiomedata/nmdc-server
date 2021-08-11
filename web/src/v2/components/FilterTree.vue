@@ -1,15 +1,16 @@
 <script lang="ts">
 import {
-  defineComponent, reactive, computed, toRef, PropType,
+  defineComponent, computed, toRef, PropType,
 } from '@vue/composition-api';
 // @ts-ignore
 import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
 
 import {
-  Condition, entityType, EnvoNode,
+  Condition, entityType, EnvoNode, FacetSummaryResponse,
 } from '@/data/api';
 import { unreactive, stateRefs, getTreeData } from '@/v2/store';
+import useReqest from '@/v2/use/useRequest';
 import useFacetSummaryData from '@/v2/use/useFacetSummaryData';
 import { cloneDeep } from 'lodash';
 
@@ -27,21 +28,21 @@ export default defineComponent({
     },
     conditions: {
       type: Array as PropType<Condition[]>,
-      required: true,
+      default: () => [],
+    },
+    facetSummary: {
+      type: Array as PropType<FacetSummaryResponse[]>,
+      default: () => [],
     },
   },
 
   setup(props, { emit }) {
-    const data = reactive({
-      createdDelay: false,
-    });
-
     const conditions = toRef(props, 'conditions');
     const field = toRef(props, 'field');
     const table = toRef(props, 'table');
     const { otherConditions, myConditions } = useFacetSummaryData({ conditions, field, table });
 
-    const tree = computed(() => stateRefs.treeData.value?.trees[`${props.field}_id`].children);
+    const tree = computed(() => stateRefs.treeData.value?.trees[`${props.field}_id`]);
     const selected = computed(() => {
       if (stateRefs.treeData.value === null) {
         return [];
@@ -49,10 +50,14 @@ export default defineComponent({
       return myConditions.value.map((v) => unreactive.nodeMapLabel[v.value as string].id);
     });
 
-    getTreeData();
+    const facetSummaryMap = computed(() => {
+      const resp: Record<string, number> = {};
+      props.facetSummary.forEach((v) => { resp[v.facet] = v.count; });
+      return resp;
+    });
 
-    /* Enable loading bar after 2 seconds of no load, to avoid overly noisy facet dialogs */
-    window.setTimeout(() => { data.createdDelay = true; }, 2000);
+    const { loading, request } = useReqest();
+    request(getTreeData);
 
     async function setSelected(values: string[]) {
       const c = cloneDeep(otherConditions.value);
@@ -76,7 +81,7 @@ export default defineComponent({
     }
 
     return {
-      data, tree, selected, setSelected, normalizer,
+      tree, selected, loading, facetSummaryMap, setSelected, normalizer,
     };
   },
 });
@@ -85,7 +90,7 @@ export default defineComponent({
 <template>
   <div class="tree-overflow">
     <v-progress-linear
-      v-if="tree === null && data.createdDelay"
+      v-if="loading"
       indeterminate
       style="position: absolute;"
     />
@@ -101,7 +106,7 @@ export default defineComponent({
       @input="setSelected"
     >
       <template #option-label="{ node }">
-        <span> {{ node.label }} </span>
+        <span> {{ node.label }} ({{ facetSummaryMap[node.label] || '0' }}) </span>
       </template>
     </treeselect>
   </div>
