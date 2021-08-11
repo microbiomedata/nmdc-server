@@ -249,7 +249,7 @@ export interface EnvoNode {
 }
 
 export interface EnvoTree {
-  trees: Record<string, EnvoNode>;
+  trees: Record<string, EnvoNode[]>;
 }
 
 export interface BulkDownload {
