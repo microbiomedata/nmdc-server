@@ -98,7 +98,7 @@ export default defineComponent({
       v-else-if="tree !== null"
       :value="selected"
       :options="tree"
-      :max-height="8000"
+      :max-height="425"
       :normailzer="normalizer"
       multiple
       always-open
@@ -118,11 +118,4 @@ export default defineComponent({
   height: 475px;
   overflow-y: auto;
 }
-</style>
-
-<style>
-/* Hack the menu height */
-/* .vue-treeselect__menu {
-  height: 410px;
-} */
 </style>
