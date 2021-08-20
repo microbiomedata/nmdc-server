@@ -5,7 +5,7 @@
 First, install [ldc](https://github.com/Kitware/ldc)
 
 In order to populate the database, you must create a `.env` file in the top
-level directory containing mongo credentials.  
+level directory containing mongo credentials.
 
 ```bash
 # .env
@@ -114,3 +114,14 @@ commands as usual, e.g.
 ```bash
 alembic -c nmdc_server/alembic.ini revision --autogenerate
 ```
+
+### Developing with the shell
+
+A handy IPython shell is provided with some commonly used symbols automatically
+imported, and `autoreload 2` enabled. To run it:
+
+```bash
+ldc dev run --rm backend nmdc-server shell
+```
+
+You can also pass `--print-sql` to output all SQL queries.

@@ -37,6 +37,8 @@ class Settings(BaseSettings):
 
     sentry_dsn: Optional[str] = None
 
+    print_sql: bool = False
+
     @property
     def current_db_uri(self) -> str:
         if self.environment == "testing":
