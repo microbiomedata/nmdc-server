@@ -13,7 +13,7 @@ from nmdc_server.database import create_session
 from nmdc_server.models import Biosample, EnvoAncestor, EnvoTerm, EnvoTree
 from nmdc_server.schemas import EnvoTreeNode
 
-envo_url = "http://purl.obolibrary.org/obo/envo/subsets/envo-basic.json"
+envo_url = "https://raw.githubusercontent.com/microbiomedata/nmdc-ontology/main/nmdco-classes.json"
 
 
 def populate_envo_ancestor(
@@ -26,10 +26,13 @@ def populate_envo_ancestor(
     visited: Set[str],
 ):
     if node in visited:
-        raise Exception("Cyclic graph detected")
+        raise Exception(f"Cyclic graph detected ({node})")
     if node not in edges:
         return
-    visited = visited.union({node})
+
+    visited = visited.copy()
+    visited.add(node)
+
     for parent in edges[node]:
         if parent not in all_nodes:
             continue  # skip ancestors outside the simplified hierarchy
@@ -215,7 +218,8 @@ def nested_envo_trees() -> Dict[str, List[EnvoTreeNode]]:
 
 
 def load(db: Session):
-    # TODO: might need to clear out old ancestor associations
+    db.execute(f"truncate table {EnvoAncestor.__tablename__}")
+
     with request.urlopen(envo_url) as r:
         envo_data = json.load(r)
 
