@@ -55,7 +55,8 @@ def truncate():
 @cli.command()
 @click.option("-v", "--verbose", count=True)
 @click.option("--function-limit", type=click.INT, default=100)
-def ingest(verbose, function_limit):
+@click.option("--skip-annotation", is_flag=True, default=False)
+def ingest(verbose, function_limit, skip_annotation):
     """Ingest the latest data from mongo."""
     level = logging.WARN
     if verbose == 1:
@@ -67,7 +68,7 @@ def ingest(verbose, function_limit):
     logger.setLevel(logging.INFO)
 
     with create_session() as db:
-        load(db, function_limit=function_limit)
+        load(db, function_limit=function_limit, skip_annotation=skip_annotation)
 
     for m, s in errors.missing.items():
         click.echo(f"missing {m}:")

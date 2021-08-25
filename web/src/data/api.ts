@@ -35,7 +35,7 @@ export interface BaseSearchResult {
   id: string;
   name: string;
   description: string;
-  alternate_ideantifiers: string[];
+  alternate_identifiers: string[];
   annotations: Record<string, string>;
   [key: string]: unknown; // possibly other things.
 }

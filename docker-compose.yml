@@ -10,6 +10,8 @@ services:
     image: postgres:12
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
+    ports:
+      - 5432:5432
     env_file:
       - .docker-env
     environment:

@@ -27,7 +27,7 @@ def paginate_cursor(
         skip = skip + page_size
 
 
-def load(db: Session, function_limit=None):
+def load(db: Session, function_limit=None, skip_annotation=False):
     """Ingest all data from the mongodb source.
 
     Optionally, you can limit the number of gene functions per omics_processing
@@ -120,33 +120,39 @@ def load(db: Session, function_limit=None):
     )
     db.commit()
 
-    try:
-        # This section has its own subprogress bar because it takes several
-        # hours to ingest all of the gene function products from the metag
-        # workflows.
-        logger.info("Loading metagenome annotation...")
+    if skip_annotation is False:
 
-        # This has historically been fast, but it is only for the progress bar.
-        # It can be removed if it becomes slow.
-        count = mongodb["metagenome_annotation_activity_set"].find().count()
-        iterator = paginate_cursor(
-            mongodb["metagenome_annotation_activity_set"],
-            page_size=1,  # prevent cursor from timing out
-            no_cursor_timeout=True,
-        )
-        with click.progressbar(iterator, length=count) as bar:
-            pipeline.load(
-                db,
-                bar,
-                pipeline.load_mg_annotation,
-                "nmdc:MetagenomeAnnotation",
-                annotations=mongodb["functional_annotation_set"],
-                function_limit=function_limit,
+        try:
+            # This section has its own subprogress bar because it takes several
+            # hours to ingest all of the gene function products from the metag
+            # workflows.
+            logger.info("Loading metagenome annotation...")
+
+            # This has historically been fast, but it is only for the progress bar.
+            # It can be removed if it becomes slow.
+            count = mongodb["metagenome_annotation_activity_set"].find().count()
+            iterator = paginate_cursor(
+                mongodb["metagenome_annotation_activity_set"],
+                page_size=1,  # prevent cursor from timing out
+                no_cursor_timeout=True,
             )
-    except Exception:
-        logger.exception("Failed during metag ingest.")
-    finally:
-        db.commit()
+            with click.progressbar(iterator, length=count) as bar:
+                pipeline.load(
+                    db,
+                    bar,
+                    pipeline.load_mg_annotation,
+                    "nmdc:MetagenomeAnnotation",
+                    annotations=mongodb["functional_annotation_set"],
+                    function_limit=function_limit,
+                )
+        except Exception:
+            logger.exception("Failed during metag ingest.")
+        finally:
+            db.commit()
+
+    else:
+
+        logger.info("Skipping annotation ingest")
 
     logger.info("Loading read qc...")
     pipeline.load(

@@ -154,6 +154,9 @@ const fields: Record<string, FieldsData> = {
     hideFacet: true,
     hideAttr: true,
   },
+  collection_date: {
+    icon: 'mdi-calendar',
+  },
   ecosystem_path_id: {
     icon: 'mdi-pine-tree',
     hideFacet: true,

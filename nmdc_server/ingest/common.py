@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from nmdc_server.schemas import AnnotationValue
 
 JsonValueType = Dict[str, str]
-EXCLUDED_FIELDS = {"_id"}
+EXCLUDED_FIELDS = {"_id", "alternative_identifiers"}
 
 
 def coerce_value(value: Union[str, int, float]) -> AnnotationValue:
