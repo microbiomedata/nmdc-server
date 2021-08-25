@@ -76,6 +76,10 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         obj["depth"] = obj["depth"]["has_numeric_value"]
 
     biosample = Biosample(**obj)
+
+    # Merge other ambiguously named alternate identifier columns
+    biosample.alternate_identifiers += obj.get("alternative_identifiers", [])
+
     db.add(models.Biosample(**biosample.dict()))
 
 
@@ -84,7 +88,7 @@ def load(db: Session, cursor: Cursor, omics_processing: Collection):
     for obj in cursor:
         try:
             load_biosample(db, obj, omics_processing)
-        except Exception:
-            logger.error("Error parsing biosample:")
+        except Exception as err:
+            logger.error(f"Error parsing biosample: {err}")
             logger.error(json.dumps(obj, indent=2, default=str))
             errors["biosample"].add(obj["id"])
