@@ -178,9 +178,9 @@ export default Vue.extend({
             {{ fieldDisplayName(condition.field) }}
           </v-list-item-subtitle>
         </v-list-item-content>
-        <v-list-item-icon>
+        <v-list-item-icon class="align-self-center">
           <v-icon>
-            mdi-plus
+            mdi-filter-plus
           </v-icon>
         </v-list-item-icon>
       </v-list-item>
