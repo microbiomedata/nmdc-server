@@ -56,11 +56,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     )
     mongodb = client[settings.mongo_database]
 
-    logger.info("Loading search indices")
-    search_index.load(db)
-    db.commit()
-    return
-
     logger.info("Loading envo terms...")
     envo.load(db)
     db.commit()
@@ -216,5 +211,9 @@ def load(db: Session, function_limit=None, skip_annotation=False):
 
     logger.info("Preprocessing envo term data")
     envo.build_envo_trees(db)
+
+    logger.info("Loading search indices")
+    search_index.load(db)
+    db.commit()
 
     logger.info("Ingest finished successfully")

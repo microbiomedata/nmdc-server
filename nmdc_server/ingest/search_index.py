@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy.orm.session import Session
 
 from nmdc_server import crud, models
@@ -20,7 +22,7 @@ def load(db: Session):
     db.execute(f"TRUNCATE TABLE {models.SearchIndex.__tablename__}")
 
     for table, field in search_fields:
-        values: FacetResponse = None
+        values: Optional[FacetResponse] = None
 
         if table == "study":
             values = crud.facet_study(db, field, [])
@@ -29,12 +31,13 @@ def load(db: Session):
         elif table == "omics_processing":
             values = crud.facet_omics_processing(db, field, [])
 
-        for value in values.facets:
-            assert type(value) is str, "Search value must be a string"
-            db.add(
-                models.SearchIndex(
-                    table=table,
-                    value=value,
-                    field=field,
+        if values is not None:
+            for value in values.facets:
+                assert type(value) is str, "Search value must be a string"
+                db.add(
+                    models.SearchIndex(
+                        table=table,
+                        value=value,
+                        field=field,
+                    )
                 )
-            )
