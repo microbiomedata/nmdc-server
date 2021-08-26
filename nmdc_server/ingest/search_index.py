@@ -9,9 +9,16 @@ from nmdc_server.query import FacetResponse
 search_fields = [
     ("study", "principal_investigator_name"),
     ("biosample", "geo_loc_name"),
+    # Envo
     ("biosample", "env_broad_scale"),
     ("biosample", "env_medium"),
     ("biosample", "env_local_scale"),
+    # GOLD classification
+    ("biosample", "ecosystem"),
+    ("biosample", "ecosystem_category"),
+    ("biosample", "ecosystem_type"),
+    ("biosample", "ecosystem_subtype"),
+    ("biosample", "specific_ecosystem"),
     ("omics_processing", "instrument_name"),
     ("omics_processing", "omics_type"),
     ("omics_processing", "processing_institution"),
