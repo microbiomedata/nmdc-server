@@ -541,6 +541,14 @@ async function createBulkDownload(conditions: Condition[], dataObjectFilter: Dat
   };
 }
 
+/**
+ * Discover facet values by text search
+ */
+async function textSearch(terms: string) {
+  const { data } = await client.get<Condition[]>('search', { params: { terms } });
+  return data;
+}
+
 async function me(): Promise<string> {
   const { data } = await client.get<string>('me');
   return data;
@@ -569,6 +577,7 @@ const api = {
   searchMetagenomeAnnotation,
   searchMetaproteomicAnalysis,
   search,
+  textSearch,
 };
 
 export {

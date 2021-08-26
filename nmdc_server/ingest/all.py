@@ -7,7 +7,15 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models
 from nmdc_server.config import Settings
-from nmdc_server.ingest import biosample, data_object, envo, omics_processing, pipeline, study
+from nmdc_server.ingest import (
+    biosample,
+    data_object,
+    envo,
+    omics_processing,
+    pipeline,
+    search_index,
+    study,
+)
 from nmdc_server.ingest.logger import get_logger
 
 
@@ -203,5 +211,9 @@ def load(db: Session, function_limit=None, skip_annotation=False):
 
     logger.info("Preprocessing envo term data")
     envo.build_envo_trees(db)
+
+    logger.info("Loading search indices")
+    search_index.load(db)
+    db.commit()
 
     logger.info("Ingest finished successfully")

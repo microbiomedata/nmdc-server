@@ -32,19 +32,30 @@ export default Vue.extend({
       type: Array as PropType<SearchFacet[]>,
       required: true,
     },
+    filterText: {
+      type: String,
+      required: true,
+    },
+    facetValues: {
+      type: Array as PropType<Condition[]>,
+      required: true,
+    },
   },
   data() {
     return {
-      filterText: '',
       menuState: {} as Record<string, boolean>,
     };
   },
   computed: {
     privatefilteredFields(): SearchFacet[] {
-      if (this.filterText) {
-        return this.fields.filter(({ field }) => {
-          const lower = this.filterText.toLowerCase();
-          return field.toLowerCase().indexOf(lower) >= 0;
+      const { filterText } = this;
+      if (filterText) {
+        return this.fields.filter(({ field, table }) => {
+          const lower = filterText.toLowerCase();
+          return (
+            field.toLowerCase().indexOf(lower) >= 0
+            || fieldDisplayName(field, table).toLowerCase().indexOf(lower) >= 0
+          );
         });
       }
       return this.fields;
@@ -81,7 +92,7 @@ export default Vue.extend({
 <template>
   <div>
     <v-text-field
-      v-model="filterText"
+      :value="filterText"
       solo
       label="search"
       clearable
@@ -91,6 +102,7 @@ export default Vue.extend({
       outlined
       flat
       append-icon="mdi-magnify"
+      @input="$emit('update:filterText', $event || '')"
     />
     <v-list
       ref="list"
@@ -146,6 +158,37 @@ export default Vue.extend({
           </v-menu>
         </template>
       </div>
+      <v-divider
+        v-if="facetValues.length && groupedFields.length"
+        class="my-2"
+      />
+      <v-subheader v-if="facetValues.length">
+        Query Options
+      </v-subheader>
+      <v-list-item
+        v-for="condition in facetValues"
+        :key="`${condition.table}:${condition.field}:${condition.value}`"
+        @click="$emit('select', condition)"
+      >
+        <v-list-item-content>
+          <v-list-item-title>
+            {{ condition.value }}
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            {{ fieldDisplayName(condition.field) }}
+          </v-list-item-subtitle>
+        </v-list-item-content>
+        <v-list-item-icon class="align-self-center">
+          <v-icon>
+            mdi-filter-plus
+          </v-icon>
+        </v-list-item-icon>
+      </v-list-item>
+      <v-list-item
+        v-if="facetValues.length === 0 && groupedFields.length === 0"
+      >
+        No search results
+      </v-list-item>
     </v-list>
   </div>
 </template>
