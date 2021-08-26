@@ -130,6 +130,17 @@ class EnvoAncestor(Base):
     ancestor = relationship(EnvoTerm, foreign_keys=[ancestor_id], lazy="joined")
 
 
+class SearchIndex(Base):
+    __tablename__ = "search_index"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+
+    # Condition value (only == operator supported)
+    table = Column(String, nullable=False)
+    value = Column(String, nullable=False)
+    field = Column(String, nullable=False)
+
+
 class PrincipalInvestigator(Base):
     __tablename__ = "principal_investigator"
 

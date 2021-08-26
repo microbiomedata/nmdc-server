@@ -767,6 +767,11 @@ class SearchQuery(BaseModel):
     conditions: List[ConditionSchema] = []
 
 
+class ConditionResultSchema(SimpleConditionSchema):
+    class Config:
+        orm_mode = True
+
+
 class FacetQuery(SearchQuery):
     attribute: str
 

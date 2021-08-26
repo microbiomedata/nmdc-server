@@ -1,14 +1,18 @@
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api';
+import { defineComponent, ref, watch } from '@vue/composition-api';
 import { types } from '@/encoding';
-import { api, DatabaseSummaryResponse, entityType } from '@/data/api';
+import {
+  api, Condition, DatabaseSummaryResponse, entityType,
+} from '@/data/api';
 
 import ConditionChips from '@/components/Presentation/ConditionChips.vue';
 
 import MenuContent from '@/v2/components/MenuContent.vue';
 import FacetedSearch, { SearchFacet } from '@/v2/components/FacetedSearch.vue';
 
-import { stateRefs, removeConditions, setConditions } from '@/v2/store';
+import {
+  stateRefs, removeConditions, setConditions, toggleConditions,
+} from '@/v2/store';
 
 /**
  * V2's sidebar has a fixed list of facets, possibly from different tables.
@@ -101,6 +105,8 @@ export default defineComponent({
   },
 
   setup() {
+    const filterText = ref('');
+    const textSearchResults = ref([] as Condition[]);
     const dbSummary = ref({} as DatabaseSummaryResponse);
     api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
 
@@ -110,13 +116,26 @@ export default defineComponent({
       }
       return {};
     }
+
+    async function updateSearch() {
+      if (filterText.value.length >= 2) {
+        textSearchResults.value = await api.textSearch(filterText.value);
+      } else {
+        textSearchResults.value = [];
+      }
+    }
+    watch(filterText, updateSearch);
+
     return {
+      filterText,
+      textSearchResults,
       setConditions,
       FunctionSearchFacets,
       conditions: stateRefs.conditions,
       dbSummary,
       dbSummaryForTable,
       removeConditions,
+      toggleConditions,
       types,
     };
   },
@@ -184,8 +203,11 @@ export default defineComponent({
     <v-divider class="my-3" />
 
     <FacetedSearch
+      :filter-text.sync="filterText"
+      :facet-values="textSearchResults"
       :conditions="conditions"
       :fields="FunctionSearchFacets"
+      @select="toggleConditions([$event])"
     >
       <template #menu="{ field, table, isOpen, toggleMenu }">
         <MenuContent

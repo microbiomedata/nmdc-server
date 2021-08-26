@@ -7,7 +7,15 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models
 from nmdc_server.config import Settings
-from nmdc_server.ingest import biosample, data_object, envo, omics_processing, pipeline, study
+from nmdc_server.ingest import (
+    biosample,
+    data_object,
+    envo,
+    omics_processing,
+    pipeline,
+    search_index,
+    study,
+)
 from nmdc_server.ingest.logger import get_logger
 
 
@@ -47,6 +55,11 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         host=settings.mongo_host, username=settings.mongo_user, password=settings.mongo_password
     )
     mongodb = client[settings.mongo_database]
+
+    logger.info("Loading search indices")
+    search_index.load(db)
+    db.commit()
+    return
 
     logger.info("Loading envo terms...")
     envo.load(db)
