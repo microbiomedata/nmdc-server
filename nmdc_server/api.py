@@ -45,8 +45,8 @@ async def me(request: Request, user: str = Depends(get_current_user)) -> Optiona
 
 # autocomplete search
 @router.get("/search", tags=["aggregation"], response_model=List[query.ConditionResultSchema])
-def text_search(terms: str, db: Session = Depends(get_db)):
-    return crud.text_search(db, terms)
+def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
+    return crud.text_search(db, terms, limit)
 
 
 # database summary

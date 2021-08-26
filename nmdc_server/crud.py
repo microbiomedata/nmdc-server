@@ -62,12 +62,12 @@ def get_aggregated_stats(db: Session) -> schemas.AggregationSummary:
     return aggregations.get_aggregation_summary(db)
 
 
-def text_search(db: Session, terms: str) -> List[models.SearchIndex]:
+def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]:
     searchtext = f"%{terms.lower()}%"
     return (
         db.query(models.SearchIndex)
         .filter(models.SearchIndex.value.ilike(searchtext))
-        .limit(6)
+        .limit(limit)
         .all()
     )
 
