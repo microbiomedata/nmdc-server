@@ -40,7 +40,7 @@ def load(db: Session):
 
         if values is not None:
             for value in values.facets:
-                assert type(value) is str, "Search value must be a string"
+                assert isinstance(value, str), "Search value must be a string"
                 db.add(
                     models.SearchIndex(
                         table=table,
