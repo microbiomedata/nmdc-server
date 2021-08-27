@@ -545,7 +545,7 @@ async function createBulkDownload(conditions: Condition[], dataObjectFilter: Dat
  * Discover facet values by text search
  */
 async function textSearch(terms: string) {
-  const { data } = await client.get<Condition[]>('search', { params: { terms } });
+  const { data } = await client.get<Condition[]>('search', { params: { terms, limit: 10 } });
   return data;
 }
 
