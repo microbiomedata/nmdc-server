@@ -31,26 +31,31 @@ export default defineComponent({
     const svgRoot = ref(undefined);
 
     const margin = {
-      top: 20,
+      top: 26,
       right: 30,
-      bottom: 30,
+      bottom: 10,
       left: 30,
     };
+    const fontSize = 12;
 
     const setOrder = ['MG', 'MT', 'MP', 'MB', 'NOM'];
+    const Samples = 'Samples';
+    const Studies = 'Studies';
+    const seriesTitles = [Samples, Studies];
+    const uniqueCounts = [Samples];
 
     function makeUpSet(dataOrig, order, el) {
       const width = props.width - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
 
-      const data = [...dataOrig].sort((a, b) => b.counts[order] - a.counts[order]);
+      const data = [...dataOrig]
+        .sort((a, b) => b.counts[order] - a.counts[order])
+        .filter((a) => a.counts[order] > 0);
 
       const uniqueSets = Array.from(
         new Set([].concat(...data.map((d) => d.sets))),
       ).sort((a, b) => setOrder.indexOf(a) - setOrder.indexOf(b));
-      const uniqueCounts = Array.from(
-        new Set([].concat(...data.map((d) => Object.keys(d.counts)))),
-      );
+
       const setMembers = [].concat(
         ...data.map((d, i) => d.sets.map((s) => ({ index: i, set: s }))),
       );
@@ -96,7 +101,7 @@ export default defineComponent({
         .attr('x', (s) => membershipX(s))
         .attr('y', -4)
         .attr('text-anchor', 'middle')
-        .attr('font-size', margin.top - 8)
+        .attr('font-size', fontSize)
         .text((d) => d)
         .attr('fill', 'black')
         .append('svg:title')
@@ -122,8 +127,6 @@ export default defineComponent({
         .attr('r', 5)
         .attr('fill', root.$vuetify.theme.currentTheme.blue);
 
-      const seriesTitles = ['Samples', 'Studies'];
-
       uniqueCounts.forEach((count, _i) => {
         const barX = scaleLinear()
           .domain([0, Math.max(...data.map((d) => d.counts[count]))])
@@ -134,7 +137,7 @@ export default defineComponent({
             parent.append('text')
               .attr('x', countsX(count))
               .attr('y', -4)
-              .attr('font-size', margin.top - 7)
+              .attr('font-size', fontSize)
               .attr('fill', 'black')
               .text(seriesTitles[_i]);
           })
@@ -151,8 +154,8 @@ export default defineComponent({
             parent.append('text')
               .attr('class', 'count')
               .attr('x', (d) => countsX(count) + barX(d.counts[count]) + 3)
-              .attr('y', (d, i) => y(i) + 12)
-              .attr('font-size', margin.top - 8)
+              .attr('y', (d, i) => y(i) + (y.bandwidth() / 2) + 4)
+              .attr('font-size', fontSize)
               .text((d) => d.counts[count])
               .attr('fill', 'black');
           });
