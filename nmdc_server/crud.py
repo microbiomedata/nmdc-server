@@ -67,6 +67,7 @@ def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]
     return (
         db.query(models.SearchIndex)
         .filter(models.SearchIndex.value.ilike(searchtext))
+        .order_by(models.SearchIndex.count.desc())
         .limit(limit)
         .all()
     )

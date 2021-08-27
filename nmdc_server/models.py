@@ -139,6 +139,7 @@ class SearchIndex(Base):
     table = Column(String, nullable=False)
     value = Column(String, nullable=False)
     field = Column(String, nullable=False)
+    count = Column(Integer, nullable=False)
 
 
 class PrincipalInvestigator(Base):

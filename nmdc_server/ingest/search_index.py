@@ -39,12 +39,13 @@ def load(db: Session):
             values = crud.facet_omics_processing(db, field, [])
 
         if values is not None:
-            for value in values.facets:
+            for value, count in values.facets.items():
                 assert isinstance(value, str), "Search value must be a string"
                 db.add(
                     models.SearchIndex(
                         table=table,
                         value=value,
                         field=field,
+                        count=count,
                     )
                 )
