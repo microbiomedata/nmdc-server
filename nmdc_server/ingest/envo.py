@@ -174,6 +174,9 @@ def _prune_useless_nodes(
     """
     Remove useless internal (non-root) nodes from a tree.
 
+    A useless node is one that is not in the terms present in the biosample set, and that has
+    only a single child node.
+
     This modifies the structure in-place, returning the new root. Returns whether or not
     any modifications were made to the tree.
     """
