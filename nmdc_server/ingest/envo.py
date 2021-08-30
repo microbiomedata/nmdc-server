@@ -165,6 +165,35 @@ def _nested_envo_subtree(
     ]
 
 
+def _prune_useless_nodes(
+    node: EnvoTreeNode,
+    present_terms: Set[str],
+    parent: Optional[EnvoTreeNode] = None,
+    modified: bool = False,
+) -> bool:
+    """
+    Remove useless internal (non-root) nodes from a tree.
+
+    A useless node is one that is not in the terms present in the biosample set, and that has
+    only a single child node.
+
+    This modifies the structure in-place, returning the new root. Returns whether or not
+    any modifications were made to the tree.
+    """
+    if parent is not None and len(node.children) == 1 and node.id not in present_terms:
+        # Delete this node, move its only child up under the parent
+        parent.children = [child for child in parent.children if child.id != node.id]
+        node = node.children[0]
+        parent.children.append(node)
+        modified = True
+        _prune_useless_nodes(node, present_terms, parent, modified)
+    else:
+        for child in node.children:
+            modified |= _prune_useless_nodes(child, present_terms, node, modified)
+
+    return modified
+
+
 def _get_trees_for_facet(
     db: Session,
     facet: str,
@@ -192,6 +221,14 @@ def _get_trees_for_facet(
     # Recursively build the tree structure
     root_nodes = _nested_envo_subtree(tree_children, reachable)
     root_map = {r.id: r for r in root_nodes}
+
+    # Prune useless internal nodes from the roots
+    for root in root_nodes:
+        # TODO I don't have a mathematical proof, but I think we might not need
+        # this loop; because of the algorithm and tree structure, it might always get
+        # pruned in a single pass. Not sure though.
+        while _prune_useless_nodes(root, present_terms):
+            pass
 
     # Return all matching root nodes
     return [root_map[root_id] for root_id in root_ids]
