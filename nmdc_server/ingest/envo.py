@@ -194,10 +194,15 @@ def _prune_useless_nodes(
     return modified
 
 
+def _prune_useless_roots(node: EnvoTreeNode, present_terms: Set[str]) -> EnvoTreeNode:
+    while len(node.children) == 1 and node.id not in present_terms:
+        node = node.children[0]
+    return node
+
+
 def _get_trees_for_facet(
     db: Session,
     facet: str,
-    root_ids: Set[str],
     tree_nodes: Dict[str, _NodeInfo],
     tree_children: TreeChildren,
 ) -> List[EnvoTreeNode]:
@@ -220,7 +225,6 @@ def _get_trees_for_facet(
 
     # Recursively build the tree structure
     root_nodes = _nested_envo_subtree(tree_children, reachable)
-    root_map = {r.id: r for r in root_nodes}
 
     # Prune useless internal nodes from the roots
     for root in root_nodes:
@@ -230,8 +234,7 @@ def _get_trees_for_facet(
         while _prune_useless_nodes(root, present_terms):
             pass
 
-    # Return all matching root nodes
-    return [root_map[root_id] for root_id in root_ids]
+    return [_prune_useless_roots(root, present_terms) for root in root_nodes]
 
 
 @functools.lru_cache(maxsize=None)
@@ -246,11 +249,9 @@ def nested_envo_trees() -> Dict[str, List[EnvoTreeNode]]:
             tree_children[edge.parent_id].append(node)
             tree_nodes[edge.id] = node
 
-        biosample_roots = get_biosample_roots(session)
-
         return {
-            facet: _get_trees_for_facet(session, facet, root_ids, tree_nodes, tree_children)
-            for facet, root_ids in biosample_roots.items()
+            facet: _get_trees_for_facet(session, facet, tree_nodes, tree_children)
+            for facet in ["env_broad_scale_id", "env_local_scale_id", "env_medium_id"]
         }
 
 
