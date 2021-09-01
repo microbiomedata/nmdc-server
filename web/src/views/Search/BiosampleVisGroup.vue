@@ -1,22 +1,24 @@
-<script>
-import { defineComponent } from '@vue/composition-api';
-import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
+<script lang="ts">
+import {
+  computed, defineComponent, ref, watchEffect, PropType,
+} from '@vue/composition-api';
+import EcosystemSankey from '@/components/EcosystemSankey.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 
 import UpSet from '@/components/Presentation/UpSet.vue';
 import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 // TODO: replace with composition functions
-import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
-import BinnedSummaryWrapper from '@/components/BinnedSummaryWrapper.vue';
+import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
+import BinnedSummaryWrapper from '@/components/Wrappers/BinnedSummaryWrapper.vue';
 // ENDTODO
-import TooltipCard from '@/v2/components/TooltipCard.vue';
-import ClusterMap from '@/v2/components/ClusterMap.vue';
+import TooltipCard from '@/components/TooltipCard.vue';
+import ClusterMap from '@/components/ClusterMap.vue';
 
 import {
   toggleConditions, removeConditions, setUniqueCondition,
-} from '@/v2/store';
-import { api } from '@/data/api';
+} from '@/store';
+import { api, Condition, FacetSummaryResponse } from '@/data/api';
 
 const helpBarchart = 'Displays the number of samples for each data type available. Click on a bar to filter by data type.';
 const helpMap = 'Displays geographical location (latitude, longitude) of sample collection sites. Click on a cluster to zoom in.  Click "Search this regon" to limit search to the current map bounds.';
@@ -31,7 +33,7 @@ const staticUpsetTooltips = {
   NOM: 'Natural Organic Matter',
 };
 
-function makeSetsFromBitmask(mask_str) {
+function makeSetsFromBitmask(mask_str: string) {
   const mask = parseInt(mask_str, 10); // the bitmask comes in as a string
   const sets = [];
 
@@ -56,12 +58,14 @@ function makeSetsFromBitmask(mask_str) {
 
 export default defineComponent({
   name: 'SampleVisGroupV2',
+
   props: {
     conditions: {
-      type: Array, //  as PropType<Condition[]>,
+      type: Array as PropType<Condition[]>,
       required: true,
     },
   },
+
   components: {
     ChartContainer,
     DateHistogram,
@@ -74,26 +78,14 @@ export default defineComponent({
     BinnedSummaryWrapper,
     UpSet,
   },
-  setup() {
-    function setBoundsFromMap(val) {
-      setUniqueCondition(['latitude', 'longitude'], ['biosample'], val);
-    }
-    return {
-      helpBarchart,
-      helpMap,
-      helpTimeline,
-      helpUpset,
-      toggleConditions,
-      setUniqueCondition,
-      removeConditions,
-      setBoundsFromMap,
-      staticUpsetTooltips,
-    };
-  },
-  computed: {
-    upsetData() {
-      const multiomicsObj = {};
-      this.sampleFacetSummary.forEach(({ facet, count }) => {
+
+  setup(props) {
+    const sampleFacetSummary = ref([] as FacetSummaryResponse[]);
+    const studyFacetSummary = ref([] as FacetSummaryResponse[]);
+
+    const upsetData = computed(() => {
+      const multiomicsObj: Record<string, { counts: any, sets: any }> = {};
+      sampleFacetSummary.value.forEach(({ facet, count }) => {
         if (parseInt(facet, 10) === 0) {
           return;
         }
@@ -105,7 +97,7 @@ export default defineComponent({
           sets: makeSetsFromBitmask(facet),
         };
       });
-      this.studyFacetSummary.forEach(({ facet, count }) => {
+      studyFacetSummary.value.forEach(({ facet, count }) => {
         if (parseInt(facet, 10) === 0) {
           return;
         }
@@ -122,29 +114,37 @@ export default defineComponent({
       return Object.keys(multiomicsObj)
         .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
         .map((k) => multiomicsObj[k]);
-    },
-  },
-  asyncComputed: {
-    sampleFacetSummary: {
-      get() {
-        return api.getFacetSummary(
-          'biosample',
-          'multiomics',
-          this.conditions,
-        );
-      },
-      default: [],
-    },
-    studyFacetSummary: {
-      get() {
-        return api.getFacetSummary(
-          'study',
-          'multiomics',
-          this.conditions,
-        );
-      },
-      default: [],
-    },
+    });
+
+    watchEffect(async () => {
+      sampleFacetSummary.value = await api.getFacetSummary(
+        'biosample',
+        'multiomics',
+        props.conditions,
+      );
+      studyFacetSummary.value = await api.getFacetSummary(
+        'study',
+        'multiomics',
+        props.conditions,
+      );
+    });
+
+    function setBoundsFromMap(val: Condition[]) {
+      setUniqueCondition(['latitude', 'longitude'], ['biosample'], val);
+    }
+
+    return {
+      helpBarchart,
+      helpMap,
+      helpTimeline,
+      helpUpset,
+      toggleConditions,
+      setUniqueCondition,
+      removeConditions,
+      setBoundsFromMap,
+      staticUpsetTooltips,
+      upsetData,
+    };
   },
 });
 </script>
@@ -202,7 +202,7 @@ export default defineComponent({
             <template #default="props">
               <DateHistogram
                 v-bind="props"
-                @select="setUniqueCondition('collection_date', 'biosample', $event.conditions)"
+                @select="setUniqueCondition(['collection_date'], ['biosample'], $event.conditions)"
               />
             </template>
           </BinnedSummaryWrapper>
@@ -226,9 +226,7 @@ export default defineComponent({
               />
             </template>
           </ChartContainer>
-          <div
-            class="mx-5 upset-legend"
-          >
+          <div class="mx-5 upset-legend">
             <span>MG: metagenomics</span>
             <span>MT: metatranscriptomics</span>
             <span>MP: metaproteomics</span>

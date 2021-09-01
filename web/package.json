@@ -11,7 +11,7 @@
     "@riophae/vue-treeselect": "^0.4.0",
     "@sentry/tracing": "^6.2.1",
     "@sentry/vue": "^6.2.1",
-    "@vue/composition-api": "^1.0.0-beta.25",
+    "@vue/composition-api": "^1.1.4",
     "axios": "^0.21.1",
     "axios-cache-adapter": "^2.7.3",
     "citation-js": "^0.5.0-alpha.4",
@@ -24,7 +24,6 @@
     "d3-selection": "^2.0.0",
     "d3-time": "^2.0.0",
     "d3-time-format": "^3.0.0",
-    "dexie": "^2.0.4",
     "filesize": "^6.0.1",
     "leaflet": "^1.7.1",
     "leaflet.markercluster": "^1.5.0",
@@ -38,8 +37,7 @@
     "vue-router": "^3.3.4",
     "vue2-leaflet": "^2.7.1",
     "vue2-leaflet-markercluster": "^3.1.0",
-    "vuetify": "^2.5.6",
-    "vuex": "^3.5.1"
+    "vuetify": "^2.5.6"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",

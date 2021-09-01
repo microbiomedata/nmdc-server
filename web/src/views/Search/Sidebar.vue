@@ -1,59 +1,143 @@
-<script>
-import Vue from 'vue';
-import { mapGetters, mapState } from 'vuex';
+<script lang="ts">
+import { defineComponent, ref, watch } from '@vue/composition-api';
 import { types } from '@/encoding';
-import { api } from '@/data/api';
-import FacetedSearch from '@/components/Presentation/FacetedSearch.vue';
-import ConditionChips from '@/components/Presentation/ConditionChips.vue';
-import MenuContent from '@/components/Presentation/MenuContent.vue';
+import {
+  api, Condition, DatabaseSummaryResponse, entityType,
+} from '@/data/api';
 
-export default Vue.extend({
+import ConditionChips from '@/components/Presentation/ConditionChips.vue';
+
+import MenuContent from '@/components/MenuContent.vue';
+import FacetedSearch, { SearchFacet } from '@/components/FacetedSearch.vue';
+
+import {
+  stateRefs, removeConditions, setConditions, toggleConditions,
+} from '@/store';
+
+/**
+ * V2's sidebar has a fixed list of facets, possibly from different tables.
+ */
+const FunctionSearchFacets: SearchFacet[] = [
+  {
+    field: 'id',
+    table: 'gene_function',
+  },
+  /** ENVO */
+  {
+    field: 'env_broad_scale',
+    table: 'biosample',
+  },
+  {
+    field: 'env_local_scale',
+    table: 'biosample',
+  },
+  {
+    field: 'env_medium',
+    table: 'biosample',
+  },
+  /** GOLD */
+  {
+    field: 'gold_classification',
+    table: 'biosample',
+  },
+  /** Biosample */
+  {
+    field: 'geo_loc_name',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'depth',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'latitude',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'longitude',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  {
+    field: 'collection_date',
+    table: 'biosample',
+    group: 'Sample',
+  },
+  /** Study */
+  {
+    field: 'principal_investigator_name',
+    table: 'study',
+    group: 'Study',
+  },
+  /** Omics Processing */
+  {
+    field: 'instrument_name',
+    table: 'omics_processing',
+    group: 'Omics Processing',
+  },
+  {
+    field: 'omics_type',
+    table: 'omics_processing',
+    group: 'Omics Processing',
+  },
+  {
+    field: 'processing_institution',
+    table: 'omics_processing',
+    group: 'Omics Processing',
+  },
+];
+
+export default defineComponent({
   components: {
     ConditionChips,
     FacetedSearch,
     MenuContent,
   },
 
-  data: () => ({
-    types,
-  }),
-
-  asyncComputed: {
-    dbSummary: {
-      async get() { return api.getDatabaseSummary(); },
-      default: {},
+  props: {
+    resultsCount: {
+      type: Number,
+      default: 0,
     },
   },
 
-  computed: {
-    ...mapState(['results']),
-    ...mapGetters(['type', 'conditions']),
-    typeSummary() {
-      if (this.type in this.dbSummary) {
-        return this.dbSummary[this.type].attributes;
+  setup() {
+    const filterText = ref('');
+    const textSearchResults = ref([] as Condition[]);
+    const dbSummary = ref({} as DatabaseSummaryResponse);
+    api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
+
+    function dbSummaryForTable(table: entityType, field: string) {
+      if (table in dbSummary.value) {
+        return dbSummary.value[table].attributes[field];
       }
       return {};
-    },
-    primitiveFields() {
-      return Object.keys(this.typeSummary);
-    },
-    typeResultsCount() {
-      const tr = this.results[this.type];
-      return tr ? tr.count : 0;
-    },
-  },
+    }
 
-  methods: {
-    removeCondition({ field, value, table }) {
-      this.$store.dispatch('route', {
-        conditions: this.conditions
-          .filter((c) => !(
-            c.field === field
-            && (value ? c.value === value : true)
-            && c.table === table
-          )),
-      });
-    },
+    async function updateSearch() {
+      if (filterText.value.length >= 2) {
+        textSearchResults.value = await api.textSearch(filterText.value);
+      } else {
+        textSearchResults.value = [];
+      }
+    }
+    watch(filterText, updateSearch);
+
+    return {
+      filterText,
+      textSearchResults,
+      setConditions,
+      FunctionSearchFacets,
+      conditions: stateRefs.conditions,
+      dbSummary,
+      dbSummaryForTable,
+      removeConditions,
+      toggleConditions,
+      types,
+    };
   },
 });
 </script>
@@ -66,40 +150,28 @@ export default Vue.extend({
     width="320"
   >
     <div class="mx-3 my-2">
-      <div class="text-subtitle-2 primary--text">
-        I want to search by...
-      </div>
-      <v-chip-group
-        :value="type"
-        mandatory
-        column
-        class="my-1"
-      >
-        <template v-for="t in Object.keys(types)">
-          <v-chip
-            v-if="types[t].visible || type === t"
-            :key="t"
-            :value="t"
-            :color="type === t ? 'primary' : 'inherit'"
-            small
-            @click="$store.dispatch('route', { name: 'Search', type: t, conditions })"
-          >
-            {{ types[t].heading }}
-          </v-chip>
-        </template>
-      </v-chip-group>
       <div
         v-if="conditions.length"
         class="text-subtitle-2 primary--text d-flex flex-row"
       >
-        <span class="grow">That match the following conditions</span>
-        <v-btn
-          icon
-          x-small
-          @click="$store.dispatch('route', { conditions: [] })"
+        <span class="grow">Active query terms</span>
+        <v-tooltip
+          bottom
+          open-delay="600"
         >
-          <v-icon>mdi-filter-off</v-icon>
-        </v-btn>
+          <template #activator="{ on, attrs }">
+            <v-btn
+              icon
+              x-small
+              v-bind="attrs"
+              v-on="on"
+              @click="removeConditions"
+            >
+              <v-icon>mdi-filter-off</v-icon>
+            </v-btn>
+          </template>
+          <span>Clear query terms</span>
+        </v-tooltip>
       </div>
     </div>
 
@@ -107,43 +179,47 @@ export default Vue.extend({
       :conditions="conditions"
       :db-summary="dbSummary"
       class="ma-3"
-      @remove="removeCondition"
+      @remove="removeConditions([$event])"
     >
-      <template #menu="{ field, table, isOpen }">
+      <template #menu="{ field, table, isOpen, toggleMenu }">
         <MenuContent
           v-bind="{
             field,
             table,
             isOpen,
             conditions,
-            summary: (dbSummary[table] || {})[field],
+            summary: dbSummaryForTable(table, field),
           }"
-          @select="$store.dispatch('route', $event)"
+          @select="setConditions($event.conditions)"
+          @close="toggleMenu(false)"
         />
       </template>
     </ConditionChips>
 
     <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
-      Found {{ typeResultsCount }} results.
+      Found {{ resultsCount }} results.
     </div>
 
     <v-divider class="my-3" />
 
     <FacetedSearch
+      :filter-text.sync="filterText"
+      :facet-values="textSearchResults"
       :conditions="conditions"
-      :type="type"
-      :fields="primitiveFields"
+      :fields="FunctionSearchFacets"
+      @select="toggleConditions([$event])"
     >
-      <template #menu="{ field, isOpen }">
+      <template #menu="{ field, table, isOpen, toggleMenu }">
         <MenuContent
           v-bind="{
             field,
-            table: type,
+            table,
             isOpen,
+            summary: dbSummaryForTable(table, field),
             conditions,
-            summary: typeSummary[field],
           }"
-          @select="$store.dispatch('route', $event)"
+          @select="setConditions($event.conditions)"
+          @close="toggleMenu(false)"
         />
       </template>
     </FacetedSearch>

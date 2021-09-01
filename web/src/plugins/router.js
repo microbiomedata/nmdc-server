@@ -3,9 +3,9 @@ import VueRouter from 'vue-router';
 
 import qs from 'qs';
 
-import V2Search from '@/v2/views/Search/Layout.vue';
-import V2SamplePage from '@/v2/views/IndividualResults/SamplePage.vue';
-import V2StudyPage from '@/v2/views/IndividualResults/StudyPage.vue';
+import V2Search from '@/views/Search/Layout.vue';
+import V2SamplePage from '@/views/IndividualResults/SamplePage.vue';
+import V2StudyPage from '@/views/IndividualResults/StudyPage.vue';
 
 Vue.use(VueRouter);
 

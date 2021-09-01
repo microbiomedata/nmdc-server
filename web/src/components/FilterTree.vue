@@ -9,9 +9,9 @@ import '@riophae/vue-treeselect/dist/vue-treeselect.css';
 import {
   Condition, entityType, EnvoNode, FacetSummaryResponse,
 } from '@/data/api';
-import { unreactive, stateRefs, getTreeData } from '@/v2/store';
-import useReqest from '@/v2/use/useRequest';
-import useFacetSummaryData from '@/v2/use/useFacetSummaryData';
+import { unreactive, stateRefs, getTreeData } from '@/store';
+import useReqest from '@/use/useRequest';
+import useFacetSummaryData from '@/use/useFacetSummaryData';
 import { cloneDeep } from 'lodash';
 
 export default defineComponent({
@@ -42,7 +42,14 @@ export default defineComponent({
     const table = toRef(props, 'table');
     const { otherConditions, myConditions } = useFacetSummaryData({ conditions, field, table });
 
-    const tree = computed(() => stateRefs.treeData.value?.trees[`${props.field}_id`]);
+    const tree = computed(() => {
+      let t = stateRefs.treeData.value?.trees[`${props.field}_id`];
+      /* Eliminate nodes with only one child from the top */
+      while (t && t?.length === 1 && t[0].children.length) {
+        t = t[0].children;
+      }
+      return t;
+    });
     const selected = computed(() => {
       if (stateRefs.treeData.value === null) {
         return [];

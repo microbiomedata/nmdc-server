@@ -6,9 +6,9 @@ import { Integrations } from '@sentry/tracing';
 import AsyncComputed from 'vue-async-computed';
 
 import router from '@/plugins/router';
-import { loadCurrentUser } from '@/v2/store';
+import { loadCurrentUser } from '@/store';
 import vuetify from '@/plugins/vuetify';
-import { provideRouter } from '@/v2/use/useRouter';
+import { provideRouter } from '@/use/useRouter';
 
 import App from './App.vue';
 

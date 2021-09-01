@@ -6,7 +6,7 @@ import { flattenDeep } from 'lodash';
 
 import { humanFileSize } from '@/data/utils';
 import { OmicsProcessingResult } from '@/data/api';
-import { stateRefs, acceptTerms } from '@/v2/store';
+import { stateRefs, acceptTerms } from '@/store';
 import { DataTableHeader } from 'vuetify';
 
 import DownloadDialog from './DownloadDialog.vue';

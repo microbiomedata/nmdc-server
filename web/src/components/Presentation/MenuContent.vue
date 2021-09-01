@@ -1,12 +1,12 @@
-<script>
-import Vue from 'vue';
+<script lang="ts">
+import { defineComponent } from '@vue/composition-api';
 import { fieldDisplayName } from '@/util';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
 import FilterTree from '@/components/Presentation/FilterTree.vue';
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     FilterDate,
     FilterFloat,
@@ -40,7 +40,9 @@ export default Vue.extend({
     },
   },
 
-  methods: { fieldDisplayName },
+  setup() {
+    return { fieldDisplayName };
+  },
 });
 </script>
 

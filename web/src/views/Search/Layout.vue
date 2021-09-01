@@ -8,13 +8,13 @@ import { types } from '@/encoding';
 import { fieldDisplayName } from '@/util';
 import { api, Condition } from '@/data/api';
 
-import { stateRefs, toggleConditions, dataObjectFilter } from '@/v2/store';
-import useFacetSummaryData from '@/v2/use/useFacetSummaryData';
-import usePaginatedResults from '@/v2/use/usePaginatedResults';
-import useClockGate from '@/v2/use/useClockGate';
-import SampleListExpansion from '@/v2/components/SampleListExpansion.vue';
+import { stateRefs, toggleConditions, dataObjectFilter } from '@/store';
+import useFacetSummaryData from '@/use/useFacetSummaryData';
+import usePaginatedResults from '@/use/usePaginatedResults';
+import useClockGate from '@/use/useClockGate';
+import SampleListExpansion from '@/components/SampleListExpansion.vue';
 
-import BulkDownload from '@/v2/components/BulkDownload.vue';
+import BulkDownload from '@/components/BulkDownload.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
 import Sidebar from './Sidebar.vue';
