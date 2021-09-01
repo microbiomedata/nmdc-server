@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
-import { stateRefs } from '@/v2/store';
+import { stateRefs } from '@/store';
 
 export default defineComponent({
   setup() {

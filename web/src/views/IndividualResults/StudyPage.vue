@@ -10,10 +10,10 @@ import {
   typeWithCardinality, valueCardinality, fieldDisplayName,
 } from '@/util';
 import { api, StudySearchResults } from '@/data/api';
-import { setUniqueCondition } from '@/v2/store';
-import { useRouter } from '@/v2/use/useRouter';
-import AttributeList from '@/v2/components/AttributeList.vue';
-import IndividualTitle from '@/v2/views/IndividualResults/IndividualTitle.vue';
+import { setUniqueCondition } from '@/store';
+import { useRouter } from '@/use/useRouter';
+import AttributeList from '@/components/Presentation/AttributeList.vue';
+import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
 
 /**
  * Override citations for certain DOIs

@@ -1,20 +1,14 @@
-<template>
-  <GChart
-    ref="chart"
-    type="BarChart"
-    :data="chartData"
-    :options="barChartOptions"
-    :events="chartEvents"
-  />
-</template>
-
-<script>
-import Vue from 'vue';
+<script lang="ts">
+import {
+  computed, defineComponent, PropType, ref,
+} from '@vue/composition-api';
+// @ts-ignore
 import { GChart } from 'vue-google-charts';
 import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
+import { FacetSummaryResponse } from '@/data/api';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'FacetBarChart',
   components: {
     GChart,
@@ -53,108 +47,119 @@ export default Vue.extend({
       default: 200,
     },
     stacked: {
-      type: [Boolean, String],
+      type: Boolean,
       default: true,
     },
     facetSummary: {
-      type: Array,
+      type: Array as PropType<FacetSummaryResponse[]>,
       required: true,
     },
     facetSummaryUnconditional: {
-      type: Array,
+      type: Array as PropType<FacetSummaryResponse[]>,
       required: true,
     },
   },
-  data() {
-    return {
-      chartEvents: {
-        select: () => {
-          const chart = this.$refs.chart.chartObject;
-          const selection = chart.getSelection();
-          const value = this.facetSummaryUnconditional[selection[0].row].facet;
-          if (selection.length === 1) {
-            this.$emit('selected', {
-              conditions: [{
-                field: this.field,
-                op: '==',
-                value,
-                table: this.table,
-              }],
-            });
-          }
-        },
+
+  setup(props, { emit, root }) {
+    const chartRef = ref();
+    const chartEvents = {
+      select: () => {
+        const chart = chartRef.value.chartObject;
+        const selection = chart.getSelection();
+        const value = props.facetSummaryUnconditional[selection[0].row].facet;
+        if (selection.length === 1) {
+          emit('selected', {
+            conditions: [{
+              field: props.field,
+              op: '==',
+              value,
+              table: props.table,
+            }],
+          });
+        }
       },
     };
-  },
-  computed: {
-    chartData() {
-      return [
-        [
-          { label: fieldDisplayName(this.field) },
-          { label: 'Match', role: 'data' },
-          { role: 'scope' },
-          { role: 'style' },
-          { label: 'No Match', role: 'data' },
-          { role: 'scope' },
-          { role: 'style' },
-          { role: 'annotation' },
-        ],
-        ...this.facetSummaryUnconditional.map(
-          (facet) => {
-            const count = (this.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0;
-            const excludedCount = facet.count - ((this.facetSummary.find(
-              (e) => e.facet === facet.facet,
-            ) || {}).count || 0);
-            return [
-              fieldDisplayName(facet.facet),
-              count,
-              true,
-              count > 0 ? (
-                ecosystems.find((e) => e.name === facet.facet)
-                || { color: this.$vuetify.theme.currentTheme.primary }
-              ).color : 'lightgray',
-              excludedCount,
-              false,
-              excludedCount > 0 ? 'lightgray' : this.$vuetify.theme.currentTheme.primary,
-              count > 0 ? `${count}` : 'No match',
-            ];
-          },
-        ),
-      ];
-    },
-    barChartOptions() {
-      return {
-        height: this.height,
-        chartArea: {
-          left: this.leftMargin,
-          right: this.rightMargin,
-          top: 0,
-          width: '85%',
-          height: '100%',
+    const chartData = computed(() => ([
+      [
+        { label: fieldDisplayName(props.field) },
+        { label: 'Match', role: 'data' },
+        { role: 'scope' },
+        { role: 'style' },
+        { label: 'No Match', role: 'data' },
+        { role: 'scope' },
+        { role: 'style' },
+        { role: 'annotation' },
+      ],
+      ...props.facetSummaryUnconditional.map(
+        (facet) => {
+          const count = (props.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0;
+          const excludedCount = facet.count - ((props.facetSummary.find(
+            (e) => e.facet === facet.facet,
+          ) || {}).count || 0);
+          return [
+            fieldDisplayName(facet.facet),
+            count,
+            true,
+            count > 0 ? (
+              ecosystems.find((e) => e.name === facet.facet)
+              || { color: root.$vuetify.theme.currentTheme.primary }
+            ).color : 'lightgray',
+            excludedCount,
+            false,
+            excludedCount > 0 ? 'lightgray' : root.$vuetify.theme.currentTheme.primary,
+            count > 0 ? `${count}` : 'No match',
+          ];
         },
-        hAxis: {
-          textStyle: {
-            fontName: 'Roboto',
-          },
-          gridlines: {
-            count: 0,
-          },
-          ticks: [],
-          baselineColor: this.showBaseline ? 'black' : 'transparent',
-          baseline: 0,
-          viewWindowMode: 'maximized',
+      ),
+    ]));
+    const barChartOptions = computed(() => ({
+      height: props.height,
+      chartArea: {
+        left: props.leftMargin,
+        right: props.rightMargin,
+        top: 0,
+        width: '85%',
+        height: '100%',
+      },
+      hAxis: {
+        textStyle: {
+          fontName: 'Roboto',
         },
-        vAxis: {
-          textStyle: {
-            fontName: 'Roboto',
-          },
+        gridlines: {
+          count: 0,
         },
-        legend: { position: 'none' },
-        annotations: { alwaysOutside: true, stem: { color: 'transparent' } },
-        title: this.showTitle ? fieldDisplayName(this.field) : null,
-        isStacked: true,
-      };
-    },
+        ticks: [],
+        baselineColor: props.showBaseline ? 'black' : 'transparent',
+        baseline: 0,
+        viewWindowMode: 'maximized',
+      },
+      vAxis: {
+        textStyle: {
+          fontName: 'Roboto',
+        },
+      },
+      legend: { position: 'none' },
+      annotations: { alwaysOutside: true, stem: { color: 'transparent' } },
+      title: props.showTitle ? fieldDisplayName(props.field) : null,
+      isStacked: true,
+    }));
+
+    return {
+      chartRef,
+      chartEvents,
+      chartData,
+      barChartOptions,
+    };
   },
 });
 </script>
+
+<template>
+  <GChart
+    ref="chartRef"
+    type="BarChart"
+    :data="chartData"
+    :options="barChartOptions"
+    :events="chartEvents"
+  />
+</template>

@@ -1,10 +1,10 @@
 <script lang="ts">
 import { computed, defineComponent, ref } from '@vue/composition-api';
-import { stateRefs, dataObjectFilter } from '@/v2/store';
+import { stateRefs, dataObjectFilter } from '@/store';
 // @ts-ignore
 import Treeselect from '@riophae/vue-treeselect';
-import DownloadDialog from '@/v2/components/DownloadDialog.vue';
-import useBulkDownload from '@/v2/use/useBulkDownload';
+import DownloadDialog from '@/components/DownloadDialog.vue';
+import useBulkDownload from '@/use/useBulkDownload';
 import { humanFileSize } from '@/data/utils';
 
 export default defineComponent({

@@ -1,9 +1,7 @@
 <script lang="ts">
 import { defineComponent, ref, watchEffect } from '@vue/composition-api';
 import { api, BiosampleSearchResult } from '@/data/api';
-
-import DataObjectList from '@/components/DataObjectsList.vue';
-import AttributeList from '@/v2/components/AttributeList.vue';
+import AttributeList from '@/components/Presentation/AttributeList.vue';
 
 import IndividualTitle from './IndividualTitle.vue';
 
@@ -12,7 +10,6 @@ export default defineComponent({
 
   components: {
     AttributeList,
-    DataObjectList,
     IndividualTitle,
   },
 
@@ -42,10 +39,6 @@ export default defineComponent({
       <AttributeList
         type="biosample"
         :item="result"
-      />
-      <DataObjectList
-        :id="result.id"
-        type="biosample"
       />
     </v-container>
   </v-main>

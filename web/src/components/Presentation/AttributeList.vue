@@ -94,7 +94,7 @@ export default defineComponent({
     </v-list>
     <v-list v-if="alternateIdentifiers.length > 0">
       <div class="display-1">
-        Alternate Identifiers
+        Alternative Identifiers
       </div>
       <v-list-item
         v-for="link in alternateIdentifiers"

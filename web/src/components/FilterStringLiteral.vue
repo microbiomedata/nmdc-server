@@ -5,7 +5,7 @@ import {
 } from '@vue/composition-api';
 import { fieldDisplayName } from '@/util';
 import { getField } from '@/encoding';
-import useFacetSummaryData from '@/v2/use/useFacetSummaryData';
+import useFacetSummaryData from '@/use/useFacetSummaryData';
 import { DataTableHeader } from 'vuetify';
 
 export default defineComponent({

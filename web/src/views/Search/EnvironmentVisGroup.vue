@@ -1,10 +1,10 @@
 <script lang="ts">
 import { defineComponent, PropType } from '@vue/composition-api';
-import EcosystemSankey from '@/components/Presentation/EcosystemSankey.vue';
+import EcosystemSankey from '@/components/EcosystemSankey.vue';
 
 import {
   toggleConditions,
-} from '@/v2/store';
+} from '@/store';
 import { Condition } from '@/data/api';
 
 export default defineComponent({

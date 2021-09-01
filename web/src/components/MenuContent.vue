@@ -3,13 +3,14 @@ import Vue, { PropType } from 'vue';
 import { fieldDisplayName } from '@/util';
 import { getField } from '@/encoding';
 
-import FacetSummaryWrapper from '@/components/FacetSummaryWrapper.vue';
+import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
+
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
 import FilterSankeyTree from '@/components/Presentation/FilterTree.vue';
-import FilterStringLiteral from '@/v2/components/FilterStringLiteral.vue';
-import FilterTree from '@/v2/components/FilterTree.vue';
+import FilterStringLiteral from '@/components/FilterStringLiteral.vue';
+import FilterTree from '@/components/FilterTree.vue';
 import { AttributeSummary, Condition, entityType } from '@/data/api';
 
 export default Vue.extend({
