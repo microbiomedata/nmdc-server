@@ -57,7 +57,7 @@ function makeSetsFromBitmask(mask_str: string) {
 }
 
 export default defineComponent({
-  name: 'SampleVisGroupV2',
+  name: 'SampleVisGroup',
 
   props: {
     conditions: {

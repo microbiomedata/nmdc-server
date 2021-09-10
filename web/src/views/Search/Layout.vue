@@ -20,7 +20,7 @@ import BiosampleVisGroup from './BiosampleVisGroup.vue';
 import Sidebar from './Sidebar.vue';
 
 export default defineComponent({
-  name: 'LayoutV2',
+  name: 'Layout',
 
   components: {
     BiosampleVisGroup,
@@ -184,7 +184,7 @@ export default defineComponent({
                 :page="study.data.pageSync"
                 :loading="study.loading.value"
                 @set-page="study.setPage($event)"
-                @selected="$router.push({ name: 'V2Sample'})"
+                @selected="$router.push({ name: 'Sample'})"
               >
                 <template #action="{ result }">
                   <v-list-item-action>
@@ -200,7 +200,7 @@ export default defineComponent({
                     <v-btn
                       icon
                       large
-                      :to="{ name: 'V2Study', params: { id: result.id } }"
+                      :to="{ name: 'Study', params: { id: result.id } }"
                     >
                       <v-icon>
                         mdi-chevron-right-box
@@ -267,7 +267,7 @@ export default defineComponent({
                 :subtitle-key="'study_id'"
                 :loading="biosample.loading.value"
                 @set-page="biosample.setPage($event)"
-                @selected="$router.push({ name: 'V2Sample', params: { id: $event }})"
+                @selected="$router.push({ name: 'Sample', params: { id: $event }})"
               >
                 <template #subtitle="props">
                   Study ID: {{ props.result.study_id }}
@@ -288,7 +288,7 @@ export default defineComponent({
                     <v-btn
                       icon
                       large
-                      :to="{ name: 'V2Sample', params: { id: result.id } }"
+                      :to="{ name: 'Sample', params: { id: result.id } }"
                     >
                       <v-icon>
                         mdi-chevron-right-box

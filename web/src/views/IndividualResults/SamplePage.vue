@@ -6,7 +6,7 @@ import AttributeList from '@/components/Presentation/AttributeList.vue';
 import IndividualTitle from './IndividualTitle.vue';
 
 export default defineComponent({
-  name: 'SamplePageV2',
+  name: 'SamplePage',
 
   components: {
     AttributeList,

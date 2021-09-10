@@ -15,7 +15,7 @@ import {
 } from '@/store';
 
 /**
- * V2's sidebar has a fixed list of facets, possibly from different tables.
+ * Sidebar has a fixed list of facets, possibly from different tables.
  */
 const FunctionSearchFacets: SearchFacet[] = [
   {
