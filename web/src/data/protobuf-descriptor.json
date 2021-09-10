@@ -1,0 +1,88 @@
+{
+  "nested": {
+    "nmdc": {
+      "nested": {
+        "QueryParams": {
+          "fields": {
+            "conditions": {
+              "rule": "repeated",
+              "type": "Condition",
+              "id": 1
+            }
+          }
+        },
+        "Condition": {
+          "fields": {
+            "op": {
+              "type": "Optype",
+              "id": 1
+            },
+            "field": {
+              "type": "FieldName",
+              "id": 2
+            },
+            "table": {
+              "type": "Table",
+              "id": 3
+            },
+            "value": {
+              "type": "string",
+              "id": 4
+            }
+          },
+          "nested": {
+            "Optype": {
+              "values": {
+                "==": 0,
+                "between": 1,
+                "<": 2,
+                "<=": 3,
+                ">": 4,
+                ">=": 5,
+                "!=": 6
+              }
+            },
+            "Table": {
+              "values": {
+                "data_object": 0,
+                "gene_function": 1,
+                "omics_processing": 2,
+                "study": 3,
+                "biosample": 4
+              }
+            },
+            "FieldName": {
+              "values": {
+                "id": 0,
+                "study_id": 1,
+                "omics_type": 2,
+                "processing_institution": 3,
+                "instrument_name": 4,
+                "location": 5,
+                "latitude": 6,
+                "longitude": 7,
+                "depth:": 8,
+                "sample_collection_site": 9,
+                "geo_loc_name": 10,
+                "add_date": 11,
+                "mod_date": 12,
+                "collection_date": 13,
+                "ecosystem_path_id": 14,
+                "principal_investigator_name": 15,
+                "gold_classification": 16,
+                "ecosystem": 17,
+                "ecosystem_category": 18,
+                "ecosystem_type": 19,
+                "ecosystem_subtype": 20,
+                "specific_ecosystem": 21,
+                "env_broad_scale": 22,
+                ",env_local_scale": 23,
+                "env_medium": 24
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

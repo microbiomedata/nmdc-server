@@ -3,15 +3,16 @@ import CompositionApi, {
   computed, ComputedRef, reactive, toRefs,
 } from '@vue/composition-api';
 import { uniqWith } from 'lodash';
-
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import {
   api, Condition, DataObjectFilter, EnvoNode, EnvoTree,
 } from '@/data/api';
+import VueRouter from 'vue-router';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
+let router: VueRouter | null = null;
 const state = reactive({
   conditions: [] as Condition[],
   bulkDownloadSelected: [] as string[],
@@ -37,8 +38,11 @@ const dataObjectFilter: ComputedRef<DataObjectFilter[]> = computed(() => state
 /**
  * load the current user on app start
  */
-async function loadCurrentUser() {
+async function init(_router: VueRouter) {
   state.user = await api.me();
+  router = _router;
+  // @ts-ignore
+  state.conditions = router.currentRoute.query?.conditions || [];
 }
 
 /**
@@ -67,6 +71,10 @@ function setConditions(conditions: Condition[]) {
       && a.op === b.op
       && a.table === b.table,
   );
+  if (router) {
+    // @ts-ignore
+    router.replace({ query: { conditions: state.conditions }, name: 'Search' });
+  }
 }
 
 /**
@@ -118,9 +126,9 @@ function toggleConditions(conditions: Condition[]) {
  */
 function removeConditions(conditions: Condition[]) {
   if (Array.isArray(conditions)) {
-    state.conditions = utilsRemoveCond(state.conditions, conditions);
+    setConditions(utilsRemoveCond(state.conditions, conditions));
   } else {
-    state.conditions = [];
+    setConditions([]);
   }
 }
 
@@ -140,7 +148,7 @@ export {
   unreactive,
   acceptTerms,
   getTreeData,
-  loadCurrentUser,
+  init,
   removeConditions,
   setUniqueCondition,
   setConditions,
