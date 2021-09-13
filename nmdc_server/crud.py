@@ -205,6 +205,11 @@ def list_ko_terms_for_module(db: Session, module: str) -> List[str]:
     return [row[0] for row in q]
 
 
+def list_ko_terms_for_pathway(db: Session, pathway: str) -> List[str]:
+    q = db.query(models.KoTermToPathway.term).filter(models.KoTermToPathway.pathway == pathway)
+    return [row[0] for row in q]
+
+
 # biosample
 def get_biosample(db: Session, biosample_id: str) -> Optional[models.Biosample]:
     return db.query(models.Biosample).filter(models.Biosample.id == biosample_id).first()

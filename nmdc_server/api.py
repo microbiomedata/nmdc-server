@@ -178,6 +178,16 @@ async def get_kegg_terms_for_module(module: str, db: Session = Depends(get_db)):
     return schemas.KeggTermListResponse(terms=terms)
 
 
+@router.get(
+    "/kegg/pathway/{pathway}",
+    response_model=schemas.KeggTermListResponse,
+    tags=["kegg"],
+)
+async def get_kegg_terms_for_pathway(pathway: str, db: Session = Depends(get_db)):
+    terms = crud.list_ko_terms_for_pathway(db, pathway)
+    return schemas.KeggTermListResponse(terms=terms)
+
+
 # study
 @router.post(
     "/study/search",
