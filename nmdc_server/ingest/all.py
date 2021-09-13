@@ -11,6 +11,7 @@ from nmdc_server.ingest import (
     biosample,
     data_object,
     envo,
+    kegg,
     omics_processing,
     pipeline,
     search_index,
@@ -58,6 +59,10 @@ def load(db: Session, function_limit=None, skip_annotation=False):
 
     logger.info("Loading envo terms...")
     envo.load(db)
+    db.commit()
+
+    logger.info("Loading Kegg orthology...")
+    kegg.load(db)
     db.commit()
 
     logger.info("Loading studies...")
