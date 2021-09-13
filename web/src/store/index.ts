@@ -1,8 +1,8 @@
 import Vue from 'vue';
 import CompositionApi, {
-  computed, ComputedRef, reactive, toRefs,
+  computed, ComputedRef, reactive, toRefs, watchEffect,
 } from '@vue/composition-api';
-import { uniqWith } from 'lodash';
+import { noop, uniqWith } from 'lodash';
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import {
   api, Condition, DataObjectFilter, EnvoNode, EnvoTree,
@@ -24,6 +24,52 @@ const unreactive = {
   nodeMapId: {} as Record<string, EnvoNode>,
   nodeMapLabel: {} as Record<string, EnvoNode>,
 };
+const queryStateKey = 'storage.queryState';
+
+/**
+ * Persist state into localstorage
+ */
+function persistState() {
+  /* If the user is browsing anonymously, stash their state in case they log in */
+  if (!state.user) {
+    window.localStorage.setItem(queryStateKey, JSON.stringify({
+      conditions: state.conditions,
+      bulkDownloadSelected: state.bulkDownloadSelected,
+    }));
+  }
+}
+
+/**
+ * Set conditions directly, removing duplicates
+ */
+function setConditions(conditions: Condition[]) {
+  state.conditions = uniqWith(
+    conditions, (a, b) => a.field === b.field
+      && a.value === b.value
+      && a.op === b.op
+      && a.table === b.table,
+  );
+  if (router) {
+    // @ts-ignore
+    router.replace({ query: { conditions: state.conditions }, name: 'Search' }).catch(noop);
+  }
+}
+
+/**
+ * Restore state from localStorage and clear
+ */
+function restoreState() {
+  const previousState = window.localStorage.getItem(queryStateKey);
+  if (previousState) {
+    const { conditions, bulkDownloadSelected } = JSON.parse(previousState);
+    setConditions(conditions);
+    state.bulkDownloadSelected = bulkDownloadSelected;
+    window.localStorage.removeItem(queryStateKey);
+  }
+}
+
+// @ts-ignore
+window.restoreState = restoreState;
 
 /**
  * An array of DataObjectFilter currently selected
@@ -43,6 +89,11 @@ async function init(_router: VueRouter) {
   router = _router;
   // @ts-ignore
   state.conditions = router.currentRoute.query?.conditions || [];
+  if (state.user) {
+    restoreState();
+  } else {
+    watchEffect(persistState);
+  }
 }
 
 /**
@@ -58,22 +109,6 @@ async function getTreeData() {
     const resp = await api.getEnvoTrees();
     state.treeData = resp;
     Object.values(resp.trees).forEach((nodeList) => nodeList.forEach(makeNodeMap));
-  }
-}
-
-/*
- * Set conditions directly, removing duplicates
- */
-function setConditions(conditions: Condition[]) {
-  state.conditions = uniqWith(
-    conditions, (a, b) => a.field === b.field
-      && a.value === b.value
-      && a.op === b.op
-      && a.table === b.table,
-  );
-  if (router) {
-    // @ts-ignore
-    router.replace({ query: { conditions: state.conditions }, name: 'Search' });
   }
 }
 

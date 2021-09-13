@@ -116,8 +116,7 @@ export default defineComponent({
         value-consists-of="LEAF_PRIORITY"
         open-direction="below"
         :options="options"
-        :disabled="disabled"
-        :placeholder="disabled ? 'Log in to bulk download' : 'Select file type'"
+        placeholder="Select file type"
       />
       <v-dialog
         v-if="!disabled"
@@ -144,6 +143,13 @@ export default defineComponent({
           @clicked="createAndDownload"
         />
       </v-dialog>
+      <v-chip
+        v-else
+        class="grow text-subtitle-1 ml-4"
+        href="/login"
+      >
+        Log in to download
+      </v-chip>
     </div>
   </v-card>
 </template>

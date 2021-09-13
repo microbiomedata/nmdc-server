@@ -82,7 +82,7 @@ export default defineComponent({
       const data: L.LatLngExpression[] = mapData.value.map(({ latLng }) => latLng);
       if (data.length === 0) return null;
       // @ts-ignore -- the type annotation for this method is wrong.
-      return (new L.LatLngBounds(data)).pad(0.1);
+      return (new L.LatLngBounds(data));
     });
 
     async function getMapData() {

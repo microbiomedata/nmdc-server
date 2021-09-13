@@ -61,7 +61,7 @@
                 "location": 5,
                 "latitude": 6,
                 "longitude": 7,
-                "depth:": 8,
+                "depth": 8,
                 "geo_loc_name": 9,
                 "collection_date": 10,
                 "principal_investigator_name": 11,
