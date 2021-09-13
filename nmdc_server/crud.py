@@ -200,6 +200,11 @@ def list_omics_processing_data_objects(db: Session, id: str) -> Query:
     )
 
 
+def list_ko_terms_for_module(db: Session, module: str) -> List[str]:
+    q = db.query(models.KoTermToModule.term).filter(models.KoTermToModule.module == module)
+    return [row[0] for row in q]
+
+
 # biosample
 def get_biosample(db: Session, biosample_id: str) -> Optional[models.Biosample]:
     return db.query(models.Biosample).filter(models.Biosample.id == biosample_id).first()

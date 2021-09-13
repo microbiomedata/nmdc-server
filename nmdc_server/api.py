@@ -168,6 +168,16 @@ async def get_envo_tree():
     return schemas.EnvoTreeResponse(trees=nested_envo_trees())
 
 
+@router.get(
+    "/kegg/module/{module}",
+    response_model=schemas.KeggTermListResponse,
+    tags=["kegg"],
+)
+async def get_kegg_terms_for_module(module: str, db: Session = Depends(get_db)):
+    terms = crud.list_ko_terms_for_module(db, module)
+    return schemas.KeggTermListResponse(terms=terms)
+
+
 # study
 @router.post(
     "/study/search",

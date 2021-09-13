@@ -598,3 +598,7 @@ EnvoTreeNode.update_forward_refs()
 
 class EnvoTreeResponse(BaseModel):
     trees: Dict[str, List[EnvoTreeNode]]
+
+
+class KeggTermListResponse(BaseModel):
+    terms: List[str]
