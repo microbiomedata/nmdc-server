@@ -10,7 +10,7 @@ import {
   Condition, entityType, EnvoNode, FacetSummaryResponse,
 } from '@/data/api';
 import { unreactive, stateRefs, getTreeData } from '@/store';
-import useReqest from '@/use/useRequest';
+import useRequest from '@/use/useRequest';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import { cloneDeep } from 'lodash';
 
@@ -63,11 +63,12 @@ export default defineComponent({
       return resp;
     });
 
-    const { loading, request } = useReqest();
+    const { loading, request } = useRequest();
     request(getTreeData);
 
     async function setSelected(values: string[]) {
       const c = cloneDeep(otherConditions.value);
+      console.log('🚀 ~ file: FilterTree.vue ~ line 71 ~ setSelected ~ c', c);
       values.forEach((value) => {
         c.push({
           op: '==',

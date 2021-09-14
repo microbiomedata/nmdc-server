@@ -7,8 +7,8 @@ import { api } from '@/data/api';
 import { makeTree } from '@/util';
 
 export default Vue.extend({
+  name: 'FilterSankeyTree',
   components: { Treeselect },
-
   props: {
     field: {
       type: String,
