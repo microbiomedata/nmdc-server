@@ -39,10 +39,6 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-    showBulk: {
-      type: Boolean,
-      default: false,
-    },
   },
 
   components: { DownloadDialog },
@@ -157,10 +153,7 @@ export default defineComponent({
         </tr>
         <tr>
           <td>
-            <v-tooltip
-              v-if="showBulk"
-              right
-            >
+            <v-tooltip right>
               <template #activator="{on, attrs }">
                 <v-icon
                   v-bind="attrs"
