@@ -190,6 +190,7 @@ export default defineComponent({
             conditions,
             summary: dbSummaryForTable(table, field),
           }"
+          update
           @select="setConditions($event.conditions)"
           @close="toggleMenu(false)"
         />
