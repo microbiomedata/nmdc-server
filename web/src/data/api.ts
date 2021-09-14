@@ -208,9 +208,10 @@ export interface EnvironmentSankeyResponse {
   [index: number]: EnvironmentSankeyEntity;
 }
 
-export type opType = 'between' | '<' | '<=' | '>' | '>=' | '==' | '!=';
+export type opType = 'between' | '<' | '<=' | '>' | '>=' | '==' | '!=' | 'has';
 export const opMap: Record<opType, string> = {
   between: 'between',
+  has: 'has',
   '<': 'less',
   '<=': 'lte',
   '>': 'greater',

@@ -39,7 +39,8 @@
                 "<=": 3,
                 ">": 4,
                 ">=": 5,
-                "!=": 6
+                "!=": 6,
+                "has": 7
               }
             },
             "Table": {
@@ -73,7 +74,8 @@
                 "specific_ecosystem": 17,
                 "env_broad_scale": 18,
                 "env_local_scale": 19,
-                "env_medium": 20
+                "env_medium": 20,
+                "multiomics": 21
               }
             }
           }

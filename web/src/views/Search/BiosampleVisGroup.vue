@@ -32,13 +32,6 @@ const staticUpsetTooltips = {
   MT: 'Metatranscriptomics',
   NOM: 'Natural Organic Matter',
 };
-const staticUpsetValueMap = {
-  MG: 'Metagenome',
-  MP: 'Proteomics',
-  MB: 'Metabolomics',
-  MT: 'Metatranscriptome',
-  NOM: 'Organic Matter Characterization',
-};
 
 function makeSetsFromBitmask(mask_str: string) {
   const mask = parseInt(mask_str, 10); // the bitmask comes in as a string
@@ -150,7 +143,6 @@ export default defineComponent({
       removeConditions,
       setBoundsFromMap,
       staticUpsetTooltips,
-      staticUpsetValueMap,
       upsetData,
     };
   },
@@ -229,7 +221,6 @@ export default defineComponent({
                   height,
                   data: upsetData,
                   tooltips: staticUpsetTooltips,
-                  valueMap: staticUpsetValueMap,
                   order: 'Samples',
                 }"
                 @select="setUniqueCondition(

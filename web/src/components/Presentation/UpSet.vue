@@ -2,6 +2,7 @@
 import { defineComponent, watchEffect, ref } from '@vue/composition-api';
 import { select } from 'd3-selection';
 import { scaleBand, scaleLinear } from 'd3-scale';
+import { MultiomicsValue } from '@/encoding';
 
 export default defineComponent({
   props: {
@@ -10,10 +11,6 @@ export default defineComponent({
       required: true,
     },
     tooltips: {
-      type: Object,
-      required: true,
-    },
-    valueMap: {
       type: Object,
       required: true,
     },
@@ -157,12 +154,16 @@ export default defineComponent({
               .attr('fill', root.$vuetify.theme.currentTheme.blue)
               .classed('upset-bar-clickable', true)
               .on('click', (event, values) => {
-                const conditions = values.sets.map((v) => ({
-                  table: 'omics_processing',
-                  field: 'omics_type',
-                  value: props.valueMap[v],
-                  op: '==',
-                }));
+                const value = values.sets.reduce((prev, cur) => {
+                  const next = prev | MultiomicsValue[cur]; //eslint-disable-line no-bitwise
+                  return next;
+                }, 0);
+                const conditions = [{
+                  field: 'multiomics',
+                  table: 'biosample',
+                  op: 'has',
+                  value,
+                }];
                 emit('select', { conditions });
               });
             parent.append('text')
