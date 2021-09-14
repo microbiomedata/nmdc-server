@@ -10,7 +10,7 @@ import {
   Condition, entityType, EnvoNode, FacetSummaryResponse,
 } from '@/data/api';
 import { unreactive, stateRefs, getTreeData } from '@/store';
-import useReqest from '@/use/useRequest';
+import useRequest from '@/use/useRequest';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import { cloneDeep } from 'lodash';
 
@@ -63,7 +63,7 @@ export default defineComponent({
       return resp;
     });
 
-    const { loading, request } = useReqest();
+    const { loading, request } = useRequest();
     request(getTreeData);
 
     async function setSelected(values: string[]) {

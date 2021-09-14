@@ -4,11 +4,10 @@ import { fieldDisplayName } from '@/util';
 import { getField } from '@/encoding';
 
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
-
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
-import FilterSankeyTree from '@/components/Presentation/FilterTree.vue';
+import FilterSankeyTree from '@/components/FilterSankeyTree.vue';
 import FilterStringLiteral from '@/components/FilterStringLiteral.vue';
 import FilterTree from '@/components/FilterTree.vue';
 import { AttributeSummary, Condition, entityType } from '@/data/api';

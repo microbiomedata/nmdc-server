@@ -15,6 +15,7 @@ export default Vue.extend({
         facetSummaryAggregate,
         facetSummaryUnconditional,
         field,
+        conditions,
         myConditions,
         otherConditions,
         table,

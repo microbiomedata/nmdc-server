@@ -72,10 +72,7 @@ export default defineComponent({
     <span
       class="text-caption font-weight-bold white--text"
     >
-      <template v-if="disabled">
-        Log in with OrcID to use bulk download.
-      </template>
-      <template v-else-if="downloadSummary.count === 0">
+      <template v-if="downloadSummary.count === 0">
         No files selected
       </template>
       <template v-else>
