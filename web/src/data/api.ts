@@ -1,6 +1,7 @@
 import { merge } from 'lodash';
 import axios from 'axios';
 import { setupCache } from 'axios-cache-adapter';
+import NmdcSchema from '@/data/nmdc-schema/jsonschema/nmdc.schema.json';
 
 const cache = setupCache({
   key: (req) => req.url + JSON.stringify(req.params) + JSON.stringify(req.data),
@@ -30,6 +31,13 @@ export type entityType = 'biosample'
   | 'metaproteomic_analysis'
   | 'data_object'
   | 'gene_function';
+
+/**
+ * By including this file in source with a git submodule,
+ * we get build-time typescript support for the dynamic types coming
+ * out of an entirely different repository.
+ */
+export type entitySchemaType = keyof typeof NmdcSchema.definitions;
 
 export interface BaseSearchResult {
   id: string;
