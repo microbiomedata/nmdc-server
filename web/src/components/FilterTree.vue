@@ -68,7 +68,6 @@ export default defineComponent({
 
     async function setSelected(values: string[]) {
       const c = cloneDeep(otherConditions.value);
-      console.log('🚀 ~ file: FilterTree.vue ~ line 71 ~ setSelected ~ c', c);
       values.forEach((value) => {
         c.push({
           op: '==',
