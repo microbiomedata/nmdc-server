@@ -2,6 +2,7 @@
 import { defineComponent, watchEffect, ref } from '@vue/composition-api';
 import { select } from 'd3-selection';
 import { scaleBand, scaleLinear } from 'd3-scale';
+import { MultiomicsValue } from '@/encoding';
 
 export default defineComponent({
   props: {
@@ -27,7 +28,7 @@ export default defineComponent({
     },
   },
 
-  setup(props, { root }) {
+  setup(props, { root, emit }) {
     const svgRoot = ref(undefined);
 
     const margin = {
@@ -150,7 +151,21 @@ export default defineComponent({
               .attr('y', (d, i) => y(i))
               .attr('width', (d) => barX(d.counts[count]))
               .attr('height', y.bandwidth())
-              .attr('fill', root.$vuetify.theme.currentTheme.blue);
+              .attr('fill', root.$vuetify.theme.currentTheme.blue)
+              .classed('upset-bar-clickable', true)
+              .on('click', (event, values) => {
+                const value = values.sets.reduce((prev, cur) => {
+                  const next = prev | MultiomicsValue[cur]; //eslint-disable-line no-bitwise
+                  return next;
+                }, 0);
+                const conditions = [{
+                  field: 'multiomics',
+                  table: 'biosample',
+                  op: 'has',
+                  value,
+                }];
+                emit('select', { conditions });
+              });
             parent.append('text')
               .attr('class', 'count')
               .attr('x', (d) => countsX(count) + barX(d.counts[count]) + 3)
@@ -172,6 +187,15 @@ export default defineComponent({
   },
 });
 </script>
+
+<style>
+.upset-bar-clickable {
+  cursor: pointer;
+}
+.upset-bar-clickable:hover {
+  fill: rgba(0, 0, 0, .5) !important;
+}
+</style>
 
 <template>
   <svg ref="svgRoot" />

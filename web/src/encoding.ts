@@ -338,8 +338,17 @@ function getField(name: string, table?: entityType): FieldsData {
   return {};
 }
 
+const MultiomicsValue = {
+  MB: 0b10000,
+  MG: 0b01000,
+  MP: 0b00100,
+  MT: 0b00010,
+  NOM: 0b00001,
+};
+
 export {
   types,
   ecosystems,
+  MultiomicsValue,
   getField,
 };

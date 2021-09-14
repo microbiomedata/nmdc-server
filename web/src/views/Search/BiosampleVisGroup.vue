@@ -223,6 +223,8 @@ export default defineComponent({
                   tooltips: staticUpsetTooltips,
                   order: 'Samples',
                 }"
+                @select="setUniqueCondition(
+                  ['omics_type'], ['omics_processing'], $event.conditions)"
               />
             </template>
           </ChartContainer>
