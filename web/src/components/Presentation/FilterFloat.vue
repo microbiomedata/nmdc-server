@@ -29,6 +29,10 @@ export default Vue.extend({
       type: Number as PropType<number>,
       required: true,
     },
+    update: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   data() {
@@ -132,7 +136,7 @@ export default Vue.extend({
       color="primary"
       @click="addFilter"
     >
-      Add Filter
+      {{ update ? 'Update' : 'Add' }} Filter
     </v-btn>
   </div>
 </template>

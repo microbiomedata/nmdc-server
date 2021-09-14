@@ -44,6 +44,10 @@ export default Vue.extend({
       type: Array as PropType<Condition[]>,
       required: true,
     },
+    update: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   beforeDestroy() {
@@ -98,6 +102,7 @@ export default Vue.extend({
           field, type: table, conditions,
           min: summary.min,
           max: summary.max,
+          update,
         }"
         class="pa-5"
         @select="$emit('select', $event)"
@@ -108,6 +113,7 @@ export default Vue.extend({
           field, type: table, conditions,
           min: summary.min,
           max: summary.max,
+          update,
         }"
         class="pa-5"
         @select="$emit('select', $event)"
