@@ -2,7 +2,6 @@ import Vue from 'vue';
 import CompositionPlugin from '@vue/composition-api';
 import VueGtag from 'vue-gtag';
 import { init as SentryInit } from '@sentry/vue';
-import { Integrations } from '@sentry/tracing';
 import AsyncComputed from 'vue-async-computed';
 
 import router from '@/plugins/router';
@@ -27,7 +26,6 @@ if (process.env.NODE_ENV === 'production') {
   SentryInit({
     Vue,
     dsn: 'https://87132695029c4406afe033fb3b13b115@o267860.ingest.sentry.io/5658761',
-    integrations: [new Integrations.BrowserTracing()],
     tracesSampleRate: 1.0,
   });
 }

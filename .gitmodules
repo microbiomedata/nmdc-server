@@ -1,0 +1,3 @@
+[submodule "web/src/data/nmdc-schema"]
+	path = web/src/data/nmdc-schema
+	url = https://github.com/microbiomedata/nmdc-schema

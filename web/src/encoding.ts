@@ -1,5 +1,5 @@
 import colors from './colors';
-import { entityType } from './data/api';
+import { entityType, entitySchemaType } from './data/api';
 
 export interface EntityData {
   icon: string;
@@ -7,6 +7,7 @@ export interface EntityData {
   name: string;
   plural: string;
   visible: boolean;
+  schemaName?: entitySchemaType; // Match the table to the NMDC Schema definition
 }
 
 export interface FieldsData {
@@ -17,6 +18,7 @@ export interface FieldsData {
   description?: string;
   group?: string;
   hideAttr?: boolean;
+  schemaName?: string; // Match the field to the nmsc schema property
   encode?: (input: string) => string,
 }
 
@@ -27,6 +29,7 @@ const types: Record<entityType, EntityData> = {
     name: 'study',
     plural: 'studies',
     visible: true,
+    schemaName: 'Study',
   },
   omics_processing: {
     icon: 'mdi-file-table-box-multiple-outline',
@@ -34,6 +37,7 @@ const types: Record<entityType, EntityData> = {
     name: 'omics_processing',
     plural: 'Omics Processing',
     visible: true,
+    schemaName: 'OmicsProcessing',
   },
   biosample: {
     icon: 'mdi-test-tube',
@@ -41,6 +45,7 @@ const types: Record<entityType, EntityData> = {
     name: 'sample',
     plural: 'samples',
     visible: true,
+    schemaName: 'Biosample',
   },
   reads_qc: {
     icon: 'mdi-dna',
@@ -55,6 +60,7 @@ const types: Record<entityType, EntityData> = {
     name: 'metagenome_assembly',
     plural: 'Metagenome assembly',
     visible: true,
+    schemaName: 'MetagenomeAssembly',
   },
   metagenome_annotation: {
     icon: 'mdi-dna',
@@ -62,6 +68,7 @@ const types: Record<entityType, EntityData> = {
     name: 'metagenome_annotation',
     plural: 'Metagenome annotation',
     visible: true,
+    schemaName: 'MetagenomeAnnotationActivity',
   },
   metaproteomic_analysis: {
     icon: 'mdi-dna',
@@ -69,6 +76,7 @@ const types: Record<entityType, EntityData> = {
     name: 'metaproteomic_analysis',
     plural: 'Metaproteomic analysis',
     visible: true,
+    schemaName: 'MetaproteomicsAnalysisActivity',
   },
   data_object: {
     icon: 'mdi-database',
@@ -76,6 +84,7 @@ const types: Record<entityType, EntityData> = {
     name: 'data_object',
     plural: 'Data objects',
     visible: false,
+    schemaName: 'DataObject',
   },
   gene_function: {
     icon: 'mdi-dna',
@@ -172,6 +181,7 @@ const fields: Record<string, FieldsData> = {
   principal_investigator_name: {
     name: 'PI Name',
     icon: 'mdi-account',
+    schemaName: 'principal_investigator',
   },
   doi: {
     icon: 'mdi-file-document-outline',

@@ -2,7 +2,8 @@
 
 ## Getting started with Docker
 
-First, install [ldc](https://github.com/Kitware/ldc)
+* install [ldc](https://github.com/Kitware/ldc)
+* install submodules via `git submodule update --init --recursive`
 
 In order to populate the database, you must create a `.env` file in the top
 level directory containing mongo credentials.

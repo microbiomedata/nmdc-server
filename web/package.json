@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "postinstall": "git submodule update --init --recursive",
     "serve": "rimraf -rf ./node_modules/.cache/vue-loader && vue-cli-service serve src/main.ts",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
     "@riophae/vue-treeselect": "^0.4.0",
-    "@sentry/tracing": "^6.2.1",
     "@sentry/vue": "^6.2.1",
     "@vue/composition-api": "^1.1.4",
     "axios": "^0.21.2",

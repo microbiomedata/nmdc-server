@@ -1,8 +1,11 @@
 <script lang="ts">
-import Vue, { PropType } from 'vue';
-import { fieldDisplayName } from '@/util';
-import { getField } from '@/encoding';
+import {
+  defineComponent, PropType, onBeforeUnmount, computed,
+} from '@vue/composition-api';
 
+import { fieldDisplayName } from '@/util';
+import { getField, types } from '@/encoding';
+import NmdcSchema from '@/data/nmdc-schema/jsonschema/nmdc.schema.json';
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
@@ -12,7 +15,7 @@ import FilterStringLiteral from '@/components/FilterStringLiteral.vue';
 import FilterTree from '@/components/FilterTree.vue';
 import { AttributeSummary, Condition, entityType } from '@/data/api';
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     FacetSummaryWrapper,
     FilterDate,
@@ -50,11 +53,22 @@ export default Vue.extend({
     },
   },
 
-  beforeDestroy() {
-    this.$emit('close');
-  },
+  setup(props, { emit }) {
+    onBeforeUnmount(() => emit('close'));
 
-  methods: { fieldDisplayName, getField },
+    const description = computed(() => {
+      const fieldSchemaName = getField(props.field, props.table);
+      const { schemaName } = types[props.table];
+      if (schemaName !== undefined) {
+        const schema = NmdcSchema.definitions[schemaName];
+        // @ts-ignore
+        return schema.properties?.[fieldSchemaName.schemaName || props.field]?.description || '';
+      }
+      return '';
+    });
+
+    return { description, fieldDisplayName, getField };
+  },
 });
 </script>
 
@@ -76,6 +90,9 @@ export default Vue.extend({
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-card-title>
+    <v-card-text>
+      {{ description }}
+    </v-card-text>
     <v-card-text
       v-if="getField(field, table).description"
     >
