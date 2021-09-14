@@ -13,6 +13,10 @@ export default defineComponent({
       type: Object,
       required: true,
     },
+    valueMap: {
+      type: Object,
+      required: true,
+    },
     order: {
       type: String,
       required: true,
@@ -27,7 +31,7 @@ export default defineComponent({
     },
   },
 
-  setup(props, { root }) {
+  setup(props, { root, emit }) {
     const svgRoot = ref(undefined);
 
     const margin = {
@@ -150,7 +154,17 @@ export default defineComponent({
               .attr('y', (d, i) => y(i))
               .attr('width', (d) => barX(d.counts[count]))
               .attr('height', y.bandwidth())
-              .attr('fill', root.$vuetify.theme.currentTheme.blue);
+              .attr('fill', root.$vuetify.theme.currentTheme.blue)
+              .classed('upset-bar-clickable', true)
+              .on('click', (event, values) => {
+                const conditions = values.sets.map((v) => ({
+                  table: 'omics_processing',
+                  field: 'omics_type',
+                  value: props.valueMap[v],
+                  op: '==',
+                }));
+                emit('select', { conditions });
+              });
             parent.append('text')
               .attr('class', 'count')
               .attr('x', (d) => countsX(count) + barX(d.counts[count]) + 3)
@@ -172,6 +186,15 @@ export default defineComponent({
   },
 });
 </script>
+
+<style>
+.upset-bar-clickable {
+  cursor: pointer;
+}
+.upset-bar-clickable:hover {
+  fill: rgba(0, 0, 0, .5) !important;
+}
+</style>
 
 <template>
   <svg ref="svgRoot" />
