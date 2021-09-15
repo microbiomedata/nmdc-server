@@ -130,6 +130,20 @@ class EnvoAncestor(Base):
     ancestor = relationship(EnvoTerm, foreign_keys=[ancestor_id], lazy="joined")
 
 
+class KoTermToModule(Base):
+    __tablename__ = "ko_term_to_module"
+
+    term = Column(String, nullable=False, primary_key=True)
+    module = Column(String, nullable=False, primary_key=True, index=True)
+
+
+class KoTermToPathway(Base):
+    __tablename__ = "ko_term_to_pathway"
+
+    term = Column(String, nullable=False, primary_key=True)
+    pathway = Column(String, nullable=False, primary_key=True, index=True)
+
+
 class SearchIndex(Base):
     __tablename__ = "search_index"
 
