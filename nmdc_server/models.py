@@ -14,6 +14,7 @@ from sqlalchemy import (
     LargeBinary,
     String,
     Table,
+    Text,
     UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
@@ -142,6 +143,13 @@ class KoTermToPathway(Base):
 
     term = Column(String, nullable=False, primary_key=True)
     pathway = Column(String, nullable=False, primary_key=True, index=True)
+
+
+class KoTermText(Base):
+    __tablename__ = "ko_term_text"
+
+    term = Column(String, nullable=False, primary_key=True)
+    text = Column(Text, nullable=False)
 
 
 class SearchIndex(Base):
