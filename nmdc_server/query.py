@@ -284,9 +284,7 @@ class BaseQuerySchema(BaseModel):
 
     def transformCondition(self, db, condition: BaseConditionSchema) -> List[BaseConditionSchema]:
         # Transform KEGG.(PATH|MODULE) queries into their respective ORTHOLOGY terms
-        if condition.key == "Table.gene_function:id" and not condition.value.startswith(
-            KEGG_Terms.ORTHOLOGY[0]
-        ):
+        if condition.key == "Table.gene_function:id":
             if condition.value.startswith(KEGG_Terms.PATHWAY[0]):
                 searchable_name = condition.value.replace(
                     KEGG_Terms.PATHWAY[0], KEGG_Terms.PATHWAY[1]
@@ -302,7 +300,8 @@ class BaseQuerySchema(BaseModel):
                     models.KoTermToModule.module.ilike(searchable_name)
                 )
             else:
-                raise ValueError(f"Unexpected function type {condition}")
+                # This is not a condition we know how to transform.
+                return [condition]
             return [
                 SimpleConditionSchema(
                     op="==",
