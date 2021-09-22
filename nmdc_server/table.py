@@ -19,7 +19,7 @@ EnvMediumTerm = aliased(models.EnvoTerm)
 MetaPGeneFunction = aliased(models.GeneFunction)
 
 
-class KEGG_Terms:
+class KeggTerms:
     ORTHOLOGY = ("KEGG.ORTHOLOGY:K", "K")
     PATHWAY = ("KEGG.PATHWAY:MAP", "MAP")
     MODULE = ("KEGG.MODULE:M", "M")
