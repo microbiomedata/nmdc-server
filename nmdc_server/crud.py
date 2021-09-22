@@ -210,6 +210,16 @@ def list_ko_terms_for_pathway(db: Session, pathway: str) -> List[str]:
     return [row[0] for row in q]
 
 
+def kegg_text_search(db: Session, query: str, limit: int) -> List[models.KoTermText]:
+    q = (
+        db.query(models.KoTermText)
+        .filter(models.KoTermText.text.ilike(f"%{query}%"))
+        .order_by(models.KoTermText.term)
+        .limit(limit)
+    )
+    return list(q)
+
+
 # biosample
 def get_biosample(db: Session, biosample_id: str) -> Optional[models.Biosample]:
     return db.query(models.Biosample).filter(models.Biosample.id == biosample_id).first()

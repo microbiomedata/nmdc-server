@@ -602,3 +602,15 @@ class EnvoTreeResponse(BaseModel):
 
 class KeggTermListResponse(BaseModel):
     terms: List[str]
+
+
+class KeggTermText(BaseModel):
+    term: str
+    text: str
+
+    class Config:
+        orm_mode = True
+
+
+class KeggTermTextListResponse(BaseModel):
+    terms: List[KeggTermText]
