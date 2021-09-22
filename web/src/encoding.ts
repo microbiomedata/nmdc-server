@@ -15,11 +15,42 @@ export interface FieldsData {
   hideFacet?: boolean;
   sortKey?: number;
   name?: string;
-  description?: string;
+  description?: string[];
   group?: string;
   hideAttr?: boolean;
   schemaName?: string; // Match the field to the nmsc schema property
   encode?: (input: string) => string,
+}
+
+const KeggPrefix = {
+  ORTHOLOGY: {
+    pattern: /^((ko?:?)|(kegg\.orthology:))(?=\d{5})/i,
+    short: 'K',
+    long: 'KEGG.ORTHOLOGY:K',
+  },
+  PATHWAY: {
+    pattern: /^((map:?)|(path:?)|(kegg.pathway:))(?=\d{5})/i,
+    short: 'MAP',
+    long: 'KEGG.PATHWAY:MAP',
+  },
+  MODULE: {
+    pattern: /^((m:?)|(kegg.module:))(?=\d{5})/i,
+    short: 'M',
+    long: 'KEGG.MODULE:M',
+  },
+};
+/**
+ * Encode a string as either the long or short variant of
+ * a KEGG identifier term.
+ */
+function keggEncode(v: string, useLong = true) {
+  const prefixes = Object.values(KeggPrefix);
+  for (let i = 0; i < prefixes.length; i += 1) {
+    const { pattern, short, long } = prefixes[i];
+    const transformed = v.replace(pattern, useLong ? long : short);
+    if (transformed !== v) return transformed;
+  }
+  return v;
 }
 
 const types: Record<entityType, EntityData> = {
@@ -295,16 +326,12 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
     id: {
       icon: 'mdi-dna',
       group: 'Function',
-      name: 'KO term',
-      description: 'Kegg Orthology search filters results to samples that have at least one of the chosen KO terms.',
-      encode: (v: string) => {
-        const prefix = 'KEGG.ORTHOLOGY';
-        let encoded = v.replace('KO', prefix);
-        if (!(encoded.startsWith(prefix))) {
-          encoded = `${prefix}:${encoded}`;
-        }
-        return encoded;
-      },
+      name: 'KEGG Term',
+      description: [
+        'KEGG Gene Function search filters results to samples that have at least one of the chosen KEGG terms.',
+        'Expected format: K00000 or M00000 or MAP00000',
+      ],
+      encode: keggEncode,
     },
   },
   biosample: {},

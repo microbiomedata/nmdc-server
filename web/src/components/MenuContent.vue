@@ -90,13 +90,22 @@ export default defineComponent({
         <v-icon>mdi-close</v-icon>
       </v-btn>
     </v-card-title>
-    <v-card-text>
+    <v-card-text
+      v-if="description"
+      class="py-1"
+    >
       {{ description }}
     </v-card-text>
     <v-card-text
       v-if="getField(field, table).description"
+      class="py-1"
     >
-      {{ getField(field, table).description }}
+      <p
+        v-for="d, i in getField(field, table).description"
+        :key="i"
+      >
+        {{ d }}
+      </p>
     </v-card-text>
     <template v-if="isOpen">
       <filter-list

@@ -28,6 +28,7 @@ from nmdc_server.table import (
     EnvLocalScaleTerm,
     EnvMediumAncestor,
     EnvMediumTerm,
+    KeggTerms,
     Table,
 )
 
@@ -280,6 +281,35 @@ class BaseQuerySchema(BaseModel):
     def groups(self) -> Iterator[Tuple[str, Iterator[BaseConditionSchema]]]:
         return groupby(self.sorted_conditions, key=lambda c: c.key)
 
+    def transform_condition(self, db, condition: BaseConditionSchema) -> List[BaseConditionSchema]:
+        # Transform KEGG.(PATH|MODULE) queries into their respective ORTHOLOGY terms
+        if condition.key == "Table.gene_function:id" and type(condition.value) is str:
+            if condition.value.startswith(KeggTerms.PATHWAY[0]):
+                searchable_name = condition.value.replace(
+                    KeggTerms.PATHWAY[0], KeggTerms.PATHWAY[1]
+                )
+                ko_terms = db.query(models.KoTermToPathway.term).filter(
+                    models.KoTermToPathway.pathway.ilike(searchable_name)
+                )
+            elif condition.value.startswith(KeggTerms.MODULE[0]):
+                searchable_name = condition.value.replace(KeggTerms.MODULE[0], KeggTerms.MODULE[1])
+                ko_terms = db.query(models.KoTermToModule.term).filter(
+                    models.KoTermToModule.module.ilike(searchable_name)
+                )
+            else:
+                # This is not a condition we know how to transform.
+                return [condition]
+            return [
+                SimpleConditionSchema(
+                    op="==",
+                    field=condition.field,
+                    value=term[0].replace("KO:K", KeggTerms.ORTHOLOGY[0]),
+                    table=condition.table,
+                )
+                for term in ko_terms
+            ]
+        return [condition]
+
     def query(self, db) -> Query:
         """Generate a query selecting all matching id's from the target table."""
         table_re = re.compile(r"Table.(.*):.*")
@@ -287,8 +317,12 @@ class BaseQuerySchema(BaseModel):
         has_filters = False
 
         for key, _conditions in self.groups:
-            conditions = list(_conditions)
-            has_filters = True
+            # Transform and flatten
+            conditions = [
+                c for condition in _conditions for c in self.transform_condition(db, condition)
+            ]
+            # If transformation eliminated the condition group, report no filters
+            has_filters = len(conditions) > 0
             match = table_re.match(key)
             if not match:
                 # Not an expected user error
