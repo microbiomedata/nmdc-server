@@ -284,7 +284,6 @@ class BaseQuerySchema(BaseModel):
 
     def transformCondition(self, db, condition: BaseConditionSchema) -> List[BaseConditionSchema]:
         # Transform KEGG.(PATH|MODULE) queries into their respective ORTHOLOGY terms
-        print(condition.key)
         if condition.key == "Table.gene_function:id" and not condition.value.startswith(
             KEGG_Terms.ORTHOLOGY[0]
         ):
@@ -326,7 +325,6 @@ class BaseQuerySchema(BaseModel):
             conditions = [
                 c for condition in _conditions for c in self.transformCondition(db, condition)
             ]
-            print(conditions)
             # If transformation eliminated the condition group, report no filters
             has_filters = len(conditions) > 0
             match = table_re.match(key)
