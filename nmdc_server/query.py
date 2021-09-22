@@ -6,6 +6,7 @@ import re
 from datetime import datetime
 from enum import Enum
 from itertools import groupby
+from logging import Logger
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field, PositiveInt
@@ -28,6 +29,7 @@ from nmdc_server.table import (
     EnvLocalScaleTerm,
     EnvMediumAncestor,
     EnvMediumTerm,
+    KEGG_Terms,
     Table,
 )
 
@@ -280,6 +282,39 @@ class BaseQuerySchema(BaseModel):
     def groups(self) -> Iterator[Tuple[str, Iterator[BaseConditionSchema]]]:
         return groupby(self.sorted_conditions, key=lambda c: c.key)
 
+    def transformCondition(self, db, condition: BaseConditionSchema) -> List[BaseConditionSchema]:
+        # Transform KEGG.(PATH|MODULE) queries into their respective ORTHOLOGY terms
+        print(condition.key)
+        if condition.key == "Table.gene_function:id" and not condition.value.startswith(
+            KEGG_Terms.ORTHOLOGY[0]
+        ):
+            if condition.value.startswith(KEGG_Terms.PATHWAY[0]):
+                searchable_name = condition.value.replace(
+                    KEGG_Terms.PATHWAY[0], KEGG_Terms.PATHWAY[1]
+                )
+                ko_terms = db.query(models.KoTermToPathway.term).filter(
+                    models.KoTermToPathway.pathway.ilike(searchable_name)
+                )
+            elif condition.value.startswith(KEGG_Terms.MODULE[0]):
+                searchable_name = condition.value.replace(
+                    KEGG_Terms.MODULE[0], KEGG_Terms.MODULE[1]
+                )
+                ko_terms = db.query(models.KoTermToModule.term).filter(
+                    models.KoTermToModule.module.ilike(searchable_name)
+                )
+            else:
+                raise ValueError(f"Unexpected function type {condition}")
+            return [
+                SimpleConditionSchema(
+                    op="==",
+                    field=condition.field,
+                    value=term[0].replace("KO:K", KEGG_Terms.ORTHOLOGY[0]),
+                    table=condition.table,
+                )
+                for term in ko_terms
+            ]
+        return [condition]
+
     def query(self, db) -> Query:
         """Generate a query selecting all matching id's from the target table."""
         table_re = re.compile(r"Table.(.*):.*")
@@ -287,8 +322,13 @@ class BaseQuerySchema(BaseModel):
         has_filters = False
 
         for key, _conditions in self.groups:
-            conditions = list(_conditions)
-            has_filters = True
+            # Transform and flatten
+            conditions = [
+                c for condition in _conditions for c in self.transformCondition(db, condition)
+            ]
+            print(conditions)
+            # If transformation eliminated the condition group, report no filters
+            has_filters = len(conditions) > 0
             match = table_re.match(key)
             if not match:
                 # Not an expected user error

@@ -201,12 +201,12 @@ def list_omics_processing_data_objects(db: Session, id: str) -> Query:
 
 
 def list_ko_terms_for_module(db: Session, module: str) -> List[str]:
-    q = db.query(models.KoTermToModule.term).filter(models.KoTermToModule.module == module)
+    q = db.query(models.KoTermToModule.term).filter(models.KoTermToModule.module.ilike(module))
     return [row[0] for row in q]
 
 
 def list_ko_terms_for_pathway(db: Session, pathway: str) -> List[str]:
-    q = db.query(models.KoTermToPathway.term).filter(models.KoTermToPathway.pathway == pathway)
+    q = db.query(models.KoTermToPathway.term).filter(models.KoTermToPathway.pathway.ilike(pathway))
     return [row[0] for row in q]
 
 
