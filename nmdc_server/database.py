@@ -1,32 +1,35 @@
-import functools
-import json
-from contextlib import contextmanager
-from datetime import datetime
-from enum import Enum
-from typing import Any, Iterator, Optional
-
-from sqlalchemy import create_engine as _create_engine
-from sqlalchemy.engine import Engine
+from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.schema import DDL, MetaData
 
 from nmdc_server.config import settings
 from nmdc_server.multiomics import MultiomicsValue
+from nmdc_server.utils import json_serializer
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False)
+_engine_kwargs = {
+    "json_serializer": json_serializer,
+    "echo": settings.print_sql,
+    "pool_size": settings.db_pool_size,
+    "max_overflow": settings.db_pool_max_overflow,
+}
+engine = create_engine(settings.current_db_uri, **_engine_kwargs)
+engine_ingest = create_engine(settings.ingest_database_uri, **_engine_kwargs)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocalIngest = sessionmaker(autocommit=False, autoflush=False, bind=engine_ingest)
 
 # This is to avoid having to manually name all constraints
 # See: http://alembic.zzzcomputing.com/en/latest/naming.html
 metadata = MetaData(
+    bind=engine,
     naming_convention={
         "pk": "pk_%(table_name)s",
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
         "ix": "ix_%(table_name)s_%(column_0_name)s",
         "uq": "uq_%(table_name)s_%(column_0_name)s",
         "ck": "ck_%(table_name)s_%(constraint_name)s",
-    }
+    },
 )
 
 Base = declarative_base(metadata=metadata)
@@ -180,37 +183,3 @@ from m
 where m.id = study.id;
 """
 )
-
-
-def json_serializer(data: Any) -> str:
-    def default_(val: Any) -> str:
-        if isinstance(val, datetime):
-            return val.isoformat()
-        elif isinstance(val, Enum):
-            return val.value
-        raise TypeError(f"Cannot serialize {val}")
-
-    return json.dumps(data, default=default_)
-
-
-@functools.lru_cache(maxsize=None)
-def create_engine(uri: str) -> Engine:
-    return _create_engine(
-        uri,
-        json_serializer=json_serializer,
-        echo=settings.print_sql,
-        pool_size=settings.db_pool_size,
-        max_overflow=settings.db_pool_max_overflow,
-    )
-
-
-@contextmanager
-def create_session(engine: Optional[Engine] = None) -> Iterator[Session]:
-    if engine is None:
-        engine = create_engine(uri=settings.current_db_uri)
-
-    SessionLocal.configure(bind=engine)
-    metadata.bind = engine
-
-    with SessionLocal() as db:
-        yield db

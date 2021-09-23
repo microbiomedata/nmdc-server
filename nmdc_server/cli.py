@@ -6,7 +6,7 @@ import click
 
 from nmdc_server import jobs
 from nmdc_server.config import Settings
-from nmdc_server.database import create_session
+from nmdc_server.database import SessionLocal
 from nmdc_server.ingest import errors
 from nmdc_server.ingest.all import load
 
@@ -31,7 +31,7 @@ def migrate(obj):
 @cli.command()
 def truncate():
     """Remove all existing data."""
-    with create_session() as db:
+    with SessionLocal() as db:
         try:
             db.execute("select truncate_tables()").all()
             db.commit()
@@ -67,7 +67,7 @@ def ingest(verbose, function_limit, skip_annotation):
     logging.basicConfig(level=level, format="%(message)s")
     logger.setLevel(logging.INFO)
 
-    with create_session() as db:
+    with SessionLocal() as db:
         load(db, function_limit=function_limit, skip_annotation=skip_annotation)
 
     for m, s in errors.missing.items():
@@ -90,7 +90,7 @@ def shell(print_sql: bool, script: Optional[Path]):
 
     imports = [
         "from nmdc_server.config import settings",
-        "from nmdc_server.database import create_session",
+        "from nmdc_server.database import SessionLocal",
         "from nmdc_server.models import "
         "Biosample, EnvoAncestor, EnvoTerm, EnvoTree, OmicsProcessing, Study",
     ]

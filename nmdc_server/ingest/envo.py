@@ -9,7 +9,7 @@ from urllib import request
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from nmdc_server.database import create_session
+from nmdc_server.database import SessionLocal
 from nmdc_server.models import Biosample, EnvoAncestor, EnvoTerm, EnvoTree
 from nmdc_server.schemas import EnvoTreeNode
 
@@ -242,7 +242,7 @@ def nested_envo_trees() -> Dict[str, List[EnvoTreeNode]]:
     tree_children = defaultdict(list)
     tree_nodes: Dict[str, _NodeInfo] = {}
 
-    with create_session() as session:
+    with SessionLocal() as session:
         query = session.query(EnvoTerm, EnvoTree).filter(EnvoTerm.id == EnvoTree.id)
         for term, edge in query:
             node = _NodeInfo(id=edge.id, parent_id=edge.parent_id, label=term.label)

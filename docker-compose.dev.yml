@@ -4,3 +4,7 @@ services:
     volumes:
       - "./nmdc_server:/app/nmdc_server"
     command: /start-reload.sh
+
+  worker:
+    volumes:
+      - "./nmdc_server:/app/nmdc_server"

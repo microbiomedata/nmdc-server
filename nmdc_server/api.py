@@ -17,9 +17,8 @@ from nmdc_server.auth import (
     login_required_responses,
 )
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
-from nmdc_server.config import Settings, settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
-from nmdc_server.database import create_session
+from nmdc_server.database import SessionLocal
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.models import IngestLock
 from nmdc_server.pagination import Pagination
@@ -27,13 +26,8 @@ from nmdc_server.pagination import Pagination
 router = APIRouter()
 
 
-# Dependency
-def get_settings():
-    yield settings
-
-
-def get_db(settings: Settings = Depends(get_settings)):
-    with create_session() as db:
+def get_db():
+    with SessionLocal() as db:
         yield db
 
 
