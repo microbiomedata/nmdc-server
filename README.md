@@ -93,13 +93,13 @@ The fix is to drop the existing database and to restart the service.  In docker-
 can be done by running
 
 ```bash
-docker-compose run backend psql postgres -c 'drop database nmdc;'
+docker-compose run backend psql postgres -c 'drop database nmdc_a;'
 ```
 
 On Spin, you can use the web interface to start a shell on the `db` instance and run:
 
 ```bash
-psql -U postgres postgres -c 'drop database nmdc;'
+psql -U postgres postgres -c 'drop database nmdc_a;'
 ```
 
 Then, redeploy the backend service.
