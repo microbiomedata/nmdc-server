@@ -164,7 +164,7 @@ export interface UnitSchema {
 
 export interface AttributeSummary {
   count: number;
-  type: 'string' | 'date' | 'integer' | 'float' | 'string_literal';
+  type: 'string' | 'date' | 'integer' | 'float' | 'kegg_search';
   min?: string | number;
   max?: string | number;
   units?: UnitSchema;
@@ -453,7 +453,7 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
     gene_function: {
       attributes: {
         id: {
-          type: 'string_literal',
+          type: 'kegg_search',
         },
       },
     },
@@ -550,6 +550,15 @@ async function createBulkDownload(conditions: Condition[], dataObjectFilter: Dat
   };
 }
 
+export interface KeggTermSearchResponse {
+  term: string;
+  text: string;
+}
+async function keggSearch(query: string) {
+  const { data } = await client.get('kegg/term/search', { params: { query } });
+  return data.terms as KeggTermSearchResponse[];
+}
+
 /**
  * Discover facet values by text search
  */
@@ -586,6 +595,7 @@ const api = {
   searchMetagenomeAnnotation,
   searchMetaproteomicAnalysis,
   search,
+  keggSearch,
   textSearch,
 };
 

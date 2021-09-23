@@ -7,11 +7,11 @@ import { Condition, entityType } from '@/data/api';
 
 const groupOrders = [
   'study',
+  'function',
   'sample',
   'gold ecosystems',
   'envo',
   'omics processing',
-  'function',
 ];
 
 export interface SearchFacet {
@@ -83,7 +83,7 @@ export default Vue.extend({
       Vue.set(this.menuState, category, value);
     },
     hasActiveConditions(category: string): boolean {
-      return this.conditions.some((cond) => cond.field === category);
+      return this.conditions.some((cond) => `${cond.table}_${cond.field}` === category);
     },
   },
 });

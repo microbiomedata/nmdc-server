@@ -11,7 +11,7 @@ import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
 import FilterSankeyTree from '@/components/FilterSankeyTree.vue';
-import FilterStringLiteral from '@/components/FilterStringLiteral.vue';
+import FilterKegg from '@/components/FilterKegg.vue';
 import FilterTree from '@/components/FilterTree.vue';
 import { AttributeSummary, Condition, entityType } from '@/data/api';
 
@@ -21,7 +21,7 @@ export default defineComponent({
     FilterDate,
     FilterFloat,
     FilterList,
-    FilterStringLiteral,
+    FilterKegg,
     FilterSankeyTree,
     FilterTree,
   },
@@ -115,8 +115,8 @@ export default defineComponent({
         :conditions="conditions"
         @select="$emit('select', $event)"
       />
-      <filter-string-literal
-        v-if="summary.type === 'string_literal'"
+      <FilterKegg
+        v-if="summary.type === 'kegg_search'"
         :field="field"
         :table="table"
         :conditions="conditions"

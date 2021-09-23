@@ -53,6 +53,10 @@ function keggEncode(v: string, useLong = true) {
   return v;
 }
 
+function stringIsKegg(v: string) {
+  return Object.values(KeggPrefix).find((item) => v.match(item.pattern));
+}
+
 const types: Record<entityType, EntityData> = {
   study: {
     icon: 'mdi-book',
@@ -328,7 +332,8 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
       group: 'Function',
       name: 'KEGG Term',
       description: [
-        'KEGG Gene Function search filters results to samples that have at least one of the chosen KEGG terms.',
+        'KEGG Gene Function search filters results to samples that have at least one of the chosen KEGG terms. '
+        + 'Orthology, Pathway, and Module are supported.',
         'Expected format: K00000 or M00000 or MAP00000',
       ],
       encode: keggEncode,
@@ -388,4 +393,6 @@ export {
   ecosystems,
   MultiomicsValue,
   getField,
+  keggEncode,
+  stringIsKegg,
 };
