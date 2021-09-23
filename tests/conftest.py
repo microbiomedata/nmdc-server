@@ -8,7 +8,6 @@ from starlette.testclient import TestClient
 from nmdc_server import auth, database
 from nmdc_server.app import create_app
 from nmdc_server.config import settings
-from nmdc_server.database import create_engine
 from nmdc_server.fakes import TokenFactory
 from nmdc_server.fakes import db as _db
 
@@ -31,9 +30,6 @@ def set_seed(connection):
 @pytest.fixture(scope="session")
 def connection():
     assert settings.environment == "testing"
-    engine = create_engine(uri=settings.testing_database_uri)
-    database.metadata.bind = engine
-    _db.configure(bind=engine)
     try:
         database.metadata.drop_all()
         database.metadata.create_all()

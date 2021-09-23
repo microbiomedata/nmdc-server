@@ -15,6 +15,10 @@ class Settings(BaseSettings):
     ingest_database_uri: str = "postgresql:///nmdc_testing"
     testing_database_uri: str = "postgresql:///nmdc_testing"
 
+    # database tuning knobs
+    db_pool_size: int = 20
+    db_pool_max_overflow: int = 40
+
     # for orcid oauth
     secret_key: str = "secret"
     client_id: str = "oauth client id"
