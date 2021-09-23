@@ -1,24 +1,16 @@
 <script lang="ts">
-import { Condition, entityType } from '@/data/api';
+import { Condition, entityType, api } from '@/data/api';
 import {
-  defineComponent, PropType, toRef, ref,
+  defineComponent, PropType, toRef, ref, watch, nextTick,
 } from '@vue/composition-api';
-import { fieldDisplayName } from '@/util';
-import { getField } from '@/encoding';
+import { keggEncode, stringIsKegg } from '@/encoding';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import { DataTableHeader } from 'vuetify';
+import useRequest from '@/use/useRequest';
 
 export default defineComponent({
 
   props: {
-    field: {
-      type: String,
-      required: true,
-    },
-    table: {
-      type: String as PropType<entityType>,
-      required: true,
-    },
     conditions: {
       type: Array as PropType<Condition[]>,
       required: true,
@@ -26,15 +18,29 @@ export default defineComponent({
   },
 
   setup(props, { emit }) {
-    const searchTerm = ref('');
+    const selected = ref(null);
     const conditions = toRef(props, 'conditions');
-    const field = toRef(props, 'field');
-    const table = toRef(props, 'table');
+    const field = ref('id');
+    const table = ref('gene_function' as entityType);
     const { myConditions } = useFacetSummaryData({ conditions, field, table });
+
+    /** Autocomplete state */
+    const { loading, request } = useRequest();
+    const items = ref([] as { text: string; value: string }[]);
+    const search = ref('');
+
+    watch(search, async () => {
+      const resp = (await request(() => api.keggSearch(search.value || '')))
+        .map((v) => ({ text: `${v.term}: ${v.text}`, value: v.term }));
+      if (resp.length === 0 && search.value && stringIsKegg(search.value)) {
+        resp.push({ value: search.value, text: search.value });
+      }
+      items.value = resp;
+    });
 
     const headers: DataTableHeader[] = [
       {
-        text: fieldDisplayName(props.field, props.table),
+        text: 'Kegg Term',
         value: 'value',
         width: '300',
         sortable: true,
@@ -48,25 +54,16 @@ export default defineComponent({
       },
     ];
 
-    function addTerm() {
-      if (searchTerm.value === '') {
-        return;
-      }
-      const encode = getField(props.field, props.table)?.encode;
+    function addTerm(term: string) {
+      if (!term) return;
       const newConditions = [...conditions.value, {
         op: '==',
         field: field.value,
-        value: encode ? encode(searchTerm.value) : searchTerm.value,
+        value: keggEncode(term),
         table: table.value,
       }];
-      searchTerm.value = '';
       emit('select', { conditions: newConditions });
-    }
-
-    function keyDown(event: KeyboardEvent) {
-      if (event.key === 'Enter') {
-        addTerm();
-      }
+      nextTick().then(() => { selected.value = null; });
     }
 
     function removeTerm(term: string) {
@@ -80,11 +77,16 @@ export default defineComponent({
     }
 
     return {
+      field,
+      table,
       headers,
       myConditions,
-      searchTerm,
+      /* Autocomplete */
+      loading,
+      search,
+      items,
+      selected,
       addTerm,
-      keyDown,
       removeTerm,
     };
   },
@@ -93,33 +95,22 @@ export default defineComponent({
 
 <template>
   <div class="match-list-table">
-    <v-row
-      no-gutters
-      class="my-3"
-    >
+    <v-row no-gutters>
       <slot name="subtitle" />
-      <v-text-field
-        v-model="searchTerm"
-        solo
-        :label="field"
+      <v-autocomplete
+        v-model="selected"
+        :loading="loading"
+        :items="items"
+        :search-input.sync="search"
+        label="Search for KEGG terms"
         clearable
         class="px-3 grow"
         dense
         hide-details
         outlined
         flat
-        @keypress="keyDown"
+        @change="addTerm"
       />
-      <v-btn
-        fab
-        depressed
-        small
-        color="primary"
-        class="ml-1 mr-4 "
-        @click="addTerm"
-      >
-        <v-icon>mdi-plus</v-icon>
-      </v-btn>
     </v-row>
     <v-data-table
       dense
@@ -131,8 +122,8 @@ export default defineComponent({
     >
       <template v-slot:item.remove="{ item }">
         <v-btn
-          small
-          depressed
+          x-small
+          depr
           color="error"
           @click="removeTerm(item.value)"
         >

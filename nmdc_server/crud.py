@@ -213,7 +213,7 @@ def list_ko_terms_for_pathway(db: Session, pathway: str) -> List[str]:
 def kegg_text_search(db: Session, query: str, limit: int) -> List[models.KoTermText]:
     q = (
         db.query(models.KoTermText)
-        .filter(models.KoTermText.text.ilike(f"%{query}%"))
+        .filter(models.KoTermText.text.ilike(f"%{query}%") | models.KoTermText.term.ilike(query))
         .order_by(models.KoTermText.term)
         .limit(limit)
     )
