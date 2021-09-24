@@ -6,7 +6,7 @@ import click
 
 from nmdc_server import jobs
 from nmdc_server.config import Settings
-from nmdc_server.database import SessionLocal
+from nmdc_server.database import SessionLocalIngest
 from nmdc_server.ingest import errors
 from nmdc_server.ingest.all import load
 
@@ -29,8 +29,8 @@ def migrate():
 
 @cli.command()
 def truncate():
-    """Remove all existing data."""
-    with SessionLocal() as db:
+    """Remove all existing data from the ingest database."""
+    with SessionLocalIngest() as db:
         try:
             db.execute("select truncate_tables()").all()
             db.commit()
@@ -56,7 +56,7 @@ def truncate():
 @click.option("--function-limit", type=click.INT, default=100)
 @click.option("--skip-annotation", is_flag=True, default=False)
 def ingest(verbose, function_limit, skip_annotation):
-    """Ingest the latest data from mongo."""
+    """Ingest the latest data from mongo into the ingest database."""
     level = logging.WARN
     if verbose == 1:
         level = logging.INFO
@@ -66,7 +66,7 @@ def ingest(verbose, function_limit, skip_annotation):
     logging.basicConfig(level=level, format="%(message)s")
     logger.setLevel(logging.INFO)
 
-    with SessionLocal() as db:
+    with SessionLocalIngest() as db:
         load(db, function_limit=function_limit, skip_annotation=skip_annotation)
 
     for m, s in errors.missing.items():
@@ -89,7 +89,7 @@ def shell(print_sql: bool, script: Optional[Path]):
 
     imports = [
         "from nmdc_server.config import settings",
-        "from nmdc_server.database import SessionLocal",
+        "from nmdc_server.database import SessionLocal, SessionLocalIngest",
         "from nmdc_server.models import "
         "Biosample, EnvoAncestor, EnvoTerm, EnvoTree, OmicsProcessing, Study",
     ]
