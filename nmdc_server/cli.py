@@ -70,15 +70,10 @@ def ingest(ctx, verbose, function_limit, skip_annotation):
     logger = logging.getLogger()
     logging.basicConfig(level=level, format="%(message)s")
     logger.setLevel(logging.INFO)
-<<<<<<< Updated upstream
-
-    with SessionLocal() as db:
-=======
     uri = ctx["settings"].ingest_database_uri
     click.echo(f"Ingesting {uri}")
     ingest_engine = create_engine(uri=uri)
     with create_session(ingest_engine) as db:
->>>>>>> Stashed changes
         load(db, function_limit=function_limit, skip_annotation=skip_annotation)
 
     for m, s in errors.missing.items():
