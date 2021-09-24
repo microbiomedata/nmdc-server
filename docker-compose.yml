@@ -18,22 +18,11 @@ services:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_DB=nmdc
 
-  db-ingest:
-    image: postgres:12
-    volumes:
-      - app-db-ingest:/var/lib/postgresql/data/pgdata
-    env_file:
-      - .docker-env
-    environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - POSTGRES_DB=nmdc
-
   worker:
     image: ghcr.io/microbiomedata/nmdc-server/worker:latest
     depends_on:
       - redis
       - db
-      - db-ingest
     env_file:
       - .docker-env
       - .env
