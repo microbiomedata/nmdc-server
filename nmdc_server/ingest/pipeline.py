@@ -26,7 +26,6 @@ class LoadObject(Protocol):
 
 # Load metagenome annotation as well as the gene function annotations produced.
 def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
-    logger = get_logger(__name__)
     pipeline = schemas.MetagenomeAnnotationBase(**obj)
     row = models.MetagenomeAnnotation(**pipeline.dict())
     db.add(row)
