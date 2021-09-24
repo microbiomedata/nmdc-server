@@ -6,7 +6,7 @@ import click
 
 from nmdc_server import jobs
 from nmdc_server.config import Settings
-from nmdc_server.database import SessionLocal
+from nmdc_server.database import create_engine, create_session
 from nmdc_server.ingest import errors
 from nmdc_server.ingest.all import load
 
@@ -24,13 +24,17 @@ def cli(ctx):
 @cli.command()
 def migrate():
     """Upgrade the database schema."""
-    jobs.migrate()
+    jobs.migrate(obj["settings"].ingest_database_uri)
 
 
 @cli.command()
-def truncate():
+@click.pass_obj
+def truncate(ctx):
     """Remove all existing data."""
-    with SessionLocal() as db:
+    uri = ctx["settings"].ingest_database_uri
+    click.echo(f"Truncating {uri}")
+    ingest_engine = create_engine(uri=uri)
+    with create_session(ingest_engine) as db:
         try:
             db.execute("select truncate_tables()").all()
             db.commit()
@@ -55,7 +59,8 @@ def truncate():
 @click.option("-v", "--verbose", count=True)
 @click.option("--function-limit", type=click.INT, default=100)
 @click.option("--skip-annotation", is_flag=True, default=False)
-def ingest(verbose, function_limit, skip_annotation):
+@click.pass_obj
+def ingest(ctx, verbose, function_limit, skip_annotation):
     """Ingest the latest data from mongo."""
     level = logging.WARN
     if verbose == 1:
@@ -65,8 +70,15 @@ def ingest(verbose, function_limit, skip_annotation):
     logger = logging.getLogger()
     logging.basicConfig(level=level, format="%(message)s")
     logger.setLevel(logging.INFO)
+<<<<<<< Updated upstream
 
     with SessionLocal() as db:
+=======
+    uri = ctx["settings"].ingest_database_uri
+    click.echo(f"Ingesting {uri}")
+    ingest_engine = create_engine(uri=uri)
+    with create_session(ingest_engine) as db:
+>>>>>>> Stashed changes
         load(db, function_limit=function_limit, skip_annotation=skip_annotation)
 
     for m, s in errors.missing.items():

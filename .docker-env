@@ -7,4 +7,5 @@ PGDATABASE=nmdc_a
 NMDC_DATABASE_URI="postgresql://postgres:postgres@db/nmdc_a"
 NMDC_CELERY_BACKEND="redis://redis:6379/0"
 NMDC_CELERY_BROKER="redis://redis:6379/0"
-NMDC_INGEST_DATABASE_URI="postgresql://postgres:postgres@db/nmdc_b"
+# Change the ingest URI to test ingest without disrupting your local copy
+NMDC_INGEST_DATABASE_URI="postgresql://postgres:postgres@db/nmdc_a"
