@@ -22,10 +22,9 @@ def cli(ctx):
 
 
 @cli.command()
-@click.pass_obj
-def migrate(obj):
+def migrate():
     """Upgrade the database schema."""
-    jobs.migrate(obj["settings"].database_uri)
+    jobs.migrate()
 
 
 @cli.command()
