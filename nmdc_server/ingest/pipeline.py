@@ -34,7 +34,15 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
 
     annotations: Collection = kwargs["annotations"]
 
-    query = annotations.find({"was_generated_by": pipeline.id})
+    query = annotations.find(
+        {
+            "was_generated_by": pipeline.id,
+            "has_function": {
+                "$regex": ko_regex,
+            },
+        },
+        no_cursor_timeout=True,
+    ).hint("was_generated_by_1")
     if kwargs.get("function_limit"):
         query = query.limit(kwargs["function_limit"])
 
@@ -42,9 +50,6 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
     mga_gene_functions: List[Tuple[UUID, str, str, str]] = []
     for gf in query:
         function_id = gf["has_function"]
-        if not re.match(ko_regex, function_id):
-            logger.warn(f"Unexpected function {function_id} for pipeline {pipeline.id}")
-            continue
         if function_id not in gene_functions:
             gene_functions[function_id] = get_or_create(
                 db, models.GeneFunction, id=gf["has_function"]
