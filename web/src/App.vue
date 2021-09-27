@@ -17,6 +17,8 @@ export default {
     >
       <a
         href="https://microbiomedata.org/"
+        target="_blank"
+        rel="noopener noreferrer"
         style="height: 100%"
       >
         <img
@@ -29,6 +31,8 @@ export default {
         depressed
         small
         href="https://microbiomedata.org/"
+        target="_blank"
+        rel="noopener noreferrer"
         class="mx-2"
       >
         NMDC Home
@@ -42,10 +46,12 @@ export default {
       <v-btn
         depressed
         small
-        href="https://microbiomedata.org/metadata/"
+        href="https://github.com/microbiomedata/nmdc-schema"
+        target="_blank"
+        rel="noopener noreferrer"
         class="mx-2"
       >
-        Metadata Standards
+        Data Schema & Standards
         <v-icon
           class="pl-2"
           small
@@ -57,6 +63,8 @@ export default {
         depressed
         small
         href="https://microbiomedata.org/workflows/"
+        target="_blank"
+        rel="noopener noreferrer"
         class="mx-2"
       >
         Bioinformatics Workflows
