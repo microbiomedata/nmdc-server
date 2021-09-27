@@ -1,6 +1,5 @@
 import re
-from typing import Any, Dict, List, Tuple, cast
-from uuid import UUID, uuid4
+from typing import Any, Dict, List, Set, cast
 
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
@@ -9,7 +8,6 @@ from sqlalchemy.orm import Session
 from typing_extensions import Protocol
 
 from nmdc_server import models, schemas
-from nmdc_server.crud import get_or_create
 from nmdc_server.ingest.errors import errors
 from nmdc_server.ingest.errors import missing as missing_
 from nmdc_server.ingest.logger import get_logger
@@ -41,33 +39,31 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
             },
         },
         no_cursor_timeout=True,
-    ).hint("was_generated_by_1")
+        projection={"_id": False, "has_function": True, "subject": True},
+    )
     if kwargs.get("function_limit"):
         query = query.limit(kwargs["function_limit"])
 
-    gene_functions: Dict[str, models.GeneFunction] = {}
-    mga_gene_functions: List[Tuple[UUID, str, str, str]] = []
-    for gf in query:
-        function_id = gf["has_function"]
-        if function_id not in gene_functions:
-            gene_functions[function_id] = get_or_create(
-                db, models.GeneFunction, id=gf["has_function"]
-            )[0]
-
-        gene_function = gene_functions[function_id]
-        db.add(gene_function)
+    gene_functions: Set[str] = set()
+    mga_gene_functions: List[models.MGAGeneFunction] = []
+    for annotation in query:
+        function_id = annotation["has_function"]
+        gene_functions.add(function_id)
         mga_gene_functions.append(
-            (
-                uuid4(),
-                pipeline.id,
-                function_id,
-                gf["subject"],
+            models.MGAGeneFunction(
+                metagenome_annotation_id=pipeline.id,
+                gene_function_id=function_id,
+                subject=annotation["subject"],
             )
         )
 
     if mga_gene_functions:
-        db.flush()
-        db.execute(insert(models.MGAGeneFunction).values(mga_gene_functions))
+        db.execute(
+            insert(models.GeneFunction)
+            .on_conflict_do_nothing()
+            .values([(gf,) for gf in gene_functions])
+        )
+        db.bulk_save_objects(mga_gene_functions)
 
     return row
 
