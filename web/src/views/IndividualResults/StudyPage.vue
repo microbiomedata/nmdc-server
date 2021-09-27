@@ -14,7 +14,7 @@ import { setUniqueCondition } from '@/store';
 import { useRouter } from '@/use/useRouter';
 import AttributeList from '@/components/Presentation/AttributeList.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
-
+import InvestigatorBio from '@/components/InvestigatorBio.vue';
 /**
  * Override citations for certain DOIs
  */
@@ -33,6 +33,7 @@ export default defineComponent({
   components: {
     AttributeList,
     IndividualTitle,
+    InvestigatorBio,
   },
 
   setup(props) {
@@ -137,7 +138,7 @@ export default defineComponent({
   <v-container fluid>
     <v-main v-if="item !== null">
       <v-row>
-        <v-col>
+        <v-col cols="7">
           <IndividualTitle :item="item">
             <template #default>
               <div v-if="item.omics_processing_counts">
@@ -164,89 +165,24 @@ export default defineComponent({
               </div>
             </template>
           </IndividualTitle>
-
-          <v-row class="mx-2">
-            <v-col
-              class="shrink"
-              offset="1"
-            >
-              <v-avatar :size="200">
-                <v-img :src="item.principal_investigator_image_url" />
-              </v-avatar>
-            </v-col>
-            <v-col class="grow">
-              <v-row
-                align="center"
-                justify="start"
-                style="height: 100%"
-              >
-                <v-card flat>
-                  <div class="headline">
-                    {{ item.principal_investigator_name }}
-                  </div>
-                  <div class="caption">
-                    Principal investigator
-                  </div>
-                  <div
-                    v-for="site in item.principal_investigator_websites"
-                    :key="site"
-                    class="caption primary--text"
-                    style="cursor: pointer"
-                    @click="openLink(site)"
-                  >
-                    <v-icon
-                      small
-                      left
-                      color="primary"
-                    >
-                      mdi-link
-                    </v-icon>
-                    {{ site }}
-                  </div>
-                </v-card>
-              </v-row>
-            </v-col>
-          </v-row>
+          <InvestigatorBio :item="item" />
         </v-col>
-        <v-col class="flex-grow-1 grey lighten-4 px-0 pb-0">
-          <v-subheader>Dataset Citation</v-subheader>
-          <v-list class="transparent">
-            <v-divider />
-            <v-list-item>
-              <v-list-item-content
-                v-text="data.doiCitation || CitationOverrides[item.doi] || item.doi"
-              />
-              <v-list-item-action>
-                <v-tooltip top>
-                  <template v-slot:activator="{ on }">
-                    <v-btn
-                      icon
-                      v-on="on"
-                      @click="openLink(`https://doi.org/${item.doi}`)"
-                    >
-                      <v-icon>mdi-open-in-new</v-icon>
-                    </v-btn>
-                  </template>
-                  <span>Visit site</span>
-                </v-tooltip>
-              </v-list-item-action>
-            </v-list-item>
-          </v-list>
-          <v-subheader v-if="data.publications.length > 0">
-            Other publications
-          </v-subheader>
-          <v-list class="transparent">
-            <template v-for="(pub, pubIndex) in data.publications">
-              <v-divider :key="`${pubIndex}-divider`" />
-              <v-list-item :key="pubIndex">
-                <v-list-item-content v-text="pub" />
+        <v-col cols="5">
+          <div class="ma-4 pa-2 grey lighten-4">
+            <v-subheader>Dataset Citation</v-subheader>
+            <v-list class="transparent">
+              <v-divider />
+              <v-list-item>
+                <v-list-item-content
+                  v-text="data.doiCitation || CitationOverrides[item.doi] || item.doi"
+                />
                 <v-list-item-action>
                   <v-tooltip top>
                     <template v-slot:activator="{ on }">
                       <v-btn
                         icon
                         v-on="on"
-                        @click="openLink(`https://doi.org/${item.publication_dois[pubIndex]}`)"
+                        @click="openLink(`https://doi.org/${item.doi}`)"
                       >
                         <v-icon>mdi-open-in-new</v-icon>
                       </v-btn>
@@ -255,8 +191,33 @@ export default defineComponent({
                   </v-tooltip>
                 </v-list-item-action>
               </v-list-item>
-            </template>
-          </v-list>
+            </v-list>
+            <v-subheader v-if="data.publications.length > 0">
+              Other publications
+            </v-subheader>
+            <v-list class="transparent">
+              <template v-for="(pub, pubIndex) in data.publications">
+                <v-divider :key="`${pubIndex}-divider`" />
+                <v-list-item :key="pubIndex">
+                  <v-list-item-content v-text="pub" />
+                  <v-list-item-action>
+                    <v-tooltip top>
+                      <template v-slot:activator="{ on }">
+                        <v-btn
+                          icon
+                          v-on="on"
+                          @click="openLink(`https://doi.org/${item.publication_dois[pubIndex]}`)"
+                        >
+                          <v-icon>mdi-open-in-new</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>Visit site</span>
+                    </v-tooltip>
+                  </v-list-item-action>
+                </v-list-item>
+              </template>
+            </v-list>
+          </div>
         </v-col>
       </v-row>
       <v-row>

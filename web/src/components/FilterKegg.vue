@@ -86,6 +86,7 @@ export default defineComponent({
       search,
       items,
       selected,
+      keggEncode,
       addTerm,
       removeTerm,
     };
@@ -96,6 +97,17 @@ export default defineComponent({
 <template>
   <div class="match-list-table">
     <v-row no-gutters>
+      <div class="px-4 text-caption">
+        <p>
+          KEGG Gene Function search filters results to
+          samples that have at least one of the chosen KEGG terms.
+          Orthology, Pathway, and Module are supported.
+          Expected format: <code>K00000, M00000 or MAP00000</code>
+        </p>
+        <p class="text-subtitle-2">
+          More information at <a href="https://www.genome.jp/kegg/">genome.jp/kegg</a>
+        </p>
+      </div>
       <slot name="subtitle" />
       <v-autocomplete
         v-model="selected"
@@ -120,7 +132,12 @@ export default defineComponent({
       :items="myConditions"
       :headers="headers"
     >
-      <template v-slot:item.remove="{ item }">
+      <template #item.value="{ item }">
+        <a :href="keggEncode(item.value, true)">
+          {{ item.value }}
+        </a>
+      </template>
+      <template #item.remove="{ item }">
         <v-btn
           x-small
           depr

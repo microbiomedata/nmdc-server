@@ -92,20 +92,9 @@ export default defineComponent({
     </v-card-title>
     <v-card-text
       v-if="description"
-      class="py-1"
+      class="py-1 text-caption"
     >
       {{ description }}
-    </v-card-text>
-    <v-card-text
-      v-if="getField(field, table).description"
-      class="py-1"
-    >
-      <p
-        v-for="d, i in getField(field, table).description"
-        :key="i"
-      >
-        {{ d }}
-      </p>
     </v-card-text>
     <template v-if="isOpen">
       <filter-list
