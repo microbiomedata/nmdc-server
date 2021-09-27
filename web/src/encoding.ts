@@ -15,7 +15,6 @@ export interface FieldsData {
   hideFacet?: boolean;
   sortKey?: number;
   name?: string;
-  description?: string[];
   group?: string;
   hideAttr?: boolean;
   schemaName?: string; // Match the field to the nmsc schema property
@@ -24,31 +23,41 @@ export interface FieldsData {
 
 const KeggPrefix = {
   ORTHOLOGY: {
-    pattern: /^((ko?:?)|(kegg\.orthology:))(?=\d{5})/i,
-    short: 'K',
+    pattern: /^((ko?:?)|(kegg\.orthology:k))(?=\d{5})/i,
+    short: 'k',
     long: 'KEGG.ORTHOLOGY:K',
+    urlBase: 'https://www.genome.jp/entry/',
   },
   PATHWAY: {
-    pattern: /^((map:?)|(path:?)|(kegg.pathway:))(?=\d{5})/i,
-    short: 'MAP',
+    pattern: /^((map:?)|(path:?)|(kegg.pathway:map))(?=\d{5})/i,
+    short: 'map',
     long: 'KEGG.PATHWAY:MAP',
+    urlBase: 'https://www.genome.jp/kegg-bin/show_pathway?',
   },
   MODULE: {
-    pattern: /^((m:?)|(kegg.module:))(?=\d{5})/i,
+    pattern: /^((m:?)|(kegg.module:m))(?=\d{5})/i,
     short: 'M',
     long: 'KEGG.MODULE:M',
+    urlBase: 'https://www.genome.jp/brite/',
   },
 };
 /**
  * Encode a string as either the long or short variant of
  * a KEGG identifier term.
  */
-function keggEncode(v: string, useLong = true) {
+function keggEncode(v: string, url = false) {
   const prefixes = Object.values(KeggPrefix);
   for (let i = 0; i < prefixes.length; i += 1) {
-    const { pattern, short, long } = prefixes[i];
-    const transformed = v.replace(pattern, useLong ? long : short);
-    if (transformed !== v) return transformed;
+    const {
+      pattern, short, long, urlBase,
+    } = prefixes[i];
+    const transformed = v.replace(pattern, url ? short : long);
+    if (transformed !== v) {
+      if (url) {
+        return urlBase + transformed;
+      }
+      return transformed;
+    }
   }
   return v;
 }
@@ -331,11 +340,6 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
       icon: 'mdi-dna',
       group: 'Function',
       name: 'KEGG Term',
-      description: [
-        'KEGG Gene Function search filters results to samples that have at least one of the chosen KEGG terms. '
-        + 'Orthology, Pathway, and Module are supported.',
-        'Expected format: K00000 or M00000 or MAP00000',
-      ],
       encode: keggEncode,
     },
   },
