@@ -17,6 +17,11 @@ services:
     environment:
       - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_DB=nmdc
+    command:
+      - postgres
+      - "-c"
+      # Our MGA ingest makes some *very* large transactions
+      - "max_wal_size=2GB"
 
   worker:
     image: ghcr.io/microbiomedata/nmdc-server/worker:latest
