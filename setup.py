@@ -19,7 +19,7 @@ setup(
         "ipython",
         "itsdangerous",
         "pint",
-        "psycopg2-binary",
+        "psycopg2",
         "pymongo",
         "python-dateutil",
         "python-dotenv",
