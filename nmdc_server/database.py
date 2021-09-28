@@ -34,7 +34,6 @@ metadata = MetaData(
 
 Base = declarative_base(metadata=metadata)
 
-
 # define functions used for comparison between arbitrary types
 listen(
     metadata,
