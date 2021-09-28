@@ -16,8 +16,14 @@ class Settings(BaseSettings):
     testing_database_uri: str = "postgresql:///nmdc_testing"
 
     # database tuning knobs
-    db_pool_size: int = 20
-    db_pool_max_overflow: int = 40
+    # Note the important relationship between postgres max connections, the pool size
+    # per worker (this number), and the number of uvicorn workers, each of which has
+    # its own engine / pool. Tune the deployment accordingly.
+    db_pool_size: int = 5
+    # Pool overflow means that if all keep-alive pool connections are in use,
+    # up to this many extra connections will be opened but then immediately closed
+    # after the session closes.
+    db_pool_max_overflow: int = 3
 
     # for orcid oauth
     secret_key: str = "secret"
