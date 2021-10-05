@@ -188,6 +188,17 @@ class DataObjectAggregationElement(BaseModel):
 DataObjectAggregation = Dict[str, DataObjectAggregationElement]
 
 
+class OrcidPerson(BaseModel):
+    name: str
+    email: str
+    orcid: str
+
+
+class CreditAssociation(BaseModel):
+    applied_role: str
+    applies_to_person: OrcidPerson
+
+
 # study
 class StudyBase(AnnotatedBase):
     principal_investigator_websites: List[str] = []
@@ -198,6 +209,8 @@ class StudyBase(AnnotatedBase):
     add_date: Optional[DateType]
     mod_date: Optional[DateType]
     doi: Optional[str]
+    has_credit_associations: Optional[List[CreditAssociation]]
+    funding_sources: Optional[List[str]]
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
@@ -410,35 +423,35 @@ class ReadsQC(PipelineStep):
 
 class MetagenomeAssemblyBase(PipelineStepBase):
     type: str = "nmdc:MetagenomeAssembly"
-    scaffolds: int
-    contigs: int
-    scaf_bp: int
-    contig_bp: int
-    scaf_N50: int
-    scaf_L50: int
-    ctg_N50: int
-    ctg_L50: int
-    scaf_N90: int
-    scaf_L90: int
-    ctg_N90: int
-    ctg_L90: int
-    scaf_max: int
-    ctg_max: int
-    scaf_n_gt50K: int
+    scaffolds: Optional[int]
+    contigs: Optional[int]
+    scaf_bp: Optional[int]
+    contig_bp: Optional[int]
+    scaf_N50: Optional[int]
+    scaf_L50: Optional[int]
+    ctg_N50: Optional[int]
+    ctg_L50: Optional[int]
+    scaf_N90: Optional[int]
+    scaf_L90: Optional[int]
+    ctg_N90: Optional[int]
+    ctg_L90: Optional[int]
+    scaf_max: Optional[int]
+    ctg_max: Optional[int]
+    scaf_n_gt50K: Optional[int]
 
     # TODO: fix the data on ingest or make this optional on the schema
-    scaf_l_gt50k: int = 0
-    scaf_pct_gt50K: int
-    num_input_reads: int
-    num_aligned_reads: int
-    scaf_logsum: float
-    scaf_powsum: float
-    ctg_logsum: float
-    ctg_powsum: float
-    asm_score: float
-    gap_pct: float
-    gc_avg: float
-    gc_std: float
+    scaf_l_gt50k: Optional[int]
+    scaf_pct_gt50K: Optional[int]
+    num_input_reads: Optional[int]
+    num_aligned_reads: Optional[int]
+    scaf_logsum: Optional[float]
+    scaf_powsum: Optional[float]
+    ctg_logsum: Optional[float]
+    ctg_powsum: Optional[float]
+    asm_score: Optional[float]
+    gap_pct: Optional[float]
+    gc_avg: Optional[float]
+    gc_std: Optional[float]
 
 
 class MetagenomeAssembly(PipelineStep):
@@ -495,20 +508,20 @@ class MAGCreate(MAG):
 
 class MAGsAnalysisBase(PipelineStepBase):
     type: str = "nmdc:MAGsAnalysis"
-    input_contig_num: int
-    too_short_contig_num: int
-    lowDepth_contig_num: int
-    unbinned_contig_num: int
-    binned_contig_num: int
+    input_contig_num: Optional[int]
+    too_short_contig_num: Optional[int]
+    lowDepth_contig_num: Optional[int]
+    unbinned_contig_num: Optional[int]
+    binned_contig_num: Optional[int]
 
 
 class MAGsAnalysis(PipelineStep):
     type: str = "nmdc:MAGsAnalysis"
-    input_contig_num: int
-    too_short_contig_num: int
-    lowDepth_contig_num: int
-    unbinned_contig_num: int
-    binned_contig_num: int
+    input_contig_num: Optional[int]
+    too_short_contig_num: Optional[int]
+    lowDepth_contig_num: Optional[int]
+    unbinned_contig_num: Optional[int]
+    binned_contig_num: Optional[int]
 
     mags_list: List[MAG]
 

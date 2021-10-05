@@ -169,6 +169,7 @@ class PrincipalInvestigator(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String, nullable=False)
+    orcid = Column(String, nullable=True)
 
     # a PI profile image... originally we didn't have a place to store static content
     # so the image data is placed in the database.
@@ -202,6 +203,10 @@ class Study(Base, AnnotatedModel):
     scientific_objective = Column(String, nullable=False, default="")
     doi = Column(String, ForeignKey("doi_info.id"), nullable=True)
     multiomics = Column(Integer, nullable=False, default=0)
+
+    # TODO migrate these into relations or something
+    has_credit_associations = Column(JSONB, nullable=True)
+    funding_sources = Column(JSONB, nullable=True)
 
     # These query expressions are a way to inject additional aggregation information
     # into the query at search time.  See `with_expression` usage in `query.py`.
@@ -400,34 +405,34 @@ metagenome_assembly_output_association = output_association("metagenome_assembly
 class MetagenomeAssembly(Base, PipelineStep):
     __tablename__ = "metagenome_assembly"
 
-    scaffolds = Column(BigInteger, nullable=False)
-    contigs = Column(BigInteger, nullable=False)
-    scaf_bp = Column(BigInteger, nullable=False)
-    contig_bp = Column(BigInteger, nullable=False)
-    scaf_N50 = Column(BigInteger, nullable=False)
-    scaf_L50 = Column(BigInteger, nullable=False)
-    ctg_N50 = Column(BigInteger, nullable=False)
-    ctg_L50 = Column(BigInteger, nullable=False)
-    scaf_N90 = Column(BigInteger, nullable=False)
-    scaf_L90 = Column(BigInteger, nullable=False)
-    ctg_N90 = Column(BigInteger, nullable=False)
-    ctg_L90 = Column(BigInteger, nullable=False)
-    scaf_max = Column(BigInteger, nullable=False)
-    ctg_max = Column(BigInteger, nullable=False)
-    scaf_n_gt50K = Column(BigInteger, nullable=False)
-    scaf_l_gt50k = Column(BigInteger, nullable=False)
-    scaf_pct_gt50K = Column(BigInteger, nullable=False)
-    num_input_reads = Column(BigInteger, nullable=False)
-    num_aligned_reads = Column(BigInteger, nullable=False)
+    scaffolds = Column(BigInteger, nullable=True)
+    contigs = Column(BigInteger, nullable=True)
+    scaf_bp = Column(BigInteger, nullable=True)
+    contig_bp = Column(BigInteger, nullable=True)
+    scaf_N50 = Column(BigInteger, nullable=True)
+    scaf_L50 = Column(BigInteger, nullable=True)
+    ctg_N50 = Column(BigInteger, nullable=True)
+    ctg_L50 = Column(BigInteger, nullable=True)
+    scaf_N90 = Column(BigInteger, nullable=True)
+    scaf_L90 = Column(BigInteger, nullable=True)
+    ctg_N90 = Column(BigInteger, nullable=True)
+    ctg_L90 = Column(BigInteger, nullable=True)
+    scaf_max = Column(BigInteger, nullable=True)
+    ctg_max = Column(BigInteger, nullable=True)
+    scaf_n_gt50K = Column(BigInteger, nullable=True)
+    scaf_l_gt50k = Column(BigInteger, nullable=True)
+    scaf_pct_gt50K = Column(BigInteger, nullable=True)
+    num_input_reads = Column(BigInteger, nullable=True)
+    num_aligned_reads = Column(BigInteger, nullable=True)
 
-    scaf_logsum = Column(Float, nullable=False)
-    scaf_powsum = Column(Float, nullable=False)
-    ctg_logsum = Column(Float, nullable=False)
-    ctg_powsum = Column(Float, nullable=False)
-    asm_score = Column(Float, nullable=False)
-    gap_pct = Column(Float, nullable=False)
-    gc_avg = Column(Float, nullable=False)
-    gc_std = Column(Float, nullable=False)
+    scaf_logsum = Column(Float, nullable=True)
+    scaf_powsum = Column(Float, nullable=True)
+    ctg_logsum = Column(Float, nullable=True)
+    ctg_powsum = Column(Float, nullable=True)
+    asm_score = Column(Float, nullable=True)
+    gap_pct = Column(Float, nullable=True)
+    gc_avg = Column(Float, nullable=True)
+    gc_std = Column(Float, nullable=True)
 
     inputs = input_relationship(metagenome_assembly_input_association)
     outputs = output_relationship(metagenome_assembly_output_association)
@@ -501,11 +506,11 @@ class PeptideMGAGeneFunction(Base):
 class MAGsAnalysis(Base, PipelineStep):
     __tablename__ = "mags_analysis"
 
-    input_contig_num = Column(BigInteger, nullable=False)
-    too_short_contig_num = Column(BigInteger, nullable=False)
-    lowDepth_contig_num = Column(BigInteger, nullable=False)
-    unbinned_contig_num = Column(BigInteger, nullable=False)
-    binned_contig_num = Column(BigInteger, nullable=False)
+    input_contig_num = Column(BigInteger, nullable=True)
+    too_short_contig_num = Column(BigInteger, nullable=True)
+    lowDepth_contig_num = Column(BigInteger, nullable=True)
+    unbinned_contig_num = Column(BigInteger, nullable=True)
+    binned_contig_num = Column(BigInteger, nullable=True)
 
     inputs = input_relationship(mags_analysis_input_association)
     outputs = output_relationship(mags_analysis_output_association)
