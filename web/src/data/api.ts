@@ -111,6 +111,16 @@ export interface StudySearchResults extends BaseSearchResult {
   add_date: string;
   mod_date: string;
   open_in_gold: string;
+  funding_sources: string[];
+  relevant_protocols: string[];
+  has_credit_associations: {
+    applied_role: string;
+    applies_to_person: {
+      name: string;
+      orcid: string;
+      email: string;
+    };
+  }[];
 }
 
 export interface DerivedDataResult extends BaseSearchResult {

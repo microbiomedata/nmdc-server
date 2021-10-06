@@ -27,6 +27,10 @@ def upgrade():
     )
     op.add_column(
         "study",
+        sa.Column("relevant_protocols", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    )
+    op.add_column(
+        "study",
         sa.Column(
             "has_credit_associations", postgresql.JSONB(astext_type=sa.Text()), nullable=True
         ),
@@ -39,4 +43,5 @@ def downgrade():
     op.drop_column("principal_investigator", "orcid")
     op.drop_column("study", "has_credit_associations")
     op.drop_column("study", "funding_sources")
+    op.drop_column("study", "relevant_protocols")
     # ### end Alembic commands ###

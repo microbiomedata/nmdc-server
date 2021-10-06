@@ -210,6 +210,7 @@ class StudyBase(AnnotatedBase):
     mod_date: Optional[DateType]
     doi: Optional[str]
     has_credit_associations: Optional[List[CreditAssociation]]
+    relevant_protocols: Optional[List[str]]
     funding_sources: Optional[List[str]]
 
     @validator("principal_investigator_websites", pre=True, each_item=True)

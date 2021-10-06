@@ -9,7 +9,7 @@ from itertools import groupby
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field, PositiveInt
-from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
+from sqlalchemy import ARRAY, Column, and_, cast, desc, func, inspect, or_
 from sqlalchemy.orm import Query, Session, with_expression
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement, intersect, union
@@ -673,7 +673,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
     def execute(self, db: Session) -> Query:
         model = self.table.model
         subquery = self.query(db).subquery()
-        return db.query(model).join(subquery, model.id == subquery.c.id)  # type: ignore
+        return db.query(model).join(subquery, model.id == subquery.c.id).order_by(desc(self.table.model.multiomics))  # type: ignore
 
 
 class ReadsQCQuerySchema(BaseQuerySchema):

@@ -4,7 +4,7 @@ import { isObject } from 'lodash';
 
 import { BaseSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
-import { fieldDisplayName, valueDisplayName } from '@/util';
+import Attribute from './Attribute.vue';
 
 export default defineComponent({
   props: {
@@ -17,6 +17,8 @@ export default defineComponent({
       required: true,
     },
   },
+
+  components: { Attribute },
 
   setup(props) {
     const displayFields = computed(() => {
@@ -31,35 +33,19 @@ export default defineComponent({
     });
 
     const alternateIdentifiers = computed(() => props.item.alternate_identifiers
-      .map((id) => [id, `https://identifiers.org/${id}`]));
-
-    function href(field: string) {
-      if (field.startsWith('open_in_')) {
-        return props.item[field];
-      }
-      const value = props.item[field] as string;
-      if (typeof value === 'string' && value.startsWith('http')) {
-        return props.item[field];
-      }
-      return undefined;
-    }
+      .map((id) => ({ name: id, target: `https://identifiers.org/${id}` })));
 
     return {
       // computed
       alternateIdentifiers,
       displayFields,
-      // methods
-      getField,
-      href,
-      fieldDisplayName,
-      valueDisplayName,
     };
   },
 });
 </script>
 
 <template>
-  <div class="ma-6">
+  <div>
     <div class="display-1">
       Attributes
     </div>
@@ -72,47 +58,18 @@ export default defineComponent({
         :key="field"
         class="pa-0 d-inline-block"
       >
-        <v-list-item
-          :href="href(field)"
-          target="_blank"
-        >
-          <v-list-item-avatar>
-            <v-icon v-if="getField(field)">
-              {{ getField(field).icon || 'mdi-text' }}
-            </v-icon>
-          </v-list-item-avatar>
-          <v-list-item-content>
-            <v-list-item-title>
-              {{ fieldDisplayName(field) }}
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              {{ valueDisplayName(field, item[field]) }}
-            </v-list-item-subtitle>
-          </v-list-item-content>
-        </v-list-item>
+        <Attribute v-bind="{ item, field }" />
       </v-col>
     </v-list>
     <v-list v-if="alternateIdentifiers.length > 0">
       <div class="display-1">
         Alternative Identifiers
       </div>
-      <v-list-item
-        v-for="link in alternateIdentifiers"
-        :key="link[0]"
-        :href="link[1]"
-      >
-        <v-list-item-avatar>
-          <v-icon>mdi-link</v-icon>
-        </v-list-item-avatar>
-        <v-list-item-content>
-          <v-list-item-title>
-            {{ link[0] }}
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            {{ link[1] }}
-          </v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
+      <Attribute
+        v-for="({ name, target }) in alternateIdentifiers"
+        :key="name"
+        v-bind="{ item, field, link: { name, target } }"
+      />
     </v-list>
   </div>
 </template>

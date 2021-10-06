@@ -206,6 +206,7 @@ class Study(Base, AnnotatedModel):
 
     # TODO migrate these into relations or something
     has_credit_associations = Column(JSONB, nullable=True)
+    relevant_protocols = Column(JSONB, nullable=True)
     funding_sources = Column(JSONB, nullable=True)
 
     # These query expressions are a way to inject additional aggregation information
@@ -506,11 +507,11 @@ class PeptideMGAGeneFunction(Base):
 class MAGsAnalysis(Base, PipelineStep):
     __tablename__ = "mags_analysis"
 
-    input_contig_num = Column(BigInteger, nullable=True)
-    too_short_contig_num = Column(BigInteger, nullable=True)
-    lowDepth_contig_num = Column(BigInteger, nullable=True)
-    unbinned_contig_num = Column(BigInteger, nullable=True)
-    binned_contig_num = Column(BigInteger, nullable=True)
+    input_contig_num = Column(BigInteger)
+    too_short_contig_num = Column(BigInteger)
+    lowDepth_contig_num = Column(BigInteger)
+    unbinned_contig_num = Column(BigInteger)
+    binned_contig_num = Column(BigInteger)
 
     inputs = input_relationship(mags_analysis_input_association)
     outputs = output_relationship(mags_analysis_output_association)
