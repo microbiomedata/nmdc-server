@@ -89,7 +89,6 @@ export default defineComponent({
                 class="pa-2"
               >
                 <v-card-title>{{ member.applies_to_person.name }}</v-card-title>
-                <v-card-subtitle>{{ member.applied_role }} (CRediT)</v-card-subtitle>
                 <v-btn
                   text
                   color="green"

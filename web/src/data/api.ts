@@ -113,6 +113,7 @@ export interface StudySearchResults extends BaseSearchResult {
   open_in_gold: string;
   funding_sources: string[];
   relevant_protocols: string[];
+  ess_dive_datasets: string[];
   has_credit_associations: {
     applied_role: string;
     applies_to_person: {

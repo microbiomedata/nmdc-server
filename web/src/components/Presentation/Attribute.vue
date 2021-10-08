@@ -3,6 +3,7 @@ import { defineComponent, PropType } from '@vue/composition-api';
 import { getField } from '@/encoding';
 import { fieldDisplayName, valueDisplayName } from '@/util';
 import { BaseSearchResult } from '@/data/api';
+import { Route } from 'vue-router';
 
 export default defineComponent({
   props: {
@@ -17,6 +18,10 @@ export default defineComponent({
     link: {
       type: Object as PropType<{ name: string; target: string; } | null>,
       default: null,
+    },
+    to: {
+      type: Object as PropType<Route>,
+      default: undefined,
     },
   },
 
@@ -63,6 +68,7 @@ export default defineComponent({
   <v-list-item
     v-else
     :href="href(field)"
+    :to="to"
     target="_blank"
   >
     <v-list-item-avatar>
