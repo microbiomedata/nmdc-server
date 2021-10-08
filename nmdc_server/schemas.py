@@ -215,6 +215,7 @@ class StudyBase(AnnotatedBase):
     has_credit_associations: Optional[List[CreditAssociation]]
     relevant_protocols: Optional[List[str]]
     funding_sources: Optional[List[str]]
+    ess_dive_datasets: Optional[List[str]]
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
