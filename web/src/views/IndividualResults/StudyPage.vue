@@ -12,7 +12,7 @@ import {
 import { api, StudySearchResults } from '@/data/api';
 import { setUniqueCondition } from '@/store';
 import { useRouter } from '@/use/useRouter';
-import AttributeList from '@/components/Presentation/AttributeList.vue';
+import Attribute from '@/components/Presentation/Attribute.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
 import InvestigatorBio from '@/components/InvestigatorBio.vue';
 /**
@@ -31,7 +31,7 @@ export default defineComponent({
   },
 
   components: {
-    AttributeList,
+    Attribute,
     IndividualTitle,
     InvestigatorBio,
   },
@@ -166,6 +166,59 @@ export default defineComponent({
             </template>
           </IndividualTitle>
           <InvestigatorBio :item="item" />
+          <v-col offset="1">
+            <div class="display-1">
+              Study Details
+            </div>
+            <v-list>
+              <Attribute v-bind="{ item, field: 'doi' }" />
+              <Attribute v-bind="{ item, field: 'id' }" />
+              <Attribute v-bind="{ item, field: 'funding_sources' }" />
+              <Attribute v-bind="{ item, field: 'sample_count' }" />
+            </v-list>
+            <div class="display-1">
+              External Resources
+            </div>
+            <v-list>
+              <v-list-item>
+                <v-list-item-avatar>
+                  <v-icon>mdi-file-document</v-icon>
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  <v-list-item-title class="text-h6">
+                    Additional data
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+              <Attribute
+                style="padding-left: 60px;"
+                v-bind="{ item, field: 'open_in_gold' }"
+              />
+              <v-list-item v-if="item.relevant_protocols">
+                <v-list-item-avatar>
+                  <v-icon>mdi-file-document</v-icon>
+                </v-list-item-avatar>
+                <v-list-item-content>
+                  <v-list-item-title class="text-h6">
+                    Protocols
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+              <template
+                v-for="proto in (item.relevant_protocols || [])"
+              >
+                <Attribute
+                  :key="proto"
+                  style="padding-left: 60px;"
+                  v-bind="{
+                    item,
+                    link: { name: proto, target: proto},
+                    field: 'relevant_protocols' }
+                  "
+                />
+              </template>
+            </v-list>
+          </v-col>
         </v-col>
         <v-col cols="5">
           <div class="ma-4 pa-2 grey lighten-4">
@@ -218,14 +271,6 @@ export default defineComponent({
               </template>
             </v-list>
           </div>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col>
-          <AttributeList
-            :item="item"
-            type="study"
-          />
         </v-col>
       </v-row>
     </v-main>

@@ -51,7 +51,10 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
             )
             if units:
                 extra["units"] = units
-            type_ = schemas.AttributeType.from_column(column)
+            try:
+                type_ = schemas.AttributeType.from_column(column)
+            except ValueError:
+                continue
             if type_ == schemas.AttributeType.string:
                 attributes[column.name] = schemas.AttributeSummary(
                     count=get_column_count(db, column),
