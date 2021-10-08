@@ -2,8 +2,8 @@
 import { StudySearchResults } from '@/data/api';
 import { computed, defineComponent, PropType } from '@vue/composition-api';
 
-function getOrcid(person) {
-  const orcid = person?.applies_to_person.orcid || '';
+function getOrcid(person: any) {
+  const orcid = person?.applies_to_person?.orcid || '';
   return `https://orcid.org/${orcid.replace('orcid:', '')}`;
 }
 

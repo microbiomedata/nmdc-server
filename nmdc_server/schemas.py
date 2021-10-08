@@ -15,6 +15,7 @@ from uuid import UUID
 from pint import Unit
 from pydantic import BaseModel, Field, validator
 from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, String
+from sqlalchemy.dialects.postgresql.json import JSONB
 
 from nmdc_server import models
 from nmdc_server.data_object_filters import DataObjectFilter, WorkflowActivityTypeEnum
@@ -61,6 +62,8 @@ class AttributeType(Enum):
             return AttributeType.integer
         elif isinstance(column.type, String):
             return AttributeType.string
+        elif isinstance(column.type, JSONB):
+            raise ValueError("Cannot summarize JSONB")
         raise Exception("Unknown column type")
 
 

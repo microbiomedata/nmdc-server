@@ -107,17 +107,27 @@ def upgrade():
     op.add_column("principal_investigator", sa.Column("orcid", sa.String(), nullable=True))
     op.add_column(
         "study",
-        sa.Column("funding_sources", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-    )
-    op.add_column(
-        "study",
         sa.Column(
-            "has_credit_associations", postgresql.JSONB(astext_type=sa.Text()), nullable=True
+            "funding_sources",
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore
+            nullable=True,
         ),
     )
     op.add_column(
         "study",
-        sa.Column("relevant_protocols", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column(
+            "has_credit_associations",
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore
+            nullable=True,
+        ),
+    )
+    op.add_column(
+        "study",
+        sa.Column(
+            "relevant_protocols",
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore
+            nullable=True,
+        ),
     )
     # ### end Alembic commands ###
 

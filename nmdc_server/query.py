@@ -673,7 +673,11 @@ class BiosampleQuerySchema(BaseQuerySchema):
     def execute(self, db: Session) -> Query:
         model = self.table.model
         subquery = self.query(db).subquery()
-        return db.query(model).join(subquery, model.id == subquery.c.id).order_by(desc(self.table.model.multiomics))  # type: ignore
+        return (
+            db.query(model)
+            .join(subquery, model.id == subquery.c.id)  # type: ignore
+            .order_by(desc(self.table.model.multiomics))  # type: ignore
+        )
 
 
 class ReadsQCQuerySchema(BaseQuerySchema):
