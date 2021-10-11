@@ -67,10 +67,10 @@ export default defineComponent({
   <v-list-item
     v-else
     :href="href(field)"
-    :to="to"
     target="_blank"
     rel="noopener noreferrer"
     v-on="{
+      // TODO: fix warning.
       click: bindClick ? () => $emit('click') : undefined
     }"
   >
