@@ -69,6 +69,7 @@ export default defineComponent({
     :href="href(field)"
     :to="to"
     target="_blank"
+    rel="noopener noreferrer"
     v-on="{
       click: bindClick ? () => $emit('click') : undefined
     }"
@@ -82,7 +83,9 @@ export default defineComponent({
       <v-list-item-title>
         {{ fieldDisplayName(field) }}
       </v-list-item-title>
-      <v-list-item-subtitle style="text-overflow: unset; overflow-wrap: break-word;">
+      <v-list-item-subtitle
+        style="white-space: initial;"
+      >
         {{ valueDisplayName(field, item[field]) }}
       </v-list-item-subtitle>
     </v-list-item-content>
