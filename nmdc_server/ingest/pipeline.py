@@ -138,6 +138,7 @@ load_metatranscriptome = generate_pipeline_loader(
 
 # This is a generic function for load workflow execution objects.  Some workflow types require
 # custom processing arguments that get passed in as kwargs.
+# flake8: noqa: C901
 def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: str, **kwargs):
     logger = get_logger(__name__)
     remove_timezone_re = re.compile(r"Z\+\d+$", re.I)
