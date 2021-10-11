@@ -79,6 +79,8 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
 
     # Merge other ambiguously named alternate identifier columns
     biosample.alternate_identifiers += obj.get("alternative_identifiers", [])
+    biosample.alternate_identifiers += obj.get("INSDC_biosample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("GOLD_sample_identifiers", [])
 
     db.add(models.Biosample(**biosample.dict()))
 

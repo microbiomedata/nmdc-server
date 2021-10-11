@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models
 from nmdc_server.config import Settings
+from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.ingest import (
     biosample,
     data_object,
@@ -94,7 +95,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         db,
         mongodb["metabolomics_analysis_activity_set"].find(),
         pipeline.load_metabolomics_analysis,
-        "nmdc:MetabolomicsAnalysisActivity",
+        WorkflowActivityTypeEnum.metabolomics_analysis.value,
     )
     db.commit()
 
@@ -103,7 +104,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         db,
         mongodb["read_based_analysis_activity_set"].find(),
         pipeline.load_read_based_analysis,
-        "nmdc:ReadbasedAnalysis",
+        WorkflowActivityTypeEnum.read_based_analysis.value,
     )
     db.commit()
 
@@ -112,7 +113,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         db,
         mongodb["metatranscriptome_activity_set"].find(),
         pipeline.load_metatranscriptome,
-        "nmdc:metaT",
+        WorkflowActivityTypeEnum.metatranscriptome.value,
     )
 
     logger.info("Loading NOM analysis...")
@@ -120,7 +121,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         db,
         mongodb["nom_analysis_activity_set"].find(),
         pipeline.load_nom_analysis,
-        "nmdc:NomAnalysisActivity",
+        WorkflowActivityTypeEnum.nom_analysis.value,
     )
     db.commit()
 
@@ -129,7 +130,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         db,
         mongodb["mags_activity_set"].find(),
         pipeline.load_mags,
-        "nmdc:MAGsAnalysisActivity",
+        WorkflowActivityTypeEnum.mags_analysis.value,
     )
     db.commit()
 
@@ -154,7 +155,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
                     db,
                     bar,
                     pipeline.load_mg_annotation,
-                    "nmdc:MetagenomeAnnotation",
+                    WorkflowActivityTypeEnum.metagenome_annotation.value,
                     annotations=mongodb["functional_annotation_set"],
                     function_limit=function_limit,
                 )
@@ -172,7 +173,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         db,
         mongodb["read_QC_analysis_activity_set"].find(),
         pipeline.load_reads_qc,
-        "nmdc:ReadQCAnalysisActivity",
+        WorkflowActivityTypeEnum.reads_qc.value,
     )
     db.commit()
 
@@ -184,7 +185,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
                 no_cursor_timeout=True,
             ),
             pipeline.load_mp_analysis,
-            "nmdc:MetaProteomicAnalysis",
+            WorkflowActivityTypeEnum.metaproteomic_analysis.value,
         )
         db.commit()
     except Exception:
@@ -197,7 +198,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         db,
         mongodb["metagenome_assembly_set"].find(),
         pipeline.load_mg_assembly,
-        "nmdc:MetagenomeAssembly",
+        WorkflowActivityTypeEnum.metagenome_assembly.value,
     )
     db.commit()
 

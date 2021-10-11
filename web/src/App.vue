@@ -46,12 +46,28 @@ export default {
       <v-btn
         depressed
         small
+        href="https://the-nmdc-portal-user-guide.readthedocs.io/en/latest/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="mx-2"
+      >
+        User Guide
+        <v-icon
+          class="pl-2"
+          small
+        >
+          mdi-open-in-new
+        </v-icon>
+      </v-btn>
+      <v-btn
+        depressed
+        small
         href="https://github.com/microbiomedata/nmdc-schema"
         target="_blank"
         rel="noopener noreferrer"
         class="mx-2"
       >
-        Data Schema & Standards
+        Data Schema
         <v-icon
           class="pl-2"
           small
@@ -67,7 +83,7 @@ export default {
         rel="noopener noreferrer"
         class="mx-2"
       >
-        Bioinformatics Workflows
+        Workflows
         <v-icon
           class="pl-2"
           small

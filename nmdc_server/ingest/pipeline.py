@@ -24,6 +24,7 @@ class LoadObject(Protocol):
 
 # Load metagenome annotation as well as the gene function annotations produced.
 def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
+    obj.pop("type")  # Ignore whatever type is in mongo, replace with a known schema type
     pipeline = schemas.MetagenomeAnnotationBase(**obj)
     row = models.MetagenomeAnnotation(**pipeline.dict())
     db.add(row)
@@ -107,6 +108,7 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
 # additional processing.
 def generate_pipeline_loader(schema, model) -> LoadObject:
     def loader(db: Session, obj: Dict[str, Any], **kwargs: Any) -> LoadObjectReturn:
+        obj.pop("type")  # Ignore whatever type is in mongo, replace with a known schema type
         pipeline_dict = schema(**obj)
         pipeline = model(**pipeline_dict.dict())
         db.add(pipeline)

@@ -270,7 +270,14 @@ export default defineComponent({
                 @selected="$router.push({ name: 'Sample', params: { id: $event }})"
               >
                 <template #subtitle="props">
-                  Study ID: {{ props.result.study_id }}
+                  <span class="pr-2">Identifiers:</span>
+                  <span
+                    v-for="id in props.result.alternate_identifiers"
+                    :key="id"
+                    class="pr-2"
+                  >
+                    {{ id }}
+                  </span>
                 </template>
                 <template #item-content="props">
                   <SampleListExpansion

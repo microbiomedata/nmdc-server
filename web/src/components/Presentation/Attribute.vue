@@ -3,7 +3,6 @@ import { defineComponent, PropType } from '@vue/composition-api';
 import { getField } from '@/encoding';
 import { fieldDisplayName, valueDisplayName } from '@/util';
 import { BaseSearchResult } from '@/data/api';
-import { Route } from 'vue-router';
 
 export default defineComponent({
   props: {
@@ -19,9 +18,9 @@ export default defineComponent({
       type: Object as PropType<{ name: string; target: string; } | null>,
       default: null,
     },
-    to: {
-      type: Object as PropType<Route>,
-      default: undefined,
+    bindClick: {
+      type: Boolean,
+      default: false,
     },
   },
 
@@ -70,6 +69,9 @@ export default defineComponent({
     :href="href(field)"
     :to="to"
     target="_blank"
+    v-on="{
+      click: bindClick ? () => $emit('click') : undefined
+    }"
   >
     <v-list-item-avatar>
       <v-icon v-if="getField(field)">
@@ -80,7 +82,7 @@ export default defineComponent({
       <v-list-item-title>
         {{ fieldDisplayName(field) }}
       </v-list-item-title>
-      <v-list-item-subtitle>
+      <v-list-item-subtitle style="text-overflow: unset; overflow-wrap: break-word;">
         {{ valueDisplayName(field, item[field]) }}
       </v-list-item-subtitle>
     </v-list-item-content>
