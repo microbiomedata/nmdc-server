@@ -22,9 +22,10 @@ def cli(ctx):
 
 
 @cli.command()
-def migrate():
+@click.option("--ingest-db", is_flag=True, default=False)
+def migrate(ingest_db: bool):
     """Upgrade the database schema."""
-    jobs.migrate()
+    jobs.migrate(ingest_db=ingest_db)
 
 
 @cli.command()

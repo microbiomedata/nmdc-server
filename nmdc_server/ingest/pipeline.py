@@ -138,6 +138,7 @@ load_metatranscriptome = generate_pipeline_loader(
 
 # This is a generic function for load workflow execution objects.  Some workflow types require
 # custom processing arguments that get passed in as kwargs.
+# flake8: noqa: C901
 def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: str, **kwargs):
     logger = get_logger(__name__)
     remove_timezone_re = re.compile(r"Z\+\d+$", re.I)
@@ -145,6 +146,13 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: st
     for obj in cursor:
         inputs = obj.pop("has_input", [])
         outputs = obj.pop("has_output", [])
+
+        if workflow_type is not None:
+            # unset the type, override it with the schema's default type
+            reported_type = obj.pop("type")
+            if reported_type != workflow_type:
+                logger.warning(f"Unexpected type {reported_type}")
+
         obj["omics_processing_id"] = obj.pop("was_informed_by")
 
         # TODO: pydantic should parse datetime like this... need to look into it

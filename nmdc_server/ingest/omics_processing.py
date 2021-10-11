@@ -8,6 +8,7 @@ from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
+from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.errors import errors
 from nmdc_server.ingest.errors import missing as missing_
@@ -54,7 +55,7 @@ def load_omics_processing(db: Session, obj: Dict[str, Any]):
 
         # add a custom workflow type for raw data (data that is the direct
         # output of an omics_processing)
-        data_object.workflow_type = "nmdc:RawData"
+        data_object.workflow_type = WorkflowActivityTypeEnum.raw_data.value
         db.add(data_object)
         omics_processing.outputs.append(data_object)  # type: ignore
 

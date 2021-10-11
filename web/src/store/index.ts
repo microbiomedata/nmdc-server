@@ -42,7 +42,7 @@ function persistState() {
 /**
  * Set conditions directly, removing duplicates
  */
-function setConditions(conditions: Condition[]) {
+function setConditions(conditions: Condition[], push = false) {
   state.conditions = uniqWith(
     conditions, (a, b) => a.field === b.field
       && a.value === b.value
@@ -51,7 +51,7 @@ function setConditions(conditions: Condition[]) {
   );
   if (router) {
     // @ts-ignore
-    router.replace({ query: { conditions: state.conditions }, name: 'Search' }).catch(noop);
+    router[push ? 'push' : 'replace']({ query: { conditions: state.conditions }, name: 'Search' }).catch(noop);
   }
 }
 

@@ -10,7 +10,7 @@ import {
   typeWithCardinality, valueCardinality, fieldDisplayName,
 } from '@/util';
 import { api, StudySearchResults } from '@/data/api';
-import { setUniqueCondition } from '@/store';
+import { setUniqueCondition, setConditions } from '@/store';
 import { useRouter } from '@/use/useRouter';
 import Attribute from '@/components/Presentation/Attribute.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
@@ -101,6 +101,15 @@ export default defineComponent({
       router.go(-1);
     }
 
+    function seeStudyInContext() {
+      setConditions([{
+        op: '==',
+        table: 'study',
+        field: 'id',
+        value: props.id,
+      }], true);
+    }
+
     watch(item, async (_item) => {
       const publicationDoiInfo = _item?.publication_doi_info;
       if (publicationDoiInfo) {
@@ -129,6 +138,7 @@ export default defineComponent({
       formatAPA,
       typeWithCardinality,
       fieldDisplayName,
+      seeStudyInContext,
     };
   },
 });
@@ -172,9 +182,15 @@ export default defineComponent({
             </div>
             <v-list>
               <Attribute v-bind="{ item, field: 'doi' }" />
-              <Attribute v-bind="{ item, field: 'id' }" />
+              <Attribute
+                v-bind="{ item, field: 'id', bindClick: true }"
+                @click="seeStudyInContext"
+              />
               <Attribute v-bind="{ item, field: 'funding_sources' }" />
-              <Attribute v-bind="{ item, field: 'sample_count' }" />
+              <Attribute
+                v-bind="{ item, field: 'sample_count', bindClick: true }"
+                @click="seeStudyInContext"
+              />
             </v-list>
             <div class="display-1">
               External Resources

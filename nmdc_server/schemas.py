@@ -415,7 +415,7 @@ class PipelineStep(PipelineStepBase):
 
 
 class ReadsQCBase(PipelineStepBase):
-    type: str = "nmdc:ReadQCAnalysis"
+    type: str = WorkflowActivityTypeEnum.reads_qc.value
     input_read_count: int
     input_read_bases: int
     output_read_count: int
@@ -427,7 +427,7 @@ class ReadsQC(PipelineStep):
 
 
 class MetagenomeAssemblyBase(PipelineStepBase):
-    type: str = "nmdc:MetagenomeAssembly"
+    type: str = WorkflowActivityTypeEnum.metagenome_assembly.value
     scaffolds: Optional[int]
     contigs: Optional[int]
     scaf_bp: Optional[int]
@@ -464,7 +464,7 @@ class MetagenomeAssembly(PipelineStep):
 
 
 class MetagenomeAnnotationBase(PipelineStepBase):
-    type: str = "nmdc:MetagenomeAnnotation"
+    type: str = WorkflowActivityTypeEnum.metagenome_annotation.value
 
 
 class MetagenomeAnnotation(PipelineStep):
@@ -472,7 +472,7 @@ class MetagenomeAnnotation(PipelineStep):
 
 
 class MetaproteomicAnalysisBase(PipelineStepBase):
-    type: str = "nmdc:MetaproteomicAnalysis"
+    type: str = WorkflowActivityTypeEnum.metaproteomic_analysis.value
 
 
 class MetaproteomicAnalysis(PipelineStep):
@@ -512,7 +512,7 @@ class MAGCreate(MAG):
 
 
 class MAGsAnalysisBase(PipelineStepBase):
-    type: str = "nmdc:MAGsAnalysis"
+    type: str = WorkflowActivityTypeEnum.mags_analysis.value
     input_contig_num: Optional[int]
     too_short_contig_num: Optional[int]
     lowDepth_contig_num: Optional[int]
@@ -521,7 +521,7 @@ class MAGsAnalysisBase(PipelineStepBase):
 
 
 class MAGsAnalysis(PipelineStep):
-    type: str = "nmdc:MAGsAnalysis"
+    type: str = WorkflowActivityTypeEnum.mags_analysis.value
     input_contig_num: Optional[int]
     too_short_contig_num: Optional[int]
     lowDepth_contig_num: Optional[int]
@@ -532,7 +532,7 @@ class MAGsAnalysis(PipelineStep):
 
 
 class NOMAnalysisBase(PipelineStepBase):
-    type: str = "nmdc:NOMAnalysis"
+    type: str = WorkflowActivityTypeEnum.nom_analysis.value
     used: str
 
 
@@ -541,7 +541,7 @@ class NOMAnalysis(PipelineStep):
 
 
 class ReadBasedAnalysisBase(PipelineStepBase):
-    type: str = "nmdc:ReadBasedAnalysis"
+    type: str = WorkflowActivityTypeEnum.read_based_analysis.value
 
 
 class ReadBasedAnalysis(PipelineStep):
@@ -549,7 +549,7 @@ class ReadBasedAnalysis(PipelineStep):
 
 
 class MetatranscriptomeBase(PipelineStepBase):
-    type: str = "nmdc:metaT"
+    type: str = WorkflowActivityTypeEnum.metatranscriptome.value
 
 
 class Metatranscriptome(PipelineStep):
@@ -557,7 +557,7 @@ class Metatranscriptome(PipelineStep):
 
 
 class MetabolomicsAnalysisBase(PipelineStepBase):
-    type: str = "nmdc:MetabolomicsAnalysis"
+    type: str = WorkflowActivityTypeEnum.metabolomics_analysis.value
     used: str
     has_calibration: str
 
