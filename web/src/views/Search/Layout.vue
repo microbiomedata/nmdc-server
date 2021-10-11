@@ -271,13 +271,14 @@ export default defineComponent({
               >
                 <template #subtitle="props">
                   <span class="pr-2">Identifiers:</span>
-                  <span
+                  <a
                     v-for="id in props.result.alternate_identifiers"
                     :key="id"
-                    class="pr-2"
-                  >
-                    {{ id }}
-                  </span>
+                    :href="`https://identifiers.org/${id}`"
+                    class="pr-2 grey--text text--darken-2"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >{{ id }}</a>
                 </template>
                 <template #item-content="props">
                   <SampleListExpansion

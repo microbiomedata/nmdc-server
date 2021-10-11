@@ -24,7 +24,6 @@ class LoadObject(Protocol):
 
 # Load metagenome annotation as well as the gene function annotations produced.
 def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
-    obj.pop("type")  # Ignore whatever type is in mongo, replace with a known schema type
     pipeline = schemas.MetagenomeAnnotationBase(**obj)
     row = models.MetagenomeAnnotation(**pipeline.dict())
     db.add(row)
@@ -108,7 +107,6 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
 # additional processing.
 def generate_pipeline_loader(schema, model) -> LoadObject:
     def loader(db: Session, obj: Dict[str, Any], **kwargs: Any) -> LoadObjectReturn:
-        obj.pop("type")  # Ignore whatever type is in mongo, replace with a known schema type
         pipeline_dict = schema(**obj)
         pipeline = model(**pipeline_dict.dict())
         db.add(pipeline)
@@ -147,6 +145,13 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: st
     for obj in cursor:
         inputs = obj.pop("has_input", [])
         outputs = obj.pop("has_output", [])
+
+        if workflow_type is not None:
+            # unset the type, override it with the schema's default type
+            reported_type = obj.pop("type")
+            if reported_type != workflow_type:
+                logger.warning(f"Unexpected type {reported_type}")
+
         obj["omics_processing_id"] = obj.pop("was_informed_by")
 
         # TODO: pydantic should parse datetime like this... need to look into it
