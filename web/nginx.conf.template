@@ -1,8 +1,8 @@
 load_module modules/ngx_http_zip_module.so;
 worker_processes 1;
 
-events { 
-    worker_connections 1024; 
+events {
+    worker_connections 1024;
 }
 
 http {
@@ -11,9 +11,9 @@ http {
         listen 80;
         index index.html;
         root /www/data/;
-        
+
         server_name localhost;
-        
+
         location / {
             try_files ${DOLLAR}uri ${DOLLAR}uri/ /index.html;
         }
@@ -34,6 +34,7 @@ http {
 
         location /data/ {
             proxy_pass http://data:8080/;
+            proxy_buffering off;
         }
 
         location /nmdcdemo/ {
