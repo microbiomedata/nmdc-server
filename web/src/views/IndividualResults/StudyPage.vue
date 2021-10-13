@@ -210,6 +210,19 @@ export default defineComponent({
                 style="padding-left: 60px;"
                 v-bind="{ item, field: 'open_in_gold' }"
               />
+              <Attribute
+                v-for="id in item.ess_dive_datasets"
+                :key="id"
+                v-bind="{
+                  item,
+                  link: {
+                    name: 'ESS DIVE Dataset',
+                    target: `https://identifiers.org/${id}`,
+                  },
+                }"
+                style="padding-left: 60px;"
+                @click="seeStudyInContext"
+              />
               <v-list-item v-if="item.relevant_protocols">
                 <v-list-item-avatar>
                   <v-icon>mdi-file-document</v-icon>
