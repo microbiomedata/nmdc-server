@@ -495,16 +495,16 @@ class MetaprotemoicPeptide(BaseModel):
 
 
 class MAG(BaseModel):
-    bin_name: str
-    number_of_contig: int
-    completeness: float
-    contamination: float
-    gene_count: int
-    bin_quality: str
-    num_16s: int
-    num_5s: int
-    num_23s: int
-    num_tRNA: int
+    bin_name: Optional[str]
+    number_of_contig: Optional[int]
+    completeness: Optional[float]
+    contamination: Optional[float]
+    gene_count: Optional[int]
+    bin_quality: Optional[str]
+    num_16s: Optional[int]
+    num_5s: Optional[int]
+    num_23s: Optional[int]
+    num_tRNA: Optional[int]
 
 
 class MAGCreate(MAG):

@@ -17,6 +17,8 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
 
     file_type_map = {f["id"]: (f["name"], f["description"]) for f in file_types}
 
+    objects_without_type = 0
+
     for obj_ in cursor:
         obj = {key: obj_[key] for key in obj_.keys() & fields}
 
@@ -36,5 +38,10 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
             obj["file_type"], obj["file_type_description"] = file_type_map[
                 obj.pop("data_object_type")
             ]
+        else:
+            objects_without_type += 1
 
         db.add(DataObject(**obj))
+
+    if objects_without_type:
+        logger.error(f"Encountered {objects_without_type} objects without data_object_type")
