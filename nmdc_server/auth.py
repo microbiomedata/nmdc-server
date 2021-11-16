@@ -15,6 +15,7 @@ from nmdc_server.config import settings, starlette_config
 _admin_users = {
     "0000-0002-0716-5890",  # Brandon Davis
     "0000-0002-0553-6731",  # Zach Mullen
+    "0000-0001-9518-8744",  # David Hays
 }
 
 # The type is added to get around an error related to:
