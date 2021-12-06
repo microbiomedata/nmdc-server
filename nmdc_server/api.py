@@ -383,14 +383,18 @@ async def ping_celery(token: Token = Depends(admin_required)) -> bool:
     tags=["jobs"],
     responses=login_required_responses,
 )
-async def run_ingest(token: Token = Depends(admin_required), db: Session = Depends(get_db)):
+async def run_ingest(
+    token: Token = Depends(admin_required),
+    params: schemas.IngestArgumentSchema = schemas.IngestArgumentSchema(),
+    db: Session = Depends(get_db),
+):
     lock = db.query(IngestLock).first()
     if lock:
         raise HTTPException(
             status_code=409,
             detail=f"An ingest started at {lock.started} is already in progress",
         )
-    jobs.ingest.delay()
+    jobs.ingest.delay(function_limit=params.function_limit, skip_annotation=params.skip_annotation)
     return ""
 
 

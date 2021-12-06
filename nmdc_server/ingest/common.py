@@ -1,7 +1,10 @@
+import logging
 from datetime import datetime
 from typing import Any, Dict, Set, Union
 
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.session import Session
 
 from nmdc_server.schemas import AnnotationValue
 
@@ -47,3 +50,14 @@ def extract_extras(
         if key not in fields and key not in exclude:
             values["annotations"][key] = extract_value(value)
     return values
+
+
+def maybe_merge_download_artifact(ingest_db: Session, query):
+    logger = logging.getLogger()
+    for row in query:
+        try:
+            ingest_db.merge(row)
+            ingest_db.commit()
+        except IntegrityError:
+            logger.info("Error: data object with download history was removed.")
+            ingest_db.rollback()

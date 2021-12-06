@@ -54,7 +54,10 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         raise Exception("Please set NMDC_MONGO_USER and NMDC_MONGO_PASSWORD")
 
     client = MongoClient(
-        host=settings.mongo_host, username=settings.mongo_user, password=settings.mongo_password
+        host=settings.mongo_host,
+        username=settings.mongo_user,
+        password=settings.mongo_password,
+        port=settings.mongo_port,
     )
     mongodb = client[settings.mongo_database]
 

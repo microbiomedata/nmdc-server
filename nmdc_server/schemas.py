@@ -632,3 +632,8 @@ class KeggTermText(BaseModel):
 
 class KeggTermTextListResponse(BaseModel):
     terms: List[KeggTermText]
+
+
+class IngestArgumentSchema(BaseModel):
+    skip_annotation: bool = False
+    function_limit: int = 0  # Default to no limit

@@ -9,6 +9,7 @@ from nmdc_server import database, models
 from nmdc_server.celery_config import celery_app
 from nmdc_server.config import settings
 from nmdc_server.ingest.all import load
+from nmdc_server.ingest.common import maybe_merge_download_artifact
 from nmdc_server.ingest.lock import ingest_lock
 
 HERE = Path(__file__).parent
@@ -50,7 +51,7 @@ def migrate(ingest_db: bool = False):
 
 
 @celery_app.task
-def ingest():
+def ingest(function_limit=None, skip_annotation=False):
     """Truncate database and ingest all data from the mongo source."""
     logger = logging.getLogger()
     logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -67,23 +68,18 @@ def ingest():
 
     with database.SessionLocalIngest() as ingest_db, database.SessionLocal() as prod_db:
         with ingest_lock(prod_db):
-            try:
-                ingest_db.execute("select truncate_tables()").all()
+            ingest_db.execute("select truncate_tables()").all()
 
-                # ingest data
-                load(ingest_db)
+            # ingest data
+            logger.info(
+                f"Load with function_limit={function_limit}, skip_annotation={skip_annotation}"
+            )
+            load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
 
-                # copy persistent data from the production db to the ingest db
-                for row in prod_db.query(models.FileDownload):
-                    ingest_db.merge(row)
-                for row in prod_db.query(models.BulkDownload):
-                    ingest_db.merge(row)
-                for row in prod_db.query(models.BulkDownloadDataObject):
-                    ingest_db.merge(row)
-                ingest_db.commit()
-            except Exception:
-                ingest_db.rollback()
-                raise
+            # copy persistent data from the production db to the ingest db
+            maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
+            maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
+            maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownloadDataObject))
 
     populate_gene_functions()
 

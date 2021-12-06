@@ -36,7 +36,8 @@ class Settings(BaseSettings):
     host: Optional[str] = None  # sets the host name for the oauth2 redirect
 
     # mongo database used for ingest
-    mongo_host: str = "nmdc-metadata.polyneme.xyz"
+    mongo_host: str = "mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org"
+    mongo_port: int = 27017
     mongo_database: str = "nmdc"
     mongo_user: str = ""
     mongo_password: str = ""
