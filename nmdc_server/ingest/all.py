@@ -23,7 +23,10 @@ from nmdc_server.ingest.logger import get_logger
 
 # Custom mongo cursor pagination.  This exists because some of the
 # queries timeout before all the results can be processed.
-def paginate_cursor(collection: str, page_size: int = 100, **kwargs) -> Iterator[Dict[str, Any]]:
+def paginate_cursor(
+    collection: Collection, page_size: int = 100, **kwargs
+) -> Iterator[Dict[str, Any]]:
+    skip = 0
     last_iteration_count = page_size
     while last_iteration_count == page_size:
         cursor = collection.find(**kwargs).limit(page_size).skip(skip)

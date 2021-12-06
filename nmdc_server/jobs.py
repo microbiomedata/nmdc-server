@@ -71,7 +71,9 @@ def ingest(function_limit=None, skip_annotation=False):
             ingest_db.execute("select truncate_tables()").all()
 
             # ingest data
-            logger.info(f'Load with function_limit={function_limit}, skip_annotaiton={skip_annotation}')
+            logger.info(
+                f"Load with function_limit={function_limit}, skip_annotaiton={skip_annotation}"
+            )
             load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
 
             # copy persistent data from the production db to the ingest db
