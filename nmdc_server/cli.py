@@ -9,7 +9,7 @@ from nmdc_server.config import Settings, settings
 from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
 from nmdc_server.ingest.all import load
-from nmdc_server.ingest.common import merge_or_delete
+from nmdc_server.ingest.common import maybe_merge_download_artifact
 
 
 @click.group()
@@ -72,9 +72,11 @@ def ingest(verbose, function_limit, skip_annotation):
         if settings.current_db_uri != settings.ingest_database_uri:
             with SessionLocal() as prod_db:
                 # copy persistent data from the production db to the ingest db
-                merge_or_delete(ingest_db, prod_db.query(models.FileDownload))
-                merge_or_delete(ingest_db, prod_db.query(models.BulkDownload))
-                merge_or_delete(ingest_db, prod_db.query(models.BulkDownloadDataObject))
+                maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
+                maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
+                maybe_merge_download_artifact(
+                    ingest_db, prod_db.query(models.BulkDownloadDataObject)
+                )
 
     for m, s in errors.missing.items():
         click.echo(f"missing {m}:")

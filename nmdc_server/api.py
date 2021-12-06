@@ -385,9 +385,8 @@ async def ping_celery(token: Token = Depends(admin_required)) -> bool:
 )
 async def run_ingest(
     token: Token = Depends(admin_required),
+    params: schemas.IngestArgumentSchema = schemas.IngestArgumentSchema(),
     db: Session = Depends(get_db),
-    function_limit: int = None,
-    skip_annotation: bool = False,
 ):
     lock = db.query(IngestLock).first()
     if lock:
@@ -395,7 +394,7 @@ async def run_ingest(
             status_code=409,
             detail=f"An ingest started at {lock.started} is already in progress",
         )
-    jobs.ingest.delay(function_limit=function_limit, skip_annotation=skip_annotation)
+    jobs.ingest.delay(function_limit=params.function_limit, skip_annotation=params.skip_annotation)
     return ""
 
 

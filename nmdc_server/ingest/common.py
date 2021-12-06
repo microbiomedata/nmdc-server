@@ -52,7 +52,7 @@ def extract_extras(
     return values
 
 
-def merge_or_delete(ingest_db: Session, query):
+def maybe_merge_download_artifact(ingest_db: Session, query):
     logger = logging.getLogger()
     for row in query:
         try:

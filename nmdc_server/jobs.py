@@ -9,7 +9,7 @@ from nmdc_server import database, models
 from nmdc_server.celery_config import celery_app
 from nmdc_server.config import settings
 from nmdc_server.ingest.all import load
-from nmdc_server.ingest.common import merge_or_delete
+from nmdc_server.ingest.common import maybe_merge_download_artifact
 from nmdc_server.ingest.lock import ingest_lock
 
 HERE = Path(__file__).parent
@@ -77,9 +77,9 @@ def ingest(function_limit=None, skip_annotation=False):
             load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
 
             # copy persistent data from the production db to the ingest db
-            merge_or_delete(ingest_db, prod_db.query(models.FileDownload))
-            merge_or_delete(ingest_db, prod_db.query(models.BulkDownload))
-            merge_or_delete(ingest_db, prod_db.query(models.BulkDownloadDataObject))
+            maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
+            maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
+            maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownloadDataObject))
 
     populate_gene_functions()
 
