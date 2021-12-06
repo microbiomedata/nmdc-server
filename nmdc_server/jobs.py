@@ -72,7 +72,7 @@ def ingest(function_limit=None, skip_annotation=False):
 
             # ingest data
             logger.info(
-                f"Load with function_limit={function_limit}, skip_annotaiton={skip_annotation}"
+                f"Load with function_limit={function_limit}, skip_annotation={skip_annotation}"
             )
             load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
 
