@@ -59,5 +59,5 @@ def maybe_merge_download_artifact(ingest_db: Session, query):
             ingest_db.merge(row)
             ingest_db.commit()
         except IntegrityError:
-            logger.error("Error: data object with download history was removed.")
+            logger.info("Error: data object with download history was removed.")
             ingest_db.rollback()
