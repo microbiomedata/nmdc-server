@@ -4,11 +4,12 @@ from typing import Optional
 
 import click
 
-from nmdc_server import jobs
-from nmdc_server.config import Settings
-from nmdc_server.database import SessionLocalIngest
+from nmdc_server import jobs, models
+from nmdc_server.config import Settings, settings
+from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
 from nmdc_server.ingest.all import load
+from nmdc_server.ingest.common import merge_or_delete
 
 
 @click.group()
@@ -17,7 +18,6 @@ def cli(ctx):
     settings = Settings()
     if settings.environment == "testing":
         settings.database_uri = settings.testing_database_uri
-
     ctx.obj = {"settings": settings}
 
 
@@ -67,8 +67,14 @@ def ingest(verbose, function_limit, skip_annotation):
     logging.basicConfig(level=level, format="%(message)s")
     logger.setLevel(logging.INFO)
 
-    with SessionLocalIngest() as db:
-        load(db, function_limit=function_limit, skip_annotation=skip_annotation)
+    with SessionLocalIngest() as ingest_db:
+        load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
+        if settings.current_db_uri != settings.ingest_database_uri:
+            with SessionLocal() as prod_db:
+                # copy persistent data from the production db to the ingest db
+                merge_or_delete(ingest_db, prod_db.query(models.FileDownload))
+                merge_or_delete(ingest_db, prod_db.query(models.BulkDownload))
+                merge_or_delete(ingest_db, prod_db.query(models.BulkDownloadDataObject))
 
     for m, s in errors.missing.items():
         click.echo(f"missing {m}:")
