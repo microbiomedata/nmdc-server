@@ -10,6 +10,7 @@ from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
 from nmdc_server.ingest.all import load
 from nmdc_server.ingest.common import maybe_merge_download_artifact
+from nmdc_server.logger import get_logger
 
 
 @click.group()
@@ -63,7 +64,7 @@ def ingest(verbose, function_limit, skip_annotation):
         level = logging.INFO
     elif verbose > 1:
         level = logging.DEBUG
-    logger = logging.getLogger()
+    logger = get_logger(__name__)
     logging.basicConfig(level=level, format="%(message)s")
     logger.setLevel(logging.INFO)
 

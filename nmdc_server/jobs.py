@@ -11,6 +11,7 @@ from nmdc_server.config import settings
 from nmdc_server.ingest.all import load
 from nmdc_server.ingest.common import maybe_merge_download_artifact
 from nmdc_server.ingest.lock import ingest_lock
+from nmdc_server.ingest.logger import get_logger
 
 HERE = Path(__file__).parent
 
@@ -53,7 +54,7 @@ def migrate(ingest_db: bool = False):
 @celery_app.task
 def ingest(function_limit=None, skip_annotation=False):
     """Truncate database and ingest all data from the mongo source."""
-    logger = logging.getLogger()
+    logger = get_logger(__name__)
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     logger.setLevel(logging.INFO)
 

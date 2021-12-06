@@ -16,7 +16,7 @@ export default {
       elevation="1"
     >
       <a
-        href="https://microbiomedata.org/"
+        href="https://data.microbiomedata.org/"
         target="_blank"
         rel="noopener noreferrer"
         style="height: 100%"

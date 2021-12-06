@@ -1,12 +1,13 @@
 import json
-import logging
 from datetime import datetime
 from enum import Enum
 from typing import Any, Dict
 
 from starlette.requests import Request
 
-logger = logging.getLogger("nmdc_server")
+from nmdc_server.ingest.logger import get_logger
+
+logger = get_logger("nmdc_server")
 
 
 def json_serializer(data: Any) -> str:
