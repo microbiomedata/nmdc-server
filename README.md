@@ -10,7 +10,6 @@ level directory containing mongo credentials.
 
 ```bash
 # .env
-NMDC_MONGO_HOST=changeme
 NMDC_MONGO_USER=changeme
 NMDC_MONGO_PASSWORD=changeme
 ```
