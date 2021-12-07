@@ -7,7 +7,7 @@ from requests.packages.urllib3.util.retry import Retry
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from nmdc_server.ingest.logger import get_logger
+from nmdc_server.logger import get_logger
 from nmdc_server.models import DOIInfo
 
 retry_strategy = Retry(total=10)

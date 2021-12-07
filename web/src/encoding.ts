@@ -293,17 +293,17 @@ const fields: Record<string, FieldsData> = {
   /* END GOLD ecosystem type */
   /* ENVO terms */
   env_broad_scale: {
-    name: 'Environmental biome',
+    name: 'Broad-scale Environmental Context',
     group: 'ENVO',
     sortKey: 1,
   },
   env_local_scale: {
-    name: 'Environmental feature',
+    name: 'Local Environmental Context',
     group: 'ENVO',
     sortKey: 2,
   },
   env_medium: {
-    name: 'Environmental material',
+    name: 'Environmental medium',
     group: 'ENVO',
     sortKey: 3,
   },

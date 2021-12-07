@@ -18,7 +18,7 @@ from nmdc_server.ingest import (
     search_index,
     study,
 )
-from nmdc_server.ingest.logger import get_logger
+from nmdc_server.logger import get_logger
 
 
 # Custom mongo cursor pagination.  This exists because some of the

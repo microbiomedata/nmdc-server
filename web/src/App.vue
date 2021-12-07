@@ -1,9 +1,11 @@
-<script>
+<script lang="ts">
 import Auth from '@/components/Presentation/Auth.vue';
+import { setConditions } from '@/store/';
 
 export default {
   name: 'App',
   components: { Auth },
+  methods: { setConditions },
 };
 </script>
 
@@ -16,10 +18,8 @@ export default {
       elevation="1"
     >
       <a
-        href="https://microbiomedata.org/"
-        target="_blank"
-        rel="noopener noreferrer"
         style="height: 100%"
+        @click="setConditions([])"
       >
         <img
           src="/NMDC_logo_long.jpg"

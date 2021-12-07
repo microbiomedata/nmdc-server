@@ -1,4 +1,3 @@
-from logging import getLogger
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
@@ -6,8 +5,9 @@ from sqlalchemy.orm import Query, Session
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 from nmdc_server.data_object_filters import get_local_data_url
+from nmdc_server.logger import get_logger
 
-logger = getLogger(__name__)
+logger = get_logger(__name__)
 NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)
 
