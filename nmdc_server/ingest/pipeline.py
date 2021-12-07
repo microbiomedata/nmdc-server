@@ -10,7 +10,7 @@ from typing_extensions import Protocol
 from nmdc_server import models, schemas
 from nmdc_server.ingest.errors import errors
 from nmdc_server.ingest.errors import missing as missing_
-from nmdc_server.ingest.logger import get_logger
+from nmdc_server.logger import get_logger
 
 DataObjectList = List[str]
 LoadObjectReturn = models.PipelineStep

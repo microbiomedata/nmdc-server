@@ -12,7 +12,7 @@ from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.errors import errors
 from nmdc_server.ingest.errors import missing as missing_
-from nmdc_server.ingest.logger import get_logger
+from nmdc_server.logger import get_logger
 from nmdc_server.schemas import OmicsProcessingCreate
 
 date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")

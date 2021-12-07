@@ -4,7 +4,7 @@ from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server.data_object_filters import get_local_data_url
-from nmdc_server.ingest.logger import get_logger
+from nmdc_server.logger import get_logger
 from nmdc_server.models import DataObject
 from nmdc_server.schemas import DataObjectCreate
 

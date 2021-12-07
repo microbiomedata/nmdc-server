@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from nmdc_server import models
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.errors import errors
-from nmdc_server.ingest.logger import get_logger
+from nmdc_server.logger import get_logger
 from nmdc_server.schemas import BiosampleCreate
 
 date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")

@@ -11,7 +11,7 @@ from nmdc_server.config import settings
 from nmdc_server.ingest.all import load
 from nmdc_server.ingest.common import maybe_merge_download_artifact
 from nmdc_server.ingest.lock import ingest_lock
-from nmdc_server.ingest.logger import get_logger
+from nmdc_server.logger import get_logger
 
 HERE = Path(__file__).parent
 

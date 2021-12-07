@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 from starlette.requests import Request
 
-from nmdc_server.ingest.logger import get_logger
+from nmdc_server.logger import get_logger
 
 logger = get_logger("nmdc_server")
 
