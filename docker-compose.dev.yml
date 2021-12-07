@@ -5,6 +5,10 @@ services:
       - "./nmdc_server:/app/nmdc_server"
     command: /start-reload.sh
 
+  db:
+    environment:
+      - POSTGRES_DB=nmdc_a
+
   worker:
     volumes:
       - "./nmdc_server:/app/nmdc_server"

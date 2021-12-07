@@ -10,23 +10,25 @@ level directory containing mongo credentials.
 
 ```bash
 # .env
-NMDC_MONGO_HOST=changeme
 NMDC_MONGO_USER=changeme
 NMDC_MONGO_PASSWORD=changeme
 ```
 
-With that file in place, populate the docker volume by running,
+In order to do an ingest, you'll need to setup SSH tunneling to the Mongo DB running at NERSC.
+How to do so is documented [here](./docs/mongo_ssh_tunnel.md).
+
+Once your `.env` file has the Mongo credentials, and your SSH tunnel is open, you can run:
 
 ```bash
-ldc run backend nmdc-server truncate # if necessary
-ldc run backend nmdc-server migrate
-ldc run backend nmdc-server ingest
+ldc dev run backend nmdc-server truncate # if necessary
+ldc dev run backend nmdc-server migrate
+ldc dev run backend nmdc-server ingest
 ```
 
 Then you can start up the services.
 
 ```bash
-ldc up
+ldc dev up
 ```
 
 View main application at `http://localhost:8080/` and the swagger page at `http://localhost:8080/docs`.
