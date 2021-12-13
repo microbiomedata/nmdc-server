@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
 
-import Search from '@/views/Search/Layout.vue';
+import Search from '@/views/Search/SearchLayout.vue';
 import SamplePage from '@/views/IndividualResults/SamplePage.vue';
 import StudyPage from '@/views/IndividualResults/StudyPage.vue';
 

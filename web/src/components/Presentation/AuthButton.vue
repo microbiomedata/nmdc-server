@@ -40,6 +40,7 @@ export default defineComponent({
         <img
           width="28px"
           class="mr-2"
+          alt="OrcId login"
           src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
         >
         OrcID Login

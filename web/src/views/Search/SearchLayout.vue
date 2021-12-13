@@ -17,10 +17,10 @@ import SampleListExpansion from '@/components/SampleListExpansion.vue';
 import BulkDownload from '@/components/BulkDownload.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
-import Sidebar from './Sidebar.vue';
+import SearchSidebar from './SearchSidebar.vue';
 
 export default defineComponent({
-  name: 'Layout',
+  name: 'SearchLayout',
 
   components: {
     BiosampleVisGroup,
@@ -28,7 +28,7 @@ export default defineComponent({
     EnvironmentVisGroup,
     SampleListExpansion,
     SearchResults,
-    Sidebar,
+    SearchSidebar,
   },
 
   setup() {
@@ -40,7 +40,7 @@ export default defineComponent({
         .filter((c) => c.table === 'study' && c.field === 'study_id')
         .map((c) => c.value)
     ));
-    function setChecked(studyId: string, omicsType: string = '') {
+    function setChecked(studyId: string, omicsType = '') {
       const conditions: Condition[] = [{
         value: studyId,
         table: 'study',
@@ -77,9 +77,7 @@ export default defineComponent({
     }
 
     const biosampleType = types.biosample;
-    const biosample = usePaginatedResults(
-      stateRefs.conditions, api.searchBiosample, dataObjectFilter,
-    );
+    const biosample = usePaginatedResults(stateRefs.conditions, api.searchBiosample, dataObjectFilter);
 
     const studyType = types.study;
     const studySummaryData = useFacetSummaryData({
@@ -87,9 +85,7 @@ export default defineComponent({
       table: ref('study'),
       conditions: stateRefs.conditions,
     });
-    const study = usePaginatedResults(
-      studySummaryData.otherConditions, api.searchStudy, undefined, 8,
-    );
+    const study = usePaginatedResults(studySummaryData.otherConditions, api.searchStudy, undefined, 8);
     const studyResults = computed(() => Object.values(study.data.results.results).map((r) => ({
       ...r,
       name: r.annotations.title || r.name,
@@ -132,7 +128,7 @@ export default defineComponent({
 
 <template>
   <div>
-    <sidebar :results-count="biosample.data.results.count" />
+    <SearchSidebar :results-count="biosample.data.results.count" />
     <v-main>
       <v-progress-linear
         v-show="biosample.loading.value || study.loading.value"
@@ -247,14 +243,12 @@ export default defineComponent({
                     {{ biosample.data.results.count === 1 ? 'Sample' : 'Samples' }}
                   </v-card-title>
                   <v-spacer />
-                  <template>
-                    <div style="width: 70%">
-                      <BulkDownload
-                        :disabled="!loggedInUser"
-                        :search-result-count="biosample.data.results.count"
-                      />
-                    </div>
-                  </template>
+                  <div style="width: 70%">
+                    <BulkDownload
+                      :disabled="!loggedInUser"
+                      :search-result-count="biosample.data.results.count"
+                    />
+                  </div>
                 </div>
               </div>
               <SearchResults

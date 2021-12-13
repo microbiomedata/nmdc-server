@@ -1,31 +1,37 @@
-/**
- * useRequest adds loading and error state to any sort of
- * API request you might need.
- */
-
-import { ref } from '@vue/composition-api';
+import { reactive, toRefs } from '@vue/composition-api';
 
 export default function useRequest() {
-  const loading = ref(false);
-  const error = ref(null);
+  const state = reactive({
+    loading: false, // indicates request in progress
+    error: null as string | null, // indicates request failure
+    count: 0, // indicates number of successful calls
+  });
 
   async function request<T>(func: () => Promise<T>) {
     try {
-      loading.value = true;
-      error.value = null;
+      state.loading = true;
+      state.error = null;
+      state.count += 1;
       const val = await func();
-      loading.value = false;
+      state.loading = false;
       return val;
     } catch (err) {
-      loading.value = false;
-      error.value = err;
+      state.loading = false;
+      state.error = String(err);
       throw err;
     }
   }
 
+  async function reset() {
+    state.loading = false;
+    state.error = null;
+    state.count = 0;
+  }
+
   return {
-    loading,
-    error,
+    ...toRefs(state),
+    state,
     request,
+    reset,
   };
 }

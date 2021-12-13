@@ -1,5 +1,7 @@
 <script lang="ts">
-import Vue from 'vue';
+import {
+  computed, defineComponent, onBeforeUnmount, onMounted, ref,
+} from '@vue/composition-api';
 
 interface ResizeObserverEntry {
   contentRect: Readonly<{
@@ -12,41 +14,47 @@ interface ResizeObserverEntry {
   ChartContainer provides information like width and height to a chart.
   It might be reasonable to provide this in the future with composition functions.
 */
-export default Vue.extend({
+export default defineComponent({
   props: {
     height: {
       type: Number,
       default: 120,
     },
   },
-  data() {
+
+  setup(props) {
+    const width = ref(800);
+    const widths = computed(() => `${width.value}px`);
+    const heights = computed(() => `${props.height}px`);
+    const containerRef = ref();
+    let ro: ResizeObserver | null = null;
+
+    onMounted(() => {
+      if (containerRef.value) {
+        ro = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+          entries.forEach((entry) => {
+            width.value = entry.contentRect.width || 200;
+          });
+        });
+        ro.observe(containerRef.value);
+      }
+    });
+    onBeforeUnmount(() => {
+      ro?.disconnect();
+    });
+
     return {
-      width: 800,
-      ro: null,
+      width,
+      widths,
+      heights,
+      containerRef,
     };
-  },
-  computed: {
-    widths(): string {
-      return `${this.width}px`;
-    },
-    heights(): string {
-      return `${this.height}px`;
-    },
-  },
-  mounted() {
-    // TODO: https://github.com/Microsoft/TypeScript/issues/28502
-    // @ts-ignore
-    this.ro = (new ResizeObserver((entries: ResizeObserverEntry[]) => {
-      entries.forEach((entry) => {
-        this.width = entry.contentRect.width || 200;
-      });
-    })).observe(this.$refs.container);
   },
 });
 </script>
 
 <template>
-  <div ref="container">
+  <div ref="containerRef">
     <div :style="{ width: widths, height: heights }">
       <svg
         ref="svg"

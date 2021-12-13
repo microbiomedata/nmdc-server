@@ -116,7 +116,7 @@ export default Vue.extend({
       @item-selected="setSelected"
       @toggle-select-all="toggleSelectAll"
     >
-      <template v-slot:item.name="{ item }">
+      <template #[`item.name`]="{ item }">
         <span :class="{ 'grey--text': !item.isSelectable }">
           {{ fieldDisplayName(item.name) }}
         </span>

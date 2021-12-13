@@ -3,11 +3,11 @@ import CompositionApi, {
   computed, ComputedRef, reactive, toRefs, watchEffect,
 } from '@vue/composition-api';
 import { noop, uniqWith } from 'lodash';
+import VueRouter from 'vue-router';
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import {
   api, Condition, DataObjectFilter, EnvoNode, EnvoTree,
 } from '@/data/api';
-import VueRouter from 'vue-router';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -43,12 +43,10 @@ function persistState() {
  * Set conditions directly, removing duplicates
  */
 function setConditions(conditions: Condition[], push = false) {
-  state.conditions = uniqWith(
-    conditions, (a, b) => a.field === b.field
+  state.conditions = uniqWith(conditions, (a, b) => a.field === b.field
       && a.value === b.value
       && a.op === b.op
-      && a.table === b.table,
-  );
+      && a.table === b.table);
   if (router) {
     // @ts-ignore
     router[push ? 'push' : 'replace']({ query: { conditions: state.conditions }, name: 'Search' }).catch(noop);

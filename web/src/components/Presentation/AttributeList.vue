@@ -4,9 +4,11 @@ import { isObject } from 'lodash';
 
 import { BaseSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
-import Attribute from './Attribute.vue';
+import AttributeItem from './AttributeItem.vue';
 
 export default defineComponent({
+  components: { AttributeItem },
+
   props: {
     type: {
       type: String,
@@ -17,8 +19,6 @@ export default defineComponent({
       required: true,
     },
   },
-
-  components: { Attribute },
 
   setup(props) {
     const displayFields = computed(() => {
@@ -58,14 +58,14 @@ export default defineComponent({
         :key="field"
         class="pa-0 d-inline-block"
       >
-        <Attribute v-bind="{ item, field }" />
+        <AttributeItem v-bind="{ item, field }" />
       </v-col>
     </v-list>
     <v-list v-if="alternateIdentifiers.length > 0">
       <div class="display-1">
         Alternative Identifiers
       </div>
-      <Attribute
+      <AttributeItem
         v-for="({ name, target }) in alternateIdentifiers"
         :key="name"
         v-bind="{ item, field, link: { name, target } }"

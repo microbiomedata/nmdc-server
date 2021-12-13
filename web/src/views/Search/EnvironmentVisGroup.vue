@@ -8,15 +8,17 @@ import {
 import { Condition } from '@/data/api';
 
 export default defineComponent({
+  components: {
+    EcosystemSankey,
+  },
+
   props: {
     conditions: {
       type: Array as PropType<Condition[]>,
       required: true,
     },
   },
-  components: {
-    EcosystemSankey,
-  },
+
   setup() {
     return {
       toggleConditions,

@@ -4,10 +4,10 @@ import {
 } from '@vue/composition-api';
 import { flattenDeep } from 'lodash';
 
+import { DataTableHeader } from 'vuetify';
 import { humanFileSize } from '@/data/utils';
 import { OmicsProcessingResult } from '@/data/api';
 import { stateRefs, acceptTerms } from '@/store';
-import { DataTableHeader } from 'vuetify';
 
 import DownloadDialog from './DownloadDialog.vue';
 
@@ -26,6 +26,8 @@ const descriptionMap: Record<string, string> = {
 };
 
 export default defineComponent({
+  components: { DownloadDialog },
+
   props: {
     omicsProcessing: {
       type: Array as PropType<OmicsProcessingResult[]>,
@@ -40,8 +42,6 @@ export default defineComponent({
       default: false,
     },
   },
-
-  components: { DownloadDialog },
 
   setup(props) {
     const headers: DataTableHeader[] = [

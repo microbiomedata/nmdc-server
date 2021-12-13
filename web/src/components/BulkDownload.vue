@@ -1,13 +1,18 @@
 <script lang="ts">
 import { computed, defineComponent, ref } from '@vue/composition-api';
-import { stateRefs, dataObjectFilter } from '@/store';
 // @ts-ignore
 import Treeselect from '@riophae/vue-treeselect';
+import { stateRefs, dataObjectFilter } from '@/store';
 import DownloadDialog from '@/components/DownloadDialog.vue';
 import useBulkDownload from '@/use/useBulkDownload';
 import { humanFileSize } from '@/data/utils';
 
 export default defineComponent({
+
+  components: {
+    DownloadDialog,
+    Treeselect,
+  },
   props: {
     disabled: {
       type: Boolean,
@@ -17,11 +22,6 @@ export default defineComponent({
       type: Number,
       default: 0,
     },
-  },
-
-  components: {
-    DownloadDialog,
-    Treeselect,
   },
 
   setup() {

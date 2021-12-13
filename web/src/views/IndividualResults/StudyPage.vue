@@ -12,7 +12,7 @@ import {
 import { api, StudySearchResults } from '@/data/api';
 import { setUniqueCondition, setConditions } from '@/store';
 import { useRouter } from '@/use/useRouter';
-import Attribute from '@/components/Presentation/Attribute.vue';
+import AttributeItem from '@/components/Presentation/AttributeItem.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
 import InvestigatorBio from '@/components/InvestigatorBio.vue';
 /**
@@ -23,17 +23,17 @@ const CitationOverrides = {
 };
 
 export default defineComponent({
+
+  components: {
+    AttributeItem,
+    IndividualTitle,
+    InvestigatorBio,
+  },
   props: {
     id: {
       type: String,
       required: true,
     },
-  },
-
-  components: {
-    Attribute,
-    IndividualTitle,
-    InvestigatorBio,
   },
 
   setup(props) {
@@ -82,10 +82,11 @@ export default defineComponent({
 
     const router = useRouter();
 
-    function setChecked(omicsType: string = '') {
+    function setChecked(omicsType = '') {
       setUniqueCondition(
         ['study_id', 'omics_type'],
-        ['study', 'omics_processing'], [{
+        ['study', 'omics_processing'],
+        [{
           value: props.id,
           table: 'study',
           op: '==',
@@ -152,15 +153,15 @@ export default defineComponent({
           <IndividualTitle :item="item">
             <template #default>
               <div v-if="item.omics_processing_counts">
-                <template v-for="item in item.omics_processing_counts">
+                <template v-for="val in item.omics_processing_counts">
                   <v-chip
-                    v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
-                    :key="item.type"
+                    v-if="val.count && (val.type.toLowerCase() !== 'lipidomics')"
+                    :key="val.type"
                     small
                     class="mr-2 my-1"
-                    @click="setChecked(item.type)"
+                    @click="setChecked(val.type)"
                   >
-                    {{ fieldDisplayName(item.type) }}: {{ item.count }}
+                    {{ fieldDisplayName(val.type) }}: {{ val.count }}
                   </v-chip>
                 </template>
               </div>
@@ -181,13 +182,13 @@ export default defineComponent({
               Study Details
             </div>
             <v-list>
-              <Attribute v-bind="{ item, field: 'doi' }" />
-              <Attribute
+              <AttributeItem v-bind="{ item, field: 'doi' }" />
+              <AttributeItem
                 v-bind="{ item, field: 'id', bindClick: true }"
                 @click="seeStudyInContext"
               />
-              <Attribute v-bind="{ item, field: 'funding_sources' }" />
-              <Attribute
+              <AttributeItem v-bind="{ item, field: 'funding_sources' }" />
+              <AttributeItem
                 v-bind="{ item, field: 'sample_count', bindClick: true }"
                 @click="seeStudyInContext"
               />
@@ -206,18 +207,18 @@ export default defineComponent({
                   </v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
-              <Attribute
+              <AttributeItem
                 style="padding-left: 60px;"
                 v-bind="{ item, field: 'open_in_gold' }"
               />
-              <Attribute
-                v-for="id in item.ess_dive_datasets"
-                :key="id"
+              <AttributeItem
+                v-for="dive_id in item.ess_dive_datasets"
+                :key="dive_id"
                 v-bind="{
                   item,
                   link: {
                     name: 'ESS DIVE Dataset',
-                    target: `https://identifiers.org/${id}`,
+                    target: `https://identifiers.org/${dive_id}`,
                   },
                 }"
                 style="padding-left: 60px;"
@@ -236,7 +237,7 @@ export default defineComponent({
               <template
                 v-for="proto in (item.relevant_protocols || [])"
               >
-                <Attribute
+                <AttributeItem
                   :key="proto"
                   style="padding-left: 60px;"
                   v-bind="{
@@ -260,7 +261,7 @@ export default defineComponent({
                 />
                 <v-list-item-action>
                   <v-tooltip top>
-                    <template v-slot:activator="{ on }">
+                    <template #activator="{ on }">
                       <v-btn
                         icon
                         v-on="on"
@@ -284,7 +285,7 @@ export default defineComponent({
                   <v-list-item-content v-text="pub" />
                   <v-list-item-action>
                     <v-tooltip top>
-                      <template v-slot:activator="{ on }">
+                      <template #activator="{ on }">
                         <v-btn
                           icon
                           v-on="on"

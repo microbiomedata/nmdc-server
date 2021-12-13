@@ -3,13 +3,13 @@ import Vue from 'vue';
 import moment from 'moment';
 
 import ChartContainer from '@/components/Presentation/ChartContainer.vue';
-import Histogram2 from '@/components/Presentation/Histogram2.vue';
+import TimeHistogram from '@/components/Presentation/TimeHistogram.vue';
 
 export default Vue.extend({
   name: 'DateHistogram',
   components: {
     ChartContainer,
-    Histogram2,
+    TimeHistogram,
   },
   props: {
     facetSummary: {
@@ -109,7 +109,7 @@ export default Vue.extend({
   <div class="histogram">
     <ChartContainer v-if="facetSummary && range !== null">
       <template #default="{ width, height }">
-        <Histogram2
+        <TimeHistogram
           ref="histogram"
           v-bind="{ width, height, data: facetSummary, range }"
         />
