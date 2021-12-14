@@ -27,15 +27,14 @@ export default defineComponent({
     const widths = computed(() => `${width.value}px`);
     const heights = computed(() => `${props.height}px`);
     const containerRef = ref();
-    let ro: ResizeObserver | null = null;
+    const ro = new ResizeObserver((entries: ResizeObserverEntry[]) => {
+      entries.forEach((entry) => {
+        width.value = entry.contentRect.width || 200;
+      });
+    });
 
     onMounted(() => {
       if (containerRef.value) {
-        ro = new ResizeObserver((entries: ResizeObserverEntry[]) => {
-          entries.forEach((entry) => {
-            width.value = entry.contentRect.width || 200;
-          });
-        });
         ro.observe(containerRef.value);
       }
     });

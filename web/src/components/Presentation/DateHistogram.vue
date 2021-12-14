@@ -51,10 +51,15 @@ export default Vue.extend({
     facetSummaryUnconditional() {
       // Derive min/max from full range
       const setMinMax = () => {
-        this.min = Date.parse(this.facetSummaryUnconditional.bins[0]);
-        this.max = Date.parse(
+        const min = Date.parse(this.facetSummaryUnconditional.bins[0]);
+        const max = Date.parse(
           this.facetSummaryUnconditional.bins[this.facetSummaryUnconditional.bins.length - 1],
         );
+        if (Number.isNaN(min) || Number.isNaN(max)) {
+          return;
+        }
+        this.min = min;
+        this.max = max;
         this.range = [this.min, this.max];
       };
       let nextTick = setMinMax;

@@ -86,8 +86,8 @@ export default defineComponent({
     });
 
     async function getMapData() {
-      await new Promise((res) => {
-        window.setTimeout(() => res, 300);
+      await new Promise<void>((res) => {
+        window.setTimeout(res, 300);
       });
       const data = await api.getEnvironmentGeospatialAggregation(props.conditions);
       const values: any[] = [];
