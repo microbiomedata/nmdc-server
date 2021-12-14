@@ -1,11 +1,11 @@
 <script lang="ts">
-import { Condition, entityType, api } from '@/data/api';
 import {
   defineComponent, PropType, toRef, ref, watch, nextTick,
 } from '@vue/composition-api';
+import { DataTableHeader } from 'vuetify';
+import { Condition, entityType, api } from '@/data/api';
 import { keggEncode, stringIsKegg } from '@/encoding';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
-import { DataTableHeader } from 'vuetify';
 import useRequest from '@/use/useRequest';
 
 export default defineComponent({
@@ -132,12 +132,12 @@ export default defineComponent({
       :items="myConditions"
       :headers="headers"
     >
-      <template #item.value="{ item }">
+      <template #[`item.value`]="{ item }">
         <a :href="keggEncode(item.value, true)">
           {{ item.value }}
         </a>
       </template>
-      <template #item.remove="{ item }">
+      <template #[`item.remove`]="{ item }">
         <v-btn
           x-small
           depr

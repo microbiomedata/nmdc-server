@@ -2,7 +2,6 @@
 import {
   computed, defineComponent, ref, watchEffect, PropType,
 } from '@vue/composition-api';
-import EcosystemSankey from '@/components/EcosystemSankey.vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 
@@ -37,24 +36,23 @@ const staticUpsetTooltips = {
 export default defineComponent({
   name: 'SampleVisGroup',
 
-  props: {
-    conditions: {
-      type: Array as PropType<Condition[]>,
-      required: true,
-    },
-  },
-
   components: {
     ChartContainer,
     DateHistogram,
     FacetBarChart,
     ClusterMap,
-    EcosystemSankey,
     TooltipCard,
     // TODO replace with composition functions
     FacetSummaryWrapper,
     BinnedSummaryWrapper,
     UpSet,
+  },
+
+  props: {
+    conditions: {
+      type: Array as PropType<Condition[]>,
+      required: true,
+    },
   },
 
   setup(props) {

@@ -1,8 +1,8 @@
 <script lang="ts">
 import { groupBy } from 'lodash';
+import { computed, defineComponent, PropType } from '@vue/composition-api';
 import { fieldDisplayName } from '@/util';
 import { BiosampleSearchResult } from '@/data/api';
-import { computed, defineComponent, PropType } from '@vue/composition-api';
 import DataObjectTable from './DataObjectTable.vue';
 
 const hiddenOmicsTypes = [
@@ -18,6 +18,10 @@ const buttonOrder = [
 ];
 
 export default defineComponent({
+  components: {
+    DataObjectTable,
+  },
+
   props: {
     result: {
       type: Object as PropType<BiosampleSearchResult>,
@@ -31,10 +35,6 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
-  },
-
-  components: {
-    DataObjectTable,
   },
 
   setup(props) {

@@ -37,8 +37,8 @@ init(router);
 new Vue({
   router,
   vuetify,
-  render: (h) => h(App),
   setup() {
     provideRouter(router);
   },
+  render: (h) => h(App),
 }).$mount('#app');

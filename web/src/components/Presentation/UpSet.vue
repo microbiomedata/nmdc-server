@@ -188,6 +188,10 @@ export default defineComponent({
 });
 </script>
 
+<template>
+  <svg ref="svgRoot" />
+</template>
+
 <style>
 .upset-bar-clickable {
   cursor: pointer;
@@ -196,7 +200,3 @@ export default defineComponent({
   fill: rgba(0, 0, 0, .5) !important;
 }
 </style>
-
-<template>
-  <svg ref="svgRoot" />
-</template>

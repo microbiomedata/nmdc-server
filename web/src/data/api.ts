@@ -48,6 +48,39 @@ export interface BaseSearchResult {
   [key: string]: unknown; // possibly other things.
 }
 
+export interface DataObjectSearchResult extends BaseSearchResult {
+  file_size_bytes: number;
+  md5_checksum: string;
+  file_type: string;
+  file_type_description: string;
+  url: string;
+
+  // download count
+  downloads: number;
+
+  // indicates selected for bulk download
+  selected: boolean;
+}
+
+export interface DerivedDataResult extends BaseSearchResult {
+  type: string;
+  git_url: string;
+  started_at_time: string;
+  ended_at_time: string;
+  execution_resource: string;
+  omics_processing_id: string;
+  outputs: DataObjectSearchResult[];
+}
+
+export interface OmicsProcessingResult extends BaseSearchResult {
+  study_id: string;
+  add_date: string;
+  mod_date: string;
+  open_in_gold: string;
+  omics_data: DerivedDataResult[];
+  outputs: DataObjectSearchResult[]; // RAW outputs
+}
+
 export interface BiosampleSearchResult extends BaseSearchResult {
   omics_processing_id: string;
   depth: number;
@@ -75,20 +108,6 @@ export interface BiosampleSearchResult extends BaseSearchResult {
     data: string;
   };
   omics_processing: OmicsProcessingResult[];
-}
-
-export interface DataObjectSearchResult extends BaseSearchResult {
-  file_size_bytes: number;
-  md5_checksum: string;
-  file_type: string;
-  file_type_description: string;
-  url: string;
-
-  // download count
-  downloads: number;
-
-  // indicates selected for bulk download
-  selected: boolean;
 }
 
 export interface StudySearchResults extends BaseSearchResult {
@@ -124,25 +143,6 @@ export interface StudySearchResults extends BaseSearchResult {
   }[];
 }
 
-export interface DerivedDataResult extends BaseSearchResult {
-  type: string;
-  git_url: string;
-  started_at_time: string;
-  ended_at_time: string;
-  execution_resource: string;
-  omics_processing_id: string;
-  outputs: DataObjectSearchResult[];
-}
-
-export interface OmicsProcessingResult extends BaseSearchResult {
-  study_id: string;
-  add_date: string;
-  mod_date: string;
-  open_in_gold: string;
-  omics_data: DerivedDataResult[];
-  outputs: DataObjectSearchResult[]; // RAW outputs
-}
-
 export interface ReadsQCResult extends DerivedDataResult {
   stats: object;
   has_inputs: string[];
@@ -161,7 +161,7 @@ export interface MetagenomeAnnotationResult extends DerivedDataResult {
   has_output: string[];
 }
 
-export type MetaproteomicAnalysisResult = DerivedDataResult
+export type MetaproteomicAnalysisResult = DerivedDataResult;
 
 export interface UnitSchema {
   /* https://github.com/microbiomedata/nmdc-server/pull/350 */
@@ -248,7 +248,7 @@ export type BulkDownloadSummary = Record<string, {
 export type BulkDownloadAggregateSummary = {
   count: number;
   size: number;
-}
+};
 
 export interface Condition {
   field: string;
@@ -306,11 +306,13 @@ async function _search<T>(
     offset = 0, limit = 100, conditions, data_object_filter,
   }: SearchParams,
 ): Promise<SearchResponse<T>> {
-  const { data } = await client.post<SearchResponse<T>>(`${table}/search`,
+  const { data } = await client.post<SearchResponse<T>>(
+    `${table}/search`,
     { conditions, data_object_filter },
     {
       params: { offset, limit },
-    });
+    },
+  );
   return data;
 }
 
@@ -405,11 +407,9 @@ async function getFacetSummary(
   conditions: Condition[],
 ): Promise<FacetSummaryResponse[]> {
   const path = type;
-  const { data } = await client.post<{ facets: Record<string, number> }>(
-    `${path}/facet`, {
-      conditions, attribute: field,
-    },
-  );
+  const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/facet`, {
+    conditions, attribute: field,
+  });
   return Object.keys(data.facets)
     .map((facetName) => ({
       facet: facetName,
@@ -480,22 +480,18 @@ async function getDatabaseStats() {
 async function getEnvironmentGeospatialAggregation(
   conditions: Condition[],
 ): Promise<EnvironmentGeospatialEntity[]> {
-  const { data } = await client.post<EnvironmentGeospatialEntity[]>(
-    'environment/geospatial', {
-      conditions,
-    },
-  );
+  const { data } = await client.post<EnvironmentGeospatialEntity[]>('environment/geospatial', {
+    conditions,
+  });
   return data;
 }
 
 async function getEnvironmentSankeyAggregation(
   conditions: Condition[],
 ): Promise<EnvironmentSankeyResponse> {
-  const { data } = await client.post<EnvironmentSankeyResponse>(
-    'environment/sankey', {
-      conditions,
-    },
-  );
+  const { data } = await client.post<EnvironmentSankeyResponse>('environment/sankey', {
+    conditions,
+  });
   return data;
 }
 
@@ -539,9 +535,7 @@ async function getBulkDownloadSummary(conditions: Condition[]) {
   return data;
 }
 
-async function getBulkDownloadAggregateSummary(
-  conditions: Condition[], dataObjectFilter: DataObjectFilter[],
-) {
+async function getBulkDownloadAggregateSummary(conditions: Condition[], dataObjectFilter: DataObjectFilter[]) {
   const { data } = await client.post<BulkDownloadAggregateSummary>('bulk_download/summary', {
     conditions,
     data_object_filter: dataObjectFilter,

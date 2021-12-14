@@ -1,6 +1,6 @@
 <script lang="ts">
-import { BaseSearchResult } from '@/data/api';
 import Vue, { PropType } from 'vue';
+import { BaseSearchResult } from '@/data/api';
 
 export default Vue.extend({
   props: {

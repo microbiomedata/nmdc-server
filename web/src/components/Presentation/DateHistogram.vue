@@ -3,13 +3,13 @@ import Vue from 'vue';
 import moment from 'moment';
 
 import ChartContainer from '@/components/Presentation/ChartContainer.vue';
-import Histogram2 from '@/components/Presentation/Histogram2.vue';
+import TimeHistogram from '@/components/Presentation/TimeHistogram.vue';
 
 export default Vue.extend({
   name: 'DateHistogram',
   components: {
     ChartContainer,
-    Histogram2,
+    TimeHistogram,
   },
   props: {
     facetSummary: {
@@ -51,10 +51,15 @@ export default Vue.extend({
     facetSummaryUnconditional() {
       // Derive min/max from full range
       const setMinMax = () => {
-        this.min = Date.parse(this.facetSummaryUnconditional.bins[0]);
-        this.max = Date.parse(
+        const min = Date.parse(this.facetSummaryUnconditional.bins[0]);
+        const max = Date.parse(
           this.facetSummaryUnconditional.bins[this.facetSummaryUnconditional.bins.length - 1],
         );
+        if (Number.isNaN(min) || Number.isNaN(max)) {
+          return;
+        }
+        this.min = min;
+        this.max = max;
         this.range = [this.min, this.max];
       };
       let nextTick = setMinMax;
@@ -109,7 +114,7 @@ export default Vue.extend({
   <div class="histogram">
     <ChartContainer v-if="facetSummary && range !== null">
       <template #default="{ width, height }">
-        <Histogram2
+        <TimeHistogram
           ref="histogram"
           v-bind="{ width, height, data: facetSummary, range }"
         />

@@ -14,7 +14,7 @@
 import { cloneDeep } from 'lodash';
 import { computed, Ref, watch } from '@vue/composition-api';
 
-export default function <T> (gate: Ref<boolean>, clock: Ref<T>) {
+export default function useClockGate<T>(gate: Ref<boolean>, clock: Ref<T>) {
   let clockStateCache: T = cloneDeep(clock.value);
   const gatedClock = computed(() => {
     if (gate.value) {

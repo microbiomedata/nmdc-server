@@ -1,10 +1,10 @@
 <script lang="ts">
-import Auth from '@/components/Presentation/Auth.vue';
+import AuthButton from '@/components/Presentation/AuthButton.vue';
 import { setConditions } from '@/store/';
 
 export default {
   name: 'App',
-  components: { Auth },
+  components: { AuthButton },
   methods: { setConditions },
 };
 </script>
@@ -24,6 +24,7 @@ export default {
         <img
           src="/NMDC_logo_long.jpg"
           height="100%"
+          alt="Page home"
         >
       </a>
       <v-spacer />
@@ -91,7 +92,7 @@ export default {
           mdi-open-in-new
         </v-icon>
       </v-btn>
-      <auth />
+      <AuthButton />
     </v-app-bar>
     <keep-alive>
       <router-view />

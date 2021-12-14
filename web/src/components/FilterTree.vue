@@ -6,13 +6,13 @@ import {
 import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
 
+import { cloneDeep } from 'lodash';
 import {
   Condition, entityType, EnvoNode, FacetSummaryResponse,
 } from '@/data/api';
 import { unreactive, stateRefs, getTreeData } from '@/store';
 import useRequest from '@/use/useRequest';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
-import { cloneDeep } from 'lodash';
 
 export default defineComponent({
   components: { Treeselect },

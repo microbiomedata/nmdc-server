@@ -2,11 +2,6 @@
 import Vue, { PropType } from 'vue';
 import { Condition, opType } from '@/data/api';
 
-interface Options {
-  text: string;
-  value: opType;
-}
-
 export default Vue.extend({
   props: {
     field: {

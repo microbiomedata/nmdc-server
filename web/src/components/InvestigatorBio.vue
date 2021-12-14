@@ -1,6 +1,6 @@
 <script lang="ts">
-import { StudySearchResults } from '@/data/api';
 import { computed, defineComponent, PropType } from '@vue/composition-api';
+import { StudySearchResults } from '@/data/api';
 
 function getOrcid(person: any) {
   const orcid = person?.applies_to_person?.orcid || '';
@@ -84,25 +84,24 @@ export default defineComponent({
                 {{ member.applies_to_person.name }}
               </div>
             </template>
-            <template>
-              <v-card
-                class="pa-2"
+            <v-card
+              class="pa-2"
+            >
+              <v-card-title>{{ member.applies_to_person.name }}</v-card-title>
+              <v-btn
+                text
+                color="green"
+                :href="getOrcid(member)"
               >
-                <v-card-title>{{ member.applies_to_person.name }}</v-card-title>
-                <v-btn
-                  text
-                  color="green"
-                  :href="getOrcid(member)"
+                <img
+                  width="24px"
+                  class="mr-2"
+                  :alt="`${member.applies_to_person.name} profile picture`"
+                  src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
                 >
-                  <img
-                    width="24px"
-                    class="mr-2"
-                    src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
-                  >
-                  OrcID
-                </v-btn>
-              </v-card>
-            </template>
+                OrcID
+              </v-btn>
+            </v-card>
           </v-menu>
         </v-card>
       </v-row>

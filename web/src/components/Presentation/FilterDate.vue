@@ -4,11 +4,6 @@ import { Condition, opType } from '@/data/api';
 
 import DateInput from './DateInput.vue';
 
-interface Options {
-  text: string;
-  value: opType;
-}
-
 export default Vue.extend({
   components: { DateInput },
 
