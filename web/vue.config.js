@@ -1,3 +1,5 @@
+// const path = require('path');
+
 module.exports = {
   publicPath: '/',
   transpileDependencies: [
@@ -8,7 +10,15 @@ module.exports = {
       warnings: true,
       errors: true,
     },
-    proxy: 'http://localhost:8000',
+    proxy: {
+      '/api': {
+        target: 'https://data.microbiomedata.org',
+      },
+      '/data-harmonizer': {
+        target: 'http://localhost:3333',
+        pathRewrite: { '^/data-harmonizer': '' },
+      },
+    },
   },
   chainWebpack: (config) => {
     // https://webpack.js.org/configuration/output/#outputstrictmoduleexceptionhandling

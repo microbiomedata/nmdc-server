@@ -91,6 +91,25 @@ uvicorn nmdc_server.asgi:app --reload
 
 View swagger page at `http://localhost:8000/docs`.
 
+### Submission portal development
+
+This is a temporary solution while the separation of concerns is established.
+
+``` bash
+# Clone DataHarmonizer https://github.com/microbiomedata/DataHarmonizer
+# cd into the DataHarmonizer Directory
+npx http-server -p 3333 .
+
+# In another terminal
+cd web/
+yarn
+yarn serve
+```
+
+You should now be able to load the submission portal as http://localhost:8080/submission/samples
+
+In production, the DataHarmonizer iframe will be served from GitHub Pages.
+
 ### Testing
 
 ```bash

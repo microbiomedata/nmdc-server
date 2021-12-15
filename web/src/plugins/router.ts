@@ -4,6 +4,7 @@ import VueRouter from 'vue-router';
 import Search from '@/views/Search/SearchLayout.vue';
 import SamplePage from '@/views/IndividualResults/SamplePage.vue';
 import StudyPage from '@/views/IndividualResults/StudyPage.vue';
+import DataHarmonizerPage from '@/views/SubmissionPortal/DataHarmonizerPage.vue';
 
 import { parseQuery, stringifyQuery } from './utils';
 
@@ -28,6 +29,12 @@ export default new VueRouter({
       path: '/details/study/:id',
       name: 'Study',
       component: StudyPage,
+      props: true,
+    },
+    {
+      path: '/submission/samples',
+      name: 'Submission Sample Editor',
+      component: DataHarmonizerPage,
       props: true,
     },
   ],
