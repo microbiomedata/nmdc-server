@@ -14,9 +14,9 @@ module.exports = {
       '/api': {
         target: 'https://data.microbiomedata.org',
       },
-      '/data-harmonizer': {
+      '/DataHarmonizer': {
         target: 'http://localhost:3333',
-        pathRewrite: { '^/data-harmonizer': '' },
+        pathRewrite: { '^/DataHarmonizer': '' },
       },
     },
   },
