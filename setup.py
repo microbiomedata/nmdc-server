@@ -18,6 +18,7 @@ setup(
         "httpx<=0.18.2",
         "ipython",
         "itsdangerous",
+        "mypy<0.920",
         "pint",
         "psycopg2",
         "pymongo>=4.0.0",
