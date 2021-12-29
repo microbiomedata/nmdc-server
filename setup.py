@@ -16,9 +16,9 @@ setup(
         "fastapi",
         "factory-boy",
         "httpx<=0.18.2",
-        "ipython",
         "itsdangerous",
         "mypy<0.920",
+        "nmdc-schema",
         "pint",
         "psycopg2",
         "pymongo>=4.0.0",
@@ -30,6 +30,9 @@ setup(
         "starlette",
         "typing-extensions",
     ],
+    extra_require={
+        "dev": ["ipython"],
+    },
     include_package_data=True,
     entry_points="""
         [console_scripts]

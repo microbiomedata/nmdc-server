@@ -5,12 +5,21 @@
 * install [ldc](https://github.com/Kitware/ldc)
 * install submodules via `git submodule update --init --recursive`
 
+### Running ingest
+
+You need an active SSH tunnel connection to nersc attached to the compose network.  After running docker-compose up, run this container, making sure to replace `<username>`.
+
+If you haven't already, [set up MFA on your NERSC account](https://docs.nersc.gov/connect/mfa/) (it's required for SSHing in).
+
+```bash
+docker run --rm -it --network nmdc-server_default --name tunnel kroniak/ssh-client ssh -o StrictHostKeyChecking=no -L 0.0.0.0:27017:mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org:27017 <username>@dtn01.nersc.gov '/bin/bash -c "while [[ 1 ]]; do echo heartbeat; sleep 300; done"'
+```
+
 In order to populate the database, you must create a `.env` file in the top
 level directory containing mongo credentials.
 
 ```bash
 # .env
-NMDC_MONGO_HOST=changeme
 NMDC_MONGO_USER=changeme
 NMDC_MONGO_PASSWORD=changeme
 ```
@@ -22,6 +31,8 @@ ldc run backend nmdc-server truncate # if necessary
 ldc run backend nmdc-server migrate
 ldc run backend nmdc-server ingest
 ```
+
+### Running the server
 
 Then you can start up the services.
 
