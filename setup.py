@@ -20,7 +20,7 @@ setup(
         "itsdangerous",
         "pint",
         "psycopg2",
-        "pymongo",
+        "pymongo>=4.0.0",
         "python-dateutil",
         "python-dotenv",
         "requests",
