@@ -1,6 +1,5 @@
 from typing import Any, Dict, List, Tuple
 
-from nmdc_schema import nmdc
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
@@ -16,7 +15,7 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
     logger = get_logger(__name__)
     fields = set(DataObjectCreate.__fields__.keys()) | {"data_object_type"}
 
-    file_type_enum = nmdc.FileTypeEnum.__dict__
+    file_type_map = {f["id"]: (f["name"], f["description"]) for f in file_types}
 
     objects_without_type = 0
 
@@ -36,9 +35,9 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
                 "https://data.microbiomedata.org", "https://data.microbiomedata.org/data"
             )
         if "data_object_type" in obj:
-            permissible_value = file_type_enum[obj.pop("data_object_type")]
-            obj["file_type"] = permissible_value.text
-            obj["file_type_description"] = permissible_value.description
+            obj["file_type"], obj["file_type_description"] = file_type_map[
+                obj.pop("data_object_type")
+            ]
         else:
             objects_without_type += 1
 
