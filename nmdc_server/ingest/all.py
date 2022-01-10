@@ -151,7 +151,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
 
             # This has historically been fast, but it is only for the progress bar.
             # It can be removed if it becomes slow.
-            count = mongodb["metagenome_annotation_activity_set"].find().estimated_document_count()
+            count = mongodb["metagenome_annotation_activity_set"].estimated_document_count()
             iterator = paginate_cursor(
                 mongodb["metagenome_annotation_activity_set"],
                 page_size=1,  # prevent cursor from timing out
