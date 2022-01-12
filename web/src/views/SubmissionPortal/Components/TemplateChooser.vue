@@ -1,11 +1,10 @@
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api';
-import { HARMONIZER_TEMPLATES } from './harmonizerApi';
+import { defineComponent } from '@vue/composition-api';
+import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
+import { templateName } from '../store';
 
 export default defineComponent({
   setup() {
-    const templateName = ref(null as null | keyof typeof HARMONIZER_TEMPLATES);
-
     return {
       templateName,
       templates: Object.keys(HARMONIZER_TEMPLATES),
@@ -15,7 +14,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-container>
+  <div>
     <div class="text-h2">
       Environment Package
     </div>
@@ -24,6 +23,7 @@ export default defineComponent({
     </div>
     <v-radio-group
       v-model="templateName"
+      class="my-6"
     >
       <v-radio
         v-for="option in templates"
@@ -33,6 +33,16 @@ export default defineComponent({
       />
     </v-radio-group>
     <div class="d-flex">
+      <v-btn
+        color="gray"
+        depressed
+        :to="{ name: 'Study Form' }"
+      >
+        <v-icon class="pr-1">
+          mdi-arrow-left-circle
+        </v-icon>
+        Go to previous step
+      </v-btn>
       <v-spacer />
       <v-btn
         color="primary"
@@ -43,8 +53,11 @@ export default defineComponent({
           params: { templateName },
         }"
       >
+        <v-icon class="pr-1">
+          mdi-arrow-right-circle
+        </v-icon>
         Go to next step
       </v-btn>
     </div>
-  </v-container>
+  </div>
 </template>

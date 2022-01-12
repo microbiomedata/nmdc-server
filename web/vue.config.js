@@ -12,7 +12,7 @@ module.exports = {
     },
     proxy: {
       '/api': {
-        target: 'https://data.microbiomedata.org',
+        target: 'http://localhost:8000/',
       },
       '/DataHarmonizer': {
         target: 'http://localhost:3333',

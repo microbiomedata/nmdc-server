@@ -6,9 +6,11 @@ import SamplePage from '@/views/IndividualResults/SamplePage.vue';
 import StudyPage from '@/views/IndividualResults/StudyPage.vue';
 
 /* Submission portal */
+import StepperView from '@/views/SubmissionPortal/StepperView.vue';
+import StudyForm from '@/views/SubmissionPortal/Components/StudyForm.vue';
 import SubmissionView from '@/views/SubmissionPortal/SubmissionView.vue';
-import TemplateoptionsPage from '@/views/SubmissionPortal/TemplateOptionsPage.vue';
-import DataHarmonizerPage from '@/views/SubmissionPortal/DataHarmonizerPage.vue';
+import TemplateChooser from '@/views/SubmissionPortal/Components/TemplateChooser.vue';
+import HarmonizerView from '@/views/SubmissionPortal/HarmonizerView.vue';
 
 import { parseQuery, stringifyQuery } from './utils';
 
@@ -40,15 +42,25 @@ export default new VueRouter({
       component: SubmissionView,
       children: [
         {
-          name: 'Submission Sample Editor',
-          component: DataHarmonizerPage,
-          path: 'samples/:templateName',
-          props: true,
+          component: StepperView,
+          path: '',
+          children: [
+            {
+              name: 'Study Form',
+              path: 'study',
+              component: StudyForm,
+            },
+            {
+              name: 'Submission Template Options',
+              component: TemplateChooser,
+              path: 'templates',
+            },
+          ],
         },
         {
-          name: 'Submission Template Options',
-          component: TemplateoptionsPage,
-          path: 'templates',
+          name: 'Submission Sample Editor',
+          component: HarmonizerView,
+          path: 'samples/:templateName',
           props: true,
         },
       ],

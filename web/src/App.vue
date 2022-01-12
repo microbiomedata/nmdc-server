@@ -1,12 +1,18 @@
 <script lang="ts">
+import { defineComponent } from '@vue/composition-api';
 import AuthButton from '@/components/Presentation/AuthButton.vue';
-import { setConditions } from '@/store/';
+import { setConditions, stateRefs } from '@/store/';
 
-export default {
+export default defineComponent({
   name: 'App',
   components: { AuthButton },
-  methods: { setConditions },
-};
+  setup() {
+    return {
+      setConditions,
+      stateRefs,
+    };
+  },
+});
 </script>
 
 <template>
@@ -28,6 +34,21 @@ export default {
         >
       </a>
       <v-spacer />
+      <v-btn
+        depressed
+        small
+        :disabled="!stateRefs.user.value"
+        :to="{ name: 'Study Form' }"
+        class="mx-2"
+      >
+        Submit Samples
+        <v-icon
+          class="pl-2"
+          small
+        >
+          mdi-upload
+        </v-icon>
+      </v-btn>
       <v-btn
         depressed
         small
