@@ -87,14 +87,16 @@ export default defineComponent({
 
     const items = computed(() => flattenDeep(
       flattenDeep(props.omicsProcessing.map((p) => (p.omics_data)))
-        .map((omics_data) => omics_data.outputs.map((data_object, i) => ({
-          ...data_object,
-          omics_data,
-          /* TODO Hack to replace metagenome with omics type name */
-          group_name: omics_data.name.replace('Metagenome', props.omicsType),
-          newgroup: i === 0,
-        }))),
-    ).filter((data) => data.file_type && data.file_type_description));
+        .map((omics_data) => omics_data.outputs
+          .filter((data) => data.file_type && data.file_type_description)
+          .map((data_object, i) => ({
+            ...data_object,
+            omics_data,
+            /* TODO Hack to replace metagenome with omics type name */
+            group_name: omics_data.name.replace('Metagenome', props.omicsType),
+            newgroup: i === 0,
+          }))),
+    ));
 
     function download(item: OmicsProcessingResult) {
       if (typeof item.url === 'string') {
