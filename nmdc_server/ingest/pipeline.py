@@ -163,6 +163,7 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: st
             obj["ended_at_time"] = remove_timezone_re.sub("", obj["ended_at_time"])
 
         if db.query(models.OmicsProcessing).get(obj["omics_processing_id"]) is None:
+            logger.error(f"Encountered pipeline with no associated omics_processing: {obj['omics_processing_id']}")
             continue
 
         try:
@@ -189,7 +190,7 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: st
         # reported at the end of the run
         missing_list = set(inputs + outputs) - set(valid_inputs + valid_outputs)
         for missing in missing_list:
-            logger.warning(f"Unknown data object {missing}")
+            logger.warning(f"Unknown data object {missing} for {obj['id']}")
             missing_["data_object"].add(missing)
 
         inputs = valid_inputs
