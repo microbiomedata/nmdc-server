@@ -163,7 +163,9 @@ def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: st
             obj["ended_at_time"] = remove_timezone_re.sub("", obj["ended_at_time"])
 
         if db.query(models.OmicsProcessing).get(obj["omics_processing_id"]) is None:
-            logger.error(f"Encountered pipeline with no associated omics_processing: {obj['omics_processing_id']}")
+            logger.error(
+                f"Encountered pipeline with no associated omics_processing: {obj['omics_processing_id']}"
+            )
             continue
 
         try:
