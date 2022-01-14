@@ -16,9 +16,21 @@ const studyForm = reactive({
   notes: '',
 });
 
-const templateName = ref(null as null | keyof typeof HARMONIZER_TEMPLATES);
+const multiOmicsForm = reactive({
+  datasetDoi: '',
+  alternativeNames: [],
+  studyNumber: '',
+  GOLDStudyId: '',
+  JGIStudyId: '',
+  NCBIBioProjectName: '',
+  NCBIBioProjectId: '',
+  dataWasGenerated: false,
+});
+
+const templateName = ref('MAM NMDC Dev Template' as keyof typeof HARMONIZER_TEMPLATES);
 
 export {
+  multiOmicsForm,
   studyForm,
   templateName,
 };

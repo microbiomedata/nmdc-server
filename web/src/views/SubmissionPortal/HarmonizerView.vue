@@ -1,17 +1,16 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, PropType,
+  computed, defineComponent, ref, nextTick,
 } from '@vue/composition-api';
 import { HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi } from './harmonizerApi';
 
+import { templateName } from './store';
+import SubmissionStepper from './Components/SubmissionStepper.vue';
+
 export default defineComponent({
-  props: {
-    templateName: {
-      type: String as PropType<keyof typeof HARMONIZER_TEMPLATES>,
-      required: true,
-    },
-  },
-  setup(props) {
+  components: { SubmissionStepper },
+
+  setup() {
     const iframeElement = ref();
     const harmonizerApi = useHarmonizerApi(iframeElement);
     const jumpToModel = ref();
@@ -32,7 +31,7 @@ export default defineComponent({
       highlightedValidationError.value = `${row}.${column}`;
     }
 
-    const templateFolderName = computed(() => HARMONIZER_TEMPLATES[props.templateName].folder);
+    const templateFolderName = computed(() => (templateName.value ? HARMONIZER_TEMPLATES[templateName.value].folder : null));
 
     const fields = computed(() => Object.keys(harmonizerApi.schemaFields.value).sort((a, b) => {
       const nameA = a.toUpperCase();
@@ -63,6 +62,7 @@ export default defineComponent({
       iframeElement,
       jumpToModel,
       harmonizerApi,
+      templateName,
       templateFolderName,
       fields,
       validationErrors,
@@ -82,23 +82,26 @@ export default defineComponent({
     style="overflow-y: hidden;"
     class="fill-height"
   >
+    <SubmissionStepper />
     <div class="d-flex flex-column px-4">
       <div class="d-flex align-center justify-center py-2">
-        <v-btn
+        <v-file-input
+          label="Choose spreadsheet file..."
+          prepend-inner-icon="mdi-file-table"
+          :prepend-icon="null"
+          outlined
+          dense
           color="primary"
+          hide-details
           class="mr-2"
-          @click="harmonizerApi.openFile()"
-        >
-          <v-icon class="pr-2">
-            mdi-file-table
-          </v-icon>
-          Import data
-        </v-btn>
+          :truncate-length="50"
+          @change="harmonizerApi.openFile"
+        />
         <v-autocomplete
           v-model="jumpToModel"
           :items="fields"
           label="Jump to column..."
-          class="shrink"
+          class="shrink mr-2"
           outlined
           dense
           hide-details
@@ -107,20 +110,8 @@ export default defineComponent({
         />
         <v-spacer />
         <v-btn
-          class="mx-2"
-          outlined
-          rel="noopener noreferrer"
-          target="_blank"
-          :href="`${IFRAME_BASE}/DataHarmonizer/template/${templateFolderName}/reference.html`"
-        >
-          <v-icon class="pr-2">
-            mdi-information
-          </v-icon>
-          Reference Guide
-        </v-btn>
-        <v-btn
-          color="primary"
-          class="mx-2"
+          color="accent"
+          class="mr-2"
           @click="harmonizerApi.validate"
         >
           <v-icon class="pr-2">
@@ -129,20 +120,33 @@ export default defineComponent({
           Validate
         </v-btn>
         <v-text-field
-          class="shrink"
+          class="shrink mr-2"
           dense
           outlined
           readonly
           hide-details
-          label="Chosen template"
+          label="Schema template"
           :value="templateName"
         />
+        <v-btn
+          class="mr-2"
+          color="grey"
+          outlined
+          rel="noopener noreferrer"
+          target="_blank"
+          :href="`${IFRAME_BASE}/template/${templateFolderName}/reference.html`"
+        >
+          <v-icon class="pr-2">
+            mdi-information
+          </v-icon>
+          Schema reference
+        </v-btn>
       </div>
       <div
         v-if="validationErrors.length"
         class="d-flex flex-row py-1"
       >
-        <div class="mr-2 text-h5 font-weight-bold shrink">
+        <div class="mr-2 text-h5 font-weight-bold grow">
           {{ validationErrors.length }} Validation Errors:
         </div>
         <div
@@ -164,12 +168,38 @@ export default defineComponent({
         </div>
       </div>
     </div>
-    <iframe
-      ref="iframeElement"
-      title="Data Harmonizer"
-      width="100%"
-      height="100%"
-      :src="`${IFRAME_BASE}/DataHarmonizer/main.html?minified=true&template=${templateFolderName}`"
-    />
+    <div style="height: calc(100vh - 260px);">
+      <iframe
+        ref="iframeElement"
+        title="Data Harmonizer"
+        width="100%"
+        height="100%"
+        :src="`${IFRAME_BASE}/main.html?minified=true&template=${templateFolderName}`"
+        sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals allow-downloads allow-forms"
+      />
+    </div>
+    <div class="d-flex grow ma-2">
+      <v-btn
+        color="gray"
+        depressed
+        :to="{ name: 'Environment Package' }"
+      >
+        <v-icon class="pr-1">
+          mdi-arrow-left-circle
+        </v-icon>
+        Go to previous step
+      </v-btn>
+      <v-spacer />
+      <v-btn
+        color="primary"
+        depressed
+        :to="{ name: 'Validate And Submit' }"
+      >
+        <v-icon class="pr-1">
+          mdi-arrow-right-circle
+        </v-icon>
+        Go to next step
+      </v-btn>
+    </div>
   </div>
 </template>

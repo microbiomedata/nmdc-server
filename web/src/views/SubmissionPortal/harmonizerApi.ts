@@ -1,7 +1,7 @@
 import { ref, Ref } from '@vue/composition-api';
 
-// export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? '' : 'https://microbiomedata.github.io/';
-export const IFRAME_BASE = 'https://microbiomedata.github.io/';
+export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333/' : 'https://microbiomedata.github.io/DataHarmonizer';
+// export const IFRAME_BASE = 'https://microbiomedata.github.io/';
 
 /**
  * A manifest of the options available in DataHarmonizer
@@ -19,24 +19,26 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
   const validationErrors = ref(undefined as undefined | null | Record<number, Record<number, string>>);
   const schemaFields = ref([] as string[]);
 
+  const postMessage = (message: any) => element.value.contentWindow?.postMessage(message, '*');
+
   function jumpTo(columnName: string) {
-    element.value.contentWindow?.postMessage({ type: 'jumpTo', columnName });
+    postMessage({ type: 'jumpTo', columnName });
   }
 
   function jumpToRowCol(row: number, column: number) {
-    element.value.contentWindow?.postMessage({ type: 'jumpToRowCol', row, column });
+    postMessage({ type: 'jumpToRowCol', row, column });
   }
 
   function setupTemplate(folder: string) {
-    element.value.contentWindow?.postMessage({ type: 'setupTemplate', folder });
+    postMessage({ type: 'setupTemplate', folder });
   }
 
   function validate() {
-    element.value.contentWindow?.postMessage({ type: 'validate' });
+    postMessage({ type: 'validate' });
   }
 
-  function openFile() {
-    element.value.contentWindow?.postMessage({ type: 'open' });
+  function openFile(files: File[]) {
+    postMessage({ type: 'open', files });
   }
 
   function subscribe() {

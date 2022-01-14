@@ -33,6 +33,8 @@ export default defineComponent({
       <v-text-field
         v-model="studyForm.studyName"
         label="Project / Study Name *"
+        hint="This is a description"
+        persistent-hint
         required
         outlined
         dense
@@ -80,7 +82,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :to="{ name: 'Submission Template Options' }"
+        :to="{ name: 'Multiomics Form' }"
       >
         Go to next step
         <v-icon class="pl-1">

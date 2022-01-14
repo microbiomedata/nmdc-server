@@ -36,7 +36,7 @@ export default defineComponent({
       <v-btn
         color="gray"
         depressed
-        :to="{ name: 'Study Form' }"
+        :to="{ name: 'Multiomics Form' }"
       >
         <v-icon class="pr-1">
           mdi-arrow-left-circle
@@ -50,7 +50,6 @@ export default defineComponent({
         :disabled="!templateName"
         :to="{
           name: 'Submission Sample Editor',
-          params: { templateName },
         }"
       >
         <v-icon class="pr-1">
