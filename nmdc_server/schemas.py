@@ -79,7 +79,7 @@ class EnvoTerm(BaseModel):
 
 class AnnotatedBase(BaseModel):
     id: str
-    name: str
+    name: str = ""
     description: str = ""
     alternate_identifiers: List[str] = []
     annotations: Dict[str, AnnotationValue] = {}

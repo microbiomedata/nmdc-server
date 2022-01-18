@@ -1,5 +1,6 @@
 from typing import Any, Dict, List, Tuple
 
+from nmdc_schema.nmdc_data import get_nmdc_file_type_enums
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
@@ -12,10 +13,18 @@ file_type_map: Dict[str, Tuple[str, str]] = {}
 
 
 def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
+
     logger = get_logger(__name__)
     fields = set(DataObjectCreate.__fields__.keys()) | {"data_object_type"}
+    file_type_map: Dict[str, Tuple[str, str]] = {}
 
-    file_type_map = {f["id"]: (f["name"], f["description"]) for f in file_types}
+    # Load descriptors from mongo collection.
+    # TODO: Remove this section once all data_object_type have been converted
+    for val in file_types:
+        file_type_map[val["id"]] = (val["name"], val["description"])
+    # Load additional descriptors from schema
+    for val in get_nmdc_file_type_enums():
+        file_type_map[val["name"]] = (val["name"], val["description"])
 
     objects_without_type = 0
 
