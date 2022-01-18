@@ -28,8 +28,8 @@ setup(
         "requests",
         "sentry-sdk[celery,sqlalchemy]",
         "sqlalchemy>=1.4",
-        "starlette==0.17.1",
-        "typing-extensions==4.0.1",
+        "starlette",
+        "typing-extensions",
     ],
     include_package_data=True,
     entry_points="""
