@@ -1,12 +1,9 @@
-FROM tiangolo/uvicorn-gunicorn:python3.8-alpine3.10
+FROM tiangolo/uvicorn-gunicorn:python3.8
 LABEL org.opencontainers.image.source=https://github.com/microbiomedata/nmdc-server
 
-RUN apk update && \
-    apk add --virtual build-deps gcc python-dev musl-dev libressl-dev libffi-dev g++ && \
-    apk add postgresql-dev postgresql-client && \
-    apk add py-cryptography
+RUN apt-get update && apt-get install -y postgresql-client
 
-RUN pip install -U pip
+RUN pip install -U pip setuptools wheel
 COPY setup.py setup.cfg /app/
 RUN pip install -e /app
 
