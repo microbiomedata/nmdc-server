@@ -1,16 +1,17 @@
 <script lang="ts">
 import { defineComponent, ref } from '@vue/composition-api';
-import { studyForm } from '../store';
+import NmdcSchema from '@/data/nmdc-schema/jsonschema/nmdc.schema.json';
+import { studyForm, studyFormValid } from '../store';
 
 export default defineComponent({
   setup() {
-    const valid = ref(true);
     const formRef = ref();
 
     return {
       formRef,
       studyForm,
-      valid,
+      studyFormValid,
+      NmdcSchema,
     };
   },
 });
@@ -22,59 +23,79 @@ export default defineComponent({
       Study Information
     </div>
     <div class="text-h5">
-      Information about the study associated with your samples.
+      {{ NmdcSchema.$defs.Study.description }}
     </div>
     <v-form
       ref="formRef"
-      v-model="valid"
+      v-model="studyFormValid"
       class="my-6"
       style="max-width: 600px;"
     >
       <v-text-field
         v-model="studyForm.studyName"
+        :rules="[
+          v => !!v || 'Name is required',
+          v => v.length > 6 || 'Study name too short',
+        ]"
+        validate-on-blur
         label="Project / Study Name *"
-        hint="This is a description"
+        :hint="NmdcSchema.$defs.Study.properties.name.description"
         persistent-hint
-        required
         outlined
         dense
+        class="my-2"
       />
       <v-text-field
         v-model="studyForm.piName"
         label="Principal Investigator Name"
+        :hint="NmdcSchema.$defs.Study.properties.principal_investigator.description"
+        persistent-hint
         outlined
         dense
+        class="my-2"
       />
       <v-text-field
         v-model="studyForm.piEmail"
         label="Principal Investigator Email *"
+        :rules="[
+          v => !!v || 'E-mail is required',
+          v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+        ]"
+        type="email"
         required
         outlined
         dense
+        class="my-2"
       />
       <v-text-field
         v-model="studyForm.piOrcid"
         label="Principal Investigator ORCiD"
         outlined
         dense
+        class="my-2"
       />
       <v-text-field
         v-model="studyForm.linkOutWebpage"
         label="LinkOut webpage"
         outlined
         dense
+        class="my-2"
       />
       <v-textarea
         v-model="studyForm.description"
         label="Study Description"
+        :hint="NmdcSchema.$defs.Study.properties.description.description"
+        persistent-hint
         outlined
         dense
+        class="my-2"
       />
       <v-text-field
         v-model="studyForm.notes"
         label="Optional Notes"
         outlined
         dense
+        class="my-2"
       />
     </v-form>
     <div class="d-flex">
@@ -82,6 +103,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
+        :disabled="!studyFormValid"
         :to="{ name: 'Multiomics Form' }"
       >
         Go to next step

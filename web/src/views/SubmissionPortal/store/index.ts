@@ -1,10 +1,14 @@
 import Vue from 'vue';
-import CompositionApi, { reactive, ref } from '@vue/composition-api';
+import CompositionApi, { reactive, ref, shallowRef } from '@vue/composition-api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
+/**
+ * Study Form Step
+ */
+const studyFormValid = ref(false);
 const studyForm = reactive({
   studyName: '',
   piName: '',
@@ -16,6 +20,10 @@ const studyForm = reactive({
   notes: '',
 });
 
+/**
+ * Multi-Omics Form Step
+ */
+const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive({
   datasetDoi: '',
   alternativeNames: [],
@@ -24,13 +32,32 @@ const multiOmicsForm = reactive({
   JGIStudyId: '',
   NCBIBioProjectName: '',
   NCBIBioProjectId: '',
-  dataWasGenerated: false,
+  omicsProcessingTypes: [],
+});
+const multiOmicsAssociations = reactive({
+  emsl: false,
+  jgi: false,
+  doi: false,
 });
 
-const templateName = ref('MAM NMDC Dev Template' as keyof typeof HARMONIZER_TEMPLATES);
+/**
+ * Environment Package Step
+ */
+const templateName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
+
+/**
+ * DataHarmonizer Step
+ */
+const sampleData = shallowRef([]);
+const samplesValid = ref(false);
 
 export {
-  multiOmicsForm,
   studyForm,
+  studyFormValid,
+  multiOmicsForm,
+  multiOmicsAssociations,
+  multiOmicsFormValid,
   templateName,
+  sampleData,
+  samplesValid,
 };

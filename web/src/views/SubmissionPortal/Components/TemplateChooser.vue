@@ -7,7 +7,8 @@ export default defineComponent({
   setup() {
     return {
       templateName,
-      templates: Object.keys(HARMONIZER_TEMPLATES),
+      HARMONIZER_TEMPLATES,
+      templates: Object.keys(HARMONIZER_TEMPLATES) as (keyof typeof HARMONIZER_TEMPLATES)[],
     };
   },
 });
@@ -29,6 +30,7 @@ export default defineComponent({
         v-for="option in templates"
         :key="option"
         :value="option"
+        :disabled="HARMONIZER_TEMPLATES[option].status === 'disabled'"
         :label="option"
       />
     </v-radio-group>

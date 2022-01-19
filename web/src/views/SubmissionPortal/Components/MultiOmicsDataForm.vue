@@ -1,16 +1,26 @@
 <script lang="ts">
 import { defineComponent, ref } from '@vue/composition-api';
-import { multiOmicsForm } from '../store';
+import {
+  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations,
+} from '../store';
 
 export default defineComponent({
   setup() {
-    const valid = ref(true);
     const formRef = ref();
+
+    function reValidate() {
+      formRef.value.validate();
+    }
 
     return {
       formRef,
       multiOmicsForm,
-      valid,
+      multiOmicsAssociations,
+      multiOmicsFormValid,
+      /* functions */
+      reValidate,
+      /* Rules functions */
+      // datasetDoiRules,
     };
   },
 });
@@ -26,17 +36,67 @@ export default defineComponent({
     </div>
     <v-form
       ref="formRef"
-      v-model="valid"
-      class="my-6"
+      v-model="multiOmicsFormValid"
+      class="my-6 mb-10"
       style="max-width: 600px;"
     >
+      <!-- DOI -->
+      <v-checkbox
+        v-model="multiOmicsAssociations.doi"
+        label="Data has already been generated"
+        hide-details
+        class="mb-2 mt-0"
+        @change="reValidate"
+      />
       <v-text-field
+        v-if="multiOmicsAssociations.doi"
         v-model="multiOmicsForm.datasetDoi"
-        label="Dataset DOI *"
-        required
+        :rules="[ v => !!v || 'DOI is required when data has been generated already' ]"
+        label="Dataset DOI (required)"
+        validate-on-blur
         outlined
         dense
       />
+
+      <!-- EMSL -->
+      <v-checkbox
+        v-model="multiOmicsAssociations.emsl"
+        label="Study is associated with EMSL"
+        hide-details
+        class="mb-2 mt-0"
+        @change="reValidate"
+      />
+      <v-text-field
+        v-if="multiOmicsAssociations.emsl"
+        v-model="multiOmicsForm.studyNumber"
+        :rules="[ v => !!v || 'EMSL Study Number is required when associated' ]"
+        label="EMSL Proposal / Study Number (required)"
+        outlined
+        validate-on-blur
+        dense
+      />
+
+      <!-- JGI -->
+      <v-checkbox
+        v-model="multiOmicsAssociations.jgi"
+        label="Study is associated with JGI"
+        hide-details
+        class="mb-2 mt-0"
+      />
+      <v-text-field
+        v-if="multiOmicsAssociations.jgi"
+        v-model="multiOmicsForm.JGIStudyId"
+        :rules="[ v => !!v || 'JGI Study ID is required when associated' ]"
+        label="JGI Study ID (required)"
+        outlined
+        validate-on-blur
+        dense
+      />
+      <div
+        v-else
+        class="my-5"
+      />
+
       <v-combobox
         v-model="multiOmicsForm.alternativeNames"
         label="Alternative Names"
@@ -48,24 +108,12 @@ export default defineComponent({
         dense
       />
       <v-text-field
-        v-model="multiOmicsForm.studyNumber"
-        label="EMSL Proposal / Study Number *"
-        outlined
-        dense
-      />
-      <v-text-field
         v-model="multiOmicsForm.GOLDStudyId"
         label="GOLD Study ID"
-        required
         outlined
         dense
       />
-      <v-text-field
-        v-model="multiOmicsForm.JGIStudyId"
-        label="JGI Study ID"
-        outlined
-        dense
-      />
+
       <v-text-field
         v-model="multiOmicsForm.NCBIBioProjectName"
         label="NCBI Bio Project Name"
@@ -78,19 +126,40 @@ export default defineComponent({
         outlined
         dense
       />
-      <v-radio-group
-        v-model="multiOmicsForm.dataWasGenerated"
-        label="Data has already been generated?"
-      >
-        <v-radio
-          :value="false"
-          label="No"
-        />
-        <v-radio
-          :value="true"
-          label="Yes"
-        />
-      </v-radio-group>
+
+      <p class="text-body-2 grey--text text--darken-2">
+        Check all data types associated with this study
+      </p>
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Metagenome (JGI)"
+        value="mg"
+        hide-details
+      />
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Metatranscriptome (JGI)"
+        value="mt"
+        hide-details
+      />
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Metaproteome (EMSL)"
+        value="mp"
+        hide-details
+      />
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Metabolome (EMSL)"
+        value="mb"
+        hide-details
+      />
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Natural Organic Matter (FT-ICR MS) (EMSL)"
+        value="nom"
+        hide-details
+      />
     </v-form>
     <div class="d-flex">
       <v-btn
@@ -107,6 +176,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
+        :disabled="!multiOmicsFormValid"
         :to="{ name: 'Environment Package' }"
       >
         Go to next step

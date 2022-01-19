@@ -1,6 +1,8 @@
 <script lang="ts">
 import { computed, defineComponent } from '@vue/composition-api';
-import { studyForm, multiOmicsForm, templateName } from '../store';
+import {
+  studyForm, multiOmicsForm, templateName, sampleData,
+} from '../store';
 
 export default defineComponent({
   setup() {
@@ -9,6 +11,7 @@ export default defineComponent({
         template: templateName.value,
         studyForm,
         multiOmicsForm,
+        sampleData: `{ ${sampleData.value.length} samples }`,
       }, null, 2);
       return value;
     });

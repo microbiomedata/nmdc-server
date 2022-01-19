@@ -60,7 +60,8 @@ export default defineComponent({
       const fieldSchemaName = getField(props.field, props.table);
       const { schemaName } = types[props.table];
       if (schemaName !== undefined) {
-        const schema = NmdcSchema.definitions[schemaName];
+        // @ts-ignore
+        const schema = NmdcSchema.$defs[schemaName];
         // @ts-ignore
         return schema.properties?.[fieldSchemaName.schemaName || props.field]?.description || '';
       }

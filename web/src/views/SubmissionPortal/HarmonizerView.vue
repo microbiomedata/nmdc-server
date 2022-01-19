@@ -1,20 +1,22 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick,
+  computed, defineComponent, ref, nextTick, watch,
 } from '@vue/composition-api';
 import { HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi } from './harmonizerApi';
 
-import { templateName } from './store';
+import { templateName, samplesValid, sampleData } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
 export default defineComponent({
   components: { SubmissionStepper },
 
-  setup() {
-    const iframeElement = ref();
-    const harmonizerApi = useHarmonizerApi(iframeElement);
+  setup(_, { root }) {
+    const harmonizerElement = ref();
+    const harmonizerApi = useHarmonizerApi(harmonizerElement);
+
     const jumpToModel = ref();
     const highlightedValidationError = ref('');
+    const columnVisibility = ref('all');
 
     async function jumpTo(columnName: string) {
       harmonizerApi.jumpTo(columnName);
@@ -24,6 +26,16 @@ export default defineComponent({
 
     function focus() {
       window.focus();
+    }
+
+    async function validate() {
+      samplesValid.value = await harmonizerApi.validate();
+    }
+
+    async function persist() {
+      const data = await harmonizerApi.exportJson();
+      sampleData.value = data;
+      root.$router.push({ name: 'Validate And Submit' });
     }
 
     function errorClick(row: number, column: number) {
@@ -58,10 +70,16 @@ export default defineComponent({
       return [];
     });
 
+    watch(columnVisibility, () => {
+      harmonizerApi.changeVisibility(columnVisibility.value);
+    });
+
     return {
-      iframeElement,
+      columnVisibility,
+      harmonizerElement,
       jumpToModel,
       harmonizerApi,
+      samplesValid,
       templateName,
       templateFolderName,
       fields,
@@ -70,8 +88,10 @@ export default defineComponent({
       IFRAME_BASE,
       /* methods */
       errorClick,
+      persist,
       focus,
       jumpTo,
+      validate,
     };
   },
 });
@@ -108,38 +128,74 @@ export default defineComponent({
           @focus="focus"
           @change="jumpTo"
         />
+        <v-menu
+          offset-y
+          nudge-bottom="4px"
+          :close-on-click="true"
+        >
+          <template #activator="{on, attrs}">
+            <v-btn
+              outlined
+              class="mr-2"
+              v-bind="attrs"
+              v-on="on"
+            >
+              <v-icon class="pr-1">
+                mdi-eye
+              </v-icon>
+              <v-icon>
+                mdi-menu-down
+              </v-icon>
+            </v-btn>
+          </template>
+          <v-card
+            class="py-1 px-2"
+            outlined
+          >
+            <v-radio-group
+              v-model="columnVisibility"
+              label="Column visibility"
+            >
+              <v-radio
+                label="All columns"
+                value="all"
+              />
+              <v-radio
+                label="Required columns"
+                value="required"
+              />
+              <v-radio
+                label="Required and Recommended columns"
+                value="recommended"
+              />
+            </v-radio-group>
+          </v-card>
+        </v-menu>
         <v-spacer />
         <v-btn
           color="accent"
           class="mr-2"
-          @click="harmonizerApi.validate"
+          small
+          @click="validate"
         >
           <v-icon class="pr-2">
             mdi-refresh
           </v-icon>
           Validate
         </v-btn>
-        <v-text-field
-          class="shrink mr-2"
-          dense
-          outlined
-          readonly
-          hide-details
-          label="Schema template"
-          :value="templateName"
-        />
         <v-btn
           class="mr-2"
           color="grey"
           outlined
+          small
           rel="noopener noreferrer"
           target="_blank"
           :href="`${IFRAME_BASE}/template/${templateFolderName}/reference.html`"
         >
-          <v-icon class="pr-2">
-            mdi-information
+          {{ templateName }} Reference
+          <v-icon class="pl-1">
+            mdi-open-in-new
           </v-icon>
-          Schema reference
         </v-btn>
       </div>
       <div
@@ -170,7 +226,7 @@ export default defineComponent({
     </div>
     <div style="height: calc(100vh - 260px);">
       <iframe
-        ref="iframeElement"
+        ref="harmonizerElement"
         title="Data Harmonizer"
         width="100%"
         height="100%"
@@ -193,7 +249,8 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :to="{ name: 'Validate And Submit' }"
+        :disabled="!samplesValid"
+        @click="persist"
       >
         <v-icon class="pr-1">
           mdi-arrow-right-circle
