@@ -271,11 +271,11 @@ class BiosampleBase(AnnotatedBase):
     mod_date: Optional[DateType]
 
     collection_date: Optional[DateType]
-    ecosystem: str
-    ecosystem_category: str
-    ecosystem_type: str
-    ecosystem_subtype: str
-    specific_ecosystem: str
+    ecosystem: Optional[str]
+    ecosystem_category: Optional[str]
+    ecosystem_type: Optional[str]
+    ecosystem_subtype: Optional[str]
+    specific_ecosystem: Optional[str]
 
 
 class BiosampleCreate(BiosampleBase):
