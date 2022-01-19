@@ -44,9 +44,12 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
                 "https://data.microbiomedata.org", "https://data.microbiomedata.org/data"
             )
         if "data_object_type" in obj:
-            obj["file_type"], obj["file_type_description"] = file_type_map[
-                obj.pop("data_object_type")
-            ]
+            enum_type = obj.pop("data_object_type")
+            type_tuple = file_type_map.get(enum_type, None)
+            if type_tuple:
+                obj["file_type"], obj["file_type_description"] = type_tuple
+            else:
+                logger.warning(f"Unknown data_object_type {enum_type} for data_object {obj['id']}")
         else:
             objects_without_type += 1
 
