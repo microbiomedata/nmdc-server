@@ -1,3 +1,5 @@
+// const path = require('path');
+
 module.exports = {
   publicPath: '/',
   transpileDependencies: [
@@ -8,7 +10,15 @@ module.exports = {
       warnings: true,
       errors: true,
     },
-    proxy: 'http://localhost:8000',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000/',
+      },
+      '/DataHarmonizer': {
+        target: 'http://localhost:3333',
+        pathRewrite: { '^/DataHarmonizer': '' },
+      },
+    },
   },
   chainWebpack: (config) => {
     // https://webpack.js.org/configuration/output/#outputstrictmoduleexceptionhandling

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "target": "esnext",
+    "target": "es2018",
     "module": "esnext",
     "strict": true,
     "jsx": "preserve",
@@ -13,10 +13,6 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "baseUrl": ".",
-    "types": [
-      "vuetify",
-      "webpack-env"
-    ],
     "paths": {
       "@/*": [
         "src/*"
@@ -28,11 +24,6 @@
       "dom.iterable",
       "scripthost"
     ],
-    "typeRoots": [
-      "src/@types",
-      "./node_modules/@types",
-      "./node_modules/vuetify/types"
-    ]
   },
   "include": [
     "src/**/*.ts",

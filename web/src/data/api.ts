@@ -37,7 +37,7 @@ export type entityType = 'biosample'
  * we get build-time typescript support for the dynamic types coming
  * out of an entirely different repository.
  */
-export type entitySchemaType = keyof typeof NmdcSchema.definitions;
+export type entitySchemaType = keyof typeof NmdcSchema.$defs;
 
 export interface BaseSearchResult {
   id: string;
