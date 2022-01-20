@@ -37,7 +37,8 @@
     "vue-router": "^3.5.3",
     "vue2-leaflet": "^2.7.1",
     "vue2-leaflet-markercluster": "^3.1.0",
-    "vuetify": "^2.6.1"
+    "vuetify": "^2.6.1",
+    "xlsx": "^0.17.5"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",

@@ -74,6 +74,10 @@ export default defineComponent({
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
+    function hydrate() {
+      harmonizerApi.loadData(sampleData.value);
+    }
+
     return {
       columnVisibility,
       harmonizerElement,
@@ -88,6 +92,7 @@ export default defineComponent({
       IFRAME_BASE,
       /* methods */
       errorClick,
+      hydrate,
       persist,
       focus,
       jumpTo,
@@ -232,6 +237,7 @@ export default defineComponent({
         height="100%"
         :src="`${IFRAME_BASE}/main.html?minified=true&template=${templateFolderName}`"
         sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals allow-downloads allow-forms"
+        @load="hydrate"
       />
     </div>
     <div class="d-flex grow ma-2">
@@ -255,7 +261,12 @@ export default defineComponent({
         <v-icon class="pr-1">
           mdi-arrow-right-circle
         </v-icon>
-        Go to next step
+        <span v-if="samplesValid">
+          Go to next step
+        </span>
+        <span v-else>
+          Validate to proceed
+        </span>
       </v-btn>
     </div>
   </div>

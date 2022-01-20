@@ -34,7 +34,7 @@ export default defineComponent({
         >
       </a>
       <v-spacer />
-      <v-btn
+      <!-- <v-btn
         depressed
         small
         :disabled="!stateRefs.user.value"
@@ -48,7 +48,7 @@ export default defineComponent({
         >
           mdi-upload
         </v-icon>
-      </v-btn>
+      </v-btn> -->
       <v-btn
         depressed
         small

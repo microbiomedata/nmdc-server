@@ -32,12 +32,23 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
 
   /* Promises for async methods */
   let validationPromiseResolvers: ((valid: boolean) => void)[] = [];
-  let exportJsonPromiseResolvers: ((data: object) => void)[] = [];
+  let exportJsonPromiseResolvers: ((data: any[][]) => void)[] = [];
 
   const postMessage = (message: any) => element.value.contentWindow?.postMessage(message, '*');
 
   function changeVisibility(value: string) {
     postMessage({ type: 'changeVisibility', value });
+  }
+
+  function exportJson() {
+    return new Promise<any[][]>((resolve) => {
+      exportJsonPromiseResolvers.push(resolve);
+      postMessage({ type: 'exportJson' });
+    });
+  }
+
+  function exportTable() {
+    postMessage({ type: 'exportTable' });
   }
 
   function jumpTo(columnName: string) {
@@ -46,6 +57,14 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
 
   function jumpToRowCol(row: number, column: number) {
     postMessage({ type: 'jumpToRowCol', row, column });
+  }
+
+  function loadData(data: any[][]) {
+    postMessage({ type: 'loadData', data });
+  }
+
+  function openFile(files: File[]) {
+    postMessage({ type: 'open', files });
   }
 
   function setupTemplate(folder: string) {
@@ -57,21 +76,6 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
       validationPromiseResolvers.push(resolve);
       postMessage({ type: 'validate' });
     });
-  }
-
-  function openFile(files: File[]) {
-    postMessage({ type: 'open', files });
-  }
-
-  function exportJson() {
-    return new Promise<object>((resolve) => {
-      exportJsonPromiseResolvers.push(resolve);
-      postMessage({ type: 'exportJson' });
-    });
-  }
-
-  function exportTable() {
-    postMessage({ type: 'exportTable' });
   }
 
   function subscribe() {
@@ -99,6 +103,7 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
     exportTable,
     jumpTo,
     jumpToRowCol,
+    loadData,
     openFile,
     setupTemplate,
     validate,

@@ -48,7 +48,7 @@ const templateName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
 /**
  * DataHarmonizer Step
  */
-const sampleData = shallowRef([]);
+const sampleData = shallowRef([] as any[][]);
 const samplesValid = ref(false);
 
 export {

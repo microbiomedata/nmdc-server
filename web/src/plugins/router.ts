@@ -73,7 +73,6 @@ export default new VueRouter({
           name: 'Submission Sample Editor',
           component: HarmonizerView,
           path: 'samples',
-          props: true,
         },
       ],
     },
