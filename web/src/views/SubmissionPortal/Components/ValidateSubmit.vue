@@ -33,7 +33,7 @@ export default defineComponent({
     }
 
     function submit() {
-      console.log('whatever');
+      // console.log('whatever');
     }
 
     return {
