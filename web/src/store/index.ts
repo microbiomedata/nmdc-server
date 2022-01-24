@@ -100,13 +100,17 @@ async function init(_router: VueRouter) {
 function makeNodeMap(node: EnvoNode) {
   unreactive.nodeMapId[node.id] = node;
   unreactive.nodeMapLabel[node.label] = node;
-  node.children.forEach(makeNodeMap);
+  if (node.children?.length === 0) {
+    Vue.delete(node, 'children');
+  } else {
+    node.children?.forEach(makeNodeMap);
+  }
 }
 async function getTreeData() {
   if (state.treeData === null) {
     const resp = await api.getEnvoTrees();
     state.treeData = resp;
-    Object.values(resp.trees).forEach((nodeList) => nodeList.forEach(makeNodeMap));
+    Object.values(state.treeData.trees).forEach((nodeList) => nodeList.forEach(makeNodeMap));
   }
 }
 

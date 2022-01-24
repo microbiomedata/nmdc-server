@@ -45,7 +45,7 @@ export default defineComponent({
     const tree = computed(() => {
       let t = stateRefs.treeData.value?.trees[`${props.field}_id`];
       /* Eliminate nodes with only one child from the top */
-      while (t && t?.length === 1 && t[0].children.length) {
+      while (t && t?.length === 1 && t[0].children?.length) {
         t = t[0].children;
       }
       return t;

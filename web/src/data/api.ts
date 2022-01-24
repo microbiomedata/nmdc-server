@@ -134,7 +134,7 @@ export interface StudySearchResults extends BaseSearchResult {
   relevant_protocols: string[];
   ess_dive_datasets: string[];
   has_credit_associations: {
-    applied_role: string;
+    applied_roles: string[];
     applies_to_person: {
       name: string;
       orcid: string;
@@ -265,7 +265,7 @@ export interface DataObjectFilter {
 export interface EnvoNode {
   id: string;
   label: string;
-  children: EnvoNode[];
+  children?: EnvoNode[];
 }
 
 export interface EnvoTree {

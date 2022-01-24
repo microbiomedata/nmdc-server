@@ -164,9 +164,9 @@ class EnvironmentSankeyAggregation(BaseModel):
     count: int
     ecosystem: Optional[str]
     ecosystem_category: Optional[str]
-    ecosystem_type: str
-    ecosystem_subtype: str
-    specific_ecosystem: str
+    ecosystem_type: Optional[str]
+    ecosystem_subtype: Optional[str]
+    specific_ecosystem: Optional[str]
 
     class Config:
         orm_mode = True
@@ -198,7 +198,7 @@ class OrcidPerson(BaseModel):
 
 
 class CreditAssociation(BaseModel):
-    applied_role: str
+    applied_roles: List[str]
     applies_to_person: OrcidPerson
 
 

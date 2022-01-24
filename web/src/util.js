@@ -74,7 +74,7 @@ export function makeTree(data, heirarchy) {
     heirarchyKey: '',
     count: 0,
     depth: 0,
-    children: [],
+    // children: null,
   };
   const nodeMap = {
     [root.id]: root,
@@ -99,10 +99,14 @@ export function makeTree(data, heirarchy) {
           heirarchyKey: heirarchy[depth],
           count: 0,
           depth: depth + 1,
-          children: [],
+          // children: null,
         };
         nodeMap[nodeKey] = node;
-        parent.children.push(node);
+        if (!('children' in parent)) {
+          parent.children = [node];
+        } else {
+          parent.children.push(node);
+        }
         topoSort.push(node);
       }
       node.count += item.count;

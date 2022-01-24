@@ -264,8 +264,16 @@ export default defineComponent({
                 @selected="$router.push({ name: 'Sample', params: { id: $event }})"
               >
                 <template #subtitle="props">
-                  <template v-if="props.result.alternate_identifiers.length">
-                    <span class="pr-2">Identifiers:</span>
+                  <span class="pr-2">Study ID:</span>
+                  <router-link
+                    :to="{name: 'Study', params: { id: props.result.study_id }}"
+                    class="pr-2 grey--text text--darken-2"
+                    v-text="props.result.study_id"
+                  />
+                  <template
+                    v-if="props.result.alternate_identifiers.length"
+                  >
+                    <span class="pr-2">Sample Identifiers:</span>
                     <a
                       v-for="id in props.result.alternate_identifiers"
                       :key="id"
@@ -274,9 +282,6 @@ export default defineComponent({
                       target="_blank"
                       rel="noopener noreferrer"
                     >{{ id }}</a>
-                  </template>
-                  <template v-else>
-                    Study ID: {{ props.result.id }}
                   </template>
                 </template>
                 <template #item-content="props">
