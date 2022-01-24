@@ -13,6 +13,7 @@ import FilterList from '@/components/Presentation/FilterList.vue';
 import FilterSankeyTree from '@/components/FilterSankeyTree.vue';
 import FilterKegg from '@/components/FilterKegg.vue';
 import FilterTree from '@/components/FilterTree.vue';
+import { urlify } from '@/data/utils';
 import { AttributeSummary, Condition, entityType } from '@/data/api';
 
 export default defineComponent({
@@ -68,7 +69,9 @@ export default defineComponent({
       return '';
     });
 
-    return { description, fieldDisplayName, getField };
+    return {
+      description, fieldDisplayName, getField, urlify,
+    };
   },
 });
 </script>
@@ -94,9 +97,8 @@ export default defineComponent({
     <v-card-text
       v-if="description"
       class="py-1 text-caption"
-    >
-      {{ description }}
-    </v-card-text>
+      v-html="urlify(description)"
+    />
     <template v-if="isOpen">
       <filter-list
         v-if="summary.type === 'string'"

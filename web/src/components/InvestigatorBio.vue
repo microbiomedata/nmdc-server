@@ -21,7 +21,7 @@ export default defineComponent({
       .find((m) => m.applies_to_person.name === props.item.principal_investigator_name));
     const piOrcid = computed(() => getOrcid(pi.value));
     return {
-      pi, piOrcid, team, getOrcid,
+      piOrcid, team, getOrcid,
     };
   },
 });
@@ -45,7 +45,7 @@ export default defineComponent({
       >
         <v-card flat>
           <div class="text-h3">
-            {{ pi.applies_to_person.name }}
+            {{ item.principal_investigator_name }}
           </div>
           <div class="text-h5 py-2">
             Principal investigator
@@ -72,6 +72,7 @@ export default defineComponent({
             v-for="member in team"
             :key="member.applies_to_person.orcid"
             bottom
+            max-width="450px"
             nudge-bottom="34"
           >
             <template #activator="{ on, attrs }">
@@ -88,6 +89,7 @@ export default defineComponent({
               class="pa-2"
             >
               <v-card-title>{{ member.applies_to_person.name }}</v-card-title>
+              <v-card-subtitle>CRediT: {{ member.applied_roles.join(', ') }}</v-card-subtitle>
               <v-btn
                 text
                 color="green"

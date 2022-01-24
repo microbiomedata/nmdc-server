@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Type, cast
 
-from sqlalchemy import Column, func
+from sqlalchemy import Column, func, or_
 from sqlalchemy.orm import Session
 
 from nmdc_server import models, query, schemas
@@ -139,6 +139,7 @@ def get_sankey_aggregation(
     subquery = biosample_query.query(db).subquery()
     rows = (
         db.query(func.count().label("count"), *columns)
+        .filter(or_(*[column.isnot(None) for column in columns]))
         .join(subquery, models.Biosample.id == subquery.c.id)
         .group_by(*columns)
     )
