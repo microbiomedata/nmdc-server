@@ -105,7 +105,6 @@ export default defineComponent({
       v-else-if="tree !== null"
       :value="selected"
       :options="tree"
-      :max-height="425"
       :normailzer="normalizer"
       multiple
       always-open

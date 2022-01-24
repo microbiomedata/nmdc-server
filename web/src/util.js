@@ -74,7 +74,8 @@ export function makeTree(data, heirarchy) {
     heirarchyKey: '',
     count: 0,
     depth: 0,
-    // children: null,
+    children: undefined,
+    isDefaultExpanded: false,
   };
   const nodeMap = {
     [root.id]: root,
@@ -99,13 +100,16 @@ export function makeTree(data, heirarchy) {
           heirarchyKey: heirarchy[depth],
           count: 0,
           depth: depth + 1,
-          // children: null,
+          children: undefined,
+          isDefaultExpanded: false,
         };
         nodeMap[nodeKey] = node;
-        if (!('children' in parent)) {
+        if (parent.children === undefined) {
           parent.children = [node];
+          parent.isDefaultExpanded = true;
         } else {
           parent.children.push(node);
+          parent.isDefaultExpanded = false;
         }
         topoSort.push(node);
       }

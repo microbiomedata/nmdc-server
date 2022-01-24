@@ -22,6 +22,7 @@ module.exports = {
     'spaced-comment': 'off',
     'vuejs-accessibility/anchor-has-content': 'off',
     'vuejs-accessibility/click-events-have-key-events': 'off',
+    'vue/no-v-html': 'off',
     camelcase: 0,
     // we should always disable console logs and debugging in production
     'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',

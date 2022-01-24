@@ -103,6 +103,7 @@ export default Vue.extend({
       multiple
       always-open
       class="ma-2 mt-4"
+      :max-height="425"
       :value="value"
       @input="setSelected"
     >
@@ -115,8 +116,8 @@ export default Vue.extend({
 
 <style lang="scss" scoped>
 .tree-overflow {
-  max-height: 475px;
-  height: 475px;
+  max-height: 525px;
+  height: 525px;
   overflow-y: auto;
 }
 </style>

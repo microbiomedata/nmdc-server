@@ -104,6 +104,9 @@ function makeNodeMap(node: EnvoNode) {
     Vue.delete(node, 'children');
   } else {
     node.children?.forEach(makeNodeMap);
+    if (node.children?.length === 1) {
+      Vue.set(node, 'isExpanded', true);
+    }
   }
 }
 async function getTreeData() {

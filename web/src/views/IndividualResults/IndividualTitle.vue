@@ -2,6 +2,7 @@
 import { defineComponent, PropType } from '@vue/composition-api';
 
 import { BaseSearchResult } from '@/data/api';
+import { urlify } from '@/data/utils';
 import { fieldDisplayName } from '@/util';
 
 export default defineComponent({
@@ -16,7 +17,7 @@ export default defineComponent({
     },
   },
   setup() {
-    return { fieldDisplayName };
+    return { fieldDisplayName, urlify };
   },
 });
 </script>
@@ -41,8 +42,8 @@ export default defineComponent({
           v-if="item[subtitleKey]"
           class="subtitle-1"
         >
-          <span class="font-weight-bold">{{ fieldDisplayName(subtitleKey) }}</span>
-          {{ item[subtitleKey] }}
+          <span class="font-weight-bold pr-1">{{ fieldDisplayName(subtitleKey) }}</span>
+          <span v-html="urlify(item[subtitleKey])" />
         </div>
         <slot />
       </v-col>

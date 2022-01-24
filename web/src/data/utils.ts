@@ -46,6 +46,26 @@ function humanFileSize(bytes: number, si = false, dp = 1) {
   return `${_bytes.toFixed(dp)} ${units[u]}`;
 }
 
+/**
+ * from https://stackoverflow.com/questions/6234773/can-i-escape-html-special-chars-in-javascript
+ */
+export function escapeHtml(unsafe: string) {
+  return unsafe
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/'/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+/**
+ * Based on https://stackoverflow.com/questions/1500260/detect-urls-in-text-with-javascript
+ */
+export function urlify(text: string) {
+  const urlRegex = /(https?:\/\/[a-zA-Z0-9./-]+)/g;
+  return escapeHtml(text).replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+}
+
 export {
   humanFileSize,
   removeCondition,
