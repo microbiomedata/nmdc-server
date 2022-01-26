@@ -18,7 +18,9 @@ data_url_hosts = [
 ]
 
 
-def get_local_data_url(url: str) -> Optional[str]:
+def get_local_data_url(url: Optional[str]) -> Optional[str]:
+    if not url:
+        return None
     for r, v in data_url_hosts:
         if r.match(url):
             return r.sub(v, url)

@@ -386,20 +386,9 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
 
     for file in bulk_download.files:  # type: ignore
         data_object = file.data_object
-
-        # TODO: Support arbitrary urls
-        if data_object.url is None or not data_object.url.startswith(
-            "https://data.microbiomedata.org/data"
-        ):
-            if data_object and data_object.url is None:
-                logger.warning("Data object url is empty")
-            if data_object and data_object.url is not None:
-                logger.warning(f"Data object url is {data_object.url}")
-            continue
-
         url = get_local_data_url(data_object.url)
         if url is None:
-            logger.warning("Unknown host in data url")
+            logger.warning(f"Data object url for {file.path} was {data_object.url}")
             continue
 
         # TODO: add crc checksums to support retries
