@@ -7,11 +7,28 @@ export default defineComponent({
   setup() {
     const formRef = ref();
 
+    function addContributor() {
+      studyForm.contributors.push({
+        name: '',
+        orcid: '',
+        roles: [],
+      });
+    }
+
+    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
+      return [
+        (v: string) => !!v || msg,
+        ...otherRules,
+      ];
+    }
+
     return {
       formRef,
       studyForm,
       studyFormValid,
       NmdcSchema,
+      addContributor,
+      requiredRules,
     };
   },
 });
@@ -29,14 +46,13 @@ export default defineComponent({
       ref="formRef"
       v-model="studyFormValid"
       class="my-6"
-      style="max-width: 600px;"
+      style="max-width: 1000px;"
     >
       <v-text-field
         v-model="studyForm.studyName"
-        :rules="[
-          v => !!v || 'Name is required',
+        :rules="requiredRules('Name is required',[
           v => v.length > 6 || 'Study name too short',
-        ]"
+        ])"
         validate-on-blur
         label="Project / Study Name *"
         :hint="NmdcSchema.$defs.Study.properties.name.description"
@@ -45,28 +61,29 @@ export default defineComponent({
         dense
         class="my-2"
       />
-      <v-text-field
-        v-model="studyForm.piName"
-        label="Principal Investigator Name"
-        :hint="NmdcSchema.$defs.Study.properties.principal_investigator.description"
-        persistent-hint
-        outlined
-        dense
-        class="my-2"
-      />
-      <v-text-field
-        v-model="studyForm.piEmail"
-        label="Principal Investigator Email *"
-        :rules="[
-          v => !!v || 'E-mail is required',
-          v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
-        ]"
-        type="email"
-        required
-        outlined
-        dense
-        class="my-2"
-      />
+      <div class="d-flex">
+        <v-text-field
+          v-model="studyForm.piName"
+          label="Principal Investigator Name"
+          :hint="NmdcSchema.$defs.Study.properties.principal_investigator.description"
+          persistent-hint
+          outlined
+          dense
+          class="my-2 mr-4"
+        />
+        <v-text-field
+          v-model="studyForm.piEmail"
+          label="Principal Investigator Email *"
+          :rules="requiredRules('E-mail is required',[
+            v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+          ])"
+          type="email"
+          required
+          outlined
+          dense
+          class="my-2"
+        />
+      </div>
       <v-text-field
         v-model="studyForm.piOrcid"
         label="Principal Investigator ORCiD"
@@ -97,7 +114,72 @@ export default defineComponent({
         dense
         class="my-2"
       />
+      <div class="text-h4">
+        Contributors
+      </div>
+      <div class="text-body-1 mb-2">
+        {{ NmdcSchema.$defs.Person.description }}
+      </div>
+      <div
+        v-for="contributor, i in studyForm.contributors"
+        :key="`contributor${i}`"
+        class="d-flex"
+      >
+        <v-card class="d-flex flex-column grow pa-4 mb-4">
+          <div class="d-flex">
+            <v-text-field
+              v-model="contributor.name"
+              :rules="requiredRules('Full name is required')"
+              label="Full name *"
+              :hint="NmdcSchema.$defs.Person.properties.name.description"
+              outlined
+              dense
+              persistent-hint
+              class="mb-2 mr-3"
+            />
+            <v-combobox
+              v-model="contributor.roles"
+              :rules="[(v) => v.length >= 1 || 'At least one role is required']"
+              label="Roles *"
+              hint="CRediT roles associated with this contributor"
+              deletable-chips
+              multiple
+              outlined
+              chips
+              small-chips
+              dense
+              persistent-hint
+              :style="{ maxWidth: '400px'}"
+            />
+          </div>
+          <v-text-field
+            v-model="contributor.orcid"
+            :rules="requiredRules('ORCiD is required')"
+            :hint="NmdcSchema.$defs.Person.properties.id.description"
+            label="ORCiD *"
+            outlined
+            persistent-hint
+            dense
+          />
+        </v-card>
+        <v-btn
+          icon
+          @click="studyForm.contributors.splice(i, 1)"
+        >
+          <v-icon>mdi-minus-circle</v-icon>
+        </v-btn>
+      </div>
+      <v-btn
+        depressed
+        @click="addContributor"
+      >
+        <v-icon class="pr-1">
+          mdi-plus-circle
+        </v-icon>
+        Add Contributor
+      </v-btn>
     </v-form>
+    <strong>* indicates required field</strong>
     <div class="d-flex">
       <v-spacer />
       <v-btn
