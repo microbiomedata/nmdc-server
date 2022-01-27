@@ -18,6 +18,11 @@ const studyForm = reactive({
   studyDate: null,
   description: '',
   notes: '',
+  contributors: [] as {
+    name: string;
+    orcid: string;
+    roles: string[];
+  }[],
 });
 
 /**
@@ -26,13 +31,13 @@ const studyForm = reactive({
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive({
   datasetDoi: '',
-  alternativeNames: [],
+  alternativeNames: [] as string[],
   studyNumber: '',
   GOLDStudyId: '',
   JGIStudyId: '',
   NCBIBioProjectName: '',
   NCBIBioProjectId: '',
-  omicsProcessingTypes: [],
+  omicsProcessingTypes: [] as string[],
 });
 const multiOmicsAssociations = reactive({
   emsl: false,

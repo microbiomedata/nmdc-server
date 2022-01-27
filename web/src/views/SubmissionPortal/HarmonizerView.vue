@@ -7,6 +7,25 @@ import { HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi } from './harmonize
 import { templateName, samplesValid, sampleData } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
+const ColorKey = {
+  required: {
+    label: 'Required field',
+    color: 'yellow',
+  },
+  recommended: {
+    label: 'Recommended field',
+    color: 'plum',
+  },
+  invalidCell: {
+    label: 'Invalid cell',
+    color: '#ffcccb',
+  },
+  emptyCell: {
+    label: 'Empty invalid cell',
+    color: '#ff91a4',
+  },
+};
+
 export default defineComponent({
   components: { SubmissionStepper },
 
@@ -79,6 +98,7 @@ export default defineComponent({
     }
 
     return {
+      ColorKey,
       columnVisibility,
       harmonizerElement,
       jumpToModel,
@@ -162,23 +182,42 @@ export default defineComponent({
               label="Column visibility"
             >
               <v-radio
-                label="All columns"
                 value="all"
-              />
+              >
+                <template #label>
+                  <div class="black--text">
+                    All Columns
+                  </div>
+                </template>
+              </v-radio>
               <v-radio
-                label="Required columns"
                 value="required"
-              />
+              >
+                <template #label>
+                  <div class="black--text">
+                    <span :style="{ 'background-color': ColorKey.required.color }">Required</span>
+                    columns
+                  </div>
+                </template>
+              </v-radio>
               <v-radio
-                label="Required and Recommended columns"
                 value="recommended"
-              />
+              >
+                <template #label>
+                  <div class="black--text">
+                    <span :style="{ 'background-color': ColorKey.required.color }">Required</span>
+                    and
+                    <span :style="{ 'background-color': ColorKey.recommended.color }">recommended</span>
+                    columns
+                  </div>
+                </template>
+              </v-radio>
             </v-radio-group>
           </v-card>
         </v-menu>
         <v-spacer />
         <v-btn
-          color="accent"
+          color="primary"
           class="mr-2"
           small
           @click="validate"
@@ -251,6 +290,19 @@ export default defineComponent({
         </v-icon>
         Go to previous step
       </v-btn>
+      <v-spacer />
+      <div class="d-flex align-center">
+        <span class="mr-1">Color key</span>
+        <v-chip
+          v-for="val in ColorKey"
+          :key="val.label"
+          :style="{ backgroundColor: val.color, opacity: 1 }"
+          class="mr-1"
+          disabled
+        >
+          {{ val.label }}
+        </v-chip>
+      </div>
       <v-spacer />
       <v-btn
         color="primary"
