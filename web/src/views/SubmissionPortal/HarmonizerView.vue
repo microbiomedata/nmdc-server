@@ -2,6 +2,7 @@
 import {
   computed, defineComponent, ref, nextTick, watch,
 } from '@vue/composition-api';
+import { flattenDeep } from 'lodash';
 import { HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi } from './harmonizerApi';
 
 import { templateName, samplesValid, sampleData } from './store';
@@ -37,8 +38,8 @@ export default defineComponent({
     const highlightedValidationError = ref('');
     const columnVisibility = ref('all');
 
-    async function jumpTo(columnName: string) {
-      harmonizerApi.jumpTo(columnName);
+    async function jumpTo({ row, column }: { row: number; column: number }) {
+      harmonizerApi.jumpToRowCol(row, column);
       await nextTick();
       jumpToModel.value = null;
     }
@@ -64,17 +65,16 @@ export default defineComponent({
 
     const templateFolderName = computed(() => (templateName.value ? HARMONIZER_TEMPLATES[templateName.value].folder : null));
 
-    const fields = computed(() => Object.keys(harmonizerApi.schemaFields.value).sort((a, b) => {
-      const nameA = a.toUpperCase();
-      const nameB = b.toUpperCase();
-      if (nameA < nameB) {
-        return -1;
-      }
-      if (nameA > nameB) {
-        return 1;
-      }
-      return 0;
-    }));
+    const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
+      .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
+        const val = {
+          text: columnName ? `  ${columnName}` : sectionName,
+          value: {
+            sectionName, columnName, column, row: 0,
+          },
+        };
+        return val;
+      }))));
 
     const validationErrors = computed(() => {
       if (harmonizerApi.validationErrors.value) {
@@ -150,9 +150,22 @@ export default defineComponent({
           outlined
           dense
           hide-details
+          height
+          :menu-props="{ maxHeight: 600 }"
           @focus="focus"
           @change="jumpTo"
-        />
+        >
+          <template #item="{ item }">
+            <span
+              :class="{
+                'pl-4': item.value.columnName !== '',
+                'text-h5': item.value.columnName === '',
+              }"
+            >
+              {{ item.value.columnName || item.value.sectionName }}
+            </span>
+          </template>
+        </v-autocomplete>
         <v-menu
           offset-y
           nudge-bottom="4px"
@@ -210,6 +223,23 @@ export default defineComponent({
                     <span :style="{ 'background-color': ColorKey.recommended.color }">recommended</span>
                     columns
                   </div>
+                </template>
+              </v-radio>
+              <v-divider class="mb-3" />
+              <span
+                class="grey--text text--darken-2 text-body-1 mb-2"
+              >
+                Show section
+              </span>
+              <v-radio
+                v-for="(value, sectionName) in harmonizerApi.schemaSections.value"
+                :key="sectionName"
+                :value="sectionName"
+              >
+                <template #label>
+                  <span>
+                    {{ sectionName }}
+                  </span>
                 </template>
               </v-radio>
             </v-radio-group>
