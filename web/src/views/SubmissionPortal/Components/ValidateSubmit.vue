@@ -19,7 +19,8 @@ export default defineComponent({
       saveAs('nmdc_study.json', submitPayload.value);
     }
 
-    const { request: doSubmit, loading: submitLoading, count: submitCount } = useRequest(submit);
+    const { request, loading: submitLoading, count: submitCount } = useRequest();
+    const doSubmit = request(submit);
 
     return {
       submitPayload,
