@@ -19,11 +19,12 @@ export default defineComponent({
       saveAs('nmdc_study.json', submitPayload.value);
     }
 
-    const { request: doSubmit, loading: submitLoading } = useRequest(submit);
+    const { request: doSubmit, loading: submitLoading, count: submitCount } = useRequest(submit);
 
     return {
       submitPayload,
       submitLoading,
+      submitCount,
       downloadJson,
       downloadSamples,
       doSubmit,
@@ -73,10 +74,11 @@ export default defineComponent({
       <v-btn
         color="primary"
         :loading="submitLoading"
-        :disabled="submitLoading"
-        @click="submit"
+        :disabled="submitLoading || submitCount > 0"
+        @click="doSubmit"
       >
-        Submit
+        <span v-if="submitCount === 0">Submit</span>
+        <span v-else>Submission successful</span>
       </v-btn>
     </div>
   </div>

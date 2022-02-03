@@ -78,7 +78,7 @@ const submitPayload = computed(() => {
 
 async function submit() {
   client.post('metadata_submission', {
-    metadata_submission: submitPayload,
+    metadata_submission: payloadObject.value,
   });
 }
 
