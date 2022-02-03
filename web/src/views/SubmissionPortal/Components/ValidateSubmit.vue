@@ -1,25 +1,12 @@
 <script lang="ts">
-import { computed, defineComponent } from '@vue/composition-api';
+import { defineComponent } from '@vue/composition-api';
 import { writeFile, utils } from 'xlsx';
-import {
-  studyForm, multiOmicsForm, templateName, sampleData,
-} from '../store';
+import { submit, submitPayload, sampleData } from '../store';
 import { saveAs } from '@/util';
+import useRequest from '@/use/useRequest';
 
 export default defineComponent({
   setup() {
-    const payloadObject = computed(() => ({
-      template: templateName.value,
-      studyForm,
-      multiOmicsForm,
-      sampleData: sampleData.value,
-    }));
-
-    const payload = computed(() => {
-      const value = JSON.stringify(payloadObject.value, null, 2);
-      return value;
-    });
-
     function downloadSamples() {
       const worksheet = utils.aoa_to_sheet(sampleData.value);
       const workbook = utils.book_new();
@@ -29,18 +16,17 @@ export default defineComponent({
     }
 
     function downloadJson() {
-      saveAs('nmdc_study.json', payload.value);
+      saveAs('nmdc_study.json', submitPayload.value);
     }
 
-    function submit() {
-      // console.log('whatever');
-    }
+    const { request: doSubmit, loading: submitLoading } = useRequest(submit);
 
     return {
-      payload,
+      submitPayload,
+      submitLoading,
       downloadJson,
       downloadSamples,
-      submit,
+      doSubmit,
     };
   },
 });
@@ -59,7 +45,7 @@ export default defineComponent({
       outlined
       style="max-height: 550px; overflow-y: auto;"
     >
-      <pre style="font-size: 14px">{{ payload }}</pre>
+      <pre style="font-size: 14px">{{ submitPayload }}</pre>
     </v-card>
     <div class="d-flex my-3">
       <v-btn
@@ -86,6 +72,8 @@ export default defineComponent({
       <v-spacer />
       <v-btn
         color="primary"
+        :loading="submitLoading"
+        :disabled="submitLoading"
         @click="submit"
       >
         Submit
