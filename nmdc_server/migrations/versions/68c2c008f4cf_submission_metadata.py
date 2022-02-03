@@ -28,7 +28,6 @@ def upgrade():
         sa.Column("metadata_submission", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_submission_metadata")),
     )
-    op.create_unique_constraint(op.f("uq_envo_ancestor_id"), "envo_ancestor", ["id", "ancestor_id"])
     # ### end Alembic commands ###
 
 
