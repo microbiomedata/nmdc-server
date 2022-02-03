@@ -28,7 +28,7 @@ export const HARMONIZER_TEMPLATES = {
 
 export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
   const validationErrors = ref(undefined as undefined | null | Record<number, Record<number, string>>);
-  const schemaFields = ref([] as string[]);
+  const schemaSections = ref({} as Record<string, Record<string, number>>);
 
   /* Promises for async methods */
   let validationPromiseResolvers: ((valid: boolean) => void)[] = [];
@@ -82,7 +82,7 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
     window.addEventListener('message', (event) => {
       if (event.data.type === 'update') {
         validationErrors.value = event.data.INVALID_CELLS;
-        schemaFields.value = event.data.fieldYCoordinates;
+        schemaSections.value = event.data.columnCoordinates;
         validationPromiseResolvers.forEach((resolve) => resolve(Object.keys(event.data.INVALID_CELLS || {}).length === 0));
         validationPromiseResolvers = [];
       } else if (event.data.type === 'exportJson') {
@@ -96,7 +96,7 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
 
   return {
     validationErrors,
-    schemaFields,
+    schemaSections,
     /* Methods */
     changeVisibility,
     exportJson,
