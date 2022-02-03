@@ -7,8 +7,8 @@ Create Date: 2022-02-01 19:54:38.074549
 """
 from typing import Optional
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -25,7 +25,11 @@ def upgrade():
         sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("author_orcid", sa.String(), nullable=False),
         sa.Column("created", sa.DateTime(), nullable=False),
-        sa.Column("metadata_submission", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column(
+            "metadata_submission",
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore
+            nullable=False,
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_submission_metadata")),
     )
     # ### end Alembic commands ###
