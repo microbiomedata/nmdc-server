@@ -20,7 +20,7 @@ export default defineComponent({
     }
 
     const { request, loading: submitLoading, count: submitCount } = useRequest();
-    const doSubmit = request(submit);
+    const doSubmit = () => request(submit);
 
     return {
       submitPayload,
