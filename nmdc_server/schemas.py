@@ -637,3 +637,16 @@ class KeggTermTextListResponse(BaseModel):
 class IngestArgumentSchema(BaseModel):
     skip_annotation: bool = False
     function_limit: int = 0  # Default to no limit
+
+
+class SubmissionMetadataSchemaCreate(BaseModel):
+    metadata_submission: Dict[str, Any]
+
+
+class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
+    id: UUID
+    author_orcid: str
+    created: datetime
+
+    class Config:
+        orm_mode = True

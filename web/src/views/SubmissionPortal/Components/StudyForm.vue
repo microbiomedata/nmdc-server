@@ -137,29 +137,29 @@ export default defineComponent({
               persistent-hint
               class="mb-2 mr-3"
             />
-            <v-combobox
-              v-model="contributor.roles"
-              :rules="[(v) => v.length >= 1 || 'At least one role is required']"
-              label="Roles *"
-              hint="CRediT roles associated with this contributor"
-              deletable-chips
-              multiple
+            <v-text-field
+              v-model="contributor.orcid"
+              :hint="NmdcSchema.$defs.Person.properties.id.description"
+              label="ORCiD"
               outlined
-              chips
-              small-chips
-              dense
               persistent-hint
+              dense
               :style="{ maxWidth: '400px'}"
             />
           </div>
-          <v-text-field
-            v-model="contributor.orcid"
-            :rules="requiredRules('ORCiD is required')"
-            :hint="NmdcSchema.$defs.Person.properties.id.description"
-            label="ORCiD *"
+          <v-select
+            v-model="contributor.roles"
+            :rules="[v => v.length >= 1 || 'At least one role is required']"
+            :items="NmdcSchema.$defs.CreditEnum.enum"
+            label="Roles *"
+            :hint="NmdcSchema.$defs.CreditAssociation.description"
+            deletable-chips
+            multiple
             outlined
-            persistent-hint
+            chips
+            small-chips
             dense
+            persistent-hint
           />
         </v-card>
         <v-btn

@@ -20,7 +20,7 @@ from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import SessionLocal
 from nmdc_server.ingest.envo import nested_envo_trees
-from nmdc_server.models import IngestLock
+from nmdc_server.models import IngestLock, SubmissionMetadata
 from nmdc_server.pagination import Pagination
 
 router = APIRouter()
@@ -476,3 +476,21 @@ async def download_zip_file(
             "Content-Disposition": "attachment; filename=archive.zip",
         },
     )
+
+
+@router.post(
+    "/metadata_submission",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas.SubmissionMetadataSchema,
+    status_code=201,
+)
+def submit_metadata(
+    body: schemas.SubmissionMetadataSchemaCreate,
+    db: Session = Depends(get_db),
+    token: Token = Depends(login_required),
+):
+    submission = SubmissionMetadata(**body.dict(), author_orcid=token.orcid)
+    db.add(submission)
+    db.commit()
+    return submission
