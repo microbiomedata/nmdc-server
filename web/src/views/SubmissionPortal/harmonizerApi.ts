@@ -21,7 +21,7 @@ export const HARMONIZER_TEMPLATES = {
   'miscellaneous natural or artificial environment': { folder: '', status: 'disabled' },
   'plant-associated': { folder: '', status: 'disabled' },
   sediment: { folder: '', status: 'disabled' },
-  soil: { folder: 'dev', status: 'published' },
+  soil: { folder: 'soil_emsl_jgi_mg', status: 'published' },
   wastewater_sludge: { folder: '', status: 'disabled' },
   water: { folder: '', status: 'disabled' },
 };
