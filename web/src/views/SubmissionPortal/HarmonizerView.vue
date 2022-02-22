@@ -3,9 +3,14 @@ import {
   computed, defineComponent, ref, nextTick, watch,
 } from '@vue/composition-api';
 import { flattenDeep } from 'lodash';
-import { HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi } from './harmonizerApi';
+import { writeFile, utils } from 'xlsx';
 
-import { templateName, samplesValid, sampleData } from './store';
+import useRequest from '@/use/useRequest';
+
+import { HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi } from './harmonizerApi';
+import {
+  templateName, samplesValid, sampleData, submit,
+} from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
 const ColorKey = {
@@ -30,7 +35,7 @@ const ColorKey = {
 export default defineComponent({
   components: { SubmissionStepper },
 
-  setup(_, { root }) {
+  setup() {
     const harmonizerElement = ref();
     const harmonizerApi = useHarmonizerApi(harmonizerElement);
 
@@ -49,13 +54,9 @@ export default defineComponent({
     }
 
     async function validate() {
-      samplesValid.value = await harmonizerApi.validate();
-    }
-
-    async function persist() {
       const data = await harmonizerApi.exportJson();
       sampleData.value = data;
-      root.$router.push({ name: 'Validate And Submit' });
+      samplesValid.value = await harmonizerApi.validate();
     }
 
     function errorClick(row: number, column: number) {
@@ -97,6 +98,21 @@ export default defineComponent({
       harmonizerApi.loadData(sampleData.value);
     }
 
+    const { request, loading: submitLoading, count: submitCount } = useRequest();
+    const doSubmit = () => request(async () => {
+      const data = await harmonizerApi.exportJson();
+      sampleData.value = data;
+      await submit();
+    });
+
+    function downloadSamples() {
+      const worksheet = utils.aoa_to_sheet(sampleData.value);
+      const workbook = utils.book_new();
+      utils.book_append_sheet(workbook, worksheet, 'Sheet1');
+      // @ts-ignore
+      writeFile(workbook, 'nmdc_sample_export.tsv', { bookType: 'csv', FS: '\t' });
+    }
+
     return {
       ColorKey,
       columnVisibility,
@@ -104,6 +120,8 @@ export default defineComponent({
       jumpToModel,
       harmonizerApi,
       samplesValid,
+      submitLoading,
+      submitCount,
       templateName,
       templateFolderName,
       fields,
@@ -111,9 +129,10 @@ export default defineComponent({
       highlightedValidationError,
       IFRAME_BASE,
       /* methods */
+      doSubmit,
+      downloadSamples,
       errorClick,
       hydrate,
-      persist,
       focus,
       jumpTo,
       validate,
@@ -265,6 +284,7 @@ export default defineComponent({
           rel="noopener noreferrer"
           target="_blank"
           :href="`${IFRAME_BASE}/template/${templateFolderName}/reference.html`"
+          @load="hydrate"
         >
           {{ templateName }} Reference
           <v-icon class="pl-1">
@@ -298,7 +318,7 @@ export default defineComponent({
         </div>
       </div>
     </div>
-    <div style="height: calc(100vh - 260px);">
+    <div :style="{ height: `calc(100vh - 260px  - ${validationErrors.length ? '48px' : '0px'})` }">
       <iframe
         ref="harmonizerElement"
         title="Data Harmonizer"
@@ -306,7 +326,6 @@ export default defineComponent({
         height="100%"
         :src="`${IFRAME_BASE}/main.html?minified=true&template=${templateFolderName}`"
         sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals allow-downloads allow-forms"
-        @load="hydrate"
       />
     </div>
     <div class="d-flex grow ma-2">
@@ -336,18 +355,28 @@ export default defineComponent({
       <v-spacer />
       <v-btn
         color="primary"
-        depressed
-        :disabled="!samplesValid"
-        @click="persist"
+        class="mr-2"
+        outlined
+        @click="downloadSamples"
       >
-        <v-icon class="pr-1">
-          mdi-arrow-right-circle
+        <v-icon class="pr-2">
+          mdi-file-table
         </v-icon>
-        <span v-if="samplesValid">
-          Go to next step
+        Download TSV
+      </v-btn>
+      <v-btn
+        color="primary"
+        depressed
+        :disabled="!samplesValid || submitCount > 0"
+        :loading="submitLoading"
+        @click="doSubmit"
+      >
+        <span v-if="submitCount > 0">
+          <v-icon>mdi-check-circle</v-icon>
+          Done
         </span>
         <span v-else>
-          Validate to proceed
+          Submit
         </span>
       </v-btn>
     </div>

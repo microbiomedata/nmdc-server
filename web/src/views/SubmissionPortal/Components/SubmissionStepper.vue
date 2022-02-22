@@ -16,8 +16,8 @@ const StepperMap: Record<string | number, number | string> = {
   'Submission Sample Editor': 4,
   4: 'Submission Sample Editor',
 
-  'Validate And Submit': 5,
-  5: 'Validate And Submit',
+  // 'Validate And Submit': 5,
+  // 5: 'Validate And Submit',
 };
 
 export default defineComponent({
@@ -84,15 +84,6 @@ export default defineComponent({
       >
         Customize Metadata Export
         <small>DataHarmonizer sample validation</small>
-      </v-stepper-step>
-      <v-divider />
-      <v-stepper-step
-        step="5"
-        :editable="5 < step"
-        :complete="5 < step"
-        @click="gotoStep(5)"
-      >
-        Validate and Submit
       </v-stepper-step>
     </v-stepper-header>
   </v-stepper>
