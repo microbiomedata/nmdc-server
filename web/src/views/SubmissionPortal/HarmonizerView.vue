@@ -284,6 +284,7 @@ export default defineComponent({
           rel="noopener noreferrer"
           target="_blank"
           :href="`${IFRAME_BASE}/template/${templateFolderName}/reference.html`"
+          @load="hydrate"
         >
           {{ templateName }} Reference
           <v-icon class="pl-1">
@@ -317,7 +318,7 @@ export default defineComponent({
         </div>
       </div>
     </div>
-    <div :style="{ height: `calc(100vh - 260px  - ${validationErrors.length ? '64px' : '0px'})` }">
+    <div :style="{ height: `calc(100vh - 260px  - ${validationErrors.length ? '48px' : '0px'})` }">
       <iframe
         ref="harmonizerElement"
         title="Data Harmonizer"
@@ -366,11 +367,17 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :disabled="!samplesValid"
+        :disabled="!samplesValid || submitCount > 0"
         :loading="submitLoading"
         @click="doSubmit"
       >
-        Submit
+        <span v-if="submitCount > 0">
+          <v-icon>mdi-check-circle</v-icon>
+          Done
+        </span>
+        <span v-else>
+          Submit
+        </span>
       </v-btn>
     </div>
   </div>

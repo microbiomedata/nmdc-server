@@ -1,6 +1,6 @@
 import { ref, Ref } from '@vue/composition-api';
 
-// export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333/' : 'https://microbiomedata.github.io/sheets_and_friends';
+// export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://microbiomedata.github.io/sheets_and_friends';
 export const IFRAME_BASE = 'https://microbiomedata.github.io/sheets_and_friends';
 
 /**

@@ -116,12 +116,14 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metatranscriptome"
         value="mt-jgi"
+        disabled
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metabolome"
         value="mb-jgi"
+        disabled
         hide-details
       />
       <v-text-field
