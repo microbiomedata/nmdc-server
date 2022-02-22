@@ -1,7 +1,7 @@
 import { ref, Ref } from '@vue/composition-api';
 
-export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333/' : 'https://microbiomedata.github.io/DataHarmonizer';
-// export const IFRAME_BASE = 'https://microbiomedata.github.io/DataHarmonizer';
+// export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333/' : 'https://microbiomedata.github.io/sheets_and_friends';
+export const IFRAME_BASE = 'https://microbiomedata.github.io/sheets_and_friends';
 
 /**
  * A manifest of the options available in DataHarmonizer
