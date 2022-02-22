@@ -54,9 +54,9 @@ export default defineComponent({
     }
 
     async function validate() {
+      samplesValid.value = await harmonizerApi.validate();
       const data = await harmonizerApi.exportJson();
       sampleData.value = data;
-      samplesValid.value = await harmonizerApi.validate();
     }
 
     function errorClick(row: number, column: number) {
