@@ -105,8 +105,9 @@ export default defineComponent({
       await submit();
     });
 
-    function downloadSamples() {
-      const worksheet = utils.aoa_to_sheet(sampleData.value);
+    async function downloadSamples() {
+      const data = await harmonizerApi.exportJson();
+      const worksheet = utils.aoa_to_sheet(data);
       const workbook = utils.book_new();
       utils.book_append_sheet(workbook, worksheet, 'Sheet1');
       // @ts-ignore
