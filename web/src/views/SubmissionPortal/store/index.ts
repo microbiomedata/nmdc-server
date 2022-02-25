@@ -22,7 +22,7 @@ const studyForm = reactive({
   piName: '',
   piEmail: '',
   piOrcid: '',
-  linkOutWebpage: '',
+  linkOutWebpage: [],
   studyDate: null,
   description: '',
   notes: '',
