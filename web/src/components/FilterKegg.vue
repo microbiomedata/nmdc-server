@@ -98,6 +98,9 @@ export default defineComponent({
   <div class="match-list-table">
     <v-row no-gutters>
       <div class="px-4 text-caption">
+        <p class="text-subtitle-2">
+          KEGG search is currently only available for metagenome data.
+        </p>
         <p>
           KEGG Gene Function search filters results to
           samples that have at least one of the chosen KEGG terms.

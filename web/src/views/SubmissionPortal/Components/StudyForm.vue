@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent, ref } from '@vue/composition-api';
 import NmdcSchema from '@/data/nmdc-schema/jsonschema/nmdc.schema.json';
+import Definitions from '@/definitions';
 import { studyForm, studyFormValid } from '../store';
 
 export default defineComponent({
@@ -27,6 +28,7 @@ export default defineComponent({
       studyForm,
       studyFormValid,
       NmdcSchema,
+      Definitions,
       addContributor,
       requiredRules,
     };
@@ -54,8 +56,8 @@ export default defineComponent({
           v => v.length > 6 || 'Study name too short',
         ])"
         validate-on-blur
-        label="Project / Study Name *"
-        :hint="NmdcSchema.$defs.Study.properties.name.description"
+        label="Study Name *"
+        :hint="Definitions.studyName"
         persistent-hint
         outlined
         dense
@@ -65,7 +67,7 @@ export default defineComponent({
         <v-text-field
           v-model="studyForm.piName"
           label="Principal Investigator Name"
-          :hint="NmdcSchema.$defs.Study.properties.principal_investigator.description"
+          :hint="Definitions.piName"
           persistent-hint
           outlined
           dense
@@ -77,6 +79,8 @@ export default defineComponent({
           :rules="requiredRules('E-mail is required',[
             v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
           ])"
+          :hint="Definitions.piEmail"
+          persistent-hint
           type="email"
           required
           outlined
@@ -88,20 +92,27 @@ export default defineComponent({
         v-model="studyForm.piOrcid"
         label="Principal Investigator ORCiD"
         outlined
+        :hint="Definitions.piOrcid"
+        persistent-hint
         dense
         class="my-2"
       />
-      <v-text-field
+      <v-combobox
         v-model="studyForm.linkOutWebpage"
         label="LinkOut webpage"
+        :hint="Definitions.linkOutWebpage"
+        persistent-hint
         outlined
         dense
+        multiple
+        small-chips
+        clearable
         class="my-2"
       />
       <v-textarea
         v-model="studyForm.description"
         label="Study Description"
-        :hint="NmdcSchema.$defs.Study.properties.description.description"
+        :hint="Definitions.studyDescription"
         persistent-hint
         outlined
         dense
@@ -110,6 +121,8 @@ export default defineComponent({
       <v-text-field
         v-model="studyForm.notes"
         label="Optional Notes"
+        :hint="Definitions.studyOptionalNotes"
+        persistent-hint
         outlined
         dense
         class="my-2"
@@ -118,7 +131,7 @@ export default defineComponent({
         Contributors
       </div>
       <div class="text-body-1 mb-2">
-        {{ NmdcSchema.$defs.Person.description }}
+        {{ Definitions.studyContributors }}
       </div>
       <div
         v-for="contributor, i in studyForm.contributors"
@@ -131,7 +144,7 @@ export default defineComponent({
               v-model="contributor.name"
               :rules="requiredRules('Full name is required')"
               label="Full name *"
-              :hint="NmdcSchema.$defs.Person.properties.name.description"
+              :hint="Definitions.contributorFullName"
               outlined
               dense
               persistent-hint
@@ -139,7 +152,7 @@ export default defineComponent({
             />
             <v-text-field
               v-model="contributor.orcid"
-              :hint="NmdcSchema.$defs.Person.properties.id.description"
+              :hint="Definitions.contributorOrcid"
               label="ORCiD"
               outlined
               persistent-hint
@@ -152,7 +165,7 @@ export default defineComponent({
             :rules="[v => v.length >= 1 || 'At least one role is required']"
             :items="NmdcSchema.$defs.CreditEnum.enum"
             label="Roles *"
-            :hint="NmdcSchema.$defs.CreditAssociation.description"
+            :hint="Definitions.contributorRoles"
             deletable-chips
             multiple
             outlined

@@ -1,5 +1,6 @@
 <script lang="ts">
 import { defineComponent, ref } from '@vue/composition-api';
+import Definitions from '@/definitions';
 import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations,
 } from '../store';
@@ -17,6 +18,7 @@ export default defineComponent({
       multiOmicsForm,
       multiOmicsAssociations,
       multiOmicsFormValid,
+      Definitions,
       /* functions */
       reValidate,
       /* Rules functions */
@@ -52,7 +54,7 @@ export default defineComponent({
         v-if="multiOmicsAssociations.doi"
         v-model="multiOmicsForm.datasetDoi"
         :rules="[ v => !!v || 'DOI is required when data has been generated already' ]"
-        hint="DOI is required when data has been generated already"
+        :hint="Definitions.doi"
         persistent-hint
         label="Dataset DOI *"
         validate-on-blur
@@ -67,7 +69,8 @@ export default defineComponent({
       <v-combobox
         v-model="multiOmicsForm.alternativeNames"
         label="Alternative Names"
-        hint="Multiple values supported. Press enter key after each value."
+        :hint="Definitions.studyAlternativeNames"
+        persistent-hint
         deletable-chips
         multiple
         outlined
@@ -78,28 +81,34 @@ export default defineComponent({
       <v-text-field
         v-model="multiOmicsForm.GOLDStudyId"
         label="GOLD Study ID"
+        :hint="Definitions.studyGoldID"
+        persistent-hint
         outlined
         dense
       />
 
       <v-text-field
         v-model="multiOmicsForm.NCBIBioProjectName"
-        label="NCBI Bio Project Name"
+        label="NCBI BioProject Title"
+        :hint="Definitions.studyNCBIProjectTitle"
+        persistent-hint
         outlined
         dense
       />
-      <v-textarea
+      <v-text-field
         v-model="multiOmicsForm.NCBIBioProjectId"
-        label="NCBI Bio Project ID"
+        label="NCBI BioProject Accession"
+        :hint="Definitions.studyNCBIBioProjectAccession"
+        persistent-hint
         outlined
         dense
       />
 
       <div class="text-h4">
-        Data types
+        Data types *
       </div>
       <div class="text-body-2 grey--text text--darken-2 mb-4">
-        Check all data omics processing types associated with this study
+        {{ Definitions.metadataTypes }}
       </div>
 
       <!-- JGI -->
@@ -230,7 +239,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :disabled="!multiOmicsFormValid"
+        :disabled="(!multiOmicsFormValid)"
         :to="{ name: 'Environment Package' }"
       >
         Go to next step
