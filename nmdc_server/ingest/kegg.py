@@ -26,8 +26,8 @@ def ingest_ko_text(db: Session) -> None:
 
     def ingest_tree(node: dict) -> None:
         if node["name"].startswith("K"):
-            term, text = node["name"].split("  ", maxsplit=1)
-            records[term] = text
+            term, *text = node["name"].split("  ", maxsplit=1)
+            records[term] = text[0] if text else ""
 
         for child in node.get("children", ()):
             ingest_tree(child)
