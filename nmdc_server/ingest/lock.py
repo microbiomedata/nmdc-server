@@ -2,6 +2,7 @@ from contextlib import contextmanager
 
 from sqlalchemy.orm import Session
 
+from nmdc_server.logger import get_logger
 from nmdc_server.models import IngestLock
 
 
@@ -21,9 +22,11 @@ def ingest_lock(db: Session):
     db.commit()
     try:
         yield lock
-    except Exception:
+    except Exception as e:
         db.rollback()
-        raise
-    finally:
+        db.delete(lock)
+        db.commit()
+        raise e
+    else:
         db.delete(lock)
         db.commit()

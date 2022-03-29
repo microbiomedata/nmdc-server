@@ -52,6 +52,12 @@ def extract_extras(
     return values
 
 
+def merge_download_artifact(ingest_db: Session, query):
+    for row in query:
+        ingest_db.merge(row)
+        ingest_db.commit()
+
+
 def maybe_merge_download_artifact(ingest_db: Session, query):
     logger = logging.getLogger()
     for row in query:
