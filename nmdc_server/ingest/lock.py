@@ -2,7 +2,6 @@ from contextlib import contextmanager
 
 from sqlalchemy.orm import Session
 
-from nmdc_server.logger import get_logger
 from nmdc_server.models import IngestLock
 
 
