@@ -21,9 +21,11 @@ def ingest_lock(db: Session):
     db.commit()
     try:
         yield lock
-    except Exception:
+    except Exception as e:
         db.rollback()
-        raise
-    finally:
+        db.delete(lock)
+        db.commit()
+        raise e
+    else:
         db.delete(lock)
         db.commit()

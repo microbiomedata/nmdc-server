@@ -9,7 +9,7 @@ from nmdc_server import database, models
 from nmdc_server.celery_config import celery_app
 from nmdc_server.config import settings
 from nmdc_server.ingest.all import load
-from nmdc_server.ingest.common import maybe_merge_download_artifact
+from nmdc_server.ingest.common import maybe_merge_download_artifact, merge_download_artifact
 from nmdc_server.ingest.lock import ingest_lock
 from nmdc_server.logger import get_logger
 
@@ -71,6 +71,9 @@ def ingest(function_limit=None, skip_annotation=False):
         with ingest_lock(prod_db):
             ingest_db.execute("select truncate_tables()").all()
 
+            # Copy submissions
+            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionMetadata))
+
             # ingest data
             logger.info(
                 f"Load with function_limit={function_limit}, skip_annotation={skip_annotation}"
@@ -81,8 +84,7 @@ def ingest(function_limit=None, skip_annotation=False):
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownloadDataObject))
-
-    populate_gene_functions()
+            populate_gene_functions()
 
 
 @celery_app.task
