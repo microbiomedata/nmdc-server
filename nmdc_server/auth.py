@@ -17,6 +17,7 @@ _admin_users = {
     "0000-0002-0553-6731",  # Zach Mullen
     "0000-0001-9518-8744",  # David Hays
     "0000-0002-8440-738X",  # Shane Canon
+    "0000-0003-2871-7807",  # Michal Babinski
 }
 
 # The type is added to get around an error related to:
