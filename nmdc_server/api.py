@@ -28,7 +28,8 @@ router = APIRouter()
 
 def get_db():
     with SessionLocal() as db:
-        yield db
+        with db.begin():
+            yield db
 
 
 # get the current user information
