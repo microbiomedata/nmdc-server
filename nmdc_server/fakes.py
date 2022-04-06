@@ -6,10 +6,11 @@ from uuid import UUID, uuid4
 from factory import Factory, Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
+from sqlalchemy.orm import sessionmaker
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import auth, models
-from nmdc_server.database import SessionLocal
+from nmdc_server.database import engine
 from nmdc_server.schemas import AnnotationValue
 
 
@@ -24,7 +25,8 @@ class DoiProvider(BaseProvider):
         return uuid4()
 
 
-db = scoped_session(SessionLocal)
+SessionLocalTest = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+db = scoped_session(SessionLocalTest)
 Faker.add_provider(DoiProvider)
 Faker.add_provider(date_time)
 Faker.add_provider(geo)

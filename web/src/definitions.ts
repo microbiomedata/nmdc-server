@@ -8,7 +8,7 @@ const Definitions = {
   studyOptionalNotes: 'Add any additional notes or comments about this study.',
   studyContributors: 'Other researchers associated with this study.',
   contributorFullName: 'Contributor\'s name associated with this study. First name, Middle initial, Last name',
-  contributorRoles: 'Identify all CRediT roles associated with this contributor. CRediT Information: https://info.orcid.org/credit-for-research-contribution/&sa=D&source=editors&ust=1644213796018471&usg=AOvVaw0gAzMVLEoWTNkuaN_5O3gR ; CRediT: https://credit.niso.org/ ',
+  contributorRoles: 'Identify all CRediT roles associated with this contributor. CRediT Information: https://info.orcid.org/credit-for-research-contribution ; CRediT: https://credit.niso.org/ ',
   contributorOrcid: 'ORCID of the contributor identified. https://orcid.org/signin',
   studyAlternativeNames: 'Project, study, or sample set names the are also associated with this submission or other names / identifiers for this study.',
   studyGoldID: 'Provide the GOLD study IDs associated with samples for this study.',
