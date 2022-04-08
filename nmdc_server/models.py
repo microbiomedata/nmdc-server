@@ -630,6 +630,7 @@ class GeneFunction(Base):
     id = Column(String, primary_key=True)
 
 
+# This table contains mappings of MetagenomeAssembly workflow activities to Gene Functions
 class MGAGeneFunction(Base):  # metagenome annotation
     __tablename__ = "mga_gene_function"
 
@@ -639,6 +640,17 @@ class MGAGeneFunction(Base):  # metagenome annotation
     )
     gene_function_id = Column(String, ForeignKey("gene_function.id"), nullable=False)
     subject = Column(String, nullable=False, unique=True)
+
+    function = relationship(GeneFunction)
+
+
+# This table contains mappings of Metatranscriptome workflow activities to Gene Functions
+class MTGeneFunction(Base):  # metagenome annotation
+    __tablename__ = "mt_gene_function"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    metatranscriptome_id = Column(String, ForeignKey("metatranscriptome.id"), nullable=False)
+    gene_function_id = Column(String, ForeignKey("gene_function.id"), nullable=False)
 
     function = relationship(GeneFunction)
 
@@ -718,6 +730,28 @@ class MGAGeneFunctionAggregation(Base):
             SELECT metagenome_annotation_id, gene_function_id, count(*) as count
             FROM mga_gene_function GROUP BY metagenome_annotation_id, gene_function_id
             ON CONFLICT (metagenome_annotation_id, gene_function_id)
+            DO UPDATE SET count = excluded.count;
+        """
+        )
+
+
+class MTGeneFunctionAggregation(Base):
+    __tablename__ = "mt_gene_function_aggregation"
+
+    metatranscriptome_id = Column(String, ForeignKey(Metatranscriptome.id), primary_key=True)
+    gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
+    count = Column(BigInteger, nullable=False)
+
+    @classmethod
+    def populate(cls, db: Session):
+        """Populate denormalized gene function table."""
+        db.execute(
+            f"""
+            INSERT INTO
+                {cls.__tablename__} (metatranscriptome_id, gene_function_id, count)
+            SELECT metatranscriptome_id, gene_function_id, count(*) as count
+            FROM mt_gene_function GROUP BY metatranscriptome_id, gene_function_id
+            ON CONFLICT (metatranscriptome_id, gene_function_id)
             DO UPDATE SET count = excluded.count;
         """
         )

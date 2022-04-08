@@ -22,15 +22,8 @@ class LoadObject(Protocol):
         ...
 
 
-# Load metagenome annotation as well as the gene function annotations produced.
-def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
-    pipeline = schemas.MetagenomeAnnotationBase(**obj)
-    row = models.MetagenomeAnnotation(**pipeline.dict())
-    db.add(row)
-    db.flush()
-
+def get_gene_functions(pipeline: schemas.PipelineStep, **kwargs):
     annotations: Collection = kwargs["annotations"]
-
     query = annotations.find(
         {
             "was_generated_by": pipeline.id,
@@ -43,10 +36,19 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
     )
     if kwargs.get("function_limit"):
         query = query.limit(kwargs["function_limit"])
+    return query
+
+
+# Load metagenome annotation as well as the gene function annotations produced.
+def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
+    pipeline = schemas.MetagenomeAnnotationBase(**obj)
+    row = models.MetagenomeAnnotation(**pipeline.dict())
+    db.add(row)
+    db.flush()
 
     gene_functions: Set[str] = set()
     mga_gene_functions: List[models.MGAGeneFunction] = []
-    for annotation in query:
+    for annotation in get_gene_functions(pipeline, **kwargs):
         function_id = annotation["has_function"]
         gene_functions.add(function_id)
         mga_gene_functions.append(
@@ -64,6 +66,37 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
             .values([(gf,) for gf in gene_functions])
         )
         db.bulk_save_objects(mga_gene_functions)
+
+    return row
+
+
+# Load metagenome annotation as well as the gene function annotations produced.
+def load_mt_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
+    pipeline = schemas.MetatranscriptomeBase(**obj)
+    row = models.Metatranscriptome(**pipeline.dict())
+    db.add(row)
+    db.flush()
+
+    gene_functions: Set[str] = set()
+    mt_gene_functions: List[models.MTGeneFunction] = []
+    for annotation in get_gene_functions(pipeline, **kwargs):
+        function_id = annotation["has_function"]
+        gene_functions.add(function_id)
+        mt_gene_functions.append(
+            models.MTGeneFunction(
+                metatranscriptome_id=pipeline.id,
+                gene_function_id=function_id,
+                subject=annotation["subject"],
+            )
+        )
+
+    if mt_gene_functions:
+        db.execute(
+            insert(models.GeneFunction)
+            .on_conflict_do_nothing()
+            .values([(gf,) for gf in gene_functions])
+        )
+        db.bulk_save_objects(mt_gene_functions)
 
     return row
 
@@ -130,9 +163,6 @@ load_read_based_analysis = generate_pipeline_loader(
 )
 load_metabolomics_analysis = generate_pipeline_loader(
     schemas.MetabolomicsAnalysisBase, models.MetabolomicsAnalysis
-)
-load_metatranscriptome = generate_pipeline_loader(
-    schemas.MetatranscriptomeBase, models.Metatranscriptome
 )
 
 
