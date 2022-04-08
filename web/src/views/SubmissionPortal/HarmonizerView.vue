@@ -9,7 +9,7 @@ import useRequest from '@/use/useRequest';
 
 import { HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi } from './harmonizerApi';
 import {
-  templateName, samplesValid, sampleData, submit,
+  templateName, samplesValid, sampleData, submit, incrementalSaveRecord,
 } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
@@ -57,6 +57,7 @@ export default defineComponent({
       const data = await harmonizerApi.exportJson();
       sampleData.value = data;
       samplesValid.value = await harmonizerApi.validate();
+      incrementalSaveRecord();
     }
 
     function errorClick(row: number, column: number) {
@@ -95,6 +96,7 @@ export default defineComponent({
     });
 
     function hydrate() {
+      console.log('hydrate', sampleData.value);
       harmonizerApi.loadData(sampleData.value);
     }
 
@@ -285,7 +287,6 @@ export default defineComponent({
           rel="noopener noreferrer"
           target="_blank"
           :href="`${IFRAME_BASE}/template/${templateFolderName}/reference.html`"
-          @load="hydrate"
         >
           {{ templateName }} Reference
           <v-icon class="pl-1">
@@ -327,6 +328,7 @@ export default defineComponent({
         height="100%"
         :src="`${IFRAME_BASE}/main.html?minified=true&template=${templateFolderName}`"
         sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals allow-downloads allow-forms"
+        @load="hydrate"
       />
     </div>
     <div class="d-flex grow ma-2">

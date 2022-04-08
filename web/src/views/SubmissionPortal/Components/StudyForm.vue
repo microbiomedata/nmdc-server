@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api';
+import { defineComponent, onMounted, ref } from '@vue/composition-api';
 import NmdcSchema from '@/data/nmdc-schema/jsonschema/nmdc.schema.json';
 import Definitions from '@/definitions';
 import { studyForm, studyFormValid } from '../store';
@@ -22,6 +22,10 @@ export default defineComponent({
         ...otherRules,
       ];
     }
+
+    onMounted(() => {
+      formRef.value.validate();
+    });
 
     return {
       formRef,

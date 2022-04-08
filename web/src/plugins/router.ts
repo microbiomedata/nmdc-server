@@ -13,6 +13,7 @@ import SubmissionView from '@/views/SubmissionPortal/SubmissionView.vue';
 import TemplateChooser from '@/views/SubmissionPortal/Components/TemplateChooser.vue';
 import HarmonizerView from '@/views/SubmissionPortal/HarmonizerView.vue';
 import ValidateSubmit from '@/views/SubmissionPortal/Components/ValidateSubmit.vue';
+import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
 
 import { parseQuery, stringifyQuery } from './utils';
 
@@ -42,37 +43,43 @@ export default new VueRouter({
     {
       path: '/submission',
       component: SubmissionView,
+      props: true,
       children: [
         {
           component: StepperView,
           path: '',
           children: [
             {
+              name: 'Submission Home',
+              path: 'home',
+              component: SubmissionList,
+            },
+            {
               name: 'Study Form',
-              path: 'study',
+              path: ':id/study',
               component: StudyForm,
             },
             {
               name: 'Multiomics Form',
-              path: 'multiomics',
+              path: ':id/multiomics',
               component: MultiOmicsDataForm,
             },
             {
               name: 'Environment Package',
               component: TemplateChooser,
-              path: 'templates',
+              path: ':id/templates',
             },
             {
               name: 'Validate And Submit',
               component: ValidateSubmit,
-              path: 'submit',
+              path: ':id/submit',
             },
           ],
         },
         {
           name: 'Submission Sample Editor',
           component: HarmonizerView,
-          path: 'samples',
+          path: ':id/samples',
         },
       ],
     },
