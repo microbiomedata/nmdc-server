@@ -333,6 +333,41 @@ class MetaPGeneFunctionFilter(OmicsProcessingFilter):
         return query
 
 
+class MetaTGeneFunctionFilter(OmicsProcessingFilter):
+    table = Table.mt_gene_function
+
+    def join(self, target_table: Table, query: Query) -> Query:
+        if target_table == Table.metagenome_annotation:
+            return query.join(
+                models.MTGeneFunctionAggregation,
+                models.MTGeneFunctionAggregation.metatranscriptome_id
+                == models.MetagenomeAnnotation.id,
+            ).join(
+                models.GeneFunction,
+                models.GeneFunction.id == models.MTGeneFunctionAggregation.gene_function_id,
+            )
+
+        query = super().join(target_table, query)
+        return (
+            query.join(
+                models.MetagenomeAnnotation,
+                models.MetagenomeAnnotation.omics_processing_id == models.OmicsProcessing.id,
+            )
+            .join(
+                models.MTGeneFunctionAggregation,
+                models.MTGeneFunctionAggregation.metatranscriptome_id
+                == models.MetagenomeAnnotation.id,
+            )
+            .join(
+                models.GeneFunction,
+                models.GeneFunction.id == models.MTGeneFunctionAggregation.gene_function_id,
+            )
+        )
+
+    def join_self(self, query: Query, parent: Table) -> Query:
+        return query
+
+
 def _get_all_subclasses(cls: Type[BaseFilter]) -> List[Type[BaseFilter]]:
     all_subclasses: List[Type[BaseFilter]] = []
     for subclass in cls.__subclasses__():
