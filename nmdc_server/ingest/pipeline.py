@@ -1,8 +1,7 @@
 import re
-from typing import Any, Dict, List, Set, cast
+from typing import Any, Dict, Iterable, List, Set, cast
 
 from pymongo.collection import Collection
-from pymongo.cursor import Cursor
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 from typing_extensions import Protocol
@@ -139,7 +138,13 @@ load_metatranscriptome = generate_pipeline_loader(
 # This is a generic function for load workflow execution objects.  Some workflow types require
 # custom processing arguments that get passed in as kwargs.
 # flake8: noqa: C901
-def load(db: Session, cursor: Cursor, load_object: LoadObject, workflow_type: str, **kwargs):
+def load(
+    db: Session,
+    cursor: Iterable[Dict[str, Any]],
+    load_object: LoadObject,
+    workflow_type: str,
+    **kwargs,
+):
     logger = get_logger(__name__)
     remove_timezone_re = re.compile(r"Z\+\d+$", re.I)
 
