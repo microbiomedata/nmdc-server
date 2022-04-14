@@ -50,6 +50,11 @@ export default new VueRouter({
           path: '',
           children: [
             {
+              name: 'Submission root',
+              path: '',
+              redirect: () => ({ name: 'Submission Home' }),
+            },
+            {
               name: 'Submission Home',
               path: 'home',
               component: SubmissionList,

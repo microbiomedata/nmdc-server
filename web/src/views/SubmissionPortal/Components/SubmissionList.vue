@@ -3,7 +3,7 @@ import { defineComponent } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import {
-  pastSubmissions, populateList, loadRecord, incrementalSaveRecord,
+  pastSubmissions, populateList, loadRecord, generateRecord,
 } from '../store';
 import * as api from '../store/api';
 
@@ -36,7 +36,7 @@ export default defineComponent({
     const router = useRouter();
 
     function getStatus(item: api.MetadataSubmissionRecord) {
-      if (item.metadata_submission.status === 'complete') {
+      if (item.status === 'complete') {
         return {
           text: 'Complete',
           color: 'success',
@@ -49,20 +49,19 @@ export default defineComponent({
     }
 
     async function resume(item: api.MetadataSubmissionRecord) {
-      console.log('resume');
       await loadRecord(item.id);
       router?.push({ name: 'Study Form', params: { id: item.id } });
     }
 
-    async function begin() {
-      const item = await incrementalSaveRecord();
+    async function createNewSubmission() {
+      const item = await generateRecord();
       router?.push({ name: 'Study Form', params: { id: item.id } });
     }
 
     populateList();
 
     return {
-      begin,
+      createNewSubmission,
       getStatus,
       resume,
       headers,
@@ -83,7 +82,7 @@ export default defineComponent({
     <v-card-text>
       <v-btn
         color="primary"
-        @click="begin"
+        @click="createNewSubmission"
       >
         <v-icon>mdi-plus</v-icon>
         Create New Submission

@@ -33,7 +33,7 @@ export default defineComponent({
 
     watch(currentRouteName, () => {
       if (root.$route.params.id) {
-        incrementalSaveRecord();
+        incrementalSaveRecord(root.$route.params.id);
       }
     });
 

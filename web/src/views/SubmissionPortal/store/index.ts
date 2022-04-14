@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import CompositionApi, {
-  computed, reactive, Ref, ref, shallowRef,
+  computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
 import { clone } from 'lodash';
 import * as api from './api';
@@ -10,8 +10,7 @@ import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 Vue.use(CompositionApi);
 
 const pastSubmissions: Ref<api.MetadataSubmissionRecord[]> = ref([]);
-const activeSubmissionId: Ref<string> = ref('');
-
+const hasChanged = ref(0);
 /**
  * Study Form Step
  */
@@ -72,7 +71,6 @@ const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
-  status: 'complete',
 }));
 
 const submitPayload = computed(() => {
@@ -85,8 +83,8 @@ async function populateList() {
   pastSubmissions.value = val.results;
 }
 
-function submit() {
-  return api.updateRecord(activeSubmissionId.value, payloadObject.value);
+function submit(id: string) {
+  return api.updateRecord(id, payloadObject.value, 'complete');
 }
 
 function reset() {
@@ -98,39 +96,38 @@ function reset() {
   templateName.value = 'soil';
   sampleData.value = [];
   samplesValid.value = false;
-  activeSubmissionId.value = '';
 }
 
-async function incrementalSaveRecord() {
+async function incrementalSaveRecord(id: string) {
   const val: api.MetadataSubmission = {
     ...payloadObject.value,
-    status: 'in progress',
   };
-  if (activeSubmissionId.value) {
-    const record = await api.updateRecord(activeSubmissionId.value, val);
-    return record;
+  if (hasChanged.value) {
+    await api.updateRecord(id, val);
   }
+  hasChanged.value = 0;
+}
+
+async function generateRecord() {
   reset();
-  const record = await api.createRecord(val);
-  activeSubmissionId.value = record.id;
+  const record = await api.createRecord(payloadObject.value);
   return record;
 }
 
 async function loadRecord(id: string) {
-  if (id !== activeSubmissionId.value) {
-    reset();
-    const val = await api.getRecord(id);
-    templateName.value = val.metadata_submission.template;
-    Object.assign(studyForm, val.metadata_submission.studyForm);
-    Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
-    sampleData.value = val.metadata_submission.sampleData;
-    activeSubmissionId.value = val.id;
-  }
+  reset();
+  const val = await api.getRecord(id);
+  templateName.value = val.metadata_submission.template;
+  Object.assign(studyForm, val.metadata_submission.studyForm);
+  Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
+  sampleData.value = val.metadata_submission.sampleData;
+  hasChanged.value = 0;
 }
+
+watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
 
 export {
   /* state */
-  activeSubmissionId,
   multiOmicsForm,
   multiOmicsAssociations,
   multiOmicsFormValid,
@@ -143,6 +140,7 @@ export {
   templateName,
   /* functions */
   incrementalSaveRecord,
+  generateRecord,
   loadRecord,
   populateList,
   submit,

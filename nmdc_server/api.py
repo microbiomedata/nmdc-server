@@ -532,11 +532,14 @@ def update_submission(
     token: Token = Depends(login_required),
 ):
     submission = db.query(SubmissionMetadata).get(id)
+    bodyDict = body.dict()
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     if submission.author_orcid != token.orcid:
         admin_required(token)
-    submission.metadata_submission = body.dict()["metadata_submission"]
+    submission.metadata_submission = bodyDict["metadata_submission"]
+    if bodyDict["status"]:
+        submission.status = bodyDict["status"]
     db.commit()
     return submission
 

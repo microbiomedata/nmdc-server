@@ -35,7 +35,7 @@ const ColorKey = {
 export default defineComponent({
   components: { SubmissionStepper },
 
-  setup() {
+  setup(_, { root }) {
     const harmonizerElement = ref();
     const harmonizerApi = useHarmonizerApi(harmonizerElement);
 
@@ -55,9 +55,9 @@ export default defineComponent({
 
     async function validate() {
       const data = await harmonizerApi.exportJson();
-      sampleData.value = data;
+      sampleData.value = data.slice(2);
       samplesValid.value = await harmonizerApi.validate();
-      incrementalSaveRecord();
+      incrementalSaveRecord(root.$route.params.id);
     }
 
     function errorClick(row: number, column: number) {
@@ -103,8 +103,8 @@ export default defineComponent({
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
-      sampleData.value = data;
-      await submit();
+      sampleData.value = data.slice(2);
+      await submit(root.$route.params.id);
     });
 
     async function downloadSamples() {

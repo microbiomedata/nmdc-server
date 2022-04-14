@@ -15,6 +15,12 @@ If you haven't already, [set up MFA on your NERSC account](https://docs.nersc.go
 docker run --rm -it --network nmdc-server_default --name tunnel kroniak/ssh-client ssh -o StrictHostKeyChecking=no -L 0.0.0.0:27017:mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org:27017 <username>@dtn01.nersc.gov '/bin/bash -c "while [[ 1 ]]; do echo heartbeat; sleep 300; done"'
 ```
 
+You can connect to the instance manually
+
+```bash
+docker run -d -p 3000:3000 --network nmdc-server_default mongoclient/mongoclient
+```
+
 In order to populate the database, you must create a `.env` file in the top
 level directory containing mongo credentials.
 

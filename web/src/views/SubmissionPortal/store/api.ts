@@ -10,7 +10,6 @@ interface MetadataSubmission {
   studyForm: any;
   multiOmicsForm: any;
   sampleData: any[][];
-  status: 'in progress' | 'complete' | 'review';
   [key: string]: any;
 }
 
@@ -19,6 +18,7 @@ interface MetadataSubmissionRecord {
   author_orcid: string;
   created: string;
   metadata_submission: MetadataSubmission;
+  status: string;
 }
 
 interface PaginatedResponse<T> {
@@ -33,9 +33,10 @@ async function createRecord(record: MetadataSubmission) {
   return resp.data;
 }
 
-async function updateRecord(id: string, record: MetadataSubmission) {
+async function updateRecord(id: string, record: MetadataSubmission, status?: string) {
   const resp = await client.patch<MetadataSubmissionRecord>(`metadata_submission/${id}`, {
     metadata_submission: record,
+    status,
   });
   return resp.data;
 }
