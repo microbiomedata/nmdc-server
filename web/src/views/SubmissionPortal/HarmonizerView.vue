@@ -96,7 +96,6 @@ export default defineComponent({
     });
 
     function hydrate() {
-      console.log('hydrate', sampleData.value);
       harmonizerApi.loadData(sampleData.value);
     }
 

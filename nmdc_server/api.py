@@ -2,7 +2,7 @@ from io import BytesIO
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.requests import Request
@@ -492,11 +492,11 @@ def list_submissions(
 ):
     query = db.query(SubmissionMetadata)
     if token.orcid == orcid:
-        query = query.filter(orcid=token.orcid)
+        query = query.filter(SubmissionMetadata.author_orcid == token.orcid)
     else:
         admin_required(token)
         if orcid:
-            query = query.filter(orcid=orcid)
+            query = query.filter(SubmissionMetadata.author_orcid == orcid)
     return pagination.response(query)
 
 
@@ -532,14 +532,14 @@ def update_submission(
     token: Token = Depends(login_required),
 ):
     submission = db.query(SubmissionMetadata).get(id)
-    bodyDict = body.dict()
+    body_dict = body.dict()
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     if submission.author_orcid != token.orcid:
         admin_required(token)
-    submission.metadata_submission = bodyDict["metadata_submission"]
-    if bodyDict["status"]:
-        submission.status = bodyDict["status"]
+    submission.metadata_submission = body_dict["metadata_submission"]
+    if body_dict["status"]:
+        submission.status = body_dict["status"]
     db.commit()
     return submission
 
