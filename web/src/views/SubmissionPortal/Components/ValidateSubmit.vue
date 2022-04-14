@@ -6,7 +6,7 @@ import { saveAs } from '@/util';
 import useRequest from '@/use/useRequest';
 
 export default defineComponent({
-  setup() {
+  setup(_, { root }) {
     function downloadSamples() {
       const worksheet = utils.aoa_to_sheet(sampleData.value);
       const workbook = utils.book_new();
@@ -20,7 +20,7 @@ export default defineComponent({
     }
 
     const { request, loading: submitLoading, count: submitCount } = useRequest();
-    const doSubmit = () => request(submit);
+    const doSubmit = () => request(() => submit(root.$route.params.id));
 
     return {
       submitPayload,

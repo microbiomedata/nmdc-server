@@ -854,6 +854,10 @@ class BinnedFacetResponse(BaseModel):
     bins: List[NumericValue]
 
 
+class MetadataSubmissionResponse(BaseSearchResponse):
+    results: List[schemas.SubmissionMetadataSchema]
+
+
 workflow_search_classes = [
     ReadsQCQuerySchema,
     MetagenomeAssemblyQuerySchema,

@@ -9,7 +9,7 @@ import useRequest from '@/use/useRequest';
 
 import { HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi } from './harmonizerApi';
 import {
-  templateName, samplesValid, sampleData, submit,
+  templateName, samplesValid, sampleData, submit, incrementalSaveRecord,
 } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
@@ -35,7 +35,7 @@ const ColorKey = {
 export default defineComponent({
   components: { SubmissionStepper },
 
-  setup() {
+  setup(_, { root }) {
     const harmonizerElement = ref();
     const harmonizerApi = useHarmonizerApi(harmonizerElement);
 
@@ -55,8 +55,9 @@ export default defineComponent({
 
     async function validate() {
       const data = await harmonizerApi.exportJson();
-      sampleData.value = data;
+      sampleData.value = data.slice(2);
       samplesValid.value = await harmonizerApi.validate();
+      incrementalSaveRecord(root.$route.params.id);
     }
 
     function errorClick(row: number, column: number) {
@@ -101,8 +102,8 @@ export default defineComponent({
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
-      sampleData.value = data;
-      await submit();
+      sampleData.value = data.slice(2);
+      await submit(root.$route.params.id);
     });
 
     async function downloadSamples() {
@@ -285,7 +286,6 @@ export default defineComponent({
           rel="noopener noreferrer"
           target="_blank"
           :href="`${IFRAME_BASE}/template/${templateFolderName}/reference.html`"
-          @load="hydrate"
         >
           {{ templateName }} Reference
           <v-icon class="pl-1">
@@ -327,6 +327,7 @@ export default defineComponent({
         height="100%"
         :src="`${IFRAME_BASE}/main.html?minified=true&template=${templateFolderName}`"
         sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals allow-downloads allow-forms"
+        @load="hydrate"
       />
     </div>
     <div class="d-flex grow ma-2">

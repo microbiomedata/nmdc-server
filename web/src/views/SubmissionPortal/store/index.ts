@@ -1,23 +1,20 @@
 import Vue from 'vue';
-import axios from 'axios';
 import CompositionApi, {
-  computed, reactive, ref, shallowRef,
+  computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
-
+import { clone } from 'lodash';
+import * as api from './api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
-
-const client = axios.create({
-  baseURL: process.env.VUE_APP_BASE_URL || '/api',
-});
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
+const pastSubmissions: Ref<api.MetadataSubmissionRecord[]> = ref([]);
+const hasChanged = ref(0);
 /**
  * Study Form Step
  */
-const studyFormValid = ref(false);
-const studyForm = reactive({
+const studyFormDefault = {
   studyName: '',
   piName: '',
   piEmail: '',
@@ -31,13 +28,14 @@ const studyForm = reactive({
     orcid: string;
     roles: string[];
   }[],
-});
+};
+const studyFormValid = ref(false);
+const studyForm = reactive(clone(studyFormDefault));
 
 /**
  * Multi-Omics Form Step
  */
-const multiOmicsFormValid = ref(false);
-const multiOmicsForm = reactive({
+const multiOmicsFormDefault = {
   datasetDoi: '',
   alternativeNames: [] as string[],
   studyNumber: '',
@@ -46,12 +44,15 @@ const multiOmicsForm = reactive({
   NCBIBioProjectName: '',
   NCBIBioProjectId: '',
   omicsProcessingTypes: [] as string[],
-});
-const multiOmicsAssociations = reactive({
+};
+const multiOmicsFormValid = ref(false);
+const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
+const multiOmicsAssociationsDefault = {
   emsl: false,
   jgi: false,
   doi: false,
-});
+};
+const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 
 /**
  * Environment Package Step
@@ -65,32 +66,82 @@ const sampleData = shallowRef([] as any[][]);
 const samplesValid = ref(false);
 
 /** Submit page */
-const payloadObject = computed(() => ({
+const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   template: templateName.value,
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
 }));
+
 const submitPayload = computed(() => {
   const value = JSON.stringify(payloadObject.value, null, 2);
   return value;
 });
 
-async function submit() {
-  client.post('metadata_submission', {
-    metadata_submission: payloadObject.value,
-  });
+async function populateList() {
+  const val = await api.listRecords();
+  pastSubmissions.value = val.results;
 }
 
+function submit(id: string) {
+  return api.updateRecord(id, payloadObject.value, 'complete');
+}
+
+function reset() {
+  studyFormValid.value = false;
+  Object.assign(studyForm, studyFormDefault);
+  multiOmicsFormValid.value = false;
+  Object.assign(multiOmicsForm, multiOmicsFormDefault);
+  Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
+  templateName.value = 'soil';
+  sampleData.value = [];
+  samplesValid.value = false;
+}
+
+async function incrementalSaveRecord(id: string) {
+  const val: api.MetadataSubmission = {
+    ...payloadObject.value,
+  };
+  if (hasChanged.value) {
+    await api.updateRecord(id, val);
+  }
+  hasChanged.value = 0;
+}
+
+async function generateRecord() {
+  reset();
+  const record = await api.createRecord(payloadObject.value);
+  return record;
+}
+
+async function loadRecord(id: string) {
+  reset();
+  const val = await api.getRecord(id);
+  templateName.value = val.metadata_submission.template;
+  Object.assign(studyForm, val.metadata_submission.studyForm);
+  Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
+  sampleData.value = val.metadata_submission.sampleData;
+  hasChanged.value = 0;
+}
+
+watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
+
 export {
-  studyForm,
-  studyFormValid,
+  /* state */
   multiOmicsForm,
   multiOmicsAssociations,
   multiOmicsFormValid,
-  templateName,
+  pastSubmissions,
   sampleData,
   samplesValid,
+  studyForm,
+  studyFormValid,
   submitPayload,
+  templateName,
+  /* functions */
+  incrementalSaveRecord,
+  generateRecord,
+  loadRecord,
+  populateList,
   submit,
 };

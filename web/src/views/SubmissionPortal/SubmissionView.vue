@@ -2,10 +2,17 @@
 import { defineComponent } from '@vue/composition-api';
 import AuthButton from '@/components/Presentation/AuthButton.vue';
 import { stateRefs } from '@/store';
+import { loadRecord } from './store';
 
 export default defineComponent({
   components: { AuthButton },
-  setup() { return { stateRefs }; },
+  setup(_, { root }) {
+    if (root.$route.params.id) {
+      loadRecord(root.$route.params.id);
+    }
+
+    return { stateRefs };
+  },
 });
 </script>
 

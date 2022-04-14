@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session
 
 from nmdc_server.models import KoTermText, KoTermToModule, KoTermToPathway
 
+ORTHOLOGY_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00001&format=json"
+MODULE_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00002&format=json"
+
 
 def load(db: Session) -> None:
     ingest_ko_text(db)

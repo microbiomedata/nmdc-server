@@ -641,12 +641,14 @@ class IngestArgumentSchema(BaseModel):
 
 class SubmissionMetadataSchemaCreate(BaseModel):
     metadata_submission: Dict[str, Any]
+    status: Optional[str]
 
 
 class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     id: UUID
     author_orcid: str
     created: datetime
+    status: str
 
     class Config:
         orm_mode = True

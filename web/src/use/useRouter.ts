@@ -8,5 +8,5 @@ export function provideRouter(router: VueRouter): void {
 }
 
 export function useRouter(): void | VueRouter {
-  return inject(routerKey);
+  return inject(routerKey)!!;
 }

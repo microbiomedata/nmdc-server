@@ -478,6 +478,72 @@ async def download_zip_file(
     )
 
 
+@router.get(
+    "/metadata_submission",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=query.MetadataSubmissionResponse,
+)
+def list_submissions(
+    db: Session = Depends(get_db),
+    token: Token = Depends(login_required),
+    pagination: Pagination = Depends(),
+    orcid: str = None,
+):
+    query = db.query(SubmissionMetadata)
+    if token.orcid == orcid:
+        query = query.filter(SubmissionMetadata.author_orcid == token.orcid)
+    else:
+        admin_required(token)
+        if orcid:
+            query = query.filter(SubmissionMetadata.author_orcid == orcid)
+    return pagination.response(query)
+
+
+@router.get(
+    "/metadata_submission/{id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas.SubmissionMetadataSchema,
+)
+def get_submission(
+    id: str,
+    db: Session = Depends(get_db),
+    token: Token = Depends(login_required),
+):
+    submission = db.query(SubmissionMetadata).get(id)
+    if submission is None:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    if submission.author_orcid != token.orcid:
+        admin_required(token)
+    return submission
+
+
+@router.patch(
+    "/metadata_submission/{id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas.SubmissionMetadataSchema,
+)
+def update_submission(
+    id: str,
+    body: schemas.SubmissionMetadataSchemaCreate,
+    db: Session = Depends(get_db),
+    token: Token = Depends(login_required),
+):
+    submission = db.query(SubmissionMetadata).get(id)
+    body_dict = body.dict()
+    if submission is None:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    if submission.author_orcid != token.orcid:
+        admin_required(token)
+    submission.metadata_submission = body_dict["metadata_submission"]
+    if body_dict["status"]:
+        submission.status = body_dict["status"]
+    db.commit()
+    return submission
+
+
 @router.post(
     "/metadata_submission",
     tags=["metadata_submission"],

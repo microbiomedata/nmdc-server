@@ -63,13 +63,13 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     if env_medium:
         obj["env_medium_id"] = env_medium.id
 
-    omics_processing = omics_processing.find_one({"has_input": obj["id"]})
+    omics_processing_record = omics_processing.find_one({"has_input": obj["id"]})
     part_of = obj.pop("part_of", None)
     if part_of is None:
-        if omics_processing is None:
+        if omics_processing_record is None:
             logger.error(f"Could not determine study for biosample {obj['id']}")
             return
-        part_of = omics_processing["part_of"]
+        part_of = omics_processing_record["part_of"]
 
     obj["study_id"] = part_of[0]
     if isinstance(obj.get("depth"), dict):
