@@ -20,11 +20,6 @@ def load(db: Session) -> None:
 def ingest_ko_text(db: Session) -> None:
     db.execute(f"truncate table {KoTermText.__tablename__}")
 
-    req = requests.get(
-        "https://www.genome.jp/kegg-bin/download_htext?htext=ko00001&format=json&filedir="
-    )
-    req.raise_for_status()
-
     records: Dict[str, str] = {}
 
     def ingest_tree(node: dict) -> None:
@@ -35,7 +30,10 @@ def ingest_ko_text(db: Session) -> None:
         for child in node.get("children", ()):
             ingest_tree(child)
 
-    ingest_tree(req.json())
+    for url in [ORTHOLOGY_URL, MODULE_URL]:
+        req = requests.get(url)
+        req.raise_for_status()
+        ingest_tree(req.json())
 
     db.bulk_save_objects([KoTermText(term=term, text=text) for term, text in records.items()])
     db.commit()
