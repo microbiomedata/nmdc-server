@@ -7,9 +7,11 @@ import { writeFile, utils } from 'xlsx';
 
 import useRequest from '@/use/useRequest';
 
-import { HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi } from './harmonizerApi';
 import {
-  templateName, samplesValid, sampleData, submit, incrementalSaveRecord,
+  getVariant, HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi,
+} from './harmonizerApi';
+import {
+  templateName, samplesValid, sampleData, submit, incrementalSaveRecord, multiOmicsForm,
 } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
@@ -65,7 +67,15 @@ export default defineComponent({
       highlightedValidationError.value = `${row}.${column}`;
     }
 
-    const templateFolderName = computed(() => (templateName.value ? HARMONIZER_TEMPLATES[templateName.value].folder : null));
+    const templateFolderName = computed(() => {
+      const checkBoxes = multiOmicsForm.omicsProcessingTypes;
+      const template = HARMONIZER_TEMPLATES[templateName.value];
+      try {
+        return getVariant(checkBoxes, template.variations, template.default);
+      } catch (err) {
+        return template.default;
+      }
+    });
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -325,7 +335,7 @@ export default defineComponent({
         title="Data Harmonizer"
         width="100%"
         height="100%"
-        :src="`${IFRAME_BASE}/main.html?minified=true&template=${templateFolderName}`"
+        :src="`${IFRAME_BASE}/linkml.html?minified=true&template=nmdc_dh/${templateFolderName}`"
         sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals allow-downloads allow-forms"
         @load="hydrate"
       />

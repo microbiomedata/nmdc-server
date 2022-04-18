@@ -1,29 +1,95 @@
 import { ref, Ref } from '@vue/composition-api';
 
-// export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://microbiomedata.github.io/sheets_and_friends';
-export const IFRAME_BASE = 'https://microbiomedata.github.io/sheets_and_friends';
+export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app';
+// export const IFRAME_BASE = 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app/';
+
+const StandardVariations = [
+  'emsl',
+  'emsl_jgi_mg',
+  'emsl_jgi_mt',
+  'jgi_mg',
+  'jgi_mt',
+];
+
+export function getVariant(checkBoxes: string[], variations: string[], base: string) {
+  let emsl = false;
+  let jgi = false;
+  let mt = false;
+  let mg = false;
+
+  checkBoxes.forEach((option) => {
+    if (option.endsWith('-emsl')) {
+      emsl = true;
+    }
+    if (option.endsWith('-jgi')) {
+      jgi = true;
+    }
+    if (option.startsWith('mt-')) {
+      mt = true;
+    }
+    if (option.startsWith('mg-')) {
+      mg = true;
+    }
+  });
+
+  const variation = [];
+
+  if (emsl) {
+    variation.push('emsl');
+  }
+  if (jgi) {
+    variation.push('jgi');
+  }
+  if (mg) {
+    variation.push('mg');
+  }
+  if (mt) {
+    variation.push('mt');
+  }
+
+  const variationStr = variation.join('_');
+
+  if (variations.includes(variationStr)) {
+    return `${base}_${variationStr}`;
+  }
+
+  if (variation.length === 0) {
+    return base;
+  }
+
+  throw new Error(`No variation of ${base} with ${variationStr}`);
+}
 
 /**
  * A manifest of the options available in DataHarmonizer
  */
 export const HARMONIZER_TEMPLATES = {
-  air: { folder: '', status: 'disabled' },
-  'built environment': { folder: '', status: 'disabled' },
-  'host-associated': { folder: '', status: 'disabled' },
-  'human-associated': { folder: '', status: 'disabled' },
-  'human-gut': { folder: '', status: 'disabled' },
-  'human-oral': { folder: '', status: 'disabled' },
-  'human-skin': { folder: '', status: 'disabled' },
-  'human-vaginal': { folder: '', status: 'disabled' },
-  'hydrocarbon resources-cores': { folder: '', status: 'disabled' },
-  'hydrocarbon resources-fluids_swabs': { folder: '', status: 'disabled' },
-  'microbial mat_biofilm': { folder: '', status: 'disabled' },
-  'miscellaneous natural or artificial environment': { folder: '', status: 'disabled' },
-  'plant-associated': { folder: '', status: 'disabled' },
-  sediment: { folder: '', status: 'disabled' },
-  soil: { folder: 'soil_emsl_jgi_mg', status: 'published' },
-  wastewater_sludge: { folder: '', status: 'disabled' },
-  water: { folder: '', status: 'disabled' },
+  air: { default: '', status: 'disabled', variations: [] },
+  biofilm: { default: 'biofilm', status: 'enabled', variations: [] },
+  'built environment': { default: 'built_env', status: 'enabled', variations: [] },
+  'host-associated': { default: 'host-associated', status: 'enabled', variations: [] },
+  'human-associated': { default: '', status: 'disabled', variations: [] },
+  'human-gut': { default: '', status: 'disabled', variations: [] },
+  'human-oral': { default: '', status: 'disabled', variations: [] },
+  'human-skin': { default: '', status: 'disabled', variations: [] },
+  'human-vaginal': { default: '', status: 'disabled', variations: [] },
+  'hydrocarbon resources-cores': { default: 'hrc-cores', status: 'published', variations: [] },
+  'hydrocarbon resources-fluids_swabs': {
+    default: 'hrc-fluids-swabs', status: 'published', variations: [],
+  },
+  'microbial mat_biofilm': { default: '', status: 'disabled', variations: [] },
+  'miscellaneous natural or artificial environment': {
+    default: '', status: 'disabled', variations: [],
+  },
+  'plant-associated': { default: 'plant-associated', status: 'published', variations: [] },
+  sediment: { default: 'sediment', status: 'published', variations: [] },
+  soil: {
+    default: 'soil',
+    status: 'published',
+    variations: StandardVariations,
+  },
+  wastewater_sludge: { default: 'wastewater_sludge', status: 'published', variations: [] },
+  water: { default: 'water', status: 'published', variations: [] },
 };
 
 export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
