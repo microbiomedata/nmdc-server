@@ -2,7 +2,7 @@
 
 ## Getting started with Docker
 
-* install [ldc](https://github.com/Kitware/ldc)
+* install docker and docker-compose
 * install submodules via `git submodule update --init --recursive`
 
 ### Running ingest
@@ -33,9 +33,9 @@ NMDC_MONGO_PASSWORD=changeme
 With that file in place, populate the docker volume by running,
 
 ```bash
-ldc run backend nmdc-server truncate # if necessary
-ldc run backend nmdc-server migrate
-ldc run backend nmdc-server ingest
+docker-compose run backend nmdc-server truncate # if necessary
+docker-compose run backend nmdc-server migrate
+docker-compose run backend nmdc-server ingest
 ```
 
 ### Running the server
@@ -43,7 +43,7 @@ ldc run backend nmdc-server ingest
 Then you can start up the services.
 
 ```bash
-ldc up
+docker-compose up
 ```
 
 View main application at `http://localhost:8080/` and the swagger page at `http://localhost:8080/docs`.
@@ -52,7 +52,7 @@ View main application at `http://localhost:8080/` and the swagger page at `http:
 from scratch by running the following, then re-running ingestion (above).
 
 ```bash
-ldc down
+docker-compose down
 docker volume rm -f nmdc-server_app-db-data
 ```
 
@@ -80,10 +80,8 @@ NMDC_HOST=http://localhost:8080
 
 ### Run (development)
 
-With docker and LDC
-
 ```bash
-ldc dev up -d
+docker-compose up -d
 ```
 
 With python virtualenv. Requires Python 3.7+
@@ -158,7 +156,7 @@ A handy IPython shell is provided with some commonly used symbols automatically
 imported, and `autoreload 2` enabled. To run it:
 
 ```bash
-ldc dev run --rm backend nmdc-server shell
+docker-compose run --rm backend nmdc-server shell
 ```
 
 You can also pass `--print-sql` to output all SQL queries.
