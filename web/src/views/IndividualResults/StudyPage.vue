@@ -29,6 +29,7 @@ export default defineComponent({
     IndividualTitle,
     InvestigatorBio,
   },
+
   props: {
     id: {
       type: String,
@@ -140,6 +141,12 @@ export default defineComponent({
       typeWithCardinality,
       fieldDisplayName,
       seeStudyInContext,
+      images: {
+        // eslint-disable-next-line global-require
+        gold: require('@/assets/GOLD.png'),
+        // eslint-disable-next-line global-require
+        ess: require('@/assets/ESS.png'),
+      },
     };
   },
 });
@@ -210,6 +217,7 @@ export default defineComponent({
               <AttributeItem
                 style="padding-left: 60px;"
                 v-bind="{ item, field: 'open_in_gold' }"
+                :image="images.gold"
               />
               <AttributeItem
                 v-for="dive_id in item.ess_dive_datasets"
@@ -222,6 +230,7 @@ export default defineComponent({
                   },
                 }"
                 style="padding-left: 60px;"
+                :image="images.ess"
                 @click="seeStudyInContext"
               />
               <v-list-item v-if="item.relevant_protocols">
