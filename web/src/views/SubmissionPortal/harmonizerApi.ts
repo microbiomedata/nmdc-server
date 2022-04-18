@@ -74,7 +74,9 @@ export const HARMONIZER_TEMPLATES = {
   'human-skin': { default: '', status: 'disabled', variations: [] },
   'human-vaginal': { default: '', status: 'disabled', variations: [] },
   'hydrocarbon resources-cores': { default: 'hrc-cores', status: 'published', variations: [] },
-  'hydrocarbon resources-fluids_swabs': { default: 'hrc-fluids-swabs', status: 'published', variations: [] },
+  'hydrocarbon resources-fluids_swabs': {
+    default: 'hrc-fluids-swabs', status: 'published', variations: [],
+  },
   'microbial mat_biofilm': { default: '', status: 'disabled', variations: [] },
   'miscellaneous natural or artificial environment': {
     default: '', status: 'disabled', variations: [],
