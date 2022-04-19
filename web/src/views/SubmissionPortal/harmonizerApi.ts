@@ -24,10 +24,10 @@ export function getVariant(checkBoxes: string[], variations: string[], base: str
     if (option.endsWith('-jgi')) {
       jgi = true;
     }
-    if (option.startsWith('mt-')) {
+    if (option.startsWith('mt')) {
       mt = true;
     }
-    if (option.startsWith('mg-')) {
+    if (option.startsWith('mg')) {
       mg = true;
     }
   });
@@ -57,7 +57,7 @@ export function getVariant(checkBoxes: string[], variations: string[], base: str
     return base;
   }
 
-  throw new Error(`No variation of ${base} with ${variationStr}`);
+  throw new Error(`No variation of template "${base}" with "${variationStr}"`);
 }
 
 /**
@@ -65,7 +65,6 @@ export function getVariant(checkBoxes: string[], variations: string[], base: str
  */
 export const HARMONIZER_TEMPLATES = {
   air: { default: '', status: 'disabled', variations: [] },
-  biofilm: { default: 'biofilm', status: 'enabled', variations: [] },
   'built environment': { default: 'built_env', status: 'enabled', variations: [] },
   'host-associated': { default: 'host-associated', status: 'enabled', variations: [] },
   'human-associated': { default: '', status: 'disabled', variations: [] },
@@ -73,23 +72,33 @@ export const HARMONIZER_TEMPLATES = {
   'human-oral': { default: '', status: 'disabled', variations: [] },
   'human-skin': { default: '', status: 'disabled', variations: [] },
   'human-vaginal': { default: '', status: 'disabled', variations: [] },
-  'hydrocarbon resources-cores': { default: 'hrc-cores', status: 'published', variations: [] },
+  'hydrocarbon resources-cores': {
+    default: 'hrc-cores', status: 'published', variations: [],
+  },
   'hydrocarbon resources-fluids_swabs': {
     default: 'hrc-fluids-swabs', status: 'published', variations: [],
   },
-  'microbial mat_biofilm': { default: '', status: 'disabled', variations: [] },
+  'microbial mat_biofilm': {
+    default: 'biofilm', status: 'published', variations: [],
+  },
   'miscellaneous natural or artificial environment': {
     default: '', status: 'disabled', variations: [],
   },
-  'plant-associated': { default: 'plant-associated', status: 'published', variations: [] },
-  sediment: { default: 'sediment', status: 'published', variations: [] },
-  soil: {
-    default: 'soil',
-    status: 'published',
-    variations: StandardVariations,
+  'plant-associated': {
+    default: 'plant-associated', status: 'published', variations: [],
   },
-  wastewater_sludge: { default: 'wastewater_sludge', status: 'published', variations: [] },
-  water: { default: 'water', status: 'published', variations: [] },
+  sediment: {
+    default: 'sediment', status: 'published', variations: [],
+  },
+  soil: {
+    default: 'soil', status: 'published', variations: StandardVariations,
+  },
+  wastewater_sludge: {
+    default: 'wastewater_sludge', status: 'published', variations: [],
+  },
+  water: {
+    default: 'water', status: 'published', variations: [],
+  },
 };
 
 export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
