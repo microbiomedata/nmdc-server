@@ -10,33 +10,45 @@ from nmdc_server.models import KoTermText, KoTermToModule, KoTermToPathway
 ORTHOLOGY_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00001&format=json"
 MODULE_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00002&format=json"
 
+# Expect that this file is mounted from CORI /global/cfs/cdirs/m3408/kegg_pathway.tab.txt
+PATHWAY_FILE = "./kegg_pathway.tab.txt"
+
 
 def load(db: Session) -> None:
-    ingest_ko_text(db)
+    ingest_ko_search(db)
     ingest_ko_module_map(db)
     ingest_ko_pathway_map(db)
 
 
-def ingest_ko_text(db: Session) -> None:
+def ingest_ko_search(db: Session) -> None:
     db.execute(f"truncate table {KoTermText.__tablename__}")
+    records = get_search_records()
+    db.bulk_save_objects([KoTermText(term=term, text=text) for term, text in records.items()])
+    db.commit()
 
+
+def get_search_records():
     records: Dict[str, str] = {}
 
     def ingest_tree(node: dict) -> None:
-        if node["name"].startswith("K"):
+        if not node.get("children", False):
             term, *text = node["name"].split("  ", maxsplit=1)
             records[term] = text[0] if text else ""
 
         for child in node.get("children", ()):
             ingest_tree(child)
 
-    for url in [ORTHOLOGY_URL, MODULE_URL]:
+    for url in [MODULE_URL, ORTHOLOGY_URL]:
         req = requests.get(url)
         req.raise_for_status()
         ingest_tree(req.json())
 
-    db.bulk_save_objects([KoTermText(term=term, text=text) for term, text in records.items()])
-    db.commit()
+    for file in [PATHWAY_FILE]:
+        with open(file) as fd:
+            for row in csv.DictReader(fd, delimiter="\t"):
+                records[row["image_id"]] = row["title"] or row["pathway_name"]
+
+    return records
 
 
 def ingest_ko_module_map(db: Session) -> None:
