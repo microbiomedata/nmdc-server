@@ -22,6 +22,10 @@ export default defineComponent({
       type: Boolean,
       default: false,
     },
+    image: {
+      type: String,
+      default: '',
+    },
   },
 
   setup(props) {
@@ -52,7 +56,14 @@ export default defineComponent({
     :key="link.name"
     :href="link.target"
   >
-    <v-list-item-avatar>
+    <img
+      v-if="image"
+      :src="image"
+      width="160px"
+      class="pr-2"
+      alt="Logo"
+    >
+    <v-list-item-avatar v-else>
       <v-icon>mdi-link</v-icon>
     </v-list-item-avatar>
     <v-list-item-content>
@@ -74,8 +85,15 @@ export default defineComponent({
       click: bindClick ? () => $emit('click') : undefined
     }"
   >
-    <v-list-item-avatar>
-      <v-icon v-if="getField(field)">
+    <img
+      v-if="image"
+      :src="image"
+      width="160px"
+      class="pr-2"
+      alt="Logo"
+    >
+    <v-list-item-avatar v-else-if="getField(field)">
+      <v-icon>
         {{ getField(field).icon || 'mdi-text' }}
       </v-icon>
     </v-list-item-avatar>
