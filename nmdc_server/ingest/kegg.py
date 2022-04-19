@@ -11,7 +11,7 @@ ORTHOLOGY_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00001&for
 MODULE_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00002&format=json"
 
 # Expect that this file is mounted from CORI /global/cfs/cdirs/m3408/kegg_pathway.tab.txt
-PATHWAY_FILE = "./kegg_pathway.tab.txt"
+PATHWAY_FILE = "/data/ingest/kegg/kegg_pathway.tab.txt"
 
 
 def load(db: Session) -> None:
