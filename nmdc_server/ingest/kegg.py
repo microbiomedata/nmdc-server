@@ -5,6 +5,7 @@ from typing import Dict
 import requests
 from sqlalchemy.orm import Session
 
+from nmdc_server.ingest.errors import errors
 from nmdc_server.models import KoTermText, KoTermToModule, KoTermToPathway
 
 ORTHOLOGY_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00001&format=json"
@@ -44,9 +45,12 @@ def get_search_records():
         ingest_tree(req.json())
 
     for file in [PATHWAY_FILE]:
-        with open(file) as fd:
-            for row in csv.DictReader(fd, delimiter="\t"):
-                records[row["image_id"]] = row["title"] or row["pathway_name"]
+        try:
+            with open(file) as fd:
+                for row in csv.DictReader(fd, delimiter="\t"):
+                    records[row["image_id"]] = row["title"] or row["pathway_name"]
+        except FileNotFoundError:
+            errors["kegg_search"].add(f"Missing {file}")
 
     return records
 
