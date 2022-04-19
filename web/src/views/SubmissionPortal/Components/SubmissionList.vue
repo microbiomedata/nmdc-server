@@ -74,10 +74,10 @@ export default defineComponent({
 <template>
   <v-card flat>
     <v-card-title class="text-h4">
-      NMDC Metadata Submission Portal
+      NMDC Submission Portal
     </v-card-title>
     <v-card-text>
-      This is the metadata submission portal, where researchers can provide their own study and sample metadata for inclusion in NMDC.
+      This is the submission portal, where researchers can provide their own study and sample metadata for inclusion in NMDC.
     </v-card-text>
     <v-card-text>
       <v-btn

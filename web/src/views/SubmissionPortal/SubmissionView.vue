@@ -19,7 +19,7 @@ export default defineComponent({
 <template>
   <v-main>
     <v-container v-if="!stateRefs.user.value">
-      <h1>Metadata Submission Portal</h1>
+      <h1>NMDC Submission Portal</h1>
       <p>This system requires ORCiD Authentication.</p>
       <AuthButton />
     </v-container>
