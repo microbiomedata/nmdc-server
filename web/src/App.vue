@@ -113,6 +113,22 @@ export default defineComponent({
           mdi-open-in-new
         </v-icon>
       </v-btn>
+      <v-divider vertical />
+      <v-btn
+        depressed
+        small
+        color="secondary"
+        :to="{ name: 'Submission Home' }"
+        class="mx-2"
+      >
+        Submission Portal
+        <v-icon
+          class="pl-2"
+          small
+        >
+          mdi-form-select
+        </v-icon>
+      </v-btn>
       <AuthButton />
     </v-app-bar>
     <keep-alive>
