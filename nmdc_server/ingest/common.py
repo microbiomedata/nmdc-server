@@ -18,6 +18,7 @@ EXCLUDED_FIELDS = {
     # Unexpected Biosample fields
     "GOLD_sample_identifiers",
     "INSDC_biosample_identifiers",
+    "GOLD_study_identifiers",
 }
 
 

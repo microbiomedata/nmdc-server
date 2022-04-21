@@ -21,7 +21,7 @@ def get_doi_info(doi: str) -> Response:
     }
     http = requests.Session()
     http.mount("https://", adapter)
-    return requests.get(url, headers=headers)
+    return requests.get(url, headers=headers, timeout=60)
 
 
 def upsert_doi(db: Session, doi: str):
