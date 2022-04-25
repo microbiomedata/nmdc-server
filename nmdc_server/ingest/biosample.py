@@ -1,6 +1,7 @@
 import json
 import re
 from datetime import datetime
+from tokenize import maybe
 from typing import Any, Dict
 
 from pydantic import root_validator, validator
@@ -9,6 +10,7 @@ from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
+from nmdc_server.attribute_units import extract_quantity, get_attribute_units
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.errors import errors
 from nmdc_server.logger import get_logger
@@ -72,8 +74,9 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         part_of = omics_processing_record["part_of"]
 
     obj["study_id"] = part_of[0]
-    if isinstance(obj.get("depth"), dict):
-        obj["depth"] = obj["depth"]["has_numeric_value"]
+    obj["depth"] = extract_quantity(obj.get("depth", {}), "biosample", "depth")
+    if obj["depth"] is None:
+        obj["depth"] = extract_quantity(obj.pop("depth2", {}), "biosample", "depth")
 
     biosample = Biosample(**obj)
 
@@ -86,7 +89,7 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     biosample.alternate_identifiers += obj.get("INSDC_biosample_identifiers", [])
     biosample.alternate_identifiers += obj.get("GOLD_sample_identifiers", [])
 
-    db.add(models.Biosample(**biosample.dict()))
+    # db.add(models.Biosample(**biosample.dict()))
 
 
 def load(db: Session, cursor: Cursor, omics_processing: Collection):

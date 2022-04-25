@@ -67,7 +67,8 @@ def load(db: Session, cursor: Cursor):
     for obj in cursor:
         try:
             load_omics_processing(db, obj)
-        except Exception:
+        except Exception as err:
+            logger.error(err)
             logger.error("Error parsing omics_processing:")
             logger.error(json.dumps(obj, indent=2, default=str))
             errors["omics_processing"].add(obj["id"])
