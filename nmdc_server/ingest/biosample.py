@@ -1,7 +1,6 @@
 import json
 import re
 from datetime import datetime
-from tokenize import maybe
 from typing import Any, Dict
 
 from pydantic import root_validator, validator
@@ -10,7 +9,7 @@ from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
-from nmdc_server.attribute_units import extract_quantity, get_attribute_units
+from nmdc_server.attribute_units import extract_quantity
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.errors import errors
 from nmdc_server.logger import get_logger
