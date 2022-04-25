@@ -1,7 +1,7 @@
 import { ref, Ref } from '@vue/composition-api';
 
-// export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app';
-export const IFRAME_BASE = 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app';
+export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app';
+// export const IFRAME_BASE = 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app';
 
 const VariationMap = {
   /** A mapping of the templates to the superset of checkbox options they work for. */
