@@ -1,72 +1,37 @@
 import { ref, Ref } from '@vue/composition-api';
 
-export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app';
-// export const IFRAME_BASE = 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app/';
+// export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app';
+export const IFRAME_BASE = 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app/';
 
-const StandardVariations = [
-  'emsl',
-  'emsl_jgi_mg',
-  'emsl_jgi_mt',
-  'jgi_mg',
-  'jgi_mt',
-];
+const VariationMap = {
+  /** A mapping of the templates to the superset of checkbox options they work for. */
+  emsl: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl']),
+  jgi_mg: new Set(['mg-jgi']),
+  emsl_jgi_mg: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi']),
+};
 
-export function getVariant(checkBoxes: string[], variations: string[], base: string) {
-  let emsl = false;
-  let jgi = false;
-  let mt = false;
-  let mg = false;
-
-  checkBoxes.forEach((option) => {
-    if (option.endsWith('-emsl')) {
-      emsl = true;
-    }
-    if (option.endsWith('-jgi')) {
-      jgi = true;
-    }
-    if (option.startsWith('mt')) {
-      mt = true;
-    }
-    if (option.startsWith('mg')) {
-      mg = true;
-    }
+export function getVariant(checkBoxes: string[], variations: (keyof typeof VariationMap)[], base: string) {
+  const variationStr = variations.find((v) => {
+    const vSet = VariationMap[v];
+    return checkBoxes.every((elem) => vSet.has(elem));
   });
-
-  const variation = [];
-
-  if (emsl) {
-    variation.push('emsl');
-  }
-  if (jgi) {
-    variation.push('jgi');
-  }
-  if (mg) {
-    variation.push('mg');
-  }
-  if (mt) {
-    variation.push('mt');
-  }
-
-  const variationStr = variation.join('_');
-
-  if (variations.includes(variationStr)) {
+  if (variationStr) {
     return `${base}_${variationStr}`;
   }
-
-  if (variation.length === 0) {
-    return base;
-  }
-
-  throw new Error(`No variation of template "${base}" with "${variationStr}"`);
+  return base;
 }
 
 /**
  * A manifest of the options available in DataHarmonizer
  */
-export const HARMONIZER_TEMPLATES = {
-  air: { default: '', status: 'disabled', variations: [] },
-  'built environment': { default: 'built_env', status: 'enabled', variations: [] },
-  'host-associated': { default: 'host-associated', status: 'enabled', variations: [] },
+export const HARMONIZER_TEMPLATES: Record<string, {
+  default: string;
+  status: String;
+  variations: (keyof typeof VariationMap)[];
+}> = {
+  air: { default: 'air', status: 'published', variations: [] },
+  'built environment': { default: 'built_env', status: 'published', variations: [] },
+  'host-associated': { default: 'host-associated', status: 'published', variations: [] },
   'human-associated': { default: '', status: 'disabled', variations: [] },
   'human-gut': { default: '', status: 'disabled', variations: [] },
   'human-oral': { default: '', status: 'disabled', variations: [] },
@@ -82,7 +47,7 @@ export const HARMONIZER_TEMPLATES = {
     default: 'biofilm', status: 'published', variations: [],
   },
   'miscellaneous natural or artificial environment': {
-    default: '', status: 'disabled', variations: [],
+    default: 'misc-envs', status: 'published', variations: [],
   },
   'plant-associated': {
     default: 'plant-associated', status: 'published', variations: [],
@@ -91,7 +56,7 @@ export const HARMONIZER_TEMPLATES = {
     default: 'sediment', status: 'published', variations: [],
   },
   soil: {
-    default: 'soil', status: 'published', variations: StandardVariations,
+    default: 'soil', status: 'published', variations: ['emsl', 'emsl_jgi_mg', 'jgi_mg'],
   },
   wastewater_sludge: {
     default: 'wastewater_sludge', status: 'published', variations: [],
@@ -104,7 +69,7 @@ export const HARMONIZER_TEMPLATES = {
 export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
   const validationErrors = ref(undefined as undefined | null | Record<number, Record<number, string>>);
   const schemaSections = ref({} as Record<string, Record<string, number>>);
-
+  const ready = ref(false);
   /* Promises for async methods */
   let validationPromiseResolvers: ((valid: boolean) => void)[] = [];
   let exportJsonPromiseResolvers: ((data: any[][]) => void)[] = [];
@@ -135,6 +100,7 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
   }
 
   function loadData(data: any[][]) {
+    ready.value = false;
     postMessage({ type: 'loadData', data });
   }
 
@@ -160,6 +126,7 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
         schemaSections.value = event.data.columnCoordinates;
         validationPromiseResolvers.forEach((resolve) => resolve(Object.keys(event.data.INVALID_CELLS || {}).length === 0));
         validationPromiseResolvers = [];
+        ready.value = true;
       } else if (event.data.type === 'exportJson') {
         exportJsonPromiseResolvers.forEach((resolve) => resolve(event.data.value));
         exportJsonPromiseResolvers = [];
@@ -171,6 +138,7 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
 
   return {
     validationErrors,
+    ready,
     schemaSections,
     /* Methods */
     changeVisibility,

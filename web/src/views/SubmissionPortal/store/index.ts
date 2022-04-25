@@ -4,7 +4,7 @@ import CompositionApi, {
 } from '@vue/composition-api';
 import { clone } from 'lodash';
 import * as api from './api';
-import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
+import { getVariant, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -58,12 +58,18 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
  * Environment Package Step
  */
 const templateName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
+const templateChoice = computed(() => {
+  const checkBoxes = multiOmicsForm.omicsProcessingTypes;
+  const template = HARMONIZER_TEMPLATES[templateName.value];
+  return getVariant(checkBoxes, template.variations, template.default);
+});
 
 /**
  * DataHarmonizer Step
  */
 const sampleData = shallowRef([] as any[][]);
 const samplesValid = ref(false);
+const templateChoiceDisabled = computed(() => sampleData.value.length >= 1);
 
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
@@ -138,6 +144,8 @@ export {
   studyFormValid,
   submitPayload,
   templateName,
+  templateChoice,
+  templateChoiceDisabled,
   /* functions */
   incrementalSaveRecord,
   generateRecord,
