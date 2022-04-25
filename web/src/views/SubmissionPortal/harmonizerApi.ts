@@ -4,6 +4,7 @@ import { ref, Ref } from '@vue/composition-api';
 export const IFRAME_BASE = 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app/';
 
 const VariationMap = {
+  /** A mapping of the templates to the superset of checkbox options they work for. */
   emsl: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl']),
   jgi_mg: new Set(['mg-jgi']),
   emsl_jgi_mg: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi']),
@@ -23,7 +24,11 @@ export function getVariant(checkBoxes: string[], variations: (keyof typeof Varia
 /**
  * A manifest of the options available in DataHarmonizer
  */
-export const HARMONIZER_TEMPLATES = {
+export const HARMONIZER_TEMPLATES: Record<string, {
+  default: string;
+  status: String;
+  variations: (keyof typeof VariationMap)[];
+}> = {
   air: { default: 'air', status: 'published', variations: [] },
   'built environment': { default: 'built_env', status: 'published', variations: [] },
   'host-associated': { default: 'host-associated', status: 'published', variations: [] },
@@ -51,7 +56,7 @@ export const HARMONIZER_TEMPLATES = {
     default: 'sediment', status: 'published', variations: [],
   },
   soil: {
-    default: 'soil', status: 'published', variations: Object.keys(VariationMap),
+    default: 'soil', status: 'published', variations: ['emsl', 'emsl_jgi_mg', 'jgi_mg'],
   },
   wastewater_sludge: {
     default: 'wastewater_sludge', status: 'published', variations: [],
