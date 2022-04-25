@@ -8,10 +8,10 @@ import { writeFile, utils } from 'xlsx';
 import useRequest from '@/use/useRequest';
 
 import {
-  getVariant, HARMONIZER_TEMPLATES, IFRAME_BASE, useHarmonizerApi,
+  IFRAME_BASE, useHarmonizerApi,
 } from './harmonizerApi';
 import {
-  templateName, samplesValid, sampleData, submit, incrementalSaveRecord, multiOmicsForm,
+  templateName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
 } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
@@ -40,7 +40,6 @@ export default defineComponent({
   setup(_, { root }) {
     const harmonizerElement = ref();
     const harmonizerApi = useHarmonizerApi(harmonizerElement);
-
     const jumpToModel = ref();
     const highlightedValidationError = ref('');
     const columnVisibility = ref('all');
@@ -66,16 +65,6 @@ export default defineComponent({
       harmonizerApi.jumpToRowCol(row, column);
       highlightedValidationError.value = `${row}.${column}`;
     }
-
-    const templateFolderName = computed(() => {
-      const checkBoxes = multiOmicsForm.omicsProcessingTypes;
-      const template = HARMONIZER_TEMPLATES[templateName.value];
-      try {
-        return getVariant(checkBoxes, template.variations, template.default);
-      } catch (err) {
-        return template.default;
-      }
-    });
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -135,7 +124,7 @@ export default defineComponent({
       submitLoading,
       submitCount,
       templateName,
-      templateFolderName,
+      templateChoice,
       fields,
       validationErrors,
       highlightedValidationError,
@@ -295,7 +284,7 @@ export default defineComponent({
           small
           rel="noopener noreferrer"
           target="_blank"
-          :href="`${IFRAME_BASE}/template/${templateFolderName}/reference.html`"
+          :href="`${IFRAME_BASE}/template/${templateChoice}/reference.html`"
         >
           {{ templateName }} Reference
           <v-icon class="pl-1">
@@ -330,12 +319,18 @@ export default defineComponent({
       </div>
     </div>
     <div :style="{ height: `calc(100vh - 260px  - ${validationErrors.length ? '48px' : '0px'})` }">
+      <p
+        v-if="!harmonizerApi.ready.value"
+        class="text-h2 mt-8"
+      >
+        DataHarmonizer is Loading...
+      </p>
       <iframe
         ref="harmonizerElement"
         title="Data Harmonizer"
         width="100%"
         height="100%"
-        :src="`${IFRAME_BASE}/linkml.html?minified=true&template=nmdc_dh/${templateFolderName}`"
+        :src="`${IFRAME_BASE}/linkml.html?minified=true&template=nmdc_dh/${templateChoice}`"
         sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals allow-downloads allow-forms"
         @load="hydrate"
       />

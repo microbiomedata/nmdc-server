@@ -2,7 +2,7 @@
 import { defineComponent, ref } from '@vue/composition-api';
 import Definitions from '@/definitions';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations,
+  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled,
 } from '../store';
 
 export default defineComponent({
@@ -19,6 +19,7 @@ export default defineComponent({
       multiOmicsAssociations,
       multiOmicsFormValid,
       Definitions,
+      templateChoiceDisabled,
       /* functions */
       reValidate,
       /* Rules functions */
@@ -111,6 +112,16 @@ export default defineComponent({
         {{ Definitions.metadataTypes }}
       </div>
 
+      <v-alert
+        v-if="templateChoiceDisabled"
+        type="warning"
+      >
+        <p class="text-h5">
+          Data type choice disabled
+        </p>
+        Data types cannot be changed when there are already metadata rows in step 5.  To change the template, return to step 5 and remove all data.
+      </v-alert>
+
       <!-- JGI -->
       <div class="text-h6">
         Joint Genome Institute (JGI)
@@ -119,6 +130,7 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metagenome"
         value="mg-jgi"
+        :disabled="templateChoiceDisabled"
         hide-details
       />
       <v-checkbox
@@ -156,18 +168,21 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metaproteome"
         value="mp-emsl"
+        :disabled="templateChoiceDisabled"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metabolome"
         value="mb-emsl"
+        :disabled="templateChoiceDisabled"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Natural Organic Matter (FT-ICR MS)"
         value="nom-emsl"
+        :disabled="templateChoiceDisabled"
         hide-details
       />
       <v-text-field
@@ -191,30 +206,35 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metagenome"
         value="mg"
+        :disabled="templateChoiceDisabled"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metatranscriptome"
         value="mt"
+        :disabled="templateChoiceDisabled"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metaproteome"
         value="mp"
+        :disabled="templateChoiceDisabled"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metabolome"
         value="mb"
+        :disabled="templateChoiceDisabled"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Natural Organic Matter (FT-ICR MS)"
         value="nom"
+        :disabled="templateChoiceDisabled"
         hide-details
       />
     </v-form>
