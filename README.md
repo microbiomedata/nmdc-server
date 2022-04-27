@@ -7,12 +7,13 @@
 
 ### Running ingest
 
-You need an active SSH tunnel connection to nersc attached to the compose network.  After running docker-compose up, run this container, making sure to replace `<username>`.
+You need an active SSH tunnel connection to nersc attached to the compose network.  After running docker-compose up, run this container.
 
 If you haven't already, [set up MFA on your NERSC account](https://docs.nersc.gov/connect/mfa/) (it's required for SSHing in).
 
 ```bash
-docker run --rm -it --network nmdc-server_default --name tunnel kroniak/ssh-client ssh -o StrictHostKeyChecking=no -L 0.0.0.0:27017:mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org:27017 <username>@dtn01.nersc.gov '/bin/bash -c "while [[ 1 ]]; do echo heartbeat; sleep 300; done"'
+export NERSC_USER=changeme
+docker run --rm -it -p 27017:27017 --network nmdc-server_default --name tunnel kroniak/ssh-client ssh -o StrictHostKeyChecking=no -L 0.0.0.0:27017:mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org:27017 $NERSC_USER@dtn01.nersc.gov '/bin/bash -c "while [[ 1 ]]; do echo heartbeat; sleep 300; done"'
 ```
 
 You can connect to the instance manually
