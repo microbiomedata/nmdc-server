@@ -193,6 +193,7 @@ DataObjectAggregation = Dict[str, DataObjectAggregationElement]
 
 class OrcidPerson(BaseModel):
     """https://microbiomedata.github.io/nmdc-schema/PersonValue/"""
+
     name: Optional[str]
     email: Optional[str]
     orcid: Optional[str]
@@ -201,6 +202,7 @@ class OrcidPerson(BaseModel):
 
 class CreditAssociation(BaseModel):
     """https://microbiomedata.github.io/nmdc-schema/CreditAssociation/"""
+
     applied_roles: List[str]
     applies_to_person: OrcidPerson
 
