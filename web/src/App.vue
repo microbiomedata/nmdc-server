@@ -34,30 +34,16 @@ export default defineComponent({
         >
       </a>
       <v-spacer />
-      <!-- <v-btn
-        depressed
-        small
-        :disabled="!stateRefs.user.value"
-        :to="{ name: 'Study Form' }"
-        class="mx-2"
-      >
-        Submit Samples
-        <v-icon
-          class="pl-2"
-          small
-        >
-          mdi-upload
-        </v-icon>
-      </v-btn> -->
+
       <v-btn
         depressed
         small
-        href="https://microbiomedata.org/"
+        href="https://nmdc-documentation.readthedocs.io/en/latest/tutorials/nav_data_portal.html"
         target="_blank"
         rel="noopener noreferrer"
         class="mx-2"
       >
-        NMDC Home
+        Video Tutorial
         <v-icon
           class="pl-2"
           small
@@ -65,6 +51,7 @@ export default defineComponent({
           mdi-open-in-new
         </v-icon>
       </v-btn>
+
       <v-btn
         depressed
         small
@@ -81,15 +68,16 @@ export default defineComponent({
           mdi-open-in-new
         </v-icon>
       </v-btn>
+
       <v-btn
         depressed
         small
-        href="https://github.com/microbiomedata/nmdc-schema"
+        href="https://nmdc-documentation.readthedocs.io/en/latest/index.html"
         target="_blank"
         rel="noopener noreferrer"
         class="mx-2"
       >
-        Data Schema
+        NMDC Docs
         <v-icon
           class="pl-2"
           small
@@ -97,15 +85,16 @@ export default defineComponent({
           mdi-open-in-new
         </v-icon>
       </v-btn>
+
       <v-btn
         depressed
         small
-        href="https://microbiomedata.org/workflows/"
+        href="https://microbiomedata.org/"
         target="_blank"
         rel="noopener noreferrer"
         class="mx-2"
       >
-        Workflows
+        NMDC Home
         <v-icon
           class="pl-2"
           small
@@ -113,7 +102,9 @@ export default defineComponent({
           mdi-open-in-new
         </v-icon>
       </v-btn>
+
       <v-divider vertical />
+
       <v-btn
         depressed
         small
