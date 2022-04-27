@@ -38,10 +38,10 @@ export const HARMONIZER_TEMPLATES: Record<string, {
   'human-skin': { default: '', status: 'disabled', variations: [] },
   'human-vaginal': { default: '', status: 'disabled', variations: [] },
   'hydrocarbon resources-cores': {
-    default: 'hrc-cores', status: 'published', variations: [],
+    default: 'hcr-cores', status: 'published', variations: [],
   },
   'hydrocarbon resources-fluids_swabs': {
-    default: 'hrc-fluids-swabs', status: 'published', variations: [],
+    default: 'hcr-fluids-swabs', status: 'published', variations: [],
   },
   'microbial mat_biofilm': {
     default: 'biofilm', status: 'published', variations: [],
