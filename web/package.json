@@ -27,7 +27,7 @@
     "leaflet": "^1.7.1",
     "leaflet.markercluster": "^1.5.3",
     "lodash": "^4.17.21",
-    "moment": "^2.29.1",
+    "moment": "^2.29.2",
     "protobufjs": "^6.11.2",
     "serialize-javascript": "^6.0.0",
     "vue": "^2.6.14",
