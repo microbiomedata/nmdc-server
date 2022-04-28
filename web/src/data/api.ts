@@ -110,8 +110,17 @@ export interface BiosampleSearchResult extends BaseSearchResult {
   omics_processing: OmicsProcessingResult[];
 }
 
+interface PrincipalInvestigator {
+  name?: string;
+  email?: string;
+  orcid?: string;
+}
+
 export interface StudySearchResults extends BaseSearchResult {
   principal_investigator_websites: string[];
+  principal_investigator_name: string;
+  principal_investigator_image_url: string;
+  principal_investigator: PrincipalInvestigator;
   publication_doi_info: Record<string, {
     type: string;
   }>,
@@ -136,9 +145,9 @@ export interface StudySearchResults extends BaseSearchResult {
   has_credit_associations: {
     applied_roles: string[];
     applies_to_person: {
-      name: string;
-      orcid: string;
-      email: string;
+      name?: string;
+      orcid?: string;
+      email?: string;
     };
   }[];
 }
