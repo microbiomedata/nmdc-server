@@ -282,9 +282,7 @@ export default defineComponent({
           color="grey"
           outlined
           small
-          rel="noopener noreferrer"
-          target="_blank"
-          :href="`${IFRAME_BASE}/template/${templateChoice}/reference.html`"
+          @click="harmonizerApi.launchReference()"
         >
           {{ templateName }} Reference
           <v-icon class="pl-1">

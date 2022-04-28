@@ -94,7 +94,7 @@ export default defineComponent({
       </div>
       <v-text-field
         v-model="studyForm.piOrcid"
-        label="Principal Investigator ORCiD"
+        label="Principal Investigator ORCID"
         outlined
         :hint="Definitions.piOrcid"
         persistent-hint
@@ -157,7 +157,7 @@ export default defineComponent({
             <v-text-field
               v-model="contributor.orcid"
               :hint="Definitions.contributorOrcid"
-              label="ORCiD"
+              label="ORCID"
               outlined
               persistent-hint
               dense
