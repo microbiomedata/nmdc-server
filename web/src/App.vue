@@ -55,7 +55,7 @@ export default defineComponent({
       <v-btn
         depressed
         small
-        href="https://the-nmdc-portal-user-guide.readthedocs.io/en/latest/"
+        href="https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/portal_guide.html"
         target="_blank"
         rel="noopener noreferrer"
         class="mx-2"
