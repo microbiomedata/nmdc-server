@@ -1,7 +1,7 @@
 import { ref, Ref } from '@vue/composition-api';
 
-export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app';
-// export const IFRAME_BASE = 'https://deploy-preview-101--voluble-pika-79eed4.netlify.app';
+export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://microbiomedata.github.io/sheets_and_friends';
+// export const IFRAME_BASE = 'https://microbiomedata.github.io/sheets_and_friends';
 
 const VariationMap = {
   /** A mapping of the templates to the superset of checkbox options they work for. */
@@ -99,6 +99,10 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
     postMessage({ type: 'jumpToRowCol', row, column });
   }
 
+  function launchReference() {
+    postMessage({ type: 'showReference' });
+  }
+
   function loadData(data: any[][]) {
     ready.value = false;
     postMessage({ type: 'loadData', data });
@@ -146,6 +150,7 @@ export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
     exportTable,
     jumpTo,
     jumpToRowCol,
+    launchReference,
     loadData,
     openFile,
     setupTemplate,

@@ -20,7 +20,10 @@ export default defineComponent({
   <v-main>
     <v-container v-if="!stateRefs.user.value">
       <h1>NMDC Submission Portal</h1>
-      <p>This system requires ORCiD Authentication.</p>
+      <p>
+        This system requires authentication.
+        <a href="https://support.orcid.org/hc/en-us/articles/360006973953">ORCID registration is free for individuals.</a>
+      </p>
       <AuthButton />
     </v-container>
     <keep-alive v-else>
