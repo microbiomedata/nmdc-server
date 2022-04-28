@@ -3,7 +3,7 @@ import { computed, defineComponent, PropType } from '@vue/composition-api';
 import { StudySearchResults } from '@/data/api';
 
 function getOrcid(person: any) {
-  const orcid = person?.applies_to_person?.orcid || '';
+  const orcid = person?.applies_to_person?.orcid ?? person?.orcid ?? '';
   return `https://orcid.org/${orcid.replace('orcid:', '')}`;
 }
 
@@ -15,13 +15,16 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const team = computed(() => props.item.has_credit_associations
-      .filter((m) => m.applies_to_person.name !== props.item.principal_investigator_name));
-    const pi = computed(() => props.item.has_credit_associations
-      .find((m) => m.applies_to_person.name === props.item.principal_investigator_name));
-    const piOrcid = computed(() => getOrcid(pi.value));
+    const team = computed(() => props.item.has_credit_associations);
+    const piWebsites = computed(() => {
+      if (props.item.principal_investigator.orcid) {
+        return [getOrcid(props.item.principal_investigator)]
+          .concat(props.item.principal_investigator_websites);
+      }
+      return props.item.principal_investigator_websites;
+    });
     return {
-      piOrcid, team, getOrcid,
+      team, piWebsites, getOrcid,
     };
   },
 });
@@ -51,7 +54,7 @@ export default defineComponent({
             Principal investigator
           </div>
           <a
-            v-for="site in [piOrcid].concat(item.principal_investigator_websites)"
+            v-for="site in piWebsites"
             :key="site"
             class="blue--text py-1"
             style="cursor: pointer; text-decoration: none; display: block;"
@@ -91,6 +94,7 @@ export default defineComponent({
               <v-card-title>{{ member.applies_to_person.name }}</v-card-title>
               <v-card-subtitle>CRediT: {{ member.applied_roles.join(', ') }}</v-card-subtitle>
               <v-btn
+                v-if="member.applies_to_person.orcid"
                 text
                 color="green"
                 :href="getOrcid(member)"

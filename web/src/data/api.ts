@@ -112,12 +112,15 @@ export interface BiosampleSearchResult extends BaseSearchResult {
 
 interface PrincipalInvestigator {
   name?: string;
+  email?: string;
+  orcid?: string;
 }
 
 export interface StudySearchResults extends BaseSearchResult {
   principal_investigator_websites: string[];
   principal_investigator_name: string;
   principal_investigator_image_url: string;
+  principal_investigator: PrincipalInvestigator;
   publication_doi_info: Record<string, {
     type: string;
   }>,

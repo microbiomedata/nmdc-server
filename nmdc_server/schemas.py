@@ -199,6 +199,9 @@ class OrcidPerson(BaseModel):
     orcid: Optional[str]
     profile_image_url: Optional[str]
 
+    class Config:
+        orm_mode = True
+
 
 class CreditAssociation(BaseModel):
     """https://microbiomedata.github.io/nmdc-schema/CreditAssociation/"""
@@ -249,7 +252,7 @@ class OmicsCounts(BaseModel):
 
 class Study(StudyBase):
     open_in_gold: Optional[str]
-    principal_investigator: models.PrincipalInvestigator
+    principal_investigator: OrcidPerson
     principal_investigator_name: str
     principal_investigator_image_url: str
     sample_count: Optional[int]
