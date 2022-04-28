@@ -12,7 +12,7 @@ from nmdc_server.models import PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
 
 
-def get_or_create_pi(db: Session, name: str, url: Optional[str]) -> str:
+def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional[str]) -> str:
     pi = db.query(PrincipalInvestigator).filter_by(name=name).first()
     if pi:
         return pi.id
@@ -23,7 +23,7 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str]) -> str:
         if r.ok:
             image_data = r.content
 
-    pi = PrincipalInvestigator(name=name, image=image_data)
+    pi = PrincipalInvestigator(name=name, image=image_data, orcid=orcid)
 
     db.add(pi)
     db.flush()
@@ -43,7 +43,8 @@ def load(db: Session, cursor: Cursor):
         pi_obj = obj.pop("principal_investigator")
         pi_name = pi_obj["has_raw_value"]
         pi_url = pi_obj.get("profile_image_url")
-        obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url)
+        pi_orcid = pi_obj.get("orcid")
+        obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url, pi_orcid)
         obj["principal_investigator_websites"] = obj.pop("websites", [])
         obj["publication_dois"] = [
             d.replace("https://doi.org/", "") for d in obj.pop("publications", [])

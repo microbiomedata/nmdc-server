@@ -249,6 +249,7 @@ class OmicsCounts(BaseModel):
 
 class Study(StudyBase):
     open_in_gold: Optional[str]
+    principal_investigator: models.PrincipalInvestigator
     principal_investigator_name: str
     principal_investigator_image_url: str
     sample_count: Optional[int]
