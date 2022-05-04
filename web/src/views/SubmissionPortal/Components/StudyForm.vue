@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref } from '@vue/composition-api';
-import NmdcSchema from '@/data/nmdc-schema/jsonschema/nmdc.schema.json';
+import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
 import Definitions from '@/definitions';
 import { studyForm, studyFormValid } from '../store';
 

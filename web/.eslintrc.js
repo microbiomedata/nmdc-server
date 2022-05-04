@@ -39,6 +39,7 @@ module.exports = {
       ],
       rules: {
         '@typescript-eslint/no-unused-vars': 2,
+        "no-undef": "off",
       },
     },
   ],

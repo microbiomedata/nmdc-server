@@ -10,7 +10,6 @@ export default defineComponent({
     if (root.$route.params.id) {
       loadRecord(root.$route.params.id);
     }
-
     return { stateRefs };
   },
 });

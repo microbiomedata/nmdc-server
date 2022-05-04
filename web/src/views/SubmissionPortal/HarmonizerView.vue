@@ -1,9 +1,12 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch,
+  computed, defineComponent, ref, nextTick, watch, onMounted,
 } from '@vue/composition-api';
 import { flattenDeep } from 'lodash';
 import { writeFile, utils } from 'xlsx';
+import 'handsontable/dist/handsontable.full.css';
+import hot from 'handsontable';
+import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
 
 import useRequest from '@/use/useRequest';
 
@@ -34,6 +37,26 @@ const ColorKey = {
   },
 };
 
+async function setupHarmoinizer(r: HTMLElement) {
+  // @ts-ignore
+  window.Handsontable = hot;
+  // eslint-disable-next-line no-param-reassign
+  r.innerHTML = HarmonizerTemplateText;
+  const myDHGrid = document.getElementById('data-harmonizer-grid');
+  const myDHFooter = document.getElementById('data-harmonizer-footer');
+  document.getElementById('data-harmonizer-toolbar-inset')?.remove();
+  // console.log(myDHGrid, myDHFooter);
+  // eslint-disable-next-line no-new-object
+  const dh: any = new Object(DataHarmonizer);
+  await dh.init(myDHGrid, myDHFooter, TEMPLATES);
+  // $('#data-harmonizer-toolbar-inset').children().slice(0, 6).attr('style', 'display:none !important');
+  // Picks first template in dh menu if none given in URL.
+  dh.schema = SCHEMA;
+  // Hardcode URL here if desired. Expecting a file path relative to app's template folder.
+  await dh.processTemplate('soil');
+  await dh.createHot();
+}
+
 export default defineComponent({
   components: { SubmissionStepper },
 
@@ -43,6 +66,11 @@ export default defineComponent({
     const jumpToModel = ref();
     const highlightedValidationError = ref('');
     const columnVisibility = ref('all');
+
+    onMounted(() => {
+      const r = document.getElementById('harmonizer-root');
+      if (r) setupHarmoinizer(r);
+    });
 
     async function jumpTo({ row, column }: { row: number; column: number }) {
       harmonizerApi.jumpToRowCol(row, column);
@@ -317,21 +345,7 @@ export default defineComponent({
       </div>
     </div>
     <div :style="{ height: `calc(100vh - 260px  - ${validationErrors.length ? '48px' : '0px'})` }">
-      <p
-        v-if="!harmonizerApi.ready.value"
-        class="text-h2 mt-8"
-      >
-        DataHarmonizer is Loading...
-      </p>
-      <iframe
-        ref="harmonizerElement"
-        title="Data Harmonizer"
-        width="100%"
-        height="100%"
-        :src="`${IFRAME_BASE}/linkml.html?minified=true&template=nmdc_dh/${templateChoice}`"
-        sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals allow-downloads allow-forms"
-        @load="hydrate"
-      />
+      <div id="harmonizer-root" />
     </div>
     <div class="d-flex grow ma-2">
       <v-btn
@@ -387,3 +401,66 @@ export default defineComponent({
     </div>
   </div>
 </template>
+
+<style>
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  /* Prevents track or mouse scroll gestures from triggering page navigation in chrome off of displayed page. */
+  overscroll-behavior: contain;
+}
+
+#loading-screen {
+  display: none;
+  background-color: rgba(108, 117, 125, 0.2);
+  z-index: 1000;
+}
+
+#unmapped-headers-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* Grid */
+.data-harmonizer-grid {
+  overflow: hidden;
+}
+.data-harmonizer-grid .secondary-header-cell:hover {
+  cursor: pointer;
+}
+.data-harmonizer-grid td.invalid-cell {
+  background-color: #ffcccb !important;
+}
+.data-harmonizer-grid td.empty-invalid-cell {
+  background-color: #ff91a4 !important;
+}
+.data-harmonizer-grid .htAutocompleteArrow {
+  color: gray;
+}
+.data-harmonizer-grid th {
+  text-align: left;
+}
+.data-harmonizer-grid th.required {
+  background-color:yellow;
+}
+.data-harmonizer-grid th.recommended {
+  background-color:plum;
+}
+
+/* Autocomplete */
+.listbox {
+    white-space: pre !important;
+}
+.handsontable.listbox td {
+  border-radius:3px;
+  border:1px solid silver;
+  background-color: #DDD;
+}
+.handsontable.listbox td:hover {
+  background-color: lightblue !important;
+}
+.handsontable.listbox td.current.highlight {
+  background-color: lightblue !important;
+}
+</style>
