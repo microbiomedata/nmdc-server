@@ -145,6 +145,14 @@ export class HarmonizerApi {
     this.dh.scrollTo(row, column);
   }
 
+  getHelpHtml(fieldName: string) {
+    const field = this.dh.getFields(this.dh.schema).find((f: any) => f.name === fieldName);
+    if (field) {
+      return this.dh.getComment(field);
+    }
+    return '<p>Unknown field</p>';
+  }
+
   launchReference() {
     this.dh.renderReference();
   }
