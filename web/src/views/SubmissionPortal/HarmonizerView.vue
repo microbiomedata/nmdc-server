@@ -44,10 +44,12 @@ export default defineComponent({
     const jumpToModel = ref();
     const highlightedValidationError = ref('');
     const columnVisibility = ref('all');
+    const helpHtml = ref('<p>None</p>');
 
-    onMounted(() => {
+    onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
-      if (r) harmonizerApi.init(r);
+      if (r) await harmonizerApi.init(r);
+      helpHtml.value = harmonizerApi.getHelpHtml('sample_link');
     });
 
     async function jumpTo({ row, column }: { row: number; column: number }) {
@@ -132,6 +134,7 @@ export default defineComponent({
       templateName,
       templateChoice,
       fields,
+      helpHtml,
       validationErrors,
       highlightedValidationError,
       IFRAME_BASE,
@@ -339,6 +342,7 @@ export default defineComponent({
         </v-icon>
         Go to previous step
       </v-btn>
+      <div v-html="helpHtml" />
       <v-spacer />
       <div class="d-flex align-center">
         <span class="mr-1">Color key</span>
