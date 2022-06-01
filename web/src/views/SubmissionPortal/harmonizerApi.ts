@@ -103,10 +103,12 @@ export class HarmonizerApi {
     // Hardcode URL here if desired. Expecting a file path relative to app's template folder.
     await this.dh.processTemplate('soil');
     await this.dh.createHot();
+    // @ts-ignore
+    window.dh = this.dh;
     this.ready.value = true;
   }
 
-  getColumnCoordinates() {
+  _getColumnCoordinates() {
     const ret: Record<string, Record<string, number>> = {};
     let column_ptr = 0;
     this.dh.template.forEach((section: any) => {
@@ -121,18 +123,21 @@ export class HarmonizerApi {
 
   refreshState() {
     this.validationErrors.value = this.dh.invalid_cells;
-    this.schemaSections.value = this.getColumnCoordinates();
+    this.schemaSections.value = this._getColumnCoordinates();
   }
 
-  loadData(data: any[][]) {
-    this.dh.hot.loadData(data);
+  async loadData(data: any[][]) {
+    await this.dh.hot.loadData(data);
+    await this.dh.hot.render();
+    this.refreshState();
   }
 
   changeVisibility(value: string) {
+    console.log(value, 'change');
     if (['all', 'required', 'recommended'].includes(value)) {
       this.dh.changeColVisibility(`show-${value}-cols-dropdown-item`);
     } else {
-      const ptr = Object.keys(this.getColumnCoordinates()).indexOf(value);
+      const ptr = Object.keys(this._getColumnCoordinates()).indexOf(value);
       this.dh.changeColVisibility(`show-section-${ptr}`);
     }
   }

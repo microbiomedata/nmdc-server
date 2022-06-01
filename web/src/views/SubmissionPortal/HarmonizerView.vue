@@ -45,9 +45,13 @@ export default defineComponent({
     const highlightedValidationError = ref('');
     const columnVisibility = ref('all');
 
-    onMounted(() => {
+    onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
-      if (r) harmonizerApi.init(r);
+      if (r) {
+        await harmonizerApi.init(r);
+        await nextTick();
+        harmonizerApi.loadData(sampleData.value);
+      }
     });
 
     async function jumpTo({ row, column }: { row: number; column: number }) {
@@ -100,9 +104,11 @@ export default defineComponent({
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
-    function hydrate() {
-      harmonizerApi.loadData(sampleData.value);
-    }
+    watch(sampleData, () => {
+      if (harmonizerApi.ready.value) {
+        harmonizerApi.loadData(sampleData.value);
+      }
+    });
 
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
@@ -139,7 +145,6 @@ export default defineComponent({
       doSubmit,
       downloadSamples,
       errorClick,
-      hydrate,
       focus,
       jumpTo,
       validate,
@@ -326,6 +331,7 @@ export default defineComponent({
     <div class="grow">
       <div
         id="harmonizer-root"
+        class="harmonizer-root"
       />
     </div>
     <div class="d-flex shrink ma-2">
@@ -387,6 +393,7 @@ export default defineComponent({
 @import '/libraries/handsontable.full.min.css';
 @import '/libraries/bootstrap.min.css';
 @import '/libraries/jquery-ui.min.css';
+
 /* Grid */
 #data-harmonizer-grid {
   overflow: hidden;
@@ -412,10 +419,10 @@ export default defineComponent({
   th {
     text-align: left;
 
-    .required {
+    &.required {
       background-color:yellow;
     }
-    .recommended {
+    &.recommended {
       background-color:plum;
     }
   }
