@@ -12,7 +12,7 @@ import {
   IFRAME_BASE, HarmonizerApi,
 } from './harmonizerApi';
 import {
-  templateName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
+  packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
 } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
@@ -50,7 +50,7 @@ export default defineComponent({
       if (r) {
         await harmonizerApi.init(r);
         await nextTick();
-        harmonizerApi.loadData(sampleData.value);
+        harmonizerApi.loadData(sampleData.value.slice(2));
       }
     });
 
@@ -66,7 +66,7 @@ export default defineComponent({
 
     async function validate() {
       const data = harmonizerApi.exportJson();
-      sampleData.value = data.slice(2);
+      sampleData.value = data;
       samplesValid.value = await harmonizerApi.validate();
       incrementalSaveRecord(root.$route.params.id);
     }
@@ -106,14 +106,14 @@ export default defineComponent({
 
     watch(sampleData, () => {
       if (harmonizerApi.ready.value) {
-        harmonizerApi.loadData(sampleData.value);
+        harmonizerApi.loadData(sampleData.value.slice(2));
       }
     });
 
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
-      sampleData.value = data.slice(2);
+      sampleData.value = data;
       await submit(root.$route.params.id);
     });
 
@@ -135,7 +135,7 @@ export default defineComponent({
       samplesValid,
       submitLoading,
       submitCount,
-      templateName,
+      packageName,
       templateChoice,
       fields,
       validationErrors,

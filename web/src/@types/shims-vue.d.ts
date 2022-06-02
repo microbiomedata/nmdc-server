@@ -7,7 +7,7 @@ declare module '*.vue' {
 // HACK-DH
 declare module '*.html' {
   const value: string;
-  export default value
+  export default value;
 }
 
 declare const DataHarmonizer: any;

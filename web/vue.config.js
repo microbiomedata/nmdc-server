@@ -1,5 +1,3 @@
-// const path = require('path');
-const webpack = require('webpack');
 const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
@@ -38,11 +36,11 @@ module.exports = {
           { from: './node_modules/sheets_and_friends/docs/libraries/jquery-ui.min.js', to: 'libraries/jquery-ui.min.js' },
           // { from: './node_modules/sheets_and_friends/docs/libraries/handsontable.full.min.js', to: 'libraries/handsontable.full.min.js'},
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/index.js', to: 'script/data-harmonizer/index.js' },
-          { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/export_utils.js', to: 'script/data-harmonizer/export_utils.js'},
-          { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/validation.js', to: 'script/data-harmonizer/validation.js'},
-          { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/field_rules.js', to: 'script/data-harmonizer/field_rules.js'},
-          { from: './node_modules/sheets_and_friends/docs/template/menu.js', to: 'template/menu.js'},
-          { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/schema.js', to: 'template/nmdc_dh/schema.js'},
+          { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/export_utils.js', to: 'script/data-harmonizer/export_utils.js' },
+          { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/validation.js', to: 'script/data-harmonizer/validation.js' },
+          { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/field_rules.js', to: 'script/data-harmonizer/field_rules.js' },
+          { from: './node_modules/sheets_and_friends/docs/template/menu.js', to: 'template/menu.js' },
+          { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/schema.js', to: 'template/nmdc_dh/schema.js' },
         ],
       }),
     ],

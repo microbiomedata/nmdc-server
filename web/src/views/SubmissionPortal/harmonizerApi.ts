@@ -1,5 +1,6 @@
 import { Ref, ref } from '@vue/composition-api';
 import hot from 'handsontable';
+import xlsx from 'xlsx';
 import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
 
 // export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://microbiomedata.github.io/sheets_and_friends';
@@ -86,6 +87,8 @@ export class HarmonizerApi {
   async init(r: HTMLElement) {
     // @ts-ignore
     window.Handsontable = hot;
+    // @ts-ignore
+    window.XLSX = xlsx;
     // eslint-disable-next-line no-param-reassign
     r.innerHTML = HarmonizerTemplateText;
     // eslint-disable-next-line no-param-reassign
@@ -153,11 +156,6 @@ export class HarmonizerApi {
   launchReference() {
     this.dh.renderReference();
   }
-
-  // function loadData(data: any[][]) {
-  //   ready.value = false;
-  //   postMessage({ type: 'loadData', data });
-  // }
 
   openFile(file: File) {
     if (!file) return;
