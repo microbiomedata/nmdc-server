@@ -8,9 +8,7 @@ import 'handsontable/dist/handsontable.full.css';
 
 import useRequest from '@/use/useRequest';
 
-import {
-  IFRAME_BASE, HarmonizerApi,
-} from './harmonizerApi';
+import { HarmonizerApi } from './harmonizerApi';
 import {
   packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
 } from './store';
@@ -140,7 +138,6 @@ export default defineComponent({
       fields,
       validationErrors,
       highlightedValidationError,
-      IFRAME_BASE,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -390,10 +387,24 @@ export default defineComponent({
 </template>
 
 <style lang="scss">
-@import '/libraries/handsontable.full.min.css';
-@import '/libraries/bootstrap.min.css';
-@import '/libraries/jquery-ui.min.css';
+// HACK-DH
+// Import css from CDN.  We didn't need a SCSS file for this one because
+// it doesn't have any globally conflicting styles.
+@import 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css';
 
+.harmonizer-root {
+  // Namespace these styles so that they don't affect the global styles.
+  // Read more about SASS interpolation: https://sass-lang.com/documentation/interpolation
+
+  // This stylesheet is loaded from node_modules rather than a CDN because we need an SCSS file
+  // See comment below.
+  @import '~bootstrap/scss/bootstrap.scss';
+  // This stylesheet was unfortunately copy-pasted. In order to interpolate the content here,
+  // an SCSS file is required (css will only be referenced).  There is no handsontable scss available,
+  // so the CSS was renamed SCSS and copied into the project.  SCSS and CSS are treated differently
+  // when imported within a parent scope (harmonizer-root class in this case)
+  @import './library/handsontable.min.scss';
+}
 /* Grid */
 #data-harmonizer-grid {
   overflow: hidden;

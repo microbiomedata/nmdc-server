@@ -25,16 +25,8 @@ module.exports = {
       // HACK-DH
       new CopyPlugin({
         patterns: [
-          // CSS
-          // { from: './node_modules/sheets_and_friends/docs/libraries/handsontable.full.min.css', to: 'libraries/handsontable.full.min.css' },
-          { from: './node_modules/sheets_and_friends/docs/libraries/bootstrap.min.css', to: 'libraries/bootstrap.min.css' },
-          { from: './node_modules/sheets_and_friends/docs/libraries/jquery-ui.min.css', to: 'libraries/jquery-ui.min.css' },
-          // JS
-          { from: './node_modules/sheets_and_friends/docs/libraries/bootstrap.min.js', to: 'libraries/bootstrap.min.js' },
-          // { from: './node_modules/sheets_and_friends/docs/libraries/xlsx.full.min.js', to: 'libraries/xlsx.full.min.js' },
-          { from: './node_modules/sheets_and_friends/docs/libraries/jquery-3.5.1.min.js', to: 'libraries/jquery-3.5.1.min.js' },
-          { from: './node_modules/sheets_and_friends/docs/libraries/jquery-ui.min.js', to: 'libraries/jquery-ui.min.js' },
-          // { from: './node_modules/sheets_and_friends/docs/libraries/handsontable.full.min.js', to: 'libraries/handsontable.full.min.js'},
+          // Import library javascript from DataHarmonizer.
+          // Globally scoped dependencies will be loaded from CDN instead of copied.
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/index.js', to: 'script/data-harmonizer/index.js' },
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/export_utils.js', to: 'script/data-harmonizer/export_utils.js' },
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/validation.js', to: 'script/data-harmonizer/validation.js' },

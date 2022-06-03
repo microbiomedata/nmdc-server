@@ -17,3 +17,8 @@ Some components, like `src/views/Search/FilterList` use lazy-load of data that c
 ## Stateless requests
 
 This application serves data from a stateless database, so queries can be cached, and many requests only need to be loaded once.
+
+
+## DataHarmonizer Hacks
+
+Several hacks were needed in order to get DataHarmonizer working in this application.  You can find code references for these by searching for `HACK-DH`.

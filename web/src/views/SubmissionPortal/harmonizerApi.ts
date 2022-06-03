@@ -3,9 +3,6 @@ import hot from 'handsontable';
 import xlsx from 'xlsx';
 import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
 
-// export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://microbiomedata.github.io/sheets_and_friends';
-export const IFRAME_BASE = 'https://microbiomedata.github.io/sheets_and_friends';
-
 const VariationMap = {
   /** A mapping of the templates to the superset of checkbox options they work for. */
   emsl: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl']),
@@ -89,6 +86,7 @@ export class HarmonizerApi {
     window.Handsontable = hot;
     // @ts-ignore
     window.XLSX = xlsx;
+
     // eslint-disable-next-line no-param-reassign
     r.innerHTML = HarmonizerTemplateText;
     // eslint-disable-next-line no-param-reassign
