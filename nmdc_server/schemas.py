@@ -660,3 +660,14 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
 
     class Config:
         orm_mode = True
+
+
+class User(BaseModel):
+    id: Optional[UUID]
+    orchid_uuid: str
+    name: str
+    is_admin = False
+    profile_url: Optional[str]
+
+    class Config:
+        orm_mode = True

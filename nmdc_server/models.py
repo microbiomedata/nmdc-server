@@ -816,3 +816,12 @@ class SubmissionMetadata(Base):
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
     status = Column(String, nullable=False, default="in-progress")
     metadata_submission = Column(JSONB, nullable=False)
+
+
+class User(Base):
+    __tablename__ = "user"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    orcid_uuid = Column(String, nullable=False)
+    name = Column(String, nullable=False)
+    is_admin = Column(Boolean, nullable=False, default=False)

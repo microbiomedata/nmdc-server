@@ -9,6 +9,7 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
 from nmdc_server.config import settings, starlette_config
+from nmdc_server.schemas import User
 
 # A list of orcids with "admin" access to the server.  At some point, we
 # may want to add a user table with associated roles to handle this.
@@ -112,6 +113,10 @@ async def login_via_orcid(request: Request):
 @router.get("/token", name="token", include_in_schema=False)
 async def authorize(request: Request):
     token = await oauth2_client.orcid.authorize_access_token(request)
+    # if this orchid exists in db
+    # if no - continue, else add to db  
+    user = User(orchid_uuid=token['orcid'], name=token['name'])
+    print(user)
     request.session["token"] = token
     return RedirectResponse(url="/")
 
