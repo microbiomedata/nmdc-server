@@ -11,6 +11,9 @@ const VariationMap = {
 };
 
 export function getVariant(checkBoxes: string[], variations: (keyof typeof VariationMap)[], base: string) {
+  if (checkBoxes.length === 0) {
+    return base;
+  }
   const variationStr = variations.find((v) => {
     const vSet = VariationMap[v];
     return checkBoxes.every((elem) => vSet.has(elem));
@@ -30,6 +33,7 @@ export const HARMONIZER_TEMPLATES: Record<string, {
   variations: (keyof typeof VariationMap)[];
 }> = {
   air: { default: 'air', status: 'published', variations: [] },
+  bioscales: { default: 'bioscales', status: 'published', variations: [] },
   'built environment': { default: 'built_env', status: 'published', variations: [] },
   'host-associated': { default: 'host-associated', status: 'published', variations: [] },
   'human-associated': { default: '', status: 'disabled', variations: [] },
@@ -81,7 +85,7 @@ export class HarmonizerApi {
     this.ready = ref(false);
   }
 
-  async init(r: HTMLElement) {
+  async init(r: HTMLElement, templateName: string) {
     // @ts-ignore
     window.Handsontable = hot;
     // @ts-ignore
@@ -102,7 +106,7 @@ export class HarmonizerApi {
     // Picks first template in dh menu if none given in URL.
     this.dh.schema = SCHEMA;
     // Hardcode URL here if desired. Expecting a file path relative to app's template folder.
-    await this.dh.processTemplate('soil');
+    await this.dh.processTemplate(templateName);
     await this.dh.createHot();
     // @ts-ignore
     window.dh = this.dh;

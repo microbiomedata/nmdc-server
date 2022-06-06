@@ -46,7 +46,7 @@ export default defineComponent({
     onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
       if (r) {
-        await harmonizerApi.init(r);
+        await harmonizerApi.init(r, templateChoice.value);
         await nextTick();
         harmonizerApi.loadData(sampleData.value.slice(2));
       }
@@ -175,10 +175,10 @@ export default defineComponent({
           :items="fields"
           label="Jump to column..."
           class="shrink mr-2"
+          style="z-index: 200 !important;"
           outlined
           dense
           hide-details
-          height
           :menu-props="{ maxHeight: 600 }"
           @focus="focus"
           @change="jumpTo"
@@ -299,36 +299,44 @@ export default defineComponent({
           </v-icon>
         </v-btn>
       </div>
-      <div
-        v-if="validationErrors.length"
-        class="d-flex flex-row py-1"
-      >
-        <div class="mr-2 text-h5 font-weight-bold grow">
-          {{ validationErrors.length }} Validation Errors:
-        </div>
-        <div
-          style="overflow-x: auto;"
-          class="d-flex flex-row"
-        >
-          <v-chip
-            v-for="err in validationErrors"
-            :key="`${err.row}.${err.column}`"
-            color="error"
-            class="mr-1 mb-2 grow mb-0"
-            dense
-            :outlined="highlightedValidationError !== `${err.row}.${err.column}`"
-            dark
-            @click="errorClick(err.row, err.column)"
-          >
-            {{ err.cell || 'Validation Error' }}
-          </v-chip>
-        </div>
-      </div>
     </div>
-    <div class="grow">
+    <div
+      class="harmonizer-container d-flex flex-row"
+      style="max-width: 100%;"
+    >
+      <v-navigation-drawer
+        v-if="validationErrors.length >= 1"
+        width="260"
+        class="grow"
+        permanent
+      >
+        <template v-if="validationErrors.length">
+          <div class="text-h6 mx-2">
+            {{ validationErrors.length }} Validation Errors
+          </div>
+          <div
+            style="overflow-x: auto;"
+            class="d-flex flex-column"
+          >
+            <v-chip
+              v-for="err in validationErrors"
+              :key="`${err.row}.${err.column}`"
+              color="error"
+              class="mx-1 mb-1 grow mb-0 px-1"
+              small
+              :outlined="highlightedValidationError !== `${err.row}.${err.column}`"
+              dark
+              @click="errorClick(err.row, err.column)"
+            >
+              ({{ err.row }}, {{ err.column }}) {{ err.cell || 'Validation Error' }}
+            </v-chip>
+          </div>
+        </template>
+      </v-navigation-drawer>
       <div
         id="harmonizer-root"
-        class="harmonizer-root"
+        class="harmonizer-root grow"
+        :style="{ 'max-width': validationErrors.length === 0 ? '100vw' : 'calc(100vw - 260px)' }"
       />
     </div>
     <div class="d-flex shrink ma-2">
@@ -392,6 +400,10 @@ export default defineComponent({
 // it doesn't have any globally conflicting styles.
 @import 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css';
 
+.harmonizer-container {
+  height: calc(100vh - 260px) !important;
+}
+
 .harmonizer-root {
   // Namespace these styles so that they don't affect the global styles.
   // Read more about SASS interpolation: https://sass-lang.com/documentation/interpolation
@@ -408,7 +420,7 @@ export default defineComponent({
 /* Grid */
 #data-harmonizer-grid {
   overflow: hidden;
-  height: calc(100vh - 400px) !important;
+  height: calc(100vh - 340px) !important;
   margin-top: -16px;
 
   .secondary-header-cell:hover {
