@@ -106,7 +106,7 @@ export class HarmonizerApi {
     // Picks first template in dh menu if none given in URL.
     this.dh.schema = SCHEMA;
     // Hardcode URL here if desired. Expecting a file path relative to app's template folder.
-    await this.dh.processTemplate(templateName);
+    await this.dh.useTemplate(`nmdc/${templateName}`);
     await this.dh.createHot();
     // @ts-ignore
     window.dh = this.dh;
@@ -154,8 +154,8 @@ export class HarmonizerApi {
     this.dh.scrollTo(row, column);
   }
 
-  launchReference() {
-    this.dh.renderReference();
+  launchReference(schema: any) {
+    this.dh.renderReference(schema);
   }
 
   openFile(file: File) {

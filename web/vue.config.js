@@ -33,6 +33,7 @@ module.exports = {
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/field_rules.js', to: 'script/data-harmonizer/field_rules.js' },
           { from: './node_modules/sheets_and_friends/docs/template/menu.js', to: 'template/menu.js' },
           { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/schema.js', to: 'template/nmdc_dh/schema.js' },
+          { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/export.js', to: 'template/nmdc_dh/export.js' },
         ],
       }),
     ],
