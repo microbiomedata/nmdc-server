@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, computed } from '@vue/composition-api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
-import { templateName, templateChoice, templateChoiceDisabled } from '../store';
+import { templateChoice, templateChoiceDisabled, packageName } from '../store';
 
 export default defineComponent({
   setup() {
@@ -9,7 +9,7 @@ export default defineComponent({
       () => templateChoice.value.includes('jgi') || templateChoice.value.includes('emsl'),
     );
     return {
-      templateName,
+      packageName,
       templateChoice,
       HARMONIZER_TEMPLATES,
       templates: Object.entries(HARMONIZER_TEMPLATES),
@@ -29,7 +29,7 @@ export default defineComponent({
       Choose environment package for your data.
     </div>
     <v-radio-group
-      v-model="templateName"
+      v-model="packageName"
       class="my-6"
     >
       <v-radio
@@ -89,7 +89,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :disabled="!templateName"
+        :disabled="!packageName"
         :to="{
           name: 'Submission Sample Editor',
         }"

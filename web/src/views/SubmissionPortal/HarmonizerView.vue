@@ -1,17 +1,16 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch,
+  computed, defineComponent, ref, nextTick, watch, onMounted,
 } from '@vue/composition-api';
 import { flattenDeep } from 'lodash';
 import { writeFile, utils } from 'xlsx';
+import 'handsontable/dist/handsontable.full.css';
 
 import useRequest from '@/use/useRequest';
 
+import { HarmonizerApi } from './harmonizerApi';
 import {
-  IFRAME_BASE, useHarmonizerApi,
-} from './harmonizerApi';
-import {
-  templateName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
+  packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
 } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
@@ -39,10 +38,19 @@ export default defineComponent({
 
   setup(_, { root }) {
     const harmonizerElement = ref();
-    const harmonizerApi = useHarmonizerApi(harmonizerElement);
+    const harmonizerApi = new HarmonizerApi();
     const jumpToModel = ref();
     const highlightedValidationError = ref('');
     const columnVisibility = ref('all');
+
+    onMounted(async () => {
+      const r = document.getElementById('harmonizer-root');
+      if (r) {
+        await harmonizerApi.init(r);
+        await nextTick();
+        harmonizerApi.loadData(sampleData.value.slice(2));
+      }
+    });
 
     async function jumpTo({ row, column }: { row: number; column: number }) {
       harmonizerApi.jumpToRowCol(row, column);
@@ -55,8 +63,8 @@ export default defineComponent({
     }
 
     async function validate() {
-      const data = await harmonizerApi.exportJson();
-      sampleData.value = data.slice(2);
+      const data = harmonizerApi.exportJson();
+      sampleData.value = data;
       samplesValid.value = await harmonizerApi.validate();
       incrementalSaveRecord(root.$route.params.id);
     }
@@ -94,14 +102,16 @@ export default defineComponent({
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
-    function hydrate() {
-      harmonizerApi.loadData(sampleData.value);
-    }
+    watch(sampleData, () => {
+      if (harmonizerApi.ready.value) {
+        harmonizerApi.loadData(sampleData.value.slice(2));
+      }
+    });
 
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
-      sampleData.value = data.slice(2);
+      sampleData.value = data;
       await submit(root.$route.params.id);
     });
 
@@ -123,17 +133,15 @@ export default defineComponent({
       samplesValid,
       submitLoading,
       submitCount,
-      templateName,
+      packageName,
       templateChoice,
       fields,
       validationErrors,
       highlightedValidationError,
-      IFRAME_BASE,
       /* methods */
       doSubmit,
       downloadSamples,
       errorClick,
-      hydrate,
       focus,
       jumpTo,
       validate,
@@ -144,8 +152,8 @@ export default defineComponent({
 
 <template>
   <div
-    style="overflow-y: hidden;"
-    class="fill-height"
+    style="overflow-y: hidden; overflow-x: hidden;"
+    class="d-flex flex-column fill-height"
   >
     <SubmissionStepper />
     <div class="d-flex flex-column px-4">
@@ -160,7 +168,7 @@ export default defineComponent({
           hide-details
           class="mr-2"
           :truncate-length="50"
-          @change="harmonizerApi.openFile"
+          @change="(evt) => harmonizerApi.openFile(evt)"
         />
         <v-autocomplete
           v-model="jumpToModel"
@@ -189,6 +197,7 @@ export default defineComponent({
         <v-menu
           offset-y
           nudge-bottom="4px"
+          style="z-index: 200 !important;"
           :close-on-click="true"
         >
           <template #activator="{on, attrs}">
@@ -284,7 +293,7 @@ export default defineComponent({
           small
           @click="harmonizerApi.launchReference()"
         >
-          {{ templateName }} Reference
+          {{ packageName }} Reference
           <v-icon class="pl-1">
             mdi-open-in-new
           </v-icon>
@@ -316,24 +325,13 @@ export default defineComponent({
         </div>
       </div>
     </div>
-    <div :style="{ height: `calc(100vh - 260px  - ${validationErrors.length ? '48px' : '0px'})` }">
-      <p
-        v-if="!harmonizerApi.ready.value"
-        class="text-h2 mt-8"
-      >
-        DataHarmonizer is Loading...
-      </p>
-      <iframe
-        ref="harmonizerElement"
-        title="Data Harmonizer"
-        width="100%"
-        height="100%"
-        :src="`${IFRAME_BASE}/linkml.html?minified=true&template=nmdc_dh/${templateChoice}`"
-        sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals allow-downloads allow-forms"
-        @load="hydrate"
+    <div class="grow">
+      <div
+        id="harmonizer-root"
+        class="harmonizer-root"
       />
     </div>
-    <div class="d-flex grow ma-2">
+    <div class="d-flex shrink ma-2">
       <v-btn
         color="gray"
         depressed
@@ -387,3 +385,82 @@ export default defineComponent({
     </div>
   </div>
 </template>
+
+<style lang="scss">
+// HACK-DH
+// Import css from CDN.  We didn't need a SCSS file for this one because
+// it doesn't have any globally conflicting styles.
+@import 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css';
+
+.harmonizer-root {
+  // Namespace these styles so that they don't affect the global styles.
+  // Read more about SASS interpolation: https://sass-lang.com/documentation/interpolation
+
+  // This stylesheet is loaded from node_modules rather than a CDN because we need an SCSS file
+  // See comment below.
+  @import '~bootstrap/scss/bootstrap.scss';
+  // This stylesheet was unfortunately copy-pasted. In order to interpolate the content here,
+  // an SCSS file is required (css will only be referenced).  There is no handsontable scss available,
+  // so the CSS was renamed SCSS and copied into the project.  SCSS and CSS are treated differently
+  // when imported within a parent scope (harmonizer-root class in this case)
+  @import './library/handsontable.min.scss';
+}
+/* Grid */
+#data-harmonizer-grid {
+  overflow: hidden;
+  height: calc(100vh - 400px) !important;
+  margin-top: -16px;
+
+  .secondary-header-cell:hover {
+    cursor: pointer;
+  }
+
+  .htAutocompleteArrow {
+    color: gray;
+  }
+
+  td {
+    &.invalid-cell {
+      background-color: #ffcccb !important;
+    }
+    &.empty-invalid-cell {
+      background-color: #ff91a4 !important;
+    }
+  }
+  th {
+    text-align: left;
+
+    &.required {
+      background-color:yellow;
+    }
+    &.recommended {
+      background-color:plum;
+    }
+  }
+}
+
+#loading-screen {
+  display: none;
+  background-color: rgba(108, 117, 125, 0.2);
+  z-index: 1000;
+}
+
+#unmapped-headers-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* Autocomplete */
+.listbox {
+  white-space: pre !important;
+}
+.handsontable.listbox td {
+  border-radius:3px;
+  border:1px solid silver;
+  background-color: #DDD;
+
+  &:hover, &.current.highlight {
+    background-color: lightblue !important;
+  }
+}
+</style>

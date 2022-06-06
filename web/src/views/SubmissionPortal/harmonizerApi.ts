@@ -1,7 +1,7 @@
-import { ref, Ref } from '@vue/composition-api';
-
-export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://microbiomedata.github.io/sheets_and_friends';
-// export const IFRAME_BASE = 'https://microbiomedata.github.io/sheets_and_friends';
+import { Ref, ref } from '@vue/composition-api';
+import hot from 'handsontable';
+import xlsx from 'xlsx';
+import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
 
 const VariationMap = {
   /** A mapping of the templates to the superset of checkbox options they work for. */
@@ -66,94 +66,119 @@ export const HARMONIZER_TEMPLATES: Record<string, {
   },
 };
 
-export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
-  const validationErrors = ref(undefined as undefined | null | Record<number, Record<number, string>>);
-  const schemaSections = ref({} as Record<string, Record<string, number>>);
-  const ready = ref(false);
-  /* Promises for async methods */
-  let validationPromiseResolvers: ((valid: boolean) => void)[] = [];
-  let exportJsonPromiseResolvers: ((data: any[][]) => void)[] = [];
+export class HarmonizerApi {
+  validationErrors: Ref<undefined | null | Record<number, Record<number, string>>>;
 
-  const postMessage = (message: any) => element.value.contentWindow?.postMessage(message, '*');
+  schemaSections: Ref<Record<string, Record<string, number>>>;
 
-  function changeVisibility(value: string) {
-    postMessage({ type: 'changeVisibility', value });
+  ready: Ref<boolean>;
+
+  dh: any;
+
+  constructor() {
+    this.validationErrors = ref(undefined);
+    this.schemaSections = ref({});
+    this.ready = ref(false);
   }
 
-  function exportJson() {
-    return new Promise<any[][]>((resolve) => {
-      exportJsonPromiseResolvers.push(resolve);
-      postMessage({ type: 'exportJson' });
+  async init(r: HTMLElement) {
+    // @ts-ignore
+    window.Handsontable = hot;
+    // @ts-ignore
+    window.XLSX = xlsx;
+
+    // eslint-disable-next-line no-param-reassign
+    r.innerHTML = HarmonizerTemplateText;
+    // eslint-disable-next-line no-param-reassign
+    // r.innerHTML = document.getElementById('data-harmonizer-grid').innerHTML;
+    const myDHGrid = document.getElementById('data-harmonizer-grid');
+    const myDHFooter = document.getElementById('data-harmonizer-footer');
+    $('#data-harmonizer-toolbar-inset').children().slice(0, 6).attr('style', 'display:none !important');
+    $('#data-harmonizer-toolbar')?.hide();
+    // eslint-disable-next-line no-new-object
+    this.dh = new Object(DataHarmonizer);
+    await this.dh.init(myDHGrid, myDHFooter, TEMPLATES);
+    // $('#data-harmonizer-toolbar-inset').children().slice(0, 6).attr('style', 'display:none !important');
+    // Picks first template in dh menu if none given in URL.
+    this.dh.schema = SCHEMA;
+    // Hardcode URL here if desired. Expecting a file path relative to app's template folder.
+    await this.dh.processTemplate('soil');
+    await this.dh.createHot();
+    // @ts-ignore
+    window.dh = this.dh;
+    this.ready.value = true;
+  }
+
+  _getColumnCoordinates() {
+    const ret: Record<string, Record<string, number>> = {};
+    let column_ptr = 0;
+    this.dh.template.forEach((section: any) => {
+      ret[section.title] = { '': column_ptr };
+      section.children.forEach((column: any) => {
+        ret[section.title][column.title] = column_ptr;
+        column_ptr += 1;
+      });
     });
+    return ret;
   }
 
-  function exportTable() {
-    postMessage({ type: 'exportTable' });
+  refreshState() {
+    this.validationErrors.value = this.dh.invalid_cells;
+    this.schemaSections.value = this._getColumnCoordinates();
   }
 
-  function jumpTo(columnName: string) {
-    postMessage({ type: 'jumpTo', columnName });
+  async loadData(data: any[][]) {
+    await this.dh.hot.loadData(data);
+    await this.dh.hot.render();
+    this.refreshState();
   }
 
-  function jumpToRowCol(row: number, column: number) {
-    postMessage({ type: 'jumpToRowCol', row, column });
+  changeVisibility(value: string) {
+    if (['all', 'required', 'recommended'].includes(value)) {
+      this.dh.changeColVisibility(`show-${value}-cols-dropdown-item`);
+    } else {
+      const ptr = Object.keys(this._getColumnCoordinates()).indexOf(value);
+      this.dh.changeColVisibility(`show-section-${ptr}`);
+    }
   }
 
-  function launchReference() {
-    postMessage({ type: 'showReference' });
+  exportJson() {
+    return [...this.dh.getFlatHeaders(), ...this.dh.getTrimmedData()];
   }
 
-  function loadData(data: any[][]) {
-    ready.value = false;
-    postMessage({ type: 'loadData', data });
+  jumpToRowCol(row: number, column: number) {
+    this.dh.scrollTo(row, column);
   }
 
-  function openFile(files: File[]) {
-    postMessage({ type: 'open', files });
+  launchReference() {
+    this.dh.renderReference();
   }
 
-  function setupTemplate(folder: string) {
-    postMessage({ type: 'setupTemplate', folder });
+  openFile(file: File) {
+    if (!file) return;
+    const ext = file.name.split('.').pop();
+    if (!ext) return;
+    const acceptedExts = ['xlsx', 'xls', 'tsv', 'csv'];
+    if (!acceptedExts.includes(ext)) {
+      const errMsg = `Only ${acceptedExts.join(', ')} files are supported`;
+      $('#open-err-msg').text(errMsg);
+      $('#open-error-modal').modal('show');
+    } else {
+      this.dh.invalid_cells = {};
+      this.dh.runBehindLoadingScreen(this.dh.openFile, [this.dh, file]);
+      $('#file_name_display').text(file.name);
+    }
+    $('#next-error-button,#no-error-button').hide();
+    this.dh.current_selection = [null, null, null, null];
   }
 
-  function validate() {
-    return new Promise<boolean>((resolve) => {
-      validationPromiseResolvers.push(resolve);
-      postMessage({ type: 'validate' });
-    });
+  setupTemplate(folder: string) {
+    this.dh.setupTemplate(folder);
   }
 
-  function subscribe() {
-    window.addEventListener('message', (event) => {
-      if (event.data.type === 'update') {
-        validationErrors.value = event.data.INVALID_CELLS;
-        schemaSections.value = event.data.columnCoordinates;
-        validationPromiseResolvers.forEach((resolve) => resolve(Object.keys(event.data.INVALID_CELLS || {}).length === 0));
-        validationPromiseResolvers = [];
-        ready.value = true;
-      } else if (event.data.type === 'exportJson') {
-        exportJsonPromiseResolvers.forEach((resolve) => resolve(event.data.value));
-        exportJsonPromiseResolvers = [];
-      }
-    });
+  validate() {
+    this.dh.validate();
+    this.refreshState();
+    return !!this.validationErrors.value;
   }
-
-  subscribe();
-
-  return {
-    validationErrors,
-    ready,
-    schemaSections,
-    /* Methods */
-    changeVisibility,
-    exportJson,
-    exportTable,
-    jumpTo,
-    jumpToRowCol,
-    launchReference,
-    loadData,
-    openFile,
-    setupTemplate,
-    validate,
-  };
 }

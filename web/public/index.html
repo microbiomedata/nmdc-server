@@ -25,35 +25,26 @@
     <title>NMDC Pilot</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@latest/css/materialdesignicons.min.css">
-    <script type="text/javascript">
-      // Single Page Apps for GitHub Pages
-      // https://github.com/rafrex/spa-github-pages
-      // Copyright (c) 2016 Rafael Pedicini, licensed under the MIT License
-      // ----------------------------------------------------------------------
-      // This script checks to see if a redirect is present in the query string
-      // and converts it back into the correct url and adds it to the
-      // browser's history using window.history.replaceState(...),
-      // which won't cause the browser to attempt to load the new url.
-      // When the single page app is loaded further down in this file,
-      // the correct url will be waiting in the browser's history for
-      // the single page app to route accordingly.
-      (function (l) {
-        if (l.search) {
-          var q = {};
-          l.search.slice(1).split('&').forEach(function (v) {
-            var a = v.split('=');
-            q[a[0]] = a.slice(1).join('=').replace(/~and~/g, '&');
-          });
-          if (q.p !== undefined) {
-            window.history.replaceState(null, null,
-              l.pathname.slice(0, -1) + (q.p || '') +
-              (q.q ? ('?' + q.q) : '') +
-              l.hash
-            );
-          }
-        }
-      }(window.location))
-    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.min.css"
+      integrity="sha512-yVvxUQV0QESBt1SyZbNJMAwyKvFTLMyXSyBHDO4BG5t7k/Lw34tyqlSDlKIrIENIzCl+RVUNjmCPG+V/GMesRw=="
+      crossorigin="anonymous" referrerpolicy="no-referrer" />
+
+    <!-- HACK-DH -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+      integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"
+      integrity="sha256-eTyxS0rkjpLEo16uXTS0uVCS4815lc40K2iVpWDvdSY=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chosen/1.8.7/chosen.jquery.min.js"
+      integrity="sha512-rMGGF4wg1R73ehtnxXBt5mbUfN9JUJwbk21KMlnLZDJh7BkPmeovBuddZCENJddHYYMkCh9hPFnPmS9sspki8g=="
+      crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
+      integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script src="/script/data-harmonizer/index.js"></script>
+    <script src="/script/data-harmonizer/export_utils.js"></script>
+    <script src="/script/data-harmonizer/validation.js"></script>
+    <script src="/script/data-harmonizer/field_rules.js"></script>
+    <script src="/template/menu.js"></script>
+    <script src="/template/nmdc_dh/schema.js"></script>
   </head>
   <body>
     <noscript>
