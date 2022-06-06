@@ -11,7 +11,6 @@ interface MetadataSubmission {
   studyForm: any;
   multiOmicsForm: any;
   sampleData: any[][];
-  [key: string]: any;
 }
 
 interface MetadataSubmissionRecord {

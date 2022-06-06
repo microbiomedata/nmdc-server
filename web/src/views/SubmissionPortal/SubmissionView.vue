@@ -25,8 +25,6 @@ export default defineComponent({
       </p>
       <AuthButton />
     </v-container>
-    <keep-alive v-else>
-      <router-view />
-    </keep-alive>
+    <router-view />
   </v-main>
 </template>

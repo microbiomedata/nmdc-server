@@ -134,7 +134,6 @@ export class HarmonizerApi {
   }
 
   changeVisibility(value: string) {
-    console.log(value, 'change');
     if (['all', 'required', 'recommended'].includes(value)) {
       this.dh.changeColVisibility(`show-${value}-cols-dropdown-item`);
     } else {

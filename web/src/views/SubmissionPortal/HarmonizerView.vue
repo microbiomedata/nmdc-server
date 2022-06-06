@@ -293,7 +293,7 @@ export default defineComponent({
           small
           @click="harmonizerApi.launchReference()"
         >
-          {{ templateName }} Reference
+          {{ packageName }} Reference
           <v-icon class="pl-1">
             mdi-open-in-new
           </v-icon>

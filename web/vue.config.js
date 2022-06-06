@@ -1,7 +1,6 @@
 const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
-  publicPath: '/',
   transpileDependencies: [
     'vuetify',
   ],
