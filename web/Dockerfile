@@ -56,7 +56,7 @@ RUN set -ex \
         fi; \
     done
 
-FROM node:lts-alpine as build-stage
+FROM node:lts as build-stage
 WORKDIR /app
 COPY package*.json yarn.lock ./
 RUN yarn install
