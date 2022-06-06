@@ -1,6 +1,7 @@
 const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
+  publicPath: '/',
   transpileDependencies: [
     'vuetify',
   ],
@@ -43,7 +44,7 @@ module.exports = {
     config.resolve.symlinks(false);
     config.module
       .rule('html')
-      .test(/\.html$/)
+      .test(/linkml\.html$/)
       .use('raw-loader')
       .loader('raw-loader');
   },
