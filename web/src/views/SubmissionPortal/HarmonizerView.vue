@@ -46,7 +46,7 @@ export default defineComponent({
     onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
       if (r) {
-        await harmonizerApi.init(r);
+        await harmonizerApi.init(r, templateChoice.value);
         await nextTick();
         harmonizerApi.loadData(sampleData.value.slice(2));
       }
@@ -300,7 +300,10 @@ export default defineComponent({
         </v-btn>
       </div>
     </div>
-    <div class="harmonizer-container d-flex flex-row">
+    <div
+      class="harmonizer-container d-flex flex-row"
+      style="max-width: 100%;"
+    >
       <v-navigation-drawer
         v-if="validationErrors.length >= 1"
         width="260"
@@ -332,8 +335,8 @@ export default defineComponent({
       </v-navigation-drawer>
       <div
         id="harmonizer-root"
-        class="harmonizer-root"
-        :style="{ 'width': validationErrors.length ? '100vw' : 'calc(100vw-260px)' }"
+        class="harmonizer-root grow"
+        :style="{ 'max-width': validationErrors.length === 0 ? '100vw' : 'calc(100vw - 260px)' }"
       />
     </div>
     <div class="d-flex shrink ma-2">

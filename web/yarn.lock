@@ -9241,7 +9241,7 @@ shebang-regex@^3.0.0:
 
 "sheets_and_friends@https://github.com/microbiomedata/sheets_and_friends":
   version "0.0.0"
-  resolved "https://github.com/microbiomedata/sheets_and_friends#ced27975f1a7c027af471220e9f641603e8e4b63"
+  resolved "https://github.com/microbiomedata/sheets_and_friends#3f12b903cefd5e687051775cd64962a8b35e54ff"
 
 shell-quote@^1.6.1:
   version "1.7.3"

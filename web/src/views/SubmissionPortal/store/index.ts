@@ -61,7 +61,8 @@ const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
 const templateChoice = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
   const template = HARMONIZER_TEMPLATES[packageName.value];
-  return getVariant(checkBoxes, template.variations, template.default);
+  const choice = getVariant(checkBoxes, template.variations, template.default);
+  return choice;
 });
 
 /**
