@@ -102,12 +102,6 @@ export default defineComponent({
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
-    watch(sampleData, () => {
-      if (harmonizerApi.ready.value) {
-        harmonizerApi.loadData(sampleData.value.slice(2));
-      }
-    });
-
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();

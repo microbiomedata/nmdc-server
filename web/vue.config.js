@@ -28,6 +28,7 @@ module.exports = {
           // Import library javascript from DataHarmonizer.
           // Globally scoped dependencies will be loaded from CDN instead of copied.
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/index.js', to: 'script/data-harmonizer/index.js' },
+          { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/toolbar.js', to: 'script/data-harmonizer/toolbar.js' },
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/export_utils.js', to: 'script/data-harmonizer/export_utils.js' },
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/validation.js', to: 'script/data-harmonizer/validation.js' },
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/field_rules.js', to: 'script/data-harmonizer/field_rules.js' },

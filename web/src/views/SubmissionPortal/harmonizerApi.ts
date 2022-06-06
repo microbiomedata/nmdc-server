@@ -79,6 +79,8 @@ export class HarmonizerApi {
 
   dh: any;
 
+  toolbar: any;
+
   constructor() {
     this.validationErrors = ref(undefined);
     this.schemaSections = ref({});
@@ -96,20 +98,32 @@ export class HarmonizerApi {
     // eslint-disable-next-line no-param-reassign
     // r.innerHTML = document.getElementById('data-harmonizer-grid').innerHTML;
     const myDHGrid = document.getElementById('data-harmonizer-grid');
+    const myDHToolbar = document.getElementById('data-harmonizer-toolbar');
     const myDHFooter = document.getElementById('data-harmonizer-footer');
-    $('#data-harmonizer-toolbar-inset').children().slice(0, 6).attr('style', 'display:none !important');
-    $('#data-harmonizer-toolbar')?.hide();
+    $(myDHToolbar).append($('#data-harmonizer-toolbar-inset'));
+
     // eslint-disable-next-line no-new-object
     this.dh = new Object(DataHarmonizer);
+    // eslint-disable-next-line no-new-object
+    this.toolbar = new Object(DataHarmonizerToolbar);
     await this.dh.init(myDHGrid, myDHFooter, TEMPLATES);
-    // $('#data-harmonizer-toolbar-inset').children().slice(0, 6).attr('style', 'display:none !important');
+    await this.toolbar.init(this.dh, myDHToolbar);
+
     // Picks first template in dh menu if none given in URL.
     this.dh.schema = SCHEMA;
-    // Hardcode URL here if desired. Expecting a file path relative to app's template folder.
-    await this.dh.useTemplate(`nmdc/${templateName}`);
+
+    await this.dh.processTemplate(templateName);
+    this.dh.schema_name = 'nmdc';
+    this.dh.template_name = templateName;
+    this.dh.template_path = `nmdc/${templateName}`;
     await this.dh.createHot();
+    await this.toolbar.refresh();
     // @ts-ignore
     window.dh = this.dh;
+
+    // Erase unusued toolbar
+    $('#data-harmonizer-toolbar-inset').children().slice(0, 6).attr('style', 'display:none !important');
+    $('#data-harmonizer-toolbar')?.hide();
     this.ready.value = true;
   }
 
@@ -154,8 +168,8 @@ export class HarmonizerApi {
     this.dh.scrollTo(row, column);
   }
 
-  launchReference(schema: any) {
-    this.dh.renderReference(schema);
+  launchReference() {
+    this.dh.renderReference();
   }
 
   openFile(file: File) {

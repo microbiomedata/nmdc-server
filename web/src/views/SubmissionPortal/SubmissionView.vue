@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent, ref } from '@vue/composition-api';
 import AuthButton from '@/components/Presentation/AuthButton.vue';
 import { stateRefs } from '@/store';
 import { loadRecord } from './store';
@@ -7,10 +7,17 @@ import { loadRecord } from './store';
 export default defineComponent({
   components: { AuthButton },
   setup(_, { root }) {
-    if (root.$route.params.id) {
-      loadRecord(root.$route.params.id);
+    const ready = ref(false);
+
+    async function load() {
+      if (root.$route.params.id) {
+        await loadRecord(root.$route.params.id);
+        ready.value = true;
+      }
     }
-    return { stateRefs };
+    load();
+
+    return { stateRefs, ready };
   },
 });
 </script>
@@ -25,6 +32,6 @@ export default defineComponent({
       </p>
       <AuthButton />
     </v-container>
-    <router-view />
+    <router-view v-if="ready" />
   </v-main>
 </template>

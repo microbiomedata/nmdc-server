@@ -11,6 +11,7 @@ declare module '*.html' {
 }
 
 declare const DataHarmonizer: any;
+declare const DataHarmonizerToolbar: any;
 declare const TEMPLATES: any;
 declare const SCHEMA: any;
 declare function $(...args: any[]): any;
