@@ -1,4 +1,5 @@
 import { Ref, ref } from '@vue/composition-api';
+import { debounce } from 'lodash';
 import hot from 'handsontable';
 import xlsx from 'xlsx';
 import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
@@ -81,10 +82,13 @@ export class HarmonizerApi {
 
   toolbar: any;
 
+  selectedColumn: Ref<string>;
+
   constructor() {
     this.validationErrors = ref(undefined);
     this.schemaSections = ref({});
     this.ready = ref(false);
+    this.selectedColumn = ref('');
   }
 
   async init(r: HTMLElement, templateName: string) {
@@ -96,11 +100,10 @@ export class HarmonizerApi {
     // eslint-disable-next-line no-param-reassign
     r.innerHTML = HarmonizerTemplateText;
     // eslint-disable-next-line no-param-reassign
-    // r.innerHTML = document.getElementById('data-harmonizer-grid').innerHTML;
     const myDHGrid = document.getElementById('data-harmonizer-grid');
     const myDHToolbar = document.getElementById('data-harmonizer-toolbar');
     const myDHFooter = document.getElementById('data-harmonizer-footer');
-    $(myDHToolbar).append($('#data-harmonizer-toolbar-inset'));
+    // $(myDHToolbar).append($('#data-harmonizer-toolbar-inset'));
 
     // eslint-disable-next-line no-new-object
     this.dh = new Object(DataHarmonizer);
@@ -117,6 +120,9 @@ export class HarmonizerApi {
     this.dh.template_name = templateName;
     this.dh.template_path = `nmdc/${templateName}`;
     await this.dh.createHot();
+    this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
+      this.selectedColumn.value = this.dh.getFields()[col].title;
+    }, 200, { leading: true }));
     await this.toolbar.refresh();
     // @ts-ignore
     window.dh = this.dh;
@@ -125,6 +131,7 @@ export class HarmonizerApi {
     $('#data-harmonizer-toolbar-inset').children().slice(0, 6).attr('style', 'display:none !important');
     $('#data-harmonizer-toolbar')?.hide();
     this.ready.value = true;
+    this.jumpToRowCol(0, 0);
   }
 
   _getColumnCoordinates() {
@@ -158,6 +165,11 @@ export class HarmonizerApi {
       const ptr = Object.keys(this._getColumnCoordinates()).indexOf(value);
       this.dh.changeColVisibility(`show-section-${ptr}`);
     }
+  }
+
+  getHelp(title: string) {
+    const field = this.dh.getFields().filter((f: any) => f.title === title)[0];
+    return this.dh.getCommentDict(field);
   }
 
   exportJson() {

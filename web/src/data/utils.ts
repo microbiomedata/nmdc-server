@@ -62,8 +62,8 @@ export function escapeHtml(unsafe: string) {
  * Based on https://stackoverflow.com/questions/1500260/detect-urls-in-text-with-javascript
  */
 export function urlify(text: string) {
-  const urlRegex = /(https?:\/\/[a-zA-Z0-9./-]+)/g;
-  return escapeHtml(text).replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  const urlRegex = /(https?:\/\/[a-zA-Z0-9./-_]+)/g;
+  return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
 export {
