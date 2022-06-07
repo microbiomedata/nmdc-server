@@ -12,8 +12,8 @@ export default defineComponent({
     async function load() {
       if (root.$route.params.id) {
         await loadRecord(root.$route.params.id);
-        ready.value = true;
       }
+      ready.value = true;
     }
     load();
 

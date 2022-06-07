@@ -41,7 +41,7 @@ export default new VueRouter({
       props: true,
     },
     {
-      path: '/submission/',
+      path: '/submission',
       component: SubmissionView,
       props: true,
       children: [
