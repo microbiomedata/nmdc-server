@@ -131,6 +131,7 @@ export class HarmonizerApi {
     $('#data-harmonizer-toolbar-inset').children().slice(0, 6).attr('style', 'display:none !important');
     $('#data-harmonizer-toolbar')?.hide();
     this.ready.value = true;
+    this.jumpToRowCol(0, 0);
   }
 
   _getColumnCoordinates() {
