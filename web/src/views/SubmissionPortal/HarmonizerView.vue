@@ -5,7 +5,7 @@ import {
 import { flattenDeep } from 'lodash';
 import { writeFile, utils } from 'xlsx';
 import 'handsontable/dist/handsontable.full.css';
-
+import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
 import { HarmonizerApi } from './harmonizerApi';
@@ -102,6 +102,13 @@ export default defineComponent({
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
+    const selectedHelpDict = computed(() => {
+      if (harmonizerApi.selectedColumn.value) {
+        return harmonizerApi.getHelp(harmonizerApi.selectedColumn.value);
+      }
+      return null;
+    });
+
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
@@ -127,6 +134,7 @@ export default defineComponent({
       samplesValid,
       submitLoading,
       submitCount,
+      selectedHelpDict,
       packageName,
       templateChoice,
       fields,
@@ -139,6 +147,7 @@ export default defineComponent({
       focus,
       jumpTo,
       validate,
+      urlify,
     };
   },
 });
@@ -299,8 +308,7 @@ export default defineComponent({
       style="max-width: 100%;"
     >
       <v-navigation-drawer
-        v-if="validationErrors.length >= 1"
-        width="260"
+        width="300"
         class="grow"
         permanent
       >
@@ -309,7 +317,7 @@ export default defineComponent({
             {{ validationErrors.length }} Validation Errors
           </div>
           <div
-            style="overflow-x: auto;"
+            style="overflow-x: auto; max-height: calc(50% - 34px);"
             class="d-flex flex-column"
           >
             <v-chip
@@ -326,11 +334,34 @@ export default defineComponent({
             </v-chip>
           </div>
         </template>
+        <v-divider />
+        <div
+          v-if="selectedHelpDict"
+          class="ml-2"
+          style="font-size: 14px; overflow-x: auto; max-height: 50%;"
+        >
+          <div class="my-2">
+            <span class="font-weight-bold pr-2">Label:</span>
+            <span v-html="selectedHelpDict.title" />
+          </div>
+          <div class="my-2">
+            <span class="font-weight-bold pr-2">Description:</span>
+            <span v-html="urlify(selectedHelpDict.description)" />
+          </div>
+          <div class="my-2">
+            <span class="font-weight-bold pr-2">Guidance:</span>
+            <span v-html="urlify(selectedHelpDict.guidance)" />
+          </div>
+          <div class="my-2">
+            <span class="font-weight-bold pr-2">Examples:</span>
+            <span v-html="urlify(selectedHelpDict.examples)" />
+          </div>
+        </div>
       </v-navigation-drawer>
       <div
         id="harmonizer-root"
         class="harmonizer-root grow"
-        :style="{ 'max-width': validationErrors.length === 0 ? '100vw' : 'calc(100vw - 260px)' }"
+        :style="{ 'max-width': 'calc(100vw - 300px)' }"
       />
     </div>
     <div class="d-flex shrink ma-2">
