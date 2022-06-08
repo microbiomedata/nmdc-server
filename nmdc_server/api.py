@@ -552,6 +552,10 @@ async def submit_metadata(
     token: Token = Depends(login_required),
 ):
     submission = SubmissionMetadata(**body.dict(), author_orcid=token.orcid)
-    db.add(submission)
-    db.commit()
+    user = crud.get_user(db, token.orcid)
+    # throw error for none?
+    if user is not None:
+        submission.user_id = user.id
+        db.add(submission)
+        db.commit()
     return submission

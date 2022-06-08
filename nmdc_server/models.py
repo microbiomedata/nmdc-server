@@ -816,9 +816,9 @@ class SubmissionMetadata(Base):
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
     status = Column(String, nullable=False, default="in-progress")
     metadata_submission = Column(JSONB, nullable=False)
-    user_id = Column(String, ForeignKey("user.id"))
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id")) # make it nullable
 
-    user = relationship("User", back_populates="user")
+    user = relationship("User")
 
 
 class User(Base):

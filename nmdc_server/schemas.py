@@ -657,7 +657,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     author_orcid: str
     created: datetime
     status: str
-    user: User
+    user: Optional[User]
 
     class Config:
         orm_mode = True
@@ -676,3 +676,6 @@ class User(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+SubmissionMetadataSchema.update_forward_refs()
