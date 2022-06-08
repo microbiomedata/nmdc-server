@@ -18,14 +18,12 @@ from nmdc_server.auth import (
 )
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
-from nmdc_server.database import SessionLocal, get_db
+from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.models import IngestLock, SubmissionMetadata
 from nmdc_server.pagination import Pagination
 
 router = APIRouter()
-
-
 
 
 # get the current user information
@@ -488,7 +486,7 @@ async def list_submissions(
 ):
     query = db.query(SubmissionMetadata)
     try:
-        await admin_required(token)
+        await admin_required(db, token)
     except HTTPException:
         if SubmissionMetadata.user is not None:
             query = query.filter(SubmissionMetadata.user.orcid_uuid == token.orcid)
@@ -510,7 +508,7 @@ async def get_submission(
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     if submission.author_orcid != token.orcid:
-        await admin_required(token)
+        await admin_required(db, token)
     return submission
 
 
@@ -531,7 +529,7 @@ async def update_submission(
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     if submission.author_orcid != token.orcid:
-        await admin_required(token)
+        await admin_required(db, token)
     submission.metadata_submission = body_dict["metadata_submission"]
     if body_dict["status"]:
         submission.status = body_dict["status"]

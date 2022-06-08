@@ -671,7 +671,7 @@ class User(BaseModel):
 
     @property
     def profile_url(self) -> str:
-        profile_prefix = 'https://orcid.org/'
+        profile_prefix = "https://orcid.org/"
         return f"{profile_prefix}{self.orcid_uuid}"
 
     class Config:
