@@ -18,7 +18,7 @@ from nmdc_server.auth import (
 )
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
-from nmdc_server.database import SessionLocal
+from nmdc_server.database import SessionLocal, get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.models import IngestLock, SubmissionMetadata
 from nmdc_server.pagination import Pagination
@@ -26,9 +26,6 @@ from nmdc_server.pagination import Pagination
 router = APIRouter()
 
 
-def get_db():
-    with SessionLocal() as db:
-        yield db
 
 
 # get the current user information
@@ -493,7 +490,8 @@ async def list_submissions(
     try:
         await admin_required(token)
     except HTTPException:
-        query = query.filter(SubmissionMetadata.author_orcid == token.orcid)
+        if SubmissionMetadata.user is not None:
+            query = query.filter(SubmissionMetadata.user.orcid_uuid == token.orcid)
     return pagination.response(query)
 
 

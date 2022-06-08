@@ -664,10 +664,14 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
 
 class User(BaseModel):
     id: Optional[UUID]
-    orchid_uuid: str
+    orcid_uuid: str
     name: str
     is_admin = False
-    profile_url: Optional[str]
+
+    @property
+    def profile_url(self) -> str:
+        profile_prefix = 'https://orcid.org/'
+        return f"{profile_prefix}{self.orcid_uuid}"
 
     class Config:
         orm_mode = True

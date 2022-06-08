@@ -396,3 +396,13 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
         content.append(f"- {data_object.file_size_bytes} {url} {file.path}")
 
     return "\n".join(content) + "\n"
+
+
+def create_user(db: Session, user: schemas.User) -> models.User:
+    """Create a user if not present"""
+    db_user, created = get_or_create(db, models.User, None,
+                                     orcid_uuid=user.orcid_uuid, name=user.name,
+                                     is_admin=user.is_admin)
+    if created:
+        db.commit()
+    return db_user

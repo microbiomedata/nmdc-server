@@ -182,3 +182,8 @@ from m
 where m.id = study.id;
 """
 )
+
+
+def get_db():
+    with SessionLocal() as db:
+        yield db

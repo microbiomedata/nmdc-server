@@ -7,9 +7,12 @@ from fastapi.security.oauth2 import OAuth2AuthorizationCodeBearer
 from pydantic import BaseModel
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
+from sqlalchemy.orm import Session
 
 from nmdc_server.config import settings, starlette_config
 from nmdc_server.schemas import User
+from nmdc_server.database import get_db
+from nmdc_server import crud
 
 # A list of orcids with "admin" access to the server.  At some point, we
 # may want to add a user table with associated roles to handle this.
@@ -86,11 +89,14 @@ async def login_required(token: Optional[Token] = Depends(get_token)) -> Token:
     return token
 
 
-async def admin_required(token: Token = Depends(login_required)) -> Token:
+async def admin_required(db:Session = Depends(get_db), token: Token = Depends(login_required)) -> Token:
     if settings.environment != "production":
         return token
-    if token.orcid in _admin_users:
+    user = crud.get_user(db, token.orcid)
+    if user and user.is_admin:
         return token
+
+    # raise different exception for user not found
 
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
@@ -111,12 +117,12 @@ async def login_via_orcid(request: Request):
 
 
 @router.get("/token", name="token", include_in_schema=False)
-async def authorize(request: Request):
+async def authorize(request: Request, db:Session = Depends(get_db)):
     token = await oauth2_client.orcid.authorize_access_token(request)
-    # if this orchid exists in db
-    # if no - continue, else add to db  
-    user = User(orchid_uuid=token['orcid'], name=token['name'])
-    print(user)
+    user = User(orcid_uuid=token['orcid'], name=token['name'])
+    if _admin_users.__contains__(user.orcid_uuid):
+        user.is_admin = True
+    crud.create_user(db, user)
     request.session["token"] = token
     return RedirectResponse(url="/")
 
