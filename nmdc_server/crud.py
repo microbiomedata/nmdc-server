@@ -406,3 +406,10 @@ def create_user(db: Session, user: schemas.User) -> models.User:
     if created:
         db.commit()
     return db_user
+
+
+def get_user(db: Session, orcid: str) -> Optional[models.User]:
+    user = db.query(models.User).get(orcid)
+    if user is not None:
+        return user
+    return None
