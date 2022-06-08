@@ -172,7 +172,6 @@ export class HarmonizerApi {
         remapped['All Errors'].push(entry);
       });
     });
-    console.log(remapped);
     this.validationErrors.value = remapped;
   }
 
