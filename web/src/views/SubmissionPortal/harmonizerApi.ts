@@ -1,7 +1,8 @@
-import { ref, Ref } from '@vue/composition-api';
-
-export const IFRAME_BASE = process.env.NODE_ENV === 'development' ? 'http://localhost:3333' : 'https://microbiomedata.github.io/sheets_and_friends';
-// export const IFRAME_BASE = 'https://microbiomedata.github.io/sheets_and_friends';
+import { computed, Ref, ref } from '@vue/composition-api';
+import { debounce, has } from 'lodash';
+import hot from 'handsontable';
+import xlsx from 'xlsx';
+import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
 
 const VariationMap = {
   /** A mapping of the templates to the superset of checkbox options they work for. */
@@ -11,6 +12,9 @@ const VariationMap = {
 };
 
 export function getVariant(checkBoxes: string[], variations: (keyof typeof VariationMap)[], base: string) {
+  if (checkBoxes.length === 0) {
+    return base;
+  }
   const variationStr = variations.find((v) => {
     const vSet = VariationMap[v];
     return checkBoxes.every((elem) => vSet.has(elem));
@@ -30,6 +34,7 @@ export const HARMONIZER_TEMPLATES: Record<string, {
   variations: (keyof typeof VariationMap)[];
 }> = {
   air: { default: 'air', status: 'published', variations: [] },
+  bioscales: { default: 'bioscales', status: 'published', variations: [] },
   'built environment': { default: 'built_env', status: 'published', variations: [] },
   'host-associated': { default: 'host-associated', status: 'published', variations: [] },
   'human-associated': { default: '', status: 'disabled', variations: [] },
@@ -66,94 +71,167 @@ export const HARMONIZER_TEMPLATES: Record<string, {
   },
 };
 
-export function useHarmonizerApi(element: Ref<HTMLIFrameElement>) {
-  const validationErrors = ref(undefined as undefined | null | Record<number, Record<number, string>>);
-  const schemaSections = ref({} as Record<string, Record<string, number>>);
-  const ready = ref(false);
-  /* Promises for async methods */
-  let validationPromiseResolvers: ((valid: boolean) => void)[] = [];
-  let exportJsonPromiseResolvers: ((data: any[][]) => void)[] = [];
+interface ValidationErrors {
+  [error: string]: [number, number][],
+}
 
-  const postMessage = (message: any) => element.value.contentWindow?.postMessage(message, '*');
+export class HarmonizerApi {
+  validationErrors: Ref<ValidationErrors>;
 
-  function changeVisibility(value: string) {
-    postMessage({ type: 'changeVisibility', value });
+  validationErrorGroups: Ref<string[]>;
+
+  schemaSections: Ref<Record<string, Record<string, number>>>;
+
+  ready: Ref<boolean>;
+
+  dh: any;
+
+  toolbar: any;
+
+  selectedColumn: Ref<string>;
+
+  constructor() {
+    this.validationErrors = ref({});
+    this.schemaSections = ref({});
+    this.ready = ref(false);
+    this.selectedColumn = ref('');
+    this.validationErrorGroups = computed(() => Object.keys(this.validationErrors.value));
   }
 
-  function exportJson() {
-    return new Promise<any[][]>((resolve) => {
-      exportJsonPromiseResolvers.push(resolve);
-      postMessage({ type: 'exportJson' });
+  async init(r: HTMLElement, templateName: string) {
+    // @ts-ignore
+    window.Handsontable = hot;
+    // @ts-ignore
+    window.XLSX = xlsx;
+
+    // eslint-disable-next-line no-param-reassign
+    r.innerHTML = HarmonizerTemplateText;
+    // eslint-disable-next-line no-param-reassign
+    const myDHGrid = document.getElementById('data-harmonizer-grid');
+    const myDHToolbar = document.getElementById('data-harmonizer-toolbar');
+    const myDHFooter = document.getElementById('data-harmonizer-footer');
+
+    // eslint-disable-next-line no-new-object
+    this.dh = new Object(DataHarmonizer);
+    // eslint-disable-next-line no-new-object
+    this.toolbar = new Object(DataHarmonizerToolbar);
+    await this.dh.init(myDHGrid, myDHFooter, TEMPLATES);
+    await this.toolbar.init(this.dh, myDHToolbar);
+
+    // Picks first template in dh menu if none given in URL.
+    this.dh.schema = SCHEMA;
+
+    await this.dh.processTemplate(templateName);
+    this.dh.schema_name = 'nmdc';
+    this.dh.template_name = templateName;
+    this.dh.template_path = `nmdc/${templateName}`;
+    await this.dh.createHot();
+    this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
+      this.selectedColumn.value = this.dh.getFields()[col].title;
+    }, 200, { leading: true }));
+    await this.toolbar.refresh();
+    // @ts-ignore
+    window.dh = this.dh;
+
+    // Erase unusued toolbar
+    $('#data-harmonizer-toolbar-inset').children().slice(0, 6).attr('style', 'display:none !important');
+    $('#data-harmonizer-toolbar')?.hide();
+    this.ready.value = true;
+    this.jumpToRowCol(0, 0);
+  }
+
+  _getColumnCoordinates() {
+    const ret: Record<string, Record<string, number>> = {};
+    let column_ptr = 0;
+    this.dh.template.forEach((section: any) => {
+      ret[section.title] = { '': column_ptr };
+      section.children.forEach((column: any) => {
+        ret[section.title][column.title] = column_ptr;
+        column_ptr += 1;
+      });
     });
+    return ret;
   }
 
-  function exportTable() {
-    postMessage({ type: 'exportTable' });
-  }
-
-  function jumpTo(columnName: string) {
-    postMessage({ type: 'jumpTo', columnName });
-  }
-
-  function jumpToRowCol(row: number, column: number) {
-    postMessage({ type: 'jumpToRowCol', row, column });
-  }
-
-  function launchReference() {
-    postMessage({ type: 'showReference' });
-  }
-
-  function loadData(data: any[][]) {
-    ready.value = false;
-    postMessage({ type: 'loadData', data });
-  }
-
-  function openFile(files: File[]) {
-    postMessage({ type: 'open', files });
-  }
-
-  function setupTemplate(folder: string) {
-    postMessage({ type: 'setupTemplate', folder });
-  }
-
-  function validate() {
-    return new Promise<boolean>((resolve) => {
-      validationPromiseResolvers.push(resolve);
-      postMessage({ type: 'validate' });
+  refreshState() {
+    this.schemaSections.value = this._getColumnCoordinates();
+    const remapped: ValidationErrors = {};
+    const invalid: Record<number, Record<number, string>> = this.dh.invalid_cells;
+    if (Object.keys(invalid).length) {
+      remapped['All Errors'] = [];
+    }
+    Object.entries(invalid).forEach(([row, val]) => {
+      Object.entries(val).forEach(([col, text]) => {
+        const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
+        const issue = text || 'Validation Error';
+        if (has(remapped, issue)) {
+          remapped[issue].push(entry);
+        } else {
+          remapped[issue] = [entry];
+        }
+        remapped['All Errors'].push(entry);
+      });
     });
+    this.validationErrors.value = remapped;
   }
 
-  function subscribe() {
-    window.addEventListener('message', (event) => {
-      if (event.data.type === 'update') {
-        validationErrors.value = event.data.INVALID_CELLS;
-        schemaSections.value = event.data.columnCoordinates;
-        validationPromiseResolvers.forEach((resolve) => resolve(Object.keys(event.data.INVALID_CELLS || {}).length === 0));
-        validationPromiseResolvers = [];
-        ready.value = true;
-      } else if (event.data.type === 'exportJson') {
-        exportJsonPromiseResolvers.forEach((resolve) => resolve(event.data.value));
-        exportJsonPromiseResolvers = [];
-      }
-    });
+  async loadData(data: any[][]) {
+    await this.dh.hot.loadData(data);
+    await this.dh.hot.render();
+    this.refreshState();
   }
 
-  subscribe();
+  changeVisibility(value: string) {
+    if (['all', 'required', 'recommended'].includes(value)) {
+      this.dh.changeColVisibility(`show-${value}-cols-dropdown-item`);
+    } else {
+      const ptr = Object.keys(this._getColumnCoordinates()).indexOf(value);
+      this.dh.changeColVisibility(`show-section-${ptr}`);
+    }
+  }
 
-  return {
-    validationErrors,
-    ready,
-    schemaSections,
-    /* Methods */
-    changeVisibility,
-    exportJson,
-    exportTable,
-    jumpTo,
-    jumpToRowCol,
-    launchReference,
-    loadData,
-    openFile,
-    setupTemplate,
-    validate,
-  };
+  getHelp(title: string) {
+    const field = this.dh.getFields().filter((f: any) => f.title === title)[0];
+    return this.dh.getCommentDict(field);
+  }
+
+  exportJson() {
+    return [...this.dh.getFlatHeaders(), ...this.dh.getTrimmedData()];
+  }
+
+  jumpToRowCol(row: number, column: number) {
+    this.dh.scrollTo(row, column);
+  }
+
+  launchReference() {
+    this.dh.renderReference();
+  }
+
+  openFile(file: File) {
+    if (!file) return;
+    const ext = file.name.split('.').pop();
+    if (!ext) return;
+    const acceptedExts = ['xlsx', 'xls', 'tsv', 'csv'];
+    if (!acceptedExts.includes(ext)) {
+      const errMsg = `Only ${acceptedExts.join(', ')} files are supported`;
+      $('#open-err-msg').text(errMsg);
+      $('#open-error-modal').modal('show');
+    } else {
+      this.dh.invalid_cells = {};
+      this.dh.runBehindLoadingScreen(this.dh.openFile, [this.dh, file]);
+      $('#file_name_display').text(file.name);
+    }
+    $('#next-error-button,#no-error-button').hide();
+    this.dh.current_selection = [null, null, null, null];
+  }
+
+  setupTemplate(folder: string) {
+    this.dh.setupTemplate(folder);
+  }
+
+  validate() {
+    this.dh.validate();
+    this.refreshState();
+    return !!this.validationErrors.value;
+  }
 }

@@ -1,17 +1,16 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch,
+  computed, defineComponent, ref, nextTick, watch, onMounted,
 } from '@vue/composition-api';
-import { flattenDeep } from 'lodash';
+import { clamp, flattenDeep } from 'lodash';
 import { writeFile, utils } from 'xlsx';
-
+import 'handsontable/dist/handsontable.full.css';
+import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
+import { HarmonizerApi } from './harmonizerApi';
 import {
-  IFRAME_BASE, useHarmonizerApi,
-} from './harmonizerApi';
-import {
-  templateName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
+  packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
 } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
@@ -39,10 +38,20 @@ export default defineComponent({
 
   setup(_, { root }) {
     const harmonizerElement = ref();
-    const harmonizerApi = useHarmonizerApi(harmonizerElement);
+    const harmonizerApi = new HarmonizerApi();
     const jumpToModel = ref();
-    const highlightedValidationError = ref('');
+    const highlightedValidationError = ref(0);
+    const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
+
+    onMounted(async () => {
+      const r = document.getElementById('harmonizer-root');
+      if (r) {
+        await harmonizerApi.init(r, templateChoice.value);
+        await nextTick();
+        harmonizerApi.loadData(sampleData.value.slice(2));
+      }
+    });
 
     async function jumpTo({ row, column }: { row: number; column: number }) {
       harmonizerApi.jumpToRowCol(row, column);
@@ -55,15 +64,17 @@ export default defineComponent({
     }
 
     async function validate() {
-      const data = await harmonizerApi.exportJson();
-      sampleData.value = data.slice(2);
+      const data = harmonizerApi.exportJson();
+      sampleData.value = data;
       samplesValid.value = await harmonizerApi.validate();
       incrementalSaveRecord(root.$route.params.id);
     }
 
-    function errorClick(row: number, column: number) {
-      harmonizerApi.jumpToRowCol(row, column);
-      highlightedValidationError.value = `${row}.${column}`;
+    function errorClick(index: number) {
+      const currentSeries = harmonizerApi.validationErrors.value[validationActiveCategory.value];
+      highlightedValidationError.value = clamp(index, 0, currentSeries.length - 1);
+      const currentError = currentSeries[highlightedValidationError.value];
+      harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
     }
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
@@ -77,31 +88,30 @@ export default defineComponent({
         return val;
       }))));
 
-    const validationErrors = computed(() => {
-      if (harmonizerApi.validationErrors.value) {
-        return Object.entries(harmonizerApi.validationErrors.value)
-          .map(([row, val]) => Object.entries(val)
-            .map(([column, cell]) => ({
-              cell,
-              row: Number.parseInt(row, 10),
-              column: Number.parseInt(column, 10),
-            }))).flat();
-      }
-      return [];
-    });
+    const validationItems = computed(() => harmonizerApi.validationErrorGroups.value.map((v) => {
+      const errors = harmonizerApi.validationErrors.value[v];
+      return {
+        text: `${v} (${errors.length})`,
+        value: v,
+      };
+    }));
 
+    watch(validationActiveCategory, () => errorClick(0));
     watch(columnVisibility, () => {
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
-    function hydrate() {
-      harmonizerApi.loadData(sampleData.value);
-    }
+    const selectedHelpDict = computed(() => {
+      if (harmonizerApi.selectedColumn.value) {
+        return harmonizerApi.getHelp(harmonizerApi.selectedColumn.value);
+      }
+      return null;
+    });
 
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
-      sampleData.value = data.slice(2);
+      sampleData.value = data;
       await submit(root.$route.params.id);
     });
 
@@ -123,20 +133,21 @@ export default defineComponent({
       samplesValid,
       submitLoading,
       submitCount,
-      templateName,
+      selectedHelpDict,
+      packageName,
       templateChoice,
       fields,
-      validationErrors,
       highlightedValidationError,
-      IFRAME_BASE,
+      validationItems,
+      validationActiveCategory,
       /* methods */
       doSubmit,
       downloadSamples,
       errorClick,
-      hydrate,
       focus,
       jumpTo,
       validate,
+      urlify,
     };
   },
 });
@@ -144,11 +155,11 @@ export default defineComponent({
 
 <template>
   <div
-    style="overflow-y: hidden;"
-    class="fill-height"
+    style="overflow-y: hidden; overflow-x: hidden;"
+    class="d-flex flex-column fill-height"
   >
     <SubmissionStepper />
-    <div class="d-flex flex-column px-4">
+    <div class="d-flex flex-column px-2">
       <div class="d-flex align-center justify-center py-2">
         <v-file-input
           label="Choose spreadsheet file..."
@@ -160,17 +171,17 @@ export default defineComponent({
           hide-details
           class="mr-2"
           :truncate-length="50"
-          @change="harmonizerApi.openFile"
+          @change="(evt) => harmonizerApi.openFile(evt)"
         />
         <v-autocomplete
           v-model="jumpToModel"
           :items="fields"
           label="Jump to column..."
           class="shrink mr-2"
+          style="z-index: 200 !important;"
           outlined
           dense
           hide-details
-          height
           :menu-props="{ maxHeight: 600 }"
           @focus="focus"
           @change="jumpTo"
@@ -189,6 +200,7 @@ export default defineComponent({
         <v-menu
           offset-y
           nudge-bottom="4px"
+          style="z-index: 200 !important;"
           :close-on-click="true"
         >
           <template #activator="{on, attrs}">
@@ -267,73 +279,128 @@ export default defineComponent({
         </v-menu>
         <v-spacer />
         <v-btn
-          color="primary"
-          class="mr-2"
-          small
-          @click="validate"
-        >
-          <v-icon class="pr-2">
-            mdi-refresh
-          </v-icon>
-          Validate
-        </v-btn>
-        <v-btn
           class="mr-2"
           color="grey"
           outlined
           small
           @click="harmonizerApi.launchReference()"
         >
-          {{ templateName }} Reference
+          {{ packageName }} Reference
           <v-icon class="pl-1">
             mdi-open-in-new
           </v-icon>
         </v-btn>
       </div>
-      <div
-        v-if="validationErrors.length"
-        class="d-flex flex-row py-1"
-      >
-        <div class="mr-2 text-h5 font-weight-bold grow">
-          {{ validationErrors.length }} Validation Errors:
-        </div>
-        <div
-          style="overflow-x: auto;"
-          class="d-flex flex-row"
-        >
-          <v-chip
-            v-for="err in validationErrors"
-            :key="`${err.row}.${err.column}`"
-            color="error"
-            class="mr-1 mb-2 grow mb-0"
-            dense
-            :outlined="highlightedValidationError !== `${err.row}.${err.column}`"
-            dark
-            @click="errorClick(err.row, err.column)"
-          >
-            {{ err.cell || 'Validation Error' }}
-          </v-chip>
-        </div>
-      </div>
     </div>
-    <div :style="{ height: `calc(100vh - 260px  - ${validationErrors.length ? '48px' : '0px'})` }">
-      <p
-        v-if="!harmonizerApi.ready.value"
-        class="text-h2 mt-8"
+    <div
+      class="harmonizer-container d-flex flex-row"
+      style="max-width: 100%;"
+    >
+      <v-navigation-drawer
+        width="300"
+        permanent
       >
-        DataHarmonizer is Loading...
-      </p>
-      <iframe
-        ref="harmonizerElement"
-        title="Data Harmonizer"
-        width="100%"
-        height="100%"
-        :src="`${IFRAME_BASE}/linkml.html?minified=true&template=nmdc_dh/${templateChoice}`"
-        sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-modals allow-downloads allow-forms"
-        @load="hydrate"
+        <template v-if="harmonizerApi.validationErrorGroups.value.length">
+          <v-divider />
+          <div class="text-h6 mx-2 mt-3 font-weight-bold">
+            <v-icon color="error">
+              mdi-alert
+            </v-icon>
+            Validation Errors
+          </div>
+          <v-select
+            v-model="validationActiveCategory"
+            :items="validationItems"
+            outlined
+            color="error"
+            dense
+            class="mx-2 mb-2"
+            hide-details
+          >
+            <template #selection="{ item }">
+              <p
+                style="font-size: 14px"
+                class="my-0"
+              >
+                {{ item.text }}
+              </p>
+            </template>
+          </v-select>
+          <div class="d-flex mx-2 mb-3 text-h6">
+            <v-icon
+              large
+              @click="errorClick(highlightedValidationError - 1)"
+            >
+              mdi-arrow-left-circle
+            </v-icon>
+            <v-spacer />
+            (
+            {{ highlightedValidationError + 1 }}
+            /
+            {{ harmonizerApi.validationErrors.value[validationActiveCategory].length }}
+            )
+            <v-spacer />
+            <v-icon
+              large
+              @click="errorClick(highlightedValidationError + 1)"
+            >
+              mdi-arrow-right-circle
+            </v-icon>
+          </div>
+        </template>
+        <div class="ma-2 grow">
+          <v-btn
+            color="primary"
+            small
+            block
+            @click="validate"
+          >
+            <v-icon class="pr-2">
+              mdi-refresh
+            </v-icon>
+            Validate
+          </v-btn>
+        </div>
+        <v-divider />
+        <div
+          v-if="selectedHelpDict"
+          class="ml-2"
+          style="font-size: 14px; overflow-x: auto; max-height: 50%;"
+        >
+          <div class="text-h6 mt-3 font-weight-bold">
+            <v-icon color="info">
+              mdi-information
+            </v-icon>
+            Column Help
+          </div>
+          <div class="my-2">
+            <span class="font-weight-bold pr-2">Column:</span>
+            <span v-html="selectedHelpDict.title" />
+          </div>
+          <div class="my-2">
+            <span class="font-weight-bold pr-2">Description:</span>
+            <span v-html="urlify(selectedHelpDict.description)" />
+          </div>
+          <div class="my-2">
+            <span class="font-weight-bold pr-2">Guidance:</span>
+            <span v-html="urlify(selectedHelpDict.guidance)" />
+          </div>
+          <div
+            v-if="selectedHelpDict.examples"
+            class="my-2"
+          >
+            <span class="font-weight-bold pr-2">Examples:</span>
+            <span v-html="urlify(selectedHelpDict.examples)" />
+          </div>
+        </div>
+      </v-navigation-drawer>
+      <div
+        id="harmonizer-root"
+        class="harmonizer-root grow"
+        :style="{ 'max-width': 'calc(100vw - 300px)' }"
       />
     </div>
-    <div class="d-flex grow ma-2">
+    <div class="d-flex shrink ma-2">
       <v-btn
         color="gray"
         depressed
@@ -387,3 +454,91 @@ export default defineComponent({
     </div>
   </div>
 </template>
+
+<style lang="scss">
+.harmonizer-container {
+  height: calc(100vh - 260px) !important;
+}
+
+// HACK-DH
+.harmonizer-root {
+  /**
+    Namespace these styles so that they don't affect the global styles.
+    Read more about SASS interpolation: https://sass-lang.com/documentation/interpolation
+    This stylesheet is loaded from node_modules rather than a CDN because we need an SCSS file
+    See comment below.
+
+    There's also some kind of performance bottleneck with "Force Reflow" when you include the whole
+    stylesheet, so I brought in the minimum modules for things not to break.
+  */
+  @import '~bootstrap/scss/functions';
+  @import '~bootstrap/scss/variables';
+  @import '~bootstrap/scss/mixins';
+  @import '~bootstrap/scss/modal';
+  @import '~bootstrap/scss/buttons';
+  @import '~bootstrap/scss/forms';
+  // This stylesheet was unfortunately copy-pasted. In order to interpolate the content here,
+  // an SCSS file is required (css will only be referenced).  There is no handsontable scss available,
+  // so the CSS was renamed SCSS and copied into the project.  SCSS and CSS are treated differently
+  // when imported within a parent scope (harmonizer-root class in this case)
+  // @import './library/handsontable.min.scss';
+}
+/* Grid */
+#data-harmonizer-grid {
+  overflow: hidden;
+  height: calc(100vh - 340px) !important;
+  margin-top: -16px;
+
+  .secondary-header-cell:hover {
+    cursor: pointer;
+  }
+
+  .htAutocompleteArrow {
+    color: gray;
+  }
+
+  td {
+    &.invalid-cell {
+      background-color: #ffcccb !important;
+    }
+    &.empty-invalid-cell {
+      background-color: #ff91a4 !important;
+    }
+  }
+  th {
+    text-align: left;
+
+    &.required {
+      background-color:yellow;
+    }
+    &.recommended {
+      background-color:plum;
+    }
+  }
+}
+
+#loading-screen {
+  display: none;
+  background-color: rgba(108, 117, 125, 0.2);
+  z-index: 1000;
+}
+
+#unmapped-headers-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+/* Autocomplete */
+.listbox {
+  white-space: pre !important;
+}
+.handsontable.listbox td {
+  border-radius:3px;
+  border:1px solid silver;
+  background-color: #DDD;
+
+  &:hover, &.current.highlight {
+    background-color: lightblue !important;
+  }
+}
+</style>

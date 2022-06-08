@@ -63,7 +63,7 @@ export function escapeHtml(unsafe: string) {
  */
 export function urlify(text: string) {
   const urlRegex = /(https?:\/\/[a-zA-Z0-9./-]+)/g;
-  return escapeHtml(text).replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+  return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
 }
 
 export {

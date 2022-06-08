@@ -57,11 +57,12 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 /**
  * Environment Package Step
  */
-const templateName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
+const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
 const templateChoice = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
-  const template = HARMONIZER_TEMPLATES[templateName.value];
-  return getVariant(checkBoxes, template.variations, template.default);
+  const template = HARMONIZER_TEMPLATES[packageName.value];
+  const choice = getVariant(checkBoxes, template.variations, template.default);
+  return choice;
 });
 
 /**
@@ -73,7 +74,8 @@ const templateChoiceDisabled = computed(() => sampleData.value.length >= 1);
 
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
-  template: templateName.value,
+  packageName: packageName.value,
+  template: templateChoice.value,
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
@@ -99,7 +101,7 @@ function reset() {
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
-  templateName.value = 'soil';
+  packageName.value = 'soil';
   sampleData.value = [];
   samplesValid.value = false;
 }
@@ -123,7 +125,7 @@ async function generateRecord() {
 async function loadRecord(id: string) {
   reset();
   const val = await api.getRecord(id);
-  templateName.value = val.metadata_submission.template;
+  packageName.value = val.metadata_submission.packageName;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
   sampleData.value = val.metadata_submission.sampleData;
@@ -143,7 +145,7 @@ export {
   studyForm,
   studyFormValid,
   submitPayload,
-  templateName,
+  packageName,
   templateChoice,
   templateChoiceDisabled,
   /* functions */

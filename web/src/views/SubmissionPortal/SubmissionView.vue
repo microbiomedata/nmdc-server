@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent, ref } from '@vue/composition-api';
 import AuthButton from '@/components/Presentation/AuthButton.vue';
 import { stateRefs } from '@/store';
 import { loadRecord } from './store';
@@ -7,18 +7,24 @@ import { loadRecord } from './store';
 export default defineComponent({
   components: { AuthButton },
   setup(_, { root }) {
-    if (root.$route.params.id) {
-      loadRecord(root.$route.params.id);
-    }
+    const ready = ref(false);
 
-    return { stateRefs };
+    async function load() {
+      if (root.$route.params.id) {
+        await loadRecord(root.$route.params.id);
+      }
+      ready.value = true;
+    }
+    load();
+
+    return { stateRefs, ready };
   },
 });
 </script>
 
 <template>
   <v-main>
-    <v-container v-if="!stateRefs.user.value">
+    <v-container v-if="!stateRefs.user.value && ready">
       <h1>NMDC Submission Portal</h1>
       <p>
         This system requires authentication.
@@ -26,8 +32,12 @@ export default defineComponent({
       </p>
       <AuthButton />
     </v-container>
-    <keep-alive v-else>
-      <router-view />
-    </keep-alive>
+    <router-view v-else-if="ready" />
+    <div
+      v-else
+      class="text-h3"
+    >
+      Submission portal is loading...
+    </div>
   </v-main>
 </template>

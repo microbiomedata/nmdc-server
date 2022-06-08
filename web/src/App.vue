@@ -127,3 +127,9 @@ export default defineComponent({
     </keep-alive>
   </v-app>
 </template>
+
+<style>
+html, body {
+  overflow-y: auto;
+}
+</style>
