@@ -2,7 +2,7 @@
 import {
   computed, defineComponent, ref, nextTick, watch, onMounted,
 } from '@vue/composition-api';
-import { flattenDeep } from 'lodash';
+import { clamp, flattenDeep } from 'lodash';
 import { writeFile, utils } from 'xlsx';
 import 'handsontable/dist/handsontable.full.css';
 import { urlify } from '@/data/utils';
@@ -40,7 +40,8 @@ export default defineComponent({
     const harmonizerElement = ref();
     const harmonizerApi = new HarmonizerApi();
     const jumpToModel = ref();
-    const highlightedValidationError = ref('');
+    const highlightedValidationError = ref(0);
+    const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
 
     onMounted(async () => {
@@ -69,9 +70,11 @@ export default defineComponent({
       incrementalSaveRecord(root.$route.params.id);
     }
 
-    function errorClick(row: number, column: number) {
-      harmonizerApi.jumpToRowCol(row, column);
-      highlightedValidationError.value = `${row}.${column}`;
+    function errorClick(index: number) {
+      const currentSeries = harmonizerApi.validationErrors.value[validationActiveCategory.value];
+      highlightedValidationError.value = clamp(index, 0, currentSeries.length - 1);
+      const currentError = currentSeries[highlightedValidationError.value];
+      harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
     }
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
@@ -85,19 +88,15 @@ export default defineComponent({
         return val;
       }))));
 
-    const validationErrors = computed(() => {
-      if (harmonizerApi.validationErrors.value) {
-        return Object.entries(harmonizerApi.validationErrors.value)
-          .map(([row, val]) => Object.entries(val)
-            .map(([column, cell]) => ({
-              cell,
-              row: Number.parseInt(row, 10),
-              column: Number.parseInt(column, 10),
-            }))).flat();
-      }
-      return [];
-    });
+    const validationItems = computed(() => harmonizerApi.validationErrorGroups.value.map((v) => {
+      const errors = harmonizerApi.validationErrors.value[v];
+      return {
+        text: `${v} (${errors.length})`,
+        value: v,
+      };
+    }));
 
+    watch(validationActiveCategory, () => errorClick(0));
     watch(columnVisibility, () => {
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
@@ -138,8 +137,9 @@ export default defineComponent({
       packageName,
       templateChoice,
       fields,
-      validationErrors,
       highlightedValidationError,
+      validationItems,
+      validationActiveCategory,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -159,7 +159,7 @@ export default defineComponent({
     class="d-flex flex-column fill-height"
   >
     <SubmissionStepper />
-    <div class="d-flex flex-column px-4">
+    <div class="d-flex flex-column px-2">
       <div class="d-flex align-center justify-center py-2">
         <v-file-input
           label="Choose spreadsheet file..."
@@ -279,17 +279,6 @@ export default defineComponent({
         </v-menu>
         <v-spacer />
         <v-btn
-          color="primary"
-          class="mr-2"
-          small
-          @click="validate"
-        >
-          <v-icon class="pr-2">
-            mdi-refresh
-          </v-icon>
-          Validate
-        </v-btn>
-        <v-btn
           class="mr-2"
           color="grey"
           outlined
@@ -309,39 +298,83 @@ export default defineComponent({
     >
       <v-navigation-drawer
         width="300"
-        class="grow"
         permanent
       >
-        <template v-if="validationErrors.length">
-          <div class="text-h6 mx-2">
-            {{ validationErrors.length }} Validation Errors
+        <template v-if="harmonizerApi.validationErrorGroups.value.length">
+          <v-divider />
+          <div class="text-h6 mx-2 mt-3 font-weight-bold">
+            <v-icon color="error">
+              mdi-alert
+            </v-icon>
+            Validation Errors
           </div>
-          <div
-            style="overflow-x: auto; max-height: calc(50% - 34px);"
-            class="d-flex flex-column"
+          <v-select
+            v-model="validationActiveCategory"
+            :items="validationItems"
+            outlined
+            color="error"
+            dense
+            class="mx-2 mb-2"
+            hide-details
           >
-            <v-chip
-              v-for="err in validationErrors"
-              :key="`${err.row}.${err.column}`"
-              color="error"
-              class="mx-1 mb-1 grow mb-0 px-1"
-              small
-              :outlined="highlightedValidationError !== `${err.row}.${err.column}`"
-              dark
-              @click="errorClick(err.row, err.column)"
+            <template #selection="{ item }">
+              <p
+                style="font-size: 14px"
+                class="my-0"
+              >
+                {{ item.text }}
+              </p>
+            </template>
+          </v-select>
+          <div class="d-flex mx-2 mb-3 text-h6">
+            <v-icon
+              large
+              @click="errorClick(highlightedValidationError - 1)"
             >
-              ({{ err.row }}, {{ err.column }}) {{ err.cell || 'Validation Error' }}
-            </v-chip>
+              mdi-arrow-left-circle
+            </v-icon>
+            <v-spacer />
+            (
+            {{ highlightedValidationError + 1 }}
+            /
+            {{ harmonizerApi.validationErrors.value[validationActiveCategory].length }}
+            )
+            <v-spacer />
+            <v-icon
+              large
+              @click="errorClick(highlightedValidationError + 1)"
+            >
+              mdi-arrow-right-circle
+            </v-icon>
           </div>
         </template>
+        <div class="ma-2 grow">
+          <v-btn
+            color="primary"
+            small
+            block
+            @click="validate"
+          >
+            <v-icon class="pr-2">
+              mdi-refresh
+            </v-icon>
+            Validate
+          </v-btn>
+        </div>
         <v-divider />
         <div
           v-if="selectedHelpDict"
           class="ml-2"
           style="font-size: 14px; overflow-x: auto; max-height: 50%;"
         >
+          <div class="text-h6 mt-3 font-weight-bold">
+            <v-icon color="info">
+              mdi-information
+            </v-icon>
+            Column Help
+          </div>
           <div class="my-2">
-            <span class="font-weight-bold pr-2">Label:</span>
+            <span class="font-weight-bold pr-2">Column:</span>
             <span v-html="selectedHelpDict.title" />
           </div>
           <div class="my-2">
@@ -352,7 +385,10 @@ export default defineComponent({
             <span class="font-weight-bold pr-2">Guidance:</span>
             <span v-html="urlify(selectedHelpDict.guidance)" />
           </div>
-          <div class="my-2">
+          <div
+            v-if="selectedHelpDict.examples"
+            class="my-2"
+          >
             <span class="font-weight-bold pr-2">Examples:</span>
             <span v-html="urlify(selectedHelpDict.examples)" />
           </div>
@@ -420,27 +456,31 @@ export default defineComponent({
 </template>
 
 <style lang="scss">
-// HACK-DH
-// Import css from CDN.  We didn't need a SCSS file for this one because
-// it doesn't have any globally conflicting styles.
-@import 'https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css';
-
 .harmonizer-container {
   height: calc(100vh - 260px) !important;
 }
 
 .harmonizer-root {
-  // Namespace these styles so that they don't affect the global styles.
-  // Read more about SASS interpolation: https://sass-lang.com/documentation/interpolation
+  /**
+    Namespace these styles so that they don't affect the global styles.
+    Read more about SASS interpolation: https://sass-lang.com/documentation/interpolation
+    This stylesheet is loaded from node_modules rather than a CDN because we need an SCSS file
+    See comment below.
 
-  // This stylesheet is loaded from node_modules rather than a CDN because we need an SCSS file
-  // See comment below.
-  @import '~bootstrap/scss/bootstrap.scss';
+    There's also some kind of performance bottleneck with "Force Reflow" when you include the whole
+    stylesheet, so I brought in the minimum modules for things not to break.
+  */
+  @import '~bootstrap/scss/functions';
+  @import '~bootstrap/scss/variables';
+  @import '~bootstrap/scss/mixins';
+  @import '~bootstrap/scss/modal';
+  @import '~bootstrap/scss/buttons';
+  @import '~bootstrap/scss/forms';
   // This stylesheet was unfortunately copy-pasted. In order to interpolate the content here,
   // an SCSS file is required (css will only be referenced).  There is no handsontable scss available,
   // so the CSS was renamed SCSS and copied into the project.  SCSS and CSS are treated differently
   // when imported within a parent scope (harmonizer-root class in this case)
-  @import './library/handsontable.min.scss';
+  // @import './library/handsontable.min.scss';
 }
 /* Grid */
 #data-harmonizer-grid {

@@ -24,7 +24,7 @@ export default defineComponent({
 
 <template>
   <v-main>
-    <v-container v-if="!stateRefs.user.value">
+    <v-container v-if="!stateRefs.user.value && ready">
       <h1>NMDC Submission Portal</h1>
       <p>
         This system requires authentication.
@@ -32,6 +32,12 @@ export default defineComponent({
       </p>
       <AuthButton />
     </v-container>
-    <router-view v-if="ready" />
+    <router-view v-else-if="ready" />
+    <div
+      v-else
+      class="text-h3"
+    >
+      Submission portal is loading...
+    </div>
   </v-main>
 </template>
