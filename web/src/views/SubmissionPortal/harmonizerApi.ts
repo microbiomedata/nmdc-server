@@ -1,5 +1,5 @@
-import { Ref, ref } from '@vue/composition-api';
-import { debounce } from 'lodash';
+import { computed, Ref, ref } from '@vue/composition-api';
+import { debounce, has } from 'lodash';
 import hot from 'handsontable';
 import xlsx from 'xlsx';
 import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
@@ -71,8 +71,14 @@ export const HARMONIZER_TEMPLATES: Record<string, {
   },
 };
 
+interface ValidationErrors {
+  [error: string]: [number, number][],
+}
+
 export class HarmonizerApi {
-  validationErrors: Ref<undefined | null | Record<number, Record<number, string>>>;
+  validationErrors: Ref<ValidationErrors>;
+
+  validationErrorGroups: Ref<string[]>;
 
   schemaSections: Ref<Record<string, Record<string, number>>>;
 
@@ -85,10 +91,11 @@ export class HarmonizerApi {
   selectedColumn: Ref<string>;
 
   constructor() {
-    this.validationErrors = ref(undefined);
+    this.validationErrors = ref({});
     this.schemaSections = ref({});
     this.ready = ref(false);
     this.selectedColumn = ref('');
+    this.validationErrorGroups = computed(() => Object.keys(this.validationErrors.value));
   }
 
   async init(r: HTMLElement, templateName: string) {
@@ -103,7 +110,6 @@ export class HarmonizerApi {
     const myDHGrid = document.getElementById('data-harmonizer-grid');
     const myDHToolbar = document.getElementById('data-harmonizer-toolbar');
     const myDHFooter = document.getElementById('data-harmonizer-footer');
-    // $(myDHToolbar).append($('#data-harmonizer-toolbar-inset'));
 
     // eslint-disable-next-line no-new-object
     this.dh = new Object(DataHarmonizer);
@@ -148,8 +154,26 @@ export class HarmonizerApi {
   }
 
   refreshState() {
-    this.validationErrors.value = this.dh.invalid_cells;
     this.schemaSections.value = this._getColumnCoordinates();
+    const remapped: ValidationErrors = {};
+    const invalid: Record<number, Record<number, string>> = this.dh.invalid_cells;
+    if (Object.keys(invalid).length) {
+      remapped['All Errors'] = [];
+    }
+    Object.entries(invalid).forEach(([row, val]) => {
+      Object.entries(val).forEach(([col, text]) => {
+        const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
+        const issue = text || 'Validation Error';
+        if (has(remapped, issue)) {
+          remapped[issue].push(entry);
+        } else {
+          remapped[issue] = [entry];
+        }
+        remapped['All Errors'].push(entry);
+      });
+    });
+    console.log(remapped);
+    this.validationErrors.value = remapped;
   }
 
   async loadData(data: any[][]) {
