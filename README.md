@@ -21,7 +21,7 @@ See `nmdc_server/config` for configuration.  Env variable names begin with `NMDC
 
 1. Create an OrcID account at orcid.org
 1. Create an OrcID API Token in the [developer tools](https://orcid.org/developer-tools)
-1. Set the redirect URIs to `http://localhost:8080`
+1. Set the redirect URIs to `http://localhost:8080` (Ignore the error about https, it's just a warning).
 1. Set the following configuration in `.env`, and then restart the stack.
 
 ```bash

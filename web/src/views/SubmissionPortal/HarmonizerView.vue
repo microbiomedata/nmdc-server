@@ -460,6 +460,7 @@ export default defineComponent({
   height: calc(100vh - 260px) !important;
 }
 
+// HACK-DH
 .harmonizer-root {
   /**
     Namespace these styles so that they don't affect the global styles.

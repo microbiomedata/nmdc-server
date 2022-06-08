@@ -21,4 +21,8 @@ This application serves data from a stateless database, so queries can be cached
 
 ## DataHarmonizer Hacks
 
-Several hacks were needed in order to get DataHarmonizer working in this application.  You can find code references for these by searching for `HACK-DH`.
+There are some unusual dependency and library usage patterns needed in order to get DataHarmonizer working in this application.  You can find code references for these by searching for `HACK-DH`.
+
+* DataHarmonizer code is pulled in from the `microbiomedata/sheets_and_friends` repository through `package.json`. We import code from the build artifact directory, `docs/`.  In this way, code from DataHarmonizer is never directly imported.
+* For convenience, some dependencies (jquery, bootsrtap) are imported directly from CDN instead of copying over from `docs/`.
+* DataHarmonizer uses an index.html file with dom elements as templates for various parts of the spreadsheet dialogs and toolbar.  Normally, libraries that need to create DOM would do so with Javascript, but this HTML page needs to be imported (webpack raw loader) and injected onto the page.
