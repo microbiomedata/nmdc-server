@@ -2,7 +2,7 @@ from io import BytesIO
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.requests import Request
@@ -489,7 +489,7 @@ async def list_submissions(
         await admin_required(db, token)
     except HTTPException:
         if SubmissionMetadata.user is not None:
-            query = query.filter(SubmissionMetadata.user.orcid_uuid == token.orcid)
+            query = query.filter(SubmissionMetadata.user.orcid == token.orcid)
     return pagination.response(query)
 
 
@@ -552,8 +552,12 @@ async def submit_metadata(
     submission = SubmissionMetadata(**body.dict(), author_orcid=token.orcid)
     user = crud.get_user(db, token.orcid)
     # throw error for none?
-    if user is not None:
-        submission.user_id = user.id
-        db.add(submission)
-        db.commit()
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No user found",
+        )
+    submission.user_id = user.id
+    db.add(submission)
+    db.commit()
     return submission

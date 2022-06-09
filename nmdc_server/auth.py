@@ -95,10 +95,13 @@ async def admin_required(
     if settings.environment != "production":
         return token
     user = crud.get_user(db, token.orcid)
+    if user is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No user found",
+        )
     if user and user.is_admin:
         return token
-
-    # raise different exception for user not found
 
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
@@ -121,8 +124,8 @@ async def login_via_orcid(request: Request):
 @router.get("/token", name="token", include_in_schema=False)
 async def authorize(request: Request, db: Session = Depends(get_db)):
     token = await oauth2_client.orcid.authorize_access_token(request)
-    user = User(orcid_uuid=token["orcid"], name=token["name"])
-    if _admin_users.__contains__(user.orcid_uuid):
+    user = User(orcid=token["orcid"], name=token["name"])
+    if _admin_users.__contains__(user.orcid):
         user.is_admin = True
     crud.create_user(db, user)
     request.session["token"] = token
