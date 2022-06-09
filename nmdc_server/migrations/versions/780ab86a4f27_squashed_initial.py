@@ -5,6 +5,7 @@ Revises:
 Create Date: 2022-06-08 19:49:41.862184
 
 """
+# flake8: noqa
 from typing import Optional
 
 import sqlalchemy as sa
@@ -27,21 +28,21 @@ def upgrade():
         sa.Column("orcid", sa.String(), nullable=False),
         sa.Column("ip", sa.String(), nullable=False),
         sa.Column("user_agent", sa.String(), nullable=True),
-        sa.Column("conditions", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column("filter", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column("conditions", postgresql.JSONB(astext_type=sa.Text()), nullable=False),  # type: ignore
+        sa.Column("filter", postgresql.JSONB(astext_type=sa.Text()), nullable=True),  # type: ignore
         sa.PrimaryKeyConstraint("id", name=op.f("pk_bulk_download")),
     )
     op.create_table(
         "doi_info",
         sa.Column("id", sa.String(), nullable=False),
-        sa.Column("info", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("info", postgresql.JSONB(astext_type=sa.Text()), nullable=False),  # type: ignore
         sa.PrimaryKeyConstraint("id", name=op.f("pk_doi_info")),
     )
     op.create_table(
         "envo_term",
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("label", sa.String(), nullable=False),
-        sa.Column("data", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("data", postgresql.JSONB(astext_type=sa.Text()), nullable=False),  # type: ignore
         sa.PrimaryKeyConstraint("id", name=op.f("pk_envo_term")),
     )
     op.create_table(
@@ -76,7 +77,10 @@ def upgrade():
         sa.PrimaryKeyConstraint("term", "module", name=op.f("pk_ko_term_to_module")),
     )
     op.create_index(
-        op.f("ix_ko_term_to_module_module"), "ko_term_to_module", ["module"], unique=False
+        op.f("ix_ko_term_to_module_module"),
+        "ko_term_to_module",
+        ["module"],
+        unique=False,
     )
     op.create_table(
         "ko_term_to_pathway",
@@ -85,7 +89,10 @@ def upgrade():
         sa.PrimaryKeyConstraint("term", "pathway", name=op.f("pk_ko_term_to_pathway")),
     )
     op.create_index(
-        op.f("ix_ko_term_to_pathway_pathway"), "ko_term_to_pathway", ["pathway"], unique=False
+        op.f("ix_ko_term_to_pathway_pathway"),
+        "ko_term_to_pathway",
+        ["pathway"],
+        unique=False,
     )
     op.create_table(
         "principal_investigator",
@@ -110,7 +117,7 @@ def upgrade():
         sa.Column("author_orcid", sa.String(), nullable=False),
         sa.Column("created", sa.DateTime(), nullable=False),
         sa.Column("status", sa.String(), nullable=False),
-        sa.Column("metadata_submission", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("metadata_submission", postgresql.JSONB(astext_type=sa.Text()), nullable=False),  # type: ignore
         sa.PrimaryKeyConstraint("id", name=op.f("pk_submission_metadata")),
     )
     op.create_table(
@@ -126,7 +133,9 @@ def upgrade():
         sa.Column("ancestor_id", sa.String(), nullable=False),
         sa.Column("direct", sa.Boolean(), nullable=False),
         sa.ForeignKeyConstraint(
-            ["ancestor_id"], ["envo_term.id"], name=op.f("fk_envo_ancestor_ancestor_id_envo_term")
+            ["ancestor_id"],
+            ["envo_term.id"],
+            name=op.f("fk_envo_ancestor_ancestor_id_envo_term"),
         ),
         sa.ForeignKeyConstraint(
             ["id"], ["envo_term.id"], name=op.f("fk_envo_ancestor_id_envo_term")
@@ -150,8 +159,8 @@ def upgrade():
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("description", sa.String(), nullable=False),
-        sa.Column("alternate_identifiers", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column("annotations", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("alternate_identifiers", postgresql.JSONB(astext_type=sa.Text()), nullable=False),  # type: ignore
+        sa.Column("annotations", postgresql.JSONB(astext_type=sa.Text()), nullable=False),  # type: ignore
         sa.Column("add_date", sa.DateTime(), nullable=True),
         sa.Column("mod_date", sa.DateTime(), nullable=True),
         sa.Column("gold_name", sa.String(), nullable=False),
@@ -160,11 +169,11 @@ def upgrade():
         sa.Column("doi", sa.String(), nullable=True),
         sa.Column("multiomics", sa.Integer(), nullable=False),
         sa.Column(
-            "has_credit_associations", postgresql.JSONB(astext_type=sa.Text()), nullable=True
+            "has_credit_associations", postgresql.JSONB(astext_type=sa.Text()), nullable=True  # type: ignore
         ),
-        sa.Column("relevant_protocols", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column("funding_sources", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
-        sa.Column("ess_dive_datasets", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column("relevant_protocols", postgresql.JSONB(astext_type=sa.Text()), nullable=True),  # type: ignore
+        sa.Column("funding_sources", postgresql.JSONB(astext_type=sa.Text()), nullable=True),  # type: ignore
+        sa.Column("ess_dive_datasets", postgresql.JSONB(astext_type=sa.Text()), nullable=True),  # type: ignore
         sa.Column("principal_investigator_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.ForeignKeyConstraint(["doi"], ["doi_info.id"], name=op.f("fk_study_doi_doi_info")),
         sa.ForeignKeyConstraint(
@@ -179,8 +188,8 @@ def upgrade():
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("description", sa.String(), nullable=False),
-        sa.Column("alternate_identifiers", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column("annotations", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("alternate_identifiers", postgresql.JSONB(astext_type=sa.Text()), nullable=False),  # type: ignore
+        sa.Column("annotations", postgresql.JSONB(astext_type=sa.Text()), nullable=False),  # type: ignore
         sa.Column("add_date", sa.DateTime(), nullable=True),
         sa.Column("mod_date", sa.DateTime(), nullable=True),
         sa.Column("collection_date", sa.DateTime(), nullable=True),
@@ -208,7 +217,9 @@ def upgrade():
             name=op.f("fk_biosample_env_local_scale_id_envo_term"),
         ),
         sa.ForeignKeyConstraint(
-            ["env_medium_id"], ["envo_term.id"], name=op.f("fk_biosample_env_medium_id_envo_term")
+            ["env_medium_id"],
+            ["envo_term.id"],
+            name=op.f("fk_biosample_env_medium_id_envo_term"),
         ),
         sa.ForeignKeyConstraint(
             ["study_id"], ["study.id"], name=op.f("fk_biosample_study_id_study")
@@ -237,7 +248,9 @@ def upgrade():
             ["study_id"], ["study.id"], name=op.f("fk_study_website_study_id_study")
         ),
         sa.ForeignKeyConstraint(
-            ["website_id"], ["website.id"], name=op.f("fk_study_website_website_id_website")
+            ["website_id"],
+            ["website.id"],
+            name=op.f("fk_study_website_website_id_website"),
         ),
         sa.PrimaryKeyConstraint("study_id", "website_id", name=op.f("pk_study_website")),
     )
@@ -246,8 +259,8 @@ def upgrade():
         sa.Column("id", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("description", sa.String(), nullable=False),
-        sa.Column("alternate_identifiers", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
-        sa.Column("annotations", postgresql.JSONB(astext_type=sa.Text()), nullable=False),
+        sa.Column("alternate_identifiers", postgresql.JSONB(astext_type=sa.Text()), nullable=False),  # type: ignore
+        sa.Column("annotations", postgresql.JSONB(astext_type=sa.Text()), nullable=False),  # type: ignore
         sa.Column("add_date", sa.DateTime(), nullable=True),
         sa.Column("mod_date", sa.DateTime(), nullable=True),
         sa.Column("biosample_id", sa.String(), nullable=True),
@@ -489,7 +502,9 @@ def upgrade():
             name=op.f("fk_bulk_download_data_object_data_object_id_data_object"),
         ),
         sa.PrimaryKeyConstraint(
-            "bulk_download_id", "data_object_id", name=op.f("pk_bulk_download_data_object")
+            "bulk_download_id",
+            "data_object_id",
+            name=op.f("pk_bulk_download_data_object"),
         ),
     )
     op.create_table(
@@ -975,7 +990,9 @@ def upgrade():
             name=op.f("fk_reads_qc_input_association_reads_qc_id_reads_qc"),
         ),
         sa.UniqueConstraint(
-            "reads_qc_id", "data_object_id", name=op.f("uq_reads_qc_input_association_reads_qc_id")
+            "reads_qc_id",
+            "data_object_id",
+            name=op.f("uq_reads_qc_input_association_reads_qc_id"),
         ),
     )
     op.create_table(
@@ -993,7 +1010,9 @@ def upgrade():
             name=op.f("fk_reads_qc_output_association_reads_qc_id_reads_qc"),
         ),
         sa.UniqueConstraint(
-            "reads_qc_id", "data_object_id", name=op.f("uq_reads_qc_output_association_reads_qc_id")
+            "reads_qc_id",
+            "data_object_id",
+            name=op.f("uq_reads_qc_output_association_reads_qc_id"),
         ),
     )
     op.create_table(
