@@ -87,7 +87,7 @@ With that file in place, populate the docker volume by running,
 ```bash
 docker-compose run backend nmdc-server truncate # if necessary
 docker-compose run backend nmdc-server migrate
-docker-compose run backend nmdc-server ingest
+docker-compose run backend nmdc-server -vv ingest --function-limit 100
 ```
 
 ## Running the client
@@ -127,6 +127,21 @@ docker-compose run backend psql -c "create database nmdc_a;" -d postgres
 docker-compose run backend alembic -c nmdc_server/alembic.ini upgrade head
 # Autogenerate a migration diff from the current HEAD
 docker-compose run backend alembic -c nmdc_server/alembic.ini revision --autogenerate
+```
+
+## Postgres import and export
+
+```bash
+# export, and 
+docker-compose run backend bash -c 'pg_dump nmdc_a > /app/nmdc_server/nmdc_a.sql'
+
+# import -- starting from an EMPTY database with DB running
+docker-compose down -v
+docker-compose up -d db
+docker-compose run backend psql -c "create database nmdc_a;" -d postgres
+cp downloads/nmdc_a.sql nmdc_server/nmdc_a.sql
+docker-compose run backend bash -c 'psql nmdc_a < /app/nmdc_server/nmdc_a.sql'
+docker-compose run backend nmdc-server migrate # stamp the migration db
 ```
 
 ## Developing with the shell
