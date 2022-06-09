@@ -131,6 +131,8 @@ docker-compose run backend alembic -c nmdc_server/alembic.ini revision --autogen
 
 ## Postgres import and export
 
+You can find existing database exports in Notion.
+
 ```bash
 # export, and 
 docker-compose run backend bash -c 'pg_dump nmdc_a > /app/nmdc_server/nmdc_a.sql'
