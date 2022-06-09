@@ -1,7 +1,7 @@
 """empty message
 
 Revision ID: 780ab86a4f27
-Revises:
+Revises: 
 Create Date: 2022-06-08 19:49:41.862184
 
 """
@@ -581,8 +581,7 @@ def upgrade():
             ["metabolomics_analysis_id"],
             ["metabolomics_analysis.id"],
             name=op.f(
-                """fk_metabolomics_analysis_input_association_metabolomics
-                _analysis_id_metabolomics_analysis"""
+                "fk_metabolomics_analysis_input_association_metabolomics_analysis_id_metabolomics_analysis"
             ),
         ),
         sa.UniqueConstraint(
@@ -604,8 +603,7 @@ def upgrade():
             ["metabolomics_analysis_id"],
             ["metabolomics_analysis.id"],
             name=op.f(
-                """fk_metabolomics_analysis_output_association_metabolomics
-                _analysis_id_metabolomics_analysis"""
+                "fk_metabolomics_analysis_output_association_metabolomics_analysis_id_metabolomics_analysis"
             ),
         ),
         sa.UniqueConstraint(
@@ -627,8 +625,7 @@ def upgrade():
             ["metagenome_annotation_id"],
             ["metagenome_annotation.id"],
             name=op.f(
-                """fk_metagenome_annotation_input_association
-                _metagenome_annotation_id_metagenome_annotation"""
+                "fk_metagenome_annotation_input_association_metagenome_annotation_id_metagenome_annotation"
             ),
         ),
         sa.UniqueConstraint(
@@ -650,8 +647,7 @@ def upgrade():
             ["metagenome_annotation_id"],
             ["metagenome_annotation.id"],
             name=op.f(
-                """fk_metagenome_annotation_output_association
-                _metagenome_annotation_id_metagenome_annotation"""
+                "fk_metagenome_annotation_output_association_metagenome_annotation_id_metagenome_annotation"
             ),
         ),
         sa.UniqueConstraint(
@@ -673,8 +669,7 @@ def upgrade():
             ["metagenome_assembly_id"],
             ["metagenome_assembly.id"],
             name=op.f(
-                """fk_metagenome_assembly_input_association_
-                metagenome_assembly_id_metagenome_assembly"""
+                "fk_metagenome_assembly_input_association_metagenome_assembly_id_metagenome_assembly"
             ),
         ),
         sa.UniqueConstraint(
@@ -696,8 +691,7 @@ def upgrade():
             ["metagenome_assembly_id"],
             ["metagenome_assembly.id"],
             name=op.f(
-                """fk_metagenome_assembly_output_association
-                _metagenome_assembly_id_metagenome_assembly"""
+                "fk_metagenome_assembly_output_association_metagenome_assembly_id_metagenome_assembly"
             ),
         ),
         sa.UniqueConstraint(
@@ -721,8 +715,7 @@ def upgrade():
             ["metaproteomic_analysis_id"],
             ["metaproteomic_analysis.id"],
             name=op.f(
-                """fk_metap_gene_function_aggregation_metaproteomic
-                _analysis_id_metaproteomic_analysis"""
+                "fk_metap_gene_function_aggregation_metaproteomic_analysis_id_metaproteomic_analysis"
             ),
         ),
         sa.PrimaryKeyConstraint(
@@ -744,8 +737,7 @@ def upgrade():
             ["metaproteomic_analysis_id"],
             ["metaproteomic_analysis.id"],
             name=op.f(
-                """fk_metaproteomic_analysis_input_association_
-                metaproteomic_analysis_id_metaproteomic_analysis"""
+                "fk_metaproteomic_analysis_input_association_metaproteomic_analysis_id_metaproteomic_analysis"
             ),
         ),
         sa.UniqueConstraint(
@@ -767,8 +759,7 @@ def upgrade():
             ["metaproteomic_analysis_id"],
             ["metaproteomic_analysis.id"],
             name=op.f(
-                """fk_metaproteomic_analysis_output_association_metaproteomic
-                _analysis_id_metaproteomic_analysis"""
+                "fk_metaproteomic_analysis_output_association_metaproteomic_analysis_id_metaproteomic_analysis"
             ),
         ),
         sa.UniqueConstraint(
@@ -835,8 +826,7 @@ def upgrade():
         sa.ForeignKeyConstraint(
             ["metagenome_annotation_id"],
             ["metagenome_annotation.id"],
-            name=op.f("""fk_mga_gene_function_metagenome_annotation
-                        _id_metagenome_annotation"""),
+            name=op.f("fk_mga_gene_function_metagenome_annotation_id_metagenome_annotation"),
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_mga_gene_function")),
         sa.UniqueConstraint("subject", name=op.f("uq_mga_gene_function_subject")),
@@ -939,8 +929,7 @@ def upgrade():
             ["read_based_analysis_id"],
             ["read_based_analysis.id"],
             name=op.f(
-                """fk_read_based_analysis_input_association_
-                read_based_analysis_id_read_based_analysis"""
+                "fk_read_based_analysis_input_association_read_based_analysis_id_read_based_analysis"
             ),
         ),
         sa.UniqueConstraint(
@@ -962,8 +951,7 @@ def upgrade():
             ["read_based_analysis_id"],
             ["read_based_analysis.id"],
             name=op.f(
-                """fk_read_based_analysis_output_association_read
-                _based_analysis_id_read_based_analysis"""
+                "fk_read_based_analysis_output_association_read_based_analysis_id_read_based_analysis"
             ),
         ),
         sa.UniqueConstraint(
