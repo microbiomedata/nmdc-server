@@ -120,6 +120,9 @@ In order to generate a migration, your database state should match HEAD.  If you
 ```bash
 # Destroy everything.  You'll lose your data!
 docker-compose down -v
+docker-compose up -d db
+# Create the database
+docker-compose run backend psql -c "create database nmdc_a;" -d postgres
 # Run migrations to HEAD
 docker-compose run backend alembic -c nmdc_server/alembic.ini upgrade head
 # Autogenerate a migration diff from the current HEAD
