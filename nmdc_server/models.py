@@ -826,5 +826,5 @@ class User(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     orcid = Column(String, nullable=False)
-    name = Column(String, nullable=False)
+    name = Column(String)
     is_admin = Column(Boolean, nullable=False, default=False)
