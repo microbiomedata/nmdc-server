@@ -410,6 +410,4 @@ def create_user(db: Session, user: schemas.User) -> models.User:
 
 def get_user(db: Session, orcid: str) -> Optional[models.User]:
     user = db.query(models.User).filter_by(orcid=orcid).first()
-    if user is not None:
-        return user
-    return None
+    return user

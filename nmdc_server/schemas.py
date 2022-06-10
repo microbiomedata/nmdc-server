@@ -657,7 +657,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     author_orcid: str
     created: datetime
     status: str
-    user: Optional[User]
+    author: Optional[User]
 
     class Config:
         orm_mode = True

@@ -125,8 +125,6 @@ async def login_via_orcid(request: Request):
 async def authorize(request: Request, db: Session = Depends(get_db)):
     token = await oauth2_client.orcid.authorize_access_token(request)
     user = User(orcid=token["orcid"], name=token["name"])
-    if _admin_users.__contains__(user.orcid):
-        user.is_admin = True
     crud.create_user(db, user)
     request.session["token"] = token
     return RedirectResponse(url="/")
