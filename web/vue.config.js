@@ -35,6 +35,8 @@ module.exports = {
           { from: './node_modules/sheets_and_friends/docs/template/menu.js', to: 'template/menu.js' },
           { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/schema.js', to: 'template/nmdc_dh/schema.js' },
           { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/export.js', to: 'template/nmdc_dh/export.js' },
+          { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/ConfigureFieldSettings.js', to: 'template/nmdc_dh/ConfigureFieldSettings.js' },
+          { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/GoldEcosystemTree.js', to: 'template/nmdc_dh/GoldEcosystemTree.js' },
         ],
       }),
     ],
