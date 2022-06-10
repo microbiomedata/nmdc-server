@@ -488,8 +488,8 @@ async def list_submissions(
     try:
         await admin_required(db, token)
     except HTTPException:
-        if SubmissionMetadata.user is not None:
-            query = query.filter(SubmissionMetadata.user.orcid == token.orcid)
+        if SubmissionMetadata.author is not None:
+            query = query.filter(SubmissionMetadata.author.orcid == token.orcid)
     return pagination.response(query)
 
 
