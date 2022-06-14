@@ -9,24 +9,10 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
-from nmdc_server import crud
+from nmdc_server import crud, models
 from nmdc_server.config import settings, starlette_config
 from nmdc_server.database import get_db
 from nmdc_server.schemas import User
-
-# A list of orcids with "admin" access to the server.  At some point, we
-# may want to add a user table with associated roles to handle this.
-_admin_users = {
-    "0000-0002-0716-5890",  # Brandon Davis
-    "0000-0002-0553-6731",  # Zach Mullen
-    "0000-0001-9518-8744",  # David Hays
-    "0000-0002-8440-738X",  # Shane Canon
-    "0000-0003-2871-7807",  # Michal Babinski
-    "0000-0002-9231-0692",  # Pajau Vangay
-    "0000-0001-9076-6066",  # Mark A Miller
-    "0000-0002-8683-0050",  # Montana Smith
-    "0000-0002-8162-1276",  # Emiley Eloe-Fadrosh
-}
 
 # The type is added to get around an error related to:
 #   https://github.com/python/mypy/issues/8477
@@ -79,30 +65,24 @@ async def get_current_user(token: Optional[Token] = Depends(get_token)) -> Optio
     return None
 
 
-async def login_required(token: Optional[Token] = Depends(get_token)) -> Token:
+async def login_required(
+    token: Optional[Token] = Depends(get_token), db: Session = Depends(get_db)
+) -> models.User:
     if token is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Login required",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return token
+    user_schema = User(name=token.name, orcid=token.orcid)
+    return crud.get_or_create_user(db, user_schema)
 
 
-async def admin_required(
-    db: Session = Depends(get_db), token: Token = Depends(login_required)
-) -> Token:
+async def admin_required(user: models.User = Depends(login_required)) -> models.User:
     if settings.environment != "production":
-        return token
-    user = crud.get_user(db, token.orcid)
-    if user is None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No user found",
-        )
-    if user and user.is_admin:
-        return token
-
+        return user
+    if user.is_admin:
+        return user
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Must be a site admin",
@@ -125,7 +105,9 @@ async def login_via_orcid(request: Request):
 async def authorize(request: Request, db: Session = Depends(get_db)):
     token = await oauth2_client.orcid.authorize_access_token(request)
     user = User(orcid=token["orcid"], name=token["name"])
-    crud.create_user(db, user)
+    user_model = crud.get_or_create_user(db, user)
+    user_model.name = user.name
+    db.commit()
     request.session["token"] = token
     return RedirectResponse(url="/")
 
