@@ -666,7 +666,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
 class User(BaseModel):
     id: Optional[UUID]
     orcid: str
-    name: str
+    name: str = ""
     is_admin = False
 
     @property

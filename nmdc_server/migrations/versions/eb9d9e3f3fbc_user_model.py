@@ -56,6 +56,19 @@ def upgrade():
             """
         )
     )
+    op.execute(
+        (
+            """
+                UPDATE submission_metadata
+                SET
+                    author_id=user.id
+                FROM
+                    public.user as user
+                WHERE
+                    submission_metadata.author_orcid = user.orcid
+            """
+        )
+    )
     # ### end Alembic commands ###
 
 
