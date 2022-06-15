@@ -8,9 +8,8 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
 
-from nmdc_server import crud, jobs, query, schemas
+from nmdc_server import crud, jobs, models, query, schemas
 from nmdc_server.auth import (
-    Token,
     admin_required,
     get_current_user,
     login_required,
@@ -18,17 +17,12 @@ from nmdc_server.auth import (
 )
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
-from nmdc_server.database import SessionLocal
+from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
-from nmdc_server.models import IngestLock, SubmissionMetadata
+from nmdc_server.models import IngestLock, SubmissionMetadata, User
 from nmdc_server.pagination import Pagination
 
 router = APIRouter()
-
-
-def get_db():
-    with SessionLocal() as db:
-        yield db
 
 
 # get the current user information
@@ -324,7 +318,7 @@ async def download_data_object(
     user_agent: Optional[str] = Header(None),
     x_forwarded_for: Optional[str] = Header(None),
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    user: models.User = Depends(login_required),
 ):
     ip = (x_forwarded_for or "").split(",")[0].strip()
     data_object = crud.get_data_object(db, data_object_id)
@@ -337,7 +331,7 @@ async def download_data_object(
     file_download = schemas.FileDownloadCreate(
         ip=ip,
         user_agent=user_agent,
-        orcid=token.orcid,
+        orcid=user.orcid,
         data_object_id=data_object_id,
     )
     crud.create_file_download(db, file_download)
@@ -371,7 +365,7 @@ async def get_pi_image(principal_investigator_id: UUID, db: Session = Depends(ge
     tags=["jobs"],
     responses=login_required_responses,
 )
-async def ping_celery(token: Token = Depends(admin_required)) -> bool:
+async def ping_celery(user: models.User = Depends(admin_required)) -> bool:
     try:
         return jobs.ping.delay().wait(timeout=0.5)
     except TimeoutError:
@@ -384,7 +378,7 @@ async def ping_celery(token: Token = Depends(admin_required)) -> bool:
     responses=login_required_responses,
 )
 async def run_ingest(
-    token: Token = Depends(admin_required),
+    user: models.User = Depends(admin_required),
     params: schemas.IngestArgumentSchema = schemas.IngestArgumentSchema(),
     db: Session = Depends(get_db),
 ):
@@ -404,7 +398,7 @@ async def run_ingest(
     responses=login_required_responses,
 )
 async def repopulate_gene_functions(
-    token: Token = Depends(admin_required), db: Session = Depends(get_db)
+    user: models.User = Depends(admin_required), db: Session = Depends(get_db)
 ):
     lock = db.query(IngestLock).first()
     if lock:
@@ -428,7 +422,7 @@ async def create_bulk_download(
     x_forwarded_for: Optional[str] = Header(None),
     query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(),
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    user: models.User = Depends(login_required),
 ):
     ip = (x_forwarded_for or "").split(",")[0].strip()
     bulk_download = crud.create_bulk_download(
@@ -436,7 +430,7 @@ async def create_bulk_download(
         BulkDownloadCreate(
             ip=ip,
             user_agent=user_agent,
-            orcid=token.orcid,
+            orcid=user.orcid,
             conditions=query.conditions,
             filter=query.data_object_filter,
         ),
@@ -466,7 +460,7 @@ async def get_data_object_aggregation(
 async def download_zip_file(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    user: models.User = Depends(login_required),
 ):
     table = crud.get_zip_download(db, bulk_download_id)
     return Response(
@@ -486,14 +480,14 @@ async def download_zip_file(
 )
 async def list_submissions(
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    user: models.User = Depends(login_required),
     pagination: Pagination = Depends(),
 ):
     query = db.query(SubmissionMetadata)
     try:
-        await admin_required(token)
+        await admin_required(user)
     except HTTPException:
-        query = query.filter(SubmissionMetadata.author_orcid == token.orcid)
+        query = query.join(User).filter(User.orcid == user.orcid)
     return pagination.response(query)
 
 
@@ -506,13 +500,13 @@ async def list_submissions(
 async def get_submission(
     id: str,
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    user: models.User = Depends(login_required),
 ):
     submission = db.query(SubmissionMetadata).get(id)
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
-    if submission.author_orcid != token.orcid:
-        await admin_required(token)
+    if submission.author.orcid != user.orcid:
+        await admin_required(user)
     return submission
 
 
@@ -526,14 +520,14 @@ async def update_submission(
     id: str,
     body: schemas.SubmissionMetadataSchemaCreate,
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    user: models.User = Depends(login_required),
 ):
     submission = db.query(SubmissionMetadata).get(id)
     body_dict = body.dict()
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
-    if submission.author_orcid != token.orcid:
-        await admin_required(token)
+    if submission.author_orcid != user.orcid:
+        await admin_required(user)
     submission.metadata_submission = body_dict["metadata_submission"]
     if body_dict["status"]:
         submission.status = body_dict["status"]
@@ -551,9 +545,10 @@ async def update_submission(
 async def submit_metadata(
     body: schemas.SubmissionMetadataSchemaCreate,
     db: Session = Depends(get_db),
-    token: Token = Depends(login_required),
+    user: models.User = Depends(login_required),
 ):
-    submission = SubmissionMetadata(**body.dict(), author_orcid=token.orcid)
+    submission = SubmissionMetadata(**body.dict(), author_orcid=user.orcid)
+    submission.author_id = user.id
     db.add(submission)
     db.commit()
     return submission

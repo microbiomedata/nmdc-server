@@ -657,6 +657,25 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     author_orcid: str
     created: datetime
     status: str
+    author: Optional[User]
 
     class Config:
         orm_mode = True
+
+
+class User(BaseModel):
+    id: Optional[UUID]
+    orcid: str
+    name: str = ""
+    is_admin = False
+
+    @property
+    def profile_url(self) -> str:
+        profile_prefix = "https://orcid.org/"
+        return f"{profile_prefix}{self.orcid}"
+
+    class Config:
+        orm_mode = True
+
+
+SubmissionMetadataSchema.update_forward_refs()
