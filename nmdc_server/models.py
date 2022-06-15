@@ -808,6 +808,15 @@ class EnvoTree(Base):
     parent_id = Column(String, index=True)
 
 
+class User(Base):
+    __tablename__ = "user_logins"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    orcid = Column(String, nullable=False)
+    name = Column(String)
+    is_admin = Column(Boolean, nullable=False, default=False)
+
+
 class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
 
@@ -816,15 +825,6 @@ class SubmissionMetadata(Base):
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
     status = Column(String, nullable=False, default="in-progress")
     metadata_submission = Column(JSONB, nullable=False)
-    author_id = Column(UUID(as_uuid=True), ForeignKey("user.id"))
+    author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
 
     author = relationship("User")
-
-
-class User(Base):
-    __tablename__ = "user"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    orcid = Column(String, nullable=False)
-    name = Column(String)
-    is_admin = Column(Boolean, nullable=False, default=False)
