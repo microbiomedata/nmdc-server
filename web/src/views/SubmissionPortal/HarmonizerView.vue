@@ -276,7 +276,8 @@ export default defineComponent({
           outlined
           dense
           hide-details
-          :menu-props="{ maxHeight: 600 }"
+          offset-y
+          :menu-props="{ maxHeight: 500 }"
           @focus="focus"
           @change="jumpTo"
         >
@@ -314,6 +315,7 @@ export default defineComponent({
           </template>
           <v-card
             class="py-1 px-2"
+            width="280"
             outlined
           >
             <v-radio-group

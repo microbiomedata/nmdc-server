@@ -13,8 +13,8 @@ const headers: DataTableHeader[] = [
     value: 'metadata_submission.studyForm.studyName',
   },
   {
-    text: 'PI Name',
-    value: 'metadata_submission.studyForm.piName',
+    text: 'Author',
+    value: 'author.name',
   },
   {
     text: 'Template',
@@ -23,6 +23,10 @@ const headers: DataTableHeader[] = [
   {
     text: 'Status',
     value: 'status',
+  },
+  {
+    text: 'Created',
+    value: 'created',
   },
   {
     text: '',
@@ -99,6 +103,18 @@ export default defineComponent({
         :headers="headers"
         :items="pastSubmissions"
       >
+        <template #[`item.author.name`]="{ item }">
+          <a
+            :href="`https://orcid.org/${item.author.orcid}`"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {{ item.author.name || item.author.orcid }}
+          </a>
+        </template>
+        <template #[`item.created`]="{ item }">
+          {{ new Date(item.created).toLocaleString() }}
+        </template>
         <template #[`item.status`]="{ item }">
           <v-chip
             :color="getStatus(item).color"
