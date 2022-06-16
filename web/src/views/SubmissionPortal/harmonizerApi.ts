@@ -4,6 +4,12 @@ import hot from 'handsontable';
 import xlsx from 'xlsx';
 import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
 
+export type FindResult = {
+  row: number;
+  col: number;
+  data: string;
+};
+
 const VariationMap = {
   /** A mapping of the templates to the superset of checkbox options they work for. */
   emsl: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl']),
@@ -129,6 +135,7 @@ export class HarmonizerApi {
     this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
       this.selectedColumn.value = this.dh.getFields()[col].title;
     }, 200, { leading: true }));
+    this.dh.hot.updateSettings({ search: true });
     await this.toolbar.refresh();
     // @ts-ignore
     window.dh = this.dh;
@@ -193,6 +200,11 @@ export class HarmonizerApi {
   getHelp(title: string) {
     const field = this.dh.getFields().filter((f: any) => f.title === title)[0];
     return this.dh.getCommentDict(field);
+  }
+
+  find(query: string): Array<FindResult> {
+    const search = this.dh.hot.getPlugin('search');
+    return search.query(query);
   }
 
   exportJson() {
