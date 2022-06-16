@@ -113,6 +113,8 @@ export class HarmonizerApi {
 
     // eslint-disable-next-line no-new-object
     this.dh = new Object(DataHarmonizer);
+    // @ts-ignore
+    await DataHarmonizerConfig.applyNmdcFieldSettings(this.dh);
     // eslint-disable-next-line no-new-object
     this.toolbar = new Object(DataHarmonizerToolbar);
     await this.dh.init(myDHGrid, myDHFooter, TEMPLATES);
