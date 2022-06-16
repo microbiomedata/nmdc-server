@@ -16,7 +16,7 @@ from sqlalchemy.sql.expression import ClauseElement, intersect, union
 from sqlalchemy.sql.selectable import CTE
 from typing_extensions import Annotated, Literal
 
-from nmdc_server import binning, models, schemas
+from nmdc_server import binning, models, schemas, schemas_submission
 from nmdc_server.binning import DateBinResolution
 from nmdc_server.data_object_filters import DataObjectFilter
 from nmdc_server.filters import create_filter_class
@@ -855,7 +855,7 @@ class BinnedFacetResponse(BaseModel):
 
 
 class MetadataSubmissionResponse(BaseSearchResponse):
-    results: List[schemas.SubmissionMetadataSchema]
+    results: List[schemas_submission.SubmissionMetadataSchema]
 
 
 workflow_search_classes = [

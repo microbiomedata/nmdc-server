@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
 
-from nmdc_server import crud, jobs, models, query, schemas
+from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import (
     admin_required,
     get_current_user,
@@ -495,7 +495,7 @@ async def list_submissions(
     "/metadata_submission/{id}",
     tags=["metadata_submission"],
     responses=login_required_responses,
-    response_model=schemas.SubmissionMetadataSchema,
+    response_model=schemas_submission.SubmissionMetadataSchema,
 )
 async def get_submission(
     id: str,
@@ -514,11 +514,11 @@ async def get_submission(
     "/metadata_submission/{id}",
     tags=["metadata_submission"],
     responses=login_required_responses,
-    response_model=schemas.SubmissionMetadataSchema,
+    response_model=schemas_submission.SubmissionMetadataSchema,
 )
 async def update_submission(
     id: str,
-    body: schemas.SubmissionMetadataSchemaCreate,
+    body: schemas_submission.SubmissionMetadataSchemaCreate,
     db: Session = Depends(get_db),
     user: models.User = Depends(login_required),
 ):
@@ -539,11 +539,11 @@ async def update_submission(
     "/metadata_submission",
     tags=["metadata_submission"],
     responses=login_required_responses,
-    response_model=schemas.SubmissionMetadataSchema,
+    response_model=schemas_submission.SubmissionMetadataSchema,
     status_code=201,
 )
 async def submit_metadata(
-    body: schemas.SubmissionMetadataSchemaCreate,
+    body: schemas_submission.SubmissionMetadataSchemaCreate,
     db: Session = Depends(get_db),
     user: models.User = Depends(login_required),
 ):

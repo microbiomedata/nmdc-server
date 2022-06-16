@@ -647,22 +647,6 @@ class IngestArgumentSchema(BaseModel):
     function_limit: int = 0  # Default to no limit
 
 
-class SubmissionMetadataSchemaCreate(BaseModel):
-    metadata_submission: Dict[str, Any]
-    status: Optional[str]
-
-
-class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
-    id: UUID
-    author_orcid: str
-    created: datetime
-    status: str
-    author: Optional[User]
-
-    class Config:
-        orm_mode = True
-
-
 class User(BaseModel):
     id: Optional[UUID]
     orcid: str
@@ -676,6 +660,3 @@ class User(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-SubmissionMetadataSchema.update_forward_refs()
