@@ -47,12 +47,12 @@ def upgrade():
     op.execute(
         (
             """
-                insert into user_logins(orcid)
-                    select author_orcid from submission_metadata
+                insert into user_logins(orcid, name)
+                    select author_orcid, '' from submission_metadata
                     UNION
-                    select orcid from file_download
+                    select orcid, '' from file_download
                     UNION
-                    select orcid from bulk_download
+                    select orcid, '' from bulk_download
             """
         )
     )
