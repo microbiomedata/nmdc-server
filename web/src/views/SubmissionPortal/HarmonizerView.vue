@@ -2,6 +2,7 @@
 import {
   computed, defineComponent, ref, nextTick, watch, onMounted,
 } from '@vue/composition-api';
+import type { Ref } from '@vue/composition-api';
 import { clamp, flattenDeep } from 'lodash';
 import { writeFile, utils } from 'xlsx';
 import 'handsontable/dist/handsontable.full.css';
@@ -9,6 +10,7 @@ import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
 import { HarmonizerApi } from './harmonizerApi';
+import type { FindResult } from './harmonizerApi';
 import {
   packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
 } from './store';
@@ -44,6 +46,11 @@ export default defineComponent({
     const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
     const sideBarOpenOverride = ref(false);
+    const findReplaceVisible = ref(undefined);
+    const findTerm = ref('');
+    const replaceTerm = ref('');
+    const findResults: Ref<Array<FindResult>> = ref([]);
+    const findCursor: Ref<number> = ref(0);
 
     onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
@@ -101,6 +108,24 @@ export default defineComponent({
       };
     }));
 
+    function incrementFindCursor() {
+      if (findCursor.value !== undefined) {
+        findCursor.value = (findCursor.value + 1) % findResults.value.length;
+      }
+    }
+    function decrementFindCursor() {
+      if (findCursor.value !== undefined) {
+        findCursor.value = (findCursor.value - 1 + findResults.value.length) % findResults.value.length;
+      }
+    }
+
+    watch(findTerm, () => { findResults.value = harmonizerApi.find(findTerm.value); });
+    watch(findCursor, () => {
+      if (findResults.value.length > 0) {
+        const result = findResults.value[findCursor.value];
+        harmonizerApi.jumpToRowCol(result.row, result.col);
+      }
+    });
     watch(validationActiveCategory, () => errorClick(0));
     watch(columnVisibility, () => {
       harmonizerApi.changeVisibility(columnVisibility.value);
@@ -148,7 +173,14 @@ export default defineComponent({
       packageName,
       templateChoice,
       fields,
+      findCursor,
+      findReplaceVisible,
+      findResults,
+      findTerm,
+      incrementFindCursor,
+      decrementFindCursor,
       highlightedValidationError,
+      replaceTerm,
       sidebarOpen,
       sideBarOpenOverride,
       validationItems,
@@ -371,8 +403,49 @@ export default defineComponent({
             </v-radio-group>
           </v-card>
         </v-menu>
+        <v-btn-toggle
+          v-model="findReplaceVisible"
+        >
+          <v-btn :value="true">
+            <v-icon>
+              mdi-magnify
+            </v-icon>
+          </v-btn>
+        </v-btn-toggle>
       </div>
     </div>
+    <v-form v-if="findReplaceVisible">
+      <v-container>
+        <v-row>
+          <v-col
+            cols="8"
+          >
+            <v-text-field
+              v-model="findTerm"
+              label="Find"
+            />
+          </v-col>
+          <v-col
+            cols="2"
+          >
+            <v-btn @click="decrementFindCursor">
+              Previous
+            </v-btn>
+            <v-btn @click="incrementFindCursor">
+              Next
+            </v-btn>
+          </v-col>
+        </v-row>
+        <v-row>
+          <div v-if="findTerm && findResults.length === 0">
+            Unable to find {{ findTerm }}
+          </div>
+          <div v-else>
+            {{ findResults.length > 0 ? findCursor + 1 : 0 }} of {{ findResults.length }} matches
+          </div>
+        </v-row>
+      </v-container>
+    </v-form>
     <div
       class="harmonizer-container d-flex flex-row"
       style="max-width: 100%;"
