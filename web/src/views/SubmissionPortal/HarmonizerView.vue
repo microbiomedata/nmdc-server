@@ -43,6 +43,7 @@ export default defineComponent({
     const highlightedValidationError = ref(0);
     const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
+    const sideBarOpenOverride = ref(false);
 
     onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
@@ -63,18 +64,22 @@ export default defineComponent({
       window.focus();
     }
 
-    async function validate() {
-      const data = harmonizerApi.exportJson();
-      sampleData.value = data;
-      samplesValid.value = await harmonizerApi.validate();
-      incrementalSaveRecord(root.$route.params.id);
-    }
-
     function errorClick(index: number) {
       const currentSeries = harmonizerApi.validationErrors.value[validationActiveCategory.value];
       highlightedValidationError.value = clamp(index, 0, currentSeries.length - 1);
       const currentError = currentSeries[highlightedValidationError.value];
       harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
+    }
+
+    async function validate() {
+      const data = harmonizerApi.exportJson();
+      sampleData.value = data;
+      samplesValid.value = await harmonizerApi.validate();
+      sideBarOpenOverride.value = !samplesValid.value;
+      incrementalSaveRecord(root.$route.params.id);
+      if (samplesValid.value === false) {
+        errorClick(0);
+      }
     }
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
@@ -124,6 +129,12 @@ export default defineComponent({
       writeFile(workbook, 'nmdc_sample_export.tsv', { bookType: 'csv', FS: '\t' });
     }
 
+    function openFile() {
+      document.getElementById('tsv-file-select')?.click();
+    }
+
+    const sidebarOpen = computed(() => harmonizerApi.validationErrorGroups.value.length && sideBarOpenOverride.value);
+
     return {
       ColorKey,
       columnVisibility,
@@ -138,12 +149,15 @@ export default defineComponent({
       templateChoice,
       fields,
       highlightedValidationError,
+      sidebarOpen,
+      sideBarOpenOverride,
       validationItems,
       validationActiveCategory,
       /* methods */
       doSubmit,
       downloadSamples,
       errorClick,
+      openFile,
       focus,
       jumpTo,
       validate,
@@ -160,19 +174,99 @@ export default defineComponent({
   >
     <SubmissionStepper />
     <div class="d-flex flex-column px-2">
-      <div class="d-flex align-center justify-center py-2">
-        <v-file-input
-          label="Choose spreadsheet file..."
-          prepend-inner-icon="mdi-file-table"
-          :prepend-icon="null"
-          outlined
-          dense
+      <div class="d-flex align-center">
+        <label
+          for="tsv-file-select"
+        >
+          <input
+            id="tsv-file-select"
+            type="file"
+            style="position: fixed; top: -100em"
+            @change="(evt) => harmonizerApi.openFile(evt.target.files[0])"
+          >
+          <v-btn
+            label="Choose spreadsheet file..."
+            prepend-inner-icon="mdi-file-table"
+            :prepend-icon="null"
+            outlined
+            dense
+            color="primary"
+            class="mr-2"
+            hide-details
+            @click="openFile"
+          >
+            1. Import TSV file
+            <v-icon class="pl-2">
+              mdi-file-table
+            </v-icon>
+          </v-btn>
+        </label>
+        <v-btn
+          v-if="harmonizerApi.validationErrorGroups.value.length == 0"
           color="primary"
-          hide-details
-          class="mr-2"
-          :truncate-length="50"
-          @change="(evt) => harmonizerApi.openFile(evt)"
-        />
+          outlined
+          @click="validate"
+        >
+          2. Validate
+          <v-icon class="pl-2">
+            mdi-refresh
+          </v-icon>
+        </v-btn>
+        <v-card
+          v-if="harmonizerApi.validationErrorGroups.value.length"
+          color="error"
+          width="600"
+          class="d-flex py-2 align-center"
+        >
+          <v-select
+            v-model="validationActiveCategory"
+            :items="validationItems"
+            solo
+            color="error"
+            style="z-index: 200 !important; background-color: red;"
+            dense
+            class="mx-2"
+            hide-details
+          >
+            <template #selection="{ item }">
+              <p
+                style="font-size: 14px"
+                class="my-0"
+              >
+                {{ item.text }}
+              </p>
+            </template>
+          </v-select>
+          <div class="d-flex align-center mx-2">
+            <v-icon
+              @click="errorClick(highlightedValidationError - 1)"
+            >
+              mdi-arrow-left-circle
+            </v-icon>
+            <v-spacer />
+            <span class="mx-1">
+              ({{ highlightedValidationError + 1 }}/{{ harmonizerApi.validationErrors.value[validationActiveCategory].length }})
+            </span>
+            <v-spacer />
+            <v-icon
+              @click="errorClick(highlightedValidationError + 1)"
+            >
+              mdi-arrow-right-circle
+            </v-icon>
+          </div>
+          <v-btn
+            outlined
+            small
+            class="mx-2"
+            @click="validate"
+          >
+            <v-icon class="pr-2">
+              mdi-refresh
+            </v-icon>
+            Re-validate
+          </v-btn>
+        </v-card>
+        <v-spacer />
         <v-autocomplete
           v-model="jumpToModel"
           :items="fields"
@@ -277,101 +371,39 @@ export default defineComponent({
             </v-radio-group>
           </v-card>
         </v-menu>
-        <v-spacer />
-        <v-btn
-          class="mr-2"
-          color="grey"
-          outlined
-          small
-          @click="harmonizerApi.launchReference()"
-        >
-          {{ packageName }} Reference
-          <v-icon class="pl-1">
-            mdi-open-in-new
-          </v-icon>
-        </v-btn>
       </div>
     </div>
     <div
       class="harmonizer-container d-flex flex-row"
       style="max-width: 100%;"
     >
+      <div
+        id="harmonizer-root"
+        class="harmonizer-root grow"
+        :style="{
+          'max-width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
+          'width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
+        }"
+      />
       <v-navigation-drawer
+        :value="sidebarOpen"
+        right
         width="300"
-        permanent
+        style="overflow-x: auto; font-size: 14px;"
       >
-        <template v-if="harmonizerApi.validationErrorGroups.value.length">
-          <v-divider />
-          <div class="text-h6 mx-2 mt-3 font-weight-bold">
-            <v-icon color="error">
-              mdi-alert
-            </v-icon>
-            Validation Errors
-          </div>
-          <v-select
-            v-model="validationActiveCategory"
-            :items="validationItems"
-            outlined
-            color="error"
-            dense
-            class="mx-2 mb-2"
-            hide-details
-          >
-            <template #selection="{ item }">
-              <p
-                style="font-size: 14px"
-                class="my-0"
-              >
-                {{ item.text }}
-              </p>
-            </template>
-          </v-select>
-          <div class="d-flex mx-2 mb-3 text-h6">
-            <v-icon
-              large
-              @click="errorClick(highlightedValidationError - 1)"
-            >
-              mdi-arrow-left-circle
-            </v-icon>
-            <v-spacer />
-            (
-            {{ highlightedValidationError + 1 }}
-            /
-            {{ harmonizerApi.validationErrors.value[validationActiveCategory].length }}
-            )
-            <v-spacer />
-            <v-icon
-              large
-              @click="errorClick(highlightedValidationError + 1)"
-            >
-              mdi-arrow-right-circle
-            </v-icon>
-          </div>
-        </template>
-        <div class="ma-2 grow">
-          <v-btn
-            color="primary"
-            small
-            block
-            @click="validate"
-          >
-            <v-icon class="pr-2">
-              mdi-refresh
-            </v-icon>
-            Validate
-          </v-btn>
-        </div>
-        <v-divider />
         <div
           v-if="selectedHelpDict"
-          class="ml-2"
-          style="font-size: 14px; overflow-x: auto; max-height: 50%;"
+          class="mx-2"
         >
-          <div class="text-h6 mt-3 font-weight-bold">
-            <v-icon color="info">
-              mdi-information
-            </v-icon>
+          <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
             Column Help
+            <v-spacer />
+            <v-btn
+              icon
+              @click="sideBarOpenOverride = false"
+            >
+              <v-icon>mdi-close</v-icon>
+            </v-btn>
           </div>
           <div class="my-2">
             <span class="font-weight-bold pr-2">Column:</span>
@@ -392,13 +424,20 @@ export default defineComponent({
             <span class="font-weight-bold pr-2">Examples:</span>
             <span v-html="urlify(selectedHelpDict.examples)" />
           </div>
+          <v-btn
+            color="grey"
+            outlined
+            small
+            block
+            @click="harmonizerApi.launchReference()"
+          >
+            Full {{ packageName }} Reference
+            <v-icon class="pl-1">
+              mdi-open-in-new
+            </v-icon>
+          </v-btn>
         </div>
       </v-navigation-drawer>
-      <div
-        id="harmonizer-root"
-        class="harmonizer-root grow"
-        :style="{ 'max-width': 'calc(100vw - 300px)' }"
-      />
     </div>
     <div class="d-flex shrink ma-2">
       <v-btn
@@ -448,7 +487,7 @@ export default defineComponent({
           Done
         </span>
         <span v-else>
-          Submit
+          3. Submit
         </span>
       </v-btn>
     </div>
@@ -458,6 +497,10 @@ export default defineComponent({
 <style lang="scss">
 .harmonizer-container {
   height: calc(100vh - 260px) !important;
+}
+
+.spreadsheet-input {
+  width: 0px;
 }
 
 // HACK-DH
@@ -540,5 +583,25 @@ export default defineComponent({
   &:hover, &.current.highlight {
     background-color: lightblue !important;
   }
+}
+
+.field-description-text select {min-width: 95%}
+
+#field-mapping-container {
+  overflow-x: scroll;
+  padding-bottom: 1rem;
+  scrollbar-width: 1rem;
+}
+
+#field-mapping {
+  white-space: nowrap;
+}
+
+#field-mapping col {border-left: 2px solid black}
+#field-mapping col:first-child {background: #FF0}
+#field-mapping col:nth-child(2n+3) {background: #CCC}
+
+#field-mapping tr td , #field-mapping tr th {
+  padding: 3px;
 }
 </style>

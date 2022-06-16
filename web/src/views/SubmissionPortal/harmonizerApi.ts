@@ -232,6 +232,6 @@ export class HarmonizerApi {
   validate() {
     this.dh.validate();
     this.refreshState();
-    return !!this.validationErrors.value;
+    return Object.keys(this.validationErrors).length === 0;
   }
 }
