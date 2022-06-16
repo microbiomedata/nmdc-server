@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from nmdc_server import schemas
+
 
 class Contributor(BaseModel):
     name: str
@@ -52,6 +54,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     author_orcid: str
     created: datetime
     status: str
+    author: schemas.User
 
     class Config:
         orm_mode = True

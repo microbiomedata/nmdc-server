@@ -70,7 +70,8 @@ const templateChoice = computed(() => {
  */
 const sampleData = shallowRef([] as any[][]);
 const samplesValid = ref(false);
-const templateChoiceDisabled = computed(() => sampleData.value.length >= 1);
+// row 1 and 2 are headers
+const templateChoiceDisabled = computed(() => sampleData.value.length >= 3);
 
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
