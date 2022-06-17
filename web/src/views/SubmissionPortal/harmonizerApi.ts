@@ -12,7 +12,7 @@ const VariationMap = {
 };
 // Variations should be in matching order.
 // In other words, attempt to match 'emsl' before 'emsl_jgi_mg'
-const allVariations = ['emsl', 'jgi_mg', 'emsl_jgi_mg'];
+const allVariations: (keyof typeof VariationMap)[] = ['emsl', 'jgi_mg', 'emsl_jgi_mg'];
 
 export function getVariant(checkBoxes: string[], variations: (keyof typeof VariationMap)[], base: string) {
   if (checkBoxes.length === 0) {
