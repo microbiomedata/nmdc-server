@@ -10,6 +10,9 @@ const VariationMap = {
   jgi_mg: new Set(['mg-jgi']),
   emsl_jgi_mg: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi']),
 };
+// Variations should be in matching order.
+// In other words, attempt to match 'emsl' before 'emsl_jgi_mg'
+const allVariations: (keyof typeof VariationMap)[] = ['emsl', 'jgi_mg', 'emsl_jgi_mg'];
 
 export function getVariant(checkBoxes: string[], variations: (keyof typeof VariationMap)[], base: string) {
   if (checkBoxes.length === 0) {
@@ -61,7 +64,7 @@ export const HARMONIZER_TEMPLATES: Record<string, {
     default: 'sediment', status: 'published', variations: [],
   },
   soil: {
-    default: 'soil', status: 'published', variations: ['emsl', 'emsl_jgi_mg', 'jgi_mg'],
+    default: 'soil', status: 'published', variations: allVariations,
   },
   wastewater_sludge: {
     default: 'wastewater_sludge', status: 'published', variations: [],
