@@ -172,7 +172,6 @@ export default defineComponent({
               </v-card-title>
               <SearchResults
                 disable-pagination
-                disable-navigate-on-click
                 :count="study.data.results.count"
                 :icon="studyType.icon"
                 :items-per-page="study.data.limit"
@@ -180,7 +179,7 @@ export default defineComponent({
                 :page="study.data.pageSync"
                 :loading="study.loading.value"
                 @set-page="study.setPage($event)"
-                @selected="$router.push({ name: 'Sample'})"
+                @selected="$router.push({ name: 'Study', params: { id: $event} })"
               >
                 <template #action="{ result }">
                   <v-list-item-action>
