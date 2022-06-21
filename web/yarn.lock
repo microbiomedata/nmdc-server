@@ -7406,7 +7406,7 @@ nice-try@^1.0.4:
 
 "nmdc-schema@https://github.com/microbiomedata/nmdc-schema":
   version "0.0.0"
-  resolved "https://github.com/microbiomedata/nmdc-schema#cc5a94afd26813647eb84d7f0ce0ffc58942a0ba"
+  resolved "https://github.com/microbiomedata/nmdc-schema#614426f4c8d772460adaa643c97713ae75e15bdf"
 
 no-case@^2.2.0:
   version "2.3.2"
