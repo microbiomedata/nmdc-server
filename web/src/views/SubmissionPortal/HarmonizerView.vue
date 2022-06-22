@@ -51,6 +51,15 @@ export default defineComponent({
         await harmonizerApi.init(r, templateChoice.value);
         await nextTick();
         harmonizerApi.loadData(sampleData.value.slice(2));
+
+        r.addEventListener('mousewheel', (e) => {
+          e.stopPropagation();
+          const max = r.scrollWidth - r.offsetWidth;
+          if (r.scrollLeft + e.deltaX < 0 || r.scrollLeft + e.deltaX > max) {
+            e.preventDefault();
+            r.scrollLeft = Math.max(0, Math.min(max, r.scrollLeft + e.deltaX));
+          }
+        }, false);
       }
     });
 
@@ -135,6 +144,17 @@ export default defineComponent({
 
     const sidebarOpen = computed(() => harmonizerApi.validationErrorGroups.value.length && sideBarOpenOverride.value);
 
+    function preventNavigation(e) {
+    //   event.stopPropagation();
+    //   const hRoot = this.$refs.harmonizerRoot;
+
+      //   const max = hRoot.scrollWidth - hRoot.offsetWidth;
+
+    //   if (hRoot.scrollLeft + event.deltaX < 0 || hRoot.scrollLeft + event.deltaX > max) {
+    //     event.preventDefault();
+    //     hRoot.scrollLeft = Math.max(0, Math.min(max, hRoot.scrollLeft + event.deltaX));
+    }
+
     return {
       ColorKey,
       columnVisibility,
@@ -162,6 +182,7 @@ export default defineComponent({
       jumpTo,
       validate,
       urlify,
+      preventNavigation,
     };
   },
 });
@@ -381,11 +402,13 @@ export default defineComponent({
     >
       <div
         id="harmonizer-root"
+        ref="harmonizer-root"
         class="harmonizer-root grow"
         :style="{
           'max-width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
           'width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
         }"
+        @mouse-wheel.stop="preventNavigation($event)"
       />
       <v-navigation-drawer
         :value="sidebarOpen"
