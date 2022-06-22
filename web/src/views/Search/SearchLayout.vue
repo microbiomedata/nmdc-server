@@ -186,6 +186,7 @@ export default defineComponent({
                     <v-checkbox
                       :input-value="studyCheckboxState"
                       :value="result.id"
+                      @click.stop
                       @change="setChecked(result.id)"
                     />
                   </v-list-item-action>
@@ -213,7 +214,7 @@ export default defineComponent({
                         :key="item.type"
                         small
                         class="mr-2 my-1"
-                        @click="setChecked(props.result.id, item.type)"
+                        @click.stop="setChecked(props.result.id, item.type)"
                       >
                         {{ fieldDisplayName(item.type) }}: {{ item.count }}
                       </v-chip>
