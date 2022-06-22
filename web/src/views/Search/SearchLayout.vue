@@ -172,7 +172,6 @@ export default defineComponent({
               </v-card-title>
               <SearchResults
                 disable-pagination
-                disable-navigate-on-click
                 :count="study.data.results.count"
                 :icon="studyType.icon"
                 :items-per-page="study.data.limit"
@@ -180,13 +179,14 @@ export default defineComponent({
                 :page="study.data.pageSync"
                 :loading="study.loading.value"
                 @set-page="study.setPage($event)"
-                @selected="$router.push({ name: 'Sample'})"
+                @selected="$router.push({ name: 'Study', params: { id: $event} })"
               >
                 <template #action="{ result }">
                   <v-list-item-action>
                     <v-checkbox
                       :input-value="studyCheckboxState"
                       :value="result.id"
+                      @click.stop
                       @change="setChecked(result.id)"
                     />
                   </v-list-item-action>
@@ -214,7 +214,7 @@ export default defineComponent({
                         :key="item.type"
                         small
                         class="mr-2 my-1"
-                        @click="setChecked(props.result.id, item.type)"
+                        @click.stop="setChecked(props.result.id, item.type)"
                       >
                         {{ fieldDisplayName(item.type) }}: {{ item.count }}
                       </v-chip>
