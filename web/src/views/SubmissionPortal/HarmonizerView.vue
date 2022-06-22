@@ -392,7 +392,6 @@ export default defineComponent({
     >
       <div
         id="harmonizer-root"
-        ref="harmonizer-root"
         class="harmonizer-root grow"
         :style="{
           'max-width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
