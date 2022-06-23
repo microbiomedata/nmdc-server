@@ -1,14 +1,10 @@
-import { computed, Ref, ref } from '@vue/composition-api';
+import {
+  computed, Ref, ref, nextTick,
+} from '@vue/composition-api';
 import { debounce, has } from 'lodash';
 import hot from 'handsontable';
 import xlsx from 'xlsx';
 import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
-
-export type FindResult = {
-  row: number;
-  col: number;
-  data: string;
-};
 
 const VariationMap = {
   /** A mapping of the templates to the superset of checkbox options they work for. */
@@ -135,7 +131,7 @@ export class HarmonizerApi {
     this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
       this.selectedColumn.value = this.dh.getFields()[col].title;
     }, 200, { leading: true }));
-    this.dh.hot.updateSettings({ search: true });
+    this.dh.hot.updateSettings({ search: true, customBorders: true });
     await this.toolbar.refresh();
     // @ts-ignore
     window.dh = this.dh;
@@ -202,13 +198,32 @@ export class HarmonizerApi {
     return this.dh.getCommentDict(field);
   }
 
-  find(query: string): Array<FindResult> {
+  find(query: string) {
     const search = this.dh.hot.getPlugin('search');
-    return search.query(query);
+    const results = search.query(query);
+    nextTick(this.dh.hot.render);
+    return results;
+  }
+
+  highlight(row?: number, col?: number) {
+    const borders = this.dh.hot.getPlugin('customBorders');
+    nextTick(() => borders.clearBorders());
+    if (row !== undefined && col !== undefined) {
+      nextTick(() => borders.setBorders([[row, col, row, col]], {
+        left: { hide: false, width: 2, color: 'magenta' },
+        right: { hide: false, width: 2, color: 'magenta' },
+        top: { hide: false, width: 2, color: 'magenta' },
+        bottom: { hide: false, width: 2, color: 'magenta' },
+      }));
+    }
   }
 
   exportJson() {
     return [...this.dh.getFlatHeaders(), ...this.dh.getTrimmedData()];
+  }
+
+  scrollViewportTo(row: number, column: number) {
+    this.dh.hot.scrollViewportTo(row, column);
   }
 
   jumpToRowCol(row: number, column: number) {
