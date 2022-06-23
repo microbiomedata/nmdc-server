@@ -51,6 +51,20 @@ export default defineComponent({
         await harmonizerApi.init(r, templateChoice.value);
         await nextTick();
         harmonizerApi.loadData(sampleData.value.slice(2));
+
+        /*To avoid page navigation on horizontal scrolling (using trackpad)
+          reference- https://stackoverflow.com/questions/50616221/prevent-page-navigation-on-horizontal-scroll
+        */
+        r.addEventListener('mousewheel', (e) => {
+          e.stopPropagation();
+          const max = r.scrollWidth - r.offsetWidth;
+          // @ts-ignore
+          if (r.scrollLeft + e.deltaX < 0 || r.scrollLeft + e.deltaX > max) {
+            e.preventDefault();
+            // @ts-ignore
+            r.scrollLeft = Math.max(0, Math.min(max, r.scrollLeft + e.deltaX));
+          }
+        }, false);
       }
     });
 
