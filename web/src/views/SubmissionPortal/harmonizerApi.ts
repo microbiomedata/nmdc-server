@@ -37,7 +37,7 @@ export const HARMONIZER_TEMPLATES: Record<string, {
   variations: (keyof typeof VariationMap)[];
 }> = {
   air: { default: 'air', status: 'published', variations: [] },
-  bioscales: { default: 'bioscales', status: 'published', variations: [] },
+  // bioscales: { default: 'bioscales', status: 'published', variations: [] },
   'built environment': { default: 'built_env', status: 'published', variations: [] },
   'host-associated': { default: 'host-associated', status: 'published', variations: [] },
   'human-associated': { default: '', status: 'disabled', variations: [] },
