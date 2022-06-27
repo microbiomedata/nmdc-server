@@ -1,4 +1,4 @@
-FROM nginx:mainline-alpine as nginx_builder
+FROM nginx:stable-alpine as nginx_builder
 
 ENV ENABLED_MODULES=modzip
 RUN set -ex \
@@ -64,7 +64,7 @@ COPY . .
 RUN yarn run build
 
 
-FROM nginx:mainline-alpine as production-stage
+FROM nginx:stable-alpine as production-stage
 LABEL org.opencontainers.image.source=https://github.com/microbiomedata/nmdc-server
 
 ENV ENABLED_MODULES=modzip
