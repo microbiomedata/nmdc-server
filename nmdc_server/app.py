@@ -21,7 +21,7 @@ def attach_sentry(app: FastAPI):
     app.add_middleware(SentryAsgiMiddleware)
 
 
-def create_app(env: typing.Mapping[str, str]) -> FastAPI:
+def create_app(env: typing.Mapping[str, str], secret_key: str = settings.secret_key) -> FastAPI:
     app = FastAPI(
         title="NMDC Dataset API",
         version=__version__,
@@ -31,6 +31,14 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
     errors.attach_error_handlers(app)
     app.include_router(api.router, prefix="/api")
     app.include_router(auth.router, prefix="")
-    app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
+    same_site_value = "lax"
+    if settings.environment == "production":
+        same_site_value = "Strict"
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=secret_key,
+        https_only=True,
+        same_site=same_site_value,
+    )
 
     return app
