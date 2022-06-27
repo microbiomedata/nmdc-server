@@ -552,3 +552,15 @@ async def submit_metadata(
     db.add(submission)
     db.commit()
     return submission
+
+
+@router.get(
+    "/users", responses=login_required_responses, response_model=schemas.User, tags=["user"]
+)
+async def get_users(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+):
+    print(user.orcid)
+    users = db.query(User).all()
+    return users
