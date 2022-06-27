@@ -50,9 +50,7 @@ def test_cookie_headers(client: TestClient, token: Token):
     # print(session)
     # cookies = {"session": f"${str(session, 'utf-8')}"}
     # todo-  figure out what is the value after ==
-    cookies = {
-        "session": "eyJ0b2tlbiI6IHsiYWNjZXNzX3Rva2VuIjogIjY5YTNmN2I2LTU2NzAtNDE4OC1hZDI1LWE4NmZjYzU5NWMwMyIsICJ0b2tlbl90eXBlIjogImJlYXJlciIsICJyZWZyZXNoX3Rva2VuIjogImQwYWQzMTlmLTk4YjgtNDdlNC05ODY0LWI4YTRkNTFlNzFhYSIsICJleHBpcmVzX2luIjogNjMxMTM4NTE4LCAic2NvcGUiOiAiL2F1dGhlbnRpY2F0ZSIsICJuYW1lIjogIkRlZXBpa2EgIiwgIm9yY2lkIjogIjAwMDAtMDAwMi0xNDM2LTg4NDgiLCAiZXhwaXJlc19hdCI6IDIyODc0MjY4MzJ9fQ==.YrkUEA.-kln8-0tTPgoSsTLsTWaQQ6JYo8="
-    }
+    cookies = {"session": ""}
     print(cookies)
     resp = client.get("/api/me", cookies=cookies)
     print(resp.headers)
