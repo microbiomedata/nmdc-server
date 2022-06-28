@@ -268,7 +268,6 @@ export default defineComponent({
           </v-btn>
         </v-card>
         <v-spacer />
-        <FindReplace :harmonizer-api="harmonizerApi" />
         <v-autocomplete
           v-model="jumpToModel"
           :items="fields"
@@ -375,6 +374,11 @@ export default defineComponent({
         </v-menu>
       </div>
     </div>
+    <FindReplace
+      :harmonizer-api="harmonizerApi"
+      style="max-width: 385px;"
+      class="ml-2"
+    />
     <div
       class="harmonizer-container d-flex flex-row"
       style="max-width: 100%;"
