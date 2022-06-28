@@ -77,6 +77,12 @@ interface ValidationErrors {
   [error: string]: [number, number][],
 }
 
+interface CellData {
+  row: number,
+  col: number,
+  text: string,
+}
+
 export class HarmonizerApi {
   validationErrors: Ref<ValidationErrors>;
 
@@ -216,6 +222,15 @@ export class HarmonizerApi {
         bottom: { hide: false, width: 2, color: 'magenta' },
       }));
     }
+  }
+
+  getCellData(row: number, col: number): CellData {
+    const text = this.dh.hot.getDataAtCell(row, col);
+    return { row, col, text };
+  }
+
+  setCellData(data: CellData[]) {
+    this.dh.hot.setDataAtCell(data.map((d) => [d.row, d.col, d.text]));
   }
 
   exportJson() {
