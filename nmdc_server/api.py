@@ -561,6 +561,5 @@ async def get_users(
     db: Session = Depends(get_db),
     user: models.User = Depends(admin_required),
 ):
-    print(user.orcid)
     users = db.query(User).all()
     return users

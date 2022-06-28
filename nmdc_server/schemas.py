@@ -653,10 +653,5 @@ class User(BaseModel):
     name: str = ""
     is_admin = False
 
-    @property
-    def profile_url(self) -> str:
-        profile_prefix = "https://orcid.org/"
-        return f"{profile_prefix}{self.orcid}"
-
     class Config:
         orm_mode = True
