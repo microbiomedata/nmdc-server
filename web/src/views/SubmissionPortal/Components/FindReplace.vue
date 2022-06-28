@@ -64,7 +64,8 @@ export default defineComponent({
     const next = () => scroll(1);
     const previous = () => scroll(-1);
 
-    watch(query, () => {
+    // update results with the current query and the current handsontable data
+    function updateResults() {
       // comparator for sorting search results
       function comparator(a: SearchResult, b: SearchResult) {
         return a.col - b.col || a.row - b.row;
@@ -86,7 +87,10 @@ export default defineComponent({
       }
       // seek cursor to leftmost insertion point
       scroll(low - cursor.value);
-    });
+    }
+
+    // update the search results when the query changes
+    watch(query, () => updateResults());
 
     return {
       next,
