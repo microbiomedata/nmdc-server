@@ -14,6 +14,12 @@ type SearchResult = {
   col: number;
 };
 
+// Pressing "clear" button will reset the find cursor position to 0,0.
+// Otherwise, the cursor position will be preserved so that subsequent
+// searches will start from the same position. This includes appending
+// characters to the search string or Ctrl-A+delete clearing of the
+// search string.
+
 export default defineComponent({
   props: {
     harmonizerApi: {
