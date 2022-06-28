@@ -404,3 +404,10 @@ def get_or_create_user(db: Session, user: schemas.User) -> models.User:
     if created:
         db.commit()
     return db_user
+
+
+def update_user(db: Session, user: schemas.User) -> models.User:
+    db_user = db.query(models.User).get(user.id)
+    db_user.is_admin = user.is_admin
+    db.commit()
+    return db_user
