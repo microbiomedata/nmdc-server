@@ -89,6 +89,24 @@ export default defineComponent({
       scroll(low - cursor.value);
     }
 
+    // replace the text at the current cursor position or all results with the replacement term
+    function replace(all:boolean) {
+      // array of SearchResults to perform replacements on
+      const resultsToChange = all ? results.value : [result.value];
+      // array of CellDatas with the replacement applied
+      const replacements = resultsToChange.map((r) => {
+        const data = harmonizerApi.getCellData(r.row, r.col);
+        data.text = data.text.replace(query.value || '', replacement.value || '');
+        return data;
+      });
+      // replace the text in Handsontable
+      harmonizerApi.setCellData(replacements);
+      // update the results to respect the new text
+      updateResults();
+    }
+    const replaceOnce = () => replace(false);
+    const replaceAll = () => replace(true);
+
     // update the search results when the query changes
     watch(query, () => updateResults());
 
@@ -103,6 +121,9 @@ export default defineComponent({
       results,
       cursor,
       isReplaceVisible,
+      replace,
+      replaceOnce,
+      replaceAll,
     };
   },
 });
@@ -184,6 +205,7 @@ export default defineComponent({
             icon
             v-bind="attrs"
             v-on="on"
+            @click="replaceOnce"
           >
             <v-icon>mdi-repeat-once</v-icon>
           </v-btn>
@@ -196,6 +218,7 @@ export default defineComponent({
             icon
             v-bind="attrs"
             v-on="on"
+            @click="replaceAll"
           >
             <v-icon>mdi-repeat</v-icon>
           </v-btn>
