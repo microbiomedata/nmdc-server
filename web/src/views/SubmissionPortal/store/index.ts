@@ -9,7 +9,6 @@ import { getVariant, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
-const pastSubmissions: Ref<api.MetadataSubmissionRecord[]> = ref([]);
 const hasChanged = ref(0);
 /**
  * Study Form Step
@@ -87,11 +86,6 @@ const submitPayload = computed(() => {
   return value;
 });
 
-async function populateList() {
-  const val = await api.listRecords();
-  pastSubmissions.value = val.results;
-}
-
 function submit(id: string) {
   return api.updateRecord(id, payloadObject.value, 'complete');
 }
@@ -140,7 +134,6 @@ export {
   multiOmicsForm,
   multiOmicsAssociations,
   multiOmicsFormValid,
-  pastSubmissions,
   sampleData,
   samplesValid,
   studyForm,
@@ -153,6 +146,5 @@ export {
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
-  populateList,
   submit,
 };

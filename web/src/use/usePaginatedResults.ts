@@ -1,19 +1,19 @@
 import {
-  reactive, watch, Ref, computed, toRef,
+  reactive, watch, Ref, computed, toRef, shallowReactive,
 } from '@vue/composition-api';
 import {
-  SearchParams, ResultUnion, Condition, DataObjectFilter,
+  SearchParams, Condition, DataObjectFilter, SearchResponse,
 } from '@/data/api';
 import useRequest from './useRequest';
 
-export default function usePaginatedResult(
+export default function usePaginatedResult<T>(
   conditions: Ref<Condition[]>,
-  func: (param: SearchParams) => Promise<ResultUnion>,
+  func: (param: SearchParams) => Promise<SearchResponse<T>>,
   dataObjectFilter?: Ref<DataObjectFilter[]>,
   limit = 15,
 ) {
-  const data = reactive({
-    results: { count: 0, results: [] } as ResultUnion,
+  const data = shallowReactive({
+    results: { count: 0, results: [] } as SearchResponse<T>,
     offset: 0,
     limit, // same as pageSize
     pageSync: 1,

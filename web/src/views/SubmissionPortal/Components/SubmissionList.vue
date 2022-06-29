@@ -1,9 +1,10 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent, reactive, ref, watch } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
+import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  pastSubmissions, populateList, loadRecord, generateRecord,
+  loadRecord, generateRecord,
 } from '../store';
 import * as api from '../store/api';
 
@@ -38,6 +39,10 @@ const headers: DataTableHeader[] = [
 export default defineComponent({
   setup() {
     const router = useRouter();
+    const options = reactive({
+      page: 0,
+      itemsPerPage: 10,
+    });
 
     function getStatus(item: api.MetadataSubmissionRecord) {
       if (item.status === 'complete') {
@@ -62,14 +67,16 @@ export default defineComponent({
       router?.push({ name: 'Study Form', params: { id: item.id } });
     }
 
-    populateList();
+    const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), 10);
+    watch(options, () => submission.setPage(options.page));
 
     return {
       createNewSubmission,
       getStatus,
       resume,
       headers,
-      pastSubmissions,
+      options,
+      submission,
     };
   },
 });
@@ -101,7 +108,9 @@ export default defineComponent({
     <v-card outlined>
       <v-data-table
         :headers="headers"
-        :items="pastSubmissions"
+        :items="submission.data"
+        :options.sync="options"
+        :loading="submission.loading"
       >
         <template #[`item.author.name`]="{ item }">
           <a
