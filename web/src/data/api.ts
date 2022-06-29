@@ -310,6 +310,7 @@ export interface BinResponse<T = string | number> {
 }
 
 export interface User{
+    id: string,
     orcid: string;
     name: string;
     isAdmin: boolean;
@@ -598,7 +599,7 @@ async function getAllUsers() {
 }
 
 async function updateUser(id: string, body: User) {
-  const { data } = await client.post<User>('users/{id}', body);
+  const { data } = await client.post<User>(`users/${id}`, body);
   return data;
 }
 

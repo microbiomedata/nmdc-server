@@ -23,12 +23,16 @@ export default defineComponent({
       users.value = await api.getAllUsers();
     }
 
+    async function updateAdminStatus(item: User) {
+      await api.updateUser(item.id, item);
+    }
     populateList();
 
     return {
       headers,
       populateList,
       users,
+      updateAdminStatus,
     };
   },
 });
@@ -62,6 +66,7 @@ export default defineComponent({
               <v-switch
                 v-model="item.is_admin"
                 class="mt-2"
+                @click="updateAdminStatus(item)"
               />
             </template>
           </v-data-table>
