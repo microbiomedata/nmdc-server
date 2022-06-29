@@ -309,6 +309,12 @@ export interface BinResponse<T = string | number> {
   facets: number[];
 }
 
+export interface User{
+    orcid: string;
+    name: string;
+    isAdmin: boolean;
+}
+
 async function _search<T>(
   table: string,
   {
@@ -586,6 +592,16 @@ async function me(): Promise<string> {
   return data;
 }
 
+async function getAllUsers() {
+  const { data } = await client.get<User[]>('users');
+  return data;
+}
+
+async function updateUser(id: string, body: User) {
+  const { data } = await client.post<User>('users/{id}', body);
+  return data;
+}
+
 const api = {
   createBulkDownload,
   getBinnedFacet,
@@ -611,6 +627,8 @@ const api = {
   search,
   keggSearch,
   textSearch,
+  getAllUsers,
+  updateUser,
 };
 
 export {
