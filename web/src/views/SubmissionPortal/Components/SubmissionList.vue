@@ -1,5 +1,7 @@
 <script lang="ts">
-import { defineComponent, reactive, ref, watch } from '@vue/composition-api';
+import {
+  defineComponent, ref, watch,
+} from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
@@ -12,36 +14,43 @@ const headers: DataTableHeader[] = [
   {
     text: 'Study Name',
     value: 'metadata_submission.studyForm.studyName',
+    sortable: false,
   },
   {
     text: 'Author',
     value: 'author.name',
+    sortable: false,
   },
   {
     text: 'Template',
     value: 'metadata_submission.template',
+    sortable: false,
   },
   {
     text: 'Status',
     value: 'status',
+    sortable: false,
   },
   {
     text: 'Created',
     value: 'created',
+    sortable: false,
   },
   {
     text: '',
     value: 'action',
     align: 'end',
+    sortable: false,
   },
 ];
 
 export default defineComponent({
   setup() {
     const router = useRouter();
-    const options = reactive({
-      page: 0,
-      itemsPerPage: 10,
+    const itemsPerPage = 10;
+    const options = ref({
+      page: 1,
+      itemsPerPage,
     });
 
     function getStatus(item: api.MetadataSubmissionRecord) {
@@ -67,8 +76,8 @@ export default defineComponent({
       router?.push({ name: 'Study Form', params: { id: item.id } });
     }
 
-    const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), 10);
-    watch(options, () => submission.setPage(options.page));
+    const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
+    watch(options, () => submission.setPage(options.value.page), { deep: true });
 
     return {
       createNewSubmission,
@@ -108,9 +117,12 @@ export default defineComponent({
     <v-card outlined>
       <v-data-table
         :headers="headers"
-        :items="submission.data"
+        :items="submission.data.results.results"
+        :server-items-length="submission.data.results.count"
         :options.sync="options"
-        :loading="submission.loading"
+        :loading="submission.loading.value"
+        :items-per-page.sync="submission.data.limit"
+        :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
       >
         <template #[`item.author.name`]="{ item }">
           <a

@@ -1,5 +1,5 @@
-import { SearchParams } from '@/data/api';
 import axios from 'axios';
+import { SearchParams } from '@/data/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
 const client = axios.create({
@@ -47,7 +47,7 @@ async function listRecords(params: SearchParams) {
     params: {
       limit: params.limit,
       offset: params.offset,
-    }
+    },
   });
   return resp.data;
 }

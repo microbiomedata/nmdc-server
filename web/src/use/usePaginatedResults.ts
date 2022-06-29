@@ -1,5 +1,5 @@
 import {
-  reactive, watch, Ref, computed, toRef, shallowReactive,
+  watch, Ref, computed, toRef, shallowReactive,
 } from '@vue/composition-api';
 import {
   SearchParams, Condition, DataObjectFilter, SearchResponse,
