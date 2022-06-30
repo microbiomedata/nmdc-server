@@ -32,12 +32,14 @@ def create_app(env: typing.Mapping[str, str], secret_key: str = settings.secret_
     app.include_router(api.router, prefix="/api")
     app.include_router(auth.router, prefix="")
     same_site_value = "lax"
+    https_only = False
     if settings.environment == "production":
         same_site_value = "Strict"
+        https_only = True
     app.add_middleware(
         SessionMiddleware,
         secret_key=secret_key,
-        https_only=True,
+        https_only=https_only,
         same_site=same_site_value,
     )
 
