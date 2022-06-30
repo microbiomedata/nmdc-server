@@ -52,8 +52,8 @@ def test_cookie_headers(client: TestClient, token: Token):
     signer = itsdangerous.TimestampSigner("test")  # same as the secret_key set at application start
     encoded_token = b64encode(json.dumps(token, cls=TokenEncoder).encode("utf-8"))
     encoded_token = signer.sign(f"${str(encoded_token, 'utf-8')}")
-    data = signer.unsign(encoded_token, max_age=14 * 24 * 60 * 60)
-    cookies = {"session": json.loads(b64decode(data))}
+    # data = signer.unsign(encoded_token, max_age=14 * 24 * 60 * 60)
+    cookies = {"session": str(encoded_token)}
     resp = client.get("/api/me", cookies=cookies)
 
     assert resp.headers != None
