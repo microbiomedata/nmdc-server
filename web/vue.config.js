@@ -33,10 +33,10 @@ module.exports = {
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/validation.js', to: 'script/data-harmonizer/validation.js' },
           { from: './node_modules/sheets_and_friends/docs/script/data-harmonizer/field_rules.js', to: 'script/data-harmonizer/field_rules.js' },
           { from: './node_modules/sheets_and_friends/docs/template/menu.js', to: 'template/menu.js' },
-          { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/schema.js', to: 'template/nmdc_dh/schema.js' },
-          { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/export.js', to: 'template/nmdc_dh/export.js' },
-          { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/ConfigureFieldSettings.js', to: 'template/nmdc_dh/ConfigureFieldSettings.js' },
-          { from: './node_modules/sheets_and_friends/docs/template/nmdc_dh/GoldEcosystemTree.js', to: 'template/nmdc_dh/GoldEcosystemTree.js' },
+          { from: './node_modules/sheets_and_friends/docs/template/export.js', to: 'template/export.js' },
+          { from: './node_modules/sheets_and_friends/docs/template/nmdc_submission_schema/schema.js', to: 'template/nmdc_submission_schema/schema.js' },
+          { from: './node_modules/sheets_and_friends/docs/template/nmdc_submission_schema/ConfigureFieldSettings.js', to: 'template/nmdc_submission_schema/ConfigureFieldSettings.js' },
+          { from: './node_modules/sheets_and_friends/docs/template/nmdc_submission_schema/GoldEcosystemTree.js', to: 'template/nmdc_submission_schema/GoldEcosystemTree.js' },
         ],
       }),
     ],
@@ -48,7 +48,7 @@ module.exports = {
     config.resolve.symlinks(false);
     config.module
       .rule('html')
-      .test(/linkml\.html$/)
+      .test(/main\.html$/)
       .use('raw-loader')
       .loader('raw-loader');
   },
