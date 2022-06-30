@@ -1,14 +1,13 @@
+import json
+from base64 import b64decode, b64encode
+from json import JSONEncoder
+
+import itsdangerous
 from starlette.testclient import TestClient
 
 from nmdc_server import fakes
 from nmdc_server.auth import Token
 from nmdc_server.config import settings
-from base64 import b64decode, b64encode
-
-import json
-import itsdangerous
-
-from json import JSONEncoder
 
 
 def test_login(client: TestClient):
