@@ -1,8 +1,30 @@
 import { computed, Ref, ref } from '@vue/composition-api';
 import { debounce, has } from 'lodash';
-import hot from 'handsontable';
-import xlsx from 'xlsx';
-import HarmonizerTemplateText from 'sheets_and_friends/docs/main.html';
+import { DataHarmonizer, Footer } from 'data-harmonizer';
+
+// a simple data structure to define the relationships between the GOLD ecosystem fields
+const GOLD_FIELDS = {
+  ecosystem: {
+    upstream: [],
+    downstream: ['ecosystem_category', 'ecosystem_type', 'ecosystem_subtype', 'specific_ecosystem'],
+  },
+  ecosystem_category: {
+    upstream: ['ecosystem'],
+    downstream: ['ecosystem_type', 'ecosystem_subtype', 'specific_ecosystem'],
+  },
+  ecosystem_type: {
+    upstream: ['ecosystem', 'ecosystem_category'],
+    downstream: ['ecosystem_subtype', 'specific_ecosystem'],
+  },
+  ecosystem_subtype: {
+    upstream: ['ecosystem', 'ecosystem_category', 'ecosystem_type'],
+    downstream: ['specific_ecosystem'],
+  },
+  specific_ecosystem: {
+    upstream: ['ecosystem', 'ecosystem_category', 'ecosystem_type', 'ecosystem_subtype'],
+    downstream: [],
+  },
+};
 
 const VariationMap = {
   /** A mapping of the templates to the superset of checkbox options they work for. */
@@ -87,9 +109,11 @@ export class HarmonizerApi {
 
   ready: Ref<boolean>;
 
+  goldEcosystemTree: any;
+
   dh: any;
 
-  toolbar: any;
+  footer: any;
 
   selectedColumn: Ref<string>;
 
@@ -102,45 +126,22 @@ export class HarmonizerApi {
   }
 
   async init(r: HTMLElement, templateName: string) {
-    // @ts-ignore
-    window.Handsontable = hot;
-    // @ts-ignore
-    window.XLSX = xlsx;
+    const schema = (await import('./schema.json')).default;
+    // Taken from https://gold.jgi.doe.gov/download?mode=biosampleEcosystemsJson
+    // See also: https://gold.jgi.doe.gov/ecosystemtree
+    this.goldEcosystemTree = (await import('./GoldEcosystemTree.json')).default;
 
-    // eslint-disable-next-line no-param-reassign
-    r.innerHTML = HarmonizerTemplateText;
-    // eslint-disable-next-line no-param-reassign
-    const myDHGrid = document.getElementById('data-harmonizer-grid');
-    const myDHToolbar = document.getElementById('data-harmonizer-toolbar');
-    const myDHFooter = document.getElementById('data-harmonizer-footer');
+    this.dh = new DataHarmonizer(r, {
+      modalsRoot: document.querySelector('.harmonizer-style-container'),
+      fieldSettings: this._getFieldSettings(),
+    });
+    this.footer = new Footer(document.querySelector('#harmonizer-footer-root'), this.dh);
+    this.dh.useSchema(schema, [], templateName);
 
-    // eslint-disable-next-line no-new-object
-    this.dh = new Object(DataHarmonizer);
-    // @ts-ignore
-    await DataHarmonizerConfig.applyNmdcFieldSettings(this.dh);
-    // eslint-disable-next-line no-new-object
-    this.toolbar = new Object(DataHarmonizerToolbar);
-    await this.dh.init(myDHGrid, myDHFooter, TEMPLATES);
-    await this.toolbar.init(this.dh, myDHToolbar);
-
-    // Picks first template in dh menu if none given in URL.
-    this.dh.schema = SCHEMA;
-
-    await this.dh.processTemplate(templateName);
-    this.dh.schema_name = 'nmdc';
-    this.dh.template_name = templateName;
-    this.dh.template_path = `nmdc/${templateName}`;
-    await this.dh.createHot();
     this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
       this.selectedColumn.value = this.dh.getFields()[col].title;
     }, 200, { leading: true }));
-    await this.toolbar.refresh();
-    // @ts-ignore
-    window.dh = this.dh;
 
-    // Erase unusued toolbar
-    $('#data-harmonizer-toolbar-inset').children().slice(0, 6).attr('style', 'display:none !important');
-    $('#data-harmonizer-toolbar')?.hide();
     this.ready.value = true;
     this.jumpToRowCol(0, 0);
   }
@@ -156,6 +157,77 @@ export class HarmonizerApi {
       });
     });
     return ret;
+  }
+
+  _getSameRowCellData(columnNames: string[]): string[] {
+    const row = this.dh.hot.getSelectedLast()[0];
+    return columnNames.map((columnName) => {
+      const col = this.dh.getFields().findIndex((field: any) => field.name === columnName);
+      if (col < 0) {
+        return null;
+      }
+      return this.dh.hot.getDataAtCell(row, col);
+    });
+  }
+
+  _getGoldOptions(path: string[] = []) {
+    let options: any = this.goldEcosystemTree.children;
+    for (let i = 0; i < path.length; i += 1) {
+      const name = path[i];
+      const item = options.find((child: any) => child.name === name);
+      if (!item) {
+        options = [];
+        break;
+      }
+      options = item.children;
+    }
+    return options.map((child: any) => child.name);
+  }
+
+  _getFieldSettings() {
+    const fieldSettings: any = {};
+    const fieldNames = Object.keys(GOLD_FIELDS);
+    for (let i = 0; i < fieldNames.length; i += 1) {
+      const field = fieldNames[i] as keyof typeof GOLD_FIELDS;
+      fieldSettings[field] = {
+        getColumn: (dh: any, col: {[key: string]: any}) => {
+          let flatVocab: string[];
+          const fieldObj = dh.getFields().find((f: any) => f.name === field);
+          if (fieldObj && fieldObj.flatVocabulary) {
+            flatVocab = fieldObj.flatVocabulary;
+          }
+          const newCol = { ...col };
+          // define a dynamic source field. this function gets the 'upstream' dependent fields,
+          // looks up the valid completions in the GOLD classification tree, and provides those
+          // as the autocomplete options. If the field has an enum range in the schema (i.e.
+          // the field object has a `flatVocabulary` field here) then the options are restricted
+          // to that set.
+          newCol.source = (_: any, next: (opts: any) => void) => {
+            const dependentRowData = this._getSameRowCellData(GOLD_FIELDS[field].upstream);
+            let options = this._getGoldOptions(dependentRowData);
+            if (flatVocab) {
+              options = options.filter((o: string) => flatVocab.indexOf(o) >= 0);
+            }
+            next(options);
+          };
+          newCol.type = 'autocomplete';
+          newCol.trimDropdown = false;
+          return newCol;
+        },
+        onChange: (change: any[], fields: any, triggered_changes: any[]) => {
+          // clear downstream fields if the value changes
+          if (change[2] !== change[3]) {
+            const { downstream } = GOLD_FIELDS[field];
+            for (let j = 0; j < downstream.length; j += 1) {
+              const other = downstream[j];
+              const otherIdx = fields.findIndex((f: any) => f.title === other);
+              triggered_changes.push([change[0], otherIdx, change[2], null]);
+            }
+          }
+        },
+      };
+    }
+    return fieldSettings;
   }
 
   refreshState() {
@@ -187,11 +259,18 @@ export class HarmonizerApi {
   }
 
   changeVisibility(value: string) {
-    if (['all', 'required', 'recommended'].includes(value)) {
-      this.dh.changeColVisibility(`show-${value}-cols-dropdown-item`);
-    } else {
-      const ptr = Object.keys(this._getColumnCoordinates()).indexOf(value);
-      this.dh.changeColVisibility(`show-section-${ptr}`);
+    switch (value) {
+      case 'all':
+        this.dh.showAllColumns();
+        break;
+      case 'required':
+        this.dh.showRequiredColumns();
+        break;
+      case 'recommended':
+        this.dh.showRecommendedColumns();
+        break;
+      default:
+        this.dh.showColumnsBySectionTitle(value);
     }
   }
 
@@ -218,15 +297,16 @@ export class HarmonizerApi {
     if (!ext) return;
     const acceptedExts = ['xlsx', 'xls', 'tsv', 'csv'];
     if (!acceptedExts.includes(ext)) {
-      const errMsg = `Only ${acceptedExts.join(', ')} files are supported`;
-      $('#open-err-msg').text(errMsg);
-      $('#open-error-modal').modal('show');
+      // TODO: #open-error-modal not present because Toolbar component is not being used.
+      // Display this error differently?
+      //
+      // const errMsg = `Only ${acceptedExts.join(', ')} files are supported`;
+      // $('#open-err-msg').text(errMsg);
+      // $('#open-error-modal').modal('show');
     } else {
       this.dh.invalid_cells = {};
-      this.dh.runBehindLoadingScreen(this.dh.openFile, [this.dh, file]);
-      $('#file_name_display').text(file.name);
+      this.dh.runBehindLoadingScreen(this.dh.openFile, [file]);
     }
-    $('#next-error-button,#no-error-button').hide();
     this.dh.current_selection = [null, null, null, null];
   }
 

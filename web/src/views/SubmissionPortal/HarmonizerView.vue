@@ -4,7 +4,6 @@ import {
 } from '@vue/composition-api';
 import { clamp, flattenDeep } from 'lodash';
 import { writeFile, utils } from 'xlsx';
-import 'handsontable/dist/handsontable.full.css';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
@@ -389,72 +388,77 @@ export default defineComponent({
         </v-menu>
       </div>
     </div>
-    <div
-      class="harmonizer-container d-flex flex-row"
-      style="max-width: 100%;"
-    >
+    <div class="harmonizer-style-container">
       <div
-        id="harmonizer-root"
-        class="harmonizer-root grow"
-        :style="{
-          'max-width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
-          'width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
-        }"
-      />
-      <v-navigation-drawer
-        :value="sidebarOpen"
-        right
-        width="300"
-        style="overflow-x: auto; font-size: 14px;"
+        class="harmonizer-container d-flex flex-row"
+        style="max-width: 100%;"
       >
         <div
-          v-if="selectedHelpDict"
-          class="mx-2"
+          id="harmonizer-root"
+          class="harmonizer-root grow"
+          :style="{
+            'max-width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
+            'width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
+          }"
+        />
+        <v-navigation-drawer
+          :value="sidebarOpen"
+          right
+          width="300"
+          style="overflow-x: auto; font-size: 14px;"
         >
-          <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
-            Column Help
-            <v-spacer />
-            <v-btn
-              icon
-              @click="sideBarOpenOverride = false"
+          <div
+            v-if="selectedHelpDict"
+            class="mx-2"
+          >
+            <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
+              Column Help
+              <v-spacer />
+              <v-btn
+                icon
+                @click="sideBarOpenOverride = false"
+              >
+                <v-icon>mdi-close</v-icon>
+              </v-btn>
+            </div>
+            <div class="my-2">
+              <span class="font-weight-bold pr-2">Column:</span>
+              <span v-html="selectedHelpDict.title" />
+            </div>
+            <div class="my-2">
+              <span class="font-weight-bold pr-2">Description:</span>
+              <span v-html="urlify(selectedHelpDict.description)" />
+            </div>
+            <div class="my-2">
+              <span class="font-weight-bold pr-2">Guidance:</span>
+              <span v-html="urlify(selectedHelpDict.guidance)" />
+            </div>
+            <div
+              v-if="selectedHelpDict.examples"
+              class="my-2"
             >
-              <v-icon>mdi-close</v-icon>
+              <span class="font-weight-bold pr-2">Examples:</span>
+              <span v-html="urlify(selectedHelpDict.examples)" />
+            </div>
+            <v-btn
+              color="grey"
+              outlined
+              small
+              block
+              @click="harmonizerApi.launchReference()"
+            >
+              Full {{ packageName }} Reference
+              <v-icon class="pl-1">
+                mdi-open-in-new
+              </v-icon>
             </v-btn>
           </div>
-          <div class="my-2">
-            <span class="font-weight-bold pr-2">Column:</span>
-            <span v-html="selectedHelpDict.title" />
-          </div>
-          <div class="my-2">
-            <span class="font-weight-bold pr-2">Description:</span>
-            <span v-html="urlify(selectedHelpDict.description)" />
-          </div>
-          <div class="my-2">
-            <span class="font-weight-bold pr-2">Guidance:</span>
-            <span v-html="urlify(selectedHelpDict.guidance)" />
-          </div>
-          <div
-            v-if="selectedHelpDict.examples"
-            class="my-2"
-          >
-            <span class="font-weight-bold pr-2">Examples:</span>
-            <span v-html="urlify(selectedHelpDict.examples)" />
-          </div>
-          <v-btn
-            color="grey"
-            outlined
-            small
-            block
-            @click="harmonizerApi.launchReference()"
-          >
-            Full {{ packageName }} Reference
-            <v-icon class="pl-1">
-              mdi-open-in-new
-            </v-icon>
-          </v-btn>
-        </div>
-      </v-navigation-drawer>
+        </v-navigation-drawer>
+      </div>
+
+      <div id="harmonizer-footer-root" />
     </div>
+
     <div class="d-flex shrink ma-2">
       <v-btn
         color="gray"
@@ -512,15 +516,14 @@ export default defineComponent({
 
 <style lang="scss">
 .harmonizer-container {
-  height: calc(100vh - 260px) !important;
+  height: calc(100vh - 280px) !important;
 }
 
 .spreadsheet-input {
   width: 0px;
 }
 
-// HACK-DH
-.harmonizer-root {
+.harmonizer-style-container {
   /**
     Namespace these styles so that they don't affect the global styles.
     Read more about SASS interpolation: https://sass-lang.com/documentation/interpolation
@@ -536,17 +539,17 @@ export default defineComponent({
   @import '~bootstrap/scss/modal';
   @import '~bootstrap/scss/buttons';
   @import '~bootstrap/scss/forms';
-  // This stylesheet was unfortunately copy-pasted. In order to interpolate the content here,
-  // an SCSS file is required (css will only be referenced).  There is no handsontable scss available,
-  // so the CSS was renamed SCSS and copied into the project.  SCSS and CSS are treated differently
-  // when imported within a parent scope (harmonizer-root class in this case)
-  // @import './library/handsontable.min.scss';
+  @import '~bootstrap/scss/input-group';
+  @import '~bootstrap/scss/utilities';
+
+  @import '~data-harmonizer/lib/dist/es/index';
 }
+
 /* Grid */
-#data-harmonizer-grid {
+#harmonizer-root {
   overflow: hidden;
-  height: calc(100vh - 340px) !important;
-  margin-top: -16px;
+  height: calc(100vh - 300px) !important;
+  margin-top: 8px;
 
   .secondary-header-cell:hover {
     cursor: pointer;
@@ -576,12 +579,6 @@ export default defineComponent({
   }
 }
 
-#loading-screen {
-  display: none;
-  background-color: rgba(108, 117, 125, 0.2);
-  z-index: 1000;
-}
-
 #unmapped-headers-list {
   max-height: 50vh;
   overflow-y: auto;
@@ -603,21 +600,7 @@ export default defineComponent({
 
 .field-description-text select {min-width: 95%}
 
-#field-mapping-container {
-  overflow-x: scroll;
-  padding-bottom: 1rem;
-  scrollbar-width: 1rem;
-}
-
-#field-mapping {
-  white-space: nowrap;
-}
-
-#field-mapping col {border-left: 2px solid black}
-#field-mapping col:first-child {background: #FF0}
-#field-mapping col:nth-child(2n+3) {background: #CCC}
-
-#field-mapping tr td , #field-mapping tr th {
-  padding: 3px;
+#harmonizer-footer-root {
+  width: 50%;
 }
 </style>
