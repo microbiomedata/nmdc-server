@@ -861,6 +861,7 @@ class MetadataSubmissionResponse(BaseSearchResponse):
 class UserResponse(BaseSearchResponse):
     results: List[schemas.User]
 
+
 workflow_search_classes = [
     ReadsQCQuerySchema,
     MetagenomeAssemblyQuerySchema,

@@ -366,13 +366,13 @@ async function searchDataObject(params: SearchParams) {
 
 export type ResultUnion = (
     SearchResponse<BiosampleSearchResult>
-    | SearchResponse<OmicsProcessingResult>
-    | SearchResponse<StudySearchResults>
-    | SearchResponse<ReadsQCResult>
-    | SearchResponse<MetagenomeAssembyResult>
-    | SearchResponse<MetagenomeAnnotationResult>
-    | SearchResponse<MetaproteomicAnalysisResult>
-    | SearchResponse<DataObjectSearchResult>);
+| SearchResponse<OmicsProcessingResult>
+| SearchResponse<StudySearchResults>
+| SearchResponse<ReadsQCResult>
+| SearchResponse<MetagenomeAssembyResult>
+| SearchResponse<MetagenomeAnnotationResult>
+| SearchResponse<MetaproteomicAnalysisResult>
+| SearchResponse<DataObjectSearchResult>);
 
 async function search(type: entityType, params: SearchParams) {
   let results: ResultUnion;
@@ -600,7 +600,6 @@ async function getAllUsers(params: SearchParams) {
       offset: params.offset,
     },
   });
-  console.log(data);
   return data;
 }
 
