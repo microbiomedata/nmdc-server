@@ -313,7 +313,7 @@ export interface User{
     id: string,
     orcid: string;
     name: string;
-    isAdmin: boolean;
+    is_admin: boolean;
 }
 
 async function _search<T>(
@@ -365,14 +365,14 @@ async function searchDataObject(params: SearchParams) {
 }
 
 export type ResultUnion = (
-  SearchResponse<BiosampleSearchResult>
-  | SearchResponse<OmicsProcessingResult>
-  | SearchResponse<StudySearchResults>
-  | SearchResponse<ReadsQCResult>
-  | SearchResponse<MetagenomeAssembyResult>
-  | SearchResponse<MetagenomeAnnotationResult>
-  | SearchResponse<MetaproteomicAnalysisResult>
-  | SearchResponse<DataObjectSearchResult>);
+    SearchResponse<BiosampleSearchResult>
+    | SearchResponse<OmicsProcessingResult>
+    | SearchResponse<StudySearchResults>
+    | SearchResponse<ReadsQCResult>
+    | SearchResponse<MetagenomeAssembyResult>
+    | SearchResponse<MetagenomeAnnotationResult>
+    | SearchResponse<MetaproteomicAnalysisResult>
+    | SearchResponse<DataObjectSearchResult>);
 
 async function search(type: entityType, params: SearchParams) {
   let results: ResultUnion;
@@ -593,8 +593,14 @@ async function me(): Promise<string> {
   return data;
 }
 
-async function getAllUsers() {
-  const { data } = await client.get<User[]>('users');
+async function getAllUsers(params: SearchParams) {
+  const { data } = await client.get<SearchResponse<User>>('users', {
+    params: {
+      limit: params.limit,
+      offset: params.offset,
+    },
+  });
+  console.log(data);
   return data;
 }
 

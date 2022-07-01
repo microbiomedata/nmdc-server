@@ -1,13 +1,19 @@
 <script lang="ts">
-import { defineComponent, Ref, ref } from '@vue/composition-api';
+import { defineComponent, ref, watch } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
 import { api, User } from '@/data/api';
+import { stateRefs } from '@/store';
+import usePaginatedResults from '@/use/usePaginatedResults';
 
 export default defineComponent({
 
   setup() {
-    const users: Ref<User[]> = ref([]);
-
+    const currentUser = stateRefs.user;
+    const itemsPerPage = 10;
+    const options = ref({
+      page: 1,
+      itemsPerPage,
+    });
     const headers : DataTableHeader[] = [
       {
         text: 'ORCID',
@@ -19,20 +25,19 @@ export default defineComponent({
       { text: 'Admin', value: 'is_admin', sortable: false },
     ];
 
-    async function populateList() {
-      users.value = await api.getAllUsers();
-    }
+    const users = usePaginatedResults(ref([]), api.getAllUsers, ref([]), itemsPerPage);
+    watch(options, () => users.setPage(options.value.page), { deep: true });
 
     async function updateAdminStatus(item: User) {
       await api.updateUser(item.id, item);
     }
-    populateList();
 
     return {
       headers,
-      populateList,
       users,
       updateAdminStatus,
+      options,
+      currentUser,
     };
   },
 });
@@ -49,7 +54,12 @@ export default defineComponent({
           <v-data-table
             dense
             :headers="headers"
-            :items="users"
+            :items="users.data.results"
+            :server-items-length="users.data.results.count"
+            :options.sync="options"
+            :loading="users.loading.value"
+            :items-per-page.sync="users.data.limit"
+            :footer-props="{itemsPerPageOptions : [10, 20, 50] }"
             item-key="name"
             class="elevation-1"
           >
@@ -66,6 +76,7 @@ export default defineComponent({
               <v-switch
                 v-model="item.is_admin"
                 class="mt-2"
+                :disabled="item.name==currentUser"
                 @click="updateAdminStatus(item)"
               />
             </template>

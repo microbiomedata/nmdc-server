@@ -1,6 +1,7 @@
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
+from fastapi import HTTPException, status
 from sqlalchemy.orm import Query, Session
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
@@ -408,7 +409,11 @@ def get_or_create_user(db: Session, user: schemas.User) -> models.User:
 
 def update_user(db: Session, user: schemas.User) -> Optional[models.User]:
     db_user = db.query(models.User).get(user.id)
-    if db_user:
-        db_user.is_admin = user.is_admin
-        db.commit()
+    if db_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+    db_user.is_admin = user.is_admin
+    db.commit()
     return db_user

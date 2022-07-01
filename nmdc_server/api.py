@@ -555,14 +555,15 @@ async def submit_metadata(
 
 
 @router.get(
-    "/users", responses=login_required_responses, response_model=List[schemas.User], tags=["user"]
+    "/users", responses=login_required_responses, response_model=query.UserResponse, tags=["user"]
 )
 async def get_users(
     db: Session = Depends(get_db),
     user: models.User = Depends(admin_required),
+    pagination: Pagination = Depends(),
 ):
-    users = db.query(User).all()
-    return users
+    users = db.query(User)
+    return pagination.response(users)
 
 
 @router.post(
