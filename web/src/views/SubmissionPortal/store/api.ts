@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { SearchParams } from '@/data/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
 const client = axios.create({
@@ -41,8 +42,13 @@ async function updateRecord(id: string, record: MetadataSubmission, status?: str
   return resp.data;
 }
 
-async function listRecords() {
-  const resp = await client.get<PaginatedResponse<MetadataSubmissionRecord>>('metadata_submission');
+async function listRecords(params: SearchParams) {
+  const resp = await client.get<PaginatedResponse<MetadataSubmissionRecord>>('metadata_submission', {
+    params: {
+      limit: params.limit,
+      offset: params.offset,
+    },
+  });
   return resp.data;
 }
 

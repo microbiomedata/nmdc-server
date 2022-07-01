@@ -2,7 +2,7 @@ import { computed, Ref, ref } from '@vue/composition-api';
 import { debounce, has } from 'lodash';
 import hot from 'handsontable';
 import xlsx from 'xlsx';
-import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
+import HarmonizerTemplateText from 'sheets_and_friends/docs/main.html';
 
 const VariationMap = {
   /** A mapping of the templates to the superset of checkbox options they work for. */
