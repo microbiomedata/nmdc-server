@@ -54,7 +54,7 @@ export default defineComponent({
           <v-data-table
             dense
             :headers="headers"
-            :items="users.data.results"
+            :items="users.data.results.results"
             :server-items-length="users.data.results.count"
             :options.sync="options"
             :loading="users.loading.value"
