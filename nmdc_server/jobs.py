@@ -72,8 +72,8 @@ def ingest(function_limit=None, skip_annotation=False):
             ingest_db.execute("select truncate_tables()").all()
 
             # Copy persistent data that does not depend on ingest FK
-            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionMetadata))
             merge_download_artifact(ingest_db, prod_db.query(models.User))
+            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionMetadata))
 
             # ingest data
             logger.info(
