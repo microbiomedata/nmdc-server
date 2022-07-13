@@ -40,11 +40,34 @@ export default defineComponent({
       return undefined;
     }
 
+    function dottedValueDisplayName(dottedFieldName: string) {
+      const fields = dottedFieldName.split('.');
+      const field = fields[fields.length - 1];
+      let intermediateValue: any = props.item;
+      while (fields.length && intermediateValue !== undefined) {
+        const intermediateField = fields.shift()!;
+        intermediateValue = intermediateValue[intermediateField];
+      }
+      return valueDisplayName(field, intermediateValue);
+    }
+
+    function dottedFieldDisplayName(dottedFieldName: string) {
+      const fields = dottedFieldName.split('.');
+      const field = fields.pop()!;
+      return fieldDisplayName(field);
+    }
+
+    function getDottedField(dottedFieldName: string) {
+      const fields = dottedFieldName.split('.');
+      const field = fields.pop()!;
+      return getField(field);
+    }
+
     return {
       href,
-      getField,
-      fieldDisplayName,
-      valueDisplayName,
+      getDottedField,
+      dottedFieldDisplayName,
+      dottedValueDisplayName,
     };
   },
 });
@@ -92,19 +115,19 @@ export default defineComponent({
       class="pr-2"
       alt="Logo"
     >
-    <v-list-item-avatar v-else-if="getField(field)">
+    <v-list-item-avatar v-else-if="getDottedField(field)">
       <v-icon>
-        {{ getField(field).icon || 'mdi-text' }}
+        {{ getDottedField(field).icon || 'mdi-text' }}
       </v-icon>
     </v-list-item-avatar>
     <v-list-item-content>
       <v-list-item-title>
-        {{ fieldDisplayName(field) }}
+        {{ dottedFieldDisplayName(field) }}
       </v-list-item-title>
       <v-list-item-subtitle
         style="white-space: initial;"
       >
-        {{ valueDisplayName(field, item[field]) }}
+        {{ dottedValueDisplayName(field, item[field]) }}
       </v-list-item-subtitle>
     </v-list-item-content>
   </v-list-item>
