@@ -2,12 +2,12 @@
 import { defineComponent, PropType } from '@vue/composition-api';
 import { getField } from '@/encoding';
 import { fieldDisplayName, valueDisplayName } from '@/util';
-import { BaseSearchResult } from '@/data/api';
+import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 
 export default defineComponent({
   props: {
     item: {
-      type: Object as PropType<BaseSearchResult>,
+      type: Object as PropType<BaseSearchResult | BiosampleSearchResult>,
       required: true,
     },
     field: {

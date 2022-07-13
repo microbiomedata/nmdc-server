@@ -2,7 +2,7 @@
 import { computed, defineComponent, PropType } from '@vue/composition-api';
 import { isObject } from 'lodash';
 
-import { BaseSearchResult } from '@/data/api';
+import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
 import AttributeItem from './AttributeItem.vue';
 
@@ -15,7 +15,7 @@ export default defineComponent({
       default: '',
     },
     item: {
-      type: Object as PropType<BaseSearchResult>,
+      type: Object as PropType<BaseSearchResult | BiosampleSearchResult>,
       required: true,
     },
   },
