@@ -22,11 +22,15 @@ export default defineComponent({
 
   setup(props) {
     const displayFields = computed(() => {
+      const skipFields = new Set([
+        'name',
+        'description',
+      ]);
       const ret = Object.keys(props.item).filter((field) => {
-        const value = props.item[field];
-        if (['name', 'description'].includes(field)) {
+        if (skipFields.has(field)) {
           return false;
         }
+        const value = props.item[field];
         return !isObject(value) && value && (!getField(field) || !getField(field).hideAttr);
       });
 
