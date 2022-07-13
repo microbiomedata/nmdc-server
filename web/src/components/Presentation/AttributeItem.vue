@@ -29,6 +29,13 @@ export default defineComponent({
   },
 
   setup(props) {
+    function getValue(field: string) {
+      if (field === 'geo_loc_name') {
+        return props.item.annotations.geo_loc_name;
+      }
+      return valueDisplayName(field, props.item[field]);
+    }
+
     function href(field: string) {
       if (field.startsWith('open_in_')) {
         return props.item[field];
@@ -40,34 +47,11 @@ export default defineComponent({
       return undefined;
     }
 
-    function dottedValueDisplayName(dottedFieldName: string) {
-      const fields = dottedFieldName.split('.');
-      const field = fields[fields.length - 1];
-      let intermediateValue: any = props.item;
-      while (fields.length && intermediateValue !== undefined) {
-        const intermediateField = fields.shift()!;
-        intermediateValue = intermediateValue[intermediateField];
-      }
-      return valueDisplayName(field, intermediateValue);
-    }
-
-    function dottedFieldDisplayName(dottedFieldName: string) {
-      const fields = dottedFieldName.split('.');
-      const field = fields.pop()!;
-      return fieldDisplayName(field);
-    }
-
-    function getDottedField(dottedFieldName: string) {
-      const fields = dottedFieldName.split('.');
-      const field = fields.pop()!;
-      return getField(field);
-    }
-
     return {
+      getField,
+      fieldDisplayName,
+      getValue,
       href,
-      getDottedField,
-      dottedFieldDisplayName,
-      dottedValueDisplayName,
     };
   },
 });
@@ -115,19 +99,19 @@ export default defineComponent({
       class="pr-2"
       alt="Logo"
     >
-    <v-list-item-avatar v-else-if="getDottedField(field)">
+    <v-list-item-avatar v-else-if="getField(field)">
       <v-icon>
-        {{ getDottedField(field).icon || 'mdi-text' }}
+        {{ getField(field).icon || 'mdi-text' }}
       </v-icon>
     </v-list-item-avatar>
     <v-list-item-content>
       <v-list-item-title>
-        {{ dottedFieldDisplayName(field) }}
+        {{ fieldDisplayName(field) }}
       </v-list-item-title>
       <v-list-item-subtitle
         style="white-space: initial;"
       >
-        {{ dottedValueDisplayName(field, item[field]) }}
+        {{ getValue(field) }}
       </v-list-item-subtitle>
     </v-list-item-content>
   </v-list-item>
