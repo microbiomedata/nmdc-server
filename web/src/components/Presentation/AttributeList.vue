@@ -29,9 +29,17 @@ export default defineComponent({
         'env_local_scale_id',
         'env_medium_id',
       ]);
+      const includeFields = new Set([
+        'env_broad_scale',
+        'env_local_scale',
+        'env_medium',
+      ]);
       const ret = Object.keys(props.item).filter((field) => {
         if (skipFields.has(field)) {
           return false;
+        }
+        if (includeFields.has(field)) {
+          return true;
         }
         const value = props.item[field];
         return !isObject(value) && value && (!getField(field) || !getField(field).hideAttr);

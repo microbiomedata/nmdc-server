@@ -33,6 +33,15 @@ export default defineComponent({
       if (field === 'geo_loc_name') {
         return props.item.annotations.geo_loc_name;
       }
+      if (
+        field === 'env_broad_scale'
+          || field === 'env_local_scale'
+          || field === 'env_medium'
+      ) {
+        const item = props.item as BiosampleSearchResult;
+        const env = item[field];
+        return `${env.label} (${env.id})`;
+      }
       return valueDisplayName(field, props.item[field]);
     }
 
