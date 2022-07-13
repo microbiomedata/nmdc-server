@@ -25,6 +25,9 @@ export default defineComponent({
       const skipFields = new Set([
         'name',
         'description',
+        'env_broad_scale_id',
+        'env_local_scale_id',
+        'env_medium_id',
       ]);
       const ret = Object.keys(props.item).filter((field) => {
         if (skipFields.has(field)) {
