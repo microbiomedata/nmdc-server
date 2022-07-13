@@ -29,6 +29,13 @@ export default defineComponent({
         }
         return !isObject(value) && value && (!getField(field) || !getField(field).hideAttr);
       });
+
+      // add geo_loc_name to after lat/lon
+      if (props.item?.annotations?.geo_loc_name !== undefined) {
+        const geoLocIndex = ret.includes('latitude') ? ret.indexOf('latitude') + 1 : ret.length;
+        ret.splice(geoLocIndex, 0, 'annotations.geo_loc_name');
+      }
+
       return ret;
     });
 
