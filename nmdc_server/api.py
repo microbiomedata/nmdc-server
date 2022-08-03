@@ -552,3 +552,29 @@ async def submit_metadata(
     db.add(submission)
     db.commit()
     return submission
+
+
+@router.get(
+    "/users", responses=login_required_responses, response_model=query.UserResponse, tags=["user"]
+)
+async def get_users(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+    pagination: Pagination = Depends(),
+):
+    users = db.query(User)
+    return pagination.response(users)
+
+
+@router.post(
+    "/users/{id}", responses=login_required_responses, response_model=schemas.User, tags=["user"]
+)
+async def update_user(
+    id: UUID,
+    body: schemas.User,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(admin_required),
+):
+    if body.id != id:
+        raise HTTPException(status_code=400, detail="Invalid id")
+    return crud.update_user(db, body)

@@ -309,6 +309,13 @@ export interface BinResponse<T = string | number> {
   facets: number[];
 }
 
+export interface User{
+    id: string,
+    orcid: string;
+    name: string;
+    is_admin: boolean;
+}
+
 async function _search<T>(
   table: string,
   {
@@ -358,14 +365,14 @@ async function searchDataObject(params: SearchParams) {
 }
 
 export type ResultUnion = (
-  SearchResponse<BiosampleSearchResult>
-  | SearchResponse<OmicsProcessingResult>
-  | SearchResponse<StudySearchResults>
-  | SearchResponse<ReadsQCResult>
-  | SearchResponse<MetagenomeAssembyResult>
-  | SearchResponse<MetagenomeAnnotationResult>
-  | SearchResponse<MetaproteomicAnalysisResult>
-  | SearchResponse<DataObjectSearchResult>);
+    SearchResponse<BiosampleSearchResult>
+| SearchResponse<OmicsProcessingResult>
+| SearchResponse<StudySearchResults>
+| SearchResponse<ReadsQCResult>
+| SearchResponse<MetagenomeAssembyResult>
+| SearchResponse<MetagenomeAnnotationResult>
+| SearchResponse<MetaproteomicAnalysisResult>
+| SearchResponse<DataObjectSearchResult>);
 
 async function search(type: entityType, params: SearchParams) {
   let results: ResultUnion;
@@ -586,6 +593,21 @@ async function me(): Promise<string> {
   return data;
 }
 
+async function getAllUsers(params: SearchParams) {
+  const { data } = await client.get<SearchResponse<User>>('users', {
+    params: {
+      limit: params.limit,
+      offset: params.offset,
+    },
+  });
+  return data;
+}
+
+async function updateUser(id: string, body: User) {
+  const { data } = await client.post<User>(`users/${id}`, body);
+  return data;
+}
+
 const api = {
   createBulkDownload,
   getBinnedFacet,
@@ -611,6 +633,8 @@ const api = {
   search,
   keggSearch,
   textSearch,
+  getAllUsers,
+  updateUser,
 };
 
 export {

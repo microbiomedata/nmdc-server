@@ -2,12 +2,12 @@
 import { defineComponent, PropType } from '@vue/composition-api';
 import { getField } from '@/encoding';
 import { fieldDisplayName, valueDisplayName } from '@/util';
-import { BaseSearchResult } from '@/data/api';
+import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 
 export default defineComponent({
   props: {
     item: {
-      type: Object as PropType<BaseSearchResult>,
+      type: Object as PropType<BaseSearchResult | BiosampleSearchResult>,
       required: true,
     },
     field: {
@@ -29,6 +29,22 @@ export default defineComponent({
   },
 
   setup(props) {
+    function getValue(field: string) {
+      if (field === 'geo_loc_name') {
+        return props.item.annotations.geo_loc_name;
+      }
+      if (
+        field === 'env_broad_scale'
+          || field === 'env_local_scale'
+          || field === 'env_medium'
+      ) {
+        const item = props.item as BiosampleSearchResult;
+        const env = item[field];
+        return `${env.label} (${env.id})`;
+      }
+      return valueDisplayName(field, props.item[field]);
+    }
+
     function href(field: string) {
       if (field.startsWith('open_in_')) {
         return props.item[field];
@@ -41,10 +57,10 @@ export default defineComponent({
     }
 
     return {
-      href,
       getField,
       fieldDisplayName,
-      valueDisplayName,
+      getValue,
+      href,
     };
   },
 });
@@ -104,7 +120,7 @@ export default defineComponent({
       <v-list-item-subtitle
         style="white-space: initial;"
       >
-        {{ valueDisplayName(field, item[field]) }}
+        {{ getValue(field) }}
       </v-list-item-subtitle>
     </v-list-item-content>
   </v-list-item>
