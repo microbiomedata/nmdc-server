@@ -516,7 +516,7 @@ export default defineComponent({
 
 <style lang="scss">
 .harmonizer-container {
-  height: calc(100vh - 280px) !important;
+  height: calc(100vh - 322px) !important;
 }
 
 .spreadsheet-input {
@@ -548,7 +548,7 @@ export default defineComponent({
 /* Grid */
 #harmonizer-root {
   overflow: hidden;
-  height: calc(100vh - 300px) !important;
+  height: calc(100vh - 340px) !important;
   margin-top: 8px;
 
   .secondary-header-cell:hover {
@@ -602,5 +602,6 @@ export default defineComponent({
 
 #harmonizer-footer-root {
   width: 50%;
+  padding: 12px 0;
 }
 </style>
