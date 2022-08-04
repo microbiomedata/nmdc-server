@@ -239,4 +239,9 @@ export class HarmonizerApi {
     this.refreshState();
     return Object.keys(this.validationErrors).length === 0;
   }
+
+  addChangeHook(callback: Function) {
+    // calls function on any change of the data
+    this.dh.hot.addHook('afterChange', callback);
+  }
 }

@@ -51,6 +51,11 @@ export default defineComponent({
         await harmonizerApi.init(r, templateChoice.value);
         await nextTick();
         harmonizerApi.loadData(sampleData.value.slice(2));
+        harmonizerApi.addChangeHook(() => {
+          const data = harmonizerApi.exportJson();
+          sampleData.value = data;
+          incrementalSaveRecord(root.$route.params.id);
+        });
       }
     });
 
