@@ -7,6 +7,7 @@ from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from starlette.middleware.sessions import SessionMiddleware
 
 from nmdc_server import __version__, api, auth, errors
+from nmdc_server.auth_middleware import AuthMiddleware
 from nmdc_server.config import settings
 
 
@@ -31,6 +32,6 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
     errors.attach_error_handlers(app)
     app.include_router(api.router, prefix="/api")
     app.include_router(auth.router, prefix="")
+    app.add_middleware(AuthMiddleware, secret_key=settings.secret_key)
     app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
-
     return app
