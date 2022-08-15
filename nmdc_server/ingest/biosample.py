@@ -90,6 +90,7 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         obj.get("alternative_identifiers", []),
     )
     biosample.alternate_identifiers += obj.get("INSDC_biosample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("INSDC_secondary_sample_identifiers", [])
     biosample.alternate_identifiers += obj.get("GOLD_sample_identifiers", [])
 
     db.add(models.Biosample(**biosample.dict()))
