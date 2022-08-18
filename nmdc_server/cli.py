@@ -67,7 +67,7 @@ def ingest(verbose, function_limit, skip_annotation):
     logger = get_logger(__name__)
     logging.basicConfig(level=level, format="%(message)s")
     logger.setLevel(logging.INFO)
-
+    jobs.migrate(ingest_db=True)
     with SessionLocalIngest() as ingest_db:
         load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
         if settings.current_db_uri != settings.ingest_database_uri:
