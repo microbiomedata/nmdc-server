@@ -1,6 +1,7 @@
 <script>
 import Vue from 'vue';
 import moment from 'moment';
+import * as chrono from 'chrono-node';
 
 export default Vue.extend({
   props: {
@@ -13,21 +14,29 @@ export default Vue.extend({
   data() {
     return {
       menu: false,
+      textFieldRules: [(v) => chrono.parse(v).length === 1 || 'Invalid date'],
+      textFieldDate: moment(this.value).format('MMM Do, YYYY'),
     };
   },
 
   computed: {
-    formattedDate() {
-      return moment(this.value).format('MMM Do, YYYY');
-    },
     isoDate() {
       return moment(this.value).format('YYYY-MM-DD');
     },
   },
 
   methods: {
-    update(event) {
-      this.$emit('input', moment(event).format('YYYY-MM-DDT00:00:00.000'));
+    updateFromTextField(event) {
+      const parsed = chrono.parse(event);
+      if (parsed.length === 1) {
+        const parse = parsed[0];
+        this.$emit('input', parse.date().toISOString());
+      }
+    },
+    updateFromDatePicker(event) {
+      const date = moment(event);
+      this.textFieldDate = date.format('MMM Do, YYYY');
+      this.$emit('input', date.format('YYYY-MM-DDT00:00:00.000'));
     },
   },
 });
@@ -40,24 +49,26 @@ export default Vue.extend({
     :close-on-content-click="false"
     :return-value="value"
     transition="scale-transition"
+    offset-x
     offset-y
     min-width="290px"
   >
     <template #activator="{ on, attrs }">
       <v-text-field
-        :value="formattedDate"
+        v-model="textFieldDate"
+        :rules="textFieldRules"
         label="Choose"
         prepend-icon="mdi-calendar"
-        readonly
         v-bind="attrs"
         v-on="on"
+        @input="updateFromTextField"
       />
     </template>
     <v-date-picker
       :value="isoDate"
       no-title
       scrollable
-      @input="update"
+      @input="updateFromDatePicker"
     >
       <v-spacer />
       <v-btn
