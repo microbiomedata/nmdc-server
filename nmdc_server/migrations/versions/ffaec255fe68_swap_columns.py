@@ -35,13 +35,13 @@ def upgrade():
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
         new_rows = []
-        for row in metadata_submission["sampleData"]:
+        for row in metadata_submission["sampleData"]:  # type: ignore
             uid = row[0]
             name = row[1]
             row[0] = name
             row[1] = uid
             new_rows.append(row)
-        metadata_submission["sampleData"] = new_rows
+        metadata_submission["sampleData"] = new_rows  # type: ignore
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
     session.bulk_update_mappings(SubmissionMetadata, mappings)
     session.commit()
@@ -53,13 +53,13 @@ def downgrade():
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
         new_rows = []
-        for row in metadata_submission["sampleData"]:
+        for row in metadata_submission["sampleData"]:  # type: ignore
             name = row[0]
             uid = row[1]
             row[0] = uid
             row[1] = name
             new_rows.append(row)
-        metadata_submission["sampleData"] = new_rows
+        metadata_submission["sampleData"] = new_rows  # type: ignore
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
     session.bulk_update_mappings(SubmissionMetadata, mappings)
     session.commit()
