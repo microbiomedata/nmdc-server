@@ -15,7 +15,7 @@ export default Vue.extend({
     return {
       menu: false,
       textFieldRules: [(v) => chrono.parse(v).length === 1 || 'Invalid date'],
-      textFieldDate: moment(this.value).format('MMM Do, YYYY'),
+      textFieldDate: moment(this.value).format('MMM D, YYYY'),
     };
   },
 
@@ -35,7 +35,7 @@ export default Vue.extend({
     },
     updateFromDatePicker(event) {
       const date = moment(event);
-      this.textFieldDate = date.format('MMM Do, YYYY');
+      this.textFieldDate = date.format('MMM D, YYYY');
       this.$emit('input', date.format('YYYY-MM-DDT00:00:00.000'));
     },
   },
