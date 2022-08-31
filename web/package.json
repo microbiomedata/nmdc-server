@@ -31,7 +31,7 @@
     "leaflet.markercluster": "^1.5.3",
     "lodash": "^4.17.21",
     "moment": "^2.29.2",
-    "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v5.0.3",
+    "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v6.0.4",
     "protobufjs": "^6.11.3",
     "serialize-javascript": "^6.0.0",
     "sheets_and_friends": "https://github.com/microbiomedata/sheets_and_friends",
