@@ -7416,9 +7416,9 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v5.0.3":
+"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v6.0.4":
   version "0.0.0"
-  resolved "https://github.com/microbiomedata/nmdc-schema#614426f4c8d772460adaa643c97713ae75e15bdf"
+  resolved "https://github.com/microbiomedata/nmdc-schema#e9b7da691079989a7e72ecc350f59058c6787557"
 
 no-case@^2.2.0:
   version "2.3.2"
@@ -9253,7 +9253,7 @@ shebang-regex@^3.0.0:
 
 "sheets_and_friends@https://github.com/microbiomedata/sheets_and_friends":
   version "0.0.0"
-  resolved "https://github.com/microbiomedata/sheets_and_friends#5173ebd84b5ef2ab855d9497d7b7e1edee50090d"
+  resolved "https://github.com/microbiomedata/sheets_and_friends#90be10ff63cc8363bff6260e3eec9c2410be9329"
 
 shell-quote@^1.6.1:
   version "1.7.3"
