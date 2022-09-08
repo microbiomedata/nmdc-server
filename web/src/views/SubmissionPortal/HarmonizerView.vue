@@ -12,6 +12,7 @@ import { HarmonizerApi } from './harmonizerApi';
 import {
   packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
 } from './store';
+import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
 const ColorKey = {
@@ -34,7 +35,7 @@ const ColorKey = {
 };
 
 export default defineComponent({
-  components: { SubmissionStepper },
+  components: { FindReplace, SubmissionStepper },
 
   setup(_, { root }) {
     const harmonizerElement = ref();
@@ -413,6 +414,11 @@ export default defineComponent({
           width="300"
           style="font-size: 14px;"
         >
+          <FindReplace
+            :harmonizer-api="harmonizerApi"
+            style="max-width: 385px;"
+            class="ml-2"
+          />
           <div
             v-if="selectedHelpDict"
             class="mx-2"
