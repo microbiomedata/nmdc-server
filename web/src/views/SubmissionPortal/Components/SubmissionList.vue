@@ -1,9 +1,12 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import {
+  defineComponent, ref, watch,
+} from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
+import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  pastSubmissions, populateList, loadRecord, generateRecord,
+  loadRecord, generateRecord,
 } from '../store';
 import * as api from '../store/api';
 
@@ -11,29 +14,44 @@ const headers: DataTableHeader[] = [
   {
     text: 'Study Name',
     value: 'metadata_submission.studyForm.studyName',
+    sortable: false,
   },
   {
-    text: 'PI Name',
-    value: 'metadata_submission.studyForm.piName',
+    text: 'Author',
+    value: 'author.name',
+    sortable: false,
   },
   {
     text: 'Template',
     value: 'metadata_submission.template',
+    sortable: false,
   },
   {
     text: 'Status',
     value: 'status',
+    sortable: false,
+  },
+  {
+    text: 'Created',
+    value: 'created',
+    sortable: false,
   },
   {
     text: '',
     value: 'action',
     align: 'end',
+    sortable: false,
   },
 ];
 
 export default defineComponent({
   setup() {
     const router = useRouter();
+    const itemsPerPage = 10;
+    const options = ref({
+      page: 1,
+      itemsPerPage,
+    });
 
     function getStatus(item: api.MetadataSubmissionRecord) {
       if (item.status === 'complete') {
@@ -58,14 +76,16 @@ export default defineComponent({
       router?.push({ name: 'Study Form', params: { id: item.id } });
     }
 
-    populateList();
+    const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
+    watch(options, () => submission.setPage(options.value.page), { deep: true });
 
     return {
       createNewSubmission,
       getStatus,
       resume,
       headers,
-      pastSubmissions,
+      options,
+      submission,
     };
   },
 });
@@ -97,8 +117,25 @@ export default defineComponent({
     <v-card outlined>
       <v-data-table
         :headers="headers"
-        :items="pastSubmissions"
+        :items="submission.data.results.results"
+        :server-items-length="submission.data.results.count"
+        :options.sync="options"
+        :loading="submission.loading.value"
+        :items-per-page.sync="submission.data.limit"
+        :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
       >
+        <template #[`item.author.name`]="{ item }">
+          <a
+            :href="`https://orcid.org/${item.author.orcid}`"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            {{ item.author.name || item.author.orcid }}
+          </a>
+        </template>
+        <template #[`item.created`]="{ item }">
+          {{ new Date(item.created).toLocaleString() }}
+        </template>
         <template #[`item.status`]="{ item }">
           <v-chip
             :color="getStatus(item).color"

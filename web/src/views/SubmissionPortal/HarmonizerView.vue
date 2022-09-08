@@ -44,7 +44,7 @@ export default defineComponent({
     const highlightedValidationError = ref(0);
     const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
-    const sideBarOpenOverride = ref(false);
+    const sidebarOpen = ref(true);
 
     onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
@@ -52,6 +52,11 @@ export default defineComponent({
         await harmonizerApi.init(r, templateChoice.value);
         await nextTick();
         harmonizerApi.loadData(sampleData.value.slice(2));
+        harmonizerApi.addChangeHook(() => {
+          const data = harmonizerApi.exportJson();
+          sampleData.value = data;
+          incrementalSaveRecord(root.$route.params.id);
+        });
       }
     });
 
@@ -76,7 +81,7 @@ export default defineComponent({
       const data = harmonizerApi.exportJson();
       sampleData.value = data;
       samplesValid.value = await harmonizerApi.validate();
-      sideBarOpenOverride.value = !samplesValid.value;
+      sidebarOpen.value = !samplesValid.value;
       incrementalSaveRecord(root.$route.params.id);
       if (samplesValid.value === false) {
         errorClick(0);
@@ -134,8 +139,6 @@ export default defineComponent({
       document.getElementById('tsv-file-select')?.click();
     }
 
-    const sidebarOpen = computed(() => harmonizerApi.validationErrorGroups.value.length && sideBarOpenOverride.value);
-
     return {
       ColorKey,
       columnVisibility,
@@ -151,7 +154,6 @@ export default defineComponent({
       fields,
       highlightedValidationError,
       sidebarOpen,
-      sideBarOpenOverride,
       validationItems,
       validationActiveCategory,
       /* methods */
@@ -277,7 +279,8 @@ export default defineComponent({
           outlined
           dense
           hide-details
-          :menu-props="{ maxHeight: 600 }"
+          offset-y
+          :menu-props="{ maxHeight: 500 }"
           @focus="focus"
           @change="jumpTo"
         >
@@ -315,6 +318,7 @@ export default defineComponent({
           </template>
           <v-card
             class="py-1 px-2"
+            width="280"
             outlined
           >
             <v-radio-group
@@ -391,59 +395,72 @@ export default defineComponent({
           'width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
         }"
       />
-      <v-navigation-drawer
-        :value="sidebarOpen"
-        right
-        width="300"
-        style="overflow-x: auto; font-size: 14px;"
-      >
-        <div
-          v-if="selectedHelpDict"
-          class="mx-2"
+      <div style="overflow-x: auto; font-size: 14px;">
+        <v-btn
+          class="sidebar-toggle"
+          small
+          outlined
+          tile
+          @click="sidebarOpen = !sidebarOpen"
         >
-          <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
-            Column Help
-            <v-spacer />
-            <v-btn
-              icon
-              @click="sideBarOpenOverride = false"
+          <v-icon
+            v-if="sidebarOpen"
+            class="sidebar-toggle-close"
+          >
+            mdi-menu-open
+          </v-icon>
+          <v-icon v-else>
+            mdi-menu-open
+          </v-icon>
+        </v-btn>
+        <v-navigation-drawer
+          :value="sidebarOpen"
+          right
+          width="300"
+          style="font-size: 14px;"
+        >
+          <div
+            v-if="selectedHelpDict"
+            class="mx-2"
+          >
+            <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
+              Column Help
+              <v-spacer />
+            </div>
+            <div class="my-2">
+              <span class="font-weight-bold pr-2">Column:</span>
+              <span v-html="selectedHelpDict.title" />
+            </div>
+            <div class="my-2">
+              <span class="font-weight-bold pr-2">Description:</span>
+              <span v-html="urlify(selectedHelpDict.description)" />
+            </div>
+            <div class="my-2">
+              <span class="font-weight-bold pr-2">Guidance:</span>
+              <span v-html="urlify(selectedHelpDict.guidance)" />
+            </div>
+            <div
+              v-if="selectedHelpDict.examples"
+              class="my-2"
             >
-              <v-icon>mdi-close</v-icon>
+              <span class="font-weight-bold pr-2">Examples:</span>
+              <span v-html="urlify(selectedHelpDict.examples)" />
+            </div>
+            <v-btn
+              color="grey"
+              outlined
+              small
+              block
+              @click="harmonizerApi.launchReference()"
+            >
+              Full {{ packageName }} Reference
+              <v-icon class="pl-1">
+                mdi-open-in-new
+              </v-icon>
             </v-btn>
           </div>
-          <div class="my-2">
-            <span class="font-weight-bold pr-2">Column:</span>
-            <span v-html="selectedHelpDict.title" />
-          </div>
-          <div class="my-2">
-            <span class="font-weight-bold pr-2">Description:</span>
-            <span v-html="urlify(selectedHelpDict.description)" />
-          </div>
-          <div class="my-2">
-            <span class="font-weight-bold pr-2">Guidance:</span>
-            <span v-html="urlify(selectedHelpDict.guidance)" />
-          </div>
-          <div
-            v-if="selectedHelpDict.examples"
-            class="my-2"
-          >
-            <span class="font-weight-bold pr-2">Examples:</span>
-            <span v-html="urlify(selectedHelpDict.examples)" />
-          </div>
-          <v-btn
-            color="grey"
-            outlined
-            small
-            block
-            @click="harmonizerApi.launchReference()"
-          >
-            Full {{ packageName }} Reference
-            <v-icon class="pl-1">
-              mdi-open-in-new
-            </v-icon>
-          </v-btn>
-        </div>
-      </v-navigation-drawer>
+        </v-navigation-drawer>
+      </div>
     </div>
     <div class="d-flex shrink ma-2">
       <v-btn
@@ -501,6 +518,16 @@ export default defineComponent({
 </template>
 
 <style lang="scss">
+/*
+  https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples
+  Prevent back button overscrolling
+  Chrome-only
+*/
+html {
+  margin: 0;
+  overscroll-behavior: none;
+}
+
 .harmonizer-container {
   height: calc(100vh - 260px) !important;
 }
@@ -610,4 +637,19 @@ export default defineComponent({
 #field-mapping tr td , #field-mapping tr th {
   padding: 3px;
 }
+
+.sidebar-toggle {
+  margin-top: -1px;
+  margin-left: -50px;
+  background: white;
+  z-index: 500;
+  position: absolute;
+  border-color:rgb(152, 152, 152);
+  border-right-color: rgba(152, 152, 152, 0.0);
+}
+
+.sidebar-toggle-close {
+  transform: rotate(180deg);
+}
+
 </style>

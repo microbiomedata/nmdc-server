@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
 
-from nmdc_server import crud, jobs, models, query, schemas
+from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import (
     admin_required,
     get_current_user,
@@ -495,7 +495,7 @@ async def list_submissions(
     "/metadata_submission/{id}",
     tags=["metadata_submission"],
     responses=login_required_responses,
-    response_model=schemas.SubmissionMetadataSchema,
+    response_model=schemas_submission.SubmissionMetadataSchema,
 )
 async def get_submission(
     id: str,
@@ -514,11 +514,11 @@ async def get_submission(
     "/metadata_submission/{id}",
     tags=["metadata_submission"],
     responses=login_required_responses,
-    response_model=schemas.SubmissionMetadataSchema,
+    response_model=schemas_submission.SubmissionMetadataSchema,
 )
 async def update_submission(
     id: str,
-    body: schemas.SubmissionMetadataSchemaCreate,
+    body: schemas_submission.SubmissionMetadataSchemaCreate,
     db: Session = Depends(get_db),
     user: models.User = Depends(login_required),
 ):
@@ -539,11 +539,11 @@ async def update_submission(
     "/metadata_submission",
     tags=["metadata_submission"],
     responses=login_required_responses,
-    response_model=schemas.SubmissionMetadataSchema,
+    response_model=schemas_submission.SubmissionMetadataSchema,
     status_code=201,
 )
 async def submit_metadata(
-    body: schemas.SubmissionMetadataSchemaCreate,
+    body: schemas_submission.SubmissionMetadataSchemaCreate,
     db: Session = Depends(get_db),
     user: models.User = Depends(login_required),
 ):
@@ -552,3 +552,29 @@ async def submit_metadata(
     db.add(submission)
     db.commit()
     return submission
+
+
+@router.get(
+    "/users", responses=login_required_responses, response_model=query.UserResponse, tags=["user"]
+)
+async def get_users(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+    pagination: Pagination = Depends(),
+):
+    users = db.query(User)
+    return pagination.response(users)
+
+
+@router.post(
+    "/users/{id}", responses=login_required_responses, response_model=schemas.User, tags=["user"]
+)
+async def update_user(
+    id: UUID,
+    body: schemas.User,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(admin_required),
+):
+    if body.id != id:
+        raise HTTPException(status_code=400, detail="Invalid id")
+    return crud.update_user(db, body)

@@ -2,7 +2,7 @@
 import { computed, defineComponent, PropType } from '@vue/composition-api';
 import { isObject } from 'lodash';
 
-import { BaseSearchResult } from '@/data/api';
+import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
 import AttributeItem from './AttributeItem.vue';
 
@@ -15,20 +15,42 @@ export default defineComponent({
       default: '',
     },
     item: {
-      type: Object as PropType<BaseSearchResult>,
+      type: Object as PropType<BaseSearchResult | BiosampleSearchResult>,
       required: true,
     },
   },
 
   setup(props) {
     const displayFields = computed(() => {
+      const skipFields = new Set([
+        'name',
+        'description',
+        'env_broad_scale_id',
+        'env_local_scale_id',
+        'env_medium_id',
+      ]);
+      const includeFields = new Set([
+        'env_broad_scale',
+        'env_local_scale',
+        'env_medium',
+      ]);
       const ret = Object.keys(props.item).filter((field) => {
-        const value = props.item[field];
-        if (['name', 'description'].includes(field)) {
+        if (skipFields.has(field)) {
           return false;
         }
+        if (includeFields.has(field)) {
+          return true;
+        }
+        const value = props.item[field];
         return !isObject(value) && value && (!getField(field) || !getField(field).hideAttr);
       });
+
+      // add geo_loc_name to after lat/lon
+      if (props.item?.annotations?.geo_loc_name !== undefined) {
+        const geoLocIndex = ret.includes('latitude') ? ret.indexOf('latitude') + 1 : ret.length;
+        ret.splice(geoLocIndex, 0, 'geo_loc_name');
+      }
+
       return ret;
     });
 

@@ -24,9 +24,13 @@ class Biosample(BiosampleCreate):
     @root_validator(pre=True)
     def extract_extras(cls, values):
         if "lat_lon" in values:
-            lat, lon = values.pop("lat_lon")["has_raw_value"].split(" ")
-            values["latitude"] = float(lat)
-            values["longitude"] = float(lon)
+            if "latitude" in values["lat_lon"] and "longitude" in values["lat_lon"]:
+                values["latitude"] = values["lat_lon"]["latitude"]
+                values["longitude"] = values["lat_lon"]["longitude"]
+            else:
+                lat, lon = values.pop("lat_lon")["has_raw_value"].split(" ")
+                values["latitude"] = float(lat)
+                values["longitude"] = float(lon)
 
         return extract_extras(cls, values)
 
@@ -86,6 +90,7 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         obj.get("alternative_identifiers", []),
     )
     biosample.alternate_identifiers += obj.get("INSDC_biosample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("INSDC_secondary_sample_identifiers", [])
     biosample.alternate_identifiers += obj.get("GOLD_sample_identifiers", [])
 
     db.add(models.Biosample(**biosample.dict()))

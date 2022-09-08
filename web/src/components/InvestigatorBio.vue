@@ -36,8 +36,13 @@ export default defineComponent({
       class="shrink"
       offset="1"
     >
-      <v-avatar :size="200">
-        <v-img :src="item.principal_investigator_image_url" />
+      <v-avatar
+        :size="200"
+      >
+        <v-img
+          :src="item.principal_investigator_image_url"
+          :contain="item.id === 'gold:Gs0110119'"
+        />
       </v-avatar>
     </v-col>
     <v-col class="grow mx-2">

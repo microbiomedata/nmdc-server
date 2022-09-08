@@ -2,7 +2,6 @@ import typing
 
 import sentry_sdk
 from fastapi import FastAPI
-from sentry_sdk.integrations.asgi import SentryAsgiMiddleware
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -18,7 +17,6 @@ def attach_sentry(app: FastAPI):
         dsn=settings.sentry_dsn,
         integrations=[SqlalchemyIntegration()],
     )
-    app.add_middleware(SentryAsgiMiddleware)
 
 
 def create_app(env: typing.Mapping[str, str]) -> FastAPI:

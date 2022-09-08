@@ -9,7 +9,6 @@ import { getVariant, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
-const pastSubmissions: Ref<api.MetadataSubmissionRecord[]> = ref([]);
 const hasChanged = ref(0);
 /**
  * Study Form Step
@@ -70,7 +69,8 @@ const templateChoice = computed(() => {
  */
 const sampleData = shallowRef([] as any[][]);
 const samplesValid = ref(false);
-const templateChoiceDisabled = computed(() => sampleData.value.length >= 1);
+// row 1 and 2 are headers
+const templateChoiceDisabled = computed(() => sampleData.value.length >= 3);
 
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
@@ -85,11 +85,6 @@ const submitPayload = computed(() => {
   const value = JSON.stringify(payloadObject.value, null, 2);
   return value;
 });
-
-async function populateList() {
-  const val = await api.listRecords();
-  pastSubmissions.value = val.results;
-}
 
 function submit(id: string) {
   return api.updateRecord(id, payloadObject.value, 'complete');
@@ -139,7 +134,6 @@ export {
   multiOmicsForm,
   multiOmicsAssociations,
   multiOmicsFormValid,
-  pastSubmissions,
   sampleData,
   samplesValid,
   studyForm,
@@ -152,6 +146,5 @@ export {
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
-  populateList,
   submit,
 };

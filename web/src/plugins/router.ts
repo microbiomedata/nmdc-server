@@ -15,6 +15,8 @@ import HarmonizerView from '@/views/SubmissionPortal/HarmonizerView.vue';
 import ValidateSubmit from '@/views/SubmissionPortal/Components/ValidateSubmit.vue';
 import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
 
+import UserPage from '@/views/User/UserPage.vue';
+
 import { parseQuery, stringifyQuery } from './utils';
 
 Vue.use(VueRouter);
@@ -87,6 +89,11 @@ export default new VueRouter({
           path: ':id/samples',
         },
       ],
+    },
+    {
+      path: '/users',
+      name: 'Users',
+      component: UserPage,
     },
   ],
   parseQuery,

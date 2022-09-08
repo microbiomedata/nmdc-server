@@ -4,7 +4,7 @@ import {
 import { debounce, has } from 'lodash';
 import hot from 'handsontable';
 import xlsx from 'xlsx';
-import HarmonizerTemplateText from 'sheets_and_friends/docs/linkml.html';
+import HarmonizerTemplateText from 'sheets_and_friends/docs/main.html';
 
 const VariationMap = {
   /** A mapping of the templates to the superset of checkbox options they work for. */
@@ -12,6 +12,9 @@ const VariationMap = {
   jgi_mg: new Set(['mg-jgi']),
   emsl_jgi_mg: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi']),
 };
+// Variations should be in matching order.
+// In other words, attempt to match 'emsl' before 'emsl_jgi_mg'
+const allVariations: (keyof typeof VariationMap)[] = ['emsl', 'jgi_mg', 'emsl_jgi_mg'];
 
 export function getVariant(checkBoxes: string[], variations: (keyof typeof VariationMap)[], base: string) {
   if (checkBoxes.length === 0) {
@@ -36,7 +39,7 @@ export const HARMONIZER_TEMPLATES: Record<string, {
   variations: (keyof typeof VariationMap)[];
 }> = {
   air: { default: 'air', status: 'published', variations: [] },
-  bioscales: { default: 'bioscales', status: 'published', variations: [] },
+  // bioscales: { default: 'bioscales', status: 'published', variations: [] },
   'built environment': { default: 'built_env', status: 'published', variations: [] },
   'host-associated': { default: 'host-associated', status: 'published', variations: [] },
   'human-associated': { default: '', status: 'disabled', variations: [] },
@@ -63,7 +66,7 @@ export const HARMONIZER_TEMPLATES: Record<string, {
     default: 'sediment', status: 'published', variations: [],
   },
   soil: {
-    default: 'soil', status: 'published', variations: ['emsl', 'emsl_jgi_mg', 'jgi_mg'],
+    default: 'soil', status: 'published', variations: allVariations,
   },
   wastewater_sludge: {
     default: 'wastewater_sludge', status: 'published', variations: [],
@@ -121,6 +124,8 @@ export class HarmonizerApi {
 
     // eslint-disable-next-line no-new-object
     this.dh = new Object(DataHarmonizer);
+    // @ts-ignore
+    await DataHarmonizerConfig.applyNmdcFieldSettings(this.dh);
     // eslint-disable-next-line no-new-object
     this.toolbar = new Object(DataHarmonizerToolbar);
     await this.dh.init(myDHGrid, myDHFooter, TEMPLATES);
@@ -275,5 +280,10 @@ export class HarmonizerApi {
     this.dh.validate();
     this.refreshState();
     return Object.keys(this.validationErrors).length === 0;
+  }
+
+  addChangeHook(callback: Function) {
+    // calls function on any change of the data
+    this.dh.hot.addHook('afterChange', callback);
   }
 }
