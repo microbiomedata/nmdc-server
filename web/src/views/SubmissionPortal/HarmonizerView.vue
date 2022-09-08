@@ -378,11 +378,6 @@ export default defineComponent({
         </v-menu>
       </div>
     </div>
-    <FindReplace
-      :harmonizer-api="harmonizerApi"
-      style="max-width: 385px;"
-      class="ml-2"
-    />
     <div
       class="harmonizer-container d-flex flex-row"
       style="max-width: 100%;"
@@ -419,6 +414,11 @@ export default defineComponent({
           width="300"
           style="font-size: 14px;"
         >
+          <FindReplace
+            :harmonizer-api="harmonizerApi"
+            style="max-width: 385px;"
+            class="ml-2"
+          />
           <div
             v-if="selectedHelpDict"
             class="mx-2"
