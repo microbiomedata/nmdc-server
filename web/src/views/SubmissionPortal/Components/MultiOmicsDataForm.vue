@@ -137,7 +137,7 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metatranscriptome"
         value="mt-jgi"
-        disabled
+        :disabled="templateChoiceDisabled"
         hide-details
       />
       <v-checkbox
