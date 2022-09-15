@@ -133,7 +133,11 @@ export default defineComponent({
 
     watchEffect(() => {
       if (mapRef.value && mapCenter.value) {
-        mapRef.value.fitBounds(mapCenter.value, { padding: [20, 20] });
+        const fitBoundsOptions = {
+          padding: [20, 20],
+          maxZoom: 5,
+        };
+        mapRef.value.fitBounds(mapCenter.value, fitBoundsOptions);
         mapRef.value.mapObject.invalidateSize(false);
       }
     });
