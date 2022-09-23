@@ -3,6 +3,7 @@ import { defineComponent, watchEffect, ref } from '@vue/composition-api';
 import { select } from 'd3-selection';
 import { max } from 'd3-array';
 import { axisBottom } from 'd3-axis';
+import { brushX } from 'd3-brush';
 import { scaleLinear, scaleTime } from 'd3-scale';
 
 /**
@@ -116,6 +117,30 @@ export default defineComponent({
           .attr('font-size', '10px')
           .html((d) => d.length);
       }
+
+      let rightExtent = 0;
+      const dataRects = svg.selectAll('rect');
+      [...dataRects].forEach((rect) => {
+        const transform = rect.getAttribute('transform');
+        const dx = parseFloat(transform.substring(transform.indexOf('(') + 1, transform.lastIndexOf(')'))
+          .split(',')[0]);
+        const rectWidth = parseFloat(rect.getAttribute('width'));
+        rightExtent = Math.ceil(Math.max(rightExtent, dx + rectWidth));
+      });
+
+      // add the brush
+      const onBrushEnd = ({ selection }) => {
+        console.log('in onBrushEnd', selection);
+      };
+      const brush = brushX()
+        .extent([[0, 0], [rightExtent, props.height - margin.bottom + 0.5]])
+        .on('end', onBrushEnd);
+
+      const defaultSelection = [0, rightExtent];
+
+      const gb = svg.append('g')
+        .call(brush)
+        .call(brush.move, defaultSelection);
 
       // add the x Axis
       svg
