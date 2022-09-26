@@ -1,10 +1,16 @@
 <script>
-import { defineComponent, watchEffect, ref } from '@vue/composition-api';
+import {
+  defineComponent,
+  watchEffect,
+  ref,
+} from '@vue/composition-api';
 import { select } from 'd3-selection';
 import { max } from 'd3-array';
 import { axisBottom } from 'd3-axis';
 import { brushX } from 'd3-brush';
 import { scaleLinear, scaleTime } from 'd3-scale';
+
+// import { setUniqueCondition } from '@/store';
 
 /**
  * Time Histogram lifted from
@@ -34,7 +40,7 @@ export default defineComponent({
     },
   },
 
-  setup(props, { root }) {
+  setup(props, { root, emit }) {
     const svgRoot = ref(undefined);
     // set the dimensions and margins of the graph
     const margin = {
@@ -43,8 +49,10 @@ export default defineComponent({
       bottom: 30,
       left: 30,
     };
+    const drawn = ref(false);
 
     function makeHistogram(data, el) {
+      console.log('in makeHistogram');
       const width = props.width - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
 
@@ -129,16 +137,26 @@ export default defineComponent({
       });
 
       // add the brush
-      const onBrushEnd = ({ selection }) => {
-        console.log('in onBrushEnd', selection);
+      const onBrushEnd = (event) => {
+        console.log(event);
+        const { selection, sourceEvent } = event;
+        if (selection && sourceEvent) {
+          const start = x.invert(selection[0]);
+          const end = x.invert(selection[1]);
+          console.log(start, end);
+          console.log(x);
+          emit('onBrushEnd', [start, end]);
+        } else if (sourceEvent) {
+          emit('onBrushEnd', null);
+        }
       };
       const brush = brushX()
         .extent([[0, 0], [rightExtent, props.height - margin.bottom + 0.5]])
         .on('end', onBrushEnd);
 
-      const defaultSelection = [0, rightExtent];
+      const defaultSelection = x.range();
 
-      const gb = svg.append('g')
+      svg.append('g')
         .call(brush)
         .call(brush.move, defaultSelection);
 
@@ -152,12 +170,14 @@ export default defineComponent({
 
       // add the y Axis
       // svg.append('g').call(axisLeft(y));
+
+      drawn.value = true;
     }
 
     watchEffect(() => {
       const { data } = props;
       const el = svgRoot.value;
-      if (data.bins && data.facets) {
+      if (!drawn.value && data.bins && data.facets) {
         makeHistogram(data, el);
       }
     });
