@@ -106,6 +106,28 @@ export default Vue.extend({
         });
       }
     },
+    onBrushEnd(brushRange) {
+      console.log('In event handler onBrushEnd', brushRange);
+      if (brushRange || brushRange[0] !== this.min || brushRange[1] !== this.max) {
+        this.$emit('select', {
+          type: this.table,
+          conditions: [
+            ...this.otherConditions,
+            {
+              field: this.field,
+              op: 'between',
+              value: brushRange.map((d) => moment(d).format('YYYY-MM-DDT00:00:00.000')),
+              table: this.table,
+            },
+          ],
+        });
+      } else if (this.myConditions.length) {
+        this.$emit('select', {
+          type: this.table,
+          conditions: this.otherConditions,
+        });
+      }
+    },
   },
 });
 </script>
@@ -117,6 +139,7 @@ export default Vue.extend({
         <TimeHistogram
           ref="histogram"
           v-bind="{ width, height, data: facetSummary, range }"
+          @onBrushEnd="onBrushEnd"
         />
       </template>
       <template #below>
