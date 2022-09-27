@@ -10,8 +10,6 @@ import { axisBottom } from 'd3-axis';
 import { brushX } from 'd3-brush';
 import { scaleLinear, scaleTime } from 'd3-scale';
 
-// import { setUniqueCondition } from '@/store';
-
 /**
  * Time Histogram lifted from
  * https://bl.ocks.org/d3noob/96b74d0bd6d11427dd797892551a103c
@@ -34,10 +32,6 @@ export default defineComponent({
       type: Number,
       required: true,
     },
-    range: {
-      type: Array,
-      required: true,
-    },
   },
 
   setup(props, { root, emit }) {
@@ -55,6 +49,7 @@ export default defineComponent({
       console.log('in makeHistogram');
       const width = props.width - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
+      console.log('w', width, 'h', height);
 
       /**
        * Forge bins from this.data
@@ -73,11 +68,19 @@ export default defineComponent({
         return;
       }
 
+      const minTime = Date.parse(data.bins[0]);
+      const maxTime = Date.parse(data.bins[data.bins.length - 1]);
+      if (Number.isNaN(minTime) || Number.isNaN(maxTime)) {
+        return;
+      }
+      const range = [minTime, maxTime];
+      console.log('computed range', range);
       // set the ranges
       const x = scaleTime()
-        .domain(props.range)
+        .domain(range)
         .rangeRound([0, width]);
       const y = scaleLinear().range([height, 0]);
+      console.log('element', el);
 
       // Reset the SVG
       select(el).selectAll('g').remove();
@@ -97,11 +100,16 @@ export default defineComponent({
         max(bins, (d) => d.length),
       ]);
 
+      console.log('d3 info', bins, x, y);
+
       // append the bar rectangles to the svg element
+      console.log('svg', svg);
+      console.log('select all rect', svg.selectAll('rect'));
       const enterSelection = svg
         .selectAll('rect')
         .data(bins)
         .enter();
+      console.log('enter selection', enterSelection);
       enterSelection.append('rect')
         .attr('class', 'bar')
         .attr('x', 1)
@@ -113,6 +121,7 @@ export default defineComponent({
           return w - padding;
         })
         .attr('height', (d) => ((d.length > 0) ? (height - y(d.length) + 1) : 0));
+      console.log('select all rect 2', svg.selectAll('rect'));
 
       const domain = x.domain();
       const millisecondsPerYear = 3.154 * (10 ** 10);
@@ -126,34 +135,22 @@ export default defineComponent({
           .html((d) => d.length);
       }
 
-      let rightExtent = 0;
-      const dataRects = svg.selectAll('rect');
-      [...dataRects].forEach((rect) => {
-        const transform = rect.getAttribute('transform');
-        const dx = parseFloat(transform.substring(transform.indexOf('(') + 1, transform.lastIndexOf(')'))
-          .split(',')[0]);
-        const rectWidth = parseFloat(rect.getAttribute('width'));
-        rightExtent = Math.ceil(Math.max(rightExtent, dx + rectWidth));
-      });
-
       // add the brush
       const onBrushEnd = (event) => {
-        console.log(event);
+        // if start, end = extent, clear the query
+        // if start = end, clear the query
         const { selection, sourceEvent } = event;
         if (selection && sourceEvent) {
           const start = x.invert(selection[0]);
           const end = x.invert(selection[1]);
-          console.log(start, end);
-          console.log(x);
           emit('onBrushEnd', [start, end]);
         } else if (sourceEvent) {
           emit('onBrushEnd', null);
         }
       };
       const brush = brushX()
-        .extent([[0, 0], [rightExtent, props.height - margin.bottom + 0.5]])
+        .extent([[0, 0], [x.range()[1], props.height - margin.bottom + 0.5]])
         .on('end', onBrushEnd);
-
       const defaultSelection = x.range();
 
       svg.append('g')
