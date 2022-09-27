@@ -134,15 +134,16 @@ export default Vue.extend({
 
 <template>
   <div class="histogram">
-    <ChartContainer v-if="facetSummary && range !== null">
+    <ChartContainer>
+      <!-- v-if="facetSummaryUnconditional && range !== null">-->
       <template #default="{ width, height }">
         <TimeHistogram
           ref="histogram"
-          v-bind="{ width, height, data: facetSummary, range }"
+          v-bind="{ width, height, data: facetSummaryUnconditional }"
           @onBrushEnd="onBrushEnd"
         />
       </template>
-      <template #below>
+      <!--<template #below>
         <div class="mx-4">
           <v-range-slider
             v-model="range"
@@ -159,7 +160,7 @@ export default Vue.extend({
             <span>{{ moment(range[1]).format('MM/DD/YYYY') }}</span>
           </div>
         </div>
-      </template>
+      </template>-->
     </ChartContainer>
   </div>
 </template>
