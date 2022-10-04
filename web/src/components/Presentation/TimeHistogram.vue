@@ -32,6 +32,10 @@ export default defineComponent({
       type: Number,
       required: true,
     },
+    range: {
+      type: Array,
+      required: true,
+    },
   },
 
   setup(props, { root, emit }) {
@@ -45,11 +49,9 @@ export default defineComponent({
     };
     const drawn = ref(false);
 
-    function makeHistogram(data, el) {
-      console.log('in makeHistogram');
+    function makeHistogram(data, el, selectedRange) {
       const width = props.width - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
-      console.log('w', width, 'h', height);
 
       /**
        * Forge bins from this.data
@@ -74,13 +76,11 @@ export default defineComponent({
         return;
       }
       const range = [minTime, maxTime];
-      console.log('computed range', range);
       // set the ranges
       const x = scaleTime()
         .domain(range)
         .rangeRound([0, width]);
       const y = scaleLinear().range([height, 0]);
-      console.log('element', el);
 
       // Reset the SVG
       select(el).selectAll('g').remove();
@@ -100,16 +100,11 @@ export default defineComponent({
         max(bins, (d) => d.length),
       ]);
 
-      console.log('d3 info', bins, x, y);
-
       // append the bar rectangles to the svg element
-      console.log('svg', svg);
-      console.log('select all rect', svg.selectAll('rect'));
       const enterSelection = svg
         .selectAll('rect')
         .data(bins)
         .enter();
-      console.log('enter selection', enterSelection);
       enterSelection.append('rect')
         .attr('class', 'bar')
         .attr('x', 1)
@@ -121,7 +116,6 @@ export default defineComponent({
           return w - padding;
         })
         .attr('height', (d) => ((d.length > 0) ? (height - y(d.length) + 1) : 0));
-      console.log('select all rect 2', svg.selectAll('rect'));
 
       const domain = x.domain();
       const millisecondsPerYear = 3.154 * (10 ** 10);
@@ -151,11 +145,13 @@ export default defineComponent({
       const brush = brushX()
         .extent([[0, 0], [x.range()[1], props.height - margin.bottom + 0.5]])
         .on('end', onBrushEnd);
-      const defaultSelection = x.range();
 
-      svg.append('g')
-        .call(brush)
-        .call(brush.move, defaultSelection);
+      const bg = svg.append('g')
+        .call(brush);
+      if (selectedRange[0] > minTime || selectedRange[1] < maxTime) {
+        const defaultSelection = [x(selectedRange[0]), x(selectedRange[1])];
+        bg.call(brush.move, defaultSelection);
+      }
 
       // add the x Axis
       svg
@@ -172,10 +168,10 @@ export default defineComponent({
     }
 
     watchEffect(() => {
-      const { data } = props;
+      const { data, range } = props;
       const el = svgRoot.value;
-      if (!drawn.value && data.bins && data.facets) {
-        makeHistogram(data, el);
+      if (data.bins && data.facets) {
+        makeHistogram(data, el, range);
       }
     });
 
