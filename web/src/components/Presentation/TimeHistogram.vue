@@ -143,7 +143,7 @@ export default defineComponent({
         }
       };
       const brush = brushX()
-        .extent([[0, 0], [x.range()[1], props.height - margin.bottom + 0.5]])
+        .extent([[0, 0], [x.range()[1], props.height - (margin.bottom + 19)]])
         .on('end', onBrushEnd);
 
       const bg = svg.append('g')
