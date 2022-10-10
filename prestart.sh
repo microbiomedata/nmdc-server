@@ -1,4 +1,6 @@
 #!/bin/sh
+set -e
+
 export PGUSER PGPASSWORD PGDATABASE PGHOST POSTGRES_URI
 
 while ! PGDATABASE=postgres psql --quiet -c "select * from user" ; do
@@ -8,6 +10,8 @@ done
 echo 'Creating and migrating database'
 # in spin the database already exists
 PGDATABASE=postgres psql -c "create database nmdc_a;" || true
+
+
 PGDATABASE=postgres psql -c "create database nmdc_b;" || true
 
 nmdc-server migrate

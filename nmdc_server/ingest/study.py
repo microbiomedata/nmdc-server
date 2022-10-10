@@ -41,7 +41,10 @@ class Study(StudyCreate):
 def load(db: Session, cursor: Cursor):
     for obj in cursor:
         pi_obj = obj.pop("principal_investigator")
-        pi_name = pi_obj["has_raw_value"]
+        if "name" in pi_obj:
+            pi_name = pi_obj["name"]
+        else:
+            pi_name = pi_obj["has_raw_value"]
         pi_url = pi_obj.get("profile_image_url")
         pi_orcid = pi_obj.get("orcid")
         obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url, pi_orcid)

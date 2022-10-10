@@ -3313,6 +3313,13 @@ chrome-trace-event@^1.0.2:
   resolved "https://registry.yarnpkg.com/chrome-trace-event/-/chrome-trace-event-1.0.3.tgz#1015eced4741e15d06664a957dbbf50d041e26ac"
   integrity sha512-p3KULyQg4S7NIHixdwbGX+nFHkoBiA4YQmyWtjb8XngSKV124nJmRysgAeujbUVb15vh+RvFUfCPqU7rXk+hZg==
 
+chrono-node@^2.4.1:
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/chrono-node/-/chrono-node-2.4.1.tgz#ba86142a543cc27c0c531f2acbc1c23e3358bafe"
+  integrity sha512-23lqpMF2i0lr6dAVpVyYmvVGgX/EtkHBEIgFUd6LQiP7CHLzYeROYvl5X59ZBK73KAV+FGPo4rQv0Fym8CIktw==
+  dependencies:
+    dayjs "^1.10.0"
+
 ci-info@^1.5.0:
   version "1.6.0"
   resolved "https://registry.yarnpkg.com/ci-info/-/ci-info-1.6.0.tgz#2ca20dbb9ceb32d4524a683303313f0304b1e497"
@@ -4284,6 +4291,11 @@ date-fns@^2.28.0:
   version "2.29.1"
   resolved "https://registry.yarnpkg.com/date-fns/-/date-fns-2.29.1.tgz#9667c2615525e552b5135a3116b95b1961456e60"
   integrity sha512-dlLD5rKaKxpFdnjrs+5azHDFOPEu4ANy/LTh04A1DTzMM7qoajmKCBc8pkKRFT41CNzw+4gQh79X5C+Jq27HAw==
+
+dayjs@^1.10.0:
+  version "1.11.5"
+  resolved "https://registry.yarnpkg.com/dayjs/-/dayjs-1.11.5.tgz#00e8cc627f231f9499c19b38af49f56dc0ac5e93"
+  integrity sha512-CAdX5Q3YW3Gclyo5Vpqkgpj8fSdLQcRuzfX6mC6Phy0nfJ0eGYOeS7m4mt2plDWLAtA4TqTakvbboHvUxfe4iA==
 
 de-indent@^1.0.2:
   version "1.0.2"
@@ -7538,9 +7550,9 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v5.0.3":
+"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v6.0.4":
   version "0.0.0"
-  resolved "https://github.com/microbiomedata/nmdc-schema#614426f4c8d772460adaa643c97713ae75e15bdf"
+  resolved "https://github.com/microbiomedata/nmdc-schema#e9b7da691079989a7e72ecc350f59058c6787557"
 
 no-case@^2.2.0:
   version "2.3.2"

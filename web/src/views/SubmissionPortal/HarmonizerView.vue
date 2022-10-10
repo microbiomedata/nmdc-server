@@ -11,6 +11,7 @@ import { HarmonizerApi } from './harmonizerApi';
 import {
   packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
 } from './store';
+import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 
 const ColorKey = {
@@ -33,7 +34,7 @@ const ColorKey = {
 };
 
 export default defineComponent({
-  components: { SubmissionStepper },
+  components: { FindReplace, SubmissionStepper },
 
   setup(_, { root }) {
     const harmonizerElement = ref();
@@ -42,7 +43,7 @@ export default defineComponent({
     const highlightedValidationError = ref(0);
     const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
-    const sideBarOpenOverride = ref(false);
+    const sidebarOpen = ref(true);
 
     onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
@@ -50,6 +51,11 @@ export default defineComponent({
         await harmonizerApi.init(r, templateChoice.value);
         await nextTick();
         harmonizerApi.loadData(sampleData.value.slice(2));
+        harmonizerApi.addChangeHook(() => {
+          const data = harmonizerApi.exportJson();
+          sampleData.value = data;
+          incrementalSaveRecord(root.$route.params.id);
+        });
       }
     });
 
@@ -74,7 +80,7 @@ export default defineComponent({
       const data = harmonizerApi.exportJson();
       sampleData.value = data;
       samplesValid.value = await harmonizerApi.validate();
-      sideBarOpenOverride.value = !samplesValid.value;
+      sidebarOpen.value = !samplesValid.value;
       incrementalSaveRecord(root.$route.params.id);
       if (samplesValid.value === false) {
         errorClick(0);
@@ -132,8 +138,6 @@ export default defineComponent({
       document.getElementById('tsv-file-select')?.click();
     }
 
-    const sidebarOpen = computed(() => harmonizerApi.validationErrorGroups.value.length && sideBarOpenOverride.value);
-
     return {
       ColorKey,
       columnVisibility,
@@ -149,7 +153,6 @@ export default defineComponent({
       fields,
       highlightedValidationError,
       sidebarOpen,
-      sideBarOpenOverride,
       validationItems,
       validationActiveCategory,
       /* methods */
@@ -376,23 +379,42 @@ export default defineComponent({
     </div>
     <div class="harmonizer-style-container">
       <div
-        class="harmonizer-container d-flex flex-row"
-        style="max-width: 100%;"
-      >
-        <div
-          id="harmonizer-root"
-          class="harmonizer-root grow"
-          :style="{
-            'max-width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
-            'width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
-          }"
-        />
+        id="harmonizer-root"
+        class="harmonizer-root grow"
+        :style="{
+          'max-width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
+          'width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
+        }"
+      />
+      <div style="overflow-x: auto; font-size: 14px;">
+        <v-btn
+          class="sidebar-toggle"
+          small
+          outlined
+          tile
+          @click="sidebarOpen = !sidebarOpen"
+        >
+          <v-icon
+            v-if="sidebarOpen"
+            class="sidebar-toggle-close"
+          >
+            mdi-menu-open
+          </v-icon>
+          <v-icon v-else>
+            mdi-menu-open
+          </v-icon>
+        </v-btn>
         <v-navigation-drawer
           :value="sidebarOpen"
           right
           width="300"
-          style="overflow-x: auto; font-size: 14px;"
+          style="font-size: 14px;"
         >
+          <FindReplace
+            :harmonizer-api="harmonizerApi"
+            style="max-width: 385px;"
+            class="ml-2"
+          />
           <div
             v-if="selectedHelpDict"
             class="mx-2"
@@ -400,12 +422,6 @@ export default defineComponent({
             <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
               Column Help
               <v-spacer />
-              <v-btn
-                icon
-                @click="sideBarOpenOverride = false"
-              >
-                <v-icon>mdi-close</v-icon>
-              </v-btn>
             </div>
             <div class="my-2">
               <span class="font-weight-bold pr-2">Column:</span>
@@ -600,4 +616,19 @@ html {
   width: 50%;
   padding: 12px 0;
 }
+
+.sidebar-toggle {
+  margin-top: -1px;
+  margin-left: -50px;
+  background: white;
+  z-index: 500;
+  position: absolute;
+  border-color:rgb(152, 152, 152);
+  border-right-color: rgba(152, 152, 152, 0.0);
+}
+
+.sidebar-toggle-close {
+  transform: rotate(180deg);
+}
+
 </style>
