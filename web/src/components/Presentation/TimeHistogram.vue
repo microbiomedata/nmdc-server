@@ -131,8 +131,6 @@ export default defineComponent({
 
       // add the brush
       const onBrushEnd = (event) => {
-        // if start, end = extent, clear the query
-        // if start = end, clear the query
         const { selection, sourceEvent } = event;
         if (selection && sourceEvent) {
           const start = x.invert(selection[0]);

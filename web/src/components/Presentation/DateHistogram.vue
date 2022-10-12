@@ -134,7 +134,6 @@ export default Vue.extend({
 <template>
   <div class="histogram">
     <ChartContainer>
-      <!-- v-if="facetSummaryUnconditional && range !== null">-->
       <template #default="{ width, height }">
         <TimeHistogram
           ref="histogram"
