@@ -1,8 +1,13 @@
 <script>
-import { defineComponent, watchEffect, ref } from '@vue/composition-api';
+import {
+  defineComponent,
+  watchEffect,
+  ref,
+} from '@vue/composition-api';
 import { select } from 'd3-selection';
 import { max } from 'd3-array';
 import { axisBottom } from 'd3-axis';
+import { brushX } from 'd3-brush';
 import { scaleLinear, scaleTime } from 'd3-scale';
 
 /**
@@ -33,7 +38,7 @@ export default defineComponent({
     },
   },
 
-  setup(props, { root }) {
+  setup(props, { root, emit }) {
     const svgRoot = ref(undefined);
     // set the dimensions and margins of the graph
     const margin = {
@@ -42,8 +47,9 @@ export default defineComponent({
       bottom: 30,
       left: 30,
     };
+    const drawn = ref(false);
 
-    function makeHistogram(data, el) {
+    function makeHistogram(data, el, selectedRange) {
       const width = props.width - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
 
@@ -64,9 +70,15 @@ export default defineComponent({
         return;
       }
 
+      const minTime = Date.parse(data.bins[0]);
+      const maxTime = Date.parse(data.bins[data.bins.length - 1]);
+      if (Number.isNaN(minTime) || Number.isNaN(maxTime)) {
+        return;
+      }
+      const range = [minTime, maxTime];
       // set the ranges
       const x = scaleTime()
-        .domain(props.range)
+        .domain(range)
         .rangeRound([0, width]);
       const y = scaleLinear().range([height, 0]);
 
@@ -117,6 +129,28 @@ export default defineComponent({
           .html((d) => d.length);
       }
 
+      // add the brush
+      const onBrushEnd = (event) => {
+        const { selection, sourceEvent } = event;
+        if (selection && sourceEvent) {
+          const start = x.invert(selection[0]);
+          const end = x.invert(selection[1]);
+          emit('onBrushEnd', [start, end]);
+        } else if (sourceEvent) {
+          emit('onBrushEnd', null);
+        }
+      };
+      const brush = brushX()
+        .extent([[0, 0], [x.range()[1], props.height - (margin.bottom + 19)]])
+        .on('end', onBrushEnd);
+
+      const bg = svg.append('g')
+        .call(brush);
+      if (selectedRange[0] > minTime || selectedRange[1] < maxTime) {
+        const defaultSelection = [x(selectedRange[0]), x(selectedRange[1])];
+        bg.call(brush.move, defaultSelection);
+      }
+
       // add the x Axis
       svg
         .append('g')
@@ -127,13 +161,15 @@ export default defineComponent({
 
       // add the y Axis
       // svg.append('g').call(axisLeft(y));
+
+      drawn.value = true;
     }
 
     watchEffect(() => {
-      const { data } = props;
+      const { data, range } = props;
       const el = svgRoot.value;
       if (data.bins && data.facets) {
-        makeHistogram(data, el);
+        makeHistogram(data, el, range);
       }
     });
 

@@ -31,6 +31,8 @@ setup(
         "sqlalchemy>=1.4",
         "starlette==0.17.1",
         "typing-extensions==4.0.1",
+        # pinned 3rd party dependencies
+        "importlib-metadata==4.12.0",
     ],
     include_package_data=True,
     entry_points="""

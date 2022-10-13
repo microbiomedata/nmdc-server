@@ -22,7 +22,7 @@ import { makeSetsFromBitmask } from '@/encoding';
 
 const helpBarchart = 'Displays the number of omics processing runs for each data type available. Click on a bar to filter by data type.';
 const helpMap = 'Displays geographical location (latitude, longitude) of sample collection sites. Click on a cluster to zoom in.  Click "Search this regon" to limit search to the current map bounds.';
-const helpTimeline = 'Displays sample collections grouped by collection month. Scroll the slider to narrow in on a sample collection date range.';
+const helpTimeline = 'Displays sample collections grouped by collection date. Click and drag on the timeline to filter by collection date. The selected region can be moved by dragging it from the center. The region can be resized by clicking and dragging at the edges. Click outside the region to clear it.';
 const helpUpset = 'This upset plot shows the number of samples with corresponding omic data associated. For example: there are 43 samples from 1 study that have metagenomics, metatranscriptomics, and natural organic matter characterizations.';
 
 const staticUpsetTooltips = {

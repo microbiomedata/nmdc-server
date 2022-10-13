@@ -48,7 +48,7 @@ export default Vue.extend({
   },
 
   watch: {
-    facetSummaryUnconditional() {
+    facetSummary() {
       // Derive min/max from full range
       const setMinMax = () => {
         const min = Date.parse(this.facetSummaryUnconditional.bins[0]);
@@ -106,35 +106,46 @@ export default Vue.extend({
         });
       }
     },
+    onBrushEnd(brushRange) {
+      if (brushRange && (brushRange[0] !== this.min || brushRange[1] !== this.max)) {
+        this.$emit('select', {
+          type: this.table,
+          conditions: [
+            ...this.otherConditions,
+            {
+              field: this.field,
+              op: 'between',
+              value: brushRange.map((d) => moment(d).format('YYYY-MM-DDT00:00:00.000')),
+              table: this.table,
+            },
+          ],
+        });
+      } else if (this.myConditions.length) {
+        this.$emit('select', {
+          type: this.table,
+          conditions: this.otherConditions,
+        });
+      }
+    },
   },
 });
 </script>
 
 <template>
   <div class="histogram">
-    <ChartContainer v-if="facetSummary && range !== null">
+    <ChartContainer>
       <template #default="{ width, height }">
         <TimeHistogram
           ref="histogram"
-          v-bind="{ width, height, data: facetSummary, range }"
+          v-bind="{ width, height, data: facetSummaryUnconditional, range: range || [] }"
+          @onBrushEnd="onBrushEnd"
         />
       </template>
       <template #below>
-        <div class="mx-4">
-          <v-range-slider
-            v-model="range"
-            :min="min"
-            :max="max"
-            hide-details
-            color="primary"
-            thumb-color="accent"
-            @change="afterDrag"
-          />
-          <div class="d-flex">
-            <span>{{ moment(range[0]).format('MM/DD/YYYY') }}</span>
-            <v-spacer />
-            <span>{{ moment(range[1]).format('MM/DD/YYYY') }}</span>
-          </div>
+        <div class="mx-4 d-flex">
+          <v-spacer />
+          <h4>Collection Date</h4>
+          <v-spacer />
         </div>
       </template>
     </ChartContainer>
