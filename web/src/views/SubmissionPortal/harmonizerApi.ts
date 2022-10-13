@@ -150,7 +150,6 @@ export class HarmonizerApi {
       this.selectedColumn.value = this.dh.getFields()[col].title;
     }, 200, { leading: true }));
     this.dh.hot.updateSettings({ search: true, customBorders: true });
-    await this.toolbar.refresh();
     // @ts-ignore
     window.dh = this.dh;
 

@@ -377,16 +377,26 @@ export default defineComponent({
         </v-menu>
       </div>
     </div>
-    <div class="harmonizer-style-container">
+
+    <div>
       <div
-        id="harmonizer-root"
-        class="harmonizer-root grow"
+        class="harmonizer-style-container"
         :style="{
-          'max-width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
-          'width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
+          'margin-right': sidebarOpen ? '300px' : '0px'
         }"
-      />
-      <div style="overflow-x: auto; font-size: 14px;">
+      >
+        <div id="harmonizer-root" />
+      </div>
+
+      <div
+        :style="{
+          'float': 'right',
+          'width': sidebarOpen ? '300px' : '0px',
+          'margin-top': '9px',
+          'font-size': '14px',
+          'height': 'calc(100vh - 340px)'
+        }"
+      >
         <v-btn
           class="sidebar-toggle"
           small
@@ -405,15 +415,13 @@ export default defineComponent({
           </v-icon>
         </v-btn>
         <v-navigation-drawer
+          width="100%"
           :value="sidebarOpen"
           right
-          width="300"
-          style="font-size: 14px;"
         >
           <FindReplace
             :harmonizer-api="harmonizerApi"
-            style="max-width: 385px;"
-            class="ml-2"
+            class="ml-2 mr-2"
           />
           <div
             v-if="selectedHelpDict"
@@ -457,7 +465,9 @@ export default defineComponent({
           </div>
         </v-navigation-drawer>
       </div>
+    </div>
 
+    <div class="harmonizer-style-container">
       <div id="harmonizer-footer-root" />
     </div>
 
@@ -527,10 +537,6 @@ html {
   overscroll-behavior: none;
 }
 
-.harmonizer-container {
-  height: calc(100vh - 322px) !important;
-}
-
 .spreadsheet-input {
   width: 0px;
 }
@@ -557,10 +563,21 @@ html {
   @import '~data-harmonizer/lib/dist/es/index';
 }
 
+.handsontable.listbox td {
+  border-radius:3px;
+  border:1px solid silver;
+  background-color: #DDD;
+
+  &:hover, &.current.highlight {
+    background-color: lightblue !important;
+  }
+}
+
 /* Grid */
 #harmonizer-root {
   overflow: hidden;
   height: calc(100vh - 340px) !important;
+  float: left;
   margin-top: 8px;
 
   .secondary-header-cell:hover {
@@ -615,6 +632,10 @@ html {
 #harmonizer-footer-root {
   width: 50%;
   padding: 12px 0;
+}
+
+.HandsontableCopyPaste {
+  display: none;
 }
 
 .sidebar-toggle {
