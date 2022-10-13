@@ -4,7 +4,6 @@ import {
 } from '@vue/composition-api';
 import { clamp, flattenDeep } from 'lodash';
 import { writeFile, utils } from 'xlsx';
-import 'handsontable/dist/handsontable.full.css';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
@@ -378,19 +377,26 @@ export default defineComponent({
         </v-menu>
       </div>
     </div>
-    <div
-      class="harmonizer-container d-flex flex-row"
-      style="max-width: 100%;"
-    >
+
+    <div>
       <div
-        id="harmonizer-root"
-        class="harmonizer-root grow"
+        class="harmonizer-style-container"
         :style="{
-          'max-width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
-          'width': sidebarOpen ? 'calc(100vw - 300px)' : '100%',
+          'margin-right': sidebarOpen ? '300px' : '0px'
         }"
-      />
-      <div style="overflow-x: auto; font-size: 14px;">
+      >
+        <div id="harmonizer-root" />
+      </div>
+
+      <div
+        :style="{
+          'float': 'right',
+          'width': sidebarOpen ? '300px' : '0px',
+          'margin-top': '9px',
+          'font-size': '14px',
+          'height': 'calc(100vh - 340px)'
+        }"
+      >
         <v-btn
           class="sidebar-toggle"
           small
@@ -409,15 +415,13 @@ export default defineComponent({
           </v-icon>
         </v-btn>
         <v-navigation-drawer
+          width="100%"
           :value="sidebarOpen"
           right
-          width="300"
-          style="font-size: 14px;"
         >
           <FindReplace
             :harmonizer-api="harmonizerApi"
-            style="max-width: 385px;"
-            class="ml-2"
+            class="ml-2 mr-2"
           />
           <div
             v-if="selectedHelpDict"
@@ -462,6 +466,11 @@ export default defineComponent({
         </v-navigation-drawer>
       </div>
     </div>
+
+    <div class="harmonizer-style-container">
+      <div id="harmonizer-footer-root" />
+    </div>
+
     <div class="d-flex shrink ma-2">
       <v-btn
         color="gray"
@@ -528,16 +537,11 @@ html {
   overscroll-behavior: none;
 }
 
-.harmonizer-container {
-  height: calc(100vh - 260px) !important;
-}
-
 .spreadsheet-input {
   width: 0px;
 }
 
-// HACK-DH
-.harmonizer-root {
+.harmonizer-style-container {
   /**
     Namespace these styles so that they don't affect the global styles.
     Read more about SASS interpolation: https://sass-lang.com/documentation/interpolation
@@ -553,17 +557,28 @@ html {
   @import '~bootstrap/scss/modal';
   @import '~bootstrap/scss/buttons';
   @import '~bootstrap/scss/forms';
-  // This stylesheet was unfortunately copy-pasted. In order to interpolate the content here,
-  // an SCSS file is required (css will only be referenced).  There is no handsontable scss available,
-  // so the CSS was renamed SCSS and copied into the project.  SCSS and CSS are treated differently
-  // when imported within a parent scope (harmonizer-root class in this case)
-  // @import './library/handsontable.min.scss';
+  @import '~bootstrap/scss/input-group';
+  @import '~bootstrap/scss/utilities';
+
+  @import '~data-harmonizer/lib/dist/es/index';
 }
+
+.handsontable.listbox td {
+  border-radius:3px;
+  border:1px solid silver;
+  background-color: #DDD;
+
+  &:hover, &.current.highlight {
+    background-color: lightblue !important;
+  }
+}
+
 /* Grid */
-#data-harmonizer-grid {
+#harmonizer-root {
   overflow: hidden;
   height: calc(100vh - 340px) !important;
-  margin-top: -16px;
+  float: left;
+  margin-top: 8px;
 
   .secondary-header-cell:hover {
     cursor: pointer;
@@ -593,12 +608,6 @@ html {
   }
 }
 
-#loading-screen {
-  display: none;
-  background-color: rgba(108, 117, 125, 0.2);
-  z-index: 1000;
-}
-
 #unmapped-headers-list {
   max-height: 50vh;
   overflow-y: auto;
@@ -620,22 +629,13 @@ html {
 
 .field-description-text select {min-width: 95%}
 
-#field-mapping-container {
-  overflow-x: scroll;
-  padding-bottom: 1rem;
-  scrollbar-width: 1rem;
+#harmonizer-footer-root {
+  width: 50%;
+  padding: 12px 0;
 }
 
-#field-mapping {
-  white-space: nowrap;
-}
-
-#field-mapping col {border-left: 2px solid black}
-#field-mapping col:first-child {background: #FF0}
-#field-mapping col:nth-child(2n+3) {background: #CCC}
-
-#field-mapping tr td , #field-mapping tr th {
-  padding: 3px;
+.HandsontableCopyPaste {
+  display: none;
 }
 
 .sidebar-toggle {
