@@ -34,10 +34,14 @@ const VariationMap = {
   emsl: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl']),
   jgi_mg: new Set(['mg-jgi']),
   emsl_jgi_mg: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi']),
+  jgi_mt: new Set(['mt-jgi']),
+  emsl_jgi_mt: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mt-jgi']),
+  jgi_mg_mt: new Set(['mg-jgi', 'mt-jgi']),
+  emsl_jgi_mg_mt: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi', 'mt-jgi']),
 };
 // Variations should be in matching order.
 // In other words, attempt to match 'emsl' before 'emsl_jgi_mg'
-const allVariations: (keyof typeof VariationMap)[] = ['emsl', 'jgi_mg', 'emsl_jgi_mg'];
+const allVariations: (keyof typeof VariationMap)[] = ['emsl', 'jgi_mg', 'emsl_jgi_mg', 'jgi_mt', 'emsl_jgi_mt', 'jgi_mg_mt', 'emsl_jgi_mg_mt'];
 
 export function getVariant(checkBoxes: string[], variations: (keyof typeof VariationMap)[], base: string) {
   if (checkBoxes.length === 0) {
