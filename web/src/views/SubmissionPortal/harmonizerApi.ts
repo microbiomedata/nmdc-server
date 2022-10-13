@@ -3,6 +3,7 @@ import {
 } from '@vue/composition-api';
 import { debounce, has } from 'lodash';
 import { DataHarmonizer, Footer } from 'data-harmonizer';
+import schema from './schema';
 
 // a simple data structure to define the relationships between the GOLD ecosystem fields
 const GOLD_FIELDS = {
@@ -33,10 +34,14 @@ const VariationMap = {
   emsl: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl']),
   jgi_mg: new Set(['mg-jgi']),
   emsl_jgi_mg: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi']),
+  jgi_mt: new Set(['mt-jgi']),
+  emsl_jgi_mt: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mt-jgi']),
+  jgi_mg_mt: new Set(['mg-jgi', 'mt-jgi']),
+  emsl_jgi_mg_mt: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi', 'mt-jgi']),
 };
 // Variations should be in matching order.
 // In other words, attempt to match 'emsl' before 'emsl_jgi_mg'
-const allVariations: (keyof typeof VariationMap)[] = ['emsl', 'jgi_mg', 'emsl_jgi_mg'];
+const allVariations: (keyof typeof VariationMap)[] = ['emsl', 'jgi_mg', 'emsl_jgi_mg', 'jgi_mt', 'emsl_jgi_mt', 'jgi_mg_mt', 'emsl_jgi_mg_mt'];
 
 export function getVariant(checkBoxes: string[], variations: (keyof typeof VariationMap)[], base: string) {
   if (checkBoxes.length === 0) {
@@ -134,7 +139,6 @@ export class HarmonizerApi {
   }
 
   async init(r: HTMLElement, templateName: string) {
-    const schema = (await import('./schema.json')).default;
     // Taken from https://gold.jgi.doe.gov/download?mode=biosampleEcosystemsJson
     // See also: https://gold.jgi.doe.gov/ecosystemtree
     this.goldEcosystemTree = (await import('./GoldEcosystemTree.json')).default;
