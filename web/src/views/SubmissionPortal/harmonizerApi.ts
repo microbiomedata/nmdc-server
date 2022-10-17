@@ -3,7 +3,6 @@ import {
 } from '@vue/composition-api';
 import { debounce, has } from 'lodash';
 import { DataHarmonizer, Footer } from 'data-harmonizer';
-import schema from './schema';
 
 // a simple data structure to define the relationships between the GOLD ecosystem fields
 const GOLD_FIELDS = {
@@ -139,6 +138,7 @@ export class HarmonizerApi {
   }
 
   async init(r: HTMLElement, templateName: string) {
+    const schema = (await import('./schema.json')).default;
     // Taken from https://gold.jgi.doe.gov/download?mode=biosampleEcosystemsJson
     // See also: https://gold.jgi.doe.gov/ecosystemtree
     this.goldEcosystemTree = (await import('./GoldEcosystemTree.json')).default;
