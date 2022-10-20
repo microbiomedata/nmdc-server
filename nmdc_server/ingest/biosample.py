@@ -69,7 +69,7 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         obj["env_medium_id"] = env_medium.id
 
     omics_processing_record = omics_processing.find_one({"has_input": obj["id"]})
-    part_of = obj.pop("part_of", None)
+    part_of = obj.pop("sample_link", None)
     if part_of is None:
         if omics_processing_record is None:
             logger.error(f"Could not determine study for biosample {obj['id']}")
@@ -89,9 +89,9 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         lambda x: not x.lower().startswith("gold:"),
         obj.get("alternative_identifiers", []),
     )
-    biosample.alternate_identifiers += obj.get("INSDC_biosample_identifiers", [])
-    biosample.alternate_identifiers += obj.get("INSDC_secondary_sample_identifiers", [])
-    biosample.alternate_identifiers += obj.get("GOLD_sample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("insdc_biosample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("insdc_secondary_sample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("gold_sample_identifiers", [])
 
     db.add(models.Biosample(**biosample.dict()))
 
