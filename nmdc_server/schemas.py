@@ -440,21 +440,21 @@ class MetagenomeAssemblyBase(PipelineStepBase):
     contigs: Optional[int]
     scaf_bp: Optional[int]
     contig_bp: Optional[int]
-    scaf_N50: Optional[int]
-    scaf_L50: Optional[int]
-    ctg_N50: Optional[int]
-    ctg_L50: Optional[int]
-    scaf_N90: Optional[int]
-    scaf_L90: Optional[int]
-    ctg_N90: Optional[int]
-    ctg_L90: Optional[int]
+    scaf_n50: Optional[int]
+    scaf_l50: Optional[int]
+    ctg_n50: Optional[int]
+    ctg_l50: Optional[int]
+    scaf_n90: Optional[int]
+    scaf_l90: Optional[int]
+    ctg_n90: Optional[int]
+    ctg_l90: Optional[int]
     scaf_max: Optional[int]
     ctg_max: Optional[int]
-    scaf_n_gt50K: Optional[int]
+    scaf_n_gt50k: Optional[int]
 
     # TODO: fix the data on ingest or make this optional on the schema
     scaf_l_gt50k: Optional[int]
-    scaf_pct_gt50K: Optional[int]
+    scaf_pct_gt50k: Optional[int]
     num_input_reads: Optional[int]
     num_aligned_reads: Optional[int]
     scaf_logsum: Optional[float]
@@ -512,7 +512,7 @@ class MAG(BaseModel):
     num_16s: Optional[int]
     num_5s: Optional[int]
     num_23s: Optional[int]
-    num_tRNA: Optional[int]
+    num_t_rna: Optional[int]
 
 
 class MAGCreate(MAG):
@@ -523,7 +523,7 @@ class MAGsAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.mags_analysis.value
     input_contig_num: Optional[int]
     too_short_contig_num: Optional[int]
-    lowDepth_contig_num: Optional[int]
+    low_depth_contig_num: Optional[int]
     unbinned_contig_num: Optional[int]
     binned_contig_num: Optional[int]
 
@@ -532,7 +532,7 @@ class MAGsAnalysis(PipelineStep):
     type: str = WorkflowActivityTypeEnum.mags_analysis.value
     input_contig_num: Optional[int]
     too_short_contig_num: Optional[int]
-    lowDepth_contig_num: Optional[int]
+    low_depth_contig_num: Optional[int]
     unbinned_contig_num: Optional[int]
     binned_contig_num: Optional[int]
 
