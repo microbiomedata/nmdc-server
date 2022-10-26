@@ -77,9 +77,8 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         part_of = omics_processing_record["part_of"]
 
     obj["study_id"] = part_of[0]
-    obj["depth"] = extract_quantity(obj.get("depth", {}), "biosample", "depth")
-    if obj["depth"] is None:
-        obj["depth"] = extract_quantity(obj.pop("depth2", {}), "biosample", "depth")
+    depth_obj = obj.get("depth", {})
+    obj["depth"] = extract_quantity(depth_obj, "biosample", "depth")
 
     biosample = Biosample(**obj)
 
@@ -92,6 +91,10 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     biosample.alternate_identifiers += obj.get("insdc_biosample_identifiers", [])
     biosample.alternate_identifiers += obj.get("insdc_secondary_sample_identifiers", [])
     biosample.alternate_identifiers += obj.get("gold_sample_identifiers", [])
+
+    # Store entire depth object, which may represent a range
+    if biosample.annotations is not None:
+        biosample.annotations["depth"] = depth_obj
 
     db.add(models.Biosample(**biosample.dict()))
 

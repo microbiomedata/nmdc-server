@@ -20,8 +20,7 @@ EXCLUDED_FIELDS = {
     "insdc_biosample_identifiers",
     "insdc_secondary_sample_identifiers",
     "gold_study_identifiers",
-    "gold_sequencing_project_identifiers",
-    "depth2",
+    "gold_sequencing_project_identifiers"
 }
 
 
