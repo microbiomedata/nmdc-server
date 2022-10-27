@@ -113,11 +113,11 @@ export default defineComponent({
     }
 
     watch(item, async (_item) => {
-      const publicationDoiInfo = _item?.publication_doi_info;
-      if (publicationDoiInfo) {
+      const doiMap = _item?.doi_map;
+      if (doiMap) {
         data.doiCitation = null;
         data.publications = [];
-        const unformattedPublications = Object.values(publicationDoiInfo);
+        const unformattedPublications = Object.values(doiMap);
 
         [data.doiCitation] = unformattedPublications
           .filter((c) => c.type === 'dataset' && c.type)

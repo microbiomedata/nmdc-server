@@ -243,7 +243,7 @@ class Study(Base, AnnotatedModel):
         return gold_url("https://gold.jgi.doe.gov/study?id=", self.id)
 
     @property
-    def publication_doi_info(self) -> Dict[str, Any]:
+    def doi_map(self) -> Dict[str, Any]:
         doi_info = {
             d.publication.doi: d.publication.doi_object.info
             for d in self.publication_dois  # type: ignore
