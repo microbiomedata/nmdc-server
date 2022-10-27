@@ -120,14 +120,10 @@ export default defineComponent({
       if (doiMap) {
         data.doiCitation = null;
         data.publications = [];
-        const unformattedPublications = Object.values(doiMap);
-
-        [data.doiCitation] = unformattedPublications
-          .filter((c) => c.type === 'dataset' && c.type)
-          .map((c) => formatAPA(new Cite(c)));
-        data.publications = unformattedPublications
-          .filter((c) => c.type !== 'dataset' && c.type)
-          .map((c) => formatAPA(new Cite(c)));
+        data.doiCitation = CitationOverrides[_item.doi] || formatAPA(new Cite(_item.doi));
+        data.publications = _item.publication_dois
+          .filter((doi) => doi in doiMap)
+          .map((doi) => formatAPA(new Cite(doiMap[doi])));
       }
     });
 
@@ -269,7 +265,7 @@ export default defineComponent({
               <v-divider />
               <v-list-item>
                 <v-list-item-content
-                  v-text="data.doiCitation || CitationOverrides[item.doi] || item.doi"
+                  v-text="data.doiCitation || item.doi"
                 />
                 <v-list-item-action>
                   <v-tooltip top>
