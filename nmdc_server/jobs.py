@@ -32,7 +32,7 @@ def migrate(ingest_db: bool = False):
         database_uri = settings.current_db_uri
         session_maker = database.SessionLocal
 
-    with session_maker():
+    with session_maker.begin():
         alembic_cfg = Config(str(HERE / "alembic.ini"))
         alembic_cfg.set_main_option("script_location", str(HERE / "migrations"))
         alembic_cfg.set_main_option("sqlalchemy.url", database_uri)
