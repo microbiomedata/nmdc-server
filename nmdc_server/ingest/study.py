@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 import requests
@@ -38,6 +39,11 @@ class Study(StudyCreate):
         return extract_extras(cls, values)
 
 
+def transform_doi(doi: str) -> str:
+    matches = re.findall(r"10.\d{4,9}/[-._;()/:a-zA-Z0-9]+$", doi)
+    return matches[0]
+
+
 def load(db: Session, cursor: Cursor):
     for obj in cursor:
         pi_obj = obj.pop("principal_investigator")
@@ -49,9 +55,12 @@ def load(db: Session, cursor: Cursor):
         pi_orcid = pi_obj.get("orcid")
         obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url, pi_orcid)
         obj["principal_investigator_websites"] = obj.pop("websites", [])
+
         obj["publication_dois"] = [
-            d.replace("https://doi.org/", "") for d in obj.pop("publications", [])
+            transform_doi(d) for d in obj.pop("publications", [])
         ]
+        if "doi" in obj:
+            obj["doi"]["has_raw_value"] = transform_doi(obj["doi"]["has_raw_value"])
 
         if "doi" in obj:
             upsert_doi(db, obj["doi"]["has_raw_value"])
