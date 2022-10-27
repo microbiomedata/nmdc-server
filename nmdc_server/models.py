@@ -180,7 +180,11 @@ class PrincipalInvestigator(Base):
 class DOIInfo(Base):
     __tablename__ = "doi_info"
 
-    id = Column(String, primary_key=True)
+    id = Column(
+        String,
+        CheckConstraint(r"id ~* '^10.\d{4,9}/[-._;()/:a-zA-Z0-9]+$'", name="ck_doi_format"),
+        primary_key=True
+    )
     info = Column(JSONB, nullable=False, default=dict)
 
 
