@@ -183,7 +183,7 @@ class DOIInfo(Base):
     id = Column(
         String,
         CheckConstraint(r"id ~* '^10.\d{4,9}/[-._;()/:a-zA-Z0-9]+$'", name="ck_doi_format"),
-        primary_key=True
+        primary_key=True,
     )
     info = Column(JSONB, nullable=False, default=dict)
 

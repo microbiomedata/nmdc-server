@@ -56,9 +56,7 @@ def load(db: Session, cursor: Cursor):
         obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url, pi_orcid)
         obj["principal_investigator_websites"] = obj.pop("websites", [])
 
-        obj["publication_dois"] = [
-            transform_doi(d) for d in obj.pop("publications", [])
-        ]
+        obj["publication_dois"] = [transform_doi(d) for d in obj.pop("publications", [])]
         if "doi" in obj:
             obj["doi"]["has_raw_value"] = transform_doi(obj["doi"]["has_raw_value"])
 

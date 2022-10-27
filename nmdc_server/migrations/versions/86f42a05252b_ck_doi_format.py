@@ -7,12 +7,11 @@ Create Date: 2022-10-27 16:44:51.540940
 """
 from typing import Optional
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = '86f42a05252b'
-down_revision: Optional[str] = 'ffaec255fe68'
+revision: str = "86f42a05252b"
+down_revision: Optional[str] = "ffaec255fe68"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
@@ -32,7 +31,9 @@ def upgrade():
 
     # transform DOIs to standardized format
     op.execute(r"UPDATE study SET doi = substring(doi FROM '10.\d{4,9}/[-._;()/\:a-zA-Z0-9]+')")
-    op.execute(r"UPDATE publication SET doi = substring(doi FROM '10.\d{4,9}/[-._;()/\:a-zA-Z0-9]+')")
+    op.execute(
+        r"UPDATE publication SET doi = substring(doi FROM '10.\d{4,9}/[-._;()/\:a-zA-Z0-9]+')"
+    )
     op.execute(r"UPDATE doi_info SET id = substring(id FROM '10.\d{4,9}/[-._;()/\:a-zA-Z0-9]+')")
 
     # add CHECK constraint for standardized DOI format
@@ -47,19 +48,17 @@ def upgrade():
         "fk_publication_doi_doi_info",
         "publication",
         "doi_info",
-        ["doi"], ["id"],
+        ["doi"],
+        ["id"],
     )
     op.create_foreign_key(
         "fk_study_doi_doi_info",
         "study",
         "doi_info",
-        ["doi"], ["id"],
+        ["doi"],
+        ["id"],
     )
 
 
 def downgrade():
-    op.drop_constraint(
-        "ck_doi_format",
-        "doi_info",
-        type_="check"
-    )
+    op.drop_constraint("ck_doi_format", "doi_info", type_="check")
