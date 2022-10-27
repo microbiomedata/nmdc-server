@@ -19,7 +19,7 @@ import InvestigatorBio from '@/components/InvestigatorBio.vue';
  * Override citations for certain DOIs
  */
 const CitationOverrides = {
-  'https://doi.org/10.46936/10.25585/60000017': 'Doktycz, M. (2020) BioScales - Defining plant gene function and its connection to ecosystem nitrogen and carbon cycling [Data set]. DOE Joint Genome Institute. https://doi.org/10.46936/10.25585/60000017',
+  '10.46936/10.25585/60000017': 'Doktycz, M. (2020) BioScales - Defining plant gene function and its connection to ecosystem nitrogen and carbon cycling [Data set]. DOE Joint Genome Institute. https://doi.org/10.46936/10.25585/60000017',
 };
 
 export default defineComponent({
