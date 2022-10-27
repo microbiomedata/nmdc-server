@@ -188,7 +188,10 @@ export default defineComponent({
               Study Details
             </div>
             <v-list>
-              <AttributeItem v-bind="{ item, field: 'doi' }" />
+              <AttributeItem
+                v-if="item.doi"
+                v-bind="{ item, field: 'doi' }"
+              />
               <AttributeItem
                 v-bind="{ item, field: 'id', bindClick: true }"
                 @click="seeStudyInContext"
@@ -260,8 +263,13 @@ export default defineComponent({
         </v-col>
         <v-col cols="5">
           <div class="ma-4 pa-2 grey lighten-4">
-            <v-subheader>Dataset Citation</v-subheader>
-            <v-list class="transparent">
+            <v-subheader v-if="item.doi">
+              Dataset Citation
+            </v-subheader>
+            <v-list
+              v-if="item.doi"
+              class="transparent"
+            >
               <v-divider />
               <v-list-item>
                 <v-list-item-content
