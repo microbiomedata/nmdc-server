@@ -50,7 +50,6 @@ class Biosample(BiosampleCreate):
 
 def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):
     logger = get_logger(__name__)
-    invalid = {"has_raw_value": ""}
     env_broad_scale_id = obj.pop("env_broad_scale", {}).get("term", {}).get("id", "")
     env_broad_scale = db.query(models.EnvoTerm).get(
         env_broad_scale_id.replace("_", ":")
@@ -94,6 +93,8 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     biosample.alternate_identifiers += obj.get("insdc_biosample_identifiers", [])
     biosample.alternate_identifiers += obj.get("insdc_secondary_sample_identifiers", [])
     biosample.alternate_identifiers += obj.get("gold_sample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("emsl_biosample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("igsn_biosample_identifiers", [])
 
     # Store entire depth object, which may represent a range
     if biosample.annotations is not None:
