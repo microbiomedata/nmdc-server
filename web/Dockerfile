@@ -57,6 +57,7 @@ RUN set -ex \
     done
 
 FROM node:lts as build-stage
+ENV NODE_OPTIONS=--openssl-legacy-provider
 WORKDIR /app
 COPY package*.json yarn.lock ./
 RUN yarn install
