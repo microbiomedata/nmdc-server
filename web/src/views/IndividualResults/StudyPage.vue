@@ -18,8 +18,11 @@ import InvestigatorBio from '@/components/InvestigatorBio.vue';
 /**
  * Override citations for certain DOIs
  */
-const CitationOverrides = {
-  'https://doi.org/10.46936/10.25585/60000017': 'Doktycz, M. (2020) BioScales - Defining plant gene function and its connection to ecosystem nitrogen and carbon cycling [Data set]. DOE Joint Genome Institute. https://doi.org/10.46936/10.25585/60000017',
+ interface CitationOverridesType {
+  [key: string]: string;
+}
+const CitationOverrides: CitationOverridesType = {
+  '10.46936/10.25585/60000017': 'Doktycz, M. (2020) BioScales - Defining plant gene function and its connection to ecosystem nitrogen and carbon cycling [Data set]. DOE Joint Genome Institute. https://doi.org/10.46936/10.25585/60000017',
 };
 
 export default defineComponent({
@@ -113,18 +116,14 @@ export default defineComponent({
     }
 
     watch(item, async (_item) => {
-      const publicationDoiInfo = _item?.publication_doi_info;
-      if (publicationDoiInfo) {
+      const doiMap = _item?.doi_map;
+      if (doiMap) {
         data.doiCitation = null;
         data.publications = [];
-        const unformattedPublications = Object.values(publicationDoiInfo);
-
-        [data.doiCitation] = unformattedPublications
-          .filter((c) => c.type === 'dataset' && c.type)
-          .map((c) => formatAPA(new Cite(c)));
-        data.publications = unformattedPublications
-          .filter((c) => c.type !== 'dataset' && c.type)
-          .map((c) => formatAPA(new Cite(c)));
+        data.doiCitation = CitationOverrides[_item.doi] || formatAPA(new Cite(_item.doi));
+        data.publications = _item.publication_dois
+          .filter((doi) => doi in doiMap)
+          .map((doi) => formatAPA(new Cite(doiMap[doi])));
       }
     });
 
@@ -189,7 +188,10 @@ export default defineComponent({
               Study Details
             </div>
             <v-list>
-              <AttributeItem v-bind="{ item, field: 'doi' }" />
+              <AttributeItem
+                v-if="item.doi"
+                v-bind="{ item, field: 'doi' }"
+              />
               <AttributeItem
                 v-bind="{ item, field: 'id', bindClick: true }"
                 @click="seeStudyInContext"
@@ -261,12 +263,17 @@ export default defineComponent({
         </v-col>
         <v-col cols="5">
           <div class="ma-4 pa-2 grey lighten-4">
-            <v-subheader>Dataset Citation</v-subheader>
-            <v-list class="transparent">
+            <v-subheader v-if="item.doi">
+              Dataset Citation
+            </v-subheader>
+            <v-list
+              v-if="item.doi"
+              class="transparent"
+            >
               <v-divider />
               <v-list-item>
                 <v-list-item-content
-                  v-text="data.doiCitation || CitationOverrides[item.doi] || item.doi"
+                  v-text="data.doiCitation || item.doi"
                 />
                 <v-list-item-action>
                   <v-tooltip top>

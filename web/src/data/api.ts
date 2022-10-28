@@ -121,7 +121,8 @@ export interface StudySearchResults extends BaseSearchResult {
   principal_investigator_name: string;
   principal_investigator_image_url: string;
   principal_investigator: PrincipalInvestigator;
-  publication_doi_info: Record<string, {
+  doi: string;
+  doi_map: Record<string, {
     type: string;
   }>,
   publication_dois: string[];

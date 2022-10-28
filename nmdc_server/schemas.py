@@ -258,7 +258,7 @@ class Study(StudyBase):
     sample_count: Optional[int]
     omics_counts: Optional[List[OmicsCounts]]
     omics_processing_counts: Optional[List[OmicsCounts]]
-    publication_doi_info: Dict[str, Any] = {}
+    doi_map: Dict[str, Any] = {}
     multiomics: int
 
     class Config:
