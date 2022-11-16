@@ -22,7 +22,8 @@ EXCLUDED_FIELDS = {
     "gold_study_identifiers",
     "gold_sequencing_project_identifiers",
     "emsl_biosample_identifiers",
-    "igsn_biosample_identifiers"
+    "igsn_biosample_identifiers",
+    "img_identifiers"
 }
 
 
