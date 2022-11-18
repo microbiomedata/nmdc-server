@@ -4,7 +4,7 @@ setup(
     name="nmdc-server",
     version="0.1",
     packages=find_packages(),
-    python_requires=">=3.7.0",
+    python_requires=">=3.9.0",
     install_requires=[
         # pinned because recent versions throw an error when upgrading through
         # the api at nmdc_server/jobs.py:34
@@ -19,7 +19,7 @@ setup(
         "ipython==7.31.1",
         "itsdangerous==2.0.1",
         "mypy<0.920",
-        "nmdc-schema",
+        "nmdc-schema==3.2.0", # https://github.com/microbiomedata/nmdc-server/issues/803#issuecomment-1320214791
         "pint==0.18",
         "psycopg2==2.9.3",
         "pydantic==1.8.2",
