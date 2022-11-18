@@ -51,17 +51,11 @@ class Biosample(BiosampleCreate):
 def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):
     logger = get_logger(__name__)
     env_broad_scale_id = obj.pop("env_broad_scale", {}).get("term", {}).get("id", "")
-    env_broad_scale = db.query(models.EnvoTerm).get(
-        env_broad_scale_id.replace("_", ":")
-    )
+    env_broad_scale = db.query(models.EnvoTerm).get(env_broad_scale_id.replace("_", ":"))
     env_local_scale_id = obj.pop("env_local_scale", {}).get("term", {}).get("id", "")
-    env_local_scale = db.query(models.EnvoTerm).get(
-        env_local_scale_id.replace("_", ":")
-    )
+    env_local_scale = db.query(models.EnvoTerm).get(env_local_scale_id.replace("_", ":"))
     env_medium_id = obj.pop("env_medium", {}).get("term", {}).get("id", "")
-    env_medium = db.query(models.EnvoTerm).get(
-        env_medium_id.replace("_", ":")
-    )
+    env_medium = db.query(models.EnvoTerm).get(env_medium_id.replace("_", ":"))
 
     if env_broad_scale:
         obj["env_broad_scale_id"] = env_broad_scale.id
