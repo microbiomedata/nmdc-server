@@ -1,7 +1,7 @@
 """empty message
 
 Revision ID: ae7a3eba08c5
-Revises: ffaec255fe68
+Revises: 86f42a05252b
 Create Date: 2022-10-20 19:15:19.741270
 
 """
@@ -11,7 +11,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "ae7a3eba08c5"
-down_revision: Optional[str] = "ffaec255fe68"
+down_revision: Optional[str] = "86f42a05252b"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
