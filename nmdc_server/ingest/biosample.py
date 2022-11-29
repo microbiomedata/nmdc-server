@@ -50,16 +50,12 @@ class Biosample(BiosampleCreate):
 
 def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):
     logger = get_logger(__name__)
-    invalid = {"has_raw_value": ""}
-    env_broad_scale = db.query(models.EnvoTerm).get(
-        obj.pop("env_broad_scale", invalid)["has_raw_value"].replace("_", ":")
-    )
-    env_local_scale = db.query(models.EnvoTerm).get(
-        obj.pop("env_local_scale", invalid)["has_raw_value"].replace("_", ":")
-    )
-    env_medium = db.query(models.EnvoTerm).get(
-        obj.pop("env_medium", invalid)["has_raw_value"].replace("_", ":")
-    )
+    env_broad_scale_id = obj.pop("env_broad_scale", {}).get("term", {}).get("id", "")
+    env_broad_scale = db.query(models.EnvoTerm).get(env_broad_scale_id.replace("_", ":"))
+    env_local_scale_id = obj.pop("env_local_scale", {}).get("term", {}).get("id", "")
+    env_local_scale = db.query(models.EnvoTerm).get(env_local_scale_id.replace("_", ":"))
+    env_medium_id = obj.pop("env_medium", {}).get("term", {}).get("id", "")
+    env_medium = db.query(models.EnvoTerm).get(env_medium_id.replace("_", ":"))
 
     if env_broad_scale:
         obj["env_broad_scale_id"] = env_broad_scale.id
@@ -69,7 +65,7 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         obj["env_medium_id"] = env_medium.id
 
     omics_processing_record = omics_processing.find_one({"has_input": obj["id"]})
-    part_of = obj.pop("part_of", None)
+    part_of = obj.pop("sample_link", None)
     if part_of is None:
         if omics_processing_record is None:
             logger.error(f"Could not determine study for biosample {obj['id']}")
@@ -77,9 +73,8 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         part_of = omics_processing_record["part_of"]
 
     obj["study_id"] = part_of[0]
-    obj["depth"] = extract_quantity(obj.get("depth", {}), "biosample", "depth")
-    if obj["depth"] is None:
-        obj["depth"] = extract_quantity(obj.pop("depth2", {}), "biosample", "depth")
+    depth_obj = obj.get("depth", {})
+    obj["depth"] = extract_quantity(depth_obj, "biosample", "depth")
 
     biosample = Biosample(**obj)
 
@@ -89,9 +84,16 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
         lambda x: not x.lower().startswith("gold:"),
         obj.get("alternative_identifiers", []),
     )
-    biosample.alternate_identifiers += obj.get("INSDC_biosample_identifiers", [])
-    biosample.alternate_identifiers += obj.get("INSDC_secondary_sample_identifiers", [])
-    biosample.alternate_identifiers += obj.get("GOLD_sample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("insdc_biosample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("insdc_secondary_sample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("gold_sample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("emsl_biosample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("igsn_biosample_identifiers", [])
+    biosample.alternate_identifiers += obj.get("img_identifiers", [])
+
+    # Store entire depth object, which may represent a range
+    if biosample.annotations is not None:
+        biosample.annotations["depth"] = depth_obj
 
     db.add(models.Biosample(**biosample.dict()))
 
