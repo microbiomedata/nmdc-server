@@ -19,7 +19,7 @@ setup(
         "ipython==7.31.1",
         "itsdangerous==2.0.1",
         "mypy<0.920",
-        "nmdc-schema==3.2.0", # https://github.com/microbiomedata/nmdc-server/issues/803#issuecomment-1320214791
+        "nmdc-schema",
         "pint==0.18",
         "psycopg2==2.9.3",
         "pydantic==1.8.2",
