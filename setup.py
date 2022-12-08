@@ -4,7 +4,7 @@ setup(
     name="nmdc-server",
     version="0.1",
     packages=find_packages(),
-    python_requires=">=3.7.0",
+    python_requires=">=3.9.0",
     install_requires=[
         # pinned because recent versions throw an error when upgrading through
         # the api at nmdc_server/jobs.py:34
