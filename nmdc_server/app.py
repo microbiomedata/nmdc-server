@@ -2,6 +2,7 @@ import typing
 
 import sentry_sdk
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -25,8 +26,12 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
         version=__version__,
         docs_url="/api/docs",
     )
-    attach_sentry(app)
 
+    @app.get("/docs", response_class=RedirectResponse, status_code=301, include_in_schema=False)
+    async def redirect_docs():
+        return "/api/docs"
+
+    attach_sentry(app)
     errors.attach_error_handlers(app)
     app.include_router(api.router, prefix="/api")
     app.include_router(auth.router, prefix="")
