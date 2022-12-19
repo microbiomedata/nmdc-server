@@ -40,7 +40,7 @@ NMDC_HOST=http://localhost:8080
 docker-compose up -d
 ```
 
-View main application at `http://localhost:8080/` and the swagger page at `http://localhost:8080/docs`.
+View main application at `http://localhost:8080/` and the swagger page at `http://localhost:8080/api/docs`.
 
 ## Development Setup (outside docker)
 
@@ -58,7 +58,7 @@ pip install uvicorn tox
 uvicorn nmdc_server.asgi:app --reload
 ```
 
-View swagger page at `http://localhost:8000/docs`.
+View swagger page at `http://localhost:8000/api/docs`.
 
 ## Running ingest
 
