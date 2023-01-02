@@ -56,20 +56,3 @@ def extract_extras(
         if key not in fields and key not in exclude:
             values["annotations"][key] = extract_value(value)
     return values
-
-
-def merge_download_artifact(ingest_db: Session, query):
-    for row in query:
-        ingest_db.merge(row)
-        ingest_db.commit()
-
-
-def maybe_merge_download_artifact(ingest_db: Session, query):
-    logger = logging.getLogger()
-    for row in query:
-        try:
-            ingest_db.merge(row)
-            ingest_db.commit()
-        except IntegrityError:
-            logger.info("Error: data object with download history was removed.")
-            ingest_db.rollback()

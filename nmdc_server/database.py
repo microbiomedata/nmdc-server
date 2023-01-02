@@ -15,9 +15,7 @@ _engine_kwargs = {
     "max_overflow": settings.db_pool_max_overflow,
 }
 engine = create_engine(settings.current_db_uri, **_engine_kwargs)
-engine_ingest = create_engine(settings.ingest_database_uri, **_engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-SessionLocalIngest = sessionmaker(autocommit=False, autoflush=False, bind=engine_ingest)
 
 # This is to avoid having to manually name all constraints
 # See: http://alembic.zzzcomputing.com/en/latest/naming.html

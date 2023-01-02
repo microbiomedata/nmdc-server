@@ -9,10 +9,8 @@ class Settings(BaseSettings):
     environment: str = "production"
 
     # Several different database urls are configured for different
-    # environments.  In production, only database_uri and ingest_database_uri
-    # are used.
+    # environments.  In production, only database_uri is used.
     database_uri: str = "postgresql:///nmdc"
-    ingest_database_uri: str = "postgresql:///nmdc_testing"
     testing_database_uri: str = "postgresql:///nmdc_testing"
 
     # database tuning knobs
