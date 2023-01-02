@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.schema import DDL, MetaData
 
 from nmdc_server.config import settings
@@ -104,28 +104,6 @@ returns boolean as $$
     end;
 $$
 language plpgsql;
-
-/*
-A convenience function to truncate all tables that get repopulated
-during an ingest.  Any tables storing persistent data should be
-added as an exception here.
-*/
-CREATE OR REPLACE FUNCTION truncate_tables() RETURNS void AS $$
-DECLARE
-    statements CURSOR FOR
-        SELECT tablename FROM pg_tables
-        WHERE schemaname = 'public'
-            and tablename <> 'alembic_version'
-            and tablename <> 'file_download'
-            and tablename <> 'ingest_lock'
-            and tablename <> 'bulk_download'
-            and tablename <> 'bulk_download_data_object';
-BEGIN
-    FOR stmt IN statements LOOP
-        EXECUTE 'TRUNCATE TABLE ' || quote_ident(stmt.tablename) || ' CASCADE;';
-    END LOOP;
-END;
-$$ LANGUAGE plpgsql;
 """
     ),
 )
@@ -214,3 +192,32 @@ def is_ingest_locked(db: Session):
     ).first()
     return not result[0]
 
+
+def clear_tables(db: Session):
+    db.execute(
+        """
+        /*
+        A convenience function to clear all tables that get repopulated
+        during an ingest.  Any tables storing persistent data should be
+        added as an exception here.
+        */
+        CREATE OR REPLACE FUNCTION clear_tables() RETURNS void AS $$
+        DECLARE
+            statements CURSOR FOR
+                SELECT tablename FROM pg_tables
+                WHERE schemaname = 'public'
+                    and tablename <> 'alembic_version'
+                    and tablename <> 'file_download'
+                    and tablename <> 'bulk_download'
+                    and tablename <> 'bulk_download_data_object'
+                    and tablename <> 'user_logins'
+                    and tablename <> 'submission_metadata';
+        BEGIN
+            FOR stmt IN statements LOOP
+                EXECUTE 'DELETE FROM ' || quote_ident(stmt.tablename) || ';';
+            END LOOP;
+        END;
+        $$ LANGUAGE plpgsql;
+        SELECT clear_tables();
+    """
+    ).all()

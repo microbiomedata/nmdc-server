@@ -89,7 +89,6 @@ NMDC_MONGO_PASSWORD=changeme
 With that file in place, populate the docker volume by running,
 
 ```bash
-docker-compose run backend nmdc-server truncate # if necessary
 docker-compose run backend nmdc-server migrate
 docker-compose run backend nmdc-server -vv ingest --function-limit 100
 ```
