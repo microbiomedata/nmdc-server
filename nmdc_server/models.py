@@ -661,15 +661,6 @@ class FileDownload(Base):
     data_object = relationship(DataObject, backref="download_entities")
 
 
-# This is a basic mutex lock to ensure only 1 ingest job is queued at a time.
-class IngestLock(Base):
-    __tablename__ = "ingest_lock"
-    __table_args__ = (CheckConstraint("id", name="singleton"),)
-
-    id = Column(Boolean, primary_key=True, default=True)
-    started = Column(DateTime, nullable=False, default=datetime.utcnow)
-
-
 ModelType = Union[
     Type[Study],
     Type[OmicsProcessing],

@@ -185,3 +185,32 @@ where m.id = study.id;
 def get_db():
     with SessionLocal() as db:
         yield db
+
+
+INGEST_LOCK_ID = 0
+
+
+class IngestLockNotAcquired(Exception):
+    ...
+
+
+def get_ingest_lock(db: Session):
+    """
+    https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS
+    """
+    result: tuple[bool] = db.execute(f"SELECT pg_try_advisory_lock({INGEST_LOCK_ID});").first()
+    if not result[0]:
+        raise IngestLockNotAcquired()
+
+
+def is_ingest_locked(db: Session):
+    """
+    https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS
+    """
+
+    result: tuple[bool] = db.execute(
+        f"SELECT pg_try_advisory_lock({INGEST_LOCK_ID}); "
+        f"SELECT pg_advisory_unlock({INGEST_LOCK_ID});"
+    ).first()
+    return not result[0]
+
