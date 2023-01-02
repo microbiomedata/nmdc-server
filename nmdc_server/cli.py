@@ -3,54 +3,37 @@ from pathlib import Path
 from typing import Optional
 
 import click
+from alembic import command
+from alembic.config import Config
 
-from nmdc_server import jobs, models
-from nmdc_server.config import Settings, settings
-from nmdc_server.database import SessionLocal, SessionLocalIngest
+from nmdc_server import database
+from nmdc_server.config import settings
 from nmdc_server.ingest import errors
 from nmdc_server.ingest.all import load
-from nmdc_server.ingest.common import maybe_merge_download_artifact
 from nmdc_server.logger import get_logger
 
 
 @click.group()
 @click.pass_context
 def cli(ctx):
-    settings = Settings()
     if settings.environment == "testing":
         settings.database_uri = settings.testing_database_uri
     ctx.obj = {"settings": settings}
 
 
 @cli.command()
-@click.option("--ingest-db", is_flag=True, default=False)
-def migrate(ingest_db: bool):
+def migrate():
     """Upgrade the database schema."""
-    jobs.migrate(ingest_db=ingest_db)
+    database_uri = settings.current_db_uri
+    session_maker = database.SessionLocal
 
-
-@cli.command()
-def truncate():
-    """Remove all existing data from the ingest database."""
-    with SessionLocalIngest() as db:
-        try:
-            db.execute("select truncate_tables()").all()
-            db.commit()
-        except Exception:
-            db.rollback()
-            db.execute(
-                """
-                DO $$ DECLARE
-                     r RECORD;
-                 BEGIN
-                     FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = current_schema())
-                     LOOP
-                         EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
-                     END LOOP;
-                 END $$;
-            """
-            )
-            db.commit()
+    with session_maker.begin() as db:  # type: ignore
+        database.get_ingest_lock(db)
+        alembic_cfg = Config(str(Path(__file__).parent / "alembic.ini"))
+        alembic_cfg.set_main_option("script_location", str(Path(__file__).parent / "migrations"))
+        alembic_cfg.set_main_option("sqlalchemy.url", database_uri)
+        alembic_cfg.attributes["configure_logger"] = True
+        command.upgrade(alembic_cfg, "head")
 
 
 @cli.command()
@@ -67,17 +50,11 @@ def ingest(verbose, function_limit, skip_annotation):
     logger = get_logger(__name__)
     logging.basicConfig(level=level, format="%(message)s")
     logger.setLevel(logging.INFO)
-    jobs.migrate(ingest_db=True)
-    with SessionLocalIngest() as ingest_db:
-        load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
-        if settings.current_db_uri != settings.ingest_database_uri:
-            with SessionLocal() as prod_db:
-                # copy persistent data from the production db to the ingest db
-                maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
-                maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
-                maybe_merge_download_artifact(
-                    ingest_db, prod_db.query(models.BulkDownloadDataObject)
-                )
+    with database.SessionLocal() as db:
+        with db.begin():
+            database.get_ingest_lock(db)
+            database.clear_tables(db)
+            load(db, function_limit=function_limit, skip_annotation=skip_annotation)
 
     for m, s in errors.missing.items():
         click.echo(f"missing {m}:")
@@ -99,7 +76,7 @@ def shell(print_sql: bool, script: Optional[Path]):
 
     imports = [
         "from nmdc_server.config import settings",
-        "from nmdc_server.database import SessionLocal, SessionLocalIngest",
+        "from nmdc_server.database import SessionLocal",
         "from nmdc_server.models import "
         "Biosample, EnvoAncestor, EnvoTerm, EnvoTree, OmicsProcessing, Study",
     ]
