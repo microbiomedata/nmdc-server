@@ -175,11 +175,10 @@ def load(
 
         try:
             pipeline = load_object(db, obj, **kwargs)
-            db.commit()
+            db.flush()
         except Exception:
             logger.exception(f"Error parsing pipeline {obj['id']}")
             errors["pipeline"].add(obj["id"])
-            db.rollback()
             continue
 
         id_ = pipeline.id

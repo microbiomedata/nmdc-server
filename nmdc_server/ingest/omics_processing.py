@@ -72,4 +72,4 @@ def load(db: Session, cursor: Cursor):
             logger.error("Error parsing omics_processing:")
             logger.error(json.dumps(obj, indent=2, default=str))
             errors["omics_processing"].add(obj["id"])
-    db.commit()
+    db.flush()

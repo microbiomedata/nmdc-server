@@ -65,4 +65,4 @@ def load(db: Session, cursor: Cursor):
         for doi in obj.get("publication_dois", []):
             upsert_doi(db, doi)
 
-        create_study(db, Study(**obj))
+        create_study(db, Study(**obj), commit=False)

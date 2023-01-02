@@ -26,8 +26,6 @@ search_fields = [
 
 
 def load(db: Session):
-    db.execute(f"TRUNCATE TABLE {models.SearchIndex.__tablename__}")
-
     for table, field in search_fields:
         values: Optional[FacetResponse] = None
 

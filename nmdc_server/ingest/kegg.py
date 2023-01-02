@@ -22,10 +22,9 @@ def load(db: Session) -> None:
 
 
 def ingest_ko_search(db: Session) -> None:
-    db.execute(f"truncate table {KoTermText.__tablename__}")
     records = get_search_records()
     db.bulk_save_objects([KoTermText(term=term, text=text) for term, text in records.items()])
-    db.commit()
+    db.flush()
 
 
 def get_search_records():
@@ -56,24 +55,20 @@ def get_search_records():
 
 
 def ingest_ko_module_map(db: Session) -> None:
-    db.execute(f"truncate table {KoTermToModule.__tablename__}")
-
     datafile = Path(__file__).parent / "data" / "ko_term_modules.tab.txt"
     with open(datafile) as fd:
         reader = csv.DictReader(fd, delimiter="\t")
         db.bulk_save_objects(
             [KoTermToModule(term=row["KO_id"], module=row["modules"]) for row in reader]
         )
-        db.commit()
+        db.flush()
 
 
 def ingest_ko_pathway_map(db: Session) -> None:
-    db.execute(f"truncate table {KoTermToPathway.__tablename__}")
-
     datafile = Path(__file__).parent / "data" / "ko_term_pathways.tab.txt"
     with open(datafile) as fd:
         reader = csv.DictReader(fd, delimiter="\t")
         db.bulk_save_objects(
             [KoTermToPathway(term=row["KO_id"], pathway=row["image_id"]) for row in reader]
         )
-        db.commit()
+        db.flush()
