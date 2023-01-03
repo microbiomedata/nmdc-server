@@ -385,7 +385,7 @@ async def run_ingest(
     if is_ingest_locked(db):
         raise HTTPException(
             status_code=409,
-            detail=f"An ingest is already in progress",
+            detail="An ingest is already in progress",
         )
     jobs.ingest.delay(function_limit=params.function_limit, skip_annotation=params.skip_annotation)
     return ""
@@ -402,7 +402,7 @@ async def repopulate_gene_functions(
     if is_ingest_locked(db):
         raise HTTPException(
             status_code=409,
-            detail=f"An ingest is already in progress",
+            detail="An ingest is already in progress",
         )
     jobs.populate_gene_functions.delay()
     return ""

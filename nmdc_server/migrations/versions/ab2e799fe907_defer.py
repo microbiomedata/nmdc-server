@@ -1,3 +1,5 @@
+# flake8: noqa
+
 """empty message
 
 Revision ID: ab2e799fe907
@@ -7,7 +9,6 @@ Create Date: 2023-01-02 19:10:35.972511
 """
 from typing import Optional
 
-import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.

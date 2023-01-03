@@ -1,10 +1,7 @@
-import logging
 from datetime import datetime
 from typing import Any, Dict, Set, Union
 
 from pydantic import BaseModel
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm.session import Session
 
 from nmdc_server.schemas import AnnotationValue
 
