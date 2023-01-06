@@ -20,7 +20,7 @@ def assert_status(response: Response, status: int = 200):
 
 
 def test_api_spec(client: TestClient):
-    resp = client.get("/openapi.json")
+    resp = client.get("/api/openapi.json")
     assert resp.status_code == 200
     assert resp.json()["info"]["version"] == nmdc_server.__version__
 
