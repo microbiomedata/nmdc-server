@@ -25,6 +25,7 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
         title="NMDC Dataset API",
         version=__version__,
         docs_url="/api/docs",
+        openapi_url="/api/openapi.json",
     )
 
     @app.get("/docs", response_class=RedirectResponse, status_code=301, include_in_schema=False)
