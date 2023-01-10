@@ -65,10 +65,18 @@ export default defineComponent({
           >
             <template #[`item.orcid`]="{ item }">
               <a
+                class="compact-orcid"
                 :href="`https://orcid.org/${item.orcid}`"
                 rel="noopener noreferrer"
                 target="_blank"
               >
+                <img
+                  class="mr-2"
+                  alt="ORCID logo"
+                  src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+                  width="24"
+                  height="24"
+                >
                 {{ item.orcid }}
               </a>
             </template>
@@ -86,3 +94,9 @@ export default defineComponent({
     </v-container>
   </v-main>
 </template>
+
+<style scoped>
+.compact-orcid {
+  display: flex;
+}
+</style>
