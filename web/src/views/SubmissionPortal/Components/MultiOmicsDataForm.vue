@@ -106,11 +106,22 @@ export default defineComponent({
         <v-radio
           label="Yes - Other"
           :value="4"
-        />
+        >
+          <template #label>
+            <span class="mr-4">Other</span>
+            <v-text-field
+              class="ma-0 pa-0"
+              dense
+              hide-details
+              outlined
+            />
+          </template>
+        </v-radio>
       </v-radio-group>
       <v-textarea
         v-if="dataGenerated === false && (facilityRadio === 1 || facilityRadio === 3)"
         label="Shipping Information"
+        outlined
       />
       <v-radio-group
         v-if=" dataGenerated === false && facilityRadio > 0"
@@ -125,9 +136,18 @@ export default defineComponent({
           :value="1"
         />
         <v-radio
-          label="Other"
           :value="2"
-        />
+        >
+          <template #label>
+            <span class="mr-4">Other</span>
+            <v-text-field
+              class="pa-0 ma-0"
+              dense
+              hide-details
+              outlined
+            />
+          </template>
+        </v-radio>
       </v-radio-group>
       <v-text-field
         v-if="multiOmicsAssociations.doi"
