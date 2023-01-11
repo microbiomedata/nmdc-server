@@ -16,15 +16,9 @@ export default defineComponent({
   },
   setup(props) {
     const team = computed(() => props.item.has_credit_associations);
-    const piWebsites = computed(() => {
-      if (props.item.principal_investigator.orcid) {
-        return [getOrcid(props.item.principal_investigator)]
-          .concat(props.item.principal_investigator_websites);
-      }
-      return props.item.principal_investigator_websites;
-    });
+    const hasOrcid = computed(() => props.item.principal_investigator?.orcid);
     return {
-      team, piWebsites, getOrcid,
+      team, getOrcid, hasOrcid,
     };
   },
 });
@@ -59,7 +53,21 @@ export default defineComponent({
             Principal investigator
           </div>
           <a
-            v-for="site in piWebsites"
+            v-if="hasOrcid"
+            :href="getOrcid(item.principal_investigator)"
+            class="blue--text py-1"
+            style="cursor: pointer; text-decoration: none; display: flex;"
+          >
+            <img
+              width="24px"
+              class="mr-2"
+              alt="ORCID logo"
+              src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+            >
+            {{ getOrcid(item.principal_investigator) }}
+          </a>
+          <a
+            v-for="site in item.principal_investigator_websites"
             :key="site"
             class="blue--text py-1"
             style="cursor: pointer; text-decoration: none; display: block;"
