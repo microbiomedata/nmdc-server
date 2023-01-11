@@ -118,7 +118,7 @@ export default defineComponent({
                   :alt="`${member.applies_to_person.name} profile picture`"
                   src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
                 >
-                OrcID
+                {{ member.applies_to_person.orcid.replace('orcid:', '') }}
               </v-btn>
             </v-card>
           </v-menu>
