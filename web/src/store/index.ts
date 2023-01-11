@@ -17,6 +17,7 @@ const state = reactive({
   conditions: [] as Condition[],
   bulkDownloadSelected: [] as string[],
   user: null as string | null,
+  orcid: null as string | null,
   hasAcceptedTerms: false,
   treeData: null as EnvoTree | null,
 });
@@ -88,6 +89,7 @@ async function init(_router: VueRouter) {
   // @ts-ignore
   state.conditions = router.currentRoute.query?.conditions || [];
   if (state.user) {
+    state.orcid = await api.myOrcid();
     restoreState();
   } else {
     watchEffect(persistState);
