@@ -65,6 +65,12 @@ async def get_current_user(token: Optional[Token] = Depends(get_token)) -> Optio
     return None
 
 
+async def get_current_user_orcid(token: Optional[Token] = Depends(get_token)) -> Optional[str]:
+    if token:
+        return token.orcid
+    return None
+
+
 async def login_required(
     token: Optional[Token] = Depends(get_token), db: Session = Depends(get_db)
 ) -> models.User:
