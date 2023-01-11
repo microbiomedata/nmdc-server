@@ -52,20 +52,26 @@ export default defineComponent({
           <div class="text-h5 py-2">
             Principal investigator
           </div>
-          <a
+          <span
             v-if="hasOrcid"
-            :href="getOrcid(item.principal_investigator)"
-            class="blue--text py-1"
-            style="cursor: pointer; text-decoration: none; display: flex;"
+            style="display: flex; align-items: center;"
+            class="py-1"
           >
-            <img
-              width="24px"
-              class="mr-2"
-              alt="ORCID logo"
-              src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+            <a
+              :href="getOrcid(item.principal_investigator)"
+              class="blue--text py-1 mr-2"
+              style="cursor: pointer; text-decoration: none; display: flex;"
             >
-            {{ getOrcid(item.principal_investigator) }}
-          </a>
+              <img
+                width="24px"
+                class="mr-2"
+                alt="ORCID logo"
+                src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+              >
+              {{ getOrcid(item.principal_investigator) }}
+            </a>
+            (unauthenticated)
+          </span>
           <a
             v-for="site in item.principal_investigator_websites"
             :key="site"
@@ -102,24 +108,30 @@ export default defineComponent({
               </div>
             </template>
             <v-card
-              class="pa-2"
+              class=" d-flex flex-column justify-start pa-2"
             >
               <v-card-title>{{ member.applies_to_person.name }}</v-card-title>
               <v-card-subtitle>CRediT: {{ member.applied_roles.join(', ') }}</v-card-subtitle>
-              <v-btn
+              <span
                 v-if="member.applies_to_person.orcid"
-                text
-                color="green"
-                :href="getOrcid(member)"
+                style="display: flex; align-items: center;"
+                class="py-1 pl-4"
               >
-                <img
-                  width="24px"
-                  class="mr-2"
-                  :alt="`${member.applies_to_person.name} profile picture`"
-                  src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+                <a
+                  :href="getOrcid(member)"
+                  class="blue--text py-1 mr-2"
+                  style="cursor: pointer; text-decoration: none; display: flex;"
                 >
-                {{ member.applies_to_person.orcid.replace('orcid:', '') }}
-              </v-btn>
+                  <img
+                    width="24px"
+                    class="mr-2"
+                    alt="ORCID logo"
+                    src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+                  >
+                  {{ member.applies_to_person.orcid.replace('orcid:', '') }}
+                </a>
+                (unauthenticated)
+              </span>
             </v-card>
           </v-menu>
         </v-card>
