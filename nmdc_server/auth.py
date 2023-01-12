@@ -74,7 +74,7 @@ async def login_required(
             detail="Login required",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    user_schema = User(name=token.name, orcid=token.orcid)
+    user_schema = User(name=token.name, orcid=token.orcid, token=token)
     return crud.get_or_create_user(db, user_schema)
 
 

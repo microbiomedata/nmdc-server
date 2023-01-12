@@ -652,6 +652,7 @@ class User(BaseModel):
     orcid: str
     name: str = ""
     is_admin = False
+    token: Optional[dict[str, str]]
 
     class Config:
         orm_mode = True

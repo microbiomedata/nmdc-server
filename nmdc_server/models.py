@@ -819,6 +819,7 @@ class User(Base):
     orcid = Column(String, nullable=False)
     name = Column(String)
     is_admin = Column(Boolean, nullable=False, default=False)
+    token = Column(JSONB, nullable=True)
 
 
 class SubmissionMetadata(Base):
