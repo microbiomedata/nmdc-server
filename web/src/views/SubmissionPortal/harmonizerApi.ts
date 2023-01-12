@@ -149,16 +149,12 @@ export class HarmonizerApi {
     });
     this.footer = new Footer(document.querySelector('#harmonizer-footer-root'), this.dh);
     this.dh.useSchema(schema, [], templateName);
+    this._postTemplateChange();
 
-    this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
-      this.selectedColumn.value = this.dh.getFields()[col].title;
-    }, 200, { leading: true }));
-    this.dh.hot.updateSettings({ search: true, customBorders: true });
     // @ts-ignore
     window.dh = this.dh;
 
     this.ready.value = true;
-    this.jumpToRowCol(0, 0);
   }
 
   _getColumnCoordinates() {
@@ -243,6 +239,14 @@ export class HarmonizerApi {
       };
     }
     return fieldSettings;
+  }
+
+  _postTemplateChange() {
+    this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
+      this.selectedColumn.value = this.dh.getFields()[col].title;
+    }, 200, { leading: true }));
+    this.dh.hot.updateSettings({ search: true, customBorders: true });
+    this.jumpToRowCol(0, 0);
   }
 
   refreshState() {
@@ -371,5 +375,13 @@ export class HarmonizerApi {
   addChangeHook(callback: Function) {
     // calls function on any change of the data
     this.dh.hot.addHook('afterChange', callback);
+  }
+
+  useTemplate(template: string) {
+    if (!this.dh || !template) {
+      return;
+    }
+    this.dh.useTemplate(template);
+    this._postTemplateChange();
   }
 }

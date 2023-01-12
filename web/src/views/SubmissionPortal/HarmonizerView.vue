@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted,
+  computed, defineComponent, ref, nextTick, watch, onMounted, reactive,
 } from '@vue/composition-api';
 import { clamp, flattenDeep } from 'lodash';
 import { writeFile, utils } from 'xlsx';
@@ -33,6 +33,30 @@ const ColorKey = {
   },
 };
 
+// TODO: this should come from the store
+const ENVIRONMENT_CLASSES = [
+  'air',
+  'biofilm',
+  'bioscales',
+  'built_env',
+  'host-associated',
+  'plant-associated',
+  'sediment',
+  'soil',
+  'wastewater_sludge',
+  'water',
+];
+const EMSL = 'emsl_mixin';
+const JGI_MG = 'jgi_mg_mixin';
+const JGT_MT = 'jgi_mt_mixin';
+const TEMPLATES = [
+  ENVIRONMENT_CLASSES[8],
+  EMSL,
+  JGI_MG,
+  JGT_MT,
+];
+// const ENVIRONMENT_TEMPLATE = TEMPLATES[0];
+
 export default defineComponent({
   components: { FindReplace, SubmissionStepper },
 
@@ -44,11 +68,13 @@ export default defineComponent({
     const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
     const sidebarOpen = ref(true);
+    const templates = reactive(TEMPLATES);
+    const activeTemplate = ref(templates[0]);
 
     onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
       if (r) {
-        await harmonizerApi.init(r, templateChoice.value);
+        await harmonizerApi.init(r, templates[0]);
         await nextTick();
         harmonizerApi.loadData(sampleData.value.slice(2));
         harmonizerApi.addChangeHook(() => {
@@ -138,6 +164,11 @@ export default defineComponent({
       document.getElementById('tsv-file-select')?.click();
     }
 
+    function changeTemplate(index: number) {
+      activeTemplate.value = templates[index];
+      harmonizerApi.useTemplate(templates[index]);
+    }
+
     return {
       ColorKey,
       columnVisibility,
@@ -155,6 +186,7 @@ export default defineComponent({
       sidebarOpen,
       validationItems,
       validationActiveCategory,
+      templates,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -163,6 +195,7 @@ export default defineComponent({
       focus,
       jumpTo,
       validate,
+      changeTemplate,
       urlify,
     };
   },
@@ -377,6 +410,15 @@ export default defineComponent({
         </v-menu>
       </div>
     </div>
+
+    <v-tabs @change="changeTemplate">
+      <v-tab
+        v-for="template in templates"
+        :key="template"
+      >
+        {{ template }}
+      </v-tab>
+    </v-tabs>
 
     <div>
       <div
