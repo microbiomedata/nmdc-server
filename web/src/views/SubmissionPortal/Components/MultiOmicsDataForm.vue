@@ -9,15 +9,8 @@ export default defineComponent({
   setup() {
     const formRef = ref();
 
-    const facilityRadio = ref(null);
-    const dataGenerated = ref(null);
-
     function reValidate() {
       formRef.value.validate();
-    }
-
-    function setDoi() {
-      multiOmicsAssociations.doi = dataGenerated.value || false;
     }
 
     return {
@@ -31,9 +24,6 @@ export default defineComponent({
       reValidate,
       /* Rules functions */
       // datasetDoiRules,
-      facilityRadio,
-      dataGenerated,
-      setDoi,
     };
   },
 });
@@ -54,101 +44,13 @@ export default defineComponent({
       style="max-width: 1000px;"
     >
       <!-- DOI -->
-      <!-- v-checkbox
+      <v-checkbox
         v-model="multiOmicsAssociations.doi"
         label="Data has already been generated"
         hide-details
         class="mb-2 mt-0"
         @change="reValidate"
-      / -->
-      <!-- https://lucid.app/lucidchart/75516c27-0974-4a77-ae92-73234e3f385e/edit?invitationId=inv_8fe7dca1-e52f-431c-9a0e-f1e6dd1e3a72&page=0_0# -->
-      <v-radio-group
-        v-model="dataGenerated"
-        label="Has data already been generated for your study?"
-        @change="setDoi"
-      >
-        <v-radio
-          label="No"
-          :value="false"
-        />
-        <v-radio
-          label="Yes"
-          :value="true"
-        />
-      </v-radio-group>
-      <v-checkbox
-        v-if="multiOmicsAssociations.doi"
-        label="A DOE user facility was involved"
-        hide-details
-        class="mb-2 mt-0"
       />
-      <v-radio-group
-        v-if="dataGenerated === false"
-        v-model="facilityRadio"
-        label="Are you submitting metadata for samples that will be sent to a DOE user facility?"
-      >
-        <v-radio
-          label="No"
-          :value="0"
-        />
-        <v-radio
-          label="Yes - EMSL"
-          :value="1"
-        />
-        <v-radio
-          label="Yes - JGI"
-          :value="2"
-        />
-        <v-radio
-          label="Yes - EMSL and JGI"
-          :value="3"
-        />
-        <v-radio
-          label="Yes - Other"
-          :value="4"
-        >
-          <template #label>
-            <span class="mr-4">Other</span>
-            <v-text-field
-              class="ma-0 pa-0"
-              dense
-              hide-details
-              outlined
-            />
-          </template>
-        </v-radio>
-      </v-radio-group>
-      <v-textarea
-        v-if="dataGenerated === false && (facilityRadio === 1 || facilityRadio === 3)"
-        label="Shipping Information"
-        outlined
-      />
-      <v-radio-group
-        v-if=" dataGenerated === false && facilityRadio > 0"
-        label="What kind of project have you been awarded?"
-      >
-        <v-radio
-          label="FICUS"
-          :value="0"
-        />
-        <v-radio
-          label="MONet"
-          :value="1"
-        />
-        <v-radio
-          :value="2"
-        >
-          <template #label>
-            <span class="mr-4">Other</span>
-            <v-text-field
-              class="pa-0 ma-0"
-              dense
-              hide-details
-              outlined
-            />
-          </template>
-        </v-radio>
-      </v-radio-group>
       <v-text-field
         v-if="multiOmicsAssociations.doi"
         v-model="multiOmicsForm.datasetDoi"

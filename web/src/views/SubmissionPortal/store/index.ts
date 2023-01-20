@@ -11,6 +11,20 @@ Vue.use(CompositionApi);
 
 const hasChanged = ref(0);
 /**
+ * Submission Context Step
+ */
+const contextFormDefault = {
+  dataGenerated: undefined as undefined | boolean,
+  facilityGenerated: undefined as undefined | boolean,
+  facilities: [] as string[],
+  // TODO strongly define what this type should look like
+  shippingInfo: {},
+  award: undefined as undefined | string,
+  otherAward: '',
+};
+const contextForm = reactive(clone(contextFormDefault));
+
+/**
  * Study Form Step
  */
 const studyFormDefault = {
@@ -76,6 +90,7 @@ const templateChoiceDisabled = computed(() => sampleData.value.length >= 3);
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
   template: templateChoice.value,
+  contextForm,
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
@@ -138,6 +153,7 @@ export {
   samplesValid,
   studyForm,
   studyFormValid,
+  contextForm,
   submitPayload,
   packageName,
   templateChoice,
