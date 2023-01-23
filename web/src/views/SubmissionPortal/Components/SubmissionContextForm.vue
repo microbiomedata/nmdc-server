@@ -1,11 +1,24 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent, ref } from '@vue/composition-api';
 import { contextForm } from '../store';
 
 export default defineComponent({
   setup() {
+    const addressForm = ref(false);
+    const date = ref(null);
+    const datePicker = ref(false);
+    const address = ref({});
+    const sampleItems = ref(['water_extract_soil']);
+    const biosafetyLevels = ref(['BSL2']);
+
     return {
       contextForm,
+      addressForm,
+      address,
+      date,
+      datePicker,
+      sampleItems,
+      biosafetyLevels,
     };
   },
 });
@@ -19,7 +32,9 @@ export default defineComponent({
     <div class="text-h5">
       Provide context about what your submission is.
     </div>
-    <v-form>
+    <v-form
+      style="max-width: 1000px;"
+    >
       <v-radio-group
         v-model="contextForm.dataGenerated"
         label="Has data already been generated for your study?"
@@ -58,15 +73,284 @@ export default defineComponent({
           value="JGI"
           hide-details
         />
-        <v-textarea
+        <v-card
           v-if="contextForm.dataGenerated === false && contextForm.facilities.includes('EMSL')"
-          class="mt-4"
-          label="Shipping Information"
+          class="mt-4 pa-0"
           outlined
-        />
+        >
+          <v-card-text
+            class="pt-2"
+            style="min-height: 100px;"
+          >
+            EMSL Shipping Info
+          </v-card-text>
+          <v-dialog
+            v-model="addressForm"
+            scrollable
+            width="1200"
+          >
+            <template
+              #activator="{ on, attrs }"
+            >
+              <v-btn
+                absolute
+                top
+                right
+                color="primary"
+                v-bind="attrs"
+                v-on="on"
+              >
+                Enter shipping info
+              </v-btn>
+            </template>
+            <v-card>
+              <v-card-title>
+                <v-spacer />
+                <span class="text-h5">Shipping Information</span>
+                <v-spacer />
+              </v-card-title>
+              <v-card-text>
+                <v-form
+                  class="ml-12"
+                  style="max-width: 1000px"
+                >
+                  <v-subheader>
+                    <span class="text-h6">Shipper</span>
+                  </v-subheader>
+                  <v-divider />
+                  <!-- Shipper Name, E-mail address, etc. -->
+                  <v-text-field
+                    label="Shipper Name"
+                    outlined
+                    dense
+                    class="mt-2"
+                  />
+                  <v-text-field
+                    label="E-mail Address"
+                    outlined
+                    dense
+                  />
+                  <v-text-field
+                    label="Phone Number"
+                    outlined
+                    dense
+                  />
+                  <v-text-field
+                    label="Address Line 1"
+                    outlined
+                    dense
+                  />
+                  <v-text-field
+                    label="Address Line 2"
+                    outlined
+                    dense
+                  />
+                  <v-text-field
+                    label="City"
+                    outlined
+                    dense
+                  />
+                  <div class="d-flex">
+                    <v-text-field
+                      label="State"
+                      outlined
+                      dense
+                      class="mr-4"
+                    />
+                    <v-text-field
+                      label="Zip Code"
+                      outlined
+                      dense
+                    />
+                  </div>
+                  <v-textarea
+                    label="Shipping Conditions"
+                    outlined
+                    dense
+                    rows="2"
+                  />
+                  <v-menu
+                    ref="datePickerEl"
+                    v-model="datePicker"
+                    :close-on-content-click="false"
+                    :return-value.sync="date"
+                    transition="scale-transition"
+                    offset-y
+                    min-width="auto"
+                  >
+                    <template #activator="{ on, attrs }">
+                      <v-text-field
+                        v-model="date"
+                        label="Expected Shipping Date"
+                        append-icon="mdi-calendar"
+                        readonly
+                        outlined
+                        dense
+                        v-bind="attrs"
+                        v-on="on"
+                      />
+                    </template>
+                    <v-date-picker
+                      v-model="date"
+                      no-title
+                      scrollable
+                    >
+                      <v-spacer />
+                      <v-btn
+                        text
+                        color="primary"
+                        @click="datePicker = false"
+                      >
+                        Cancel
+                      </v-btn>
+                      <v-btn
+                        text
+                        color="primary"
+                        @click="$refs.menu.save(date)"
+                      >
+                        OK
+                      </v-btn>
+                    </v-date-picker>
+                  </v-menu>
+                  <v-subheader>
+                    <span class="text-h6">Sample</span>
+                  </v-subheader>
+                  <v-divider />
+                  <v-select
+                    class="mt-2"
+                    :items="sampleItems"
+                    label="Sample"
+                    dense
+                    outlined
+                  />
+                  <v-textarea
+                    label="Sample Description"
+                    hint="Number of samples, sample container type..."
+                    outlined
+                    dense
+                    rows="2"
+                  />
+                  <v-textarea
+                    label="Experiment Goals"
+                    hint="Briefly describe the goal for your experiment"
+                    outlined
+                    dense
+                    rows="2"
+                  />
+                  <v-textarea
+                    label="Randomization"
+                    hint="What experimental conditions will be used for"
+                    outlined
+                    dense
+                    rows="1"
+                  />
+                  <div class="d-flex">
+                    <v-checkbox
+                      class="mr-4 mt-0"
+                      label="USDA Regulated?"
+                      hide-details
+                    />
+                    <v-text-field
+                      label="Permit Number"
+                      outlined
+                      dense
+                    />
+                    <v-spacer />
+                  </div>
+                  <div class="d-flex">
+                    <v-select
+                      class="mr-4"
+                      :items="biosafetyLevels"
+                      label="Biosafety Level"
+                      dense
+                      outlined
+                    />
+                    <v-checkbox
+                      class="mt-0"
+                      label="IRP/HIPAA?"
+                    />
+                    <v-spacer />
+                  </div>
+                  <v-subheader>
+                    <span class="text-h6">Institutional Review Board (IRB) Information</span>
+                  </v-subheader>
+                  <v-divider class="mb-2" />
+                  <v-text-field
+                    label="IRB Number"
+                    outlined
+                    dense
+                  />
+                  <v-text-field
+                    label="IRB Contact Name"
+                    outlined
+                    dense
+                  />
+                  <v-text-field
+                    label="E-mail Address"
+                    outlined
+                    dense
+                  />
+                  <v-text-field
+                    label="Phone Number"
+                    outlined
+                    dense
+                  />
+                  <v-text-field
+                    label="Address Line 1"
+                    outlined
+                    dense
+                  />
+                  <v-text-field
+                    label="Address Line 2"
+                    outlined
+                    dense
+                  />
+                  <v-text-field
+                    label="City"
+                    outlined
+                    dense
+                  />
+                  <div class="d-flex">
+                    <v-text-field
+                      label="State"
+                      outlined
+                      dense
+                      class="mr-4"
+                    />
+                    <v-text-field
+                      label="Zip Code"
+                      outlined
+                      dense
+                    />
+                  </div>
+                  <v-subheader>
+                    <span class="text-h6">Additional Comments</span>
+                  </v-subheader>
+                  <v-divider class="mb-2" />
+                  <v-textarea
+                    label="Comments"
+                    outlined
+                    dense
+                    lines="4"
+                  />
+                </v-form>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer />
+                <v-btn
+                  color="primary"
+                  @click="addressForm = false"
+                >
+                  Save
+                </v-btn>
+                <v-spacer />
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </v-card>
         <v-radio-group
           v-if="contextForm.dataGenerated === false && contextForm.facilities.length > 0"
-          v-model="award"
+          v-model="contextForm.award"
           label="What kind of project have you been awarded?"
         >
           <v-radio
