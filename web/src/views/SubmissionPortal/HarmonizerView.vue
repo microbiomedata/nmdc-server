@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, reactive,
+  computed, defineComponent, ref, nextTick, watch, onMounted,
 } from '@vue/composition-api';
 import { clamp, flattenDeep } from 'lodash';
 import { writeFile, utils } from 'xlsx';
@@ -9,7 +9,7 @@ import useRequest from '@/use/useRequest';
 
 import { HarmonizerApi } from './harmonizerApi';
 import {
-  packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
+  packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateList, mergeSampleData,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
@@ -33,30 +33,6 @@ const ColorKey = {
   },
 };
 
-// TODO: this should come from the store
-const ENVIRONMENT_CLASSES = [
-  'air',
-  'biofilm',
-  'bioscales',
-  'built_env',
-  'host-associated',
-  'plant-associated',
-  'sediment',
-  'soil',
-  'wastewater_sludge',
-  'water',
-];
-const EMSL = 'emsl_mixin';
-const JGI_MG = 'jgi_mg_mixin';
-const JGT_MT = 'jgi_mt_mixin';
-const TEMPLATES = [
-  ENVIRONMENT_CLASSES[8],
-  EMSL,
-  JGI_MG,
-  JGT_MT,
-];
-// const ENVIRONMENT_TEMPLATE = TEMPLATES[0];
-
 export default defineComponent({
   components: { FindReplace, SubmissionStepper },
 
@@ -68,20 +44,26 @@ export default defineComponent({
     const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
     const sidebarOpen = ref(true);
-    const templates = reactive(TEMPLATES);
-    const activeTemplate = ref(templates[0]);
+    const activeTemplate = ref(templateList.value[0]);
+    const activeTemplateData = computed(() => sampleData.value[activeTemplate.value] || []);
+
+    watch(activeTemplateData, () => {
+      harmonizerApi.loadData(activeTemplateData.value);
+    });
+
+    const onDataChange = () => {
+      const data = harmonizerApi.exportJson();
+      mergeSampleData(activeTemplate.value, data);
+      incrementalSaveRecord(root.$route.params.id);
+    };
 
     onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
       if (r) {
-        await harmonizerApi.init(r, templates[0]);
+        await harmonizerApi.init(r, activeTemplate.value);
         await nextTick();
-        harmonizerApi.loadData(sampleData.value.slice(2));
-        harmonizerApi.addChangeHook(() => {
-          const data = harmonizerApi.exportJson();
-          sampleData.value = data;
-          incrementalSaveRecord(root.$route.params.id);
-        });
+        harmonizerApi.loadData(activeTemplateData.value);
+        harmonizerApi.addChangeHook(onDataChange);
       }
     });
 
@@ -104,7 +86,7 @@ export default defineComponent({
 
     async function validate() {
       const data = harmonizerApi.exportJson();
-      sampleData.value = data;
+      mergeSampleData(activeTemplate.value, data);
       samplesValid.value = await harmonizerApi.validate();
       sidebarOpen.value = !samplesValid.value;
       incrementalSaveRecord(root.$route.params.id);
@@ -147,7 +129,7 @@ export default defineComponent({
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
-      sampleData.value = data;
+      mergeSampleData(activeTemplate.value, data);
       await submit(root.$route.params.id);
     });
 
@@ -165,8 +147,9 @@ export default defineComponent({
     }
 
     function changeTemplate(index: number) {
-      activeTemplate.value = templates[index];
-      harmonizerApi.useTemplate(templates[index]);
+      activeTemplate.value = templateList.value[index];
+      harmonizerApi.useTemplate(templateList.value[index]);
+      harmonizerApi.addChangeHook(onDataChange);
     }
 
     return {
@@ -180,13 +163,12 @@ export default defineComponent({
       submitCount,
       selectedHelpDict,
       packageName,
-      templateChoice,
       fields,
       highlightedValidationError,
       sidebarOpen,
       validationItems,
       validationActiveCategory,
-      templates,
+      templateList,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -413,7 +395,7 @@ export default defineComponent({
 
     <v-tabs @change="changeTemplate">
       <v-tab
-        v-for="template in templates"
+        v-for="template in templateList"
         :key="template"
       >
         {{ template }}

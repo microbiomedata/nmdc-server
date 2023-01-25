@@ -11,7 +11,7 @@ interface MetadataSubmission {
   template: string;
   studyForm: any;
   multiOmicsForm: any;
-  sampleData: any[][];
+  sampleData: Record<string, any[]>;
 }
 
 interface MetadataSubmissionRecord {

@@ -1,14 +1,14 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
 import { writeFile, utils } from 'xlsx';
-import { submit, submitPayload, sampleData } from '../store';
+import { submit, submitPayload } from '../store';
 import { saveAs } from '@/util';
 import useRequest from '@/use/useRequest';
 
 export default defineComponent({
   setup(_, { root }) {
     function downloadSamples() {
-      const worksheet = utils.aoa_to_sheet(sampleData.value);
+      const worksheet = utils.aoa_to_sheet([]); // TODO: sampleData.value);
       const workbook = utils.book_new();
       utils.book_append_sheet(workbook, worksheet, 'Sheet1');
       // @ts-ignore

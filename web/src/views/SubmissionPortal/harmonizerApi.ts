@@ -28,32 +28,21 @@ const GOLD_FIELDS = {
   },
 };
 
-const VariationMap = {
-  /** A mapping of the templates to the superset of checkbox options they work for. */
-  emsl: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl']),
-  jgi_mg: new Set(['mg-jgi']),
-  emsl_jgi_mg: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi']),
-  jgi_mt: new Set(['mt-jgi']),
-  emsl_jgi_mt: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mt-jgi']),
-  jgi_mg_mt: new Set(['mg-jgi', 'mt-jgi']),
-  emsl_jgi_mg_mt: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi', 'mt-jgi']),
-};
-// Variations should be in matching order.
-// In other words, attempt to match 'emsl' before 'emsl_jgi_mg'
-const allVariations: (keyof typeof VariationMap)[] = ['emsl', 'jgi_mg', 'emsl_jgi_mg', 'jgi_mt', 'emsl_jgi_mt', 'jgi_mg_mt', 'emsl_jgi_mg_mt'];
-
-export function getVariant(checkBoxes: string[], variations: (keyof typeof VariationMap)[], base: string) {
-  if (checkBoxes.length === 0) {
-    return base;
+const EMSL = 'emsl';
+const JGI_MG = 'jgi_mg';
+const JGT_MT = 'jgi_mt';
+export function getVariant(checkBoxes: string[], base: string) {
+  const templates = [base];
+  if (checkBoxes.includes('mp-emsl') || checkBoxes.includes('mb-emsl') || checkBoxes.includes('nom-emsl')) {
+    templates.push(EMSL);
   }
-  const variationStr = variations.find((v) => {
-    const vSet = VariationMap[v];
-    return checkBoxes.every((elem) => vSet.has(elem));
-  });
-  if (variationStr) {
-    return `${base}_${variationStr}`;
+  if (checkBoxes.includes('mg-jgi')) {
+    templates.push(JGI_MG);
   }
-  return base;
+  if (checkBoxes.includes('mt-jgi')) {
+    templates.push(JGT_MT);
+  }
+  return templates;
 }
 
 /**
@@ -61,44 +50,43 @@ export function getVariant(checkBoxes: string[], variations: (keyof typeof Varia
  */
 export const HARMONIZER_TEMPLATES: Record<string, {
   default: string;
-  status: String;
-  variations: (keyof typeof VariationMap)[];
+  status: 'published' | 'disabled';
 }> = {
-  air: { default: 'air', status: 'published', variations: [] },
-  // bioscales: { default: 'bioscales', status: 'published', variations: [] },
-  'built environment': { default: 'built_env', status: 'published', variations: [] },
-  'host-associated': { default: 'host-associated', status: 'published', variations: [] },
-  'human-associated': { default: '', status: 'disabled', variations: [] },
-  'human-gut': { default: '', status: 'disabled', variations: [] },
-  'human-oral': { default: '', status: 'disabled', variations: [] },
-  'human-skin': { default: '', status: 'disabled', variations: [] },
-  'human-vaginal': { default: '', status: 'disabled', variations: [] },
+  air: { default: 'air', status: 'published' },
+  // bioscales: { default: 'bioscales', status: 'published' },
+  'built environment': { default: 'built_env', status: 'published' },
+  'host-associated': { default: 'host-associated', status: 'published' },
+  'human-associated': { default: '', status: 'disabled' },
+  'human-gut': { default: '', status: 'disabled' },
+  'human-oral': { default: '', status: 'disabled' },
+  'human-skin': { default: '', status: 'disabled' },
+  'human-vaginal': { default: '', status: 'disabled' },
   'hydrocarbon resources-cores': {
-    default: 'hcr-cores', status: 'published', variations: [],
+    default: 'hcr-cores', status: 'published',
   },
   'hydrocarbon resources-fluids_swabs': {
-    default: 'hcr-fluids-swabs', status: 'published', variations: [],
+    default: 'hcr-fluids-swabs', status: 'published',
   },
   'microbial mat_biofilm': {
-    default: 'biofilm', status: 'published', variations: [],
+    default: 'biofilm', status: 'published',
   },
   'miscellaneous natural or artificial environment': {
-    default: 'misc-envs', status: 'published', variations: [],
+    default: 'misc-envs', status: 'published',
   },
   'plant-associated': {
-    default: 'plant-associated', status: 'published', variations: [],
+    default: 'plant-associated', status: 'published',
   },
   sediment: {
-    default: 'sediment', status: 'published', variations: [],
+    default: 'sediment', status: 'published',
   },
   soil: {
-    default: 'soil', status: 'published', variations: allVariations,
+    default: 'soil', status: 'published',
   },
   wastewater_sludge: {
-    default: 'wastewater_sludge', status: 'published', variations: [],
+    default: 'wastewater_sludge', status: 'published',
   },
   water: {
-    default: 'water', status: 'published', variations: [],
+    default: 'water', status: 'published',
   },
 };
 
@@ -271,8 +259,8 @@ export class HarmonizerApi {
     this.validationErrors.value = remapped;
   }
 
-  async loadData(data: any[][]) {
-    await this.dh.hot.loadData(data);
+  async loadData(data: any[]) {
+    await this.dh.loadDataObjects(data);
     await this.dh.hot.render();
     this.refreshState();
   }
@@ -328,7 +316,7 @@ export class HarmonizerApi {
   }
 
   exportJson() {
-    return [...this.dh.getFlatHeaders(), ...this.dh.getTrimmedData()];
+    return this.dh.getDataObjects(false);
   }
 
   scrollViewportTo(row: number, column: number) {
@@ -373,8 +361,16 @@ export class HarmonizerApi {
   }
 
   addChangeHook(callback: Function) {
-    // calls function on any change of the data
-    this.dh.hot.addHook('afterChange', callback);
+    if (!this.ready.value) {
+      return;
+    }
+    // calls function on any non-programmatic change of the data
+    this.dh.hot.addHook('afterChange', (changes: any[], source: string | null) => {
+      if (source === 'loadData') {
+        return;
+      }
+      callback();
+    });
   }
 
   useTemplate(template: string) {
