@@ -33,6 +33,20 @@ const ColorKey = {
   },
 };
 
+// controls which field is used to merge data from different DH views
+const SCHEMA_ID = 'source_mat_id';
+
+// used in determining which rows are shown in each view
+const TYPE_FIELD = 'analysis_type';
+
+// TODO: should this be derived from schema?
+const COMMON_COLUMNS = ['samp_name', SCHEMA_ID, TYPE_FIELD];
+
+// TODO: can this be imported from elsewhere?
+const EMSL = 'emsl';
+const JGI_MG = 'jgi_mg';
+const JGT_MT = 'jgi_mt';
+
 export default defineComponent({
   components: { FindReplace, SubmissionStepper },
 
@@ -146,10 +160,58 @@ export default defineComponent({
       document.getElementById('tsv-file-select')?.click();
     }
 
+    function rowIsVisibleForTemplate(row: Record<string, any>, template: string) {
+      if (template === templateList.value[0]) {
+        return true;
+      }
+      const row_types = row[TYPE_FIELD];
+      if (!row_types) {
+        return false;
+      }
+      if (template === EMSL) {
+        return row_types.includes('metaproteomics')
+          || row_types.includes('metabolomics')
+          || row_types.includes('natural organic matter');
+      }
+      if (template === JGI_MG) {
+        return row_types.includes('metagenomics');
+      }
+      if (template === JGT_MT) {
+        return row_types.includes('metatranscriptomics');
+      }
+      return false;
+    }
+
     function changeTemplate(index: number) {
-      activeTemplate.value = templateList.value[index];
-      harmonizerApi.useTemplate(templateList.value[index]);
-      harmonizerApi.addChangeHook(onDataChange);
+      if (harmonizerApi.ready.value) {
+        onDataChange();
+
+        // When changing templates we may need to populate the column columns
+        // from the first tab
+        const nextData = { ...sampleData.value };
+        const nextTemplate = templateList.value[index];
+        (nextData[templateList.value[0]] || []).forEach((row) => {
+          if (rowIsVisibleForTemplate(row, nextTemplate)) {
+            const rowId = row[SCHEMA_ID];
+            if (!nextData[nextTemplate]) {
+              nextData[nextTemplate] = [];
+            }
+            const existing = nextData[nextTemplate].find((r) => r[SCHEMA_ID] === rowId);
+            if (!existing) {
+              const newRow = {} as Record<string, any>;
+              COMMON_COLUMNS.forEach((col) => {
+                newRow[col] = row[col];
+              });
+              nextData[nextTemplate].push(newRow);
+            }
+          }
+        });
+        sampleData.value = nextData;
+
+        activeTemplate.value = nextTemplate;
+        harmonizerApi.useTemplate(nextTemplate);
+        harmonizerApi.addChangeHook(onDataChange);
+      }
     }
 
     return {
