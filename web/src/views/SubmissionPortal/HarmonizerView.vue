@@ -418,7 +418,7 @@ export default defineComponent({
           'width': sidebarOpen ? '300px' : '0px',
           'margin-top': '9px',
           'font-size': '14px',
-          'height': 'calc(100vh - 340px)'
+          'height': 'calc(100vh - 362px)'
         }"
       >
         <v-btn
@@ -600,7 +600,7 @@ html {
 /* Grid */
 #harmonizer-root {
   overflow: hidden;
-  height: calc(100vh - 340px) !important;
+  height: calc(100vh - 362px) !important;
   float: left;
   margin-top: 8px;
 
