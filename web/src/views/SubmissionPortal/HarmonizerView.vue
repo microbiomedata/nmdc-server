@@ -196,23 +196,42 @@ export default defineComponent({
         // TODO: would it make more sense to do this in the afterChange hook?
         const nextData = { ...sampleData.value };
         const nextTemplate = templateList.value[index];
-        (nextData[`${templateList.value[0]}_data`] || []).forEach((row) => {
-          if (rowIsVisibleForTemplate(row, nextTemplate)) {
-            const templateKey = `${nextTemplate}_data`;
-            const rowId = row[SCHEMA_ID];
+        const templateKey = `${nextTemplate}_data`;
+        const environmentKey = `${templateList.value[0]}_data`;
+        // add/update any rows from the first tab to the active tab if they apply and if
+        // they aren't there already.
+        (nextData[environmentKey] || []).forEach((row) => {
+          const rowId = row[SCHEMA_ID];
+          const existing = nextData[templateKey].find((r) => r[SCHEMA_ID] === rowId);
+
+          if (!existing && rowIsVisibleForTemplate(row, nextTemplate)) {
             if (!nextData[templateKey]) {
               nextData[templateKey] = [];
             }
-            const existing = nextData[templateKey].find((r) => r[SCHEMA_ID] === rowId);
-            if (!existing) {
-              const newRow = {} as Record<string, any>;
-              COMMON_COLUMNS.forEach((col) => {
-                newRow[col] = row[col];
-              });
-              nextData[templateKey].push(newRow);
-            }
+            const newRow = {} as Record<string, any>;
+            COMMON_COLUMNS.forEach((col) => {
+              newRow[col] = row[col];
+            });
+            nextData[templateKey].push(newRow);
+          }
+          if (existing) {
+            COMMON_COLUMNS.forEach((col) => {
+              existing[col] = row[col];
+            });
           }
         });
+        // remove any rows from the active tab if they were removed from the first tab
+        // or no longer apply to the active tab
+        if (nextData[templateKey]) {
+          nextData[templateKey] = nextData[templateKey].filter((row) => {
+            if (!rowIsVisibleForTemplate(row, nextTemplate)) {
+              return false;
+            }
+            const rowId = row[SCHEMA_ID];
+            const environmentRow = nextData[environmentKey].findIndex((r) => r[SCHEMA_ID] === rowId);
+            return environmentRow >= 0;
+          });
+        }
         sampleData.value = nextData;
 
         activeTemplate.value = nextTemplate;
