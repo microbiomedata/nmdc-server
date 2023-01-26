@@ -38,7 +38,7 @@ class MultiOmicsForm(BaseModel):
 
 class MetadataSubmissionRecord(BaseModel):
     packageName: str
-    template: str
+    templates: List[str]
     studyForm: StudyForm
     multiOmicsForm: MultiOmicsForm
     sampleData: Dict[str, List[Any]]

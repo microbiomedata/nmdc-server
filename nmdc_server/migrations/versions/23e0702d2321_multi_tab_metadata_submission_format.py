@@ -44,62 +44,105 @@ with open(DIR / 'multi_tab_metadata_submission_format_slot_lookup.json', 'r') as
     SLOT_TITLE_MAP = json.load(in_file)
 
 
+def upgrade_templates(omics_processing_types, environmental_package):
+    EMSL = 'emsl'
+    JGI_MG = 'jgi_mg'
+    JGT_MT = 'jgi_mt'
+
+    templates = [environmental_package];
+    if 'mp-emsl' in omics_processing_types or 'mb-emsl' in omics_processing_types or 'nom-emsl' in omics_processing_types:
+        templates.append(EMSL)
+
+    if 'mg-jgi' in omics_processing_types:
+        templates.append(JGI_MG)
+    
+    if 'mt-jgi' in omics_processing_types:
+        templates.append(JGT_MT)
+    
+    return templates
+
+
+def downgrade_templates(omics_processing_types, environmental_package):
+    variation_map = {
+        'emsl': {'mp-emsl', 'mb-emsl', 'nom-emsl'},
+        'jgi_mg': {'mg-jgi'},
+        'emsl_jgi_mg': {'mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi'},
+        'jgi_mt': {'mt-jgi'},
+        'emsl_jgi_mt': {'mp-emsl', 'mb-emsl', 'nom-emsl', 'mt-jgi'},
+        'jgi_mg_mt': {'mg-jgi', 'mt-jgi'},
+        'emsl_jgi_mg_mt': {'mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi', 'mt-jgi'},
+    }
+    variant = next((v for v, s in variation_map.items() if all(o in s for o in omics_processing_types)), None)
+    template = environmental_package
+    if variant:
+        template += f"_{variant}"
+    
+    return template
+
+
 def upgrade():
     session = orm.Session(bind=op.get_bind())
     mappings = []
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
 
-        template = metadata_submission['template']
         sample_data = metadata_submission['sampleData']
         package_name = metadata_submission['packageName']
 
         converted_sample_data = {}
         common_column_data = {}
 
-        if isinstance(sample_data, dict):
-            continue
+        # If sample_data is in the list-of-lists format, upgrade it to the dict format
+        if isinstance(sample_data, list):
+            for row in sample_data[2:]:
+                converted_row = {}
+                for col_num, value in enumerate(row):
+                    col_title = sample_data[1][col_num]
+                    if not value:
+                        continue
 
-        for row in sample_data[2:]:
-            converted_row = {}
-            for col_num, value in enumerate(row):
-                col_title = sample_data[1][col_num]
-                if not value:
-                    continue
+                    col_classes = SLOT_TITLE_MAP[col_title]
+                    if len(col_classes) == 0:
+                        print(f'WARNING: no classes found for column "{col_title}"')
 
-                col_classes = SLOT_TITLE_MAP[col_title]
-                if len(col_classes) == 0:
-                    print(f'WARNING: no classes found for column "{col_title}"')
+                    elif len(col_classes) == 1:
+                        col_class, col_slot = list(col_classes.items())[0]
+                        if col_class not in converted_row:
+                            converted_row[col_class] = {}
+                        converted_row[col_class][col_slot] = value
 
-                elif len(col_classes) == 1:
-                    col_class, col_slot = list(col_classes.items())[0]
-                    if col_class not in converted_row:
-                        converted_row[col_class] = {}
-                    converted_row[col_class][col_slot] = value
+                    elif 'dh_mutliview_common_columns' in col_classes:
+                        col_slot = col_classes['dh_mutliview_common_columns']
+                        common_column_data[col_slot] = value
 
-                elif 'dh_mutliview_common_columns' in col_classes:
-                    col_slot = col_classes['dh_mutliview_common_columns']
-                    common_column_data[col_slot] = value
+                    elif package_name in col_classes:
+                        col_slot = col_classes[package_name]
+                        if package_name not in converted_row:
+                            converted_row[package_name] = {}
+                        converted_row[package_name][col_slot] = value
 
-                elif package_name in col_classes:
-                    col_slot = col_classes[package_name]
-                    if package_name not in converted_row:
-                        converted_row[package_name] = {}
-                    converted_row[package_name][col_slot] = value
+                    else:
+                        print(f'WARNING: could not determine single template for column "{col_title}"')
+                        
+                for template in converted_row.values():
+                    template.update(common_column_data)
 
-                else:
-                    print(f'WARNING: could not determine single template for column "{col_title}"')
-                    
-            for template in converted_row.values():
-                template.update(common_column_data)
+                for key, template in converted_row.items():
+                    if key not in converted_sample_data:
+                        converted_sample_data[key] = []
+                    converted_sample_data[key].append(template)
 
-            for key, template in converted_row.items():
-                if key not in converted_sample_data:
-                    converted_sample_data[key] = []
-                converted_sample_data[key].append(template)
+            metadata_submission["_oldSampleData"] = sample_data
+            metadata_submission["sampleData"] = converted_sample_data
 
-        metadata_submission["_oldSampleData"] = sample_data
-        metadata_submission["sampleData"] = converted_sample_data
+        # if template is in metadata_submission, drop it in favor of templates
+        if 'template' in metadata_submission:
+            omics_processing_types = metadata_submission.get("multiOmicsForm", {}).get("omicsProcessingTypes", [])
+            environmental_package = metadata_submission.get("packageName", "soil")
+
+            metadata_submission["templates"] = upgrade_templates(omics_processing_types, environmental_package)
+            del metadata_submission["template"]
+
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
 
     session.bulk_update_mappings(SubmissionMetadata, mappings)
@@ -112,12 +155,17 @@ def downgrade():
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
 
-        if "_oldSampleData" not in metadata_submission:
-            continue
+        if "_oldSampleData" in metadata_submission:
+            old_sample_data = metadata_submission["_oldSampleData"]
+            metadata_submission["sampleData"] = old_sample_data
+            del metadata_submission["_oldSampleData"]
 
-        old_sample_data = metadata_submission["_oldSampleData"]
-        metadata_submission["sampleData"] = old_sample_data
-        del metadata_submission["_oldSampleData"]
+        if "templates" in metadata_submission:
+            omics_processing_types = metadata_submission.get("multiOmicsForm", {}).get("omicsProcessingTypes", [])
+            environmental_package = metadata_submission.get("packageName", "soil")
+
+            metadata_submission["template"] = downgrade_templates(omics_processing_types, environmental_package)
+            del metadata_submission["templates"]
 
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
 

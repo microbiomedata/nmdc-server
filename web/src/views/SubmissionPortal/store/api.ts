@@ -8,7 +8,7 @@ const client = axios.create({
 
 interface MetadataSubmission {
   packageName: keyof typeof HARMONIZER_TEMPLATES;
-  template: string;
+  templates: string[];
   studyForm: any;
   multiOmicsForm: any;
   sampleData: Record<string, any[]>;

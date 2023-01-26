@@ -69,12 +69,12 @@ const templateList = computed(() => {
  */
 const sampleData = shallowRef({} as Record<string, any[]>);
 const samplesValid = ref(false);
-const templateChoiceDisabled = computed(() => Object.keys(sampleData.value).length >= 0);
+const templateChoiceDisabled = computed(() => Object.keys(sampleData.value).length > 0);
 
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
-  template: '', // TODO: is this needed anymore?
+  templates: templateList.value,
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
