@@ -380,4 +380,19 @@ export class HarmonizerApi {
     this.dh.useTemplate(template);
     this._postTemplateChange();
   }
+
+  setColumnsReadOnly(columns: number[]) {
+    const { hot } = this.dh;
+    const rowCount = hot.countRows();
+    columns.forEach((col) => {
+      for (let row = 0; row < rowCount; row += 1) {
+        hot.setCellMeta(row, col, 'readOnly', true);
+      }
+    });
+    hot.render();
+  }
+
+  setMaxRows(maxRows: number) {
+    this.dh.hot.updateSettings({ maxRows });
+  }
 }

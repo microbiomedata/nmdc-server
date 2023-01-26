@@ -63,6 +63,11 @@ export default defineComponent({
 
     watch(activeTemplateData, () => {
       harmonizerApi.loadData(activeTemplateData.value);
+      // if we're not on the first tab, the common columns should be read-only
+      if (activeTemplate.value !== templateList.value[0]) {
+        harmonizerApi.setColumnsReadOnly([0, 1, 2]);
+        harmonizerApi.setMaxRows(activeTemplateData.value.length);
+      }
     });
 
     const onDataChange = () => {
@@ -188,6 +193,7 @@ export default defineComponent({
 
         // When changing templates we may need to populate the column columns
         // from the first tab
+        // TODO: would it make more sense to do this in the afterChange hook?
         const nextData = { ...sampleData.value };
         const nextTemplate = templateList.value[index];
         (nextData[templateList.value[0]] || []).forEach((row) => {
