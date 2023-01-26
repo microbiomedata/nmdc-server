@@ -128,9 +128,10 @@ def upgrade():
                     template.update(common_column_data)
 
                 for key, template in converted_row.items():
-                    if key not in converted_sample_data:
-                        converted_sample_data[key] = []
-                    converted_sample_data[key].append(template)
+                    suffixed_key = f"{key}_data"
+                    if suffixed_key not in converted_sample_data:
+                        converted_sample_data[suffixed_key] = []
+                    converted_sample_data[suffixed_key].append(template)
 
             metadata_submission["_oldSampleData"] = sample_data
             metadata_submission["sampleData"] = converted_sample_data

@@ -59,7 +59,7 @@ export default defineComponent({
     const columnVisibility = ref('all');
     const sidebarOpen = ref(true);
     const activeTemplate = ref(templateList.value[0]);
-    const activeTemplateData = computed(() => sampleData.value[activeTemplate.value] || []);
+    const activeTemplateData = computed(() => sampleData.value[`${activeTemplate.value}_data`] || []);
 
     watch(activeTemplateData, () => {
       harmonizerApi.loadData(activeTemplateData.value);
@@ -196,19 +196,20 @@ export default defineComponent({
         // TODO: would it make more sense to do this in the afterChange hook?
         const nextData = { ...sampleData.value };
         const nextTemplate = templateList.value[index];
-        (nextData[templateList.value[0]] || []).forEach((row) => {
+        (nextData[`${templateList.value[0]}_data`] || []).forEach((row) => {
           if (rowIsVisibleForTemplate(row, nextTemplate)) {
+            const templateKey = `${nextTemplate}_data`;
             const rowId = row[SCHEMA_ID];
-            if (!nextData[nextTemplate]) {
-              nextData[nextTemplate] = [];
+            if (!nextData[templateKey]) {
+              nextData[templateKey] = [];
             }
-            const existing = nextData[nextTemplate].find((r) => r[SCHEMA_ID] === rowId);
+            const existing = nextData[templateKey].find((r) => r[SCHEMA_ID] === rowId);
             if (!existing) {
               const newRow = {} as Record<string, any>;
               COMMON_COLUMNS.forEach((col) => {
                 newRow[col] = row[col];
               });
-              nextData[nextTemplate].push(newRow);
+              nextData[templateKey].push(newRow);
             }
           }
         });

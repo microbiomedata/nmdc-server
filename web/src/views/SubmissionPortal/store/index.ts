@@ -131,7 +131,7 @@ watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
 function mergeSampleData(template: string, data: any[]) {
   sampleData.value = {
     ...sampleData.value,
-    [template]: data,
+    [`${template}_data`]: data,
   };
 }
 
