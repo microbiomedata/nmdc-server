@@ -22,7 +22,44 @@ const contextFormDefault = {
   award: undefined as undefined | string,
   otherAward: '',
 };
+const addressFormDefault = {
+  // Shipper info
+  shipperName: '',
+  shipperEmail: '',
+  shipperPhone: '',
+  shipperAddress1: '',
+  shipperAddress2: '',
+  shipperCity: '',
+  shipperState: '',
+  shipperZip: '',
+  expectedShippingDate: undefined as undefined | Date,
+  shippingConditions: '',
+  // Sample info
+  sample: '',
+  description: '',
+  experimentalGoals: '',
+  randomization: '',
+  usdaRegulated: undefined as undefined | boolean,
+  permitNumber: '',
+  biosafetyLevel: '',
+  irpOrHipaa: undefined as undefined | boolean,
+  // IRB info
+  irbNumber: '',
+  irbName: '',
+  irbEmail: '',
+  irbPhone: '',
+  irbAddress1: '',
+  irbAddress2: '',
+  irbCity: '',
+  irbState: '',
+  irbZip: '',
+  // Additional comments
+  comments: '',
+};
 const contextForm = reactive(clone(contextFormDefault));
+const contextFormValid = ref(false);
+const addressForm = reactive(clone(addressFormDefault));
+const addressFormValid = ref(false);
 
 /**
  * Study Form Step
@@ -106,6 +143,7 @@ function submit(id: string) {
 }
 
 function reset() {
+  contextFormValid.value = false;
   studyFormValid.value = false;
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
@@ -151,9 +189,12 @@ export {
   multiOmicsFormValid,
   sampleData,
   samplesValid,
+  contextForm,
+  contextFormValid,
+  addressForm,
+  addressFormValid,
   studyForm,
   studyFormValid,
-  contextForm,
   submitPayload,
   packageName,
   templateChoice,
