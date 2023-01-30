@@ -6,8 +6,10 @@ import {
   addressForm,
   addressFormValid,
 } from '../store';
+import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 
 export default defineComponent({
+  components: { SubmissionContextShippingForm },
   setup() {
     const formRef = ref();
     const showAddressForm = ref(false);
@@ -88,7 +90,10 @@ export default defineComponent({
           value="JGI"
           hide-details
         />
-        <v-card
+        <submission-context-shipping-form
+          v-if="contextForm.dataGenerated === false && contextForm.facilities.includes('EMSL')"
+        />
+        <!-- v-card
           v-if="contextForm.dataGenerated === false && contextForm.facilities.includes('EMSL')"
           class="mt-4 pa-0"
           outlined
@@ -134,7 +139,6 @@ export default defineComponent({
                     <span class="text-h6">Shipper</span>
                   </v-subheader>
                   <v-divider />
-                  <!-- Shipper Name, E-mail address, etc. -->
                   <v-text-field
                     v-model="addressForm.shipperName"
                     label="Shipper Name"
@@ -390,7 +394,7 @@ export default defineComponent({
               </v-card-actions>
             </v-card>
           </v-dialog>
-        </v-card>
+        </v-card -->
         <v-radio-group
           v-if="contextForm.dataGenerated === false && contextForm.facilities.length > 0"
           v-model="contextForm.award"

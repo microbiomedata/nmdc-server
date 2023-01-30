@@ -24,14 +24,16 @@ const contextFormDefault = {
 };
 const addressFormDefault = {
   // Shipper info
-  shipperName: '',
-  shipperEmail: '',
-  shipperPhone: '',
-  shipperAddress1: '',
-  shipperAddress2: '',
-  shipperCity: '',
-  shipperState: '',
-  shipperZip: '',
+  shipper: {
+    name: '',
+    email: '',
+    phone: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+  } as api.NmdcAddress,
   expectedShippingDate: undefined as undefined | Date,
   shippingConditions: '',
   // Sample info
@@ -45,15 +47,16 @@ const addressFormDefault = {
   irpOrHipaa: undefined as undefined | boolean,
   // IRB info
   irbNumber: '',
-  irbName: '',
-  irbEmail: '',
-  irbPhone: '',
-  irbAddress1: '',
-  irbAddress2: '',
-  irbCity: '',
-  irbState: '',
-  irbZip: '',
-  // Additional comments
+  irbAddress: {
+    name: '',
+    email: '',
+    phone: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+  } as api.NmdcAddress,
   comments: '',
 };
 const contextForm = reactive(clone(contextFormDefault));
@@ -192,6 +195,7 @@ export {
   contextForm,
   contextFormValid,
   addressForm,
+  addressFormDefault,
   addressFormValid,
   studyForm,
   studyFormValid,
