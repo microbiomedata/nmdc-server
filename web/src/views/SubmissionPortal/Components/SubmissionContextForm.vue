@@ -425,7 +425,7 @@ export default defineComponent({
         </v-radio-group>
       </div>
     </v-form>
-    <strong>* indicated required field</strong>
+    <strong>* indicates required field</strong>
     <div class="d-flex">
       <v-spacer />
       <v-btn
