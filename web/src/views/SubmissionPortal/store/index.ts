@@ -17,8 +17,6 @@ const contextFormDefault = {
   dataGenerated: undefined as undefined | boolean,
   facilityGenerated: undefined as undefined | boolean,
   facilities: [] as string[],
-  // TODO strongly define what this type should look like
-  shippingInfo: {},
   award: undefined as undefined | string,
   otherAward: '',
 };
@@ -131,6 +129,7 @@ const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
   template: templateChoice.value,
   contextForm,
+  addressForm,
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
@@ -146,7 +145,10 @@ function submit(id: string) {
 }
 
 function reset() {
+  Object.assign(contextForm, contextFormDefault);
   contextFormValid.value = false;
+  Object.assign(addressForm, addressFormDefault);
+  addressFormValid.value = false;
   studyFormValid.value = false;
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
