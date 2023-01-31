@@ -35,6 +35,7 @@ interface MetadataSubmission {
   packageName: keyof typeof HARMONIZER_TEMPLATES;
   template: string;
   contextForm: any;
+  addressForm: any;
   studyForm: any;
   multiOmicsForm: any;
   sampleData: any[][];
