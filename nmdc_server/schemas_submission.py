@@ -36,9 +36,47 @@ class MultiOmicsForm(BaseModel):
     omicsProcessingTypes: List[str]
 
 
+class NmcdAddress(BaseModel):
+    name: str
+    email: str
+    phone: str
+    line1: str
+    line2: str
+    city: str
+    state: str
+    postalCode: str
+
+
+class AddressForm(BaseModel):
+    shipper: NmcdAddress
+    expectedShippingDate: datetime
+    shippingConditions: str
+    sample: str
+    description: str
+    experimentalGoals: str
+    randomization: str
+    usdaRegulated: bool
+    permitNumber: str
+    biosafetyLevel: str
+    irpOrHipaa: bool
+    irbNumber: str
+    irbAddress: NmcdAddress
+    comments: str
+
+
+class ContextForm(BaseModel):
+    dataGenerated: Optional[bool]
+    facilityGenerated: Optional[bool]
+    facilities: List[str]
+    award: Optional[str]
+    otherAward: str
+
+
 class MetadataSubmissionRecord(BaseModel):
     packageName: str
     template: str
+    contextForm: ContextForm
+    addressForm: Optional[AddressForm]
     studyForm: StudyForm
     multiOmicsForm: MultiOmicsForm
     sampleData: List[List[Any]]
