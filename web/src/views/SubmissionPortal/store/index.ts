@@ -13,15 +13,6 @@ const hasChanged = ref(0);
 /**
  * Submission Context Step
  */
-const contextFormDefault = {
-  dataGenerated: undefined as undefined | boolean,
-  facilityGenerated: undefined as undefined | boolean,
-  facilities: [] as string[],
-  // TODO strongly define what this type should look like
-  shippingInfo: {},
-  award: undefined as undefined | string,
-  otherAward: '',
-};
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -58,6 +49,13 @@ const addressFormDefault = {
     postalCode: '',
   } as api.NmdcAddress,
   comments: '',
+};
+const contextFormDefault = {
+  dataGenerated: undefined as undefined | boolean,
+  facilityGenerated: undefined as undefined | boolean,
+  facilities: [] as string[],
+  award: undefined as undefined | string,
+  otherAward: '',
 };
 const contextForm = reactive(clone(contextFormDefault));
 const contextFormValid = ref(false);
@@ -131,6 +129,7 @@ const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
   template: templateChoice.value,
   contextForm,
+  addressForm,
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
@@ -148,6 +147,9 @@ function submit(id: string) {
 function reset() {
   contextFormValid.value = false;
   studyFormValid.value = false;
+  addressFormValid.value = false;
+  Object.assign(contextForm, contextFormDefault);
+  Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
