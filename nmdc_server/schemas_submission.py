@@ -49,16 +49,16 @@ class NmcdAddress(BaseModel):
 
 class AddressForm(BaseModel):
     shipper: NmcdAddress
-    expectedShippingDate: datetime
+    expectedShippingDate: Optional[datetime]
     shippingConditions: str
     sample: str
     description: str
     experimentalGoals: str
     randomization: str
-    usdaRegulated: bool
+    usdaRegulated: Optional[bool]
     permitNumber: str
     biosafetyLevel: str
-    irpOrHipaa: bool
+    irpOrHipaa: Optional[bool]
     irbNumber: str
     irbAddress: NmcdAddress
     comments: str
@@ -76,7 +76,7 @@ class MetadataSubmissionRecord(BaseModel):
     packageName: str
     template: str
     contextForm: ContextForm
-    addressForm: Optional[AddressForm]
+    addressForm: AddressForm
     studyForm: StudyForm
     multiOmicsForm: MultiOmicsForm
     sampleData: List[List[Any]]
