@@ -13,13 +13,6 @@ const hasChanged = ref(0);
 /**
  * Submission Context Step
  */
-const contextFormDefault = {
-  dataGenerated: undefined as undefined | boolean,
-  facilityGenerated: undefined as undefined | boolean,
-  facilities: [] as string[],
-  award: undefined as undefined | string,
-  otherAward: '',
-};
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -56,6 +49,13 @@ const addressFormDefault = {
     postalCode: '',
   } as api.NmdcAddress,
   comments: '',
+};
+const contextFormDefault = {
+  dataGenerated: undefined as undefined | boolean,
+  facilityGenerated: undefined as undefined | boolean,
+  facilities: [] as string[],
+  award: undefined as undefined | string,
+  otherAward: '',
 };
 const contextForm = reactive(clone(contextFormDefault));
 const contextFormValid = ref(false);
@@ -150,6 +150,9 @@ function reset() {
   Object.assign(addressForm, addressFormDefault);
   addressFormValid.value = false;
   studyFormValid.value = false;
+  addressFormValid.value = false;
+  Object.assign(contextForm, contextFormDefault);
+  Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
