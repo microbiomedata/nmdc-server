@@ -308,25 +308,6 @@ export class HarmonizerApi {
     this.dh.renderReference();
   }
 
-  openFile(file: File) {
-    if (!file) return;
-    const ext = file.name.split('.').pop();
-    if (!ext) return;
-    const acceptedExts = ['xlsx', 'xls', 'tsv', 'csv'];
-    if (!acceptedExts.includes(ext)) {
-      // TODO: #open-error-modal not present because Toolbar component is not being used.
-      // Display this error differently?
-      //
-      // const errMsg = `Only ${acceptedExts.join(', ')} files are supported`;
-      // $('#open-err-msg').text(errMsg);
-      // $('#open-error-modal').modal('show');
-    } else {
-      this.dh.invalid_cells = {};
-      this.dh.runBehindLoadingScreen(this.dh.openFile, [file]);
-    }
-    this.dh.current_selection = [null, null, null, null];
-  }
-
   setupTemplate(folder: string) {
     this.dh.setupTemplate(folder);
   }
@@ -421,5 +402,29 @@ export class HarmonizerApi {
       header[attrName] = attrs[attrName].title || attrs[attrName].name;
     });
     return header;
+  }
+
+  unflattenArrayValues(tableData: Record<string, any>[], template: string) {
+    return tableData.map((row) => Object.fromEntries(
+      Object.entries(row).map(([key, value]) => {
+        let unflattenedValue = value;
+        if (this.schema.classes[template].attributes[key].multivalued) {
+          unflattenedValue = value.split(';').map((v: string) => v.trim());
+        }
+        return [key, unflattenedValue];
+      }),
+    ));
+  }
+
+  static flattenArrayValues(tableData: Record<string, any>[]) {
+    return tableData.map((row) => Object.fromEntries(
+      Object.entries(row).map(([key, value]) => {
+        let flatValue = value;
+        if (Array.isArray(value)) {
+          flatValue = value.join('; ');
+        }
+        return [key, flatValue];
+      }),
+    ));
   }
 }

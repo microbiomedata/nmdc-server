@@ -5,7 +5,7 @@ import {
 import {
   clamp, flattenDeep, has, sum,
 } from 'lodash';
-import { writeFile, utils } from 'xlsx';
+import { read, writeFile, utils } from 'xlsx';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
@@ -54,18 +54,6 @@ const COMMON_COLUMNS = ['samp_name', SCHEMA_ID, TYPE_FIELD];
 const EMSL = 'emsl';
 const JGI_MG = 'jgi_mg';
 const JGT_MT = 'jgi_mt';
-
-function flattenArrayValues(tableData: Record<string, any>[]) {
-  return tableData.map((row) => Object.fromEntries(
-    Object.entries(row).map(([key, value]) => {
-      let flatValue = value;
-      if (Array.isArray(value)) {
-        flatValue = value.join('; ');
-      }
-      return [key, flatValue];
-    }),
-  ));
-}
 
 export default defineComponent({
   components: { FindReplace, SubmissionStepper },
@@ -219,7 +207,7 @@ export default defineComponent({
       templateList.value.forEach((template) => {
         const worksheet = utils.json_to_sheet([
           harmonizerApi.getHeaderRow(template),
-          ...flattenArrayValues(sampleData.value[`${template}_data`]),
+          ...HarmonizerApi.flattenArrayValues(sampleData.value[`${template}_data`]),
         ], {
           skipHeader: true,
         });
@@ -228,8 +216,32 @@ export default defineComponent({
       writeFile(workbook, EXPORT_FILENAME, { compression: true });
     }
 
-    function openFile() {
+    function showOpenFileDialog() {
       document.getElementById('tsv-file-select')?.click();
+    }
+
+    function openFile(file: File) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e == null || e.target == null) {
+          return;
+        }
+        const workbook = read(e.target.result);
+        const imported = {} as Record<string, any>;
+        Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
+          imported[`${name}_data`] = harmonizerApi.unflattenArrayValues(
+            utils.sheet_to_json(worksheet, {
+              header: harmonizerApi.getOrderedAttributes(name),
+              range: 1,
+            }),
+            name,
+          );
+        });
+        harmonizerApi.setInvalidCells({});
+        sampleData.value = imported;
+        incrementalSaveRecord(root.$route.params.id);
+      };
+      reader.readAsArrayBuffer(file);
     }
 
     function rowIsVisibleForTemplate(row: Record<string, any>, template: string) {
@@ -335,6 +347,7 @@ export default defineComponent({
       doSubmit,
       downloadSamples,
       errorClick,
+      showOpenFileDialog,
       openFile,
       focus,
       jumpTo,
@@ -361,7 +374,8 @@ export default defineComponent({
             id="tsv-file-select"
             type="file"
             style="position: fixed; top: -100em"
-            @change="(evt) => harmonizerApi.openFile(evt.target.files[0])"
+            accept=".xls,.xlsx"
+            @change="(evt) => openFile(evt.target.files[0])"
           >
           <v-btn
             label="Choose spreadsheet file..."
@@ -372,9 +386,9 @@ export default defineComponent({
             color="primary"
             class="mr-2"
             hide-details
-            @click="openFile"
+            @click="showOpenFileDialog"
           >
-            1. Import TSV file
+            1. Import XLSX file
             <v-icon class="pl-2">
               mdi-file-table
             </v-icon>
