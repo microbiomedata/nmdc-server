@@ -1,7 +1,7 @@
 import {
-  computed, Ref, ref, nextTick,
+  Ref, ref, nextTick,
 } from '@vue/composition-api';
-import { debounce, has } from 'lodash';
+import { debounce } from 'lodash';
 import { DataHarmonizer, Footer } from 'data-harmonizer';
 
 // a simple data structure to define the relationships between the GOLD ecosystem fields
@@ -90,10 +90,6 @@ export const HARMONIZER_TEMPLATES: Record<string, {
   },
 };
 
-interface ValidationErrors {
-  [error: string]: [number, number][],
-}
-
 interface CellData {
   row: number,
   col: number,
@@ -101,10 +97,6 @@ interface CellData {
 }
 
 export class HarmonizerApi {
-  validationErrors: Ref<ValidationErrors>;
-
-  validationErrorGroups: Ref<string[]>;
-
   schemaSections: Ref<Record<string, Record<string, number>>>;
 
   ready: Ref<boolean>;
@@ -118,11 +110,9 @@ export class HarmonizerApi {
   selectedColumn: Ref<string>;
 
   constructor() {
-    this.validationErrors = ref({});
     this.schemaSections = ref({});
     this.ready = ref(false);
     this.selectedColumn = ref('');
-    this.validationErrorGroups = computed(() => Object.keys(this.validationErrors.value));
   }
 
   async init(r: HTMLElement, templateName: string) {
@@ -239,27 +229,12 @@ export class HarmonizerApi {
 
   refreshState() {
     this.schemaSections.value = this._getColumnCoordinates();
-    const remapped: ValidationErrors = {};
-    const invalid: Record<number, Record<number, string>> = this.dh.invalid_cells;
-    if (Object.keys(invalid).length) {
-      remapped['All Errors'] = [];
-    }
-    Object.entries(invalid).forEach(([row, val]) => {
-      Object.entries(val).forEach(([col, text]) => {
-        const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
-        const issue = text || 'Validation Error';
-        if (has(remapped, issue)) {
-          remapped[issue].push(entry);
-        } else {
-          remapped[issue] = [entry];
-        }
-        remapped['All Errors'].push(entry);
-      });
-    });
-    this.validationErrors.value = remapped;
   }
 
   async loadData(data: any[]) {
+    if (!this.ready.value) {
+      return;
+    }
     await this.dh.loadDataObjects(data);
     await this.dh.hot.render();
     this.refreshState();
@@ -357,7 +332,7 @@ export class HarmonizerApi {
   validate() {
     this.dh.validate();
     this.refreshState();
-    return Object.keys(this.validationErrors).length === 0;
+    return this.dh.invalid_cells;
   }
 
   addChangeHook(callback: Function) {
@@ -394,5 +369,10 @@ export class HarmonizerApi {
 
   setMaxRows(maxRows: number) {
     this.dh.hot.updateSettings({ maxRows });
+  }
+
+  setInvalidCells(invalidCells: Record<number, Record<number, string>>) {
+    this.dh.invalid_cells = invalidCells;
+    this.dh.hot.render();
   }
 }

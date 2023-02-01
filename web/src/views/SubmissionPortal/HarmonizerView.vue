@@ -1,8 +1,10 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted,
+  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
 } from '@vue/composition-api';
-import { clamp, flattenDeep } from 'lodash';
+import {
+  clamp, flattenDeep, has, sum,
+} from 'lodash';
 import { writeFile, utils } from 'xlsx';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
@@ -13,6 +15,10 @@ import {
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
+
+interface ValidationErrors {
+  [error: string]: [number, number][],
+}
 
 const ColorKey = {
   required: {
@@ -58,8 +64,11 @@ export default defineComponent({
     const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
     const sidebarOpen = ref(true);
+    const invalidCells = shallowRef({} as Record<string, Record<number, Record<number, string>>>);
+
     const activeTemplate = ref(templateList.value[0]);
     const activeTemplateData = computed(() => sampleData.value[`${activeTemplate.value}_data`] || []);
+    const activeInvalidCells = computed(() => invalidCells.value[activeTemplate.value] || {});
 
     watch(activeTemplateData, () => {
       harmonizerApi.loadData(activeTemplateData.value);
@@ -69,6 +78,40 @@ export default defineComponent({
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
     });
+
+    watch(activeInvalidCells, () => {
+      harmonizerApi.setInvalidCells(activeInvalidCells.value);
+    });
+
+    const validationErrors = computed(() => {
+      const remapped: ValidationErrors = {};
+      const invalid: Record<number, Record<number, string>> = activeInvalidCells.value;
+      if (Object.keys(invalid).length) {
+        remapped['All Errors'] = [];
+      }
+      Object.entries(invalid).forEach(([row, val]) => {
+        Object.entries(val).forEach(([col, text]) => {
+          const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
+          const issue = text || 'Validation Error';
+          if (has(remapped, issue)) {
+            remapped[issue].push(entry);
+          } else {
+            remapped[issue] = [entry];
+          }
+          remapped['All Errors'].push(entry);
+        });
+      });
+      return remapped;
+    });
+
+    const validationErrorGroups = computed(() => Object.keys(validationErrors.value));
+
+    const validationTotalCounts = computed(() => Object.fromEntries(
+      Object.entries(invalidCells.value).map(([template, cells]) => ([
+        template,
+        sum(Object.values(cells).map((row) => Object.keys(row).length)),
+      ])),
+    ));
 
     const onDataChange = () => {
       const data = harmonizerApi.exportJson();
@@ -97,7 +140,7 @@ export default defineComponent({
     }
 
     function errorClick(index: number) {
-      const currentSeries = harmonizerApi.validationErrors.value[validationActiveCategory.value];
+      const currentSeries = validationErrors.value[validationActiveCategory.value];
       highlightedValidationError.value = clamp(index, 0, currentSeries.length - 1);
       const currentError = currentSeries[highlightedValidationError.value];
       harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
@@ -106,10 +149,15 @@ export default defineComponent({
     async function validate() {
       const data = harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value, data);
-      samplesValid.value = await harmonizerApi.validate();
-      sidebarOpen.value = !samplesValid.value;
+      const result = await harmonizerApi.validate();
+      const valid = Object.keys(result).length === 0;
+      sidebarOpen.value = !valid;
+      invalidCells.value = {
+        ...invalidCells.value,
+        [activeTemplate.value]: result,
+      };
       incrementalSaveRecord(root.$route.params.id);
-      if (samplesValid.value === false) {
+      if (valid === false) {
         errorClick(0);
       }
     }
@@ -125,8 +173,8 @@ export default defineComponent({
         return val;
       }))));
 
-    const validationItems = computed(() => harmonizerApi.validationErrorGroups.value.map((v) => {
-      const errors = harmonizerApi.validationErrors.value[v];
+    const validationItems = computed(() => validationErrorGroups.value.map((v) => {
+      const errors = validationErrors.value[v];
       return {
         text: `${v} (${errors.length})`,
         value: v,
@@ -187,9 +235,11 @@ export default defineComponent({
       return false;
     }
 
-    function changeTemplate(index: number) {
+    async function changeTemplate(index: number) {
       if (harmonizerApi.ready.value) {
         onDataChange();
+
+        await validate();
 
         // When changing templates we may need to populate the column columns
         // from the first tab
@@ -257,6 +307,11 @@ export default defineComponent({
       validationItems,
       validationActiveCategory,
       templateList,
+      activeTemplate,
+      invalidCells,
+      validationErrors,
+      validationErrorGroups,
+      validationTotalCounts,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -307,7 +362,7 @@ export default defineComponent({
           </v-btn>
         </label>
         <v-btn
-          v-if="harmonizerApi.validationErrorGroups.value.length == 0"
+          v-if="validationErrorGroups.length == 0"
           color="primary"
           outlined
           @click="validate"
@@ -318,7 +373,7 @@ export default defineComponent({
           </v-icon>
         </v-btn>
         <v-card
-          v-if="harmonizerApi.validationErrorGroups.value.length"
+          v-if="validationErrorGroups.length"
           color="error"
           width="600"
           class="d-flex py-2 align-center"
@@ -350,7 +405,7 @@ export default defineComponent({
             </v-icon>
             <v-spacer />
             <span class="mx-1">
-              ({{ highlightedValidationError + 1 }}/{{ harmonizerApi.validationErrors.value[validationActiveCategory].length }})
+              ({{ highlightedValidationError + 1 }}/{{ validationErrors[validationActiveCategory].length }})
             </span>
             <v-spacer />
             <v-icon
@@ -486,7 +541,13 @@ export default defineComponent({
         v-for="template in templateList"
         :key="template"
       >
-        {{ template }}
+        <v-badge
+          :content="validationTotalCounts[template]"
+          :value="validationTotalCounts[template] > 0"
+          color="error"
+        >
+          {{ template }}
+        </v-badge>
       </v-tab>
     </v-tabs>
 
