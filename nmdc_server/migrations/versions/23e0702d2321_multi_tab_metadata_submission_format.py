@@ -7,8 +7,7 @@ Create Date: 2023-01-18 00:25:23.881413
 """
 import json
 import pathlib
-
-from typing import Optional
+from typing import Any, Dict, Optional
 from uuid import uuid4
 
 from alembic import op
@@ -16,15 +15,14 @@ from sqlalchemy import Column, orm
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.declarative import declarative_base
 
-from nmdc_server.models import SubmissionMetadata
-
 # revision identifiers, used by Alembic.
-revision: str = '23e0702d2321'
-down_revision: Optional[str] = 'ae7a3eba08c5'
+revision: str = "23e0702d2321"
+down_revision: Optional[str] = "ae7a3eba08c5"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
 Base = declarative_base()
+
 
 # This is defined here instead importing from nmdc_server.models to make it
 # resilient against future changes to SubmissionMetadata.
@@ -35,67 +33,72 @@ class SubmissionMetadata(Base):
     metadata_submission = Column(JSONB, nullable=False)
 
 
-# Likewise this JSON document was built from the submission schema, but we 
-# don't link to the checked-in schema file to make this migration continue 
+# Likewise this JSON document was built from the submission schema, but we
+# don't link to the checked-in schema file to make this migration continue
 # to work correctly if the schema changes.
 # See: https://gist.github.com/pkalita-lbl/3d897bc0b50fa6f56593caacc95b617b
 DIR = pathlib.Path(__file__).parent
-with open(DIR / 'multi_tab_metadata_submission_format_slot_lookup.json', 'r') as in_file:
+with open(DIR / "multi_tab_metadata_submission_format_slot_lookup.json", "r") as in_file:
     SLOT_TITLE_MAP = json.load(in_file)
 
 
 def upgrade_templates(omics_processing_types, environmental_package):
-    EMSL = 'emsl'
-    JGI_MG = 'jgi_mg'
-    JGT_MT = 'jgi_mt'
+    templates = [environmental_package]
+    if (
+        "mp-emsl" in omics_processing_types
+        or "mb-emsl" in omics_processing_types
+        or "nom-emsl" in omics_processing_types
+    ):
+        templates.append("emsl")
 
-    templates = [environmental_package];
-    if 'mp-emsl' in omics_processing_types or 'mb-emsl' in omics_processing_types or 'nom-emsl' in omics_processing_types:
-        templates.append(EMSL)
+    if "mg-jgi" in omics_processing_types:
+        templates.append("jgi_mg")
 
-    if 'mg-jgi' in omics_processing_types:
-        templates.append(JGI_MG)
-    
-    if 'mt-jgi' in omics_processing_types:
-        templates.append(JGT_MT)
-    
+    if "mt-jgi" in omics_processing_types:
+        templates.append("jgi_mt")
+
     return templates
 
 
 def downgrade_templates(omics_processing_types, environmental_package):
     variation_map = {
-        'emsl': {'mp-emsl', 'mb-emsl', 'nom-emsl'},
-        'jgi_mg': {'mg-jgi'},
-        'emsl_jgi_mg': {'mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi'},
-        'jgi_mt': {'mt-jgi'},
-        'emsl_jgi_mt': {'mp-emsl', 'mb-emsl', 'nom-emsl', 'mt-jgi'},
-        'jgi_mg_mt': {'mg-jgi', 'mt-jgi'},
-        'emsl_jgi_mg_mt': {'mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi', 'mt-jgi'},
+        "emsl": {"mp-emsl", "mb-emsl", "nom-emsl"},
+        "jgi_mg": {"mg-jgi"},
+        "emsl_jgi_mg": {"mp-emsl", "mb-emsl", "nom-emsl", "mg-jgi"},
+        "jgi_mt": {"mt-jgi"},
+        "emsl_jgi_mt": {"mp-emsl", "mb-emsl", "nom-emsl", "mt-jgi"},
+        "jgi_mg_mt": {"mg-jgi", "mt-jgi"},
+        "emsl_jgi_mg_mt": {"mp-emsl", "mb-emsl", "nom-emsl", "mg-jgi", "mt-jgi"},
     }
-    variant = next((v for v, s in variation_map.items() if all(o in s for o in omics_processing_types)), None)
+    variant = next(
+        (v for v, s in variation_map.items() if all(o in s for o in omics_processing_types)), None
+    )
     template = environmental_package
     if variant:
         template += f"_{variant}"
-    
+
     return template
 
 
-def upgrade():
+def upgrade():  # noqa: C901
     session = orm.Session(bind=op.get_bind())
     mappings = []
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
 
-        sample_data = metadata_submission['sampleData']
-        package_name = metadata_submission['packageName']
+        if isinstance(metadata_submission, list):
+            continue
 
-        converted_sample_data = {}
-        common_column_data = {}
+        sample_data = metadata_submission["sampleData"]
+        package_name = metadata_submission["packageName"]
+
+        converted_sample_data: Dict[str, Any] = {}
+        common_column_data: Dict[str, Any] = {}
 
         # If sample_data is in the list-of-lists format, upgrade it to the dict format
         if isinstance(sample_data, list):
             for row in sample_data[2:]:
-                converted_row = {}
+                converted_row: Dict[str, Any] = {}
                 for col_num, value in enumerate(row):
                     col_title = sample_data[1][col_num]
                     if not value:
@@ -111,8 +114,8 @@ def upgrade():
                             converted_row[col_class] = {}
                         converted_row[col_class][col_slot] = value
 
-                    elif 'dh_mutliview_common_columns' in col_classes:
-                        col_slot = col_classes['dh_mutliview_common_columns']
+                    elif "dh_mutliview_common_columns" in col_classes:
+                        col_slot = col_classes["dh_mutliview_common_columns"]
                         common_column_data[col_slot] = value
 
                     elif package_name in col_classes:
@@ -122,8 +125,8 @@ def upgrade():
                         converted_row[package_name][col_slot] = value
 
                     else:
-                        print(f'WARNING: could not determine single template for column "{col_title}"')
-                        
+                        print(f'WARNING: could not determine template for column "{col_title}"')
+
                 for template in converted_row.values():
                     template.update(common_column_data)
 
@@ -137,11 +140,15 @@ def upgrade():
             metadata_submission["sampleData"] = converted_sample_data
 
         # if template is in metadata_submission, drop it in favor of templates
-        if 'template' in metadata_submission:
-            omics_processing_types = metadata_submission.get("multiOmicsForm", {}).get("omicsProcessingTypes", [])
+        if "template" in metadata_submission:
+            omics_processing_types = metadata_submission.get("multiOmicsForm", {}).get(
+                "omicsProcessingTypes", []
+            )
             environmental_package = metadata_submission.get("packageName", "soil")
 
-            metadata_submission["templates"] = upgrade_templates(omics_processing_types, environmental_package)
+            metadata_submission["templates"] = upgrade_templates(
+                omics_processing_types, environmental_package
+            )
             del metadata_submission["template"]
 
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
@@ -156,16 +163,23 @@ def downgrade():
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
 
+        if isinstance(metadata_submission, list):
+            continue
+
         if "_oldSampleData" in metadata_submission:
             old_sample_data = metadata_submission["_oldSampleData"]
             metadata_submission["sampleData"] = old_sample_data
             del metadata_submission["_oldSampleData"]
 
         if "templates" in metadata_submission:
-            omics_processing_types = metadata_submission.get("multiOmicsForm", {}).get("omicsProcessingTypes", [])
+            omics_processing_types = metadata_submission.get("multiOmicsForm", {}).get(
+                "omicsProcessingTypes", []
+            )
             environmental_package = metadata_submission.get("packageName", "soil")
 
-            metadata_submission["template"] = downgrade_templates(omics_processing_types, environmental_package)
+            metadata_submission["template"] = downgrade_templates(
+                omics_processing_types, environmental_package
+            )
             del metadata_submission["templates"]
 
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
