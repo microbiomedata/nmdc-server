@@ -39,6 +39,8 @@ const ColorKey = {
   },
 };
 
+const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
+
 // controls which field is used to merge data from different DH views
 const SCHEMA_ID = 'source_mat_id';
 
@@ -52,6 +54,18 @@ const COMMON_COLUMNS = ['samp_name', SCHEMA_ID, TYPE_FIELD];
 const EMSL = 'emsl';
 const JGI_MG = 'jgi_mg';
 const JGT_MT = 'jgi_mt';
+
+function flattenArrayValues(tableData: Record<string, any>[]) {
+  return tableData.map((row) => Object.fromEntries(
+    Object.entries(row).map(([key, value]) => {
+      let flatValue = value;
+      if (Array.isArray(value)) {
+        flatValue = value.join('; ');
+      }
+      return [key, flatValue];
+    }),
+  ));
+}
 
 export default defineComponent({
   components: { FindReplace, SubmissionStepper },
@@ -201,12 +215,17 @@ export default defineComponent({
     });
 
     async function downloadSamples() {
-      const data = await harmonizerApi.exportJson();
-      const worksheet = utils.aoa_to_sheet(data);
       const workbook = utils.book_new();
-      utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-      // @ts-ignore
-      writeFile(workbook, 'nmdc_sample_export.tsv', { bookType: 'csv', FS: '\t' });
+      templateList.value.forEach((template) => {
+        const worksheet = utils.json_to_sheet([
+          harmonizerApi.getHeaderRow(template),
+          ...flattenArrayValues(sampleData.value[`${template}_data`]),
+        ], {
+          skipHeader: true,
+        });
+        utils.book_append_sheet(workbook, worksheet, template);
+      });
+      writeFile(workbook, EXPORT_FILENAME, { compression: true });
     }
 
     function openFile() {
@@ -678,7 +697,7 @@ export default defineComponent({
         <v-icon class="pr-2">
           mdi-file-table
         </v-icon>
-        Download TSV
+        Download XLSX
       </v-btn>
       <v-btn
         color="primary"

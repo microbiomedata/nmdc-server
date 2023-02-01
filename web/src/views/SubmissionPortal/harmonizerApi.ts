@@ -109,6 +109,8 @@ export class HarmonizerApi {
 
   selectedColumn: Ref<string>;
 
+  schema: any;
+
   constructor() {
     this.schemaSections = ref({});
     this.ready = ref(false);
@@ -116,7 +118,7 @@ export class HarmonizerApi {
   }
 
   async init(r: HTMLElement, templateName: string) {
-    const schema = (await import('./schema.json')).default;
+    this.schema = (await import('./schema.json')).default;
     // Taken from https://gold.jgi.doe.gov/download?mode=biosampleEcosystemsJson
     // See also: https://gold.jgi.doe.gov/ecosystemtree
     this.goldEcosystemTree = (await import('./GoldEcosystemTree.json')).default;
@@ -126,7 +128,7 @@ export class HarmonizerApi {
       fieldSettings: this._getFieldSettings(),
     });
     this.footer = new Footer(document.querySelector('#harmonizer-footer-root'), this.dh);
-    this.dh.useSchema(schema, [], templateName);
+    this.dh.useSchema(this.schema, [], templateName);
     this._postTemplateChange();
 
     // @ts-ignore
@@ -374,5 +376,50 @@ export class HarmonizerApi {
   setInvalidCells(invalidCells: Record<number, Record<number, string>>) {
     this.dh.invalid_cells = invalidCells;
     this.dh.hot.render();
+  }
+
+  getSlot(slotName: string) {
+    return this.schema.slots[slotName];
+  }
+
+  getSlotRank(slotName: string) {
+    const slot = this.getSlot(slotName);
+    if (!slot) {
+      return 9999;
+    }
+    return slot.rank;
+  }
+
+  getSlotGroupRank(slotName: string) {
+    const slot = this.getSlot(slotName);
+    if (!slot || !slot.slot_group) {
+      return 9999;
+    }
+    return this.getSlotRank(slot.slot_group);
+  }
+
+  getOrderedAttributes(template: string) {
+    return Object.keys(this.schema.classes[template].attributes).sort(
+      (a, b) => {
+        const aSlotGroupRank = this.getSlotGroupRank(a);
+        const bSlotGroupRank = this.getSlotGroupRank(b);
+        if (aSlotGroupRank !== bSlotGroupRank) {
+          return aSlotGroupRank - bSlotGroupRank;
+        }
+        const aSlotRank = this.getSlotRank(a);
+        const bSlotRank = this.getSlotRank(b);
+        return aSlotRank - bSlotRank;
+      },
+    );
+  }
+
+  getHeaderRow(template: string) {
+    const orderedAttrNames = this.getOrderedAttributes(template);
+    const attrs = this.schema.classes[template].attributes;
+    const header = {} as Record<string, string>;
+    orderedAttrNames.forEach((attrName) => {
+      header[attrName] = attrs[attrName].title || attrs[attrName].name;
+    });
+    return header;
   }
 }
