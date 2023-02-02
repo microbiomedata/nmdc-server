@@ -153,7 +153,9 @@ export default defineComponent({
       mergeSampleData(activeTemplate.value, data);
       const result = await harmonizerApi.validate();
       const valid = Object.keys(result).length === 0;
-      sidebarOpen.value = !valid;
+      if (!valid && !sidebarOpen.value) {
+        sidebarOpen.value = true;
+      }
       invalidCells.value = {
         ...invalidCells.value,
         [activeTemplate.value]: result,
