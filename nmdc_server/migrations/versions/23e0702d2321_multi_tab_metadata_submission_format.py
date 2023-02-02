@@ -122,9 +122,8 @@ def upgrade():  # noqa: C901
 
                     col_classes = SLOT_TITLE_MAP[col_title]
                     if len(col_classes) == 0:
-                        print(
-                            f'WARNING: no classes found for column "{col_title}" in {submission_metadata.id}'
-                        )
+                        print(f'WARNING: no classes found for column "{col_title}" '
+                              f'in {submission_metadata.id}')
 
                     elif len(col_classes) == 1:
                         col_class, col_slot = list(col_classes.items())[0]
@@ -153,9 +152,8 @@ def upgrade():  # noqa: C901
                         converted_row[JGI_MT][col_slot] = value
 
                     else:
-                        print(
-                            f'WARNING: could not determine template for column "{col_title}" in {submission_metadata.id}'
-                        )
+                        print(f'WARNING: could not determine template for column "{col_title}" '
+                              f'in {submission_metadata.id}')
 
                 for row in converted_row.values():
                     row.update(common_column_data)
