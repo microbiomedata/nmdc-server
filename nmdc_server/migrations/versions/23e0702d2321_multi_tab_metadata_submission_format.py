@@ -5,9 +5,10 @@ Revises: ae7a3eba08c5
 Create Date: 2023-01-18 00:25:23.881413
 
 """
+import collections
 import json
 import pathlib
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 from alembic import op
@@ -42,6 +43,19 @@ with open(DIR / "multi_tab_metadata_submission_format_slot_lookup.json", "r") as
     SLOT_TITLE_MAP = json.load(in_file)
 
 
+PACKAGE_CLASSES = {
+    "built environment": "built_env",
+    "hydrocarbon resources-cores": "hcr-cores",
+    "hydrocarbon resources-fluids_swabs": "hcr-fluids-swabs",
+    "microbial mat_biofilm": "biofilm",
+    "miscellaneous natural or artificial environment": "misc-envs",
+}
+
+EMSL = "emsl"
+JGI_MG = "jgi_mg"
+JGI_MT = "jgi_mt"
+
+
 def upgrade_templates(omics_processing_types, environmental_package):
     templates = [environmental_package]
     if (
@@ -49,13 +63,13 @@ def upgrade_templates(omics_processing_types, environmental_package):
         or "mb-emsl" in omics_processing_types
         or "nom-emsl" in omics_processing_types
     ):
-        templates.append("emsl")
+        templates.append(EMSL)
 
     if "mg-jgi" in omics_processing_types:
-        templates.append("jgi_mg")
+        templates.append(JGI_MG)
 
     if "mt-jgi" in omics_processing_types:
-        templates.append("jgi_mt")
+        templates.append(JGI_MT)
 
     return templates
 
@@ -91,14 +105,16 @@ def upgrade():  # noqa: C901
 
         sample_data = metadata_submission["sampleData"]
         package_name = metadata_submission["packageName"]
+        package_class = PACKAGE_CLASSES.get(package_name, package_name)
+        template = metadata_submission["template"]
 
-        converted_sample_data: Dict[str, Any] = {}
+        converted_sample_data: Dict[str, List[Any]] = collections.defaultdict(list)
         common_column_data: Dict[str, Any] = {}
 
         # If sample_data is in the list-of-lists format, upgrade it to the dict format
         if isinstance(sample_data, list):
             for row in sample_data[2:]:
-                converted_row: Dict[str, Any] = {}
+                converted_row: Dict[str, Dict[str, Any]] = collections.defaultdict(dict)
                 for col_num, value in enumerate(row):
                     col_title = sample_data[1][col_num]
                     if not value:
@@ -106,35 +122,47 @@ def upgrade():  # noqa: C901
 
                     col_classes = SLOT_TITLE_MAP[col_title]
                     if len(col_classes) == 0:
-                        print(f'WARNING: no classes found for column "{col_title}"')
+                        print(
+                            f'WARNING: no classes found for column "{col_title}" in {submission_metadata.id}'
+                        )
 
                     elif len(col_classes) == 1:
                         col_class, col_slot = list(col_classes.items())[0]
-                        if col_class not in converted_row:
-                            converted_row[col_class] = {}
                         converted_row[col_class][col_slot] = value
 
                     elif "dh_mutliview_common_columns" in col_classes:
                         col_slot = col_classes["dh_mutliview_common_columns"]
                         common_column_data[col_slot] = value
 
-                    elif package_name in col_classes:
-                        col_slot = col_classes[package_name]
-                        if package_name not in converted_row:
-                            converted_row[package_name] = {}
-                        converted_row[package_name][col_slot] = value
+                    elif package_class in col_classes:
+                        col_slot = col_classes[package_class]
+                        converted_row[package_class][col_slot] = value
+
+                    elif EMSL in col_class and "emsl" in template:
+                        col_slot = col_classes[EMSL]
+                        converted_row[EMSL][col_slot] = value
+
+                    elif JGI_MG in col_class and "jgi_mg" in template:
+                        col_slot = col_classes[JGI_MG]
+                        converted_row[JGI_MG][col_slot] = value
+
+                    elif JGI_MT in col_classes and (
+                        "jgi_mt" in template or "jgi_mg_mt" in template
+                    ):
+                        col_slot = col_classes[JGI_MT]
+                        converted_row[JGI_MT][col_slot] = value
 
                     else:
-                        print(f'WARNING: could not determine template for column "{col_title}"')
+                        print(
+                            f'WARNING: could not determine template for column "{col_title}" in {submission_metadata.id}'
+                        )
 
-                for template in converted_row.values():
-                    template.update(common_column_data)
+                for row in converted_row.values():
+                    row.update(common_column_data)
 
-                for key, template in converted_row.items():
+                for key, row in converted_row.items():
                     suffixed_key = f"{key}_data"
-                    if suffixed_key not in converted_sample_data:
-                        converted_sample_data[suffixed_key] = []
-                    converted_sample_data[suffixed_key].append(template)
+                    converted_sample_data[suffixed_key].append(row)
 
             metadata_submission["_oldSampleData"] = sample_data
             metadata_submission["sampleData"] = converted_sample_data

@@ -93,6 +93,21 @@
     "wastewater_sludge": "depth",
     "water": "depth"
   },
+  "depth": {
+    "air": "depth",
+    "biofilm": "depth",
+    "bioscales": "depth",
+    "built_env": "depth",
+    "hcr-cores": "depth",
+    "hcr-fluids-swabs": "depth",
+    "host-associated": "depth",
+    "misc-envs": "depth",
+    "plant-associated": "depth",
+    "sediment": "depth",
+    "soil": "depth",
+    "wastewater_sludge": "depth",
+    "water": "depth"
+  },
   "elevation": {
     "air": "elev",
     "biofilm": "elev",
@@ -542,6 +557,22 @@
     "water": "samp_name"
   },
   "globally unique ID": {
+    "air": "source_mat_id",
+    "biofilm": "source_mat_id",
+    "bioscales": "source_mat_id",
+    "built_env": "source_mat_id",
+    "dh_mutliview_common_columns": "source_mat_id",
+    "emsl": "source_mat_id",
+    "host-associated": "source_mat_id",
+    "jgi_mg": "source_mat_id",
+    "jgi_mt": "source_mat_id",
+    "plant-associated": "source_mat_id",
+    "sediment": "source_mat_id",
+    "soil": "source_mat_id",
+    "wastewater_sludge": "source_mat_id",
+    "water": "source_mat_id"
+  },
+  "source material identifiers": {
     "air": "source_mat_id",
     "biofilm": "source_mat_id",
     "bioscales": "source_mat_id",
@@ -2005,6 +2036,9 @@
     "jgi_mg": "dna_cont_type"
   },
   "DNA plate position": {
+    "jgi_mg": "dna_cont_well"
+  },
+  "DNA well number": {
     "jgi_mg": "dna_cont_well"
   },
   "DNA container label": {
