@@ -665,7 +665,7 @@ export default defineComponent({
               block
               @click="harmonizerApi.launchReference()"
             >
-              Full {{ packageName }} Reference
+              Full {{ activeTemplate }} Reference
               <v-icon class="pl-1">
                 mdi-open-in-new
               </v-icon>
