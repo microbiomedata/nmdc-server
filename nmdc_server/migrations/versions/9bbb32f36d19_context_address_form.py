@@ -79,10 +79,10 @@ def upgrade():
         if isinstance(metadata_submission, List):
             continue
 
-        if not metadata_submission.get("context_form", None):
-            metadata_submission["context_form"] = ContextForm().dict()
-        if not metadata_submission.get("address_form"):
-            metadata_submission["address_form"] = AddressForm().dict()
+        if not metadata_submission.get("contextForm", None):
+            metadata_submission["contextForm"] = ContextForm().dict()
+        if not metadata_submission.get("addressForm"):
+            metadata_submission["addressForm"] = AddressForm().dict()
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
     session.bulk_update_mappings(SubmissionMetadata, mappings)
     session.commit()
@@ -96,10 +96,10 @@ def downgrade():
         if isinstance(metadata_submission, List):
             continue
 
-        if metadata_submission["context_form"]:
-            del metadata_submission["context_form"]
-        if metadata_submission["address_form"]:
-            del metadata_submission["address_form"]
+        if metadata_submission.get("contextForm", None):
+            del metadata_submission["contextForm"]
+        if metadata_submission.get("addressForm", None):
+            del metadata_submission["addressForm"]
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
     session.bulk_update_mappings(SubmissionMetadata, mappings)
     session.commit()
