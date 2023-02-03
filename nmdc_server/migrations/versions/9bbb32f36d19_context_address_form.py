@@ -9,7 +9,6 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import uuid4
 
-import sqlalchemy as sa
 from alembic import op
 from pydantic import BaseModel
 from sqlalchemy import Column, orm
@@ -77,7 +76,10 @@ def upgrade():
     mappings = []
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
-        if not metadata_submission.get("context_form"):
+        if isinstance(metadata_submission, List):
+            continue
+
+        if not metadata_submission.get("context_form", None):
             metadata_submission["context_form"] = ContextForm().dict()
         if not metadata_submission.get("address_form"):
             metadata_submission["address_form"] = AddressForm().dict()
@@ -91,6 +93,9 @@ def downgrade():
     mappings = []
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
+        if isinstance(metadata_submission, List):
+            continue
+
         if metadata_submission["context_form"]:
             del metadata_submission["context_form"]
         if metadata_submission["address_form"]:
