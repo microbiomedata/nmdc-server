@@ -68,12 +68,12 @@ export default defineComponent({
 
     async function resume(item: api.MetadataSubmissionRecord) {
       await loadRecord(item.id);
-      router?.push({ name: 'Study Form', params: { id: item.id } });
+      router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
     async function createNewSubmission() {
       const item = await generateRecord();
-      router?.push({ name: 'Study Form', params: { id: item.id } });
+      router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
     const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);

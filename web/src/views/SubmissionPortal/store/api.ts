@@ -6,9 +6,35 @@ const client = axios.create({
   baseURL: process.env.VUE_APP_BASE_URL || '/api',
 });
 
+interface NmdcAddress {
+  name: string;
+  email: string;
+  phone: string;
+  line1: string;
+  line2: string;
+  city: string;
+  state: string;
+  postalCode: string;
+}
+
+function addressToString(address: NmdcAddress): string {
+  let result = '';
+  const contactAndStreetInfo = [address.name, address.email, address.phone, address.line1, address.line2];
+  contactAndStreetInfo.forEach((line) => {
+    if (line.trim()) {
+      result += `${line.trim()}\n`;
+    }
+  });
+  const stateAndZip = `${address.state} ${address.postalCode}`;
+  const joinString = (address.city.trim() && stateAndZip.trim()) ? ', ' : '';
+  result += [address.city, stateAndZip].join(joinString);
+  return result;
+}
+
 interface MetadataSubmission {
   packageName: keyof typeof HARMONIZER_TEMPLATES;
   template: string;
+  contextForm: any;
   studyForm: any;
   multiOmicsForm: any;
   sampleData: any[][];
@@ -58,6 +84,8 @@ async function getRecord(id: string) {
 }
 
 export {
+  NmdcAddress,
+  addressToString,
   MetadataSubmission,
   MetadataSubmissionRecord,
   createRecord,

@@ -11,6 +11,58 @@ Vue.use(CompositionApi);
 
 const hasChanged = ref(0);
 /**
+ * Submission Context Step
+ */
+const contextFormDefault = {
+  dataGenerated: undefined as undefined | boolean,
+  facilityGenerated: undefined as undefined | boolean,
+  facilities: [] as string[],
+  award: undefined as undefined | string,
+  otherAward: '',
+};
+const addressFormDefault = {
+  // Shipper info
+  shipper: {
+    name: '',
+    email: '',
+    phone: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+  } as api.NmdcAddress,
+  expectedShippingDate: undefined as undefined | Date,
+  shippingConditions: '',
+  // Sample info
+  sample: '',
+  description: '',
+  experimentalGoals: '',
+  randomization: '',
+  usdaRegulated: undefined as undefined | boolean,
+  permitNumber: '',
+  biosafetyLevel: '',
+  irpOrHipaa: undefined as undefined | boolean,
+  // IRB info
+  irbNumber: '',
+  irbAddress: {
+    name: '',
+    email: '',
+    phone: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+  } as api.NmdcAddress,
+  comments: '',
+};
+const contextForm = reactive(clone(contextFormDefault));
+const contextFormValid = ref(false);
+const addressForm = reactive(clone(addressFormDefault));
+const addressFormValid = ref(false);
+
+/**
  * Study Form Step
  */
 const studyFormDefault = {
@@ -76,6 +128,8 @@ const templateChoiceDisabled = computed(() => sampleData.value.length >= 3);
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
   template: templateChoice.value,
+  contextForm,
+  addressForm,
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
@@ -91,6 +145,10 @@ function submit(id: string) {
 }
 
 function reset() {
+  Object.assign(contextForm, contextFormDefault);
+  contextFormValid.value = false;
+  Object.assign(addressForm, addressFormDefault);
+  addressFormValid.value = false;
   studyFormValid.value = false;
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
@@ -136,6 +194,11 @@ export {
   multiOmicsFormValid,
   sampleData,
   samplesValid,
+  contextForm,
+  contextFormValid,
+  addressForm,
+  addressFormDefault,
+  addressFormValid,
   studyForm,
   studyFormValid,
   submitPayload,
