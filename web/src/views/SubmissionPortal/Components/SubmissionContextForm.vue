@@ -14,6 +14,8 @@ import {
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 
+const awardTypes = ['MONet', 'FICUS'];
+
 export default defineComponent({
   components: { SubmissionContextShippingForm },
   setup() {
@@ -31,12 +33,33 @@ export default defineComponent({
       return valid || 'If submitting to a user facility, an award is required.';
     }];
 
+    const otherAwardTextRules = () => [(v) => {
+      if (awardTypes.includes(contextForm.award)) {
+        return true;
+      }
+      const inputEmpty = v.trim().length === 0;
+      if (contextForm.facilities.length > 0) {
+        return !inputEmpty || 'Please enter the kind of project award.';
+      }
+      return true;
+    }];
+
     watch(
       () => contextForm.facilities,
       () => {
         nextTick(() => formRef.value.validate());
       },
       { deep: true },
+    );
+
+    watch(
+      () => contextForm.award,
+      (award) => {
+        if (awardTypes.includes(award)) {
+          contextForm.otherAward = '';
+        }
+        nextTick(() => formRef.value.validate());
+      },
     );
 
     onMounted(() => {
@@ -57,6 +80,7 @@ export default defineComponent({
       sampleItems,
       biosafetyLevels,
       projectAwardValidationRules,
+      otherAwardTextRules,
     };
   },
 });
@@ -144,6 +168,7 @@ export default defineComponent({
                 dense
                 hide-details
                 outlined
+                :rules="otherAwardTextRules()"
               />
             </template>
           </v-radio>
