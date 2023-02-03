@@ -1,5 +1,11 @@
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api';
+import {
+  defineComponent,
+  onMounted,
+  ref,
+  watch,
+  nextTick,
+} from '@vue/composition-api';
 import {
   contextForm,
   contextFormValid,
@@ -19,6 +25,23 @@ export default defineComponent({
     const address = ref({});
     const sampleItems = ref(['water_extract_soil']);
     const biosafetyLevels = ref(['BSL2']);
+    const projectAwardValidationRules = () => [(v) => {
+      const awardChosen = v === 'MONet' || v === 'FICUS' || v === contextForm.otherAward;
+      const valid = awardChosen || contextForm.facilities.length === 0;
+      return valid || 'If submitting to a user facility, an award is required.';
+    }];
+
+    watch(
+      () => contextForm.facilities,
+      () => {
+        nextTick(() => formRef.value.validate());
+      },
+      { deep: true },
+    );
+
+    onMounted(() => {
+      formRef.value.validate();
+    });
 
     return {
       formRef,
@@ -33,6 +56,7 @@ export default defineComponent({
       datePicker,
       sampleItems,
       biosafetyLevels,
+      projectAwardValidationRules,
     };
   },
 });
@@ -49,11 +73,13 @@ export default defineComponent({
     <v-form
       ref="formRef"
       v-model="contextFormValid"
+      class="mb-2"
       style="max-width: 1000px;"
     >
       <v-radio-group
         v-model="contextForm.dataGenerated"
-        label="Has data already been generated for your study?"
+        label="Has data already been generated for your study?*"
+        :rules="[v => (v === true || v === false) || 'This field is required']"
       >
         <v-radio
           label="No"
@@ -97,6 +123,7 @@ export default defineComponent({
           v-if="contextForm.dataGenerated === false && contextForm.facilities.length > 0"
           v-model="contextForm.award"
           label="What kind of project have you been awarded?"
+          :rules="projectAwardValidationRules()"
         >
           <v-radio
             label="FICUS"
@@ -130,6 +157,7 @@ export default defineComponent({
         color="gray"
         depressed
         :to="{ name: 'Study Form' }"
+        :disabled="!contextFormValid"
       >
         Go to next step
         <v-icon class="pl-1">
