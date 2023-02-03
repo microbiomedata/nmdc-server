@@ -5,6 +5,18 @@ import { addressToString } from '../store/api';
 
 export default defineComponent({
   setup() {
+    const shipperAddressOneLiner = computed(() => {
+      const shipperData = [
+        addressForm.shipper.name,
+        addressForm.shipper.line1,
+        addressForm.shipper.line2,
+        addressForm.shipper.city,
+        addressForm.shipper.state,
+        addressForm.shipper.postalCode,
+      ];
+      const existingShipperData = shipperData.filter((shipperDatum) => !!shipperDatum.trim());
+      return existingShipperData.join(', ');
+    });
     const shipperAddressString = computed(() => addressToString(addressForm.shipper));
     const shipperSummary = computed(() => {
       let result = '';
@@ -65,6 +77,7 @@ export default defineComponent({
     ]);
 
     return {
+      shipperAddressOneLiner,
       shipperSummary,
       addressForm,
       irbSummary,
@@ -87,7 +100,10 @@ export default defineComponent({
             $expand
           </v-icon>
         </template>
-        <span class="header">Shipper</span>
+        <div class="header">
+          <span class="mr-2">Shipper</span>
+          <span class="expansion-panel-preview">{{ shipperAddressOneLiner }}</span>
+        </div>
       </v-expansion-panel-header>
       <v-expansion-panel-content>
         <span
@@ -168,6 +184,12 @@ export default defineComponent({
 
 .header {
   order: 1;
+  justify-content: flex-start;
+}
+
+.expansion-panel-preview {
+  color: gray;
+  font-style: italic;
 }
 
 .label {
