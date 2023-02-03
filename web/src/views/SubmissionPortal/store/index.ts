@@ -184,6 +184,8 @@ async function loadRecord(id: string) {
   packageName.value = val.metadata_submission.packageName;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
+  Object.assign(contextForm, val.metadata_submission.contextForm);
+  Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
 }
