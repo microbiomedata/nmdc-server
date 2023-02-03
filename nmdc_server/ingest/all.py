@@ -142,7 +142,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     db.commit()
 
     if skip_annotation is False:
-
         try:
             # This section has its own subprogress bar because it takes several
             # hours to ingest all of the gene function products from the metag
@@ -172,7 +171,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
             db.commit()
 
     else:
-
         logger.info("Skipping annotation ingest")
 
     logger.info("Loading read qc...")
