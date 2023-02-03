@@ -86,6 +86,7 @@ export default defineComponent({
         />
         <v-checkbox
           v-model="contextForm.facilities"
+          class="mt-2"
           label="JGI"
           value="JGI"
           hide-details
