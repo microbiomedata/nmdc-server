@@ -14,7 +14,7 @@ def print_status(message):
         print("done")
 
 REPO = "microbiomedata/sheets_and_friends"
-REVISION_ID = "734c899f957cbc2e19ecaba526e63579a2b90790"
+REVISION_ID = "4c83c3696d686cf5878db40a71e296faed1a4b2c"
 REMOTE_PATH = "artifacts/nmdc_submission_schema.json"
 
 LOCAL_PATH = "web/src/views/SubmissionPortal/schema.json"
