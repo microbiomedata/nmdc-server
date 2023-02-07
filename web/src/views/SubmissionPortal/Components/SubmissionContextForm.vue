@@ -1,11 +1,16 @@
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api';
+import {
+  defineComponent,
+  ref,
+  onMounted,
+  watch,
+  nextTick,
+} from '@vue/composition-api';
 import Definitions from '@/definitions';
 import {
   contextForm,
   contextFormValid,
-  addressForm,
-  addressFormValid,
+  AwardTypes,
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 
@@ -13,28 +18,53 @@ export default defineComponent({
   components: { SubmissionContextShippingForm },
   setup() {
     const formRef = ref();
-    const showAddressForm = ref(false);
-    const addressFormRef = ref();
-    const date = ref(null);
-    const datePicker = ref(false);
-    const address = ref({});
-    const sampleItems = ref(['water_extract_soil']);
-    const biosafetyLevels = ref(['BSL2']);
+    const projectAwardValidationRules = () => [(v: string) => {
+      const awardChosen = v === 'MONet' || v === 'FICUS' || v === contextForm.otherAward;
+      const valid = awardChosen || contextForm.facilities.length === 0;
+      return valid || 'If submitting to a use facility, this field is required.'
+    }];
+    const otherAwardValidationRules = () => [(v: string) => {
+      const awardTypes = Object.values(AwardTypes) as string[];
+      if (contextForm.award && awardTypes.includes(contextForm.award)) {
+        return true;
+      }
+      const inputEmpty = v.trim().length === 0;
+      if (contextForm.facilities.length > 0) {
+        return !inputEmpty || 'Please enter the kind of project award.';
+      }
+      return true;
+    }];
+
+    watch(
+      () => contextForm.facilities,
+      () => {
+        nextTick(() => formRef.value.validate());
+      },
+      { deep: true },
+    );
+
+    watch(
+      () => contextForm.award,
+      (award) => {
+        const awardTypes = Object.values(AwardTypes) as string[];
+        if (award && awardTypes.includes(award)) {
+          contextForm.otherAward = '';
+        }
+        nextTick(() => formRef.value.validate());
+      },
+    );
+
+    onMounted(() => {
+      formRef.value.validate();
+    });
 
     return {
       Definitions,
       formRef,
       contextForm,
       contextFormValid,
-      addressForm,
-      addressFormValid,
-      showAddressForm,
-      addressFormRef,
-      address,
-      date,
-      datePicker,
-      sampleItems,
-      biosafetyLevels,
+      projectAwardValidationRules,
+      otherAwardValidationRules,
     };
   },
 });
@@ -52,10 +82,12 @@ export default defineComponent({
       ref="formRef"
       v-model="contextFormValid"
       style="max-width: 1000px;"
+      class="mb-2"
     >
       <v-radio-group
         v-model="contextForm.dataGenerated"
-        label="Has data already been generated for your study?"
+        label="Has data already been generated for your study?*"
+        :rules="[v => (v === true || v === false) || 'This field is required']"
       >
         <v-radio
           label="No"
@@ -110,7 +142,8 @@ export default defineComponent({
         <v-radio-group
           v-if="contextForm.dataGenerated === false && contextForm.facilities.length > 0"
           v-model="contextForm.award"
-          label="What kind of project have you been awarded?"
+          label="What kind of project have you been awarded?*"
+          :rules="projectAwardValidationRules()"
         >
           <v-radio
             label="FICUS"
@@ -131,6 +164,7 @@ export default defineComponent({
                 dense
                 hide-details
                 outlined
+                :rules="otherAwardValidationRules()"
               />
             </template>
           </v-radio>
@@ -144,6 +178,7 @@ export default defineComponent({
         color="gray"
         depressed
         :to="{ name: 'Study Form' }"
+        :disabled="!contextFormValid"
       >
         Go to next step
         <v-icon class="pl-1">

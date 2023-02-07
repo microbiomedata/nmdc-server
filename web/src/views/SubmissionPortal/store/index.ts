@@ -14,6 +14,11 @@ enum BiosafetyLevels {
   BSL2 = 'BSL2'
 }
 
+enum AwardTypes {
+  MONET = 'MONet',
+  FICUS = 'FICUS'
+}
+
 const hasChanged = ref(0);
 /**
  * Submission Context Step
@@ -199,6 +204,7 @@ watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
 
 export {
   BiosafetyLevels,
+  AwardTypes,
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
