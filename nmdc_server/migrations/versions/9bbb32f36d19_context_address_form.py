@@ -64,6 +64,7 @@ class AddressForm(BaseModel):
 
 
 class ContextForm(BaseModel):
+    datasetDoi: str = ""
     dataGenerated: Optional[bool] = None
     facilityGenerated: Optional[bool] = None
     facilities: List[str] = []
@@ -80,7 +81,11 @@ def upgrade():
             continue
 
         if not metadata_submission.get("contextForm", None):
-            metadata_submission["contextForm"] = ContextForm().dict()
+            context_form = ContextForm().dict()
+            context_form["datasetDoi"] = metadata_submission.get("multiOmicsForm", {}).get(
+                "datasetDoi", ""
+            )
+            metadata_submission["contextForm"] = context_form
         if not metadata_submission.get("addressForm"):
             metadata_submission["addressForm"] = AddressForm().dict()
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
@@ -97,6 +102,8 @@ def downgrade():
             continue
 
         if metadata_submission.get("contextForm", None):
+            context_form = metadata_submission["contextForm"]
+            metadata_submission["multiOmicsForm"]["datasetDoi"] = context_form.get("datasetDoi", "")
             del metadata_submission["contextForm"]
         if metadata_submission.get("addressForm", None):
             del metadata_submission["addressForm"]

@@ -26,7 +26,6 @@ class StudyForm(BaseModel):
 
 
 class MultiOmicsForm(BaseModel):
-    datasetDoi: str
     alternativeNames: List[str]
     studyNumber: str
     GOLDStudyId: str
@@ -65,6 +64,7 @@ class AddressForm(BaseModel):
 
 
 class ContextForm(BaseModel):
+    datasetDoi: str
     dataGenerated: Optional[bool]
     facilityGenerated: Optional[bool]
     facilities: List[str]
