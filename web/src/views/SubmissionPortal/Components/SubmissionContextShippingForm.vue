@@ -1,6 +1,6 @@
 <script lang="ts">
 import { computed, defineComponent, ref } from '@vue/composition-api';
-import { addressForm, addressFormValid } from '../store';
+import { addressForm, addressFormValid, BiosafetyLevels } from '../store';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 
@@ -11,7 +11,7 @@ export default defineComponent({
     const showAddressForm = ref(false);
     const datePicker = ref(false);
     const sampleItems = ref(['water_extract_soil']);
-    const biosafetyLevels = ref(['BSL2']);
+    const biosafetyLevels = Object.values(BiosafetyLevels);
 
     const shipperSummary = computed(() => {
       let result = '';

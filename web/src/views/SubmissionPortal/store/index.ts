@@ -9,6 +9,11 @@ import { getVariant, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
+enum BiosafetyLevels {
+  BSL1 = 'BSL1',
+  BSL2 = 'BSL2'
+}
+
 const hasChanged = ref(0);
 /**
  * Submission Context Step
@@ -193,6 +198,7 @@ async function loadRecord(id: string) {
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
 
 export {
+  BiosafetyLevels,
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
