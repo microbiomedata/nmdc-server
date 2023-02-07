@@ -1,0 +1,23 @@
+version: "3.3"
+services:
+  mongodb_container:
+    image: mongo:latest
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: rootpassword
+    ports:
+      - 27017:27017
+    container_name: mongo_db
+    volumes:
+      - /home/local/KHQ/mike.nagler/Development/projects/nmdc/mongo/data:/data/db
+      - /home/local/KHQ/mike.nagler/Development/projects/nmdc/mongo_dumps:/opt/mongo_dumps
+  backend:
+    volumes:
+      - "./nmdc_server:/app/nmdc_server"
+    command: /start-reload.sh
+  worker:
+    volumes:
+      - "./nmdc_server:/app/nmdc_server"
+
+volumes:
+  mongodb_data_container:
