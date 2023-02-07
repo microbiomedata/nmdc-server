@@ -52,6 +52,7 @@ const addressFormDefault = {
 };
 const contextFormDefault = {
   dataGenerated: undefined as undefined | boolean,
+  datasetDoi: '',
   facilityGenerated: undefined as undefined | boolean,
   facilities: [] as string[],
   award: undefined as undefined | string,
@@ -87,7 +88,6 @@ const studyForm = reactive(clone(studyFormDefault));
  * Multi-Omics Form Step
  */
 const multiOmicsFormDefault = {
-  datasetDoi: '',
   alternativeNames: [] as string[],
   studyNumber: '',
   GOLDStudyId: '',
