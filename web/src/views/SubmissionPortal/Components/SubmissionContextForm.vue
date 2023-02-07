@@ -1,5 +1,6 @@
 <script lang="ts">
 import { defineComponent, ref } from '@vue/composition-api';
+import Definitions from '@/definitions';
 import {
   contextForm,
   contextFormValid,
@@ -21,6 +22,7 @@ export default defineComponent({
     const biosafetyLevels = ref(['BSL2']);
 
     return {
+      Definitions,
       formRef,
       contextForm,
       contextFormValid,
@@ -64,6 +66,17 @@ export default defineComponent({
           :value="true"
         />
       </v-radio-group>
+      <v-text-field
+        v-if="contextForm.dataGenerated"
+        v-model="contextForm.datasetDoi"
+        label="Dataset DOI *"
+        :hint="Definitions.doi"
+        :rules="[v => !!v || 'DOI is required when data has been generated already.' ]"
+        persistent-hint
+        validate-on-blur
+        outlined
+        dense
+      />
       <v-checkbox
         v-if="contextForm.dataGenerated"
         v-model="contextForm.facilityGenerated"

@@ -22,8 +22,6 @@ export default defineComponent({
       templateChoiceDisabled,
       /* functions */
       reValidate,
-      /* Rules functions */
-      // datasetDoiRules,
     };
   },
 });
@@ -51,19 +49,7 @@ export default defineComponent({
         class="mb-2 mt-0"
         @change="reValidate"
       />
-      <v-text-field
-        v-if="multiOmicsAssociations.doi"
-        v-model="multiOmicsForm.datasetDoi"
-        :rules="[ v => !!v || 'DOI is required when data has been generated already' ]"
-        :hint="Definitions.doi"
-        persistent-hint
-        label="Dataset DOI *"
-        validate-on-blur
-        outlined
-        dense
-      />
       <div
-        v-else
         class="my-5"
       />
 

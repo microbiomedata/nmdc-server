@@ -13,13 +13,6 @@ const hasChanged = ref(0);
 /**
  * Submission Context Step
  */
-const contextFormDefault = {
-  dataGenerated: undefined as undefined | boolean,
-  facilityGenerated: undefined as undefined | boolean,
-  facilities: [] as string[],
-  award: undefined as undefined | string,
-  otherAward: '',
-};
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -57,6 +50,14 @@ const addressFormDefault = {
   } as api.NmdcAddress,
   comments: '',
 };
+const contextFormDefault = {
+  dataGenerated: undefined as undefined | boolean,
+  datasetDoi: '',
+  facilityGenerated: undefined as undefined | boolean,
+  facilities: [] as string[],
+  award: undefined as undefined | string,
+  otherAward: '',
+};
 const contextForm = reactive(clone(contextFormDefault));
 const contextFormValid = ref(false);
 const addressForm = reactive(clone(addressFormDefault));
@@ -87,7 +88,6 @@ const studyForm = reactive(clone(studyFormDefault));
  * Multi-Omics Form Step
  */
 const multiOmicsFormDefault = {
-  datasetDoi: '',
   alternativeNames: [] as string[],
   studyNumber: '',
   GOLDStudyId: '',
@@ -150,6 +150,9 @@ function reset() {
   Object.assign(addressForm, addressFormDefault);
   addressFormValid.value = false;
   studyFormValid.value = false;
+  addressFormValid.value = false;
+  Object.assign(contextForm, contextFormDefault);
+  Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
@@ -181,6 +184,8 @@ async function loadRecord(id: string) {
   packageName.value = val.metadata_submission.packageName;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
+  Object.assign(contextForm, val.metadata_submission.contextForm);
+  Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
 }
