@@ -64,6 +64,7 @@ export default defineComponent({
         chips
         small-chips
         dense
+        append-icon=""
       />
       <v-text-field
         v-model="multiOmicsForm.GOLDStudyId"
