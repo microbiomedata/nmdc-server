@@ -274,7 +274,7 @@ export default defineComponent({
 
         await validate();
 
-        // When changing templates we may need to populate the column columns
+        // When changing templates we may need to populate the common columns
         // from the first tab
         // TODO: would it make more sense to do this in the afterChange hook?
         const nextData = { ...sampleData.value };
