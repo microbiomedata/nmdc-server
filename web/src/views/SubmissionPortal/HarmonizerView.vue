@@ -91,10 +91,10 @@ export default defineComponent({
       if (Object.keys(invalid).length) {
         remapped['All Errors'] = [];
       }
-      Object.entries(invalid).forEach(([row, val]) => {
-        Object.entries(val).forEach(([col, text]) => {
+      Object.entries(invalid).forEach(([row, rowErrors]) => {
+        Object.entries(rowErrors).forEach(([col, errorText]) => {
           const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
-          const issue = text || 'Validation Error';
+          const issue = errorText || 'Validation Error';
           if (has(remapped, issue)) {
             remapped[issue].push(entry);
           } else {
@@ -177,11 +177,11 @@ export default defineComponent({
         return val;
       }))));
 
-    const validationItems = computed(() => validationErrorGroups.value.map((v) => {
-      const errors = validationErrors.value[v];
+    const validationItems = computed(() => validationErrorGroups.value.map((errorGroup) => {
+      const errors = validationErrors.value[errorGroup];
       return {
-        text: `${v} (${errors.length})`,
-        value: v,
+        text: `${errorGroup} (${errors.length})`,
+        value: errorGroup,
       };
     }));
 
@@ -224,16 +224,16 @@ export default defineComponent({
 
     function openFile(file: File) {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        if (e == null || e.target == null) {
+      reader.onload = (event) => {
+        if (event == null || event.target == null) {
           return;
         }
-        const workbook = read(e.target.result);
+        const workbook = read(event.target.result);
         const imported = {} as Record<string, any>;
         Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
           imported[`${name}_data`] = harmonizerApi.unflattenArrayValues(
             utils.sheet_to_json(worksheet, {
-              header: harmonizerApi.getOrderedAttributes(name),
+              header: harmonizerApi.getOrderedAttributeNames(name),
               range: 1,
             }),
             name,

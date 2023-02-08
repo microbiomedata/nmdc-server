@@ -4,7 +4,7 @@ import CompositionApi, {
 } from '@vue/composition-api';
 import { clone } from 'lodash';
 import * as api from './api';
-import { getVariant, HARMONIZER_TEMPLATES } from '../harmonizerApi';
+import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -60,7 +60,7 @@ const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
 const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
   const template = HARMONIZER_TEMPLATES[packageName.value];
-  const list = getVariant(checkBoxes, template.default);
+  const list = getVariants(checkBoxes, template.default);
   return list;
 });
 

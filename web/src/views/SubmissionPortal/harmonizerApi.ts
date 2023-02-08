@@ -31,7 +31,7 @@ const GOLD_FIELDS = {
 const EMSL = 'emsl';
 const JGI_MG = 'jgi_mg';
 const JGT_MT = 'jgi_mt';
-export function getVariant(checkBoxes: string[], base: string) {
+export function getVariants(checkBoxes: string[], base: string): string[] {
   const templates = [base];
   if (checkBoxes.includes('mp-emsl') || checkBoxes.includes('mb-emsl') || checkBoxes.includes('nom-emsl')) {
     templates.push(EMSL);
@@ -379,7 +379,7 @@ export class HarmonizerApi {
     return this.getSlotRank(slot.slot_group);
   }
 
-  getOrderedAttributes(template: string) {
+  getOrderedAttributeNames(template: string) {
     return Object.keys(this.schema.classes[template].attributes).sort(
       (a, b) => {
         const aSlotGroupRank = this.getSlotGroupRank(a);
@@ -395,7 +395,7 @@ export class HarmonizerApi {
   }
 
   getHeaderRow(template: string) {
-    const orderedAttrNames = this.getOrderedAttributes(template);
+    const orderedAttrNames = this.getOrderedAttributeNames(template);
     const attrs = this.schema.classes[template].attributes;
     const header = {} as Record<string, string>;
     orderedAttrNames.forEach((attrName) => {
