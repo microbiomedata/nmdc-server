@@ -41,18 +41,6 @@ export default defineComponent({
       class="my-6 mb-10"
       style="max-width: 1000px;"
     >
-      <!-- DOI -->
-      <v-checkbox
-        v-model="multiOmicsAssociations.doi"
-        label="Data has already been generated"
-        hide-details
-        class="mb-2 mt-0"
-        @change="reValidate"
-      />
-      <div
-        class="my-5"
-      />
-
       <v-combobox
         v-model="multiOmicsForm.alternativeNames"
         label="Alternative Names"
