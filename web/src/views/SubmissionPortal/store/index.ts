@@ -102,7 +102,6 @@ const multiOmicsFormDefault = {
   studyNumber: '',
   GOLDStudyId: '',
   JGIStudyId: '',
-  NCBIBioProjectName: '',
   NCBIBioProjectId: '',
   omicsProcessingTypes: [] as string[],
 };

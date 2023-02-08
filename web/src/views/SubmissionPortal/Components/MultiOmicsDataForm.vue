@@ -62,15 +62,6 @@ export default defineComponent({
         outlined
         dense
       />
-
-      <v-text-field
-        v-model="multiOmicsForm.NCBIBioProjectName"
-        label="NCBI BioProject Title"
-        :hint="Definitions.studyNCBIProjectTitle"
-        persistent-hint
-        outlined
-        dense
-      />
       <v-text-field
         v-model="multiOmicsForm.NCBIBioProjectId"
         label="NCBI BioProject Accession"

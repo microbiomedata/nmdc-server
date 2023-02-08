@@ -30,7 +30,6 @@ class MultiOmicsForm(BaseModel):
     studyNumber: str
     GOLDStudyId: str
     JGIStudyId: str
-    NCBIBioProjectName: str
     NCBIBioProjectId: str
     omicsProcessingTypes: List[str]
 
