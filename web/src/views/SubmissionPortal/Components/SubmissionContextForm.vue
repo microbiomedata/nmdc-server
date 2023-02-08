@@ -105,6 +105,7 @@ export default defineComponent({
         validate-on-blur
         outlined
         dense
+        @change="reValidate"
       />
       <v-checkbox
         v-if="contextForm.dataGenerated"
