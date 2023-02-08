@@ -1,5 +1,10 @@
 <script lang="ts">
-import { computed, defineComponent, ref } from '@vue/composition-api';
+import {
+  computed,
+  defineComponent,
+  ref,
+} from '@vue/composition-api';
+import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
 import { addressForm, addressFormValid, BiosafetyLevels } from '../store';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
@@ -11,6 +16,7 @@ export default defineComponent({
     const showAddressForm = ref(false);
     const datePicker = ref(false);
     const sampleItems = ref(['water_extract_soil']);
+    const sampleEnumValues = NmdcSchema.$defs.SampleTypeEnum.enum;
     const biosafetyLevelValues = Object.values(BiosafetyLevels);
 
     const shipperSummary = computed(() => {
@@ -38,6 +44,7 @@ export default defineComponent({
       biosafetyLevelValues,
       BiosafetyLevels,
       addressSummary,
+      sampleEnumValues,
     };
   },
 });
@@ -202,7 +209,7 @@ export default defineComponent({
             <v-select
               v-model="addressForm.sample"
               class="mt-2"
-              :items="sampleItems"
+              :items="sampleEnumValues"
               label="Sample"
               dense
               outlined
@@ -250,7 +257,7 @@ export default defineComponent({
               <v-select
                 v-model="addressForm.biosafetyLevel"
                 class="mr-4"
-                :items="biosafetyLevels"
+                :items="biosafetyLevelValues"
                 label="Biosafety Level"
                 dense
                 outlined

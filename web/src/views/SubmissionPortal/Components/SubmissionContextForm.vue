@@ -21,7 +21,7 @@ export default defineComponent({
     const projectAwardValidationRules = () => [(v: string) => {
       const awardChosen = v === 'MONet' || v === 'FICUS' || v === contextForm.otherAward;
       const valid = awardChosen || contextForm.facilities.length === 0;
-      return valid || 'If submitting to a use facility, this field is required.'
+      return valid || 'If submitting to a use facility, this field is required.';
     }];
     const otherAwardValidationRules = () => [(v: string) => {
       const awardTypes = Object.values(AwardTypes) as string[];
