@@ -88,6 +88,10 @@ def upgrade():
             metadata_submission["contextForm"] = context_form
         if not metadata_submission.get("addressForm"):
             metadata_submission["addressForm"] = AddressForm().dict()
+
+        if metadata_submission.get("multiOmicsForm"):
+            omics_form = metadata_submission["multiOmicsForm"]
+            del omics_form["NCBIBioProjectName"]
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
     session.bulk_update_mappings(SubmissionMetadata, mappings)
     session.commit()
@@ -107,6 +111,10 @@ def downgrade():
             del metadata_submission["contextForm"]
         if metadata_submission.get("addressForm", None):
             del metadata_submission["addressForm"]
+
+        if metadata_submission.get("multiOmicsForm"):
+            omics_form = metadata_submission["multiOmicsForm"]
+            omics_form["NCBIBioProjectName"] = ""
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
     session.bulk_update_mappings(SubmissionMetadata, mappings)
     session.commit()
