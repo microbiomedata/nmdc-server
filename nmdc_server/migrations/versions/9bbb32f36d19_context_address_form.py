@@ -1,7 +1,7 @@
 """additional submission build wizard step
 
 Revision ID: 9bbb32f36d19
-Revises: ae7a3eba08c5
+Revises: 23e0702d2321
 Create Date: 2023-02-02 19:54:44.340586
 
 """
@@ -20,7 +20,7 @@ Base = declarative_base()
 
 # revision identifiers, used by Alembic.
 revision: str = "9bbb32f36d19"
-down_revision: Optional[str] = "ae7a3eba08c5"
+down_revision: Optional[str] = "23e0702d2321"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
