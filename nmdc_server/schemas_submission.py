@@ -26,18 +26,55 @@ class StudyForm(BaseModel):
 
 
 class MultiOmicsForm(BaseModel):
-    datasetDoi: str
     alternativeNames: List[str]
     studyNumber: str
     GOLDStudyId: str
     JGIStudyId: str
-    NCBIBioProjectName: str
     NCBIBioProjectId: str
     omicsProcessingTypes: List[str]
 
 
+class NmcdAddress(BaseModel):
+    name: str
+    email: str
+    phone: str
+    line1: str
+    line2: str
+    city: str
+    state: str
+    postalCode: str
+
+
+class AddressForm(BaseModel):
+    shipper: NmcdAddress
+    expectedShippingDate: Optional[datetime]
+    shippingConditions: str
+    sample: str
+    description: str
+    experimentalGoals: str
+    randomization: str
+    usdaRegulated: Optional[bool]
+    permitNumber: str
+    biosafetyLevel: str
+    irpOrHipaa: Optional[bool]
+    irbNumber: str
+    irbAddress: NmcdAddress
+    comments: str
+
+
+class ContextForm(BaseModel):
+    datasetDoi: str
+    dataGenerated: Optional[bool]
+    facilityGenerated: Optional[bool]
+    facilities: List[str]
+    award: Optional[str]
+    otherAward: str
+
+
 class MetadataSubmissionRecord(BaseModel):
     packageName: str
+    contextForm: ContextForm
+    addressForm: AddressForm
     templates: List[str]
     studyForm: StudyForm
     multiOmicsForm: MultiOmicsForm

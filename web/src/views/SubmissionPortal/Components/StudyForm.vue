@@ -197,7 +197,17 @@ export default defineComponent({
       </v-btn>
     </v-form>
     <strong>* indicates required field</strong>
-    <div class="d-flex">
+    <div class="d-flex mt-5">
+      <v-btn
+        color="gray"
+        depressed
+        :to="{ name: 'Submission Context' }"
+      >
+        <v-icon class="pl-1">
+          mdi-arrow-left-circle
+        </v-icon>
+        Go to previous step
+      </v-btn>
       <v-spacer />
       <v-btn
         color="primary"

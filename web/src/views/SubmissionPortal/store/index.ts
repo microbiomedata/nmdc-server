@@ -9,7 +9,70 @@ import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
+enum BiosafetyLevels {
+  BSL1 = 'BSL1',
+  BSL2 = 'BSL2'
+}
+
+enum AwardTypes {
+  MONET = 'MONet',
+  FICUS = 'FICUS'
+}
+
 const hasChanged = ref(0);
+/**
+ * Submission Context Step
+ */
+const addressFormDefault = {
+  // Shipper info
+  shipper: {
+    name: '',
+    email: '',
+    phone: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+  } as api.NmdcAddress,
+  expectedShippingDate: undefined as undefined | Date,
+  shippingConditions: '',
+  // Sample info
+  sample: '',
+  description: '',
+  experimentalGoals: '',
+  randomization: '',
+  usdaRegulated: undefined as undefined | boolean,
+  permitNumber: '',
+  biosafetyLevel: '',
+  irpOrHipaa: undefined as undefined | boolean,
+  // IRB info
+  irbNumber: '',
+  irbAddress: {
+    name: '',
+    email: '',
+    phone: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+  } as api.NmdcAddress,
+  comments: '',
+};
+const contextFormDefault = {
+  dataGenerated: undefined as undefined | boolean,
+  datasetDoi: '',
+  facilityGenerated: undefined as undefined | boolean,
+  facilities: [] as string[],
+  award: undefined as undefined | string,
+  otherAward: '',
+};
+const contextForm = reactive(clone(contextFormDefault));
+const contextFormValid = ref(false);
+const addressForm = reactive(clone(addressFormDefault));
+const addressFormValid = ref(false);
+
 /**
  * Study Form Step
  */
@@ -35,12 +98,10 @@ const studyForm = reactive(clone(studyFormDefault));
  * Multi-Omics Form Step
  */
 const multiOmicsFormDefault = {
-  datasetDoi: '',
   alternativeNames: [] as string[],
   studyNumber: '',
   GOLDStudyId: '',
   JGIStudyId: '',
-  NCBIBioProjectName: '',
   NCBIBioProjectId: '',
   omicsProcessingTypes: [] as string[],
 };
@@ -74,6 +135,8 @@ const templateChoiceDisabled = computed(() => Object.keys(sampleData.value).leng
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
+  contextForm,
+  addressForm,
   templates: templateList.value,
   studyForm,
   multiOmicsForm,
@@ -90,7 +153,14 @@ function submit(id: string) {
 }
 
 function reset() {
+  Object.assign(contextForm, contextFormDefault);
+  contextFormValid.value = false;
+  Object.assign(addressForm, addressFormDefault);
+  addressFormValid.value = false;
   studyFormValid.value = false;
+  addressFormValid.value = false;
+  Object.assign(contextForm, contextFormDefault);
+  Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
@@ -122,6 +192,8 @@ async function loadRecord(id: string) {
   packageName.value = val.metadata_submission.packageName;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
+  Object.assign(contextForm, val.metadata_submission.contextForm);
+  Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
 }
@@ -136,12 +208,19 @@ function mergeSampleData(template: string, data: any[]) {
 }
 
 export {
+  BiosafetyLevels,
+  AwardTypes,
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
   multiOmicsFormValid,
   sampleData,
   samplesValid,
+  contextForm,
+  contextFormValid,
+  addressForm,
+  addressFormDefault,
+  addressFormValid,
   studyForm,
   studyFormValid,
   submitPayload,
