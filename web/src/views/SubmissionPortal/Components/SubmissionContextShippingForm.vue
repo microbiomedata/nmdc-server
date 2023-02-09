@@ -1,6 +1,11 @@
 <script lang="ts">
-import { computed, defineComponent, ref } from '@vue/composition-api';
-import { addressForm, addressFormValid } from '../store';
+import {
+  computed,
+  defineComponent,
+  ref,
+} from '@vue/composition-api';
+import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
+import { addressForm, addressFormValid, BiosafetyLevels } from '../store';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 
@@ -11,7 +16,8 @@ export default defineComponent({
     const showAddressForm = ref(false);
     const datePicker = ref(false);
     const sampleItems = ref(['water_extract_soil']);
-    const biosafetyLevels = ref(['BSL2']);
+    const sampleEnumValues = NmdcSchema.$defs.SampleTypeEnum.enum;
+    const biosafetyLevelValues = Object.values(BiosafetyLevels);
 
     const shipperSummary = computed(() => {
       let result = '';
@@ -35,8 +41,10 @@ export default defineComponent({
       showAddressForm,
       datePicker,
       sampleItems,
-      biosafetyLevels,
+      biosafetyLevelValues,
+      BiosafetyLevels,
       addressSummary,
+      sampleEnumValues,
     };
   },
 });
@@ -201,7 +209,7 @@ export default defineComponent({
             <v-select
               v-model="addressForm.sample"
               class="mt-2"
-              :items="sampleItems"
+              :items="sampleEnumValues"
               label="Sample"
               dense
               outlined
@@ -249,7 +257,7 @@ export default defineComponent({
               <v-select
                 v-model="addressForm.biosafetyLevel"
                 class="mr-4"
-                :items="biosafetyLevels"
+                :items="biosafetyLevelValues"
                 label="Biosafety Level"
                 dense
                 outlined
@@ -261,66 +269,68 @@ export default defineComponent({
               />
               <v-spacer />
             </div>
-            <v-subheader>
-              <span class="text-h6">Institutional Review Board (IRB) Information</span>
-            </v-subheader>
-            <v-divider class="mb-2" />
-            <v-text-field
-              v-model="addressForm.irbNumber"
-              label="IRB Number"
-              outlined
-              dense
-            />
-            <v-text-field
-              v-model="addressForm.irbAddress.name"
-              label="IRB Contact Name"
-              outlined
-              dense
-            />
-            <v-text-field
-              v-model="addressForm.irbAddress.email"
-              label="E-mail Address"
-              outlined
-              dense
-            />
-            <v-text-field
-              v-model="addressForm.irbAddress.phone"
-              label="Phone Number"
-              outlined
-              dense
-            />
-            <v-text-field
-              v-model="addressForm.irbAddress.line1"
-              label="Address Line 1"
-              outlined
-              dense
-            />
-            <v-text-field
-              v-model="addressForm.irbAddress.line2"
-              label="Address Line 2"
-              outlined
-              dense
-            />
-            <v-text-field
-              v-model="addressForm.irbAddress.city"
-              label="City"
-              outlined
-              dense
-            />
-            <div class="d-flex">
+            <div v-if="addressForm.biosafetyLevel === BiosafetyLevels.BSL2">
+              <v-subheader>
+                <span class="text-h6">Institutional Review Board (IRB) Information</span>
+              </v-subheader>
+              <v-divider class="mb-2" />
               <v-text-field
-                v-model="addressForm.irbAddress.state"
-                label="State"
-                outlined
-                dense
-                class="mr-4"
-              />
-              <v-text-field
-                v-model="addressForm.irbAddress.postalCode"
-                label="Zip Code"
+                v-model="addressForm.irbNumber"
+                label="IRB Number"
                 outlined
                 dense
               />
+              <v-text-field
+                v-model="addressForm.irbAddress.name"
+                label="IRB Contact Name"
+                outlined
+                dense
+              />
+              <v-text-field
+                v-model="addressForm.irbAddress.email"
+                label="E-mail Address"
+                outlined
+                dense
+              />
+              <v-text-field
+                v-model="addressForm.irbAddress.phone"
+                label="Phone Number"
+                outlined
+                dense
+              />
+              <v-text-field
+                v-model="addressForm.irbAddress.line1"
+                label="Address Line 1"
+                outlined
+                dense
+              />
+              <v-text-field
+                v-model="addressForm.irbAddress.line2"
+                label="Address Line 2"
+                outlined
+                dense
+              />
+              <v-text-field
+                v-model="addressForm.irbAddress.city"
+                label="City"
+                outlined
+                dense
+              />
+              <div class="d-flex">
+                <v-text-field
+                  v-model="addressForm.irbAddress.state"
+                  label="State"
+                  outlined
+                  dense
+                  class="mr-4"
+                />
+                <v-text-field
+                  v-model="addressForm.irbAddress.postalCode"
+                  label="Zip Code"
+                  outlined
+                  dense
+                />
+              </div>
             </div>
             <v-subheader>
               <span class="text-h6">Additional Comments</span>

@@ -1,11 +1,17 @@
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api';
+import {
+  defineComponent,
+  ref,
+  onMounted,
+  watch,
+  nextTick,
+} from '@vue/composition-api';
+import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
 import Definitions from '@/definitions';
 import {
   contextForm,
   contextFormValid,
-  addressForm,
-  addressFormValid,
+  AwardTypes,
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 
@@ -13,28 +19,53 @@ export default defineComponent({
   components: { SubmissionContextShippingForm },
   setup() {
     const formRef = ref();
-    const showAddressForm = ref(false);
-    const addressFormRef = ref();
-    const date = ref(null);
-    const datePicker = ref(false);
-    const address = ref({});
-    const sampleItems = ref(['water_extract_soil']);
-    const biosafetyLevels = ref(['BSL2']);
+    const facilityEnum = NmdcSchema.$defs.ProcessingInstitutionEnum.enum.filter(
+      (facility: string) => ['EMSL', 'JGI'].includes(facility),
+    );
+    const projectAwardValidationRules = () => [(v: string) => {
+      const awardChosen = v === 'MONet' || v === 'FICUS' || v === contextForm.otherAward;
+      const valid = awardChosen || contextForm.facilities.length === 0;
+      return valid || 'If submitting to a use facility, this field is required.';
+    }];
+    const otherAwardValidationRules = () => [(v: string) => {
+      const awardTypes = Object.values(AwardTypes) as string[];
+      if (contextForm.award && awardTypes.includes(contextForm.award)) {
+        return true;
+      }
+      const inputEmpty = v.trim().length === 0;
+      if (contextForm.facilities.length > 0) {
+        return !inputEmpty || 'Please enter the kind of project award.';
+      }
+      return true;
+    }];
+    const revalidate = () => {
+      nextTick(() => formRef.value.validate());
+    };
+
+    watch(
+      () => contextForm.award,
+      (award) => {
+        const awardTypes = Object.values(AwardTypes) as string[];
+        if (award && awardTypes.includes(award)) {
+          contextForm.otherAward = '';
+        }
+        revalidate();
+      },
+    );
+
+    onMounted(() => {
+      formRef.value.validate();
+    });
 
     return {
       Definitions,
+      facilityEnum,
       formRef,
       contextForm,
       contextFormValid,
-      addressForm,
-      addressFormValid,
-      showAddressForm,
-      addressFormRef,
-      address,
-      date,
-      datePicker,
-      sampleItems,
-      biosafetyLevels,
+      projectAwardValidationRules,
+      otherAwardValidationRules,
+      revalidate,
     };
   },
 });
@@ -52,10 +83,13 @@ export default defineComponent({
       ref="formRef"
       v-model="contextFormValid"
       style="max-width: 1000px;"
+      class="mb-2"
     >
       <v-radio-group
         v-model="contextForm.dataGenerated"
-        label="Has data already been generated for your study?"
+        label="Has data already been generated for your study? *"
+        :rules="[v => (v === true || v === false) || 'This field is required']"
+        @change="revalidate"
       >
         <v-radio
           label="No"
@@ -76,6 +110,7 @@ export default defineComponent({
         validate-on-blur
         outlined
         dense
+        @change="revalidate"
       />
       <v-checkbox
         v-if="contextForm.dataGenerated"
@@ -89,20 +124,16 @@ export default defineComponent({
           class="v-label theme--light mb-2"
           style="font-size: 14px;"
         >
-          Are you submitting metadata for samples that will be sent to a DOE user factility?
+          Are you submitting metadata for samples that will be sent to a DOE user facility?
         </legend>
         <v-checkbox
+          v-for="facility in facilityEnum"
+          :key="facility"
           v-model="contextForm.facilities"
-          label="EMSL"
-          value="EMSL"
+          :label="facility"
+          :value="facility"
           hide-details
-        />
-        <v-checkbox
-          v-model="contextForm.facilities"
-          class="mt-2"
-          label="JGI"
-          value="JGI"
-          hide-details
+          @change="revalidate"
         />
         <submission-context-shipping-form
           v-if="contextForm.dataGenerated === false && contextForm.facilities.includes('EMSL')"
@@ -110,7 +141,8 @@ export default defineComponent({
         <v-radio-group
           v-if="contextForm.dataGenerated === false && contextForm.facilities.length > 0"
           v-model="contextForm.award"
-          label="What kind of project have you been awarded?"
+          label="What kind of project have you been awarded? *"
+          :rules="projectAwardValidationRules()"
         >
           <v-radio
             label="FICUS"
@@ -131,6 +163,7 @@ export default defineComponent({
                 dense
                 hide-details
                 outlined
+                :rules="otherAwardValidationRules()"
               />
             </template>
           </v-radio>
@@ -144,6 +177,7 @@ export default defineComponent({
         color="gray"
         depressed
         :to="{ name: 'Study Form' }"
+        :disabled="!contextFormValid"
       >
         Go to next step
         <v-icon class="pl-1">
