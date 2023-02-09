@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -38,10 +38,10 @@ class MultiOmicsForm(BaseModel):
 
 class MetadataSubmissionRecord(BaseModel):
     packageName: str
-    template: str
+    templates: List[str]
     studyForm: StudyForm
     multiOmicsForm: MultiOmicsForm
-    sampleData: List[List[Any]]
+    sampleData: Dict[str, List[Any]]
 
 
 class SubmissionMetadataSchemaCreate(BaseModel):
