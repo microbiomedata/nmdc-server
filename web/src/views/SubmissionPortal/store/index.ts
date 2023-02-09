@@ -4,7 +4,7 @@ import CompositionApi, {
 } from '@vue/composition-api';
 import { clone } from 'lodash';
 import * as api from './api';
-import { getVariant, HARMONIZER_TEMPLATES } from '../harmonizerApi';
+import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -118,27 +118,26 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
  * Environment Package Step
  */
 const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
-const templateChoice = computed(() => {
+const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
   const template = HARMONIZER_TEMPLATES[packageName.value];
-  const choice = getVariant(checkBoxes, template.variations, template.default);
-  return choice;
+  const list = getVariants(checkBoxes, template.default);
+  return list;
 });
 
 /**
  * DataHarmonizer Step
  */
-const sampleData = shallowRef([] as any[][]);
+const sampleData = shallowRef({} as Record<string, any[]>);
 const samplesValid = ref(false);
-// row 1 and 2 are headers
-const templateChoiceDisabled = computed(() => sampleData.value.length >= 3);
+const templateChoiceDisabled = computed(() => Object.keys(sampleData.value).length > 0);
 
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
-  template: templateChoice.value,
   contextForm,
   addressForm,
+  templates: templateList.value,
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
@@ -167,7 +166,7 @@ function reset() {
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = 'soil';
-  sampleData.value = [];
+  sampleData.value = {};
   samplesValid.value = false;
 }
 
@@ -201,6 +200,13 @@ async function loadRecord(id: string) {
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
 
+function mergeSampleData(template: string, data: any[]) {
+  sampleData.value = {
+    ...sampleData.value,
+    [`${template}_data`]: data,
+  };
+}
+
 export {
   BiosafetyLevels,
   AwardTypes,
@@ -219,11 +225,12 @@ export {
   studyFormValid,
   submitPayload,
   packageName,
-  templateChoice,
+  templateList,
   templateChoiceDisabled,
   /* functions */
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
   submit,
+  mergeSampleData,
 };

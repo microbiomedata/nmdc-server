@@ -1,0 +1,2483 @@
+{
+  "air_PM_concen": {
+    "air": "air particulate matter concentration"
+  },
+  "barometric pressure": {
+    "air": "barometric_press"
+  },
+  "carbon monoxide": {
+    "air": "carb_monoxide"
+  },
+  "humidity": {
+    "air": "humidity"
+  },
+  "oxygen": {
+    "air": "oxygen"
+  },
+  "pollutants": {
+    "air": "pollutants"
+  },
+  "solar irradiance": {
+    "air": "solar_irradiance"
+  },
+  "ventilation rate": {
+    "air": "ventilation_rate"
+  },
+  "volatile organic compounds": {
+    "air": "volatile_org_comp"
+  },
+  "wind direction": {
+    "air": "wind_direction"
+  },
+  "wind speed": {
+    "air": "wind_speed"
+  },
+  "altitude": {
+    "air": "alt",
+    "biofilm": "alt",
+    "bioscales": "alt",
+    "built_env": "alt",
+    "hcr-cores": "alt",
+    "hcr-fluids-swabs": "alt",
+    "host-associated": "alt",
+    "misc-envs": "alt",
+    "plant-associated": "alt",
+    "sediment": "alt",
+    "soil": "alt",
+    "wastewater_sludge": "alt",
+    "water": "alt"
+  },
+  "carbon dioxide": {
+    "air": "carb_dioxide",
+    "built_env": "carb_dioxide"
+  },
+  "chemical administration": {
+    "air": "chem_administration",
+    "biofilm": "chem_administration",
+    "bioscales": "chem_administration",
+    "host-associated": "chem_administration",
+    "misc-envs": "chem_administration",
+    "plant-associated": "chem_administration",
+    "sediment": "chem_administration",
+    "soil": "chem_administration",
+    "wastewater_sludge": "chem_administration",
+    "water": "chem_administration"
+  },
+  "collection date": {
+    "air": "collection_date",
+    "biofilm": "collection_date",
+    "bioscales": "collection_date",
+    "built_env": "collection_date",
+    "hcr-cores": "collection_date",
+    "hcr-fluids-swabs": "collection_date",
+    "host-associated": "collection_date",
+    "misc-envs": "collection_date",
+    "plant-associated": "collection_date",
+    "sediment": "collection_date",
+    "soil": "collection_date",
+    "wastewater_sludge": "collection_date",
+    "water": "collection_date"
+  },
+  "depth, meters": {
+    "air": "depth",
+    "biofilm": "depth",
+    "bioscales": "depth",
+    "built_env": "depth",
+    "hcr-cores": "depth",
+    "hcr-fluids-swabs": "depth",
+    "host-associated": "depth",
+    "misc-envs": "depth",
+    "plant-associated": "depth",
+    "sediment": "depth",
+    "soil": "depth",
+    "wastewater_sludge": "depth",
+    "water": "depth"
+  },
+  "depth": {
+    "air": "depth",
+    "biofilm": "depth",
+    "bioscales": "depth",
+    "built_env": "depth",
+    "hcr-cores": "depth",
+    "hcr-fluids-swabs": "depth",
+    "host-associated": "depth",
+    "misc-envs": "depth",
+    "plant-associated": "depth",
+    "sediment": "depth",
+    "soil": "depth",
+    "wastewater_sludge": "depth",
+    "water": "depth"
+  },
+  "elevation": {
+    "air": "elev",
+    "biofilm": "elev",
+    "bioscales": "elev",
+    "built_env": "elev",
+    "hcr-cores": "elev",
+    "hcr-fluids-swabs": "elev",
+    "host-associated": "elev",
+    "misc-envs": "elev",
+    "plant-associated": "elev",
+    "sediment": "elev",
+    "soil": "elev",
+    "wastewater_sludge": "elev",
+    "water": "elev"
+  },
+  "broad-scale environmental context": {
+    "air": "env_broad_scale",
+    "biofilm": "env_broad_scale",
+    "bioscales": "env_broad_scale",
+    "built_env": "env_broad_scale",
+    "hcr-cores": "env_broad_scale",
+    "hcr-fluids-swabs": "env_broad_scale",
+    "host-associated": "env_broad_scale",
+    "misc-envs": "env_broad_scale",
+    "plant-associated": "env_broad_scale",
+    "sediment": "env_broad_scale",
+    "soil": "env_broad_scale",
+    "wastewater_sludge": "env_broad_scale",
+    "water": "env_broad_scale"
+  },
+  "local environmental context": {
+    "air": "env_local_scale",
+    "biofilm": "env_local_scale",
+    "bioscales": "env_local_scale",
+    "built_env": "env_local_scale",
+    "hcr-cores": "env_local_scale",
+    "hcr-fluids-swabs": "env_local_scale",
+    "host-associated": "env_local_scale",
+    "misc-envs": "env_local_scale",
+    "plant-associated": "env_local_scale",
+    "sediment": "env_local_scale",
+    "soil": "env_local_scale",
+    "wastewater_sludge": "env_local_scale",
+    "water": "env_local_scale"
+  },
+  "environmental medium": {
+    "air": "env_medium",
+    "biofilm": "env_medium",
+    "bioscales": "env_medium",
+    "built_env": "env_medium",
+    "hcr-cores": "env_medium",
+    "hcr-fluids-swabs": "env_medium",
+    "host-associated": "env_medium",
+    "misc-envs": "env_medium",
+    "plant-associated": "env_medium",
+    "sediment": "env_medium",
+    "soil": "env_medium",
+    "wastewater_sludge": "env_medium",
+    "water": "env_medium"
+  },
+  "experimental factor": {
+    "air": "experimental_factor",
+    "biofilm": "experimental_factor",
+    "bioscales": "experimental_factor",
+    "built_env": "experimental_factor",
+    "hcr-cores": "experimental_factor",
+    "hcr-fluids-swabs": "experimental_factor",
+    "host-associated": "experimental_factor",
+    "misc-envs": "experimental_factor",
+    "plant-associated": "experimental_factor",
+    "sediment": "experimental_factor",
+    "soil": "experimental_factor",
+    "wastewater_sludge": "experimental_factor",
+    "water": "experimental_factor"
+  },
+  "geographic location (country and/or sea,region)": {
+    "air": "geo_loc_name",
+    "biofilm": "geo_loc_name",
+    "bioscales": "geo_loc_name",
+    "built_env": "geo_loc_name",
+    "hcr-cores": "geo_loc_name",
+    "hcr-fluids-swabs": "geo_loc_name",
+    "host-associated": "geo_loc_name",
+    "misc-envs": "geo_loc_name",
+    "plant-associated": "geo_loc_name",
+    "sediment": "geo_loc_name",
+    "soil": "geo_loc_name",
+    "wastewater_sludge": "geo_loc_name",
+    "water": "geo_loc_name"
+  },
+  "geographic location (latitude and longitude)": {
+    "air": "lat_lon",
+    "biofilm": "lat_lon",
+    "bioscales": "lat_lon",
+    "built_env": "lat_lon",
+    "hcr-cores": "lat_lon",
+    "hcr-fluids-swabs": "lat_lon",
+    "host-associated": "lat_lon",
+    "misc-envs": "lat_lon",
+    "plant-associated": "lat_lon",
+    "sediment": "lat_lon",
+    "soil": "lat_lon",
+    "wastewater_sludge": "lat_lon",
+    "water": "lat_lon"
+  },
+  "methane": {
+    "air": "methane",
+    "biofilm": "methane",
+    "sediment": "methane"
+  },
+  "miscellaneous parameter": {
+    "air": "misc_param",
+    "biofilm": "misc_param",
+    "bioscales": "misc_param",
+    "hcr-cores": "misc_param",
+    "hcr-fluids-swabs": "misc_param",
+    "host-associated": "misc_param",
+    "misc-envs": "misc_param",
+    "plant-associated": "misc_param",
+    "sediment": "misc_param",
+    "soil": "misc_param",
+    "wastewater_sludge": "misc_param",
+    "water": "misc_param"
+  },
+  "organism count": {
+    "air": "organism_count",
+    "biofilm": "organism_count",
+    "built_env": "organism_count",
+    "hcr-cores": "organism_count",
+    "hcr-fluids-swabs": "organism_count",
+    "host-associated": "organism_count",
+    "misc-envs": "organism_count",
+    "plant-associated": "organism_count",
+    "sediment": "organism_count",
+    "wastewater_sludge": "organism_count",
+    "water": "organism_count"
+  },
+  "oxygenation status of sample": {
+    "air": "oxy_stat_samp",
+    "biofilm": "oxy_stat_samp",
+    "bioscales": "oxy_stat_samp",
+    "hcr-cores": "oxy_stat_samp",
+    "hcr-fluids-swabs": "oxy_stat_samp",
+    "host-associated": "oxy_stat_samp",
+    "misc-envs": "oxy_stat_samp",
+    "plant-associated": "oxy_stat_samp",
+    "sediment": "oxy_stat_samp",
+    "soil": "oxy_stat_samp",
+    "wastewater_sludge": "oxy_stat_samp",
+    "water": "oxy_stat_samp"
+  },
+  "perturbation": {
+    "air": "perturbation",
+    "biofilm": "perturbation",
+    "host-associated": "perturbation",
+    "misc-envs": "perturbation",
+    "plant-associated": "perturbation",
+    "sediment": "perturbation",
+    "wastewater_sludge": "perturbation",
+    "water": "perturbation"
+  },
+  "relationship to oxygen": {
+    "air": "rel_to_oxygen",
+    "biofilm": "rel_to_oxygen",
+    "bioscales": "rel_to_oxygen",
+    "hcr-cores": "rel_to_oxygen",
+    "hcr-fluids-swabs": "rel_to_oxygen",
+    "host-associated": "rel_to_oxygen",
+    "misc-envs": "rel_to_oxygen",
+    "plant-associated": "rel_to_oxygen",
+    "sediment": "rel_to_oxygen",
+    "soil": "rel_to_oxygen",
+    "wastewater_sludge": "rel_to_oxygen",
+    "water": "rel_to_oxygen"
+  },
+  "salinity": {
+    "air": "salinity",
+    "biofilm": "salinity",
+    "bioscales": "salinity",
+    "hcr-cores": "salinity",
+    "hcr-fluids-swabs": "salinity",
+    "host-associated": "salinity",
+    "misc-envs": "salinity",
+    "plant-associated": "salinity",
+    "sediment": "salinity",
+    "soil": "salinity",
+    "wastewater_sludge": "salinity",
+    "water": "salinity"
+  },
+  "sample collection device": {
+    "air": "samp_collec_device",
+    "biofilm": "samp_collec_device",
+    "bioscales": "samp_collec_device",
+    "hcr-cores": "samp_collec_device",
+    "hcr-fluids-swabs": "samp_collec_device",
+    "host-associated": "samp_collec_device",
+    "misc-envs": "samp_collec_device",
+    "plant-associated": "samp_collec_device",
+    "sediment": "samp_collec_device",
+    "soil": "samp_collec_device",
+    "wastewater_sludge": "samp_collec_device",
+    "water": "samp_collec_device"
+  },
+  "sample collection method": {
+    "air": "samp_collec_method",
+    "biofilm": "samp_collec_method",
+    "bioscales": "samp_collec_method",
+    "hcr-cores": "samp_collec_method",
+    "hcr-fluids-swabs": "samp_collec_method",
+    "host-associated": "samp_collec_method",
+    "misc-envs": "samp_collec_method",
+    "plant-associated": "samp_collec_method",
+    "sediment": "samp_collec_method",
+    "soil": "samp_collec_method",
+    "wastewater_sludge": "samp_collec_method",
+    "water": "samp_collec_method"
+  },
+  "sample material processing": {
+    "air": "samp_mat_process",
+    "biofilm": "samp_mat_process",
+    "bioscales": "samp_mat_process",
+    "hcr-cores": "samp_mat_process",
+    "hcr-fluids-swabs": "samp_mat_process",
+    "host-associated": "samp_mat_process",
+    "misc-envs": "samp_mat_process",
+    "plant-associated": "samp_mat_process",
+    "sediment": "samp_mat_process",
+    "soil": "samp_mat_process",
+    "wastewater_sludge": "samp_mat_process",
+    "water": "samp_mat_process"
+  },
+  "amount or size of sample collected": {
+    "air": "samp_size",
+    "biofilm": "samp_size",
+    "bioscales": "samp_size",
+    "hcr-cores": "samp_size",
+    "hcr-fluids-swabs": "samp_size",
+    "host-associated": "samp_size",
+    "misc-envs": "samp_size",
+    "plant-associated": "samp_size",
+    "sediment": "samp_size",
+    "soil": "samp_size",
+    "wastewater_sludge": "samp_size",
+    "water": "samp_size"
+  },
+  "sample storage duration": {
+    "air": "samp_store_dur",
+    "biofilm": "samp_store_dur",
+    "hcr-cores": "samp_store_dur",
+    "hcr-fluids-swabs": "samp_store_dur",
+    "host-associated": "samp_store_dur",
+    "misc-envs": "samp_store_dur",
+    "plant-associated": "samp_store_dur",
+    "sediment": "samp_store_dur",
+    "wastewater_sludge": "samp_store_dur",
+    "water": "samp_store_dur"
+  },
+  "sample storage location": {
+    "air": "samp_store_loc",
+    "biofilm": "samp_store_loc",
+    "hcr-cores": "samp_store_loc",
+    "hcr-fluids-swabs": "samp_store_loc",
+    "host-associated": "samp_store_loc",
+    "misc-envs": "samp_store_loc",
+    "plant-associated": "samp_store_loc",
+    "sediment": "samp_store_loc",
+    "wastewater_sludge": "samp_store_loc",
+    "water": "samp_store_loc"
+  },
+  "sample storage temperature": {
+    "air": "samp_store_temp",
+    "biofilm": "samp_store_temp",
+    "bioscales": "samp_store_temp",
+    "hcr-cores": "samp_store_temp",
+    "hcr-fluids-swabs": "samp_store_temp",
+    "host-associated": "samp_store_temp",
+    "misc-envs": "samp_store_temp",
+    "plant-associated": "samp_store_temp",
+    "sediment": "samp_store_temp",
+    "soil": "samp_store_temp",
+    "wastewater_sludge": "samp_store_temp",
+    "water": "samp_store_temp"
+  },
+  "size fraction selected": {
+    "air": "size_frac",
+    "biofilm": "size_frac",
+    "built_env": "size_frac",
+    "hcr-cores": "size_frac",
+    "hcr-fluids-swabs": "size_frac",
+    "host-associated": "size_frac",
+    "misc-envs": "size_frac",
+    "plant-associated": "size_frac",
+    "sediment": "size_frac",
+    "wastewater_sludge": "size_frac",
+    "water": "size_frac"
+  },
+  "temperature": {
+    "air": "temp",
+    "biofilm": "temp",
+    "bioscales": "temp",
+    "built_env": "temp",
+    "hcr-cores": "temp",
+    "hcr-fluids-swabs": "temp",
+    "host-associated": "temp",
+    "misc-envs": "temp",
+    "plant-associated": "temp",
+    "sediment": "temp",
+    "soil": "temp",
+    "wastewater_sludge": "temp",
+    "water": "temp"
+  },
+  "ventilation type": {
+    "air": "ventilation_type",
+    "built_env": "ventilation_type"
+  },
+  "ecosystem": {
+    "air": "ecosystem",
+    "biofilm": "ecosystem",
+    "bioscales": "ecosystem",
+    "built_env": "ecosystem",
+    "hcr-cores": "ecosystem",
+    "hcr-fluids-swabs": "ecosystem",
+    "host-associated": "ecosystem",
+    "misc-envs": "ecosystem",
+    "plant-associated": "ecosystem",
+    "sediment": "ecosystem",
+    "soil": "ecosystem",
+    "wastewater_sludge": "ecosystem",
+    "water": "ecosystem"
+  },
+  "ecosystem_category": {
+    "air": "ecosystem_category",
+    "biofilm": "ecosystem_category",
+    "bioscales": "ecosystem_category",
+    "built_env": "ecosystem_category",
+    "hcr-cores": "ecosystem_category",
+    "hcr-fluids-swabs": "ecosystem_category",
+    "host-associated": "ecosystem_category",
+    "misc-envs": "ecosystem_category",
+    "plant-associated": "ecosystem_category",
+    "sediment": "ecosystem_category",
+    "soil": "ecosystem_category",
+    "wastewater_sludge": "ecosystem_category",
+    "water": "ecosystem_category"
+  },
+  "ecosystem_subtype": {
+    "air": "ecosystem_subtype",
+    "biofilm": "ecosystem_subtype",
+    "bioscales": "ecosystem_subtype",
+    "built_env": "ecosystem_subtype",
+    "hcr-cores": "ecosystem_subtype",
+    "hcr-fluids-swabs": "ecosystem_subtype",
+    "host-associated": "ecosystem_subtype",
+    "misc-envs": "ecosystem_subtype",
+    "plant-associated": "ecosystem_subtype",
+    "sediment": "ecosystem_subtype",
+    "soil": "ecosystem_subtype",
+    "wastewater_sludge": "ecosystem_subtype",
+    "water": "ecosystem_subtype"
+  },
+  "ecosystem_type": {
+    "air": "ecosystem_type",
+    "biofilm": "ecosystem_type",
+    "bioscales": "ecosystem_type",
+    "built_env": "ecosystem_type",
+    "hcr-cores": "ecosystem_type",
+    "hcr-fluids-swabs": "ecosystem_type",
+    "host-associated": "ecosystem_type",
+    "misc-envs": "ecosystem_type",
+    "plant-associated": "ecosystem_type",
+    "sediment": "ecosystem_type",
+    "soil": "ecosystem_type",
+    "wastewater_sludge": "ecosystem_type",
+    "water": "ecosystem_type"
+  },
+  "specific_ecosystem": {
+    "air": "specific_ecosystem",
+    "biofilm": "specific_ecosystem",
+    "bioscales": "specific_ecosystem",
+    "built_env": "specific_ecosystem",
+    "hcr-cores": "specific_ecosystem",
+    "hcr-fluids-swabs": "specific_ecosystem",
+    "host-associated": "specific_ecosystem",
+    "misc-envs": "specific_ecosystem",
+    "plant-associated": "specific_ecosystem",
+    "sediment": "specific_ecosystem",
+    "soil": "specific_ecosystem",
+    "wastewater_sludge": "specific_ecosystem",
+    "water": "specific_ecosystem"
+  },
+  "environmental package": {
+    "air": "env_package",
+    "biofilm": "env_package",
+    "bioscales": "env_package",
+    "built_env": "env_package",
+    "host-associated": "env_package",
+    "plant-associated": "env_package",
+    "samp_id_new_terms_mixin": "env_package",
+    "sediment": "env_package",
+    "soil": "env_package",
+    "wastewater_sludge": "env_package",
+    "water": "env_package"
+  },
+  "sample linkage": {
+    "air": "sample_link",
+    "biofilm": "sample_link",
+    "bioscales": "sample_link",
+    "built_env": "sample_link",
+    "host-associated": "sample_link",
+    "plant-associated": "sample_link",
+    "samp_id_new_terms_mixin": "sample_link",
+    "sediment": "sample_link",
+    "soil": "sample_link",
+    "wastewater_sludge": "sample_link",
+    "water": "sample_link"
+  },
+  "analysis/data type": {
+    "air": "analysis_type",
+    "biofilm": "analysis_type",
+    "bioscales": "analysis_type",
+    "built_env": "analysis_type",
+    "dh_mutliview_common_columns": "analysis_type",
+    "emsl": "analysis_type",
+    "host-associated": "analysis_type",
+    "jgi_mg": "analysis_type",
+    "jgi_mt": "analysis_type",
+    "plant-associated": "analysis_type",
+    "sediment": "analysis_type",
+    "soil": "analysis_type",
+    "wastewater_sludge": "analysis_type",
+    "water": "analysis_type"
+  },
+  "sample name": {
+    "air": "samp_name",
+    "biofilm": "samp_name",
+    "bioscales": "samp_name",
+    "built_env": "samp_name",
+    "dh_mutliview_common_columns": "samp_name",
+    "emsl": "samp_name",
+    "host-associated": "samp_name",
+    "jgi_mg": "samp_name",
+    "jgi_mt": "samp_name",
+    "plant-associated": "samp_name",
+    "sediment": "samp_name",
+    "soil": "samp_name",
+    "wastewater_sludge": "samp_name",
+    "water": "samp_name"
+  },
+  "globally unique ID": {
+    "air": "source_mat_id",
+    "biofilm": "source_mat_id",
+    "bioscales": "source_mat_id",
+    "built_env": "source_mat_id",
+    "dh_mutliview_common_columns": "source_mat_id",
+    "emsl": "source_mat_id",
+    "host-associated": "source_mat_id",
+    "jgi_mg": "source_mat_id",
+    "jgi_mt": "source_mat_id",
+    "plant-associated": "source_mat_id",
+    "sediment": "source_mat_id",
+    "soil": "source_mat_id",
+    "wastewater_sludge": "source_mat_id",
+    "water": "source_mat_id"
+  },
+  "source material identifiers": {
+    "air": "source_mat_id",
+    "biofilm": "source_mat_id",
+    "bioscales": "source_mat_id",
+    "built_env": "source_mat_id",
+    "dh_mutliview_common_columns": "source_mat_id",
+    "emsl": "source_mat_id",
+    "host-associated": "source_mat_id",
+    "jgi_mg": "source_mat_id",
+    "jgi_mt": "source_mat_id",
+    "plant-associated": "source_mat_id",
+    "sediment": "source_mat_id",
+    "soil": "source_mat_id",
+    "wastewater_sludge": "source_mat_id",
+    "water": "source_mat_id"
+  },
+  "alkalinity": {
+    "biofilm": "alkalinity",
+    "hcr-cores": "alkalinity",
+    "hcr-fluids-swabs": "alkalinity",
+    "misc-envs": "alkalinity",
+    "sediment": "alkalinity",
+    "wastewater_sludge": "alkalinity",
+    "water": "alkalinity"
+  },
+  "alkyl diethers": {
+    "biofilm": "alkyl_diethers",
+    "sediment": "alkyl_diethers",
+    "water": "alkyl_diethers"
+  },
+  "aminopeptidase activity": {
+    "biofilm": "aminopept_act",
+    "sediment": "aminopept_act",
+    "water": "aminopept_act"
+  },
+  "ammonium": {
+    "biofilm": "ammonium",
+    "hcr-cores": "ammonium",
+    "hcr-fluids-swabs": "ammonium",
+    "misc-envs": "ammonium",
+    "sediment": "ammonium",
+    "water": "ammonium"
+  },
+  "bacterial carbon production": {
+    "biofilm": "bacteria_carb_prod",
+    "sediment": "bacteria_carb_prod",
+    "water": "bacteria_carb_prod"
+  },
+  "biomass": {
+    "biofilm": "biomass",
+    "misc-envs": "biomass",
+    "sediment": "biomass",
+    "water": "biomass"
+  },
+  "bishomohopanol": {
+    "biofilm": "bishomohopanol",
+    "sediment": "bishomohopanol",
+    "water": "bishomohopanol"
+  },
+  "bromide": {
+    "biofilm": "bromide",
+    "misc-envs": "bromide",
+    "sediment": "bromide",
+    "water": "bromide"
+  },
+  "calcium": {
+    "biofilm": "calcium",
+    "bioscales": "calcium",
+    "hcr-cores": "calcium",
+    "hcr-fluids-swabs": "calcium",
+    "misc-envs": "calcium",
+    "sediment": "calcium",
+    "water": "calcium"
+  },
+  "carbon/nitrogen ratio": {
+    "biofilm": "carb_nitro_ratio",
+    "bioscales": "carb_nitro_ratio",
+    "sediment": "carb_nitro_ratio",
+    "soil": "carb_nitro_ratio"
+  },
+  "chloride": {
+    "biofilm": "chloride",
+    "hcr-cores": "chloride",
+    "hcr-fluids-swabs": "chloride",
+    "misc-envs": "chloride",
+    "sediment": "chloride",
+    "water": "chloride"
+  },
+  "chlorophyll": {
+    "biofilm": "chlorophyll",
+    "misc-envs": "chlorophyll",
+    "sediment": "chlorophyll",
+    "water": "chlorophyll"
+  },
+  "diether lipids": {
+    "biofilm": "diether_lipids",
+    "misc-envs": "diether_lipids",
+    "sediment": "diether_lipids",
+    "water": "diether_lipids"
+  },
+  "dissolved carbon dioxide": {
+    "biofilm": "diss_carb_dioxide",
+    "hcr-cores": "diss_carb_dioxide",
+    "hcr-fluids-swabs": "diss_carb_dioxide",
+    "misc-envs": "diss_carb_dioxide",
+    "sediment": "diss_carb_dioxide",
+    "water": "diss_carb_dioxide"
+  },
+  "dissolved hydrogen": {
+    "biofilm": "diss_hydrogen",
+    "misc-envs": "diss_hydrogen",
+    "sediment": "diss_hydrogen",
+    "water": "diss_hydrogen"
+  },
+  "dissolved inorganic carbon": {
+    "biofilm": "diss_inorg_carb",
+    "hcr-cores": "diss_inorg_carb",
+    "hcr-fluids-swabs": "diss_inorg_carb",
+    "misc-envs": "diss_inorg_carb",
+    "sediment": "diss_inorg_carb",
+    "water": "diss_inorg_carb"
+  },
+  "dissolved organic carbon": {
+    "biofilm": "diss_org_carb",
+    "hcr-cores": "diss_org_carb",
+    "hcr-fluids-swabs": "diss_org_carb",
+    "sediment": "diss_org_carb",
+    "water": "diss_org_carb"
+  },
+  "dissolved organic nitrogen": {
+    "biofilm": "diss_org_nitro",
+    "misc-envs": "diss_org_nitro",
+    "sediment": "diss_org_nitro",
+    "water": "diss_org_nitro"
+  },
+  "dissolved oxygen": {
+    "biofilm": "diss_oxygen",
+    "misc-envs": "diss_oxygen",
+    "sediment": "diss_oxygen",
+    "water": "diss_oxygen"
+  },
+  "glucosidase activity": {
+    "biofilm": "glucosidase_act",
+    "sediment": "glucosidase_act",
+    "water": "glucosidase_act"
+  },
+  "magnesium": {
+    "biofilm": "magnesium",
+    "bioscales": "magnesium",
+    "hcr-cores": "magnesium",
+    "hcr-fluids-swabs": "magnesium",
+    "sediment": "magnesium",
+    "": "magnesium"
+  },
+  "mean friction velocity": {
+    "biofilm": "mean_frict_vel",
+    "sediment": "mean_frict_vel",
+    "water": "mean_frict_vel"
+  },
+  "mean peak friction velocity": {
+    "biofilm": "mean_peak_frict_vel",
+    "sediment": "mean_peak_frict_vel",
+    "water": "mean_peak_frict_vel"
+  },
+  "n-alkanes": {
+    "biofilm": "n_alkanes",
+    "sediment": "n_alkanes",
+    "water": "n_alkanes"
+  },
+  "nitrate": {
+    "biofilm": "nitrate",
+    "hcr-cores": "nitrate",
+    "hcr-fluids-swabs": "nitrate",
+    "misc-envs": "nitrate",
+    "sediment": "nitrate",
+    "wastewater_sludge": "nitrate",
+    "water": "nitrate"
+  },
+  "nitrite": {
+    "biofilm": "nitrite",
+    "hcr-cores": "nitrite",
+    "hcr-fluids-swabs": "nitrite",
+    "misc-envs": "nitrite",
+    "sediment": "nitrite",
+    "water": "nitrite"
+  },
+  "nitrogen": {
+    "biofilm": "nitro",
+    "misc-envs": "nitro",
+    "sediment": "nitro",
+    "water": "nitro"
+  },
+  "organic carbon": {
+    "biofilm": "org_carb",
+    "misc-envs": "org_carb",
+    "sediment": "org_carb",
+    "water": "org_carb"
+  },
+  "organic matter": {
+    "biofilm": "org_matter",
+    "bioscales": "org_matter",
+    "misc-envs": "org_matter",
+    "sediment": "org_matter",
+    "soil": "org_matter",
+    "water": "org_matter"
+  },
+  "organic nitrogen": {
+    "biofilm": "org_nitro",
+    "bioscales": "org_nitro",
+    "misc-envs": "org_nitro",
+    "sediment": "org_nitro",
+    "soil": "org_nitro",
+    "water": "org_nitro"
+  },
+  "particulate organic carbon": {
+    "biofilm": "part_org_carb",
+    "sediment": "part_org_carb",
+    "water": "part_org_carb"
+  },
+  "petroleum hydrocarbon": {
+    "biofilm": "petroleum_hydrocarb",
+    "sediment": "petroleum_hydrocarb",
+    "water": "petroleum_hydrocarb"
+  },
+  "pH": {
+    "biofilm": "ph",
+    "bioscales": "ph",
+    "hcr-cores": "ph",
+    "hcr-fluids-swabs": "ph",
+    "misc-envs": "ph",
+    "sediment": "ph",
+    "soil": "ph",
+    "wastewater_sludge": "ph",
+    "water": "ph"
+  },
+  "phaeopigments": {
+    "biofilm": "phaeopigments",
+    "sediment": "phaeopigments",
+    "water": "phaeopigments"
+  },
+  "phosphate": {
+    "biofilm": "phosphate",
+    "bioscales": "phosphate",
+    "misc-envs": "phosphate",
+    "sediment": "phosphate",
+    "soil": "phosphate",
+    "wastewater_sludge": "phosphate",
+    "water": "phosphate"
+  },
+  "phospholipid fatty acid": {
+    "biofilm": "phosplipid_fatt_acid",
+    "misc-envs": "phosplipid_fatt_acid",
+    "sediment": "phosplipid_fatt_acid",
+    "water": "phosplipid_fatt_acid"
+  },
+  "potassium": {
+    "biofilm": "potassium",
+    "bioscales": "potassium",
+    "hcr-cores": "potassium",
+    "hcr-fluids-swabs": "potassium",
+    "misc-envs": "potassium",
+    "sediment": "potassium",
+    "water": "potassium"
+  },
+  "pressure": {
+    "biofilm": "pressure",
+    "hcr-cores": "pressure",
+    "hcr-fluids-swabs": "pressure",
+    "misc-envs": "pressure",
+    "sediment": "pressure",
+    "water": "pressure"
+  },
+  "redox potential": {
+    "biofilm": "redox_potential",
+    "sediment": "redox_potential",
+    "water": "redox_potential"
+  },
+  "silicate": {
+    "biofilm": "silicate",
+    "misc-envs": "silicate",
+    "sediment": "silicate",
+    "water": "silicate"
+  },
+  "sodium": {
+    "biofilm": "sodium",
+    "hcr-cores": "sodium",
+    "hcr-fluids-swabs": "sodium",
+    "misc-envs": "sodium",
+    "sediment": "sodium",
+    "wastewater_sludge": "sodium",
+    "water": "sodium"
+  },
+  "sulfate": {
+    "biofilm": "sulfate",
+    "hcr-cores": "sulfate",
+    "hcr-fluids-swabs": "sulfate",
+    "misc-envs": "sulfate",
+    "sediment": "sulfate",
+    "water": "sulfate"
+  },
+  "sulfide": {
+    "biofilm": "sulfide",
+    "hcr-cores": "sulfide",
+    "hcr-fluids-swabs": "sulfide",
+    "misc-envs": "sulfide",
+    "sediment": "sulfide",
+    "water": "sulfide"
+  },
+  "total carbon": {
+    "biofilm": "tot_carb",
+    "bioscales": "tot_carb",
+    "sediment": "tot_carb",
+    "soil": "tot_carb"
+  },
+  "total nitrogen content": {
+    "biofilm": "tot_nitro_content",
+    "bioscales": "tot_nitro_content",
+    "sediment": "tot_nitro_content",
+    "soil": "tot_nitro_content"
+  },
+  "total organic carbon": {
+    "biofilm": "tot_org_carb",
+    "bioscales": "tot_org_carb",
+    "sediment": "tot_org_carb",
+    "soil": "tot_org_carb"
+  },
+  "turbidity": {
+    "biofilm": "turbidity",
+    "sediment": "turbidity",
+    "water": "turbidity"
+  },
+  "water content": {
+    "biofilm": "water_content",
+    "bioscales": "water_content",
+    "sediment": "water_content",
+    "soil": "water_content"
+  },
+  "air temperature regimen": {
+    "bioscales": "air_temp_regm",
+    "plant-associated": "air_temp_regm",
+    "soil": "air_temp_regm"
+  },
+  "biotic regimen": {
+    "bioscales": "biotic_regm",
+    "plant-associated": "biotic_regm",
+    "soil": "biotic_regm"
+  },
+  "climate environment": {
+    "bioscales": "climate_environment",
+    "plant-associated": "climate_environment",
+    "soil": "climate_environment"
+  },
+  "gaseous environment": {
+    "bioscales": "gaseous_environment",
+    "plant-associated": "gaseous_environment",
+    "soil": "gaseous_environment"
+  },
+  "growth facility": {
+    "bioscales": "growth_facil",
+    "plant-associated": "growth_facil",
+    "soil": "growth_facil"
+  },
+  "humidity regimen": {
+    "bioscales": "humidity_regm",
+    "plant-associated": "humidity_regm",
+    "soil": "humidity_regm"
+  },
+  "light regimen": {
+    "bioscales": "light_regm",
+    "plant-associated": "light_regm",
+    "soil": "light_regm"
+  },
+  "size-fraction lower threshold": {
+    "bioscales": "size_frac_low",
+    "soil": "size_frac_low",
+    "water": "size_frac_low"
+  },
+  "size-fraction upper threshold": {
+    "bioscales": "size_frac_up",
+    "soil": "size_frac_up",
+    "water": "size_frac_up"
+  },
+  "total nitrogen concentration": {
+    "bioscales": "tot_nitro",
+    "hcr-cores": "tot_nitro",
+    "hcr-fluids-swabs": "tot_nitro",
+    "wastewater_sludge": "tot_nitro",
+    "water": "tot_nitro"
+  },
+  "total phosphorus": {
+    "bioscales": "tot_phosp",
+    "hcr-cores": "tot_phosp",
+    "hcr-fluids-swabs": "tot_phosp",
+    "soil": "tot_phosp"
+  },
+  "watering regimen": {
+    "bioscales": "watering_regm",
+    "plant-associated": "watering_regm",
+    "soil": "watering_regm"
+  },
+  "history/agrochemical additions": {
+    "bioscales": "agrochem_addition",
+    "soil": "agrochem_addition"
+  },
+  "extreme_unusual_properties/Al saturation": {
+    "bioscales": "al_sat",
+    "soil": "al_sat"
+  },
+  "extreme_unusual_properties/Al saturation method": {
+    "bioscales": "al_sat_meth",
+    "soil": "al_sat_meth"
+  },
+  "mean annual precipitation": {
+    "bioscales": "annual_precpt",
+    "soil": "annual_precpt"
+  },
+  "mean annual temperature": {
+    "bioscales": "annual_temp",
+    "soil": "annual_temp"
+  },
+  "observed biotic relationship": {
+    "bioscales": "biotic_relationship",
+    "soil": "biotic_relationship"
+  },
+  "history/crop rotation": {
+    "bioscales": "crop_rotation",
+    "soil": "crop_rotation"
+  },
+  "current land use": {
+    "bioscales": "cur_land_use",
+    "soil": "cur_land_use"
+  },
+  "current vegetation": {
+    "bioscales": "cur_vegetation",
+    "soil": "cur_vegetation"
+  },
+  "current vegetation method": {
+    "bioscales": "cur_vegetation_meth",
+    "soil": "cur_vegetation_meth"
+  },
+  "drainage classification": {
+    "bioscales": "drainage_class",
+    "soil": "drainage_class"
+  },
+  "history/extreme events": {
+    "bioscales": "extreme_event",
+    "soil": "extreme_event"
+  },
+  "soil_taxonomic/FAO classification": {
+    "bioscales": "fao_class",
+    "soil": "fao_class"
+  },
+  "history/fire": {
+    "bioscales": "fire",
+    "soil": "fire"
+  },
+  "history/flooding": {
+    "bioscales": "flooding",
+    "soil": "flooding"
+  },
+  "extreme_unusual_properties/heavy metals": {
+    "bioscales": "heavy_metals",
+    "soil": "heavy_metals"
+  },
+  "extreme_unusual_properties/heavy metals method": {
+    "bioscales": "heavy_metals_meth",
+    "soil": "heavy_metals_meth"
+  },
+  "horizon method": {
+    "bioscales": "horizon_meth",
+    "soil": "horizon_meth"
+  },
+  "link to classification information": {
+    "bioscales": "link_class_info",
+    "soil": "link_class_info"
+  },
+  "link to climate information": {
+    "bioscales": "link_climate_info",
+    "soil": "link_climate_info"
+  },
+  "soil_taxonomic/local classification": {
+    "bioscales": "local_class",
+    "soil": "local_class"
+  },
+  "soil_taxonomic/local classification method": {
+    "bioscales": "local_class_meth",
+    "soil": "local_class_meth"
+  },
+  "microbial biomass method": {
+    "bioscales": "micro_biomass_meth",
+    "soil": "micro_biomass_meth"
+  },
+  "microbial biomass": {
+    "bioscales": "microbial_biomass",
+    "soil": "microbial_biomass"
+  },
+  "pH method": {
+    "bioscales": "ph_meth",
+    "soil": "ph_meth"
+  },
+  "history/previous land use method": {
+    "bioscales": "prev_land_use_meth",
+    "soil": "prev_land_use_meth"
+  },
+  "history/previous land use": {
+    "bioscales": "previous_land_use",
+    "soil": "previous_land_use"
+  },
+  "profile position": {
+    "bioscales": "profile_position",
+    "soil": "profile_position"
+  },
+  "salinity method": {
+    "bioscales": "salinity_meth",
+    "soil": "salinity_meth"
+  },
+  "mean seasonal precipitation": {
+    "bioscales": "season_precpt",
+    "soil": "season_precpt"
+  },
+  "mean seasonal temperature": {
+    "bioscales": "season_temp",
+    "soil": "season_temp"
+  },
+  "composite design/sieving": {
+    "bioscales": "sieving",
+    "soil": "sieving"
+  },
+  "slope aspect": {
+    "bioscales": "slope_aspect",
+    "soil": "slope_aspect"
+  },
+  "slope gradient": {
+    "bioscales": "slope_gradient",
+    "soil": "slope_gradient"
+  },
+  "soil horizon": {
+    "bioscales": "soil_horizon",
+    "soil": "soil_horizon"
+  },
+  "soil texture measurement": {
+    "bioscales": "soil_text_measure",
+    "soil": "soil_text_measure"
+  },
+  "soil texture method": {
+    "bioscales": "soil_texture_meth",
+    "soil": "soil_texture_meth"
+  },
+  "soil type": {
+    "bioscales": "soil_type",
+    "soil": "soil_type"
+  },
+  "soil type method": {
+    "bioscales": "soil_type_meth",
+    "soil": "soil_type_meth"
+  },
+  "storage conditions": {
+    "bioscales": "store_cond",
+    "soil": "store_cond"
+  },
+  "history/tillage": {
+    "bioscales": "tillage",
+    "soil": "tillage"
+  },
+  "total nitrogen content method": {
+    "bioscales": "tot_nitro_cont_meth",
+    "soil": "tot_nitro_cont_meth"
+  },
+  "total organic carbon method": {
+    "bioscales": "tot_org_c_meth",
+    "soil": "tot_org_c_meth"
+  },
+  "water content method": {
+    "bioscales": "water_cont_soil_meth",
+    "soil": "water_cont_soil_meth"
+  },
+  "ammonium nitrogen": {
+    "bioscales": "ammonium_nitrogen"
+  },
+  "lime buffer capacity (at 30 minutes)": {
+    "bioscales": "lbc_thirty"
+  },
+  "lime buffer capacity (after 5 day incubation)": {
+    "bioscales": "lbceq"
+  },
+  "manganese": {
+    "bioscales": "manganese"
+  },
+  "nitrate_nitrogen": {
+    "bioscales": "nitrate_nitrogen"
+  },
+  "nitrite_nitrogen": {
+    "bioscales": "nitrite_nitrogen"
+  },
+  "zinc": {
+    "bioscales": "zinc"
+  },
+  "absolute air humidity": {
+    "built_env": "abs_air_humidity"
+  },
+  "address": {
+    "built_env": "address"
+  },
+  "adjacent rooms": {
+    "built_env": "adj_room"
+  },
+  "aerospace structure": {
+    "built_env": "aero_struc"
+  },
+  "air temperature": {
+    "built_env": "air_temp"
+  },
+  "amount of light": {
+    "built_env": "amount_light"
+  },
+  "architectural structure": {
+    "built_env": "arch_struc"
+  },
+  "average dew point": {
+    "built_env": "avg_dew_point"
+  },
+  "average daily occupancy": {
+    "built_env": "avg_occup"
+  },
+  "average temperature": {
+    "built_env": "avg_temp"
+  },
+  "bathroom count": {
+    "built_env": "bathroom_count"
+  },
+  "bedroom count": {
+    "built_env": "bedroom_count"
+  },
+  "design, construction, and operation documents": {
+    "built_env": "build_docs"
+  },
+  "building occupancy type": {
+    "built_env": "build_occup_type"
+  },
+  "building setting": {
+    "built_env": "building_setting"
+  },
+  "built structure age": {
+    "built_env": "built_struc_age"
+  },
+  "built structure setting": {
+    "built_env": "built_struc_set"
+  },
+  "built structure type": {
+    "built_env": "built_struc_type"
+  },
+  "ceiling area": {
+    "built_env": "ceil_area"
+  },
+  "ceiling condition": {
+    "built_env": "ceil_cond"
+  },
+  "ceiling finish material": {
+    "built_env": "ceil_finish_mat"
+  },
+  "ceiling structure": {
+    "built_env": "ceil_struc"
+  },
+  "ceiling texture": {
+    "built_env": "ceil_texture"
+  },
+  "ceiling thermal mass": {
+    "built_env": "ceil_thermal_mass"
+  },
+  "ceiling type": {
+    "built_env": "ceil_type"
+  },
+  "ceiling signs of water/mold": {
+    "built_env": "ceil_water_mold"
+  },
+  "cooling system identifier": {
+    "built_env": "cool_syst_id"
+  },
+  "date last rain": {
+    "built_env": "date_last_rain"
+  },
+  "dew point": {
+    "built_env": "dew_point"
+  },
+  "door type, composite": {
+    "built_env": "door_comp_type"
+  },
+  "door condition": {
+    "built_env": "door_cond"
+  },
+  "door direction of opening": {
+    "built_env": "door_direct"
+  },
+  "door location": {
+    "built_env": "door_loc"
+  },
+  "door material": {
+    "built_env": "door_mat"
+  },
+  "door movement": {
+    "built_env": "door_move"
+  },
+  "door area or size": {
+    "built_env": "door_size"
+  },
+  "door type": {
+    "built_env": "door_type"
+  },
+  "door type, metal": {
+    "built_env": "door_type_metal"
+  },
+  "door type, wood": {
+    "built_env": "door_type_wood"
+  },
+  "door signs of water/mold": {
+    "built_env": "door_water_mold"
+  },
+  "drawings": {
+    "built_env": "drawings"
+  },
+  "elevator count": {
+    "built_env": "elevator"
+  },
+  "escalator count": {
+    "built_env": "escalator"
+  },
+  "exposed ductwork": {
+    "built_env": "exp_duct"
+  },
+  "exposed pipes": {
+    "built_env": "exp_pipe"
+  },
+  "exterior door count": {
+    "built_env": "ext_door"
+  },
+  "orientations of exterior wall": {
+    "built_env": "ext_wall_orient"
+  },
+  "orientations of exterior window": {
+    "built_env": "ext_window_orient"
+  },
+  "filter type": {
+    "built_env": "filter_type"
+  },
+  "fireplace type": {
+    "built_env": "fireplace_type"
+  },
+  "floor age": {
+    "built_env": "floor_age"
+  },
+  "floor area": {
+    "built_env": "floor_area"
+  },
+  "floor condition": {
+    "built_env": "floor_cond"
+  },
+  "floor count": {
+    "built_env": "floor_count"
+  },
+  "floor finish material": {
+    "built_env": "floor_finish_mat"
+  },
+  "floor structure": {
+    "built_env": "floor_struc"
+  },
+  "floor thermal mass": {
+    "built_env": "floor_thermal_mass"
+  },
+  "floor signs of water/mold": {
+    "built_env": "floor_water_mold"
+  },
+  "frequency of cleaning": {
+    "built_env": "freq_clean"
+  },
+  "frequency of cooking": {
+    "built_env": "freq_cook"
+  },
+  "furniture": {
+    "built_env": "furniture"
+  },
+  "gender of restroom": {
+    "built_env": "gender_restroom"
+  },
+  "hallway/corridor count": {
+    "built_env": "hall_count"
+  },
+  "handidness": {
+    "built_env": "handidness"
+  },
+  "heating and cooling system type": {
+    "built_env": "heat_cool_type"
+  },
+  "heating delivery locations": {
+    "built_env": "heat_deliv_loc"
+  },
+  "heating system delivery method": {
+    "built_env": "heat_sys_deliv_meth"
+  },
+  "heating system identifier": {
+    "built_env": "heat_system_id"
+  },
+  "height carpet fiber mat": {
+    "built_env": "height_carper_fiber"
+  },
+  "indoor space": {
+    "built_env": "indoor_space"
+  },
+  "indoor surface": {
+    "built_env": "indoor_surf"
+  },
+  "inside lux light": {
+    "built_env": "inside_lux"
+  },
+  "interior wall condition": {
+    "built_env": "int_wall_cond"
+  },
+  "last time swept/mopped/vacuumed": {
+    "built_env": "last_clean"
+  },
+  "light type": {
+    "built_env": "light_type"
+  },
+  "maximum occupancy": {
+    "built_env": "max_occup"
+  },
+  "mechanical structure": {
+    "built_env": "mech_struc"
+  },
+  "number of pets": {
+    "built_env": "number_pets"
+  },
+  "number of houseplants": {
+    "built_env": "number_plants"
+  },
+  "number of residents": {
+    "built_env": "number_resident"
+  },
+  "occupant density at sampling": {
+    "built_env": "occup_density_samp"
+  },
+  "occupancy documentation": {
+    "built_env": "occup_document"
+  },
+  "occupancy at sampling": {
+    "built_env": "occup_samp"
+  },
+  "presence of pets, animals, or insects": {
+    "built_env": "pres_animal_insect"
+  },
+  "quadrant position": {
+    "built_env": "quad_pos"
+  },
+  "relative air humidity": {
+    "built_env": "rel_air_humidity"
+  },
+  "outside relative humidity": {
+    "built_env": "rel_humidity_out"
+  },
+  "relative sampling location": {
+    "built_env": "rel_samp_loc"
+  },
+  "room air exchange rate": {
+    "built_env": "room_air_exch_rate"
+  },
+  "room architectural elements": {
+    "built_env": "room_architec_elem"
+  },
+  "room condition": {
+    "built_env": "room_condt"
+  },
+  "rooms connected by a doorway": {
+    "built_env": "room_connected"
+  },
+  "room count": {
+    "built_env": "room_count"
+  },
+  "room dimensions": {
+    "built_env": "room_dim"
+  },
+  "room door distance": {
+    "built_env": "room_door_dist"
+  },
+  "rooms that share a door with sampling room": {
+    "built_env": "room_door_share"
+  },
+  "rooms that are on the same hallway": {
+    "built_env": "room_hallway"
+  },
+  "room location in building": {
+    "built_env": "room_loc"
+  },
+  "room moisture damage or mold history": {
+    "built_env": "room_moist_dam_hist"
+  },
+  "room net area": {
+    "built_env": "room_net_area"
+  },
+  "room occupancy": {
+    "built_env": "room_occup"
+  },
+  "room sampling position": {
+    "built_env": "room_samp_pos"
+  },
+  "room type": {
+    "built_env": "room_type"
+  },
+  "room volume": {
+    "built_env": "room_vol"
+  },
+  "rooms that share a wall with sampling room": {
+    "built_env": "room_wall_share"
+  },
+  "room window count": {
+    "built_env": "room_window_count"
+  },
+  "sampling floor": {
+    "built_env": "samp_floor"
+  },
+  "sampling room ID or name": {
+    "built_env": "samp_room_id"
+  },
+  "sample size sorting method": {
+    "built_env": "samp_sort_meth"
+  },
+  "sampling time outside": {
+    "built_env": "samp_time_out"
+  },
+  "sampling day weather": {
+    "built_env": "samp_weather"
+  },
+  "season": {
+    "built_env": "season"
+  },
+  "seasonal use": {
+    "built_env": "season_use"
+  },
+  "shading device signs of water/mold": {
+    "built_env": "shad_dev_water_mold"
+  },
+  "shading device condition": {
+    "built_env": "shading_device_cond"
+  },
+  "shading device location": {
+    "built_env": "shading_device_loc"
+  },
+  "shading device material": {
+    "built_env": "shading_device_mat"
+  },
+  "shading device type": {
+    "built_env": "shading_device_type"
+  },
+  "space typical state": {
+    "built_env": "space_typ_state"
+  },
+  "specifications": {
+    "built_env": "specific"
+  },
+  "specific humidity": {
+    "built_env": "specific_humidity"
+  },
+  "substructure type": {
+    "built_env": "substructure_type"
+  },
+  "surface-air contaminant": {
+    "built_env": "surf_air_cont"
+  },
+  "surface humidity": {
+    "built_env": "surf_humidity"
+  },
+  "surface material": {
+    "built_env": "surf_material"
+  },
+  "surface moisture": {
+    "built_env": "surf_moisture"
+  },
+  "surface moisture pH": {
+    "built_env": "surf_moisture_ph"
+  },
+  "surface temperature": {
+    "built_env": "surf_temp"
+  },
+  "temperature outside house": {
+    "built_env": "temp_out"
+  },
+  "train line": {
+    "built_env": "train_line"
+  },
+  "train station collection location": {
+    "built_env": "train_stat_loc"
+  },
+  "train stop collection location": {
+    "built_env": "train_stop_loc"
+  },
+  "typical occupant density": {
+    "built_env": "typ_occup_density"
+  },
+  "visual media": {
+    "built_env": "vis_media"
+  },
+  "wall area": {
+    "built_env": "wall_area"
+  },
+  "wall construction type": {
+    "built_env": "wall_const_type"
+  },
+  "wall finish material": {
+    "built_env": "wall_finish_mat"
+  },
+  "wall height": {
+    "built_env": "wall_height"
+  },
+  "wall location": {
+    "built_env": "wall_loc"
+  },
+  "wall surface treatment": {
+    "built_env": "wall_surf_treatment"
+  },
+  "wall texture": {
+    "built_env": "wall_texture"
+  },
+  "wall thermal mass": {
+    "built_env": "wall_thermal_mass"
+  },
+  "wall signs of water/mold": {
+    "built_env": "wall_water_mold"
+  },
+  "water feature size": {
+    "built_env": "water_feat_size"
+  },
+  "water feature type": {
+    "built_env": "water_feat_type"
+  },
+  "weekday": {
+    "built_env": "weekday"
+  },
+  "window condition": {
+    "built_env": "window_cond"
+  },
+  "window covering": {
+    "built_env": "window_cover"
+  },
+  "window horizontal position": {
+    "built_env": "window_horiz_pos"
+  },
+  "window location": {
+    "built_env": "window_loc"
+  },
+  "window material": {
+    "built_env": "window_mat"
+  },
+  "window open frequency": {
+    "built_env": "window_open_freq"
+  },
+  "window area/size": {
+    "built_env": "window_size"
+  },
+  "window status": {
+    "built_env": "window_status"
+  },
+  "window type": {
+    "built_env": "window_type"
+  },
+  "window vertical position": {
+    "built_env": "window_vert_pos"
+  },
+  "window signs of water/mold": {
+    "built_env": "window_water_mold"
+  },
+  "EMSL sample storage temperature, deg. C": {
+    "emsl": "EMSL_store_temp"
+  },
+  "project ID": {
+    "emsl": "project_ID"
+  },
+  "replicate number": {
+    "emsl": "replicate_number"
+  },
+  "sample shipped amount": {
+    "emsl": "sample_shipped"
+  },
+  "sample type": {
+    "emsl": "sample_type",
+    "hcr-cores": "samp_type",
+    "hcr-fluids-swabs": "samp_type"
+  },
+  "number technical replicate": {
+    "emsl": "technical_reps"
+  },
+  "oil water contact depth": {
+    "hcr-cores": "owc_tvdss"
+  },
+  "permeability": {
+    "hcr-cores": "permeability"
+  },
+  "sample measured depth": {
+    "hcr-cores": "samp_md"
+  },
+  "sample true vertical depth subsea": {
+    "hcr-cores": "samp_tvdss"
+  },
+  "source rock depositional environment": {
+    "hcr-cores": "sr_dep_env"
+  },
+  "source rock geological age": {
+    "hcr-cores": "sr_geol_age"
+  },
+  "source rock kerogen type": {
+    "hcr-cores": "sr_kerog_type"
+  },
+  "source rock lithology": {
+    "hcr-cores": "sr_lithology"
+  },
+  "additional info": {
+    "hcr-cores": "additional_info",
+    "hcr-fluids-swabs": "additional_info"
+  },
+  "alkalinity method": {
+    "hcr-cores": "alkalinity_method",
+    "hcr-fluids-swabs": "alkalinity_method",
+    "water": "alkalinity_method"
+  },
+  "API gravity": {
+    "hcr-cores": "api",
+    "hcr-fluids-swabs": "api"
+  },
+  "aromatics wt%": {
+    "hcr-cores": "aromatics_pc",
+    "hcr-fluids-swabs": "aromatics_pc"
+  },
+  "asphaltenes wt%": {
+    "hcr-cores": "asphaltenes_pc",
+    "hcr-fluids-swabs": "asphaltenes_pc"
+  },
+  "basin name": {
+    "hcr-cores": "basin",
+    "hcr-fluids-swabs": "basin"
+  },
+  "benzene": {
+    "hcr-cores": "benzene",
+    "hcr-fluids-swabs": "benzene"
+  },
+  "density": {
+    "hcr-cores": "density",
+    "hcr-fluids-swabs": "density",
+    "misc-envs": "density",
+    "sediment": "density",
+    "water": "density"
+  },
+  "depositional environment": {
+    "hcr-cores": "depos_env",
+    "hcr-fluids-swabs": "depos_env"
+  },
+  "dissolved inorganic phosphorus": {
+    "hcr-cores": "diss_inorg_phosp",
+    "hcr-fluids-swabs": "diss_inorg_phosp",
+    "water": "diss_inorg_phosp"
+  },
+  "dissolved iron": {
+    "hcr-cores": "diss_iron",
+    "hcr-fluids-swabs": "diss_iron"
+  },
+  "dissolved oxygen in fluids": {
+    "hcr-cores": "diss_oxygen_fluid",
+    "hcr-fluids-swabs": "diss_oxygen_fluid"
+  },
+  "ethylbenzene": {
+    "hcr-cores": "ethylbenzene",
+    "hcr-fluids-swabs": "ethylbenzene"
+  },
+  "field name": {
+    "hcr-cores": "field",
+    "hcr-fluids-swabs": "field"
+  },
+  "hydrocarbon type produced": {
+    "hcr-cores": "hc_produced",
+    "hcr-fluids-swabs": "hc_produced"
+  },
+  "hydrocarbon resource type": {
+    "hcr-cores": "hcr",
+    "hcr-fluids-swabs": "hcr"
+  },
+  "formation water salinity": {
+    "hcr-cores": "hcr_fw_salinity",
+    "hcr-fluids-swabs": "hcr_fw_salinity"
+  },
+  "hydrocarbon resource geological age": {
+    "hcr-cores": "hcr_geol_age",
+    "hcr-fluids-swabs": "hcr_geol_age"
+  },
+  "hydrocarbon resource original pressure": {
+    "hcr-cores": "hcr_pressure",
+    "hcr-fluids-swabs": "hcr_pressure"
+  },
+  "hydrocarbon resource original temperature": {
+    "hcr-cores": "hcr_temp",
+    "hcr-fluids-swabs": "hcr_temp"
+  },
+  "lithology": {
+    "hcr-cores": "lithology",
+    "hcr-fluids-swabs": "lithology"
+  },
+  "organism count qPCR information": {
+    "hcr-cores": "org_count_qpcr_info",
+    "hcr-fluids-swabs": "org_count_qpcr_info"
+  },
+  "porosity": {
+    "hcr-cores": "porosity",
+    "sediment": "porosity"
+  },
+  "pour point": {
+    "hcr-cores": "pour_point",
+    "hcr-fluids-swabs": "pour_point"
+  },
+  "reservoir name": {
+    "hcr-cores": "reservoir",
+    "hcr-fluids-swabs": "reservoir"
+  },
+  "resins wt%": {
+    "hcr-cores": "resins_pc",
+    "hcr-fluids-swabs": "resins_pc"
+  },
+  "sample subtype": {
+    "hcr-cores": "samp_subtype",
+    "hcr-fluids-swabs": "samp_subtype"
+  },
+  "sample transport conditions": {
+    "hcr-cores": "samp_transport_cond",
+    "hcr-fluids-swabs": "samp_transport_cond"
+  },
+  "sample well name": {
+    "hcr-cores": "samp_well_name",
+    "hcr-fluids-swabs": "samp_well_name"
+  },
+  "saturates wt%": {
+    "hcr-cores": "saturates_pc",
+    "hcr-fluids-swabs": "saturates_pc"
+  },
+  "sulfate in formation water": {
+    "hcr-cores": "sulfate_fw",
+    "hcr-fluids-swabs": "sulfate_fw"
+  },
+  "suspended solids": {
+    "hcr-cores": "suspend_solids",
+    "hcr-fluids-swabs": "suspend_solids",
+    "wastewater_sludge": "suspend_solids"
+  },
+  "total acid number": {
+    "hcr-cores": "tan",
+    "hcr-fluids-swabs": "tan"
+  },
+  "toluene": {
+    "hcr-cores": "toluene",
+    "hcr-fluids-swabs": "toluene"
+  },
+  "total iron": {
+    "hcr-cores": "tot_iron",
+    "hcr-fluids-swabs": "tot_iron"
+  },
+  "total sulfur": {
+    "hcr-cores": "tot_sulfur",
+    "hcr-fluids-swabs": "tot_sulfur"
+  },
+  "depth (TVDSS) of hydrocarbon resource pressure": {
+    "hcr-cores": "tvdss_of_hcr_press",
+    "hcr-fluids-swabs": "tvdss_of_hcr_press"
+  },
+  "depth (TVDSS) of hydrocarbon resource temperature": {
+    "hcr-cores": "tvdss_of_hcr_temp",
+    "hcr-fluids-swabs": "tvdss_of_hcr_temp"
+  },
+  "volatile fatty acids": {
+    "hcr-cores": "vfa",
+    "hcr-fluids-swabs": "vfa"
+  },
+  "vfa in formation water": {
+    "hcr-cores": "vfa_fw",
+    "hcr-fluids-swabs": "vfa_fw"
+  },
+  "viscosity": {
+    "hcr-cores": "viscosity",
+    "hcr-fluids-swabs": "viscosity"
+  },
+  "well identification number": {
+    "hcr-cores": "win",
+    "hcr-fluids-swabs": "win"
+  },
+  "xylene": {
+    "hcr-cores": "xylene",
+    "hcr-fluids-swabs": "xylene"
+  },
+  "secondary and tertiary recovery methods and start date": {
+    "hcr-fluids-swabs": "add_recov_method"
+  },
+  "biocide administration": {
+    "hcr-fluids-swabs": "biocide"
+  },
+  "biocide administration method": {
+    "hcr-fluids-swabs": "biocide_admin_method"
+  },
+  "chemical treatment method": {
+    "hcr-fluids-swabs": "chem_treat_method"
+  },
+  "chemical treatment": {
+    "hcr-fluids-swabs": "chem_treatment"
+  },
+  "injection water breakthrough date of specific well": {
+    "hcr-fluids-swabs": "iw_bt_date_well"
+  },
+  "injection water fraction": {
+    "hcr-fluids-swabs": "iwf"
+  },
+  "production rate": {
+    "hcr-fluids-swabs": "prod_rate"
+  },
+  "production start date": {
+    "hcr-fluids-swabs": "prod_start_date"
+  },
+  "sample collection point": {
+    "hcr-fluids-swabs": "samp_collect_point"
+  },
+  "corrosion rate at sample location": {
+    "hcr-fluids-swabs": "samp_loc_corr_rate"
+  },
+  "preservative added to sample": {
+    "hcr-fluids-swabs": "samp_preserv"
+  },
+  "water cut": {
+    "hcr-fluids-swabs": "water_cut"
+  },
+  "water production rate": {
+    "hcr-fluids-swabs": "water_prod_rate"
+  },
+  "host blood pressure diastolic": {
+    "host-associated": "blood_press_diast"
+  },
+  "host blood pressure systolic": {
+    "host-associated": "blood_press_syst"
+  },
+  "gravidity": {
+    "host-associated": "gravidity"
+  },
+  "host body habitat": {
+    "host-associated": "host_body_habitat"
+  },
+  "host body product": {
+    "host-associated": "host_body_product"
+  },
+  "host body site": {
+    "host-associated": "host_body_site"
+  },
+  "host body temperature": {
+    "host-associated": "host_body_temp"
+  },
+  "host color": {
+    "host-associated": "host_color"
+  },
+  "host diet": {
+    "host-associated": "host_diet"
+  },
+  "host family relationship": {
+    "host-associated": "host_family_relation"
+  },
+  "host growth conditions": {
+    "host-associated": "host_growth_cond"
+  },
+  "host last meal": {
+    "host-associated": "host_last_meal"
+  },
+  "host sex": {
+    "host-associated": "host_sex"
+  },
+  "host shape": {
+    "host-associated": "host_shape"
+  },
+  "host subject id": {
+    "host-associated": "host_subject_id"
+  },
+  "host substrate": {
+    "host-associated": "host_substrate"
+  },
+  "ancestral data": {
+    "host-associated": "ances_data",
+    "plant-associated": "ances_data"
+  },
+  "biological status": {
+    "host-associated": "biol_stat",
+    "plant-associated": "biol_stat"
+  },
+  "genetic modification": {
+    "host-associated": "genetic_mod",
+    "plant-associated": "genetic_mod"
+  },
+  "host age": {
+    "host-associated": "host_age",
+    "plant-associated": "host_age"
+  },
+  "host common name": {
+    "host-associated": "host_common_name",
+    "plant-associated": "host_common_name"
+  },
+  "host dry mass": {
+    "host-associated": "host_dry_mass",
+    "plant-associated": "host_dry_mass"
+  },
+  "host genotype": {
+    "host-associated": "host_genotype",
+    "plant-associated": "host_genotype"
+  },
+  "host height": {
+    "host-associated": "host_height",
+    "plant-associated": "host_height"
+  },
+  "host length": {
+    "host-associated": "host_length",
+    "plant-associated": "host_length"
+  },
+  "host life stage": {
+    "host-associated": "host_life_stage",
+    "plant-associated": "host_life_stage"
+  },
+  "host phenotype": {
+    "host-associated": "host_phenotype",
+    "plant-associated": "host_phenotype"
+  },
+  "host subspecific genetic lineage": {
+    "host-associated": "host_subspecf_genlin",
+    "plant-associated": "host_subspecf_genlin"
+  },
+  "observed host symbionts": {
+    "host-associated": "host_symbiont",
+    "plant-associated": "host_symbiont"
+  },
+  "host taxid": {
+    "host-associated": "host_taxid",
+    "plant-associated": "host_taxid"
+  },
+  "host total mass": {
+    "host-associated": "host_tot_mass",
+    "plant-associated": "host_tot_mass"
+  },
+  "sample capture status": {
+    "host-associated": "samp_capt_status",
+    "plant-associated": "samp_capt_status"
+  },
+  "sample disease stage": {
+    "host-associated": "samp_dis_stage",
+    "plant-associated": "samp_dis_stage"
+  },
+  "DNA absorbance 260/280": {
+    "jgi_mg": "dna_absorb1"
+  },
+  "DNA absorbance 260/230": {
+    "jgi_mg": "dna_absorb2"
+  },
+  "DNA collection site": {
+    "jgi_mg": "dna_collect_site"
+  },
+  "DNA concentration in ng/ul": {
+    "jgi_mg": "dna_concentration"
+  },
+  "DNA container type": {
+    "jgi_mg": "dna_cont_type"
+  },
+  "DNA plate position": {
+    "jgi_mg": "dna_cont_well"
+  },
+  "DNA well number": {
+    "jgi_mg": "dna_cont_well"
+  },
+  "DNA container label": {
+    "jgi_mg": "dna_container_ID"
+  },
+  "DNase treatment DNA": {
+    "jgi_mg": "dna_dnase"
+  },
+  "DNA isolation method": {
+    "jgi_mg": "dna_isolate_meth"
+  },
+  "DNA expected organisms": {
+    "jgi_mg": "dna_organisms"
+  },
+  "DNA seq project contact": {
+    "jgi_mg": "dna_project_contact"
+  },
+  "DNA sample ID": {
+    "jgi_mg": "dna_samp_ID"
+  },
+  "DNA sample format": {
+    "jgi_mg": "dna_sample_format"
+  },
+  "DNA sample name": {
+    "jgi_mg": "dna_sample_name"
+  },
+  "DNA seq project ID": {
+    "jgi_mg": "dna_seq_project"
+  },
+  "DNA seq project PI": {
+    "jgi_mg": "dna_seq_project_PI"
+  },
+  "DNA seq project name": {
+    "jgi_mg": "dna_seq_project_name"
+  },
+  "DNA volume in ul": {
+    "jgi_mg": "dna_volume"
+  },
+  "DNA proposal ID": {
+    "jgi_mg": "proposal_dna"
+  },
+  "DNase treated": {
+    "jgi_mt": "dnase_rna"
+  },
+  "RNA proposal ID": {
+    "jgi_mt": "proposal_rna"
+  },
+  "RNA absorbance 260/280": {
+    "jgi_mt": "rna_absorb1"
+  },
+  "RNA absorbance 260/230": {
+    "jgi_mt": "rna_absorb2"
+  },
+  "RNA collection site": {
+    "jgi_mt": "rna_collect_site"
+  },
+  "RNA concentration in ng/ul": {
+    "jgi_mt": "rna_concentration"
+  },
+  "RNA container type": {
+    "jgi_mt": "rna_cont_type"
+  },
+  "RNA well number": {
+    "jgi_mt": "rna_cont_well"
+  },
+  "RNA container label": {
+    "jgi_mt": "rna_container_ID"
+  },
+  "RNA isolation method": {
+    "jgi_mt": "rna_isolate_meth"
+  },
+  "RNA expected organisms": {
+    "jgi_mt": "rna_organisms"
+  },
+  "RNA seq project contact": {
+    "jgi_mt": "rna_project_contact"
+  },
+  "RNA sample ID": {
+    "jgi_mt": "rna_samp_ID"
+  },
+  "RNA sample format": {
+    "jgi_mt": "rna_sample_format"
+  },
+  "RNA sample name": {
+    "jgi_mt": "rna_sample_name"
+  },
+  "RNA seq project ID": {
+    "jgi_mt": "rna_seq_project"
+  },
+  "RNA seq project PI": {
+    "jgi_mt": "rna_seq_project_PI"
+  },
+  "RNA seq project name": {
+    "jgi_mt": "rna_seq_project_name"
+  },
+  "RNA volume in ul": {
+    "jgi_mt": "rna_volume"
+  },
+  "water current": {
+    "misc-envs": "water_current",
+    "water": "water_current"
+  },
+  "antibiotic regimen": {
+    "plant-associated": "antibiotic_regm"
+  },
+  "chemical mutagen": {
+    "plant-associated": "chem_mutagen"
+  },
+  "culture rooting medium": {
+    "plant-associated": "cult_root_med"
+  },
+  "fertilizer regimen": {
+    "plant-associated": "fertilizer_regm"
+  },
+  "fungicide regimen": {
+    "plant-associated": "fungicide_regm"
+  },
+  "gravity": {
+    "plant-associated": "gravity"
+  },
+  "growth habit": {
+    "plant-associated": "growth_habit"
+  },
+  "growth hormone regimen": {
+    "plant-associated": "growth_hormone_regm"
+  },
+  "herbicide regimen": {
+    "plant-associated": "herbicide_regm"
+  },
+  "host wet mass": {
+    "plant-associated": "host_wet_mass"
+  },
+  "mechanical damage": {
+    "plant-associated": "mechanical_damage"
+  },
+  "mineral nutrient regimen": {
+    "plant-associated": "mineral_nutr_regm"
+  },
+  "non-mineral nutrient regimen": {
+    "plant-associated": "non_min_nutr_regm"
+  },
+  "pesticide regimen": {
+    "plant-associated": "pesticide_regm"
+  },
+  "pH regimen": {
+    "plant-associated": "ph_regm"
+  },
+  "plant growth medium": {
+    "plant-associated": "plant_growth_med"
+  },
+  "plant product": {
+    "plant-associated": "plant_product"
+  },
+  "plant sex": {
+    "plant-associated": "plant_sex"
+  },
+  "plant structure": {
+    "plant-associated": "plant_struc"
+  },
+  "radiation regimen": {
+    "plant-associated": "radiation_regm"
+  },
+  "rainfall regimen": {
+    "plant-associated": "rainfall_regm"
+  },
+  "rooting conditions": {
+    "plant-associated": "root_cond"
+  },
+  "rooting medium carbon": {
+    "plant-associated": "root_med_carbon"
+  },
+  "rooting medium macronutrients": {
+    "plant-associated": "root_med_macronutr"
+  },
+  "rooting medium micronutrients": {
+    "plant-associated": "root_med_micronutr"
+  },
+  "rooting medium pH": {
+    "plant-associated": "root_med_ph"
+  },
+  "rooting medium regulators": {
+    "plant-associated": "root_med_regl"
+  },
+  "rooting medium solidifier": {
+    "plant-associated": "root_med_solid"
+  },
+  "rooting medium organic supplements": {
+    "plant-associated": "root_med_suppl"
+  },
+  "salt regimen": {
+    "plant-associated": "salt_regm"
+  },
+  "seasonal environment": {
+    "plant-associated": "season_environment"
+  },
+  "standing water regimen": {
+    "plant-associated": "standing_water_regm"
+  },
+  "tissue culture growth media": {
+    "plant-associated": "tiss_cult_growth_med"
+  },
+  "water temperature regimen": {
+    "plant-associated": "water_temp_regm"
+  },
+  "tidal stage": {
+    "sediment": "tidal_stage",
+    "water": "tidal_stage"
+  },
+  "total depth of water column": {
+    "sediment": "tot_depth_water_col",
+    "water": "tot_depth_water_col"
+  },
+  "particle classification": {
+    "sediment": "particle_class"
+  },
+  "sediment type": {
+    "sediment": "sediment_type"
+  },
+  "incubation collection date": {
+    "soil": "collection_date_inc",
+    "soil_mixs_inspired_mixin": "collection_date_inc"
+  },
+  "collection time, GMT": {
+    "soil": "collection_time",
+    "soil_mixs_inspired_mixin": "collection_time"
+  },
+  "incubation collection time, GMT": {
+    "soil": "collection_time_inc",
+    "soil_mixs_inspired_mixin": "collection_time_inc"
+  },
+  "experimental factor- other": {
+    "soil": "experimental_factor_other",
+    "soil_mixs_inspired_mixin": "experimental_factor_other"
+  },
+  "filter method": {
+    "soil": "filter_method",
+    "soil_mixs_inspired_mixin": "filter_method"
+  },
+  "isotope exposure/addition": {
+    "soil": "isotope_exposure",
+    "soil_mixs_inspired_mixin": "isotope_exposure"
+  },
+  "microbial biomass carbon method": {
+    "soil": "micro_biomass_C_meth",
+    "soil_mixs_inspired_mixin": "micro_biomass_C_meth"
+  },
+  "microbial biomass nitrogen method": {
+    "soil": "micro_biomass_N_meth",
+    "soil_mixs_inspired_mixin": "micro_biomass_N_meth"
+  },
+  "microbial biomass carbon": {
+    "soil": "microbial_biomass_C",
+    "soil_mixs_inspired_mixin": "microbial_biomass_C"
+  },
+  "microbial biomass nitrogen": {
+    "soil": "microbial_biomass_N",
+    "soil_mixs_inspired_mixin": "microbial_biomass_N"
+  },
+  "non-microbial biomass": {
+    "soil": "non_microb_biomass",
+    "soil_mixs_inspired_mixin": "non_microb_biomass"
+  },
+  "non-microbial biomass method": {
+    "soil": "non_microb_biomass_method",
+    "soil_mixs_inspired_mixin": "non_microb_biomass_method"
+  },
+  "organic nitrogen method": {
+    "soil": "org_nitro_method",
+    "soil_mixs_inspired_mixin": "org_nitro_method"
+  },
+  "other treatments": {
+    "soil": "other_treatment",
+    "soil_mixs_inspired_mixin": "other_treatment"
+  },
+  "incubation start date": {
+    "soil": "start_date_inc",
+    "soil_mixs_inspired_mixin": "start_date_inc"
+  },
+  "incubation start time, GMT": {
+    "soil": "start_time_inc",
+    "soil_mixs_inspired_mixin": "start_time_inc"
+  },
+  "biochemical oxygen demand": {
+    "wastewater_sludge": "biochem_oxygen_dem"
+  },
+  "chemical oxygen demand": {
+    "wastewater_sludge": "chem_oxygen_dem"
+  },
+  "efficiency percent": {
+    "wastewater_sludge": "efficiency_percent"
+  },
+  "emulsions": {
+    "wastewater_sludge": "emulsions"
+  },
+  "gaseous substances": {
+    "wastewater_sludge": "gaseous_substances"
+  },
+  "industrial effluent percent": {
+    "wastewater_sludge": "indust_eff_percent"
+  },
+  "inorganic particles": {
+    "wastewater_sludge": "inorg_particles"
+  },
+  "organic particles": {
+    "wastewater_sludge": "org_particles"
+  },
+  "pre-treatment": {
+    "wastewater_sludge": "pre_treatment"
+  },
+  "primary treatment": {
+    "wastewater_sludge": "primary_treatment"
+  },
+  "reactor type": {
+    "wastewater_sludge": "reactor_type"
+  },
+  "secondary treatment": {
+    "wastewater_sludge": "secondary_treatment"
+  },
+  "sewage type": {
+    "wastewater_sludge": "sewage_type"
+  },
+  "sludge retention time": {
+    "wastewater_sludge": "sludge_retent_time"
+  },
+  "soluble inorganic material": {
+    "wastewater_sludge": "soluble_inorg_mat"
+  },
+  "soluble organic material": {
+    "wastewater_sludge": "soluble_org_mat"
+  },
+  "tertiary treatment": {
+    "wastewater_sludge": "tertiary_treatment"
+  },
+  "total phosphate": {
+    "wastewater_sludge": "tot_phosphate"
+  },
+  "wastewater type": {
+    "wastewater_sludge": "wastewater_type"
+  },
+  "atmospheric data": {
+    "water": "atmospheric_data"
+  },
+  "bacterial production": {
+    "water": "bac_prod"
+  },
+  "bacterial respiration": {
+    "water": "bac_resp"
+  },
+  "conductivity": {
+    "water": "conduc"
+  },
+  "dissolved inorganic nitrogen": {
+    "water": "diss_inorg_nitro"
+  },
+  "downward PAR": {
+    "water": "down_par"
+  },
+  "fluorescence": {
+    "water": "fluor"
+  },
+  "light intensity": {
+    "water": "light_intensity"
+  },
+  "particulate organic nitrogen": {
+    "water": "part_org_nitro"
+  },
+  "photon flux": {
+    "water": "photon_flux"
+  },
+  "primary production": {
+    "water": "primary_prod"
+  },
+  "soluble reactive phosphorus": {
+    "water": "soluble_react_phosp"
+  },
+  "suspended particulate matter": {
+    "water": "suspend_part_matter"
+  },
+  "total dissolved nitrogen": {
+    "water": "tot_diss_nitro"
+  },
+  "total inorganic nitrogen": {
+    "water": "tot_inorg_nitro"
+  },
+  "total particulate carbon": {
+    "water": "tot_part_carb"
+  },
+  "has unit": {
+    "quantity value": "has unit"
+  },
+  "has numeric value": {
+    "quantity value": "has numeric value"
+  },
+  "has raw value": {
+    "quantity value": "has raw value"
+  },
+  "id": {
+    "Activity": "id"
+  },
+  "name": {
+    "Activity": "name"
+  },
+  "started_at_time": {
+    "Activity": "started_at_time"
+  },
+  "ended_at_time": {
+    "Activity": "ended_at_time"
+  },
+  "was_informed_by": {
+    "Activity": "was_informed_by",
+    "Agent": "was_informed_by"
+  },
+  "was_associated_with": {
+    "Activity": "was_associated_with"
+  },
+  "used": {
+    "Activity": "used"
+  },
+  "acted_on_behalf_of": {
+    "Agent": "acted_on_behalf_of"
+  },
+  "has_unit": {
+    "QuantityValue": "has_unit"
+  },
+  "has_numeric_value": {
+    "QuantityValue": "has_numeric_value"
+  },
+  "has_minimum_numeric_value": {
+    "QuantityValue": "has_minimum_numeric_value"
+  },
+  "has_maximum_numeric_value": {
+    "QuantityValue": "has_maximum_numeric_value"
+  },
+  "has_raw_value": {
+    "QuantityValue": "has_raw_value",
+    "AttributeValue": "has_raw_value"
+  },
+  "was_generated_by": {
+    "QuantityValue": "was_generated_by",
+    "AttributeValue": "was_generated_by"
+  }
+}

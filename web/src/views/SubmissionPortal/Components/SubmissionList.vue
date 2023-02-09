@@ -23,7 +23,7 @@ const headers: DataTableHeader[] = [
   },
   {
     text: 'Template',
-    value: 'metadata_submission.template',
+    value: 'metadata_submission.templates',
     sortable: false,
   },
   {
@@ -132,6 +132,9 @@ export default defineComponent({
           >
             {{ item.author.name || item.author.orcid }}
           </a>
+        </template>
+        <template #[`item.metadata_submission.templates`]="{ item }">
+          {{ item.metadata_submission.templates.join(' + ') }}
         </template>
         <template #[`item.created`]="{ item }">
           {{ new Date(item.created).toLocaleString() }}

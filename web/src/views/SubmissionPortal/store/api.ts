@@ -33,12 +33,12 @@ function addressToString(address: NmdcAddress): string {
 
 interface MetadataSubmission {
   packageName: keyof typeof HARMONIZER_TEMPLATES;
-  template: string;
   contextForm: any;
   addressForm: any;
+  templates: string[];
   studyForm: any;
   multiOmicsForm: any;
-  sampleData: any[][];
+  sampleData: Record<string, any[]>;
 }
 
 interface MetadataSubmissionRecord {

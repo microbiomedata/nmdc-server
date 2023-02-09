@@ -1,20 +1,16 @@
 <script lang="ts">
-import { defineComponent, computed } from '@vue/composition-api';
+import { defineComponent } from '@vue/composition-api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
-import { templateChoice, templateChoiceDisabled, packageName } from '../store';
+import { templateChoiceDisabled, templateList, packageName } from '../store';
 
 export default defineComponent({
   setup() {
-    const disableOptionsWithoutVariations = computed(
-      () => templateChoice.value.includes('jgi') || templateChoice.value.includes('emsl'),
-    );
     return {
       packageName,
-      templateChoice,
       HARMONIZER_TEMPLATES,
       templates: Object.entries(HARMONIZER_TEMPLATES),
+      templateList,
       templateChoiceDisabled,
-      disableOptionsWithoutVariations,
     };
   },
 });
@@ -36,7 +32,7 @@ export default defineComponent({
         v-for="option in templates.filter((v) => v[1].status !== 'disabled')"
         :key="option[0]"
         :value="option[0]"
-        :disabled="templateChoiceDisabled || (disableOptionsWithoutVariations && !option[1].variations.length)"
+        :disabled="templateChoiceDisabled"
         :label="option[0]"
       />
       <p class="grey--text text--darken-1 my-5">
@@ -57,7 +53,7 @@ export default defineComponent({
       <p class="text-h5">
         DataHarmonizer Template Choice
       </p>
-      Your DataHarmonizer template is "{{ templateChoice }}".
+      Your DataHarmonizer template is "{{ templateList.join(' + ') }}".
       <span v-if="disableOptionsWithoutVariations">
         Because you have chosen data types specific to processing institutions,
         only packages with matching institution template variations are enabled.
@@ -70,7 +66,7 @@ export default defineComponent({
       <p class="text-h5">
         Template choice disabled
       </p>
-      Your DataHarmonizer template is "{{ templateChoice }}".
+      Your DataHarmonizer template is "{{ templateList.join(' + ') }}".
       Template cannot be changed when there are already metadata rows in step 5.
       To change the template, return to step 5 and remove all data.
     </v-alert>
