@@ -6,6 +6,7 @@ import {
   watch,
   nextTick,
 } from '@vue/composition-api';
+import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
 import Definitions from '@/definitions';
 import {
   contextForm,
@@ -18,6 +19,9 @@ export default defineComponent({
   components: { SubmissionContextShippingForm },
   setup() {
     const formRef = ref();
+    const facilityEnum = NmdcSchema.$defs.ProcessingInstitutionEnum.enum.filter(
+      (facility: string) => ['EMSL', 'JGI'].includes(facility),
+    );
     const projectAwardValidationRules = () => [(v: string) => {
       const awardChosen = v === 'MONet' || v === 'FICUS' || v === contextForm.otherAward;
       const valid = awardChosen || contextForm.facilities.length === 0;
@@ -55,6 +59,7 @@ export default defineComponent({
 
     return {
       Definitions,
+      facilityEnum,
       formRef,
       contextForm,
       contextFormValid,
@@ -122,17 +127,11 @@ export default defineComponent({
           Are you submitting metadata for samples that will be sent to a DOE user facility?
         </legend>
         <v-checkbox
+          v-for="facility in facilityEnum"
+          :key="facility"
           v-model="contextForm.facilities"
-          label="EMSL"
-          value="EMSL"
-          hide-details
-          @change="reValidate"
-        />
-        <v-checkbox
-          v-model="contextForm.facilities"
-          class="mt-2"
-          label="JGI"
-          value="JGI"
+          :label="facility"
+          :value="facility"
           hide-details
           @change="reValidate"
         />
