@@ -82,7 +82,7 @@ export default defineComponent({
     >
       <v-radio-group
         v-model="contextForm.dataGenerated"
-        label="Has data already been generated for your study?*"
+        label="Has data already been generated for your study? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
         @change="reValidate"
       >
@@ -119,7 +119,7 @@ export default defineComponent({
           class="v-label theme--light mb-2"
           style="font-size: 14px;"
         >
-          Are you submitting metadata for samples that will be sent to a DOE user factility?
+          Are you submitting metadata for samples that will be sent to a DOE user facility?
         </legend>
         <v-checkbox
           v-model="contextForm.facilities"
@@ -142,7 +142,7 @@ export default defineComponent({
         <v-radio-group
           v-if="contextForm.dataGenerated === false && contextForm.facilities.length > 0"
           v-model="contextForm.award"
-          label="What kind of project have you been awarded?*"
+          label="What kind of project have you been awarded? *"
           :rules="projectAwardValidationRules()"
         >
           <v-radio
