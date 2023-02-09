@@ -7,8 +7,9 @@ import useRequest from '@/use/useRequest';
 
 export default defineComponent({
   setup(_, { root }) {
+    // TODO: https://github.com/microbiomedata/nmdc-server/issues/852
     function downloadSamples() {
-      const worksheet = utils.aoa_to_sheet([]); // TODO: sampleData.value);
+      const worksheet = utils.aoa_to_sheet([]);
       const workbook = utils.book_new();
       utils.book_append_sheet(workbook, worksheet, 'Sheet1');
       // @ts-ignore
