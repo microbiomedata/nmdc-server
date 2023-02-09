@@ -38,7 +38,7 @@ export default defineComponent({
       }
       return true;
     }];
-    const reValidate = () => {
+    const revalidate = () => {
       nextTick(() => formRef.value.validate());
     };
 
@@ -49,7 +49,7 @@ export default defineComponent({
         if (award && awardTypes.includes(award)) {
           contextForm.otherAward = '';
         }
-        reValidate();
+        revalidate();
       },
     );
 
@@ -65,7 +65,7 @@ export default defineComponent({
       contextFormValid,
       projectAwardValidationRules,
       otherAwardValidationRules,
-      reValidate,
+      revalidate,
     };
   },
 });
@@ -89,7 +89,7 @@ export default defineComponent({
         v-model="contextForm.dataGenerated"
         label="Has data already been generated for your study? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        @change="reValidate"
+        @change="revalidate"
       >
         <v-radio
           label="No"
@@ -110,7 +110,7 @@ export default defineComponent({
         validate-on-blur
         outlined
         dense
-        @change="reValidate"
+        @change="revalidate"
       />
       <v-checkbox
         v-if="contextForm.dataGenerated"
@@ -133,7 +133,7 @@ export default defineComponent({
           :label="facility"
           :value="facility"
           hide-details
-          @change="reValidate"
+          @change="revalidate"
         />
         <submission-context-shipping-form
           v-if="contextForm.dataGenerated === false && contextForm.facilities.includes('EMSL')"
