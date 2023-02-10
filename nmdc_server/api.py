@@ -17,9 +17,9 @@ from nmdc_server.auth import (
 )
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
-from nmdc_server.database import get_db
+from nmdc_server.database import get_db, is_ingest_locked
 from nmdc_server.ingest.envo import nested_envo_trees
-from nmdc_server.models import IngestLock, SubmissionMetadata, User
+from nmdc_server.models import SubmissionMetadata, User
 from nmdc_server.pagination import Pagination
 
 router = APIRouter()
@@ -382,11 +382,10 @@ async def run_ingest(
     params: schemas.IngestArgumentSchema = schemas.IngestArgumentSchema(),
     db: Session = Depends(get_db),
 ):
-    lock = db.query(IngestLock).first()
-    if lock:
+    if is_ingest_locked(db):
         raise HTTPException(
             status_code=409,
-            detail=f"An ingest started at {lock.started} is already in progress",
+            detail="An ingest is already in progress",
         )
     jobs.ingest.delay(function_limit=params.function_limit, skip_annotation=params.skip_annotation)
     return ""
@@ -400,11 +399,10 @@ async def run_ingest(
 async def repopulate_gene_functions(
     user: models.User = Depends(admin_required), db: Session = Depends(get_db)
 ):
-    lock = db.query(IngestLock).first()
-    if lock:
+    if is_ingest_locked(db):
         raise HTTPException(
             status_code=409,
-            detail=f"An ingest started at {lock.started} is in progress",
+            detail="An ingest is already in progress",
         )
     jobs.populate_gene_functions.delay()
     return ""

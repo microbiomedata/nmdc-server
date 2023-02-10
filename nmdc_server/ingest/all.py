@@ -63,15 +63,15 @@ def load(db: Session, function_limit=None, skip_annotation=False):
 
     logger.info("Loading envo terms...")
     envo.load(db)
-    db.commit()
+    db.flush()
 
     logger.info("Loading Kegg orthology...")
     kegg.load(db)
-    db.commit()
+    db.flush()
 
     logger.info("Loading studies...")
     study.load(db, mongodb["study_set"].find())
-    db.commit()
+    db.flush()
 
     logger.info("Loading data objects...")
     data_object.load(
@@ -79,7 +79,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         mongodb["data_object_set"].find(),
         list(mongodb["file_type_enum"].find()),
     )
-    db.commit()
+    db.flush()
 
     # Only grab biosamples associated with studies we are ingesting.
     logger.info("Loading biosamples...")
@@ -91,11 +91,11 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         cursor,
         omics_processing=mongodb["omics_processing_set"],
     )
-    db.commit()
+    db.flush()
 
     logger.info("Loading omics processing...")
     omics_processing.load(db, mongodb["omics_processing_set"].find())
-    db.commit()
+    db.flush()
 
     logger.info("Loading metabolomics analysis...")
     pipeline.load(
@@ -104,7 +104,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         pipeline.load_metabolomics_analysis,
         WorkflowActivityTypeEnum.metabolomics_analysis.value,
     )
-    db.commit()
+    db.flush()
 
     logger.info("Loading read based analysis...")
     pipeline.load(
@@ -113,7 +113,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         pipeline.load_read_based_analysis,
         WorkflowActivityTypeEnum.read_based_analysis.value,
     )
-    db.commit()
+    db.flush()
 
     logger.info("Loading metatranscriptome activities...")
     pipeline.load(
@@ -122,6 +122,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         pipeline.load_metatranscriptome,
         WorkflowActivityTypeEnum.metatranscriptome.value,
     )
+    db.flush()
 
     logger.info("Loading NOM analysis...")
     pipeline.load(
@@ -130,7 +131,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         pipeline.load_nom_analysis,
         WorkflowActivityTypeEnum.nom_analysis.value,
     )
-    db.commit()
+    db.flush()
 
     logger.info("Loading MAGs...")
     pipeline.load(
@@ -139,7 +140,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         pipeline.load_mags,
         WorkflowActivityTypeEnum.mags_analysis.value,
     )
-    db.commit()
+    db.flush()
 
     if skip_annotation is False:
         try:
@@ -168,7 +169,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         except Exception:
             logger.exception("Failed during metag ingest.")
         finally:
-            db.commit()
+            db.flush()
 
     else:
         logger.info("Skipping annotation ingest")
@@ -180,7 +181,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         pipeline.load_reads_qc,
         WorkflowActivityTypeEnum.reads_qc.value,
     )
-    db.commit()
+    db.flush()
 
     try:
         logger.info("Loading metaproteomic analysis...")
@@ -192,11 +193,10 @@ def load(db: Session, function_limit=None, skip_annotation=False):
             pipeline.load_mp_analysis,
             WorkflowActivityTypeEnum.metaproteomic_analysis.value,
         )
-        db.commit()
     except Exception:
         logger.exception("Failed during metap ingest.")
     finally:
-        db.commit()
+        db.flush()
 
     logger.info("Loading metagenome assembly...")
     pipeline.load(
@@ -205,26 +205,27 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         pipeline.load_mg_assembly,
         WorkflowActivityTypeEnum.metagenome_assembly.value,
     )
-    db.commit()
+    db.flush()
 
     # all the data is loaded, so trigger denormalization updates
     logger.info("Populating mga_gene_functions...")
     models.MGAGeneFunctionAggregation.populate(db)
-    db.commit()
+    db.flush()
 
     logger.info("Populating metap_gene_functions...")
     models.MetaPGeneFunctionAggregation.populate(db)
-    db.commit()
+    db.flush()
 
     logger.info("Populating multiomics...")
     models.Biosample.populate_multiomics(db)
-    db.commit()
+    db.flush()
 
     logger.info("Preprocessing envo term data")
     envo.build_envo_trees(db)
+    db.flush()
 
     logger.info("Loading search indices")
     search_index.load(db)
-    db.commit()
+    db.flush()
 
     logger.info("Ingest finished successfully")

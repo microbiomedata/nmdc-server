@@ -73,7 +73,6 @@ services:
 
 volumes:
   app-db-data:
-  app-db-ingest:
 
 networks:
   public:

@@ -119,7 +119,6 @@ def build_envo_trees(db: Session) -> None:
 
     This should only be called after biosamples have been ingested.
     """
-    db.execute(f"truncate table {EnvoTree.__tablename__}")
 
     roots = get_biosample_roots(db)
     root_set = set(itertools.chain(*roots.values()))
@@ -134,7 +133,7 @@ def build_envo_trees(db: Session) -> None:
 
         _build_envo_subtree(db, root)
 
-    db.commit()
+    db.flush()
 
     nested_envo_trees.cache_clear()
 
@@ -256,7 +255,6 @@ def nested_envo_trees() -> Dict[str, List[EnvoTreeNode]]:
 
 
 def load(db: Session):
-    db.execute(f"truncate table {EnvoAncestor.__tablename__}")
 
     with request.urlopen(envo_url) as r:
         envo_data = json.load(r)
@@ -294,4 +292,4 @@ def load(db: Session):
             db.flush()
             populate_envo_ancestor(db, node, node, direct_ancestors, ids, True, set())
 
-    db.commit()
+    db.flush()

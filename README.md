@@ -89,7 +89,6 @@ NMDC_MONGO_PASSWORD=changeme
 With that file in place, populate the docker volume by running,
 
 ```bash
-docker-compose run backend nmdc-server truncate # if necessary
 docker-compose run backend nmdc-server migrate
 docker-compose run backend nmdc-server -vv ingest --function-limit 100
 ```
@@ -126,7 +125,7 @@ In order to generate a migration, your database state should match HEAD.  If you
 docker-compose down -v
 docker-compose up -d db
 # Create the database
-docker-compose run backend psql -c "create database nmdc_a;" -d postgres
+docker-compose run backend psql -c "create database nmdc;" -d postgres
 # Run migrations to HEAD
 docker-compose run backend alembic -c nmdc_server/alembic.ini upgrade head
 # Autogenerate a migration diff from the current HEAD
@@ -138,15 +137,15 @@ docker-compose run backend alembic -c nmdc_server/alembic.ini revision --autogen
 You can find existing database exports in Notion.
 
 ```bash
-# export, and 
-docker-compose run backend bash -c 'pg_dump nmdc_a > /app/nmdc_server/nmdc_a.sql'
+# export, and
+docker-compose run backend bash -c 'pg_dump nmdc > /app/nmdc_server/nmdc.sql'
 
 # import -- starting from an EMPTY database with DB running
 docker-compose down -v
 docker-compose up -d db
-docker-compose run backend psql -c "create database nmdc_a;" -d postgres
-cp downloads/nmdc_a.sql nmdc_server/nmdc_a.sql
-docker-compose run backend bash -c 'psql nmdc_a < /app/nmdc_server/nmdc_a.sql'
+docker-compose run backend psql -c "create database nmdc;" -d postgres
+cp downloads/nmdc.sql nmdc_server/nmdc.sql
+docker-compose run backend bash -c 'psql nmdc < /app/nmdc_server/nmdc.sql'
 docker-compose run backend nmdc-server migrate # stamp the migration db
 ```
 

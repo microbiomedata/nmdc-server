@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.schema import DDL, MetaData
 
 from nmdc_server.config import settings
@@ -15,9 +15,7 @@ _engine_kwargs = {
     "max_overflow": settings.db_pool_max_overflow,
 }
 engine = create_engine(settings.current_db_uri, **_engine_kwargs)
-engine_ingest = create_engine(settings.ingest_database_uri, **_engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-SessionLocalIngest = sessionmaker(autocommit=False, autoflush=False, bind=engine_ingest)
 
 # This is to avoid having to manually name all constraints
 # See: http://alembic.zzzcomputing.com/en/latest/naming.html
@@ -106,28 +104,6 @@ returns boolean as $$
     end;
 $$
 language plpgsql;
-
-/*
-A convenience function to truncate all tables that get repopulated
-during an ingest.  Any tables storing persistent data should be
-added as an exception here.
-*/
-CREATE OR REPLACE FUNCTION truncate_tables() RETURNS void AS $$
-DECLARE
-    statements CURSOR FOR
-        SELECT tablename FROM pg_tables
-        WHERE schemaname = 'public'
-            and tablename <> 'alembic_version'
-            and tablename <> 'file_download'
-            and tablename <> 'ingest_lock'
-            and tablename <> 'bulk_download'
-            and tablename <> 'bulk_download_data_object';
-BEGIN
-    FOR stmt IN statements LOOP
-        EXECUTE 'TRUNCATE TABLE ' || quote_ident(stmt.tablename) || ' CASCADE;';
-    END LOOP;
-END;
-$$ LANGUAGE plpgsql;
 """
     ),
 )
@@ -187,3 +163,61 @@ where m.id = study.id;
 def get_db():
     with SessionLocal() as db:
         yield db
+
+
+INGEST_LOCK_ID = 0
+
+
+class IngestLockNotAcquired(Exception):
+    ...
+
+
+def get_ingest_lock(db: Session):
+    """
+    https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS
+    """
+    result: tuple[bool] = db.execute(f"SELECT pg_try_advisory_lock({INGEST_LOCK_ID});").first()
+    if not result[0]:
+        raise IngestLockNotAcquired()
+
+
+def is_ingest_locked(db: Session):
+    """
+    https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS
+    """
+
+    result: tuple[bool] = db.execute(
+        f"SELECT pg_try_advisory_lock({INGEST_LOCK_ID}); "
+        f"SELECT pg_advisory_unlock({INGEST_LOCK_ID});"
+    ).first()
+    return not result[0]
+
+
+def clear_tables(db: Session):
+    db.execute(
+        """
+        /*
+        A convenience function to clear all tables that get repopulated
+        during an ingest.  Any tables storing persistent data should be
+        added as an exception here.
+        */
+        CREATE OR REPLACE FUNCTION clear_tables() RETURNS void AS $$
+        DECLARE
+            statements CURSOR FOR
+                SELECT tablename FROM pg_tables
+                WHERE schemaname = 'public'
+                    and tablename <> 'alembic_version'
+                    and tablename <> 'file_download'
+                    and tablename <> 'bulk_download'
+                    and tablename <> 'bulk_download_data_object'
+                    and tablename <> 'user_logins'
+                    and tablename <> 'submission_metadata';
+        BEGIN
+            FOR stmt IN statements LOOP
+                EXECUTE 'DELETE FROM ' || quote_ident(stmt.tablename) || ';';
+            END LOOP;
+        END;
+        $$ LANGUAGE plpgsql;
+        SELECT clear_tables();
+    """
+    ).all()

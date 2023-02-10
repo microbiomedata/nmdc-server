@@ -94,7 +94,7 @@ def get_study(db: Session, study_id: str) -> Optional[models.Study]:
     ).first()
 
 
-def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
+def create_study(db: Session, study: schemas.StudyCreate, commit=True) -> models.Study:
     study_dict = study.dict()
 
     websites = study_dict.pop("principal_investigator_websites")
@@ -113,7 +113,10 @@ def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
         db_study.publication_dois.append(study_publication)  # type: ignore
 
     db.add(db_study)
-    db.commit()
+    if commit:
+        db.commit()
+    else:
+        db.flush()
     db.refresh(db_study)
     return db_study
 

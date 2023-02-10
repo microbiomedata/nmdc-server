@@ -44,8 +44,14 @@ def input_association(table: str) -> Table:
     return Table(
         f"{table}_input_association",
         Base.metadata,
-        Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
-        Column("data_object_id", String, ForeignKey("data_object.id")),
+        Column(
+            f"{table}_id", String, ForeignKey(f"{table}.id", deferrable=True, initially="DEFERRED")
+        ),
+        Column(
+            "data_object_id",
+            String,
+            ForeignKey("data_object.id", deferrable=True, initially="DEFERRED"),
+        ),
         UniqueConstraint(f"{table}_id", "data_object_id"),
     )
 
@@ -62,8 +68,14 @@ def output_association(table: str) -> Table:
     return Table(
         f"{table}_output_association",
         Base.metadata,
-        Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
-        Column("data_object_id", String, ForeignKey("data_object.id")),
+        Column(
+            f"{table}_id", String, ForeignKey(f"{table}.id", deferrable=True, initially="DEFERRED")
+        ),
+        Column(
+            "data_object_id",
+            String,
+            ForeignKey("data_object.id", deferrable=True, initially="DEFERRED"),
+        ),
         UniqueConstraint(f"{table}_id", "data_object_id"),
     )
 
@@ -117,8 +129,18 @@ class EnvoAncestor(Base):
     __tablename__ = "envo_ancestor"
     __table_args__ = (UniqueConstraint("id", "ancestor_id"),)
 
-    id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
-    ancestor_id = Column(String, ForeignKey(EnvoTerm.id), nullable=False, primary_key=True)
+    id = Column(
+        String,
+        ForeignKey(EnvoTerm.id, deferrable=True, initially="DEFERRED"),
+        nullable=False,
+        primary_key=True,
+    )
+    ancestor_id = Column(
+        String,
+        ForeignKey(EnvoTerm.id, deferrable=True, initially="DEFERRED"),
+        nullable=False,
+        primary_key=True,
+    )
 
     # denotes that the ancestor is a direct parent of the linked term
     direct = Column(Boolean, nullable=False, default=lambda: False)
@@ -205,7 +227,9 @@ class Study(Base, AnnotatedModel):
     gold_name = Column(String, nullable=False, default="")
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
-    doi = Column(String, ForeignKey("doi_info.id"), nullable=True)
+    doi = Column(
+        String, ForeignKey("doi_info.id", deferrable=True, initially="DEFERRED"), nullable=True
+    )
     multiomics = Column(Integer, nullable=False, default=0)
 
     # TODO migrate these into relations or something
@@ -223,7 +247,9 @@ class Study(Base, AnnotatedModel):
     omics_processing_counts = query_expression()
 
     principal_investigator_id = Column(
-        UUID(as_uuid=True), ForeignKey("principal_investigator.id"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("principal_investigator.id", deferrable=True, initially="DEFERRED"),
+        nullable=False,
     )
     principal_investigator = relationship("PrincipalInvestigator", cascade="all")
     principal_investigator_name = association_proxy("principal_investigator", "name")
@@ -260,12 +286,20 @@ class Biosample(Base, AnnotatedModel):
     mod_date = Column(DateTime, nullable=True)
     collection_date = Column(DateTime, nullable=True)
     depth = Column(Float, nullable=True)
-    env_broad_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
-    env_local_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
-    env_medium_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
+    env_broad_scale_id = Column(
+        String, ForeignKey(EnvoTerm.id, deferrable=True, initially="DEFERRED"), nullable=True
+    )
+    env_local_scale_id = Column(
+        String, ForeignKey(EnvoTerm.id, deferrable=True, initially="DEFERRED"), nullable=True
+    )
+    env_medium_id = Column(
+        String, ForeignKey(EnvoTerm.id, deferrable=True, initially="DEFERRED"), nullable=True
+    )
     latitude = Column(Float, nullable=False)
     longitude = Column(Float, nullable=False)
-    study_id = Column(String, ForeignKey("study.id"), nullable=False)
+    study_id = Column(
+        String, ForeignKey("study.id", deferrable=True, initially="DEFERRED"), nullable=False
+    )
     multiomics = Column(Integer, nullable=False, default=0)
 
     # gold terms
@@ -302,7 +336,6 @@ class Biosample(Base, AnnotatedModel):
     @classmethod
     def populate_multiomics(cls, db: Session):
         db.execute(update_multiomics_sql)
-        db.commit()
 
 
 omics_processing_output_association = output_association("omics_processing")
@@ -313,9 +346,13 @@ class OmicsProcessing(Base, AnnotatedModel):
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
-    biosample_id = Column(String, ForeignKey("biosample.id"), nullable=True)
+    biosample_id = Column(
+        String, ForeignKey("biosample.id", deferrable=True, initially="DEFERRED"), nullable=True
+    )
     biosample = relationship("Biosample", backref="omics_processing")
-    study_id = Column(String, ForeignKey("study.id"), nullable=True)
+    study_id = Column(
+        String, ForeignKey("study.id", deferrable=True, initially="DEFERRED"), nullable=True
+    )
     study = relationship("Study", backref="omics_processing")
 
     outputs = output_relationship(omics_processing_output_association)
@@ -354,7 +391,11 @@ class DataObject(Base):
     workflow_type = Column(String, nullable=True)
 
     # denormalized relationship representing the source omics_processing
-    omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
+    omics_processing_id = Column(
+        String,
+        ForeignKey("omics_processing.id", deferrable=True, initially="DEFERRED"),
+        nullable=True,
+    )
     omics_processing = relationship(OmicsProcessing)
 
     @hybrid_property
@@ -378,7 +419,11 @@ class PipelineStep:
 
     @declared_attr
     def omics_processing_id(cls):
-        return Column(String, ForeignKey("omics_processing.id"), nullable=False)
+        return Column(
+            String,
+            ForeignKey("omics_processing.id", deferrable=True, initially="DEFERRED"),
+            nullable=False,
+        )
 
     @declared_attr
     def omics_processing(cls):
@@ -477,13 +522,19 @@ class MetaproteomicPeptide(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     metaproteomic_analysis_id = Column(
-        String, ForeignKey("metaproteomic_analysis.id"), nullable=False
+        String,
+        ForeignKey("metaproteomic_analysis.id", deferrable=True, initially="DEFERRED"),
+        nullable=False,
     )
 
     peptide_sequence = Column(String, nullable=False)
     peptide_sum_masic_abundance = Column(BigInteger, nullable=False)
     peptide_spectral_count = Column(BigInteger, nullable=False)
-    best_protein = Column(String, ForeignKey("mga_gene_function.subject"), nullable=False)
+    best_protein = Column(
+        String,
+        ForeignKey("mga_gene_function.subject", deferrable=True, initially="DEFERRED"),
+        nullable=False,
+    )
     min_q_value = Column(Float, nullable=False)
 
     best_protein_object = relationship("MGAGeneFunction")
@@ -496,9 +547,15 @@ class PeptideMGAGeneFunction(Base):
     __tablename__ = "peptide_mga_gene_function"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    subject = Column(String, ForeignKey("mga_gene_function.subject"), nullable=False)
+    subject = Column(
+        String,
+        ForeignKey("mga_gene_function.subject", deferrable=True, initially="DEFERRED"),
+        nullable=False,
+    )
     metaproteomic_peptide_id = Column(
-        UUID(as_uuid=True), ForeignKey("metaproteomic_peptide.id"), nullable=False
+        UUID(as_uuid=True),
+        ForeignKey("metaproteomic_peptide.id", deferrable=True, initially="DEFERRED"),
+        nullable=False,
     )
 
     mga_gene_function = relationship("MGAGeneFunction")
@@ -526,7 +583,11 @@ class MAG(Base):
     __tablename__ = "mag"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    mags_analysis_id = Column(String, ForeignKey("mags_analysis.id"), nullable=False)
+    mags_analysis_id = Column(
+        String,
+        ForeignKey("mags_analysis.id", deferrable=True, initially="DEFERRED"),
+        nullable=False,
+    )
     bin_name = Column(String, nullable=True)
     number_of_contig = Column(BigInteger, nullable=True)
     completeness = Column(Float, nullable=True)
@@ -600,8 +661,14 @@ class Website(Base):
 class StudyWebsite(Base):
     __tablename__ = "study_website"
 
-    study_id = Column(String, ForeignKey("study.id"), primary_key=True)
-    website_id = Column(UUID(as_uuid=True), ForeignKey("website.id"), primary_key=True)
+    study_id = Column(
+        String, ForeignKey("study.id", deferrable=True, initially="DEFERRED"), primary_key=True
+    )
+    website_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("website.id", deferrable=True, initially="DEFERRED"),
+        primary_key=True,
+    )
 
     website = relationship(Website, cascade="all")
 
@@ -610,7 +677,12 @@ class Publication(Base):
     __tablename__ = "publication"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    doi = Column(String, ForeignKey("doi_info.id"), nullable=False, unique=True)
+    doi = Column(
+        String,
+        ForeignKey("doi_info.id", deferrable=True, initially="DEFERRED"),
+        nullable=False,
+        unique=True,
+    )
 
     doi_object = relationship("DOIInfo", cascade="all", lazy="joined")
 
@@ -618,8 +690,14 @@ class Publication(Base):
 class StudyPublication(Base):
     __tablename__ = "study_publication"
 
-    study_id = Column(String, ForeignKey("study.id"), primary_key=True)
-    publication_id = Column(UUID(as_uuid=True), ForeignKey("publication.id"), primary_key=True)
+    study_id = Column(
+        String, ForeignKey("study.id", deferrable=True, initially="DEFERRED"), primary_key=True
+    )
+    publication_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("publication.id", deferrable=True, initially="DEFERRED"),
+        primary_key=True,
+    )
 
     publication = relationship(Publication, cascade="all")
 
@@ -639,9 +717,15 @@ class MGAGeneFunction(Base):  # metagenome annotation
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     metagenome_annotation_id = Column(
-        String, ForeignKey("metagenome_annotation.id"), nullable=False
+        String,
+        ForeignKey("metagenome_annotation.id", deferrable=True, initially="DEFERRED"),
+        nullable=False,
     )
-    gene_function_id = Column(String, ForeignKey("gene_function.id"), nullable=False)
+    gene_function_id = Column(
+        String,
+        ForeignKey("gene_function.id", deferrable=True, initially="DEFERRED"),
+        nullable=False,
+    )
     subject = Column(String, nullable=False, unique=True)
 
     function = relationship(GeneFunction)
@@ -653,21 +737,14 @@ class FileDownload(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
-    data_object_id = Column(String, ForeignKey("data_object.id"), nullable=False)
+    data_object_id = Column(
+        String, ForeignKey("data_object.id", deferrable=True, initially="DEFERRED"), nullable=False
+    )
     ip = Column(String, nullable=False)
     user_agent = Column(String, nullable=True)
     orcid = Column(String, nullable=False)
 
     data_object = relationship(DataObject, backref="download_entities")
-
-
-# This is a basic mutex lock to ensure only 1 ingest job is queued at a time.
-class IngestLock(Base):
-    __tablename__ = "ingest_lock"
-    __table_args__ = (CheckConstraint("id", name="singleton"),)
-
-    id = Column(Boolean, primary_key=True, default=True)
-    started = Column(DateTime, nullable=False, default=datetime.utcnow)
 
 
 ModelType = Union[
@@ -708,8 +785,14 @@ workflow_activity_types = [
 class MGAGeneFunctionAggregation(Base):
     __tablename__ = "mga_gene_function_aggregation"
 
-    metagenome_annotation_id = Column(String, ForeignKey(MetagenomeAnnotation.id), primary_key=True)
-    gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
+    metagenome_annotation_id = Column(
+        String,
+        ForeignKey(MetagenomeAnnotation.id, deferrable=True, initially="DEFERRED"),
+        primary_key=True,
+    )
+    gene_function_id = Column(
+        String, ForeignKey(GeneFunction.id, deferrable=True, initially="DEFERRED"), primary_key=True
+    )
     count = Column(BigInteger, nullable=False)
 
     @classmethod
@@ -731,9 +814,13 @@ class MetaPGeneFunctionAggregation(Base):
     __tablename__ = "metap_gene_function_aggregation"
 
     metaproteomic_analysis_id = Column(
-        String, ForeignKey("metaproteomic_analysis.id"), primary_key=True
+        String,
+        ForeignKey("metaproteomic_analysis.id", deferrable=True, initially="DEFERRED"),
+        primary_key=True,
     )
-    gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
+    gene_function_id = Column(
+        String, ForeignKey(GeneFunction.id, deferrable=True, initially="DEFERRED"), primary_key=True
+    )
     count = Column(BigInteger, nullable=False)
     best_protein = Column(Boolean, nullable=False)
 
@@ -791,8 +878,14 @@ class BulkDownload(Base):
 class BulkDownloadDataObject(Base):
     __tablename__ = "bulk_download_data_object"
 
-    bulk_download_id = Column(UUID(as_uuid=True), ForeignKey(BulkDownload.id), primary_key=True)
-    data_object_id = Column(String, ForeignKey(DataObject.id), primary_key=True)
+    bulk_download_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey(BulkDownload.id, deferrable=True, initially="DEFERRED"),
+        primary_key=True,
+    )
+    data_object_id = Column(
+        String, ForeignKey(DataObject.id, deferrable=True, initially="DEFERRED"), primary_key=True
+    )
 
     # the path inside the zip file
     path = Column(String, nullable=False)
@@ -829,6 +922,8 @@ class SubmissionMetadata(Base):
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
     status = Column(String, nullable=False, default="in-progress")
     metadata_submission = Column(JSONB, nullable=False)
-    author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
+    author_id = Column(
+        UUID(as_uuid=True), ForeignKey(User.id, deferrable=True, initially="DEFERRED")
+    )
 
     author = relationship("User")
