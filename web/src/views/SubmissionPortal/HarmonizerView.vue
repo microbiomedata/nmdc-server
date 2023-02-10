@@ -285,7 +285,7 @@ export default defineComponent({
         // they aren't there already.
         (nextData[environmentKey] || []).forEach((row) => {
           const rowId = row[SCHEMA_ID];
-          const existing = nextData[templateKey].find((r) => r[SCHEMA_ID] === rowId);
+          const existing = nextData[templateKey] && nextData[templateKey].find((r) => r[SCHEMA_ID] === rowId);
 
           if (!existing && rowIsVisibleForTemplate(row, nextTemplate)) {
             if (!nextData[templateKey]) {
