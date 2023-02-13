@@ -51,7 +51,7 @@ def db(connection):
 
 @pytest.fixture
 def app(db):
-    return create_app(env=os.environ.copy())
+    return create_app(env=os.environ.copy(), secret_key="test")
 
 
 @pytest.fixture
