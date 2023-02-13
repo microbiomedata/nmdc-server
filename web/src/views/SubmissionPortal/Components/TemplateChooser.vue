@@ -54,10 +54,6 @@ export default defineComponent({
         DataHarmonizer Template Choice
       </p>
       Your DataHarmonizer template is "{{ templateList.join(' + ') }}".
-      <span v-if="disableOptionsWithoutVariations">
-        Because you have chosen data types specific to processing institutions,
-        only packages with matching institution template variations are enabled.
-      </span>
     </v-alert>
     <v-alert
       v-else
