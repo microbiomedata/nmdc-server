@@ -29,7 +29,7 @@ setup(
         "requests==2.28.1",
         "sentry-sdk[celery,sqlalchemy]",
         "sqlalchemy>=1.4",
-        "starlette==0.17.1",
+        "starlette==0.25.0",
         "typing-extensions==4.0.1",
         # pinned 3rd party dependencies
         "importlib-metadata==4.12.0",
