@@ -204,7 +204,77 @@ export default defineComponent({
       await submit(root.$route.params.id);
     });
 
+    function rowIsVisibleForTemplate(row: Record<string, any>, template: string) {
+      if (template === templateList.value[0]) {
+        return true;
+      }
+      const row_types = row[TYPE_FIELD];
+      if (!row_types) {
+        return false;
+      }
+      if (template === EMSL) {
+        return row_types.includes('metaproteomics')
+          || row_types.includes('metabolomics')
+          || row_types.includes('natural organic matter');
+      }
+      if (template === JGI_MG) {
+        return row_types.includes('metagenomics');
+      }
+      if (template === JGT_MT) {
+        return row_types.includes('metatranscriptomics');
+      }
+      return false;
+    }
+
+    function synchronizeTabData(templateName: string) {
+      if (templateName === templateList.value[0]) {
+        return;
+      }
+      const nextData = { ...sampleData.value };
+      const templateKey = `${templateName}_data`;
+      const environmentKey = `${templateList.value[0]}_data`;
+      // add/update any rows from the first tab to the active tab if they apply and if
+      // they aren't there already.
+      (nextData[environmentKey] || []).forEach((row) => {
+        const rowId = row[SCHEMA_ID];
+        const existing = nextData[templateKey] && nextData[templateKey].find((r) => r[SCHEMA_ID] === rowId);
+
+        if (!existing && rowIsVisibleForTemplate(row, templateName)) {
+          if (!nextData[templateKey]) {
+            nextData[templateKey] = [];
+          }
+          const newRow = {} as Record<string, any>;
+          COMMON_COLUMNS.forEach((col) => {
+            newRow[col] = row[col];
+          });
+          nextData[templateKey].push(newRow);
+        }
+        if (existing) {
+          COMMON_COLUMNS.forEach((col) => {
+            existing[col] = row[col];
+          });
+        }
+      });
+      // remove any rows from the active tab if they were removed from the first tab
+      // or no longer apply to the active tab
+      if (nextData[templateKey]) {
+        nextData[templateKey] = nextData[templateKey].filter((row) => {
+          if (!rowIsVisibleForTemplate(row, templateName)) {
+            return false;
+          }
+          const rowId = row[SCHEMA_ID];
+          const environmentRow = nextData[environmentKey].findIndex((r) => r[SCHEMA_ID] === rowId);
+          return environmentRow >= 0;
+        });
+      }
+      sampleData.value = nextData;
+    }
+
     async function downloadSamples() {
+      templateList.value.forEach((template) => {
+        synchronizeTabData(template);
+      });
+
       const workbook = utils.book_new();
       templateList.value.forEach((template) => {
         const worksheet = utils.json_to_sheet([
@@ -246,81 +316,23 @@ export default defineComponent({
       reader.readAsArrayBuffer(file);
     }
 
-    function rowIsVisibleForTemplate(row: Record<string, any>, template: string) {
-      if (template === templateList.value[0]) {
-        return true;
-      }
-      const row_types = row[TYPE_FIELD];
-      if (!row_types) {
-        return false;
-      }
-      if (template === EMSL) {
-        return row_types.includes('metaproteomics')
-          || row_types.includes('metabolomics')
-          || row_types.includes('natural organic matter');
-      }
-      if (template === JGI_MG) {
-        return row_types.includes('metagenomics');
-      }
-      if (template === JGT_MT) {
-        return row_types.includes('metatranscriptomics');
-      }
-      return false;
-    }
-
     async function changeTemplate(index: number) {
-      if (harmonizerApi.ready.value) {
-        onDataChange();
-
-        await validate();
-
-        // When changing templates we may need to populate the common columns
-        // from the first tab
-        // TODO: would it make more sense to do this in the afterChange hook?
-        const nextData = { ...sampleData.value };
-        const nextTemplate = templateList.value[index];
-        const templateKey = `${nextTemplate}_data`;
-        const environmentKey = `${templateList.value[0]}_data`;
-        // add/update any rows from the first tab to the active tab if they apply and if
-        // they aren't there already.
-        (nextData[environmentKey] || []).forEach((row) => {
-          const rowId = row[SCHEMA_ID];
-          const existing = nextData[templateKey] && nextData[templateKey].find((r) => r[SCHEMA_ID] === rowId);
-
-          if (!existing && rowIsVisibleForTemplate(row, nextTemplate)) {
-            if (!nextData[templateKey]) {
-              nextData[templateKey] = [];
-            }
-            const newRow = {} as Record<string, any>;
-            COMMON_COLUMNS.forEach((col) => {
-              newRow[col] = row[col];
-            });
-            nextData[templateKey].push(newRow);
-          }
-          if (existing) {
-            COMMON_COLUMNS.forEach((col) => {
-              existing[col] = row[col];
-            });
-          }
-        });
-        // remove any rows from the active tab if they were removed from the first tab
-        // or no longer apply to the active tab
-        if (nextData[templateKey]) {
-          nextData[templateKey] = nextData[templateKey].filter((row) => {
-            if (!rowIsVisibleForTemplate(row, nextTemplate)) {
-              return false;
-            }
-            const rowId = row[SCHEMA_ID];
-            const environmentRow = nextData[environmentKey].findIndex((r) => r[SCHEMA_ID] === rowId);
-            return environmentRow >= 0;
-          });
-        }
-        sampleData.value = nextData;
-
-        activeTemplate.value = nextTemplate;
-        harmonizerApi.useTemplate(nextTemplate);
-        harmonizerApi.addChangeHook(onDataChange);
+      if (!harmonizerApi.ready.value) {
+        return;
       }
+
+      onDataChange();
+
+      await validate();
+
+      // When changing templates we may need to populate the common columns
+      // from the first tab
+      const nextTemplate = templateList.value[index];
+      synchronizeTabData(nextTemplate);
+
+      activeTemplate.value = nextTemplate;
+      harmonizerApi.useTemplate(nextTemplate);
+      harmonizerApi.addChangeHook(onDataChange);
     }
 
     return {
