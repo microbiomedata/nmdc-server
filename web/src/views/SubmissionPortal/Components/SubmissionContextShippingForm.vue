@@ -170,7 +170,6 @@ export default defineComponent({
               ref="datePickerEl"
               v-model="datePicker"
               :close-on-content-click="false"
-              :return-value.sync="addressForm.expectedShippingDate"
               transition="scale-transition"
               offset-y
               min-width="auto"
@@ -179,35 +178,22 @@ export default defineComponent({
                 <v-text-field
                   v-model="addressForm.expectedShippingDate"
                   label="Expected Shipping Date"
-                  append-icon="mdi-calendar"
+                  prepend-icon="mdi-calendar"
+                  clearable
                   readonly
                   outlined
                   dense
                   v-bind="attrs"
                   v-on="on"
+                  @click.clear="addressForm.expectedShippingDate = undefined"
                 />
               </template>
               <v-date-picker
                 v-model="addressForm.expectedShippingDate"
                 no-title
                 scrollable
-              >
-                <v-spacer />
-                <v-btn
-                  text
-                  color="primary"
-                  @click="datePicker = false"
-                >
-                  Cancel
-                </v-btn>
-                <v-btn
-                  text
-                  color="primary"
-                  @click="$refs.datePickerEl.save(addressForm.expectedShippingDate)"
-                >
-                  OK
-                </v-btn>
-              </v-date-picker>
+                @input="datePicker = false"
+              />
             </v-menu>
             <v-subheader>
               <span class="text-h6">Sample type/Species</span>
