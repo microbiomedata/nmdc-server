@@ -203,14 +203,14 @@ export default defineComponent({
               </v-date-picker>
             </v-menu>
             <v-subheader>
-              <span class="text-h6">Sample</span>
+              <span class="text-h6">Sample type/Species</span>
             </v-subheader>
             <v-divider />
             <v-select
               v-model="addressForm.sample"
               class="mt-2"
               :items="sampleEnumValues"
-              label="Sample"
+              label="Sample type/Species"
               dense
               outlined
             />
