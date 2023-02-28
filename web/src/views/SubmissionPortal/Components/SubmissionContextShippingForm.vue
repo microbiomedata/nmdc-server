@@ -18,6 +18,12 @@ export default defineComponent({
     const sampleItems = ref(['water_extract_soil']);
     const sampleEnumValues = NmdcSchema.$defs.SampleTypeEnum.enum;
     const biosafetyLevelValues = Object.values(BiosafetyLevels);
+    const shippingConditionsItems = [
+      'Store frozen: transported within a cold chain and stored at -70°C to -80°C upon delivery.',
+      'Store frozen: transported within a cold chain and stored at -20°C (4°F).',
+      'Store Refrigerated: at 2°-8°C (36°-46°F): for heat sensitive products that must not be frozen.',
+      'Room temperature: Store at 15°-25°C (59°-77°F).',
+    ];
 
     const shipperSummary = computed(() => {
       let result = '';
@@ -45,6 +51,7 @@ export default defineComponent({
       BiosafetyLevels,
       addressSummary,
       sampleEnumValues,
+      shippingConditionsItems,
     };
   },
 });
@@ -152,12 +159,12 @@ export default defineComponent({
                 dense
               />
             </div>
-            <v-textarea
+            <v-combobox
               v-model="addressForm.shippingConditions"
               label="Shipping Conditions"
+              :items="shippingConditionsItems"
               outlined
               dense
-              rows="2"
             />
             <v-menu
               ref="datePickerEl"
