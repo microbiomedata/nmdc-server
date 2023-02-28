@@ -77,7 +77,7 @@ export default defineComponent({
       Submission Context
     </div>
     <div class="text-h5">
-      Provide context about what your submission is.
+      Data and sample status
     </div>
     <v-form
       ref="formRef"
