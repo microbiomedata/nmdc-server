@@ -5,7 +5,7 @@ Revises: 9bbb32f36d19
 Create Date: 2023-03-01 19:54:23.116184
 
 """
-from typing import List, Optional
+from typing import Optional
 from uuid import uuid4
 
 from alembic import op
