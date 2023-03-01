@@ -56,9 +56,7 @@ class AddressForm(BaseModel):
     usdaRegulated: Optional[bool]
     permitNumber: str
     biosafetyLevel: str
-    irpOrHipaa: Optional[bool]
-    irbNumber: str
-    irbAddress: NmcdAddress
+    irbOrHipaa: Optional[bool]
     comments: str
 
 

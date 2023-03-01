@@ -32,16 +32,6 @@ export default defineComponent({
       return result.trim();
     });
 
-    const irbAddressString = computed(() => addressToString(addressForm.irbAddress));
-    const irbSummary = computed(() => {
-      let result = '';
-      if (addressForm.irbNumber) {
-        result += `${addressForm.irbNumber}\n`;
-      }
-      result += irbAddressString.value.trim();
-      return result;
-    });
-
     const sampleProperties = computed(() => [
       {
         title: 'Sample Name',
@@ -72,8 +62,8 @@ export default defineComponent({
         value: addressForm.biosafetyLevel,
       },
       {
-        title: 'IRP/HIPAA',
-        value: addressForm.irpOrHipaa,
+        title: 'IRB/HIPAA Compliance?',
+        value: (addressForm.irbOrHipaa ? 'Yes' : 'No'),
       },
     ]);
 
@@ -81,7 +71,6 @@ export default defineComponent({
       shipperAddressOneLiner,
       shipperSummary,
       addressForm,
-      irbSummary,
       sampleProperties,
     };
   },
@@ -139,23 +128,6 @@ export default defineComponent({
             </p>
           </span>
         </div>
-      </v-expansion-panel-content>
-    </v-expansion-panel>
-    <v-expansion-panel>
-      <v-expansion-panel-header class="pl-0">
-        <template #actions>
-          <v-icon class="icon">
-            $expand
-          </v-icon>
-        </template>
-        <span class="header">Institutional Review Board (IRB) Information</span>
-      </v-expansion-panel-header>
-      <v-expansion-panel-content>
-        <span
-          style="white-space: pre-line;"
-        >
-          {{ irbSummary }}
-        </span>
       </v-expansion-panel-content>
     </v-expansion-panel>
     <v-expansion-panel>
