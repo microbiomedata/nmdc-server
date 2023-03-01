@@ -25,7 +25,8 @@ export default defineComponent({
         result += `\nShipping Conditions: ${addressForm.shippingConditions}`;
       }
       if (addressForm.expectedShippingDate) {
-        result += `\nExpected Shipping Date: ${addressForm.expectedShippingDate}`;
+        const date = new Date(addressForm.expectedShippingDate);
+        result += `\nExpected Shipping Date: ${date.toLocaleDateString()}`;
       }
 
       return result.trim();

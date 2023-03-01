@@ -2,7 +2,9 @@
 import {
   computed,
   defineComponent,
+  onMounted,
   ref,
+  watch,
 } from '@vue/composition-api';
 import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
 import { addressForm, addressFormValid, BiosafetyLevels } from '../store';
@@ -40,12 +42,27 @@ export default defineComponent({
       ],
     }]);
 
+    const reformatDate = (dateString: string | Date) => new Date(dateString).toISOString().substring(0, 10);
+
+    const expectedShippingDateString = ref('');
+
+    watch(expectedShippingDateString, (newValue: string) => {
+      addressForm.expectedShippingDate = newValue.length ? new Date(newValue) : undefined;
+    });
+
+    onMounted(() => {
+      expectedShippingDateString.value = addressForm.expectedShippingDate
+        ? reformatDate(addressForm.expectedShippingDate)
+        : '';
+    });
+
     return {
       addressFormRef,
       addressForm,
       addressFormValid,
       showAddressForm,
       datePicker,
+      expectedShippingDateString,
       sampleItems,
       biosafetyLevelValues,
       BiosafetyLevels,
@@ -176,7 +193,7 @@ export default defineComponent({
             >
               <template #activator="{ on, attrs }">
                 <v-text-field
-                  v-model="addressForm.expectedShippingDate"
+                  v-model="expectedShippingDateString"
                   label="Expected Shipping Date"
                   prepend-icon="mdi-calendar"
                   clearable
@@ -189,7 +206,7 @@ export default defineComponent({
                 />
               </template>
               <v-date-picker
-                v-model="addressForm.expectedShippingDate"
+                v-model="expectedShippingDateString"
                 no-title
                 scrollable
                 @input="datePicker = false"
