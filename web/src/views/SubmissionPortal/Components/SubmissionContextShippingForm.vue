@@ -2,7 +2,9 @@
 import {
   computed,
   defineComponent,
+  onMounted,
   ref,
+  watch,
 } from '@vue/composition-api';
 import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
 import { addressForm, addressFormValid, BiosafetyLevels } from '../store';
@@ -18,6 +20,12 @@ export default defineComponent({
     const sampleItems = ref(['water_extract_soil']);
     const sampleEnumValues = NmdcSchema.$defs.SampleTypeEnum.enum;
     const biosafetyLevelValues = Object.values(BiosafetyLevels);
+    const shippingConditionsItems = [
+      'Store frozen: transported within a cold chain and stored at -70°C to -80°C upon delivery.',
+      'Store frozen: transported within a cold chain and stored at -20°C (4°F).',
+      'Store Refrigerated: at 2°-8°C (36°-46°F): for heat sensitive products that must not be frozen.',
+      'Room temperature: Store at 15°-25°C (59°-77°F).',
+    ];
 
     const shipperSummary = computed(() => {
       let result = '';
@@ -34,17 +42,33 @@ export default defineComponent({
       ],
     }]);
 
+    const reformatDate = (dateString: string | Date) => new Date(dateString).toISOString().substring(0, 10);
+
+    const expectedShippingDateString = ref('');
+
+    watch(expectedShippingDateString, (newValue: string) => {
+      addressForm.expectedShippingDate = newValue.length ? new Date(newValue) : undefined;
+    });
+
+    onMounted(() => {
+      expectedShippingDateString.value = addressForm.expectedShippingDate
+        ? reformatDate(addressForm.expectedShippingDate)
+        : '';
+    });
+
     return {
       addressFormRef,
       addressForm,
       addressFormValid,
       showAddressForm,
       datePicker,
+      expectedShippingDateString,
       sampleItems,
       biosafetyLevelValues,
       BiosafetyLevels,
       addressSummary,
       sampleEnumValues,
+      shippingConditionsItems,
     };
   },
 });
@@ -152,65 +176,51 @@ export default defineComponent({
                 dense
               />
             </div>
-            <v-textarea
+            <v-combobox
               v-model="addressForm.shippingConditions"
               label="Shipping Conditions"
+              :items="shippingConditionsItems"
               outlined
               dense
-              rows="2"
             />
             <v-menu
               ref="datePickerEl"
               v-model="datePicker"
               :close-on-content-click="false"
-              :return-value.sync="addressForm.expectedShippingDate"
               transition="scale-transition"
               offset-y
               min-width="auto"
             >
               <template #activator="{ on, attrs }">
                 <v-text-field
-                  v-model="addressForm.expectedShippingDate"
+                  v-model="expectedShippingDateString"
                   label="Expected Shipping Date"
-                  append-icon="mdi-calendar"
+                  prepend-icon="mdi-calendar"
+                  clearable
                   readonly
                   outlined
                   dense
                   v-bind="attrs"
                   v-on="on"
+                  @click.clear="addressForm.expectedShippingDate = undefined"
                 />
               </template>
               <v-date-picker
-                v-model="addressForm.expectedShippingDate"
+                v-model="expectedShippingDateString"
                 no-title
                 scrollable
-              >
-                <v-spacer />
-                <v-btn
-                  text
-                  color="primary"
-                  @click="datePicker = false"
-                >
-                  Cancel
-                </v-btn>
-                <v-btn
-                  text
-                  color="primary"
-                  @click="$refs.datePickerEl.save(addressForm.expectedShippingDate)"
-                >
-                  OK
-                </v-btn>
-              </v-date-picker>
+                @input="datePicker = false"
+              />
             </v-menu>
             <v-subheader>
-              <span class="text-h6">Sample</span>
+              <span class="text-h6">Sample Type/Species</span>
             </v-subheader>
             <v-divider />
             <v-select
               v-model="addressForm.sample"
               class="mt-2"
               :items="sampleEnumValues"
-              label="Sample"
+              label="Sample Type/Species"
               dense
               outlined
             />
@@ -263,74 +273,11 @@ export default defineComponent({
                 outlined
               />
               <v-checkbox
-                v-model="addressForm.irpOrHippa"
+                v-model="addressForm.irbOrHipaa"
                 class="mt-0"
-                label="IRP/HIPAA?"
+                label="IRB/HIPAA Compliance?"
               />
               <v-spacer />
-            </div>
-            <div v-if="addressForm.biosafetyLevel === BiosafetyLevels.BSL2">
-              <v-subheader>
-                <span class="text-h6">Institutional Review Board (IRB) Information</span>
-              </v-subheader>
-              <v-divider class="mb-2" />
-              <v-text-field
-                v-model="addressForm.irbNumber"
-                label="IRB Number"
-                outlined
-                dense
-              />
-              <v-text-field
-                v-model="addressForm.irbAddress.name"
-                label="IRB Contact Name"
-                outlined
-                dense
-              />
-              <v-text-field
-                v-model="addressForm.irbAddress.email"
-                label="E-mail Address"
-                outlined
-                dense
-              />
-              <v-text-field
-                v-model="addressForm.irbAddress.phone"
-                label="Phone Number"
-                outlined
-                dense
-              />
-              <v-text-field
-                v-model="addressForm.irbAddress.line1"
-                label="Address Line 1"
-                outlined
-                dense
-              />
-              <v-text-field
-                v-model="addressForm.irbAddress.line2"
-                label="Address Line 2"
-                outlined
-                dense
-              />
-              <v-text-field
-                v-model="addressForm.irbAddress.city"
-                label="City"
-                outlined
-                dense
-              />
-              <div class="d-flex">
-                <v-text-field
-                  v-model="addressForm.irbAddress.state"
-                  label="State"
-                  outlined
-                  dense
-                  class="mr-4"
-                />
-                <v-text-field
-                  v-model="addressForm.irbAddress.postalCode"
-                  label="Zip Code"
-                  outlined
-                  dense
-                />
-              </div>
             </div>
             <v-subheader>
               <span class="text-h6">Additional Comments</span>

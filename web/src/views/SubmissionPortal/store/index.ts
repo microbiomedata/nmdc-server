@@ -45,19 +45,7 @@ const addressFormDefault = {
   usdaRegulated: undefined as undefined | boolean,
   permitNumber: '',
   biosafetyLevel: '',
-  irpOrHipaa: undefined as undefined | boolean,
-  // IRB info
-  irbNumber: '',
-  irbAddress: {
-    name: '',
-    email: '',
-    phone: '',
-    line1: '',
-    line2: '',
-    city: '',
-    state: '',
-    postalCode: '',
-  } as api.NmdcAddress,
+  irbOrHipaa: undefined as undefined | boolean,
   comments: '',
 };
 const contextFormDefault = {

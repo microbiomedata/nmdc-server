@@ -25,20 +25,11 @@ export default defineComponent({
         result += `\nShipping Conditions: ${addressForm.shippingConditions}`;
       }
       if (addressForm.expectedShippingDate) {
-        result += `\nExpected Shipping Date: ${addressForm.expectedShippingDate}`;
+        const date = new Date(addressForm.expectedShippingDate);
+        result += `\nExpected Shipping Date: ${date.toLocaleDateString()}`;
       }
 
       return result.trim();
-    });
-
-    const irbAddressString = computed(() => addressToString(addressForm.irbAddress));
-    const irbSummary = computed(() => {
-      let result = '';
-      if (addressForm.irbNumber) {
-        result += `${addressForm.irbNumber}\n`;
-      }
-      result += irbAddressString.value.trim();
-      return result;
     });
 
     const sampleProperties = computed(() => [
@@ -71,8 +62,8 @@ export default defineComponent({
         value: addressForm.biosafetyLevel,
       },
       {
-        title: 'IRP/HIPAA',
-        value: addressForm.irpOrHipaa,
+        title: 'IRB/HIPAA Compliance?',
+        value: (addressForm.irbOrHipaa ? 'Yes' : 'No'),
       },
     ]);
 
@@ -80,7 +71,6 @@ export default defineComponent({
       shipperAddressOneLiner,
       shipperSummary,
       addressForm,
-      irbSummary,
       sampleProperties,
     };
   },
@@ -138,23 +128,6 @@ export default defineComponent({
             </p>
           </span>
         </div>
-      </v-expansion-panel-content>
-    </v-expansion-panel>
-    <v-expansion-panel>
-      <v-expansion-panel-header class="pl-0">
-        <template #actions>
-          <v-icon class="icon">
-            $expand
-          </v-icon>
-        </template>
-        <span class="header">Institutional Review Board (IRB) Information</span>
-      </v-expansion-panel-header>
-      <v-expansion-panel-content>
-        <span
-          style="white-space: pre-line;"
-        >
-          {{ irbSummary }}
-        </span>
       </v-expansion-panel-content>
     </v-expansion-panel>
     <v-expansion-panel>
