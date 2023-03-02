@@ -213,14 +213,14 @@ export default defineComponent({
               />
             </v-menu>
             <v-subheader>
-              <span class="text-h6">Sample type/Species</span>
+              <span class="text-h6">Sample Type/Species</span>
             </v-subheader>
             <v-divider />
             <v-select
               v-model="addressForm.sample"
               class="mt-2"
               :items="sampleEnumValues"
-              label="Sample type/Species"
+              label="Sample Type/Species"
               dense
               outlined
             />
