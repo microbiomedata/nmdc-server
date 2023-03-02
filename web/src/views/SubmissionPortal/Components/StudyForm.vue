@@ -103,7 +103,7 @@ export default defineComponent({
       />
       <v-combobox
         v-model="studyForm.linkOutWebpage"
-        label="LinkOut webpage"
+        label="Webpage Links"
         :hint="Definitions.linkOutWebpage"
         persistent-hint
         outlined
