@@ -126,6 +126,7 @@ export class HarmonizerApi {
     this.dh = new DataHarmonizer(r, {
       modalsRoot: document.querySelector('.harmonizer-style-container'),
       fieldSettings: this._getFieldSettings(),
+      columnHelpEntries: ['column', 'description', 'guidance', 'examples'],
     });
     this.footer = new Footer(document.querySelector('#harmonizer-footer-root'), this.dh);
     this.dh.useSchema(this.schema, [], templateName);
