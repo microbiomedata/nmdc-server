@@ -223,7 +223,7 @@ export default defineComponent({
               <template #activator="{ on, attrs }">
                 <v-text-field
                   v-model="expectedShippingDateString"
-                  :rules="requiredRules('Expected shipping date is required', [])"
+                  :rules="requiredRules('Expected Shipping Date is required', [])"
                   label="Expected Shipping Date *"
                   prepend-icon="mdi-calendar"
                   clearable
@@ -248,7 +248,7 @@ export default defineComponent({
             <v-divider />
             <v-select
               v-model="addressForm.sample"
-              :rules="requiredRules('Sample type/Species is required', [])"
+              :rules="requiredRules('Sample Type/Species is required', [])"
               class="mt-2"
               :items="sampleEnumValues"
               label="Sample type/Species *"
@@ -266,6 +266,7 @@ export default defineComponent({
             <v-textarea
               v-model="addressForm.experimentalGoals"
               label="Experiment Goals"
+              :rules="requiredRules('Experiment Goals are required', [])"
               hint="Briefly describe the goal for your experiment"
               outlined
               dense
