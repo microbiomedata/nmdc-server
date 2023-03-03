@@ -118,7 +118,21 @@ const templateList = computed(() => {
  */
 const sampleData = shallowRef({} as Record<string, any[]>);
 const samplesValid = ref(false);
-const templateChoiceDisabled = computed(() => Object.keys(sampleData.value).length > 0);
+const templateChoiceDisabled = computed(() => {
+  // If there are no keys in sampleData, the DH view hasn't been touched
+  // yet, so it's still okay to change the template.
+  if (Object.keys(sampleData.value).length === 0) {
+    return false;
+  }
+  // If the DH has been touched, see if any of the values (templates) actually
+  // contain data. If at least one does, then do not allow changing the template.
+  // Otherwise, allow template changes.
+  const templateWithDataIndex = Object.values(sampleData.value).findIndex((value) => value.length > 0);
+  if (templateWithDataIndex >= 0) {
+    return true;
+  }
+  return false;
+});
 
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
