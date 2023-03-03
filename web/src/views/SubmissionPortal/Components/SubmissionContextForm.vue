@@ -12,6 +12,7 @@ import {
   contextForm,
   contextFormValid,
   AwardTypes,
+  addressFormValid,
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 
@@ -67,6 +68,7 @@ export default defineComponent({
       formRef,
       contextForm,
       contextFormValid,
+      addressFormValid,
       projectAwardValidationRules,
       otherAwardValidationRules,
       doiRequiredRules,
@@ -183,7 +185,7 @@ export default defineComponent({
         color="gray"
         depressed
         :to="{ name: 'Study Form' }"
-        :disabled="!contextFormValid"
+        :disabled="!contextFormValid || (contextForm.facilities.includes('EMSL') && !addressFormValid)"
       >
         Go to next step
         <v-icon class="pl-1">
