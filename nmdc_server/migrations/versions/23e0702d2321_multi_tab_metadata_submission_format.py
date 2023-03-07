@@ -106,7 +106,7 @@ def upgrade():  # noqa: C901
         sample_data = metadata_submission["sampleData"]
         package_name = metadata_submission["packageName"]
         package_class = PACKAGE_CLASSES.get(package_name, package_name)
-        template = metadata_submission["template"]
+        template = metadata_submission.get("template", "")
 
         converted_sample_data: Dict[str, List[Any]] = collections.defaultdict(list)
         common_column_data: Dict[str, Any] = {}
