@@ -91,7 +91,8 @@ def upgrade():
 
         if metadata_submission.get("multiOmicsForm"):
             omics_form = metadata_submission["multiOmicsForm"]
-            del omics_form["NCBIBioProjectName"]
+            if "NCBIBioProjectName" in omics_form:
+                del omics_form["NCBIBioProjectName"]
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
     session.bulk_update_mappings(SubmissionMetadata, mappings)
     session.commit()
