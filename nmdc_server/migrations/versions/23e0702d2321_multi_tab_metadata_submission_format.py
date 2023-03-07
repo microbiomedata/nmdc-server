@@ -139,11 +139,11 @@ def upgrade():  # noqa: C901
                         col_slot = col_classes[package_class]
                         converted_row[package_class][col_slot] = value
 
-                    elif EMSL in col_class and "emsl" in template:
+                    elif EMSL in col_classes and "emsl" in template:
                         col_slot = col_classes[EMSL]
                         converted_row[EMSL][col_slot] = value
 
-                    elif JGI_MG in col_class and "jgi_mg" in template:
+                    elif JGI_MG in col_classes and "jgi_mg" in template:
                         col_slot = col_classes[JGI_MG]
                         converted_row[JGI_MG][col_slot] = value
 
