@@ -91,18 +91,19 @@ export default defineComponent({
   <v-card
     class="mt-4 pa-0"
     outlined
+    :style="addressFormValid ? '' : 'border: 2px solid red'"
   >
     <v-card-text
       class="pt-2"
       style="min-height: 100px;"
     >
-      <span>EMSL Shipping Info</span>
-      <span
+      <span :class="{'error--text': !addressFormValid}">EMSL Shipping Info *</span>
+      <p
         v-if="!addressFormValid"
-        class="ml-2"
+        class="error--text"
       >
-        <em>Shipping information is required</em>
-      </span>
+        Shipping information is required
+      </p>
       <submission-context-shipping-summary
         class="mt-6"
       />
