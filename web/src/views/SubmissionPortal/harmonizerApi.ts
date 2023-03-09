@@ -418,6 +418,9 @@ export class HarmonizerApi {
   }
 
   static flattenArrayValues(tableData: Record<string, any>[]) {
+    if (!tableData) {
+      return [];
+    }
     return tableData.map((row) => Object.fromEntries(
       Object.entries(row).map(([key, value]) => {
         let flatValue = value;

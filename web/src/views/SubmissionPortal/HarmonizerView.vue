@@ -233,16 +233,21 @@ export default defineComponent({
       const nextData = { ...sampleData.value };
       const templateKey = `${templateName}_data`;
       const environmentKey = `${templateList.value[0]}_data`;
+
+      // ensure the necessary keys exist in the data object
+      if (!nextData[environmentKey]) {
+        nextData[environmentKey] = [];
+      }
+      if (!nextData[templateKey]) {
+        nextData[templateKey] = [];
+      }
+
       // add/update any rows from the first tab to the active tab if they apply and if
       // they aren't there already.
-      (nextData[environmentKey] || []).forEach((row) => {
+      nextData[environmentKey].forEach((row) => {
         const rowId = row[SCHEMA_ID];
         const existing = nextData[templateKey] && nextData[templateKey].find((r) => r[SCHEMA_ID] === rowId);
-
         if (!existing && rowIsVisibleForTemplate(row, templateName)) {
-          if (!nextData[templateKey]) {
-            nextData[templateKey] = [];
-          }
           const newRow = {} as Record<string, any>;
           COMMON_COLUMNS.forEach((col) => {
             newRow[col] = row[col];
@@ -257,7 +262,7 @@ export default defineComponent({
       });
       // remove any rows from the active tab if they were removed from the first tab
       // or no longer apply to the active tab
-      if (nextData[templateKey]) {
+      if (nextData[templateKey].length > 0) {
         nextData[templateKey] = nextData[templateKey].filter((row) => {
           if (!rowIsVisibleForTemplate(row, templateName)) {
             return false;
