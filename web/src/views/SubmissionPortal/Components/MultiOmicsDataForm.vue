@@ -91,7 +91,7 @@ export default defineComponent({
       </v-alert>
 
       <!-- JGI -->
-      <div v-if="contextForm.facilities.includes('JGI')">
+      <div v-if="contextForm.facilities.includes('JGI') || contextForm.facilityGenerated === true">
         <div class="text-h6">
           Joint Genome Institute (JGI)
         </div>
@@ -131,7 +131,7 @@ export default defineComponent({
       </div>
 
       <!-- EMSL -->
-      <div v-if="contextForm.facilities.includes('EMSL')">
+      <div v-if="contextForm.facilities.includes('EMSL') || contextForm.facilityGenerated === true">
         <div class="text-h6 mt-4">
           Environmental Molecular Science Laboratory (EMSL)
         </div>
