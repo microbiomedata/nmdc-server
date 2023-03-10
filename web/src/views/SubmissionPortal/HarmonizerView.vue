@@ -658,7 +658,10 @@ export default defineComponent({
             </div>
             <div class="my-2">
               <span class="font-weight-bold pr-2">Column:</span>
-              <span v-html="selectedHelpDict.title" />
+              <span
+                :title="selectedHelpDict.name"
+                v-html="selectedHelpDict.title"
+              />
             </div>
             <div class="my-2">
               <span class="font-weight-bold pr-2">Description:</span>
