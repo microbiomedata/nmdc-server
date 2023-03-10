@@ -43,19 +43,6 @@ export default defineComponent({
       style="max-width: 1000px;"
     >
       <div v-if="contextForm.dataGenerated === true">
-        <v-combobox
-          v-model="multiOmicsForm.alternativeNames"
-          label="Alternative Names"
-          :hint="Definitions.studyAlternativeNames"
-          persistent-hint
-          deletable-chips
-          multiple
-          outlined
-          chips
-          small-chips
-          dense
-          append-icon=""
-        />
         <v-text-field
           v-model="multiOmicsForm.GOLDStudyId"
           label="GOLD Study ID"
@@ -71,6 +58,19 @@ export default defineComponent({
           persistent-hint
           outlined
           dense
+        />
+        <v-combobox
+          v-model="multiOmicsForm.alternativeNames"
+          label="Alternative Names / IDs"
+          :hint="Definitions.studyAlternativeNames"
+          persistent-hint
+          deletable-chips
+          multiple
+          outlined
+          chips
+          small-chips
+          dense
+          append-icon=""
         />
       </div>
       <div class="text-h4">
