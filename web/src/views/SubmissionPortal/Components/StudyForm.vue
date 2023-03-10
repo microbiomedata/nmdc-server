@@ -125,7 +125,11 @@ export default defineComponent({
         outlined
         dense
         class="my-2"
-      />
+      >
+        <template #message="{ message }">
+          <span v-html="message" />
+        </template>
+      </v-textarea>
       <v-text-field
         v-model="studyForm.notes"
         label="Optional Notes"
