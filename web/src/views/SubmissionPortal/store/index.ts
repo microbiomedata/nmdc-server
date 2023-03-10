@@ -15,6 +15,9 @@ enum BiosafetyLevels {
 }
 
 enum AwardTypes {
+  CSP = 'CSP',
+  BERSS = 'BERSS',
+  BRCSS = 'BRCSs',
   MONET = 'MONet',
   FICUS = 'FICUS'
 }
