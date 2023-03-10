@@ -42,7 +42,7 @@ export default defineComponent({
       class="my-6 mb-10"
       style="max-width: 1000px;"
     >
-      <div v-if="contextForm.facilities.length === 0">
+      <div v-if="contextForm.dataGenerated === true">
         <v-combobox
           v-model="multiOmicsForm.alternativeNames"
           label="Alternative Names"
