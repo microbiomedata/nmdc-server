@@ -100,7 +100,11 @@ export default defineComponent({
         persistent-hint
         dense
         class="my-2"
-      />
+      >
+        <template #message="{ message }">
+          <span v-html="message" />
+        </template>
+      </v-text-field>
       <v-combobox
         v-model="studyForm.linkOutWebpage"
         label="Webpage Links"
@@ -162,7 +166,11 @@ export default defineComponent({
               persistent-hint
               dense
               :style="{ maxWidth: '400px'}"
-            />
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-text-field>
           </div>
           <v-select
             v-model="contributor.roles"
@@ -177,7 +185,11 @@ export default defineComponent({
             small-chips
             dense
             persistent-hint
-          />
+          >
+            <template #message="{ message }">
+              <span v-html="message" />
+            </template>
+          </v-select>
         </v-card>
         <v-btn
           icon
