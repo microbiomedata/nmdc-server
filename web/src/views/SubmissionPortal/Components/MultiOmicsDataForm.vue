@@ -121,7 +121,7 @@ export default defineComponent({
           v-model="multiOmicsForm.JGIStudyId"
           :rules="[ v => !!v || 'JGI Study ID is required when processing was done at JGI' ]"
           label="JGI Study ID *"
-          hint="JGI Study ID is required when processing was done at JGI"
+          hint="This is the 6 digit ID assigned to your JGI Proposal and is required when completing metadata for samples to be sent to JGI for sequencing."
           persistent-hint
           class="mt-4"
           outlined
