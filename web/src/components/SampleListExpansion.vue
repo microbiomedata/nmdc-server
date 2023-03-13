@@ -14,7 +14,7 @@ const buttonOrder = [
   'metatranscriptome',
   'proteomics',
   'metabolomics',
-  'organic matter characterization',
+  'nom characterization',
 ];
 
 export default defineComponent({
