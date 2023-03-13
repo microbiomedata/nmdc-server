@@ -223,6 +223,8 @@ class StudyBase(AnnotatedBase):
     relevant_protocols: Optional[List[str]]
     funding_sources: Optional[List[str]]
     ess_dive_datasets: Optional[List[str]]
+    # 7.4.12
+    # massive_study_identifiers: Optional[List[str]]
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
