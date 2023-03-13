@@ -15,6 +15,9 @@ enum BiosafetyLevels {
 }
 
 enum AwardTypes {
+  CSP = 'CSP',
+  BERSS = 'BERSS',
+  BRCSS = 'BRCSs',
   MONET = 'MONet',
   FICUS = 'FICUS'
 }
@@ -109,7 +112,7 @@ const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
 const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
   const template = HARMONIZER_TEMPLATES[packageName.value];
-  const list = getVariants(checkBoxes, template.default);
+  const list = getVariants(checkBoxes, contextForm.dataGenerated, template.default);
   return list;
 });
 
