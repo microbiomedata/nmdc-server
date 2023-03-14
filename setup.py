@@ -18,6 +18,10 @@ setup(
         "httpx<=0.18.2",
         "ipython==7.31.1",
         "itsdangerous==2.0.1",
+        # Added explicitly because trying to build a docker container
+        # after updating nmdc-schema failed to pull this in
+        # TODO: investigate further, try to remove from requirements
+        "linkml",
         "mypy<0.920",
         "nmdc-schema==7.4.12",
         "pint==0.18",
