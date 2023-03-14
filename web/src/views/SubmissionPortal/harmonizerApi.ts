@@ -31,8 +31,11 @@ const GOLD_FIELDS = {
 const EMSL = 'emsl';
 const JGI_MG = 'jgi_mg';
 const JGT_MT = 'jgi_mt';
-export function getVariants(checkBoxes: string[], base: string): string[] {
+export function getVariants(checkBoxes: string[], dataGenerated: boolean | undefined, base: string): string[] {
   const templates = [base];
+  if (dataGenerated) {
+    return templates;
+  }
   if (checkBoxes.includes('mp-emsl') || checkBoxes.includes('mb-emsl') || checkBoxes.includes('nom-emsl')) {
     templates.push(EMSL);
   }
@@ -418,6 +421,9 @@ export class HarmonizerApi {
   }
 
   static flattenArrayValues(tableData: Record<string, any>[]) {
+    if (!tableData) {
+      return [];
+    }
     return tableData.map((row) => Object.fromEntries(
       Object.entries(row).map(([key, value]) => {
         let flatValue = value;

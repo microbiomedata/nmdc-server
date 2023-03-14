@@ -42,20 +42,7 @@ export default defineComponent({
       class="my-6 mb-10"
       style="max-width: 1000px;"
     >
-      <div v-if="contextForm.facilities.length === 0">
-        <v-combobox
-          v-model="multiOmicsForm.alternativeNames"
-          label="Alternative Names"
-          :hint="Definitions.studyAlternativeNames"
-          persistent-hint
-          deletable-chips
-          multiple
-          outlined
-          chips
-          small-chips
-          dense
-          append-icon=""
-        />
+      <div v-if="contextForm.dataGenerated === true">
         <v-text-field
           v-model="multiOmicsForm.GOLDStudyId"
           label="GOLD Study ID"
@@ -71,6 +58,19 @@ export default defineComponent({
           persistent-hint
           outlined
           dense
+        />
+        <v-combobox
+          v-model="multiOmicsForm.alternativeNames"
+          label="Alternative Names / IDs"
+          :hint="Definitions.studyAlternativeNames"
+          persistent-hint
+          deletable-chips
+          multiple
+          outlined
+          chips
+          small-chips
+          dense
+          append-icon=""
         />
       </div>
       <div class="text-h4">
@@ -91,7 +91,7 @@ export default defineComponent({
       </v-alert>
 
       <!-- JGI -->
-      <div v-if="contextForm.facilities.includes('JGI')">
+      <div v-if="contextForm.facilities.includes('JGI') || contextForm.facilityGenerated === true">
         <div class="text-h6">
           Joint Genome Institute (JGI)
         </div>
@@ -121,7 +121,7 @@ export default defineComponent({
           v-model="multiOmicsForm.JGIStudyId"
           :rules="[ v => !!v || 'JGI Proposal ID/Study ID is required when processing was done at JGI' ]"
           label="JGI Proposal ID/Study ID *"
-          hint="JGI Proposal ID/Study ID is required when processing was done at JGI"
+          hint="This is the 6 digit ID assigned to your JGI Proposal and is required when completing metadata for samples to be sent to JGI for sequencing."
           persistent-hint
           class="mt-4"
           outlined
@@ -131,7 +131,7 @@ export default defineComponent({
       </div>
 
       <!-- EMSL -->
-      <div v-if="contextForm.facilities.includes('EMSL')">
+      <div v-if="contextForm.facilities.includes('EMSL') || contextForm.facilityGenerated === true">
         <div class="text-h6 mt-4">
           Environmental Molecular Science Laboratory (EMSL)
         </div>

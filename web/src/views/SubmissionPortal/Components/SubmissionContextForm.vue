@@ -24,7 +24,8 @@ export default defineComponent({
       (facility: string) => ['EMSL', 'JGI'].includes(facility),
     );
     const projectAwardValidationRules = () => [(v: string) => {
-      const awardChosen = v === 'MONet' || v === 'FICUS' || v === contextForm.otherAward;
+      const awardTypes = Object.values(AwardTypes) as string[];
+      const awardChosen = awardTypes.includes(v) || v === contextForm.otherAward;
       const valid = awardChosen || contextForm.facilities.length === 0;
       return valid || 'If submitting to a use facility, this field is required.';
     }];
@@ -152,14 +153,76 @@ export default defineComponent({
           label="What kind of project have you been awarded? *"
           :rules="projectAwardValidationRules()"
         >
-          <v-radio
-            label="FICUS"
-            value="FICUS"
-          />
-          <v-radio
-            label="MONet"
-            value="MONet"
-          />
+          <div class="d-flex">
+            <v-radio
+              value="CSP"
+              label="CSP"
+            />
+            <div class="ml-1">
+              (<a
+                href="https://jgi.doe.gov/user-programs/program-info/csp-overview/csp-annual-call/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >Community Science Program</a>)
+            </div>
+          </div>
+
+          <div class="d-flex">
+            <v-radio
+              value="BERSS"
+              label="BERSS"
+            />
+            <div class="ml-1">
+              (<a
+                href="https://jgi.doe.gov/user-programs/other-programs/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >Biological and Environmental Research Support Science</a>)
+            </div>
+          </div>
+
+          <div class="d-flex">
+            <v-radio
+              value="BRCSs"
+              label="BRCSs"
+            />
+            <div class="ml-1">
+              (<a
+                href="https://jgi.doe.gov/user-programs/other-programs/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >Bioenergy Research Centers</a>)
+            </div>
+          </div>
+
+          <div class="d-flex">
+            <v-radio
+              value="FICUS"
+              label="FICUS"
+            />
+            <div class="ml-1">
+              (<a
+                href="https://www.emsl.pnnl.gov/basic/ficus-program/1872"
+                target="_blank"
+                rel="noopener noreferrer"
+              >Facilities Integrating Collaborations for User Science</a>)
+            </div>
+          </div>
+
+          <div class="d-flex">
+            <v-radio
+              value="MONet"
+              label="MONet"
+            />
+            <div class="ml-1">
+              (<a
+                href="https://www.emsl.pnnl.gov/monet"
+                target="_blank"
+                rel="noopener noreferrer"
+              >Molecular Observation Network</a>)
+            </div>
+          </div>
+
           <v-radio
             :value="contextForm.otherAward"
           >
