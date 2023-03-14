@@ -63,8 +63,8 @@ export default defineComponent({
         Template choice disabled
       </p>
       Your DataHarmonizer template is "{{ templateList.join(' + ') }}".
-      Template cannot be changed when there are already metadata rows in step 5.
-      To change the template, return to step 5 and remove all data.
+      Template cannot be changed when there are already metadata rows in step 6.
+      To change the template, return to step 6 and remove all data.
     </v-alert>
     <div class="d-flex">
       <v-btn
