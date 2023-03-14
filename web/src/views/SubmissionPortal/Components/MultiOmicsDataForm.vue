@@ -87,7 +87,7 @@ export default defineComponent({
         <p class="text-h5">
           Data type choice disabled
         </p>
-        Data types cannot be changed when there are already metadata rows in step 5.  To change the template, return to step 5 and remove all data.
+        Data types cannot be changed when there are already metadata rows in step 6.  To change the template, return to step 6 and remove all data.
       </v-alert>
 
       <!-- JGI -->
