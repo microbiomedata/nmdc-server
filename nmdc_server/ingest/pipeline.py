@@ -32,37 +32,42 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
 
     query = annotations.find(
         {
-            "was_generated_by": pipeline.id,
-            "has_function": {
+            "metagenome_annotation_id": pipeline.id,
+            "gene_function_id": {
                 "$regex": ko_regex,
             },
         },
         no_cursor_timeout=True,
-        projection={"_id": False, "has_function": True, "subject": True},
+        projection={
+            "_id": False,
+            "metagenome_annotation_id": True,
+            "count": True,
+            "gene_function_id": True,
+        },
     )
     if kwargs.get("function_limit"):
         query = query.limit(kwargs["function_limit"])
 
     gene_functions: Set[str] = set()
-    mga_gene_functions: List[models.MGAGeneFunction] = []
+    mga_gene_function_aggregations: List[models.MGAGeneFunctionAggregation] = []
     for annotation in query:
-        function_id = annotation["has_function"]
+        function_id = annotation["gene_function_id"]
         gene_functions.add(function_id)
-        mga_gene_functions.append(
-            models.MGAGeneFunction(
+        mga_gene_function_aggregations.append(
+            models.MGAGeneFunctionAggregation(
                 metagenome_annotation_id=pipeline.id,
                 gene_function_id=function_id,
-                subject=annotation["subject"],
+                count=annotation["count"],
             )
         )
 
-    if mga_gene_functions:
+    if mga_gene_function_aggregations:
         db.execute(
             insert(models.GeneFunction)
             .on_conflict_do_nothing()
             .values([(gf,) for gf in gene_functions])
         )
-        db.bulk_save_objects(mga_gene_functions)
+        db.bulk_save_objects(mga_gene_function_aggregations)
 
     return row
 
@@ -78,26 +83,67 @@ def load_mags(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
 
 
 def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
-    peptides = obj.pop("has_peptide_quantifications", [])
     pipeline = cast(models.MetaproteomicAnalysis, load_mp_analysis_base(db, obj, **kwargs))
 
-    for p in peptides:
-        if not db.query(models.MGAGeneFunction).filter_by(subject=p["best_protein"]).first():
-            continue
+    annotations: Collection = kwargs["annotations"]
 
-        proteins = p.pop("all_proteins", [])
-        peptide = models.MetaproteomicPeptide(metaproteomic_analysis=pipeline, **p)
-        db.add(peptide)
+    query = annotations.find(
+        {
+            "metaproteomic_analysis_id": pipeline.id,
+            "gene_function_id": {
+                "$regex": ko_regex,
+            },
+        },
+        no_cursor_timeout=True,
+        projection={
+            "_id": False,
+            "metaproteomic_analysis_id": True,
+            "count": True,
+            "gene_function_id": True,
+            "best_protein": True,
+        },
+    )
+    if kwargs.get("function_limit"):
+        query = query.limit(kwargs["function_limit"])
 
-        for protein in proteins:
-            if not db.query(models.MGAGeneFunction).filter_by(subject=protein).first():
-                continue
-            db.add(
-                models.PeptideMGAGeneFunction(
-                    subject=protein,
-                    metaproteomic_peptide=peptide,
-                )
+    gene_functions: Set[str] = set()
+    metap_gene_function_aggregations: List[models.MetaPGeneFunctionAggregation] = []
+    for annotation in query:
+        function_id = annotation["gene_function_id"]
+        gene_functions.add(function_id)
+        metap_gene_function_aggregations.append(
+            models.MetaPGeneFunctionAggregation(
+                metaproteomic_analysis_id=pipeline.id,
+                gene_function_id=function_id,
+                count=annotation["count"],
+                best_protein=annotation["best_protein"],
             )
+        )
+    if metap_gene_function_aggregations:
+        db.execute(
+            insert(models.GeneFunction)
+            .on_conflict_do_nothing()
+            .values([(gf,) for gf in gene_functions])
+        )
+        db.bulk_save_objects(metap_gene_function_aggregations)
+
+    # for p in peptides:
+    # if not db.query(models.MGAGeneFunction).filter_by(subject=p["best_protein"]).first():
+    # continue
+
+    # proteins = p.pop("all_proteins", [])
+    # peptide = models.MetaproteomicPeptide(metaproteomic_analysis=pipeline, **p)
+    # db.add(peptide)
+
+    # for protein in proteins:
+    # if not db.query(models.MGAGeneFunction).filter_by(subject=protein).first():
+    # continue
+    # db.add(
+    # models.PeptideMGAGeneFunction(
+    # subject=protein,
+    # metaproteomic_peptide=peptide,
+    # )
+    # )
 
     return pipeline
 
@@ -156,7 +202,7 @@ def load(
             # unset the type, override it with the schema's default type
             reported_type = obj.pop("type")
             if reported_type != workflow_type:
-                logger.warning(f"Unexpected type {reported_type}")
+                logger.warning(f"Unexpected type {reported_type} (expected {workflow_type})")
 
         obj["omics_processing_id"] = obj.pop("was_informed_by")
 

@@ -471,9 +471,9 @@ def test_query_gene_function_biosample(db: Session):
         gene_functions=gene_functions, omics_processing__biosample=sample1
     )
     db.commit()
-    models.MGAGeneFunctionAggregation.populate(db)
-    models.MetaPGeneFunctionAggregation.populate(db)
-    db.commit()
+    # models.MGAGeneFunctionAggregation.populate(db)
+    # models.MetaPGeneFunctionAggregation.populate(db)
+    # db.commit()
 
     q = query.BiosampleQuerySchema(
         conditions=[
@@ -512,9 +512,9 @@ def test_query_gene_function_mga_metap(db: Session):
         mga_gene_function=gene_functions[1], metaproteomic_peptide=peptide
     )
     db.commit()
-    models.MGAGeneFunctionAggregation.populate(db)
-    models.MetaPGeneFunctionAggregation.populate(db)
-    db.commit()
+    # models.MGAGeneFunctionAggregation.populate(db)
+    # models.MetaPGeneFunctionAggregation.populate(db)
+    # db.commit()
 
     q = query.MetagenomeAnnotationQuerySchema(
         conditions=[

@@ -162,7 +162,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
                     bar,
                     pipeline.load_mg_annotation,
                     WorkflowActivityTypeEnum.metagenome_annotation.value,
-                    annotations=mongodb["functional_annotation_set"],
+                    annotations=mongodb["functional_annotation_agg"],
                     function_limit=function_limit,
                 )
         except Exception:
@@ -191,6 +191,8 @@ def load(db: Session, function_limit=None, skip_annotation=False):
             ),
             pipeline.load_mp_analysis,
             WorkflowActivityTypeEnum.metaproteomic_analysis.value,
+            annotations=mongodb["metap_gene_function_aggregation"],
+            function_limit=function_limit,
         )
         db.commit()
     except Exception:
@@ -208,13 +210,13 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     db.commit()
 
     # all the data is loaded, so trigger denormalization updates
-    logger.info("Populating mga_gene_functions...")
-    models.MGAGeneFunctionAggregation.populate(db)
-    db.commit()
+    # logger.info("Populating mga_gene_functions...")
+    # models.MGAGeneFunctionAggregation.populate(db)
+    # db.commit()
 
-    logger.info("Populating metap_gene_functions...")
-    models.MetaPGeneFunctionAggregation.populate(db)
-    db.commit()
+    # logger.info("Populating metap_gene_functions...")
+    # models.MetaPGeneFunctionAggregation.populate(db)
+    # db.commit()
 
     logger.info("Populating multiomics...")
     models.Biosample.populate_multiomics(db)

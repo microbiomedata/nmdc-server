@@ -82,5 +82,6 @@ def populate_gene_functions():
     """Populate denormalized gene function tables."""
     with database.SessionLocalIngest() as ingest_db:
         with ingest_db.begin():
-            models.MGAGeneFunctionAggregation.populate(ingest_db)
-            models.MetaPGeneFunctionAggregation.populate(ingest_db)
+            # models.MGAGeneFunctionAggregation.populate(ingest_db)
+            # models.MetaPGeneFunctionAggregation.populate(ingest_db)
+            pass
