@@ -176,7 +176,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading read qc...")
     pipeline.load(
         db,
-        mongodb["read_QC_analysis_activity_set"].find(),
+        mongodb["read_qc_analysis_activity_set"].find(),
         pipeline.load_reads_qc,
         WorkflowActivityTypeEnum.reads_qc.value,
     )
