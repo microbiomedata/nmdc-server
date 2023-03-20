@@ -23,7 +23,9 @@ def upgrade():
     op.add_column(
         "study",
         sa.Column(
-            "massive_study_identifiers", postgresql.JSONB(astext_type=sa.Text()), nullable=True
+            "massive_study_identifiers",
+            postgresql.JSONB(astext_type=sa.Text()),  # type ignore
+            nullable=True,
         ),
     )
     # ### end Alembic commands ###
