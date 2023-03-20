@@ -127,24 +127,6 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
         )
         db.bulk_save_objects(metap_gene_function_aggregations)
 
-    # for p in peptides:
-    # if not db.query(models.MGAGeneFunction).filter_by(subject=p["best_protein"]).first():
-    # continue
-
-    # proteins = p.pop("all_proteins", [])
-    # peptide = models.MetaproteomicPeptide(metaproteomic_analysis=pipeline, **p)
-    # db.add(peptide)
-
-    # for protein in proteins:
-    # if not db.query(models.MGAGeneFunction).filter_by(subject=protein).first():
-    # continue
-    # db.add(
-    # models.PeptideMGAGeneFunction(
-    # subject=protein,
-    # metaproteomic_peptide=peptide,
-    # )
-    # )
-
     return pipeline
 
 

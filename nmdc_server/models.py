@@ -452,8 +452,6 @@ metagenome_annotation_output_association = output_association("metagenome_annota
 class MetagenomeAnnotation(Base, PipelineStep):
     __tablename__ = "metagenome_annotation"
 
-    gene_functions = relationship("MGAGeneFunction")
-
     inputs = input_relationship(metagenome_annotation_input_association)
     outputs = output_relationship(metagenome_annotation_output_association)
 
@@ -471,43 +469,6 @@ class MetaproteomicAnalysis(Base, PipelineStep):
 
 mags_analysis_input_association = input_association("mags_analysis")
 mags_analysis_output_association = output_association("mags_analysis")
-
-
-class MetaproteomicPeptide(Base):
-    __tablename__ = "metaproteomic_peptide"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    metaproteomic_analysis_id = Column(
-        String, ForeignKey("metaproteomic_analysis.id"), nullable=False
-    )
-
-    peptide_sequence = Column(String, nullable=False)
-    peptide_sum_masic_abundance = Column(BigInteger, nullable=False)
-    peptide_spectral_count = Column(BigInteger, nullable=False)
-    best_protein = Column(String, ForeignKey("mga_gene_function.subject"), nullable=False)
-    min_q_value = Column(Float, nullable=False)
-
-    best_protein_object = relationship("MGAGeneFunction")
-    metaproteomic_analysis = relationship(
-        MetaproteomicAnalysis, backref="has_peptide_quantifications"
-    )
-
-
-class PeptideMGAGeneFunction(Base):
-    __tablename__ = "peptide_mga_gene_function"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    subject = Column(String, ForeignKey("mga_gene_function.subject"), nullable=False)
-    metaproteomic_peptide_id = Column(
-        UUID(as_uuid=True), ForeignKey("metaproteomic_peptide.id"), nullable=False
-    )
-
-    mga_gene_function = relationship("MGAGeneFunction")
-    metaproteomic_peptide = relationship("MetaproteomicPeptide")
-
-    @property
-    def gene_function(self) -> str:
-        return self.mga_gene_function.gene_function_id
 
 
 class MAGsAnalysis(Base, PipelineStep):
@@ -626,26 +587,11 @@ class StudyPublication(Base):
 
 
 # This table contains KO terms detected in metagenome and metaproteomic workflow
-# activities.  In terms of size, this table and particularly the MGAGeneFunction
-# table linking with workflow activities are orders of magnitude larger than
-# the other tables.
+# activities
 class GeneFunction(Base):
     __tablename__ = "gene_function"
 
     id = Column(String, primary_key=True)
-
-
-class MGAGeneFunction(Base):  # metagenome annotation
-    __tablename__ = "mga_gene_function"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    metagenome_annotation_id = Column(
-        String, ForeignKey("metagenome_annotation.id"), nullable=False
-    )
-    gene_function_id = Column(String, ForeignKey("gene_function.id"), nullable=False)
-    subject = Column(String, nullable=False, unique=True)
-
-    function = relationship(GeneFunction)
 
 
 # Store references to individual downloads to provide download statistics information.
@@ -703,29 +649,15 @@ workflow_activity_types = [
 
 
 # denormalized tables
-# To improve performance of gene function queries a denormalized representation of gene functions
-# detected in MetaG and MetaP workflow activies is generated after ingestion.  This is done using
-# the custom SQL embedded in the populate methods.
+# These tables store aggregated gene function annotation data. The aggregations
+# are generated in mongo and these tables are built during the ingeset of the
+# associated pipelines
 class MGAGeneFunctionAggregation(Base):
     __tablename__ = "mga_gene_function_aggregation"
 
     metagenome_annotation_id = Column(String, ForeignKey(MetagenomeAnnotation.id), primary_key=True)
     gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
     count = Column(BigInteger, nullable=False)
-
-    # @classmethod
-    # def populate(cls, db: Session):
-    # """Populate denormalized gene function table."""
-    # db.execute(
-    # f"""
-    # INSERT INTO
-    # {cls.__tablename__} (metagenome_annotation_id, gene_function_id, count)
-    # SELECT metagenome_annotation_id, gene_function_id, count(*) as count
-    # FROM mga_gene_function GROUP BY metagenome_annotation_id, gene_function_id
-    # ON CONFLICT (metagenome_annotation_id, gene_function_id)
-    # DO UPDATE SET count = excluded.count;
-    # """
-    # )
 
 
 class MetaPGeneFunctionAggregation(Base):
@@ -737,34 +669,6 @@ class MetaPGeneFunctionAggregation(Base):
     gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
     count = Column(BigInteger, nullable=False)
     best_protein = Column(Boolean, nullable=False)
-
-    # @classmethod
-    # def populate(cls, db: Session):
-    # """Populate denormalized gene function table."""
-    # db.execute(
-    # f"""
-    # INSERT INTO
-    # {cls.__tablename__}
-    # (metaproteomic_analysis_id, gene_function_id, count, best_protein)
-    # SELECT
-    # metaproteomic_analysis.id,
-    # mga_gene_function.gene_function_id,
-    # count(*) AS count,
-    # bool_or(metaproteomic_peptide.best_protein = mga_gene_function.subject)
-    # AS best_protein
-    # FROM metaproteomic_analysis
-    # JOIN metaproteomic_peptide
-    # ON metaproteomic_peptide.metaproteomic_analysis_id = metaproteomic_analysis.id
-    # JOIN peptide_mga_gene_function
-    # ON peptide_mga_gene_function.metaproteomic_peptide_id = metaproteomic_peptide.id
-    # JOIN mga_gene_function
-    # ON mga_gene_function.subject = peptide_mga_gene_function.subject
-    # GROUP BY metaproteomic_analysis.id, mga_gene_function.gene_function_id
-    # ON CONFLICT (metaproteomic_analysis_id, gene_function_id)
-    # DO UPDATE
-    # SET count = excluded.count, best_protein = excluded.best_protein;
-    # """
-    # )
 
 
 # Used to store a reference to a user requested zip download.  This is stored
