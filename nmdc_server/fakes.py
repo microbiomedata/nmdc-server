@@ -354,34 +354,3 @@ class GeneFunction(SQLAlchemyModelFactory):
         sqlalchemy_session = db
 
     id: str = Faker("pystr")
-
-
-class MGAGeneFunction(SQLAlchemyModelFactory):
-    class Meta:
-        model = models.MGAGeneFunction
-        sqlalchemy_session = db
-
-    function = SubFactory(GeneFunction)
-    subject = Faker("pystr")
-
-
-class MetaproteomicPeptideFactory(SQLAlchemyModelFactory):
-    class Meta:
-        model = models.MetaproteomicPeptide
-        sqlalchemy_session = db
-
-    peptide_sequence: str = Faker("pystr")
-    peptide_sum_masic_abundance: int = Faker("pyint")
-    peptide_spectral_count: int = Faker("pyint")
-    best_protein_object = SubFactory(MGAGeneFunction)
-    min_q_value: float = Faker("pyfloat")
-    metaproteomic_analysis = SubFactory(MetaproteomicAnalysisFactory)
-
-
-class PeptideMGAGeneFunctionFactory(SQLAlchemyModelFactory):
-    class Meta:
-        model = models.PeptideMGAGeneFunction
-        sqlalchemy_session = db
-
-    mga_gene_function = SubFactory(MGAGeneFunction)
-    metaproteomic_peptide = SubFactory(MetaproteomicPeptideFactory)
