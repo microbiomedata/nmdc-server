@@ -143,7 +143,7 @@ export interface StudySearchResults extends BaseSearchResult {
   funding_sources: string[];
   relevant_protocols: string[];
   ess_dive_datasets: string[];
-  // massive_study_identifiers: string[];
+  massive_study_identifiers: string[];
   has_credit_associations: {
     applied_roles: string[];
     applies_to_person: {
