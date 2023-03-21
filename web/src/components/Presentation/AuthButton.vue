@@ -3,6 +3,12 @@ import { defineComponent } from '@vue/composition-api';
 import { stateRefs } from '@/store';
 
 export default defineComponent({
+  props: {
+    nav: {
+      type: Boolean,
+      default: false,
+    },
+  },
   setup() {
     return {
       me: stateRefs.user,
@@ -15,8 +21,10 @@ export default defineComponent({
   <div>
     <template v-if="me">
       <v-btn
-        text
-        color="grey darken-2"
+        :text="!nav"
+        :plain="nav"
+        :small="nav"
+        :ripple="!nav"
       >
         <v-icon left>
           mdi-account-circle
@@ -24,8 +32,10 @@ export default defineComponent({
         {{ me }}
       </v-btn>
       <v-btn
-        icon
-        color="grey darken-2"
+        :icon="!nav"
+        :plain="nav"
+        :small="nav"
+        :ripple="!nav"
         href="/logout"
       >
         <v-icon>mdi-logout</v-icon>
@@ -33,8 +43,9 @@ export default defineComponent({
     </template>
     <template v-else>
       <v-btn
-        text
-        color="grey darken-2"
+        :text="!nav"
+        :plain="nav"
+        :small="nav"
         href="/login"
       >
         <img
