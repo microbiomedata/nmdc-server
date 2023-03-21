@@ -22,7 +22,8 @@ setup(
         # after updating nmdc-schema failed to pull this in. It should
         # likely be pulled in by nmdc-schema, but that is not currently
         # the case
-        "linkml",
+        # https://github.com/microbiomedata/nmdc-schema/issues/820
+        "linkml>=1.4.6",
         "mypy<0.920",
         "nmdc-schema==7.4.12",
         "pint==0.18",
