@@ -18,6 +18,7 @@ import BulkDownload from '@/components/BulkDownload.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
 import SearchSidebar from './SearchSidebar.vue';
+import SearchHelpMenu from './SearchHelpMenu.vue';
 
 export default defineComponent({
   name: 'SearchLayout',
@@ -29,6 +30,7 @@ export default defineComponent({
     SampleListExpansion,
     SearchResults,
     SearchSidebar,
+    SearchHelpMenu,
   },
 
   setup() {
@@ -142,17 +144,25 @@ export default defineComponent({
       >
         <v-row>
           <v-col>
-            <v-tabs
-              v-model="vistab"
-              height="30px"
-            >
-              <v-tab key="omics">
-                Omics
-              </v-tab>
-              <v-tab key="environments">
-                Environment
-              </v-tab>
-            </v-tabs>
+            <v-row>
+              <v-col>
+                <v-tabs
+                  v-model="vistab"
+                  height="30px"
+                >
+                  <v-tab key="omics">
+                    Omics
+                  </v-tab>
+                  <v-tab key="environments">
+                    Environment
+                  </v-tab>
+                </v-tabs>
+              </v-col>
+              <v-spacer />
+              <v-col class="d-flex justify-end flex-grow-0 flex-shrink-0">
+                <search-help-menu />
+              </v-col>
+            </v-row>
             <v-tabs-items
               v-model="vistab"
               class="my-3"
