@@ -26,11 +26,11 @@ export default defineComponent({
   >
     <a
       class="header-logo"
-      @click="$emit('logoClicked')"
+      href="https://microbiomedata.org/"
     >
       <img
         src="/NMDC_logo_long.jpg"
-        alt="Page home"
+        alt="Home page"
       >
     </a>
 

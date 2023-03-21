@@ -1,14 +1,13 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
 import AppHeader from '@/components/Presentation/AppHeader.vue';
-import { setConditions, stateRefs } from '@/store/';
+import { stateRefs } from '@/store/';
 
 export default defineComponent({
   name: 'App',
   components: { AppHeader },
   setup() {
     return {
-      setConditions,
       stateRefs,
     };
   },
@@ -17,7 +16,7 @@ export default defineComponent({
 
 <template>
   <v-app>
-    <app-header @logoClicked="setConditions([])" />
+    <app-header />
     <keep-alive>
       <router-view />
     </keep-alive>
