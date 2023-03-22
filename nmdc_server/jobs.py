@@ -74,14 +74,3 @@ def ingest(function_limit=None, skip_annotation=False):
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownloadDataObject))
-            populate_gene_functions()
-
-
-@celery_app.task
-def populate_gene_functions():
-    """Populate denormalized gene function tables."""
-    with database.SessionLocalIngest() as ingest_db:
-        with ingest_db.begin():
-            # models.MGAGeneFunctionAggregation.populate(ingest_db)
-            # models.MetaPGeneFunctionAggregation.populate(ingest_db)
-            pass
