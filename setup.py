@@ -25,7 +25,7 @@ setup(
         # https://github.com/microbiomedata/nmdc-schema/issues/820
         "linkml>=1.4.6",
         "mypy<0.920",
-        "nmdc-schema==7.4.12",
+        "nmdc-schema==7.4.15",
         "pint==0.18",
         "psycopg2==2.9.3",
         "pydantic==1.8.2",
