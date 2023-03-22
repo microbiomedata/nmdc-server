@@ -22,6 +22,11 @@ enum AwardTypes {
   FICUS = 'FICUS'
 }
 
+enum SubmissionStatus {
+  InProgress = 'In Progress',
+  SubmittedPendingReview = 'Submitted- Pending Review'
+}
+
 const hasChanged = ref(0);
 /**
  * Submission Context Step
@@ -153,7 +158,8 @@ const submitPayload = computed(() => {
 });
 
 function submit(id: string) {
-  return api.updateRecord(id, payloadObject.value, 'complete');
+  const status = SubmissionStatus.SubmittedPendingReview;
+  return api.updateRecord(id, payloadObject.value, status);
 }
 
 function reset() {
