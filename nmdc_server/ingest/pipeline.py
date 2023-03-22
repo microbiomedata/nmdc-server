@@ -93,6 +93,7 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
             "gene_function_id": {
                 "$regex": ko_regex,
             },
+            "best_protein": True,
         },
         no_cursor_timeout=True,
         projection={
