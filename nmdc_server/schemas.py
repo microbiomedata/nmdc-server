@@ -395,14 +395,6 @@ class GeneFunction(BaseModel):
     id: str
 
 
-class MGAGeneFunction(BaseModel):
-    class Config:
-        orm_mode = True
-
-    gene_function_id: str
-    subject: str
-
-
 class PipelineStepBase(BaseModel):
     id: str
     name: str = ""
@@ -477,7 +469,7 @@ class MetagenomeAnnotationBase(PipelineStepBase):
 
 
 class MetagenomeAnnotation(PipelineStep):
-    gene_functions: List[MGAGeneFunction]
+    pass
 
 
 class MetaproteomicAnalysisBase(PipelineStepBase):
@@ -486,21 +478,6 @@ class MetaproteomicAnalysisBase(PipelineStepBase):
 
 class MetaproteomicAnalysis(PipelineStep):
     pass
-
-
-class PeptideMGAGeneFunction(BaseModel):
-    subject: str
-    gene_function: str
-
-
-class MetaprotemoicPeptide(BaseModel):
-    peptide_sequence: str
-    peptide_sum_masic_abundance: int
-    peptide_spectral_count: int
-    best_protein: str
-    min_q_value: float
-
-    best_protein_object: "MGAGeneFunction"
 
 
 class MAG(BaseModel):
@@ -589,7 +566,6 @@ OmicsTypes = Union[
 OmicsProcessing.update_forward_refs()
 Biosample.update_forward_refs()
 MAGCreate.update_forward_refs()
-MetaprotemoicPeptide.update_forward_refs()
 
 
 class FileDownloadMetadata(BaseModel):

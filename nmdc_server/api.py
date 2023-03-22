@@ -393,24 +393,6 @@ async def run_ingest(
 
 
 @router.post(
-    "/jobs/populate_gene_functions",
-    tags=["jobs"],
-    responses=login_required_responses,
-)
-async def repopulate_gene_functions(
-    user: models.User = Depends(admin_required), db: Session = Depends(get_db)
-):
-    lock = db.query(IngestLock).first()
-    if lock:
-        raise HTTPException(
-            status_code=409,
-            detail=f"An ingest started at {lock.started} is in progress",
-        )
-    jobs.populate_gene_functions.delay()
-    return ""
-
-
-@router.post(
     "/bulk_download",
     tags=["download"],
     response_model=BulkDownload,
