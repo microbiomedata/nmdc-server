@@ -6,3 +6,6 @@ __pycache__/
 .vscode/
 .venv
 vetur.config.js
+*.sql
+**.local**
+build/**

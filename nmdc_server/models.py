@@ -213,6 +213,7 @@ class Study(Base, AnnotatedModel):
     relevant_protocols = Column(JSONB, nullable=True)
     funding_sources = Column(JSONB, nullable=True)
     ess_dive_datasets = Column(JSONB, nullable=True)
+    massive_study_identifiers = Column(JSONB, nullable=True)
 
     # These query expressions are a way to inject additional aggregation information
     # into the query at search time.  See `with_expression` usage in `query.py`.

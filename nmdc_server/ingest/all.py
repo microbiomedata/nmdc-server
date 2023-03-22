@@ -109,7 +109,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading read based analysis...")
     pipeline.load(
         db,
-        mongodb["read_based_analysis_activity_set"].find(),
+        mongodb["read_based_taxonomy_analysis_activity_set"].find(),
         pipeline.load_read_based_analysis,
         WorkflowActivityTypeEnum.read_based_analysis.value,
     )
@@ -176,7 +176,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading read qc...")
     pipeline.load(
         db,
-        mongodb["read_QC_analysis_activity_set"].find(),
+        mongodb["read_qc_analysis_activity_set"].find(),
         pipeline.load_reads_qc,
         WorkflowActivityTypeEnum.reads_qc.value,
     )
