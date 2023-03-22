@@ -18,14 +18,8 @@ setup(
         "httpx<=0.18.2",
         "ipython==7.31.1",
         "itsdangerous==2.0.1",
-        # Added explicitly because trying to build a docker container
-        # after updating nmdc-schema failed to pull this in. It should
-        # likely be pulled in by nmdc-schema, but that is not currently
-        # the case
-        # https://github.com/microbiomedata/nmdc-schema/issues/820
-        "linkml>=1.4.6",
         "mypy<0.920",
-        "nmdc-schema==7.4.15",
+        "nmdc-schema==7.4.16",
         "pint==0.18",
         "psycopg2==2.9.3",
         "pydantic==1.8.2",
