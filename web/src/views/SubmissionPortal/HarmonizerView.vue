@@ -9,9 +9,9 @@ import { read, writeFile, utils } from 'xlsx';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
-import { HarmonizerApi } from './harmonizerApi';
+import { HarmonizerApi, HARMONIZER_TEMPLATES } from './harmonizerApi';
 import {
-  packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateList, mergeSampleData,
+  packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateList, mergeSampleData, hasChanged,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
@@ -68,14 +68,20 @@ export default defineComponent({
     const sidebarOpen = ref(true);
     const invalidCells = shallowRef({} as Record<string, Record<number, Record<number, string>>>);
 
-    const activeTemplate = ref(templateList.value[0]);
-    const activeTemplateData = computed(() => sampleData.value[`${activeTemplate.value}_data`] || []);
-    const activeInvalidCells = computed(() => invalidCells.value[activeTemplate.value] || {});
+    const activeTemplateKey = ref(templateList.value[0]);
+    const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value]);
+    const activeTemplateData = computed(() => {
+      if (!activeTemplate.value.sampleDataSlot) {
+        return [];
+      }
+      return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
+    });
+    const activeInvalidCells = computed(() => invalidCells.value[activeTemplateKey.value] || {});
 
     watch(activeTemplateData, () => {
       harmonizerApi.loadData(activeTemplateData.value);
       // if we're not on the first tab, the common columns should be read-only
-      if (activeTemplate.value !== templateList.value[0]) {
+      if (activeTemplateKey.value !== templateList.value[0]) {
         harmonizerApi.setColumnsReadOnly([0, 1, 2]);
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
@@ -116,15 +122,16 @@ export default defineComponent({
     ));
 
     const onDataChange = () => {
+      hasChanged.value += 1;
       const data = harmonizerApi.exportJson();
-      mergeSampleData(activeTemplate.value, data);
+      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       incrementalSaveRecord(root.$route.params.id);
     };
 
     onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
       if (r) {
-        await harmonizerApi.init(r, activeTemplate.value);
+        await harmonizerApi.init(r, activeTemplate.value.schemaClass);
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
         harmonizerApi.addChangeHook(onDataChange);
@@ -150,7 +157,7 @@ export default defineComponent({
 
     async function validate() {
       const data = harmonizerApi.exportJson();
-      mergeSampleData(activeTemplate.value, data);
+      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       const result = await harmonizerApi.validate();
       const valid = Object.keys(result).length === 0;
       if (!valid && !sidebarOpen.value) {
@@ -158,7 +165,7 @@ export default defineComponent({
       }
       invalidCells.value = {
         ...invalidCells.value,
-        [activeTemplate.value]: result,
+        [activeTemplateKey.value]: result,
       };
       incrementalSaveRecord(root.$route.params.id);
       if (valid === false) {
@@ -200,59 +207,63 @@ export default defineComponent({
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
-      mergeSampleData(activeTemplate.value, data);
+      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       await submit(root.$route.params.id);
     });
 
-    function rowIsVisibleForTemplate(row: Record<string, any>, template: string) {
-      if (template === templateList.value[0]) {
+    function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
+      if (templateKey === templateList.value[0]) {
         return true;
       }
       const row_types = row[TYPE_FIELD];
       if (!row_types) {
         return false;
       }
-      if (template === EMSL) {
+      if (templateKey === EMSL) {
         return row_types.includes('metaproteomics')
           || row_types.includes('metabolomics')
           || row_types.includes('natural organic matter');
       }
-      if (template === JGI_MG) {
+      if (templateKey === JGI_MG) {
         return row_types.includes('metagenomics');
       }
-      if (template === JGT_MT) {
+      if (templateKey === JGT_MT) {
         return row_types.includes('metatranscriptomics');
       }
       return false;
     }
 
-    function synchronizeTabData(templateName: string) {
-      if (templateName === templateList.value[0]) {
+    function synchronizeTabData(templateKey: string) {
+      if (templateKey === templateList.value[0]) {
         return;
       }
       const nextData = { ...sampleData.value };
-      const templateKey = `${templateName}_data`;
-      const environmentKey = `${templateList.value[0]}_data`;
+      const templateSlot = HARMONIZER_TEMPLATES[templateKey].sampleDataSlot;
+      const environmentSlot = HARMONIZER_TEMPLATES[templateList.value[0]].sampleDataSlot;
+
+      if (!templateSlot || !environmentSlot) {
+        return;
+      }
 
       // ensure the necessary keys exist in the data object
-      if (!nextData[environmentKey]) {
-        nextData[environmentKey] = [];
+      if (!nextData[environmentSlot]) {
+        nextData[environmentSlot] = [];
       }
-      if (!nextData[templateKey]) {
-        nextData[templateKey] = [];
+      if (!nextData[templateSlot]) {
+        nextData[templateSlot] = [];
       }
 
       // add/update any rows from the first tab to the active tab if they apply and if
       // they aren't there already.
-      nextData[environmentKey].forEach((row) => {
+      nextData[environmentSlot].forEach((row) => {
         const rowId = row[SCHEMA_ID];
-        const existing = nextData[templateKey] && nextData[templateKey].find((r) => r[SCHEMA_ID] === rowId);
-        if (!existing && rowIsVisibleForTemplate(row, templateName)) {
+        const existing = nextData[templateSlot] && nextData[templateSlot].find((r) => r[SCHEMA_ID] === rowId);
+        if (!existing && rowIsVisibleForTemplate(row, templateKey)) {
           const newRow = {} as Record<string, any>;
           COMMON_COLUMNS.forEach((col) => {
             newRow[col] = row[col];
           });
-          nextData[templateKey].push(newRow);
+          nextData[templateSlot].push(newRow);
         }
         if (existing) {
           COMMON_COLUMNS.forEach((col) => {
@@ -262,13 +273,13 @@ export default defineComponent({
       });
       // remove any rows from the active tab if they were removed from the first tab
       // or no longer apply to the active tab
-      if (nextData[templateKey].length > 0) {
-        nextData[templateKey] = nextData[templateKey].filter((row) => {
-          if (!rowIsVisibleForTemplate(row, templateName)) {
+      if (nextData[templateSlot].length > 0) {
+        nextData[templateSlot] = nextData[templateSlot].filter((row) => {
+          if (!rowIsVisibleForTemplate(row, templateKey)) {
             return false;
           }
           const rowId = row[SCHEMA_ID];
-          const environmentRow = nextData[environmentKey].findIndex((r) => r[SCHEMA_ID] === rowId);
+          const environmentRow = nextData[environmentSlot].findIndex((r) => r[SCHEMA_ID] === rowId);
           return environmentRow >= 0;
         });
       }
@@ -276,19 +287,23 @@ export default defineComponent({
     }
 
     async function downloadSamples() {
-      templateList.value.forEach((template) => {
-        synchronizeTabData(template);
+      templateList.value.forEach((templateKey) => {
+        synchronizeTabData(templateKey);
       });
 
       const workbook = utils.book_new();
-      templateList.value.forEach((template) => {
+      templateList.value.forEach((templateKey) => {
+        const template = HARMONIZER_TEMPLATES[templateKey];
+        if (!template.sampleDataSlot || !template.schemaClass) {
+          return;
+        }
         const worksheet = utils.json_to_sheet([
-          harmonizerApi.getHeaderRow(template),
-          ...HarmonizerApi.flattenArrayValues(sampleData.value[`${template}_data`]),
+          harmonizerApi.getHeaderRow(template.schemaClass),
+          ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot]),
         ], {
           skipHeader: true,
         });
-        utils.book_append_sheet(workbook, worksheet, template);
+        utils.book_append_sheet(workbook, worksheet, template.displayName);
       });
       writeFile(workbook, EXPORT_FILENAME, { compression: true });
     }
@@ -306,12 +321,16 @@ export default defineComponent({
         const workbook = read(event.target.result);
         const imported = {} as Record<string, any>;
         Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
-          imported[`${name}_data`] = harmonizerApi.unflattenArrayValues(
+          const template = Object.values(HARMONIZER_TEMPLATES).find((template) => template.displayName === name);
+          if (!template || !template.sampleDataSlot || !template.schemaClass) {
+            return;
+          }
+          imported[template.sampleDataSlot] = harmonizerApi.unflattenArrayValues(
             utils.sheet_to_json(worksheet, {
-              header: harmonizerApi.getOrderedAttributeNames(name),
+              header: harmonizerApi.getOrderedAttributeNames(template.schemaClass),
               range: 1,
             }),
-            name,
+            template.schemaClass,
           );
         });
         harmonizerApi.setInvalidCells({});
@@ -335,13 +354,15 @@ export default defineComponent({
       const nextTemplate = templateList.value[index];
       synchronizeTabData(nextTemplate);
 
-      activeTemplate.value = nextTemplate;
-      harmonizerApi.useTemplate(nextTemplate);
+      activeTemplateKey.value = nextTemplate;
+      activeTemplate.value = HARMONIZER_TEMPLATES[nextTemplate];
+      harmonizerApi.useTemplate(HARMONIZER_TEMPLATES[nextTemplate].schemaClass);
       harmonizerApi.addChangeHook(onDataChange);
     }
 
     return {
       ColorKey,
+      HARMONIZER_TEMPLATES,
       columnVisibility,
       harmonizerElement,
       jumpToModel,
@@ -590,15 +611,15 @@ export default defineComponent({
 
     <v-tabs @change="changeTemplate">
       <v-tab
-        v-for="template in templateList"
-        :key="template"
+        v-for="templateKey in templateList"
+        :key="templateKey"
       >
         <v-badge
-          :content="validationTotalCounts[template]"
-          :value="validationTotalCounts[template] > 0"
+          :content="validationTotalCounts[templateKey]"
+          :value="validationTotalCounts[templateKey] > 0"
           color="error"
         >
-          {{ template }}
+          {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
         </v-badge>
       </v-tab>
     </v-tabs>
@@ -685,7 +706,7 @@ export default defineComponent({
               block
               @click="harmonizerApi.launchReference()"
             >
-              Full {{ activeTemplate }} Reference
+              Full {{ activeTemplate.displayName }} Reference
               <v-icon class="pl-1">
                 mdi-open-in-new
               </v-icon>

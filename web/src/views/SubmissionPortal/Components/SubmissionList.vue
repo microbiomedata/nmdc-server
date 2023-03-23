@@ -9,6 +9,7 @@ import {
   loadRecord, generateRecord,
 } from '../store';
 import * as api from '../store/api';
+import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
 const headers: DataTableHeader[] = [
   {
@@ -80,6 +81,7 @@ export default defineComponent({
     watch(options, () => submission.setPage(options.value.page), { deep: true });
 
     return {
+      HARMONIZER_TEMPLATES,
       createNewSubmission,
       getStatus,
       resume,
@@ -134,7 +136,7 @@ export default defineComponent({
           </a>
         </template>
         <template #[`item.metadata_submission.templates`]="{ item }">
-          {{ item.metadata_submission.templates.join(' + ') }}
+          {{ item.metadata_submission.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
         </template>
         <template #[`item.created`]="{ item }">
           {{ new Date(item.created).toLocaleString() }}

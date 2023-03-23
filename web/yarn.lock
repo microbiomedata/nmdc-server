@@ -7554,6 +7554,10 @@ nice-try@^1.0.4:
   version "0.0.0"
   resolved "https://github.com/microbiomedata/nmdc-schema#e9b7da691079989a7e72ecc350f59058c6787557"
 
+"nmdc-submission-schema@https://files.pythonhosted.org/packages/source/n/nmdc-submission-schema/nmdc_submission_schema-1.0.0.tar.gz":
+  version "0.0.0"
+  resolved "https://files.pythonhosted.org/packages/source/n/nmdc-submission-schema/nmdc_submission_schema-1.0.0.tar.gz#abfb25dc836b1953205bbeceb9e0217a1ce474e3"
+
 no-case@^2.2.0:
   version "2.3.2"
   resolved "https://registry.yarnpkg.com/no-case/-/no-case-2.3.2.tgz#60b813396be39b3f1288a4c1ed5d1e7d28b464ac"
