@@ -157,8 +157,7 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string) {
-  const status = SubmissionStatus.SubmittedPendingReview;
+function submit(id: string, status: SubmissionStatus = SubmissionStatus.InProgress) {
   return api.updateRecord(id, payloadObject.value, status);
 }
 
@@ -221,6 +220,8 @@ function mergeSampleData(key: string | undefined, data: any[]) {
 }
 
 export {
+  /* enums */
+  SubmissionStatus,
   BiosafetyLevels,
   AwardTypes,
   /* state */

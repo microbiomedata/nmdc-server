@@ -11,7 +11,15 @@ import useRequest from '@/use/useRequest';
 
 import { HarmonizerApi, HARMONIZER_TEMPLATES } from './harmonizerApi';
 import {
-  packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateList, mergeSampleData, hasChanged,
+  packageName,
+  samplesValid,
+  sampleData,
+  submit,
+  incrementalSaveRecord,
+  templateList,
+  mergeSampleData,
+  SubmissionStatus,
+  hasChanged,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
@@ -208,7 +216,7 @@ export default defineComponent({
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id);
+      await submit(root.$route.params.id, SubmissionStatus.SubmittedPendingReview);
     });
 
     function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
