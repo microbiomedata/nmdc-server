@@ -18,8 +18,9 @@ import {
   incrementalSaveRecord,
   templateList,
   mergeSampleData,
-  SubmissionStatus,
   hasChanged,
+  SubmissionStatus,
+  submissionStatus,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';

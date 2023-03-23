@@ -22,10 +22,17 @@ enum AwardTypes {
   FICUS = 'FICUS'
 }
 
-enum SubmissionStatus {
-  InProgress = 'In Progress',
-  SubmittedPendingReview = 'Submitted- Pending Review'
-}
+type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
+
+const submissionStatus: Record<string, SubmissionStatus> = {
+  InProgress: 'In Progress',
+  SubmittedPendingReview: 'Submitted- Pending Review',
+  Complete: 'Complete',
+};
+
+const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(submissionStatus).includes(str);
+
+const status = ref(submissionStatus.InProgress);
 
 const hasChanged = ref(0);
 /**
@@ -157,7 +164,7 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string, status: SubmissionStatus = SubmissionStatus.InProgress) {
+function submit(id: string, status: SubmissionStatus = submissionStatus.InProgress) {
   return api.updateRecord(id, payloadObject.value, status);
 }
 
@@ -177,6 +184,7 @@ function reset() {
   packageName.value = 'soil';
   sampleData.value = {};
   samplesValid.value = false;
+  status.value = submissionStatus.InProgress;
 }
 
 async function incrementalSaveRecord(id: string) {
@@ -205,6 +213,7 @@ async function loadRecord(id: string) {
   Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
+  status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
@@ -220,8 +229,8 @@ function mergeSampleData(key: string | undefined, data: any[]) {
 }
 
 export {
-  /* enums */
   SubmissionStatus,
+  submissionStatus,
   BiosafetyLevels,
   AwardTypes,
   /* state */
