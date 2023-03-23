@@ -23,10 +23,9 @@ from sqlalchemy import Column, orm
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.declarative import declarative_base
 
-
 # revision identifiers, used by Alembic.
-revision: str = '7b9f5a789198'
-down_revision: Optional[str] = 'b96ecfffa792'
+revision: str = "7b9f5a789198"
+down_revision: Optional[str] = "b96ecfffa792"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
@@ -78,6 +77,9 @@ def upgrade():
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
 
+        if isinstance(metadata_submission, list):
+            continue
+
         sample_data = metadata_submission.get("sampleData")
 
         if sample_data is None or not isinstance(sample_data, dict):
@@ -95,11 +97,15 @@ def upgrade():
     session.bulk_update_mappings(SubmissionMetadata, mappings)
     session.commit()
 
+
 def downgrade():
     session = orm.Session(bind=op.get_bind())
     mappings = []
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
+
+        if isinstance(metadata_submission, list):
+            continue
 
         sample_data = metadata_submission.get("sampleData")
 
