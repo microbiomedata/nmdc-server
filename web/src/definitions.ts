@@ -1,5 +1,5 @@
 const Definitions = {
-  studyName: 'Provide a name for the study your samples will belong with.',
+  studyName: 'Provide a study name to associate with your samples.',
   piName: 'The Principal Investigator who led the study and/or generated the data.',
   piEmail: 'An email address for the Principal Investigator.',
   piOrcid: '<a href="https://orcid.org" target="_blank" rel="noopener noreferrer">ORCID iD</a> of the Principal Investigator.',
