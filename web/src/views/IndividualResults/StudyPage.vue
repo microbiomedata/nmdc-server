@@ -145,6 +145,8 @@ export default defineComponent({
         gold: require('@/assets/GOLD.png'),
         // eslint-disable-next-line global-require
         ess: require('@/assets/ESS.png'),
+        // eslint-disable-next-line global-require
+        massive: require('@/assets/massive.png'),
       },
     };
   },
@@ -234,6 +236,20 @@ export default defineComponent({
                 style="padding-left: 60px;"
                 :image="images.ess"
                 @click="seeStudyInContext"
+              />
+              <AttributeItem
+                v-for="massive_id in item.massive_study_identifiers"
+                :key="massive_id"
+                v-bind="{
+                  item,
+                  link: {
+                    name: 'MASSive Study',
+                    target: `https://identifiers.org/massive/${massive_id}`
+                  },
+                }"
+                style="padding-left: 60px;"
+                :image="images.massive"
+                @click="() => console.log('Clicked massive link')"
               />
               <v-list-item v-if="item.relevant_protocols">
                 <v-list-item-avatar>
