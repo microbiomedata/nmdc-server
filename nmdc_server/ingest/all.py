@@ -58,6 +58,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         username=settings.mongo_user,
         password=settings.mongo_password,
         port=settings.mongo_port,
+        directConnection=True,
     )
     mongodb = client[settings.mongo_database]
 
