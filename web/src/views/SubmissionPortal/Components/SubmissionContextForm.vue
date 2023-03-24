@@ -95,7 +95,7 @@ export default defineComponent({
     >
       <v-radio-group
         v-model="contextForm.dataGenerated"
-        label="Has data already been generated for your study? *"
+        label="Have data already been generated for your study? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
         @change="revalidate"
       >
