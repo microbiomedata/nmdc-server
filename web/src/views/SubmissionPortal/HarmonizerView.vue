@@ -141,7 +141,6 @@ export default defineComponent({
     };
 
     onMounted(async () => {
-      console.log(status);
       const r = document.getElementById('harmonizer-root');
       if (r) {
         await harmonizerApi.init(r, activeTemplate.value.schemaClass);
