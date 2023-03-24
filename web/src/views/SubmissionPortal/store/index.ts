@@ -111,8 +111,7 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
 const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
-  const template = HARMONIZER_TEMPLATES[packageName.value];
-  const list = getVariants(checkBoxes, contextForm.dataGenerated, template.default);
+  const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
   return list;
 });
 
@@ -205,10 +204,13 @@ async function loadRecord(id: string) {
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
 
-function mergeSampleData(template: string, data: any[]) {
+function mergeSampleData(key: string | undefined, data: any[]) {
+  if (!key) {
+    return;
+  }
   sampleData.value = {
     ...sampleData.value,
-    [`${template}_data`]: data,
+    [key]: data,
   };
 }
 
@@ -232,6 +234,7 @@ export {
   packageName,
   templateList,
   templateChoiceDisabled,
+  hasChanged,
   /* functions */
   incrementalSaveRecord,
   generateRecord,

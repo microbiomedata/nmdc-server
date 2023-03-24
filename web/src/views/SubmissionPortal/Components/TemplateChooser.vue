@@ -1,15 +1,19 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent, computed } from '@vue/composition-api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import { templateChoiceDisabled, templateList, packageName } from '../store';
 
 export default defineComponent({
   setup() {
+    const templateListDisplayNames = computed(() => templateList.value
+      .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
+      .join(' + '));
+
     return {
       packageName,
       HARMONIZER_TEMPLATES,
       templates: Object.entries(HARMONIZER_TEMPLATES),
-      templateList,
+      templateListDisplayNames,
       templateChoiceDisabled,
     };
   },
@@ -29,11 +33,11 @@ export default defineComponent({
       class="my-6"
     >
       <v-radio
-        v-for="option in templates.filter((v) => v[1].status !== 'disabled')"
+        v-for="option in templates.filter((v) => v[1].status === 'published')"
         :key="option[0]"
         :value="option[0]"
         :disabled="templateChoiceDisabled"
-        :label="option[0]"
+        :label="HARMONIZER_TEMPLATES[option[0]].displayName"
       />
       <p class="grey--text text--darken-1 my-5">
         Under development
@@ -43,7 +47,7 @@ export default defineComponent({
         :key="option[0]"
         :value="option[0]"
         :disabled="true"
-        :label="option[0]"
+        :label="HARMONIZER_TEMPLATES[option[0]].displayName"
       />
     </v-radio-group>
     <v-alert
@@ -53,7 +57,7 @@ export default defineComponent({
       <p class="text-h5">
         DataHarmonizer Template Choice
       </p>
-      Your DataHarmonizer template is "{{ templateList.join(' + ') }}".
+      Your DataHarmonizer template is "{{ templateListDisplayNames }}".
     </v-alert>
     <v-alert
       v-else
@@ -62,7 +66,7 @@ export default defineComponent({
       <p class="text-h5">
         Template choice disabled
       </p>
-      Your DataHarmonizer template is "{{ templateList.join(' + ') }}".
+      Your DataHarmonizer template is "{{ templateListDisplayNames }}".
       Template cannot be changed when there are already metadata rows in step 6.
       To change the template, return to step 6 and remove all data.
     </v-alert>

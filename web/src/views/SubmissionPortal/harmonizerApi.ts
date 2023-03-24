@@ -51,45 +51,116 @@ export function getVariants(checkBoxes: string[], dataGenerated: boolean | undef
 /**
  * A manifest of the options available in DataHarmonizer
  */
-export const HARMONIZER_TEMPLATES: Record<string, {
-  default: string;
-  status: 'published' | 'disabled';
-}> = {
-  air: { default: 'air', status: 'published' },
-  // bioscales: { default: 'bioscales', status: 'published' },
-  'built environment': { default: 'built_env', status: 'published' },
-  'host-associated': { default: 'host-associated', status: 'published' },
-  'human-associated': { default: '', status: 'disabled' },
-  'human-gut': { default: '', status: 'disabled' },
-  'human-oral': { default: '', status: 'disabled' },
-  'human-skin': { default: '', status: 'disabled' },
-  'human-vaginal': { default: '', status: 'disabled' },
+interface HarmonizerTemplateInfo {
+  displayName: string,
+  schemaClass?: string,
+  sampleDataSlot?: string,
+  status: 'published' | 'mixin' | 'disabled',
+}
+export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
+  air: {
+    displayName: 'air',
+    schemaClass: 'AirInterface',
+    sampleDataSlot: 'air_data',
+    status: 'published',
+  },
+  'built environment': {
+    displayName: 'built environment',
+    schemaClass: 'BuiltEnvInterface',
+    sampleDataSlot: 'built_env_data',
+    status: 'published',
+  },
+  'host-associated': {
+    displayName: 'host-associated',
+    schemaClass: 'HostAssociatedInterface',
+    sampleDataSlot: 'host_associated_data',
+    status: 'published',
+  },
+  'human-associated': {
+    displayName: 'human-associated',
+    status: 'disabled',
+  },
+  'human-gut': {
+    displayName: 'human - gut',
+    status: 'disabled',
+  },
+  'human-oral': {
+    displayName: 'human - oral',
+    status: 'disabled',
+  },
+  'human-skin': {
+    displayName: 'human - skin',
+    status: 'disabled',
+  },
+  'human-vaginal': {
+    displayName: 'human - vaginal',
+    status: 'disabled',
+  },
   'hydrocarbon resources-cores': {
-    default: 'hcr-cores', status: 'published',
+    displayName: 'hydrocarbon resources - cores',
+    schemaClass: 'HcrCoresInterface',
+    sampleDataSlot: 'hcr_cores_data',
+    status: 'published',
   },
   'hydrocarbon resources-fluids_swabs': {
-    default: 'hcr-fluids-swabs', status: 'published',
+    displayName: 'hydrocarbon resources - fluids swabs',
+    schemaClass: 'HcrFluidsSwabsInterface',
+    sampleDataSlot: 'hcr_fluids_swabs_data',
+    status: 'published',
   },
   'microbial mat_biofilm': {
-    default: 'biofilm', status: 'published',
+    displayName: 'microbial mat_biofilm',
+    schemaClass: 'BiofilmInterface',
+    sampleDataSlot: 'biofilm_data',
+    status: 'published',
   },
   'miscellaneous natural or artificial environment': {
-    default: 'misc-envs', status: 'published',
+    displayName: 'miscellaneous natural or artificial environment',
+    schemaClass: 'MiscEnvsInterface',
+    sampleDataSlot: 'misc_envs_data',
+    status: 'published',
   },
   'plant-associated': {
-    default: 'plant-associated', status: 'published',
+    displayName: 'plant-associated',
+    schemaClass: 'PlantAssociatedInterface',
+    sampleDataSlot: 'plant_associated_data',
+    status: 'published',
   },
   sediment: {
-    default: 'sediment', status: 'published',
+    displayName: 'sediment',
+    schemaClass: 'SedimentInterface',
+    sampleDataSlot: 'sediment_data',
+    status: 'published',
   },
   soil: {
-    default: 'soil', status: 'published',
-  },
-  wastewater_sludge: {
-    default: 'wastewater_sludge', status: 'published',
+    displayName: 'soil',
+    schemaClass: 'SoilInterface',
+    sampleDataSlot: 'soil_data',
+    status: 'published',
   },
   water: {
-    default: 'water', status: 'published',
+    displayName: 'water',
+    schemaClass: 'WaterInterface',
+    sampleDataSlot: 'water_data',
+    status: 'published',
+  },
+  [EMSL]: {
+    displayName: 'EMSL',
+    schemaClass: 'EmslInterface',
+    sampleDataSlot: 'emsl_data',
+    status: 'mixin',
+  },
+  [JGI_MG]: {
+    displayName: 'JGI MG',
+    schemaClass: 'JgiMgInterface',
+    sampleDataSlot: 'jgi_mg_data',
+    status: 'mixin',
+  },
+  [JGT_MT]: {
+    displayName: 'JGI MT',
+    schemaClass: 'JgiMtInterface',
+    sampleDataSlot: 'jgi_mt_data',
+    status: 'mixin',
   },
 };
 
@@ -120,8 +191,8 @@ export class HarmonizerApi {
     this.selectedColumn = ref('');
   }
 
-  async init(r: HTMLElement, templateName: string) {
-    this.schema = (await import('./schema.json')).default;
+  async init(r: HTMLElement, templateName: string | undefined) {
+    this.schema = (await import('nmdc-submission-schema/project/json/nmdc_submission_schema.json')).default;
     // Taken from https://gold.jgi.doe.gov/download?mode=biosampleEcosystemsJson
     // See also: https://gold.jgi.doe.gov/ecosystemtree
     this.goldEcosystemTree = (await import('./GoldEcosystemTree.json')).default;
@@ -335,7 +406,7 @@ export class HarmonizerApi {
     });
   }
 
-  useTemplate(template: string) {
+  useTemplate(template: string | undefined) {
     if (!this.dh || !template) {
       return;
     }
@@ -383,8 +454,8 @@ export class HarmonizerApi {
     return this.getSlotRank(slot.slot_group);
   }
 
-  getOrderedAttributeNames(template: string) {
-    return Object.keys(this.schema.classes[template].attributes).sort(
+  getOrderedAttributeNames(className: string): string[] {
+    return Object.keys(this.schema.classes[className].attributes).sort(
       (a, b) => {
         const aSlotGroupRank = this.getSlotGroupRank(a);
         const bSlotGroupRank = this.getSlotGroupRank(b);
@@ -398,9 +469,9 @@ export class HarmonizerApi {
     );
   }
 
-  getHeaderRow(template: string) {
-    const orderedAttrNames = this.getOrderedAttributeNames(template);
-    const attrs = this.schema.classes[template].attributes;
+  getHeaderRow(className: string): Record<string, string> {
+    const orderedAttrNames = this.getOrderedAttributeNames(className);
+    const attrs = this.schema.classes[className].attributes;
     const header = {} as Record<string, string>;
     orderedAttrNames.forEach((attrName) => {
       header[attrName] = attrs[attrName].title || attrs[attrName].name;
@@ -408,11 +479,11 @@ export class HarmonizerApi {
     return header;
   }
 
-  unflattenArrayValues(tableData: Record<string, any>[], template: string) {
+  unflattenArrayValues(tableData: Record<string, any>[], className: string): Record<string, any>[] {
     return tableData.map((row) => Object.fromEntries(
       Object.entries(row).map(([key, value]) => {
         let unflattenedValue = value;
-        if (this.schema.classes[template].attributes[key].multivalued) {
+        if (this.schema.classes[className].attributes[key].multivalued) {
           unflattenedValue = value.split(';').map((v: string) => v.trim());
         }
         return [key, unflattenedValue];
