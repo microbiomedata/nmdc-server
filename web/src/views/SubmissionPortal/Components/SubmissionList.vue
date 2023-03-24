@@ -6,7 +6,7 @@ import { DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  loadRecord, generateRecord,
+  loadRecord, generateRecord, submissionStatus,
 } from '../store';
 import * as api from '../store/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
@@ -55,15 +55,10 @@ export default defineComponent({
     });
 
     function getStatus(item: api.MetadataSubmissionRecord) {
-      if (item.status === 'complete') {
-        return {
-          text: 'Complete',
-          color: 'success',
-        };
-      }
+      const color = item.status === submissionStatus.Complete ? 'success' : 'default';
       return {
-        text: 'In progress',
-        color: 'default',
+        text: item.status,
+        color,
       };
     }
 
