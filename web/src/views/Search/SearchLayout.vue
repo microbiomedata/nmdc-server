@@ -87,7 +87,7 @@ export default defineComponent({
       table: ref('study'),
       conditions: stateRefs.conditions,
     });
-    const study = usePaginatedResults(studySummaryData.otherConditions, api.searchStudy, undefined, 9);
+    const study = usePaginatedResults(studySummaryData.otherConditions, api.searchStudy, undefined, 10);
     const studyResults = computed(() => Object.values(study.data.results.results).map((r) => ({
       ...r,
       name: r.annotations.title || r.name,
