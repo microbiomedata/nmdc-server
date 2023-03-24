@@ -219,6 +219,7 @@ export default defineComponent({
                 </v-list-item-content>
               </v-list-item>
               <AttributeItem
+                v-if="item.open_in_gold"
                 style="padding-left: 60px;"
                 v-bind="{ item, field: 'open_in_gold' }"
                 :image="images.gold"
