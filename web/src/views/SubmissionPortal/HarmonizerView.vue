@@ -225,6 +225,7 @@ export default defineComponent({
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       await submit(root.$route.params.id, SubmissionStatus.SubmittedPendingReview);
+      submitDialog.value = false;
     });
 
     function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
@@ -778,11 +779,11 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :disabled="!samplesValid || status !== submissionStatus.InProgress"
+        :disabled="!samplesValid || status !== submissionStatus.InProgress || submitCount > 0"
         :loading="submitLoading"
         @click="submitDialog = true"
       >
-        <span v-if="status === submissionStatus.SubmittedPendingReview">
+        <span v-if="status === submissionStatus.SubmittedPendingReview || submitCount">
           <v-icon>mdi-check-circle</v-icon>
           Done
         </span>
