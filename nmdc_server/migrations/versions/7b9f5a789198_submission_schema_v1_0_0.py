@@ -11,7 +11,7 @@ strings always correspond to keys of the HARMONIZER_TEMPLATES
 object in harmonizerApi.ts.
 
 Revision ID: 7b9f5a789198
-Revises: b96ecfffa792
+Revises: 7ba2cb5f236e
 Create Date: 2023-03-21 23:29:41.957897
 
 """
@@ -25,7 +25,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # revision identifiers, used by Alembic.
 revision: str = "7b9f5a789198"
-down_revision: Optional[str] = "b96ecfffa792"
+down_revision: Optional[str] = "7ba2cb5f236e"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
