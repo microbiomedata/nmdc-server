@@ -251,6 +251,7 @@ export {
   templateList,
   templateChoiceDisabled,
   hasChanged,
+  status,
   /* functions */
   incrementalSaveRecord,
   generateRecord,

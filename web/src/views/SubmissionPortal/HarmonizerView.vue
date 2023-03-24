@@ -14,6 +14,7 @@ import {
   packageName,
   samplesValid,
   sampleData,
+  status,
   submit,
   incrementalSaveRecord,
   templateList,
@@ -87,6 +88,8 @@ export default defineComponent({
     });
     const activeInvalidCells = computed(() => invalidCells.value[activeTemplateKey.value] || {});
 
+    const submitDialog = ref(false);
+
     watch(activeTemplateData, () => {
       harmonizerApi.loadData(activeTemplateData.value);
       // if we're not on the first tab, the common columns should be read-only
@@ -138,6 +141,7 @@ export default defineComponent({
     };
 
     onMounted(async () => {
+      console.log(status);
       const r = document.getElementById('harmonizer-root');
       if (r) {
         await harmonizerApi.init(r, activeTemplate.value.schemaClass);
@@ -179,6 +183,9 @@ export default defineComponent({
       incrementalSaveRecord(root.$route.params.id);
       if (valid === false) {
         errorClick(0);
+        samplesValid.value = false;
+      } else {
+        samplesValid.value = true;
       }
     }
 
@@ -392,6 +399,9 @@ export default defineComponent({
       validationErrors,
       validationErrorGroups,
       validationTotalCounts,
+      submissionStatus,
+      status,
+      submitDialog,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -768,17 +778,26 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :disabled="!samplesValid || submitCount > 0"
+        :disabled="!samplesValid"
         :loading="submitLoading"
-        @click="doSubmit"
+        @click="submitDialog = true"
       >
-        <span v-if="submitCount > 0">
+        <span v-if="status === submissionStatus.SubmittedPendingReview">
           <v-icon>mdi-check-circle</v-icon>
           Done
         </span>
         <span v-else>
           3. Submit
         </span>
+        <v-dialog
+          v-model="submitDialog"
+          activator="parent"
+          width="auto"
+        >
+          <v-card>
+            <v-card-text>Submit popup</v-card-text>
+          </v-card>
+        </v-dialog>
       </v-btn>
     </div>
   </div>
