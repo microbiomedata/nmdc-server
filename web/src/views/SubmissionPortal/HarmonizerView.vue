@@ -778,7 +778,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :disabled="!samplesValid"
+        :disabled="!samplesValid || status !== submissionStatus.InProgress"
         :loading="submitLoading"
         @click="submitDialog = true"
       >
@@ -795,7 +795,22 @@ export default defineComponent({
           width="auto"
         >
           <v-card>
-            <v-card-text>Submit popup</v-card-text>
+            <v-card-title>
+              Submit
+            </v-card-title>
+            <v-card-text>You are about to submit this study and metadata for NMDC review. Would you like to continue?</v-card-text>
+            <v-card-actions>
+              <v-btn
+                color="primary"
+                class="mr-2"
+                @click="doSubmit"
+              >
+                Yes- Submit
+              </v-btn>
+              <v-btn @click="submitDialog = false">
+                Cancel
+              </v-btn>
+            </v-card-actions>
           </v-card>
         </v-dialog>
       </v-btn>
