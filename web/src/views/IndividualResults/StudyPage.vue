@@ -244,7 +244,7 @@ export default defineComponent({
                 v-bind="{
                   item,
                   link: {
-                    name: 'MASSive Study',
+                    name: 'MassIVE Study',
                     target: `https://identifiers.org/${massive_id}`
                   },
                 }"
