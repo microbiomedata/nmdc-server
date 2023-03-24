@@ -20,7 +20,6 @@ import {
   templateList,
   mergeSampleData,
   hasChanged,
-  SubmissionStatus,
   submissionStatus,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
@@ -182,10 +181,11 @@ export default defineComponent({
       incrementalSaveRecord(root.$route.params.id);
       if (valid === false) {
         errorClick(0);
-        samplesValid.value = false;
-      } else {
-        samplesValid.value = true;
       }
+      samplesValid.value = true;
+      Object.keys(invalidCells.value).forEach((templateKey) => {
+        samplesValid.value = samplesValid.value && Object.keys(invalidCells.value[templateKey]).length === 0;
+      });
     }
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
@@ -223,7 +223,7 @@ export default defineComponent({
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id, SubmissionStatus.SubmittedPendingReview);
+      await submit(root.$route.params.id, submissionStatus.SubmittedPendingReview);
       submitDialog.value = false;
     });
 
