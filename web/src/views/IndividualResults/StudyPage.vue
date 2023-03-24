@@ -244,7 +244,7 @@ export default defineComponent({
                   item,
                   link: {
                     name: 'MASSive Study',
-                    target: `https://identifiers.org/massive/${massive_id}`
+                    target: `https://identifiers.org/${massive_id}`
                   },
                 }"
                 style="padding-left: 60px;"
