@@ -19,7 +19,6 @@ EXCLUDED_FIELDS = {
     "gold_biosample_identifiers",
     "insdc_biosample_identifiers",
     "insdc_secondary_sample_identifiers",
-    "gold_study_identifiers",
     "gold_sequencing_project_identifiers",
     "emsl_biosample_identifiers",
     "igsn_biosample_identifiers",
