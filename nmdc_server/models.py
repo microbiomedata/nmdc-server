@@ -30,7 +30,7 @@ from nmdc_server.database import Base, update_multiomics_sql
 # described by https://microbiomedata.github.io/nmdc-schema/.
 
 
-def gold_url(base: str, id: str, gold_identifiers: list[str]) -> Optional[str]:
+def gold_url(base: str, id: str, gold_identifiers: Optional[list[str]] = None) -> Optional[str]:
     if id.startswith("gold:"):
         return f"{base}{id[5:]}"
     if gold_identifiers and gold_identifiers[0].lower().startswith("gold:"):
@@ -244,7 +244,11 @@ class Study(Base, AnnotatedModel):
 
     @property
     def open_in_gold(self) -> Optional[str]:
-        return gold_url("https://gold.jgi.doe.gov/study?id=", self.id, self.gold_study_identifiers) # type: ignore
+        return gold_url(
+            "https://gold.jgi.doe.gov/study?id=",
+            self.id,
+            self.gold_study_identifiers,  # type: ignore
+        )
 
     @property
     def doi_map(self) -> Dict[str, Any]:
