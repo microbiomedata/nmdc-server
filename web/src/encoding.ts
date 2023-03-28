@@ -346,7 +346,7 @@ const fields: Record<string, FieldsData> = {
     name: 'NOM analysis',
   },
   'Organic Matter Characterization': {
-    name: 'Organic Matter',
+    name: 'Natural Organic Matter',
   },
   multiomics: {
     hideAttr: true,
