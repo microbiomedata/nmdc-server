@@ -403,10 +403,10 @@ reads_qc_output_association = output_association("reads_qc")
 class ReadsQC(Base, PipelineStep):
     __tablename__ = "reads_qc"
 
-    input_read_count = Column(BigInteger, nullable=False)
-    input_read_bases = Column(BigInteger, nullable=False)
-    output_read_count = Column(BigInteger, nullable=False)
-    output_read_bases = Column(BigInteger, nullable=False)
+    input_read_count = Column(BigInteger, nullable=True)
+    input_read_bases = Column(BigInteger, nullable=True)
+    output_read_count = Column(BigInteger, nullable=True)
+    output_read_bases = Column(BigInteger, nullable=True)
 
     inputs = input_relationship(reads_qc_input_association)
     outputs = output_relationship(reads_qc_output_association)

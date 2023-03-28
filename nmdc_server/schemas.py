@@ -418,10 +418,10 @@ class PipelineStep(PipelineStepBase):
 
 class ReadsQCBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.reads_qc.value
-    input_read_count: int
-    input_read_bases: int
-    output_read_count: int
-    output_read_bases: int
+    input_read_count: Optional[int]
+    input_read_bases: Optional[int]
+    output_read_count: Optional[int]
+    output_read_bases: Optional[int]
 
 
 class ReadsQC(PipelineStep):
