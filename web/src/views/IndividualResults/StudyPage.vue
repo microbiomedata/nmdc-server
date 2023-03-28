@@ -250,7 +250,6 @@ export default defineComponent({
                 }"
                 style="padding-left: 60px;"
                 :image="images.massive"
-                @click="() => console.log('Clicked massive link')"
               />
               <v-list-item v-if="item.relevant_protocols">
                 <v-list-item-avatar>
