@@ -30,9 +30,11 @@ from nmdc_server.database import Base, update_multiomics_sql
 # described by https://microbiomedata.github.io/nmdc-schema/.
 
 
-def gold_url(base: str, id: str) -> Optional[str]:
+def gold_url(base: str, id: str, gold_identifiers: Optional[list[str]] = None) -> Optional[str]:
     if id.startswith("gold:"):
         return f"{base}{id[5:]}"
+    if gold_identifiers and gold_identifiers[0].lower().startswith("gold:"):
+        return f"{base}{gold_identifiers[0][5:]}"
     return None
 
 
@@ -214,6 +216,7 @@ class Study(Base, AnnotatedModel):
     funding_sources = Column(JSONB, nullable=True)
     ess_dive_datasets = Column(JSONB, nullable=True)
     massive_study_identifiers = Column(JSONB, nullable=True)
+    gold_study_identifiers = Column(JSONB, nullable=True)
 
     # These query expressions are a way to inject additional aggregation information
     # into the query at search time.  See `with_expression` usage in `query.py`.
@@ -241,7 +244,11 @@ class Study(Base, AnnotatedModel):
 
     @property
     def open_in_gold(self) -> Optional[str]:
-        return gold_url("https://gold.jgi.doe.gov/study?id=", self.id)
+        return gold_url(
+            "https://gold.jgi.doe.gov/study?id=",
+            self.id,
+            self.gold_study_identifiers,  # type: ignore
+        )
 
     @property
     def doi_map(self) -> Dict[str, Any]:
