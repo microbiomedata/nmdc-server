@@ -33,7 +33,7 @@
     "lodash": "^4.17.21",
     "moment": "^2.29.2",
     "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v6.0.4",
-    "nmdc-submission-schema": "https://files.pythonhosted.org/packages/source/n/nmdc-submission-schema/nmdc_submission_schema-1.0.0.tar.gz",
+    "nmdc-submission-schema": "https://files.pythonhosted.org/packages/source/n/nmdc-submission-schema/nmdc_submission_schema-1.0.1.tar.gz",
     "popper.js": "1.16.1",
     "protobufjs": "^6.11.3",
     "serialize-javascript": "^6.0.0",
