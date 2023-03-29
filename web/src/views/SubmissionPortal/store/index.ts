@@ -2,7 +2,7 @@ import Vue from 'vue';
 import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
-import { clone } from 'lodash';
+import { clone, forEach } from 'lodash';
 import * as api from './api';
 import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
@@ -131,7 +131,6 @@ const templateList = computed(() => {
  * DataHarmonizer Step
  */
 const sampleData = shallowRef({} as Record<string, any[]>);
-const samplesValid = ref(false);
 const templateChoiceDisabled = computed(() => {
   // If there are no keys in sampleData, the DH view hasn't been touched
   // yet, so it's still okay to change the template.
@@ -146,6 +145,13 @@ const templateChoiceDisabled = computed(() => {
     return true;
   }
   return false;
+});
+
+const tabsValidated = ref({} as Record<string, boolean>);
+watch(templateList, () => {
+  forEach(templateList.value, (templateKey) => {
+    tabsValidated.value[templateKey] = false;
+  });
 });
 
 /** Submit page */
@@ -183,7 +189,6 @@ function reset() {
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = 'soil';
   sampleData.value = {};
-  samplesValid.value = false;
   status.value = submissionStatus.InProgress;
 }
 
@@ -238,7 +243,6 @@ export {
   multiOmicsAssociations,
   multiOmicsFormValid,
   sampleData,
-  samplesValid,
   contextForm,
   contextFormValid,
   addressForm,
@@ -251,6 +255,7 @@ export {
   templateList,
   templateChoiceDisabled,
   hasChanged,
+  tabsValidated,
   status,
   /* functions */
   incrementalSaveRecord,

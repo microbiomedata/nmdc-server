@@ -12,7 +12,6 @@ import useRequest from '@/use/useRequest';
 import { HarmonizerApi, HARMONIZER_TEMPLATES } from './harmonizerApi';
 import {
   packageName,
-  samplesValid,
   sampleData,
   status,
   submit,
@@ -20,6 +19,7 @@ import {
   templateList,
   mergeSampleData,
   hasChanged,
+  tabsValidated,
   submissionStatus,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
@@ -137,6 +137,7 @@ export default defineComponent({
       const data = harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       incrementalSaveRecord(root.$route.params.id);
+      tabsValidated.value[activeTemplateKey.value] = false;
     };
 
     onMounted(async () => {
@@ -182,11 +183,19 @@ export default defineComponent({
       if (valid === false) {
         errorClick(0);
       }
-      samplesValid.value = true;
-      Object.keys(invalidCells.value).forEach((templateKey) => {
-        samplesValid.value = samplesValid.value && Object.keys(invalidCells.value[templateKey]).length === 0;
-      });
+      tabsValidated.value = {
+        ...tabsValidated.value,
+        [activeTemplateKey.value]: valid,
+      };
     }
+
+    const canSubmit = computed(() => {
+      let allTabsValid = true;
+      Object.values(tabsValidated.value).forEach((value) => {
+        allTabsValid = allTabsValid && value;
+      });
+      return allTabsValid;
+    });
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -383,7 +392,7 @@ export default defineComponent({
       harmonizerElement,
       jumpToModel,
       harmonizerApi,
-      samplesValid,
+      canSubmit,
       submitLoading,
       submitCount,
       selectedHelpDict,
@@ -778,7 +787,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :disabled="!samplesValid || status !== submissionStatus.InProgress || submitCount > 0"
+        :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
         :loading="submitLoading"
         @click="submitDialog = true"
       >
