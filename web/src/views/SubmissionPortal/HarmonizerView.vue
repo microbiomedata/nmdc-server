@@ -132,14 +132,6 @@ export default defineComponent({
       ])),
     ));
 
-    const templateTabBadgeContent = computed(() => {
-      const errorCount = validationTotalCounts.value[templateKey];
-      if (!errorCount) {
-        return tabsValidated.value[templateKey] ? '5' : '6';
-      }
-      return errorCount;
-    });
-
     const onDataChange = () => {
       hasChanged.value += 1;
       const data = harmonizerApi.exportJson();
@@ -413,6 +405,7 @@ export default defineComponent({
       validationActiveCategory,
       templateList,
       activeTemplate,
+      activeTemplateKey,
       invalidCells,
       validationErrors,
       validationErrorGroups,
@@ -431,7 +424,6 @@ export default defineComponent({
       validate,
       changeTemplate,
       urlify,
-      getTemplateTabBadgeContent,
     };
   },
 });
@@ -472,17 +464,24 @@ export default defineComponent({
             </v-icon>
           </v-btn>
         </label>
-        <v-btn
-          v-if="validationErrorGroups.length == 0"
-          color="primary"
-          outlined
-          @click="validate"
-        >
-          2. Validate
-          <v-icon class="pl-2">
-            mdi-refresh
-          </v-icon>
-        </v-btn>
+        <div v-if="validationErrorGroups.length === 0">
+          <v-btn
+            color="primary"
+            outlined
+            @click="validate"
+          >
+            2. Validate
+            <v-icon class="pl-2">
+              mdi-refresh
+            </v-icon>
+          </v-btn>
+          <span
+            v-if="!tabsValidated[activeTemplateKey]"
+            class="warning--text"
+          >
+            This tab must be validated before being submitted.
+          </span>
+        </div>
         <v-card
           v-if="validationErrorGroups.length"
           color="error"
@@ -651,12 +650,11 @@ export default defineComponent({
       <v-tab
         v-for="templateKey in templateList"
         :key="templateKey"
-        :class="{'error-tab': !tabsValidated[templateKey]}"
       >
         <v-badge
-          :content="validationTotalCounts[templateKey]"
-          :value="validationTotalCounts[templateKey] > 0"
-          color="error"
+          :content="validationTotalCounts[templateKey] || '!'"
+          :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey] || status !== submissionStatus.InProgress"
+          :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
         >
           {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
         </v-badge>
@@ -978,9 +976,4 @@ html {
 .sidebar-toggle-close {
   transform: rotate(180deg);
 }
-
-.error-tab {
-  background-color: #ff91a4;
-}
-
 </style>
