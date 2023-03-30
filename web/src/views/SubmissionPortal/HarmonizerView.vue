@@ -132,6 +132,14 @@ export default defineComponent({
       ])),
     ));
 
+    const templateTabBadgeContent = computed(() => {
+      const errorCount = validationTotalCounts.value[templateKey];
+      if (!errorCount) {
+        return tabsValidated.value[templateKey] ? '5' : '6';
+      }
+      return errorCount;
+    });
+
     const onDataChange = () => {
       hasChanged.value += 1;
       const data = harmonizerApi.exportJson();
@@ -393,6 +401,7 @@ export default defineComponent({
       jumpToModel,
       harmonizerApi,
       canSubmit,
+      tabsValidated,
       submitLoading,
       submitCount,
       selectedHelpDict,
@@ -422,6 +431,7 @@ export default defineComponent({
       validate,
       changeTemplate,
       urlify,
+      getTemplateTabBadgeContent,
     };
   },
 });
@@ -641,6 +651,7 @@ export default defineComponent({
       <v-tab
         v-for="templateKey in templateList"
         :key="templateKey"
+        :class="{'error-tab': !tabsValidated[templateKey]}"
       >
         <v-badge
           :content="validationTotalCounts[templateKey]"
@@ -784,45 +795,60 @@ export default defineComponent({
         </v-icon>
         Download XLSX
       </v-btn>
-      <v-btn
-        color="primary"
-        depressed
-        :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
-        :loading="submitLoading"
-        @click="submitDialog = true"
-      >
-        <span v-if="status === submissionStatus.SubmittedPendingReview || submitCount">
-          <v-icon>mdi-check-circle</v-icon>
-          Done
+      <v-tooltip top>
+        <template #activator="{ on, attrs }">
+          <div
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-btn
+              color="primary"
+              depressed
+              :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
+              :loading="submitLoading"
+              @click="submitDialog = true"
+            >
+              <span v-if="status === submissionStatus.SubmittedPendingReview || submitCount">
+                <v-icon>mdi-check-circle</v-icon>
+                Done
+              </span>
+              <span v-else>
+                3. Submit
+              </span>
+              <v-dialog
+                v-model="submitDialog"
+                activator="parent"
+                width="auto"
+              >
+                <v-card>
+                  <v-card-title>
+                    Submit
+                  </v-card-title>
+                  <v-card-text>You are about to submit this study and metadata for NMDC review. Would you like to continue?</v-card-text>
+                  <v-card-actions>
+                    <v-btn
+                      color="primary"
+                      class="mr-2"
+                      @click="doSubmit"
+                    >
+                      Yes- Submit
+                    </v-btn>
+                    <v-btn @click="submitDialog = false">
+                      Cancel
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </v-btn>
+          </div>
+        </template>
+        <span v-if="!canSubmit">
+          You must validate all tabs before submitting your study and metadata.
         </span>
         <span v-else>
-          3. Submit
+          Submit for NMDC review.
         </span>
-        <v-dialog
-          v-model="submitDialog"
-          activator="parent"
-          width="auto"
-        >
-          <v-card>
-            <v-card-title>
-              Submit
-            </v-card-title>
-            <v-card-text>You are about to submit this study and metadata for NMDC review. Would you like to continue?</v-card-text>
-            <v-card-actions>
-              <v-btn
-                color="primary"
-                class="mr-2"
-                @click="doSubmit"
-              >
-                Yes- Submit
-              </v-btn>
-              <v-btn @click="submitDialog = false">
-                Cancel
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-btn>
+      </v-tooltip>
     </div>
   </div>
 </template>
@@ -951,6 +977,10 @@ html {
 
 .sidebar-toggle-close {
   transform: rotate(180deg);
+}
+
+.error-tab {
+  background-color: #ff91a4;
 }
 
 </style>
