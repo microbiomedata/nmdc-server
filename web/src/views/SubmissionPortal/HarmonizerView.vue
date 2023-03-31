@@ -464,24 +464,17 @@ export default defineComponent({
             </v-icon>
           </v-btn>
         </label>
-        <div v-if="validationErrorGroups.length === 0">
-          <v-btn
-            color="primary"
-            outlined
-            @click="validate"
-          >
-            2. Validate
-            <v-icon class="pl-2">
-              mdi-refresh
-            </v-icon>
-          </v-btn>
-          <span
-            v-if="!tabsValidated[activeTemplateKey]"
-            class="warning--text"
-          >
-            This tab must be validated before being submitted.
-          </span>
-        </div>
+        <v-btn
+          v-if="validationErrorGroups.length === 0"
+          color="primary"
+          outlined
+          @click="validate"
+        >
+          2. Validate
+          <v-icon class="pl-2">
+            mdi-refresh
+          </v-icon>
+        </v-btn>
         <v-card
           v-if="validationErrorGroups.length"
           color="error"
@@ -647,18 +640,38 @@ export default defineComponent({
     </div>
 
     <v-tabs @change="changeTemplate">
-      <v-tab
+      <v-tooltip
         v-for="templateKey in templateList"
         :key="templateKey"
+        right
       >
-        <v-badge
-          :content="validationTotalCounts[templateKey] || '!'"
-          :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey] || status !== submissionStatus.InProgress"
-          :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
-        >
+        <template #activator="{on, attrs}">
+          <div
+            style="display: flex;"
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-tab>
+              <v-badge
+                :content="validationTotalCounts[templateKey] || '!'"
+                :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey] || status !== submissionStatus.InProgress"
+                :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
+              >
+                {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+              </v-badge>
+            </v-tab>
+          </div>
+        </template>
+        <span v-if="validationTotalCounts[templateKey] > 0">
+          {{ validationTotalCounts[templateKey] }} validation errors
+        </span>
+        <span v-else-if="!tabsValidated[templateKey]">
+          This tab must be validated before submission
+        </span>
+        <span v-else>
           {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
-        </v-badge>
-      </v-tab>
+        </span>
+      </v-tooltip>
     </v-tabs>
 
     <div>
