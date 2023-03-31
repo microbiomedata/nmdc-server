@@ -44,9 +44,9 @@ def transform_doi(doi: str) -> str:
     return matches[0]
 
 
-def get_study_image_data(image_urls: list[str]) -> Optional[bytes]:
+def get_study_image_data(image_urls: list[dict[str, str]]) -> Optional[bytes]:
     if image_urls:
-        r = requests.get(image_urls[0])
+        r = requests.get(image_urls[0]["url"])
         if r.ok:
             return r.content
     return None

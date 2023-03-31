@@ -244,6 +244,7 @@ class StudyBase(AnnotatedBase):
 
 class StudyCreate(StudyBase):
     principal_investigator_id: UUID
+    image: Optional[bytes]
 
 
 class OmicsCounts(BaseModel):
