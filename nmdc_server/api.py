@@ -234,6 +234,14 @@ async def get_study(study_id: str, db: Session = Depends(get_db)):
     return db_study
 
 
+@router.get("/study/{study_id}/image", tags=["study"])
+async def get_study_image(study_id: str, db: Session = Depends(get_db)):
+    image = crud.get_study_image(db, study_id)
+    if image is None:
+        raise HTTPException(status_code=404, detail="No image exists for this study")
+    return StreamingResponse(BytesIO(image), media_type="image/jpeg")
+
+
 # omics_processing
 @router.post(
     "/omics_processing/search",

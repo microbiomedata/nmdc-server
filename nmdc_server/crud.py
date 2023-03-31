@@ -94,6 +94,13 @@ def get_study(db: Session, study_id: str) -> Optional[models.Study]:
     ).first()
 
 
+def get_study_image(db: Session, study_id: str) -> Optional[bytes]:
+    study = db.query(models.Study).get(study_id)
+    if study is not None:
+        return study.image
+    return None
+
+
 def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
     study_dict = study.dict()
 
