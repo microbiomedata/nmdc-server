@@ -231,6 +231,7 @@ class Study(Base, AnnotatedModel):
     )
     principal_investigator = relationship("PrincipalInvestigator", cascade="all")
     principal_investigator_name = association_proxy("principal_investigator", "name")
+    image = Column(LargeBinary, nullable=True)
 
     @property
     def principal_investigator_image_url(self):
