@@ -131,6 +131,7 @@ class StudyFactory(AnnotatedFactory):
     scientific_objective = Faker("sentence")
     principal_investigator = SubFactory(PrincipalInvestigator)
     doi_object = SubFactory(DOIInfoFactory)
+    image = Faker("binary", length=64)
 
     class Meta:
         model = models.Study

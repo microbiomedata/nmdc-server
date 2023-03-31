@@ -89,6 +89,13 @@ def test_get_pi_image(db: Session, client: TestClient):
     assert resp.headers["Content-Type"] == "image/jpeg"
 
 
+def test_get_study_image(db: Session, client: TestClient):
+    fakes.StudyFactory(id="study1")
+    resp = client.get("/api/study/study1/image")
+    assert_status(resp)
+    assert resp.headers["Content-Type"] == "image/jpeg"
+
+
 def test_get_environmental_aggregation(db: Session, client: TestClient):
     for _ in range(10):
         fakes.BiosampleFactory()
