@@ -119,7 +119,7 @@ interface PrincipalInvestigator {
 export interface StudySearchResults extends BaseSearchResult {
   principal_investigator_websites: string[];
   principal_investigator_name: string;
-  principal_investigator_image_url: string;
+  image_url: string;
   principal_investigator: PrincipalInvestigator;
   doi: string;
   doi_map: Record<string, {

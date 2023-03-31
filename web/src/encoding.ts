@@ -330,7 +330,7 @@ const fields: Record<string, FieldsData> = {
   ncbi_project_name: {
     hideFacet: true,
   },
-  principal_investigator_image_url: {
+  image_url: {
     hideFacet: true,
     hideAttr: true,
   },

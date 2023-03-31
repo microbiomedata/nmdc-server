@@ -40,7 +40,7 @@ export default defineComponent({
         :size="200"
       >
         <v-img
-          :src="item.principal_investigator_image_url"
+          :src="props.item.image_url"
           :contain="item.id === 'gold:Gs0110119'"
         />
       </v-avatar>

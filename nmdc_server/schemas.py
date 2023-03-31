@@ -259,7 +259,7 @@ class Study(StudyBase):
     open_in_gold: Optional[str]
     principal_investigator: OrcidPerson
     principal_investigator_name: str
-    principal_investigator_image_url: str
+    image_url: str
     sample_count: Optional[int]
     omics_counts: Optional[List[OmicsCounts]]
     omics_processing_counts: Optional[List[OmicsCounts]]
