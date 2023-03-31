@@ -26,7 +26,7 @@ DateType = Union[datetime, date]
 # valid datetime strings into datetime objects while falling
 # back to ordinary strings.  Also, we never want numeric types
 # to be interpreted as dates.
-AnnotationValue = Union[float, int, datetime, str, dict]
+AnnotationValue = Union[float, int, datetime, str, dict, list]
 
 
 class ErrorSchema(BaseModel):
