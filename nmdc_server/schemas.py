@@ -14,7 +14,7 @@ from uuid import UUID
 
 from pint import Unit
 from pydantic import BaseModel, Field, validator
-from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, String
+from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, LargeBinary, String
 from sqlalchemy.dialects.postgresql.json import JSONB
 
 from nmdc_server import models
@@ -64,6 +64,9 @@ class AttributeType(Enum):
             return AttributeType.string
         elif isinstance(column.type, JSONB):
             raise ValueError("Cannot summarize JSONB")
+        elif isinstance(column.type, LargeBinary):
+            raise ValueError("Cannot summarize LargeBinary")
+
         raise Exception("Unknown column type")
 
 
