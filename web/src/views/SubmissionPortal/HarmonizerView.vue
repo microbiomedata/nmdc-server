@@ -11,7 +11,16 @@ import useRequest from '@/use/useRequest';
 
 import { HarmonizerApi, HARMONIZER_TEMPLATES } from './harmonizerApi';
 import {
-  packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateList, mergeSampleData, hasChanged,
+  packageName,
+  sampleData,
+  status,
+  submit,
+  incrementalSaveRecord,
+  templateList,
+  mergeSampleData,
+  hasChanged,
+  tabsValidated,
+  submissionStatus,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
@@ -78,6 +87,8 @@ export default defineComponent({
     });
     const activeInvalidCells = computed(() => invalidCells.value[activeTemplateKey.value] || {});
 
+    const submitDialog = ref(false);
+
     watch(activeTemplateData, () => {
       harmonizerApi.loadData(activeTemplateData.value);
       // if we're not on the first tab, the common columns should be read-only
@@ -126,6 +137,7 @@ export default defineComponent({
       const data = harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       incrementalSaveRecord(root.$route.params.id);
+      tabsValidated.value[activeTemplateKey.value] = false;
     };
 
     onMounted(async () => {
@@ -171,7 +183,19 @@ export default defineComponent({
       if (valid === false) {
         errorClick(0);
       }
+      tabsValidated.value = {
+        ...tabsValidated.value,
+        [activeTemplateKey.value]: valid,
+      };
     }
+
+    const canSubmit = computed(() => {
+      let allTabsValid = true;
+      Object.values(tabsValidated.value).forEach((value) => {
+        allTabsValid = allTabsValid && value;
+      });
+      return allTabsValid;
+    });
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -208,7 +232,8 @@ export default defineComponent({
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id);
+      await submit(root.$route.params.id, submissionStatus.SubmittedPendingReview);
+      submitDialog.value = false;
     });
 
     function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
@@ -367,7 +392,8 @@ export default defineComponent({
       harmonizerElement,
       jumpToModel,
       harmonizerApi,
-      samplesValid,
+      canSubmit,
+      tabsValidated,
       submitLoading,
       submitCount,
       selectedHelpDict,
@@ -379,10 +405,14 @@ export default defineComponent({
       validationActiveCategory,
       templateList,
       activeTemplate,
+      activeTemplateKey,
       invalidCells,
       validationErrors,
       validationErrorGroups,
       validationTotalCounts,
+      submissionStatus,
+      status,
+      submitDialog,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -435,7 +465,7 @@ export default defineComponent({
           </v-btn>
         </label>
         <v-btn
-          v-if="validationErrorGroups.length == 0"
+          v-if="validationErrorGroups.length === 0"
           color="primary"
           outlined
           @click="validate"
@@ -610,18 +640,38 @@ export default defineComponent({
     </div>
 
     <v-tabs @change="changeTemplate">
-      <v-tab
+      <v-tooltip
         v-for="templateKey in templateList"
         :key="templateKey"
+        right
       >
-        <v-badge
-          :content="validationTotalCounts[templateKey]"
-          :value="validationTotalCounts[templateKey] > 0"
-          color="error"
-        >
+        <template #activator="{on, attrs}">
+          <div
+            style="display: flex;"
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-tab>
+              <v-badge
+                :content="validationTotalCounts[templateKey] || '!'"
+                :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey] || status !== submissionStatus.InProgress"
+                :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
+              >
+                {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+              </v-badge>
+            </v-tab>
+          </div>
+        </template>
+        <span v-if="validationTotalCounts[templateKey] > 0">
+          {{ validationTotalCounts[templateKey] }} validation errors
+        </span>
+        <span v-else-if="!tabsValidated[templateKey]">
+          This tab must be validated before submission
+        </span>
+        <span v-else>
           {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
-        </v-badge>
-      </v-tab>
+        </span>
+      </v-tooltip>
     </v-tabs>
 
     <div>
@@ -756,21 +806,60 @@ export default defineComponent({
         </v-icon>
         Download XLSX
       </v-btn>
-      <v-btn
-        color="primary"
-        depressed
-        :disabled="!samplesValid || submitCount > 0"
-        :loading="submitLoading"
-        @click="doSubmit"
-      >
-        <span v-if="submitCount > 0">
-          <v-icon>mdi-check-circle</v-icon>
-          Done
+      <v-tooltip top>
+        <template #activator="{ on, attrs }">
+          <div
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-btn
+              color="primary"
+              depressed
+              :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
+              :loading="submitLoading"
+              @click="submitDialog = true"
+            >
+              <span v-if="status === submissionStatus.SubmittedPendingReview || submitCount">
+                <v-icon>mdi-check-circle</v-icon>
+                Done
+              </span>
+              <span v-else>
+                3. Submit
+              </span>
+              <v-dialog
+                v-model="submitDialog"
+                activator="parent"
+                width="auto"
+              >
+                <v-card>
+                  <v-card-title>
+                    Submit
+                  </v-card-title>
+                  <v-card-text>You are about to submit this study and metadata for NMDC review. Would you like to continue?</v-card-text>
+                  <v-card-actions>
+                    <v-btn
+                      color="primary"
+                      class="mr-2"
+                      @click="doSubmit"
+                    >
+                      Yes- Submit
+                    </v-btn>
+                    <v-btn @click="submitDialog = false">
+                      Cancel
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </v-btn>
+          </div>
+        </template>
+        <span v-if="!canSubmit">
+          You must validate all tabs before submitting your study and metadata.
         </span>
         <span v-else>
-          3. Submit
+          Submit for NMDC review.
         </span>
-      </v-btn>
+      </v-tooltip>
     </div>
   </div>
 </template>
@@ -900,5 +989,4 @@ html {
 .sidebar-toggle-close {
   transform: rotate(180deg);
 }
-
 </style>

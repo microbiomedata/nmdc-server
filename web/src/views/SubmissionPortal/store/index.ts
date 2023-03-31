@@ -2,7 +2,7 @@ import Vue from 'vue';
 import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
-import { clone } from 'lodash';
+import { clone, forEach } from 'lodash';
 import * as api from './api';
 import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
@@ -21,6 +21,18 @@ enum AwardTypes {
   MONET = 'MONet',
   FICUS = 'FICUS'
 }
+
+type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
+
+const submissionStatus: Record<string, SubmissionStatus> = {
+  InProgress: 'In Progress',
+  SubmittedPendingReview: 'Submitted- Pending Review',
+  Complete: 'Complete',
+};
+
+const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(submissionStatus).includes(str);
+
+const status = ref(submissionStatus.InProgress);
 
 const hasChanged = ref(0);
 /**
@@ -119,7 +131,6 @@ const templateList = computed(() => {
  * DataHarmonizer Step
  */
 const sampleData = shallowRef({} as Record<string, any[]>);
-const samplesValid = ref(false);
 const templateChoiceDisabled = computed(() => {
   // If there are no keys in sampleData, the DH view hasn't been touched
   // yet, so it's still okay to change the template.
@@ -134,6 +145,13 @@ const templateChoiceDisabled = computed(() => {
     return true;
   }
   return false;
+});
+
+const tabsValidated = ref({} as Record<string, boolean>);
+watch(templateList, () => {
+  forEach(templateList.value, (templateKey) => {
+    tabsValidated.value[templateKey] = false;
+  });
 });
 
 /** Submit page */
@@ -152,8 +170,8 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string) {
-  return api.updateRecord(id, payloadObject.value, 'complete');
+function submit(id: string, status: SubmissionStatus = submissionStatus.InProgress) {
+  return api.updateRecord(id, payloadObject.value, status);
 }
 
 function reset() {
@@ -171,7 +189,7 @@ function reset() {
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = 'soil';
   sampleData.value = {};
-  samplesValid.value = false;
+  status.value = submissionStatus.InProgress;
 }
 
 async function incrementalSaveRecord(id: string) {
@@ -200,6 +218,7 @@ async function loadRecord(id: string) {
   Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
+  status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
@@ -215,6 +234,8 @@ function mergeSampleData(key: string | undefined, data: any[]) {
 }
 
 export {
+  SubmissionStatus,
+  submissionStatus,
   BiosafetyLevels,
   AwardTypes,
   /* state */
@@ -222,7 +243,6 @@ export {
   multiOmicsAssociations,
   multiOmicsFormValid,
   sampleData,
-  samplesValid,
   contextForm,
   contextFormValid,
   addressForm,
@@ -235,6 +255,8 @@ export {
   templateList,
   templateChoiceDisabled,
   hasChanged,
+  tabsValidated,
+  status,
   /* functions */
   incrementalSaveRecord,
   generateRecord,
