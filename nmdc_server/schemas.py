@@ -261,6 +261,7 @@ class Study(StudyBase):
     principal_investigator: OrcidPerson
     principal_investigator_name: str
     image_url: str
+    principal_investigator_image_url: str
     sample_count: Optional[int]
     omics_counts: Optional[List[OmicsCounts]]
     omics_processing_counts: Optional[List[OmicsCounts]]
