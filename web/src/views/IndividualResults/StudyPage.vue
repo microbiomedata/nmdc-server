@@ -66,6 +66,9 @@ export default defineComponent({
     });
 
     const goldLinks = computed(() => {
+      if (!item.value) {
+        return [];
+      }
       const links = new Set();
       if (item.value.open_in_gold) {
         links.add(item.value.open_in_gold);
