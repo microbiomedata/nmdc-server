@@ -183,8 +183,8 @@ export default defineComponent({
 
           <div class="d-flex">
             <v-radio
-              value="BRCSs"
-              label="BRCSs"
+              value="BRCs"
+              label="BRCs"
             />
             <div class="ml-1">
               (<a

@@ -31,7 +31,7 @@ export default defineComponent({
 <template>
   <div>
     <div class="text-h2">
-      Multiomics Data
+      Multi-omics Data
     </div>
     <div class="text-h5">
       Information about the type of samples being submitted.

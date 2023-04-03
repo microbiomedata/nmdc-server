@@ -97,7 +97,7 @@ export default defineComponent({
         :complete="4 < step"
         @click="gotoStep(4)"
       >
-        Multiomics Data
+        Multi-omics Data
         <small>Input Form</small>
       </v-stepper-step>
       <v-divider />
