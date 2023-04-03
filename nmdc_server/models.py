@@ -241,7 +241,7 @@ class Study(Base, AnnotatedModel):
     def image_url(self):
         if self.image:
             return f"/api/study/{self.id}/image"
-        return ''
+        return ""
 
     principal_investigator_websites = relationship("StudyWebsite", cascade="all", lazy="joined")
     publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
