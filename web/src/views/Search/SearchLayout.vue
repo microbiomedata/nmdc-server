@@ -281,7 +281,7 @@ export default defineComponent({
                     v-text="props.result.study_id"
                   />
                   <template
-                    v-if="props.result.alternate_identifiers.length"
+                    v-if="props.result.alternate_identifiers.length || props.result.emsl_biosample_identifiers.length"
                   >
                     <span class="pr-2">Sample Identifiers:</span>
                     <a
@@ -292,6 +292,12 @@ export default defineComponent({
                       target="_blank"
                       rel="noopener noreferrer"
                     >{{ id }}</a>
+                    <span
+                      v-for="id in props.result.emsl_biosample_identifiers"
+                      :key="id"
+                    >
+                      {{ id }}
+                    </span>
                   </template>
                 </template>
                 <template #item-content="props">

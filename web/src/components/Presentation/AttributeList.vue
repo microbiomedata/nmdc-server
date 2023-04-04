@@ -83,7 +83,7 @@ export default defineComponent({
         <AttributeItem v-bind="{ item, field }" />
       </v-col>
     </v-list>
-    <v-list v-if="alternateIdentifiers.length > 0">
+    <v-list v-if="alternateIdentifiers.length > 0 || item.emsl_biosample_identifiers.length > 0">
       <div class="display-1">
         Alternative Identifiers
       </div>
@@ -91,6 +91,11 @@ export default defineComponent({
         v-for="({ name, target }) in alternateIdentifiers"
         :key="name"
         v-bind="{ item, field, link: { name, target } }"
+      />
+      <AttributeItem
+        v-for="emslId, index in item.emsl_biosample_identifiers"
+        :key="emslId"
+        v-bind="{ item, field: 'emsl_biosample_identifiers', index, displayName: 'EMSL Identifier' }"
       />
     </v-list>
   </div>
