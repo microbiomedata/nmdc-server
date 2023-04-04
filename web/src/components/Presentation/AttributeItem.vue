@@ -14,6 +14,11 @@ export default defineComponent({
       type: String,
       required: true,
     },
+    index: {
+      type: Number,
+      required: false,
+      default: -1,
+    },
     link: {
       type: Object as PropType<{ name: string; target: string; } | null>,
       default: null,
@@ -24,6 +29,11 @@ export default defineComponent({
     },
     image: {
       type: String,
+      default: '',
+    },
+    displayName: {
+      type: String,
+      required: false,
       default: '',
     },
   },
@@ -41,6 +51,10 @@ export default defineComponent({
         const item = props.item as BiosampleSearchResult;
         const env = item[field];
         return `${env.label} (${env.id})`;
+      }
+      if (field === 'emsl_biosample_identifiers') {
+        const item = props.item as BiosampleSearchResult;
+        return item.emsl_biosample_identifiers[props.index] || '';
       }
       return valueDisplayName(field, props.item[field]);
     }
@@ -115,7 +129,7 @@ export default defineComponent({
     </v-list-item-avatar>
     <v-list-item-content>
       <v-list-item-title>
-        {{ fieldDisplayName(field) }}
+        {{ displayName.length > 0 ? displayName : fieldDisplayName(field) }}
       </v-list-item-title>
       <v-list-item-subtitle
         style="white-space: initial;"
