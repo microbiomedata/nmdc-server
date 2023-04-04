@@ -91,6 +91,11 @@ export function makeTree(data, heirarchy) {
       const nodeKey = `${parentKey}${parentKey && '.'}${nodeName}`;
       const parent = nodeMap[parentKey];
       let node = nodeMap[nodeKey];
+      if (!parent) {
+        console.log(heirarchy, depth, item);
+        console.log(parentKey, nodeKey);
+        console.log(parent, node);
+      }
       if (!node) {
         node = {
           id: nodeKey,
@@ -104,14 +109,16 @@ export function makeTree(data, heirarchy) {
           isDefaultExpanded: false,
         };
         nodeMap[nodeKey] = node;
-        if (parent.children === undefined) {
-          parent.children = [node];
-          parent.isDefaultExpanded = true;
-        } else {
-          parent.children.push(node);
-          parent.isDefaultExpanded = false;
+        if (parent) {
+          if (parent.children === undefined) {
+            parent.children = [node];
+            parent.isDefaultExpanded = true;
+          } else {
+            parent.children.push(node);
+            parent.isDefaultExpanded = false;
+          }
+          topoSort.push(node);
         }
-        topoSort.push(node);
       }
       node.count += item.count;
     });
