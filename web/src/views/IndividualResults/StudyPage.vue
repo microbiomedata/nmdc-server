@@ -24,6 +24,7 @@ import InvestigatorBio from '@/components/InvestigatorBio.vue';
 const CitationOverrides: CitationOverridesType = {
   '10.46936/10.25585/60000017': 'Doktycz, M. (2020) BioScales - Defining plant gene function and its connection to ecosystem nitrogen and carbon cycling [Data set]. DOE Joint Genome Institute. https://doi.org/10.46936/10.25585/60000017',
 };
+const GoldStudyLinkBase = 'https://gold.jgi.doe.gov/study?id=';
 
 export default defineComponent({
 
@@ -62,6 +63,24 @@ export default defineComponent({
         }
         return !isObject(value);
       });
+    });
+
+    const goldLinks = computed(() => {
+      if (!item.value) {
+        return [];
+      }
+      const links = new Set();
+      if (item.value.open_in_gold) {
+        links.add(item.value.open_in_gold);
+      }
+      if (item.value.gold_study_identifiers) {
+        item.value.gold_study_identifiers.forEach((identifier: string) => {
+          if (identifier.toLowerCase().startsWith('gold:')) {
+            links.add(GoldStudyLinkBase + identifier.substring(5));
+          }
+        });
+      }
+      return links;
     });
 
     function relatedTypeDescription(relatedType: string) {
@@ -129,6 +148,8 @@ export default defineComponent({
 
     return {
       CitationOverrides,
+      GoldStudyLinkBase,
+      goldLinks,
       data,
       item,
       displayFields,
@@ -219,9 +240,16 @@ export default defineComponent({
                 </v-list-item-content>
               </v-list-item>
               <AttributeItem
-                v-if="item.open_in_gold"
+                v-for="link in goldLinks"
+                :key="link"
                 style="padding-left: 60px;"
-                v-bind="{ item, field: 'open_in_gold' }"
+                v-bind="{
+                  item,
+                  link: {
+                    name: 'Open in GOLD',
+                    target: link
+                  }
+                }"
                 :image="images.gold"
               />
               <AttributeItem

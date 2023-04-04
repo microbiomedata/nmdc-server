@@ -144,6 +144,7 @@ export interface StudySearchResults extends BaseSearchResult {
   relevant_protocols: string[];
   ess_dive_datasets: string[];
   massive_study_identifiers: string[];
+  gold_study_identifiers: string[];
   has_credit_associations: {
     applied_roles: string[];
     applies_to_person: {
