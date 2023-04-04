@@ -294,7 +294,7 @@ class BiosampleBase(AnnotatedBase):
 
 
 class BiosampleCreate(BiosampleBase):
-    pass
+    emsl_biosample_identifiers: List[str] = []
 
 
 class Biosample(BiosampleBase):
@@ -305,7 +305,7 @@ class Biosample(BiosampleBase):
     env_broad_scale_terms: List[str] = []
     env_local_scale_terms: List[str] = []
     env_medium_terms: List[str] = []
-    emsl_biosample_identifiers: Optional[List[str]]
+    emsl_biosample_identifiers: List[str] = []
 
     omics_processing: List["OmicsProcessing"]
     multiomics: int
