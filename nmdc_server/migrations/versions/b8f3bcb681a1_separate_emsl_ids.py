@@ -1,4 +1,4 @@
-"""empty message
+"""Use separate column for biosample EMSL IDs
 
 Revision ID: b8f3bcb681a1
 Revises: 0a3edcd64e1f
