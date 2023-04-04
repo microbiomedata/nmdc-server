@@ -108,6 +108,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
     data: string;
   };
   omics_processing: OmicsProcessingResult[];
+  emsl_biosample_identifiers: string[];
 }
 
 interface PrincipalInvestigator {
