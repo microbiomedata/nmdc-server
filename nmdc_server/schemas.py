@@ -305,6 +305,7 @@ class Biosample(BiosampleBase):
     env_broad_scale_terms: List[str] = []
     env_local_scale_terms: List[str] = []
     env_medium_terms: List[str] = []
+    emsl_biosample_identifiers: Optional[List[str]]
 
     omics_processing: List["OmicsProcessing"]
     multiomics: int
