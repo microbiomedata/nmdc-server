@@ -44,6 +44,14 @@ def transform_doi(doi: str) -> str:
     return matches[0]
 
 
+def get_study_image_data(image_urls: list[dict[str, str]]) -> Optional[bytes]:
+    if image_urls:
+        r = requests.get(image_urls[0]["url"])
+        if r.ok:
+            return r.content
+    return None
+
+
 def load(db: Session, cursor: Cursor):
     for obj in cursor:
         pi_obj = obj.pop("principal_investigator")
@@ -55,6 +63,7 @@ def load(db: Session, cursor: Cursor):
         pi_orcid = pi_obj.get("orcid")
         obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url, pi_orcid)
         obj["principal_investigator_websites"] = obj.pop("websites", [])
+        obj["image"] = get_study_image_data(obj.pop("study_image", []))
 
         obj["publication_dois"] = [transform_doi(d) for d in obj.pop("publications", [])]
         if "doi" in obj:

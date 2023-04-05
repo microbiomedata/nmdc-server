@@ -36,7 +36,13 @@ export default defineComponent({
       class="shrink"
       offset="1"
     >
+      <v-img
+        v-if="item.image_url"
+        :src="item.image_url"
+        width="200"
+      />
       <v-avatar
+        v-else
         :size="200"
       >
         <v-img

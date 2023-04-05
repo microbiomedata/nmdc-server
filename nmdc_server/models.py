@@ -231,10 +231,17 @@ class Study(Base, AnnotatedModel):
     )
     principal_investigator = relationship("PrincipalInvestigator", cascade="all")
     principal_investigator_name = association_proxy("principal_investigator", "name")
+    image = Column(LargeBinary, nullable=True)
 
     @property
     def principal_investigator_image_url(self):
         return f"/api/principal_investigator/{self.principal_investigator_id}"
+
+    @property
+    def image_url(self):
+        if self.image:
+            return f"/api/study/{self.id}/image"
+        return ""
 
     principal_investigator_websites = relationship("StudyWebsite", cascade="all", lazy="joined")
     publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
