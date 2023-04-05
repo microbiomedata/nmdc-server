@@ -87,9 +87,10 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     biosample.alternate_identifiers += obj.get("insdc_biosample_identifiers", [])
     biosample.alternate_identifiers += obj.get("insdc_secondary_sample_identifiers", [])
     biosample.alternate_identifiers += obj.get("gold_biosample_identifiers", [])
-    biosample.alternate_identifiers += obj.get("emsl_biosample_identifiers", [])
     biosample.alternate_identifiers += obj.get("igsn_biosample_identifiers", [])
     biosample.alternate_identifiers += obj.get("img_identifiers", [])
+
+    biosample.emsl_biosample_identifiers = obj.get("emsl_biosample_identifiers", [])
 
     # Store entire depth object, which may represent a range
     if biosample.annotations is not None:

@@ -282,6 +282,7 @@ class Biosample(Base, AnnotatedModel):
     longitude = Column(Float, nullable=False)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     multiomics = Column(Integer, nullable=False, default=0)
+    emsl_biosample_identifiers = Column(JSONB, nullable=True)
 
     # gold terms
     ecosystem = Column(String, nullable=True)
