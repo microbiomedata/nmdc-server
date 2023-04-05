@@ -38,6 +38,7 @@ export default defineComponent({
     >
       <v-img
         v-if="item.image_url"
+        :key="item.image_url"
         :src="item.image_url"
         width="200"
       />
