@@ -149,9 +149,11 @@ const templateChoiceDisabled = computed(() => {
 
 const tabsValidated = ref({} as Record<string, boolean>);
 watch(templateList, () => {
+  const newTabsValidated = {} as Record<string, boolean>;
   forEach(templateList.value, (templateKey) => {
-    tabsValidated.value[templateKey] = false;
+    newTabsValidated[templateKey] = false;
   });
+  tabsValidated.value = newTabsValidated;
 });
 
 /** Submit page */
