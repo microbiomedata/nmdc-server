@@ -20,15 +20,17 @@ const Menus = [
         href: 'https://microbiomedata.org/nmdc-code-of-conduct/',
       },
       {
-        label: 'Acknowledgements',
-        href: 'https://microbiomedata.org/acknowledgements/',
+        label: 'Data Use Policy',
+        href: 'https://microbiomedata.org/nmdc-data-use-policy/',
       },
-    ],
-  },
-  {
-    label: 'Data',
-    href: 'https://microbiomedata.org/data/',
-    items: [
+      {
+        label: 'Fair',
+        href: 'https://microbiomedata.org/fair/',
+      },
+      {
+        label: 'Data',
+        href: 'https://microbiomedata.org/data/',
+      },
       {
         label: 'Metadata',
         href: 'https://microbiomedata.org/metadata/',
@@ -36,14 +38,6 @@ const Menus = [
       {
         label: 'Workflows',
         href: 'https://microbiomedata.org/workflows/',
-      },
-      {
-        label: 'Fair',
-        href: 'https://microbiomedata.org/fair/',
-      },
-      {
-        label: 'Data Use Policy',
-        href: 'https://microbiomedata.org/nmdc-data-use-policy/',
       },
     ],
   },
@@ -81,12 +75,8 @@ const Menus = [
         href: 'https://microbiomedata.org/community/community-conversations/',
       },
       {
-        label: 'Events',
+        label: 'News and Events',
         href: 'https://microbiomedata.org/events/',
-      },
-      {
-        label: 'News',
-        href: 'https://microbiomedata.org/news/',
       },
     ],
   },
@@ -104,10 +94,6 @@ const Menus = [
       {
         label: 'Data Management',
         href: 'https://microbiomedata.org/data-management/',
-      },
-      {
-        label: 'Letter of Support',
-        href: 'https://docs.google.com/forms/d/e/1FAIpQLScF4yChmxXZG1v1fXa-2ydyN8QEyTYsKYd9jWICcrwdaG222A/viewform?usp=sf_link',
       },
       {
         label: 'Publications',
