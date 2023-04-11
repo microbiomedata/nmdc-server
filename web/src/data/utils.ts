@@ -1,3 +1,4 @@
+import LinkifyIt from 'linkify-it';
 import { Condition } from './api';
 
 function removeCondition(conditions: Condition[], conds: Condition[]) {
@@ -58,12 +59,27 @@ export function escapeHtml(unsafe: string) {
     .replace(/'/g, '&#039;');
 }
 
-/**
- * Based on https://stackoverflow.com/questions/1500260/detect-urls-in-text-with-javascript
- */
-export function urlify(text: string) {
-  const urlRegex = /(https?:\/\/[a-zA-Z0-9./-]+)/g;
-  return text.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+export function urlify(text: string): string {
+  const matcher = new LinkifyIt();
+  if (!text) {
+    return '';
+  }
+
+  const matches = matcher.match(text);
+  if (!matches) {
+    return text;
+  }
+
+  let urlified = '';
+  let lastIndex = 0;
+  matches.forEach((match) => {
+    if (match.index > lastIndex) {
+      urlified += text.substring(lastIndex, match.index);
+    }
+    urlified += `<a href="${match.url}" target="_blank" rel="noopener noreferrer">${match.text}</a>`;
+    lastIndex = match.lastIndex;
+  });
+  return urlified;
 }
 
 export {
