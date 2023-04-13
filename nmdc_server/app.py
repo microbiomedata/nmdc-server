@@ -36,6 +36,6 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
     errors.attach_error_handlers(app)
     app.include_router(api.router, prefix="/api")
     app.include_router(auth.router, prefix="")
-    app.add_middleware(SessionMiddleware, secret_key=settings.secret_key)
+    app.add_middleware(SessionMiddleware, secret_key=settings.secret_key, https_only=True)
 
     return app
