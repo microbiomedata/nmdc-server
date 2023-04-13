@@ -25,13 +25,12 @@ from nmdc_server.pagination import Pagination
 
 router = APIRouter()
 
+
 # get application settings
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
     settings = Settings()
-    return {
-        "disable_bulk_download": settings.disable_bulk_download
-    }
+    return {"disable_bulk_download": settings.disable_bulk_download}
 
 
 # get the current user information

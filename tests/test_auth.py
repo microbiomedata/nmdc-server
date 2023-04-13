@@ -5,6 +5,15 @@ from nmdc_server.auth import Token
 from nmdc_server.config import settings
 
 
+def assert_status(response: Response, status: int = 200):
+    __tracebackhide__ = True
+    if response.headers["Content-Type"] != "application/json":
+        print(response.content)
+    elif response.status_code != status:
+        print(json.dumps(response.json(), indent=2))
+    assert response.status_code == status, "Invalid response code"
+
+
 def test_login(client: TestClient):
     resp = client.request(method="get", url="/login", allow_redirects=False)
 
@@ -14,6 +23,7 @@ def test_login(client: TestClient):
 
 def test_current_user(client: TestClient, token: Token):
     resp = client.get("/api/me")
+    assert_status(resp)
     assert resp.json() == token.name
 
 
