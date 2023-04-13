@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
@@ -16,6 +16,7 @@ from nmdc_server.auth import (
     login_required_responses,
 )
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
+from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
@@ -23,6 +24,14 @@ from nmdc_server.models import IngestLock, SubmissionMetadata, User
 from nmdc_server.pagination import Pagination
 
 router = APIRouter()
+
+# get application settings
+@router.get("/settings", name="Get application settings")
+async def get_settings() -> Dict[str, Any]:
+    settings = Settings()
+    return {
+        "disable_bulk_download": settings.disable_bulk_download
+    }
 
 
 # get the current user information

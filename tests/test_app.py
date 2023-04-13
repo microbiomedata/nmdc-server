@@ -24,6 +24,10 @@ def test_api_spec(client: TestClient):
     assert resp.status_code == 200
     assert resp.json()["info"]["version"] == nmdc_server.__version__
 
+def test_get_settings(client: TestClient):
+    resp = client.get("/api/settings")
+    assert_status(resp)
+    assert resp["disable_bulk_download"] == False
 
 @pytest.mark.parametrize(
     "condition,expected",
