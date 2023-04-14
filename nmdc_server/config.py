@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     print_sql: bool = False
 
     # App settings related to UI behavior
-    disable_bulk_download: bool = False
+    disable_bulk_download: str = ""
 
     @property
     def current_db_uri(self) -> str:
