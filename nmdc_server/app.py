@@ -20,7 +20,7 @@ def attach_sentry(app: FastAPI):
     )
 
 
-def create_app(env: typing.Mapping[str, str]) -> FastAPI:
+def create_app(env: typing.Mapping[str, str], secure_cookies: bool = True) -> FastAPI:
     app = FastAPI(
         title="NMDC Dataset API",
         version=__version__,
@@ -36,6 +36,6 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
     errors.attach_error_handlers(app)
     app.include_router(api.router, prefix="/api")
     app.include_router(auth.router, prefix="")
-    app.add_middleware(SessionMiddleware, secret_key=settings.secret_key, https_only=True)
+    app.add_middleware(SessionMiddleware, secret_key=settings.secret_key, https_only=secure_cookies)
 
     return app

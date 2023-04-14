@@ -28,7 +28,7 @@ def test_api_spec(client: TestClient):
 def test_get_settings(client: TestClient):
     resp = client.get("/api/settings")
     assert_status(resp)
-    assert resp.json()["disable_bulk_download"] == False
+    assert not resp.json()["disable_bulk_download"]
 
 
 @pytest.mark.parametrize(
