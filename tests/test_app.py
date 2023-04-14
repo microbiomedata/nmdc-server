@@ -25,6 +25,11 @@ def test_api_spec(client: TestClient):
     assert resp.json()["info"]["version"] == nmdc_server.__version__
 
 
+def test_get_settings(client: TestClient):
+    resp = client.get("/api/settings")
+    assert_status(resp)
+
+
 @pytest.mark.parametrize(
     "condition,expected",
     [

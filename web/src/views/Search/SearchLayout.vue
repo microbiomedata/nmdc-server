@@ -61,6 +61,14 @@ export default defineComponent({
     }
 
     /**
+     * SearchLayout-level settings
+     */
+    const disableBulkDownload = ref(true);
+    api.getAppSettings().then((appSettings) => {
+      disableBulkDownload.value = appSettings.disable_bulk_download;
+    });
+
+    /**
      * Expanded Omics details
      */
     const expandedOmicsDetails = reactive({
@@ -113,6 +121,7 @@ export default defineComponent({
       gatedEnvironmentVisConditions,
       gatedOmicsVisConditions,
       loggedInUser,
+      disableBulkDownload,
       studyType,
       study,
       studyResults,
@@ -253,7 +262,10 @@ export default defineComponent({
                     {{ biosample.data.results.count === 1 ? 'Sample' : 'Samples' }}
                   </v-card-title>
                   <v-spacer />
-                  <div style="width: 70%">
+                  <div
+                    v-if="!disableBulkDownload"
+                    style="width: 70%"
+                  >
                     <BulkDownload
                       :disabled="!loggedInUser"
                       :search-result-count="biosample.data.results.count"
