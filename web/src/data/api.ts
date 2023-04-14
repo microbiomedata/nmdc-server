@@ -613,6 +613,11 @@ async function updateUser(id: string, body: User) {
   return data;
 }
 
+async function getAppSettings() {
+  const { data } = await client.get<Record<string, boolean>>('settings');
+  return data;
+}
+
 const api = {
   createBulkDownload,
   getBinnedFacet,
@@ -620,6 +625,7 @@ const api = {
   getBulkDownloadAggregateSummary,
   getBiosample,
   getDatabaseSummary,
+  getAppSettings,
   getDatabaseStats,
   getDataObjectList,
   getEnvironmentGeospatialAggregation,
