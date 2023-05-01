@@ -10,6 +10,7 @@ import {
 } from '../store';
 import * as api from '../store/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
+import SubmissionTable from './SubmissionTable.vue';
 
 const headers: DataTableHeader[] = [
   {
@@ -46,6 +47,10 @@ const headers: DataTableHeader[] = [
 ];
 
 export default defineComponent({
+  components: {
+    SubmissionTable,
+  },
+
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
@@ -111,7 +116,11 @@ export default defineComponent({
     <v-card-text>
       Pick up where you left off or review a previous submission.
     </v-card-text>
-    <v-card outlined>
+    <SubmissionTable
+      :action-title="`Resume`"
+      @submissionSelected="resume"
+    />
+    <!-- v-card outlined>
       <v-data-table
         :headers="headers"
         :items="submission.data.results.results"
@@ -156,6 +165,6 @@ export default defineComponent({
           </v-btn>
         </template>
       </v-data-table>
-    </v-card>
+    </v-card -->
   </v-card>
 </template>
