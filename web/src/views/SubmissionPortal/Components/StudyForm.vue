@@ -23,6 +23,10 @@ export default defineComponent({
       ];
     }
 
+    function copyInfoClicked(event) {
+      console.log(event);
+    }
+
     onMounted(() => {
       formRef.value.validate();
     });
@@ -35,6 +39,7 @@ export default defineComponent({
       Definitions,
       addContributor,
       requiredRules,
+      copyInfoClicked,
     };
   },
 });
@@ -45,9 +50,19 @@ export default defineComponent({
     <div class="text-h2">
       Study Information
     </div>
-    <div class="text-h5">
+    <div class="text-h5 mb-1">
       {{ NmdcSchema.$defs.Study.description }}
     </div>
+    <v-btn
+      color="primary"
+      depressed
+      @click="copyInfoClicked"
+    >
+      <v-icon class="pr-1">
+        mdi-content-copy
+      </v-icon>
+      Copy from another submission
+    </v-btn>
     <v-form
       ref="formRef"
       v-model="studyFormValid"
