@@ -3,10 +3,15 @@ import { defineComponent, onMounted, ref } from '@vue/composition-api';
 import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
 import Definitions from '@/definitions';
 import { studyForm, studyFormValid } from '../store';
+import SubmissionTable from './SubmissionTable.vue';
 
 export default defineComponent({
+  components: {
+    SubmissionTable,
+  },
   setup() {
     const formRef = ref();
+    const copyDataDialog = ref(false);
 
     function addContributor() {
       studyForm.contributors.push({
@@ -23,8 +28,13 @@ export default defineComponent({
       ];
     }
 
-    function copyInfoClicked(event) {
-      console.log(event);
+    function copyInfoClicked() {
+      copyDataDialog.value = true;
+    }
+
+    function copyData() {
+      console.log('Copying data...');
+      copyDataDialog.value = false;
     }
 
     onMounted(() => {
@@ -33,12 +43,14 @@ export default defineComponent({
 
     return {
       formRef,
+      copyDataDialog,
       studyForm,
       studyFormValid,
       NmdcSchema,
       Definitions,
       addContributor,
       requiredRules,
+      copyData,
       copyInfoClicked,
     };
   },
@@ -62,6 +74,29 @@ export default defineComponent({
         mdi-content-copy
       </v-icon>
       Copy from another submission
+      <v-dialog
+        v-model="copyDataDialog"
+        activator="parent"
+        width="auto"
+      >
+        <v-card>
+          <v-card-title>
+            Copy Study Data
+          </v-card-title>
+          <v-card-text>Copy study data from an existing submission.</v-card-text>
+          <submission-table
+            :action-title="`Copy`"
+            @submissionSelected="copyData"
+          />
+          <v-card-actions>
+            <v-btn
+              @click="copyDataDialog = false"
+            >
+              Cancel
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-btn>
     <v-form
       ref="formRef"

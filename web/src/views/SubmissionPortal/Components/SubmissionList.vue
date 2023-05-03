@@ -120,51 +120,5 @@ export default defineComponent({
       :action-title="`Resume`"
       @submissionSelected="resume"
     />
-    <!-- v-card outlined>
-      <v-data-table
-        :headers="headers"
-        :items="submission.data.results.results"
-        :server-items-length="submission.data.results.count"
-        :options.sync="options"
-        :loading="submission.loading.value"
-        :items-per-page.sync="submission.data.limit"
-        :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
-      >
-        <template #[`item.author.name`]="{ item }">
-          <a
-            :href="`https://orcid.org/${item.author.orcid}`"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {{ item.author.name || item.author.orcid }}
-          </a>
-        </template>
-        <template #[`item.metadata_submission.templates`]="{ item }">
-          {{ item.metadata_submission.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
-        </template>
-        <template #[`item.created`]="{ item }">
-          {{ new Date(item.created).toLocaleString() }}
-        </template>
-        <template #[`item.status`]="{ item }">
-          <v-chip
-            :color="getStatus(item).color"
-          >
-            {{ getStatus(item).text }}
-          </v-chip>
-        </template>
-        <template #[`item.action`]="{ item }">
-          <v-btn
-            small
-            color="primary"
-            @click="() => resume(item)"
-          >
-            Resume
-            <v-icon class="pl-1">
-              mdi-arrow-right-circle
-            </v-icon>
-          </v-btn>
-        </template>
-      </v-data-table>
-    </v-card -->
   </v-card>
 </template>
