@@ -81,7 +81,6 @@ export default defineComponent({
       <v-dialog
         v-model="copyDataDialog"
         activator="parent"
-        width="auto"
       >
         <v-card>
           <v-card-title>
