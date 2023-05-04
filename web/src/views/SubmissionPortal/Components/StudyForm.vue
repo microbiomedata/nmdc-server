@@ -1,9 +1,11 @@
 <script lang="ts">
 import { defineComponent, onMounted, ref } from '@vue/composition-api';
 import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
+import { cloneDeep } from 'lodash';
 import Definitions from '@/definitions';
 import { studyForm, studyFormValid } from '../store';
 import SubmissionTable from './SubmissionTable.vue';
+import { MetadataSubmissionRecord } from '../store/api';
 
 export default defineComponent({
   components: {
@@ -32,8 +34,10 @@ export default defineComponent({
       copyDataDialog.value = true;
     }
 
-    function copyData() {
-      console.log('Copying data...');
+    function copyData(item: MetadataSubmissionRecord) {
+      const newStudyData = cloneDeep(item.metadata_submission.studyForm);
+      Object.assign(studyForm, newStudyData);
+      formRef.value.validate();
       copyDataDialog.value = false;
     }
 
