@@ -1,50 +1,11 @@
 <script lang="ts">
-import {
-  defineComponent, ref, watch,
-} from '@vue/composition-api';
-import { DataTableHeader } from 'vuetify';
+import { defineComponent } from '@vue/composition-api';
 import { useRouter } from '@/use/useRouter';
-import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  loadRecord, generateRecord, submissionStatus,
+  loadRecord, generateRecord,
 } from '../store';
 import * as api from '../store/api';
-import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import SubmissionTable from './SubmissionTable.vue';
-
-const headers: DataTableHeader[] = [
-  {
-    text: 'Study Name',
-    value: 'metadata_submission.studyForm.studyName',
-    sortable: false,
-  },
-  {
-    text: 'Author',
-    value: 'author.name',
-    sortable: false,
-  },
-  {
-    text: 'Template',
-    value: 'metadata_submission.templates',
-    sortable: false,
-  },
-  {
-    text: 'Status',
-    value: 'status',
-    sortable: false,
-  },
-  {
-    text: 'Created',
-    value: 'created',
-    sortable: false,
-  },
-  {
-    text: '',
-    value: 'action',
-    align: 'end',
-    sortable: false,
-  },
-];
 
 export default defineComponent({
   components: {
@@ -53,19 +14,6 @@ export default defineComponent({
 
   setup() {
     const router = useRouter();
-    const itemsPerPage = 10;
-    const options = ref({
-      page: 1,
-      itemsPerPage,
-    });
-
-    function getStatus(item: api.MetadataSubmissionRecord) {
-      const color = item.status === submissionStatus.Complete ? 'success' : 'default';
-      return {
-        text: item.status,
-        color,
-      };
-    }
 
     async function resume(item: api.MetadataSubmissionRecord) {
       await loadRecord(item.id);
@@ -77,17 +25,9 @@ export default defineComponent({
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
-    const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
-    watch(options, () => submission.setPage(options.value.page), { deep: true });
-
     return {
-      HARMONIZER_TEMPLATES,
       createNewSubmission,
-      getStatus,
       resume,
-      headers,
-      options,
-      submission,
     };
   },
 });
