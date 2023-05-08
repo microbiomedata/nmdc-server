@@ -6,9 +6,10 @@ import { DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  loadRecord, generateRecord,
+  loadRecord, generateRecord, submissionStatus,
 } from '../store';
 import * as api from '../store/api';
+import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
 const headers: DataTableHeader[] = [
   {
@@ -23,7 +24,7 @@ const headers: DataTableHeader[] = [
   },
   {
     text: 'Template',
-    value: 'metadata_submission.template',
+    value: 'metadata_submission.templates',
     sortable: false,
   },
   {
@@ -54,32 +55,28 @@ export default defineComponent({
     });
 
     function getStatus(item: api.MetadataSubmissionRecord) {
-      if (item.status === 'complete') {
-        return {
-          text: 'Complete',
-          color: 'success',
-        };
-      }
+      const color = item.status === submissionStatus.Complete ? 'success' : 'default';
       return {
-        text: 'In progress',
-        color: 'default',
+        text: item.status,
+        color,
       };
     }
 
     async function resume(item: api.MetadataSubmissionRecord) {
       await loadRecord(item.id);
-      router?.push({ name: 'Study Form', params: { id: item.id } });
+      router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
     async function createNewSubmission() {
       const item = await generateRecord();
-      router?.push({ name: 'Study Form', params: { id: item.id } });
+      router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
     const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
     watch(options, () => submission.setPage(options.value.page), { deep: true });
 
     return {
+      HARMONIZER_TEMPLATES,
       createNewSubmission,
       getStatus,
       resume,
@@ -132,6 +129,9 @@ export default defineComponent({
           >
             {{ item.author.name || item.author.orcid }}
           </a>
+        </template>
+        <template #[`item.metadata_submission.templates`]="{ item }">
+          {{ item.metadata_submission.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
         </template>
         <template #[`item.created`]="{ item }">
           {{ new Date(item.created).toLocaleString() }}

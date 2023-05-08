@@ -2,14 +2,80 @@ import Vue from 'vue';
 import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
-import { clone } from 'lodash';
+import { clone, forEach } from 'lodash';
 import * as api from './api';
-import { getVariant, HARMONIZER_TEMPLATES } from '../harmonizerApi';
+import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
+enum BiosafetyLevels {
+  BSL1 = 'BSL1',
+  BSL2 = 'BSL2'
+}
+
+enum AwardTypes {
+  CSP = 'CSP',
+  BERSS = 'BERSS',
+  BRCS = 'BRCs',
+  MONET = 'MONet',
+  FICUS = 'FICUS'
+}
+
+type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
+
+const submissionStatus: Record<string, SubmissionStatus> = {
+  InProgress: 'In Progress',
+  SubmittedPendingReview: 'Submitted- Pending Review',
+  Complete: 'Complete',
+};
+
+const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(submissionStatus).includes(str);
+
+const status = ref(submissionStatus.InProgress);
+
 const hasChanged = ref(0);
+/**
+ * Submission Context Step
+ */
+const addressFormDefault = {
+  // Shipper info
+  shipper: {
+    name: '',
+    email: '',
+    phone: '',
+    line1: '',
+    line2: '',
+    city: '',
+    state: '',
+    postalCode: '',
+  } as api.NmdcAddress,
+  expectedShippingDate: undefined as undefined | Date,
+  shippingConditions: '',
+  // Sample info
+  sample: '',
+  description: '',
+  experimentalGoals: '',
+  randomization: '',
+  usdaRegulated: undefined as undefined | boolean,
+  permitNumber: '',
+  biosafetyLevel: '',
+  irbOrHipaa: undefined as undefined | boolean,
+  comments: '',
+};
+const contextFormDefault = {
+  dataGenerated: undefined as undefined | boolean,
+  datasetDoi: '',
+  facilityGenerated: undefined as undefined | boolean,
+  facilities: [] as string[],
+  award: undefined as undefined | string,
+  otherAward: '',
+};
+const contextForm = reactive(clone(contextFormDefault));
+const contextFormValid = ref(false);
+const addressForm = reactive(clone(addressFormDefault));
+const addressFormValid = ref(false);
+
 /**
  * Study Form Step
  */
@@ -35,12 +101,10 @@ const studyForm = reactive(clone(studyFormDefault));
  * Multi-Omics Form Step
  */
 const multiOmicsFormDefault = {
-  datasetDoi: '',
   alternativeNames: [] as string[],
   studyNumber: '',
   GOLDStudyId: '',
   JGIStudyId: '',
-  NCBIBioProjectName: '',
   NCBIBioProjectId: '',
   omicsProcessingTypes: [] as string[],
 };
@@ -57,25 +121,47 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
  * Environment Package Step
  */
 const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
-const templateChoice = computed(() => {
+const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
-  const template = HARMONIZER_TEMPLATES[packageName.value];
-  const choice = getVariant(checkBoxes, template.variations, template.default);
-  return choice;
+  const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
+  return list;
 });
 
 /**
  * DataHarmonizer Step
  */
-const sampleData = shallowRef([] as any[][]);
-const samplesValid = ref(false);
-// row 1 and 2 are headers
-const templateChoiceDisabled = computed(() => sampleData.value.length >= 3);
+const sampleData = shallowRef({} as Record<string, any[]>);
+const templateChoiceDisabled = computed(() => {
+  // If there are no keys in sampleData, the DH view hasn't been touched
+  // yet, so it's still okay to change the template.
+  if (Object.keys(sampleData.value).length === 0) {
+    return false;
+  }
+  // If the DH has been touched, see if any of the values (templates) actually
+  // contain data. If at least one does, then do not allow changing the template.
+  // Otherwise, allow template changes.
+  const templateWithDataIndex = Object.values(sampleData.value).findIndex((value) => value.length > 0);
+  if (templateWithDataIndex >= 0) {
+    return true;
+  }
+  return false;
+});
+
+const tabsValidated = ref({} as Record<string, boolean>);
+watch(templateList, () => {
+  const newTabsValidated = {} as Record<string, boolean>;
+  forEach(templateList.value, (templateKey) => {
+    newTabsValidated[templateKey] = false;
+  });
+  tabsValidated.value = newTabsValidated;
+});
 
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
-  template: templateChoice.value,
+  contextForm,
+  addressForm,
+  templates: templateList.value,
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
@@ -86,19 +172,26 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string) {
-  return api.updateRecord(id, payloadObject.value, 'complete');
+function submit(id: string, status: SubmissionStatus = submissionStatus.InProgress) {
+  return api.updateRecord(id, payloadObject.value, status);
 }
 
 function reset() {
+  Object.assign(contextForm, contextFormDefault);
+  contextFormValid.value = false;
+  Object.assign(addressForm, addressFormDefault);
+  addressFormValid.value = false;
   studyFormValid.value = false;
+  addressFormValid.value = false;
+  Object.assign(contextForm, contextFormDefault);
+  Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = 'soil';
-  sampleData.value = [];
-  samplesValid.value = false;
+  sampleData.value = {};
+  status.value = submissionStatus.InProgress;
 }
 
 async function incrementalSaveRecord(id: string) {
@@ -123,28 +216,53 @@ async function loadRecord(id: string) {
   packageName.value = val.metadata_submission.packageName;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
+  Object.assign(contextForm, val.metadata_submission.contextForm);
+  Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
+  status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
 
+function mergeSampleData(key: string | undefined, data: any[]) {
+  if (!key) {
+    return;
+  }
+  sampleData.value = {
+    ...sampleData.value,
+    [key]: data,
+  };
+}
+
 export {
+  SubmissionStatus,
+  submissionStatus,
+  BiosafetyLevels,
+  AwardTypes,
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
   multiOmicsFormValid,
   sampleData,
-  samplesValid,
+  contextForm,
+  contextFormValid,
+  addressForm,
+  addressFormDefault,
+  addressFormValid,
   studyForm,
   studyFormValid,
   submitPayload,
   packageName,
-  templateChoice,
+  templateList,
   templateChoiceDisabled,
+  hasChanged,
+  tabsValidated,
+  status,
   /* functions */
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
   submit,
+  mergeSampleData,
 };

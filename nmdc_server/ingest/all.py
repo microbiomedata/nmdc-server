@@ -58,6 +58,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         username=settings.mongo_user,
         password=settings.mongo_password,
         port=settings.mongo_port,
+        directConnection=True,
     )
     mongodb = client[settings.mongo_database]
 
@@ -109,7 +110,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading read based analysis...")
     pipeline.load(
         db,
-        mongodb["read_based_analysis_activity_set"].find(),
+        mongodb["read_based_taxonomy_analysis_activity_set"].find(),
         pipeline.load_read_based_analysis,
         WorkflowActivityTypeEnum.read_based_analysis.value,
     )
@@ -142,7 +143,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     db.commit()
 
     if skip_annotation is False:
-
         try:
             # This section has its own subprogress bar because it takes several
             # hours to ingest all of the gene function products from the metag
@@ -163,7 +163,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
                     bar,
                     pipeline.load_mg_annotation,
                     WorkflowActivityTypeEnum.metagenome_annotation.value,
-                    annotations=mongodb["functional_annotation_set"],
+                    annotations=mongodb["functional_annotation_agg"],
                     function_limit=function_limit,
                 )
         except Exception:
@@ -172,13 +172,12 @@ def load(db: Session, function_limit=None, skip_annotation=False):
             db.commit()
 
     else:
-
         logger.info("Skipping annotation ingest")
 
     logger.info("Loading read qc...")
     pipeline.load(
         db,
-        mongodb["read_QC_analysis_activity_set"].find(),
+        mongodb["read_qc_analysis_activity_set"].find(),
         pipeline.load_reads_qc,
         WorkflowActivityTypeEnum.reads_qc.value,
     )
@@ -193,6 +192,8 @@ def load(db: Session, function_limit=None, skip_annotation=False):
             ),
             pipeline.load_mp_analysis,
             WorkflowActivityTypeEnum.metaproteomic_analysis.value,
+            annotations=mongodb["metap_gene_function_aggregation"],
+            function_limit=function_limit,
         )
         db.commit()
     except Exception:
@@ -207,15 +208,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         pipeline.load_mg_assembly,
         WorkflowActivityTypeEnum.metagenome_assembly.value,
     )
-    db.commit()
-
-    # all the data is loaded, so trigger denormalization updates
-    logger.info("Populating mga_gene_functions...")
-    models.MGAGeneFunctionAggregation.populate(db)
-    db.commit()
-
-    logger.info("Populating metap_gene_functions...")
-    models.MetaPGeneFunctionAggregation.populate(db)
     db.commit()
 
     logger.info("Populating multiomics...")

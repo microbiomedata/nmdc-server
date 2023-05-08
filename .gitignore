@@ -4,3 +4,8 @@ __pycache__/
 .mypy_cache/
 .tox/
 .vscode/
+.venv
+vetur.config.js
+*.sql
+**.local**
+build/**

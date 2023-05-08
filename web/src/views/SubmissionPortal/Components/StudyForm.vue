@@ -100,10 +100,14 @@ export default defineComponent({
         persistent-hint
         dense
         class="my-2"
-      />
+      >
+        <template #message="{ message }">
+          <span v-html="message" />
+        </template>
+      </v-text-field>
       <v-combobox
         v-model="studyForm.linkOutWebpage"
-        label="LinkOut webpage"
+        label="Webpage Links"
         :hint="Definitions.linkOutWebpage"
         persistent-hint
         outlined
@@ -121,7 +125,11 @@ export default defineComponent({
         outlined
         dense
         class="my-2"
-      />
+      >
+        <template #message="{ message }">
+          <span v-html="message" />
+        </template>
+      </v-textarea>
       <v-text-field
         v-model="studyForm.notes"
         label="Optional Notes"
@@ -162,7 +170,11 @@ export default defineComponent({
               persistent-hint
               dense
               :style="{ maxWidth: '400px'}"
-            />
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-text-field>
           </div>
           <v-select
             v-model="contributor.roles"
@@ -177,7 +189,11 @@ export default defineComponent({
             small-chips
             dense
             persistent-hint
-          />
+          >
+            <template #message="{ message }">
+              <span v-html="message" />
+            </template>
+          </v-select>
         </v-card>
         <v-btn
           icon
@@ -197,7 +213,17 @@ export default defineComponent({
       </v-btn>
     </v-form>
     <strong>* indicates required field</strong>
-    <div class="d-flex">
+    <div class="d-flex mt-5">
+      <v-btn
+        color="gray"
+        depressed
+        :to="{ name: 'Submission Context' }"
+      >
+        <v-icon class="pl-1">
+          mdi-arrow-left-circle
+        </v-icon>
+        Go to previous step
+      </v-btn>
       <v-spacer />
       <v-btn
         color="primary"

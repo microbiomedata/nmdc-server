@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
@@ -17,6 +17,7 @@ from nmdc_server.auth import (
     login_required_responses,
 )
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
+from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
@@ -24,6 +25,13 @@ from nmdc_server.models import IngestLock, SubmissionMetadata, User
 from nmdc_server.pagination import Pagination
 
 router = APIRouter()
+
+
+# get application settings
+@router.get("/settings", name="Get application settings")
+async def get_settings() -> Dict[str, Any]:
+    settings = Settings()
+    return {"disable_bulk_download": settings.disable_bulk_download.upper() == "YES"}
 
 
 # get the current user information
@@ -240,6 +248,14 @@ async def get_study(study_id: str, db: Session = Depends(get_db)):
     return db_study
 
 
+@router.get("/study/{study_id}/image", tags=["study"])
+async def get_study_image(study_id: str, db: Session = Depends(get_db)):
+    image = crud.get_study_image(db, study_id)
+    if image is None:
+        raise HTTPException(status_code=404, detail="No image exists for this study")
+    return StreamingResponse(BytesIO(image), media_type="image/jpeg")
+
+
 # omics_processing
 @router.post(
     "/omics_processing/search",
@@ -395,24 +411,6 @@ async def run_ingest(
             detail=f"An ingest started at {lock.started} is already in progress",
         )
     jobs.ingest.delay(function_limit=params.function_limit, skip_annotation=params.skip_annotation)
-    return ""
-
-
-@router.post(
-    "/jobs/populate_gene_functions",
-    tags=["jobs"],
-    responses=login_required_responses,
-)
-async def repopulate_gene_functions(
-    user: models.User = Depends(admin_required), db: Session = Depends(get_db)
-):
-    lock = db.query(IngestLock).first()
-    if lock:
-        raise HTTPException(
-            status_code=409,
-            detail=f"An ingest started at {lock.started} is in progress",
-        )
-    jobs.populate_gene_functions.delay()
     return ""
 
 

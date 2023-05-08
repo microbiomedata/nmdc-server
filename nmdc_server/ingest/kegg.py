@@ -58,11 +58,11 @@ def get_search_records():
 def ingest_ko_module_map(db: Session) -> None:
     db.execute(f"truncate table {KoTermToModule.__tablename__}")
 
-    datafile = Path(__file__).parent / "data" / "ko_term_modules.tab.txt"
+    datafile = Path(__file__).parent / "data" / "kegg_module_ko_terms.tab.txt"
     with open(datafile) as fd:
         reader = csv.DictReader(fd, delimiter="\t")
         db.bulk_save_objects(
-            [KoTermToModule(term=row["KO_id"], module=row["modules"]) for row in reader]
+            [KoTermToModule(term=row["ko_terms"], module=row["module_id"]) for row in reader]
         )
         db.commit()
 

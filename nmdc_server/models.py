@@ -30,9 +30,11 @@ from nmdc_server.database import Base, update_multiomics_sql
 # described by https://microbiomedata.github.io/nmdc-schema/.
 
 
-def gold_url(base: str, id: str) -> Optional[str]:
+def gold_url(base: str, id: str, gold_identifiers: Optional[list[str]] = None) -> Optional[str]:
     if id.startswith("gold:"):
         return f"{base}{id[5:]}"
+    if gold_identifiers and gold_identifiers[0].lower().startswith("gold:"):
+        return f"{base}{gold_identifiers[0][5:]}"
     return None
 
 
@@ -213,6 +215,8 @@ class Study(Base, AnnotatedModel):
     relevant_protocols = Column(JSONB, nullable=True)
     funding_sources = Column(JSONB, nullable=True)
     ess_dive_datasets = Column(JSONB, nullable=True)
+    massive_study_identifiers = Column(JSONB, nullable=True)
+    gold_study_identifiers = Column(JSONB, nullable=True)
 
     # These query expressions are a way to inject additional aggregation information
     # into the query at search time.  See `with_expression` usage in `query.py`.
@@ -227,10 +231,17 @@ class Study(Base, AnnotatedModel):
     )
     principal_investigator = relationship("PrincipalInvestigator", cascade="all")
     principal_investigator_name = association_proxy("principal_investigator", "name")
+    image = Column(LargeBinary, nullable=True)
 
     @property
     def principal_investigator_image_url(self):
         return f"/api/principal_investigator/{self.principal_investigator_id}"
+
+    @property
+    def image_url(self):
+        if self.image:
+            return f"/api/study/{self.id}/image"
+        return ""
 
     principal_investigator_websites = relationship("StudyWebsite", cascade="all", lazy="joined")
     publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
@@ -240,7 +251,11 @@ class Study(Base, AnnotatedModel):
 
     @property
     def open_in_gold(self) -> Optional[str]:
-        return gold_url("https://gold.jgi.doe.gov/study?id=", self.id)
+        return gold_url(
+            "https://gold.jgi.doe.gov/study?id=",
+            self.id,
+            self.gold_study_identifiers,  # type: ignore
+        )
 
     @property
     def doi_map(self) -> Dict[str, Any]:
@@ -267,6 +282,7 @@ class Biosample(Base, AnnotatedModel):
     longitude = Column(Float, nullable=False)
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     multiomics = Column(Integer, nullable=False, default=0)
+    emsl_biosample_identifiers = Column(JSONB, nullable=True)
 
     # gold terms
     ecosystem = Column(String, nullable=True)
@@ -395,10 +411,10 @@ reads_qc_output_association = output_association("reads_qc")
 class ReadsQC(Base, PipelineStep):
     __tablename__ = "reads_qc"
 
-    input_read_count = Column(BigInteger, nullable=False)
-    input_read_bases = Column(BigInteger, nullable=False)
-    output_read_count = Column(BigInteger, nullable=False)
-    output_read_bases = Column(BigInteger, nullable=False)
+    input_read_count = Column(BigInteger, nullable=True)
+    input_read_bases = Column(BigInteger, nullable=True)
+    output_read_count = Column(BigInteger, nullable=True)
+    output_read_bases = Column(BigInteger, nullable=True)
 
     inputs = input_relationship(reads_qc_input_association)
     outputs = output_relationship(reads_qc_output_association)
@@ -451,8 +467,6 @@ metagenome_annotation_output_association = output_association("metagenome_annota
 class MetagenomeAnnotation(Base, PipelineStep):
     __tablename__ = "metagenome_annotation"
 
-    gene_functions = relationship("MGAGeneFunction")
-
     inputs = input_relationship(metagenome_annotation_input_association)
     outputs = output_relationship(metagenome_annotation_output_association)
 
@@ -470,43 +484,6 @@ class MetaproteomicAnalysis(Base, PipelineStep):
 
 mags_analysis_input_association = input_association("mags_analysis")
 mags_analysis_output_association = output_association("mags_analysis")
-
-
-class MetaproteomicPeptide(Base):
-    __tablename__ = "metaproteomic_peptide"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    metaproteomic_analysis_id = Column(
-        String, ForeignKey("metaproteomic_analysis.id"), nullable=False
-    )
-
-    peptide_sequence = Column(String, nullable=False)
-    peptide_sum_masic_abundance = Column(BigInteger, nullable=False)
-    peptide_spectral_count = Column(BigInteger, nullable=False)
-    best_protein = Column(String, ForeignKey("mga_gene_function.subject"), nullable=False)
-    min_q_value = Column(Float, nullable=False)
-
-    best_protein_object = relationship("MGAGeneFunction")
-    metaproteomic_analysis = relationship(
-        MetaproteomicAnalysis, backref="has_peptide_quantifications"
-    )
-
-
-class PeptideMGAGeneFunction(Base):
-    __tablename__ = "peptide_mga_gene_function"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    subject = Column(String, ForeignKey("mga_gene_function.subject"), nullable=False)
-    metaproteomic_peptide_id = Column(
-        UUID(as_uuid=True), ForeignKey("metaproteomic_peptide.id"), nullable=False
-    )
-
-    mga_gene_function = relationship("MGAGeneFunction")
-    metaproteomic_peptide = relationship("MetaproteomicPeptide")
-
-    @property
-    def gene_function(self) -> str:
-        return self.mga_gene_function.gene_function_id
 
 
 class MAGsAnalysis(Base, PipelineStep):
@@ -625,26 +602,11 @@ class StudyPublication(Base):
 
 
 # This table contains KO terms detected in metagenome and metaproteomic workflow
-# activities.  In terms of size, this table and particularly the MGAGeneFunction
-# table linking with workflow activities are orders of magnitude larger than
-# the other tables.
+# activities
 class GeneFunction(Base):
     __tablename__ = "gene_function"
 
     id = Column(String, primary_key=True)
-
-
-class MGAGeneFunction(Base):  # metagenome annotation
-    __tablename__ = "mga_gene_function"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    metagenome_annotation_id = Column(
-        String, ForeignKey("metagenome_annotation.id"), nullable=False
-    )
-    gene_function_id = Column(String, ForeignKey("gene_function.id"), nullable=False)
-    subject = Column(String, nullable=False, unique=True)
-
-    function = relationship(GeneFunction)
 
 
 # Store references to individual downloads to provide download statistics information.
@@ -702,29 +664,15 @@ workflow_activity_types = [
 
 
 # denormalized tables
-# To improve performance of gene function queries a denormalized representation of gene functions
-# detected in MetaG and MetaP workflow activies is generated after ingestion.  This is done using
-# the custom SQL embedded in the populate methods.
+# These tables store aggregated gene function annotation data. The aggregations
+# are generated in mongo and these tables are built during the ingeset of the
+# associated pipelines
 class MGAGeneFunctionAggregation(Base):
     __tablename__ = "mga_gene_function_aggregation"
 
     metagenome_annotation_id = Column(String, ForeignKey(MetagenomeAnnotation.id), primary_key=True)
     gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
     count = Column(BigInteger, nullable=False)
-
-    @classmethod
-    def populate(cls, db: Session):
-        """Populate denormalized gene function table."""
-        db.execute(
-            f"""
-            INSERT INTO
-                {cls.__tablename__} (metagenome_annotation_id, gene_function_id, count)
-            SELECT metagenome_annotation_id, gene_function_id, count(*) as count
-            FROM mga_gene_function GROUP BY metagenome_annotation_id, gene_function_id
-            ON CONFLICT (metagenome_annotation_id, gene_function_id)
-            DO UPDATE SET count = excluded.count;
-        """
-        )
 
 
 class MetaPGeneFunctionAggregation(Base):
@@ -736,34 +684,6 @@ class MetaPGeneFunctionAggregation(Base):
     gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
     count = Column(BigInteger, nullable=False)
     best_protein = Column(Boolean, nullable=False)
-
-    @classmethod
-    def populate(cls, db: Session):
-        """Populate denormalized gene function table."""
-        db.execute(
-            f"""
-            INSERT INTO
-                {cls.__tablename__}
-                (metaproteomic_analysis_id, gene_function_id, count, best_protein)
-            SELECT
-                metaproteomic_analysis.id,
-                mga_gene_function.gene_function_id,
-                count(*) AS count,
-                bool_or(metaproteomic_peptide.best_protein = mga_gene_function.subject)
-                    AS best_protein
-            FROM metaproteomic_analysis
-            JOIN metaproteomic_peptide
-                ON metaproteomic_peptide.metaproteomic_analysis_id = metaproteomic_analysis.id
-            JOIN peptide_mga_gene_function
-                ON peptide_mga_gene_function.metaproteomic_peptide_id = metaproteomic_peptide.id
-            JOIN mga_gene_function
-                ON mga_gene_function.subject = peptide_mga_gene_function.subject
-            GROUP BY metaproteomic_analysis.id, mga_gene_function.gene_function_id
-            ON CONFLICT (metaproteomic_analysis_id, gene_function_id)
-            DO UPDATE
-            SET count = excluded.count, best_protein = excluded.best_protein;
-        """
-        )
 
 
 # Used to store a reference to a user requested zip download.  This is stored

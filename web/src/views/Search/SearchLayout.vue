@@ -18,6 +18,7 @@ import BulkDownload from '@/components/BulkDownload.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
 import SearchSidebar from './SearchSidebar.vue';
+import SearchHelpMenu from './SearchHelpMenu.vue';
 
 export default defineComponent({
   name: 'SearchLayout',
@@ -29,6 +30,7 @@ export default defineComponent({
     SampleListExpansion,
     SearchResults,
     SearchSidebar,
+    SearchHelpMenu,
   },
 
   setup() {
@@ -59,6 +61,14 @@ export default defineComponent({
     }
 
     /**
+     * SearchLayout-level settings
+     */
+    const disableBulkDownload = ref(true);
+    api.getAppSettings().then((appSettings) => {
+      disableBulkDownload.value = appSettings.disable_bulk_download;
+    });
+
+    /**
      * Expanded Omics details
      */
     const expandedOmicsDetails = reactive({
@@ -85,7 +95,7 @@ export default defineComponent({
       table: ref('study'),
       conditions: stateRefs.conditions,
     });
-    const study = usePaginatedResults(studySummaryData.otherConditions, api.searchStudy, undefined, 9);
+    const study = usePaginatedResults(studySummaryData.otherConditions, api.searchStudy, undefined, 50);
     const studyResults = computed(() => Object.values(study.data.results.results).map((r) => ({
       ...r,
       name: r.annotations.title || r.name,
@@ -111,6 +121,7 @@ export default defineComponent({
       gatedEnvironmentVisConditions,
       gatedOmicsVisConditions,
       loggedInUser,
+      disableBulkDownload,
       studyType,
       study,
       studyResults,
@@ -142,17 +153,25 @@ export default defineComponent({
       >
         <v-row>
           <v-col>
-            <v-tabs
-              v-model="vistab"
-              height="30px"
-            >
-              <v-tab key="omics">
-                Omics
-              </v-tab>
-              <v-tab key="environments">
-                Environment
-              </v-tab>
-            </v-tabs>
+            <v-row>
+              <v-col>
+                <v-tabs
+                  v-model="vistab"
+                  height="30px"
+                >
+                  <v-tab key="omics">
+                    Omics
+                  </v-tab>
+                  <v-tab key="environments">
+                    Environment
+                  </v-tab>
+                </v-tabs>
+              </v-col>
+              <v-spacer />
+              <v-col class="d-flex justify-end flex-grow-0 flex-shrink-0">
+                <search-help-menu />
+              </v-col>
+            </v-row>
             <v-tabs-items
               v-model="vistab"
               class="my-3"
@@ -243,7 +262,10 @@ export default defineComponent({
                     {{ biosample.data.results.count === 1 ? 'Sample' : 'Samples' }}
                   </v-card-title>
                   <v-spacer />
-                  <div style="width: 70%">
+                  <div
+                    v-if="!disableBulkDownload"
+                    style="width: 70%"
+                  >
                     <BulkDownload
                       :disabled="!loggedInUser"
                       :search-result-count="biosample.data.results.count"
@@ -271,7 +293,7 @@ export default defineComponent({
                     v-text="props.result.study_id"
                   />
                   <template
-                    v-if="props.result.alternate_identifiers.length"
+                    v-if="props.result.alternate_identifiers.length || props.result.emsl_biosample_identifiers.length"
                   >
                     <span class="pr-2">Sample Identifiers:</span>
                     <a
@@ -282,6 +304,12 @@ export default defineComponent({
                       target="_blank"
                       rel="noopener noreferrer"
                     >{{ id }}</a>
+                    <span
+                      v-for="id in props.result.emsl_biosample_identifiers"
+                      :key="id"
+                    >
+                      {{ id }}
+                    </span>
                   </template>
                 </template>
                 <template #item-content="props">

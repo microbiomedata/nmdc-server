@@ -2,7 +2,7 @@
 import { defineComponent, ref } from '@vue/composition-api';
 import Definitions from '@/definitions';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled,
+  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm,
 } from '../store';
 
 export default defineComponent({
@@ -20,10 +20,9 @@ export default defineComponent({
       multiOmicsFormValid,
       Definitions,
       templateChoiceDisabled,
+      contextForm,
       /* functions */
       reValidate,
-      /* Rules functions */
-      // datasetDoiRules,
     };
   },
 });
@@ -32,7 +31,7 @@ export default defineComponent({
 <template>
   <div>
     <div class="text-h2">
-      Multiomics Data
+      Multi-omics Data
     </div>
     <div class="text-h5">
       Information about the type of samples being submitted.
@@ -43,68 +42,37 @@ export default defineComponent({
       class="my-6 mb-10"
       style="max-width: 1000px;"
     >
-      <!-- DOI -->
-      <v-checkbox
-        v-model="multiOmicsAssociations.doi"
-        label="Data has already been generated"
-        hide-details
-        class="mb-2 mt-0"
-        @change="reValidate"
-      />
-      <v-text-field
-        v-if="multiOmicsAssociations.doi"
-        v-model="multiOmicsForm.datasetDoi"
-        :rules="[ v => !!v || 'DOI is required when data has been generated already' ]"
-        :hint="Definitions.doi"
-        persistent-hint
-        label="Dataset DOI *"
-        validate-on-blur
-        outlined
-        dense
-      />
-      <div
-        v-else
-        class="my-5"
-      />
-
-      <v-combobox
-        v-model="multiOmicsForm.alternativeNames"
-        label="Alternative Names"
-        :hint="Definitions.studyAlternativeNames"
-        persistent-hint
-        deletable-chips
-        multiple
-        outlined
-        chips
-        small-chips
-        dense
-      />
-      <v-text-field
-        v-model="multiOmicsForm.GOLDStudyId"
-        label="GOLD Study ID"
-        :hint="Definitions.studyGoldID"
-        persistent-hint
-        outlined
-        dense
-      />
-
-      <v-text-field
-        v-model="multiOmicsForm.NCBIBioProjectName"
-        label="NCBI BioProject Title"
-        :hint="Definitions.studyNCBIProjectTitle"
-        persistent-hint
-        outlined
-        dense
-      />
-      <v-text-field
-        v-model="multiOmicsForm.NCBIBioProjectId"
-        label="NCBI BioProject Accession"
-        :hint="Definitions.studyNCBIBioProjectAccession"
-        persistent-hint
-        outlined
-        dense
-      />
-
+      <div v-if="contextForm.dataGenerated === true">
+        <v-text-field
+          v-model="multiOmicsForm.GOLDStudyId"
+          label="GOLD Study ID"
+          :hint="Definitions.studyGoldID"
+          persistent-hint
+          outlined
+          dense
+        />
+        <v-text-field
+          v-model="multiOmicsForm.NCBIBioProjectId"
+          label="NCBI BioProject Accession"
+          :hint="Definitions.studyNCBIBioProjectAccession"
+          persistent-hint
+          outlined
+          dense
+        />
+        <v-combobox
+          v-model="multiOmicsForm.alternativeNames"
+          label="Alternative Names / IDs"
+          :hint="Definitions.studyAlternativeNames"
+          persistent-hint
+          deletable-chips
+          multiple
+          outlined
+          chips
+          small-chips
+          dense
+          append-icon=""
+        />
+      </div>
       <div class="text-h4">
         Data types *
       </div>
@@ -119,85 +87,88 @@ export default defineComponent({
         <p class="text-h5">
           Data type choice disabled
         </p>
-        Data types cannot be changed when there are already metadata rows in step 5.  To change the template, return to step 5 and remove all data.
+        Data types cannot be changed when there are already metadata rows in step 6.  To change the template, return to step 6 and remove all data.
       </v-alert>
 
       <!-- JGI -->
-      <div class="text-h6">
-        Joint Genome Institute (JGI)
+      <div v-if="contextForm.facilities.includes('JGI') || contextForm.facilityGenerated === true">
+        <div class="text-h6">
+          Joint Genome Institute (JGI)
+        </div>
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Metagenome"
+          value="mg-jgi"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Metatranscriptome"
+          value="mt-jgi"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Metabolome"
+          value="mb-jgi"
+          disabled
+          hide-details
+        />
+        <v-text-field
+          v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('jgi'))"
+          v-model="multiOmicsForm.JGIStudyId"
+          :rules="[ v => !!v || 'JGI Proposal ID/Study ID is required when processing was done at JGI' ]"
+          label="JGI Proposal ID/Study ID *"
+          hint="This is the 6 digit ID assigned to your JGI Proposal and is required when completing metadata for samples to be sent to JGI for sequencing."
+          persistent-hint
+          class="mt-4"
+          outlined
+          validate-on-blur
+          dense
+        />
       </div>
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metagenome"
-        value="mg-jgi"
-        :disabled="templateChoiceDisabled"
-        hide-details
-      />
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metatranscriptome"
-        value="mt-jgi"
-        :disabled="templateChoiceDisabled"
-        hide-details
-      />
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metabolome"
-        value="mb-jgi"
-        disabled
-        hide-details
-      />
-      <v-text-field
-        v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('jgi'))"
-        v-model="multiOmicsForm.JGIStudyId"
-        :rules="[ v => !!v || 'JGI Study ID is required when processing was done at JGI' ]"
-        label="JGI Study ID *"
-        hint="JGI Study ID is required when processing was done at JGI"
-        persistent-hint
-        class="mt-4"
-        outlined
-        validate-on-blur
-        dense
-      />
 
       <!-- EMSL -->
-      <div class="text-h6 mt-4">
-        Environmental Molecular Science Laboratory (EMSL)
+      <div v-if="contextForm.facilities.includes('EMSL') || contextForm.facilityGenerated === true">
+        <div class="text-h6 mt-4">
+          Environmental Molecular Science Laboratory (EMSL)
+        </div>
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Metaproteome"
+          value="mp-emsl"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Metabolome"
+          value="mb-emsl"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Natural Organic Matter (FT-ICR MS)"
+          value="nom-emsl"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+        <v-text-field
+          v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('emsl'))"
+          v-model="multiOmicsForm.studyNumber"
+          :rules="[ v => !!v || 'EMSL Study Number is required when processing was done at EMSL' ]"
+          hint="EMSL Study Number is required when processing was done at EMSL"
+          persistent-hint
+          label="EMSL Proposal / Study Number *"
+          class="mt-4"
+          outlined
+          validate-on-blur
+          dense
+        />
       </div>
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metaproteome"
-        value="mp-emsl"
-        :disabled="templateChoiceDisabled"
-        hide-details
-      />
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metabolome"
-        value="mb-emsl"
-        :disabled="templateChoiceDisabled"
-        hide-details
-      />
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Natural Organic Matter (FT-ICR MS)"
-        value="nom-emsl"
-        :disabled="templateChoiceDisabled"
-        hide-details
-      />
-      <v-text-field
-        v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('emsl'))"
-        v-model="multiOmicsForm.studyNumber"
-        :rules="[ v => !!v || 'EMSL Study Number is required when processing was done at EMSL' ]"
-        hint="EMSL Study Number is required when processing was done at EMSL"
-        persistent-hint
-        label="EMSL Proposal / Study Number *"
-        class="mt-4"
-        outlined
-        validate-on-blur
-        dense
-      />
-
       <!-- Other -->
       <div class="text-h6 mt-4">
         Other Non-DOE

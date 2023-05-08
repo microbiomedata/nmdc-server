@@ -1,7 +1,7 @@
 import {
-  computed, Ref, ref, nextTick,
+  Ref, ref, nextTick,
 } from '@vue/composition-api';
-import { debounce, has } from 'lodash';
+import { debounce } from 'lodash';
 import { DataHarmonizer, Footer } from 'data-harmonizer';
 
 // a simple data structure to define the relationships between the GOLD ecosystem fields
@@ -28,83 +28,141 @@ const GOLD_FIELDS = {
   },
 };
 
-const VariationMap = {
-  /** A mapping of the templates to the superset of checkbox options they work for. */
-  emsl: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl']),
-  jgi_mg: new Set(['mg-jgi']),
-  emsl_jgi_mg: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi']),
-  jgi_mt: new Set(['mt-jgi']),
-  emsl_jgi_mt: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mt-jgi']),
-  jgi_mg_mt: new Set(['mg-jgi', 'mt-jgi']),
-  emsl_jgi_mg_mt: new Set(['mp-emsl', 'mb-emsl', 'nom-emsl', 'mg-jgi', 'mt-jgi']),
-};
-// Variations should be in matching order.
-// In other words, attempt to match 'emsl' before 'emsl_jgi_mg'
-const allVariations: (keyof typeof VariationMap)[] = ['emsl', 'jgi_mg', 'emsl_jgi_mg', 'jgi_mt', 'emsl_jgi_mt', 'jgi_mg_mt', 'emsl_jgi_mg_mt'];
-
-export function getVariant(checkBoxes: string[], variations: (keyof typeof VariationMap)[], base: string) {
-  if (checkBoxes.length === 0) {
-    return base;
+const EMSL = 'emsl';
+const JGI_MG = 'jgi_mg';
+const JGT_MT = 'jgi_mt';
+export function getVariants(checkBoxes: string[], dataGenerated: boolean | undefined, base: string): string[] {
+  const templates = [base];
+  if (dataGenerated) {
+    return templates;
   }
-  const variationStr = variations.find((v) => {
-    const vSet = VariationMap[v];
-    return checkBoxes.every((elem) => vSet.has(elem));
-  });
-  if (variationStr) {
-    return `${base}_${variationStr}`;
+  if (checkBoxes.includes('mp-emsl') || checkBoxes.includes('mb-emsl') || checkBoxes.includes('nom-emsl')) {
+    templates.push(EMSL);
   }
-  return base;
+  if (checkBoxes.includes('mg-jgi')) {
+    templates.push(JGI_MG);
+  }
+  if (checkBoxes.includes('mt-jgi')) {
+    templates.push(JGT_MT);
+  }
+  return templates;
 }
 
 /**
  * A manifest of the options available in DataHarmonizer
  */
-export const HARMONIZER_TEMPLATES: Record<string, {
-  default: string;
-  status: String;
-  variations: (keyof typeof VariationMap)[];
-}> = {
-  air: { default: 'air', status: 'published', variations: [] },
-  // bioscales: { default: 'bioscales', status: 'published', variations: [] },
-  'built environment': { default: 'built_env', status: 'published', variations: [] },
-  'host-associated': { default: 'host-associated', status: 'published', variations: [] },
-  'human-associated': { default: '', status: 'disabled', variations: [] },
-  'human-gut': { default: '', status: 'disabled', variations: [] },
-  'human-oral': { default: '', status: 'disabled', variations: [] },
-  'human-skin': { default: '', status: 'disabled', variations: [] },
-  'human-vaginal': { default: '', status: 'disabled', variations: [] },
+interface HarmonizerTemplateInfo {
+  displayName: string,
+  schemaClass?: string,
+  sampleDataSlot?: string,
+  status: 'published' | 'mixin' | 'disabled',
+}
+export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
+  air: {
+    displayName: 'air',
+    schemaClass: 'AirInterface',
+    sampleDataSlot: 'air_data',
+    status: 'published',
+  },
+  'built environment': {
+    displayName: 'built environment',
+    schemaClass: 'BuiltEnvInterface',
+    sampleDataSlot: 'built_env_data',
+    status: 'published',
+  },
+  'host-associated': {
+    displayName: 'host-associated',
+    schemaClass: 'HostAssociatedInterface',
+    sampleDataSlot: 'host_associated_data',
+    status: 'published',
+  },
+  'human-associated': {
+    displayName: 'human-associated',
+    status: 'disabled',
+  },
+  'human-gut': {
+    displayName: 'human - gut',
+    status: 'disabled',
+  },
+  'human-oral': {
+    displayName: 'human - oral',
+    status: 'disabled',
+  },
+  'human-skin': {
+    displayName: 'human - skin',
+    status: 'disabled',
+  },
+  'human-vaginal': {
+    displayName: 'human - vaginal',
+    status: 'disabled',
+  },
   'hydrocarbon resources-cores': {
-    default: 'hcr-cores', status: 'published', variations: [],
+    displayName: 'hydrocarbon resources - cores',
+    schemaClass: 'HcrCoresInterface',
+    sampleDataSlot: 'hcr_cores_data',
+    status: 'published',
   },
   'hydrocarbon resources-fluids_swabs': {
-    default: 'hcr-fluids-swabs', status: 'published', variations: [],
+    displayName: 'hydrocarbon resources - fluids swabs',
+    schemaClass: 'HcrFluidsSwabsInterface',
+    sampleDataSlot: 'hcr_fluids_swabs_data',
+    status: 'published',
   },
   'microbial mat_biofilm': {
-    default: 'biofilm', status: 'published', variations: [],
+    displayName: 'microbial mat_biofilm',
+    schemaClass: 'BiofilmInterface',
+    sampleDataSlot: 'biofilm_data',
+    status: 'published',
   },
   'miscellaneous natural or artificial environment': {
-    default: 'misc-envs', status: 'published', variations: [],
+    displayName: 'miscellaneous natural or artificial environment',
+    schemaClass: 'MiscEnvsInterface',
+    sampleDataSlot: 'misc_envs_data',
+    status: 'published',
   },
   'plant-associated': {
-    default: 'plant-associated', status: 'published', variations: [],
+    displayName: 'plant-associated',
+    schemaClass: 'PlantAssociatedInterface',
+    sampleDataSlot: 'plant_associated_data',
+    status: 'published',
   },
   sediment: {
-    default: 'sediment', status: 'published', variations: [],
+    displayName: 'sediment',
+    schemaClass: 'SedimentInterface',
+    sampleDataSlot: 'sediment_data',
+    status: 'published',
   },
   soil: {
-    default: 'soil', status: 'published', variations: allVariations,
-  },
-  wastewater_sludge: {
-    default: 'wastewater_sludge', status: 'published', variations: [],
+    displayName: 'soil',
+    schemaClass: 'SoilInterface',
+    sampleDataSlot: 'soil_data',
+    status: 'published',
   },
   water: {
-    default: 'water', status: 'published', variations: [],
+    displayName: 'water',
+    schemaClass: 'WaterInterface',
+    sampleDataSlot: 'water_data',
+    status: 'published',
+  },
+  [EMSL]: {
+    displayName: 'EMSL',
+    schemaClass: 'EmslInterface',
+    sampleDataSlot: 'emsl_data',
+    status: 'mixin',
+  },
+  [JGI_MG]: {
+    displayName: 'JGI MG',
+    schemaClass: 'JgiMgInterface',
+    sampleDataSlot: 'jgi_mg_data',
+    status: 'mixin',
+  },
+  [JGT_MT]: {
+    displayName: 'JGI MT',
+    schemaClass: 'JgiMtInterface',
+    sampleDataSlot: 'jgi_mt_data',
+    status: 'mixin',
   },
 };
-
-interface ValidationErrors {
-  [error: string]: [number, number][],
-}
 
 interface CellData {
   row: number,
@@ -113,10 +171,6 @@ interface CellData {
 }
 
 export class HarmonizerApi {
-  validationErrors: Ref<ValidationErrors>;
-
-  validationErrorGroups: Ref<string[]>;
-
   schemaSections: Ref<Record<string, Record<string, number>>>;
 
   ready: Ref<boolean>;
@@ -129,16 +183,16 @@ export class HarmonizerApi {
 
   selectedColumn: Ref<string>;
 
+  schema: any;
+
   constructor() {
-    this.validationErrors = ref({});
     this.schemaSections = ref({});
     this.ready = ref(false);
     this.selectedColumn = ref('');
-    this.validationErrorGroups = computed(() => Object.keys(this.validationErrors.value));
   }
 
-  async init(r: HTMLElement, templateName: string) {
-    const schema = (await import('./schema.json')).default;
+  async init(r: HTMLElement, templateName: string | undefined) {
+    this.schema = (await import('nmdc-submission-schema/project/json/nmdc_submission_schema.json')).default;
     // Taken from https://gold.jgi.doe.gov/download?mode=biosampleEcosystemsJson
     // See also: https://gold.jgi.doe.gov/ecosystemtree
     this.goldEcosystemTree = (await import('./GoldEcosystemTree.json')).default;
@@ -146,19 +200,16 @@ export class HarmonizerApi {
     this.dh = new DataHarmonizer(r, {
       modalsRoot: document.querySelector('.harmonizer-style-container'),
       fieldSettings: this._getFieldSettings(),
+      columnHelpEntries: ['column', 'description', 'guidance', 'examples'],
     });
     this.footer = new Footer(document.querySelector('#harmonizer-footer-root'), this.dh);
-    this.dh.useSchema(schema, [], templateName);
+    this.dh.useSchema(this.schema, [], templateName);
+    this._postTemplateChange();
 
-    this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
-      this.selectedColumn.value = this.dh.getFields()[col].title;
-    }, 200, { leading: true }));
-    this.dh.hot.updateSettings({ search: true, customBorders: true });
     // @ts-ignore
     window.dh = this.dh;
 
     this.ready.value = true;
-    this.jumpToRowCol(0, 0);
   }
 
   _getColumnCoordinates() {
@@ -245,30 +296,23 @@ export class HarmonizerApi {
     return fieldSettings;
   }
 
-  refreshState() {
-    this.schemaSections.value = this._getColumnCoordinates();
-    const remapped: ValidationErrors = {};
-    const invalid: Record<number, Record<number, string>> = this.dh.invalid_cells;
-    if (Object.keys(invalid).length) {
-      remapped['All Errors'] = [];
-    }
-    Object.entries(invalid).forEach(([row, val]) => {
-      Object.entries(val).forEach(([col, text]) => {
-        const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
-        const issue = text || 'Validation Error';
-        if (has(remapped, issue)) {
-          remapped[issue].push(entry);
-        } else {
-          remapped[issue] = [entry];
-        }
-        remapped['All Errors'].push(entry);
-      });
-    });
-    this.validationErrors.value = remapped;
+  _postTemplateChange() {
+    this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
+      this.selectedColumn.value = this.dh.getFields()[col].title;
+    }, 200, { leading: true }));
+    this.dh.hot.updateSettings({ search: true, customBorders: true });
+    this.jumpToRowCol(0, 0);
   }
 
-  async loadData(data: any[][]) {
-    await this.dh.hot.loadData(data);
+  refreshState() {
+    this.schemaSections.value = this._getColumnCoordinates();
+  }
+
+  async loadData(data: any[]) {
+    if (!this.ready.value) {
+      return;
+    }
+    await this.dh.loadDataObjects(data);
     await this.dh.hot.render();
     this.refreshState();
   }
@@ -324,7 +368,7 @@ export class HarmonizerApi {
   }
 
   exportJson() {
-    return [...this.dh.getFlatHeaders(), ...this.dh.getTrimmedData()];
+    return this.dh.getDataObjects(false);
   }
 
   scrollViewportTo(row: number, column: number) {
@@ -339,25 +383,6 @@ export class HarmonizerApi {
     this.dh.renderReference();
   }
 
-  openFile(file: File) {
-    if (!file) return;
-    const ext = file.name.split('.').pop();
-    if (!ext) return;
-    const acceptedExts = ['xlsx', 'xls', 'tsv', 'csv'];
-    if (!acceptedExts.includes(ext)) {
-      // TODO: #open-error-modal not present because Toolbar component is not being used.
-      // Display this error differently?
-      //
-      // const errMsg = `Only ${acceptedExts.join(', ')} files are supported`;
-      // $('#open-err-msg').text(errMsg);
-      // $('#open-error-modal').modal('show');
-    } else {
-      this.dh.invalid_cells = {};
-      this.dh.runBehindLoadingScreen(this.dh.openFile, [file]);
-    }
-    this.dh.current_selection = [null, null, null, null];
-  }
-
   setupTemplate(folder: string) {
     this.dh.setupTemplate(folder);
   }
@@ -365,11 +390,119 @@ export class HarmonizerApi {
   validate() {
     this.dh.validate();
     this.refreshState();
-    return Object.keys(this.validationErrors).length === 0;
+    return this.dh.invalid_cells;
   }
 
   addChangeHook(callback: Function) {
-    // calls function on any change of the data
-    this.dh.hot.addHook('afterChange', callback);
+    if (!this.ready.value) {
+      return;
+    }
+    // calls function on any non-programmatic change of the data
+    this.dh.hot.addHook('afterChange', (changes: any[], source: string | null) => {
+      if (source === 'loadData') {
+        return;
+      }
+      callback();
+    });
+  }
+
+  useTemplate(template: string | undefined) {
+    if (!this.dh || !template) {
+      return;
+    }
+    this.dh.useTemplate(template);
+    this._postTemplateChange();
+  }
+
+  setColumnsReadOnly(columns: number[]) {
+    const { hot } = this.dh;
+    const rowCount = hot.countRows();
+    columns.forEach((col) => {
+      for (let row = 0; row < rowCount; row += 1) {
+        hot.setCellMeta(row, col, 'readOnly', true);
+      }
+    });
+    hot.render();
+  }
+
+  setMaxRows(maxRows: number) {
+    this.dh.hot.updateSettings({ maxRows });
+  }
+
+  setInvalidCells(invalidCells: Record<number, Record<number, string>>) {
+    this.dh.invalid_cells = invalidCells;
+    this.dh.hot.render();
+  }
+
+  getSlot(slotName: string) {
+    return this.schema.slots[slotName];
+  }
+
+  getSlotRank(slotName: string) {
+    const slot = this.getSlot(slotName);
+    if (!slot) {
+      return 9999;
+    }
+    return slot.rank;
+  }
+
+  getSlotGroupRank(slotName: string) {
+    const slot = this.getSlot(slotName);
+    if (!slot || !slot.slot_group) {
+      return 9999;
+    }
+    return this.getSlotRank(slot.slot_group);
+  }
+
+  getOrderedAttributeNames(className: string): string[] {
+    return Object.keys(this.schema.classes[className].attributes).sort(
+      (a, b) => {
+        const aSlotGroupRank = this.getSlotGroupRank(a);
+        const bSlotGroupRank = this.getSlotGroupRank(b);
+        if (aSlotGroupRank !== bSlotGroupRank) {
+          return aSlotGroupRank - bSlotGroupRank;
+        }
+        const aSlotRank = this.getSlotRank(a);
+        const bSlotRank = this.getSlotRank(b);
+        return aSlotRank - bSlotRank;
+      },
+    );
+  }
+
+  getHeaderRow(className: string): Record<string, string> {
+    const orderedAttrNames = this.getOrderedAttributeNames(className);
+    const attrs = this.schema.classes[className].attributes;
+    const header = {} as Record<string, string>;
+    orderedAttrNames.forEach((attrName) => {
+      header[attrName] = attrs[attrName].title || attrs[attrName].name;
+    });
+    return header;
+  }
+
+  unflattenArrayValues(tableData: Record<string, any>[], className: string): Record<string, any>[] {
+    return tableData.map((row) => Object.fromEntries(
+      Object.entries(row).map(([key, value]) => {
+        let unflattenedValue = value;
+        if (this.schema.classes[className].attributes[key].multivalued) {
+          unflattenedValue = value.split(';').map((v: string) => v.trim());
+        }
+        return [key, unflattenedValue];
+      }),
+    ));
+  }
+
+  static flattenArrayValues(tableData: Record<string, any>[]) {
+    if (!tableData) {
+      return [];
+    }
+    return tableData.map((row) => Object.fromEntries(
+      Object.entries(row).map(([key, value]) => {
+        let flatValue = value;
+        if (Array.isArray(value)) {
+          flatValue = value.join('; ');
+        }
+        return [key, flatValue];
+      }),
+    ));
   }
 }

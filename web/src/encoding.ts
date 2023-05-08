@@ -334,6 +334,10 @@ const fields: Record<string, FieldsData> = {
     hideFacet: true,
     hideAttr: true,
   },
+  image_url: {
+    hideFacet: true,
+    hideAttr: true,
+  },
   /* END disable uniques */
   /* Other non-facet terms to remap */
   reads_qc: {
@@ -346,7 +350,7 @@ const fields: Record<string, FieldsData> = {
     name: 'NOM analysis',
   },
   'Organic Matter Characterization': {
-    name: 'Organic Matter',
+    name: 'Natural Organic Matter',
   },
   multiomics: {
     hideAttr: true,

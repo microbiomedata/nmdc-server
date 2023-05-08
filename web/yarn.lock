@@ -1597,6 +1597,11 @@
   dependencies:
     "@types/geojson" "*"
 
+"@types/linkify-it@^3.0.2":
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/@types/linkify-it/-/linkify-it-3.0.2.tgz#fd2cd2edbaa7eaac7e7f3c1748b52a19143846c9"
+  integrity sha512-HZQYqbiFVWufzCwexrvh694SOim8z2d+xJl5UNamcvQFejLY/2YUtzXHYi3cHdI7PMlS8ejH2slRAOJQ32aNbA==
+
 "@types/lodash@^4.14.178":
   version "4.14.178"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.178.tgz#341f6d2247db528d4a13ddbb374bcdc80406f4f8"
@@ -4275,10 +4280,10 @@ dashdash@^1.12.0:
   dependencies:
     assert-plus "^1.0.0"
 
-data-harmonizer@1.3.5:
-  version "1.3.5"
-  resolved "https://registry.yarnpkg.com/data-harmonizer/-/data-harmonizer-1.3.5.tgz#126fbd814d877825d3fe77fb1fb450fa9672d7ff"
-  integrity sha512-aE7AgfsxgHbwvcEnNylDur77fZpwduaYWtPD1ZsMVgUiu6QP71RpfZguwFRFSTzeo4yJLbuiy9zByKk4nD5s/w==
+data-harmonizer@1.4.7:
+  version "1.4.7"
+  resolved "https://registry.yarnpkg.com/data-harmonizer/-/data-harmonizer-1.4.7.tgz#b1412018007a578493a1cc5129c86351580883cf"
+  integrity sha512-fSkQ0DC7mRu0hibmoaVbJTr4v/meMHCZVAXYhnAGnekaYPzgmvhxEM34EMHF+C3QR/41xQ+t6DsJqK4basLJdw==
   dependencies:
     "@selectize/selectize" "^0.13.5"
     date-fns "^2.28.0"
@@ -6965,6 +6970,13 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
+linkify-it@^4.0.1:
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/linkify-it/-/linkify-it-4.0.1.tgz#01f1d5e508190d06669982ba31a7d9f56a5751ec"
+  integrity sha512-C7bfi1UZmoj8+PQx22XyeXCuBlokoyWQL5pWSP+EI6nzRylyThouddufc2c1NDIcP9k5agmN9fLpA7VNJfIiqw==
+  dependencies:
+    uc.micro "^1.0.1"
+
 loader-fs-cache@^1.0.0:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/loader-fs-cache/-/loader-fs-cache-1.0.3.tgz#f08657646d607078be2f0a032f8bd69dd6f277d9"
@@ -7553,6 +7565,10 @@ nice-try@^1.0.4:
 "nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v6.0.4":
   version "0.0.0"
   resolved "https://github.com/microbiomedata/nmdc-schema#e9b7da691079989a7e72ecc350f59058c6787557"
+
+"nmdc-submission-schema@https://files.pythonhosted.org/packages/source/n/nmdc-submission-schema/nmdc_submission_schema-1.0.2.tar.gz":
+  version "0.0.0"
+  resolved "https://files.pythonhosted.org/packages/source/n/nmdc-submission-schema/nmdc_submission_schema-1.0.2.tar.gz#955fd0c2358519c648c0ee3a907917a8183e70de"
 
 no-case@^2.2.0:
   version "2.3.2"
@@ -10236,6 +10252,11 @@ typescript@^4.5.3:
   version "4.5.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.5.3.tgz#afaa858e68c7103317d89eb90c5d8906268d353c"
   integrity sha512-eVYaEHALSt+s9LbvgEv4Ef+Tdq7hBiIZgii12xXJnukryt3pMgJf6aKhoCZ3FWQsu6sydEnkg11fYXLzhLBjeQ==
+
+uc.micro@^1.0.1:
+  version "1.0.6"
+  resolved "https://registry.yarnpkg.com/uc.micro/-/uc.micro-1.0.6.tgz#9c411a802a409a91fc6cf74081baba34b24499ac"
+  integrity sha512-8Y75pvTYkLJW2hWQHXxoqRgV7qb9B+9vFEtidML+7koHUFapnVJAZ6cKs+Qjz5Aw3aZWHMC6u0wJE3At+nSGwA==
 
 uglify-js@3.4.x:
   version "3.4.10"

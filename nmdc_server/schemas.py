@@ -14,7 +14,7 @@ from uuid import UUID
 
 from pint import Unit
 from pydantic import BaseModel, Field, validator
-from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, String
+from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, LargeBinary, String
 from sqlalchemy.dialects.postgresql.json import JSONB
 
 from nmdc_server import models
@@ -26,7 +26,7 @@ DateType = Union[datetime, date]
 # valid datetime strings into datetime objects while falling
 # back to ordinary strings.  Also, we never want numeric types
 # to be interpreted as dates.
-AnnotationValue = Union[float, int, datetime, str, dict]
+AnnotationValue = Union[float, int, datetime, str, dict, list]
 
 
 class ErrorSchema(BaseModel):
@@ -64,6 +64,9 @@ class AttributeType(Enum):
             return AttributeType.string
         elif isinstance(column.type, JSONB):
             raise ValueError("Cannot summarize JSONB")
+        elif isinstance(column.type, LargeBinary):
+            raise ValueError("Cannot summarize LargeBinary")
+
         raise Exception("Unknown column type")
 
 
@@ -223,6 +226,8 @@ class StudyBase(AnnotatedBase):
     relevant_protocols: Optional[List[str]]
     funding_sources: Optional[List[str]]
     ess_dive_datasets: Optional[List[str]]
+    massive_study_identifiers: Optional[List[str]]
+    gold_study_identifiers: Optional[List[str]]
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
@@ -239,6 +244,7 @@ class StudyBase(AnnotatedBase):
 
 class StudyCreate(StudyBase):
     principal_investigator_id: UUID
+    image: Optional[bytes]
 
 
 class OmicsCounts(BaseModel):
@@ -254,6 +260,7 @@ class Study(StudyBase):
     open_in_gold: Optional[str]
     principal_investigator: OrcidPerson
     principal_investigator_name: str
+    image_url: str
     principal_investigator_image_url: str
     sample_count: Optional[int]
     omics_counts: Optional[List[OmicsCounts]]
@@ -287,7 +294,7 @@ class BiosampleBase(AnnotatedBase):
 
 
 class BiosampleCreate(BiosampleBase):
-    pass
+    emsl_biosample_identifiers: List[str] = []
 
 
 class Biosample(BiosampleBase):
@@ -298,6 +305,7 @@ class Biosample(BiosampleBase):
     env_broad_scale_terms: List[str] = []
     env_local_scale_terms: List[str] = []
     env_medium_terms: List[str] = []
+    emsl_biosample_identifiers: Optional[List[str]]
 
     omics_processing: List["OmicsProcessing"]
     multiomics: int
@@ -394,14 +402,6 @@ class GeneFunction(BaseModel):
     id: str
 
 
-class MGAGeneFunction(BaseModel):
-    class Config:
-        orm_mode = True
-
-    gene_function_id: str
-    subject: str
-
-
 class PipelineStepBase(BaseModel):
     id: str
     name: str = ""
@@ -424,10 +424,10 @@ class PipelineStep(PipelineStepBase):
 
 class ReadsQCBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.reads_qc.value
-    input_read_count: int
-    input_read_bases: int
-    output_read_count: int
-    output_read_bases: int
+    input_read_count: Optional[int]
+    input_read_bases: Optional[int]
+    output_read_count: Optional[int]
+    output_read_bases: Optional[int]
 
 
 class ReadsQC(PipelineStep):
@@ -476,7 +476,7 @@ class MetagenomeAnnotationBase(PipelineStepBase):
 
 
 class MetagenomeAnnotation(PipelineStep):
-    gene_functions: List[MGAGeneFunction]
+    pass
 
 
 class MetaproteomicAnalysisBase(PipelineStepBase):
@@ -485,21 +485,6 @@ class MetaproteomicAnalysisBase(PipelineStepBase):
 
 class MetaproteomicAnalysis(PipelineStep):
     pass
-
-
-class PeptideMGAGeneFunction(BaseModel):
-    subject: str
-    gene_function: str
-
-
-class MetaprotemoicPeptide(BaseModel):
-    peptide_sequence: str
-    peptide_sum_masic_abundance: int
-    peptide_spectral_count: int
-    best_protein: str
-    min_q_value: float
-
-    best_protein_object: "MGAGeneFunction"
 
 
 class MAG(BaseModel):
@@ -588,7 +573,6 @@ OmicsTypes = Union[
 OmicsProcessing.update_forward_refs()
 Biosample.update_forward_refs()
 MAGCreate.update_forward_refs()
-MetaprotemoicPeptide.update_forward_refs()
 
 
 class FileDownloadMetadata(BaseModel):

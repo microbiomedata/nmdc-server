@@ -1,18 +1,33 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted,
+  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
 } from '@vue/composition-api';
-import { clamp, flattenDeep } from 'lodash';
-import { writeFile, utils } from 'xlsx';
+import {
+  clamp, flattenDeep, has, sum,
+} from 'lodash';
+import { read, writeFile, utils } from 'xlsx';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
-import { HarmonizerApi } from './harmonizerApi';
+import { HarmonizerApi, HARMONIZER_TEMPLATES } from './harmonizerApi';
 import {
-  packageName, samplesValid, sampleData, submit, incrementalSaveRecord, templateChoice,
+  packageName,
+  sampleData,
+  status,
+  submit,
+  incrementalSaveRecord,
+  templateList,
+  mergeSampleData,
+  hasChanged,
+  tabsValidated,
+  submissionStatus,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
+
+interface ValidationErrors {
+  [error: string]: [number, number][],
+}
 
 const ColorKey = {
   required: {
@@ -33,6 +48,22 @@ const ColorKey = {
   },
 };
 
+const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
+
+// controls which field is used to merge data from different DH views
+const SCHEMA_ID = 'source_mat_id';
+
+// used in determining which rows are shown in each view
+const TYPE_FIELD = 'analysis_type';
+
+// TODO: should this be derived from schema?
+const COMMON_COLUMNS = ['samp_name', SCHEMA_ID, TYPE_FIELD];
+
+// TODO: can this be imported from elsewhere?
+const EMSL = 'emsl';
+const JGI_MG = 'jgi_mg';
+const JGT_MT = 'jgi_mt';
+
 export default defineComponent({
   components: { FindReplace, SubmissionStepper },
 
@@ -44,18 +75,78 @@ export default defineComponent({
     const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
     const sidebarOpen = ref(true);
+    const invalidCells = shallowRef({} as Record<string, Record<number, Record<number, string>>>);
+
+    const activeTemplateKey = ref(templateList.value[0]);
+    const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value]);
+    const activeTemplateData = computed(() => {
+      if (!activeTemplate.value.sampleDataSlot) {
+        return [];
+      }
+      return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
+    });
+    const activeInvalidCells = computed(() => invalidCells.value[activeTemplateKey.value] || {});
+
+    const submitDialog = ref(false);
+
+    watch(activeTemplateData, () => {
+      harmonizerApi.loadData(activeTemplateData.value);
+      // if we're not on the first tab, the common columns should be read-only
+      if (activeTemplateKey.value !== templateList.value[0]) {
+        harmonizerApi.setColumnsReadOnly([0, 1, 2]);
+        harmonizerApi.setMaxRows(activeTemplateData.value.length);
+      }
+    });
+
+    watch(activeInvalidCells, () => {
+      harmonizerApi.setInvalidCells(activeInvalidCells.value);
+    });
+
+    const validationErrors = computed(() => {
+      const remapped: ValidationErrors = {};
+      const invalid: Record<number, Record<number, string>> = activeInvalidCells.value;
+      if (Object.keys(invalid).length) {
+        remapped['All Errors'] = [];
+      }
+      Object.entries(invalid).forEach(([row, rowErrors]) => {
+        Object.entries(rowErrors).forEach(([col, errorText]) => {
+          const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
+          const issue = errorText || 'Validation Error';
+          if (has(remapped, issue)) {
+            remapped[issue].push(entry);
+          } else {
+            remapped[issue] = [entry];
+          }
+          remapped['All Errors'].push(entry);
+        });
+      });
+      return remapped;
+    });
+
+    const validationErrorGroups = computed(() => Object.keys(validationErrors.value));
+
+    const validationTotalCounts = computed(() => Object.fromEntries(
+      Object.entries(invalidCells.value).map(([template, cells]) => ([
+        template,
+        sum(Object.values(cells).map((row) => Object.keys(row).length)),
+      ])),
+    ));
+
+    const onDataChange = () => {
+      hasChanged.value += 1;
+      const data = harmonizerApi.exportJson();
+      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
+      incrementalSaveRecord(root.$route.params.id);
+      tabsValidated.value[activeTemplateKey.value] = false;
+    };
 
     onMounted(async () => {
       const r = document.getElementById('harmonizer-root');
       if (r) {
-        await harmonizerApi.init(r, templateChoice.value);
+        await harmonizerApi.init(r, activeTemplate.value.schemaClass);
         await nextTick();
-        harmonizerApi.loadData(sampleData.value.slice(2));
-        harmonizerApi.addChangeHook(() => {
-          const data = harmonizerApi.exportJson();
-          sampleData.value = data;
-          incrementalSaveRecord(root.$route.params.id);
-        });
+        harmonizerApi.loadData(activeTemplateData.value);
+        harmonizerApi.addChangeHook(onDataChange);
       }
     });
 
@@ -70,7 +161,7 @@ export default defineComponent({
     }
 
     function errorClick(index: number) {
-      const currentSeries = harmonizerApi.validationErrors.value[validationActiveCategory.value];
+      const currentSeries = validationErrors.value[validationActiveCategory.value];
       highlightedValidationError.value = clamp(index, 0, currentSeries.length - 1);
       const currentError = currentSeries[highlightedValidationError.value];
       harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
@@ -78,14 +169,33 @@ export default defineComponent({
 
     async function validate() {
       const data = harmonizerApi.exportJson();
-      sampleData.value = data;
-      samplesValid.value = await harmonizerApi.validate();
-      sidebarOpen.value = !samplesValid.value;
+      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
+      const result = await harmonizerApi.validate();
+      const valid = Object.keys(result).length === 0;
+      if (!valid && !sidebarOpen.value) {
+        sidebarOpen.value = true;
+      }
+      invalidCells.value = {
+        ...invalidCells.value,
+        [activeTemplateKey.value]: result,
+      };
       incrementalSaveRecord(root.$route.params.id);
-      if (samplesValid.value === false) {
+      if (valid === false) {
         errorClick(0);
       }
+      tabsValidated.value = {
+        ...tabsValidated.value,
+        [activeTemplateKey.value]: valid,
+      };
     }
+
+    const canSubmit = computed(() => {
+      let allTabsValid = true;
+      Object.values(tabsValidated.value).forEach((value) => {
+        allTabsValid = allTabsValid && value;
+      });
+      return allTabsValid;
+    });
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -98,11 +208,11 @@ export default defineComponent({
         return val;
       }))));
 
-    const validationItems = computed(() => harmonizerApi.validationErrorGroups.value.map((v) => {
-      const errors = harmonizerApi.validationErrors.value[v];
+    const validationItems = computed(() => validationErrorGroups.value.map((errorGroup) => {
+      const errors = validationErrors.value[errorGroup];
       return {
-        text: `${v} (${errors.length})`,
-        value: v,
+        text: `${errorGroup} (${errors.length})`,
+        value: errorGroup,
       };
     }));
 
@@ -121,48 +231,198 @@ export default defineComponent({
     const { request, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => request(async () => {
       const data = await harmonizerApi.exportJson();
-      sampleData.value = data;
-      await submit(root.$route.params.id);
+      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
+      await submit(root.$route.params.id, submissionStatus.SubmittedPendingReview);
+      submitDialog.value = false;
     });
 
-    async function downloadSamples() {
-      const data = await harmonizerApi.exportJson();
-      const worksheet = utils.aoa_to_sheet(data);
-      const workbook = utils.book_new();
-      utils.book_append_sheet(workbook, worksheet, 'Sheet1');
-      // @ts-ignore
-      writeFile(workbook, 'nmdc_sample_export.tsv', { bookType: 'csv', FS: '\t' });
+    function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
+      if (templateKey === templateList.value[0]) {
+        return true;
+      }
+      const row_types = row[TYPE_FIELD];
+      if (!row_types) {
+        return false;
+      }
+      if (templateKey === EMSL) {
+        return row_types.includes('metaproteomics')
+          || row_types.includes('metabolomics')
+          || row_types.includes('natural organic matter');
+      }
+      if (templateKey === JGI_MG) {
+        return row_types.includes('metagenomics');
+      }
+      if (templateKey === JGT_MT) {
+        return row_types.includes('metatranscriptomics');
+      }
+      return false;
     }
 
-    function openFile() {
+    function synchronizeTabData(templateKey: string) {
+      if (templateKey === templateList.value[0]) {
+        return;
+      }
+      const nextData = { ...sampleData.value };
+      const templateSlot = HARMONIZER_TEMPLATES[templateKey].sampleDataSlot;
+      const environmentSlot = HARMONIZER_TEMPLATES[templateList.value[0]].sampleDataSlot;
+
+      if (!templateSlot || !environmentSlot) {
+        return;
+      }
+
+      // ensure the necessary keys exist in the data object
+      if (!nextData[environmentSlot]) {
+        nextData[environmentSlot] = [];
+      }
+      if (!nextData[templateSlot]) {
+        nextData[templateSlot] = [];
+      }
+
+      // add/update any rows from the first tab to the active tab if they apply and if
+      // they aren't there already.
+      nextData[environmentSlot].forEach((row) => {
+        const rowId = row[SCHEMA_ID];
+        const existing = nextData[templateSlot] && nextData[templateSlot].find((r) => r[SCHEMA_ID] === rowId);
+        if (!existing && rowIsVisibleForTemplate(row, templateKey)) {
+          const newRow = {} as Record<string, any>;
+          COMMON_COLUMNS.forEach((col) => {
+            newRow[col] = row[col];
+          });
+          nextData[templateSlot].push(newRow);
+        }
+        if (existing) {
+          COMMON_COLUMNS.forEach((col) => {
+            existing[col] = row[col];
+          });
+        }
+      });
+      // remove any rows from the active tab if they were removed from the first tab
+      // or no longer apply to the active tab
+      if (nextData[templateSlot].length > 0) {
+        nextData[templateSlot] = nextData[templateSlot].filter((row) => {
+          if (!rowIsVisibleForTemplate(row, templateKey)) {
+            return false;
+          }
+          const rowId = row[SCHEMA_ID];
+          const environmentRow = nextData[environmentSlot].findIndex((r) => r[SCHEMA_ID] === rowId);
+          return environmentRow >= 0;
+        });
+      }
+      sampleData.value = nextData;
+    }
+
+    async function downloadSamples() {
+      templateList.value.forEach((templateKey) => {
+        synchronizeTabData(templateKey);
+      });
+
+      const workbook = utils.book_new();
+      templateList.value.forEach((templateKey) => {
+        const template = HARMONIZER_TEMPLATES[templateKey];
+        if (!template.sampleDataSlot || !template.schemaClass) {
+          return;
+        }
+        const worksheet = utils.json_to_sheet([
+          harmonizerApi.getHeaderRow(template.schemaClass),
+          ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot]),
+        ], {
+          skipHeader: true,
+        });
+        utils.book_append_sheet(workbook, worksheet, template.displayName);
+      });
+      writeFile(workbook, EXPORT_FILENAME, { compression: true });
+    }
+
+    function showOpenFileDialog() {
       document.getElementById('tsv-file-select')?.click();
+    }
+
+    function openFile(file: File) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event == null || event.target == null) {
+          return;
+        }
+        const workbook = read(event.target.result);
+        const imported = {} as Record<string, any>;
+        Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
+          const template = Object.values(HARMONIZER_TEMPLATES).find((template) => template.displayName === name);
+          if (!template || !template.sampleDataSlot || !template.schemaClass) {
+            return;
+          }
+          imported[template.sampleDataSlot] = harmonizerApi.unflattenArrayValues(
+            utils.sheet_to_json(worksheet, {
+              header: harmonizerApi.getOrderedAttributeNames(template.schemaClass),
+              range: 1,
+            }),
+            template.schemaClass,
+          );
+        });
+        harmonizerApi.setInvalidCells({});
+        sampleData.value = imported;
+        incrementalSaveRecord(root.$route.params.id);
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    async function changeTemplate(index: number) {
+      if (!harmonizerApi.ready.value) {
+        return;
+      }
+
+      onDataChange();
+
+      await validate();
+
+      // When changing templates we may need to populate the common columns
+      // from the first tab
+      const nextTemplate = templateList.value[index];
+      synchronizeTabData(nextTemplate);
+
+      activeTemplateKey.value = nextTemplate;
+      activeTemplate.value = HARMONIZER_TEMPLATES[nextTemplate];
+      harmonizerApi.useTemplate(HARMONIZER_TEMPLATES[nextTemplate].schemaClass);
+      harmonizerApi.addChangeHook(onDataChange);
     }
 
     return {
       ColorKey,
+      HARMONIZER_TEMPLATES,
       columnVisibility,
       harmonizerElement,
       jumpToModel,
       harmonizerApi,
-      samplesValid,
+      canSubmit,
+      tabsValidated,
       submitLoading,
       submitCount,
       selectedHelpDict,
       packageName,
-      templateChoice,
       fields,
       highlightedValidationError,
       sidebarOpen,
       validationItems,
       validationActiveCategory,
+      templateList,
+      activeTemplate,
+      activeTemplateKey,
+      invalidCells,
+      validationErrors,
+      validationErrorGroups,
+      validationTotalCounts,
+      submissionStatus,
+      status,
+      submitDialog,
       /* methods */
       doSubmit,
       downloadSamples,
       errorClick,
+      showOpenFileDialog,
       openFile,
       focus,
       jumpTo,
       validate,
+      changeTemplate,
       urlify,
     };
   },
@@ -184,7 +444,8 @@ export default defineComponent({
             id="tsv-file-select"
             type="file"
             style="position: fixed; top: -100em"
-            @change="(evt) => harmonizerApi.openFile(evt.target.files[0])"
+            accept=".xls,.xlsx"
+            @change="(evt) => openFile(evt.target.files[0])"
           >
           <v-btn
             label="Choose spreadsheet file..."
@@ -195,16 +456,16 @@ export default defineComponent({
             color="primary"
             class="mr-2"
             hide-details
-            @click="openFile"
+            @click="showOpenFileDialog"
           >
-            1. Import TSV file
+            1. Import XLSX file
             <v-icon class="pl-2">
               mdi-file-table
             </v-icon>
           </v-btn>
         </label>
         <v-btn
-          v-if="harmonizerApi.validationErrorGroups.value.length == 0"
+          v-if="validationErrorGroups.length === 0"
           color="primary"
           outlined
           @click="validate"
@@ -215,7 +476,7 @@ export default defineComponent({
           </v-icon>
         </v-btn>
         <v-card
-          v-if="harmonizerApi.validationErrorGroups.value.length"
+          v-if="validationErrorGroups.length"
           color="error"
           width="600"
           class="d-flex py-2 align-center"
@@ -247,7 +508,7 @@ export default defineComponent({
             </v-icon>
             <v-spacer />
             <span class="mx-1">
-              ({{ highlightedValidationError + 1 }}/{{ harmonizerApi.validationErrors.value[validationActiveCategory].length }})
+              ({{ highlightedValidationError + 1 }}/{{ validationErrors[validationActiveCategory].length }})
             </span>
             <v-spacer />
             <v-icon
@@ -378,6 +639,41 @@ export default defineComponent({
       </div>
     </div>
 
+    <v-tabs @change="changeTemplate">
+      <v-tooltip
+        v-for="templateKey in templateList"
+        :key="templateKey"
+        right
+      >
+        <template #activator="{on, attrs}">
+          <div
+            style="display: flex;"
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-tab>
+              <v-badge
+                :content="validationTotalCounts[templateKey] || '!'"
+                :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey] || status !== submissionStatus.InProgress"
+                :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
+              >
+                {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+              </v-badge>
+            </v-tab>
+          </div>
+        </template>
+        <span v-if="validationTotalCounts[templateKey] > 0">
+          {{ validationTotalCounts[templateKey] }} validation errors
+        </span>
+        <span v-else-if="!tabsValidated[templateKey]">
+          This tab must be validated before submission
+        </span>
+        <span v-else>
+          {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+        </span>
+      </v-tooltip>
+    </v-tabs>
+
     <div>
       <div
         class="harmonizer-style-container"
@@ -394,7 +690,7 @@ export default defineComponent({
           'width': sidebarOpen ? '300px' : '0px',
           'margin-top': '9px',
           'font-size': '14px',
-          'height': 'calc(100vh - 340px)'
+          'height': 'calc(100vh - 362px)'
         }"
       >
         <v-btn
@@ -433,7 +729,10 @@ export default defineComponent({
             </div>
             <div class="my-2">
               <span class="font-weight-bold pr-2">Column:</span>
-              <span v-html="selectedHelpDict.title" />
+              <span
+                :title="selectedHelpDict.name"
+                v-html="selectedHelpDict.title"
+              />
             </div>
             <div class="my-2">
               <span class="font-weight-bold pr-2">Description:</span>
@@ -457,7 +756,7 @@ export default defineComponent({
               block
               @click="harmonizerApi.launchReference()"
             >
-              Full {{ packageName }} Reference
+              Full {{ activeTemplate.displayName }} Reference
               <v-icon class="pl-1">
                 mdi-open-in-new
               </v-icon>
@@ -505,23 +804,62 @@ export default defineComponent({
         <v-icon class="pr-2">
           mdi-file-table
         </v-icon>
-        Download TSV
+        Download XLSX
       </v-btn>
-      <v-btn
-        color="primary"
-        depressed
-        :disabled="!samplesValid || submitCount > 0"
-        :loading="submitLoading"
-        @click="doSubmit"
-      >
-        <span v-if="submitCount > 0">
-          <v-icon>mdi-check-circle</v-icon>
-          Done
+      <v-tooltip top>
+        <template #activator="{ on, attrs }">
+          <div
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-btn
+              color="primary"
+              depressed
+              :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
+              :loading="submitLoading"
+              @click="submitDialog = true"
+            >
+              <span v-if="status === submissionStatus.SubmittedPendingReview || submitCount">
+                <v-icon>mdi-check-circle</v-icon>
+                Done
+              </span>
+              <span v-else>
+                3. Submit
+              </span>
+              <v-dialog
+                v-model="submitDialog"
+                activator="parent"
+                width="auto"
+              >
+                <v-card>
+                  <v-card-title>
+                    Submit
+                  </v-card-title>
+                  <v-card-text>You are about to submit this study and metadata for NMDC review. Would you like to continue?</v-card-text>
+                  <v-card-actions>
+                    <v-btn
+                      color="primary"
+                      class="mr-2"
+                      @click="doSubmit"
+                    >
+                      Yes- Submit
+                    </v-btn>
+                    <v-btn @click="submitDialog = false">
+                      Cancel
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </v-btn>
+          </div>
+        </template>
+        <span v-if="!canSubmit">
+          You must validate all tabs before submitting your study and metadata.
         </span>
         <span v-else>
-          3. Submit
+          Submit for NMDC review.
         </span>
-      </v-btn>
+      </v-tooltip>
     </div>
   </div>
 </template>
@@ -576,7 +914,7 @@ html {
 /* Grid */
 #harmonizer-root {
   overflow: hidden;
-  height: calc(100vh - 340px) !important;
+  height: calc(100vh - 362px) !important;
   float: left;
   margin-top: 8px;
 
@@ -651,5 +989,4 @@ html {
 .sidebar-toggle-close {
   transform: rotate(180deg);
 }
-
 </style>

@@ -108,6 +108,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
     data: string;
   };
   omics_processing: OmicsProcessingResult[];
+  emsl_biosample_identifiers: string[];
 }
 
 interface PrincipalInvestigator {
@@ -120,6 +121,7 @@ export interface StudySearchResults extends BaseSearchResult {
   principal_investigator_websites: string[];
   principal_investigator_name: string;
   principal_investigator_image_url: string;
+  image_url: string;
   principal_investigator: PrincipalInvestigator;
   doi: string;
   doi_map: Record<string, {
@@ -143,6 +145,8 @@ export interface StudySearchResults extends BaseSearchResult {
   funding_sources: string[];
   relevant_protocols: string[];
   ess_dive_datasets: string[];
+  massive_study_identifiers: string[];
+  gold_study_identifiers: string[];
   has_credit_associations: {
     applied_roles: string[];
     applies_to_person: {
@@ -614,6 +618,11 @@ async function updateUser(id: string, body: User) {
   return data;
 }
 
+async function getAppSettings() {
+  const { data } = await client.get<Record<string, boolean>>('settings');
+  return data;
+}
+
 const api = {
   createBulkDownload,
   getBinnedFacet,
@@ -621,6 +630,7 @@ const api = {
   getBulkDownloadAggregateSummary,
   getBiosample,
   getDatabaseSummary,
+  getAppSettings,
   getDatabaseStats,
   getDataObjectList,
   getEnvironmentGeospatialAggregation,

@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -26,22 +26,57 @@ class StudyForm(BaseModel):
 
 
 class MultiOmicsForm(BaseModel):
-    datasetDoi: str
     alternativeNames: List[str]
     studyNumber: str
     GOLDStudyId: str
     JGIStudyId: str
-    NCBIBioProjectName: str
     NCBIBioProjectId: str
     omicsProcessingTypes: List[str]
 
 
+class NmcdAddress(BaseModel):
+    name: str
+    email: str
+    phone: str
+    line1: str
+    line2: str
+    city: str
+    state: str
+    postalCode: str
+
+
+class AddressForm(BaseModel):
+    shipper: NmcdAddress
+    expectedShippingDate: Optional[datetime]
+    shippingConditions: str
+    sample: str
+    description: str
+    experimentalGoals: str
+    randomization: str
+    usdaRegulated: Optional[bool]
+    permitNumber: str
+    biosafetyLevel: str
+    irbOrHipaa: Optional[bool]
+    comments: str
+
+
+class ContextForm(BaseModel):
+    datasetDoi: str
+    dataGenerated: Optional[bool]
+    facilityGenerated: Optional[bool]
+    facilities: List[str]
+    award: Optional[str]
+    otherAward: str
+
+
 class MetadataSubmissionRecord(BaseModel):
     packageName: str
-    template: str
+    contextForm: ContextForm
+    addressForm: AddressForm
+    templates: List[str]
     studyForm: StudyForm
     multiOmicsForm: MultiOmicsForm
-    sampleData: List[List[Any]]
+    sampleData: Dict[str, List[Any]]
 
 
 class SubmissionMetadataSchemaCreate(BaseModel):
