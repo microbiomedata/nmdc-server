@@ -1,12 +1,24 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref } from '@vue/composition-api';
+import {
+  defineComponent,
+  onMounted,
+  ref,
+  nextTick,
+} from '@vue/composition-api';
 import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
+import { cloneDeep } from 'lodash';
 import Definitions from '@/definitions';
 import { studyForm, studyFormValid } from '../store';
+import SubmissionTable from './SubmissionTable.vue';
+import { MetadataSubmissionRecord } from '../store/api';
 
 export default defineComponent({
+  components: {
+    SubmissionTable,
+  },
   setup() {
     const formRef = ref();
+    const copyDataDialog = ref(false);
 
     function addContributor() {
       studyForm.contributors.push({
@@ -23,18 +35,32 @@ export default defineComponent({
       ];
     }
 
+    function copyInfoClicked() {
+      copyDataDialog.value = true;
+    }
+
+    function copyData(item: MetadataSubmissionRecord) {
+      const newStudyData = cloneDeep(item.metadata_submission.studyForm);
+      Object.assign(studyForm, newStudyData);
+      nextTick(() => formRef.value.validate());
+      copyDataDialog.value = false;
+    }
+
     onMounted(() => {
       formRef.value.validate();
     });
 
     return {
       formRef,
+      copyDataDialog,
       studyForm,
       studyFormValid,
       NmdcSchema,
       Definitions,
       addContributor,
       requiredRules,
+      copyData,
+      copyInfoClicked,
     };
   },
 });
@@ -45,9 +71,41 @@ export default defineComponent({
     <div class="text-h2">
       Study Information
     </div>
-    <div class="text-h5">
+    <div class="text-h5 mb-1">
       {{ NmdcSchema.$defs.Study.description }}
     </div>
+    <v-btn
+      color="primary"
+      depressed
+      @click="copyInfoClicked"
+    >
+      <v-icon class="pr-1">
+        mdi-content-copy
+      </v-icon>
+      Copy from another submission
+      <v-dialog
+        v-model="copyDataDialog"
+        activator="parent"
+      >
+        <v-card>
+          <v-card-title>
+            Copy Study Data
+          </v-card-title>
+          <v-card-text>Copy study data from an existing submission.</v-card-text>
+          <submission-table
+            :action-title="`Copy`"
+            @submissionSelected="copyData"
+          />
+          <v-card-actions>
+            <v-btn
+              @click="copyDataDialog = false"
+            >
+              Cancel
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-btn>
     <v-form
       ref="formRef"
       v-model="studyFormValid"
