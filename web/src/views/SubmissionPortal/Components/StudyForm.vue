@@ -1,5 +1,10 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref } from '@vue/composition-api';
+import {
+  defineComponent,
+  onMounted,
+  ref,
+  nextTick,
+} from '@vue/composition-api';
 import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
 import { cloneDeep } from 'lodash';
 import Definitions from '@/definitions';
@@ -37,7 +42,7 @@ export default defineComponent({
     function copyData(item: MetadataSubmissionRecord) {
       const newStudyData = cloneDeep(item.metadata_submission.studyForm);
       Object.assign(studyForm, newStudyData);
-      formRef.value.validate();
+      nextTick(() => formRef.value.validate());
       copyDataDialog.value = false;
     }
 
