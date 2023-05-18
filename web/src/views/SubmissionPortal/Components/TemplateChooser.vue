@@ -2,8 +2,10 @@
 import { defineComponent, computed } from '@vue/composition-api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import { templateChoiceDisabled, templateList, packageName } from '../store';
+import SubmissionDocsLink from './SubmissionDocsLink.vue';
 
 export default defineComponent({
+  components: { SubmissionDocsLink },
   setup() {
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
@@ -24,6 +26,7 @@ export default defineComponent({
   <div>
     <div class="text-h2">
       Environment Package
+      <submission-docs-link documentation-url="https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/submit2nmdc.html#environmental-package" />
     </div>
     <div class="text-h5">
       Choose environment package for your data.

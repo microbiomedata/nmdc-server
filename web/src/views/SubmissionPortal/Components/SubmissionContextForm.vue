@@ -15,9 +15,10 @@ import {
   addressFormValid,
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
+import SubmissionDocsLink from './SubmissionDocsLink.vue';
 
 export default defineComponent({
-  components: { SubmissionContextShippingForm },
+  components: { SubmissionContextShippingForm, SubmissionDocsLink },
   setup() {
     const formRef = ref();
     const facilityEnum = NmdcSchema.$defs.ProcessingInstitutionEnum.enum.filter(
@@ -83,6 +84,9 @@ export default defineComponent({
   <div>
     <div class="text-h2">
       Submission Context
+      <submission-docs-link
+        documentation-url="https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/submit2nmdc.html#submission-context"
+      />
     </div>
     <div class="text-h5">
       Data and sample status
