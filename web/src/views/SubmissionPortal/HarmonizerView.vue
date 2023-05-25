@@ -530,7 +530,7 @@ export default defineComponent({
             Re-validate
           </v-btn>
         </v-card>
-        <submission-docs-link documentation-url="https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/submit2nmdc.html#sample-metadata" />
+        <submission-docs-link anchor="sample-metadata" />
         <v-spacer />
         <v-autocomplete
           v-model="jumpToModel"

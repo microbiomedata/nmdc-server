@@ -34,7 +34,7 @@ export default defineComponent({
   <div>
     <div class="text-h2">
       Multi-omics Data
-      <submission-docs-link documentation-url="https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/submit2nmdc.html#multi-omics-data" />
+      <submission-docs-link anchor="multi-omics-data" />
     </div>
     <div class="text-h5">
       Information about the type of samples being submitted.

@@ -1,12 +1,22 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { computed, defineComponent } from '@vue/composition-api';
 
 export default defineComponent({
   props: {
-    documentationUrl: {
+    baseUrl: {
       type: String,
       default: 'https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/submit2nmdc.html',
     },
+    anchor: {
+      type: String,
+      default: '',
+    },
+  },
+  setup(props) {
+    const fullUrl = computed(() => props.baseUrl + (props.anchor ? `#${props.anchor}` : ''));
+    return {
+      fullUrl,
+    };
   },
 });
 </script>
@@ -14,7 +24,7 @@ export default defineComponent({
 <template>
   <a
     class="ml-2"
-    :href="documentationUrl"
+    :href="fullUrl"
     target="_blank"
   >
     <v-icon>

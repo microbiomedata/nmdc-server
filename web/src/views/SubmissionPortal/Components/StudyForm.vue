@@ -46,9 +46,7 @@ export default defineComponent({
   <div>
     <div class="text-h2">
       Study Information
-      <submission-docs-link
-        documentation-url="https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/submit2nmdc.html#study"
-      />
+      <submission-docs-link anchor="study" />
     </div>
     <div class="text-h5">
       {{ NmdcSchema.$defs.Study.description }}

@@ -26,7 +26,7 @@ export default defineComponent({
   <div>
     <div class="text-h2">
       Environment Package
-      <submission-docs-link documentation-url="https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/submit2nmdc.html#environmental-package" />
+      <submission-docs-link anchor="environmental-package" />
     </div>
     <div class="text-h5">
       Choose environment package for your data.
