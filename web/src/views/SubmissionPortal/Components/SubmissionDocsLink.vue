@@ -22,13 +22,26 @@ export default defineComponent({
 </script>
 
 <template>
-  <a
-    class="ml-2"
-    :href="fullUrl"
-    target="_blank"
-  >
-    <v-icon>
-      mdi-information-outline
-    </v-icon>
-  </a>
+  <v-tooltip bottom>
+    View documentation
+    <template #activator="{ on, attrs }">
+      <a
+        class="ml-2"
+        :href="fullUrl"
+        target="_blank"
+        v-bind="attrs"
+        v-on="on"
+      >
+        <v-btn
+          color="primary"
+          text
+          icon
+        >
+          <v-icon size="24px">
+            mdi-information
+          </v-icon>
+        </v-btn>
+      </a>
+    </template>
+  </v-tooltip>
 </template>
