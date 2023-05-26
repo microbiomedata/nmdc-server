@@ -1,5 +1,6 @@
-# NMDC Server and Client Portal
-
+*****************************
+NMDC Server and Client Portal
+*****************************
 ## Documentation
 
 * [Data Portal Management](https://github.com/microbiomedata/nmdc-server/wiki/Data-Portal-Management)
@@ -7,7 +8,9 @@
 * [NMDC Data Portal End User Guide](https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/portal_guide.html)
 * [NMDC Public General Documentation](https://nmdc-documentation.readthedocs.io/en/latest/index.html)
 
-## Development Setup (with docker)
+
+# Development Setup
+## __Docker__
 
 * install docker and docker-compose
 
@@ -42,7 +45,9 @@ docker-compose up -d
 
 View main application at `http://localhost:8080/` and the swagger page at `http://localhost:8080/api/docs`.
 
-## Development Setup (outside docker)
+
+
+## __Outside Docker__
 
 ```bash
 # Start only the service dependencies.
@@ -60,7 +65,9 @@ uvicorn nmdc_server.asgi:app --reload
 
 View swagger page at `http://localhost:8000/api/docs`.
 
-## Running ingest
+
+
+# Running ingest
 
 You need an active SSH tunnel connection to nersc attached to the compose network.  After running docker-compose up, run this container.
 
@@ -68,7 +75,7 @@ If you haven't already, [set up MFA on your NERSC account](https://docs.nersc.go
 
 ```bash
 export NERSC_USER=changeme
-docker run --rm -it -p 27017:27017 --network nmdc-server_default --name tunnel kroniak/ssh-client ssh -o StrictHostKeyChecking=no -L 0.0.0.0:27017:mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org:27017 $NERSC_USER@dtn01.nersc.gov '/bin/bash -c "while [[ 1 ]]; do echo heartbeat; sleep 300; done"'
+docker run --rm -it -p 27017:27017 --network nmdc-server_default --name tunnel kroniak/ssh-client ssh -o StrictHostKeyChecking=no -L 0.0.0.0:27017:mongo-loadbalancer.nmdc.production.svc.spin.nersc.org:27017 $NERSC_USER@dtn01.nersc.gov '/bin/bash -c "while [[ 1 ]]; do echo heartbeat; sleep 300; done"'
 ```
 
 You can connect to the instance manually
@@ -91,10 +98,10 @@ With that file in place, populate the docker volume by running,
 ```bash
 docker-compose run backend nmdc-server truncate # if necessary
 docker-compose run backend nmdc-server migrate
-docker-compose run backend nmdc-server -vv ingest --function-limit 100
+docker-compose run backend nmdc-server ingest -vv --function-limit 100
 ```
 
-## Running the client
+# Running the client
 
 Run the client in development mode.
 
@@ -106,7 +113,7 @@ yarn serve
 
 **Note**: To authenticate, log into the portal at `http://localhost:8080` first.  Then, the dev environment portal at `http://localhost:8081` will also be authenticated.  This is because oauth with webpack dev server is not possible.
 
-## Testing
+# Testing
 
 ```bash
 tox
@@ -133,12 +140,12 @@ docker-compose run backend alembic -c nmdc_server/alembic.ini upgrade head
 docker-compose run backend alembic -c nmdc_server/alembic.ini revision --autogenerate
 ```
 
-## Postgres import and export
+# Postgres import and export
 
 You can find existing database exports in Notion.
 
 ```bash
-# export, and 
+# export, and
 docker-compose run backend bash -c 'pg_dump nmdc_a > /app/nmdc_server/nmdc_a.sql'
 
 # import -- starting from an EMPTY database with DB running
@@ -150,7 +157,7 @@ docker-compose run backend bash -c 'psql nmdc_a < /app/nmdc_server/nmdc_a.sql'
 docker-compose run backend nmdc-server migrate # stamp the migration db
 ```
 
-## Developing with the shell
+# Developing with the shell
 
 A handy IPython shell is provided with some commonly used symbols automatically
 imported, and `autoreload 2` enabled. To run it:
