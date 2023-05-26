@@ -1,5 +1,5 @@
 
-# __NMDC Server and Client Portal__
+# NMDC Server and Client Portal
 
 ## Documentation
 
