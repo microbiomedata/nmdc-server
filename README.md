@@ -1,6 +1,6 @@
-*****************************
-NMDC Server and Client Portal
-*****************************
+
+# __NMDC Server and Client Portal__
+
 ## Documentation
 
 * [Data Portal Management](https://github.com/microbiomedata/nmdc-server/wiki/Data-Portal-Management)
