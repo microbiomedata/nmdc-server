@@ -29,6 +29,7 @@ export default defineComponent({
         class="ml-2"
         :href="fullUrl"
         target="_blank"
+        rel="noopener noreferrer"
         v-bind="attrs"
         v-on="on"
       >
