@@ -10,6 +10,7 @@ import {
 } from '../store';
 import * as api from '../store/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
+import SubmissionDocsLink from './SubmissionDocsLink.vue';
 
 const headers: DataTableHeader[] = [
   {
@@ -46,6 +47,7 @@ const headers: DataTableHeader[] = [
 ];
 
 export default defineComponent({
+  components: { SubmissionDocsLink },
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
@@ -92,6 +94,7 @@ export default defineComponent({
   <v-card flat>
     <v-card-title class="text-h4">
       NMDC Submission Portal
+      <submission-docs-link />
     </v-card-title>
     <v-card-text>
       This is the submission portal, where researchers can provide their own study and sample metadata for inclusion in NMDC.

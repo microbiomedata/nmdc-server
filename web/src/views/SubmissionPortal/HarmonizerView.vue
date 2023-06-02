@@ -24,6 +24,7 @@ import {
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
+import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -65,7 +66,7 @@ const JGI_MG = 'jgi_mg';
 const JGT_MT = 'jgi_mt';
 
 export default defineComponent({
-  components: { FindReplace, SubmissionStepper },
+  components: { FindReplace, SubmissionStepper, SubmissionDocsLink },
 
   setup(_, { root }) {
     const harmonizerElement = ref();
@@ -529,6 +530,7 @@ export default defineComponent({
             Re-validate
           </v-btn>
         </v-card>
+        <submission-docs-link anchor="sample-metadata" />
         <v-spacer />
         <v-autocomplete
           v-model="jumpToModel"

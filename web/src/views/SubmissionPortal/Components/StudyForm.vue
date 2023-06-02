@@ -3,8 +3,10 @@ import { defineComponent, onMounted, ref } from '@vue/composition-api';
 import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
 import Definitions from '@/definitions';
 import { studyForm, studyFormValid } from '../store';
+import SubmissionDocsLink from './SubmissionDocsLink.vue';
 
 export default defineComponent({
+  components: { SubmissionDocsLink },
   setup() {
     const formRef = ref();
 
@@ -44,6 +46,7 @@ export default defineComponent({
   <div>
     <div class="text-h2">
       Study Information
+      <submission-docs-link anchor="study" />
     </div>
     <div class="text-h5">
       {{ NmdcSchema.$defs.Study.description }}
