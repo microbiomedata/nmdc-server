@@ -130,7 +130,19 @@ export default defineComponent({
             rel="noopener noreferrer"
             target="_blank"
           >
+            <img
+              v-if="!item.author.name"
+              alt="ORCID logo"
+              src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+              height="14px"
+            >
             {{ item.author.name || item.author.orcid }}
+            <img
+              v-if="!!item.author.name"
+              alt="ORCID logo"
+              src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+              height="14px"
+            >
           </a>
         </template>
         <template #[`item.metadata_submission.templates`]="{ item }">
