@@ -1,13 +1,17 @@
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@vue/composition-api';
 import { StudySearchResults } from '@/data/api';
+import OrcidId from './Presentation/OrcidId.vue';
 
 function getOrcid(person: any) {
   const orcid = person?.applies_to_person?.orcid ?? person?.orcid ?? '';
-  return `https://orcid.org/${orcid.replace('orcid:', '')}`;
+  return orcid.replace('orcid:', '');
 }
 
 export default defineComponent({
+  components: {
+    OrcidId,
+  },
   props: {
     item: {
       type: Object as PropType<StudySearchResults>,
@@ -64,20 +68,11 @@ export default defineComponent({
             style="display: flex; align-items: center;"
             class="py-1"
           >
-            <a
-              :href="getOrcid(item.principal_investigator)"
-              class="blue--text py-1 mr-2"
-              style="cursor: pointer; text-decoration: none; display: flex;"
-            >
-              <img
-                width="24px"
-                class="mr-2"
-                alt="ORCID logo"
-                src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
-              >
-              {{ getOrcid(item.principal_investigator) }}
-            </a>
-            (unauthenticated)
+            <orcid-id
+              :orcid-id="getOrcid(item.principal_investigator)"
+              :authenticated="false"
+              :width="24"
+            />
           </span>
           <a
             v-for="site in item.principal_investigator_websites"
@@ -119,26 +114,12 @@ export default defineComponent({
             >
               <v-card-title>{{ member.applies_to_person.name }}</v-card-title>
               <v-card-subtitle>CRediT: {{ member.applied_roles.join(', ') }}</v-card-subtitle>
-              <span
+              <orcid-id
                 v-if="member.applies_to_person.orcid"
-                style="display: flex; align-items: center;"
-                class="py-1 pl-4"
-              >
-                <a
-                  :href="getOrcid(member)"
-                  class="blue--text py-1 mr-2"
-                  style="cursor: pointer; text-decoration: none; display: flex;"
-                >
-                  <img
-                    width="24px"
-                    class="mr-2"
-                    alt="ORCID logo"
-                    src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
-                  >
-                  {{ member.applies_to_person.orcid.replace('orcid:', '') }}
-                </a>
-                (unauthenticated)
-              </span>
+                :orcid-id="getOrcid(member)"
+                :authenticated="false"
+                :width="24"
+              />
             </v-card>
           </v-menu>
         </v-card>
