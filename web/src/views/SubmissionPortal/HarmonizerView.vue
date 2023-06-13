@@ -94,7 +94,7 @@ export default defineComponent({
 
     const submitDialog = ref(false);
 
-    watch(activeTemplateData, () => {
+    watch(activeTemplate, () => {
       harmonizerApi.loadData(activeTemplateData.value);
       // if we're not on the first tab, the common columns should be read-only
       if (activeTemplateKey.value !== templateList.value[0]) {
