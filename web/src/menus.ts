@@ -28,10 +28,6 @@ const Menus = [
         href: 'https://microbiomedata.org/fair/',
       },
       {
-        label: 'Data',
-        href: 'https://microbiomedata.org/data/',
-      },
-      {
         label: 'Metadata',
         href: 'https://microbiomedata.org/metadata/',
       },
@@ -69,6 +65,10 @@ const Menus = [
       {
         label: 'Champions',
         href: 'https://microbiomedata.org/community/championsprogram/',
+      },
+      {
+        label: 'User Research',
+        href: 'https://microbiomedata.org/user-research/',
       },
       {
         label: 'Community Conversations',
