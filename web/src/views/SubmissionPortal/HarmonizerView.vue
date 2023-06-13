@@ -51,14 +51,18 @@ const ColorKey = {
 
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
 
+const SAMP_NAME = 'samp_name';
+const SOURCE_MAT_ID = 'source_mat_id';
+const ANALYSIS_TYPE = 'analysis_type';
+
 // controls which field is used to merge data from different DH views
-const SCHEMA_ID = 'source_mat_id';
+const SCHEMA_ID = SAMP_NAME;
 
 // used in determining which rows are shown in each view
-const TYPE_FIELD = 'analysis_type';
+const TYPE_FIELD = ANALYSIS_TYPE;
 
 // TODO: should this be derived from schema?
-const COMMON_COLUMNS = ['samp_name', SCHEMA_ID, TYPE_FIELD];
+const COMMON_COLUMNS = [SAMP_NAME, SOURCE_MAT_ID, ANALYSIS_TYPE];
 
 // TODO: can this be imported from elsewhere?
 const EMSL = 'emsl';
