@@ -10,16 +10,16 @@ This document describes how the study page is populated in the data portal by de
 
 1. This comes directly from the `title` slot of `study` class instances
 2. `description` slot of `study` class instances
-3.  `profile_image_url` slot of the `principal_investigator` slot (type `PersonValue`) of `study` class instances OR the first entry in the `study_image` slot of `study` class instances. During ingest, the image is downloaded from the specified URI and stored as a `BLOB` in Postgres.
+3.  `profile_image_url` slot of the `principal_investigator` slot (type `PersonValue`) of `study` class instances OR the first entry in the `study_image` slot of `study` class instances. If both are present, priority is given to the `study_image` if both are present. During ingest, the image(s) are downloaded from the specified URI and stored as a `BLOB`s in Postgres. This is for stability reasons. We don't want to risk broken image links.
 4. `name` slot of `principal_investigator`
-5. `orcid` slot of `principal_investigator`, URL prefix added or expanded by `nmdc-server` in `web/src/components/InvestigatorBio.vue::getOrcid`
+5. `orcid` slot of `principal_investigator`, URL prefix added or expanded by `nmdc-server` in [`web/src/components/InvestigatorBio.vue::getOrcid`](https://github.com/microbiomedata/nmdc-server/blob/main/web/src/components/InvestigatorBio.vue#L5)
 6. `websites` slot of `principal_investigator`
 7. `name` slot of `applies_to_person` slot of all entries in `has_credit_associations`
-8. `has_raw_value` of `doi` slot of `study`. Modified during ingest in `nmdc_server/ingest/study.py::transform_doi` to only include to DOI, not the full URL.
+8. `has_raw_value` of `doi` slot of `study`. Modified during ingest in [`nmdc_server/ingest/study.py::transform_doi`](https://github.com/microbiomedata/nmdc-server/blob/42f07cbda0d5f44d1b67488b65b0a04c88356261/nmdc_server/ingest/study.py#L42) to only include to DOI, not the full URL.
 9. `id` of `study`
 10. `funding_sources` of `study`
 11. Computed at search time by `nmdc-server`
-12. `gold_study_identifiers` and `id`, if the study has a gold-prefixed `id`
-13. `doi` of `study` (see number 8 for more details) in conjunction with [citation-js](https://github.com/citation-js/citation-js).
-14. `publications` slot of `study`, in conjunction with `citation-js`. As with DOIs, we pass strings fount in the `publications` slot through `nmdc_server/ingest/study.py::transform_doi`.
+12. The "Additional data" section is populated by a variety of slots. For the study shown, `nmdc-server` detects that the `id` of this study is prefixed with `"gold:"`. This is [used to compute a URL](https://github.com/microbiomedata/nmdc-server/blob/main/nmdc_server/models.py#L253) at runtime, which is displayed here. Additionally, if the slot `gold_study_identifiers` is populated, those values will be used to compute URLs and displayed here as well.
+13. `doi` of `study` (see number 8 for more details). The DOI is passed to a library, [citation-js](https://github.com/citation-js/citation-js), on page load to get the full citation.
+14. `publications` slot of `study`. We pass the DOI values in this list to `citation-js` to get the full citation at page load. As with the `doi` slot, we pass strings found in the `publications` slot through `nmdc_server/ingest/study.py::transform_doi`.
 15. Computed at search time by `nmdc-server`
