@@ -489,11 +489,13 @@ mags_analysis_output_association = output_association("mags_analysis")
 class MAGsAnalysis(Base, PipelineStep):
     __tablename__ = "mags_analysis"
 
-    input_contig_num = Column(BigInteger)
-    too_short_contig_num = Column(BigInteger)
-    low_depth_contig_num = Column(BigInteger)
-    unbinned_contig_num = Column(BigInteger)
-    binned_contig_num = Column(BigInteger)
+    # TODO MIGRATE: these should likely be nullable
+    # https://github.com/microbiomedata/nmdc-schema/blob/main/nmdc_schema/mongodb_direct_to_nmdc_Database_file.py
+    input_contig_num = Column(BigInteger, nullable=True)
+    too_short_contig_num = Column(BigInteger, nullable=True)
+    low_depth_contig_num = Column(BigInteger, nullable=True)
+    unbinned_contig_num = Column(BigInteger, nullable=True)
+    binned_contig_num = Column(BigInteger, nullable=True)
 
     inputs = input_relationship(mags_analysis_input_association)
     outputs = output_relationship(mags_analysis_output_association)
