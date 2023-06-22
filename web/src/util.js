@@ -91,29 +91,35 @@ export function makeTree(data, heirarchy) {
       const nodeKey = `${parentKey}${parentKey && '.'}${nodeName}`;
       const parent = nodeMap[parentKey];
       let node = nodeMap[nodeKey];
-      if (!node) {
-        node = {
-          id: nodeKey,
-          parent,
-          name: nodeName,
-          label: nodeName,
-          heirarchyKey: heirarchy[depth],
-          count: 0,
-          depth: depth + 1,
-          children: undefined,
-          isDefaultExpanded: false,
-        };
-        nodeMap[nodeKey] = node;
-        if (parent.children === undefined) {
-          parent.children = [node];
-          parent.isDefaultExpanded = true;
-        } else {
-          parent.children.push(node);
-          parent.isDefaultExpanded = false;
+      console.log(item);
+      if (parent && nodeName) {
+        if (!node) {
+          node = {
+            id: nodeKey,
+            parent,
+            name: nodeName,
+            label: nodeName,
+            heirarchyKey: heirarchy[depth],
+            count: 0,
+            depth: depth + 1,
+            children: undefined,
+            isDefaultExpanded: false,
+          };
+          nodeMap[nodeKey] = node;
+
+          if (parent.children === undefined) {
+            parent.children = [node];
+            parent.isDefaultExpanded = true;
+          } else {
+            parent.children.push(node);
+            parent.isDefaultExpanded = false;
+          }
+
+          topoSort.push(node);
         }
-        topoSort.push(node);
+        node.count += item.count;
+        console.log(node.count);
       }
-      node.count += item.count;
     });
   });
   return {
