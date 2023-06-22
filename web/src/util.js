@@ -91,7 +91,6 @@ export function makeTree(data, heirarchy) {
       const nodeKey = `${parentKey}${parentKey && '.'}${nodeName}`;
       const parent = nodeMap[parentKey];
       let node = nodeMap[nodeKey];
-      console.log(item);
       if (parent && nodeName) {
         if (!node) {
           node = {
@@ -118,7 +117,6 @@ export function makeTree(data, heirarchy) {
           topoSort.push(node);
         }
         node.count += item.count;
-        console.log(node.count);
       }
     });
   });
