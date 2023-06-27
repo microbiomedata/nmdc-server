@@ -12,6 +12,7 @@ from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import (
     admin_required,
     get_current_user,
+    get_current_user_orcid,
     login_required,
     login_required_responses,
 )
@@ -37,6 +38,11 @@ async def get_settings() -> Dict[str, Any]:
 @router.get("/me", tags=["user"], name="Return the current user name")
 async def me(request: Request, user: str = Depends(get_current_user)) -> Optional[str]:
     return user
+
+
+@router.get("/me/orcid", tags=["user"], name="Return the ORCID iD of current user")
+async def my_orcid(request: Request, orcid: str = Depends(get_current_user_orcid)) -> Optional[str]:
+    return orcid
 
 
 # autocomplete search

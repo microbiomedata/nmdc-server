@@ -12,6 +12,7 @@ export default defineComponent({
   setup() {
     return {
       me: stateRefs.user,
+      orcid: stateRefs.orcid,
     };
   },
 });
@@ -25,11 +26,18 @@ export default defineComponent({
         :plain="nav"
         :small="nav"
         :ripple="!nav"
+        :href="orcid ? `https://orcid.org/${orcid}` : ''"
       >
         <v-icon left>
           mdi-account-circle
         </v-icon>
         {{ me }}
+        <img
+          width="24px"
+          class="ml-2"
+          alt="ORCID logo"
+          src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+        >
       </v-btn>
       <v-btn
         :icon="!nav"

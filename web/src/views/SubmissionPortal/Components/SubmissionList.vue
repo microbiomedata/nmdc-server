@@ -11,6 +11,7 @@ import {
 import * as api from '../store/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
+import OrcidId from '../../../components/Presentation/OrcidId.vue';
 
 const headers: DataTableHeader[] = [
   {
@@ -47,7 +48,7 @@ const headers: DataTableHeader[] = [
 ];
 
 export default defineComponent({
-  components: { SubmissionDocsLink },
+  components: { SubmissionDocsLink, OrcidId },
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
@@ -125,13 +126,12 @@ export default defineComponent({
         :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
       >
         <template #[`item.author.name`]="{ item }">
-          <a
-            :href="`https://orcid.org/${item.author.orcid}`"
-            rel="noopener noreferrer"
-            target="_blank"
-          >
-            {{ item.author.name || item.author.orcid }}
-          </a>
+          <orcid-id
+            :orcid-id="item.author.orcid"
+            :name="item.author.name"
+            :width="14"
+            :authenticated="true"
+          />
         </template>
         <template #[`item.metadata_submission.templates`]="{ item }">
           {{ item.metadata_submission.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}

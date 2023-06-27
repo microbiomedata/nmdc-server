@@ -598,6 +598,11 @@ async function me(): Promise<string> {
   return data;
 }
 
+async function myOrcid(): Promise<string> {
+  const { data } = await client.get<string>('me/orcid');
+  return data;
+}
+
 async function getAllUsers(params: SearchParams) {
   const { data } = await client.get<SearchResponse<User>>('users', {
     params: {
@@ -634,6 +639,7 @@ const api = {
   getFacetSummary,
   getStudy,
   me,
+  myOrcid,
   searchBiosample,
   searchOmicsProcessing,
   searchStudy,

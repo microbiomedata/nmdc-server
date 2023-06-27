@@ -1,13 +1,17 @@
 <script lang="ts">
 import { computed, defineComponent, PropType } from '@vue/composition-api';
 import { StudySearchResults } from '@/data/api';
+import OrcidId from './Presentation/OrcidId.vue';
 
 function getOrcid(person: any) {
   const orcid = person?.applies_to_person?.orcid ?? person?.orcid ?? '';
-  return `https://orcid.org/${orcid.replace('orcid:', '')}`;
+  return orcid.replace('orcid:', '');
 }
 
 export default defineComponent({
+  components: {
+    OrcidId,
+  },
   props: {
     item: {
       type: Object as PropType<StudySearchResults>,
@@ -16,15 +20,9 @@ export default defineComponent({
   },
   setup(props) {
     const team = computed(() => props.item.has_credit_associations);
-    const piWebsites = computed(() => {
-      if (props.item.principal_investigator.orcid) {
-        return [getOrcid(props.item.principal_investigator)]
-          .concat(props.item.principal_investigator_websites);
-      }
-      return props.item.principal_investigator_websites;
-    });
+    const hasOrcid = computed(() => props.item.principal_investigator?.orcid);
     return {
-      team, piWebsites, getOrcid,
+      team, getOrcid, hasOrcid,
     };
   },
 });
@@ -65,8 +63,19 @@ export default defineComponent({
           <div class="text-h5 py-2">
             Principal investigator
           </div>
+          <span
+            v-if="hasOrcid"
+            style="display: flex; align-items: center;"
+            class="py-1"
+          >
+            <orcid-id
+              :orcid-id="getOrcid(item.principal_investigator)"
+              :authenticated="false"
+              :width="24"
+            />
+          </span>
           <a
-            v-for="site in piWebsites"
+            v-for="site in item.principal_investigator_websites"
             :key="site"
             class="blue--text py-1"
             style="cursor: pointer; text-decoration: none; display: block;"
@@ -101,24 +110,16 @@ export default defineComponent({
               </div>
             </template>
             <v-card
-              class="pa-2"
+              class=" d-flex flex-column justify-start pa-2"
             >
               <v-card-title>{{ member.applies_to_person.name }}</v-card-title>
               <v-card-subtitle>CRediT: {{ member.applied_roles.join(', ') }}</v-card-subtitle>
-              <v-btn
+              <orcid-id
                 v-if="member.applies_to_person.orcid"
-                text
-                color="green"
-                :href="getOrcid(member)"
-              >
-                <img
-                  width="24px"
-                  class="mr-2"
-                  :alt="`${member.applies_to_person.name} profile picture`"
-                  src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
-                >
-                OrcID
-              </v-btn>
+                :orcid-id="getOrcid(member)"
+                :authenticated="false"
+                :width="24"
+              />
             </v-card>
           </v-menu>
         </v-card>

@@ -4,8 +4,10 @@ import { DataTableHeader } from 'vuetify';
 import { api, User } from '@/data/api';
 import { stateRefs } from '@/store';
 import usePaginatedResults from '@/use/usePaginatedResults';
+import OrcidId from '../../components/Presentation/OrcidId.vue';
 
 export default defineComponent({
+  components: { OrcidId },
 
   setup() {
     const currentUser = stateRefs.user;
@@ -64,13 +66,11 @@ export default defineComponent({
             class="elevation-1"
           >
             <template #[`item.orcid`]="{ item }">
-              <a
-                :href="`https://orcid.org/${item.orcid}`"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {{ item.orcid }}
-              </a>
+              <orcid-id
+                :orcid-id="item.orcid"
+                :authenticated="true"
+                :width="24"
+              />
             </template>
             <template #[`item.is_admin`]="{ item }">
               <v-switch
