@@ -1,10 +1,10 @@
 # Study Page
 
-This document describes how the study page is populated in the data portal by describing which slots are used, and how they are interpreted by the data portal.
+This document describes how the study page is populated in the data portal by describing which slots are used, and how they are interpreted by the data portal. In order to document everything, multiple study pages are used, so if you don't see a slot being used in the first image, it will likely be represented in some other screenshot on the page.
 
 ## __Full Study Page__
 
-![Full study page](./images/study_page_1_annotated.png)
+![Example study page](./images/study_page_1_annotated.png)
 
 ### __Explanations__
 
@@ -23,3 +23,15 @@ This document describes how the study page is populated in the data portal by de
 13. `doi` of `study` (see number 8 for more details). The DOI is passed to a library, [citation-js](https://github.com/citation-js/citation-js), on page load to get the full citation.
 14. `publications` slot of `study`. We pass the DOI values in this list to `citation-js` to get the full citation at page load. As with the `doi` slot, we pass strings found in the `publications` slot through `nmdc_server/ingest/study.py::transform_doi`.
 15. Computed at search time by `nmdc-server`
+
+## __Full Study Page 2__
+
+![Protocols and team descriptions](./images/study_page_2_annotated.png)
+
+### __Explanations__
+
+1-3 above all come from the `has_credit_associations` slot of `study`. During ingest, the value of this slot is stored in a `JSONB` column in the `study` table.  Essentially, we store each `CreditAssociation` value as is, in a list, in this column. During render, we iterate over the `JSONB` column to create each of these names and cards.
+1. The `name` of the `PersonValue` stored in the `applies_to_person` slot of the `CreditAssociation`
+2. The values stored in the `applied_role` slot of each `CreditAssociation`
+3. This button is actually a link to the contributors ORCID page. It appears if the `orcid` slot of the `CreditAssociation`'s `applies_to_person` slot has a value.
+4. `relevant_protocols` slot of `study`
