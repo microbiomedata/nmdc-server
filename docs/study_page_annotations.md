@@ -35,3 +35,15 @@ This document describes how the study page is populated in the data portal by de
 2. The values stored in the `applied_role` slot of each `CreditAssociation`
 3. This button is actually a link to the contributors ORCID page. It appears if the `orcid` slot of the `CreditAssociation`'s `applies_to_person` slot has a value.
 4. `relevant_protocols` slot of `study`
+
+
+## __External Resources: Additional Data__
+
+![Additional Data, ESS Dive Identifiers](./images/additional_data_ess_dive.png)
+
+![Additional Data, massive identifiers](./images/additional_data_massive.png)
+
+### __Explanations__
+
+- **ESS Dive Dataset** links are derived from the `ess_dive_datasets` slot of `Study`. The frontend of the data portal prepends `https://identifiers.org/` to each ID it finds in this slot.
+- **MassIVE Study** links are derived from the `massive_study_identifiers` slot of `Study`. The frontend of the data portal prepends `https://identifiers.org/` tto each ID it finds in this slot.
