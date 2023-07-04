@@ -46,4 +46,4 @@ This document describes how the study page is populated in the data portal by de
 ### __Explanations__
 
 - **ESS Dive Dataset** links are derived from the `ess_dive_datasets` slot of `Study`. The frontend of the data portal prepends `https://identifiers.org/` to each ID it finds in this slot.
-- **MassIVE Study** links are derived from the `massive_study_identifiers` slot of `Study`. The frontend of the data portal prepends `https://identifiers.org/` tto each ID it finds in this slot.
+- **MassIVE Study** links are derived from the `massive_study_identifiers` slot of `Study`. The frontend of the data portal prepends `https://identifiers.org/` to each ID it finds in this slot.
