@@ -24,11 +24,12 @@ input_types = {
     "processed_sample",
 }
 
-process_types = {
+process_types = [
     # "processed_sample",
     "pooling",
-    "extraction" "library_preperation",
-}
+    "extraction",
+    "library_preparation",
+]
 
 
 class OmicsProcessing(OmicsProcessingCreate):
@@ -59,37 +60,43 @@ collections = {
     "processed_sample": "processed_sample_set",
     "extraction": "extraction_set",
     "library_preparation": "library_preparation_set",
-    "pooling": "pooling",
+    "pooling": "pooling_set",
 }
 
 
-def is_biosample(id, biosample_collection):
-    return list(biosample_collection.find({"id": id}))
+def is_biosample(object_id, biosample_collection):
+    return list(biosample_collection.find({"id": object_id}))
 
 
-def find_parent_process(output_id, mongodb):
+def find_parent_process(output_id, mongodb, logger):
+    logger.error(f"finding parent process for {output_id}")
     output_found = False
     collections_left = True
     while not output_found and collections_left:
         for name in process_types:
+            logger.error(f"searching collection: {name} - {collections[name]}")
             collection: Collection = mongodb[collections[name]]
-            query = list(collection.find({"has_output": output_id}, no_cursor_timeout=True))
-            if len(query):
+            query = collection.find({"has_output": output_id}, no_cursor_timeout=True)
+            result_list = list(query)
+            logger.error(f"found {len(result_list)} results")
+            if len(result_list):
                 output_found = True
-                return query[0]
+                logger.error(f"found a parent process: {result_list[0]['id']}")
+                return result_list[0]
         collections_left = False
+    logger.error("found no parent process")
     return None
 
 
-def get_biosample_input_ids(input_id, mongodb, logger, results=[]) -> list[Any]:
+def get_biosample_input_ids(input_id, mongodb, logger, results: set) -> set[Any]:
     # Check if the input is a biosample
     biosample_collection: Collection = mongodb["biosample_set"]
     processed_sample_collection: Collection = mongodb["processed_sample_set"]
     if is_biosample(input_id, biosample_collection):
-        results += [input_id]
+        results.add(input_id)
         return results
 
-    logger.error("non-biosample input")
+    logger.error(f"non-biosample input found: {input_id}")
 
     query = list(processed_sample_collection.find({"id": input_id}, no_cursor_timeout=True))
     if not query:
@@ -97,23 +104,28 @@ def get_biosample_input_ids(input_id, mongodb, logger, results=[]) -> list[Any]:
         return results
 
     processed_sample_id = query[0]["id"]
+    logger.error(f"processed sample id: {processed_sample_id}")
 
     # For processed samples find the process that created it
-    parent_process = find_parent_process(processed_sample_id, mongodb)
+    parent_process = find_parent_process(processed_sample_id, mongodb, logger)
+    if parent_process:
+        logger.error(f"parent process id: {parent_process['id']}")
     if parent_process:
         # we have an extraction, library preparation, or pooling
         # assume all inputs for pooling are biosamples
-        for input_id in parent_process["has_input"]:
-            get_biosample_input_ids(input_id, mongodb, results)
+        for parent_input_id in parent_process["has_input"]:
+            get_biosample_input_ids(parent_input_id, mongodb, logger, results)
     return results
 
 
 def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, logger):
     logger = get_logger(__name__)
     input_ids = obj.pop("has_input", [None])
-    biosample_input_ids = []
+    biosample_input_ids = set()
     for input_id in input_ids:
-        biosample_input_ids += get_biosample_input_ids(input_id, mongodb, logger)
+        biosample_input_ids.union(
+            get_biosample_input_ids(input_id, mongodb, logger, biosample_input_ids)
+        )
     if len(biosample_input_ids) > 1:
         logger.error("Processed sample input detected")
         logger.error(obj["id"])
