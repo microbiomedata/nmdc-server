@@ -15,7 +15,7 @@ For example, `Study.principal_investigator(PersonValue).name` refers to the name
 
 1. `Study.title`: This comes directly from the `title` slot of `Study` class instances
 2. `Study.description`: `description` slot of `Study` class instances
-3.  `Study.principal_investigator(PersonValue).profile_image_url` or `Study.study_image`: `profile_image_url` slot of the `principal_investigator` slot (type `PersonValue`) of `study` class instances OR the first entry in the `study_image` slot of `study` class instances. If both are present, priority is given to the `study_image` if both are present. During ingest, the image(s) are downloaded from the specified URI and stored as a `BLOB`s in Postgres. This is for stability reasons. We don't want to risk broken image links.
+3.  `Study.principal_investigator(PersonValue).profile_image_url` or `Study.study_image`: `profile_image_url` slot of the `principal_investigator` slot (type `PersonValue`) of `study` class instances OR the first entry in the `study_image` slot of `study` class instances. Priority is given to the `study_image` if both are present. During ingest, the image(s) are downloaded from the specified URI and stored as a `BLOB`s in Postgres. This is for stability reasons. We don't want to risk broken image links.
 4. `Study.principal_investigator(PersonValue).name`: The `name` slot of `principal_investigator`
 5. `Study.principal_investigator(PersonValue).orcid`: The `orcid` slot of `principal_investigator`, URL prefix added or expanded by `nmdc-server` in [`web/src/components/InvestigatorBio.vue::getOrcid`](https://github.com/microbiomedata/nmdc-server/blob/main/web/src/components/InvestigatorBio.vue#L5)
 6. `Study.websites`: The `websites` slot of `study`
@@ -51,4 +51,4 @@ For example, `Study.principal_investigator(PersonValue).name` refers to the name
 ### __Explanations__
 
 - **ESS Dive Dataset** links are derived from `Study.ess_dive_datasets`. The frontend of the data portal [prepends](https://github.com/microbiomedata/nmdc-server/blob/a7deacd320971088464407d82c4363a8247a0327/web/src/views/IndividualResults/StudyPage.vue#L255) `https://identifiers.org/` to each ID it finds in this slot.
-- **MassIVE Study** links are derived from`Study.massive_study_identifiers`. The frontend of the data portal [prepends](https://github.com/microbiomedata/nmdc-server/blob/a7deacd320971088464407d82c4363a8247a0327/web/src/views/IndividualResults/StudyPage.vue#L269) `https://identifiers.org/` tto each ID it finds in this slot.
+- **MassIVE Study** links are derived from`Study.massive_study_identifiers`. The frontend of the data portal [prepends](https://github.com/microbiomedata/nmdc-server/blob/a7deacd320971088464407d82c4363a8247a0327/web/src/views/IndividualResults/StudyPage.vue#L269) `https://identifiers.org/` to each ID it finds in this slot.
