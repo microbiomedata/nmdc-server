@@ -317,7 +317,8 @@ class Biosample(BiosampleBase):
 # omics_processing
 class OmicsProcessingBase(AnnotatedBase):
     study_id: Optional[str]
-    biosample_id: Optional[str]
+    # biosample_inputs: List["BiosampleBase"]
+    # biosample_id: Optional[str]
     add_date: Optional[DateType]
     mod_date: Optional[DateType]
 
