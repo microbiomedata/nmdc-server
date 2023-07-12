@@ -1,7 +1,7 @@
 import json
 import re
 from datetime import datetime
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from pydantic import root_validator, validator
 from pymongo.collection import Collection
@@ -19,17 +19,30 @@ from nmdc_server.schemas import OmicsProcessingCreate
 
 date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
 
-input_types = {
-    "biosample",
-    "processed_sample",
-}
 
 process_types = [
-    # "processed_sample",
     "pooling",
     "extraction",
     "library_preparation",
 ]
+
+
+collections = {
+    "biosample": "biosample_set",
+    "processed_sample": "processed_sample_set",
+    "extraction": "extraction_set",
+    "library_preparation": "library_preparation_set",
+    "pooling": "pooling_set",
+}
+
+
+omics_types = {
+    "metagenome": "Metagenome",
+    "metabolomics": "Metabolomics",
+    "proteomics": "Proteomics",
+    "metatranscriptome": "Metatranscriptome",
+    "organic matter characterization": "Organic Matter Characterization",
+}
 
 
 class OmicsProcessing(OmicsProcessingCreate):
@@ -46,86 +59,64 @@ class OmicsProcessing(OmicsProcessingCreate):
         return v
 
 
-omics_types = {
-    "metagenome": "Metagenome",
-    "metabolomics": "Metabolomics",
-    "proteomics": "Proteomics",
-    "metatranscriptome": "Metatranscriptome",
-    "organic matter characterization": "Organic Matter Characterization",
-}
-
-
-collections = {
-    "biosample": "biosample_set",
-    "processed_sample": "processed_sample_set",
-    "extraction": "extraction_set",
-    "library_preparation": "library_preparation_set",
-    "pooling": "pooling_set",
-}
-
-
 def is_biosample(object_id, biosample_collection):
     return list(biosample_collection.find({"id": object_id}))
 
 
-def find_parent_process(output_id, mongodb, logger):
-    logger.error(f"finding parent process for {output_id}")
+def find_parent_process(output_id: str, mongodb: Database) -> Optional[dict[str, Any]]:
+    """Given a ProcessedSample ID, find the process (e.g. Extraction) that created it."""
     output_found = False
     collections_left = True
     while not output_found and collections_left:
         for name in process_types:
-            logger.error(f"searching collection: {name} - {collections[name]}")
             collection: Collection = mongodb[collections[name]]
             query = collection.find({"has_output": output_id}, no_cursor_timeout=True)
             result_list = list(query)
-            logger.error(f"found {len(result_list)} results")
             if len(result_list):
                 output_found = True
-                logger.error(f"found a parent process: {result_list[0]['id']}")
                 return result_list[0]
         collections_left = False
-    logger.error("found no parent process")
     return None
 
 
-def get_biosample_input_ids(input_id, mongodb, logger, results: set) -> set[Any]:
-    # Check if the input is a biosample
+def get_biosample_input_ids(input_id: str, mongodb: Database, results: set) -> set[Any]:
+    """
+    Given an input ID return all biosample objects that are included in the input resource.
+
+    OmicsProcessing objects can take Biosamples or ProcessedSamples as inputs. Work needs to be done
+    to determine which biosamples make up a given ProcessedSample. This function recursively tries
+    to determine those Biosamples.
+    """
+    # Base case, the input is already a biosample
     biosample_collection: Collection = mongodb["biosample_set"]
     processed_sample_collection: Collection = mongodb["processed_sample_set"]
     if is_biosample(input_id, biosample_collection):
         results.add(input_id)
         return results
 
-    logger.error(f"non-biosample input found: {input_id}")
-
+    # The given input is not a Biosample or Processed sample. Stop here.
+    # Maybe this should report an error?
     query = list(processed_sample_collection.find({"id": input_id}, no_cursor_timeout=True))
     if not query:
-        # throw error?
         return results
 
     processed_sample_id = query[0]["id"]
-    logger.error(f"processed sample id: {processed_sample_id}")
 
-    # For processed samples find the process that created it
-    parent_process = find_parent_process(processed_sample_id, mongodb, logger)
+    # Recursive case. For processed samples find the process that created it,
+    # and check the inputs of that process.
+    parent_process = find_parent_process(processed_sample_id, mongodb)
     if parent_process:
-        logger.error(f"parent process id: {parent_process['id']}")
-    if parent_process:
-        # we have an extraction, library preparation, or pooling
-        # assume all inputs for pooling are biosamples
         for parent_input_id in parent_process["has_input"]:
-            get_biosample_input_ids(parent_input_id, mongodb, logger, results)
+            get_biosample_input_ids(parent_input_id, mongodb, results)
     return results
 
 
 def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, logger):
     logger = get_logger(__name__)
-    input_ids = obj.pop("has_input", [None])
+    input_ids: list[str] = obj.pop("has_input", [""])
     biosample_input_ids = set()
     for input_id in input_ids:
-        biosample_input_ids.union(
-            get_biosample_input_ids(input_id, mongodb, logger, biosample_input_ids)
-        )
+        biosample_input_ids.union(get_biosample_input_ids(input_id, mongodb, biosample_input_ids))
     if len(biosample_input_ids) > 1:
         logger.error("Processed sample input detected")
         logger.error(obj["id"])
