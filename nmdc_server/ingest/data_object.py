@@ -52,13 +52,5 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
         else:
             objects_without_type += 1
 
-        # file_size_bytes is not required by the schema. if it doesn't exist, set to 0
-        # TODO see about changing the schema, or updating our data model to more
-        # accurately reflect that, and use `coalesce` in our queries
-        obj["file_size_bytes"] = obj.get("file_size_bytes", 0)
-        if obj["file_size_bytes"]:
-            logger.error("null value for file_size_bytes")
-        db.add(DataObject(**obj))
-
     if objects_without_type:
         logger.error(f"Encountered {objects_without_type} objects without data_object_type")

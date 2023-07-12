@@ -49,7 +49,7 @@ export interface BaseSearchResult {
 }
 
 export interface DataObjectSearchResult extends BaseSearchResult {
-  file_size_bytes: number;
+  file_size_bytes: number | null;
   md5_checksum: string;
   file_type: string;
   file_type_description: string;

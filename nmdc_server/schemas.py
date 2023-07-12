@@ -341,7 +341,7 @@ class DataObjectBase(BaseModel):
     id: str
     name: str
     description: str = ""
-    file_size_bytes: int
+    file_size_bytes: Optional[int]
     md5_checksum: Optional[str]
     url: Optional[str]
     downloads: int

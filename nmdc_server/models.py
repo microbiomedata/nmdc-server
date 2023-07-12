@@ -360,7 +360,7 @@ class DataObject(Base):
     id = Column(String, primary_key=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=False, default="")
-    file_size_bytes = Column(BigInteger, nullable=False)
+    file_size_bytes = Column(BigInteger, nullable=True)
     md5_checksum = Column(String, nullable=True)
     url = Column(String, nullable=True)
     file_type = Column(String, nullable=True)

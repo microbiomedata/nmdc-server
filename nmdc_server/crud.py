@@ -401,7 +401,8 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
 
         # TODO: add crc checksums to support retries
         # TODO: add directory structure and metadata
-        content.append(f"- {data_object.file_size_bytes} {url} {file.path}")
+        file_size_string = data_object.file_size_bytes if data_object.file_size_bytes else ""
+        content.append(f"- {file_size_string} {url} {file.path}")
 
     return "\n".join(content) + "\n"
 
