@@ -52,5 +52,7 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
         else:
             objects_without_type += 1
 
+        db.add(DataObject(**obj))
+
     if objects_without_type:
         logger.error(f"Encountered {objects_without_type} objects without data_object_type")
