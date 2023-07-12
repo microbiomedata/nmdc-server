@@ -294,7 +294,9 @@ class Biosample(Base, AnnotatedModel):
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     multiomics = Column(Integer, nullable=False, default=0)
     emsl_biosample_identifiers = Column(JSONB, nullable=True)
-    omics_processing = relationship("OmicsProcessing", secondary=biosample_input_association, back_populates="biosample_inputs")
+    omics_processing = relationship(
+        "OmicsProcessing", secondary=biosample_input_association, back_populates="biosample_inputs"
+    )
 
     # gold terms
     ecosystem = Column(String, nullable=True)
@@ -341,7 +343,9 @@ class OmicsProcessing(Base, AnnotatedModel):
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
-    biosample_inputs = relationship("Biosample", secondary=biosample_input_association, back_populates="omics_processing")
+    biosample_inputs = relationship(
+        "Biosample", secondary=biosample_input_association, back_populates="omics_processing"
+    )
     # biosample_id = Column(String, ForeignKey("biosample.id"), nullable=True)
     # biosample = relationship("Biosample", backref="omics_processing")
     study_id = Column(String, ForeignKey("study.id"), nullable=True)

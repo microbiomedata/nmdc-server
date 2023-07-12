@@ -293,7 +293,7 @@ class BiosampleBase(AnnotatedBase):
     specific_ecosystem: Optional[str]
 
     class Config:
-       orm_mode = True
+        orm_mode = True
 
 
 class BiosampleCreate(BiosampleBase):
