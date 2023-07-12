@@ -114,7 +114,7 @@ def get_biosample_input_ids(input_id: str, mongodb: Database, results: set) -> s
 def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, logger):
     logger = get_logger(__name__)
     input_ids: list[str] = obj.pop("has_input", [""])
-    biosample_input_ids = set()
+    biosample_input_ids: set[str] = set()
     for input_id in input_ids:
         biosample_input_ids.union(get_biosample_input_ids(input_id, mongodb, biosample_input_ids))
     if len(biosample_input_ids) > 1:
