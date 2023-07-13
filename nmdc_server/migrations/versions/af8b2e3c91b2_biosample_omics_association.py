@@ -1,7 +1,7 @@
 """Add many-to-many relationship between biosample and omics_processing
 
 Revision ID: af8b2e3c91b2
-Revises: b8f3bcb681a1
+Revises: dcc0a41b60af
 Create Date: 2023-07-10 18:18:46.785564
 
 """
@@ -17,7 +17,7 @@ Base = declarative_base()
 
 # revision identifiers, used by Alembic.
 revision: str = "af8b2e3c91b2"
-down_revision: Optional[str] = "b8f3bcb681a1"
+down_revision: Optional[str] = "dcc0a41b60af"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
