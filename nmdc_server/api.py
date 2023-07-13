@@ -344,11 +344,6 @@ async def mongo_search_study(
     # Count number of each omics_type
     for result in results:
         omics_processing_counts = Counter(result["omics_processing"])
-        # omics_processing_counts = {}
-        # for omics_type in result["omics_processing"]:
-        #     if omics_processing_counts.get(omics_type) is None:
-        #         omics_processing_counts[omics_type] = 0
-        #     omics_processing_counts[omics_type] += 1
         count_list = [{"type": key, "count": value} for key, value in omics_processing_counts.items()]
         count_list.sort(key=lambda x: x["type"])
         result["omics_processing_counts"] = count_list if len(count_list) > 0 else None
