@@ -42,12 +42,12 @@ const FunctionSearchFacets: SearchFacet[] = [
   },
   /** Biosample */
   {
-    field: 'geo_loc_name',
+    field: 'geo_loc_name.has_raw_value',
     table: 'biosample',
     group: 'Sample',
   },
   {
-    field: 'depth',
+    field: 'depth.has_numeric_value',
     table: 'biosample',
     group: 'Sample',
   },
@@ -68,7 +68,7 @@ const FunctionSearchFacets: SearchFacet[] = [
   },
   /** Study */
   {
-    field: 'principal_investigator_name',
+    field: 'principal_investigator.has_raw_value',
     table: 'study',
     group: 'Study',
   },

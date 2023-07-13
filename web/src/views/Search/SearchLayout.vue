@@ -96,10 +96,7 @@ export default defineComponent({
       conditions: stateRefs.conditions,
     });
     const study = usePaginatedResults(studySummaryData.otherConditions, api.searchStudy, undefined, 50);
-    const studyResults = computed(() => Object.values(study.data.results.results).map((r) => ({
-      ...r,
-      name: r.annotations.title || r.name,
-    })));
+    const studyResults = computed(() => Object.values(study.data.results.results));
 
     const loggedInUser = computed(() => typeof stateRefs.user.value === 'string');
 
@@ -293,23 +290,28 @@ export default defineComponent({
                     v-text="props.result.study_id"
                   />
                   <template
-                    v-if="props.result.alternate_identifiers.length || props.result.emsl_biosample_identifiers.length"
+                    v-if="(props.result.alternative_identifiers && props.result.alternative_identifiers.length) ||
+                      (props.result.emsl_biosample_identifiers && props.result.emsl_biosample_identifiers.length)"
                   >
                     <span class="pr-2">Sample Identifiers:</span>
-                    <a
-                      v-for="id in props.result.alternate_identifiers"
-                      :key="id"
-                      :href="`https://identifiers.org/${id}`"
-                      class="pr-2 grey--text text--darken-2"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >{{ id }}</a>
-                    <span
-                      v-for="id in props.result.emsl_biosample_identifiers"
-                      :key="id"
-                    >
-                      {{ id }}
-                    </span>
+                    <template v-if="props.result.alternative_identifiers">
+                      <a
+                        v-for="id in props.result.alternative_identifiers"
+                        :key="id"
+                        :href="`https://identifiers.org/${id}`"
+                        class="pr-2 grey--text text--darken-2"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >{{ id }}</a>
+                    </template>
+                    <template v-if="props.result.emsl_biosample_identifiers">
+                      <span
+                        v-for="id in props.result.emsl_biosample_identifiers"
+                        :key="id"
+                      >
+                        {{ id }}
+                      </span>
+                    </template>
                   </template>
                 </template>
                 <template #item-content="props">

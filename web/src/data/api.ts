@@ -43,8 +43,7 @@ export interface BaseSearchResult {
   id: string;
   name: string;
   description: string;
-  alternate_identifiers: string[];
-  annotations: Record<string, string>;
+  alternative_identifiers: string[];
   [key: string]: unknown; // possibly other things.
 }
 
@@ -62,23 +61,22 @@ export interface DataObjectSearchResult extends BaseSearchResult {
   selected: boolean;
 }
 
-export interface DerivedDataResult extends BaseSearchResult {
+export interface AnalysisResult extends BaseSearchResult {
   type: string;
   git_url: string;
   started_at_time: string;
   ended_at_time: string;
   execution_resource: string;
-  omics_processing_id: string;
-  outputs: DataObjectSearchResult[];
+  was_informed_by: string;
+  has_output: string[];
 }
 
 export interface OmicsProcessingResult extends BaseSearchResult {
-  study_id: string;
   add_date: string;
   mod_date: string;
   open_in_gold: string;
-  omics_data: DerivedDataResult[];
-  outputs: DataObjectSearchResult[]; // RAW outputs
+  omics_type: {has_raw_value: string};
+  has_output: string[]; // RAW outputs
 }
 
 export interface BiosampleSearchResult extends BaseSearchResult {
@@ -107,8 +105,10 @@ export interface BiosampleSearchResult extends BaseSearchResult {
     label: string;
     data: string;
   };
-  omics_processing: OmicsProcessingResult[];
   emsl_biosample_identifiers: string[];
+  omics_processing: OmicsProcessingResult[];
+  analysis: AnalysisResult[];
+  data_object: DataObjectSearchResult[];
 }
 
 interface PrincipalInvestigator {
@@ -157,25 +157,25 @@ export interface StudySearchResults extends BaseSearchResult {
   }[];
 }
 
-export interface ReadsQCResult extends DerivedDataResult {
+export interface ReadsQCResult extends AnalysisResult {
   stats: object;
   has_inputs: string[];
   has_output: string[];
 }
 
-export interface MetagenomeAssembyResult extends DerivedDataResult {
+export interface MetagenomeAssembyResult extends AnalysisResult {
   stats: object;
   has_inputs: string[];
   has_output: string[];
 }
 
-export interface MetagenomeAnnotationResult extends DerivedDataResult {
+export interface MetagenomeAnnotationResult extends AnalysisResult {
   stats: object;
   has_inputs: string[];
   has_output: string[];
 }
 
-export type MetaproteomicAnalysisResult = DerivedDataResult;
+export type MetaproteomicAnalysisResult = AnalysisResult;
 
 export interface UnitSchema {
   /* https://github.com/microbiomedata/nmdc-server/pull/350 */
@@ -328,7 +328,7 @@ async function _search<T>(
   }: SearchParams,
 ): Promise<SearchResponse<T>> {
   const { data } = await client.post<SearchResponse<T>>(
-    `${table}/search`,
+    `${table}/mongo-search`,
     { conditions, data_object_filter },
     {
       params: { offset, limit },
@@ -428,7 +428,7 @@ async function getFacetSummary(
   conditions: Condition[],
 ): Promise<FacetSummaryResponse[]> {
   const path = type;
-  const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/facet`, {
+  const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/mongo-facet`, {
     conditions, attribute: field,
   });
   return Object.keys(data.facets)

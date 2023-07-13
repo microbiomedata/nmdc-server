@@ -45,8 +45,8 @@ export default defineComponent({
 
     const filteredOmicsProcessing = computed(() => Object.entries(groupBy(
       props.result.omics_processing
-        .filter((p) => hiddenOmicsTypes.indexOf(p.annotations.omics_type.toLowerCase()) === -1),
-      (p) => p.annotations.omics_type,
+        .filter((p) => hiddenOmicsTypes.indexOf(p.omics_type.has_raw_value.toLowerCase()) === -1),
+      (p) => p.omics_type.has_raw_value,
     )).sort(([agroup], [bgroup]) => {
       const ai = buttonOrder.indexOf(agroup.toLowerCase());
       const bi = buttonOrder.indexOf(bgroup.toLowerCase());
@@ -86,7 +86,7 @@ export default defineComponent({
         v-if="isOpen(projects[0].id)"
         :key="projects[0].id"
         class="flex-row mt-2"
-        :omics-processing="projects"
+        :biosample="result"
         :omics-type="omicsType"
         :logged-in-user="loggedInUser"
       />

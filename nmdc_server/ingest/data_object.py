@@ -52,6 +52,9 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
         else:
             objects_without_type += 1
 
+        obj["file_size_bytes"] = obj.get("file_size_bytes", 0)
+        if not obj["file_size_bytes"]:
+            logger.error("null value for file_size_bytes")
         db.add(DataObject(**obj))
 
     if objects_without_type:

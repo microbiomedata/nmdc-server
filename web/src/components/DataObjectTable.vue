@@ -6,7 +6,7 @@ import { flattenDeep } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
 import { humanFileSize } from '@/data/utils';
-import { OmicsProcessingResult } from '@/data/api';
+import { BiosampleSearchResult, OmicsProcessingResult } from '@/data/api';
 import { stateRefs, acceptTerms } from '@/store';
 
 import DownloadDialog from './DownloadDialog.vue';
@@ -29,8 +29,8 @@ export default defineComponent({
   components: { DownloadDialog },
 
   props: {
-    omicsProcessing: {
-      type: Array as PropType<OmicsProcessingResult[]>,
+    biosample: {
+      type: Object as PropType<BiosampleSearchResult>,
       required: true,
     },
     omicsType: {
@@ -86,16 +86,23 @@ export default defineComponent({
     });
 
     const items = computed(() => flattenDeep(
-      flattenDeep(props.omicsProcessing.map((p) => (p.omics_data)))
-        .map((omics_data) => omics_data.outputs
-          .filter((data) => data.file_type && data.file_type_description)
-          .map((data_object, i) => ({
-            ...data_object,
-            omics_data,
-            /* TODO Hack to replace metagenome with omics type name */
-            group_name: omics_data.name.replace('Metagenome', props.omicsType),
-            newgroup: i === 0,
-          }))),
+      flattenDeep(props.biosample.omics_processing.filter((o) => o.omics_type.has_raw_value === props.omicsType).map(
+        (omicsProcessing) => props.biosample.analysis.filter(
+          (analysis) => analysis.was_informed_by === omicsProcessing.id,
+        ),
+      )).map(
+        (analysis) => analysis.has_output.map(
+          (dataObjectId) => props.biosample.data_object.find(
+            (dataObject) => dataObject.id === dataObjectId,
+          ),
+        ).map((dataObject, index) => ({
+          ...dataObject,
+          analysis,
+          /* TODO Hack to replace metagenome with omics type name */
+          group_name: analysis.name ? analysis.name.replace('Metagenome', props.omicsType) : '',
+          newgroup: index === 0,
+        })),
+      ),
     ));
 
     function download(item: OmicsProcessingResult) {
@@ -168,10 +175,10 @@ export default defineComponent({
               <span>This file is included in the currently selected bulk download</span>
             </v-tooltip>
           </td>
-          <td>{{ item.file_type }}</td>
-          <td>{{ item.file_type_description }}</td>
+          <td>{{ item.data_object_type }}</td>
+          <td>TODO: lookup from schema</td>
           <td>{{ humanFileSize(item.file_size_bytes ) }}</td>
-          <td>{{ item.downloads }}</td>
+          <td>TODO</td>
           <td>
             <v-tooltip
               :disabled="!!(loggedInUser && item.url)"
