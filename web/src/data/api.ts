@@ -87,8 +87,8 @@ export interface BiosampleSearchResult extends BaseSearchResult {
   env_broad_scale_id: string;
   env_local_scale_id: string;
   env_medium_id: string;
-  longitude: number;
-  latitude: number;
+  longitude: number | null;
+  latitude: number | null;
   add_date: string;
   mod_date: string;
   open_in_gold: string;
@@ -224,8 +224,8 @@ export interface EnvironmentGeospatialEntity {
   count: number;
   ecosystem: string;
   ecosystem_category: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
 }
 
 interface EnvironmentSankeyEntity {

@@ -9,6 +9,7 @@ from typing import Optional
 
 import sqlalchemy as sa
 from alembic import op
+from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "dcc0a41b60af"
@@ -25,6 +26,18 @@ def upgrade():
         existing_type=sa.BIGINT(),
         nullable=True,
     )
+    op.alter_column(
+        "biosample",
+        "latitude",
+        existing_type=postgresql.DOUBLE_PRECISION(precision=53),
+        nullable=True,
+    )
+    op.alter_column(
+        "biosample",
+        "longitude",
+        existing_type=postgresql.DOUBLE_PRECISION(precision=53),
+        nullable=True,
+    )
     # ### end Alembic commands ###
 
 
@@ -34,6 +47,18 @@ def downgrade():
         "data_object",
         "file_size_bytes",
         existing_type=sa.BIGINT(),
+        nullable=False,
+    )
+    op.alter_column(
+        "biosample",
+        "latitude",
+        existing_type=postgresql.DOUBLE_PRECISION(precision=53),
+        nullable=False,
+    )
+    op.alter_column(
+        "biosample",
+        "longitude",
+        existing_type=postgresql.DOUBLE_PRECISION(precision=53),
         nullable=False,
     )
     # ### end Alembic commands ###

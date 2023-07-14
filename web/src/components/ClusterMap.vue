@@ -92,12 +92,14 @@ export default defineComponent({
       const data = await api.getEnvironmentGeospatialAggregation(props.conditions);
       const values: any[] = [];
       data.forEach((cluster, index) => {
-        for (let i = 0; i < cluster.count; i += 1) {
-          values.push({
-            ...cluster,
-            key: `${index}_${i}`,
-            latLng: L.latLng(cluster.latitude, cluster.longitude),
-          });
+        if (cluster.latitude && cluster.longitude) {
+          for (let i = 0; i < cluster.count; i += 1) {
+            values.push({
+              ...cluster,
+              key: `${index}_${i}`,
+              latLng: L.latLng(cluster.latitude, cluster.longitude),
+            });
+          }
         }
       });
       mapData.value = values;

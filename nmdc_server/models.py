@@ -278,8 +278,11 @@ class Biosample(Base, AnnotatedModel):
     env_broad_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
     env_local_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
     env_medium_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
-    latitude = Column(Float, nullable=False)
-    longitude = Column(Float, nullable=False)
+
+    # These columns can be null to accomodate legacy data, but all new data will have lat/lon
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     multiomics = Column(Integer, nullable=False, default=0)
     emsl_biosample_identifiers = Column(JSONB, nullable=True)
