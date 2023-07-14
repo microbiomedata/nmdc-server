@@ -46,7 +46,7 @@ export default defineComponent({
       });
 
       // add geo_loc_name to after lat/lon
-      if (props.item?.annotations?.geo_loc_name !== undefined) {
+      if (props.item.geo_loc_name && (props.item.geo_loc_name as any).has_raw_value) {
         const geoLocIndex = ret.includes('latitude') ? ret.indexOf('latitude') + 1 : ret.length;
         ret.splice(geoLocIndex, 0, 'geo_loc_name');
       }
@@ -54,7 +54,7 @@ export default defineComponent({
       return ret;
     });
 
-    const alternateIdentifiers = computed(() => props.item.alternate_identifiers
+    const alternateIdentifiers = computed(() => props.item.alternative_identifiers
       .map((id) => ({ name: id, target: `https://identifiers.org/${id}` })));
 
     return {

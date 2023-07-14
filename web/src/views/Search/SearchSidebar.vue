@@ -62,7 +62,7 @@ const FunctionSearchFacets: SearchFacet[] = [
     group: 'Sample',
   },
   {
-    field: 'collection_date',
+    field: 'collection_date.has_date_value',
     table: 'biosample',
     group: 'Sample',
   },
@@ -79,7 +79,7 @@ const FunctionSearchFacets: SearchFacet[] = [
     group: 'Omics Processing',
   },
   {
-    field: 'omics_type',
+    field: 'omics_type.has_raw_value',
     table: 'omics_processing',
     group: 'Omics Processing',
   },

@@ -1,4 +1,5 @@
 from collections import Counter
+from datetime import date
 from io import BytesIO
 from typing import Any, Dict, List, Optional
 from uuid import UUID
@@ -68,6 +69,77 @@ async def get_database_summary(db: Session = Depends(get_db)):
 
 
 @router.get(
+    "/mongo_summary",
+    tags=["aggregation"],
+)
+async def mongo_get_database_summary(db: Session = Depends(get_db)):
+    return {
+        "biosample": {
+            "attributes": {
+                "depth.has_numeric_value": {
+                    "min": 0,
+                    "max": 2000,
+                    "type": "float",
+                },
+                "geo_loc_name.has_raw_value": {
+                    "type": "string",
+                },
+                "gold_classification": {
+                    "type": "sankey-tree",
+                },
+                "env_broad_scale": {
+                    "type": "tree",
+                },
+                "env_local_scale": {
+                    "type": "tree",
+                },
+                "env_medium": {
+                    "type": "tree",
+                },
+                "latitude": {
+                    "type": "float",
+                },
+                "longitude": {
+                    "type": "float",
+                },
+                "collection_date.has_date_value": {
+                    "type": "date",
+                    "min": "2000-03-15T00:00:00",
+                    "max": "2022-08-12T00:00:00",
+                },
+            },
+        },
+        "gene_function": {
+            "attributes": {
+                "id": {
+                    "type": "kegg_search",
+                },
+            },
+        },
+        "omics_processing": {
+            "attributes": {
+                "omics_type.has_raw_value": {
+                    "type": "string",
+                },
+                "instrument_name": {
+                    "type": "string",
+                },
+                "processing_institution": {
+                    "type": "string",
+                },
+            },
+        },
+        "study": {
+            "attributes": {
+                "principal_investigator.has_raw_value": {
+                    "type": "string",
+                },
+            },
+        },
+    }
+
+
+@router.get(
     "/stats",
     response_model=schemas.AggregationSummary,
     tags=["aggregation"],
@@ -127,32 +199,6 @@ def conditions_to_mongo_filter(conditions):
 
 # biosample
 @router.post(
-    "/biosample/mongo-search",
-    tags=["biosample"],
-    name="Search for biosamples",
-    description="Faceted search of biosample data.",
-)
-async def mongo_search_biosample(
-    query: query.BiosampleSearchQuery = query.BiosampleSearchQuery(),
-    pagination: Pagination = Depends(),
-):
-    settings = Settings()
-    client = MongoClient(
-        host=settings.mongo_host,
-        username=settings.mongo_user,
-        password=settings.mongo_password,
-        port=settings.mongo_port,
-        directConnection=True,
-    )
-    mongo_filter = conditions_to_mongo_filter(query.conditions)
-    print(json.dumps(mongo_filter, indent=2))
-    return json.loads(bson.json_util.dumps({
-        "count": client.nmdc.denormalized.count_documents(filter=mongo_filter),
-        "results": [doc for doc in client.nmdc.denormalized.find(filter=mongo_filter, skip=pagination.offset, limit=pagination.limit, sort=[("omics_processing_count", DESCENDING)])],
-    }))
-
-
-@router.post(
     "/biosample/search",
     response_model=query.BiosampleSearchResponse,
     tags=["biosample"],
@@ -187,7 +233,42 @@ async def search_biosample(
 
 
 @router.post(
-    "/biosample/mongo-facet",
+    "/biosample/mongo_search",
+    tags=["biosample"],
+    name="Search for biosamples",
+    description="Faceted search of biosample data.",
+)
+async def mongo_search_biosample(
+    query: query.BiosampleSearchQuery = query.BiosampleSearchQuery(),
+    pagination: Pagination = Depends(),
+):
+    settings = Settings()
+    client = MongoClient(
+        host=settings.mongo_host,
+        username=settings.mongo_user,
+        password=settings.mongo_password,
+        port=settings.mongo_port,
+        directConnection=True,
+    )
+    mongo_filter = conditions_to_mongo_filter(query.conditions)
+    return json.loads(bson.json_util.dumps({
+        "count": client.nmdc.denormalized.count_documents(filter=mongo_filter),
+        "results": [doc for doc in client.nmdc.denormalized.find(filter=mongo_filter, skip=pagination.offset, limit=pagination.limit, sort=[("omics_processing_count", DESCENDING)])],
+    }))
+
+
+@router.post(
+    "/biosample/facet",
+    response_model=query.FacetResponse,
+    tags=["biosample"],
+    name="Get all values of an attribute",
+)
+async def facet_biosample(query: query.FacetQuery, db: Session = Depends(get_db)):
+    return crud.facet_biosample(db, query.attribute, query.conditions)
+
+
+@router.post(
+    "/biosample/mongo_facet",
     tags=["biosample"],
     name="Get all values of an attribute",
 )
@@ -213,16 +294,6 @@ async def mongo_facet_biosample(query: query.FacetQuery):
 
 
 @router.post(
-    "/biosample/facet",
-    response_model=query.FacetResponse,
-    tags=["biosample"],
-    name="Get all values of an attribute",
-)
-async def facet_biosample(query: query.FacetQuery, db: Session = Depends(get_db)):
-    return crud.facet_biosample(db, query.attribute, query.conditions)
-
-
-@router.post(
     "/biosample/binned_facet",
     response_model=query.BinnedFacetResponse,
     tags=["biosample"],
@@ -230,6 +301,56 @@ async def facet_biosample(query: query.FacetQuery, db: Session = Depends(get_db)
 )
 async def binned_facet_biosample(query: query.BinnedFacetQuery, db: Session = Depends(get_db)):
     return crud.binned_facet_biosample(db, **query.dict())
+
+
+@router.post(
+    "/biosample/mongo_binned_facet",
+    tags=["biosample"],
+    name="Get all values of an attribute",
+)
+async def mongo_binned_facet_biosample(query: query.FacetQuery):
+    settings = Settings()
+    client = MongoClient(
+        host=settings.mongo_host,
+        username=settings.mongo_user,
+        password=settings.mongo_password,
+        port=settings.mongo_port,
+        directConnection=True,
+    )
+    aggregation = [
+        {
+            "$match": conditions_to_mongo_filter(query.conditions),
+        }, {
+            "$group": {
+                "_id": { "year": { "$year": "$collection_date.has_date_value" }, "month": { "$month": "$collection_date.has_date_value" } },
+                "count": { "$count": {} }
+            },
+        },
+    ]
+
+    date_string = lambda d: f"{d['_id']['year']}-{str(d['_id']['month']).zfill(2)}-01"
+    binned_data = list(client.nmdc.denormalized.aggregate(aggregation))
+    binned_data.sort(key=date_string)
+    binned_data = [d for d in binned_data if d["_id"]["year"] is not None]
+
+    # Fill in missing months with zero counts
+    def next_month(d):
+        if d["month"] < 12:
+            return {"month": d["month"] + 1, "year": d["year"]}
+        return {"month": 1, "year": d["year"] + 1}
+    full_binned_data = []
+    for d in binned_data:
+        if len(full_binned_data) == 0:
+            full_binned_data.append(d)
+            continue
+        while full_binned_data[-1]["_id"]["year"] != d["_id"]["year"] or full_binned_data[-1]["_id"]["month"] != d["_id"]["month"]:
+            full_binned_data.append({"_id": next_month(full_binned_data[-1]["_id"]), "count": 0})
+        full_binned_data[-1] = d
+
+    return json.loads(bson.json_util.dumps({
+        "bins": [date_string(d) for d in full_binned_data],
+        "facets": [d["count"] for d in full_binned_data],
+    }))
 
 
 @router.get(
@@ -285,7 +406,22 @@ async def kegg_text_search(query: str, limit=20, db: Session = Depends(get_db)):
 
 # study
 @router.post(
-    "/study/mongo-search",
+    "/study/search",
+    response_model=query.StudySearchResponse,
+    tags=["study"],
+    name="Search for studies",
+    description="Faceted search of study data.",
+)
+async def search_study(
+    query: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+    pagination: Pagination = Depends(),
+):
+    return pagination.response(crud.search_study(db, query.conditions))
+
+
+@router.post(
+    "/study/mongo_search",
     tags=["study"],
     name="Search for studies",
     description="Faceted search of study data.",
@@ -356,21 +492,6 @@ async def mongo_search_study(
 
 
 @router.post(
-    "/study/search",
-    response_model=query.StudySearchResponse,
-    tags=["study"],
-    name="Search for studies",
-    description="Faceted search of study data.",
-)
-async def search_study(
-    query: query.SearchQuery = query.SearchQuery(),
-    db: Session = Depends(get_db),
-    pagination: Pagination = Depends(),
-):
-    return pagination.response(crud.search_study(db, query.conditions))
-
-
-@router.post(
     "/study/facet",
     response_model=query.FacetResponse,
     tags=["study"],
@@ -381,7 +502,7 @@ async def facet_study(query: query.FacetQuery, db: Session = Depends(get_db)):
 
 
 @router.post(
-    "/study/mongo-facet",
+    "/study/mongo_facet",
     tags=["study"],
     name="Get all values of an attribute",
 )
@@ -470,6 +591,42 @@ async def search_omics_processing(
 )
 async def facet_omics_processing(query: query.FacetQuery, db: Session = Depends(get_db)):
     return crud.facet_omics_processing(db, query.attribute, query.conditions)
+
+
+@router.post(
+    "/omics_processing/mongo_facet",
+    tags=["omics_processing"],
+    name="Get all values of an attribute",
+)
+async def mongo_facet_omics_processing(query: query.FacetQuery):
+    settings = Settings()
+    client = MongoClient(
+        host=settings.mongo_host,
+        username=settings.mongo_user,
+        password=settings.mongo_password,
+        port=settings.mongo_port,
+        directConnection=True,
+    )
+    aggregation = [
+        {
+            "$match": conditions_to_mongo_filter(query.conditions),
+        }, {
+            "$unwind": { "path": "$omics_processing" },
+        }, {
+            "$group": {
+                "_id": "$omics_processing.id",
+                "omics_processing": { "$first": "$omics_processing" },
+            },
+        }, {
+            "$replaceRoot": { "newRoot": "$omics_processing" },
+        }, {
+            "$sortByCount": f"${query.attribute}",
+        },
+    ]
+
+    return json.loads(bson.json_util.dumps({
+        "facets": { facet["_id"]: facet["count"] for facet in client.nmdc.denormalized.aggregate(aggregation) },
+    }))
 
 
 @router.post(

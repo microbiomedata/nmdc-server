@@ -1,4 +1,3 @@
-import { merge } from 'lodash';
 import axios from 'axios';
 import { setupCache } from 'axios-cache-adapter';
 import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
@@ -105,6 +104,9 @@ export interface BiosampleSearchResult extends BaseSearchResult {
     label: string;
     data: string;
   };
+  geo_loc_name: {
+    has_raw_value: string;
+  }
   emsl_biosample_identifiers: string[];
   omics_processing: OmicsProcessingResult[];
   analysis: AnalysisResult[];
@@ -328,7 +330,7 @@ async function _search<T>(
   }: SearchParams,
 ): Promise<SearchResponse<T>> {
   const { data } = await client.post<SearchResponse<T>>(
-    `${table}/mongo-search`,
+    `${table}/mongo_search`,
     { conditions, data_object_filter },
     {
       params: { offset, limit },
@@ -428,7 +430,7 @@ async function getFacetSummary(
   conditions: Condition[],
 ): Promise<FacetSummaryResponse[]> {
   const path = type;
-  const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/mongo-facet`, {
+  const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/mongo_facet`, {
     conditions, attribute: field,
   });
   return Object.keys(data.facets)
@@ -448,7 +450,7 @@ async function getBinnedFacet<T = string | number>(
   numBins: number,
   resolution: 'day' | 'week' | 'month' | 'year' = 'month',
 ) {
-  const { data } = await client.post<BinResponse<T>>(`${table}/binned_facet`, {
+  const { data } = await client.post<BinResponse<T>>(`${table}/mongo_binned_facet`, {
     attribute,
     conditions,
     resolution,
@@ -458,39 +460,8 @@ async function getBinnedFacet<T = string | number>(
 }
 
 async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
-  const { data } = await client.get<DatabaseSummaryResponse>('summary');
-  // TODO: fix this on the server
-  // merge this object with summary response
-  const mergeSummary = {
-    biosample: {
-      attributes: {
-        gold_classification: {
-          type: 'sankey-tree',
-          count: -1,
-        },
-        env_broad_scale: {
-          type: 'tree',
-          count: -1,
-        },
-        env_local_scale: {
-          type: 'tree',
-          count: -1,
-        },
-        env_medium: {
-          type: 'tree',
-          count: -1,
-        },
-      },
-    },
-    gene_function: {
-      attributes: {
-        id: {
-          type: 'kegg_search',
-        },
-      },
-    },
-  };
-  return merge(data, mergeSummary);
+  const { data } = await client.get<DatabaseSummaryResponse>('mongo_summary');
+  return data;
 }
 
 async function getDatabaseStats() {

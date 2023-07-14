@@ -40,9 +40,6 @@ export default defineComponent({
 
   setup(props) {
     function getValue(field: string) {
-      if (field === 'geo_loc_name') {
-        return props.item.annotations.geo_loc_name;
-      }
       if (
         field === 'env_broad_scale'
           || field === 'env_local_scale'

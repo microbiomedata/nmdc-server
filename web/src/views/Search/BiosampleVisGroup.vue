@@ -132,7 +132,7 @@ export default defineComponent({
         <TooltipCard :text="helpBarchart">
           <FacetSummaryWrapper
             table="omics_processing"
-            field="omics_type"
+            field="omics_type.has_raw_value"
             :conditions="conditions"
             use-all-conditions
           >
@@ -171,14 +171,14 @@ export default defineComponent({
         >
           <BinnedSummaryWrapper
             table="biosample"
-            field="collection_date"
+            field="collection_date.has_date_value"
             :conditions="conditions"
             use-all-conditions
           >
             <template #default="props">
               <DateHistogram
                 v-bind="props"
-                @select="setUniqueCondition(['collection_date'], ['biosample'], $event.conditions)"
+                @select="setUniqueCondition(['collection_date.has_date_value'], ['biosample'], $event.conditions)"
               />
             </template>
           </BinnedSummaryWrapper>

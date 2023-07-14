@@ -88,22 +88,8 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
             count=get_column_count(db, models.Biosample.env_broad_scale_id),
             type=schemas.AttributeType.string,
         )
-        attributes["depth.has_numeric_value"] = schemas.AttributeSummary(
-            count=count,
-            type=schemas.AttributeType.float_,
-            min=0,
-            max=2000,
-        )
-        attributes["geo_loc_name.has_raw_value"] = schemas.AttributeSummary(
-            count=count,
-            type=schemas.AttributeType.string,
-        )
     if model == models.Study:
         attributes["principal_investigator_name"] = schemas.AttributeSummary(
-            count=count,
-            type=schemas.AttributeType.string,
-        )
-        attributes["principal_investigator.has_raw_value"] = schemas.AttributeSummary(
             count=count,
             type=schemas.AttributeType.string,
         )
