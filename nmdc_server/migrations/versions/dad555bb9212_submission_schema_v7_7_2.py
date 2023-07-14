@@ -12,15 +12,13 @@ from typing import Optional
 from uuid import uuid4
 
 from alembic import op
-from pydantic import BaseModel
 from sqlalchemy import Column, orm
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.declarative import declarative_base
 
-
 # revision identifiers, used by Alembic.
-revision: str = 'dad555bb9212'
-down_revision: Optional[str] = 'b8f3bcb681a1'
+revision: str = "dad555bb9212"
+down_revision: Optional[str] = "b8f3bcb681a1"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
@@ -37,7 +35,11 @@ CUR_LAND_USE_RENAMES = [
     ("rainforest (evergreen forest receiving greater than 406 cm annual rainfall)", "rainforest"),
     ("shrub crops (blueberries,nursery ornamentals,filberts)", "shrub crops"),
     ("shrub land (e.g. mesquite,sage-brush,creosote bush,shrub oak,eucalyptus)", "shrub land"),
-    ("successional shrub land (tree saplings,hazels,sumacs,chokecherry,shrub dogwoods,blackberries)", "successional shrub land"),
+    (
+        "successional shrub land (tree saplings,hazels,sumacs,chokecherry,"
+        "shrub dogwoods,blackberries)",
+        "successional shrub land",
+    ),
     ("swamp (permanent or semi-permanent water body dominated by woody plants)", "swamp"),
     ("tropical (e.g. mangrove,palms)", "tropical"),
     ("tundra (mosses,lichens)", "tundra"),
@@ -76,19 +78,16 @@ def rename(slot, rename_map):
                 if value in rename_map:
                     row[slot] = rename_map[value]
 
-        mappings.append({
-            "id": submission_metadata.id,
-            "metadata_submission": metadata_submission
-        })
+        mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
     session.bulk_update_mappings(SubmissionMetadata, mappings)
     session.commit()
 
 
 def upgrade():
     upgrade_map = dict(CUR_LAND_USE_RENAMES)
-    rename('cur_land_use', upgrade_map)
+    rename("cur_land_use", upgrade_map)
 
 
 def downgrade():
-    downgrade_map = dict(reversed(t) for t in CUR_LAND_USE_RENAMES)
-    rename('cur_land_use', downgrade_map)
+    downgrade_map = dict((t[1], t[0]) for t in CUR_LAND_USE_RENAMES)
+    rename("cur_land_use", downgrade_map)
