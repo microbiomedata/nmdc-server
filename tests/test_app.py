@@ -147,6 +147,7 @@ def test_get_environmental_aggregation(db: Session, client: TestClient):
 )
 def test_list_data_objects(db: Session, client: TestClient, endpoint: str):
     data_object = fakes.DataObjectFactory(id="do")
+    biosample_input = fakes.BiosampleFactory(id="b")
     omics_processing = fakes.OmicsProcessingFactory(id="1")
     reads_qc = fakes.ReadsQCFactory(id="1")
     assembly = fakes.MetagenomeAssemblyFactory(id="1")
@@ -154,6 +155,7 @@ def test_list_data_objects(db: Session, client: TestClient, endpoint: str):
     analysis = fakes.MetaproteomicAnalysisFactory(id="1")
 
     omics_processing.outputs = [data_object]
+    omics_processing.biosample_inputs = [biosample_input]
     reads_qc.outputs = [data_object]
     assembly.outputs = [data_object]
     annotation.outputs = [data_object]

@@ -205,11 +205,13 @@ class OmicsProcessingFactory(AnnotatedFactory):
 
     add_date = Faker("date_time")
     mod_date = Faker("date_time")
-    biosample = SubFactory(BiosampleFactory)
+    biosample_inputs = []
 
     @lazy_attribute
     def study(self):
-        return self.biosample.study
+        if not self.biosample_inputs:
+            return None
+        return self.biosample_inputs[0].study
 
 
 class DataObjectFactory(SQLAlchemyModelFactory):
