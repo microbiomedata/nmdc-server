@@ -483,7 +483,10 @@ export class HarmonizerApi {
     return tableData.map((row) => Object.fromEntries(
       Object.entries(row).map(([key, value]) => {
         let unflattenedValue = value;
-        if (this.schema.classes[className].attributes[key].multivalued) {
+        if (
+          this.schema.classes[className].attributes[key].multivalued
+          && value.split
+        ) {
           unflattenedValue = value.split(';').map((v: string) => v.trim());
         }
         return [key, unflattenedValue];
