@@ -363,9 +363,25 @@ export default defineComponent({
             template.schemaClass,
           );
         });
-        harmonizerApi.setInvalidCells({});
+        // Load imported data
         sampleData.value = imported;
+
+        // Clear validation state
+        harmonizerApi.setInvalidCells({});
+        invalidCells.value = {};
+        Object.keys(tabsValidated.value).forEach((tab) => {
+          tabsValidated.value[tab] = false;
+        });
+
+        // Sync with backend
+        hasChanged.value += 1;
         incrementalSaveRecord(root.$route.params.id);
+
+        // Load data for active tab into DataHarmonizer
+        harmonizerApi.loadData(activeTemplateData.value);
+
+        // Reset the file input so that the same filename can be loaded multiple times
+        (document.getElementById('tsv-file-select') as HTMLInputElement).value = '';
       };
       reader.readAsArrayBuffer(file);
     }
