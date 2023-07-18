@@ -32,11 +32,22 @@ class OmicsProcessing(OmicsProcessingCreate):
         return v
 
 
+omics_types = {
+    "metagenome": "Metagenome",
+    "metabolomics": "Metabolomics",
+    "proteomics": "Proteomics",
+    "metatranscriptome": "Metatranscriptome",
+    "organic matter characterization": "Organic Matter Characterization",
+}
+
+
 def load_omics_processing(db: Session, obj: Dict[str, Any]):
     logger = get_logger(__name__)
     obj["biosample_id"] = obj.pop("has_input", [None])[0]
     data_objects = obj.pop("has_output", [])
     obj["study_id"] = obj.pop("part_of", [None])[0]
+    raw_omics_type: str = obj["omics_type"]["has_raw_value"]
+    obj["omics_type"]["has_raw_value"] = omics_types[raw_omics_type.lower()]
 
     if obj["biosample_id"] and db.query(models.Biosample).get(obj["biosample_id"]) is None:
         logger.warn(f"Unknown biosample {obj['biosample_id']}")
