@@ -326,16 +326,16 @@ def construct_zip_file_path(data_object: models.DataObject) -> str:
     #     involves a complicated query... need a way to join that information
     #     in the original query (possibly in the sqlalchemy relationship)
     omics_processing = data_object.omics_processing
-    biosample = cast(Optional[models.Biosample], omics_processing.biosample)
+    biosamples = cast(Optional[list[models.Biosample]], omics_processing.biosample_inputs)
 
     def safe_name(name: str) -> str:
         return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
     op_name = safe_name(omics_processing.id)
 
-    if biosample is not None:
-        biosample_name = safe_name(biosample.id)
-        study = biosample.study
+    if biosamples:
+        biosample_name = ",".join([safe_name(biosample.id) for biosample in biosamples])
+        study = biosamples[0].study
     else:
         # Some emsl omics_processing are missing biosamples
         biosample_name = "unknown"

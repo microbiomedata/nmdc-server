@@ -151,7 +151,9 @@ with m as (select
                 b'{MultiomicsValue.om.value:05b}'
         end
     )::integer as multiomics
-from biosample b join omics_processing op on op.biosample_id = b.id
+from biosample b
+    join biosample_input_association bia on bia.biosample_id = b.id
+    join omics_processing op on bia.omics_processing_id = op.id
 group by b.id)
 update biosample set multiomics = m.multiomics
 from m
@@ -175,7 +177,8 @@ with m as (select
     )::integer as multiomics
 from study s
     join biosample b on s.id = b.study_id
-    join omics_processing op on op.biosample_id = b.id
+    join biosample_input_association bia on b.id = bia.biosample_id
+    join omics_processing op on bia.omics_processing_id = op.id
 group by s.id)
 update study set multiomics = m.multiomics
 from m
