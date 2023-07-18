@@ -1,6 +1,6 @@
 from collections import OrderedDict
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
 from factory import Factory, Faker, SubFactory, lazy_attribute, post_generation
@@ -205,7 +205,7 @@ class OmicsProcessingFactory(AnnotatedFactory):
 
     add_date = Faker("date_time")
     mod_date = Faker("date_time")
-    biosample_inputs = []
+    biosample_inputs: List[models.Biosample] = []
 
     @lazy_attribute
     def study(self):

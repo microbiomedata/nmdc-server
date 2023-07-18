@@ -486,7 +486,9 @@ def test_query_pi(db: Session):
 )
 def test_query_multiomics(db: Session, value: int, result: bool):
     biosample = fakes.BiosampleFactory()
-    fakes.OmicsProcessingFactory(annotations={"omics_type": "Metabolomics"}, biosample_inputs=[biosample])
+    fakes.OmicsProcessingFactory(
+        annotations={"omics_type": "Metabolomics"}, biosample_inputs=[biosample]
+    )
     fakes.OmicsProcessingFactory(
         annotations={"omics_type": "Metatranscriptome"}, biosample_inputs=[biosample]
     )
