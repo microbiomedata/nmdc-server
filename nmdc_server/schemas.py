@@ -280,8 +280,8 @@ class BiosampleBase(AnnotatedBase):
     env_local_scale_id: Optional[str]
     env_medium_id: Optional[str]
     # https://github.com/samuelcolvin/pydantic/issues/156
-    longitude: Optional[float] = Field(..., gt=-180, le=180)
-    latitude: Optional[float] = Field(..., ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, gt=-180, le=180)
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
     add_date: Optional[DateType]
     mod_date: Optional[DateType]
 

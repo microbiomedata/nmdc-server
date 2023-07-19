@@ -346,8 +346,6 @@ class OmicsProcessing(Base, AnnotatedModel):
     biosample_inputs = relationship(
         "Biosample", secondary=biosample_input_association, back_populates="omics_processing"
     )
-    # biosample_id = Column(String, ForeignKey("biosample.id"), nullable=True)
-    # biosample = relationship("Biosample", backref="omics_processing")
     study_id = Column(String, ForeignKey("study.id"), nullable=True)
     study = relationship("Study", backref="omics_processing")
 
