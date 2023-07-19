@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  computed, defineComponent, PropType, reactive,
+  computed, defineComponent, onMounted, PropType, reactive,
 } from '@vue/composition-api';
 import { flattenDeep } from 'lodash';
 
@@ -113,6 +113,10 @@ export default defineComponent({
       termsDialog.value = false;
       acceptTerms();
     }
+
+    onMounted(() => {
+      console.log(props.omicsProcessing);
+    });
 
     return {
       onAcceptTerms,
