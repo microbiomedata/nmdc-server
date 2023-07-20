@@ -138,7 +138,9 @@ def test_grouped_query(db: Session):
 
 def test_indirect_join(db: Session):
     study = fakes.StudyFactory(id="study1")
-    fakes.OmicsProcessingFactory(id="omics_processing1", biosample__study=study)
+    biosample = fakes.BiosampleFactory(id="b", study=study)
+    # fakes.OmicsProcessingFactory(id="omics_processing1", biosample__study=study)
+    fakes.OmicsProcessingFactory(id="omics_processing1", biosample_inputs=[biosample])
     db.commit()
 
     q = query.StudyQuerySchema(
@@ -484,9 +486,11 @@ def test_query_pi(db: Session):
 )
 def test_query_multiomics(db: Session, value: int, result: bool):
     biosample = fakes.BiosampleFactory()
-    fakes.OmicsProcessingFactory(annotations={"omics_type": "Metabolomics"}, biosample=biosample)
     fakes.OmicsProcessingFactory(
-        annotations={"omics_type": "Metatranscriptome"}, biosample=biosample
+        annotations={"omics_type": "Metabolomics"}, biosample_inputs=[biosample]
+    )
+    fakes.OmicsProcessingFactory(
+        annotations={"omics_type": "Metatranscriptome"}, biosample_inputs=[biosample]
     )
     db.commit()
 

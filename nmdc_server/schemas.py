@@ -177,8 +177,8 @@ class EnvironmentSankeyAggregation(BaseModel):
 
 class EnvironmentGeospatialAggregation(BaseModel):
     count: int
-    latitude: float
-    longitude: float
+    latitude: Optional[float]
+    longitude: Optional[float]
     ecosystem: Optional[str]
     ecosystem_category: Optional[str]
 
@@ -280,8 +280,8 @@ class BiosampleBase(AnnotatedBase):
     env_local_scale_id: Optional[str]
     env_medium_id: Optional[str]
     # https://github.com/samuelcolvin/pydantic/issues/156
-    longitude: float = Field(..., gt=-180, le=180)
-    latitude: float = Field(..., ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, gt=-180, le=180)
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
     add_date: Optional[DateType]
     mod_date: Optional[DateType]
 
@@ -291,6 +291,9 @@ class BiosampleBase(AnnotatedBase):
     ecosystem_type: Optional[str]
     ecosystem_subtype: Optional[str]
     specific_ecosystem: Optional[str]
+
+    class Config:
+        orm_mode = True
 
 
 class BiosampleCreate(BiosampleBase):
@@ -317,7 +320,7 @@ class Biosample(BiosampleBase):
 # omics_processing
 class OmicsProcessingBase(AnnotatedBase):
     study_id: Optional[str]
-    biosample_id: Optional[str]
+    biosample_inputs: list[BiosampleBase] = []
     add_date: Optional[DateType]
     mod_date: Optional[DateType]
 
@@ -328,9 +331,20 @@ class OmicsProcessingCreate(OmicsProcessingBase):
 
 class OmicsProcessing(OmicsProcessingBase):
     open_in_gold: Optional[str]
+    biosample_ids: list[str] = []
 
     omics_data: List["OmicsTypes"]
     outputs: List["DataObject"]
+
+    @validator("biosample_ids")
+    @classmethod
+    def set_biosample_ids(cls, biosample_ids: list[str], values: dict[str, Any]) -> list[str]:
+        # Only capture biosample IDs in responses
+        biosample_objects: list[BiosampleBase] = values.get("biosample_inputs", [])
+        biosample_ids = biosample_ids + [biosample.id for biosample in biosample_objects]
+        values.pop("biosample_inputs")
+
+        return biosample_ids
 
     class Config:
         orm_mode = True
@@ -341,7 +355,7 @@ class DataObjectBase(BaseModel):
     id: str
     name: str
     description: str = ""
-    file_size_bytes: int
+    file_size_bytes: Optional[int]
     md5_checksum: Optional[str]
     url: Optional[str]
     downloads: int

@@ -170,7 +170,7 @@ export default defineComponent({
           </td>
           <td>{{ item.file_type }}</td>
           <td>{{ item.file_type_description }}</td>
-          <td>{{ humanFileSize(item.file_size_bytes ) }}</td>
+          <td>{{ humanFileSize(item.file_size_bytes) }}</td>
           <td>{{ item.downloads }}</td>
           <td>
             <v-tooltip

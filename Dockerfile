@@ -1,4 +1,4 @@
-FROM tiangolo/uvicorn-gunicorn:python3.9
+FROM tiangolo/uvicorn-gunicorn:python3.9-2023-06-05
 LABEL org.opencontainers.image.source=https://github.com/microbiomedata/nmdc-server
 
 RUN apt-get update && apt-get install -y postgresql-client

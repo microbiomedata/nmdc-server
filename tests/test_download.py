@@ -7,8 +7,8 @@ from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 
 def test_bulk_download_query(db: Session):
     sample = fakes.BiosampleFactory()
-    op1 = fakes.OmicsProcessingFactory(biosample=sample)
-    fakes.OmicsProcessingFactory(biosample=sample)
+    op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
+    fakes.OmicsProcessingFactory(biosample_inputs=[sample])
 
     raw1 = fakes.DataObjectFactory(
         url="https://data.microbiomedata.org/data/raw",
@@ -50,8 +50,8 @@ def test_bulk_download_query(db: Session):
 
 def test_generate_bulk_download(db: Session, client: TestClient, token):
     sample = fakes.BiosampleFactory()
-    op1 = fakes.OmicsProcessingFactory(biosample=sample)
-    fakes.OmicsProcessingFactory(biosample=sample)
+    op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
+    fakes.OmicsProcessingFactory(biosample_inputs=[sample])
 
     raw1 = fakes.DataObjectFactory(
         url="https://data.microbiomedata.org/data/raw",
@@ -81,8 +81,8 @@ def test_generate_bulk_download(db: Session, client: TestClient, token):
 
 def test_generate_bulk_download_filtered(db: Session, client: TestClient, token):
     sample = fakes.BiosampleFactory()
-    op1 = fakes.OmicsProcessingFactory(biosample=sample)
-    fakes.OmicsProcessingFactory(biosample=sample)
+    op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
+    fakes.OmicsProcessingFactory(biosample_inputs=[sample])
 
     raw1 = fakes.DataObjectFactory(
         url="https://data.microbiomedata.org/data/raw",
