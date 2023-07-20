@@ -31,7 +31,6 @@ class Biosample(BiosampleCreate):
                 lat, lon = values.pop("lat_lon")["has_raw_value"].split(" ")
                 values["latitude"] = float(lat)
                 values["longitude"] = float(lon)
-
         return extract_extras(cls, values)
 
     @validator("depth", pre=True)

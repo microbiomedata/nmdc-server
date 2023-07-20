@@ -326,16 +326,16 @@ def construct_zip_file_path(data_object: models.DataObject) -> str:
     #     involves a complicated query... need a way to join that information
     #     in the original query (possibly in the sqlalchemy relationship)
     omics_processing = data_object.omics_processing
-    biosample = cast(Optional[models.Biosample], omics_processing.biosample)
+    biosamples = cast(Optional[list[models.Biosample]], omics_processing.biosample_inputs)
 
     def safe_name(name: str) -> str:
         return name.replace("/", "_").replace("\\", "_").replace(":", "_")
 
     op_name = safe_name(omics_processing.id)
 
-    if biosample is not None:
-        biosample_name = safe_name(biosample.id)
-        study = biosample.study
+    if biosamples:
+        biosample_name = ",".join([safe_name(biosample.id) for biosample in biosamples])
+        study = biosamples[0].study
     else:
         # Some emsl omics_processing are missing biosamples
         biosample_name = "unknown"
@@ -401,7 +401,8 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
 
         # TODO: add crc checksums to support retries
         # TODO: add directory structure and metadata
-        content.append(f"- {data_object.file_size_bytes} {url} {file.path}")
+        file_size_string = data_object.file_size_bytes if data_object.file_size_bytes else ""
+        content.append(f"- {file_size_string} {url} {file.path}")
 
     return "\n".join(content) + "\n"
 
