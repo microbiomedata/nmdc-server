@@ -4,7 +4,7 @@
 slot. See https://github.com/microbiomedata/sheets_and_friends/issues/60
 
 Revision ID: dad555bb9212
-Revises: b8f3bcb681a1
+Revises: af8b2e3c91b2
 Create Date: 2023-07-14 21:12:10.113468
 
 """
@@ -18,7 +18,7 @@ from sqlalchemy.ext.declarative import declarative_base
 
 # revision identifiers, used by Alembic.
 revision: str = "dad555bb9212"
-down_revision: Optional[str] = "b8f3bcb681a1"
+down_revision: Optional[str] = "af8b2e3c91b2"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
