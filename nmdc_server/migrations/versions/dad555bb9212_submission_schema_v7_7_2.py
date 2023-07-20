@@ -1,7 +1,7 @@
 """submission schema v7.7.2
 
-* Changes the permissible values of the enum in the cur_land_use
-slot. See https://github.com/microbiomedata/sheets_and_friends/issues/60
+* Changes the permissible values of the enum in the cur_land_use slot.
+  See https://github.com/microbiomedata/sheets_and_friends/issues/60
 
 Revision ID: dad555bb9212
 Revises: af8b2e3c91b2
