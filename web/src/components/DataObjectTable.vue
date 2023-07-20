@@ -85,8 +85,17 @@ export default defineComponent({
       value: false,
     });
 
+    function getOmicsDataWithInputIds(omicsProcessing: OmicsProcessingResult) {
+      const biosampleInputIds = omicsProcessing.biosample_inputs.map((input) => input.id);
+      return omicsProcessing.omics_data.map((omics) => {
+        const omicsCopy = { ...omics };
+        omicsCopy.inputIds = biosampleInputIds;
+        return omicsCopy;
+      });
+    }
+
     const items = computed(() => flattenDeep(
-      flattenDeep(props.omicsProcessing.map((p) => (p.omics_data)))
+      flattenDeep(props.omicsProcessing.map((p) => (getOmicsDataWithInputIds(p))))
         .map((omics_data) => omics_data.outputs
           .filter((data) => data.file_type && data.file_type_description)
           .map((data_object, i) => ({
@@ -155,6 +164,19 @@ export default defineComponent({
         >
           <td colspan="6">
             <b>Workflow Activity:</b> {{ item.group_name }}
+            <br>
+            <div v-if="item.omics_data.inputIds.length > 1">
+              <v-icon>
+                mdi-flask-outline
+              </v-icon>
+              <b>Associated biosample inputs: </b>
+              <span
+                v-for="biosampleId in item.omics_data.inputIds"
+                :key="biosampleId"
+              >
+                {{ biosampleId }},
+              </span>
+            </div>
           </td>
         </tr>
         <tr>
