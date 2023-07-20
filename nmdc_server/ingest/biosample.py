@@ -46,6 +46,28 @@ class Biosample(BiosampleCreate):
             return datetime.strptime(v, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()
         return v
 
+    @validator("collection_date", pre=True)
+    def coerce_collection_date(cls, value):
+        # { "has_raw_value": ... }
+        raw_value = value["has_raw_value"]
+        if isinstance(raw_value, str) and date_fmt.match(raw_value):
+            return datetime.strptime(raw_value, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()
+        try:
+            dt = datetime.strptime(raw_value, "%Y-%m-%d").isoformat()
+            return dt
+        except ValueError:
+            try:
+                raw_value = raw_value + "-01"
+                dt = datetime.strptime(raw_value, "%Y-%m-%d").isoformat()
+                return dt
+            except ValueError:
+                try:
+                    raw_value = raw_value + "-01"
+                    dt = datetime.strptime(raw_value, "%Y-%m-%d").isoformat()
+                    return dt
+                except ValueError:
+                    return None
+
 
 def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):
     logger = get_logger(__name__)
@@ -76,6 +98,11 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     obj["depth"] = extract_quantity(depth_obj, "biosample", "depth")
 
     biosample = Biosample(**obj)
+
+    collection_date_pre_validation = obj.get("collection_date", {}).get("has_raw_value", None)
+    collection_date_post_validation = biosample.collection_date
+    if collection_date_pre_validation and not collection_date_post_validation:
+        logger.error(f"Failed to parse collection_date for biosample: {biosample.id}")
 
     # Merge other ambiguously named alternate identifier columns
     # TODO remove the hack to filter out gold from the alternate IDs
