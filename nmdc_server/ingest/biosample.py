@@ -50,6 +50,26 @@ class Biosample(BiosampleCreate):
     def coerce_collection_date(cls, value):
         # { "has_raw_value": ... }
         raw_value = value["has_raw_value"]
+        expected_formats = [
+            "%d-%b-%y %I.%M.%S.%f000 %p",
+            "%y-%m-%dT%I:%M:%S",
+            "%y-%m-%dT%H:%M:%S",
+            "%Y-%m-%dT%I:%M:%S",
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S%z",
+            "%y-%m-%d %I:%M:%S",
+            "%y-%m-%d %H:%M:%S",
+            "%Y-%m-%d %I:%M:%S",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%d %H:%M:%S%z",
+            "%Y-%m-%dT%H:%MZ",
+        ]
+        for date_format in expected_formats:
+            try:
+                dt = datetime.strptime(raw_value, date_format).isoformat()
+                return dt
+            except ValueError:
+                continue
         if isinstance(raw_value, str) and date_fmt.match(raw_value):
             return datetime.strptime(raw_value, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()
         try:
