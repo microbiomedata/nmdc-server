@@ -66,7 +66,10 @@ class Biosample(BiosampleCreate):
                     dt = datetime.strptime(raw_value, "%Y-%m-%d").isoformat()
                     return dt
                 except ValueError:
-                    return None
+                    # The raw value may be parseable by pydantic.
+                    # If not, we will a validation error in the
+                    # ingest output
+                    return raw_value
 
 
 def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):
@@ -98,11 +101,6 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     obj["depth"] = extract_quantity(depth_obj, "biosample", "depth")
 
     biosample = Biosample(**obj)
-
-    collection_date_pre_validation = obj.get("collection_date", {}).get("has_raw_value", None)
-    collection_date_post_validation = biosample.collection_date
-    if collection_date_pre_validation and not collection_date_post_validation:
-        logger.error(f"Failed to parse collection_date for biosample: {biosample.id}")
 
     # Merge other ambiguously named alternate identifier columns
     # TODO remove the hack to filter out gold from the alternate IDs
