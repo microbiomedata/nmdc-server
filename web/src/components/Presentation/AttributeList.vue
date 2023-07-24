@@ -51,12 +51,15 @@ export default defineComponent({
         ret.splice(geoLocIndex, 0, 'geo_loc_name');
       }
 
+      if (props.item?.annotations?.biosample_categories !== null) {
+        ret.push('biosample_categories');
+      }
+
       return ret;
     });
 
     const alternateIdentifiers = computed(() => props.item.alternate_identifiers
       .map((id) => ({ name: id, target: `https://identifiers.org/${id}` })));
-
     return {
       // computed
       alternateIdentifiers,

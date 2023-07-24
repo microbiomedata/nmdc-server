@@ -43,6 +43,9 @@ export default defineComponent({
       if (field === 'geo_loc_name') {
         return props.item.annotations.geo_loc_name;
       }
+      if (field === 'biosample_categories') {
+        return props.item.annotations.biosample_categories.join(', ');
+      }
       if (
         field === 'env_broad_scale'
           || field === 'env_local_scale'
