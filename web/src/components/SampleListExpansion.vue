@@ -45,7 +45,7 @@ export default defineComponent({
 
     const filteredOmicsProcessing = computed(() => Object.entries(groupBy(
       props.result.omics_processing
-        .filter((p) => hiddenOmicsTypes.indexOf(p.annotations.omics_type.toLowerCase()) === -1),
+        .filter((p) => hiddenOmicsTypes.indexOf((p.annotations.omics_type as string).toLowerCase()) === -1),
       (p) => p.annotations.omics_type,
     )).sort(([agroup], [bgroup]) => {
       const ai = buttonOrder.indexOf(agroup.toLowerCase());
