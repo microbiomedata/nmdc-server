@@ -87,7 +87,7 @@ export default defineComponent({
     }
 
     const biosampleType = types.biosample;
-    const biosample = usePaginatedResults(stateRefs.conditions, api.searchBiosample, dataObjectFilter, 150);
+    const biosample = usePaginatedResults(stateRefs.conditions, api.searchBiosample, dataObjectFilter);
 
     const studyType = types.study;
     const studySummaryData = useFacetSummaryData({
@@ -281,7 +281,6 @@ export default defineComponent({
                 :results="biosample.data.results.results"
                 :page="biosample.data.pageSync"
                 :subtitle-key="'study_id'"
-                :title-key="'id'"
                 :loading="biosample.loading.value"
                 @set-page="biosample.setPage($event)"
                 @selected="$router.push({ name: 'Sample', params: { id: $event }})"
