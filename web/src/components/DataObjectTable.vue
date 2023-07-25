@@ -6,7 +6,7 @@ import { flattenDeep } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
 import { humanFileSize } from '@/data/utils';
-import { OmicsProcessingResult } from '@/data/api';
+import { BiosampleSearchResult, OmicsProcessingResult } from '@/data/api';
 import { stateRefs, acceptTerms } from '@/store';
 
 import DownloadDialog from './DownloadDialog.vue';
@@ -40,6 +40,10 @@ export default defineComponent({
     loggedInUser: {
       type: Boolean,
       default: false,
+    },
+    biosample: {
+      type: Object as PropType<BiosampleSearchResult>,
+      required: true,
     },
   },
 
@@ -86,7 +90,7 @@ export default defineComponent({
     });
 
     function getOmicsDataWithInputIds(omicsProcessing: OmicsProcessingResult) {
-      const biosampleInputIds = omicsProcessing.biosample_inputs.map((input) => input.id);
+      const biosampleInputIds = (omicsProcessing.biosample_inputs as BiosampleSearchResult[]).map((input) => input.id);
       return omicsProcessing.omics_data.map((omics) => {
         const omicsCopy = { ...omics };
         omicsCopy.inputIds = biosampleInputIds;
@@ -106,6 +110,13 @@ export default defineComponent({
             newgroup: i === 0,
           }))),
     ));
+
+    function getRelatedBiosampleIds(omicsData: any) {
+      if (!omicsData || !omicsData.inputIds) {
+        return [];
+      }
+      return omicsData.inputIds.filter((id: string) => id !== props.biosample.id);
+    }
 
     function download(item: OmicsProcessingResult) {
       if (typeof item.url === 'string') {
@@ -135,6 +146,7 @@ export default defineComponent({
       items,
       humanFileSize,
       termsDialog,
+      getRelatedBiosampleIds,
     };
   },
 });
@@ -165,17 +177,19 @@ export default defineComponent({
           <td colspan="6">
             <b>Workflow Activity:</b> {{ item.group_name }}
             <br>
-            <div v-if="item.omics_data.inputIds.length > 1">
+            <div v-if="getRelatedBiosampleIds(item.omics_data).length">
               <v-icon>
                 mdi-flask-outline
               </v-icon>
-              <b>Associated biosample inputs: </b>
-              <span
-                v-for="biosampleId in item.omics_data.inputIds"
+              <span class="text-subtitle-2 grey--text text--darken-3"><b>Associated biosample inputs:</b></span>
+              <router-link
+                v-for="biosampleId in getRelatedBiosampleIds(item.omics_data)"
                 :key="biosampleId"
+                :to="{name: 'Sample', params: { id: biosampleId }}"
+                class="ml-2 grey--text text--darken-3"
               >
-                {{ biosampleId }},
-              </span>
+                {{ biosampleId }}
+              </router-link>
             </div>
           </td>
         </tr>
