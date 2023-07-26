@@ -72,11 +72,8 @@ def load(db: Session, cursor: Cursor):
 
         for doi in publication_dois:
             upsert_doi(db, doi, DOIType.PUBLICATION)
-            new_doi = db.query(DOIInfo).get(doi)
 
-        if "doi" in obj:
-            upsert_doi(db, obj["doi"]["has_raw_value"])
-        for doi in obj.get("publication_dois", []):
-            upsert_doi(db, doi)
+        for doi in award_dois:
+            upsert_doi(db, doi, DOIType.AWARD)
 
         create_study(db, Study(**obj))
