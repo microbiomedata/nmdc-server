@@ -198,10 +198,7 @@ class BiosampleFilter(BaseFilter):
     table = Table.biosample
 
     def join_omics_processing(self, query: Query) -> Query:
-        return self.join_self(
-            query.join(models.OmicsProcessing, models.Biosample.omics_processing),
-            Table.biosample,
-        )
+        return query.join(models.biosample_input_association).join(models.Biosample)
 
     def join_biosample(self, query: Query) -> Query:
         return self.join_self(query, Table.biosample)
@@ -240,10 +237,7 @@ class OmicsProcessingFilter(BaseFilter):
         return self.join_self(query, Table.omics_processing)
 
     def join_biosample(self, query: Query) -> Query:
-        return self.join_self(
-            query.join(models.Biosample, models.OmicsProcessing.biosample_inputs),
-            Table.omics_processing,
-        )
+        return query.join(models.biosample_input_association).join(models.OmicsProcessing)
 
     def join_study(self, query: Query) -> Query:
         return self.join_self(

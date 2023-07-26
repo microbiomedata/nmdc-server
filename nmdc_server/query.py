@@ -10,7 +10,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, desc, func, inspect, or_
-from sqlalchemy.orm import Query, Session, with_expression
+from sqlalchemy.orm import Query, Session, aliased, with_expression
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement, intersect, union
 from sqlalchemy.sql.selectable import CTE
@@ -538,18 +538,24 @@ class StudyQuerySchema(BaseQuerySchema):
     def _count_omics_data_query(self, db: Session, query_schema: BaseQuerySchema) -> Query:
         """Generate a query counting matching omics_processing types."""
         model = query_schema.table.model
+        aliased_model = aliased(model)
         table_name = model.__tablename__  # type: ignore
+
+        op_alias = aliased(models.OmicsProcessing)
+        biosample_alias = aliased(models.Biosample)
 
         subquery = query_schema.query(db).subquery()
 
         q = (
             db.query(
-                models.OmicsProcessing.study_id.label(f"{table_name}_study_id"),
-                func.count(model.id).label(f"{table_name}_count"),  # type: ignore
+                op_alias.study_id.label(f"{table_name}_study_id"),
+                func.count(func.distinct(model.id)).label(f"{table_name}_count"),  # type: ignore
             )
-            .join(model, isouter=True)
+            .join(op_alias)
+            .join(biosample_alias, op_alias.biosample_inputs)
+            .join(aliased_model)
             .join(subquery, subquery.c.id == model.id)  # type: ignore
-            .group_by(models.OmicsProcessing.study_id)
+            .group_by(op_alias.study_id)
         )
         return q
 
@@ -557,20 +563,22 @@ class StudyQuerySchema(BaseQuerySchema):
         self, db: Session, conditions: List[ConditionSchema]
     ) -> Query:
         """Aggregate omics types into a custom jsonb response."""
+        op_summary_alias = aliased(models.OmicsProcessing)
+        biosample_alias = aliased(models.Biosample)
+
         subquery = OmicsProcessingQuerySchema(conditions=conditions).query(db).subquery()
         query = (
             db.query(
-                models.OmicsProcessing.annotations["omics_type"].astext.label(
-                    "omics_processing_type"
-                ),
-                func.count(models.OmicsProcessing.id).label("omics_processing_count"),
-                models.OmicsProcessing.study_id.label("omics_processing_study_id_sub"),
+                op_summary_alias.annotations["omics_type"].astext.label("omics_processing_type"),
+                func.count(op_summary_alias.id).label("omics_processing_count"),
+                op_summary_alias.study_id.label("omics_processing_study_id_sub"),
             )
-            .join(subquery, subquery.c.id == models.OmicsProcessing.id)
-            .filter(models.OmicsProcessing.annotations["omics_type"] != None)
+            .join(subquery, subquery.c.id == op_summary_alias.id)
+            .join(biosample_alias, op_summary_alias.biosample_inputs)
+            .filter(op_summary_alias.annotations["omics_type"] != None)
             .group_by(
-                models.OmicsProcessing.study_id,
-                models.OmicsProcessing.annotations["omics_type"].astext,
+                op_summary_alias.study_id,
+                op_summary_alias.annotations["omics_type"].astext,
             )
         ).subquery()
         return db.query(
