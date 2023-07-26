@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from nmdc_server.crud import create_study
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.doi import upsert_doi
-from nmdc_server.models import PrincipalInvestigator
+from nmdc_server.models import DOIInfo, DOIType, PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
 
 
@@ -65,9 +65,14 @@ def load(db: Session, cursor: Cursor):
         obj["principal_investigator_websites"] = obj.pop("websites", [])
         obj["image"] = get_study_image_data(obj.pop("study_image", []))
 
-        obj["publication_dois"] = [transform_doi(d) for d in obj.pop("publications", [])]
+        publication_dois = [transform_doi(d) for d in obj.pop("publications", [])]
+        award_dois = []
         if "doi" in obj:
-            obj["doi"]["has_raw_value"] = transform_doi(obj["doi"]["has_raw_value"])
+            award_dois = [transform_doi(obj["doi"]["has_raw_value"])]
+
+        for doi in publication_dois:
+            upsert_doi(db, doi, DOIType.PUBLICATION)
+            new_doi = db.query(DOIInfo).get(doi)
 
         if "doi" in obj:
             upsert_doi(db, obj["doi"]["has_raw_value"])

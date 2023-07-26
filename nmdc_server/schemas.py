@@ -236,8 +236,8 @@ class StudyBase(AnnotatedBase):
     massive_study_identifiers: Optional[List[str]]
     gold_study_identifiers: Optional[List[str]]
 
-    award_dois: Optional[List[DOIInfo]]
-    publication_dois: Optional[List[DOIInfo]]
+    award_dois: Optional[List[str]]
+    publication_dois: Optional[List[str]]
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:

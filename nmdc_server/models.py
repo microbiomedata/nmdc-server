@@ -186,6 +186,14 @@ class DOIType(enum.Enum):
     PUBLICATION = 3
 
 
+study_doi_association = Table(
+    "study_doi_association",
+    Base.metadata,
+    Column("study_id", ForeignKey("study.id"), primary_key=True),
+    Column("doi_id", ForeignKey("doi_info.id"), primary_key=True),
+)
+
+
 # Caches information from doi.org
 class DOIInfo(Base):
     __tablename__ = "doi_info"
@@ -196,8 +204,8 @@ class DOIInfo(Base):
         primary_key=True,
     )
     info = Column(JSONB, nullable=False, default=dict)
-    study_id = Column(String, ForeignKey("study.id"))
     doi_type = Column(Enum(DOIType))
+    studies = relationship("Study", secondary=study_doi_association, back_populates="dois")
 
 
 class AnnotatedModel:
@@ -218,7 +226,7 @@ class Study(Base, AnnotatedModel):
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
     # doi = Column(String, ForeignKey("doi_info.id"), nullable=True)
-    dois = relationship("DOIInfo")
+    dois = relationship("DOIInfo", secondary=study_doi_association, back_populates="studies")
     multiomics = Column(Integer, nullable=False, default=0)
 
     # TODO migrate these into relations or something

@@ -8,7 +8,7 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from nmdc_server.logger import get_logger
-from nmdc_server.models import DOIInfo
+from nmdc_server.models import DOIInfo, DOIType
 
 retry_strategy = Retry(total=10)
 adapter = HTTPAdapter(max_retries=retry_strategy)
@@ -24,7 +24,7 @@ def get_doi_info(doi: str) -> Response:
     return requests.get(url, headers=headers, timeout=60)
 
 
-def upsert_doi(db: Session, doi: str):
+def upsert_doi(db: Session, doi: str, doi_type: DOIType):
     logger = get_logger(__name__)
     # Try really hard to get doi data... the doi.org service is very unreliable.
     try:
@@ -43,7 +43,7 @@ def upsert_doi(db: Session, doi: str):
             return
         info = {}
 
-    statement = insert(DOIInfo.__table__).values(id=doi, info=info)
+    statement = insert(DOIInfo.__table__).values(id=doi, info=info, type=doi_type)
     statement = statement.on_conflict_do_update(constraint="pk_doi_info", set_=dict(info=info))
     db.execute(statement)
     db.flush()

@@ -119,6 +119,16 @@ def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
     # study_publication = models.StudyPublication(publication=publication)
     # db_study.publication_dois.append(study_publication)  # type: ignore
 
+    award_dois = study_dict.pop("award_dois")
+    for doi_id in award_dois:
+        doi_info = get_or_create(db, models.DOIInfo, id=doi_id)
+        db_study.dois.append(doi_info)
+
+    publication_dois = study_dict.pop("publication_dois")
+    for doi_id in publication_dois:
+        doi_info = get_or_create(db, models.DOIInfo, id=doi_id)
+        db_study.dois.append(doi_info)
+
     db.add(db_study)
     db.commit()
     db.refresh(db_study)
