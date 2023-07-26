@@ -31,7 +31,6 @@ class Biosample(BiosampleCreate):
                 lat, lon = values.pop("lat_lon")["has_raw_value"].split(" ")
                 values["latitude"] = float(lat)
                 values["longitude"] = float(lon)
-
         return extract_extras(cls, values)
 
     @validator("depth", pre=True)
@@ -46,6 +45,51 @@ class Biosample(BiosampleCreate):
         if isinstance(v, str) and date_fmt.match(v):
             return datetime.strptime(v, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()
         return v
+
+    @validator("collection_date", pre=True)
+    def coerce_collection_date(cls, value):
+        # { "has_raw_value": ... }
+        raw_value = value["has_raw_value"]
+        expected_formats = [
+            "%d-%b-%y %I.%M.%S.%f000 %p",
+            "%y-%m-%dT%I:%M:%S",
+            "%y-%m-%dT%H:%M:%S",
+            "%Y-%m-%dT%I:%M:%S",
+            "%Y-%m-%dT%H:%M:%S",
+            "%Y-%m-%dT%H:%M:%S%z",
+            "%y-%m-%d %I:%M:%S",
+            "%y-%m-%d %H:%M:%S",
+            "%Y-%m-%d %I:%M:%S",
+            "%Y-%m-%d %H:%M:%S",
+            "%Y-%m-%d %H:%M:%S%z",
+            "%Y-%m-%dT%H:%MZ",
+        ]
+        for date_format in expected_formats:
+            try:
+                dt = datetime.strptime(raw_value, date_format).isoformat()
+                return dt
+            except ValueError:
+                continue
+        if isinstance(raw_value, str) and date_fmt.match(raw_value):
+            return datetime.strptime(raw_value, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()
+        try:
+            dt = datetime.strptime(raw_value, "%Y-%m-%d").isoformat()
+            return dt
+        except ValueError:
+            try:
+                raw_value = raw_value + "-01"
+                dt = datetime.strptime(raw_value, "%Y-%m-%d").isoformat()
+                return dt
+            except ValueError:
+                try:
+                    raw_value = raw_value + "-01"
+                    dt = datetime.strptime(raw_value, "%Y-%m-%d").isoformat()
+                    return dt
+                except ValueError:
+                    # The raw value may be parseable by pydantic.
+                    # If not, we will a validation error in the
+                    # ingest output
+                    return raw_value
 
 
 def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):

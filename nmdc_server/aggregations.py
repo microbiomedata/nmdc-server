@@ -114,7 +114,7 @@ def get_aggregation_summary(db: Session):
         studies=q(models.Study).count(),
         locations=distinct(models.Biosample.annotations["location"]),
         habitats=distinct(models.Biosample.annotations["habitat"]),
-        data_size=q(func.sum(models.DataObject.file_size_bytes)).scalar(),
+        data_size=q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0))).scalar(),
         metagenomes=omics_category("metagenome"),
         metatranscriptomes=omics_category("metatranscriptome"),
         proteomics=omics_category("proteomics"),

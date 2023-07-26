@@ -19,7 +19,7 @@ setup(
         "ipython==7.31.1",
         "itsdangerous==2.0.1",
         "mypy<0.920",
-        "nmdc-schema==7.4.16",
+        "nmdc-schema==7.7.0",
         "pint==0.18",
         "psycopg2==2.9.3",
         "pydantic==1.8.2",

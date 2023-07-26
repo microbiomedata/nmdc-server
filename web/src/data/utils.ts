@@ -28,7 +28,11 @@ function removeCondition(conditions: Condition[], conds: Condition[]) {
  *
  * https://stackoverflow.com/questions/10420352/converting-file-size-in-bytes-to-human-readable-string
  */
-function humanFileSize(bytes: number, si = false, dp = 1) {
+function humanFileSize(bytes: number | null, si = false, dp = 1) {
+  if (!bytes) {
+    return '';
+  }
+
   const thresh = si ? 1000 : 1024;
   if (Math.abs(bytes) < thresh) {
     return `${bytes} B`;

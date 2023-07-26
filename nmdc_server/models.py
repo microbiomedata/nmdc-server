@@ -268,6 +268,14 @@ class Study(Base, AnnotatedModel):
         return doi_info
 
 
+biosample_input_association = Table(
+    "biosample_input_association",
+    Base.metadata,
+    Column("omics_processing_id", ForeignKey("omics_processing.id"), primary_key=True),
+    Column("biosample_id", ForeignKey("biosample.id"), primary_key=True),
+)
+
+
 class Biosample(Base, AnnotatedModel):
     __tablename__ = "biosample"
 
@@ -278,11 +286,17 @@ class Biosample(Base, AnnotatedModel):
     env_broad_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
     env_local_scale_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
     env_medium_id = Column(String, ForeignKey(EnvoTerm.id), nullable=True)
-    latitude = Column(Float, nullable=False)
-    longitude = Column(Float, nullable=False)
+
+    # These columns can be null to accomodate legacy data, but all new data will have lat/lon
+    latitude = Column(Float, nullable=True)
+    longitude = Column(Float, nullable=True)
+
     study_id = Column(String, ForeignKey("study.id"), nullable=False)
     multiomics = Column(Integer, nullable=False, default=0)
     emsl_biosample_identifiers = Column(JSONB, nullable=True)
+    omics_processing = relationship(
+        "OmicsProcessing", secondary=biosample_input_association, back_populates="biosample_inputs"
+    )
 
     # gold terms
     ecosystem = Column(String, nullable=True)
@@ -329,8 +343,9 @@ class OmicsProcessing(Base, AnnotatedModel):
 
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
-    biosample_id = Column(String, ForeignKey("biosample.id"), nullable=True)
-    biosample = relationship("Biosample", backref="omics_processing")
+    biosample_inputs = relationship(
+        "Biosample", secondary=biosample_input_association, back_populates="omics_processing"
+    )
     study_id = Column(String, ForeignKey("study.id"), nullable=True)
     study = relationship("Study", backref="omics_processing")
 
@@ -360,7 +375,7 @@ class DataObject(Base):
     id = Column(String, primary_key=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=False, default="")
-    file_size_bytes = Column(BigInteger, nullable=False)
+    file_size_bytes = Column(BigInteger, nullable=True)
     md5_checksum = Column(String, nullable=True)
     url = Column(String, nullable=True)
     file_type = Column(String, nullable=True)
