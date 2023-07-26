@@ -236,8 +236,8 @@ class StudyBase(AnnotatedBase):
     massive_study_identifiers: Optional[List[str]]
     gold_study_identifiers: Optional[List[str]]
 
-    award_dois: Optional[List[str]]
-    publication_dois: Optional[List[str]]
+    award_doi_ids: Optional[List[str]]
+    publication_doi_ids: Optional[List[str]]
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
@@ -245,11 +245,17 @@ class StudyBase(AnnotatedBase):
             return study_website
         return study_website.website.url
 
-    # @validator("publication_dois", pre=True, each_item=True)
-    # def replace_dois(cls, study_publication: Union[models.StudyPublication, str]) -> str:
-    # if isinstance(study_publication, str):
-    # return study_publication
-    # return study_publication.publication.doi
+    @validator("publication_doi_ids", pre=True, each_item=True)
+    def replace_dois(cls, study_publication: Union[models.DOIInfo, str]) -> str:
+        if isinstance(study_publication, str):
+            return study_publication
+        return study_publication.doi
+
+    @validator("award_doi_ids", pre=True, each_item=True)
+    def replace_award_dois(cls, award_doi: Union[models.DOIInfo, str]) -> str:
+        if isinstance(award_doi, str):
+            return award_doi
+        return award_doi.doi
 
 
 class StudyCreate(StudyBase):
@@ -277,6 +283,9 @@ class Study(StudyBase):
     omics_processing_counts: Optional[List[OmicsCounts]]
     doi_map: Dict[str, Any] = {}
     multiomics: int
+
+    award_dois: Optional[List[DOIInfo]]
+    publication_dois: Optional[List[DOIInfo]]
 
     class Config:
         orm_mode = True
