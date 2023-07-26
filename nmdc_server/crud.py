@@ -114,10 +114,10 @@ def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
         study_website = models.StudyWebsite(website=website)
         db_study.principal_investigator_websites.append(study_website)  # type: ignore
 
-    for doi in publications:
-        publication, _ = get_or_create(db, models.Publication, doi=doi)
-        study_publication = models.StudyPublication(publication=publication)
-        db_study.publication_dois.append(study_publication)  # type: ignore
+    # for doi in publications:
+    # publication, _ = get_or_create(db, models.Publication, doi=doi)
+    # study_publication = models.StudyPublication(publication=publication)
+    # db_study.publication_dois.append(study_publication)  # type: ignore
 
     db.add(db_study)
     db.commit()

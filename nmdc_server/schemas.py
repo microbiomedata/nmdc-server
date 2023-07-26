@@ -213,15 +213,22 @@ class CreditAssociation(BaseModel):
     applies_to_person: OrcidPerson
 
 
+class DOIInfo(BaseModel):
+    id: str
+    info: dict
+    study_id: str
+    doi_type: models.DOIType
+
+
 class StudyBase(AnnotatedBase):
     principal_investigator_websites: List[str] = []
-    publication_dois: List[str] = []
+    # publication_dois: List[str] = []
     gold_name: str = ""
     gold_description: str = ""
     scientific_objective: str = ""
     add_date: Optional[DateType]
     mod_date: Optional[DateType]
-    doi: Optional[str]
+    # doi: Optional[str]
     has_credit_associations: Optional[List[CreditAssociation]]
     relevant_protocols: Optional[List[str]]
     funding_sources: Optional[List[str]]
@@ -229,17 +236,20 @@ class StudyBase(AnnotatedBase):
     massive_study_identifiers: Optional[List[str]]
     gold_study_identifiers: Optional[List[str]]
 
+    award_dois: Optional[List[DOIInfo]]
+    publication_dois: Optional[List[DOIInfo]]
+
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
         if isinstance(study_website, str):
             return study_website
         return study_website.website.url
 
-    @validator("publication_dois", pre=True, each_item=True)
-    def replace_dois(cls, study_publication: Union[models.StudyPublication, str]) -> str:
-        if isinstance(study_publication, str):
-            return study_publication
-        return study_publication.publication.doi
+    # @validator("publication_dois", pre=True, each_item=True)
+    # def replace_dois(cls, study_publication: Union[models.StudyPublication, str]) -> str:
+    # if isinstance(study_publication, str):
+    # return study_publication
+    # return study_publication.publication.doi
 
 
 class StudyCreate(StudyBase):

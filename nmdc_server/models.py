@@ -1,3 +1,4 @@
+import enum
 from datetime import datetime
 from typing import Any, Dict, Iterator, List, Optional, Type, Union
 from uuid import uuid4
@@ -8,6 +9,7 @@ from sqlalchemy import (
     CheckConstraint,
     Column,
     DateTime,
+    Enum,
     Float,
     ForeignKey,
     Integer,
@@ -178,6 +180,12 @@ class PrincipalInvestigator(Base):
     image = Column(LargeBinary, nullable=True)
 
 
+class DOIType(enum.Enum):
+    AWARD = 1
+    DATASET = 2
+    PUBLICATION = 3
+
+
 # Caches information from doi.org
 class DOIInfo(Base):
     __tablename__ = "doi_info"
@@ -188,6 +196,8 @@ class DOIInfo(Base):
         primary_key=True,
     )
     info = Column(JSONB, nullable=False, default=dict)
+    study_id = Column(String, ForeignKey("study.id"))
+    doi_type = Column(Enum(DOIType))
 
 
 class AnnotatedModel:
@@ -207,7 +217,8 @@ class Study(Base, AnnotatedModel):
     gold_name = Column(String, nullable=False, default="")
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
-    doi = Column(String, ForeignKey("doi_info.id"), nullable=True)
+    # doi = Column(String, ForeignKey("doi_info.id"), nullable=True)
+    dois = relationship("DOIInfo")
     multiomics = Column(Integer, nullable=False, default=0)
 
     # TODO migrate these into relations or something
@@ -244,10 +255,10 @@ class Study(Base, AnnotatedModel):
         return ""
 
     principal_investigator_websites = relationship("StudyWebsite", cascade="all", lazy="joined")
-    publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
-    doi_object = relationship("DOIInfo", cascade="all", lazy="joined")
+    # publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
+    # doi_object = relationship("DOIInfo", cascade="all", lazy="joined")
 
-    doi_info = association_proxy("doi_object", "info")
+    # doi_info = association_proxy("doi_object", "info")
 
     @property
     def open_in_gold(self) -> Optional[str]:
@@ -258,13 +269,20 @@ class Study(Base, AnnotatedModel):
         )
 
     @property
+    def award_dois(self) -> list[DOIInfo]:
+        return [d for d in self.dois if d.doi_type == DOIType.AWARD]
+
+    @property
+    def publication_dois(self) -> list[DOIInfo]:
+        return [d for d in self.dois if d.doi_type == DOIType.PUBLICATION]
+
+    @property
     def doi_map(self) -> Dict[str, Any]:
-        doi_info = {
-            d.publication.doi: d.publication.doi_object.info
-            for d in self.publication_dois  # type: ignore
-        }
-        if self.doi:
-            doi_info[self.doi] = self.doi_info
+        doi_info = {}
+        for award_doi in self.award_dois:
+            doi_info[award_doi.id] = award_doi.info
+        for publication_doi in self.publication_dois:
+            doi_info[publication_doi.id] = publication_doi.info
         return doi_info
 
 
@@ -598,22 +616,22 @@ class StudyWebsite(Base):
     website = relationship(Website, cascade="all")
 
 
-class Publication(Base):
-    __tablename__ = "publication"
+# class Publication(Base):
+# __tablename__ = "publication"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    doi = Column(String, ForeignKey("doi_info.id"), nullable=False, unique=True)
+# id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+# doi = Column(String, ForeignKey("doi_info.id"), nullable=False, unique=True)
 
-    doi_object = relationship("DOIInfo", cascade="all", lazy="joined")
+# doi_object = relationship("DOIInfo", cascade="all", lazy="joined")
 
 
-class StudyPublication(Base):
-    __tablename__ = "study_publication"
+# class StudyPublication(Base):
+# __tablename__ = "study_publication"
 
-    study_id = Column(String, ForeignKey("study.id"), primary_key=True)
-    publication_id = Column(UUID(as_uuid=True), ForeignKey("publication.id"), primary_key=True)
+# study_id = Column(String, ForeignKey("study.id"), primary_key=True)
+# publication_id = Column(UUID(as_uuid=True), ForeignKey("publication.id"), primary_key=True)
 
-    publication = relationship(Publication, cascade="all")
+# publication = relationship(Publication, cascade="all")
 
 
 # This table contains KO terms detected in metagenome and metaproteomic workflow
