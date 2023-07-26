@@ -58,12 +58,33 @@ export default defineComponent({
       return ret;
     });
 
+    const relatedBiosamples = computed(() => {
+      const relatedBiosampleIds = new Set();
+      if (props.type !== 'biosample') {
+        return relatedBiosampleIds;
+      }
+      const biosample = props.item as BiosampleSearchResult;
+      if (biosample.omics_processing.length) {
+        biosample.omics_processing.forEach((omicsProcessing: any) => {
+          if (omicsProcessing.biosample_inputs) {
+            omicsProcessing.biosample_inputs.forEach((biosampleInput: BiosampleSearchResult) => {
+              if (biosampleInput.id && biosampleInput.id !== biosample.id) {
+                relatedBiosampleIds.add(biosampleInput.id);
+              }
+            });
+          }
+        });
+      }
+      return relatedBiosampleIds;
+    });
+
     const alternateIdentifiers = computed(() => props.item.alternate_identifiers
       .map((id) => ({ name: id, target: `https://identifiers.org/${id}` })));
     return {
       // computed
       alternateIdentifiers,
       displayFields,
+      relatedBiosamples,
     };
   },
 });
@@ -100,6 +121,28 @@ export default defineComponent({
         :key="emslId"
         v-bind="{ item, field: 'emsl_biosample_identifiers', index, displayName: 'EMSL Identifier' }"
       />
+    </v-list>
+    <v-list v-if="type === 'biosample' && relatedBiosamples.size">
+      <div class="display-1">
+        Related Biosamples
+      </div>
+      <v-list-item
+        v-for="biosampleId in relatedBiosamples"
+        :key="biosampleId"
+        :href="'/details/sample/' + biosampleId"
+      >
+        <v-list-item-avatar>
+          <v-icon>mdi-link</v-icon>
+        </v-list-item-avatar>
+        <v-list-item-content>
+          <v-list-item-title>
+            ID
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            {{ biosampleId }}
+          </v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
     </v-list>
   </div>
 </template>
