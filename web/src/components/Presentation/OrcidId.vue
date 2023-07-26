@@ -47,11 +47,11 @@ export default defineComponent({
         {{ orcidId }}
       </span>
     </a>
-    <span
+    <!--span
       v-if="!authenticated"
       class="ml-1"
     >
       (Unauthenticated)
-    </span>
+    </span-->
   </div>
 </template>
