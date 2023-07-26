@@ -13,6 +13,7 @@ setup(
         "celery[redis]",
         "click",
         "cryptography<3.4",  # https://github.com/pyca/cryptography/issues/5771
+        "dnspython==2.3.0",  # https://github.com/microbiomedata/nmdc-server/actions/runs/5671884086/job/15369921721
         "fastapi==0.71.0",
         "factory-boy==3.2.1",
         "httpx<=0.18.2",
