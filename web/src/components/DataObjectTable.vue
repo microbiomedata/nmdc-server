@@ -6,7 +6,7 @@ import { flattenDeep } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
 import { humanFileSize } from '@/data/utils';
-import { OmicsProcessingResult } from '@/data/api';
+import { BiosampleSearchResult, OmicsProcessingResult } from '@/data/api';
 import { stateRefs, acceptTerms } from '@/store';
 
 import DownloadDialog from './DownloadDialog.vue';
@@ -40,6 +40,10 @@ export default defineComponent({
     loggedInUser: {
       type: Boolean,
       default: false,
+    },
+    biosample: {
+      type: Object as PropType<BiosampleSearchResult>,
+      required: true,
     },
   },
 
@@ -85,8 +89,17 @@ export default defineComponent({
       value: false,
     });
 
+    function getOmicsDataWithInputIds(omicsProcessing: OmicsProcessingResult) {
+      const biosampleInputIds = (omicsProcessing.biosample_inputs as BiosampleSearchResult[]).map((input) => input.id);
+      return omicsProcessing.omics_data.map((omics) => {
+        const omicsCopy = { ...omics };
+        omicsCopy.inputIds = biosampleInputIds;
+        return omicsCopy;
+      });
+    }
+
     const items = computed(() => flattenDeep(
-      flattenDeep(props.omicsProcessing.map((p) => (p.omics_data)))
+      flattenDeep(props.omicsProcessing.map((p) => (getOmicsDataWithInputIds(p))))
         .map((omics_data) => omics_data.outputs
           .filter((data) => data.file_type && data.file_type_description)
           .map((data_object, i) => ({
@@ -97,6 +110,13 @@ export default defineComponent({
             newgroup: i === 0,
           }))),
     ));
+
+    function getRelatedBiosampleIds(omicsData: any) {
+      if (!omicsData || !omicsData.inputIds) {
+        return [];
+      }
+      return omicsData.inputIds.filter((id: string) => id !== props.biosample.id);
+    }
 
     function download(item: OmicsProcessingResult) {
       if (typeof item.url === 'string') {
@@ -122,6 +142,7 @@ export default defineComponent({
       items,
       humanFileSize,
       termsDialog,
+      getRelatedBiosampleIds,
     };
   },
 });
@@ -151,6 +172,21 @@ export default defineComponent({
         >
           <td colspan="6">
             <b>Workflow Activity:</b> {{ item.group_name }}
+            <br>
+            <div v-if="getRelatedBiosampleIds(item.omics_data).length">
+              <v-icon>
+                mdi-flask-outline
+              </v-icon>
+              <span class="text-subtitle-2 grey--text text--darken-3"><b>Associated biosample inputs:</b></span>
+              <router-link
+                v-for="biosampleId in getRelatedBiosampleIds(item.omics_data)"
+                :key="biosampleId"
+                :to="{name: 'Sample', params: { id: biosampleId }}"
+                class="ml-2 grey--text text--darken-3"
+              >
+                {{ biosampleId }}
+              </router-link>
+            </div>
           </td>
         </tr>
         <tr>
