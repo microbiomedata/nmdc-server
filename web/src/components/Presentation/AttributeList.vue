@@ -51,7 +51,7 @@ export default defineComponent({
         ret.splice(geoLocIndex, 0, 'geo_loc_name');
       }
 
-      if (props.item?.annotations?.biosample_categories !== null) {
+      if (props.item?.annotations?.biosample_categories !== undefined) {
         ret.push('biosample_categories');
       }
 
@@ -60,6 +60,7 @@ export default defineComponent({
 
     const relatedBiosamples = computed(() => {
       const relatedBiosampleIds = new Set();
+      const relatedBiosampleInfo: any[] | Set<unknown> = [];
       if (props.type !== 'biosample') {
         return relatedBiosampleIds;
       }
@@ -69,13 +70,16 @@ export default defineComponent({
           if (omicsProcessing.biosample_inputs) {
             omicsProcessing.biosample_inputs.forEach((biosampleInput: BiosampleSearchResult) => {
               if (biosampleInput.id && biosampleInput.id !== biosample.id) {
-                relatedBiosampleIds.add(biosampleInput.id);
+                if (!relatedBiosampleIds.has(biosampleInput.id)) {
+                  relatedBiosampleInfo.push({ id: biosampleInput.id, name: biosampleInput.name });
+                  relatedBiosampleIds.add(biosampleInput.id);
+                }
               }
             });
           }
         });
       }
-      return relatedBiosampleIds;
+      return relatedBiosampleInfo;
     });
 
     const alternateIdentifiers = computed(() => props.item.alternate_identifiers
@@ -122,24 +126,24 @@ export default defineComponent({
         v-bind="{ item, field: 'emsl_biosample_identifiers', index, displayName: 'EMSL Identifier' }"
       />
     </v-list>
-    <v-list v-if="type === 'biosample' && relatedBiosamples.size">
+    <v-list v-if="type === 'biosample' && relatedBiosamples.length">
       <div class="display-1">
         Related Biosamples
       </div>
       <v-list-item
-        v-for="biosampleId in relatedBiosamples"
-        :key="biosampleId"
-        :href="'/details/sample/' + biosampleId"
+        v-for="biosample in relatedBiosamples"
+        :key="biosample.id"
+        :href="'/details/sample/' + biosample.id"
       >
         <v-list-item-avatar>
           <v-icon>mdi-link</v-icon>
         </v-list-item-avatar>
         <v-list-item-content>
           <v-list-item-title>
-            ID
+            {{ biosample.name }}
           </v-list-item-title>
           <v-list-item-subtitle>
-            {{ biosampleId }}
+            ID: {{ biosample.id }}
           </v-list-item-subtitle>
         </v-list-item-content>
       </v-list-item>
