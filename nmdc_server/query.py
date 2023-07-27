@@ -661,6 +661,7 @@ class StudyQuerySchema(BaseQuerySchema):
             db.query(model)
             .join(subquery, model.id == subquery.c.id)  # type: ignore
             .join(sample_count, model.id == sample_count.c.study_id, isouter=True)  # type: ignore
+            .order_by(model.annotations["title"].astext)
             .options(with_expression(models.Study.sample_count, sample_count.c.sample_count)),
         )
 
