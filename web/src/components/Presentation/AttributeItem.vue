@@ -70,6 +70,9 @@ export default defineComponent({
       if (typeof value === 'string' && value.startsWith('http')) {
         return props.item[field];
       }
+      if (field === 'study_id') {
+        return `/details/study/${props.item.study_id}`;
+      }
       return undefined;
     }
 
@@ -111,7 +114,7 @@ export default defineComponent({
   <v-list-item
     v-else
     :href="href(field)"
-    target="_blank"
+    :target="field==='study_id' ? '' : '_blank' "
     rel="noopener noreferrer"
     v-on="{
       // TODO: fix warning.
