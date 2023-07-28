@@ -74,7 +74,9 @@ export default defineComponent({
         x-small
         :outlined="!isOpen(projects[0].id)"
         :color="isOpen(projects[0].id) ? 'primary' : 'default'"
+        :disabled="projects[0].omics_data.length == 0 ? true : false"
         class="mr-2 mt-2"
+
         @click="() => $emit('open-details', projects[0].id)"
       >
         {{ fieldDisplayName(omicsType) }}
