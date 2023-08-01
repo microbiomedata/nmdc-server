@@ -570,7 +570,7 @@ class StudyQuerySchema(BaseQuerySchema):
         query = (
             db.query(
                 op_summary_alias.annotations["omics_type"].astext.label("omics_processing_type"),
-                func.count(op_summary_alias.id).label("omics_processing_count"),
+                func.count(func.distinct(op_summary_alias.id)).label("omics_processing_count"),
                 op_summary_alias.study_id.label("omics_processing_study_id_sub"),
             )
             .join(subquery, subquery.c.id == op_summary_alias.id)
