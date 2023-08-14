@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     # Several different database urls are configured for different
     # environments.  In production, only database_uri and ingest_database_uri
     # are used.
-    database_uri: str = "postgresql:///nmdc"
+    database_uri: str = "postgresql:///nmdc_testing"
     ingest_database_uri: str = "postgresql:///nmdc_testing"
     testing_database_uri: str = "postgresql:///nmdc_testing"
 

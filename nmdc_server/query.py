@@ -234,7 +234,7 @@ class GoldConditionSchema(BaseConditionSchema):
 # A special condition type on multiomics bitstrings
 class MultiomicsConditionSchema(BaseConditionSchema):
     table: Table
-    value: int
+    value: Union[int, List[str]]
     field: Literal["multiomics"]
     op: Literal["has"]
 

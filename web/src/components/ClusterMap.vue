@@ -93,11 +93,13 @@ export default defineComponent({
       const values: any[] = [];
       data.forEach((cluster, index) => {
         for (let i = 0; i < cluster.count; i += 1) {
-          values.push({
-            ...cluster,
-            key: `${index}_${i}`,
-            latLng: L.latLng(cluster.latitude, cluster.longitude),
-          });
+          if (cluster.latitude !== undefined && cluster.longitude !== undefined) {
+            values.push({
+              ...cluster,
+              key: `${index}_${i}`,
+              latLng: L.latLng(cluster.latitude, cluster.longitude),
+            });
+          }
         }
       });
       mapData.value = values;
@@ -108,7 +110,7 @@ export default defineComponent({
       if (bounds) {
         emit('selected', [
           {
-            field: 'latitude',
+            field: 'lat_lon.latitude',
             op: 'between',
             value: [
               //  @ts-ignore
@@ -117,7 +119,7 @@ export default defineComponent({
             table: 'biosample',
           },
           {
-            field: 'longitude',
+            field: 'lat_lon.longitude',
             op: 'between',
             value: [
               //  @ts-ignore

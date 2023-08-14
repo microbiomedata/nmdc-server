@@ -24,16 +24,19 @@ const FunctionSearchFacets: SearchFacet[] = [
   },
   /** ENVO */
   {
-    field: 'env_broad_scale',
+    field: 'env_broad_scale.has_raw_value',
     table: 'biosample',
+    group: 'ENVO',
   },
   {
-    field: 'env_local_scale',
+    field: 'env_local_scale.has_raw_value',
     table: 'biosample',
+    group: 'ENVO',
   },
   {
-    field: 'env_medium',
+    field: 'env_medium.has_raw_value',
     table: 'biosample',
+    group: 'ENVO',
   },
   /** GOLD */
   {
@@ -52,12 +55,12 @@ const FunctionSearchFacets: SearchFacet[] = [
     group: 'Sample',
   },
   {
-    field: 'latitude',
+    field: 'lat_lon.latitude',
     table: 'biosample',
     group: 'Sample',
   },
   {
-    field: 'longitude',
+    field: 'lat_lon.longitude',
     table: 'biosample',
     group: 'Sample',
   },

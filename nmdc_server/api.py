@@ -87,20 +87,24 @@ async def mongo_get_database_summary(db: Session = Depends(get_db)):
                 "gold_classification": {
                     "type": "sankey-tree",
                 },
-                "env_broad_scale": {
+                "env_broad_scale.has_raw_value": {
                     "type": "tree",
                 },
-                "env_local_scale": {
+                "env_local_scale.has_raw_value": {
                     "type": "tree",
                 },
-                "env_medium": {
+                "env_medium.has_raw_value": {
                     "type": "tree",
                 },
-                "latitude": {
+                "lat_lon.latitude": {
                     "type": "float",
+                    "min": -90,
+                    "max": 90,
                 },
-                "longitude": {
+                "lat_lon.longitude": {
                     "type": "float",
+                    "min": -180,
+                    "max": 180,
                 },
                 "collection_date.has_date_value": {
                     "type": "date",
@@ -171,10 +175,63 @@ async def get_environmental_geospatial(
     return crud.get_environmental_geospatial(db, query)
 
 
-def conditions_to_mongo_filter(conditions):
+@router.post(
+    "/environment/mongo_geospatial",
+    tags=["aggregation"],
+)
+async def mongo_get_environmental_geospatial(
+    query: query.BiosampleQuerySchema = query.BiosampleQuerySchema()
+):
+    settings = Settings()
+    client = MongoClient(
+        host=settings.mongo_host,
+        username=settings.mongo_user,
+        password=settings.mongo_password,
+        port=settings.mongo_port,
+        directConnection=True,
+    )
+    mongo_filter = conditions_to_mongo_filter(query.conditions)
+    results = client.nmdc.denormalized.aggregate([
+        {
+            "$match": mongo_filter,
+        },
+        {
+            "$group": {
+                "_id": {
+                    "latitude": "$lat_lon.latitude",
+                    "longitude": "$lat_lon.longitude",
+                    "ecosystem": "$ecosystem",
+                    "ecosystem_category": "$ecosystem_category",
+                },
+                "count": {
+                    "$count": {},
+                },
+            },
+        },
+        {
+            "$set": {
+                "_id.count": "$count",
+            },
+        },
+        {
+            "$replaceRoot": {
+                "newRoot": "$_id",
+            },
+        },
+    ])
+    return json.loads(bson.json_util.dumps(results))
+
+
+def facet_value_to_key(value):
+    if type(value) is list:
+        return ";".join(value)
+    return value
+
+
+def conditions_to_mongo_filter(conditions, base_type="biosample"):
     mongo_filter = dict()
     for condition in conditions:
-        if condition.table.name == "biosample":
+        if condition.table.name == base_type:
             field_name = condition.field
         else:
             field_name = f"{condition.table.name}.{condition.field}"
@@ -184,15 +241,17 @@ def conditions_to_mongo_filter(conditions):
                 mongo_filter[field_name] = {"$in": []}
             mongo_filter[field_name]["$in"].append(condition.value)
         elif condition.op == Operation.less:
-            mongo_filter[field_name] = { "$lt": condition.value }
+            mongo_filter[field_name] = {"$lt": condition.value}
         elif condition.op == Operation.less_equal:
-            mongo_filter[field_name] = { "$lte": condition.value }
+            mongo_filter[field_name] = {"$lte": condition.value}
         elif condition.op == Operation.greater:
-            mongo_filter[field_name] = { "$gt": condition.value }
+            mongo_filter[field_name] = {"$gt": condition.value}
         elif condition.op == Operation.greater_equal:
-            mongo_filter[field_name] = { "$gte": condition.value }
+            mongo_filter[field_name] = {"$gte": condition.value}
         elif condition.op == "between":
-            mongo_filter[field_name] = { "$gte": condition.value[0], "$lte": condition.value[1] }
+            mongo_filter[field_name] = {"$gte": condition.value[0], "$lte": condition.value[1]}
+        elif condition.op == "has":
+            mongo_filter[field_name] = {"$all": condition.value}
 
     return mongo_filter
 
@@ -251,9 +310,32 @@ async def mongo_search_biosample(
         directConnection=True,
     )
     mongo_filter = conditions_to_mongo_filter(query.conditions)
+    aggregation = [
+        {
+            "$match": mongo_filter,
+        },
+        {
+            "$unset": "gene_function",
+        },
+    ]
+    print("mongo_search_biosample:")
+    print(aggregation)
+
+    def data_object_is_selected(data_object):
+        for condition in query.data_object_filter:
+            if (data_object.get("data_object_type") == condition.file_type and
+                data_object.get("activity_type") == condition.workflow.value):
+                return True
+        return False
+
+    def add_data_object_selection(sample):
+        for data_object in sample["data_object"]:
+            data_object["selected"] = data_object_is_selected(data_object)
+        return sample
+
     return json.loads(bson.json_util.dumps({
-        "count": client.nmdc.denormalized.count_documents(filter=mongo_filter),
-        "results": [doc for doc in client.nmdc.denormalized.find(filter=mongo_filter, skip=pagination.offset, limit=pagination.limit, sort=[("omics_processing_count", DESCENDING)])],
+        "count": list(client.nmdc.denormalized.aggregate([*aggregation, {"$count": "count"}]))[0]["count"],
+        "results": [add_data_object_selection(doc) for doc in client.nmdc.denormalized.aggregate([*aggregation, {"$skip": pagination.offset}, {"$limit": pagination.limit}])],
     }))
 
 
@@ -284,12 +366,17 @@ async def mongo_facet_biosample(query: query.FacetQuery):
     aggregation = [
         {
             "$match": conditions_to_mongo_filter(query.conditions),
-        }, {
+        },
+        {
             "$sortByCount": f"${query.attribute}",
         },
     ]
+
+    print("mongo_facet_biosample:")
+    print(aggregation)
+
     return json.loads(bson.json_util.dumps({
-        "facets": { facet["_id"]: facet["count"] for facet in client.nmdc.denormalized.aggregate(aggregation) },
+        "facets": { facet_value_to_key(facet["_id"]): facet["count"] for facet in client.nmdc.denormalized.aggregate(aggregation) },
     }))
 
 
@@ -320,13 +407,16 @@ async def mongo_binned_facet_biosample(query: query.FacetQuery):
     aggregation = [
         {
             "$match": conditions_to_mongo_filter(query.conditions),
-        }, {
+        },
+        {
             "$group": {
                 "_id": { "year": { "$year": "$collection_date.has_date_value" }, "month": { "$month": "$collection_date.has_date_value" } },
                 "count": { "$count": {} }
             },
         },
     ]
+    print("mongo_binned_facet_biosample:")
+    print(aggregation)
 
     date_string = lambda d: f"{d['_id']['year']}-{str(d['_id']['month']).zfill(2)}-01"
     binned_data = list(client.nmdc.denormalized.aggregate(aggregation))
@@ -347,9 +437,11 @@ async def mongo_binned_facet_biosample(query: query.FacetQuery):
             full_binned_data.append({"_id": next_month(full_binned_data[-1]["_id"]), "count": 0})
         full_binned_data[-1] = d
 
+    # Add one more month with zero count so we have a bin end boundary for the last bin
+    full_binned_data.append({"_id": next_month(full_binned_data[-1]["_id"]), "count": 0})
     return json.loads(bson.json_util.dumps({
         "bins": [date_string(d) for d in full_binned_data],
-        "facets": [d["count"] for d in full_binned_data],
+        "facets": [d["count"] for d in full_binned_data][:-1],
     }))
 
 
@@ -442,16 +534,19 @@ async def mongo_search_study(
     aggregation = [
         {
             "$match": conditions_to_mongo_filter(query.conditions),
-        }, {
+        },
+        {
             "$unwind": { "path": "$study" },
-        }, {
+        },
+        {
             "$group": {
                 "_id": "$study.id",
                 "study": { "$first": "$study" },
                 "sample_count": { "$count": {} },
                 "omics_processing": { "$push": "$omics_processing" },
             },
-        }, {
+        },
+        {
             "$set": {
                 "study.sample_count": "$sample_count",
                 "study.omics_processing": {
@@ -464,13 +559,12 @@ async def mongo_search_study(
                                 "in": { "$concatArrays": ["$$this", "$$value"] },
                             },
                         },
-                        # Extract only the omics_type
-                        "in": "$$this.omics_type.has_raw_value",
+                        "in": "$$this",
                     },
                 },
-                # "study.omics_processing_concat": { "$concatArrays": "$omics_processing" },
             },
-        }, {
+        },
+        {
             "$replaceRoot": { "newRoot": "$study" },
         },
     ]
@@ -479,14 +573,29 @@ async def mongo_search_study(
 
     # Count number of each omics_type
     for result in results:
-        omics_processing_counts = Counter(result["omics_processing"])
+        filtered_omics_processing = [{ "omics_processing": doc } for doc in result["omics_processing"]]
+
+        # This is a query per study to only match specific omics_processing when an omics_processing search is active.
+        # Can it instead be done all at once in the above aggregation pipeline?
+        omics_processing_conditions = [cond for cond in query.conditions if cond.table.name == "omics_processing"]
+        if len(omics_processing_conditions) > 0:
+            filtered_omics_processing = [doc for doc in client.nmdc.aggregate([
+                {
+                    "$documents": filtered_omics_processing,
+                },
+                {
+                    "$match": conditions_to_mongo_filter(omics_processing_conditions),
+                },
+            ])]
+
+        omics_processing_counts = Counter([doc["omics_processing"]["omics_type"]["has_raw_value"] for doc in filtered_omics_processing])
         count_list = [{"type": key, "count": value} for key, value in omics_processing_counts.items()]
         count_list.sort(key=lambda x: x["type"])
         result["omics_processing_counts"] = count_list if len(count_list) > 0 else None
         del result["omics_processing"]
 
     return json.loads(bson.json_util.dumps({
-        "count": [doc for doc in client.nmdc.denormalized.aggregate([*aggregation, {"$count": "count"}])][0]["count"],
+        "count": list(client.nmdc.denormalized.aggregate([*aggregation, {"$count": "count"}]))[0]["count"],
         "results": results,
     }))
 
@@ -518,22 +627,26 @@ async def mongo_facet_study(query: query.FacetQuery):
     aggregation = [
         {
             "$match": conditions_to_mongo_filter(query.conditions),
-        }, {
+        },
+        {
             "$unwind": { "path": "$study" },
-        }, {
+        },
+        {
             "$group": {
                 "_id": "$study.id",
                 "study": { "$first": "$study" },
             },
-        }, {
+        },
+        {
             "$replaceRoot": { "newRoot": "$study" },
-        }, {
+        },
+        {
             "$sortByCount": f"${query.attribute}",
         },
     ]
 
     return json.loads(bson.json_util.dumps({
-        "facets": { facet["_id"]: facet["count"] for facet in client.nmdc.denormalized.aggregate(aggregation) },
+        "facets": { facet_value_to_key(facet["_id"]): facet["count"] for facet in client.nmdc.denormalized.aggregate(aggregation) },
     }))
 
 
@@ -607,25 +720,24 @@ async def mongo_facet_omics_processing(query: query.FacetQuery):
         port=settings.mongo_port,
         directConnection=True,
     )
+
     aggregation = [
         {
-            "$match": conditions_to_mongo_filter(query.conditions),
-        }, {
-            "$unwind": { "path": "$omics_processing" },
-        }, {
-            "$group": {
-                "_id": "$omics_processing.id",
-                "omics_processing": { "$first": "$omics_processing" },
-            },
-        }, {
-            "$replaceRoot": { "newRoot": "$omics_processing" },
-        }, {
+            "$match": conditions_to_mongo_filter(query.conditions, "omics_processing"),
+        },
+    ]
+
+    aggregation += [
+        {
             "$sortByCount": f"${query.attribute}",
         },
     ]
 
+    print("mongo_facet_omics_processing:")
+    print(aggregation)
+
     return json.loads(bson.json_util.dumps({
-        "facets": { facet["_id"]: facet["count"] for facet in client.nmdc.denormalized.aggregate(aggregation) },
+        "facets": { facet_value_to_key(facet["_id"]): facet["count"] for facet in client.nmdc.omics_processing_denormalized.aggregate(aggregation) },
     }))
 
 
@@ -719,6 +831,63 @@ def data_object_aggregation(
 ):
     return crud.aggregate_data_object_by_workflow(db, query.conditions)
 
+
+@router.post(
+    "/data_object/mongo_workflow_summary",
+    tags=["data_object"],
+    name="Aggregate data objects by workflow",
+)
+def mongo_data_object_aggregation(
+    query: query.DataObjectQuerySchema = query.DataObjectQuerySchema(),
+):
+    settings = Settings()
+    client = MongoClient(
+        host=settings.mongo_host,
+        username=settings.mongo_user,
+        password=settings.mongo_password,
+        port=settings.mongo_port,
+        directConnection=True,
+    )
+    aggregation = [
+        {
+            "$match": conditions_to_mongo_filter(query.conditions),
+        },
+        {
+            "$unwind": { "path": "$data_object" },
+        },
+        {
+            "$group": {
+                "_id": "$data_object.id",
+                "data_object": { "$first": "$data_object" },
+            },
+        },
+        {
+            "$replaceRoot": { "newRoot": "$data_object" },
+        },
+        {
+            "$set": {
+                "combined_type": {
+                    "data_object_type": "$data_object_type",
+                    "activity_type": "$activity_type",
+                },
+            },
+        },
+        {
+            "$sortByCount": "$combined_type",
+        },
+    ]
+
+    result = dict()
+    for facet in client.nmdc.denormalized.aggregate(aggregation):
+        if "data_object_type" not in facet["_id"]:
+            # We are not considering data_objects without a data_object_type
+            continue
+        if result.get(facet["_id"]["activity_type"]) is None:
+            result[facet["_id"]["activity_type"]] = { "count": 0, "file_types": dict() }
+        result[facet["_id"]["activity_type"]]["file_types"][facet["_id"]["data_object_type"]] = facet["count"]
+        result[facet["_id"]["activity_type"]]["count"] += facet["count"]
+
+    return json.loads(bson.json_util.dumps(result))
 
 @router.get("/principal_investigator/{principal_investigator_id}", tags=["principal_investigator"])
 async def get_pi_image(principal_investigator_id: UUID, db: Session = Depends(get_db)):

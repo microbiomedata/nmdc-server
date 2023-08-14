@@ -36,6 +36,7 @@ function parseQuery(q: string) {
   const u8a = new Uint8Array(atob(b64).split('').map((c) => c.charCodeAt(0)));
   const msg = QueryParams.decode(u8a);
   const obj = QueryParams.toObject(msg, { enums: String });
+  obj.conditions = obj.conditions ?? [];
   obj.conditions.forEach((c: Condition) => {
     // @ts-ignore
     // eslint-disable-next-line no-param-reassign

@@ -66,29 +66,6 @@ function stringIsKegg(v: string) {
   return Object.values(KeggPrefix).find((item) => v.match(item.pattern));
 }
 
-function makeSetsFromBitmask(mask_str: string) {
-  const mask = parseInt(mask_str, 10); // the bitmask comes in as a string
-  const sets = [];
-
-  /* eslint-disable no-bitwise */
-  if (1 & mask) {
-    sets.push('NOM');
-  }
-  if ((1 << 4) & mask) {
-    sets.push('MB');
-  }
-  if ((1 << 2) & mask) {
-    sets.push('MP');
-  }
-  if ((1 << 1) & mask) {
-    sets.push('MT');
-  }
-  if ((1 << 3) & mask) {
-    sets.push('MG');
-  }
-  return sets;
-}
-
 const types: Record<entityType, EntityData> = {
   study: {
     icon: 'mdi-book',
@@ -411,20 +388,19 @@ function getField(name: string, table?: entityType): FieldsData {
   return {};
 }
 
-const MultiomicsValue = {
-  MB: 0b10000,
-  MG: 0b01000,
-  MP: 0b00100,
-  MT: 0b00010,
-  NOM: 0b00001,
+const multiomicsAbbreviations = {
+  Metagenome: 'MG',
+  Metatranscriptome: 'MT',
+  Proteomics: 'MP',
+  Metabolomics: 'MB',
+  'Organic Matter Characterization': 'NOM',
 };
 
 export {
   types,
   ecosystems,
-  MultiomicsValue,
+  multiomicsAbbreviations,
   getField,
   keggEncode,
   stringIsKegg,
-  makeSetsFromBitmask,
 };

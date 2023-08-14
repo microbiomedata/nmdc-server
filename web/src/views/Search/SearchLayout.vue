@@ -285,9 +285,9 @@ export default defineComponent({
                 <template #subtitle="props">
                   <span class="pr-2">Study ID:</span>
                   <router-link
-                    :to="{name: 'Study', params: { id: props.result.study_id }}"
+                    :to="{name: 'Study', params: { id: props.result.part_of[0] }}"
                     class="pr-2 grey--text text--darken-2"
-                    v-text="props.result.study_id"
+                    v-text="props.result.part_of[0]"
                   />
                   <template
                     v-if="(props.result.alternative_identifiers && props.result.alternative_identifiers.length) ||

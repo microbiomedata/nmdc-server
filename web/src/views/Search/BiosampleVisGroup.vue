@@ -18,7 +18,6 @@ import {
   toggleConditions, removeConditions, setUniqueCondition,
 } from '@/store';
 import { api, Condition, FacetSummaryResponse } from '@/data/api';
-import { makeSetsFromBitmask } from '@/encoding';
 
 const helpBarchart = 'Displays the number of omics processing runs for each data type available. Click on a bar to filter by data type.';
 const helpMap = 'Displays geographical location (latitude, longitude) of sample collection sites. Click on a cluster to zoom in.  Click "Search this regon" to limit search to the current map bounds.';
@@ -62,7 +61,7 @@ export default defineComponent({
     const upsetData = computed(() => {
       const multiomicsObj: Record<string, { counts: any, sets: any }> = {};
       sampleFacetSummary.value.forEach(({ facet, count }) => {
-        if (parseInt(facet, 10) === 0) {
+        if (facet.length === 0) {
           return;
         }
         multiomicsObj[facet] = {
@@ -70,11 +69,11 @@ export default defineComponent({
             Samples: count,
             Studies: 0,
           },
-          sets: makeSetsFromBitmask(facet),
+          sets: facet.split(';'),
         };
       });
       studyFacetSummary.value.forEach(({ facet, count }) => {
-        if (parseInt(facet, 10) === 0) {
+        if (facet.length === 0) {
           return;
         }
         if (!multiomicsObj[facet]) {
@@ -82,7 +81,7 @@ export default defineComponent({
             counts: {
               Samples: 0,
             },
-            sets: makeSetsFromBitmask(facet),
+            sets: facet.split(';'),
           };
         }
         multiomicsObj[facet].counts.Studies = count;

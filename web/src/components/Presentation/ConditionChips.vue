@@ -4,7 +4,6 @@ import Vue from 'vue';
 import { groupBy } from 'lodash';
 import { opMap } from '@/data/api';
 import { fieldDisplayName } from '@/util';
-import { makeSetsFromBitmask } from '@/encoding';
 
 export default Vue.extend({
   props: {
@@ -45,7 +44,7 @@ export default Vue.extend({
     valueTransform(val, field, type) {
       // Special handling for multiomics
       if (field === 'multiomics' && type === 'biosample') {
-        return Array.from(makeSetsFromBitmask(val)).join(', ');
+        return val.join(', ');
       }
       // If it's not primitive
       if (val && typeof val === 'object') {

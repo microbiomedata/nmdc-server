@@ -109,7 +109,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
   }
   emsl_biosample_identifiers: string[];
   omics_processing: OmicsProcessingResult[];
-  analysis: AnalysisResult[];
+  activity: AnalysisResult[];
   data_object: DataObjectSearchResult[];
 }
 
@@ -472,7 +472,7 @@ async function getDatabaseStats() {
 async function getEnvironmentGeospatialAggregation(
   conditions: Condition[],
 ): Promise<EnvironmentGeospatialEntity[]> {
-  const { data } = await client.post<EnvironmentGeospatialEntity[]>('environment/geospatial', {
+  const { data } = await client.post<EnvironmentGeospatialEntity[]>('environment/mongo_geospatial', {
     conditions,
   });
   return data;
@@ -521,7 +521,7 @@ async function getEnvoTrees() {
  * Bulk Download API
  */
 async function getBulkDownloadSummary(conditions: Condition[]) {
-  const { data } = await client.post<BulkDownloadSummary>('data_object/workflow_summary', {
+  const { data } = await client.post<BulkDownloadSummary>('data_object/mongo_workflow_summary', {
     conditions,
   });
   return data;

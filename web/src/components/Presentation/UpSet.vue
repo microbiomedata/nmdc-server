@@ -2,7 +2,7 @@
 import { defineComponent, watchEffect, ref } from '@vue/composition-api';
 import { select } from 'd3-selection';
 import { scaleBand, scaleLinear } from 'd3-scale';
-import { MultiomicsValue } from '@/encoding';
+import { multiomicsAbbreviations } from '@/encoding';
 
 export default defineComponent({
   props: {
@@ -39,7 +39,7 @@ export default defineComponent({
     };
     const fontSize = 12;
 
-    const setOrder = ['MG', 'MT', 'MP', 'MB', 'NOM'];
+    const setOrder = ['Metagenome', 'Metatranscriptome', 'Proteomics', 'Metabolomics', 'Organic Matter Characterization'];
     const Samples = 'Samples';
     const Studies = 'Studies';
     const seriesTitles = [Samples, Studies];
@@ -103,7 +103,7 @@ export default defineComponent({
         .attr('y', -4)
         .attr('text-anchor', 'middle')
         .attr('font-size', fontSize)
-        .text((d) => d)
+        .text((d) => multiomicsAbbreviations[d])
         .attr('fill', 'black')
         .append('svg:title')
         .text((s) => props.tooltips[s]);
@@ -153,16 +153,12 @@ export default defineComponent({
               .attr('height', y.bandwidth())
               .attr('fill', root.$vuetify.theme.currentTheme.blue)
               .classed('upset-bar-clickable', true)
-              .on('click', (event, values) => {
-                const value = values.sets.reduce((prev, cur) => {
-                  const next = prev | MultiomicsValue[cur]; //eslint-disable-line no-bitwise
-                  return next;
-                }, 0);
+              .on('click', (_event, values) => {
                 const conditions = [{
                   field: 'multiomics',
                   table: 'biosample',
                   op: 'has',
-                  value,
+                  value: values.sets,
                 }];
                 emit('select', { conditions });
               });

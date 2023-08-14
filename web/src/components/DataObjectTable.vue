@@ -87,19 +87,19 @@ export default defineComponent({
 
     const items = computed(() => flattenDeep(
       flattenDeep(props.biosample.omics_processing.filter((o) => o.omics_type.has_raw_value === props.omicsType).map(
-        (omicsProcessing) => props.biosample.analysis.filter(
-          (analysis) => analysis.was_informed_by === omicsProcessing.id,
+        (omicsProcessing) => props.biosample.activity.filter(
+          (activity) => activity.was_informed_by === omicsProcessing.id,
         ),
       )).map(
-        (analysis) => analysis.has_output.map(
+        (activity) => activity.has_output.map(
           (dataObjectId) => props.biosample.data_object.find(
             (dataObject) => dataObject.id === dataObjectId,
           ),
         ).map((dataObject, index) => ({
           ...dataObject,
-          analysis,
+          activity,
           /* TODO Hack to replace metagenome with omics type name */
-          group_name: analysis.name ? analysis.name.replace('Metagenome', props.omicsType) : '',
+          group_name: activity.name ? activity.name.replace('Metagenome', props.omicsType) : '',
           newgroup: index === 0,
         })),
       ),
