@@ -89,14 +89,12 @@ export default defineComponent({
               Click the "ORCID Login" button, to either register for an ORCID ID or, if you
               already have one, to sign into your ORCID account, then grant permission for NMDC to access your
               ORCID ID. This allows us to verify your identity and securely connect to
-              your ORCID ID.
+              your ORCID ID. Additionally we may use information, such as your name and email, to associate your 
+              ORCID record with your NMDC submissions. 
             </p>
 
-            <p>Learn more about <a href="https://orcid.org/blog/2017/02/20/whats-so-special-about-signing">what's so special about signing in?</a></p>
+            <p>Learn more about <a href="https://orcid.org/blog/2017/02/20/whats-so-special-about-signing">what's so special about signing in.</a></p>
 
-            <p>
-              Additionally, we will use information from your ORCID record, such as your name, to associate you with your NMDC submissions.
-            </p>
           </v-card-text>
         </v-card>
       </v-menu>
