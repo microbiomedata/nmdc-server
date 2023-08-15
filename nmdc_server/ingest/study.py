@@ -76,4 +76,8 @@ def load(db: Session, cursor: Cursor):
         for doi in award_dois:
             upsert_doi(db, doi, DOIType.AWARD)
 
+        # slot doesn't exist yet
+        # for doi in dataset_dois:
+        # upsert_doi(db, doi, DOIType.DATASET)
+
         create_study(db, Study(**obj))

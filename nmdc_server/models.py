@@ -285,6 +285,10 @@ class Study(Base, AnnotatedModel):
         return [d for d in self.dois if d.doi_type == DOIType.PUBLICATION]
 
     @property
+    def dataset_dois(self) -> list[DOIInfo]:
+        return [d for d in self.dois if d.doi_type == DOIType.DATASET]
+
+    @property
     def doi_map(self) -> Dict[str, Any]:
         doi_info = {}
         for award_doi in self.award_dois:

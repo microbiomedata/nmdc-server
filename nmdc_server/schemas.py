@@ -286,6 +286,7 @@ class Study(StudyBase):
 
     award_dois: Optional[List[DOIInfo]]
     publication_dois: Optional[List[DOIInfo]]
+    dataset_dois: Optional[List[DOIInfo]]
 
     class Config:
         orm_mode = True
