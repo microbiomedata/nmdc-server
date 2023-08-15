@@ -81,22 +81,21 @@ export default defineComponent({
           <v-card-title>ORCID Account Integration</v-card-title>
           <v-card-text>
             <p>
-              NMDC is collecting your ORCID ID so we can turn on features
-              like file downloads and the ability to create and manage metadata submissions through
+              NMDC requires an ORCID ID to log in. When logged in you have access to features such as downloading 
+              files and the ability to create and manage metadata submissions through
               our Submission Portal.
             </p>
             <p>
-              When you click the "Login" button, we will ask you to share your
-              ID using an authenticated process, either by registering for an ORCID ID or, if you
-              already have one, to sign into your ORCID account, then granting permission to get your
-              ORCID ID. We do this to ensure that you are correctly identified and securely connected to
+              Click the "ORCID Login" button, to either register for an ORCID ID or, if you
+              already have one, to sign into your ORCID account, then grant permission for NMDC to access your
+              ORCID ID. This allows us to verify your identity and securely connect to
               your ORCID ID.
             </p>
 
             <p>Learn more about <a href="https://orcid.org/blog/2017/02/20/whats-so-special-about-signing">what's so special about signing in?</a></p>
 
             <p>
-              Additionally, we will use information from your ORCID record, like your name, to connect you with your NMDC submissions.
+              Additionally, we will use information from your ORCID record, such as your name, to associate you with your NMDC submissions.
             </p>
           </v-card-text>
         </v-card>
