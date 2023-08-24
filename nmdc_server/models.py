@@ -181,9 +181,9 @@ class PrincipalInvestigator(Base):
 
 
 class DOIType(enum.Enum):
-    AWARD = 1
-    DATASET = 2
-    PUBLICATION = 3
+    AWARD = "award"
+    DATASET = "dataset"
+    PUBLICATION = "publication"
 
 
 study_doi_association = Table(
