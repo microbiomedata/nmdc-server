@@ -75,6 +75,7 @@ class Operation(Enum):
     less = "<"
     less_equal = "<="
     not_equal = "!="
+    like = "like"
 
 
 # These dicts serve to provide special logic when filter conditions
@@ -179,6 +180,8 @@ class SimpleConditionSchema(BaseConditionSchema):
                 return column <= self.value
             elif self.op == Operation.not_equal:
                 return column != self.value
+            elif self.op == Operation.like:
+                return column.ilike(f"%{self.value}%")
         if hasattr(model, "annotations"):
             json_field = model.annotations  # type: ignore
         else:

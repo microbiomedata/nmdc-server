@@ -46,9 +46,22 @@ async def my_orcid(request: Request, orcid: str = Depends(get_current_user_orcid
 
 
 # autocomplete search
-@router.get("/search", tags=["aggregation"], response_model=List[query.ConditionResultSchema])
+@router.get(
+    "/search",
+    tags=["aggregation"],
+    response_model=List[query.ConditionResultSchema],
+)
 def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
-    return crud.text_search(db, terms, limit)
+    data = {
+        "table": "study",
+        "value": terms.lower(),
+        "field": "principal_investigator_name",
+        "op": "like",
+    }
+    custom_search_index = query.SimpleConditionSchema(**data)
+    filters = crud.text_search(db, terms, limit)
+    filters.append(custom_search_index)
+    return filters
 
 
 # database summary

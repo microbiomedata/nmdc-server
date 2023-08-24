@@ -65,13 +65,18 @@ def get_aggregated_stats(db: Session) -> schemas.AggregationSummary:
 
 def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]:
     searchtext = f"%{terms.lower()}%"
-    return (
+    facets = (
         db.query(models.SearchIndex)
         .filter(models.SearchIndex.value.ilike(searchtext))
         .order_by(models.SearchIndex.count.desc())
         .limit(limit)
         .all()
     )
+    data = {"table": "study", "value": terms.lower(), "field": "principal_investigator_name"}
+    custom_search_index = models.SearchIndex(**data)
+    facets.append(custom_search_index)
+    print(facets)
+    return facets
 
 
 def get_environmental_sankey(
