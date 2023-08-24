@@ -6,7 +6,7 @@ from pydantic import root_validator, validator
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
-from nmdc_server.crud import create_study
+from nmdc_server.crud import create_study, get_doi
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.doi import upsert_doi
 from nmdc_server.models import DOIInfo, DOIType, PrincipalInvestigator
@@ -66,9 +66,8 @@ def load(db: Session, cursor: Cursor):
         obj["image"] = get_study_image_data(obj.pop("study_image", []))
 
         publication_dois = [transform_doi(d) for d in obj.pop("publications", [])]
-        award_dois = []
-        if "doi" in obj:
-            award_dois = [transform_doi(obj["doi"]["has_raw_value"])]
+
+        award_dois = [transform_doi(doi) for doi in obj.pop("award_dois", [])]
 
         for doi in publication_dois:
             upsert_doi(db, doi, DOIType.PUBLICATION)
@@ -80,4 +79,9 @@ def load(db: Session, cursor: Cursor):
         # for doi in dataset_dois:
         # upsert_doi(db, doi, DOIType.DATASET)
 
-        create_study(db, Study(**obj))
+        new_study = create_study(db, Study(**obj))
+
+        for doi in publication_dois + award_dois:
+            doi = get_doi(db, doi)
+            if doi:
+                new_study.dois.append(doi)

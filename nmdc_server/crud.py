@@ -101,11 +101,15 @@ def get_study_image(db: Session, study_id: str) -> Optional[bytes]:
     return None
 
 
+def get_doi(db: Session, doi_id: str) -> models.DOIInfo:
+    doi = db.query(models.DOIInfo).get(doi_id)
+    return doi
+
+
 def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
     study_dict = study.dict()
 
     websites = study_dict.pop("principal_investigator_websites")
-    publications = study_dict.pop("publication_dois")
 
     db_study = models.Study(**study_dict)
 
@@ -113,26 +117,6 @@ def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
         website, _ = get_or_create(db, models.Website, url=url)
         study_website = models.StudyWebsite(website=website)
         db_study.principal_investigator_websites.append(study_website)  # type: ignore
-
-    # for doi in publications:
-    # publication, _ = get_or_create(db, models.Publication, doi=doi)
-    # study_publication = models.StudyPublication(publication=publication)
-    # db_study.publication_dois.append(study_publication)  # type: ignore
-
-    award_dois = study_dict.pop("award_dois", [])
-    for doi_id in award_dois:
-        doi_info = get_or_create(db, models.DOIInfo, id=doi_id)
-        db_study.dois.append(doi_info)
-
-    publication_dois = study_dict.pop("publication_dois", [])
-    for doi_id in publication_dois:
-        doi_info = get_or_create(db, models.DOIInfo, id=doi_id)
-        db_study.dois.append(doi_info)
-
-    dataset_dois = study_dict.pop("dataset_dois", [])
-    for doi_id in dataset_dois:
-        doi_info = get_or_create(db, models.DOIInfo, id=doi_id)
-        db_study.dois.append(doi_info)
 
     db.add(db_study)
     db.commit()
