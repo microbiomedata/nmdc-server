@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from nmdc_server.crud import create_study, get_doi
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.doi import upsert_doi
-from nmdc_server.models import DOIInfo, DOIType, PrincipalInvestigator
+from nmdc_server.models import DOIType, PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
 
 
@@ -66,8 +66,8 @@ def load(db: Session, cursor: Cursor):
         obj["image"] = get_study_image_data(obj.pop("study_image", []))
 
         publication_dois = [transform_doi(d) for d in obj.pop("publications", [])]
-
         award_dois = [transform_doi(doi) for doi in obj.pop("award_dois", [])]
+        dataset_dois = [transform_doi(doi) for doi in obj.pop("dataset_dois", [])]
 
         for doi in publication_dois:
             upsert_doi(db, doi, DOIType.PUBLICATION)
@@ -75,13 +75,12 @@ def load(db: Session, cursor: Cursor):
         for doi in award_dois:
             upsert_doi(db, doi, DOIType.AWARD)
 
-        # slot doesn't exist yet
-        # for doi in dataset_dois:
-        # upsert_doi(db, doi, DOIType.DATASET)
+        for doi in dataset_dois:
+            upsert_doi(db, doi, DOIType.DATASET)
 
         new_study = create_study(db, Study(**obj))
 
-        for doi in publication_dois + award_dois:
-            doi = get_doi(db, doi)
-            if doi:
-                new_study.dois.append(doi)
+        for doi_id in publication_dois + award_dois + dataset_dois:
+            doi_object = get_doi(db, doi_id)
+            if doi_object:
+                new_study.dois.append(doi_object)  # type: ignore

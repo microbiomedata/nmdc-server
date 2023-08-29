@@ -225,7 +225,6 @@ class Study(Base, AnnotatedModel):
     gold_name = Column(String, nullable=False, default="")
     gold_description = Column(String, nullable=False, default="")
     scientific_objective = Column(String, nullable=False, default="")
-    # doi = Column(String, ForeignKey("doi_info.id"), nullable=True)
     dois = relationship("DOIInfo", secondary=study_doi_association, back_populates="studies")
     multiomics = Column(Integer, nullable=False, default=0)
 
@@ -278,15 +277,15 @@ class Study(Base, AnnotatedModel):
 
     @property
     def award_dois(self) -> list[DOIInfo]:
-        return [d for d in self.dois if d.doi_type == DOIType.AWARD]
+        return [d for d in self.dois if d.doi_type == DOIType.AWARD]  # type: ignore
 
     @property
     def publication_dois(self) -> list[DOIInfo]:
-        return [d for d in self.dois if d.doi_type == DOIType.PUBLICATION]
+        return [d for d in self.dois if d.doi_type == DOIType.PUBLICATION]  # type: ignore
 
     @property
     def dataset_dois(self) -> list[DOIInfo]:
-        return [d for d in self.dois if d.doi_type == DOIType.DATASET]
+        return [d for d in self.dois if d.doi_type == DOIType.DATASET]  # type: ignore
 
     @property
     def doi_map(self) -> Dict[str, Any]:
@@ -295,6 +294,8 @@ class Study(Base, AnnotatedModel):
             doi_info[award_doi.id] = award_doi.info
         for publication_doi in self.publication_dois:
             doi_info[publication_doi.id] = publication_doi.info
+        for dataset_doi in self.dataset_dois:
+            doi_info[dataset_doi.id] = dataset_doi.info
         return doi_info
 
 

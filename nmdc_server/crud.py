@@ -101,7 +101,7 @@ def get_study_image(db: Session, study_id: str) -> Optional[bytes]:
     return None
 
 
-def get_doi(db: Session, doi_id: str) -> models.DOIInfo:
+def get_doi(db: Session, doi_id: str) -> Optional[models.DOIInfo]:
     doi = db.query(models.DOIInfo).get(doi_id)
     return doi
 
