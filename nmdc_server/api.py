@@ -58,9 +58,30 @@ def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
         "field": "principal_investigator_name",
         "op": "like",
     }
+    data2 = {
+        "table": "study",
+        "value": terms.lower(),
+        "field": "name",
+        "op": "like",
+    }
+    data3 = {
+        "table": "study",
+        "value": terms.lower(),
+        "field": "description",
+        "op": "like",
+    }
+    data4 = {
+        "table": "study",
+        "value": terms.lower(),
+        "field": "title",
+        "op": "like",
+    }
     custom_search_index = query.SimpleConditionSchema(**data)
     filters = crud.text_search(db, terms, limit)
     filters.append(custom_search_index)
+    filters.append(query.SimpleConditionSchema(**data2))
+    filters.append(query.SimpleConditionSchema(**data3))
+    filters.append(query.SimpleConditionSchema(**data4))
     return filters
 
 

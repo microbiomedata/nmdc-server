@@ -72,10 +72,6 @@ def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]
         .limit(limit)
         .all()
     )
-    data = {"table": "study", "value": terms.lower(), "field": "principal_investigator_name"}
-    custom_search_index = models.SearchIndex(**data)
-    facets.append(custom_search_index)
-    print(facets)
     return facets
 
 
