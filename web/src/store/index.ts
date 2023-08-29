@@ -55,6 +55,23 @@ function setConditions(conditions: Condition[], push = false) {
 }
 
 /**
+ * For each condition, remove all others with a similar table & field.
+ */
+function setUniqueCondition(
+  field: string[],
+  table: string[],
+  conditions: Condition[],
+) {
+  const others = state.conditions.filter((c) => (
+    !field.includes(c.field)) || (!table.includes(c.table)
+  ));
+  setConditions([
+    ...conditions,
+    ...others,
+  ]);
+}
+
+/**
  * Restore state from localStorage and clear
  */
 function restoreState() {
@@ -117,23 +134,6 @@ async function getTreeData() {
     state.treeData = resp;
     Object.values(state.treeData.trees).forEach((nodeList) => nodeList.forEach(makeNodeMap));
   }
-}
-
-/**
- * For each condition, remove all others with a similar table & field.
- */
-function setUniqueCondition(
-  field: string[],
-  table: string[],
-  conditions: Condition[],
-) {
-  const others = state.conditions.filter((c) => (
-    !field.includes(c.field)) || (!table.includes(c.table)
-  ));
-  setConditions([
-    ...conditions,
-    ...others,
-  ]);
 }
 
 /**

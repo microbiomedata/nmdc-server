@@ -105,7 +105,7 @@ export default defineComponent({
 
     const router = useRouter();
 
-    function setChecked(omicsType = '') {
+    function seeOmicsForStudy(omicsType = '') {
       setUniqueCondition(
         ['study_id', 'omics_type'],
         ['study', 'omics_processing'],
@@ -113,7 +113,7 @@ export default defineComponent({
           value: props.id,
           table: 'study',
           op: '==',
-          field: 'study_id',
+          field: 'id',
         }, {
           value: omicsType,
           table: 'omics_processing',
@@ -154,7 +154,7 @@ export default defineComponent({
       item,
       displayFields,
       /* Methods */
-      setChecked,
+      seeOmicsForStudy,
       relatedTypeDescription,
       openLink,
       formatAPA,
@@ -188,7 +188,7 @@ export default defineComponent({
                     :key="val.type"
                     small
                     class="mr-2 my-1"
-                    @click="setChecked(val.type)"
+                    @click="seeOmicsForStudy(val.type)"
                   >
                     {{ fieldDisplayName(val.type) }}: {{ val.count }}
                   </v-chip>
