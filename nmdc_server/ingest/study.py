@@ -65,7 +65,9 @@ def load(db: Session, cursor: Cursor):
         obj["principal_investigator_websites"] = obj.pop("websites", [])
         obj["image"] = get_study_image_data(obj.pop("study_image", []))
 
-        publication_dois = [transform_doi(d) for d in obj.pop("publications", [])]
+        publication_dois = [transform_doi(d) for d in obj.pop("publications", [])] + [
+            transform_doi(d) for d in obj.pop("publication_dois", [])
+        ]
         award_dois = [transform_doi(doi) for doi in obj.pop("award_dois", [])]
         dataset_dois = [transform_doi(doi) for doi in obj.pop("dataset_dois", [])]
 
