@@ -262,10 +262,6 @@ class Study(Base, AnnotatedModel):
         return ""
 
     principal_investigator_websites = relationship("StudyWebsite", cascade="all", lazy="joined")
-    # publication_dois = relationship("StudyPublication", cascade="all", lazy="joined")
-    # doi_object = relationship("DOIInfo", cascade="all", lazy="joined")
-
-    # doi_info = association_proxy("doi_object", "info")
 
     @property
     def open_in_gold(self) -> Optional[str]:
@@ -627,24 +623,6 @@ class StudyWebsite(Base):
     website_id = Column(UUID(as_uuid=True), ForeignKey("website.id"), primary_key=True)
 
     website = relationship(Website, cascade="all")
-
-
-# class Publication(Base):
-# __tablename__ = "publication"
-
-# id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-# doi = Column(String, ForeignKey("doi_info.id"), nullable=False, unique=True)
-
-# doi_object = relationship("DOIInfo", cascade="all", lazy="joined")
-
-
-# class StudyPublication(Base):
-# __tablename__ = "study_publication"
-
-# study_id = Column(String, ForeignKey("study.id"), primary_key=True)
-# publication_id = Column(UUID(as_uuid=True), ForeignKey("publication.id"), primary_key=True)
-
-# publication = relationship(Publication, cascade="all")
 
 
 # This table contains KO terms detected in metagenome and metaproteomic workflow

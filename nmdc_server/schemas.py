@@ -224,13 +224,11 @@ class DOIInfo(BaseModel):
 
 class StudyBase(AnnotatedBase):
     principal_investigator_websites: List[str] = []
-    # publication_dois: List[str] = []
     gold_name: str = ""
     gold_description: str = ""
     scientific_objective: str = ""
     add_date: Optional[DateType]
     mod_date: Optional[DateType]
-    # doi: Optional[str]
     has_credit_associations: Optional[List[CreditAssociation]]
     relevant_protocols: Optional[List[str]]
     funding_sources: Optional[List[str]]
