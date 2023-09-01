@@ -68,7 +68,9 @@ def load(db: Session, cursor: Cursor):
         publication_dois = [transform_doi(d) for d in obj.pop("publications", [])] + [
             transform_doi(d) for d in obj.pop("publication_dois", [])
         ]
-        award_dois = [transform_doi(doi) for doi in obj.pop("award_dois", [])]
+        award_dois = [transform_doi(doi) for doi in obj.pop("award_dois", [])] + [
+            transform_doi(d) for d in obj.pop("emsl_project_dois", [])
+        ]
         dataset_dois = [transform_doi(doi) for doi in obj.pop("dataset_dois", [])]
 
         for doi in publication_dois:
