@@ -43,7 +43,7 @@ export default defineComponent({
     const { otherConditions, myConditions } = useFacetSummaryData({ conditions, field, table });
 
     const tree = computed(() => {
-      let t = stateRefs.treeData.value?.trees[`${props.field}_id`];
+      let t = stateRefs.treeData.value?.trees[`${props.field.split('.')[0]}_id`];
       /* Eliminate nodes with only one child from the top */
       while (t && t?.length === 1 && t[0].children?.length) {
         t = t[0].children;
@@ -72,7 +72,7 @@ export default defineComponent({
         c.push({
           op: '==',
           field: field.value,
-          value: unreactive.nodeMapId[value].label,
+          value: unreactive.nodeMapId[value].id,
           table: table.value,
         });
       });
@@ -87,8 +87,19 @@ export default defineComponent({
       };
     }
 
+    function facetCount(node: EnvoNode) {
+      let count = facetSummaryMap.value[node.id] || 0;
+      if (!node.children) {
+        return count;
+      }
+      node.children.forEach((child) => {
+        count += facetCount(child);
+      });
+      return count;
+    }
+
     return {
-      tree, selected, loading, facetSummaryMap, setSelected, normalizer,
+      tree, selected, loading, facetSummaryMap, setSelected, normalizer, facetCount,
     };
   },
 });
@@ -112,7 +123,7 @@ export default defineComponent({
       @input="setSelected"
     >
       <template #option-label="{ node }">
-        <span> {{ node.label }} ({{ facetSummaryMap[node.label] || '0' }}) </span>
+        <span> {{ node.label }} ({{ facetCount(node) }}) </span>
       </template>
     </treeselect>
   </div>

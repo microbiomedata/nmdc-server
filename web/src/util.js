@@ -48,6 +48,9 @@ export function valueDisplayName(field, value) {
   if (field === 'file_size') {
     return filesize(value);
   }
+  if (value.has_raw_value) {
+    return `${value.has_raw_value}`;
+  }
   return `${value}`;
 }
 

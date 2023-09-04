@@ -115,21 +115,21 @@ export interface BiosampleSearchResult extends BaseSearchResult {
 
 interface PrincipalInvestigator {
   name?: string;
+  has_raw_value?: string;
   email?: string;
   orcid?: string;
+  profile_image_url?: string;
 }
 
 export interface StudySearchResults extends BaseSearchResult {
-  principal_investigator_websites: string[];
-  principal_investigator_name: string;
-  principal_investigator_image_url: string;
-  image_url: string;
+  websites: string[];
+  study_image: {url: string}[];
   principal_investigator: PrincipalInvestigator;
-  doi: string;
+  doi: {has_raw_value: string};
   doi_map: Record<string, {
     type: string;
   }>,
-  publication_dois: string[];
+  publications: string[];
   omics_counts: {
     type: string;
     count: number;
@@ -412,7 +412,7 @@ async function search(type: entityType, params: SearchParams) {
 }
 
 async function _getById<T>(route: string, id: string): Promise<T> {
-  const { data } = await client.get<T>(`${route}/${id}`);
+  const { data } = await client.get<T>(`mongo_${route}/${id}`);
   return data;
 }
 
@@ -481,7 +481,7 @@ async function getEnvironmentGeospatialAggregation(
 async function getEnvironmentSankeyAggregation(
   conditions: Condition[],
 ): Promise<EnvironmentSankeyResponse> {
-  const { data } = await client.post<EnvironmentSankeyResponse>('environment/sankey', {
+  const { data } = await client.post<EnvironmentSankeyResponse>('environment/mongo_sankey', {
     conditions,
   });
   return data;

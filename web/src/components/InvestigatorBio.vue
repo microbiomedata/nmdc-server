@@ -35,9 +35,9 @@ export default defineComponent({
       offset="1"
     >
       <v-img
-        v-if="item.image_url"
-        :key="item.image_url"
-        :src="item.image_url"
+        v-if="item.study_image && item.study_image.length > 0"
+        :key="item.study_image[0].url"
+        :src="item.study_image[0].url"
         width="200"
       />
       <v-avatar
@@ -45,7 +45,7 @@ export default defineComponent({
         :size="200"
       >
         <v-img
-          :src="item.principal_investigator_image_url"
+          :src="item.principal_investigator.profile_image_url"
           :contain="item.id === 'gold:Gs0110119'"
         />
       </v-avatar>
@@ -58,7 +58,7 @@ export default defineComponent({
       >
         <v-card flat>
           <div class="text-h3">
-            {{ item.principal_investigator_name }}
+            {{ item.principal_investigator.name || item.principal_investigator.has_raw_value }}
           </div>
           <div class="text-h5 py-2">
             Principal investigator
@@ -75,7 +75,7 @@ export default defineComponent({
             />
           </span>
           <a
-            v-for="site in item.principal_investigator_websites"
+            v-for="site in item.websites"
             :key="site"
             class="blue--text py-1"
             style="cursor: pointer; text-decoration: none; display: block;"

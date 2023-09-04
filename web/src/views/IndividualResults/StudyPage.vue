@@ -15,15 +15,7 @@ import { useRouter } from '@/use/useRouter';
 import AttributeItem from '@/components/Presentation/AttributeItem.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
 import InvestigatorBio from '@/components/InvestigatorBio.vue';
-/**
- * Override citations for certain DOIs
- */
- interface CitationOverridesType {
-  [key: string]: string;
-}
-const CitationOverrides: CitationOverridesType = {
-  '10.46936/10.25585/60000017': 'Doktycz, M. (2020) BioScales - Defining plant gene function and its connection to ecosystem nitrogen and carbon cycling [Data set]. DOE Joint Genome Institute. https://doi.org/10.46936/10.25585/60000017',
-};
+
 const GoldStudyLinkBase = 'https://gold.jgi.doe.gov/study?id=';
 
 export default defineComponent({
@@ -135,19 +127,15 @@ export default defineComponent({
     }
 
     watch(item, async (_item) => {
-      const doiMap = _item?.doi_map;
-      if (doiMap) {
-        data.doiCitation = null;
-        data.publications = [];
-        data.doiCitation = CitationOverrides[_item.doi] || formatAPA(new Cite(_item.doi));
-        data.publications = _item.publication_dois
-          .filter((doi) => doi in doiMap)
-          .map((doi) => formatAPA(new Cite(doiMap[doi])));
+      data.doiCitation = null;
+      data.publications = [];
+      if (_item) {
+        data.doiCitation = formatAPA(new Cite(_item.doi.has_raw_value));
+        data.publications = _item.publications.map((doi) => formatAPA(new Cite(doi)));
       }
     });
 
     return {
-      CitationOverrides,
       GoldStudyLinkBase,
       goldLinks,
       data,
@@ -181,7 +169,7 @@ export default defineComponent({
         <v-col cols="7">
           <IndividualTitle :item="item">
             <template #default>
-              <div v-if="item.omics_processing_counts">
+              <div v-if="Object.values(item.omics_processing_counts).reduce((partialSum, a) => partialSum + a.count, 0) > 0">
                 <template v-for="val in item.omics_processing_counts">
                   <v-chip
                     v-if="val.count && (val.type.toLowerCase() !== 'lipidomics')"
@@ -325,7 +313,7 @@ export default defineComponent({
                       <v-btn
                         icon
                         v-on="on"
-                        @click="openLink(`https://doi.org/${item.doi}`)"
+                        @click="openLink(`https://doi.org/${item.doi.has_raw_value}`)"
                       >
                         <v-icon>mdi-open-in-new</v-icon>
                       </v-btn>

@@ -24,17 +24,17 @@ const FunctionSearchFacets: SearchFacet[] = [
   },
   /** ENVO */
   {
-    field: 'env_broad_scale.has_raw_value',
+    field: 'env_broad_scale.term.id',
     table: 'biosample',
     group: 'ENVO',
   },
   {
-    field: 'env_local_scale.has_raw_value',
+    field: 'env_local_scale.term.id',
     table: 'biosample',
     group: 'ENVO',
   },
   {
-    field: 'env_medium.has_raw_value',
+    field: 'env_medium.term.id',
     table: 'biosample',
     group: 'ENVO',
   },

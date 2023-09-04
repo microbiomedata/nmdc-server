@@ -221,7 +221,7 @@ export default defineComponent({
                   </v-list-item-action>
                 </template>
                 <template #item-content="props">
-                  <div v-if="props.result.omics_processing_counts">
+                  <div v-if="Object.values(props.result.omics_processing_counts).reduce((partialSum, a) => partialSum + a.count, 0) > 0">
                     <template
                       v-for="item in props.result.omics_processing_counts"
                     >

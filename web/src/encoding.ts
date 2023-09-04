@@ -18,7 +18,8 @@ export interface FieldsData {
   group?: string;
   hideAttr?: boolean;
   schemaName?: string; // Match the field to the nmsc schema property
-  encode?: (input: string) => string,
+  encode?: (input: string) => string;
+  has_raw_value?: string;
 }
 
 const KeggPrefix = {

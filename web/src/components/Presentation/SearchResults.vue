@@ -16,9 +16,9 @@ export default Vue.extend({
       type: Number,
       required: true,
     },
-    titleKey: {
-      type: String,
-      default: 'name',
+    titleKeys: {
+      type: Array as PropType<String[]>,
+      default: () => ['title', 'name'],
     },
     subtitleKey: {
       type: String,
@@ -39,6 +39,16 @@ export default Vue.extend({
     disablePagination: {
       type: Boolean,
       default: false,
+    },
+  },
+  methods: {
+    getTitle(result: BaseSearchResult) {
+      for (let i = 0; i < this.$props.titleKeys.length; i += 1) {
+        if (result[this.$props.titleKeys[i]]) {
+          return result[this.$props.titleKeys[i]];
+        }
+      }
+      return 'Untitled';
     },
   },
 });
@@ -84,7 +94,7 @@ export default Vue.extend({
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>
-              {{ result[titleKey] }}
+              {{ getTitle(result) }}
             </v-list-item-title>
             <v-list-item-subtitle>
               <slot
