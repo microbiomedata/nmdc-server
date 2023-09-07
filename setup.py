@@ -18,7 +18,7 @@ setup(
         "fastapi==0.71.0",
         "factory-boy==3.2.1",
         "httpx<=0.18.2",
-        "ipython==7.31.1",
+        "ipython==8.10.0",
         "itsdangerous==2.0.1",
         "mypy<0.920",
         "nmdc-schema==7.7.0",
