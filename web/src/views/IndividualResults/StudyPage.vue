@@ -384,11 +384,11 @@ export default defineComponent({
               >
                 <v-divider />
                 <v-list-item
-                  v-for="(award, index) in data.awardDois"
+                  v-for="(dataDOI, index) in data.datasetDois"
                   :key="index"
                 >
                   <v-list-item-content>
-                    {{ award }}
+                    {{ dataDOI }}
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-tooltip top>
@@ -396,7 +396,7 @@ export default defineComponent({
                         <v-btn
                           icon
                           v-on="on"
-                          @click="openLink(`https://doi.org/${item.doi}`)"
+                          @click="openLink(`https://doi.org/${item.dataset_dois[index].id}`)"
                         >
                           <v-icon>mdi-open-in-new</v-icon>
                         </v-btn>
