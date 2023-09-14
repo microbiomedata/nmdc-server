@@ -24,6 +24,12 @@ class DoiProvider(BaseProvider):
         return uuid4()
 
 
+class EnumProvider(BaseProvider):
+    def enum_value(self, enum_class):
+        enum_values = list(enum_class)
+        return self.random_element(enum_values)
+
+
 db = scoped_session(SessionLocal)
 Faker.add_provider(DoiProvider)
 Faker.add_provider(date_time)
@@ -33,6 +39,7 @@ Faker.add_provider(lorem)
 Faker.add_provider(misc)
 Faker.add_provider(person)
 Faker.add_provider(python)
+Faker.add_provider(EnumProvider)
 
 
 class TokenFactory(Factory):
@@ -56,6 +63,7 @@ class DOIInfoFactory(SQLAlchemyModelFactory):
 
     id = Faker("doi")
     info = Faker("pydict", value_types=["str"])
+    doi_type = Faker("enum_value", enum_class=models.DOIType)
 
 
 class AnnotatedFactory(SQLAlchemyModelFactory):
@@ -75,15 +83,6 @@ class WebsiteFactory(SQLAlchemyModelFactory):
 
     class Meta:
         model = models.Website
-        sqlalchemy_session = db
-
-
-class PublicationFactory(SQLAlchemyModelFactory):
-    id = Faker("uuid")
-    doi_object = SubFactory(DOIInfoFactory)
-
-    class Meta:
-        model = models.Publication
         sqlalchemy_session = db
 
 
@@ -130,8 +129,8 @@ class StudyFactory(AnnotatedFactory):
     gold_description = Faker("sentence")
     scientific_objective = Faker("sentence")
     principal_investigator = SubFactory(PrincipalInvestigator)
-    doi_object = SubFactory(DOIInfoFactory)
     image = Faker("binary", length=64)
+    dois: List[models.DOIInfo] = []
 
     class Meta:
         model = models.Study
@@ -148,31 +147,12 @@ class StudyFactory(AnnotatedFactory):
         for website in extracted:
             self.principal_investigator_websites.append(website)
 
-    @post_generation
-    def publication_dois(self, create, extracted, **kwargs):
-        if not create:
-            return
-
-        if not extracted:
-            extracted = [StudyPublicationFactory(), StudyPublicationFactory()]
-
-        for publication in extracted:
-            self.publication_dois.append(publication)
-
 
 class StudyWebsiteFactory(SQLAlchemyModelFactory):
     website = SubFactory(WebsiteFactory)
 
     class Meta:
         model = models.StudyWebsite
-        sqlalchemy_session = db
-
-
-class StudyPublicationFactory(SQLAlchemyModelFactory):
-    publication = SubFactory(PublicationFactory)
-
-    class Meta:
-        model = models.StudyPublication
         sqlalchemy_session = db
 
 
