@@ -117,7 +117,7 @@ interface PrincipalInvestigator {
   orcid?: string;
 }
 
-interface DOI {
+export interface DOI {
   type: string,
   id:string,
 }

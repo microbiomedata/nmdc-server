@@ -9,7 +9,7 @@ import Cite from 'citation-js';
 import {
   typeWithCardinality, valueCardinality, fieldDisplayName,
 } from '@/util';
-import { api, StudySearchResults } from '@/data/api';
+import { api, StudySearchResults, DOI } from '@/data/api';
 import { setUniqueCondition, setConditions } from '@/store';
 import { useRouter } from '@/use/useRouter';
 import AttributeItem from '@/components/Presentation/AttributeItem.vue';
@@ -43,8 +43,9 @@ export default defineComponent({
 
   setup(props) {
     const data = reactive({
-      doiCitation: '' as string | null,
-      publications: [] as any[],
+      awardDois: [] as DOI[],
+      publicationDois: [] as DOI[],
+      datasetDois: [] as DOI[],
     });
 
     const item = ref(null as StudySearchResults | null);
@@ -137,12 +138,16 @@ export default defineComponent({
     watch(item, async (_item) => {
       const doiMap = _item?.doi_map;
       if (doiMap) {
-        data.doiCitation = null;
-        data.publications = [];
-        data.doiCitation = CitationOverrides[_item.doi] || formatAPA(new Cite(_item.doi));
-        data.publications = _item.publication_dois
-          .filter((doi) => doi in doiMap)
-          .map((doi) => formatAPA(new Cite(doiMap[doi])));
+        data.awardDois = [];
+        data.publicationDois = [];
+        data.datasetDois = [];
+        data.awardDois = _item.award_dois
+          .filter((doi) => doi.id in doiMap)
+          .map((doi) => formatAPA(new Cite(doi.id)));
+        // CitationOverrides[_item.award_doi] || formatAPA(new Cite(_item.award_doi));
+        data.publicationDois = _item.publication_dois
+          .filter((doi) => doi.id in doiMap)
+          .map((doi) => formatAPA(new Cite(doiMap[doi.id])));
       }
     });
 
@@ -211,10 +216,6 @@ export default defineComponent({
               Study Details
             </div>
             <v-list>
-              <AttributeItem
-                v-if="item.doi"
-                v-bind="{ item, field: 'doi' }"
-              />
               <AttributeItem
                 v-bind="{ item, field: 'id', bindClick: true }"
                 @click="seeStudyInContext"
@@ -306,50 +307,32 @@ export default defineComponent({
           </v-col>
         </v-col>
         <v-col cols="5">
-          <div class="ma-4 pa-2 grey lighten-4">
-            <v-subheader v-if="item.doi">
-              Dataset Citation
-            </v-subheader>
-            <v-list
-              v-if="item.doi"
-              class="transparent"
-            >
-              <v-divider />
-              <v-list-item>
-                <v-list-item-content
-                  v-text="data.doiCitation || item.doi"
-                />
-                <v-list-item-action>
-                  <v-tooltip top>
-                    <template #activator="{ on }">
-                      <v-btn
-                        icon
-                        v-on="on"
-                        @click="openLink(`https://doi.org/${item.doi}`)"
-                      >
-                        <v-icon>mdi-open-in-new</v-icon>
-                      </v-btn>
-                    </template>
-                    <span>Visit site</span>
-                  </v-tooltip>
-                </v-list-item-action>
-              </v-list-item>
-            </v-list>
-            <v-subheader v-if="data.publications.length > 0">
-              Other publications
-            </v-subheader>
-            <v-list class="transparent">
-              <template v-for="(pub, pubIndex) in data.publications">
-                <v-divider :key="`${pubIndex}-divider`" />
-                <v-list-item :key="pubIndex">
-                  <v-list-item-content v-text="pub" />
+          <div
+            v-if="Object.keys(item.doi_map).length !== 0"
+            class="ma-4 pa-2 grey lighten-4"
+          >
+            <template v-if="item.award_dois.length > 0">
+              <v-subheader>
+                Award DOIs
+              </v-subheader>
+              <v-list
+                class="transparent"
+              >
+                <v-divider />
+                <v-list-item
+                  v-for="(award, index) in data.awardDois"
+                  :key="index"
+                >
+                  <v-list-item-content>
+                    {{ award }}
+                  </v-list-item-content>
                   <v-list-item-action>
                     <v-tooltip top>
                       <template #activator="{ on }">
                         <v-btn
                           icon
                           v-on="on"
-                          @click="openLink(`https://doi.org/${item.publication_dois[pubIndex]}`)"
+                          @click="openLink(`https://doi.org/${item.award_dois[index].id}`)"
                         >
                           <v-icon>mdi-open-in-new</v-icon>
                         </v-btn>
@@ -358,8 +341,72 @@ export default defineComponent({
                     </v-tooltip>
                   </v-list-item-action>
                 </v-list-item>
-              </template>
-            </v-list>
+              </v-list>
+            </template>
+            <template
+              v-if="data.publicationDois.length > 0"
+            >
+              <v-subheader>
+                Publications
+              </v-subheader>
+              <v-divider />
+              <v-list
+                class="
+              transparent"
+              >
+                <template v-for="(pub, pubIndex) in data.publicationDois">
+                  <v-list-item :key="pubIndex">
+                    <v-list-item-content v-text="pub" />
+                    <v-list-item-action>
+                      <v-tooltip top>
+                        <template #activator="{ on }">
+                          <v-btn
+                            icon
+                            v-on="on"
+                            @click="openLink(`https://doi.org/${item.publication_dois[pubIndex].id}`)"
+                          >
+                            <v-icon>mdi-open-in-new</v-icon>
+                          </v-btn>
+                        </template>
+                        <span>Visit site</span>
+                      </v-tooltip>
+                    </v-list-item-action>
+                  </v-list-item>
+                </template>
+              </v-list>
+            </template>
+            <template v-if="item.dataset_dois.length > 0">
+              <v-subheader>
+                Data DOIs
+              </v-subheader>
+              <v-list
+                class="transparent"
+              >
+                <v-divider />
+                <v-list-item
+                  v-for="(award, index) in data.awardDois"
+                  :key="index"
+                >
+                  <v-list-item-content>
+                    {{ award }}
+                  </v-list-item-content>
+                  <v-list-item-action>
+                    <v-tooltip top>
+                      <template #activator="{ on }">
+                        <v-btn
+                          icon
+                          v-on="on"
+                          @click="openLink(`https://doi.org/${item.doi}`)"
+                        >
+                          <v-icon>mdi-open-in-new</v-icon>
+                        </v-btn>
+                      </template>
+                      <span>Visit site</span>
+                    </v-tooltip>
+                  </v-list-item-action>
+                </v-list-item>
+              </v-list>
+            </template>
           </div>
         </v-col>
       </v-row>
