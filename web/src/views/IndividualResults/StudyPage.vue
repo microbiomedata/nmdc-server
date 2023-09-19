@@ -143,8 +143,7 @@ export default defineComponent({
         data.datasetDois = [];
         data.awardDois = _item.award_dois
           .filter((doi) => doi.id in doiMap)
-          .map((doi) => formatAPA(new Cite(doi.id)));
-        // CitationOverrides[_item.award_doi] || formatAPA(new Cite(_item.award_doi));
+          .map((doi) => CitationOverrides[doi.id] || formatAPA(new Cite(doi.id)));
         data.publicationDois = _item.publication_dois
           .filter((doi) => doi.id in doiMap)
           .map((doi) => formatAPA(new Cite(doiMap[doi.id])));
