@@ -213,15 +213,22 @@ class CreditAssociation(BaseModel):
     applies_to_person: OrcidPerson
 
 
+class DOIInfo(BaseModel):
+    id: str
+    info: dict
+    doi_type: models.DOIType
+
+    class Config:
+        orm_mode = True
+
+
 class StudyBase(AnnotatedBase):
     principal_investigator_websites: List[str] = []
-    publication_dois: List[str] = []
     gold_name: str = ""
     gold_description: str = ""
     scientific_objective: str = ""
     add_date: Optional[DateType]
     mod_date: Optional[DateType]
-    doi: Optional[str]
     has_credit_associations: Optional[List[CreditAssociation]]
     relevant_protocols: Optional[List[str]]
     funding_sources: Optional[List[str]]
@@ -234,12 +241,6 @@ class StudyBase(AnnotatedBase):
         if isinstance(study_website, str):
             return study_website
         return study_website.website.url
-
-    @validator("publication_dois", pre=True, each_item=True)
-    def replace_dois(cls, study_publication: Union[models.StudyPublication, str]) -> str:
-        if isinstance(study_publication, str):
-            return study_publication
-        return study_publication.publication.doi
 
 
 class StudyCreate(StudyBase):
@@ -267,6 +268,10 @@ class Study(StudyBase):
     omics_processing_counts: Optional[List[OmicsCounts]]
     doi_map: Dict[str, Any] = {}
     multiomics: int
+
+    award_dois: Optional[List[DOIInfo]]
+    publication_dois: Optional[List[DOIInfo]]
+    dataset_dois: Optional[List[DOIInfo]]
 
     class Config:
         orm_mode = True

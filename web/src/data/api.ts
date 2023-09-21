@@ -117,17 +117,23 @@ interface PrincipalInvestigator {
   orcid?: string;
 }
 
+export interface DOI {
+  type: string,
+  id:string,
+}
+
 export interface StudySearchResults extends BaseSearchResult {
   principal_investigator_websites: string[];
   principal_investigator_name: string;
   principal_investigator_image_url: string;
   image_url: string;
   principal_investigator: PrincipalInvestigator;
-  doi: string;
+  award_dois: DOI[];
+  dataset_dois: DOI[],
   doi_map: Record<string, {
     type: string;
   }>,
-  publication_dois: string[];
+  publication_dois: DOI[];
   omics_counts: {
     type: string;
     count: number;
