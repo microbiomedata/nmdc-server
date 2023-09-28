@@ -54,6 +54,7 @@ export default function usePaginatedResult<T>(
   if (dataObjectFilter !== undefined) {
     watch(dataObjectFilter, fetchResults, { deep: true });
   }
+  fetchResults();
   // ENDTODO
 
   function setPage(newPage: number) {
