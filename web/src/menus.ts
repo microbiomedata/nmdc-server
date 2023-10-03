@@ -67,6 +67,10 @@ const Menus = [
         href: 'https://microbiomedata.org/community/championsprogram/',
       },
       {
+        label: 'NMDC Snapshots',
+        href: 'https://microbiomedata.org/nmdc-snapshots/',
+      },
+      {
         label: 'User Research',
         href: 'https://microbiomedata.org/user-research/',
       },
