@@ -4,6 +4,7 @@ __pycache__/
 .mypy_cache/
 .tox/
 .vscode/
+.idea/
 .venv
 vetur.config.js
 *.sql
