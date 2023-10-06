@@ -245,7 +245,7 @@ class Study(Base, AnnotatedModel):
     omics_processing_counts = query_expression()
 
     principal_investigator_id = Column(
-        UUID(as_uuid=True), ForeignKey("principal_investigator.id"), nullable=False
+        UUID(as_uuid=True), ForeignKey("principal_investigator.id"), nullable=True
     )
     principal_investigator = relationship("PrincipalInvestigator", cascade="all")
     principal_investigator_name = association_proxy("principal_investigator", "name")
@@ -253,7 +253,9 @@ class Study(Base, AnnotatedModel):
 
     @property
     def principal_investigator_image_url(self):
-        return f"/api/principal_investigator/{self.principal_investigator_id}"
+        if self.principal_investigator_id is not None:
+            return f"/api/principal_investigator/{self.principal_investigator_id}"
+        return ""
 
     @property
     def image_url(self):

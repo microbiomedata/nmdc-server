@@ -223,7 +223,7 @@ class DOIInfo(BaseModel):
 
 
 class StudyBase(AnnotatedBase):
-    principal_investigator_websites: List[str] = []
+    principal_investigator_websites: Optional[List[str]] = []
     gold_name: str = ""
     gold_description: str = ""
     scientific_objective: str = ""
@@ -244,7 +244,7 @@ class StudyBase(AnnotatedBase):
 
 
 class StudyCreate(StudyBase):
-    principal_investigator_id: UUID
+    principal_investigator_id: Optional[UUID]
     image: Optional[bytes]
 
 
@@ -259,8 +259,8 @@ class OmicsCounts(BaseModel):
 
 class Study(StudyBase):
     open_in_gold: Optional[str]
-    principal_investigator: OrcidPerson
-    principal_investigator_name: str
+    principal_investigator: Optional[OrcidPerson]
+    principal_investigator_name: Optional[str]
     image_url: str
     principal_investigator_image_url: str
     sample_count: Optional[int]
