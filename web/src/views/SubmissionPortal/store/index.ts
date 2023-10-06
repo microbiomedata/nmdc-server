@@ -76,6 +76,27 @@ const contextFormValid = ref(false);
 const addressForm = reactive(clone(addressFormDefault));
 const addressFormValid = ref(false);
 
+function validateAddressForm() {
+  const requiredFieldsShipper = [
+    'name',
+    'email',
+    'line1',
+    'city',
+    'state',
+    'postalCode',
+  ];
+  let shipperValid = requiredFieldsShipper.every((key) => !!(addressForm.shipper as Record<string, any>)[key]);
+  shipperValid = shipperValid && /.+@.+\..+/.test(addressForm.shipper.email);
+  const requiredFields = [
+    'expectedShippingDate',
+    'sample',
+    'experimentalGoals',
+    'biosafetyLevel',
+  ];
+  const formFieldsValid = requiredFields.every((key) => !!(addressForm as Record<string, any>)[key]);
+  addressFormValid.value = formFieldsValid && shipperValid;
+}
+
 /**
  * Study Form Step
  */
@@ -221,6 +242,7 @@ async function loadRecord(id: string) {
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
+  validateAddressForm();
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
@@ -260,6 +282,7 @@ export {
   tabsValidated,
   status,
   /* functions */
+  validateAddressForm,
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
