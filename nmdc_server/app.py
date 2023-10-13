@@ -22,7 +22,7 @@ def attach_sentry(app: FastAPI):
 
 def create_app(env: typing.Mapping[str, str], secure_cookies: bool = True) -> FastAPI:
     app = FastAPI(
-        title="NMDC Dataset API",
+        title="NMDC Data and Submission Portal API",
         version=__version__,
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
