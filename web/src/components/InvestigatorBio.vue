@@ -78,7 +78,7 @@ export default defineComponent({
             v-for="site in item.principal_investigator_websites"
             :key="site"
             class="blue--text py-1"
-            style="cursor: pointer; text-decoration: none; display: block;"
+            style="cursor: pointer; text-decoration: none; display: block; word-break: break-all"
             :href="site"
           >
             <v-icon
