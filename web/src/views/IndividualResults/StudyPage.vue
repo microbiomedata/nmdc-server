@@ -247,7 +247,6 @@ export default defineComponent({
                 v-bind="{ item, field: 'id', bindClick: true }"
                 @click="seeStudyInContext"
               />
-              <AttributeItem v-bind="{ item, field: 'funding_sources' }" />
               <AttributeItem
                 v-bind="{ item, field: 'sample_count', bindClick: true }"
                 @click="seeStudyInContext"

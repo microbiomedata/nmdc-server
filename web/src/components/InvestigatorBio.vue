@@ -50,7 +50,7 @@ export default defineComponent({
         />
       </v-avatar>
     </v-col>
-    <v-col class="grow mx-2">
+    <v-col class="grow mx-2 pr-8">
       <v-row
         align="center"
         justify="start"
@@ -122,6 +122,12 @@ export default defineComponent({
               />
             </v-card>
           </v-menu>
+          <div class="text-h5 py-2 primary--text">
+            Funding Sources
+          </div>
+          <div>
+            {{ item.funding_sources.flat().toString() }}
+          </div>
         </v-card>
       </v-row>
     </v-col>
