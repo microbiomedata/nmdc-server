@@ -12,7 +12,8 @@ export default defineComponent({
     },
     field: {
       type: String,
-      required: true,
+      required: false,
+      default: '',
     },
     index: {
       type: Number,
