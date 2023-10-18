@@ -209,7 +209,10 @@ export default defineComponent({
               </div>
             </template>
           </IndividualTitle>
-          <InvestigatorBio :item="item" />
+          <InvestigatorBio
+            v-if="item.principal_investigator"
+            :item="item"
+          />
           <v-col offset="1">
             <div class="display-1">
               Study Details
