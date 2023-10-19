@@ -52,36 +52,29 @@ async def my_orcid(request: Request, orcid: str = Depends(get_current_user_orcid
     response_model=List[query.ConditionResultSchema],
 )
 def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
-    data = {
-        "table": "study",
-        "value": terms.lower(),
-        "field": "principal_investigator_name",
-        "op": "like",
-    }
-    data2 = {
+    # Add 'ilike' filters for study columns users may want to search by
+    study_name_filter = {
         "table": "study",
         "value": terms.lower(),
         "field": "name",
         "op": "like",
     }
-    data3 = {
+    study_description_filter = {
         "table": "study",
         "value": terms.lower(),
         "field": "description",
         "op": "like",
     }
-    data4 = {
+    study_title_filter = {
         "table": "study",
         "value": terms.lower(),
         "field": "title",
         "op": "like",
     }
-    custom_search_index = query.SimpleConditionSchema(**data)
     filters = crud.text_search(db, terms, limit)
-    filters.append(custom_search_index)
-    filters.append(query.SimpleConditionSchema(**data2))
-    filters.append(query.SimpleConditionSchema(**data3))
-    filters.append(query.SimpleConditionSchema(**data4))
+    filters.append(query.SimpleConditionSchema(**study_name_filter))
+    filters.append(query.SimpleConditionSchema(**study_description_filter))
+    filters.append(query.SimpleConditionSchema(**study_title_filter))
     return filters
 
 
