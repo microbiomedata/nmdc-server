@@ -137,7 +137,7 @@ export default Vue.extend({
       <template #default="{ width, height }">
         <TimeHistogram
           ref="histogram"
-          v-bind="{ width, height, data: facetSummaryUnconditional, range: range || [] }"
+          v-bind="{ width, height, selectedData: facetSummary, totalData: facetSummaryUnconditional, range: range || [] }"
           @onBrushEnd="onBrushEnd"
         />
       </template>
