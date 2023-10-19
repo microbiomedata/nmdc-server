@@ -247,7 +247,7 @@ export interface EnvironmentSankeyResponse {
   [index: number]: EnvironmentSankeyEntity;
 }
 
-export type opType = 'between' | '<' | '<=' | '>' | '>=' | '==' | '!=' | 'has';
+export type opType = 'between' | '<' | '<=' | '>' | '>=' | '==' | '!=' | 'has' | 'like';
 export const opMap: Record<opType, string> = {
   between: 'between',
   has: 'has',
@@ -257,6 +257,7 @@ export const opMap: Record<opType, string> = {
   '>=': 'gte',
   '!=': 'not',
   '==': 'is',
+  like: 'like',
 };
 
 // See https://github.com/microbiomedata/nmdc-server/pull/403 for documentation
