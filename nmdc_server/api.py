@@ -46,9 +46,39 @@ async def my_orcid(request: Request, orcid: str = Depends(get_current_user_orcid
 
 
 # autocomplete search
-@router.get("/search", tags=["aggregation"], response_model=List[query.ConditionResultSchema])
+@router.get(
+    "/search",
+    tags=["aggregation"],
+    response_model=List[query.ConditionResultSchema],
+)
 def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
-    return crud.text_search(db, terms, limit)
+    # Add 'ilike' filters for study columns users may want to search by
+    study_name_filter = {
+        "table": "study",
+        "value": terms.lower(),
+        "field": "name",
+        "op": "like",
+    }
+    study_description_filter = {
+        "table": "study",
+        "value": terms.lower(),
+        "field": "description",
+        "op": "like",
+    }
+    study_title_filter = {
+        "table": "study",
+        "value": terms.lower(),
+        "field": "title",
+        "op": "like",
+    }
+    # These two lists are of objects of separate types
+    filters = crud.text_search(db, terms, limit)
+    plaintext_filters = [
+        query.SimpleConditionSchema(**study_name_filter),
+        query.SimpleConditionSchema(**study_description_filter),
+        query.SimpleConditionSchema(**study_title_filter),
+    ]
+    return [*filters, *plaintext_filters]
 
 
 # database summary

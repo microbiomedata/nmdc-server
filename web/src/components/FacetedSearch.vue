@@ -85,6 +85,18 @@ export default Vue.extend({
     hasActiveConditions(category: string): boolean {
       return this.conditions.some((cond) => `${cond.table}_${cond.field}` === category);
     },
+    tableName(table: string): string {
+      if (table === 'study') {
+        return 'Study';
+      }
+      if (table === 'biosample') {
+        return 'Biosample';
+      }
+      if (table === 'omics_processing') {
+        return 'Omics Processing';
+      }
+      return '';
+    },
   },
 });
 </script>
@@ -176,6 +188,7 @@ export default Vue.extend({
           </v-list-item-title>
           <v-list-item-subtitle>
             {{ fieldDisplayName(condition.field) }}
+            <span v-if="condition.op === 'like'">({{ tableName(condition.table) }})</span>
           </v-list-item-subtitle>
         </v-list-item-content>
         <v-list-item-icon class="align-self-center">
