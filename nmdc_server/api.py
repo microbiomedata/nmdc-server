@@ -71,11 +71,14 @@ def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
         "field": "title",
         "op": "like",
     }
+    # These two lists are of objects of separate types
     filters = crud.text_search(db, terms, limit)
-    filters.append(query.SimpleConditionSchema(**study_name_filter))
-    filters.append(query.SimpleConditionSchema(**study_description_filter))
-    filters.append(query.SimpleConditionSchema(**study_title_filter))
-    return filters
+    plaintext_filters = [
+        query.SimpleConditionSchema(**study_name_filter),
+        query.SimpleConditionSchema(**study_description_filter),
+        query.SimpleConditionSchema(**study_title_filter),
+    ]
+    return [*filters, *plaintext_filters]
 
 
 # database summary
