@@ -16,7 +16,11 @@ import { scaleLinear, scaleTime } from 'd3-scale';
  */
 export default defineComponent({
   props: {
-    data: {
+    selectedData: {
+      type: Object, // Array<Object.valueOf>
+      required: true,
+    },
+    totalData: {
       type: Object, // Array<Object.valueOf>
       required: true,
     },
@@ -49,29 +53,43 @@ export default defineComponent({
     };
     const drawn = ref(false);
 
-    function makeHistogram(data, el, selectedRange) {
+    function makeHistogram(selectedData, totalData, el, selectedRange) {
       const width = props.width - margin.left - margin.right;
       const height = props.height - margin.top - margin.bottom;
-
       /**
        * Forge bins from this.data
        * [ { x0: min, x1: max, length: count }, { ... } ]
        */
-      const bins = [];
-      data.facets.forEach((count, i) => {
-        bins.push({
+      const selectedBins = [];
+
+      selectedData.facets.forEach((count, i) => {
+        selectedBins.push({
           length: count,
-          x0: Date.parse(data.bins[i]),
-          x1: Date.parse(data.bins[i + 1]),
+          x0: Date.parse(selectedData.bins[i]),
+          x1: Date.parse(selectedData.bins[i + 1]),
         });
       });
 
-      if (bins.length === 0) {
+      if (selectedBins.length === 0) {
         return;
       }
 
-      const minTime = Date.parse(data.bins[0]);
-      const maxTime = Date.parse(data.bins[data.bins.length - 1]);
+      const totalBins = [];
+
+      totalData.facets.forEach((count, i) => {
+        totalBins.push({
+          length: count,
+          x0: Date.parse(totalData.bins[i]),
+          x1: Date.parse(totalData.bins[i + 1]),
+        });
+      });
+
+      if (totalBins.length === 0) {
+        return;
+      }
+
+      const minTime = Date.parse(totalData.bins[0]);
+      const maxTime = Date.parse(totalData.bins[totalData.bins.length - 1]);
       if (Number.isNaN(minTime) || Number.isNaN(maxTime)) {
         return;
       }
@@ -97,15 +115,33 @@ export default defineComponent({
       // Scale the range of the data in the y domain
       y.domain([
         0,
-        max(bins, (d) => d.length),
+        max(totalBins, (d) => d.length),
       ]);
 
       // append the bar rectangles to the svg element
-      const enterSelection = svg
+      // draw total collection in grey first so the selected data is drawn on top
+      svg
         .selectAll('rect')
-        .data(bins)
-        .enter();
-      enterSelection.append('rect')
+        .data(totalBins)
+        .enter()
+        .append('rect')
+        .attr('class', 'bar')
+        .attr('x', 1)
+        .attr('fill', 'lightgray')
+        .attr('transform', (d) => 'translate('.concat(x(d.x0), ',', y(d.length), ')'))
+        .attr('width', (d) => {
+          const w = x(d.x1) - x(d.x0);
+          const padding = w * 0.1;
+          return w - padding;
+        })
+        .attr('height', (d) => ((d.length > 0) ? (height - y(d.length) + 1) : 0));
+
+      // draw selected dataset
+      const enterSelection = svg
+        .selectAll('rect2')
+        .data(selectedBins)
+        .enter()
+        .append('rect')
         .attr('class', 'bar')
         .attr('x', 1)
         .attr('fill', root.$vuetify.theme.currentTheme.primary)
@@ -166,10 +202,10 @@ export default defineComponent({
     }
 
     watchEffect(() => {
-      const { data, range } = props;
+      const { selectedData, totalData, range } = props;
       const el = svgRoot.value;
-      if (data.bins && data.facets) {
-        makeHistogram(data, el, range);
+      if (selectedData.bins && selectedData.facets) {
+        makeHistogram(selectedData, totalData, el, range);
       }
     });
 
