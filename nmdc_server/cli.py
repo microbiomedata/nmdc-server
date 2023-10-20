@@ -23,6 +23,12 @@ def cli(ctx):
 
 
 @cli.command()
+def create_or_replace_nmdc_functions():
+    """Create or replace custom NMDC functions for the SQL Databases"""
+    jobs.update_nmdc_functions()
+
+
+@cli.command()
 @click.option("--ingest-db", is_flag=True, default=False)
 def migrate(ingest_db: bool):
     """Upgrade the database schema."""

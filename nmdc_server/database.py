@@ -34,12 +34,8 @@ metadata = MetaData(
 
 Base = declarative_base(metadata=metadata)
 
-# define functions used for comparison between arbitrary types
-listen(
-    metadata,
-    "before_create",
-    DDL(
-        """
+update_nmdc_functions_sql = DDL(
+    """
 create or replace function nmdc_compare (lhs text, op text, rhs text)
 returns boolean as $$
     declare
@@ -55,6 +51,7 @@ returns boolean as $$
                 when op = '>' then (lhs_ > rhs_)
                 when op = '>=' then (lhs_ >= rhs_)
                 when op = '!=' then (lhs_ <> rhs_)
+                when op = 'like' then (lhs_ ILIKE rhs_)
             end into result;
         return result;
     end;
@@ -128,8 +125,14 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
-"""
-    ),
+    """
+)
+
+# define functions used for comparison between arbitrary types
+listen(
+    metadata,
+    "before_create",
+    update_nmdc_functions_sql,
 )
 
 # A SQL function used to populate denormalized multiomics bitmasks

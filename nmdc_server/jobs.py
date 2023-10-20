@@ -20,11 +20,25 @@ def ping():
     return True
 
 
+def update_nmdc_functions():
+    """Update NMDC custom functions for both databases."""
+    logger = get_logger(__name__)
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger.setLevel(logging.INFO)
+    for db_info in [(database.SessionLocal, "active"), (database.SessionLocalIngest, "ingest")]:
+        db_to_update, db_type = db_info
+        with db_to_update() as db:
+            logger.info(f"Updating NMDC functions for the {db_type} database.")
+            db.execute(database.update_nmdc_functions_sql)
+            db.commit()
+
+
 def migrate(ingest_db: bool = False):
     """Update the database to the latest HEAD.
 
     This function will also create the schema if necessary.
     """
+    update_nmdc_functions()
     if ingest_db:
         database_uri = settings.ingest_database_uri
         session_maker = database.SessionLocalIngest

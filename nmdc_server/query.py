@@ -186,6 +186,10 @@ class SimpleConditionSchema(BaseConditionSchema):
             json_field = model.annotations  # type: ignore
         else:
             raise InvalidAttributeException(self.table.value, self.field)
+        if self.op == Operation.like:
+            return func.nmdc_compare(
+                json_field[self.field].astext, self.op.value, f"%{self.value}%"
+            )
         return func.nmdc_compare(json_field[self.field].astext, self.op.value, self.value)
 
 
