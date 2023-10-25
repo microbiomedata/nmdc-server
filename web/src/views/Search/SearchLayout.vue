@@ -191,6 +191,7 @@ export default defineComponent({
               </v-card-title>
               <SearchResults
                 disable-pagination
+                disable-navigate-on-click
                 :count="study.data.results.count"
                 :icon="studyType.icon"
                 :items-per-page="study.data.limit"
