@@ -240,7 +240,7 @@ export default defineComponent({
           />
           <v-col offset="1">
             <div class="display-1">
-              Study Details
+              NMDC Details
             </div>
             <v-list>
               <AttributeItem
@@ -253,7 +253,7 @@ export default defineComponent({
               />
             </v-list>
             <div class="display-1">
-              External Resources
+              Aditional Resources
             </div>
             <v-list>
               <v-list-item>
@@ -262,7 +262,7 @@ export default defineComponent({
                 </v-list-item-avatar>
                 <v-list-item-content>
                   <v-list-item-title class="text-h6">
-                    Additional data
+                    Data
                   </v-list-item-title>
                 </v-list-item-content>
               </v-list-item>
