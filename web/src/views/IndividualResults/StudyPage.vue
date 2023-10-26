@@ -252,10 +252,15 @@ export default defineComponent({
                 @click="seeStudyInContext"
               />
             </v-list>
-            <div class="display-1">
+            <div
+              v-if="goldLinks.length || item.ess_dive_datasets || item.massive_study_identifiers || item.relevant_protocols"
+              class="display-1"
+            >
               Aditional Resources
             </div>
-            <v-list>
+            <v-list
+              v-if="goldLinks.length || item.ess_dive_datasets || item.massive_study_identifiers || item.relevant_protocols"
+            >
               <v-list-item>
                 <v-list-item-avatar>
                   <v-icon>mdi-file-document</v-icon>
