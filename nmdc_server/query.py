@@ -631,7 +631,9 @@ class StudyQuerySchema(BaseQuerySchema):
         # Here we only insert filter conditions that are actually relevant for
         # this aggregation.  This reduces the complexity of subquery greatly.
         op_filter_conditions = [
-            c for c in self.conditions if c.table.value in {"omics_processing", "biosample"}
+            c
+            for c in self.conditions
+            if c.table.value in {"omics_processing", "biosample", "gene_function"}
         ]
         op_summary_subquery = self._count_omics_processing_summary(
             db, op_filter_conditions
