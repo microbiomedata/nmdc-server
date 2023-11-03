@@ -330,7 +330,7 @@ async function _search<T>(
   }: SearchParams,
 ): Promise<SearchResponse<T>> {
   const { data } = await client.post<SearchResponse<T>>(
-    `${table}/mongo_search`,
+    `${table}/search`,
     { conditions, data_object_filter },
     {
       params: { offset, limit },
@@ -412,7 +412,7 @@ async function search(type: entityType, params: SearchParams) {
 }
 
 async function _getById<T>(route: string, id: string): Promise<T> {
-  const { data } = await client.get<T>(`mongo_${route}/${id}`);
+  const { data } = await client.get<T>(`${route}/${id}`);
   return data;
 }
 
@@ -430,7 +430,7 @@ async function getFacetSummary(
   conditions: Condition[],
 ): Promise<FacetSummaryResponse[]> {
   const path = type;
-  const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/mongo_facet`, {
+  const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/facet`, {
     conditions, attribute: field,
   });
   return Object.keys(data.facets)
@@ -450,7 +450,7 @@ async function getBinnedFacet<T = string | number>(
   numBins: number,
   resolution: 'day' | 'week' | 'month' | 'year' = 'month',
 ) {
-  const { data } = await client.post<BinResponse<T>>(`${table}/mongo_binned_facet`, {
+  const { data } = await client.post<BinResponse<T>>(`${table}/binned_facet`, {
     attribute,
     conditions,
     resolution,
@@ -460,7 +460,7 @@ async function getBinnedFacet<T = string | number>(
 }
 
 async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
-  const { data } = await client.get<DatabaseSummaryResponse>('mongo_summary');
+  const { data } = await client.get<DatabaseSummaryResponse>('summary');
   return data;
 }
 
@@ -472,7 +472,7 @@ async function getDatabaseStats() {
 async function getEnvironmentGeospatialAggregation(
   conditions: Condition[],
 ): Promise<EnvironmentGeospatialEntity[]> {
-  const { data } = await client.post<EnvironmentGeospatialEntity[]>('environment/mongo_geospatial', {
+  const { data } = await client.post<EnvironmentGeospatialEntity[]>('environment/geospatial', {
     conditions,
   });
   return data;
@@ -481,7 +481,7 @@ async function getEnvironmentGeospatialAggregation(
 async function getEnvironmentSankeyAggregation(
   conditions: Condition[],
 ): Promise<EnvironmentSankeyResponse> {
-  const { data } = await client.post<EnvironmentSankeyResponse>('environment/mongo_sankey', {
+  const { data } = await client.post<EnvironmentSankeyResponse>('environment/sankey', {
     conditions,
   });
   return data;
@@ -521,7 +521,7 @@ async function getEnvoTrees() {
  * Bulk Download API
  */
 async function getBulkDownloadSummary(conditions: Condition[]) {
-  const { data } = await client.post<BulkDownloadSummary>('data_object/mongo_workflow_summary', {
+  const { data } = await client.post<BulkDownloadSummary>('data_object/workflow_summary', {
     conditions,
   });
   return data;

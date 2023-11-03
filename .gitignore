@@ -9,3 +9,5 @@ vetur.config.js
 *.sql
 **.local**
 build/**
+.idea/
+node_modules/
