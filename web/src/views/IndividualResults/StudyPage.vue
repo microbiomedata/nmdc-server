@@ -206,8 +206,11 @@ export default defineComponent({
 <template>
   <v-container fluid>
     <v-main v-if="item !== null">
-      <v-row>
-        <v-col cols="7">
+      <v-row :class="{'flex-column': $vuetify.breakpoint.xs}">
+        <v-col
+          cols="12"
+          md="7"
+        >
           <IndividualTitle :item="item">
             <template #default>
               <div v-if="item.omics_processing_counts">
@@ -252,92 +255,123 @@ export default defineComponent({
                 @click="seeStudyInContext"
               />
             </v-list>
-            <div
-              v-if="goldLinks.length || item.ess_dive_datasets || item.massive_study_identifiers || item.relevant_protocols"
-              class="display-1"
+            <template
+              v-if="
+                goldLinks.length > 0 ||
+                  data.essDiveDois.length > 0 ||
+                  data.massiveDois.length > 0 ||
+                  item.relevant_protocols ||
+                  item.principal_investigator_websites"
             >
               Aditional Resources
-            </div>
-            <v-list
-              v-if="goldLinks.length || item.ess_dive_datasets || item.massive_study_identifiers || item.relevant_protocols"
-            >
-              <v-list-item>
-                <v-list-item-avatar>
-                  <v-icon>mdi-file-document</v-icon>
-                </v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title class="text-h6">
-                    Data
-                  </v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-              <AttributeItem
-                v-for="link in goldLinks"
-                :key="link"
-                style="padding-left: 60px;"
-                v-bind="{
-                  item,
-                  link: {
-                    name: 'Open in GOLD',
-                    target: link
-                  }
-                }"
-                :image="images.gold"
-              />
-              <AttributeItem
-                v-for="dive in data.essDiveDois"
-                :key="dive.id"
-                v-bind="{
-                  item,
-                  link: {
-                    name: 'ESS DIVE Dataset',
-                    target: dive.id,
-                  },
-                }"
-                style="padding-left: 60px;"
-                :image="images.ess"
-                @click="seeStudyInContext"
-              />
-              <AttributeItem
-                v-for="massive in data.massiveDois"
-                :key="massive.id"
-                v-bind="{
-                  item,
-                  link: {
-                    name: 'MassIVE Study',
-                    target: massive.id
-                  },
-                }"
-                style="padding-left: 60px;"
-                :image="images.massive"
-              />
-              <v-list-item v-if="item.relevant_protocols">
-                <v-list-item-avatar>
-                  <v-icon>mdi-file-document</v-icon>
-                </v-list-item-avatar>
-                <v-list-item-content>
-                  <v-list-item-title class="text-h6">
-                    Protocols
-                  </v-list-item-title>
-                </v-list-item-content>
-              </v-list-item>
-              <template
-                v-for="proto in (item.relevant_protocols || [])"
+              </div>
+              <v-list
+                v-if="goldLinks.length > 0|| data.essDiveDois.length > 0 || data.massiveDois.length > 0 || item.relevant_protocols"
               >
+                <v-list-item>
+                  <v-list-item-avatar>
+                    <v-icon>mdi-file-document</v-icon>
+                  </v-list-item-avatar>
+                  <v-list-item-content>
+                    <v-list-item-title class="text-h6">
+                      Data
+                    </v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
                 <AttributeItem
-                  :key="proto"
+                  v-for="link in goldLinks"
+                  :key="link"
                   style="padding-left: 60px;"
                   v-bind="{
                     item,
-                    link: { name: proto, target: proto},
-                    field: 'relevant_protocols' }
-                  "
+                    link: {
+                      name: 'Open in GOLD',
+                      target: link
+                    }
+                  }"
+                  :image="images.gold"
                 />
-              </template>
-            </v-list>
+                <AttributeItem
+                  v-for="dive in data.essDiveDois"
+                  :key="dive.id"
+                  v-bind="{
+                    item,
+                    link: {
+                      name: 'ESS DIVE Dataset',
+                      target: dive.id,
+                    },
+                  }"
+                  style="padding-left: 60px;"
+                  :image="images.ess"
+                  @click="seeStudyInContext"
+                />
+                <AttributeItem
+                  v-for="massive in data.massiveDois"
+                  :key="massive.id"
+                  v-bind="{
+                    item,
+                    link: {
+                      name: 'MassIVE Study',
+                      target: massive.id
+                    },
+                  }"
+                  style="padding-left: 60px;"
+                  :image="images.massive"
+                />
+                <v-list-item v-if="item.relevant_protocols">
+                  <v-list-item-avatar>
+                    <v-icon>mdi-file-document</v-icon>
+                  </v-list-item-avatar>
+                  <v-list-item-content>
+                    <v-list-item-title class="text-h6">
+                      Protocols
+                    </v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+                <template
+                  v-for="proto in (item.relevant_protocols || [])"
+                >
+                  <AttributeItem
+                    :key="proto"
+                    style="padding-left: 60px;"
+                    v-bind="{
+                      item,
+                      link: { name: proto, target: proto},
+                      field: 'relevant_protocols' }
+                    "
+                  />
+                </template>
+                <v-list-item v-if="item.principal_investigator_websites">
+                  <v-list-item-avatar>
+                    <v-icon>mdi-file-document</v-icon>
+                  </v-list-item-avatar>
+                  <v-list-item-content>
+                    <v-list-item-title class="text-h6">
+                      Links
+                    </v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+                <template
+                  v-for="site in (item.principal_investigator_websites || [])"
+                >
+                  <AttributeItem
+                    :key="site"
+                    style="padding-left: 60px;"
+                    v-bind="{
+                      item,
+                      link: { name: site, target: site},
+                    }
+                    "
+                  />
+                </template>
+              </v-list>
+            </template>
           </v-col>
         </v-col>
-        <v-col cols="5">
+        <v-col
+          cols="12"
+          md="5"
+        >
           <div
             v-if="Object.keys(item.doi_map).length > 0"
             class="ma-4 pa-2 grey lighten-4"
