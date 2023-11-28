@@ -537,6 +537,7 @@ async def get_submission(
     user: models.User = Depends(login_required),
 ):
     submission = db.query(SubmissionMetadata).get(id)
+    _ = crud.try_get_submission_lock(db, submission.id, user.id)
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     if submission.author.orcid != user.orcid:
@@ -562,11 +563,36 @@ async def update_submission(
         raise HTTPException(status_code=404, detail="Submission not found")
     if submission.author_orcid != user.orcid:
         await admin_required(user)
+    has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
+    if not has_lock:
+        raise HTTPException(
+            status_code=400,
+            detail="This submission is currently being edited by a different user.",
+        )
     submission.metadata_submission = body_dict["metadata_submission"]
+    crud.update_submission_lock(db, submission.id)
     if body_dict["status"]:
         submission.status = body_dict["status"]
     db.commit()
     return submission
+
+
+@router.put("/metadata_submission/{id}/unlock")
+async def unlock_submission(
+    id: str, db: Session = Depends(get_db), user: models.User = Depends(login_required)
+) -> str:
+    submission = db.query(SubmissionMetadata).get(id)
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+    # Then verify session user has the lock
+    has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
+    if not has_lock:
+        raise HTTPException(
+            status_code=400, detail="This submission is currently being edited by a different user."
+        )
+    else:
+        crud.release_submission_lock(db, submission.id)
+        return f"Submission lock released successfully for submission with ID {id}"
 
 
 @router.post(
@@ -585,6 +611,7 @@ async def submit_metadata(
     submission.author_id = user.id
     db.add(submission)
     db.commit()
+    crud.try_get_submission_lock(db, submission.id, user.id)
     return submission
 
 

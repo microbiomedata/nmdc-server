@@ -1,10 +1,18 @@
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Query, Session
 
-from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
+from nmdc_server import (
+    aggregations,
+    bulk_download_schema,
+    models,
+    query,
+    schemas,
+    schemas_submission,
+)
 from nmdc_server.data_object_filters import get_local_data_url
 from nmdc_server.logger import get_logger
 
@@ -425,3 +433,65 @@ def update_user(db: Session, user: schemas.User) -> Optional[models.User]:
     db_user.is_admin = user.is_admin
     db.commit()
     return db_user
+
+
+def update_submission_lock(db: Session, submission_id: str):
+    """Update the timestamp for a locked submission."""
+    submission_record = db.query(models.SubmissionMetadata).get(submission_id)
+    if not submission_record:
+        # Throw a different error, or accept different params
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    submission_record.lock_updated = datetime.utcnow()
+    db.commit()
+
+
+def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bool:
+    """
+    Try to obtain the lock for a submission.
+
+    Returns True if the given user obtains the lock, otherwise False.
+    If the result is `True`, a side effect of this function is updating the submission with the new
+    lock owner.
+    """
+
+    # Ensure the requested records exist
+    submission_record = db.query(models.SubmissionMetadata).get(submission_id)
+    if not submission_record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    user_record = db.query(models.User).get(user_id)
+    if not user_record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    current_lock_holder: schemas.User = submission_record.locked_by
+    if not current_lock_holder or current_lock_holder.id == user_id:
+        # Either the given user already has the lock, or no one does
+        submission_record.locked_by = user_record
+        submission_record.lock_updated = datetime.utcnow()
+        db.commit()
+        return True
+    else:
+        # Someone else is holding the lock
+        if submission_record.lock_updated:
+            # Compare current time to last edit
+            seconds_since_last_lock_update = (
+                datetime.utcnow() - submission_record.lock_updated
+            ).total_seconds()
+            # A user can hold the lock for 30 minutes without making edits
+            if seconds_since_last_lock_update > (60 * 30):
+                submission_record.locked_by = user_record
+                submission_record.lock_updates = datetime.utcnow()
+                db.commit()
+                return True
+            else:
+                # Someone else holds the lock, but there's no timestamp
+                # Ensure that there's a timestamp on the lock.
+                submission_record.lock_updates = datetime.utcnow()
+    return False
+
+
+def release_submission_lock(db: Session, submission_id: str):
+    submission = db.query(models.SubmissionMetadata).get(submission_id)
+    if submission is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    submission.locked_by = None
+    db.commit()
