@@ -777,4 +777,15 @@ class SubmissionMetadata(Base):
     metadata_submission = Column(JSONB, nullable=False)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
 
-    author = relationship("User")
+    author = relationship(
+        "User", foreign_keys=[author_id], primaryjoin="SubmissionMetadata.author_id == User.id"
+    )
+
+    # Power the lock/unlock mechanism
+    locked_by_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
+    locked_by = relationship(
+        "User",
+        foreign_keys=[locked_by_id],
+        primaryjoin="SubmissionMetadata.locked_by_id == User.id",
+    )
+    lock_updated = Column(DateTime, nullable=True, default=datetime.utcnow)
