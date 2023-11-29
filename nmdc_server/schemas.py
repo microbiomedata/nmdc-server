@@ -216,7 +216,8 @@ class CreditAssociation(BaseModel):
 class DOIInfo(BaseModel):
     id: str
     info: dict
-    doi_type: models.DOIType
+    doi_category: models.DOIType
+    doi_provider:str
 
     class Config:
         orm_mode = True
@@ -232,8 +233,6 @@ class StudyBase(AnnotatedBase):
     has_credit_associations: Optional[List[CreditAssociation]]
     relevant_protocols: Optional[List[str]]
     funding_sources: Optional[List[str]]
-    ess_dive_datasets: Optional[List[str]]
-    massive_study_identifiers: Optional[List[str]]
     gold_study_identifiers: Optional[List[str]]
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
@@ -269,9 +268,6 @@ class Study(StudyBase):
     doi_map: Dict[str, Any] = {}
     multiomics: int
 
-    award_dois: Optional[List[DOIInfo]]
-    publication_dois: Optional[List[DOIInfo]]
-    dataset_dois: Optional[List[DOIInfo]]
 
     class Config:
         orm_mode = True

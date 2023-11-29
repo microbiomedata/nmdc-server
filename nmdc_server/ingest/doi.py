@@ -43,7 +43,7 @@ def upsert_doi(db: Session, doi: str, doi_type: DOIType):
             return
         info = {}
 
-    statement = insert(DOIInfo.__table__).values(id=doi, info=info, doi_type=doi_type)
+    statement = insert(DOIInfo.__table__).values(id=doi, info=info, doi_type=DOIType(doi_type))
     statement = statement.on_conflict_do_update(constraint="pk_doi_info", set_=dict(info=info))
     db.execute(statement)
     db.flush()
