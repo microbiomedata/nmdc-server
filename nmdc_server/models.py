@@ -276,12 +276,8 @@ class Study(Base, AnnotatedModel):
     @property
     def doi_map(self) -> Dict[str, Any]:
         doi_info = {}
-        for award_doi in self.award_dois:
-            doi_info[award_doi.id] = award_doi.info
-        for publication_doi in self.publication_dois:
-            doi_info[publication_doi.id] = publication_doi.info
-        for dataset_doi in self.dataset_dois:
-            doi_info[dataset_doi.id] = dataset_doi.info
+        for doi in self.dois:
+            doi_info[doi.id] = { 'info': doi.info, 'category': doi.doi_type}
         return doi_info
 
 
