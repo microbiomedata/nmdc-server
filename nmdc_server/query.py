@@ -9,7 +9,7 @@ from itertools import groupby
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, Field, PositiveInt
-from sqlalchemy import ARRAY, Column, and_, cast, desc, func, inspect, or_
+from sqlalchemy import ARRAY, Column, and_, cast, desc, exists, func, inspect, or_
 from sqlalchemy.orm import Query, Session, aliased, with_expression
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement, intersect, union
@@ -652,6 +652,13 @@ class StudyQuerySchema(BaseQuerySchema):
                 op_summary_subquery.c.omics_processing_summary,
             ),
         )
+
+    def query(self, db: Session):
+        study_query = super().query(db)
+        sample_query = BiosampleQuerySchema(conditions=self.conditions).query(db)
+        studies_from_sample_query = sample_query.with_entities(models.Biosample.study_id).distinct()
+        study_query = study_query.where(self.table.model.id.in_(studies_from_sample_query))
+        return study_query
 
     def execute(self, db: Session) -> Query:
         sample_subquery = BiosampleQuerySchema(conditions=self.conditions).query(db).subquery()
