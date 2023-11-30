@@ -99,6 +99,30 @@ def test_basic_query(db: Session, table):
     assert tests[table][0].id in {r.id for r in q.all()}
 
 
+def test_study_search_biosample_conditions(db: Session):
+    _ = fakes.BiosampleFactory(longitude=10, latitude=0)
+    _ = fakes.BiosampleFactory(longitude=0, latitude=50)
+    sample_3 = fakes.BiosampleFactory(longitude=10, latitude=50)
+    db.commit()
+
+    condition_lat_range = {
+        "table": "biosample",
+        "field": "latitude",
+        "op": "between",
+        "value": [49, 51],
+    }
+    condition_long_range = {
+        "table": "biosample",
+        "field": "longitude",
+        "op": "between",
+        "value": [9, 11],
+    }
+    q = query.StudyQuerySchema(conditions=[condition_lat_range, condition_long_range])
+    results = {s.id for s in q.execute(db)}
+    assert len(results) == 1
+    assert sample_3.study_id in results
+
+
 @pytest.mark.parametrize(
     "op,value,expected",
     [
