@@ -24,7 +24,7 @@ def get_doi_info(doi: str) -> Response:
     return requests.get(url, headers=headers, timeout=60)
 
 
-def upsert_doi(db: Session, doi: str, doi_type: DOIType):
+def upsert_doi(db: Session, doi: str, doi_type: str):
     logger = get_logger(__name__)
     # Try really hard to get doi data... the doi.org service is very unreliable.
     try:

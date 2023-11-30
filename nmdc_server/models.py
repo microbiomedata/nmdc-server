@@ -181,9 +181,9 @@ class PrincipalInvestigator(Base):
 
 
 class DOIType(enum.Enum):
-    AWARD = 'award_doi'
-    DATASET = 'dataset_doi'
-    PUBLICATION = 'publication_doi'
+    AWARD = "award_doi"
+    DATASET = "dataset_doi"
+    PUBLICATION = "publication_doi"
 
 
 study_doi_association = Table(
@@ -277,7 +277,7 @@ class Study(Base, AnnotatedModel):
     def doi_map(self) -> Dict[str, Any]:
         doi_info = {}
         for doi in self.dois:
-            doi_info[doi.id] = { 'info': doi.info, 'category': doi.doi_type}
+            doi_info[doi.id] = {"info": doi.info, "category": doi.doi_type}
         return doi_info
 
 

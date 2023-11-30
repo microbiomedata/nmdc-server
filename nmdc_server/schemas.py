@@ -217,7 +217,7 @@ class DOIInfo(BaseModel):
     id: str
     info: dict
     doi_category: models.DOIType
-    doi_provider:str
+    doi_provider: str
 
     class Config:
         orm_mode = True
@@ -267,7 +267,6 @@ class Study(StudyBase):
     omics_processing_counts: Optional[List[OmicsCounts]]
     doi_map: Dict[str, Any] = {}
     multiomics: int
-
 
     class Config:
         orm_mode = True

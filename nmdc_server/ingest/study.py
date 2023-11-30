@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from nmdc_server.crud import create_study, get_doi
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.doi import upsert_doi
-from nmdc_server.models import DOIType, PrincipalInvestigator
+from nmdc_server.models import PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
 
 
@@ -65,14 +65,13 @@ def load(db: Session, cursor: Cursor):
             obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url, pi_orcid)
             obj["principal_investigator_websites"] = obj.pop("websites", [])
         obj["image"] = get_study_image_data(obj.pop("study_image", []))
-        dois=obj.pop("associated_dois", None)
+        dois = obj.pop("associated_dois", None)
         if dois:
             for doi in dois:
                 doi["doi_value"] = transform_doi(doi.pop("doi_value"))
 
             for doi in dois:
                 upsert_doi(db, doi["doi_value"], doi["doi_category"])
-
 
         new_study = create_study(db, Study(**obj))
         if dois:
