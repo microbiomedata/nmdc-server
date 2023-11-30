@@ -100,8 +100,9 @@ def test_basic_query(db: Session, table):
 
 
 def test_study_search_biosample_conditions(db: Session):
-    _ = fakes.BiosampleFactory(longitude=10, latitude=0)
-    _ = fakes.BiosampleFactory(longitude=0, latitude=50)
+    test_study = fakes.StudyFactory()
+    _ = fakes.BiosampleFactory(longitude=10, latitude=0, study=test_study)
+    _ = fakes.BiosampleFactory(longitude=0, latitude=50, study=test_study)
     sample_3 = fakes.BiosampleFactory(longitude=10, latitude=50)
     db.commit()
 
