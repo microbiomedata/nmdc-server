@@ -276,7 +276,7 @@ class Study(Base, AnnotatedModel):
     @property
     def doi_map(self) -> Dict[str, Any]:
         doi_info = {}
-        for doi in self.dois:
+        for doi in self.dois:  # type: ignore
             doi_info[doi.id] = {"info": doi.info, "category": doi.doi_type}
         return doi_info
 
