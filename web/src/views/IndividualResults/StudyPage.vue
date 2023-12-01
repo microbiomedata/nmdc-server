@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  computed, defineComponent, reactive, watchEffect, ref, watch,
+  computed, defineComponent, watchEffect, ref, watch,
 } from '@vue/composition-api';
 
 import { isObject } from 'lodash';
@@ -42,14 +42,13 @@ export default defineComponent({
   },
 
   setup(props) {
-    const data = reactive({
+    const data = ref({
       awardDois: [] as DOI[],
       publicationDois: [] as DOI[],
       datasetDois: [] as DOI[],
     });
 
     const item = ref(null as StudySearchResults | null);
-
     watchEffect(() => {
       api.getStudy(props.id).then((b) => { item.value = b; });
     });
@@ -138,15 +137,18 @@ export default defineComponent({
     watch(item, async (_item) => {
       const doiMap = _item?.doi_map;
       if (doiMap) {
-        data.awardDois = [];
-        data.publicationDois = [];
-        data.datasetDois = [];
-        data.awardDois = _item.award_dois
-          .filter((doi) => doi.id in doiMap)
-          .map((doi) => CitationOverrides[doi.id] || formatAPA(new Cite(doi.id)));
-        data.publicationDois = _item.publication_dois
-          .filter((doi) => doi.id in doiMap)
-          .map((doi) => formatAPA(new Cite(doiMap[doi.id])));
+        data.value.awardDois = [];
+        data.value.publicationDois = [];
+        data.value.datasetDois = [];
+        data.value.awardDois = Object.values(doiMap)
+          .filter((doi) => doi.category === 'award_doi')
+          .map((doi) => CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)));
+        data.value.datasetDois = Object.values(doiMap)
+          .filter((doi) => doi.category === 'dataset_doi')
+          .map((doi) => CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)));
+        data.value.publicationDois = Object.values(doiMap)
+          .filter((doi) => doi.category === 'publication_doi')
+          .map((doi) => CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)));
       }
     });
 
@@ -310,10 +312,10 @@ export default defineComponent({
         </v-col>
         <v-col cols="5">
           <div
-            v-if="Object.keys(item.doi_map).length !== 0"
+            v-if="Object.keys(item.doi_map).length > 0"
             class="ma-4 pa-2 grey lighten-4"
           >
-            <template v-if="item.award_dois.length > 0">
+            <template v-if="data.awardDois.length > 0">
               <v-subheader>
                 Award DOIs
               </v-subheader>
@@ -377,7 +379,7 @@ export default defineComponent({
                 </template>
               </v-list>
             </template>
-            <template v-if="item.dataset_dois.length > 0">
+            <template v-if="data.datasetDois.length > 0">
               <v-subheader>
                 Data DOIs
               </v-subheader>
