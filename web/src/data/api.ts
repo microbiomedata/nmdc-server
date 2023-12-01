@@ -130,9 +130,7 @@ export interface StudySearchResults extends BaseSearchResult {
   principal_investigator: PrincipalInvestigator;
   award_dois: DOI[];
   dataset_dois: DOI[],
-  doi_map: Record<string, {
-    type: string;
-  }>,
+  doi_map: Record<string, any>,
   publication_dois: DOI[];
   omics_counts: {
     type: string;
