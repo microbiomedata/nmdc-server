@@ -118,7 +118,7 @@ interface PrincipalInvestigator {
 }
 
 export interface DOI {
-  type: string,
+  cite: string,
   id:string,
 }
 
