@@ -42,10 +42,12 @@ export default defineComponent({
   },
 
   setup(props) {
-    const data = ref({
+    const dois = ref({
       awardDois: [] as DOI[],
       publicationDois: [] as DOI[],
       datasetDois: [] as DOI[],
+      massiveDois: [] as DOI[],
+      essDiveDois: [] as DOI[],
     });
 
     const item = ref(null as StudySearchResults | null);
@@ -137,18 +139,39 @@ export default defineComponent({
     watch(item, async (_item) => {
       const doiMap = _item?.doi_map;
       if (doiMap) {
-        data.value.awardDois = [];
-        data.value.publicationDois = [];
-        data.value.datasetDois = [];
-        data.value.awardDois = Object.values(doiMap)
+        dois.value.awardDois = [];
+        dois.value.publicationDois = [];
+        dois.value.datasetDois = [];
+        dois.value.massiveDois = Object.values(doiMap)
+          .filter((doi) => doi.info.publisher.includes('MassIVE'))
+          .map((doi) => [{
+            cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
+            id: doi.info.id,
+          }]).flat();
+        dois.value.essDiveDois = Object.values(doiMap)
+          .filter((doi) => doi.info.publisher.includes('Environmental System Science Data Infrastructure for a Virtual Ecosystem'))
+          .map((doi) => [{
+            cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
+            id: doi.info.id,
+          }]).flat();
+        dois.value.awardDois = Object.values(doiMap)
           .filter((doi) => doi.category === 'award_doi')
-          .map((doi) => CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)));
-        data.value.datasetDois = Object.values(doiMap)
-          .filter((doi) => doi.category === 'dataset_doi')
-          .map((doi) => CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)));
-        data.value.publicationDois = Object.values(doiMap)
+          .map((doi) => [{
+            cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
+            id: doi.info.DOI,
+          }]).flat();
+        dois.value.datasetDois = Object.values(doiMap)
+          .filter((doi) => doi.category === 'dataset_doi' && !doi.info.publisher.includes('MassIVE') && !doi.info.publisher.includes('Environmental System Science Data Infrastructure for a Virtual Ecosystem'))
+          .map((doi) => [{
+            cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
+            id: doi.info.DOI,
+          }]).flat();
+        dois.value.publicationDois = Object.values(doiMap)
           .filter((doi) => doi.category === 'publication_doi')
-          .map((doi) => CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)));
+          .map((doi) => [{
+            cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
+            id: doi.info.DOI,
+          }]).flat();
       }
     });
 
@@ -156,7 +179,7 @@ export default defineComponent({
       CitationOverrides,
       GoldStudyLinkBase,
       goldLinks,
-      data,
+      data: dois,
       item,
       displayFields,
       /* Methods */
@@ -258,13 +281,13 @@ export default defineComponent({
                 :image="images.gold"
               />
               <AttributeItem
-                v-for="dive_id in item.ess_dive_datasets"
-                :key="dive_id"
+                v-for="dive in data.essDiveDois"
+                :key="dive.id"
                 v-bind="{
                   item,
                   link: {
                     name: 'ESS DIVE Dataset',
-                    target: `https://identifiers.org/${dive_id}`,
+                    target: dive.id,
                   },
                 }"
                 style="padding-left: 60px;"
@@ -272,13 +295,13 @@ export default defineComponent({
                 @click="seeStudyInContext"
               />
               <AttributeItem
-                v-for="massive_id in item.massive_study_identifiers"
-                :key="massive_id"
+                v-for="massive in data.massiveDois"
+                :key="massive.id"
                 v-bind="{
                   item,
                   link: {
                     name: 'MassIVE Study',
-                    target: `https://identifiers.org/${massive_id}`
+                    target: massive.id
                   },
                 }"
                 style="padding-left: 60px;"
@@ -328,7 +351,7 @@ export default defineComponent({
                   :key="index"
                 >
                   <v-list-item-content>
-                    {{ award }}
+                    {{ award.cite }}
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-tooltip top>
@@ -336,7 +359,7 @@ export default defineComponent({
                         <v-btn
                           icon
                           v-on="on"
-                          @click="openLink(`https://doi.org/${item.award_dois[index].id}`)"
+                          @click="openLink(`https://doi.org/${award.id}`)"
                         >
                           <v-icon>mdi-open-in-new</v-icon>
                         </v-btn>
@@ -360,14 +383,16 @@ export default defineComponent({
               >
                 <template v-for="(pub, pubIndex) in data.publicationDois">
                   <v-list-item :key="pubIndex">
-                    <v-list-item-content v-text="pub" />
+                    <v-list-item-content>
+                      {{ pub.cite }}
+                    </v-list-item-content>
                     <v-list-item-action>
                       <v-tooltip top>
                         <template #activator="{ on }">
                           <v-btn
                             icon
                             v-on="on"
-                            @click="openLink(`https://doi.org/${item.publication_dois[pubIndex].id}`)"
+                            @click="openLink(`https://doi.org/${pub.id}`)"
                           >
                             <v-icon>mdi-open-in-new</v-icon>
                           </v-btn>
@@ -392,7 +417,7 @@ export default defineComponent({
                   :key="index"
                 >
                   <v-list-item-content>
-                    {{ dataDOI }}
+                    {{ dataDOI.cite }}
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-tooltip top>
@@ -400,7 +425,7 @@ export default defineComponent({
                         <v-btn
                           icon
                           v-on="on"
-                          @click="openLink(`https://doi.org/${item.dataset_dois[index].id}`)"
+                          @click="openLink(`https://doi.org/${dataDOI.id}`)"
                         >
                           <v-icon>mdi-open-in-new</v-icon>
                         </v-btn>
