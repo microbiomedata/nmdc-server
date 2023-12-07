@@ -291,7 +291,7 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
     "/omics_processing/search",
     response_model=query.OmicsProcessingSearchResponse,
     tags=["omics_processing"],
-    name="Search for studies",
+    name="Search for omics processings",
     description="Faceted search of omics_processing data.",
 )
 async def search_omics_processing(
