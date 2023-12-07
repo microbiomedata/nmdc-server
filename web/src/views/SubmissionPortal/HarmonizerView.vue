@@ -355,11 +355,19 @@ export default defineComponent({
           if (!template || !template.sampleDataSlot || !template.schemaClass) {
             return;
           }
+
+          // The spreadsheet has slot names as the header row. So `sheet_to_json` will produce array
+          // of objects with slot names as keys. But we want the imported data to be keyed on slot
+          // IDs. This code reads the worksheet data and remaps the keys from slot names to IDs.
+          const slotIdToNameMap = harmonizerApi.getHeaderRow(template.schemaClass);
+          const slotNameToIdMap = Object.fromEntries(Object.entries(slotIdToNameMap).map(([k, v]) => [v, k]));
+          const worksheet_data: Record<string, string>[] = utils.sheet_to_json(worksheet);
+          const remapped_data = worksheet_data.map((row) => Object.fromEntries(Object.entries(row)
+            .filter(([column]) => slotNameToIdMap[column] !== undefined)
+            .map(([column, value]) => [slotNameToIdMap[column], value])));
+
           imported[template.sampleDataSlot] = harmonizerApi.unflattenArrayValues(
-            utils.sheet_to_json(worksheet, {
-              header: harmonizerApi.getOrderedAttributeNames(template.schemaClass),
-              range: 1,
-            }),
+            remapped_data,
             template.schemaClass,
           );
         });
