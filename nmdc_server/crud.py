@@ -455,7 +455,7 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
     if not user_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    current_lock_holder: schemas.User = submission_record.locked_by
+    current_lock_holder = submission_record.locked_by
     if not current_lock_holder or current_lock_holder.id == user_id:
         # Either the given user already has the lock, or no one does
         submission_record.locked_by = user_record
@@ -472,13 +472,13 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
             # A user can hold the lock for 30 minutes without making edits
             if seconds_since_last_lock_update > (60 * 30):
                 submission_record.locked_by = user_record
-                submission_record.lock_updates = datetime.utcnow()
+                submission_record.lock_updated = datetime.utcnow()
                 db.commit()
                 return True
             else:
                 # Someone else holds the lock, but there's no timestamp
                 # Ensure that there's a timestamp on the lock.
-                submission_record.lock_updates = datetime.utcnow()
+                submission_record.lock_updated = datetime.utcnow()
     return False
 
 
@@ -486,5 +486,5 @@ def release_submission_lock(db: Session, submission_id: str):
     submission = db.query(models.SubmissionMetadata).get(submission_id)
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    submission.locked_by = None
+    submission.locked_by = None  # type: ignore
     db.commit()

@@ -537,9 +537,9 @@ async def get_submission(
     user: models.User = Depends(login_required),
 ):
     submission = db.query(SubmissionMetadata).get(id)
-    _ = crud.try_get_submission_lock(db, submission.id, user.id)
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
+    _ = crud.try_get_submission_lock(db, submission.id, user.id)
     if submission.author.orcid != user.orcid:
         await admin_required(user)
     return submission
