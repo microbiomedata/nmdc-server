@@ -7,6 +7,7 @@ import OrcidId from '@/components/Presentation/OrcidId.vue';
 import { stateRefs } from '@/store';
 import { getSubmissionLockedBy } from './store';
 import { useRouter } from '@/use/useRouter';
+import { unlockSubmission } from './store/api';
 
 export default defineComponent({
   components: { SubmissionStepper, OrcidId },
@@ -39,6 +40,14 @@ export default defineComponent({
       return false;
     });
 
+    window.addEventListener('beforeunload', () => {
+      if (isEditingSubmission.value) {
+        if (router) {
+          unlockSubmission(router.currentRoute.params.id);
+        }
+      }
+    });
+
     return { loggedInUserHasLock, getSubmissionLockedBy, isEditingSubmission };
   },
 
@@ -58,8 +67,8 @@ export default defineComponent({
       </p>
       <orcid-id
         v-if="getSubmissionLockedBy()"
-        :orcid-id="getSubmissionLockedBy()?.orcid"
-        :name="getSubmissionLockedBy()?.name"
+        :orcid-id="getSubmissionLockedBy().orcid"
+        :name="getSubmissionLockedBy().name"
         authenticated="true"
       />
       <a href="/submission/home">
