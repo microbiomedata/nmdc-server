@@ -6,7 +6,6 @@ from starlette.testclient import TestClient
 
 from nmdc_server import fakes
 from nmdc_server.auth import Token
-from nmdc_server.config import settings
 from nmdc_server.schemas_submission import SubmissionMetadataSchema
 
 

@@ -5,14 +5,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Query, Session
 
-from nmdc_server import (
-    aggregations,
-    bulk_download_schema,
-    models,
-    query,
-    schemas,
-    schemas_submission,
-)
+from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 from nmdc_server.data_object_filters import get_local_data_url
 from nmdc_server.logger import get_logger
 

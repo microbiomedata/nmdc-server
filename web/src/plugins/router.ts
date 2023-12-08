@@ -115,7 +115,6 @@ router.beforeEach((to: Route, from: Route, next: Function) => {
       next();
       return;
     }
-    console.log('unlocking submission');
     unlockSubmission(from.params.id);
   }
   next();
