@@ -87,7 +87,7 @@ async function getRecord(id: string) {
 }
 
 async function unlockSubmission(id: string) {
-  const resp = await client.get<string>(`metadata_submission/${id}/unlock`);
+  const resp = await client.put<string>(`metadata_submission/${id}/unlock`);
   return resp.data;
 }
 
