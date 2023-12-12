@@ -361,13 +361,13 @@ export default defineComponent({
           // IDs. This code reads the worksheet data and remaps the keys from slot names to IDs.
           const slotIdToNameMap = harmonizerApi.getHeaderRow(template.schemaClass);
           const slotNameToIdMap = Object.fromEntries(Object.entries(slotIdToNameMap).map(([k, v]) => [v, k]));
-          const worksheet_data: Record<string, string>[] = utils.sheet_to_json(worksheet);
-          const remapped_data = worksheet_data.map((row) => Object.fromEntries(Object.entries(row)
-            .filter(([column]) => slotNameToIdMap[column] !== undefined)
-            .map(([column, value]) => [slotNameToIdMap[column], value])));
+          const worksheetData: Record<string, string>[] = utils.sheet_to_json(worksheet);
+          const remappedData = worksheetData.map((row) => Object.fromEntries(Object.entries(row)
+            .filter(([slotName]) => slotNameToIdMap[slotName] !== undefined)
+            .map(([slotName, value]) => [slotNameToIdMap[slotName], value])));
 
           imported[template.sampleDataSlot] = harmonizerApi.unflattenArrayValues(
-            remapped_data,
+            remappedData,
             template.schemaClass,
           );
         });
