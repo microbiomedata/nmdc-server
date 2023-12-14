@@ -771,7 +771,7 @@ class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    author_orcid = Column(String, nullable=False)
+    author_orcid = Column(String, nullable=False, unique=True)
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
     status = Column(String, nullable=False, default="in-progress")
     metadata_submission = Column(JSONB, nullable=False)
@@ -789,3 +789,18 @@ class SubmissionMetadata(Base):
         primaryjoin="SubmissionMetadata.locked_by_id == User.id",
     )
     lock_updated = Column(DateTime, nullable=True, default=datetime.utcnow)
+
+
+class SubmissionEditorRole(enum.Enum):
+    EDITOR = "editor"
+    OWNER = "owner"
+    VIEWER = "viewer"
+    METADATA_CONTRIBUTOR = "metadata_contributor"
+
+
+class SubmissionRole(Base):
+    __tablename__ = "submission_role"
+
+    submission_id = Column(UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id))
+    user_orcid = Column(String, ForeignKey(User.orcid))
+    role = Column(Enum(SubmissionEditorRole))
