@@ -23,7 +23,7 @@ setup(
         "mypy<0.920",
         "nmdc-schema==7.7.0",
         "pint==0.18",
-        "psycopg2==2.9.3",
+        "psycopg2-binary==2.9.3",
         "pydantic==1.8.2",
         "pymongo>=4.0.0",
         "python-dateutil",
