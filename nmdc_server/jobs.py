@@ -14,6 +14,8 @@ from nmdc_server.logger import get_logger
 
 HERE = Path(__file__).parent
 
+logger = get_logger(__name__)
+
 
 @celery_app.task
 def ping():
@@ -54,13 +56,7 @@ def migrate(ingest_db: bool = False):
         command.upgrade(alembic_cfg, "head")
 
 
-@celery_app.task
-def ingest(function_limit=None, skip_annotation=False):
-    """Truncate database and ingest all data from the mongo source."""
-    logger = get_logger(__name__)
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    logger.setLevel(logging.INFO)
-
+def do_ingest(function_limit, skip_annotation):
     with database.SessionLocalIngest() as ingest_db:
         try:
             ingest_db.execute("select truncate_tables()").all()
@@ -88,3 +84,12 @@ def ingest(function_limit=None, skip_annotation=False):
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownloadDataObject))
+
+
+@celery_app.task
+def ingest(function_limit=None, skip_annotation=False):
+    """Truncate database and ingest all data from the mongo source."""
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    logger.setLevel(logging.INFO)
+
+    do_ingest(function_limit, skip_annotation)

@@ -3,13 +3,12 @@ from pathlib import Path
 from typing import Optional
 
 import click
+import requests
 
-from nmdc_server import jobs, models
-from nmdc_server.config import Settings, settings
-from nmdc_server.database import SessionLocal, SessionLocalIngest
+from nmdc_server import jobs
+from nmdc_server.config import Settings
+from nmdc_server.database import SessionLocalIngest
 from nmdc_server.ingest import errors
-from nmdc_server.ingest.all import load
-from nmdc_server.ingest.common import maybe_merge_download_artifact
 from nmdc_server.logger import get_logger
 
 
@@ -63,8 +62,11 @@ def truncate():
 @click.option("-v", "--verbose", count=True)
 @click.option("--function-limit", type=click.INT, default=100)
 @click.option("--skip-annotation", is_flag=True, default=False)
-def ingest(verbose, function_limit, skip_annotation):
+@click.option("--swap-rancher-secrets", is_flag=True, default=False)
+def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
     """Ingest the latest data from mongo into the ingest database."""
+    settings = Settings()
+
     level = logging.WARN
     if verbose == 1:
         level = logging.INFO
@@ -73,17 +75,8 @@ def ingest(verbose, function_limit, skip_annotation):
     logger = get_logger(__name__)
     logging.basicConfig(level=level, format="%(message)s")
     logger.setLevel(logging.INFO)
-    jobs.migrate(ingest_db=True)
-    with SessionLocalIngest() as ingest_db:
-        load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
-        if settings.current_db_uri != settings.ingest_database_uri:
-            with SessionLocal() as prod_db:
-                # copy persistent data from the production db to the ingest db
-                maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
-                maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
-                maybe_merge_download_artifact(
-                    ingest_db, prod_db.query(models.BulkDownloadDataObject)
-                )
+
+    jobs.do_ingest(function_limit, skip_annotation)
 
     for m, s in errors.missing.items():
         click.echo(f"missing {m}:")
@@ -94,6 +87,55 @@ def ingest(verbose, function_limit, skip_annotation):
         click.echo(f"errors {m}:")
         for id in s:
             click.echo(id)
+
+    if swap_rancher_secrets:
+        if not settings.rancher_api_base_url:
+            raise ValueError("rancher_api_base_url must be set to use --swap-rancher-secrets")
+        if not settings.rancher_api_auth_token:
+            raise ValueError("rancher_api_auth_token must be set to use --swap-rancher-secrets")
+        if not settings.rancher_project_id:
+            raise ValueError("rancher_project_id must be set to use --swap-rancher-secrets")
+        if not settings.rancher_postgres_secret_id:
+            raise ValueError("rancher_postgres_secret_id must be set to use --swap-rancher-secrets")
+        if not settings.rancher_backend_workload_id:
+            raise ValueError("rancher_backend_workload_id must be set to use --swap-rancher-secrets")
+        if not settings.rancher_worker_workload_id:
+            raise ValueError("rancher_worker_workload_id must be set to use --swap-rancher-secrets")
+
+        headers = {"Authorization": f"Bearer {settings.rancher_api_auth_token}"}
+
+        click.echo(f"Getting current secret {settings.rancher_postgres_secret_id}")
+        secret_url = f"{settings.rancher_api_base_url}/project/{settings.rancher_project_id}/secrets/{settings.rancher_postgres_secret_id}"
+        response = requests.get(secret_url, headers=headers)
+        response.raise_for_status()
+        current = response.json()
+        update = {
+            "data": {
+                "INGEST_URI": current["data"]["POSTGRES_URI"],
+                "POSTGRES_PASSWORD": current["data"]["POSTGRES_PASSWORD"],
+                "POSTGRES_URI": current["data"]["INGEST_URI"]
+            }
+        }
+
+        click.echo(f"Updating secret {settings.rancher_postgres_secret_id}")
+        response = requests.put(secret_url, headers=headers, json=update)
+        response.raise_for_status()
+
+        click.echo(f"Redeploying workload {settings.rancher_backend_workload_id}")
+        response = requests.post(
+            f"{settings.rancher_api_base_url}/project/{settings.rancher_project_id}/workloads/{settings.rancher_backend_workload_id}?action=redeploy",
+            headers=headers,
+        )
+        response.raise_for_status()
+
+        click.echo(f"Redeploying workload {settings.rancher_worker_workload_id}")
+        response = requests.post(
+            f"{settings.rancher_api_base_url}/project/{settings.rancher_project_id}/workloads/{settings.rancher_worker_workload_id}?action=redeploy",
+            headers=headers,
+        )
+        response.raise_for_status()
+
+        click.echo("Done")
 
 
 @cli.command()
