@@ -89,23 +89,26 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
             click.echo(id)
 
     if swap_rancher_secrets:
-        if not settings.rancher_api_base_url:
-            raise ValueError("rancher_api_base_url must be set to use --swap-rancher-secrets")
-        if not settings.rancher_api_auth_token:
-            raise ValueError("rancher_api_auth_token must be set to use --swap-rancher-secrets")
-        if not settings.rancher_project_id:
-            raise ValueError("rancher_project_id must be set to use --swap-rancher-secrets")
-        if not settings.rancher_postgres_secret_id:
-            raise ValueError("rancher_postgres_secret_id must be set to use --swap-rancher-secrets")
-        if not settings.rancher_backend_workload_id:
-            raise ValueError("rancher_backend_workload_id must be set to use --swap-rancher-secrets")
-        if not settings.rancher_worker_workload_id:
-            raise ValueError("rancher_worker_workload_id must be set to use --swap-rancher-secrets")
+
+        def require_setting(name: str):
+            if not getattr(settings, name, None):
+                raise ValueError(f"{name} must be set to use --swap-rancher-secrets")
+
+        require_setting("rancher_api_base_url")
+        require_setting("rancher_api_auth_token")
+        require_setting("rancher_project_id")
+        require_setting("rancher_postgres_secret_id")
+        require_setting("rancher_backend_workload_id")
+        require_setting("rancher_worker_workload_id")
 
         headers = {"Authorization": f"Bearer {settings.rancher_api_auth_token}"}
 
         click.echo(f"Getting current secret {settings.rancher_postgres_secret_id}")
-        secret_url = f"{settings.rancher_api_base_url}/project/{settings.rancher_project_id}/secrets/{settings.rancher_postgres_secret_id}"
+        secret_url = (
+            f"{settings.rancher_api_base_url}"
+            f"/project/{settings.rancher_project_id}"
+            f"/secrets/{settings.rancher_postgres_secret_id}"
+        )
         response = requests.get(secret_url, headers=headers)
         response.raise_for_status()
         current = response.json()
@@ -113,7 +116,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
             "data": {
                 "INGEST_URI": current["data"]["POSTGRES_URI"],
                 "POSTGRES_PASSWORD": current["data"]["POSTGRES_PASSWORD"],
-                "POSTGRES_URI": current["data"]["INGEST_URI"]
+                "POSTGRES_URI": current["data"]["INGEST_URI"],
             }
         }
 
@@ -123,14 +126,18 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
 
         click.echo(f"Redeploying workload {settings.rancher_backend_workload_id}")
         response = requests.post(
-            f"{settings.rancher_api_base_url}/project/{settings.rancher_project_id}/workloads/{settings.rancher_backend_workload_id}?action=redeploy",
+            f"{settings.rancher_api_base_url}"
+            f"/project/{settings.rancher_project_id}"
+            f"/workloads/{settings.rancher_backend_workload_id}?action=redeploy",
             headers=headers,
         )
         response.raise_for_status()
 
         click.echo(f"Redeploying workload {settings.rancher_worker_workload_id}")
         response = requests.post(
-            f"{settings.rancher_api_base_url}/project/{settings.rancher_project_id}/workloads/{settings.rancher_worker_workload_id}?action=redeploy",
+            f"{settings.rancher_api_base_url}"
+            f"/project/{settings.rancher_project_id}"
+            f"/workloads/{settings.rancher_worker_workload_id}?action=redeploy",
             headers=headers,
         )
         response.raise_for_status()
