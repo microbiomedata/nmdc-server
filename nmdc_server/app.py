@@ -4,9 +4,10 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+from sqlalchemy_oso import SQLAlchemyOso, authorized_sessionmaker
 from starlette.middleware.sessions import SessionMiddleware
 
-from nmdc_server import __version__, api, auth, errors
+from nmdc_server import __version__, api, auth, errors, models
 from nmdc_server.config import settings
 
 
@@ -18,6 +19,13 @@ def attach_sentry(app: FastAPI):
         dsn=settings.sentry_dsn,
         integrations=[SqlalchemyIntegration()],
     )
+
+
+def init_oso(app: FastAPI):
+    oso = SQLAlchemyOso(models.Base)
+    oso.load_files(["nmdc_server/authorization.polar"])
+
+    return oso
 
 
 def create_app(env: typing.Mapping[str, str], secure_cookies: bool = True) -> FastAPI:
