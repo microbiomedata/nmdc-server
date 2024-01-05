@@ -1,5 +1,59 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nmdc-server"
+readme = "README.md"
+requires-python = ">=3.9"
+dynamic = ["version"]
+dependencies = [
+    # pinned because recent versions throw an error when upgrading through
+    # the api at nmdc_server/jobs.py:34
+    "alembic==1.5.8",
+    "authlib==0.15.5",
+    "celery[redis]",
+    "click",
+    "cryptography",
+    # https://github.com/microbiomedata/nmdc-server/actions/runs/5671884086/job/15369921721
+    "dnspython==2.3.0",
+    "fastapi==0.71.0",
+    "factory-boy==3.2.1",
+    "httpx<=0.18.2",
+    "ipython==7.31.1",
+    "itsdangerous==2.0.1",
+    "mypy<0.920",
+    "nmdc-schema==9.3.2",
+    "pint==0.18",
+    "psycopg2==2.9.3",
+    "pydantic==1.10.2",
+    "pymongo>=4.0.0",
+    "python-dateutil",
+    "python-dotenv",
+    "requests==2.28.1",
+    "sentry-sdk[celery,sqlalchemy]",
+    "sqlalchemy>=1.4",
+    "starlette==0.17.1",
+    "typing-extensions==4.1.0",
+    # pinned 3rd party dependencies
+    "importlib-metadata==4.12.0",
+]
+
+[project.scripts]
+nmdc-server = "nmdc_server.cli:cli"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["nmdc_server*"]
+
 [tool.black]
 line-length = 100
 skip-string-normalization = false
 target-version = ['py37']
 exclude='\.eggs|\.git|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist'
+
+[tool.isort]
+line_length = 100
+profile = "black"

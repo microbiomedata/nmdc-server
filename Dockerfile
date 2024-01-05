@@ -4,7 +4,7 @@ LABEL org.opencontainers.image.source=https://github.com/microbiomedata/nmdc-ser
 RUN apt-get update && apt-get install -y postgresql-client
 
 RUN pip install -U pip setuptools wheel
-COPY setup.py setup.cfg /app/
+COPY pyproject.toml /app/
 RUN pip install -e /app
 
 COPY nmdc_server /app/nmdc_server
