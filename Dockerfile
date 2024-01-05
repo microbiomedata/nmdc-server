@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y postgresql-client
 
 RUN pip install -U pip setuptools wheel
 COPY pyproject.toml /app/
-RUN pip install -e /app
+RUN --mount=source=.git,target=/app/.git,type=bind pip install -e /app
 
 COPY nmdc_server /app/nmdc_server
 COPY .env.production /app/.env
