@@ -767,6 +767,14 @@ class User(Base):
     is_admin = Column(Boolean, nullable=False, default=False)
 
 
+class SubmissionEditorRole(enum.Enum):
+    editor = "editor"
+    owner = "owner"
+    viewer = "viewer"
+    metadata_contributor = "metadata_contributor"
+    reviewer = "reviewer"
+
+
 class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
 
@@ -790,17 +798,33 @@ class SubmissionMetadata(Base):
     )
     lock_updated = Column(DateTime, nullable=True, default=datetime.utcnow)
 
+    # Roles
+    roles = relationship("SubmissionRole", back_populates="submission")
 
-class SubmissionEditorRole(enum.Enum):
-    EDITOR = "editor"
-    OWNER = "owner"
-    VIEWER = "viewer"
-    METADATA_CONTRIBUTOR = "metadata_contributor"
+    @property
+    def editors(self) -> list[str]:
+        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.editor]
+
+    @property
+    def viewers(self) -> list[str]:
+        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.viewer]
+
+    @property
+    def metadata_contributors(self) -> list[str]:
+        return [
+            role.user_orcid
+            for role in self.roles
+            if role.role == SubmissionEditorRole.metadata_contributor
+        ]
 
 
 class SubmissionRole(Base):
     __tablename__ = "submission_role"
 
     submission_id = Column(UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id))
-    user_orcid = Column(String, ForeignKey(User.orcid))
+    # Use a plain string column over FK to support adding permissions for people who
+    # haven't yet signed into the Data Portal
+    user_orcid = Column(String)
     role = Column(Enum(SubmissionEditorRole))
+
+    submission = relationship("SubmissionMetadata", back_populates="roles")
