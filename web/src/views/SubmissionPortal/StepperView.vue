@@ -57,7 +57,6 @@ export default defineComponent({
 <template>
   <div>
     <SubmissionStepper class="mx-0" />
-    <!-- Put locked by notification/banner here -->
     <v-container v-if="loggedInUserHasLock || !isEditingSubmission">
       <router-view />
     </v-container>
