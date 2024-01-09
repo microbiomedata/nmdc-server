@@ -1,88 +1,81 @@
 name: deploy
 
-on: 
+on:
   push:
     branches:
       - main
-  release:
-      types: [published]
+    tags:
+      - 'v*'
+
+env:
+  # We don't want to do certain steps if this is running in a fork
+  IS_ORIGINAL_REPO: ${{ github.repository == 'microbiomedata/nmdc-server' }}
+
+  # Used to determine if we add the special `prod` Docker image tag
+  IS_PROD_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+
+  # Used when sending redeploy action requests to Rancher
+  RANCHER_NAMESPACE: ${{ startsWith(github.ref, 'refs/tags/v') && 'nmdc' || 'nmdc-dev' }}
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     strategy:
       matrix:
         image: [server, client, worker]
 
     steps:
-      -
-        name: Checkout code
-        uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v4
         with:
-          submodules: 'recursive'
-      -
-        name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
+          # history for all branches and tags is needed for setuptools-scm
+          fetch-depth: 0
+
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/microbiomedata/nmdc-server/${{ matrix.image }}
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=raw,value=prod,enable=${{ env.IS_PROD_RELEASE }}      
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-#
-# SERVER
-#
-      -
-        name: Build and push server
-        uses: docker/build-push-action@v2
-        if: ${{ matrix.image == 'server' }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
         with:
-          tags: ${{ format('ghcr.io/microbiomedata/nmdc-server/server:{0}', github.event.release.tag_name || 'latest') }}
-          push: true
-      -
-        name: Deploy server
-        uses: fjogeleit/http-request-action@v1.3.3
-        if: ${{ matrix.image == 'server' && github.event_name == 'push' }}
+          context: ${{ matrix.image == 'client' && 'web' || '.' }}
+          push: ${{ env.IS_ORIGINAL_REPO }}
+          file: ${{ matrix.image == 'worker' && 'Dockerfile.worker' || (matrix.image == 'client' && 'web/Dockerfile' || 'Dockerfile') }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+  redeploy:
+    needs: build
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        deployment: [ backend, frontend, worker ]
+
+    steps:
+      - name: Redeploy ${{ env.RANCHER_NAMESPACE }}:${{ env.IS_PROD_RELEASE && '' || 'portal-' }}${{ matrix.deployment }}
+        if: ${{ env.IS_ORIGINAL_REPO }}
+        uses: fjogeleit/http-request-action@v1
         with:
-          url: 'https://rancher2.spin.nersc.gov/v3/project/c-tmq7p:p-bkv45/workloads/deployment:nmdc-dev:portal-backend?action=redeploy'
-          method: 'POST'
-          username: ${{ secrets.SPIN_USER }}
-          password: ${{ secrets.SPIN_PASSWORD }}
-#
-# CLIENT
-#
-      -
-        name: Build and push client
-        uses: docker/build-push-action@v2
-        if: ${{ matrix.image == 'client' }}
-        with:
-          tags: ${{ format('ghcr.io/microbiomedata/nmdc-server/client:{0}', github.event.release.tag_name || 'latest') }}
-          context: web
-          push: true
-      -
-        name: Deploy client
-        uses: fjogeleit/http-request-action@v1.3.3
-        if: ${{ matrix.image == 'client' && github.event_name == 'push' }}
-        with:
-          url: 'https://rancher2.spin.nersc.gov/v3/project/c-tmq7p:p-bkv45/workloads/deployment:nmdc-dev:portal-frontend?action=redeploy'
-          method: 'POST'
-          username: ${{ secrets.SPIN_USER }}
-          password: ${{ secrets.SPIN_PASSWORD }}
-#
-# WORKER
-#
-      -
-        name: Build and push worker
-        uses: docker/build-push-action@v2
-        if: ${{ matrix.image == 'worker' }}
-        with:
-          tags: ${{ format('ghcr.io/microbiomedata/nmdc-server/worker:{0}', github.event.release.tag_name || 'latest') }}
-          file: ./Dockerfile.worker
-          push: true
-      - 
-        name: Deploy worker
-        uses: fjogeleit/http-request-action@v1.3.3
-        if: ${{ matrix.image == 'worker' && github.event_name == 'push' }}
-        with:
-          url: 'https://rancher2.spin.nersc.gov/v3/project/c-tmq7p:p-bkv45/workloads/deployment:nmdc-dev:portal-worker?action=redeploy'
-          method: 'POST'
+          url: https://rancher2.spin.nersc.gov/v3/project/c-tmq7p:p-bkv45/workloads/deployment:${{ env.RANCHER_NAMESPACE }}:${{ env.IS_PROD_RELEASE && '' || 'portal-' }}${{ matrix.deployment }}?action=redeploy
+          method: POST
           username: ${{ secrets.SPIN_USER }}
           password: ${{ secrets.SPIN_PASSWORD }}
