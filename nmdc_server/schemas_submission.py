@@ -91,6 +91,9 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     status: str
     author: schemas.User
 
+    lock_updated: Optional[datetime]
+    locked_by: Optional[schemas.User]
+
     class Config:
         orm_mode = True
 

@@ -337,3 +337,77 @@ class GeneFunction(SQLAlchemyModelFactory):
         sqlalchemy_session = db
 
     id: str = Faker("pystr")
+
+
+class UserFactory(SQLAlchemyModelFactory):
+    class Meta:
+        model = models.User
+        sqlalchemy_session = db
+
+    id: UUID = Faker("uuid")
+    name: str = Faker("name")
+    orcid: str = Faker("pystr")
+    is_admin: bool = True
+
+
+class MetadataSubmissionFactory(SQLAlchemyModelFactory):
+    class Meta:
+        model = models.SubmissionMetadata
+        sqlalchemy_session = db
+
+    id: UUID = Faker("uuid")
+    author = SubFactory(UserFactory)
+    author_orcid = Faker("pystr")
+    status = "In Progress"
+    created = datetime.utcnow()
+    # TODO specify all fields!
+    metadata_submission = {
+        "sampleData": {},
+        "multiOmicsForm": {
+            "alternativeNames": [],
+            "studyNumber": "",
+            "GOLDStudyId": "",
+            "JGIStudyId": "",
+            "NCBIBioProjectId": "",
+            "omicsProcessingTypes": [],
+        },
+        "studyForm": {
+            "studyName": "",
+            "piName": "",
+            "piEmail": "",
+            "piOrcid": "",
+            "linkOutWebpage": [],
+            "description": "",
+            "notes": "",
+            "contributors": [],
+        },
+        "templates": [],
+        "addressForm": {
+            "shipper": {
+                "name": "",
+                "email": "",
+                "phone": "",
+                "line1": "",
+                "line2": "",
+                "city": "",
+                "state": "",
+                "postalCode": "",
+            },
+            "shippingConditions": "",
+            "sample": "",
+            "description": "",
+            "experimentalGoals": "",
+            "randomization": "",
+            "permitNumber": "",
+            "biosafetyLevel": "",
+            "comments": "",
+        },
+        "contextForm": {
+            "datasetDoi": "",
+            "facilities": [],
+            "otherAward": "",
+        },
+        "packageName": "",
+    }
+    locked_by = None
+    lock_updated = None

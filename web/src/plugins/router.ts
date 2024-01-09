@@ -1,5 +1,5 @@
 import Vue from 'vue';
-import VueRouter from 'vue-router';
+import VueRouter, { Route } from 'vue-router';
 
 import Search from '@/views/Search/SearchLayout.vue';
 import SamplePage from '@/views/IndividualResults/SamplePage.vue';
@@ -18,11 +18,13 @@ import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.v
 
 import UserPage from '@/views/User/UserPage.vue';
 
+import { unlockSubmission } from '@/views/SubmissionPortal/store/api';
+
 import { parseQuery, stringifyQuery } from './utils';
 
 Vue.use(VueRouter);
 
-export default new VueRouter({
+const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
   routes: [
@@ -105,3 +107,17 @@ export default new VueRouter({
   parseQuery,
   stringifyQuery,
 });
+router.beforeEach((to: Route, from: Route, next: Function) => {
+  if (from.fullPath.includes('submission') && !!from.params.id) {
+    // We are navigating away from a submission edit screen
+    if (to.fullPath.includes('submission') && !!to.params.id && to.params.id === from.params.id) {
+      // We are navigating to a submission edit screen for the same submission, no need to  unlock
+      next();
+      return;
+    }
+    unlockSubmission(from.params.id);
+  }
+  next();
+});
+
+export default router;

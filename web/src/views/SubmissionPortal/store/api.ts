@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { SearchParams } from '@/data/api';
+import { SearchParams, User } from '@/data/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
 const client = axios.create({
@@ -47,6 +47,8 @@ interface MetadataSubmissionRecord {
   created: string;
   metadata_submission: MetadataSubmission;
   status: string;
+  locked_by: User;
+  lock_updated: string;
 }
 
 interface PaginatedResponse<T> {
@@ -84,6 +86,11 @@ async function getRecord(id: string) {
   return resp.data;
 }
 
+async function unlockSubmission(id: string) {
+  const resp = await client.put<string>(`metadata_submission/${id}/unlock`);
+  return resp.data;
+}
+
 export {
   NmdcAddress,
   addressToString,
@@ -93,4 +100,5 @@ export {
   getRecord,
   listRecords,
   updateRecord,
+  unlockSubmission,
 };

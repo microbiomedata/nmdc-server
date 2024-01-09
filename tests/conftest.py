@@ -5,7 +5,7 @@ from factory import random
 from starlette.requests import Request
 from starlette.testclient import TestClient
 
-from nmdc_server import auth, database
+from nmdc_server import auth, crud, database, schemas
 from nmdc_server.app import create_app
 from nmdc_server.config import settings
 from nmdc_server.fakes import TokenFactory
@@ -63,3 +63,10 @@ def client(app):
 def token(client):
     resp = client.post("/test-session")
     return auth.Token(**resp.json())
+
+
+@pytest.fixture
+def logged_in_user(token):
+    user_schema = schemas.User(name=token.name, orcid=token.orcid)
+    user = crud.get_or_create_user(_db, user_schema)
+    return user

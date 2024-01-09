@@ -5,6 +5,7 @@ import CompositionApi, {
 import { clone, forEach } from 'lodash';
 import * as api from './api';
 import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
+import { User } from '@/data/api';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -33,6 +34,14 @@ const submissionStatus: Record<string, SubmissionStatus> = {
 const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(submissionStatus).includes(str);
 
 const status = ref(submissionStatus.InProgress);
+
+/**
+ * Submission record locking information
+ */
+let _submissionLockedBy: User | null = null;
+function getSubmissionLockedBy(): User | null {
+  return _submissionLockedBy;
+}
 
 const hasChanged = ref(0);
 /**
@@ -221,6 +230,7 @@ async function loadRecord(id: string) {
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
+  _submissionLockedBy = val.locked_by;
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
@@ -260,6 +270,7 @@ export {
   tabsValidated,
   status,
   /* functions */
+  getSubmissionLockedBy,
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
