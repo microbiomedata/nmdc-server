@@ -107,7 +107,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         secret_url = (
             f"{settings.rancher_api_base_url}"
             f"/project/{settings.rancher_project_id}"
-            f"/secrets/{settings.rancher_postgres_secret_id}"
+            f"/namespacedSecrets/{settings.rancher_postgres_secret_id}"
         )
         response = requests.get(secret_url, headers=headers)
         response.raise_for_status()
