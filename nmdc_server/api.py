@@ -646,5 +646,3 @@ async def update_user(
     if body.id != id:
         raise HTTPException(status_code=400, detail="Invalid id")
     return crud.update_user(db, body)
-
-@router.get("/version")
