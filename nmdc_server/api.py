@@ -9,13 +9,13 @@ from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
 
 from nmdc_server import (
-    __version__,
     crud,
     jobs,
     models,
     query,
     schemas,
     schemas_submission,
+    __version__,
 )
 from nmdc_server.auth import (
     admin_required,
