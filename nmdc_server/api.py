@@ -8,15 +8,7 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
 
-from nmdc_server import (
-    crud,
-    jobs,
-    models,
-    query,
-    schemas,
-    schemas_submission,
-    __version__,
-)
+from nmdc_server import crud, jobs, models, query, schemas, schemas_submission, __version__
 from nmdc_server.auth import (
     admin_required,
     get_current_user,
