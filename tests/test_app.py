@@ -30,6 +30,12 @@ def test_get_settings(client: TestClient):
     assert_status(resp)
 
 
+def test_get_version(client: TestClient):
+    resp = client.get("/api/version")
+    assert resp.status_code == 200
+    assert resp.json()["version"] == nmdc_server.__version__
+
+
 @pytest.mark.parametrize(
     "condition,expected",
     [

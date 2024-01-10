@@ -23,6 +23,7 @@ from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.models import IngestLock, SubmissionMetadata, User
 from nmdc_server.pagination import Pagination
+from nmdc_server import __version__
 
 router = APIRouter()
 
@@ -32,6 +33,12 @@ router = APIRouter()
 async def get_settings() -> Dict[str, Any]:
     settings = Settings()
     return {"disable_bulk_download": settings.disable_bulk_download.upper() == "YES"}
+
+
+# get application version number
+@router.get("/version", name="Get application version identifier")
+async def get_version() -> Dict[str, Any]:
+    return {"nmdc-server": __version__}
 
 
 # get the current user information
@@ -639,3 +646,5 @@ async def update_user(
     if body.id != id:
         raise HTTPException(status_code=400, detail="Invalid id")
     return crud.update_user(db, body)
+
+@router.get("/version")
