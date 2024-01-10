@@ -8,7 +8,15 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
 
-from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
+from nmdc_server import (
+    __version__,
+    crud,
+    jobs,
+    models,
+    query,
+    schemas,
+    schemas_submission,
+)
 from nmdc_server.auth import (
     admin_required,
     get_current_user,
@@ -23,7 +31,6 @@ from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.models import IngestLock, SubmissionMetadata, User
 from nmdc_server.pagination import Pagination
-from nmdc_server import __version__
 
 router = APIRouter()
 
