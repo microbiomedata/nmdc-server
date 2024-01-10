@@ -488,3 +488,65 @@ def release_submission_lock(db: Session, submission_id: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     submission.locked_by = None  # type: ignore
     db.commit()
+
+
+#############################
+# SUBMISSION ACCESS CONTROL #
+#############################
+read_roles = [
+    models.SubmissionEditorRole.editor,
+    models.SubmissionEditorRole.metadata_contributor,
+    models.SubmissionEditorRole.owner,
+    models.SubmissionEditorRole.viewer,
+]
+
+metadata_edit_roles = [
+    models.SubmissionEditorRole.editor,
+    models.SubmissionEditorRole.metadata_contributor,
+    models.SubmissionEditorRole.owner,
+]
+
+context_edit_roles = [
+    models.SubmissionEditorRole.editor,
+    models.SubmissionEditorRole.owner,
+]
+
+contributors_edit_roles = [
+    models.SubmissionEditorRole.owner,
+]
+
+
+def can_read(db: Session, submission_id: str, user_orcid: str) -> bool:
+    role = (
+        db.query(models.SubmissionRole)
+        .where(
+            models.SubmissionRole.user_orcid == user_orcid
+            and models.SubmissionRole.submission_id == submission_id
+        )
+        .first()
+    )
+    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
+        submission_id
+    )
+    if submission is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    is_creator = submission.author_orcid == user_orcid
+    return is_creator or (role and role.role in read_roles)
+
+
+def can_edit_all(db: Session, submission_id: str, user_orcid: str) -> bool:
+    role = (
+        db.query(models.SubmissionRole)
+        .where(
+            models.SubmissionRole.user_orcid == user_orcid
+            and models.SubmissionRole.submission_id == submission_id
+        )
+        .first()
+    )
+    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
+        submission_id
+    )
+    if submission is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    is_creator = submission.author_orcid == user_orcid
+    return is_creator or (role and role.role in contributors_edit_roles)
