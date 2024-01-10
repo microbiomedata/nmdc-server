@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.expression import intersect
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
 
@@ -21,7 +22,13 @@ from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
-from nmdc_server.models import IngestLock, SubmissionMetadata, User
+from nmdc_server.models import (
+    IngestLock,
+    SubmissionEditorRole,
+    SubmissionMetadata,
+    SubmissionRole,
+    User,
+)
 from nmdc_server.pagination import Pagination
 
 router = APIRouter()
@@ -521,7 +528,11 @@ async def list_submissions(
     try:
         await admin_required(user)
     except HTTPException:
-        query = query.join(User).filter(User.orcid == user.orcid)
+        # Give this user all submissions that they have a role for, and those that they created.
+        query = intersect(
+            query.join(SubmissionRole).filter(SubmissionRole.user_orcid == user.orcid),
+            query.join(User).filter(User.orcid == user.orcid),
+        )
     return pagination.response(query)
 
 
@@ -561,8 +572,13 @@ async def update_submission(
     body_dict = body.dict()
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
+    is_admin = False
     if submission.author_orcid != user.orcid:
         await admin_required(user)
+        is_admin = True
+    if not (is_admin or crud.can_edit_all(db, id, user.orcid)):
+        # Forbidden
+        raise HTTPException(403, detail="Could not process the request.")
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
     if not has_lock:
         raise HTTPException(
@@ -570,6 +586,13 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
     submission.metadata_submission = body_dict["metadata_submission"]
+    pi_orcid = body_dict["metadata_submission"].get("studyForm", {}).get("piOrcid", None)
+    if pi_orcid and pi_orcid not in submission.owners:
+        # Create an owner role for the PI if it doesn't exist
+        pi_owner_role = SubmissionRole(
+            submission_id=id, user_orcid=pi_orcid, role=SubmissionEditorRole.owner
+        )
+        db.add(pi_owner_role)
     crud.update_submission_lock(db, submission.id)
     if body_dict["status"]:
         submission.status = body_dict["status"]
@@ -610,6 +633,10 @@ async def submit_metadata(
     submission = SubmissionMetadata(**body.dict(), author_orcid=user.orcid)
     submission.author_id = user.id
     db.add(submission)
+    owner_role = SubmissionRole(
+        submission_id=submission.id, user_orcid=user.orcid, role=SubmissionEditorRole.owner
+    )
+    db.add(owner_role)
     db.commit()
     crud.try_get_submission_lock(db, submission.id, user.id)
     return submission
