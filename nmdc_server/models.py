@@ -817,6 +817,10 @@ class SubmissionMetadata(Base):
             if role.role == SubmissionEditorRole.metadata_contributor
         ]
 
+    @property
+    def owners(self) -> list[str]:
+        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.owner]
+
 
 class SubmissionRole(Base):
     __tablename__ = "submission_role"
