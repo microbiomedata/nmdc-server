@@ -779,7 +779,7 @@ class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    author_orcid = Column(String, nullable=False, unique=True)
+    author_orcid = Column(String, nullable=False)
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
     status = Column(String, nullable=False, default="in-progress")
     metadata_submission = Column(JSONB, nullable=False)
@@ -824,11 +824,12 @@ class SubmissionMetadata(Base):
 
 class SubmissionRole(Base):
     __tablename__ = "submission_role"
+    __table_args__ = (UniqueConstraint("submission_id", "user_orcid"),)
 
-    submission_id = Column(UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id))
+    submission_id = Column(UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id), primary_key=True)
     # Use a plain string column over FK to support adding permissions for people who
     # haven't yet signed into the Data Portal
-    user_orcid = Column(String)
+    user_orcid = Column(String, primary_key=True)
     role = Column(Enum(SubmissionEditorRole))
 
     submission = relationship("SubmissionMetadata", back_populates="roles")
