@@ -560,10 +560,13 @@ def get_submissions_for_user(db: Session, user: models.User):
     if user.is_admin:
         return all_submissions
 
-    permitted_submissions = all_submissions.join(models.SubmissionRole)
+    # Use a left outer join to include submissions with no roles for the user, so we can filter on author orcid
+    permitted_submissions = all_submissions.outerjoin(models.SubmissionRole)
     permitted_submissions = permitted_submissions.filter(or_(
         models.SubmissionRole.user_orcid == user.orcid,
         models.SubmissionMetadata.author_orcid == user.orcid,
     ))
+    print(str(permitted_submissions))
+    print(str(permitted_submissions.statement.compile().params))
 
     return permitted_submissions
