@@ -575,7 +575,4 @@ def get_submissions_for_user(db: Session, user: models.User):
             models.SubmissionMetadata.author_orcid == user.orcid,
         )
     )
-    print(str(permitted_submissions))
-    print(str(permitted_submissions.statement.compile().params))
-
     return permitted_submissions
