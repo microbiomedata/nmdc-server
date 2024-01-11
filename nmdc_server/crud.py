@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from sqlalchemy import or_
 from sqlalchemy.orm import Query, Session
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
@@ -550,3 +551,19 @@ def can_edit_all(db: Session, submission_id: str, user_orcid: str) -> bool:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     is_creator = submission.author_orcid == user_orcid
     return is_creator or (role and role.role in contributors_edit_roles)
+
+
+def get_submissions_for_user(db: Session, user: models.User):
+    """Return all submissions that a user has permission to view."""
+    all_submissions = db.query(models.SubmissionMetadata)
+
+    if user.is_admin:
+        return all_submissions
+
+    permitted_submissions = all_submissions.join(models.SubmissionRole)
+    permitted_submissions = permitted_submissions.filter(or_(
+        models.SubmissionRole.user_orcid == user.orcid,
+        models.SubmissionMetadata.author_orcid == user.orcid,
+    ))
+
+    return permitted_submissions

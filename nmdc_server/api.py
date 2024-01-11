@@ -528,11 +528,7 @@ async def list_submissions(
     try:
         await admin_required(user)
     except HTTPException:
-        # Give this user all submissions that they have a role for, and those that they created.
-        query = intersect(
-            query.join(SubmissionRole).filter(SubmissionRole.user_orcid == user.orcid),
-            query.join(User).filter(User.orcid == user.orcid),
-        )
+        query = crud.get_submissions_for_user(db, user)
     return pagination.response(query)
 
 
@@ -633,8 +629,13 @@ async def submit_metadata(
     submission = SubmissionMetadata(**body.dict(), author_orcid=user.orcid)
     submission.author_id = user.id
     db.add(submission)
+    db.commit()
     owner_role = SubmissionRole(
-        submission_id=submission.id, user_orcid=user.orcid, role=SubmissionEditorRole.owner
+        **{
+            "submission_id": submission.id,
+            "user_orcid": user.orcid,
+            "role": SubmissionEditorRole.owner,
+        }
     )
     db.add(owner_role)
     db.commit()
