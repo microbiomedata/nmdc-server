@@ -568,7 +568,7 @@ async def update_submission(
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     if not (user.is_admin or crud.can_edit_all(db, id, user.orcid)):
-        raise HTTPException(403, detail="Could not process the request.")
+        raise HTTPException(403, detail="Must have access.")
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
     if not has_lock:
         raise HTTPException(
