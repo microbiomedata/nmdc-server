@@ -547,9 +547,9 @@ async def get_submission(
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     _ = crud.try_get_submission_lock(db, submission.id, user.id)
-    if submission.author.orcid != user.orcid:
-        await admin_required(user)
-    return submission
+    if user.is_admin or crud.can_edit_all(db, id, user.orcid):
+        return submission
+    raise HTTPException(status_code=403, detail="Must have access.")
 
 
 @router.patch(
@@ -568,12 +568,7 @@ async def update_submission(
     body_dict = body.dict()
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
-    is_admin = False
-    if submission.author_orcid != user.orcid:
-        await admin_required(user)
-        is_admin = True
-    if not (is_admin or crud.can_edit_all(db, id, user.orcid)):
-        # Forbidden
+    if not (user.is_admin or crud.can_edit_all(db, id, user.orcid)):
         raise HTTPException(403, detail="Could not process the request.")
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
     if not has_lock:
