@@ -85,8 +85,8 @@ async def login_required(
 
 
 async def admin_required(user: models.User = Depends(login_required)) -> models.User:
-    # if settings.environment != "production":
-    # return user
+    if settings.environment != "production":
+        return user
     if user.is_admin:
         return user
     raise HTTPException(
