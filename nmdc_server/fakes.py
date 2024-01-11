@@ -412,6 +412,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     locked_by = None
     lock_updated = None
 
+
 class SubmissionRoleFactory(SQLAlchemyModelFactory):
     class Meta:
         model = models.SubmissionRole

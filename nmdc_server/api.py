@@ -5,7 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.expression import intersect
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
 
@@ -581,7 +580,7 @@ async def update_submission(
     if pi_orcid and pi_orcid not in submission.owners:
         # Create an owner role for the PI if it doesn't exist
         pi_owner_role = SubmissionRole(
-            submission_id=id, user_orcid=pi_orcid, role=SubmissionEditorRole.owner
+            submission_id=id, user_orcid=pi_orcid, role=SubmissionEditorRole.owner.value
         )
         db.add(pi_owner_role)
     crud.update_submission_lock(db, submission.id)

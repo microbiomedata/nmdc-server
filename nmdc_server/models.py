@@ -803,23 +803,35 @@ class SubmissionMetadata(Base):
 
     @property
     def editors(self) -> list[str]:
-        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.editor]
+        return [
+            role.user_orcid
+            for role in self.roles  # type: ignore
+            if role.role == SubmissionEditorRole.editor
+        ]
 
     @property
     def viewers(self) -> list[str]:
-        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.viewer]
+        return [
+            role.user_orcid
+            for role in self.roles  # type: ignore
+            if role.role == SubmissionEditorRole.viewer
+        ]
 
     @property
     def metadata_contributors(self) -> list[str]:
         return [
             role.user_orcid
-            for role in self.roles
+            for role in self.roles  # type: ignore
             if role.role == SubmissionEditorRole.metadata_contributor
         ]
 
     @property
     def owners(self) -> list[str]:
-        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.owner]
+        return [
+            role.user_orcid
+            for role in self.roles   # type: ignore
+            if role.role == SubmissionEditorRole.owner
+        ]
 
 
 class SubmissionRole(Base):

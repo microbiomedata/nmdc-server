@@ -6,7 +6,7 @@ from fastapi.responses import RedirectResponse
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from starlette.middleware.sessions import SessionMiddleware
 
-from nmdc_server import __version__, api, auth, errors, models
+from nmdc_server import __version__, api, auth, errors
 from nmdc_server.config import settings
 
 
