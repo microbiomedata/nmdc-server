@@ -411,3 +411,13 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     }
     locked_by = None
     lock_updated = None
+
+class SubmissionRoleFactory(SQLAlchemyModelFactory):
+    class Meta:
+        model = models.SubmissionRole
+        sqlalchemy_session = db
+
+    submission_id: UUID = Faker("uuid")
+    user_orcid: str = Faker("pystr")
+    role: models.SubmissionEditorRole = models.SubmissionEditorRole.owner
+    submission = SubFactory(MetadataSubmissionFactory)
