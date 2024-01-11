@@ -829,7 +829,7 @@ class SubmissionMetadata(Base):
     def owners(self) -> list[str]:
         return [
             role.user_orcid
-            for role in self.roles   # type: ignore
+            for role in self.roles  # type: ignore
             if role.role == SubmissionEditorRole.owner
         ]
 
