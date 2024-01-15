@@ -517,7 +517,7 @@ contributors_edit_roles = [
 ]
 
 
-def can_read(db: Session, submission_id: str, user_orcid: str) -> Optional[bool]:
+def can_read_submission(db: Session, submission_id: str, user_orcid: str) -> Optional[bool]:
     role = (
         db.query(models.SubmissionRole)
         .filter(
@@ -537,7 +537,7 @@ def can_read(db: Session, submission_id: str, user_orcid: str) -> Optional[bool]
     return (is_creator or (role and models.SubmissionEditorRole(role.role) in read_roles)) is True
 
 
-def can_edit_all(db: Session, submission_id: str, user_orcid: str) -> Optional[bool]:
+def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str) -> Optional[bool]:
     role = (
         db.query(models.SubmissionRole)
         .filter(
