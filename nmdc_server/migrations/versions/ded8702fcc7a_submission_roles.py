@@ -10,10 +10,9 @@ from typing import Optional
 from uuid import uuid4
 
 import sqlalchemy as sa
-from sqlalchemy.dialects import postgresql
 from alembic import op
-from sqlalchemy import Column, orm, String, Enum, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import Column, Enum, ForeignKey, String, orm
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -30,7 +29,7 @@ depends_on: Optional[str] = None
 # https://stackoverflow.com/questions/17547119/accessing-models-in-alembic-migrations
 class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id = Column(postgresql.UUID(as_uuid=True), primary_key=True, default=uuid4)
     author_orcid = Column(String, nullable=False)
 
 
@@ -40,7 +39,6 @@ class SubmissionEditorRole(enum.Enum):
     viewer = "viewer"
     metadata_contributor = "metadata_contributor"
     reviewer = "reviewer"
-
 
 
 def upgrade():
@@ -75,10 +73,13 @@ def upgrade():
 
     class SubmissionRole(Base):
         __tablename__ = "submission_role"
-        submission_id = Column(UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id), primary_key=True)
+        submission_id = Column(
+            postgresql.UUID(as_uuid=True),
+            ForeignKey(SubmissionMetadata.id),
+            primary_key=True,
+        )
         user_orcid = Column(String, primary_key=True)
         role = Column(Enum(SubmissionEditorRole))
-
 
     # Create owner roles for the author of each existing alembic migration
     session = orm.Session(bind=op.get_bind())
@@ -87,12 +88,11 @@ def upgrade():
             author_owner_role = SubmissionRole(
                 submission_id=submission_metadata.id,
                 user_orcid=submission_metadata.author_orcid,
-                role=SubmissionEditorRole.owner
+                role=SubmissionEditorRole.owner,
             )
             session.add(author_owner_role)
     session.commit()
     session.close()
-
 
 
 def downgrade():
