@@ -562,7 +562,7 @@ def get_submissions_for_user(db: Session, user: models.User):
     if user.is_admin:
         return all_submissions
 
-    permitted_submissions = all_submissions.join(models.SubmissionRole)
+    permitted_submissions = all_submissions.outerjoin(models.SubmissionRole)
     permitted_submissions = permitted_submissions.filter(
         models.SubmissionRole.user_orcid == user.orcid
     )

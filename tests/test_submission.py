@@ -19,6 +19,7 @@ def test_try_edit_locked_submission(db: Session, client: TestClient, token: Toke
         locked_by=fakes.UserFactory(),
         lock_updated=datetime.utcnow(),
     )
+    fakes.SubmissionRoleFactory(submission=submission,submission_id=submission.id, user_orcid=logged_in_user.orcid, role=SubmissionEditorRole.owner)
     payload = SubmissionMetadataSchema(**submission.__dict__).json()
     db.commit()
 
@@ -40,6 +41,7 @@ def test_try_edit_expired_locked_submission(
         locked_by=fakes.UserFactory(),
         lock_updated=datetime.utcnow() - timedelta(hours=1),
     )
+    fakes.SubmissionRoleFactory(submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid, role=SubmissionEditorRole.owner)
     payload = SubmissionMetadataSchema(**submission.__dict__).json()
     db.commit()
 
@@ -58,6 +60,7 @@ def test_try_edit_locked_by_current_user_submission(
         locked_by=logged_in_user,
         lock_updated=datetime.utcnow(),
     )
+    fakes.SubmissionRoleFactory(submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid, role=SubmissionEditorRole.owner)
     payload = SubmissionMetadataSchema(**submission.__dict__).json()
     db.commit()
 
@@ -86,23 +89,18 @@ def test_submission_list_with_roles(db: Session, client: TestClient, token: Toke
 
     results = response.json()["results"]
     allowed_submission_ids = [result["id"] for result in results]
-    expected_ids = [str(submission_a.id), str(submission_b.id)]
+    expected_ids = [str(submission_a.id)]
     assert all([submission_id in expected_ids for submission_id in allowed_submission_ids])
-    assert len(results) == 2
+    assert len(results) == 1
 
 
 @pytest.mark.parametrize(
-    "role,code", [(SubmissionEditorRole.owner, 200), ("author", 200), (None, 403)]
+    "role,code", [(SubmissionEditorRole.owner, 200), (None, 403)]
 )
 def test_get_submission_with_roles(
     db: Session, client: TestClient, token: Token, logged_in_user, role, code
 ):
-    if role == "author":
-        submission = fakes.MetadataSubmissionFactory(
-            author=logged_in_user, author_orcid=logged_in_user.orcid
-        )
-        db.commit()
-    elif role == SubmissionEditorRole.owner:
+    if role == SubmissionEditorRole.owner:
         submission = fakes.MetadataSubmissionFactory()
         db.commit()
         role = fakes.SubmissionRoleFactory(
@@ -116,18 +114,12 @@ def test_get_submission_with_roles(
 
 
 @pytest.mark.parametrize(
-    "role,code", [(SubmissionEditorRole.owner, 200), ("author", 200), (None, 403)]
+    "role,code", [(SubmissionEditorRole.owner, 200), (None, 403)]
 )
 def test_edit_submission_with_roles(
     db: Session, client: TestClient, token: Token, logged_in_user, role, code
 ):
-    if role == "author":
-        submission = fakes.MetadataSubmissionFactory(
-            author=logged_in_user, author_orcid=logged_in_user.orcid
-        )
-        payload = SubmissionMetadataSchema(**submission.__dict__).json()
-        db.commit()
-    elif role == SubmissionEditorRole.owner:
+    if role == SubmissionEditorRole.owner:
         submission = fakes.MetadataSubmissionFactory()
         payload = SubmissionMetadataSchema(**submission.__dict__).json()
         db.commit()
@@ -149,6 +141,7 @@ def test_owner_role_created_for_pi(db: Session, client: TestClient, token: Token
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
+    fakes.SubmissionRoleFactory(submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid)
     payload = SubmissionMetadataSchema(**submission.__dict__)
     db.commit()
 
@@ -161,9 +154,9 @@ def test_owner_role_created_for_pi(db: Session, client: TestClient, token: Token
     assert response.status_code == 200
 
     roles = db.query(SubmissionRole)
-    assert roles.count() == 1
+    assert roles.count() == 2
 
-    role = roles.first()
+    role = roles.where(SubmissionRole.user_orcid == str(pi_orcid)).first()
     assert role is not None
     assert role.user_orcid == str(pi_orcid)
     assert role.submission_id == submission.id
