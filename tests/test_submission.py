@@ -19,7 +19,12 @@ def test_try_edit_locked_submission(db: Session, client: TestClient, token: Toke
         locked_by=fakes.UserFactory(),
         lock_updated=datetime.utcnow(),
     )
-    fakes.SubmissionRoleFactory(submission=submission,submission_id=submission.id, user_orcid=logged_in_user.orcid, role=SubmissionEditorRole.owner)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
     payload = SubmissionMetadataSchema(**submission.__dict__).json()
     db.commit()
 
@@ -41,7 +46,12 @@ def test_try_edit_expired_locked_submission(
         locked_by=fakes.UserFactory(),
         lock_updated=datetime.utcnow() - timedelta(hours=1),
     )
-    fakes.SubmissionRoleFactory(submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid, role=SubmissionEditorRole.owner)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
     payload = SubmissionMetadataSchema(**submission.__dict__).json()
     db.commit()
 
@@ -60,7 +70,12 @@ def test_try_edit_locked_by_current_user_submission(
         locked_by=logged_in_user,
         lock_updated=datetime.utcnow(),
     )
-    fakes.SubmissionRoleFactory(submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid, role=SubmissionEditorRole.owner)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
     payload = SubmissionMetadataSchema(**submission.__dict__).json()
     db.commit()
 
@@ -73,7 +88,7 @@ def test_try_edit_locked_by_current_user_submission(
 def test_submission_list_with_roles(db: Session, client: TestClient, token: Token, logged_in_user):
     user_a = fakes.UserFactory()
     submission_a = fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
-    submission_b = fakes.MetadataSubmissionFactory(
+    fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
@@ -94,9 +109,7 @@ def test_submission_list_with_roles(db: Session, client: TestClient, token: Toke
     assert len(results) == 1
 
 
-@pytest.mark.parametrize(
-    "role,code", [(SubmissionEditorRole.owner, 200), (None, 403)]
-)
+@pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
 def test_get_submission_with_roles(
     db: Session, client: TestClient, token: Token, logged_in_user, role, code
 ):
@@ -113,9 +126,7 @@ def test_get_submission_with_roles(
     assert response.status_code == code
 
 
-@pytest.mark.parametrize(
-    "role,code", [(SubmissionEditorRole.owner, 200), (None, 403)]
-)
+@pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
 def test_edit_submission_with_roles(
     db: Session, client: TestClient, token: Token, logged_in_user, role, code
 ):
@@ -141,7 +152,9 @@ def test_owner_role_created_for_pi(db: Session, client: TestClient, token: Token
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
-    fakes.SubmissionRoleFactory(submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid
+    )
     payload = SubmissionMetadataSchema(**submission.__dict__)
     db.commit()
 
