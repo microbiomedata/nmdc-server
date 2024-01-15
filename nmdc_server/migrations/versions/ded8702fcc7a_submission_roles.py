@@ -5,17 +5,42 @@ Revises: 0f87ba7add08
 Create Date: 2024-01-10 22:34:09.294181
 
 """
+import enum
 from typing import Optional
+from uuid import uuid4
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
+from alembic import op
+from sqlalchemy import Column, orm, String, Enum, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.ext.declarative import declarative_base
+
+Base = declarative_base()
 
 # revision identifiers, used by Alembic.
 revision: str = "ded8702fcc7a"
 down_revision: Optional[str] = "0f87ba7add08"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
+
+
+# Redefine SubmissionMetadata, including only what we need for this migration
+# to ensure this migration is self-contained.
+# https://stackoverflow.com/questions/17547119/accessing-models-in-alembic-migrations
+class SubmissionMetadata(Base):
+    __tablename__ = "submission_metadata"
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    author_orcid = Column(String, nullable=False)
+
+
+class SubmissionEditorRole(enum.Enum):
+    editor = "editor"
+    owner = "owner"
+    viewer = "viewer"
+    metadata_contributor = "metadata_contributor"
+    reviewer = "reviewer"
+
 
 
 def upgrade():
@@ -47,6 +72,27 @@ def upgrade():
         ),
     )
     # ### end Alembic commands ###
+
+    class SubmissionRole(Base):
+        __tablename__ = "submission_role"
+        submission_id = Column(UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id), primary_key=True)
+        user_orcid = Column(String, primary_key=True)
+        role = Column(Enum(SubmissionEditorRole))
+
+
+    # Create owner roles for the author of each existing alembic migration
+    session = orm.Session(bind=op.get_bind())
+    for submission_metadata in session.query(SubmissionMetadata):
+        if submission_metadata.author_orcid:
+            author_owner_role = SubmissionRole(
+                submission_id=submission_metadata.id,
+                user_orcid=submission_metadata.author_orcid,
+                role=SubmissionEditorRole.owner
+            )
+            session.add(author_owner_role)
+    session.commit()
+    session.close()
+
 
 
 def downgrade():
