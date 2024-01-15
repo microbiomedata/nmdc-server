@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
@@ -533,8 +533,7 @@ def can_read_submission(db: Session, submission_id: str, user_orcid: str) -> Opt
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    is_creator = submission.author_orcid == user_orcid
-    return (is_creator or (role and models.SubmissionEditorRole(role.role) in read_roles)) is True
+    return (role and models.SubmissionEditorRole(role.role) in read_roles) is True
 
 
 def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str) -> Optional[bool]:
@@ -553,10 +552,7 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    is_creator = submission.author_orcid == user_orcid
-    return (
-        is_creator or (role and models.SubmissionEditorRole(role.role) in contributors_edit_roles)
-    ) is True
+    return (role and models.SubmissionEditorRole(role.role) in contributors_edit_roles) is True
 
 
 def get_submissions_for_user(db: Session, user: models.User):
@@ -566,13 +562,8 @@ def get_submissions_for_user(db: Session, user: models.User):
     if user.is_admin:
         return all_submissions
 
-    # Use a left outer join to include submissions with no roles for the user,
-    # so we can filter on author orcid
-    permitted_submissions = all_submissions.outerjoin(models.SubmissionRole)
+    permitted_submissions = all_submissions.join(models.SubmissionRole)
     permitted_submissions = permitted_submissions.filter(
-        or_(
-            models.SubmissionRole.user_orcid == user.orcid,
-            models.SubmissionMetadata.author_orcid == user.orcid,
-        )
+        models.SubmissionRole.user_orcid == user.orcid
     )
     return permitted_submissions
