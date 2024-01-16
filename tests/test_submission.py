@@ -88,9 +88,7 @@ def test_try_edit_locked_by_current_user_submission(
 def test_submission_list_with_roles(db: Session, client: TestClient, token: Token, logged_in_user):
     user_a = fakes.UserFactory()
     submission_a = fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
-    fakes.MetadataSubmissionFactory(
-        author=logged_in_user, author_orcid=logged_in_user.orcid
-    )
+    fakes.MetadataSubmissionFactory(author=logged_in_user, author_orcid=logged_in_user.orcid)
     fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
     db.commit()
     fakes.SubmissionRoleFactory(
@@ -169,7 +167,7 @@ def test_owner_role_created_for_pi(db: Session, client: TestClient, token: Token
     roles = db.query(SubmissionRole)
     assert roles.count() == 2
 
-    role = roles.where(SubmissionRole.user_orcid == str(pi_orcid)).first()
+    role = roles.filter(SubmissionRole.user_orcid == str(pi_orcid)).first()
     assert role is not None
     assert role.user_orcid == str(pi_orcid)
     assert role.submission_id == submission.id
