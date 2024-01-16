@@ -527,7 +527,9 @@ async def list_submissions(
     try:
         await admin_required(user)
     except HTTPException:
-        query = query.join(User).filter(User.orcid == user.orcid)
+        query = query.join(User, SubmissionMetadata.author_id == User.id).filter(
+            User.orcid == user.orcid
+        )
     return pagination.response(query)
 
 

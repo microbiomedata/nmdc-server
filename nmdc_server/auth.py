@@ -85,7 +85,7 @@ async def login_required(
 
 
 async def admin_required(user: models.User = Depends(login_required)) -> models.User:
-    if settings.environment != "production":
+    if settings.environment != "production" and settings.environment != "testing":
         return user
     if user.is_admin:
         return user
