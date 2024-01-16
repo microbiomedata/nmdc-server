@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
 
-from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
+from nmdc_server import __version__, crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import (
     admin_required,
     get_current_user,
@@ -32,6 +32,12 @@ router = APIRouter()
 async def get_settings() -> Dict[str, Any]:
     settings = Settings()
     return {"disable_bulk_download": settings.disable_bulk_download.upper() == "YES"}
+
+
+# get application version number
+@router.get("/version", name="Get application version identifier")
+async def get_version() -> Dict[str, Any]:
+    return {"nmdc-server": __version__}
 
 
 # get the current user information
