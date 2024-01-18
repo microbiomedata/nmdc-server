@@ -15,6 +15,12 @@ def test_list_submissions(db: Session, client: TestClient, token: Token, logged_
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
     db.commit()
 
     response = client.request(method="GET", url="/api/metadata_submission")
