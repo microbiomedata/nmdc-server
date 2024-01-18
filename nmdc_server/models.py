@@ -181,9 +181,9 @@ class PrincipalInvestigator(Base):
 
 
 class DOIType(enum.Enum):
-    AWARD = "award"
-    DATASET = "dataset"
-    PUBLICATION = "publication"
+    AWARD = "award_doi"
+    DATASET = "dataset_doi"
+    PUBLICATION = "publication_doi"
 
 
 study_doi_association = Table(
@@ -274,26 +274,10 @@ class Study(Base, AnnotatedModel):
         )
 
     @property
-    def award_dois(self) -> list[DOIInfo]:
-        return [d for d in self.dois if d.doi_type == DOIType.AWARD]  # type: ignore
-
-    @property
-    def publication_dois(self) -> list[DOIInfo]:
-        return [d for d in self.dois if d.doi_type == DOIType.PUBLICATION]  # type: ignore
-
-    @property
-    def dataset_dois(self) -> list[DOIInfo]:
-        return [d for d in self.dois if d.doi_type == DOIType.DATASET]  # type: ignore
-
-    @property
     def doi_map(self) -> Dict[str, Any]:
-        doi_info = {}
-        for award_doi in self.award_dois:
-            doi_info[award_doi.id] = award_doi.info
-        for publication_doi in self.publication_dois:
-            doi_info[publication_doi.id] = publication_doi.info
-        for dataset_doi in self.dataset_dois:
-            doi_info[dataset_doi.id] = dataset_doi.info
+        doi_info = dict()
+        for doi in self.dois:  # type: ignore
+            doi_info[doi.id] = {"info": doi.info, "category": doi.doi_type}
         return doi_info
 
 

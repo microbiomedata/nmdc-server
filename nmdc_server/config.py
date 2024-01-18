@@ -53,6 +53,14 @@ class Settings(BaseSettings):
     # App settings related to UI behavior
     disable_bulk_download: str = ""
 
+    # Rancher information to swap databases after ingest
+    rancher_api_base_url: Optional[str] = None
+    rancher_api_auth_token: Optional[str] = None
+    rancher_project_id: Optional[str] = None
+    rancher_postgres_secret_id: Optional[str] = None
+    rancher_backend_workload_id: Optional[str] = None
+    rancher_worker_workload_id: Optional[str] = None
+
     @property
     def current_db_uri(self) -> str:
         if self.environment == "testing":

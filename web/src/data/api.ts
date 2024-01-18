@@ -118,8 +118,13 @@ interface PrincipalInvestigator {
 }
 
 export interface DOI {
-  type: string,
+  cite: string,
   id:string,
+}
+
+export interface DOIMAP {
+  info: Record<string, any>,
+  category: string
 }
 
 export interface StudySearchResults extends BaseSearchResult {
@@ -130,9 +135,7 @@ export interface StudySearchResults extends BaseSearchResult {
   principal_investigator: PrincipalInvestigator;
   award_dois: DOI[];
   dataset_dois: DOI[],
-  doi_map: Record<string, {
-    type: string;
-  }>,
+  doi_map: Record<string, DOIMAP>,
   publication_dois: DOI[];
   omics_counts: {
     type: string;

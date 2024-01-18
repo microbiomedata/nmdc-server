@@ -476,10 +476,10 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
                 submission_record.lock_updated = datetime.utcnow()
                 db.commit()
                 return True
-            else:
-                # Someone else holds the lock, but there's no timestamp
-                # Ensure that there's a timestamp on the lock.
-                submission_record.lock_updated = datetime.utcnow()
+        else:
+            # Someone else holds the lock, but there's no timestamp
+            # Ensure that there's a timestamp on the lock.
+            submission_record.lock_updated = datetime.utcnow()
     return False
 
 
