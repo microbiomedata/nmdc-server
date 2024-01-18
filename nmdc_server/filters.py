@@ -219,10 +219,10 @@ class BiosampleFilter(BaseFilter):
 
 
 class EnvoTermFilter(BiosampleFilter):
-
     def join_omics_processing(self, query: Query) -> Query:
         join_with_biosample_query = super().join_omics_processing(query)
         return self.join_envo(self.table, join_with_biosample_query)
+
 
 class EnvBroadScaleFilter(EnvoTermFilter):
     table = Table.env_broad_scale
