@@ -3,6 +3,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
@@ -488,3 +489,81 @@ def release_submission_lock(db: Session, submission_id: str):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     submission.locked_by = None  # type: ignore
     db.commit()
+
+
+#############################
+# SUBMISSION ACCESS CONTROL #
+#############################
+read_roles = [
+    models.SubmissionEditorRole.editor,
+    models.SubmissionEditorRole.metadata_contributor,
+    models.SubmissionEditorRole.owner,
+    models.SubmissionEditorRole.viewer,
+]
+
+metadata_edit_roles = [
+    models.SubmissionEditorRole.editor,
+    models.SubmissionEditorRole.metadata_contributor,
+    models.SubmissionEditorRole.owner,
+]
+
+context_edit_roles = [
+    models.SubmissionEditorRole.editor,
+    models.SubmissionEditorRole.owner,
+]
+
+contributors_edit_roles = [
+    models.SubmissionEditorRole.owner,
+]
+
+
+def can_read_submission(db: Session, submission_id: str, user_orcid: str) -> Optional[bool]:
+    role = (
+        db.query(models.SubmissionRole)
+        .filter(
+            and_(
+                models.SubmissionRole.user_orcid == user_orcid,
+                models.SubmissionRole.submission_id == submission_id,
+            )
+        )
+        .first()
+    )
+    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
+        submission_id
+    )
+    if submission is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    return (role and models.SubmissionEditorRole(role.role) in read_roles) is True
+
+
+def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str) -> Optional[bool]:
+    role = (
+        db.query(models.SubmissionRole)
+        .filter(
+            and_(
+                models.SubmissionRole.user_orcid == user_orcid,
+                models.SubmissionRole.submission_id == submission_id,
+            )
+        )
+        .first()
+    )
+    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
+        submission_id
+    )
+    if submission is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    return (role and models.SubmissionEditorRole(role.role) in contributors_edit_roles) is True
+
+
+def get_submissions_for_user(db: Session, user: models.User):
+    """Return all submissions that a user has permission to view."""
+    all_submissions = db.query(models.SubmissionMetadata)
+
+    if user.is_admin:
+        return all_submissions
+
+    permitted_submissions = all_submissions.outerjoin(models.SubmissionRole)
+    permitted_submissions = permitted_submissions.filter(
+        models.SubmissionRole.user_orcid == user.orcid
+    )
+    return permitted_submissions

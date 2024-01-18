@@ -751,6 +751,14 @@ class User(Base):
     is_admin = Column(Boolean, nullable=False, default=False)
 
 
+class SubmissionEditorRole(enum.Enum):
+    editor = "editor"
+    owner = "owner"
+    viewer = "viewer"
+    metadata_contributor = "metadata_contributor"
+    reviewer = "reviewer"
+
+
 class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
 
@@ -773,3 +781,51 @@ class SubmissionMetadata(Base):
         primaryjoin="SubmissionMetadata.locked_by_id == User.id",
     )
     lock_updated = Column(DateTime, nullable=True, default=datetime.utcnow)
+
+    # Roles
+    roles = relationship("SubmissionRole", back_populates="submission")
+
+    @property
+    def editors(self) -> list[str]:
+        return [
+            role.user_orcid
+            for role in self.roles  # type: ignore
+            if role.role == SubmissionEditorRole.editor
+        ]
+
+    @property
+    def viewers(self) -> list[str]:
+        return [
+            role.user_orcid
+            for role in self.roles  # type: ignore
+            if role.role == SubmissionEditorRole.viewer
+        ]
+
+    @property
+    def metadata_contributors(self) -> list[str]:
+        return [
+            role.user_orcid
+            for role in self.roles  # type: ignore
+            if role.role == SubmissionEditorRole.metadata_contributor
+        ]
+
+    @property
+    def owners(self) -> list[str]:
+        return [
+            role.user_orcid
+            for role in self.roles  # type: ignore
+            if role.role == SubmissionEditorRole.owner
+        ]
+
+
+class SubmissionRole(Base):
+    __tablename__ = "submission_role"
+    __table_args__ = (UniqueConstraint("submission_id", "user_orcid"),)
+
+    submission_id = Column(UUID(as_uuid=True), ForeignKey(SubmissionMetadata.id), primary_key=True)
+    # Use a plain string column over FK to support adding permissions for people who
+    # haven't yet signed into the Data Portal
+    user_orcid = Column(String, primary_key=True)
+    role = Column(Enum(SubmissionEditorRole))
+
+    submission = relationship("SubmissionMetadata", back_populates="roles")
