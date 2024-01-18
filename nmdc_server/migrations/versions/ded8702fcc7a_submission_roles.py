@@ -88,7 +88,7 @@ def upgrade():
             author_owner_role = SubmissionRole(
                 submission_id=submission_metadata.id,
                 user_orcid=submission_metadata.author_orcid,
-                role=str(SubmissionEditorRole.owner),
+                role=SubmissionEditorRole.owner.value,
             )
             session.add(author_owner_role)
     session.commit()
