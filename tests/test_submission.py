@@ -57,6 +57,12 @@ def test_try_edit_expired_locked_submission(
         locked_by=fakes.UserFactory(),
         lock_updated=datetime.utcnow() - timedelta(hours=1),
     )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
     payload = SubmissionMetadataSchema(**submission.__dict__).json()
     db.commit()
 

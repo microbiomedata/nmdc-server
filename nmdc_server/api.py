@@ -533,9 +533,7 @@ async def list_submissions(
     try:
         await admin_required(user)
     except HTTPException:
-        query = query.join(User, SubmissionMetadata.author_id == User.id).filter(
-            User.orcid == user.orcid
-        )
+        query = crud.get_submissions_for_user(db, user)
     return pagination.response(query)
 
 
