@@ -1,6 +1,9 @@
+.mypy_cache
 .tox
 .coverage
 .cache
+.venv
+.vscode
 env
 *.egg-info
 node_modules

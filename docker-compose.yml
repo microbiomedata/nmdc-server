@@ -22,7 +22,7 @@ services:
       - "max_wal_size=2GB"
 
   worker:
-    image: ghcr.io/microbiomedata/nmdc-server/worker:latest
+    image: ghcr.io/microbiomedata/nmdc-server/worker:main
     depends_on:
       - redis
       - db
@@ -34,7 +34,7 @@ services:
       dockerfile: Dockerfile.worker
 
   backend:
-    image: ghcr.io/microbiomedata/nmdc-server/server:latest
+    image: ghcr.io/microbiomedata/nmdc-server/server:main
     depends_on:
       - db
       - redis
@@ -53,7 +53,7 @@ services:
       - "8000:8000"
 
   web:
-    image: ghcr.io/microbiomedata/nmdc-server/client:latest
+    image: ghcr.io/microbiomedata/nmdc-server/client:main
     depends_on:
       - backend
       - data
