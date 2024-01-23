@@ -2,8 +2,10 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 
 from authlib.integrations import starlette_client
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.security.oauth2 import OAuth2AuthorizationCodeBearer
+from jose import jwt
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.requests import Request
@@ -38,6 +40,12 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(
     auto_error=False,
 )
 
+bearer_scheme = HTTPBearer(scheme_name="bearerAuth", auto_error=False)
+
+
+async def bearer_credentials(req: Request):
+    return await bearer_scheme(req)
+
 
 class Token(BaseModel):
     access_token: UUID
@@ -51,11 +59,14 @@ class Token(BaseModel):
 
 
 async def get_token(
-    request: Request, access_token: Dict[str, Any] = Security(oauth2_scheme)
+    request: Request, bearer: HTTPAuthorizationCredentials = Depends(bearer_scheme)
 ) -> Optional[Token]:
     token = request.session.get("token")
     if token:
         return Token(**token)
+    if bearer:
+        payload = jwt.decode(bearer.credentials, settings.secret_key, algorithms=["HS256"])
+        return Token(**payload)
     return None
 
 
@@ -95,6 +106,11 @@ async def admin_required(user: models.User = Depends(login_required)) -> models.
     )
 
 
+def create_local_token(data: dict):
+    encoded_jwt = jwt.encode(data, settings.secret_key, algorithm="HS256")
+    return encoded_jwt
+
+
 router = APIRouter()
 
 
@@ -107,6 +123,14 @@ async def login_via_orcid(request: Request):
     return await oauth2_client.orcid.authorize_redirect(request, redirect_uri)
 
 
+@router.get("/login:jwt", include_in_schema=False)
+async def login_via_orcid(request: Request):
+    redirect_uri = request.url_for("token:jwt")
+    if settings.host:
+        redirect_uri = f"{settings.host.rstrip('/')}/token:jwt"
+    return await oauth2_client.orcid.authorize_redirect(request, redirect_uri)
+
+
 @router.get("/token", name="token", include_in_schema=False)
 async def authorize(request: Request, db: Session = Depends(get_db)):
     token = await oauth2_client.orcid.authorize_access_token(request)
@@ -116,6 +140,16 @@ async def authorize(request: Request, db: Session = Depends(get_db)):
     db.commit()
     request.session["token"] = token
     return RedirectResponse(url="/")
+
+
+@router.get("/token:jwt", name="token:jwt", include_in_schema=False)
+async def authorize(request: Request, db: Session = Depends(get_db)):
+    token = await oauth2_client.orcid.authorize_access_token(request)
+    user = User(orcid=token["orcid"], name=token["name"])
+    user_model = crud.get_or_create_user(db, user)
+    user_model.name = user.name
+    db.commit()
+    return create_local_token(token)
 
 
 @router.get(
