@@ -2,7 +2,7 @@
 import { defineComponent, onMounted, ref } from '@vue/composition-api';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
 import Definitions from '@/definitions';
-import { studyForm, studyFormValid } from '../store';
+import { studyForm, studyFormValid, permissionTitleToDbValueMap, permissionTitle } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 
 export default defineComponent({
@@ -15,6 +15,7 @@ export default defineComponent({
         name: '',
         orcid: '',
         roles: [],
+        permissionLevel: null,
       });
     }
 
@@ -25,8 +26,17 @@ export default defineComponent({
       ];
     }
 
+    const permissionLevelChoices: { title: string, value: string }[] = [];
+    Object.keys(permissionTitleToDbValueMap).forEach((title) => {
+      permissionLevelChoices.push({
+        title,
+        value: permissionTitleToDbValueMap[title as permissionTitle],
+      });
+    });
+
     onMounted(() => {
       formRef.value.validate();
+      console.log(NmdcSchema.$defs.CreditEnum.enum);
     });
 
     return {
@@ -37,6 +47,7 @@ export default defineComponent({
       Definitions,
       addContributor,
       requiredRules,
+      permissionLevelChoices,
     };
   },
 });
@@ -179,24 +190,39 @@ export default defineComponent({
               </template>
             </v-text-field>
           </div>
-          <v-select
-            v-model="contributor.roles"
-            :rules="[v => v.length >= 1 || 'At least one role is required']"
-            :items="NmdcSchema.$defs.CreditEnum.enum"
-            label="Roles *"
-            :hint="Definitions.contributorRoles"
-            deletable-chips
-            multiple
-            outlined
-            chips
-            small-chips
-            dense
-            persistent-hint
-          >
-            <template #message="{ message }">
-              <span v-html="message" />
-            </template>
-          </v-select>
+          <div class="d-flex">
+            <v-select
+              v-model="contributor.roles"
+              :rules="[v => v.length >= 1 || 'At least one role is required']"
+              :items="NmdcSchema.$defs.CreditEnum.enum"
+              label="CRediT Roles *"
+              :hint="Definitions.contributorRoles"
+              deletable-chips
+              multiple
+              outlined
+              chips
+              small-chips
+              dense
+              persistent-hint
+              class="mb-2 mr-3"
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-select>
+            <v-select
+              v-model="contributor.permissionLevel"
+              :items="permissionChoices"
+              :item-title="title"
+              :item-value="value"
+              :style="{ maxWidth: '400px'}"
+              label="Edit Permission Level"
+              hint="Level of permissions the contributor has for this submission"
+              outlined
+              dense
+              persistent-hint
+            />
+          </div>
         </v-card>
         <v-btn
           icon

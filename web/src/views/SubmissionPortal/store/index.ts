@@ -85,6 +85,13 @@ const contextFormValid = ref(false);
 const addressForm = reactive(clone(addressFormDefault));
 const addressFormValid = ref(false);
 
+type permissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
+const permissionTitleToDbValueMap: Record<permissionTitle, string> = {
+  Viewer: 'viewer',
+  'Metadata Contributor': 'metadata_contributor',
+  Editor: 'editor',
+};
+
 /**
  * Study Form Step
  */
@@ -101,6 +108,7 @@ const studyFormDefault = {
     name: string;
     orcid: string;
     roles: string[];
+    permissionLevel: permissionTitle | null;
   }[],
 };
 const studyFormValid = ref(false);
@@ -250,6 +258,8 @@ export {
   submissionStatus,
   BiosafetyLevels,
   AwardTypes,
+  permissionTitle,
+  permissionTitleToDbValueMap,
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
