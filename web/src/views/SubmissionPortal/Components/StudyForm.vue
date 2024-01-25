@@ -1,8 +1,18 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref } from '@vue/composition-api';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+import {
+  defineComponent,
+  onMounted,
+  ref,
+  Ref,
+} from '@vue/composition-api';
 import Definitions from '@/definitions';
-import { studyForm, studyFormValid, permissionTitleToDbValueMap, permissionTitle } from '../store';
+import {
+  studyForm,
+  studyFormValid,
+  permissionTitleToDbValueMap,
+  permissionTitle,
+} from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 
 export default defineComponent({
@@ -26,9 +36,9 @@ export default defineComponent({
       ];
     }
 
-    const permissionLevelChoices: { title: string, value: string }[] = [];
+    const permissionLevelChoices: Ref<{ title: string, value: string }[]> = ref([]);
     Object.keys(permissionTitleToDbValueMap).forEach((title) => {
-      permissionLevelChoices.push({
+      permissionLevelChoices.value.push({
         title,
         value: permissionTitleToDbValueMap[title as permissionTitle],
       });
@@ -36,7 +46,6 @@ export default defineComponent({
 
     onMounted(() => {
       formRef.value.validate();
-      console.log(NmdcSchema.$defs.CreditEnum.enum);
     });
 
     return {
@@ -212,9 +221,9 @@ export default defineComponent({
             </v-select>
             <v-select
               v-model="contributor.permissionLevel"
-              :items="permissionChoices"
-              :item-title="title"
-              :item-value="value"
+              :items="permissionLevelChoices"
+              item-text="title"
+              item-value="value"
               :style="{ maxWidth: '400px'}"
               label="Edit Permission Level"
               hint="Level of permissions the contributor has for this submission"
