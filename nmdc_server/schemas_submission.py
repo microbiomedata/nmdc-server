@@ -11,6 +11,7 @@ class Contributor(BaseModel):
     name: str
     orcid: str
     roles: List[str]
+    permissionLevel: Optional[str]
 
 
 class StudyForm(BaseModel):
