@@ -29,7 +29,7 @@ export default defineComponent({
         <v-btn
           icon
           x-large
-          @click="$router.go(-1)"
+          :to="{name: 'Search'}"
         >
           <v-icon>mdi-chevron-left-box</v-icon>
         </v-btn>

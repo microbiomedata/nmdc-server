@@ -50,6 +50,25 @@ export default defineComponent({
       essDiveDois: [] as DOI[],
     });
 
+    const sampleTree = {
+      name: 'Consortium or Umbrella Study Name',
+      children: [
+        {
+          name: 'Study Name',
+          studyId: 1,
+        },
+        {
+          name: 'This Study',
+          studyId: 2,
+        },
+        {
+          name: 'Study Name',
+          studyId: 3,
+        },
+
+      ],
+    };
+
     const item = ref(null as StudySearchResults | null);
     watchEffect(() => {
       api.getStudy(props.id).then((b) => { item.value = b; });
@@ -142,40 +161,31 @@ export default defineComponent({
         dois.value.awardDois = [];
         dois.value.publicationDois = [];
         dois.value.datasetDois = [];
-        dois.value.massiveDois = Object.values(doiMap)
-          .filter((doi) => doi.info.publisher.includes('MassIVE'))
-          .map((doi) => [{
-            cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
-            id: doi.info.id,
-          }]).flat();
-        dois.value.essDiveDois = Object.values(doiMap)
-          .filter((doi) => doi.info.publisher.includes('Environmental System Science Data Infrastructure for a Virtual Ecosystem'))
-          .map((doi) => [{
-            cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
-            id: doi.info.id,
-          }]).flat();
         dois.value.awardDois = Object.values(doiMap)
           .filter((doi) => doi.category === 'award_doi')
           .map((doi) => [{
             cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
             id: doi.info.DOI,
+            provider: doi.provider,
           }]).flat();
         dois.value.datasetDois = Object.values(doiMap)
           .filter((doi) => doi.category === 'dataset_doi' && !doi.info.publisher.includes('MassIVE') && !doi.info.publisher.includes('Environmental System Science Data Infrastructure for a Virtual Ecosystem'))
           .map((doi) => [{
             cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
             id: doi.info.DOI,
+            provider: doi.provider,
           }]).flat();
         dois.value.publicationDois = Object.values(doiMap)
           .filter((doi) => doi.category === 'publication_doi')
           .map((doi) => [{
             cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
             id: doi.info.DOI,
+            provider: doi.provider,
           }]).flat();
       }
     });
-
     return {
+      sampleTree,
       CitationOverrides,
       GoldStudyLinkBase,
       goldLinks,
@@ -257,16 +267,17 @@ export default defineComponent({
             </v-list>
             <template
               v-if="
-                goldLinks.length > 0 ||
+                goldLinks ||
                   data.essDiveDois.length > 0 ||
                   data.massiveDois.length > 0 ||
-                  item.relevant_protocols ||
-                  item.principal_investigator_websites"
+                  item.relevant_protocols.length > 0 ||
+                  item.principal_investigator_websites.length > 0"
             >
-              Aditional Resources
+              <div class="display-1">
+                Additional Resources
               </div>
               <v-list
-                v-if="goldLinks.length > 0|| data.essDiveDois.length > 0 || data.massiveDois.length > 0 || item.relevant_protocols"
+                v-if="goldLinks || data.essDiveDois.length > 0 || data.massiveDois.length > 0 || item.relevant_protocols"
               >
                 <v-list-item>
                   <v-list-item-avatar>
@@ -285,7 +296,7 @@ export default defineComponent({
                   v-bind="{
                     item,
                     link: {
-                      name: 'Open in GOLD',
+                      name: 'GOLD Metadata',
                       target: link
                     }
                   }"
@@ -341,7 +352,7 @@ export default defineComponent({
                     "
                   />
                 </template>
-                <v-list-item v-if="item.principal_investigator_websites">
+                <v-list-item v-if="item.principal_investigator_websites.length > 0">
                   <v-list-item-avatar>
                     <v-icon>mdi-file-document</v-icon>
                   </v-list-item-avatar>
@@ -390,7 +401,14 @@ export default defineComponent({
                 >
                   <v-list-item-content>
                     {{ award.cite }}
+                    <div
+                      v-if="award.provider"
+                      class="pt-2"
+                    >
+                      <span class="font-weight-bold pr-2">Provider:</span> {{ award.provider }}
+                    </div>
                   </v-list-item-content>
+
                   <v-list-item-action>
                     <v-tooltip top>
                       <template #activator="{ on }">
@@ -423,6 +441,12 @@ export default defineComponent({
                   <v-list-item :key="pubIndex">
                     <v-list-item-content>
                       {{ pub.cite }}
+                      <div
+                        v-if="pub.provider"
+                        class="pt-2"
+                      >
+                        <span class="font-weight-bold pr-2">Provider:</span>{{ pub.provider }}
+                      </div>
                     </v-list-item-content>
                     <v-list-item-action>
                       <v-tooltip top>
@@ -456,6 +480,12 @@ export default defineComponent({
                 >
                   <v-list-item-content>
                     {{ dataDOI.cite }}
+                    <div
+                      v-if="dataDOI.provider"
+                      class="pt-2"
+                    >
+                      <span class="font-weight-bold pr-2">Provider:</span>{{ dataDOI.provider }}
+                    </div>
                   </v-list-item-content>
                   <v-list-item-action>
                     <v-tooltip top>
@@ -475,6 +505,30 @@ export default defineComponent({
               </v-list>
             </template>
           </div>
+          <v-card
+            v-if="item.part_of"
+            flat
+          >
+            <v-card-title class="display-1">
+              Part of:
+            </v-card-title>
+            <v-list>
+              <v-list-item
+                v-for="study in item.part_of"
+                :key="study"
+                :to="`${study}`"
+              >
+                <v-list-item-icon>
+                  <v-icon>mdi-file-document</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title class="px-2">
+                    {{ study }}
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-card>
         </v-col>
       </v-row>
     </v-main>
