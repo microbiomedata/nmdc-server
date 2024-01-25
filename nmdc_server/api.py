@@ -32,6 +32,7 @@ from nmdc_server.pagination import PaginatedResponse, Pagination
 
 router = APIRouter()
 
+
 # get application settings
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
@@ -256,35 +257,51 @@ async def search_study(
     flat: bool = False,
 ):
     if not flat:
-
-        top_level_condition:List[query.ConditionSchema] = [query.SimpleConditionSchema(**{'field': "part_of", 'op': "==", 'value': 'null', 'table': "study"})]
-        children_condition:List[query.ConditionSchema] = [query.SimpleConditionSchema(**{'field': "part_of", 'op': "!=", 'value': 'null', 'table': "study"})]
+        top_level_condition: List[query.ConditionSchema] = [
+            query.SimpleConditionSchema(
+                **{"field": "part_of", "op": "==", "value": "null", "table": "study"}
+            )
+        ]
+        children_condition: List[query.ConditionSchema] = [
+            query.SimpleConditionSchema(
+                **{"field": "part_of", "op": "!=", "value": "null", "table": "study"}
+            )
+        ]
 
         top_level_condition.extend(q.conditions)
         children_condition.extend(q.conditions)
 
-        top_level_studies: PaginatedResponse = pagination.response(crud.search_study(db, top_level_condition ))
-        children_studies = pagination.response(crud.search_study(db, children_condition))
+        top_level_studies: PaginatedResponse = pagination.response(
+            crud.search_study(db, top_level_condition)
+        )
+        children_studies: PaginatedResponse = pagination.response(
+            crud.search_study(db, children_condition)
+        )
 
-        # If there are children studies that match the query, but the top level studies do not, add the parent to the top level studies
-        if children_studies['count'] > top_level_studies['count']:
-            for child in children_studies['results']:
+        """
+        If there are children studies that match the query, but the top level studies do not,
+        add the parent to the top level studies
+        """
+        if children_studies["count"] > top_level_studies["count"]:
+            for child in children_studies["results"]:
                 if child.part_of is not None:
-                   for parent_id in child.part_of:
-                       if parent_id not in [parent.id for parent in top_level_studies['results']]:
-                           parent = crud.get_study(db, parent_id)
-                           if parent is not None:
-                               top_level_studies['results'].append(parent)
+                    for parent_id in child.part_of:
+                        if parent_id not in [parent.id for parent in top_level_studies["results"]]:
+                            parent = crud.get_study(db, parent_id)
+                            if parent is not None:
+                                top_level_studies["results"].append(parent)
 
-        for parent in top_level_studies['results']:
+        for parent in top_level_studies["results"]:
             parent.children = []
-            for child in children_studies['results']:
+            for child in children_studies["results"]:
                 if child.part_of is not None and parent.id in child.part_of:
                     parent.children.append(child)
 
-        count = top_level_studies['count'] + children_studies['count']
+        count = top_level_studies["count"] + children_studies["count"]
 
-        structured_results: query.StudySearchResponse = query.StudySearchResponse(count=count, results=top_level_studies["results"])
+        structured_results: query.StudySearchResponse = query.StudySearchResponse(
+            count=count, results=top_level_studies["results"]
+        )
         # study_results["results"] = top_level_studies
         return structured_results
     else:

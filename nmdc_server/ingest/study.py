@@ -73,7 +73,6 @@ def load(db: Session, cursor: Cursor):
             for doi in dois:
                 upsert_doi(db, **doi)
 
-
         new_study = create_study(db, Study(**obj))
         if dois:
             for doi in dois:

@@ -245,6 +245,7 @@ class StudyBase(AnnotatedBase):
             return study_website
         return study_website.website.url
 
+
 class StudyCreate(StudyBase):
     principal_investigator_id: Optional[UUID]
     image: Optional[bytes]
@@ -274,7 +275,9 @@ class Study(StudyBase):
     class Config:
         orm_mode = True
 
+
 Study.update_forward_refs()
+
 
 # biosample
 class BiosampleBase(AnnotatedBase):
