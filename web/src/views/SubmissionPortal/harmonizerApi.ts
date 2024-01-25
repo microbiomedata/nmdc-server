@@ -195,7 +195,7 @@ export class HarmonizerApi {
     this.schema = (await import('nmdc-submission-schema/project/json/nmdc_submission_schema.json')).default;
     // Taken from https://gold.jgi.doe.gov/download?mode=biosampleEcosystemsJson
     // See also: https://gold.jgi.doe.gov/ecosystemtree
-    this.goldEcosystemTree = (await import('./GoldEcosystemTree.json')).default;
+    this.goldEcosystemTree = (await import('nmdc-submission-schema/project/thirdparty/GoldEcosystemTree.json')).default;
 
     this.dh = new DataHarmonizer(r, {
       modalsRoot: document.querySelector('.harmonizer-style-container'),
