@@ -71,7 +71,8 @@ def load(db: Session, cursor: Cursor):
                 doi["doi_value"] = transform_doi(doi.pop("doi_value"))
 
             for doi in dois:
-                upsert_doi(db, doi["doi_value"], doi["doi_category"])
+                upsert_doi(db, **doi)
+
 
         new_study = create_study(db, Study(**obj))
         if dois:
