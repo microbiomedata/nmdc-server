@@ -274,6 +274,7 @@ class Study(StudyBase):
     class Config:
         orm_mode = True
 
+Study.update_forward_refs()
 
 # biosample
 class BiosampleBase(AnnotatedBase):
