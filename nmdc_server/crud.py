@@ -516,6 +516,19 @@ contributors_edit_roles = [
     models.SubmissionEditorRole.owner,
 ]
 
+def get_submission_role(db: Session, submission_id: str, user_orcid: str) -> Optional[models.SubmissionRole]:
+    role = (
+        db.query(models.SubmissionRole)
+        .filter(
+            and_(
+                models.SubmissionRole.user_orcid == user_orcid,
+                models.SubmissionRole.submission_id == submission_id,
+            )
+        )
+        .first()
+    )
+    return role
+
 
 def can_read_submission(db: Session, submission_id: str, user_orcid: str) -> Optional[bool]:
     role = (

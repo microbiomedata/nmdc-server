@@ -644,14 +644,17 @@ async def update_submission(
     body_dict = body.dict()
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
+
     if not (user.is_admin or crud.can_edit_entire_submission(db, id, user.orcid)):
         raise HTTPException(403, detail="Must have access.")
+
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
     if not has_lock:
         raise HTTPException(
             status_code=400,
             detail="This submission is currently being edited by a different user.",
         )
+
     submission.metadata_submission = body_dict["metadata_submission"]
     pi_orcid = body_dict["metadata_submission"].get("studyForm", {}).get("piOrcid", None)
     if pi_orcid and pi_orcid not in submission.owners:
@@ -660,6 +663,19 @@ async def update_submission(
             submission_id=id, user_orcid=pi_orcid, role=SubmissionEditorRole.owner.value
         )
         db.add(pi_owner_role)
+
+    contributors = body_dict["metadata_submission"].get("studyForm", {}).get("contributors", [])
+    for contributor in contributors:
+        if contributor["permissionLevel"] and contributor["orcid"]:
+            existing_role = crud.get_submission_role(db, id, contributor["orcid"])
+            permission_level = SubmissionEditorRole(contributor["permissionLevel"]).value
+            if existing_role and existing_role.role.value != permission_level:
+                existing_role.role = permission_level
+            else:
+                contributor_role = SubmissionRole(
+                    submission_id=id, user_orcid=contributor["orcid"], role=permission_level
+                )
+                db.add(contributor_role)
     crud.update_submission_lock(db, submission.id)
     if body_dict["status"]:
         submission.status = body_dict["status"]
