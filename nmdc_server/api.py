@@ -669,13 +669,15 @@ async def update_submission(
         if contributor["permissionLevel"] and contributor["orcid"]:
             existing_role = crud.get_submission_role(db, id, contributor["orcid"])
             permission_level = SubmissionEditorRole(contributor["permissionLevel"]).value
-            if existing_role and existing_role.role.value != permission_level:
-                existing_role.role = permission_level
+            if existing_role:
+                if existing_role.role.value != permission_level:
+                    existing_role.role = permission_level
             else:
                 contributor_role = SubmissionRole(
                     submission_id=id, user_orcid=contributor["orcid"], role=permission_level
                 )
                 db.add(contributor_role)
+
     crud.update_submission_lock(db, submission.id)
     if body_dict["status"]:
         submission.status = body_dict["status"]
