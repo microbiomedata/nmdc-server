@@ -2,9 +2,10 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from nmdc_server import schemas
+from nmdc_server.models import SubmissionEditorRole
 
 
 class Contributor(BaseModel):
@@ -97,6 +98,27 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
 
     class Config:
         orm_mode = True
+
+    @validator("metadata_submission", pre=True, always=True)
+    def populate_roles(cls, metadata_submission, values):
+        owners = set(values.get("owners", []))
+        editors = set(values.get("editors", []))
+        viewers = set(values.get("viewers", []))
+        metadata_contributors = set(values.get("metadata_contributors", []))
+
+        for contributor in metadata_submission.get("studyForm", {}).get("contributors", []):
+            orcid = contributor.get("orcid", None)
+            if orcid:
+                if orcid in owners:
+                    contributor["role"] = SubmissionEditorRole.owner.value
+                elif orcid in editors:
+                    contributor["role"] = SubmissionEditorRole.editor.value
+                elif orcid in metadata_contributors:
+                    contributor["role"] = SubmissionEditorRole.metadata_contributor.value
+                elif orcid in viewers:
+                    contributor["role"] = SubmissionEditorRole.viewer.value
+        return metadata_submission
+
 
 
 SubmissionMetadataSchema.update_forward_refs()
