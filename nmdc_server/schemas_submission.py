@@ -96,6 +96,8 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     lock_updated: Optional[datetime]
     locked_by: Optional[schemas.User]
 
+    permission_level: Optional[str]
+
     class Config:
         orm_mode = True
 
@@ -118,7 +120,6 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
                 elif orcid in viewers:
                     contributor["role"] = SubmissionEditorRole.viewer.value
         return metadata_submission
-
 
 
 SubmissionMetadataSchema.update_forward_refs()
