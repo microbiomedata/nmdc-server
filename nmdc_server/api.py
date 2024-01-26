@@ -665,18 +665,8 @@ async def update_submission(
         db.add(pi_owner_role)
 
     contributors = body_dict["metadata_submission"].get("studyForm", {}).get("contributors", [])
-    for contributor in contributors:
-        if contributor["permissionLevel"] and contributor["orcid"]:
-            existing_role = crud.get_submission_role(db, id, contributor["orcid"])
-            permission_level = SubmissionEditorRole(contributor["permissionLevel"]).value
-            if existing_role:
-                if existing_role.role.value != permission_level:
-                    existing_role.role = permission_level
-            else:
-                contributor_role = SubmissionRole(
-                    submission_id=id, user_orcid=contributor["orcid"], role=permission_level
-                )
-                db.add(contributor_role)
+    contributors = [schemas_submission.Contributor(**c) for c in contributors]
+    crud.update_submission_contributor_roles(db, submission, contributors)
 
     crud.update_submission_lock(db, submission.id)
     if body_dict["status"]:
