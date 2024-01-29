@@ -23,8 +23,15 @@ enum AwardTypes {
   FICUS = 'FICUS'
 }
 
-type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
+type permissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
+type permissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor';
+const permissionTitleToDbValueMap: Record<permissionTitle, permissionLevelValues> = {
+  Viewer: 'viewer',
+  'Metadata Contributor': 'metadata_contributor',
+  Editor: 'editor',
+};
 
+type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
 const submissionStatus: Record<string, SubmissionStatus> = {
   InProgress: 'In Progress',
   SubmittedPendingReview: 'Submitted- Pending Review',
@@ -41,6 +48,11 @@ const status = ref(submissionStatus.InProgress);
 let _submissionLockedBy: User | null = null;
 function getSubmissionLockedBy(): User | null {
   return _submissionLockedBy;
+}
+
+let _permissionLevel: permissionLevelValues | null = null;
+function getPermissionLevel(): permissionLevelValues | null {
+  return _permissionLevel;
 }
 
 const hasChanged = ref(0);
@@ -84,13 +96,6 @@ const contextForm = reactive(clone(contextFormDefault));
 const contextFormValid = ref(false);
 const addressForm = reactive(clone(addressFormDefault));
 const addressFormValid = ref(false);
-
-type permissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
-const permissionTitleToDbValueMap: Record<permissionTitle, string> = {
-  Viewer: 'viewer',
-  'Metadata Contributor': 'metadata_contributor',
-  Editor: 'editor',
-};
 
 /**
  * Study Form Step
@@ -239,6 +244,7 @@ async function loadRecord(id: string) {
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
   _submissionLockedBy = val.locked_by;
+  _permissionLevel = (val.permission_level as permissionLevelValues);
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
@@ -260,6 +266,7 @@ export {
   AwardTypes,
   permissionTitle,
   permissionTitleToDbValueMap,
+  permissionLevelValues,
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
@@ -281,6 +288,7 @@ export {
   status,
   /* functions */
   getSubmissionLockedBy,
+  getPermissionLevel,
   incrementalSaveRecord,
   generateRecord,
   loadRecord,

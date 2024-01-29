@@ -13,6 +13,8 @@ import {
   contextFormValid,
   AwardTypes,
   addressFormValid,
+  getPermissionLevel,
+  permissionLevelValues,
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -49,6 +51,9 @@ export default defineComponent({
       nextTick(() => formRef.value.validate());
     };
 
+    const permissionLevel = getPermissionLevel();
+    const isReadOnly = permissionLevel ? ['viewer', 'metadata_contributor'].includes(permissionLevel) : true;
+
     watch(
       () => contextForm.award,
       (award) => {
@@ -75,6 +80,8 @@ export default defineComponent({
       otherAwardValidationRules,
       doiRequiredRules,
       revalidate,
+      permissionLevel,
+      isReadOnly,
     };
   },
 });

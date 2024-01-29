@@ -49,6 +49,7 @@ interface MetadataSubmissionRecord {
   status: string;
   locked_by: User;
   lock_updated: string;
+  permission_level: string | null;
 }
 
 interface PaginatedResponse<T> {
