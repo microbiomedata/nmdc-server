@@ -4,6 +4,7 @@ This module contains pydantic schemas for data serialization.
 The schemas defined here are for simple CRUD methods on domain objects.
 Additional schemas exist in other modules for more specialized use cases.
 """
+
 from __future__ import annotations
 
 from datetime import date, datetime

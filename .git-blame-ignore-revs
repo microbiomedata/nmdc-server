@@ -1,3 +1,5 @@
 # .git-blame-ignore-revs
 # removed blank lines before code blocks
 8d6cb9d723f925a89bc79f5492f9166d819e5fe6
+# Reformat files with black v24
+b96c270d51c7f4a5aba10dac30d203be502daceb
