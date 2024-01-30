@@ -2,6 +2,7 @@
 This module contains schemas that turn the query DSL into sqlalchemy query objects
 for both search and faceting aggregations.
 """
+
 import re
 from datetime import datetime
 from enum import Enum
