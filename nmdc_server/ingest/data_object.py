@@ -36,8 +36,10 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
             logger.warning(
                 f"Unknown url host '{url}', it need to be added to nginx config for bulk download"
             )
-        if url and url.startswith("https://data.microbiomedata.org") and not url.startswith(
-            "https://data.microbiomedata.org/data"
+        if (
+            url
+            and url.startswith("https://data.microbiomedata.org")
+            and not url.startswith("https://data.microbiomedata.org/data")
         ):
             obj["url"] = url.replace(
                 "https://data.microbiomedata.org", "https://data.microbiomedata.org/data"
