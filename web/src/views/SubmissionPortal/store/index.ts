@@ -24,11 +24,18 @@ enum AwardTypes {
 }
 
 type permissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
-type permissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor';
+type permissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor' | 'owner';
 const permissionTitleToDbValueMap: Record<permissionTitle, permissionLevelValues> = {
   Viewer: 'viewer',
   'Metadata Contributor': 'metadata_contributor',
   Editor: 'editor',
+};
+
+const permissionLevelHierarchy: Record<permissionLevelValues, number> = {
+  owner: 4,
+  editor: 3,
+  metadata_contributor: 2,
+  viewer: 1,
 };
 
 type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
@@ -53,6 +60,21 @@ function getSubmissionLockedBy(): User | null {
 let _permissionLevel: permissionLevelValues | null = null;
 function getPermissionLevel(): permissionLevelValues | null {
   return _permissionLevel;
+}
+
+function canEditPermissions(): boolean {
+  if (!_permissionLevel) return false;
+  return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
+}
+
+function canEditSubmissionMetadata(): boolean {
+  if (!_permissionLevel) return false;
+  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
+}
+
+function canEditSampleMetadta(): boolean {
+  if (!_permissionLevel) return false;
+  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
 }
 
 const hasChanged = ref(0);
@@ -267,6 +289,10 @@ export {
   permissionTitle,
   permissionTitleToDbValueMap,
   permissionLevelValues,
+  permissionLevelHierarchy,
+  canEditPermissions,
+  canEditSampleMetadta,
+  canEditSubmissionMetadata,
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,

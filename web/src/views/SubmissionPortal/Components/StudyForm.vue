@@ -12,6 +12,8 @@ import {
   studyFormValid,
   permissionTitleToDbValueMap,
   permissionTitle,
+  canEditPermissions,
+  canEditSubmissionMetadata,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 
@@ -57,6 +59,8 @@ export default defineComponent({
       addContributor,
       requiredRules,
       permissionLevelChoices,
+      canEditPermissions,
+      canEditSubmissionMetadata,
     };
   },
 });
@@ -76,6 +80,7 @@ export default defineComponent({
       v-model="studyFormValid"
       class="my-6"
       style="max-width: 1000px;"
+      :read-only="true"
     >
       <v-text-field
         v-model="studyForm.studyName"
@@ -220,12 +225,13 @@ export default defineComponent({
               </template>
             </v-select>
             <v-select
+              v-if="canEditPermissions()"
               v-model="contributor.permissionLevel"
               :items="permissionLevelChoices"
               item-text="title"
               item-value="value"
               :style="{ maxWidth: '400px'}"
-              label="Edit Permission Level"
+              label="Permission Level"
               hint="Level of permissions the contributor has for this submission"
               outlined
               dense
