@@ -6,7 +6,7 @@ import {
   watch,
   nextTick,
 } from '@vue/composition-api';
-import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
 import Definitions from '@/definitions';
 import {
   contextForm,
