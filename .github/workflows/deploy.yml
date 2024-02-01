@@ -72,7 +72,7 @@ jobs:
 
     steps:
       - name: Redeploy nmdc-dev:portal-${{ matrix.deployment }}
-        if: ${{ !env.IS_PROD_RELEASE && env.IS_ORIGINAL_REPO }}
+        if: ${{ env.IS_PROD_RELEASE == 'false' && env.IS_ORIGINAL_REPO == 'true' }}
         uses: fjogeleit/http-request-action@v1
         with:
           url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc-dev:portal-${{ matrix.deployment }}?action=redeploy
@@ -81,7 +81,7 @@ jobs:
           password: ${{ secrets.SPIN_PASSWORD }}
 
       - name: Redeploy nmdc:${{ matrix.deployment }}
-        if: ${{ env.IS_PROD_RELEASE && env.IS_ORIGINAL_REPO }}
+        if: ${{ env.IS_PROD_RELEASE == 'true' && env.IS_ORIGINAL_REPO == 'true' }}
         uses: fjogeleit/http-request-action@v1
         with:
           url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc:${{ matrix.deployment }}?action=redeploy
@@ -90,7 +90,7 @@ jobs:
           password: ${{ secrets.SPIN_PASSWORD }}
 
       - name: Redeploy nmdc-sandbox:${{ matrix.deployment }}
-        if: ${{ env.IS_PROD_RELEASE && env.IS_ORIGINAL_REPO }}
+        if: ${{ env.IS_PROD_RELEASE == 'true' && env.IS_ORIGINAL_REPO == 'true' }}
         uses: fjogeleit/http-request-action@v1
         with:
           url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc-sandbox:${{ matrix.deployment }}?action=redeploy
