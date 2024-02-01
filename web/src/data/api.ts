@@ -1,7 +1,7 @@
 import { merge } from 'lodash';
 import axios from 'axios';
 import { setupCache } from 'axios-cache-adapter';
-import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
 
 const cache = setupCache({
   key: (req) => req.url + JSON.stringify(req.params) + JSON.stringify(req.data),
