@@ -237,7 +237,7 @@ class StudyBase(AnnotatedBase):
     gold_study_identifiers: Optional[List[str]]
     part_of: Optional[List[str]]
     study_category: Optional[str]
-    children: Optional[List[Study]]
+    children: Optional[List[Study]] = []
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
@@ -275,8 +275,6 @@ class Study(StudyBase):
     class Config:
         orm_mode = True
 
-
-Study.update_forward_refs()
 
 
 # biosample

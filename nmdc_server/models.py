@@ -237,6 +237,7 @@ class Study(Base, AnnotatedModel):
 
     study_category = Column(String, nullable=False, default="")
     part_of = Column(JSONB, nullable=True)
+    children = Column(JSONB, nullable=True)
 
     # These query expressions are a way to inject additional aggregation information
     # into the query at search time.  See `with_expression` usage in `query.py`.
