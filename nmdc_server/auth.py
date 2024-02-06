@@ -9,6 +9,7 @@ from fastapi.security.oauth2 import OAuth2AuthorizationCodeBearer
 from jose import jwt
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
+from starlette.datastructures import URL
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
@@ -124,15 +125,18 @@ class LoginBehavior(str, Enum):
 # authentication
 @router.get("/login", include_in_schema=False)
 async def login_via_orcid(request: Request, behavior: LoginBehavior = LoginBehavior.web):
+    qs = f"?behavior={behavior}"
     if settings.host:
-        redirect_uri = f"{settings.host.rstrip('/')}/token?behavior={behavior}"
+        redirect_uri = f"{settings.host.rstrip('/')}/token{qs}"
     else:
-        redirect_uri = request.url_for("token", behavior=behavior)
+        redirect_uri = request.url_for("token") + qs
     return await oauth2_client.orcid.authorize_redirect(request, redirect_uri)
 
 
 @router.get("/token", name="token", include_in_schema=False)
-async def authorize(request: Request, db: Session = Depends(get_db), behavior: LoginBehavior = LoginBehavior.web):
+async def authorize(
+    request: Request, db: Session = Depends(get_db), behavior: LoginBehavior = LoginBehavior.web
+):
     token = await oauth2_client.orcid.authorize_access_token(request)
     user = User(orcid=token["orcid"], name=token["name"])
     user_model = crud.get_or_create_user(db, user)
@@ -144,7 +148,9 @@ async def authorize(request: Request, db: Session = Depends(get_db), behavior: L
     if behavior == LoginBehavior.jwt:
         return create_local_token(token)
     if behavior == LoginBehavior.app:
-        return RedirectResponse(url=f"{settings.field_notes_host}/token?token=" + create_local_token(token))
+        return RedirectResponse(
+            url=f"{settings.field_notes_host}/token?token=" + create_local_token(token)
+        )
 
 
 @router.get(
