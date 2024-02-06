@@ -4,12 +4,11 @@ from uuid import UUID
 
 from authlib.integrations import starlette_client
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.security.oauth2 import OAuth2AuthorizationCodeBearer
 from jose import jwt
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from starlette.datastructures import URL
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
