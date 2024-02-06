@@ -14,9 +14,6 @@ env:
   # Used to determine if we add the special `prod` Docker image tag
   IS_PROD_RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
 
-  # Used when sending redeploy action requests to Rancher
-  RANCHER_NAMESPACE: ${{ startsWith(github.ref, 'refs/tags/v') && 'nmdc' || 'nmdc-dev' }}
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -66,16 +63,37 @@ jobs:
 
     runs-on: ubuntu-latest
 
+    env:
+      WORKLOAD_API_BASE: https://rancher2.spin.nersc.gov/v3/project/c-tmq7p:p-bkv45/workloads
+
     strategy:
       matrix:
         deployment: [ backend, frontend, worker ]
 
     steps:
-      - name: Redeploy ${{ env.RANCHER_NAMESPACE }}:${{ env.IS_PROD_RELEASE && '' || 'portal-' }}${{ matrix.deployment }}
-        if: ${{ env.IS_ORIGINAL_REPO }}
+      - name: Redeploy nmdc-dev:portal-${{ matrix.deployment }}
+        if: ${{ env.IS_PROD_RELEASE == 'false' && env.IS_ORIGINAL_REPO == 'true' }}
         uses: fjogeleit/http-request-action@v1
         with:
-          url: https://rancher2.spin.nersc.gov/v3/project/c-tmq7p:p-bkv45/workloads/deployment:${{ env.RANCHER_NAMESPACE }}:${{ env.IS_PROD_RELEASE && '' || 'portal-' }}${{ matrix.deployment }}?action=redeploy
+          url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc-dev:portal-${{ matrix.deployment }}?action=redeploy
+          method: POST
+          username: ${{ secrets.SPIN_USER }}
+          password: ${{ secrets.SPIN_PASSWORD }}
+
+      - name: Redeploy nmdc:${{ matrix.deployment }}
+        if: ${{ env.IS_PROD_RELEASE == 'true' && env.IS_ORIGINAL_REPO == 'true' }}
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc:${{ matrix.deployment }}?action=redeploy
+          method: POST
+          username: ${{ secrets.SPIN_USER }}
+          password: ${{ secrets.SPIN_PASSWORD }}
+
+      - name: Redeploy nmdc-sandbox:${{ matrix.deployment }}
+        if: ${{ env.IS_PROD_RELEASE == 'true' && env.IS_ORIGINAL_REPO == 'true' }}
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc-sandbox:${{ matrix.deployment }}?action=redeploy
           method: POST
           username: ${{ secrets.SPIN_USER }}
           password: ${{ secrets.SPIN_PASSWORD }}

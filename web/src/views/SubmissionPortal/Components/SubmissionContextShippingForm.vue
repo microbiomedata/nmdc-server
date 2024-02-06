@@ -7,7 +7,7 @@ import {
   ref,
   watch,
 } from '@vue/composition-api';
-import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
 import { addressForm, addressFormValid, BiosafetyLevels } from '../store';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';

@@ -18,6 +18,7 @@ between all tables represented in `table.py`.  In practice, there is a lot of
 duplicated logic that is shared in subclasses in this module.  Also, many
 combinations of tables are never used and are thus unimplemented.
 """
+
 from typing import TYPE_CHECKING, Iterable, List, Type
 
 from sqlalchemy import func, or_
@@ -198,7 +199,10 @@ class BiosampleFilter(BaseFilter):
     table = Table.biosample
 
     def join_omics_processing(self, query: Query) -> Query:
-        return query.join(models.biosample_input_association).join(models.Biosample)
+        return self.join_self(
+            query.join(models.biosample_input_association).join(models.Biosample),
+            Table.biosample,
+        )
 
     def join_biosample(self, query: Query) -> Query:
         return self.join_self(query, Table.biosample)
