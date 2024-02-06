@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -114,42 +115,36 @@ def create_local_token(data: dict):
 router = APIRouter()
 
 
+class LoginBehavior(str, Enum):
+    web = "web"
+    jwt = "jwt"
+    app = "app"
+
+
 # authentication
 @router.get("/login", include_in_schema=False)
-async def login_via_orcid(request: Request):
-    redirect_uri = request.url_for("token")
+async def login_via_orcid(request: Request, behavior: LoginBehavior = LoginBehavior.web):
     if settings.host:
-        redirect_uri = f"{settings.host.rstrip('/')}/token"
-    return await oauth2_client.orcid.authorize_redirect(request, redirect_uri)
-
-
-@router.get("/login:jwt", include_in_schema=False)
-async def login_via_orcid(request: Request):
-    redirect_uri = request.url_for("token:jwt")
-    if settings.host:
-        redirect_uri = f"{settings.host.rstrip('/')}/token:jwt"
+        redirect_uri = f"{settings.host.rstrip('/')}/token?behavior={behavior}"
+    else:
+        redirect_uri = request.url_for("token", behavior=behavior)
     return await oauth2_client.orcid.authorize_redirect(request, redirect_uri)
 
 
 @router.get("/token", name="token", include_in_schema=False)
-async def authorize(request: Request, db: Session = Depends(get_db)):
+async def authorize(request: Request, db: Session = Depends(get_db), behavior: LoginBehavior = LoginBehavior.web):
     token = await oauth2_client.orcid.authorize_access_token(request)
     user = User(orcid=token["orcid"], name=token["name"])
     user_model = crud.get_or_create_user(db, user)
     user_model.name = user.name
     db.commit()
-    request.session["token"] = token
-    return RedirectResponse(url="/")
-
-
-@router.get("/token:jwt", name="token:jwt", include_in_schema=False)
-async def authorize(request: Request, db: Session = Depends(get_db)):
-    token = await oauth2_client.orcid.authorize_access_token(request)
-    user = User(orcid=token["orcid"], name=token["name"])
-    user_model = crud.get_or_create_user(db, user)
-    user_model.name = user.name
-    db.commit()
-    return create_local_token(token)
+    if behavior == LoginBehavior.web:
+        request.session["token"] = token
+        return RedirectResponse(url="/")
+    if behavior == LoginBehavior.jwt:
+        return create_local_token(token)
+    if behavior == LoginBehavior.app:
+        return RedirectResponse(url=f"{settings.field_notes_host}/token?token=" + create_local_token(token))
 
 
 @router.get(
