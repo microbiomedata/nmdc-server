@@ -72,7 +72,7 @@ function canEditSubmissionMetadata(): boolean {
   return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
 }
 
-function canEditSampleMetadta(): boolean {
+function canEditSampleMetadata(): boolean {
   if (!_permissionLevel) return false;
   return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
 }
@@ -217,7 +217,10 @@ const submitPayload = computed(() => {
 });
 
 function submit(id: string, status: SubmissionStatus = submissionStatus.InProgress) {
-  return api.updateRecord(id, payloadObject.value, status);
+  if (canEditSubmissionMetadata()) {
+    return api.updateRecord(id, payloadObject.value, status);
+  }
+  throw new Error('Unable to submit due to inadequate permission level for this submission.');
 }
 
 function reset() {
@@ -239,6 +242,9 @@ function reset() {
 }
 
 async function incrementalSaveRecord(id: string) {
+  if (!canEditSubmissionMetadata()) {
+    return;
+  }
   const val: api.MetadataSubmission = {
     ...payloadObject.value,
   };
@@ -290,9 +296,6 @@ export {
   permissionTitleToDbValueMap,
   permissionLevelValues,
   permissionLevelHierarchy,
-  canEditPermissions,
-  canEditSampleMetadta,
-  canEditSubmissionMetadata,
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
@@ -320,4 +323,7 @@ export {
   loadRecord,
   submit,
   mergeSampleData,
+  canEditPermissions,
+  canEditSampleMetadata,
+  canEditSubmissionMetadata,
 };

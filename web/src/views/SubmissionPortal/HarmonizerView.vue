@@ -21,6 +21,7 @@ import {
   hasChanged,
   tabsValidated,
   submissionStatus,
+  canEditSampleMetadata,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
@@ -168,6 +169,9 @@ export default defineComponent({
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
         harmonizerApi.addChangeHook(onDataChange);
+        if (!canEditSampleMetadata()) {
+          harmonizerApi.setTableReadOnly();
+        }
       }
     });
 
@@ -215,7 +219,7 @@ export default defineComponent({
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
-      return allTabsValid;
+      return allTabsValid && canEditSampleMetadata();
     });
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
@@ -469,6 +473,7 @@ export default defineComponent({
       validate,
       changeTemplate,
       urlify,
+      canEditSampleMetadata,
     };
   },
 });
@@ -501,6 +506,7 @@ export default defineComponent({
             color="primary"
             class="mr-2"
             hide-details
+            :disabled="!canEditSampleMetadata()"
             @click="showOpenFileDialog"
           >
             1. Import XLSX file
@@ -513,6 +519,7 @@ export default defineComponent({
           v-if="validationErrorGroups.length === 0"
           color="primary"
           outlined
+          :disabled="!canEditSampleMetadata()"
           @click="validate"
         >
           2. Validate
@@ -813,7 +820,10 @@ export default defineComponent({
     </div>
 
     <div class="harmonizer-style-container">
-      <div id="harmonizer-footer-root" />
+      <div
+        v-if="canEditSampleMetadata()"
+        id="harmonizer-footer-root"
+      />
     </div>
 
     <div class="d-flex shrink ma-2">

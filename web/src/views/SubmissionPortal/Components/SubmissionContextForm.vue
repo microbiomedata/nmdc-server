@@ -13,8 +13,7 @@ import {
   contextFormValid,
   AwardTypes,
   addressFormValid,
-  getPermissionLevel,
-  permissionLevelValues,
+  canEditSubmissionMetadata,
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -51,9 +50,6 @@ export default defineComponent({
       nextTick(() => formRef.value.validate());
     };
 
-    const permissionLevel = getPermissionLevel();
-    const isReadOnly = permissionLevel ? ['viewer', 'metadata_contributor'].includes(permissionLevel) : true;
-
     watch(
       () => contextForm.award,
       (award) => {
@@ -80,8 +76,7 @@ export default defineComponent({
       otherAwardValidationRules,
       doiRequiredRules,
       revalidate,
-      permissionLevel,
-      isReadOnly,
+      canEditSubmissionMetadata,
     };
   },
 });
@@ -101,6 +96,7 @@ export default defineComponent({
       v-model="contextFormValid"
       style="max-width: 1000px;"
       class="mb-2"
+      :disabled="!canEditSubmissionMetadata()"
     >
       <v-radio-group
         v-model="contextForm.dataGenerated"

@@ -80,7 +80,7 @@ export default defineComponent({
       v-model="studyFormValid"
       class="my-6"
       style="max-width: 1000px;"
-      :read-only="true"
+      :disabled="!canEditSubmissionMetadata()"
     >
       <v-text-field
         v-model="studyForm.studyName"
@@ -241,6 +241,7 @@ export default defineComponent({
         </v-card>
         <v-btn
           icon
+          :disabled="!canEditSubmissionMetadata()"
           @click="studyForm.contributors.splice(i, 1)"
         >
           <v-icon>mdi-minus-circle</v-icon>
@@ -248,6 +249,7 @@ export default defineComponent({
       </div>
       <v-btn
         depressed
+        :disabled="!canEditSubmissionMetadata()"
         @click="addContributor"
       >
         <v-icon class="pr-1">
