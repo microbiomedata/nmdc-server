@@ -64,10 +64,11 @@ async function createRecord(record: MetadataSubmission) {
   return resp.data;
 }
 
-async function updateRecord(id: string, record: Partial<MetadataSubmission>, status?: string) {
+async function updateRecord(id: string, record: Partial<MetadataSubmission>, status?: string, permissions?: Record<string, string>) {
   const resp = await client.patch<MetadataSubmissionRecord>(`metadata_submission/${id}`, {
     metadata_submission: record,
     status,
+    permissions,
   });
   return resp.data;
 }

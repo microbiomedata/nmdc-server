@@ -99,6 +99,8 @@ class SubmissionMetadataSchemaCreate(BaseModel):
 class SubmissionMetadataSchemaPatch(BaseModel):
     metadata_submission: PartialMetadataSubmissionRecord
     status: Optional[str]
+    # Map of ORCID iD to permission level
+    permissions: Optional[Dict[str, str]]
 
 class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     id: UUID
