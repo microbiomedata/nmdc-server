@@ -38,6 +38,12 @@ export default defineComponent({
       ];
     }
 
+    const orcidRequiredRules = (idx: number) => [(v: string) => {
+      if (idx > studyForm.contributors.length) return true;
+      const contributor = studyForm.contributors[idx];
+      return (contributor.permissionLevel && !!v) || 'ORCID iD is required if a permission level is specified';
+    }];
+
     const permissionLevelChoices: Ref<{ title: string, value: string }[]> = ref([]);
     Object.keys(permissionTitleToDbValueMap).forEach((title) => {
       permissionLevelChoices.value.push({
@@ -61,6 +67,7 @@ export default defineComponent({
       permissionLevelChoices,
       canEditPermissions,
       canEditSubmissionMetadata,
+      orcidRequiredRules,
     };
   },
 });
@@ -192,6 +199,7 @@ export default defineComponent({
             />
             <v-text-field
               v-model="contributor.orcid"
+              :rules="orcidRequiredRules(i)"
               :hint="Definitions.contributorOrcid"
               label="ORCID"
               outlined
