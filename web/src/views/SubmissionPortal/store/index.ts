@@ -135,7 +135,7 @@ const studyFormDefault = {
     name: string;
     orcid: string;
     roles: string[];
-    permissionLevel: permissionTitle | null;
+    permissionLevel: permissionLevelValues | null;
   }[],
 };
 const studyFormValid = ref(false);
@@ -211,6 +211,24 @@ const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   sampleData: sampleData.value,
 }));
 
+function getPermissions(): Record<string, permissionLevelValues> {
+  const permissions: Record<string, permissionLevelValues> = {};
+  if (studyForm.piOrcid) {
+    console.log('here');
+    permissions[studyForm.piOrcid] = 'owner';
+  }
+  studyForm.contributors.forEach((contributor) => {
+    console.log('contrib');
+    const { orcid, permissionLevel } = contributor;
+    console.log(orcid, permissionLevel);
+    if (orcid && permissionLevel) {
+      permissions[orcid] = permissionLevel;
+    }
+  });
+  console.log(permissions);
+  return permissions;
+}
+
 const submitPayload = computed(() => {
   const value = JSON.stringify(payloadObject.value, null, 2);
   return value;
@@ -245,11 +263,22 @@ async function incrementalSaveRecord(id: string) {
   if (!canEditSubmissionMetadata()) {
     return;
   }
-  const val: Partial<api.MetadataSubmission> = {
-    ...payloadObject.value,
-  };
+
+  let payload: Partial<api.MetadataSubmission> = {};
+  let permissions: Record<string, permissionLevelValues> | undefined;
+  if (canEditPermissions()) {
+    payload = payloadObject.value;
+    permissions = getPermissions();
+  } else if (canEditSubmissionMetadata()) {
+    payload = payloadObject.value;
+  } else if (canEditSampleMetadata()) {
+    payload = {
+      sampleData: payloadObject.value.sampleData,
+    };
+  }
+
   if (hasChanged.value) {
-    await api.updateRecord(id, val);
+    await api.updateRecord(id, payload, undefined, permissions);
   }
   hasChanged.value = 0;
 }
