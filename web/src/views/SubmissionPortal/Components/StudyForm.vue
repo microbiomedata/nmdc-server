@@ -41,7 +41,8 @@ export default defineComponent({
     const orcidRequiredRules = (idx: number) => [(v: string) => {
       if (idx > studyForm.contributors.length) return true;
       const contributor = studyForm.contributors[idx];
-      return (contributor.permissionLevel && !!v) || 'ORCID iD is required if a permission level is specified';
+      // show error when: permission level exists, but orcid does not
+      return (contributor.permissionLevel && !!v) || !contributor.permissionLevel || 'ORCID iD is required if a permission level is specified';
     }];
 
     const permissionLevelChoices: Ref<{ title: string, value: string }[]> = ref([]);
@@ -130,6 +131,7 @@ export default defineComponent({
       <v-text-field
         v-model="studyForm.piOrcid"
         label="Principal Investigator ORCID"
+        :disabled="!canEditPermissions()"
         outlined
         :hint="Definitions.piOrcid"
         persistent-hint
@@ -236,6 +238,7 @@ export default defineComponent({
               v-if="canEditPermissions()"
               v-model="contributor.permissionLevel"
               :items="permissionLevelChoices"
+              clearable
               item-text="title"
               item-value="value"
               :style="{ maxWidth: '400px'}"
