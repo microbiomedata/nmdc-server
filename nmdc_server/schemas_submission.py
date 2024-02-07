@@ -81,10 +81,24 @@ class MetadataSubmissionRecord(BaseModel):
     sampleData: Dict[str, List[Any]]
 
 
+class PartialMetadataSubmissionRecord(BaseModel):
+    packageName: Optional[str]
+    contextForm: Optional[ContextForm]
+    addressForm: Optional[AddressForm]
+    templates: Optional[List[str]]
+    studyForm: Optional[StudyForm]
+    multiOmicsForm: Optional[MultiOmicsForm]
+    sampleData: Optional[Dict[str, List[Any]]]
+
+
 class SubmissionMetadataSchemaCreate(BaseModel):
     metadata_submission: MetadataSubmissionRecord
     status: Optional[str]
 
+
+class SubmissionMetadataSchemaPatch(BaseModel):
+    metadata_submission: PartialMetadataSubmissionRecord
+    status: Optional[str]
 
 class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     id: UUID

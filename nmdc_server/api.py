@@ -650,7 +650,7 @@ async def get_submission(
 )
 async def update_submission(
     id: str,
-    body: schemas_submission.SubmissionMetadataSchemaCreate,
+    body: schemas_submission.SubmissionMetadataSchemaPatch,
     db: Session = Depends(get_db),
     user: models.User = Depends(login_required),
 ):

@@ -245,7 +245,7 @@ async function incrementalSaveRecord(id: string) {
   if (!canEditSubmissionMetadata()) {
     return;
   }
-  const val: api.MetadataSubmission = {
+  const val: Partial<api.MetadataSubmission> = {
     ...payloadObject.value,
   };
   if (hasChanged.value) {
