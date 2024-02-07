@@ -623,15 +623,15 @@ async def get_submission(
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     _ = crud.try_get_submission_lock(db, submission.id, user.id)
-    if user.is_admin or crud.can_edit_entire_submission(db, id, user.orcid):
+    if user.is_admin or crud.can_read_submission(db, id, user.orcid):
         permission_level = None
         if user.is_admin or user.orcid in submission.owners:
             permission_level = models.SubmissionEditorRole.owner.value
         elif user.orcid in submission.editors:
             permission_level = models.SubmissionEditorRole.editor.value
-        elif user.orcid in submission.metadata_contributor:
+        elif user.orcid in submission.metadata_contributors:
             permission_level = models.SubmissionEditorRole.metadata_contributor.value
-        elif user.orcid in submission.viewer:
+        elif user.orcid in submission.viewers:
             permission_level = models.SubmissionEditorRole.viewer.value
         return schemas_submission.SubmissionMetadataSchema(
             **submission.__dict__,
