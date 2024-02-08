@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
@@ -644,9 +644,6 @@ async def get_submission(
 
 def can_save_submission(role: models.SubmissionRole, data: dict):
     """Compare a patch payload with what the user can actually save."""
-    # Owner Fields
-    # all
-    viewer_fields: Set[str] = set()
     metadata_contributor_fields = set(["sampleData", "metadata_submission"])
     editor_fields = set(
         [
@@ -666,7 +663,6 @@ def can_save_submission(role: models.SubmissionRole, data: dict):
     fields_for_permission = {
         models.SubmissionEditorRole.editor: editor_fields,
         models.SubmissionEditorRole.metadata_contributor: metadata_contributor_fields,
-        models.SubmissionEditorRole.viewer: viewer_fields,
     }
     permission_level = models.SubmissionEditorRole(role.role)
     if permission_level == models.SubmissionEditorRole.owner:
@@ -691,7 +687,7 @@ async def update_submission(
     user: models.User = Depends(login_required),
 ):
     submission = db.query(SubmissionMetadata).get(id)
-    body_dict = body.dict()
+    body_dict = body.dict(exclude_unset=True)
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -714,9 +710,10 @@ async def update_submission(
     )
 
     # Update permissions and status iff the user is an "owner"
-    if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner.value:
-        new_permissions = body_dict["metadata_submission"].get("permissions", {})
-        crud.update_submission_contributor_roles(db, submission, new_permissions)
+    if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner:
+        new_permissions = body_dict.get("permissions", None)
+        if new_permissions is not None:
+            crud.update_submission_contributor_roles(db, submission, new_permissions)
 
         if body_dict["status"]:
             submission.status = body_dict["status"]
