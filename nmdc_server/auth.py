@@ -3,8 +3,7 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 
 from authlib.integrations import starlette_client
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.security.oauth2 import OAuth2AuthorizationCodeBearer
 from jose import jwt
 from pydantic import BaseModel
@@ -41,12 +40,6 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(
     auto_error=False,
 )
 
-bearer_scheme = HTTPBearer(scheme_name="bearerAuth", auto_error=False)
-
-
-async def bearer_credentials(req: Request):
-    return await bearer_scheme(req)
-
 
 class Token(BaseModel):
     access_token: UUID
@@ -60,13 +53,13 @@ class Token(BaseModel):
 
 
 async def get_token(
-    request: Request, bearer: HTTPAuthorizationCredentials = Depends(bearer_scheme)
+    request: Request, token: Optional[str] = Security(oauth2_scheme)
 ) -> Optional[Token]:
-    token = request.session.get("token")
+    session_token = request.session.get("token")
+    if session_token:
+        return Token(**session_token)
     if token:
-        return Token(**token)
-    if bearer:
-        payload = jwt.decode(bearer.credentials, settings.secret_key, algorithms=["HS256"])
+        payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
         return Token(**payload)
     return None
 
@@ -107,7 +100,7 @@ async def admin_required(user: models.User = Depends(login_required)) -> models.
     )
 
 
-def create_local_token(data: dict):
+def encode_token(data: dict):
     encoded_jwt = jwt.encode(data, settings.secret_key, algorithm="HS256")
     return encoded_jwt
 
@@ -145,10 +138,10 @@ async def authorize(
         request.session["token"] = token
         return RedirectResponse(url="/")
     if behavior == LoginBehavior.jwt:
-        return create_local_token(token)
+        return encode_token(token)
     if behavior == LoginBehavior.app:
         return RedirectResponse(
-            url=f"{settings.field_notes_host}/token?token=" + create_local_token(token)
+            url=f"{settings.field_notes_host}/token?token=" + encode_token(token)
         )
 
 
