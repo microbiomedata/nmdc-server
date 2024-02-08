@@ -715,7 +715,7 @@ async def update_submission(
         if new_permissions is not None:
             crud.update_submission_contributor_roles(db, submission, new_permissions)
 
-        if body_dict["status"]:
+        if body_dict.get("status", None):
             submission.status = body_dict["status"]
         db.commit()
     crud.update_submission_lock(db, submission.id)
