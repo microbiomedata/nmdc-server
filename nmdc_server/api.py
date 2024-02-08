@@ -642,6 +642,29 @@ async def get_submission(
     raise HTTPException(status_code=403, detail="Must have access.")
 
 
+def can_save_submission(role: models.SubmissionRole, data: dict):
+    """Compare a patch payload with what the user can actually save."""
+    # Owner Fields
+    # all
+    viewer_fields = set()
+    metadata_contributor_fields = set(["sampleData", "metadata_submission"])
+    editor_fields = set(["packageName", "contextForm", "addressForm", "templates", "studyForm", "multiOmicsForm", "sampleData", "metadata_submission"])
+    attempted_patch_fields = set([key for key in data] + [key for key in data.get("metadata_submission", {})])
+    fields_for_permission = {
+        models.SubmissionEditorRole.editor: editor_fields,
+        models.SubmissionEditorRole.metadata_contributor: metadata_contributor_fields,
+        models.SubmissionEditorRole.viewer: viewer_fields,
+    }
+    permission_level = models.SubmissionEditorRole(role.role)
+    if permission_level == models.SubmissionEditorRole.owner:
+        return True
+    elif permission_level ==models.SubmissionEditorRole.viewer:
+        return False
+    else:
+        allowed_fields = fields_for_permission[permission_level]
+        return all([field in allowed_fields for field in attempted_patch_fields])
+
+
 @router.patch(
     "/metadata_submission/{id}",
     tags=["metadata_submission"],
@@ -659,7 +682,8 @@ async def update_submission(
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
 
-    if not (user.is_admin or crud.can_edit_entire_submission(db, id, user.orcid)):
+    current_user_role = crud.get_submission_role(db, id, user.orcid)
+    if not (user.is_admin or (current_user_role and can_save_submission(current_user_role, body_dict))):
         raise HTTPException(403, detail="Must have access.")
 
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
@@ -669,23 +693,18 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    submission.metadata_submission = body_dict["metadata_submission"]
-    pi_orcid = body_dict["metadata_submission"].get("studyForm", {}).get("piOrcid", None)
-    if pi_orcid and pi_orcid not in submission.owners:
-        # Create an owner role for the PI if it doesn't exist
-        pi_owner_role = SubmissionRole(
-            submission_id=id, user_orcid=pi_orcid, role=SubmissionEditorRole.owner.value
-        )
-        db.add(pi_owner_role)
+    # Merge the submission metadata dicts
+    submission.metadata_submission = submission.metadata_submission | body_dict["metadata_submission"]
 
-    contributors = body_dict["metadata_submission"].get("studyForm", {}).get("contributors", [])
-    contributors = [schemas_submission.Contributor(**c) for c in contributors]
-    crud.update_submission_contributor_roles(db, submission, contributors)
+    # Update permissions and status iff the user is an "owner"
+    if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner.value:
+        new_permissions = body_dict["metadata_submission"].get("permissions", {})
+        crud.update_submission_contributor_roles(db, submission, new_permissions)
 
+        if body_dict["status"]:
+            submission.status = body_dict["status"]
+        db.commit()
     crud.update_submission_lock(db, submission.id)
-    if body_dict["status"]:
-        submission.status = body_dict["status"]
-    db.commit()
     return submission
 
 
