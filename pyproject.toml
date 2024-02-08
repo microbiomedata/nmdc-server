@@ -30,6 +30,7 @@ dependencies = [
     "pymongo>=4.0.0",
     "python-dateutil",
     "python-dotenv",
+    "python-jose[cryptography]",
     "requests==2.28.1",
     "sentry-sdk[celery,sqlalchemy]",
     "sqlalchemy>=1.4",

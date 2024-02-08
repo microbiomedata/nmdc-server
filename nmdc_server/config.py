@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     oauth_authorization_endpoint: str = "https://orcid.org/oauth/authorize"
     oauth_token_endpoint: str = "https://orcid.org/oauth/token"
     host: Optional[str] = None  # sets the host name for the oauth2 redirect
+    field_notes_host: str = "https://fieldnotes.microbiomedata.org"
 
     # mongo database used for ingest
     mongo_host: str = "mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org"
