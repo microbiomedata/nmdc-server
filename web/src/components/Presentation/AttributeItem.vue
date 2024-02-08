@@ -110,10 +110,10 @@ export default defineComponent({
             if (typeof rangeStr === 'string') {
               result = rangeStr;
             } else {
-              // Check whether the raw depth is non-null and the depth annotation contains a unit;
+              // Check whether the raw depth is numeric (i.e. not null) and the depth annotation contains a unit;
               // and, if so, use a concatenation of the two as the result.
               const unitStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Mode.Unit);
-              if (rawDepth !== null && typeof unitStr === 'string') {
+              if (typeof rawDepth === 'number' && typeof unitStr === 'string') {
                 result = `${rawDepth} ${unitStr}`;
               }
             }
