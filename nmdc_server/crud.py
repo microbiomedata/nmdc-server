@@ -586,25 +586,27 @@ def get_roles_for_submission(db: Session, submission: models.SubmissionMetadata)
     return db.query(models.SubmissionRole).filter(models.SubmissionRole.submission_id == submission.id)
 
 
-def update_submission_contributor_roles(db: Session, submission: models.SubmissionMetadata, contributors: List[schemas_submission.Contributor]):
+def update_submission_contributor_roles(db: Session, submission: models.SubmissionMetadata, new_permissions: Dict[str, str]):
+    """
+    Update permissions for a given submission.
+
+    new_permissions is a dictionary that maps ORCID iDs to permission level values.
+    This function ignores and change to or absence of the author's permission level
+    """
     submission_roles: List[models.SubmissionRole] = get_roles_for_submission(db, submission).all()
-    contributors_by_orcid = {contributor.orcid: contributor for contributor in contributors}
 
     for role in submission_roles:
-        if role.user_orcid in contributors_by_orcid:
-            contributor = contributors_by_orcid[role.user_orcid]
-            if not contributor.permissionLevel:
-                db.delete(role)
-            if role.role != contributor.permissionLevel and role.role != models.SubmissionEditorRole.owner:
+        if role.user_orcid in new_permissions:
+            if role.role != new_permissions[role.user_orcid] and role.role != models.SubmissionEditorRole.owner:
                 # Don't edit owner roles
                 role.role = models.SubmissionEditorRole(contributor.permissionLevel).value
         elif role.role != models.SubmissionEditorRole.owner:
             # Don't delete owner roles
             db.delete(role)
 
-    new_user_role_needed = set(contributors_by_orcid) - set([role.user_orcid for role in submission_roles])
+    new_user_role_needed = set(new_permissions) - set([role.user_orcid for role in submission_roles])
     for orcid in new_user_role_needed:
-        role_value = models.SubmissionEditorRole(contributors_by_orcid[orcid].permissionLevel).value
+        role_value = models.SubmissionEditorRole(new_permissions[orcid]).value
         new_role = models.SubmissionRole(submission_id=submission.id, user_orcid=orcid, role=role_value)
         db.add(new_role)
     db.commit()
