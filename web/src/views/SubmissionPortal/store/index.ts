@@ -214,11 +214,9 @@ const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
 function getPermissions(): Record<string, permissionLevelValues> {
   const permissions: Record<string, permissionLevelValues> = {};
   if (studyForm.piOrcid) {
-    console.log('here');
     permissions[studyForm.piOrcid] = 'owner';
   }
   studyForm.contributors.forEach((contributor) => {
-    console.log('contrib');
     const { orcid, permissionLevel } = contributor;
     console.log(orcid, permissionLevel);
     if (orcid && permissionLevel) {
