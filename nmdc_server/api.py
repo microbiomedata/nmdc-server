@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
@@ -637,7 +637,7 @@ async def get_submission(
             **submission.__dict__,
             author=schemas.User(**submission.author.__dict__),
             locked_by=schemas.User(**submission.locked_by.__dict__),
-            permission_level=permission_level
+            permission_level=permission_level,
         )
     raise HTTPException(status_code=403, detail="Must have access.")
 
@@ -646,10 +646,23 @@ def can_save_submission(role: models.SubmissionRole, data: dict):
     """Compare a patch payload with what the user can actually save."""
     # Owner Fields
     # all
-    viewer_fields = set()
+    viewer_fields: Set[str] = set()
     metadata_contributor_fields = set(["sampleData", "metadata_submission"])
-    editor_fields = set(["packageName", "contextForm", "addressForm", "templates", "studyForm", "multiOmicsForm", "sampleData", "metadata_submission"])
-    attempted_patch_fields = set([key for key in data] + [key for key in data.get("metadata_submission", {})])
+    editor_fields = set(
+        [
+            "packageName",
+            "contextForm",
+            "addressForm",
+            "templates",
+            "studyForm",
+            "multiOmicsForm",
+            "sampleData",
+            "metadata_submission",
+        ]
+    )
+    attempted_patch_fields = set(
+        [key for key in data] + [key for key in data.get("metadata_submission", {})]
+    )
     fields_for_permission = {
         models.SubmissionEditorRole.editor: editor_fields,
         models.SubmissionEditorRole.metadata_contributor: metadata_contributor_fields,
@@ -658,7 +671,7 @@ def can_save_submission(role: models.SubmissionRole, data: dict):
     permission_level = models.SubmissionEditorRole(role.role)
     if permission_level == models.SubmissionEditorRole.owner:
         return True
-    elif permission_level ==models.SubmissionEditorRole.viewer:
+    elif permission_level == models.SubmissionEditorRole.viewer:
         return False
     else:
         allowed_fields = fields_for_permission[permission_level]
@@ -683,7 +696,9 @@ async def update_submission(
         raise HTTPException(status_code=404, detail="Submission not found")
 
     current_user_role = crud.get_submission_role(db, id, user.orcid)
-    if not (user.is_admin or (current_user_role and can_save_submission(current_user_role, body_dict))):
+    if not (
+        user.is_admin or (current_user_role and can_save_submission(current_user_role, body_dict))
+    ):
         raise HTTPException(403, detail="Must have access.")
 
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
@@ -694,7 +709,9 @@ async def update_submission(
         )
 
     # Merge the submission metadata dicts
-    submission.metadata_submission = submission.metadata_submission | body_dict["metadata_submission"]
+    submission.metadata_submission = (
+        submission.metadata_submission | body_dict["metadata_submission"]
+    )
 
     # Update permissions and status iff the user is an "owner"
     if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner.value:

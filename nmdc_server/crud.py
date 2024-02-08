@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
 
-from nmdc_server import aggregations, bulk_download_schema, models, query, schemas, schemas_submission
+from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 from nmdc_server.data_object_filters import get_local_data_url
 from nmdc_server.logger import get_logger
 
@@ -516,7 +516,10 @@ contributors_edit_roles = [
     models.SubmissionEditorRole.owner,
 ]
 
-def get_submission_role(db: Session, submission_id: str, user_orcid: str) -> Optional[models.SubmissionRole]:
+
+def get_submission_role(
+    db: Session, submission_id: str, user_orcid: str
+) -> Optional[models.SubmissionRole]:
     role = (
         db.query(models.SubmissionRole)
         .filter(
@@ -583,10 +586,14 @@ def get_submissions_for_user(db: Session, user: models.User):
 
 
 def get_roles_for_submission(db: Session, submission: models.SubmissionMetadata):
-    return db.query(models.SubmissionRole).filter(models.SubmissionRole.submission_id == submission.id)
+    return db.query(models.SubmissionRole).filter(
+        models.SubmissionRole.submission_id == submission.id
+    )
 
 
-def update_submission_contributor_roles(db: Session, submission: models.SubmissionMetadata, new_permissions: Dict[str, str]):
+def update_submission_contributor_roles(
+    db: Session, submission: models.SubmissionMetadata, new_permissions: Dict[str, str]
+):
     """
     Update permissions for a given submission.
 
@@ -597,16 +604,23 @@ def update_submission_contributor_roles(db: Session, submission: models.Submissi
 
     for role in submission_roles:
         if role.user_orcid in new_permissions:
-            if role.role != new_permissions[role.user_orcid] and role.role != models.SubmissionEditorRole.owner:
+            if (
+                role.role != new_permissions[role.user_orcid]
+                and role.role != models.SubmissionEditorRole.owner.value
+            ):
                 # Don't edit owner roles
-                role.role = models.SubmissionEditorRole(contributor.permissionLevel).value
-        elif role.role != models.SubmissionEditorRole.owner:
+                role.role = models.SubmissionEditorRole(new_permissions[role.user_orcid]).value
+        elif role.role != models.SubmissionEditorRole.owner.value:
             # Don't delete owner roles
             db.delete(role)
 
-    new_user_role_needed = set(new_permissions) - set([role.user_orcid for role in submission_roles])
+    new_user_role_needed = set(new_permissions) - set(
+        [role.user_orcid for role in submission_roles]
+    )
     for orcid in new_user_role_needed:
         role_value = models.SubmissionEditorRole(new_permissions[orcid]).value
-        new_role = models.SubmissionRole(submission_id=submission.id, user_orcid=orcid, role=role_value)
+        new_role = models.SubmissionRole(
+            submission_id=submission.id, user_orcid=orcid, role=role_value
+        )
         db.add(new_role)
     db.commit()

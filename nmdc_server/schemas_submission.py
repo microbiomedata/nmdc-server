@@ -102,6 +102,7 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     # Map of ORCID iD to permission level
     permissions: Optional[Dict[str, str]]
 
+
 class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     id: UUID
     author_orcid: str
