@@ -62,7 +62,7 @@ function getPermissionLevel(): permissionLevelValues | null {
   return _permissionLevel;
 }
 
-function canEditPermissions(): boolean {
+function isOwner(): boolean {
   if (!_permissionLevel) return false;
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
@@ -262,7 +262,7 @@ async function incrementalSaveRecord(id: string) {
 
   let payload: Partial<api.MetadataSubmission> = {};
   let permissions: Record<string, permissionLevelValues> | undefined;
-  if (canEditPermissions()) {
+  if (isOwner()) {
     payload = payloadObject.value;
     permissions = getPermissions();
   } else if (canEditSubmissionMetadata()) {
@@ -348,7 +348,7 @@ export {
   loadRecord,
   submit,
   mergeSampleData,
-  canEditPermissions,
+  isOwner,
   canEditSampleMetadata,
   canEditSubmissionMetadata,
 };

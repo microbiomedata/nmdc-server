@@ -12,7 +12,7 @@ import {
   studyFormValid,
   permissionTitleToDbValueMap,
   permissionTitle,
-  canEditPermissions,
+  isOwner,
   canEditSubmissionMetadata,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -66,7 +66,7 @@ export default defineComponent({
       addContributor,
       requiredRules,
       permissionLevelChoices,
-      canEditPermissions,
+      isOwner,
       canEditSubmissionMetadata,
       orcidRequiredRules,
     };
@@ -131,7 +131,7 @@ export default defineComponent({
       <v-text-field
         v-model="studyForm.piOrcid"
         label="Principal Investigator ORCID"
-        :disabled="!canEditPermissions()"
+        :disabled="!isOwner()"
         outlined
         :hint="Definitions.piOrcid"
         persistent-hint
@@ -235,7 +235,7 @@ export default defineComponent({
               </template>
             </v-select>
             <v-select
-              v-if="canEditPermissions()"
+              v-if="isOwner()"
               v-model="contributor.permissionLevel"
               :items="permissionLevelChoices"
               clearable
