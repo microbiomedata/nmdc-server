@@ -22,6 +22,7 @@ import {
   tabsValidated,
   submissionStatus,
   canEditSampleMetadata,
+  isOwner,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
@@ -219,7 +220,7 @@ export default defineComponent({
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
-      return allTabsValid && canEditSampleMetadata();
+      return allTabsValid && isOwner();
     });
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
