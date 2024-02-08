@@ -53,13 +53,13 @@ class Token(BaseModel):
 
 
 async def get_token(
-    request: Request, token: Optional[str] = Security(oauth2_scheme)
+    request: Request, access_token: Optional[str] = Security(oauth2_scheme)
 ) -> Optional[Token]:
-    session_token = request.session.get("token")
-    if session_token:
-        return Token(**session_token)
+    token = request.session.get("token")
     if token:
-        payload = jwt.decode(token, settings.secret_key, algorithms=["HS256"])
+        return Token(**token)
+    if access_token:
+        payload = jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
         return Token(**payload)
     return None
 
