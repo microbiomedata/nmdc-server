@@ -2,7 +2,49 @@
 import { defineComponent, PropType } from '@vue/composition-api';
 import { getField } from '@/encoding';
 import { fieldDisplayName, valueDisplayName } from '@/util';
-import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
+import { BaseSearchResult, BiosampleSearchResult, JSONValue } from '@/data/api';
+
+enum Mode {
+  RangeWithUnit = 'RangeWithUnit',
+  Unit = 'Unit',
+}
+
+/**
+ * Helper function that checks whether the specific depth annotation adequately describes something and, if so,
+ * returns a string representing that thing; otherwise, it returns `undefined`.
+ *
+ * @param depthAnnotation {JSONValue} The `depth` annotation containing data from which you want to build a string
+ * @param mode {Mode} Keyword indicating the type of string you want to build
+ */
+const buildStrFromDepthAnnotation = (depthAnnotation: JSONValue, mode: Mode): string | undefined => {
+  let str: string | undefined;
+
+  // Regardless of the specified mode, check whether the depth annotation is a "non-null, non-array" object.
+  if (typeof depthAnnotation === 'object' && depthAnnotation !== null && !Array.isArray(depthAnnotation)) {
+    // Extract data according to the specified mode.
+    switch (mode) {
+      case Mode.RangeWithUnit: {
+        const { has_minimum_numeric_value, has_maximum_numeric_value, has_unit } = depthAnnotation;
+        if (typeof has_minimum_numeric_value === 'number' && typeof has_maximum_numeric_value === 'number' && typeof has_unit === 'string') {
+          str = `${has_minimum_numeric_value} - ${has_maximum_numeric_value} ${has_unit}`;
+        }
+        break;
+      }
+      case Mode.Unit: {
+        const { has_unit } = depthAnnotation;
+        if (typeof has_unit === 'string') {
+          str = has_unit;
+        }
+        break;
+      }
+      default: {
+        break;
+      }
+    }
+  }
+
+  return str;
+};
 
 export default defineComponent({
   props: {
@@ -40,6 +82,31 @@ export default defineComponent({
 
   setup(props) {
     function getValue(field: string) {
+      if (field === 'depth') {
+        const rawDepth = props.item.depth;
+
+        // Use the raw depth as the fallback result.
+        let result = rawDepth;
+
+        // Check whether there is a depth annotation.
+        if ('depth' in props.item.annotations) {
+          // Check whether the depth annotation describes a range;
+          // and, if so, use that as the result.
+          const rangeWithUnitStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Mode.RangeWithUnit);
+          if (typeof rangeWithUnitStr === 'string') {
+            result = rangeWithUnitStr;
+          } else {
+            // Check whether the raw depth is non-null and the depth annotation contains a unit;
+            // and, if so, use a concatenation of the two as the result.
+            const unitStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Mode.Unit);
+            if (rawDepth !== null && typeof unitStr === 'string') {
+              result = `${rawDepth} ${unitStr}`;
+            }
+          }
+        }
+
+        return result;
+      }
       if (field === 'geo_loc_name') {
         return props.item.annotations.geo_loc_name;
       }
