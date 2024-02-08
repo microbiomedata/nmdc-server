@@ -6,6 +6,7 @@ import { BaseSearchResult, BiosampleSearchResult, JSONValue } from '@/data/api';
 
 enum Mode {
   RangeWithUnit = 'RangeWithUnit',
+  Range = 'Range',
   Unit = 'Unit',
 }
 
@@ -27,6 +28,13 @@ const buildStrFromDepthAnnotation = (depthAnnotation: JSONValue, mode: Mode): st
         const { has_minimum_numeric_value, has_maximum_numeric_value, has_unit } = depthAnnotation;
         if (typeof has_minimum_numeric_value === 'number' && typeof has_maximum_numeric_value === 'number' && typeof has_unit === 'string') {
           str = `${has_minimum_numeric_value} - ${has_maximum_numeric_value} ${has_unit}`;
+        }
+        break;
+      }
+      case Mode.Range: {
+        const { has_minimum_numeric_value, has_maximum_numeric_value } = depthAnnotation;
+        if (typeof has_minimum_numeric_value === 'number' && typeof has_maximum_numeric_value === 'number') {
+          str = `${has_minimum_numeric_value} - ${has_maximum_numeric_value}`;
         }
         break;
       }
@@ -90,17 +98,24 @@ export default defineComponent({
 
         // Check whether there is a depth annotation.
         if ('depth' in props.item.annotations) {
-          // Check whether the depth annotation describes a range;
+          // Check whether the depth annotation describes a range with a unit;
           // and, if so, use that as the result.
           const rangeWithUnitStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Mode.RangeWithUnit);
           if (typeof rangeWithUnitStr === 'string') {
             result = rangeWithUnitStr;
           } else {
-            // Check whether the raw depth is non-null and the depth annotation contains a unit;
-            // and, if so, use a concatenation of the two as the result.
-            const unitStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Mode.Unit);
-            if (rawDepth !== null && typeof unitStr === 'string') {
-              result = `${rawDepth} ${unitStr}`;
+            // Check whether the depth annotation describes a range;
+            // and, if so, use that as the result.
+            const rangeStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Mode.Range);
+            if (typeof rangeStr === 'string') {
+              result = rangeStr;
+            } else {
+              // Check whether the raw depth is non-null and the depth annotation contains a unit;
+              // and, if so, use a concatenation of the two as the result.
+              const unitStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Mode.Unit);
+              if (rawDepth !== null && typeof unitStr === 'string') {
+                result = `${rawDepth} ${unitStr}`;
+              }
             }
           }
         }
