@@ -218,12 +218,10 @@ function getPermissions(): Record<string, permissionLevelValues> {
   }
   studyForm.contributors.forEach((contributor) => {
     const { orcid, permissionLevel } = contributor;
-    console.log(orcid, permissionLevel);
     if (orcid && permissionLevel) {
       permissions[orcid] = permissionLevel;
     }
   });
-  console.log(permissions);
   return permissions;
 }
 
