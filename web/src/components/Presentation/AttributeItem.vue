@@ -104,21 +104,22 @@ export default defineComponent({
 
         // Check whether there is a depth annotation.
         if ('depth' in props.item.annotations) {
+          const depthAnnotation = props.item.annotations.depth as JSONValue;
           // Check whether the depth annotation describes a range with a unit;
           // and, if so, use that as the result.
-          const rangeWithUnitStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Format.RangeWithUnit);
+          const rangeWithUnitStr = buildStrFromDepthAnnotation(depthAnnotation, Format.RangeWithUnit);
           if (typeof rangeWithUnitStr === 'string') {
             result = rangeWithUnitStr;
           } else {
             // Check whether the depth annotation describes a range;
             // and, if so, use that as the result.
-            const rangeStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Format.Range);
+            const rangeStr = buildStrFromDepthAnnotation(depthAnnotation, Format.Range);
             if (typeof rangeStr === 'string') {
               result = rangeStr;
             } else {
               // Check whether the top-level depth value is numeric (not null) and the depth annotation contains a unit;
               // and, if so, use a concatenation of the two as the result.
-              const unitStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Format.Unit);
+              const unitStr = buildStrFromDepthAnnotation(depthAnnotation, Format.Unit);
               if (typeof topLevelDepth === 'number' && typeof unitStr === 'string') {
                 result = `${topLevelDepth} ${unitStr}`;
               }
