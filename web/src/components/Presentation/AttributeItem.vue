@@ -17,7 +17,7 @@ export enum Format {
 const buildStrFromDepthAnnotation = (depthAnnotation: JSONValue, format: Format): string | undefined => {
   let str: string | undefined;
 
-  // Regardless of the specified mode, check whether the depth annotation is a "non-null, non-array" object.
+  // Regardless of the specified format, check whether the depth annotation is a "non-null, non-array" object.
   if (typeof depthAnnotation === 'object' && depthAnnotation !== null && !Array.isArray(depthAnnotation)) {
     // Extract data according to the specified format.
     switch (format) {
