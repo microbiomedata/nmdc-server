@@ -4,7 +4,7 @@ import { isObject } from 'lodash';
 
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
-import AttributeItem from './AttributeItem.vue';
+import AttributeItem, { doesDepthAnnotationDescribeRange } from './AttributeItem.vue';
 
 export default defineComponent({
   components: { AttributeItem },
@@ -41,6 +41,15 @@ export default defineComponent({
         if (includeFields.has(field)) {
           return true;
         }
+
+        // For the "depth" field, we only include it if either:
+        // (a) the top-level depth value is a number (even if it's 0); or
+        // (b) the depth annotation describes a range (with or without units).
+        if (field === 'depth') {
+          const isTopLevelDepthNumeric = typeof props.item.depth === 'number';
+          return isTopLevelDepthNumeric || doesDepthAnnotationDescribeRange(props.item.annotations.depth);
+        }
+
         const value = props.item[field];
         return !isObject(value) && value && (!getField(field) || !getField(field).hideAttr);
       });
