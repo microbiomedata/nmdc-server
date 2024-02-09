@@ -43,7 +43,6 @@ const buildStrFromDepthAnnotation = (depthAnnotation: JSONValue, format: Format)
         break;
       }
       default: {
-        console.error('Invalid format specifier.');
         break;
       }
     }
