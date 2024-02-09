@@ -52,7 +52,7 @@ const buildStrFromDepthAnnotation = (depthAnnotation: JSONValue, format: Format)
 };
 
 /**
- * Helper function that checks whether the specified depth annotation "adequately" describes a range.
+ * Helper function that checks whether the specified depth annotation describes a range.
  */
 export const doesDepthAnnotationDescribeRange = (depthAnnotation: JSONValue): boolean => {
   const rangeWithUnit = buildStrFromDepthAnnotation(depthAnnotation, Format.RangeWithUnit);
@@ -97,10 +97,10 @@ export default defineComponent({
   setup(props) {
     function getValue(field: string) {
       if (field === 'depth') {
-        const rawDepth = props.item.depth;
+        const topLevelDepth = props.item.depth;
 
-        // Use the raw depth as the fallback result.
-        let result = rawDepth;
+        // Use the top-level depth value as the fallback result.
+        let result = topLevelDepth;
 
         // Check whether there is a depth annotation.
         if ('depth' in props.item.annotations) {
@@ -116,11 +116,11 @@ export default defineComponent({
             if (typeof rangeStr === 'string') {
               result = rangeStr;
             } else {
-              // Check whether the raw depth is numeric (i.e. not null) and the depth annotation contains a unit;
+              // Check whether the top-level depth value is numeric (not null) and the depth annotation contains a unit;
               // and, if so, use a concatenation of the two as the result.
               const unitStr = buildStrFromDepthAnnotation(props.item.annotations.depth, Format.Unit);
-              if (typeof rawDepth === 'number' && typeof unitStr === 'string') {
-                result = `${rawDepth} ${unitStr}`;
+              if (typeof topLevelDepth === 'number' && typeof unitStr === 'string') {
+                result = `${topLevelDepth} ${unitStr}`;
               }
             }
           }
