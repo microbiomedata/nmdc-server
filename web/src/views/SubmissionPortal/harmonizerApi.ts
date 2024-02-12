@@ -414,15 +414,16 @@ export class HarmonizerApi {
     this._postTemplateChange();
   }
 
-  setColumnsReadOnly(columns: number[]) {
+  setColumnsReadOnly(slotNames: string[]) {
     const { hot } = this.dh;
-    const rowCount = hot.countRows();
-    columns.forEach((col) => {
-      for (let row = 0; row < rowCount; row += 1) {
-        hot.setCellMeta(row, col, 'readOnly', true);
+    const { columns } = hot.getSettings();
+    const fields = this.dh.getFields();
+    for (let col = 0; col < fields.length; col += 1) {
+      if (slotNames.includes(fields[col].name)) {
+        columns[col].readOnly = true;
       }
-    });
-    hot.render();
+    }
+    hot.updateSettings({ columns });
   }
 
   setMaxRows(maxRows: number) {
