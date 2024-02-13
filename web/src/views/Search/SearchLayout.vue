@@ -45,7 +45,8 @@ export default defineComponent({
         .filter((c) => c.table === 'study' && c.field === 'study_id')
         .map((c) => c.value)
     ));
-    function setChecked(studyId: string, children:StudySearchResults[] = [], omicsType = '') {
+    function setChecked(studyId: string, { children = [] as StudySearchResults[], omicsType = '' } = {}) {
+      console.log('setChecked', studyId, children, omicsType);
       const conditions: Condition[] = [{
         value: studyId,
         table: 'study',
@@ -235,7 +236,7 @@ export default defineComponent({
 
             <v-card outlined>
               <v-card-title class="pb-0">
-                {{ study.data.results.count }}
+                {{ study.data.results.total }}
                 {{ study.data.results.count === 1 ? 'Study' : 'Studies' }}
               </v-card-title>
               <SearchResults
@@ -256,7 +257,7 @@ export default defineComponent({
                       :input-value="studyCheckboxState"
                       :value="result.id"
                       @click.stop
-                      @change="setChecked(result.id, result.children)"
+                      @change="setChecked(result.id, {children:result.children})"
                     />
                   </v-list-item-action>
                 </template>
@@ -307,7 +308,7 @@ export default defineComponent({
                         :key="item.type"
                         small
                         class="mr-2 my-1"
-                        @click.stop="setChecked(props.result.id, item.type)"
+                        @click.stop="setChecked(props.result.id, {omicsType:item.type})"
                       >
                         {{ fieldDisplayName(item.type) }}: {{ item.count }}
                       </v-chip>
@@ -363,23 +364,23 @@ export default defineComponent({
                           </v-btn>
                         </v-list-item-action>
                       </template>
-                      <template #item-content>
-                        <div v-if="props.result.omics_processing_counts">
+                      <template #item-content="childProps">
+                        <div v-if="childProps.result.omics_processing_counts">
                           <template
-                            v-for="item in props.result.omics_processing_counts"
+                            v-for="item in childProps.result.omics_processing_counts"
                           >
                             <v-chip
                               v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
                               :key="item.type"
                               small
                               class="mr-2 my-1"
-                              @click.stop="setChecked(props.result.id, item.type)"
+                              @click.stop="setChecked(childProps.result.id, {omicsType:item.type})"
                             >
                               {{ fieldDisplayName(item.type) }}: {{ item.count }}
                             </v-chip>
                           </template>
                         </div>
-                        <div v-else-if="props.result.study_category !== 'consortium'">
+                        <div v-else-if="childProps.result.study_category !== 'consortium'">
                           <v-chip
                             small
                             disabled
@@ -394,7 +395,7 @@ export default defineComponent({
                 </template>
               </SearchResults>
               <v-card-title class="pb-0">
-                {{ consortium.data.results.count }}
+                {{ consortium.data.results.total }}
                 {{ consortium.data.results.count === 1 ? 'Consortium' : 'Consortia' }}
               </v-card-title>
               <SearchResults
@@ -415,7 +416,7 @@ export default defineComponent({
                       :input-value="studyCheckboxState"
                       :value="result.id"
                       @click.stop
-                      @change="setChecked(result.id, result.children)"
+                      @change="setChecked(result.id,{children:result.children})"
                     />
                   </v-list-item-action>
                 </template>
@@ -465,7 +466,7 @@ export default defineComponent({
                         :key="item.type"
                         small
                         class="mr-2 my-1"
-                        @click.stop="setChecked(props.result.id, item.type)"
+                        @click.stop="setChecked(props.result.id, {omicsType:item.type})"
                       >
                         {{ fieldDisplayName(item.type) }}: {{ item.count }}
                       </v-chip>
@@ -522,7 +523,7 @@ export default defineComponent({
                               :key="item.type"
                               small
                               class="mr-2 my-1"
-                              @click.stop="setChecked(props.result.id, item.type)"
+                              @click.stop="setChecked(props.result.id, {omicsType:item.type})"
                             >
                               {{ fieldDisplayName(item.type) }}: {{ item.count }}
                             </v-chip>

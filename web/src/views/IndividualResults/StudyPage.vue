@@ -50,26 +50,21 @@ export default defineComponent({
       essDiveDois: [] as DOI[],
     });
 
-    const sampleTree = {
-      name: 'Consortium or Umbrella Study Name',
-      children: [
-        {
-          name: 'Study Name',
-          studyId: 1,
-        },
-        {
-          name: 'This Study',
-          studyId: 2,
-        },
-        {
-          name: 'Study Name',
-          studyId: 3,
-        },
-
-      ],
-    };
-
     const item = ref(null as StudySearchResults | null);
+    const parentStudies = ref([]as StudySearchResults[]);
+
+    watch(item, () => {
+      if (item.value?.part_of) {
+        item.value.part_of.forEach((id: string) => {
+          api.getStudy(id).then((b) => {
+            parentStudies.value.push(b);
+          });
+        });
+      } else {
+        parentStudies.value = [];
+      }
+    });
+
     watchEffect(() => {
       api.getStudy(props.id).then((b) => { item.value = b; });
     });
@@ -185,7 +180,6 @@ export default defineComponent({
       }
     });
     return {
-      sampleTree,
       CitationOverrides,
       GoldStudyLinkBase,
       goldLinks,
@@ -200,6 +194,7 @@ export default defineComponent({
       typeWithCardinality,
       fieldDisplayName,
       seeStudyInContext,
+      parentStudies,
       images: {
         // eslint-disable-next-line global-require
         gold: require('@/assets/GOLD.png'),
@@ -267,10 +262,8 @@ export default defineComponent({
             </v-list>
             <template
               v-if="
-                goldLinks ||
-                  data.essDiveDois.length > 0 ||
-                  data.massiveDois.length > 0 ||
-                  item.relevant_protocols.length > 0 ||
+                goldLinks.keys.length > 0 ||
+                  item.relevant_protocols||
                   item.principal_investigator_websites.length > 0"
             >
               <div class="display-1">
@@ -405,7 +398,8 @@ export default defineComponent({
                       v-if="award.provider"
                       class="pt-2"
                     >
-                      <span class="font-weight-bold pr-2">Provider:</span> {{ award.provider }}
+                      <span class="font-weight-bold pr-2">Provider:</span>
+                      <span class="text-uppercase">{{ award.provider }}</span>
                     </div>
                   </v-list-item-content>
 
@@ -506,7 +500,7 @@ export default defineComponent({
             </template>
           </div>
           <v-card
-            v-if="item.part_of"
+            v-if="item.part_of && item.part_of.length > 0"
             flat
           >
             <v-card-title class="display-1">
@@ -514,16 +508,40 @@ export default defineComponent({
             </v-card-title>
             <v-list>
               <v-list-item
-                v-for="study in item.part_of"
-                :key="study"
-                :to="`${study}`"
+                v-for="study in parentStudies"
+                :key="study.id"
+                :to="`${study.id}`"
               >
                 <v-list-item-icon>
                   <v-icon>mdi-file-document</v-icon>
                 </v-list-item-icon>
                 <v-list-item-content>
                   <v-list-item-title class="px-2">
-                    {{ study }}
+                    {{ study.annotations.title }}
+                  </v-list-item-title>
+                </v-list-item-content>
+              </v-list-item>
+            </v-list>
+          </v-card>
+          <v-card
+            v-if="item.children && item.children.length > 0"
+            flat
+          >
+            <v-card-title class="display-1">
+              Associated Studies:
+            </v-card-title>
+            <v-list>
+              <v-list-item
+                v-for="study in item.children"
+                :key="study.id"
+                :to="`${study.id}`"
+              >
+                <v-list-item-icon>
+                  <v-icon>mdi-file-document</v-icon>
+                </v-list-item-icon>
+                <v-list-item-content>
+                  <v-list-item-title class="px-2">
+                    {{ study.annotations.title }}
                   </v-list-item-title>
                 </v-list-item-content>
               </v-list-item>

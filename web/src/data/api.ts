@@ -280,7 +280,7 @@ export type BulkDownloadAggregateSummary = {
 export interface Condition {
   field: string;
   op: opType;
-  value: string | number | [number, number] ;
+  value: string | number | [number, number];
   table: string;
 }
 
