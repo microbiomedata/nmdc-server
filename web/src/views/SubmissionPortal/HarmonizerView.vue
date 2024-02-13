@@ -64,6 +64,21 @@ const TYPE_FIELD = ANALYSIS_TYPE;
 // TODO: should this be derived from schema?
 const COMMON_COLUMNS = [SAMP_NAME, SOURCE_MAT_ID, ANALYSIS_TYPE];
 
+const ALWAYS_READ_ONLY_COLUMNS = [
+  'dna_seq_project',
+  'rna_seq_project',
+  'dna_samp_id',
+  'rna_samp_id',
+  'rna_seq_project_pi',
+  'dna_seq_project_pi',
+  'dna_project_contact',
+  'rna_project_contact',
+  'proposal_rna',
+  'proposal_dna',
+  'rna_seq_project_name',
+  'dna_seq_project_name',
+];
+
 // TODO: can this be imported from elsewhere?
 const EMSL = 'emsl';
 const JGI_MG = 'jgi_mg';
@@ -96,9 +111,10 @@ export default defineComponent({
 
     watch(activeTemplate, () => {
       harmonizerApi.loadData(activeTemplateData.value);
+      harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
       // if we're not on the first tab, the common columns should be read-only
       if (activeTemplateKey.value !== templateList.value[0]) {
-        harmonizerApi.setColumnsReadOnly([0, 1, 2]);
+        harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
     });
@@ -1018,5 +1034,9 @@ html {
 
 .sidebar-toggle-close {
   transform: rotate(180deg);
+}
+
+.htDimmed {
+  cursor: not-allowed;
 }
 </style>
