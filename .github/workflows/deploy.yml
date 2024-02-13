@@ -80,11 +80,11 @@ jobs:
           username: ${{ secrets.SPIN_USER }}
           password: ${{ secrets.SPIN_PASSWORD }}
 
-      - name: Redeploy nmdc:${{ matrix.deployment }}
+      - name: Redeploy nmdc:portal-${{ matrix.deployment }}
         if: ${{ env.IS_PROD_RELEASE == 'true' && env.IS_ORIGINAL_REPO == 'true' }}
         uses: fjogeleit/http-request-action@v1
         with:
-          url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc:${{ matrix.deployment }}?action=redeploy
+          url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc:portal-${{ matrix.deployment }}?action=redeploy
           method: POST
           username: ${{ secrets.SPIN_USER }}
           password: ${{ secrets.SPIN_PASSWORD }}
