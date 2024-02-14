@@ -46,7 +46,6 @@ export default defineComponent({
         .map((c) => c.value)
     ));
     function setChecked(studyId: string, { children = [] as StudySearchResults[], omicsType = '' } = {}) {
-      console.log('setChecked', studyId, children, omicsType);
       const conditions: Condition[] = [{
         value: studyId,
         table: 'study',
@@ -61,14 +60,24 @@ export default defineComponent({
           op: '==',
         });
       }
+
       if (children.length > 0) {
         children.forEach((child) => {
-          conditions.push({
-            value: child.id,
-            table: 'study',
-            field: 'study_id',
-            op: '==',
-          });
+          if (!studyCheckboxState.value.includes(child.id)) {
+            conditions.push({
+              value: child.id,
+              table: 'study',
+              field: 'study_id',
+              op: '==',
+            });
+          } else {
+            conditions.splice(conditions.indexOf({
+              value: child.id,
+              table: 'study',
+              field: 'study_id',
+              op: '==',
+            }), 1);
+          }
         });
       }
       toggleConditions(conditions);
