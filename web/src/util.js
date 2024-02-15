@@ -160,8 +160,8 @@ export function saveAs(filename, text) {
  * - https://microbiomedata.github.io/nmdc-schema/QuantityValue/
  *
  * @param depthAnnotation {object?} Value of the biosample's `annotations.depth` property
- * @param depthAnnotation.has_maximum_numeric_value {number?} Upper magnitude of the quantity's range
  * @param depthAnnotation.has_minimum_numeric_value {number?} Lower magnitude of the quantity's range
+ * @param depthAnnotation.has_maximum_numeric_value {number?} Upper magnitude of the quantity's range
  * @param depthAnnotation.has_numeric_value {number?} Magnitude of the quantity
  * @param depthAnnotation.has_unit {string?} Unit of the quantity
  * @param depth {number | null} Value of the biosample's top-level `depth` property
@@ -171,14 +171,14 @@ export const formatBiosampleDepth = (depthAnnotation, depth) => {
   let formattedStr = depth; // fallback value
   if (depthAnnotation !== undefined) {
     const {
-      has_maximum_numeric_value: maxMagnitude,
       has_minimum_numeric_value: minMagnitude,
+      has_maximum_numeric_value: maxMagnitude,
       has_numeric_value: magnitude,
       has_unit: unit,
     } = depthAnnotation;
-    if (typeof maxMagnitude === 'number' && typeof minMagnitude === 'number' && typeof unit === 'string') {
+    if (typeof minMagnitude === 'number' && typeof maxMagnitude === 'number' && typeof unit === 'string') {
       formattedStr = `${minMagnitude} - ${maxMagnitude} ${unit}`; // range with unit
-    } else if (typeof maxMagnitude === 'number' && typeof minMagnitude === 'number') {
+    } else if (typeof minMagnitude === 'number' && typeof maxMagnitude === 'number') {
       formattedStr = `${minMagnitude} - ${maxMagnitude}`; // range without unit
     } else if (typeof magnitude === 'number' && typeof unit === 'string') {
       formattedStr = `${magnitude} ${unit}`; // number with unit
