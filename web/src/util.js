@@ -141,3 +141,48 @@ export function saveAs(filename, text) {
   element.click();
   document.body.removeChild(element);
 }
+
+/**
+ * Returns a string describing the depth of the biosample in the most preferred format possible (see formats below);
+ * or returns `null` (if it cannot describe a depth in any of the preferred formats).
+ *
+ * Formats, from most to least preferred (preferred by whom? see https://github.com/microbiomedata/nmdc-server/issues/756):
+ * 1. Range with unit (e.g. "1 - 2 meters")
+ * 2. Range without unit (e.g. "1 - 2")
+ * 3. Number with unit (e.g. "1 meter")
+ * 4. Whatever the biosample's top-level `depth` property contains (see `nmdc_server/ingest/biosample.py`)
+ *
+ * Note: I check values' types instead of their truthiness because I consider 0 to be a valid depth magnitude,
+ *       while JavaScript considers it to be falsy.
+ *
+ * References:
+ * - https://jsdoc.app/tags-param#parameters-with-properties
+ * - https://microbiomedata.github.io/nmdc-schema/QuantityValue/
+ *
+ * @param depthAnnotation {object?} Value of the biosample's `annotations.depth` property
+ * @param depthAnnotation.has_maximum_numeric_value {number?} Upper magnitude of the quantity's range
+ * @param depthAnnotation.has_minimum_numeric_value {number?} Lower magnitude of the quantity's range
+ * @param depthAnnotation.has_numeric_value {number?} Magnitude of the quantity
+ * @param depthAnnotation.has_unit {string?} Unit of the quantity
+ * @param depth {number | null} Value of the biosample's top-level `depth` property
+ * @return {string | null} Either a string describing the depth of the biosample, or `null`
+ */
+export const formatBiosampleDepth = (depthAnnotation, depth) => {
+  let formattedStr = depth; // fallback value
+  if (depthAnnotation !== undefined) {
+    const {
+      has_maximum_numeric_value: maxMagnitude,
+      has_minimum_numeric_value: minMagnitude,
+      has_numeric_value: magnitude,
+      has_unit: unit,
+    } = depthAnnotation;
+    if (typeof maxMagnitude === 'number' && typeof minMagnitude === 'number' && typeof unit === 'string') {
+      formattedStr = `${minMagnitude} - ${maxMagnitude} ${unit}`; // range with unit
+    } else if (typeof maxMagnitude === 'number' && typeof minMagnitude === 'number') {
+      formattedStr = `${minMagnitude} - ${maxMagnitude}`; // range without unit
+    } else if (typeof magnitude === 'number' && typeof unit === 'string') {
+      formattedStr = `${magnitude} ${unit}`; // number with unit
+    }
+  }
+  return formattedStr;
+};

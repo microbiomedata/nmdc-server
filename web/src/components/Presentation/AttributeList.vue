@@ -4,7 +4,8 @@ import { isObject } from 'lodash';
 
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
-import AttributeItem, { doesDepthAnnotationDescribeRange } from './AttributeItem.vue';
+import AttributeItem from './AttributeItem.vue';
+import { formatBiosampleDepth } from '@/util';
 
 export default defineComponent({
   components: { AttributeItem },
@@ -42,12 +43,11 @@ export default defineComponent({
           return true;
         }
 
-        // For the "depth" field, we only include it if either:
-        // (a) the top-level depth value is a number (even if it's 0); or
-        // (b) the depth annotation describes a range (with or without units).
+        // For the "depth" field, we only include it if it is something we can format as a string.
+        // Note: I assert some types here to work around the inaccurate type definitions in `api.ts`.
         if (field === 'depth') {
-          const isTopLevelDepthNumeric = typeof props.item.depth === 'number';
-          return isTopLevelDepthNumeric || doesDepthAnnotationDescribeRange(props.item.annotations.depth);
+          const formattedDepth = formatBiosampleDepth(props.item.annotations.depth as object | null, props.item.depth as number | null);
+          return formattedDepth !== null;
         }
 
         const value = props.item[field];
