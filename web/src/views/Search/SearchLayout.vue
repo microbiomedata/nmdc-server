@@ -60,7 +60,6 @@ export default defineComponent({
           op: '==',
         });
       }
-
       if (children.length > 0) {
         children.forEach((child) => {
           if (!studyCheckboxState.value.includes(child.id)) {
@@ -70,16 +69,10 @@ export default defineComponent({
               field: 'study_id',
               op: '==',
             });
-          } else {
-            conditions.splice(conditions.indexOf({
-              value: child.id,
-              table: 'study',
-              field: 'study_id',
-              op: '==',
-            }), 1);
           }
         });
       }
+
       toggleConditions(conditions);
     }
 
@@ -352,6 +345,7 @@ export default defineComponent({
                       <template #action="{ result }">
                         <v-list-item-action>
                           <v-checkbox
+                            :disabled="studyCheckboxState.includes(props.result.id)"
                             :input-value="studyCheckboxState"
                             :value="result.id"
                             @click.stop

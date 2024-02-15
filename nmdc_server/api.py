@@ -261,12 +261,12 @@ async def search_study(
     if not flat:
         top_level_condition: List[query.ConditionSchema] = [
             query.SimpleConditionSchema(
-                **{"field": "part_of", "op": "==", "value": "null", "table": "study"}
+                **{"field": "part_of", "op": "==", "value": "null", "table": "study"} # type: ignore
             )
         ]
         children_condition: List[query.ConditionSchema] = [
             query.SimpleConditionSchema(
-                **{"field": "part_of", "op": "!=", "value": "null", "table": "study"}
+                **{"field": "part_of", "op": "!=", "value": "null", "table": "study"} # type: ignore
             )
         ]
 
@@ -283,7 +283,6 @@ async def search_study(
         for child in children_studies:
             for parent_id in child.part_of:
                 if parent_id not in [parent.id for parent in top_level_studies] and child.id not in [parent.id for parent in top_level_studies]:
-                    print(parent_id)
                     top_level_studies.append(child)
 
         for parent in top_level_studies:
