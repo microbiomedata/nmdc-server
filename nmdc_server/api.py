@@ -4,7 +4,6 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response
 from fastapi.responses import JSONResponse
-from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
@@ -24,13 +23,12 @@ from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.models import (
     IngestLock,
-    Study,
     SubmissionEditorRole,
     SubmissionMetadata,
     SubmissionRole,
     User,
 )
-from nmdc_server.pagination import PaginatedResponse, Pagination
+from nmdc_server.pagination import Pagination
 
 router = APIRouter()
 
@@ -261,12 +259,22 @@ async def search_study(
     if not flat:
         top_level_condition: List[query.ConditionSchema] = [
             query.SimpleConditionSchema(
-                **{"field": "part_of", "op": "==", "value": "null", "table": "study"} # type: ignore
+                **{
+                    "field": "part_of",
+                    "op": "==",
+                    "value": "null",
+                    "table": "study",
+                }  # type: ignore
             )
         ]
         children_condition: List[query.ConditionSchema] = [
             query.SimpleConditionSchema(
-                **{"field": "part_of", "op": "!=", "value": "null", "table": "study"} # type: ignore
+                **{
+                    "field": "part_of",
+                    "op": "!=",
+                    "value": "null",
+                    "table": "study",
+                }  # type: ignore
             )
         ]
 
@@ -276,13 +284,15 @@ async def search_study(
         children_studies = crud.search_study(db, children_condition).all()
         top_level_studies = crud.search_study(db, top_level_condition).all()
 
-    #     """
-    #     If there are children studies that match the query, but the top level studies do not,
-    #     add the parent to the top level studies
-    #     """
+        #     """
+        #     If there are children studies that match the query, but the top level studies do not,
+        #     add the parent to the top level studies
+        #     """
         for child in children_studies:
             for parent_id in child.part_of:
-                if parent_id not in [parent.id for parent in top_level_studies] and child.id not in [parent.id for parent in top_level_studies]:
+                if parent_id not in [
+                    parent.id for parent in top_level_studies
+                ] and child.id not in [parent.id for parent in top_level_studies]:
                     top_level_studies.append(child)
 
         for parent in top_level_studies:
@@ -296,10 +306,11 @@ async def search_study(
         total = crud.search_study(db, q.conditions).count()
 
         structured_results: query.StudySearchResponse = query.StudySearchResponse(
-            count=count, results=top_level_studies[pagination.offset:pagination.limit + pagination.offset], total=total
+            count=count,
+            results=top_level_studies[pagination.offset : pagination.limit + pagination.offset],
+            total=total,
         )
         return structured_results
-
 
     return pagination.response(crud.search_study(db, q.conditions))
 
@@ -333,17 +344,17 @@ async def get_study(study_id: str, db: Session = Depends(get_db)):
     db_study = crud.get_study(db, study_id)
 
     children_condition: List[query.ConditionSchema] = [
-            query.SimpleConditionSchema(
-                **{"field": "part_of", "op": "!=", "value": "null", "table": "study"}
-            )
-        ]
+        query.SimpleConditionSchema(
+            **{"field": "part_of", "op": "!=", "value": "null", "table": "study"}
+        )
+    ]
 
     children_studies = crud.search_study(db, children_condition).all()
     if db_study:
         db_study.children = []
         for child in children_studies:
-                    if child.part_of is not None and db_study.id in child.part_of:
-                        db_study.children.append(child)
+            if child.part_of is not None and db_study.id in child.part_of:
+                db_study.children.append(child)
 
     if db_study is None:
         raise HTTPException(status_code=404, detail="Study not found")
