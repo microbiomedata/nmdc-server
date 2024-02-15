@@ -206,6 +206,7 @@ class DOIInfo(Base):
     info = Column(JSONB, nullable=False, default=dict)
     doi_type = Column(Enum(DOIType))
     studies = relationship("Study", secondary=study_doi_association, back_populates="dois")
+    doi_provider = Column(String, nullable=False, default="")
 
 
 class AnnotatedModel:
@@ -232,9 +233,11 @@ class Study(Base, AnnotatedModel):
     has_credit_associations = Column(JSONB, nullable=True)
     relevant_protocols = Column(JSONB, nullable=True)
     funding_sources = Column(JSONB, nullable=True)
-    ess_dive_datasets = Column(JSONB, nullable=True)
-    massive_study_identifiers = Column(JSONB, nullable=True)
     gold_study_identifiers = Column(JSONB, nullable=True)
+
+    study_category = Column(String, nullable=False, default="")
+    part_of = Column(JSONB, nullable=True)
+    children = Column(JSONB, nullable=True)
 
     # These query expressions are a way to inject additional aggregation information
     # into the query at search time.  See `with_expression` usage in `query.py`.
@@ -277,7 +280,11 @@ class Study(Base, AnnotatedModel):
     def doi_map(self) -> Dict[str, Any]:
         doi_info = dict()
         for doi in self.dois:  # type: ignore
-            doi_info[doi.id] = {"info": doi.info, "category": doi.doi_type}
+            doi_info[doi.id] = {
+                "info": doi.info,
+                "category": doi.doi_type,
+                "provider": doi.doi_provider,
+            }
         return doi_info
 
 

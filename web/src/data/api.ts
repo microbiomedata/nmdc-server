@@ -120,11 +120,13 @@ interface PrincipalInvestigator {
 export interface DOI {
   cite: string,
   id:string,
+  provider: string,
 }
 
 export interface DOIMAP {
   info: Record<string, any>,
-  category: string
+  category: string,
+  provider: string,
 }
 
 export interface StudySearchResults extends BaseSearchResult {
@@ -153,9 +155,10 @@ export interface StudySearchResults extends BaseSearchResult {
   open_in_gold: string;
   funding_sources: string[];
   relevant_protocols: string[];
-  ess_dive_datasets: string[];
-  massive_study_identifiers: string[];
   gold_study_identifiers: string[];
+  study_category: string;
+  part_of: string[] | null;
+  children: StudySearchResults[] | null;
   has_credit_associations: {
     applied_roles: string[];
     applies_to_person: {

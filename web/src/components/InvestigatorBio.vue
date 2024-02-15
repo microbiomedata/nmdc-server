@@ -50,7 +50,7 @@ export default defineComponent({
         />
       </v-avatar>
     </v-col>
-    <v-col class="grow mx-2">
+    <v-col class="grow mx-2 pr-8">
       <v-row
         align="center"
         justify="start"
@@ -74,21 +74,6 @@ export default defineComponent({
               :width="24"
             />
           </span>
-          <a
-            v-for="site in item.principal_investigator_websites"
-            :key="site"
-            class="blue--text py-1"
-            style="cursor: pointer; text-decoration: none; display: block;"
-            :href="site"
-          >
-            <v-icon
-              left
-              color="blue"
-            >
-              mdi-link
-            </v-icon>
-            {{ site }}
-          </a>
           <div class="text-h5 py-2 primary--text">
             Team
           </div>
@@ -122,6 +107,12 @@ export default defineComponent({
               />
             </v-card>
           </v-menu>
+          <div class="text-h5 py-2 primary--text">
+            Funding Sources
+          </div>
+          <div>
+            {{ item.funding_sources.flat().toString() }}
+          </div>
         </v-card>
       </v-row>
     </v-col>

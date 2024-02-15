@@ -251,11 +251,68 @@ async def kegg_text_search(query: str, limit=20, db: Session = Depends(get_db)):
     description="Faceted search of study data.",
 )
 async def search_study(
-    query: query.SearchQuery = query.SearchQuery(),
+    q: query.SearchQuery = query.SearchQuery(),
     db: Session = Depends(get_db),
     pagination: Pagination = Depends(),
+    flat: bool = False,
 ):
-    return pagination.response(crud.search_study(db, query.conditions))
+    if not flat:
+        top_level_condition: List[query.ConditionSchema] = [
+            query.SimpleConditionSchema(
+                **{
+                    "field": "part_of",
+                    "op": "==",
+                    "value": "null",
+                    "table": "study",
+                }
+            )
+        ]
+        children_condition: List[query.ConditionSchema] = [
+            query.SimpleConditionSchema(
+                **{
+                    "field": "part_of",
+                    "op": "!=",
+                    "value": "null",
+                    "table": "study",
+                }
+            )
+        ]
+
+        top_level_condition.extend(q.conditions)
+        children_condition.extend(q.conditions)
+
+        children_studies = crud.search_study(db, children_condition).all()
+        top_level_studies = crud.search_study(db, top_level_condition).all()
+
+        #     """
+        #     If there are children studies that match the query, but the top level studies do not,
+        #     add the parent to the top level studies
+        #     """
+        for child in children_studies:
+            for parent_id in child.part_of:
+                if parent_id not in [
+                    parent.id for parent in top_level_studies
+                ] and child.id not in [parent.id for parent in top_level_studies]:
+                    top_level_studies.append(child)
+
+        for parent in top_level_studies:
+            parent.children = []
+            for child in children_studies:
+                if child.part_of is not None and parent.id in child.part_of:
+                    parent.children.append(child)
+
+        count = len(top_level_studies)
+
+        total = crud.search_study(db, q.conditions).count()
+
+        structured_results: query.StudySearchResponse = query.StudySearchResponse(
+            count=count,
+            results=top_level_studies[pagination.offset : pagination.limit + pagination.offset],
+            total=total,
+        )
+        return structured_results
+
+    return pagination.response(crud.search_study(db, q.conditions))
 
 
 @router.post(
@@ -285,6 +342,20 @@ async def binned_facet_study(query: query.BinnedFacetQuery, db: Session = Depend
 )
 async def get_study(study_id: str, db: Session = Depends(get_db)):
     db_study = crud.get_study(db, study_id)
+
+    children_condition: List[query.ConditionSchema] = [
+        query.SimpleConditionSchema(
+            **{"field": "part_of", "op": "!=", "value": "null", "table": "study"}
+        )
+    ]
+
+    children_studies = crud.search_study(db, children_condition).all()
+    if db_study:
+        db_study.children = []
+        for child in children_studies:
+            if child.part_of is not None and db_study.id in child.part_of:
+                db_study.children.append(child)
+
     if db_study is None:
         raise HTTPException(status_code=404, detail="Study not found")
     return db_study

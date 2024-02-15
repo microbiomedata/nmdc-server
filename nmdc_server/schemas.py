@@ -27,7 +27,7 @@ DateType = Union[datetime, date]
 # valid datetime strings into datetime objects while falling
 # back to ordinary strings.  Also, we never want numeric types
 # to be interpreted as dates.
-AnnotationValue = Union[float, int, datetime, str, dict, list]
+AnnotationValue = Union[float, int, datetime, str, dict, list, None]
 
 
 class ErrorSchema(BaseModel):
@@ -235,6 +235,9 @@ class StudyBase(AnnotatedBase):
     relevant_protocols: Optional[List[str]]
     funding_sources: Optional[List[str]]
     gold_study_identifiers: Optional[List[str]]
+    part_of: Optional[List[str]]
+    study_category: Optional[str]
+    children: Optional[List[Study]] = []
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
