@@ -264,7 +264,7 @@ async def search_study(
                     "op": "==",
                     "value": "null",
                     "table": "study",
-                }  # type: ignore
+                }
             )
         ]
         children_condition: List[query.ConditionSchema] = [
@@ -274,7 +274,7 @@ async def search_study(
                     "op": "!=",
                     "value": "null",
                     "table": "study",
-                }  # type: ignore
+                }
             )
         ]
 

@@ -439,7 +439,8 @@ export default defineComponent({
                         v-if="pub.provider"
                         class="pt-2"
                       >
-                        <span class="font-weight-bold pr-2">Provider:</span>{{ pub.provider }}
+                        <span class="font-weight-bold pr-2">Provider:</span>
+                        <span class="text-uppercase">{{ pub.provider }}</span>
                       </div>
                     </v-list-item-content>
                     <v-list-item-action>
@@ -478,7 +479,8 @@ export default defineComponent({
                       v-if="dataDOI.provider"
                       class="pt-2"
                     >
-                      <span class="font-weight-bold pr-2">Provider:</span>{{ dataDOI.provider }}
+                      <span class="font-weight-bold pr-2">Provider:</span>
+                      <span class="</span>">{{ dataDOI.provider }}</span>
                     </div>
                   </v-list-item-content>
                   <v-list-item-action>

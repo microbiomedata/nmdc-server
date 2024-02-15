@@ -5,6 +5,7 @@ Revises: ded8702fcc7a
 Create Date: 2023-12-05 21:50:30.315417
 
 """
+
 from typing import Optional
 
 import sqlalchemy as sa
@@ -32,7 +33,7 @@ def downgrade():
         "study",
         sa.Column(
             "ess_dive_datasets",
-            postgresql.JSONB(astext_type=sa.Text()),
+            postgresql.JSONB(astext_type=sa.Text()),  # type:ignore
             autoincrement=False,
             nullable=True,
         ),
@@ -41,7 +42,7 @@ def downgrade():
         "study",
         sa.Column(
             "massive_study_identifiers",
-            postgresql.JSONB(astext_type=sa.Text()),
+            postgresql.JSONB(astext_type=sa.Text()),  # type:ignore
             autoincrement=False,
             nullable=True,
         ),

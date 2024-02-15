@@ -276,7 +276,6 @@ class Study(StudyBase):
         orm_mode = True
 
 
-
 # biosample
 class BiosampleBase(AnnotatedBase):
     study_id: str
