@@ -39,15 +39,6 @@ export type entityType = 'biosample'
  */
 export type entitySchemaType = keyof typeof NmdcSchema.$defs;
 
-/**
- * Define a TypeScript type alias that accounts for all possible JSON values.
- *
- * References:
- * - https://www.json.org/json-en.html
- * - https://devblogs.microsoft.com/typescript/announcing-typescript-3-7/#more-recursive-type-aliases
- */
-export type JSONValue = string | number | boolean | null | { [k: string]: JSONValue } | Array<JSONValue>;
-
 export interface BaseSearchResult {
   id: string;
   name: string;
