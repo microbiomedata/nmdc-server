@@ -46,7 +46,7 @@ export default defineComponent({
         // For the "depth" field, we only include it if it is something we can format as a string.
         // Note: I assert some types here to work around the inaccurate type definitions in `api.ts`.
         if (field === 'depth') {
-          const formattedDepth = formatBiosampleDepth(props.item.annotations.depth as object | null, props.item.depth as number | null);
+          const formattedDepth = formatBiosampleDepth(props.item.annotations?.depth as object | null, props.item.depth as number | null);
           return formattedDepth !== null;
         }
 

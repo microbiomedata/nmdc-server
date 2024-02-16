@@ -161,7 +161,7 @@ export function saveAs(filename, text) {
  * - https://jsdoc.app/tags-param#parameters-with-properties
  * - https://microbiomedata.github.io/nmdc-schema/QuantityValue/
  *
- * @param depthAnnotation {object?} Value of the biosample's `annotations.depth` property
+ * @param depthAnnotation {object | null} Value of the biosample's `annotations.depth` property
  * @param depthAnnotation.has_minimum_numeric_value {number?} Lower magnitude of the quantity's range
  * @param depthAnnotation.has_maximum_numeric_value {number?} Upper magnitude of the quantity's range
  * @param depthAnnotation.has_numeric_value {number?} Magnitude of the quantity
@@ -171,7 +171,7 @@ export function saveAs(filename, text) {
  */
 export const formatBiosampleDepth = (depthAnnotation, depth) => {
   let formattedStr = depth; // fallback value
-  if (depthAnnotation !== undefined) {
+  if (depthAnnotation !== null) {
     const {
       has_minimum_numeric_value: minMagnitude,
       has_maximum_numeric_value: maxMagnitude,
