@@ -169,7 +169,7 @@ export function saveAs(filename, text) {
  * @param depth {number | null} Value of the biosample's top-level `depth` property
  * @return {string | null} Either a string describing the depth of the biosample, or `null`
  */
-export const formatBiosampleDepth = (depthAnnotation, depth) => {
+export function formatBiosampleDepth(depthAnnotation, depth) {
   let formattedStr = depth; // fallback value
   if (depthAnnotation !== null) {
     const {
@@ -187,4 +187,4 @@ export const formatBiosampleDepth = (depthAnnotation, depth) => {
     }
   }
   return formattedStr;
-};
+}
