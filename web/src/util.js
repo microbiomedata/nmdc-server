@@ -143,17 +143,19 @@ export function saveAs(filename, text) {
 }
 
 /**
- * Returns a string describing the depth of the biosample in the most preferred format possible (see formats below);
- * or returns `null` (if it cannot describe a depth in any of the preferred formats).
+ * Returns a string describing the depth of a biosample, or returns null.
  *
- * Formats, from most to least preferred (preferred by whom? see https://github.com/microbiomedata/nmdc-server/issues/756):
+ * If the biosample's depth annotation contains enough information for this function to format the depth into a string
+ * having one of the formats listed below, the function formats it that way. Otherwise, the function returns whatever
+ * the biosample's top-level `depth` property contains, which could be `null` (per `nmdc_server/ingest/biosample.py`).
+ *
+ * Formats:
  * 1. Range with unit (e.g. "1 - 2 meters")
  * 2. Range without unit (e.g. "1 - 2")
  * 3. Number with unit (e.g. "1 meter")
- * 4. Whatever the biosample's top-level `depth` property contains (see `nmdc_server/ingest/biosample.py`)
  *
- * Note: I check values' types instead of their truthiness because I consider 0 to be a valid depth magnitude,
- *       while JavaScript considers it to be falsy.
+ * Note: I check values' types instead of their truthiness here because I consider `0` to be a valid depth magnitude,
+ *       while JavaScript considers it to be falsy (per https://developer.mozilla.org/en-US/docs/Glossary/Falsy).
  *
  * References:
  * - https://jsdoc.app/tags-param#parameters-with-properties
