@@ -206,7 +206,7 @@ class DOIInfo(Base):
     info = Column(JSONB, nullable=False, default=dict)
     doi_type = Column(Enum(DOIType))
     studies = relationship("Study", secondary=study_doi_association, back_populates="dois")
-    doi_provider = Column(String, nullable=False, default="")
+    doi_provider = Column(String, nullable=True)
 
 
 class AnnotatedModel:
@@ -235,7 +235,7 @@ class Study(Base, AnnotatedModel):
     funding_sources = Column(JSONB, nullable=True)
     gold_study_identifiers = Column(JSONB, nullable=True)
 
-    study_category = Column(String, nullable=False, default="")
+    study_category = Column(String, nullable=True)
     part_of = Column(JSONB, nullable=True)
     children = Column(JSONB, nullable=True)
 
