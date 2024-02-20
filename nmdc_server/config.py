@@ -62,6 +62,9 @@ class Settings(BaseSettings):
     rancher_backend_workload_id: Optional[str] = None
     rancher_worker_workload_id: Optional[str] = None
 
+    # CORS settings necessary for allowing request from Field Notes app
+    cors_allow_origins: Optional[str] = None  # comma separated list of allowed origins
+
     @property
     def current_db_uri(self) -> str:
         if self.environment == "testing":
