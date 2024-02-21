@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from '@vue/composition-api';
 import { getField } from '@/encoding';
-import { fieldDisplayName, valueDisplayName } from '@/util';
+import { fieldDisplayName, formatBiosampleDepth, valueDisplayName } from '@/util';
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 
 export default defineComponent({
@@ -41,6 +41,11 @@ export default defineComponent({
 
   setup(props) {
     function getValue(field: string) {
+      // For the "depth" field, format it as a string or `null`.
+      // Note: I assert some types here to work around the inaccurate type definitions in `api.ts`.
+      if (field === 'depth') {
+        return formatBiosampleDepth(props.item.annotations?.depth as object | null, props.item.depth as number | null);
+      }
       if (field === 'geo_loc_name') {
         return props.item.annotations.geo_loc_name;
       }

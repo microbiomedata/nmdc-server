@@ -5,6 +5,7 @@ import { isObject } from 'lodash';
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
 import AttributeItem from './AttributeItem.vue';
+import { formatBiosampleDepth } from '@/util';
 
 export default defineComponent({
   components: { AttributeItem },
@@ -41,6 +42,14 @@ export default defineComponent({
         if (includeFields.has(field)) {
           return true;
         }
+
+        // For the "depth" field, we only include it if it is something we can format as a string.
+        // Note: I assert some types here to work around the inaccurate type definitions in `api.ts`.
+        if (field === 'depth') {
+          const formattedDepth = formatBiosampleDepth(props.item.annotations?.depth as object | null, props.item.depth as number | null);
+          return formattedDepth !== null;
+        }
+
         const value = props.item[field];
         return !isObject(value) && value && (!getField(field) || !getField(field).hideAttr);
       });
