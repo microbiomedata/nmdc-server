@@ -49,6 +49,7 @@ interface MetadataSubmissionRecord {
   status: string;
   locked_by: User;
   lock_updated: string;
+  permission_level: string | null;
 }
 
 interface PaginatedResponse<T> {
@@ -63,10 +64,11 @@ async function createRecord(record: MetadataSubmission) {
   return resp.data;
 }
 
-async function updateRecord(id: string, record: MetadataSubmission, status?: string) {
+async function updateRecord(id: string, record: Partial<MetadataSubmission>, status?: string, permissions?: Record<string, string>) {
   const resp = await client.patch<MetadataSubmissionRecord>(`metadata_submission/${id}`, {
     metadata_submission: record,
     status,
+    permissions,
   });
   return resp.data;
 }

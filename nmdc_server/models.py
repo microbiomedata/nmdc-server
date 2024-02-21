@@ -758,7 +758,7 @@ class User(Base):
     is_admin = Column(Boolean, nullable=False, default=False)
 
 
-class SubmissionEditorRole(enum.Enum):
+class SubmissionEditorRole(str, enum.Enum):
     editor = "editor"
     owner = "owner"
     viewer = "viewer"

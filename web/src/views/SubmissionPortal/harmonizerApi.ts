@@ -426,6 +426,11 @@ export class HarmonizerApi {
     hot.updateSettings({ columns });
   }
 
+  setTableReadOnly() {
+    this.dh.hot.updateSettings({ readOnly: true });
+    this.dh.hot.render();
+  }
+
   setMaxRows(maxRows: number) {
     this.dh.hot.updateSettings({ maxRows });
   }

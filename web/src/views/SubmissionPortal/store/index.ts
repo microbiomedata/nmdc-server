@@ -23,8 +23,22 @@ enum AwardTypes {
   FICUS = 'FICUS'
 }
 
-type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
+type permissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
+type permissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor' | 'owner';
+const permissionTitleToDbValueMap: Record<permissionTitle, permissionLevelValues> = {
+  Viewer: 'viewer',
+  'Metadata Contributor': 'metadata_contributor',
+  Editor: 'editor',
+};
 
+const permissionLevelHierarchy: Record<permissionLevelValues, number> = {
+  owner: 4,
+  editor: 3,
+  metadata_contributor: 2,
+  viewer: 1,
+};
+
+type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
 const submissionStatus: Record<string, SubmissionStatus> = {
   InProgress: 'In Progress',
   SubmittedPendingReview: 'Submitted- Pending Review',
@@ -41,6 +55,26 @@ const status = ref(submissionStatus.InProgress);
 let _submissionLockedBy: User | null = null;
 function getSubmissionLockedBy(): User | null {
   return _submissionLockedBy;
+}
+
+let _permissionLevel: permissionLevelValues | null = null;
+function getPermissionLevel(): permissionLevelValues | null {
+  return _permissionLevel;
+}
+
+function isOwner(): boolean {
+  if (!_permissionLevel) return false;
+  return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
+}
+
+function canEditSubmissionMetadata(): boolean {
+  if (!_permissionLevel) return false;
+  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
+}
+
+function canEditSampleMetadata(): boolean {
+  if (!_permissionLevel) return false;
+  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
 }
 
 const hasChanged = ref(0);
@@ -101,6 +135,7 @@ const studyFormDefault = {
     name: string;
     orcid: string;
     roles: string[];
+    permissionLevel: permissionLevelValues | null;
   }[],
 };
 const studyFormValid = ref(false);
@@ -176,13 +211,30 @@ const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   sampleData: sampleData.value,
 }));
 
+function getPermissions(): Record<string, permissionLevelValues> {
+  const permissions: Record<string, permissionLevelValues> = {};
+  if (studyForm.piOrcid) {
+    permissions[studyForm.piOrcid] = 'owner';
+  }
+  studyForm.contributors.forEach((contributor) => {
+    const { orcid, permissionLevel } = contributor;
+    if (orcid && permissionLevel) {
+      permissions[orcid] = permissionLevel;
+    }
+  });
+  return permissions;
+}
+
 const submitPayload = computed(() => {
   const value = JSON.stringify(payloadObject.value, null, 2);
   return value;
 });
 
 function submit(id: string, status: SubmissionStatus = submissionStatus.InProgress) {
-  return api.updateRecord(id, payloadObject.value, status);
+  if (canEditSubmissionMetadata()) {
+    return api.updateRecord(id, payloadObject.value, status);
+  }
+  throw new Error('Unable to submit due to inadequate permission level for this submission.');
 }
 
 function reset() {
@@ -204,11 +256,25 @@ function reset() {
 }
 
 async function incrementalSaveRecord(id: string) {
-  const val: api.MetadataSubmission = {
-    ...payloadObject.value,
-  };
+  if (!canEditSubmissionMetadata()) {
+    return;
+  }
+
+  let payload: Partial<api.MetadataSubmission> = {};
+  let permissions: Record<string, permissionLevelValues> | undefined;
+  if (isOwner()) {
+    payload = payloadObject.value;
+    permissions = getPermissions();
+  } else if (canEditSubmissionMetadata()) {
+    payload = payloadObject.value;
+  } else if (canEditSampleMetadata()) {
+    payload = {
+      sampleData: payloadObject.value.sampleData,
+    };
+  }
+
   if (hasChanged.value) {
-    await api.updateRecord(id, val);
+    await api.updateRecord(id, payload, undefined, permissions);
   }
   hasChanged.value = 0;
 }
@@ -231,6 +297,7 @@ async function loadRecord(id: string) {
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
   _submissionLockedBy = val.locked_by;
+  _permissionLevel = (val.permission_level as permissionLevelValues);
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
@@ -250,6 +317,10 @@ export {
   submissionStatus,
   BiosafetyLevels,
   AwardTypes,
+  permissionTitle,
+  permissionTitleToDbValueMap,
+  permissionLevelValues,
+  permissionLevelHierarchy,
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
@@ -271,9 +342,13 @@ export {
   status,
   /* functions */
   getSubmissionLockedBy,
+  getPermissionLevel,
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
   submit,
   mergeSampleData,
+  isOwner,
+  canEditSampleMetadata,
+  canEditSubmissionMetadata,
 };
