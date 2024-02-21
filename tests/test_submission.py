@@ -173,7 +173,6 @@ def test_create_role_on_patch(db: Session, client: TestClient, token: Token, log
     payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
     db.commit()
 
-    # payload.metadata_submission.studyForm.piOrcid = str(pi_orcid)
     payload.permissions = {str(pi_orcid): SubmissionEditorRole.owner.value}
     response = client.request(
         method="patch",
