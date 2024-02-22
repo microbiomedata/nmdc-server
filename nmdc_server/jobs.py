@@ -73,6 +73,7 @@ def do_ingest(function_limit, skip_annotation):
             # Copy persistent data that does not depend on ingest FK
             merge_download_artifact(ingest_db, prod_db.query(models.User))
             merge_download_artifact(ingest_db, prod_db.query(models.SubmissionMetadata))
+            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionRole))
 
             # ingest data
             logger.info(

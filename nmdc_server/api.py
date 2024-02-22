@@ -634,7 +634,11 @@ async def get_submission(
         elif user.orcid in submission.viewers:
             permission_level = models.SubmissionEditorRole.viewer.value
         return schemas_submission.SubmissionMetadataSchema(
-            **submission.__dict__,
+            status=submission.status,
+            id=submission.id,
+            metadata_submission=submission.metadata_submission,
+            author_orcid=submission.author_orcid,
+            created=submission.created,
             author=schemas.User(**submission.author.__dict__),
             locked_by=schemas.User(**submission.locked_by.__dict__),
             permission_level=permission_level,
