@@ -26,6 +26,10 @@ login_required_responses: Dict[Any, Any] = {
     "403": {"description": "Insufficient permissions"},
 }
 oauth2_client = starlette_client.OAuth(starlette_config)
+
+# We can include other params like max-age etc. in client_kwargs
+# Also nonce may not be needed for now (the main benefit is that it is 
+# supposed to trigger parse_id_token, but it is not working for orcid)
 oauth2_client.register(
     name="orcid",
     client_id=settings.client_id,
