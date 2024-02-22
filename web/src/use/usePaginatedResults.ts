@@ -1,6 +1,7 @@
 import {
   watch, Ref, computed, toRef, shallowReactive,
 } from '@vue/composition-api';
+import { debounce } from 'lodash';
 import {
   SearchParams, Condition, DataObjectFilter, SearchResponse,
 } from '@/data/api';
@@ -44,12 +45,13 @@ export default function usePaginatedResult<T>(
     toRef(data, 'limit'),
     toRef(data, 'offset'),
   ], fetchResults);
-  watch([conditions], () => {
+
+  watch([conditions], debounce(() => {
     const doFetch = data.offset === 0;
     data.offset = 0;
     data.limit = limit;
     if (doFetch) fetchResults();
-  });
+  }, 500));
 
   if (dataObjectFilter !== undefined) {
     watch(dataObjectFilter, fetchResults, { deep: true });
