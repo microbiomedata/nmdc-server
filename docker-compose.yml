@@ -61,7 +61,7 @@ services:
       - .docker-env
     environment:
       BACKEND_URL: "http://backend:8000"
-      DNS_ADDRESS: "127.0.0.11"
+      DNS_ADDRESS: "127.0.0.1"
     build:
       context: web/
       dockerfile: Dockerfile
@@ -71,7 +71,7 @@ services:
     ports:
       - "8080:80"
 
-volumes:
+volumes:  
   app-db-data:
   app-db-ingest:
 

@@ -15,6 +15,9 @@ from nmdc_server import crud, models
 from nmdc_server.config import settings, starlette_config
 from nmdc_server.database import get_db
 from nmdc_server.schemas import User
+from nmdc_server.logger import get_logger
+
+logger = get_logger(__name__)
 
 # The type is added to get around an error related to:
 #   https://github.com/python/mypy/issues/8477
@@ -30,6 +33,7 @@ oauth2_client.register(
     server_metadata_url=settings.open_id_config_url,
     client_kwargs={
         "scope": settings.oauth_scope,
+        "nonce": "foo"
     },
 )
 
@@ -50,11 +54,15 @@ class Token(BaseModel):
     name: str
     orcid: str
     expires_at: int
+    id_token: str
 
+
+# Add an ID Token pydantic model?
 
 async def get_token(
     request: Request, access_token: Optional[str] = Security(oauth2_scheme)
 ) -> Optional[Token]:
+    # Use ID tokens here instead of access tokens
     token = request.session.get("token")
     if token:
         return Token(**token)
@@ -65,12 +73,14 @@ async def get_token(
 
 
 async def get_current_user(token: Optional[Token] = Depends(get_token)) -> Optional[str]:
+    # If we use id tokens here given_name + family_name
     if token:
         return token.name
     return None
 
 
 async def get_current_user_orcid(token: Optional[Token] = Depends(get_token)) -> Optional[str]:
+    # If we use id tokens here pull "sub"
     if token:
         return token.orcid
     return None
@@ -133,6 +143,15 @@ async def authorize(
     user = User(orcid=token["orcid"], name=token["name"])
     user_model = crud.get_or_create_user(db, user)
     user_model.name = user.name
+
+    # logger.warn("HELLOO!" + str(token))
+
+    # Grab the id_token from the access token
+    # use oauth2_client.orcid.parse_id_token if possible (or manually parse)
+    #   - parsing may be tricky because of JWT headers, signature etc.
+    #   - what does nonce do and how to use it? 
+    # Use the ID token for session token instead
+
     db.commit()
     if behavior == LoginBehavior.web:
         request.session["token"] = token
