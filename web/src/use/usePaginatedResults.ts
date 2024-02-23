@@ -41,22 +41,24 @@ export default function usePaginatedResult<T>(
     });
   }
 
+  const debouncedFetchResults = debounce(fetchResults, 500);
+
   watch([
     toRef(data, 'limit'),
     toRef(data, 'offset'),
-  ], fetchResults);
+  ], debouncedFetchResults);
 
-  watch([conditions], debounce(() => {
+  watch([conditions], () => {
     const doFetch = data.offset === 0;
     data.offset = 0;
     data.limit = limit;
-    if (doFetch) fetchResults();
-  }, 500));
+    if (doFetch) debouncedFetchResults();
+  });
 
   if (dataObjectFilter !== undefined) {
-    watch(dataObjectFilter, fetchResults, { deep: true });
+    watch(dataObjectFilter, debouncedFetchResults, { deep: true });
   }
-  fetchResults();
+  debouncedFetchResults();
   // ENDTODO
 
   function setPage(newPage: number) {
