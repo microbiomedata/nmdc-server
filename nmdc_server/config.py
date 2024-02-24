@@ -30,11 +30,13 @@ class Settings(BaseSettings):
     client_id: str = "oauth client id"
     client_secret: str = "oauth secret key"
     open_id_config_url: str = "https://sandbox.orcid.org/.well-known/openid-configuration"
-    oauth_scope: str = "/authenticate openid"
+    oauth_scope: str = "openid"
     oauth_authorization_endpoint: str = "https://sandbox.orcid.org/oauth/authorize"
     oauth_token_endpoint: str = "https://sandbox.orcid.org/oauth/token"
     host: Optional[str] = None  # sets the host name for the oauth2 redirect
     field_notes_host: str = "https://fieldnotes.microbiomedata.org"
+    orcid_jwk = {'kty': 'RSA', 'e': 'AQAB', 'use': 'sig', 'kid': 'sandbox-orcid-org-3hpgosl3b6lapenh1ewsgdob3fawepoj', 'n': 'pl-jp-kTAGf6BZUrWIYUJTvqqMVd4iAnoLS6vve-KNV0q8TxKvMre7oi9IulDcqTuJ1alHrZAIVlgrgFn88MKirZuTqHG6LCtEsr7qGD9XyVcz64oXrb9vx4FO9tLNQxvdnIWCIwyPAYWtPMHMSSD5oEVUtVL_5IaxfCJvU-FchdHiwfxvXMWmA-i3mcEEe9zggag2vUPPIqUwbPVUFNj2hE7UsZbasuIToEMFRZqSB6juc9zv6PEUueQ5hAJCEylTkzMwyBMibrt04TmtZk2w9DfKJR91555s2ZMstX4G_su1_FqQ6p9vgcuLQ6tCtrW77tta-Rw7McF_tyPmvnhQ'}
+    orcid_jws_verify_algorithm = 'RS256'
 
     # mongo database used for ingest
     mongo_host: str = "mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org"
