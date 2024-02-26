@@ -71,7 +71,7 @@ services:
     ports:
       - "8080:80"
 
-volumes:  
+volumes:
   app-db-data:
   app-db-ingest:
 

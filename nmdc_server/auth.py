@@ -28,9 +28,7 @@ login_required_responses: Dict[Any, Any] = {
 }
 oauth2_client = starlette_client.OAuth(starlette_config)
 
-# We can include other params like max-age etc. in client_kwargs
-# Also nonce may not be needed for now (the main benefit is that it is 
-# supposed to trigger parse_id_token, but it is not working for orcid)
+# We can include oidc params like max-age, nonce etc. in client_kwargs
 oauth2_client.register(
     name="orcid",
     client_id=settings.client_id,
@@ -38,7 +36,6 @@ oauth2_client.register(
     server_metadata_url=settings.open_id_config_url,
     client_kwargs={
         "scope": settings.oauth_scope,
-        "nonce": "foo"
     },
 )
 
@@ -62,24 +59,9 @@ class Token(BaseModel):
     id_token: str
 
 
-# Add an ID Token pydantic model?
-class IDToken(BaseModel):
-    at_hash: str # "bBuLGYBEPKW_CUPtIgDKSA",
-    aud: str #"APP-ZPP616AE98ZDOPXI",
-    sub: str # "0009-0004-1405-1690",
-    auth_time: int # 1706912832,
-    iss: str # "https://sandbox.orcid.org",
-    exp: int # 1708663664,
-    given_name: str # "Shreyas",
-    iat: str # 1708577264,
-    family_name: str # "Cholia",
-    jti: UUID # "25908e79-c0f2-4a01-95e6-9a74c825d6d3"
-
-
 async def get_token(
     request: Request, access_token: Optional[str] = Security(oauth2_scheme)
 ) -> Optional[Token]:
-    # Use ID tokens here instead of access tokens
     token = request.session.get("token")
     if token:
         return Token(**token)
@@ -87,30 +69,25 @@ async def get_token(
         try:
             payload = jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
             return Token(**payload)
-        # Catch specific exception
         except(JWTError):
+            # Catch JWTError and try to decode id_token
             # TODO: Should we verify some of the claims?
             payload = jwt.get_unverified_claims(access_token)
             # Verify the signature
             jws.verify(access_token, settings.orcid_jwk, settings.orcid_jws_verify_algorithm)
-            return IDToken(**payload)
+            # convert to a minimal token object
+            return Token(name=f"{access_token['given_name']} {access_token['family_name']}", orcid=access_token['sub'])
 
     return None
 
 
 async def get_current_user(token: Optional[Token] = Depends(get_token)) -> Optional[str]:
-    # If we use id tokens here given_name + family_name
-    if type(token) is IDToken:
-        return f"{token.given_name} {token.family_name}"
     if token:
         return token.name
     return None
 
 
 async def get_current_user_orcid(token: Optional[Token] = Depends(get_token)) -> Optional[str]:
-    # If we use id tokens here pull "sub"
-    if type(token) is IDToken:
-        return token.sub
     if token:
         return token.orcid
     return None
@@ -125,13 +102,8 @@ async def login_required(
             detail="Login required",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    if type(token) is IDToken:
-        # TODO: additional validation here
-        name = f"{token.given_name} {token.family_name}"
-        orcid = token.sub
-        user_schema = User(name=name, orcid=orcid)
-    else:
-        user_schema = User(name=token.name, orcid=token.orcid)
+
+    user_schema = User(name=token.name, orcid=token.orcid)
     return crud.get_or_create_user(db, user_schema)
 
 
@@ -179,14 +151,6 @@ async def authorize(
     user = User(orcid=token["orcid"], name=token["name"])
     user_model = crud.get_or_create_user(db, user)
     user_model.name = user.name
-
-    logger.warn("HELLOO! " + str(jwt.get_unverified_claims(token["id_token"])))
-
-    # Grab the id_token from the access token
-    # use oauth2_client.orcid.parse_id_token if possible (or manually parse)
-    #   - parsing may be tricky because of JWT headers, signature etc.
-    #   - what does nonce do and how to use it? 
-    # Use the ID token for session token instead
 
     db.commit()
     if behavior == LoginBehavior.web:
