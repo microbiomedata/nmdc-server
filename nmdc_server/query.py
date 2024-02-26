@@ -656,13 +656,27 @@ class StudyQuerySchema(BaseQuerySchema):
 
     def query(self, db: Session):
         study_query = super().query(db)
-        if any([condition.table == Table.biosample for condition in self.conditions]):
+        biosample_condition_exists = any(
+            [condition.table == Table.biosample for condition in self.conditions]
+        )
+        omics_condition_exists = any(
+            [condition.table == Table.omics_processing for condition in self.conditions]
+        )
+        if biosample_condition_exists:
             sample_query = BiosampleQuerySchema(conditions=self.conditions).query(db)
             studies_from_sample_query = sample_query.with_entities(
                 models.Biosample.study_id
             ).distinct()
             study_query = study_query.where(  # type: ignore
                 self.table.model.id.in_(studies_from_sample_query)  # type: ignore
+            )
+        elif omics_condition_exists:
+            omics_query = OmicsProcessingQuerySchema(conditions=self.conditions).query(db)
+            studies_from_omics_query = omics_query.with_entities(
+                models.OmicsProcessing.study_id
+            ).distinct()
+            study_query = study_query.where(  # type: ignore
+                self.table.model.id.in_(studies_from_omics_query)  # type: ignore
             )
         return study_query
 
@@ -700,6 +714,20 @@ class BiosampleQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
         return Table.biosample
+
+    def query(self, db: Session):
+        sample_query = super().query(db)
+        if any([condition.table == Table.omics_processing for condition in self.conditions]):
+            omics_query = OmicsProcessingQuerySchema(conditions=self.conditions).query(db)
+            samples_from_omics_query = (
+                omics_query.join(models.biosample_input_association)
+                .with_entities(models.biosample_input_association.c.biosample_id)
+                .distinct()
+            )
+            sample_query = sample_query.where(  # type: ignore
+                self.table.model.id.in_(samples_from_omics_query)  # type: ignore
+            )
+        return sample_query
 
     def execute(self, db: Session) -> Query:
         model = self.table.model
