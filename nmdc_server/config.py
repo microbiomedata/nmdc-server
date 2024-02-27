@@ -30,7 +30,7 @@ class Settings(BaseSettings):
     client_id: str = "oauth client id"
     client_secret: str = "oauth secret key"
     open_id_config_url: str = "https://sandbox.orcid.org/.well-known/openid-configuration"
-    oauth_scope: str = "openid"
+    oauth_scope: str = "/authenticate openid"
     oauth_authorization_endpoint: str = "https://sandbox.orcid.org/oauth/authorize"
     oauth_token_endpoint: str = "https://sandbox.orcid.org/oauth/token"
     host: Optional[str] = None  # sets the host name for the oauth2 redirect

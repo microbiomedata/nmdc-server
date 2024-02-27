@@ -70,14 +70,16 @@ async def get_token(
             payload = jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
             return Token(**payload)
         except(JWTError):
-            # Catch JWTError and try to decode id_token
-            # TODO: Should we verify some of the claims?
-            payload = jwt.get_unverified_claims(access_token)
-            # Verify the signature
-            jws.verify(access_token, settings.orcid_jwk, settings.orcid_jws_verify_algorithm)
-            # convert to a minimal token object
-            return Token(name=f"{access_token['given_name']} {access_token['family_name']}", orcid=access_token['sub'])
-
+            try:
+                # Catch JWTError and try to decode id_token
+                payload = jwt.get_unverified_claims(access_token)
+                # Verify the signature
+                jws.verify(access_token, settings.orcid_jwk, settings.orcid_jws_verify_algorithm)
+                # convert to a minimal token object
+                return Token(name=f"{access_token['given_name']} {access_token['family_name']}", orcid=access_token['sub'])
+            except(JWTError):
+                logger.debug("Error decoding JWT token")
+                return None
     return None
 
 
@@ -102,7 +104,6 @@ async def login_required(
             detail="Login required",
             headers={"WWW-Authenticate": "Bearer"},
         )
-
     user_schema = User(name=token.name, orcid=token.orcid)
     return crud.get_or_create_user(db, user_schema)
 
@@ -151,7 +152,6 @@ async def authorize(
     user = User(orcid=token["orcid"], name=token["name"])
     user_model = crud.get_or_create_user(db, user)
     user_model.name = user.name
-
     db.commit()
     if behavior == LoginBehavior.web:
         request.session["token"] = token
