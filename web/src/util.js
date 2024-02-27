@@ -141,3 +141,50 @@ export function saveAs(filename, text) {
   element.click();
   document.body.removeChild(element);
 }
+
+/**
+ * Returns a string describing the depth of a biosample, or returns null.
+ *
+ * If the biosample's depth annotation contains enough information for this function to format the depth into a string
+ * having one of the formats listed below, the function formats it that way. Otherwise, the function returns whatever
+ * the biosample's top-level `depth` property contains, which could be `null` (per `nmdc_server/ingest/biosample.py`).
+ *
+ * Formats:
+ * 1. Range with unit (e.g. "1 - 2 meters")
+ * 2. Range without unit (e.g. "1 - 2")
+ * 3. Number with unit (e.g. "1 meter")
+ *
+ * Note: I check values' types instead of their truthiness here because I consider `0` to be a valid depth magnitude,
+ *       while JavaScript considers it to be falsy (per https://developer.mozilla.org/en-US/docs/Glossary/Falsy).
+ *
+ * References:
+ * - https://jsdoc.app/tags-param#parameters-with-properties
+ * - https://microbiomedata.github.io/nmdc-schema/QuantityValue/
+ *
+ * @param depthAnnotation {object | null} Value of the biosample's `annotations.depth` property
+ * @param depthAnnotation.has_minimum_numeric_value {number?} Lower magnitude of the quantity's range
+ * @param depthAnnotation.has_maximum_numeric_value {number?} Upper magnitude of the quantity's range
+ * @param depthAnnotation.has_numeric_value {number?} Magnitude of the quantity
+ * @param depthAnnotation.has_unit {string?} Unit of the quantity
+ * @param depth {number | null} Value of the biosample's top-level `depth` property
+ * @return {string | null} Either a string describing the depth of the biosample, or `null`
+ */
+export function formatBiosampleDepth(depthAnnotation, depth) {
+  let formattedStr = depth; // fallback value
+  if (depthAnnotation !== null) {
+    const {
+      has_minimum_numeric_value: minMagnitude,
+      has_maximum_numeric_value: maxMagnitude,
+      has_numeric_value: magnitude,
+      has_unit: unit,
+    } = depthAnnotation;
+    if (typeof minMagnitude === 'number' && typeof maxMagnitude === 'number' && typeof unit === 'string') {
+      formattedStr = `${minMagnitude} - ${maxMagnitude} ${unit}`; // range with unit
+    } else if (typeof minMagnitude === 'number' && typeof maxMagnitude === 'number') {
+      formattedStr = `${minMagnitude} - ${maxMagnitude}`; // range without unit
+    } else if (typeof magnitude === 'number' && typeof unit === 'string') {
+      formattedStr = `${magnitude} ${unit}`; // number with unit
+    }
+  }
+  return formattedStr;
+}

@@ -2,7 +2,7 @@
 import { defineComponent, ref } from '@vue/composition-api';
 import Definitions from '@/definitions';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm,
+  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm, canEditSubmissionMetadata,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 
@@ -25,6 +25,7 @@ export default defineComponent({
       contextForm,
       /* functions */
       reValidate,
+      canEditSubmissionMetadata,
     };
   },
 });
@@ -44,6 +45,7 @@ export default defineComponent({
       v-model="multiOmicsFormValid"
       class="my-6 mb-10"
       style="max-width: 1000px;"
+      :disabled="!canEditSubmissionMetadata()"
     >
       <div v-if="contextForm.dataGenerated === true">
         <v-text-field

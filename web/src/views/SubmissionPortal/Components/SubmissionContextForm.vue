@@ -13,6 +13,7 @@ import {
   contextFormValid,
   AwardTypes,
   addressFormValid,
+  canEditSubmissionMetadata,
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -75,6 +76,7 @@ export default defineComponent({
       otherAwardValidationRules,
       doiRequiredRules,
       revalidate,
+      canEditSubmissionMetadata,
     };
   },
 });
@@ -94,6 +96,7 @@ export default defineComponent({
       v-model="contextFormValid"
       style="max-width: 1000px;"
       class="mb-2"
+      :disabled="!canEditSubmissionMetadata()"
     >
       <v-radio-group
         v-model="contextForm.dataGenerated"

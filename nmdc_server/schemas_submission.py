@@ -2,15 +2,17 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from nmdc_server import schemas
+from nmdc_server.models import SubmissionEditorRole
 
 
 class Contributor(BaseModel):
     name: str
     orcid: str
     roles: List[str]
+    permissionLevel: Optional[str]
 
 
 class StudyForm(BaseModel):
@@ -79,9 +81,26 @@ class MetadataSubmissionRecord(BaseModel):
     sampleData: Dict[str, List[Any]]
 
 
+class PartialMetadataSubmissionRecord(BaseModel):
+    packageName: Optional[str]
+    contextForm: Optional[ContextForm]
+    addressForm: Optional[AddressForm]
+    templates: Optional[List[str]]
+    studyForm: Optional[StudyForm]
+    multiOmicsForm: Optional[MultiOmicsForm]
+    sampleData: Optional[Dict[str, List[Any]]]
+
+
 class SubmissionMetadataSchemaCreate(BaseModel):
     metadata_submission: MetadataSubmissionRecord
     status: Optional[str]
+
+
+class SubmissionMetadataSchemaPatch(BaseModel):
+    metadata_submission: PartialMetadataSubmissionRecord
+    status: Optional[str]
+    # Map of ORCID iD to permission level
+    permissions: Optional[Dict[str, str]]
 
 
 class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
@@ -94,8 +113,30 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     lock_updated: Optional[datetime]
     locked_by: Optional[schemas.User]
 
+    permission_level: Optional[str]
+
     class Config:
         orm_mode = True
+
+    @validator("metadata_submission", pre=True, always=True)
+    def populate_roles(cls, metadata_submission, values):
+        owners = set(values.get("owners", []))
+        editors = set(values.get("editors", []))
+        viewers = set(values.get("viewers", []))
+        metadata_contributors = set(values.get("metadata_contributors", []))
+
+        for contributor in metadata_submission.get("studyForm", {}).get("contributors", []):
+            orcid = contributor.get("orcid", None)
+            if orcid:
+                if orcid in owners:
+                    contributor["role"] = SubmissionEditorRole.owner.value
+                elif orcid in editors:
+                    contributor["role"] = SubmissionEditorRole.editor.value
+                elif orcid in metadata_contributors:
+                    contributor["role"] = SubmissionEditorRole.metadata_contributor.value
+                elif orcid in viewers:
+                    contributor["role"] = SubmissionEditorRole.viewer.value
+        return metadata_submission
 
 
 SubmissionMetadataSchema.update_forward_refs()
