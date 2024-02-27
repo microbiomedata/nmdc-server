@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Any, Dict, Optional
 from uuid import UUID
+from datetime import datetime
 
 from authlib.integrations import starlette_client
 from fastapi import APIRouter, Depends, HTTPException, Security, status
@@ -75,8 +76,18 @@ async def get_token(
                 payload = jwt.get_unverified_claims(access_token)
                 # Verify the signature
                 jws.verify(access_token, settings.orcid_jwk, settings.orcid_jws_verify_algorithm)
-                # convert to a minimal token object
-                return Token(name=f"{access_token['given_name']} {access_token['family_name']}", orcid=access_token['sub'])
+                # convert to a minimal token object with mostly null values
+                return Token(
+                             access_token=UUID(int=0),
+                             token_type="",
+                             refresh_token=UUID(int=0),
+                             expires_in=payload['exp'] - int(datetime.now().timestamp()),
+                             scope="",
+                             name=f"{payload['given_name']} {payload['family_name']}",
+                             orcid=payload['sub'],
+                             expires_at=payload['exp'],
+                             id_token=access_token
+                             )
             except(JWTError):
                 logger.debug("Error decoding JWT token")
                 return None
