@@ -16,11 +16,14 @@ import {
   canEditSubmissionMetadata,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
+import { api } from '../../../data/api';
 
 export default defineComponent({
   components: { SubmissionDocsLink },
   setup() {
     const formRef = ref();
+
+    const currentUserOrcid = ref('');
 
     function addContributor() {
       studyForm.contributors.push({
@@ -53,8 +56,9 @@ export default defineComponent({
       });
     });
 
-    onMounted(() => {
+    onMounted(async () => {
       formRef.value.validate();
+      currentUserOrcid.value = await api.myOrcid();
     });
 
     return {
@@ -69,6 +73,7 @@ export default defineComponent({
       isOwner,
       canEditSubmissionMetadata,
       orcidRequiredRules,
+      currentUserOrcid,
     };
   },
 });
@@ -203,6 +208,7 @@ export default defineComponent({
               v-model="contributor.orcid"
               :rules="orcidRequiredRules(i)"
               :hint="Definitions.contributorOrcid"
+              :disabled="currentUserOrcid === contributor.orcid"
               label="ORCID"
               outlined
               persistent-hint
@@ -252,7 +258,7 @@ export default defineComponent({
         </v-card>
         <v-btn
           icon
-          :disabled="!canEditSubmissionMetadata()"
+          :disabled="!isOwner() || currentUserOrcid === contributor.orcid"
           @click="studyForm.contributors.splice(i, 1)"
         >
           <v-icon>mdi-minus-circle</v-icon>
