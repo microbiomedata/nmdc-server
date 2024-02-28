@@ -256,7 +256,7 @@ function reset() {
 }
 
 async function incrementalSaveRecord(id: string) {
-  if (!canEditSubmissionMetadata()) {
+  if (!canEditSampleMetadata()) {
     return;
   }
 
