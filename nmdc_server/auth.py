@@ -70,23 +70,25 @@ async def get_token(
         try:
             payload = jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
             return Token(**payload)
-        except(JWTError):
+        except JWTError:
             try:
                 # Catch JWTError and try to decode id_token
                 payload = jwt.get_unverified_claims(access_token)
                 # Verify the signature
                 jws.verify(access_token, settings.orcid_jwk, settings.orcid_jws_verify_algorithm)
                 # convert to a minimal token object with mostly null values
-                return Token(access_token=UUID(int=0),
-                             token_type="",
-                             refresh_token=UUID(int=0),
-                             expires_in=payload['exp'] - int(datetime.now().timestamp()),
-                             scope="",
-                             name=f"{payload['given_name']} {payload['family_name']}",
-                             orcid=payload['sub'],
-                             expires_at=payload['exp'],
-                             id_token=access_token)
-            except(JWTError):
+                return Token(
+                    access_token=UUID(int=0),
+                    token_type="",
+                    refresh_token=UUID(int=0),
+                    expires_in=payload["exp"] - int(datetime.now().timestamp()),
+                    scope="",
+                    name=f"{payload['given_name']} {payload['family_name']}",
+                    orcid=payload["sub"],
+                    expires_at=payload["exp"],
+                    id_token=access_token,
+                )
+            except JWTError:
                 logger.debug("Error decoding JWT token")
                 return None
     return None
