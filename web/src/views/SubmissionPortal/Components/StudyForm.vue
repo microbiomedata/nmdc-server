@@ -41,12 +41,18 @@ export default defineComponent({
       ];
     }
 
-    const orcidRequiredRules = (idx: number) => [(v: string) => {
+    const orcidRequiredRule = (idx: number) => (v: string) => {
       if (idx > studyForm.contributors.length) return true;
       const contributor = studyForm.contributors[idx];
       // show error when: permission level exists, but orcid does not
       return (contributor.permissionLevel && !!v) || !contributor.permissionLevel || 'ORCID iD is required if a permission level is specified';
-    }];
+    };
+
+    const uniqueOrcidRule = (idx: number) => (v: string) => {
+      if (idx > studyForm.contributors.length) return true;
+      const existingOrcids = new Set(studyForm.contributors.filter((contributor, contributorListIndex) => idx !== contributorListIndex).map((contributor) => contributor.orcid));
+      return !existingOrcids.has(v) || 'ORCID iDs must be unique';
+    };
 
     const permissionLevelChoices: Ref<{ title: string, value: string }[]> = ref([]);
     Object.keys(permissionTitleToDbValueMap).forEach((title) => {
@@ -72,7 +78,8 @@ export default defineComponent({
       permissionLevelChoices,
       isOwner,
       canEditSubmissionMetadata,
-      orcidRequiredRules,
+      orcidRequiredRule,
+      uniqueOrcidRule,
       currentUserOrcid,
     };
   },
@@ -206,7 +213,7 @@ export default defineComponent({
             />
             <v-text-field
               v-model="contributor.orcid"
-              :rules="orcidRequiredRules(i)"
+              :rules="[orcidRequiredRule(i), uniqueOrcidRule(i)]"
               :hint="Definitions.contributorOrcid"
               :disabled="currentUserOrcid === contributor.orcid"
               label="ORCID"
