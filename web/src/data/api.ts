@@ -156,9 +156,10 @@ export interface StudySearchResults extends BaseSearchResult {
   funding_sources: string[];
   relevant_protocols: string[];
   gold_study_identifiers: string[];
+  sample_count: number;
   study_category: string;
   part_of: string[] | null;
-  children: StudySearchResults[] | null;
+  children: StudySearchResults[];
   has_credit_associations: {
     applied_roles: string[];
     applies_to_person: {
