@@ -16,11 +16,14 @@ import {
   canEditSubmissionMetadata,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
+import { api } from '../../../data/api';
 
 export default defineComponent({
   components: { SubmissionDocsLink },
   setup() {
     const formRef = ref();
+
+    const currentUserOrcid = ref('');
 
     function addContributor() {
       studyForm.contributors.push({
@@ -38,12 +41,18 @@ export default defineComponent({
       ];
     }
 
-    const orcidRequiredRules = (idx: number) => [(v: string) => {
+    const orcidRequiredRule = (idx: number) => (v: string) => {
       if (idx > studyForm.contributors.length) return true;
       const contributor = studyForm.contributors[idx];
       // show error when: permission level exists, but orcid does not
       return (contributor.permissionLevel && !!v) || !contributor.permissionLevel || 'ORCID iD is required if a permission level is specified';
-    }];
+    };
+
+    const uniqueOrcidRule = (idx: number) => (v: string) => {
+      if (idx > studyForm.contributors.length) return true;
+      const existingOrcids = new Set(studyForm.contributors.filter((contributor, contributorListIndex) => idx !== contributorListIndex).map((contributor) => contributor.orcid));
+      return !existingOrcids.has(v) || 'ORCID iDs must be unique';
+    };
 
     const permissionLevelChoices: Ref<{ title: string, value: string }[]> = ref([]);
     Object.keys(permissionTitleToDbValueMap).forEach((title) => {
@@ -53,8 +62,9 @@ export default defineComponent({
       });
     });
 
-    onMounted(() => {
+    onMounted(async () => {
       formRef.value.validate();
+      currentUserOrcid.value = await api.myOrcid();
     });
 
     return {
@@ -68,7 +78,9 @@ export default defineComponent({
       permissionLevelChoices,
       isOwner,
       canEditSubmissionMetadata,
-      orcidRequiredRules,
+      orcidRequiredRule,
+      uniqueOrcidRule,
+      currentUserOrcid,
     };
   },
 });
@@ -201,8 +213,9 @@ export default defineComponent({
             />
             <v-text-field
               v-model="contributor.orcid"
-              :rules="orcidRequiredRules(i)"
+              :rules="[orcidRequiredRule(i), uniqueOrcidRule(i)]"
               :hint="Definitions.contributorOrcid"
+              :disabled="currentUserOrcid === contributor.orcid"
               label="ORCID"
               outlined
               persistent-hint
@@ -252,7 +265,7 @@ export default defineComponent({
         </v-card>
         <v-btn
           icon
-          :disabled="!canEditSubmissionMetadata()"
+          :disabled="!isOwner() || currentUserOrcid === contributor.orcid"
           @click="studyForm.contributors.splice(i, 1)"
         >
           <v-icon>mdi-minus-circle</v-icon>
