@@ -164,7 +164,7 @@ export default defineComponent({
             provider: doi.provider,
           }]).flat();
         dois.value.datasetDois = Object.values(doiMap)
-          .filter((doi) => doi.category === 'dataset_doi' && !doi.info.publisher.includes('MassIVE') && !doi.info.publisher.includes('Environmental System Science Data Infrastructure for a Virtual Ecosystem'))
+          .filter((doi) => doi.category === 'dataset_doi')
           .map((doi) => [{
             cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
             id: doi.info.DOI,
@@ -231,15 +231,6 @@ export default defineComponent({
                   </v-chip>
                 </template>
               </div>
-              <div v-else>
-                <v-chip
-                  small
-                  disabled
-                  class="my-1"
-                >
-                  Omics data coming soon
-                </v-chip>
-              </div>
             </template>
           </IndividualTitle>
           <InvestigatorBio
@@ -270,9 +261,11 @@ export default defineComponent({
                 Additional Resources
               </div>
               <v-list
-                v-if="goldLinks || data.essDiveDois.length > 0 || data.massiveDois.length > 0 || item.relevant_protocols"
+                v-if="goldLinks || item.relevant_protocols"
               >
-                <v-list-item>
+                <v-list-item
+                  v-if="goldLinks || item.relevant_protocols"
+                >
                   <v-list-item-avatar>
                     <v-icon>mdi-file-document</v-icon>
                   </v-list-item-avatar>
@@ -294,33 +287,6 @@ export default defineComponent({
                     }
                   }"
                   :image="images.gold"
-                />
-                <AttributeItem
-                  v-for="dive in data.essDiveDois"
-                  :key="dive.id"
-                  v-bind="{
-                    item,
-                    link: {
-                      name: 'ESS DIVE Dataset',
-                      target: dive.id,
-                    },
-                  }"
-                  style="padding-left: 60px;"
-                  :image="images.ess"
-                  @click="seeStudyInContext"
-                />
-                <AttributeItem
-                  v-for="massive in data.massiveDois"
-                  :key="massive.id"
-                  v-bind="{
-                    item,
-                    link: {
-                      name: 'MassIVE Study',
-                      target: massive.id
-                    },
-                  }"
-                  style="padding-left: 60px;"
-                  :image="images.massive"
                 />
                 <v-list-item v-if="item.relevant_protocols">
                   <v-list-item-avatar>
@@ -480,7 +446,7 @@ export default defineComponent({
                       class="pt-2"
                     >
                       <span class="font-weight-bold pr-2">Provider:</span>
-                      <span class="</span>">{{ dataDOI.provider }}</span>
+                      <span class="text-uppercase">{{ dataDOI.provider }}</span>
                     </div>
                   </v-list-item-content>
                   <v-list-item-action>

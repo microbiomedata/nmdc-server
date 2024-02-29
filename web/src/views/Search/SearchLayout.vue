@@ -238,173 +238,28 @@ export default defineComponent({
 
             <v-card outlined>
               <v-card-title class="pb-0">
-                {{ study.data.results.total }}
-                {{ study.data.results.count === 1 ? 'Study' : 'Studies' }}
-              </v-card-title>
-              <SearchResults
-                disable-navigate-on-click
-                :count="study.data.results.count"
-                :icon="studyType.icon"
-                :items-per-page="study.data.limit"
-                :results="studyResults"
-                :page="study.data.pageSync"
-                :loading="study.loading.value"
-                @set-page="study.setPage($event)"
-                @selected="$router.push({ name: 'Study', params: { id: $event} })"
-                @set-items-per-page="study.setItemsPerPage($event)"
-              >
-                <template #action="{ result }">
-                  <v-list-item-action>
-                    <v-checkbox
-                      :input-value="studyCheckboxState"
-                      :value="result.id"
-                      @click.stop
-                      @change="setChecked(result.id, {children:result.children})"
-                    />
-                  </v-list-item-action>
-                </template>
-
-                <template #child-list="{ result }">
-                  <v-list-item-action
-                    v-if="result.children && result.children.length > 0"
-                    class="ma-0"
-                  >
-                    <v-btn
-                      icon
-                      @click="toggleChildren(result)"
-                    >
-                      <v-icon
-                        v-if="showChildren.includes(result.id)"
-                      >
-                        mdi-chevron-up-box
-                      </v-icon>
-                      <v-icon
-                        v-else
-                      >
-                        mdi-chevron-down-box
-                      </v-icon>
-                    </v-btn>
-                  </v-list-item-action>
-                </template>
-
-                <template #action-right="{ result }">
-                  <v-list-item-action>
-                    <v-btn
-                      icon
-                      large
-                      :to="{ name: 'Study', params: { id: result.id } }"
-                    >
-                      <v-icon>
-                        mdi-open-in-new
-                      </v-icon>
-                    </v-btn>
-                  </v-list-item-action>
-                </template>
-                <template #item-content="props">
-                  <div v-if="props.result.omics_processing_counts">
-                    <template
-                      v-for="item in props.result.omics_processing_counts"
-                    >
-                      <v-chip
-                        v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
-                        :key="item.type"
-                        small
-                        class="mr-2 my-1"
-                        @click.stop="setChecked(props.result.id, {omicsType:item.type})"
-                      >
-                        {{ fieldDisplayName(item.type) }}: {{ item.count }}
-                      </v-chip>
-                    </template>
-                  </div>
-                  <div v-else-if="props.result.study_category !== 'consortium'">
-                    <v-chip
-                      small
-                      disabled
-                      class="my-1"
-                    >
-                      Omics data coming soon
-                    </v-chip>
-                  </div>
-                  <v-card
-                    v-if="showChildren.includes(props.result.id)"
-                    flat
-                    class="pa-4 mt-2"
-                  >
-                    <v-divider />
-                    <SearchResults
-                      disable-navigate-on-click
-                      disable-pagination
-                      :count="props.result.children.length"
-                      :icon="studyType.icon"
-                      :items-per-page="props.result.children.length"
-                      :results="props.result.children"
-                      :page="1"
-                      :loading="false"
-                      @selected="$router.push({ name: 'Study', params: { id: $event} })"
-                    >
-                      <template #action="{ result }">
-                        <v-list-item-action>
-                          <v-checkbox
-                            :disabled="studyCheckboxState.includes(props.result.id)"
-                            :input-value="studyCheckboxState"
-                            :value="result.id"
-                            @click.stop
-                            @change="setChecked(result.id)"
-                          />
-                        </v-list-item-action>
-                      </template>
-
-                      <template #action-right="{ result }">
-                        <v-list-item-action>
-                          <v-btn
-                            icon
-                            large
-                            :to="{ name: 'Study', params: { id: result.id } }"
-                          >
-                            <v-icon>
-                              mdi-open-in-new
-                            </v-icon>
-                          </v-btn>
-                        </v-list-item-action>
-                      </template>
-                      <template #item-content="childProps">
-                        <div v-if="childProps.result.omics_processing_counts">
-                          <template
-                            v-for="item in childProps.result.omics_processing_counts"
-                          >
-                            <v-chip
-                              v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
-                              :key="item.type"
-                              small
-                              class="mr-2 my-1"
-                              @click.stop="setChecked(childProps.result.id, {omicsType:item.type})"
-                            >
-                              {{ fieldDisplayName(item.type) }}: {{ item.count }}
-                            </v-chip>
-                          </template>
-                        </div>
-                        <div v-else-if="childProps.result.study_category !== 'consortium'">
-                          <v-chip
-                            small
-                            disabled
-                            class="my-1"
-                          >
-                            Omics data coming soon
-                          </v-chip>
-                        </div>
-                      </template>
-                    </SearchResults>
-                  </v-card>
-                </template>
-              </SearchResults>
-              <v-card-title class="pb-0">
                 {{ consortium.data.results.total }}
                 {{ consortium.data.results.count === 1 ? 'Consortium' : 'Consortia' }}
+                <v-tooltip
+                  right
+                >
+                  <template #activator="{on, attrs}">
+                    <v-btn
+                      icon
+                      small
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      <v-icon>mdi-help-circle</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Standardized Data Collections</span>
+                </v-tooltip>
               </v-card-title>
               <SearchResults
                 disable-navigate-on-click
                 :count="consortium.data.results.count"
-                :icon="studyType.icon"
+                :icon="'mdi-database'"
                 :items-per-page="consortium.data.limit"
                 :results="consortiumStudyResults"
                 :page="consortium.data.pageSync"
@@ -485,7 +340,7 @@ export default defineComponent({
                       disable-navigate-on-click
                       disable-pagination
                       :count="props.result.children.length"
-                      :icon="studyType.icon"
+                      :icon="'mdi-database'"
                       :items-per-page="props.result.children.length"
                       :results="props.result.children"
                       :page="1"
@@ -516,10 +371,10 @@ export default defineComponent({
                           </v-btn>
                         </v-list-item-action>
                       </template>
-                      <template #item-content>
-                        <div v-if="props.result.omics_processing_counts">
+                      <template #item-content="childProps">
+                        <div v-if="childProps.result.omics_processing_counts">
                           <template
-                            v-for="item in props.result.omics_processing_counts"
+                            v-for="item in childProps.result.omics_processing_counts"
                           >
                             <v-chip
                               v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
@@ -527,6 +382,163 @@ export default defineComponent({
                               small
                               class="mr-2 my-1"
                               @click.stop="setChecked(props.result.id, {omicsType:item.type})"
+                            >
+                              {{ fieldDisplayName(item.type) }}: {{ item.count }}
+                            </v-chip>
+                          </template>
+                        </div>
+                      </template>
+                    </SearchResults>
+                  </v-card>
+                </template>
+              </SearchResults>
+              <v-card-title class="pb-0">
+                {{ study.data.results.total }}
+                {{ study.data.results.count === 1 ? 'Study' : 'Studies' }}
+                <v-tooltip
+                  right
+                >
+                  <template #activator="{on, attrs}">
+                    <v-btn
+                      icon
+                      small
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      <v-icon>mdi-help-circle</v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Research-driven Experimental Data Sets</span>
+                </v-tooltip>
+              </v-card-title>
+              <SearchResults
+                disable-navigate-on-click
+                :count="study.data.results.count"
+                :icon="studyType.icon"
+                :items-per-page="study.data.limit"
+                :results="studyResults"
+                :page="study.data.pageSync"
+                :loading="study.loading.value"
+                @set-page="study.setPage($event)"
+                @selected="$router.push({ name: 'Study', params: { id: $event} })"
+                @set-items-per-page="study.setItemsPerPage($event)"
+              >
+                <template #action="{ result }">
+                  <v-list-item-action>
+                    <v-checkbox
+                      :input-value="studyCheckboxState"
+                      :value="result.id"
+                      @click.stop
+                      @change="setChecked(result.id, {children:result.children})"
+                    />
+                  </v-list-item-action>
+                </template>
+
+                <template #child-list="{ result }">
+                  <v-list-item-action
+                    v-if="result.children && result.children.length > 0"
+                    class="ma-0"
+                  >
+                    <v-btn
+                      icon
+                      @click="toggleChildren(result)"
+                    >
+                      <v-icon
+                        v-if="showChildren.includes(result.id)"
+                      >
+                        mdi-chevron-up-box
+                      </v-icon>
+                      <v-icon
+                        v-else
+                      >
+                        mdi-chevron-down-box
+                      </v-icon>
+                    </v-btn>
+                  </v-list-item-action>
+                </template>
+
+                <template #action-right="{ result }">
+                  <v-list-item-action>
+                    <v-btn
+                      icon
+                      large
+                      :to="{ name: 'Study', params: { id: result.id } }"
+                    >
+                      <v-icon>
+                        mdi-open-in-new
+                      </v-icon>
+                    </v-btn>
+                  </v-list-item-action>
+                </template>
+                <template #item-content="props">
+                  <div v-if="props.result.omics_processing_counts">
+                    <template
+                      v-for="item in props.result.omics_processing_counts"
+                    >
+                      <v-chip
+                        v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                        :key="item.type"
+                        small
+                        class="mr-2 my-1"
+                        @click.stop="setChecked(props.result.id, {omicsType:item.type})"
+                      >
+                        {{ fieldDisplayName(item.type) }}: {{ item.count }}
+                      </v-chip>
+                    </template>
+                  </div>
+                  <v-card
+                    v-if="showChildren.includes(props.result.id)"
+                    flat
+                    class="pa-4 mt-2"
+                  >
+                    <v-divider />
+                    <SearchResults
+                      disable-navigate-on-click
+                      disable-pagination
+                      :count="props.result.children.length"
+                      :icon="studyType.icon"
+                      :items-per-page="props.result.children.length"
+                      :results="props.result.children"
+                      :page="1"
+                      :loading="false"
+                      @selected="$router.push({ name: 'Study', params: { id: $event} })"
+                    >
+                      <template #action="{ result }">
+                        <v-list-item-action>
+                          <v-checkbox
+                            :disabled="studyCheckboxState.includes(props.result.id)"
+                            :input-value="studyCheckboxState"
+                            :value="result.id"
+                            @click.stop
+                            @change="setChecked(result.id)"
+                          />
+                        </v-list-item-action>
+                      </template>
+
+                      <template #action-right="{ result }">
+                        <v-list-item-action>
+                          <v-btn
+                            icon
+                            large
+                            :to="{ name: 'Study', params: { id: result.id } }"
+                          >
+                            <v-icon>
+                              mdi-open-in-new
+                            </v-icon>
+                          </v-btn>
+                        </v-list-item-action>
+                      </template>
+                      <template #item-content="childProps">
+                        <div v-if="childProps.result.omics_processing_counts">
+                          <template
+                            v-for="item in childProps.result.omics_processing_counts"
+                          >
+                            <v-chip
+                              v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                              :key="item.type"
+                              small
+                              class="mr-2 my-1"
+                              @click.stop="setChecked(childProps.result.id, {omicsType:item.type})"
                             >
                               {{ fieldDisplayName(item.type) }}: {{ item.count }}
                             </v-chip>

@@ -112,8 +112,15 @@ export default defineComponent({
           />
           <v-list-item-avatar>
             <v-icon
-              v-text="icon"
-            />
+              v-if="result.children && result.children.length > 0 && result.study_category === 'research_study'"
+            >
+              mdi-book-multiple-outline
+            </v-icon>
+            <v-icon
+              v-else
+            >
+              {{ icon }}
+            </v-icon>
           </v-list-item-avatar>
           <v-list-item-content>
             <v-list-item-title>
