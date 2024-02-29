@@ -136,11 +136,19 @@ export default defineComponent({
       .map((r) => ({
         ...r,
         name: r.annotations.title || r.name,
+        children: r.children?.map((c) => ({
+          ...c,
+          name: c.annotations.title || c.name,
+        })),
       })));
     const consortiumStudyResults = computed(() => Object.values(consortium.data.results.results)
       .map((r) => ({
         ...r,
         name: r.annotations.title || r.name,
+        children: r.children?.map((c) => ({
+          ...c,
+          name: c.annotations.title || c.name,
+        })),
       })));
 
     const loggedInUser = computed(() => typeof stateRefs.user.value === 'string');

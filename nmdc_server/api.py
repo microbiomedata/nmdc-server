@@ -284,22 +284,24 @@ async def search_study(
         children_studies = crud.search_study(db, children_condition).all()
         top_level_studies = crud.search_study(db, top_level_condition).all()
 
-        #     """
-        #     If there are children studies that match the query, but the top level studies do not,
-        #     add the parent to the top level studies
-        #     """
-        for child in children_studies:
-            for parent_id in child.part_of:
-                if parent_id not in [
-                    parent.id for parent in top_level_studies
-                ] and child.id not in [parent.id for parent in top_level_studies]:
-                    top_level_studies.append(child)
-
         for parent in top_level_studies:
             parent.children = []
             for child in children_studies:
                 if child.part_of is not None and parent.id in child.part_of:
                     parent.children.append(child)
+
+        # If there are children studies that match the query, but their top level studies do not,
+        # and they are not already listed as children of another top level study,
+        # add the child to the top level studies
+        for child in children_studies:
+            for parent_id in child.part_of:
+                if (
+                    parent_id not in [parent.id for parent in top_level_studies]
+                    and child.id not in [parent.id for parent in top_level_studies]
+                    and child.id
+                    not in [child.id for parent in top_level_studies for child in parent.children]
+                ):
+                    top_level_studies.append(child)
 
         count = len(top_level_studies)
 
