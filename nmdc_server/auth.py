@@ -3,7 +3,7 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 
 from authlib.integrations import starlette_client
-from fastapi import APIRouter, Cookie, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.responses import PlainTextResponse
 from fastapi.security.oauth2 import OAuth2AuthorizationCodeBearer
 from jose import jwt
