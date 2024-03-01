@@ -58,6 +58,7 @@ export default defineComponent({
     <v-col
       v-if="!disablePagination"
       cols="12"
+      class="pb-0"
     >
       <v-row
         no-gutters
@@ -67,7 +68,6 @@ export default defineComponent({
           cols="3"
         >
           <v-pagination
-
             :value="page"
             :length="Math.ceil(count / rows)"
             :total-visible="7"
