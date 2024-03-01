@@ -162,7 +162,10 @@ async def get_session_cookie(request: Request):
     # Reference: https://fastapi.tiangolo.com/reference/request/#fastapi.Request.cookies
     session_cookie = request.cookies.get("session", None)
     if session_cookie is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Request did not contain a session cookie.",
+        )
     return PlainTextResponse(content=session_cookie)
 
 
