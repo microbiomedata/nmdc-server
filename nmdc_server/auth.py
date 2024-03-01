@@ -3,7 +3,8 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 
 from authlib.integrations import starlette_client
-from fastapi import APIRouter, Depends, HTTPException, Security, status
+from fastapi import APIRouter, Cookie, Depends, HTTPException, Security, status
+from fastapi.responses import PlainTextResponse
 from fastapi.security.oauth2 import OAuth2AuthorizationCodeBearer
 from jose import jwt
 from pydantic import BaseModel
@@ -143,6 +144,26 @@ async def authorize(
         return RedirectResponse(
             url=f"{settings.field_notes_host}/token?token=" + encode_token(token)
         )
+
+
+@router.get(
+    "/session-cookie",
+    name="Get the session cookie",
+    tags=["user"],
+    responses={200: {"description": "Session cookie"}},
+)
+async def get_session_cookie(request: Request):
+    r"""
+    Returns the web browser's session cookie in plain text format.
+
+    Note: This endpoint does not require authentication, since the server is only
+          returning information sent to it by the client (verbatim).
+    """
+    # Reference: https://fastapi.tiangolo.com/reference/request/#fastapi.Request.cookies
+    session_cookie = request.cookies.get("session", None)
+    if session_cookie is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
+    return PlainTextResponse(content=session_cookie)
 
 
 @router.get(
