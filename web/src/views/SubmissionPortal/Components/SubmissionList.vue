@@ -12,6 +12,7 @@ import * as api from '../store/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
+import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 
 const headers: DataTableHeader[] = [
   {
@@ -48,7 +49,7 @@ const headers: DataTableHeader[] = [
 ];
 
 export default defineComponent({
-  components: { OrcidId, TitleBanner },
+  components: { IconBar, OrcidId, TitleBanner },
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
@@ -80,6 +81,7 @@ export default defineComponent({
 
     return {
       HARMONIZER_TEMPLATES,
+      IconBar,
       TitleBanner,
       createNewSubmission,
       getStatus,
@@ -99,86 +101,7 @@ export default defineComponent({
         <v-row>
           <v-col class="pb-0">
             <TitleBanner />
-            <v-container class="mt-4 mb-1">
-              <v-row>
-                <v-col>
-                  <a
-                    target="_blank"
-                    title="View the how-to guide"
-                    href="https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/submit2nmdc.html"
-                    class="text-decoration-none"
-                  >
-                    <v-container>
-                      <v-row class="align-center flex-nowrap">
-                        <v-col cols="4">
-                          <v-avatar color="primary">
-                            <v-icon color="white">
-                              mdi-timer-outline
-                            </v-icon>
-                          </v-avatar>
-                        </v-col>
-                        <v-col>
-                          <span class="blue--text text-left text-h6 font-weight-bold">
-                            Quickstart
-                          </span>
-                        </v-col>
-                      </v-row>
-                    </v-container>
-                  </a>
-                </v-col>
-                <v-col>
-                  <a
-                    target="_blank"
-                    title="View the submission portal tutorial"
-                    href="https://nmdc-documentation.readthedocs.io/en/latest/tutorials/submission_portal.html"
-                    class="text-decoration-none"
-                  >
-                    <v-container>
-                      <v-row class="align-center flex-nowrap">
-                        <v-col cols="4">
-                          <v-avatar color="primary">
-                            <v-icon color="white">
-                              mdi-human-male-board
-                            </v-icon>
-                          </v-avatar>
-                        </v-col>
-                        <v-col>
-                          <span class="blue--text text-left text-h6 font-weight-bold">
-                            Tutorial
-                          </span>
-                        </v-col>
-                      </v-row>
-                    </v-container>
-                  </a>
-                </v-col>
-                <v-col>
-                  <!-- TODO: Verify that this is the correct `href`, given recent decision about documentation duplication. -->
-                  <a
-                    target="_blank"
-                    title="View the metadata schema"
-                    href="https://nmdc-documentation.readthedocs.io/en/latest/reference/metadata/combined_schema_docs.html"
-                    class="text-decoration-none"
-                  >
-                    <v-container>
-                      <v-row class="align-center flex-nowrap">
-                        <v-col cols="4">
-                          <v-avatar color="primary">
-                            <v-icon color="white">
-                              mdi-book-open-variant-outline
-                            </v-icon>
-                          </v-avatar>
-                        </v-col>
-                        <v-col>
-                          <span class="blue--text text-left text-h6 font-weight-bold">
-                            Reference
-                          </span>
-                        </v-col>
-                      </v-row>
-                    </v-container>
-                  </a>
-                </v-col>
-              </v-row>
-            </v-container>
+            <IconBar />
           </v-col>
         </v-row>
         <v-row>
