@@ -11,6 +11,7 @@ import {
 import * as api from '../store/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
+import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 
 const headers: DataTableHeader[] = [
   {
@@ -47,7 +48,7 @@ const headers: DataTableHeader[] = [
 ];
 
 export default defineComponent({
-  components: { OrcidId },
+  components: { OrcidId, TitleBanner },
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
@@ -79,6 +80,7 @@ export default defineComponent({
 
     return {
       HARMONIZER_TEMPLATES,
+      TitleBanner,
       createNewSubmission,
       getStatus,
       resume,
@@ -96,18 +98,7 @@ export default defineComponent({
       <v-container>
         <v-row>
           <v-col class="pb-0">
-            <v-container>
-              <v-row :style="{ backgroundImage: 'url(' + require('@/assets/submission-portal-hero.png') + ')', backgroundSize: 'cover' }">
-                <v-col class="text-center py-16">
-                  <h1 class="white--text">
-                    Submission Portal
-                  </h1>
-                  <span class="d-block white--text mt-4">
-                    Ready to submit data?
-                  </span>
-                </v-col>
-              </v-row>
-            </v-container>
+            <TitleBanner />
             <v-container class="mt-4 mb-1">
               <v-row>
                 <v-col>
