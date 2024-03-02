@@ -10,7 +10,6 @@ import {
 } from '../store';
 import * as api from '../store/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
-import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
 
 const headers: DataTableHeader[] = [
@@ -48,7 +47,7 @@ const headers: DataTableHeader[] = [
 ];
 
 export default defineComponent({
-  components: { SubmissionDocsLink, OrcidId },
+  components: { OrcidId },
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
@@ -93,12 +92,147 @@ export default defineComponent({
 
 <template>
   <v-card flat>
-    <v-card-title class="text-h4">
-      NMDC Submission Portal
-      <submission-docs-link />
-    </v-card-title>
-    <v-card-text>
-      This is the submission portal, where researchers can provide their own study and sample metadata for inclusion in NMDC.
+    <v-card-text class="pt-0 px-0">
+      <v-container>
+        <v-row>
+          <v-col class="pb-0">
+            <v-container>
+              <v-row :style="{ backgroundImage: 'url(' + require('@/assets/submission-portal-hero.png') + ')', backgroundSize: 'cover' }">
+                <v-col class="text-center py-16">
+                  <h1 class="white--text">
+                    Submission Portal
+                  </h1>
+                  <span class="d-block white--text mt-4">
+                    Ready to submit data?
+                  </span>
+                </v-col>
+              </v-row>
+            </v-container>
+            <v-container class="mt-4 mb-1">
+              <v-row>
+                <v-col>
+                  <a
+                    target="_blank"
+                    title="View the how-to guide"
+                    href="https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/submit2nmdc.html"
+                    class="text-decoration-none"
+                  >
+                    <v-container>
+                      <v-row class="align-center flex-nowrap">
+                        <v-col cols="4">
+                          <v-avatar color="primary">
+                            <v-icon color="white">
+                              mdi-timer-outline
+                            </v-icon>
+                          </v-avatar>
+                        </v-col>
+                        <v-col>
+                          <span class="blue--text text-left text-h6 font-weight-bold">
+                            Quickstart
+                          </span>
+                        </v-col>
+                      </v-row>
+                    </v-container>
+                  </a>
+                </v-col>
+                <v-col>
+                  <a
+                    target="_blank"
+                    title="View the submission portal tutorial"
+                    href="https://nmdc-documentation.readthedocs.io/en/latest/tutorials/submission_portal.html"
+                    class="text-decoration-none"
+                  >
+                    <v-container>
+                      <v-row class="align-center flex-nowrap">
+                        <v-col cols="4">
+                          <v-avatar color="primary">
+                            <v-icon color="white">
+                              mdi-human-male-board
+                            </v-icon>
+                          </v-avatar>
+                        </v-col>
+                        <v-col>
+                          <span class="blue--text text-left text-h6 font-weight-bold">
+                            Tutorial
+                          </span>
+                        </v-col>
+                      </v-row>
+                    </v-container>
+                  </a>
+                </v-col>
+                <v-col>
+                  <!-- TODO: Verify that this is the correct `href`, given recent decision about documentation duplication. -->
+                  <a
+                    target="_blank"
+                    title="View the metadata schema"
+                    href="https://nmdc-documentation.readthedocs.io/en/latest/reference/metadata/combined_schema_docs.html"
+                    class="text-decoration-none"
+                  >
+                    <v-container>
+                      <v-row class="align-center flex-nowrap">
+                        <v-col cols="4">
+                          <v-avatar color="primary">
+                            <v-icon color="white">
+                              mdi-book-open-variant-outline
+                            </v-icon>
+                          </v-avatar>
+                        </v-col>
+                        <v-col>
+                          <span class="blue--text text-left text-h6 font-weight-bold">
+                            Reference
+                          </span>
+                        </v-col>
+                      </v-row>
+                    </v-container>
+                  </a>
+                </v-col>
+              </v-row>
+            </v-container>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <h2 class="blue--text text-h6">
+              Making it easy to follow standards
+            </h2>
+            <p class="text-justify mb-0 text-body-1">
+              The Submission Portal is a flexible, template-driven tool designed to lower the barrier to collecting and reporting cohesive, standardized metadata about studies, samples, and assays. The standards we leverage include:
+            </p>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <h2 class="blue--text text-h6">
+              Supporting FAIR data
+            </h2>
+            <p class="text-justify mb-0 text-body-1">
+              The Submission Portal leverages validation functions of the
+              <a
+                href="https://github.com/cidgoh/DataHarmonizer"
+                target="_blank"
+                title="View cidgoh/DataHarmonizer on GitHub"
+              >DataHarmonizer</a>
+              tool to check entered metadata values against the standards in the
+              <a
+                href="https://github.com/microbiomedata/nmdc-schema"
+                target="_blank"
+                title="View microbiomedata/nmdc-schema on GitHub"
+              >NMDC schema</a>.
+              By following existing community standards like the Minimum Information about any (x) Sequence (MIxS) standard from the Genomic Standards Consortium (GSC), the Submission Portal advances FAIR microbiome data.
+            </p>
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <h2 class="blue--text text-h6">
+              Interoperability with DOE User Facilities
+            </h2>
+            <p class="text-justify mb-0 text-body-1">
+              We collaborate closely with the JGI and EMSL to support integration of multi-omics data generated across these Facilities. The Submission Portal has been designed to be compliant with both JGI and EMSL sample submission requirements, ensuring study and biosample information is consistently collected to support interoperability and reuse.
+            </p>
+          </v-col>
+        </v-row>
+      </v-container>
     </v-card-text>
     <v-card-text>
       <v-btn
