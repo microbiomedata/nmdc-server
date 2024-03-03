@@ -12,7 +12,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-container>
+  <v-container class="mt-1">
     <v-row>
       <v-col class="px-0">
         <h2 class="blue--text text-h6">

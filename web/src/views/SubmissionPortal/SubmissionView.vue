@@ -6,9 +6,14 @@ import AuthButton from '@/components/Presentation/AuthButton.vue';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';
 import { loadRecord } from './store';
+import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
+import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
+import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 
 export default defineComponent({
-  components: { AuthButton },
+  components: {
+    AuthButton, IconBar, IntroBlurb, TitleBanner,
+  },
   props: {
     id: {
       type: String as PropType<string | null>,
@@ -35,12 +40,33 @@ export default defineComponent({
 <template>
   <v-main>
     <v-container v-if="!stateRefs.user.value && !req.loading.value">
-      <h1>NMDC Submission Portal</h1>
-      <p>
-        This system requires authentication.
-        <a href="https://support.orcid.org/hc/en-us/articles/360006973953">ORCID registration is free for individuals.</a>
-      </p>
-      <AuthButton />
+      <v-container class="mt-4">
+        <v-row>
+          <v-col class="pb-0">
+            <TitleBanner />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col class="pb-0">
+            <!-- TODO: Give this section some TLC... -->
+            <p>
+              This system requires authentication.
+              <a href="https://support.orcid.org/hc/en-us/articles/360006973953">ORCID registration is free for individuals.</a>
+            </p>
+            <AuthButton />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <IconBar />
+          </v-col>
+        </v-row>
+        <v-row>
+          <v-col>
+            <IntroBlurb />
+          </v-col>
+        </v-row>
+      </v-container>
     </v-container>
     <router-view v-else-if="!req.loading.value && !req.error.value" />
     <div

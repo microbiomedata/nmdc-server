@@ -108,7 +108,7 @@ export default defineComponent({
             <IconBar />
           </v-col>
         </v-row>
-        <v-row>
+        <v-row v-if="submission.data.results.count === 0">
           <v-col>
             <IntroBlurb />
           </v-col>

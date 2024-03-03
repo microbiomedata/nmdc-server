@@ -12,7 +12,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-container class="mt-4 mb-1 limited-width">
+  <v-container class="mt-4 limited-width">
     <v-row>
       <v-col>
         <a
