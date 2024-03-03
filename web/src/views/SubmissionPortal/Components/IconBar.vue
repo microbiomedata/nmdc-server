@@ -94,7 +94,7 @@ export default defineComponent({
   </v-container>
 </template>
 
-<style>
+<style scoped>
 .limited-width {
   max-width: 800px;
 }
