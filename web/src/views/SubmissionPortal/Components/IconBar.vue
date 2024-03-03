@@ -12,7 +12,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-container class="mt-4 mb-1">
+  <v-container class="mt-4 mb-1 limited-width">
     <v-row>
       <v-col>
         <a
@@ -93,3 +93,9 @@ export default defineComponent({
     </v-row>
   </v-container>
 </template>
+
+<style>
+.limited-width {
+  max-width: 800px;
+}
+</style>
