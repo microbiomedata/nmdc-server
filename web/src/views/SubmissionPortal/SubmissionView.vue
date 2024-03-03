@@ -2,17 +2,17 @@
 import {
   defineComponent, PropType, toRef, watch,
 } from '@vue/composition-api';
-import AuthButton from '@/components/Presentation/AuthButton.vue';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';
 import { loadRecord } from './store';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
+import LoginPrompt from '@/views/SubmissionPortal/Components/LoginPrompt.vue';
 
 export default defineComponent({
   components: {
-    AuthButton, IconBar, IntroBlurb, TitleBanner,
+    IconBar, IntroBlurb, LoginPrompt, TitleBanner,
   },
   props: {
     id: {
@@ -47,13 +47,8 @@ export default defineComponent({
           </v-col>
         </v-row>
         <v-row>
-          <v-col class="pb-0">
-            <!-- TODO: Give this section some TLC... -->
-            <p>
-              This system requires authentication.
-              <a href="https://support.orcid.org/hc/en-us/articles/360006973953">ORCID registration is free for individuals.</a>
-            </p>
-            <AuthButton />
+          <v-col>
+            <LoginPrompt />
           </v-col>
         </v-row>
         <v-row>
