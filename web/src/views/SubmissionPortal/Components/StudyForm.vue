@@ -167,7 +167,7 @@ export default defineComponent({
       <v-text-field
         v-model="studyForm.piOrcid"
         label="Principal Investigator ORCID"
-        :disabled="!isOwner()"
+        :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid"
         outlined
         :hint="Definitions.piOrcid"
         persistent-hint
