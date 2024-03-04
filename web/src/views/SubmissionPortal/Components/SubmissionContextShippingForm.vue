@@ -13,6 +13,7 @@ import {
   addressFormValid,
   BiosafetyLevels,
   canEditSubmissionMetadata,
+  validateAddressForm,
 } from '../store';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
@@ -71,6 +72,7 @@ export default defineComponent({
       expectedShippingDateString.value = addressForm.expectedShippingDate
         ? reformatDate(addressForm.expectedShippingDate)
         : '';
+      validateAddressForm();
     });
 
     return {
