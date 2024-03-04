@@ -25,6 +25,25 @@ export default defineComponent({
 
     const currentUserOrcid = ref('');
 
+    const permissionHelpText = ref([
+      {
+        title: 'Viewer',
+        description: 'Viewers can see all components of a submission, but cannot edit.',
+      },
+      {
+        title: 'Metadata Contributor',
+        description: 'Metadata contributors can view all components of a submission and can only edit the sample metadata information on the last step of the submission process.',
+      },
+      {
+        title: 'Editor',
+        description: 'Editors of a submission have full permission to edit every aspect of the submission with the exception of permission levels.',
+      },
+      {
+        title: 'Owner',
+        description: 'This level of permission is automatically assigned to the submission author and Principal Investigator. These users can edit every aspect of the submission.',
+      },
+    ]);
+
     function addContributor() {
       studyForm.contributors.push({
         name: '',
@@ -81,6 +100,7 @@ export default defineComponent({
       orcidRequiredRule,
       uniqueOrcidRule,
       currentUserOrcid,
+      permissionHelpText,
     };
   },
 });
@@ -260,7 +280,32 @@ export default defineComponent({
               outlined
               dense
               persistent-hint
-            />
+            >
+              <template #prepend-inner>
+                <v-tooltip
+                  bottom
+                  max-width="500px"
+                >
+                  <template #activator="{on, attrs}">
+                    <v-btn
+                      icon
+                      small
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      <v-icon>mdi-help-circle</v-icon>
+                    </v-btn>
+                  </template>
+                  <div
+                    v-for="role in permissionHelpText"
+                    :key="role.title"
+                    class="pb-2"
+                  >
+                    <strong>{{ role.title }}: </strong><span>{{ role.description }}</span>
+                  </div>
+                </v-tooltip>
+              </template>
+            </v-select>
           </div>
         </v-card>
         <v-btn
