@@ -27,6 +27,7 @@ import {
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
+import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -87,7 +88,12 @@ const JGI_MG = 'jgi_mg';
 const JGT_MT = 'jgi_mt';
 
 export default defineComponent({
-  components: { FindReplace, SubmissionStepper, SubmissionDocsLink },
+  components: {
+    FindReplace,
+    SubmissionStepper,
+    SubmissionDocsLink,
+    SubmissionPermissionBanner,
+  },
 
   setup(_, { root }) {
     const harmonizerElement = ref();
@@ -486,6 +492,9 @@ export default defineComponent({
     class="d-flex flex-column fill-height"
   >
     <SubmissionStepper />
+    <submission-permission-banner
+      v-if="!canEditSampleMetadata()"
+    />
     <div class="d-flex flex-column px-2">
       <div class="d-flex align-center">
         <label

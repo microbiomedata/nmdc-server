@@ -17,9 +17,10 @@ import {
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
+import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 
 export default defineComponent({
-  components: { SubmissionContextShippingForm, SubmissionDocsLink },
+  components: { SubmissionContextShippingForm, SubmissionDocsLink, SubmissionPermissionBanner },
   setup() {
     const formRef = ref();
     const facilityEnum = NmdcSchema.$defs.ProcessingInstitutionEnum.enum.filter(
@@ -91,6 +92,9 @@ export default defineComponent({
     <div class="text-h5">
       Data and sample status
     </div>
+    <submission-permission-banner
+      v-if="!canEditSubmissionMetadata()"
+    />
     <v-form
       ref="formRef"
       v-model="contextFormValid"

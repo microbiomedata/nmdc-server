@@ -17,9 +17,10 @@ import {
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import { api } from '../../../data/api';
+import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 
 export default defineComponent({
-  components: { SubmissionDocsLink },
+  components: { SubmissionDocsLink, SubmissionPermissionBanner },
   setup() {
     const formRef = ref();
 
@@ -115,6 +116,9 @@ export default defineComponent({
     <div class="text-h5">
       {{ NmdcSchema.$defs.Study.description }}
     </div>
+    <submission-permission-banner
+      v-if="!canEditSubmissionMetadata()"
+    />
     <v-form
       ref="formRef"
       v-model="studyFormValid"

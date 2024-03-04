@@ -5,9 +5,10 @@ import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm, canEditSubmissionMetadata,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
+import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 
 export default defineComponent({
-  components: { SubmissionDocsLink },
+  components: { SubmissionDocsLink, SubmissionPermissionBanner },
   setup() {
     const formRef = ref();
 
@@ -40,6 +41,9 @@ export default defineComponent({
     <div class="text-h5">
       Information about the type of samples being submitted.
     </div>
+    <submission-permission-banner
+      v-if="!canEditSubmissionMetadata()"
+    />
     <v-form
       ref="formRef"
       v-model="multiOmicsFormValid"
