@@ -3,12 +3,7 @@ import {
   defineComponent,
 } from '@vue/composition-api';
 
-export default defineComponent({
-  components: {},
-  setup() {
-    return {};
-  },
-});
+export default defineComponent({});
 </script>
 
 <template>
@@ -19,6 +14,7 @@ export default defineComponent({
           target="_blank"
           title="View the how-to guide"
           href="https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/submit2nmdc.html"
+          rel="noreferrer noopener"
           class="text-decoration-none"
         >
           <v-container>
@@ -44,6 +40,7 @@ export default defineComponent({
           target="_blank"
           title="View the submission portal tutorial"
           href="https://nmdc-documentation.readthedocs.io/en/latest/tutorials/submission_portal.html"
+          rel="noreferrer noopener"
           class="text-decoration-none"
         >
           <v-container>
@@ -70,6 +67,7 @@ export default defineComponent({
           target="_blank"
           title="View the metadata schema"
           href="https://nmdc-documentation.readthedocs.io/en/latest/reference/metadata/combined_schema_docs.html"
+          rel="noreferrer noopener"
           class="text-decoration-none"
         >
           <v-container>

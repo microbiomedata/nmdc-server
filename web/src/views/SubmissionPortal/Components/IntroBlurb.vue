@@ -3,12 +3,7 @@ import {
   defineComponent,
 } from '@vue/composition-api';
 
-export default defineComponent({
-  components: {},
-  setup() {
-    return {};
-  },
-});
+export default defineComponent({});
 </script>
 
 <template>
@@ -32,12 +27,14 @@ export default defineComponent({
           The Submission Portal leverages validation functions of the
           <a
             href="https://github.com/cidgoh/DataHarmonizer"
+            rel="noreferrer noopener"
             target="_blank"
             title="View cidgoh/DataHarmonizer on GitHub"
           >DataHarmonizer</a>
           tool to check entered metadata values against the standards in the
           <a
             href="https://github.com/microbiomedata/nmdc-schema"
+            rel="noreferrer noopener"
             target="_blank"
             title="View microbiomedata/nmdc-schema on GitHub"
           >NMDC schema</a>.

@@ -2,7 +2,6 @@
 import { defineComponent } from '@vue/composition-api';
 
 export default defineComponent({
-  props: {},
   setup() {
     return {
       loginHref: '/login',
@@ -14,7 +13,7 @@ export default defineComponent({
 <template>
   <v-alert
     class="mb-0"
-    text="text"
+    text
   >
     <v-container>
       <v-row align="center">
@@ -27,6 +26,7 @@ export default defineComponent({
             Don't have an ORCiD? Individuals can
             <a
               href="https://support.orcid.org/hc/en-us/articles/360006973953"
+              rel="noreferrer noopener"
               target="_blank"
               title="Learn about registering an ORCiD"
               class="text--disabled"
@@ -34,7 +34,6 @@ export default defineComponent({
           </p>
         </v-col>
         <v-col class="flex-grow-0">
-          <!-- Note: This button is a simplified version of: `web/src/components/Presentation/AuthButton.vue` -->
           <v-btn
             :href="loginHref"
             variant="plain"
