@@ -4,11 +4,13 @@ import sentry_sdk
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from starlette.middleware.sessions import SessionMiddleware
 
 from nmdc_server import __version__, api, auth, errors
 from nmdc_server.config import settings
+from nmdc_server.static_files import STATIC_PATH, generate_submission_schema_files
 
 
 def attach_sentry(app: FastAPI):
@@ -33,10 +35,15 @@ def create_app(env: typing.Mapping[str, str], secure_cookies: bool = True) -> Fa
     async def redirect_docs():
         return "/api/docs"
 
+    @app.on_event("startup")
+    async def load_submission_schema():
+        generate_submission_schema_files()
+
     attach_sentry(app)
     errors.attach_error_handlers(app)
     app.include_router(api.router, prefix="/api")
     app.include_router(auth.router, prefix="")
+    app.mount("/static", StaticFiles(directory=STATIC_PATH), name="static")
     app.add_middleware(SessionMiddleware, secret_key=settings.secret_key, https_only=secure_cookies)
 
     if settings.cors_allow_origins:
