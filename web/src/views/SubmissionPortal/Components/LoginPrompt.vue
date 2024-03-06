@@ -22,14 +22,13 @@ export default defineComponent({
             Login with your ORCiD
             to access the Submission Portal.
           </p>
-          <p class="body-2 mb-0 text--disabled">
+          <p class="body-2 mb-0">
             Don't have an ORCiD? Individuals can
             <a
               href="https://support.orcid.org/hc/en-us/articles/360006973953"
               rel="noreferrer noopener"
               target="_blank"
               title="Learn about registering an ORCiD"
-              class="text--disabled"
             >get one for free</a>.
           </p>
         </v-col>
