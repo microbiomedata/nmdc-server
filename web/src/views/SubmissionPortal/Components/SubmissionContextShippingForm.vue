@@ -118,6 +118,7 @@ export default defineComponent({
       v-model="showAddressForm"
       scrollable
       width="1200"
+      eager
     >
       <template
         #activator="{ on, attrs }"
