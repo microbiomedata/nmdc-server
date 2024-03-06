@@ -9,7 +9,9 @@ import Cite from 'citation-js';
 import {
   typeWithCardinality, valueCardinality, fieldDisplayName,
 } from '@/util';
-import { api, StudySearchResults, DOI } from '@/data/api';
+import {
+  api, StudySearchResults, DOI, Condition,
+} from '@/data/api';
 import { setUniqueCondition, setConditions } from '@/store';
 import { useRouter } from '@/use/useRouter';
 import AttributeItem from '@/components/Presentation/AttributeItem.vue';
@@ -56,9 +58,11 @@ export default defineComponent({
     watch(item, () => {
       if (item.value?.part_of) {
         item.value.part_of.forEach((id: string) => {
-          api.getStudy(id).then((b) => {
-            parentStudies.value.push(b);
-          });
+          if (!parentStudies.value.some((study) => study.id === id)) {
+            api.getStudy(id).then((b) => {
+              parentStudies.value.push(b);
+            });
+          }
         });
       } else {
         parentStudies.value = [];
@@ -68,6 +72,12 @@ export default defineComponent({
     watchEffect(() => {
       api.getStudy(props.id).then((b) => { item.value = b; });
     });
+
+    const studyData = computed(() => Object.values(item)
+      .map((val) => ({
+        ...val,
+        sample_count: val?.children?.reduce((acc: number, child: StudySearchResults) => acc + child.sample_count, val.sample_count),
+      }))[0]);
 
     const displayFields = computed(() => {
       if (item.value === null) {
@@ -82,7 +92,7 @@ export default defineComponent({
     });
 
     const goldLinks = computed(() => {
-      if (!item.value) {
+      if (!item.value?.gold_study_identifiers && !item.value?.open_in_gold) {
         return [];
       }
       const links = new Set();
@@ -141,13 +151,24 @@ export default defineComponent({
       router.go(-1);
     }
 
-    function seeStudyInContext() {
-      setConditions([{
+    function seeStudyInContext(item: StudySearchResults) {
+      const conditions: Condition[] = [{
         op: '==',
         table: 'study',
-        field: 'id',
+        field: 'study_id',
         value: props.id,
-      }], true);
+      }];
+      if (item.children.length > 0) {
+        item.children.forEach((child: StudySearchResults) => {
+          conditions.push({
+            value: child.id,
+            table: 'study',
+            field: 'study_id',
+            op: '==',
+          });
+        });
+      }
+      setConditions(conditions, true);
     }
 
     watch(item, async (_item) => {
@@ -185,6 +206,7 @@ export default defineComponent({
       goldLinks,
       data: dois,
       item,
+      studyData,
       displayFields,
       /* Methods */
       seeOmicsForStudy,
@@ -244,11 +266,11 @@ export default defineComponent({
             <v-list>
               <AttributeItem
                 v-bind="{ item, field: 'id', bindClick: true }"
-                @click="seeStudyInContext"
+                @click="seeStudyInContext(item)"
               />
               <AttributeItem
-                v-bind="{ item, field: 'sample_count', bindClick: true }"
-                @click="seeStudyInContext"
+                v-bind="{ item: studyData, field: 'sample_count', bindClick: true }"
+                @click="seeStudyInContext(item)"
               />
             </v-list>
             <template
@@ -261,10 +283,10 @@ export default defineComponent({
                 Additional Resources
               </div>
               <v-list
-                v-if="goldLinks || item.relevant_protocols"
+                v-if="goldLinks || item.relevant_protocols.length > 0"
               >
                 <v-list-item
-                  v-if="goldLinks || item.relevant_protocols"
+                  v-if="(goldLinks && goldLinks.keys.length > 0) || item.relevant_protocols"
                 >
                   <v-list-item-avatar>
                     <v-icon>mdi-file-document</v-icon>

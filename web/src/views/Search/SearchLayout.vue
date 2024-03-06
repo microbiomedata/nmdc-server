@@ -358,6 +358,7 @@ export default defineComponent({
                       <template #action="{ result }">
                         <v-list-item-action>
                           <v-checkbox
+                            :disabled="studyCheckboxState.includes(props.result.id)"
                             :input-value="studyCheckboxState"
                             :value="result.id"
                             @click.stop
