@@ -62,11 +62,10 @@ export default defineComponent({});
         </a>
       </v-col>
       <v-col>
-        <!-- TODO: Verify that this is the correct `href`, given recent decision about documentation duplication. -->
         <a
           target="_blank"
           title="View the metadata schema"
-          href="https://nmdc-documentation.readthedocs.io/en/latest/reference/metadata/combined_schema_docs.html"
+          href="https://w3id.org/nmdc/about"
           rel="noreferrer noopener"
           class="text-decoration-none"
         >
