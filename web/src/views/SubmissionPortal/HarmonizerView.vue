@@ -6,6 +6,7 @@ import {
   clamp, flattenDeep, has, sum,
 } from 'lodash';
 import { read, writeFile, utils } from 'xlsx';
+import { api } from '@/data/api';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
@@ -163,10 +164,15 @@ export default defineComponent({
       tabsValidated.value[activeTemplateKey.value] = false;
     };
 
+    const { request: schemaRequest, loading: schemaLoading } = useRequest();
     onMounted(async () => {
+      const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
+        api.getSubmissionSchema(),
+        api.getGoldEcosystemTree(),
+      ]));
       const r = document.getElementById('harmonizer-root');
-      if (r) {
-        await harmonizerApi.init(r, activeTemplate.value.schemaClass);
+      if (r && schema) {
+        await harmonizerApi.init(r, schema, activeTemplate.value.schemaClass, goldEcosystemTree);
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
         harmonizerApi.addChangeHook(onDataChange);
@@ -254,8 +260,8 @@ export default defineComponent({
       return null;
     });
 
-    const { request, loading: submitLoading, count: submitCount } = useRequest();
-    const doSubmit = () => request(async () => {
+    const { request: submitRequest, loading: submitLoading, count: submitCount } = useRequest();
+    const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       await submit(root.$route.params.id, submissionStatus.SubmittedPendingReview);
@@ -463,6 +469,7 @@ export default defineComponent({
       submissionStatus,
       status,
       submitDialog,
+      schemaLoading,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -729,6 +736,9 @@ export default defineComponent({
     </v-tabs>
 
     <div>
+      <div v-if="schemaLoading">
+        Loading...
+      </div>
       <div
         class="harmonizer-style-container"
         :style="{

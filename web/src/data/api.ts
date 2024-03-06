@@ -21,6 +21,10 @@ const client = axios.create({
   adapter: cache.adapter,
 });
 
+const staticFileClient = axios.create({
+  baseURL: '/static',
+});
+
 /* The real entity types */
 export type entityType = 'biosample'
   | 'study'
@@ -636,6 +640,16 @@ async function getAppSettings() {
   return data;
 }
 
+async function getSubmissionSchema() {
+  const { data } = await staticFileClient.get('/submission_schema/submission_schema.json');
+  return data;
+}
+
+async function getGoldEcosystemTree() {
+  const { data } = await staticFileClient.get('/submission_schema/GoldEcosystemTree.json');
+  return data;
+}
+
 const api = {
   createBulkDownload,
   getBinnedFacet,
@@ -651,6 +665,8 @@ const api = {
   getEnvoTrees,
   getFacetSummary,
   getStudy,
+  getSubmissionSchema,
+  getGoldEcosystemTree,
   me,
   myOrcid,
   searchBiosample,
