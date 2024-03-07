@@ -19,7 +19,7 @@ export default defineComponent({
       <v-row align="center">
         <v-col class="justify-content-center">
           <p class="body-1">
-            Login with your ORCiD
+            Login with your ORCID iD
             to access the Submission Portal.
           </p>
           <p class="body-2 mb-0">
