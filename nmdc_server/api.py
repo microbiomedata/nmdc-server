@@ -752,7 +752,7 @@ async def delete_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    for role in submission.roles:
+    for role in submission.roles:  # type: ignore
         db.delete(role)
     db.delete(submission)
     db.commit()
