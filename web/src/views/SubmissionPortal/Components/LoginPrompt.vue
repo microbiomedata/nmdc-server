@@ -23,7 +23,7 @@ export default defineComponent({
             to access the Submission Portal.
           </p>
           <p class="body-2 mb-0">
-            Don't have an ORCiD? Individuals can
+            Don't have an ORCID iD? Individuals can
             <a
               href="https://support.orcid.org/hc/en-us/articles/360006973953"
               rel="noreferrer noopener"
