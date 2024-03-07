@@ -602,7 +602,7 @@ async def list_submissions(
     user: models.User = Depends(login_required),
     pagination: Pagination = Depends(),
 ):
-    query = db.query(SubmissionMetadata)
+    query = db.query(SubmissionMetadata).order_by(SubmissionMetadata.created.desc())
     try:
         await admin_required(user)
     except HTTPException:
