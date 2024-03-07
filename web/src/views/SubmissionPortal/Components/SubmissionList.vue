@@ -10,8 +10,10 @@ import {
 } from '../store';
 import * as api from '../store/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
-import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
+import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
+import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
+import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 
 const headers: DataTableHeader[] = [
   {
@@ -48,7 +50,9 @@ const headers: DataTableHeader[] = [
 ];
 
 export default defineComponent({
-  components: { SubmissionDocsLink, OrcidId },
+  components: {
+    IconBar, IntroBlurb, OrcidId, TitleBanner,
+  },
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
@@ -80,6 +84,9 @@ export default defineComponent({
 
     return {
       HARMONIZER_TEMPLATES,
+      IconBar,
+      IntroBlurb,
+      TitleBanner,
       createNewSubmission,
       getStatus,
       resume,
@@ -93,12 +100,20 @@ export default defineComponent({
 
 <template>
   <v-card flat>
-    <v-card-title class="text-h4">
-      NMDC Submission Portal
-      <submission-docs-link />
-    </v-card-title>
-    <v-card-text>
-      This is the submission portal, where researchers can provide their own study and sample metadata for inclusion in NMDC.
+    <v-card-text class="pt-0 px-0">
+      <v-container>
+        <v-row>
+          <v-col class="pb-0">
+            <TitleBanner />
+            <IconBar />
+          </v-col>
+        </v-row>
+        <v-row v-if="submission.data.results.count === 0">
+          <v-col>
+            <IntroBlurb />
+          </v-col>
+        </v-row>
+      </v-container>
     </v-card-text>
     <v-card-text>
       <v-btn
