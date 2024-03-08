@@ -10,7 +10,11 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from nmdc_server import __version__, api, auth, errors
 from nmdc_server.config import settings
-from nmdc_server.static_files import STATIC_PATH, generate_submission_schema_files
+from nmdc_server.static_files import (
+    STATIC_PATH,
+    generate_submission_schema_files,
+    initialize_static_directory,
+)
 
 
 def attach_sentry(app: FastAPI):
@@ -37,6 +41,7 @@ def create_app(env: typing.Mapping[str, str], secure_cookies: bool = True) -> Fa
 
     @app.on_event("startup")
     async def load_submission_schema():
+        initialize_static_directory(remove_existing=True)
         generate_submission_schema_files()
 
     attach_sentry(app)

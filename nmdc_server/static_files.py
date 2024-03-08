@@ -6,11 +6,15 @@ from linkml_runtime import SchemaView
 from linkml_runtime.dumpers import json_dumper
 
 STATIC_PATH = Path("static")
-try:
-    shutil.rmtree(STATIC_PATH)
-except FileNotFoundError:
-    pass
-STATIC_PATH.mkdir(parents=True, exist_ok=True)
+
+
+def initialize_static_directory(*, remove_existing=False):
+    if remove_existing:
+        try:
+            shutil.rmtree(STATIC_PATH)
+        except FileNotFoundError:
+            pass
+    STATIC_PATH.mkdir(parents=True, exist_ok=True)
 
 
 def generate_submission_schema_files():
