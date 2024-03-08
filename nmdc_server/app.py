@@ -10,10 +10,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from nmdc_server import __version__, api, auth, errors
 from nmdc_server.config import settings
-from nmdc_server.static_files import (
-    generate_submission_schema_files,
-    initialize_static_directory,
-)
+from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
 
 
 def attach_sentry(app: FastAPI):
