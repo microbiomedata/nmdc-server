@@ -7562,13 +7562,9 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v10.0.0":
+"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v10.1.2":
   version "0.0.0"
-  resolved "https://github.com/microbiomedata/nmdc-schema#9211a67e6254c025e8ac811f500bcaefda75aabb"
-
-"nmdc-submission-schema@https://files.pythonhosted.org/packages/source/n/nmdc-submission-schema/nmdc_submission_schema-10.0.0.tar.gz":
-  version "0.0.0"
-  resolved "https://files.pythonhosted.org/packages/source/n/nmdc-submission-schema/nmdc_submission_schema-10.0.0.tar.gz#c1be26ae279f1fda240873dd5dc0311bf6fc2eb2"
+  resolved "https://github.com/microbiomedata/nmdc-schema#2e7a9cb68cb0fb1fc2e67028fe25786c81faa885"
 
 no-case@^2.2.0:
   version "2.3.2"
