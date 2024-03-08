@@ -292,3 +292,79 @@ def test_update_role_on_patch(db: Session, client: TestClient, token: Token, log
     assert roles.count() == 1
     role = roles.first()
     assert role and role.role == SubmissionEditorRole.editor
+
+
+def test_delete_submission_by_owner(db: Session, client: TestClient, token: Token, logged_in_user):
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Verify that the DELETE request goes through
+    response = client.request(method="DELETE", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 204
+
+    # Verify that it's really gone
+    response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 404
+
+
+def test_delete_submission_by_non_owner(
+    db: Session, client: TestClient, token: Token, logged_in_user
+):
+    user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=user, author_orcid=user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.metadata_contributor,
+    )
+    db.commit()
+
+    # Verify that a contributor cannot delete it
+    response = client.request(method="DELETE", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 403
+
+    # Verify that it is still there
+    response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 200
+
+
+def test_delete_submission_while_locked(
+    db: Session, client: TestClient, token: Token, logged_in_user
+):
+    user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        locked_by=user,
+        lock_updated=datetime.utcnow(),
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=user.orcid,
+        role=SubmissionEditorRole.metadata_contributor,
+    )
+    db.commit()
+
+    # Verify that a owner cannot delete while submission is locked
+    response = client.request(method="DELETE", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 400
+
+    # Verify that it is still there
+    response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 200
