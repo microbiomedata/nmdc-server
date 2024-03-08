@@ -506,9 +506,6 @@ export default defineComponent({
         </v-btn>
         <v-banner v-if="canSubmit" single-line transition="slide-y-transition" color="primary" outlined>
           Data is valid and can be submitted.
-          <template v-slot:actions="{ dismiss }">
-            <v-btn text color="primary" @click="dismiss">Dismiss</v-btn>
-          </template>
         </v-banner>
         <v-card
           v-if="validationErrorGroups.length"
