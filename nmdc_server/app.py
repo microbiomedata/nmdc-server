@@ -11,7 +11,6 @@ from starlette.middleware.sessions import SessionMiddleware
 from nmdc_server import __version__, api, auth, errors
 from nmdc_server.config import settings
 from nmdc_server.static_files import (
-    STATIC_PATH,
     generate_submission_schema_files,
     initialize_static_directory,
 )
@@ -40,15 +39,15 @@ def create_app(env: typing.Mapping[str, str], secure_cookies: bool = True) -> Fa
         return "/api/docs"
 
     @app.on_event("startup")
-    async def load_submission_schema():
-        initialize_static_directory(remove_existing=True)
-        generate_submission_schema_files()
+    async def generate_and_mount_static_files():
+        static_path = initialize_static_directory(remove_existing=True)
+        generate_submission_schema_files(directory=static_path)
+        app.mount("/static", StaticFiles(directory=static_path), name="static")
 
     attach_sentry(app)
     errors.attach_error_handlers(app)
     app.include_router(api.router, prefix="/api")
     app.include_router(auth.router, prefix="")
-    app.mount("/static", StaticFiles(directory=STATIC_PATH), name="static")
     app.add_middleware(SessionMiddleware, secret_key=settings.secret_key, https_only=secure_cookies)
 
     if settings.cors_allow_origins:

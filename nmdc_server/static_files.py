@@ -5,19 +5,19 @@ from pathlib import Path
 from linkml_runtime import SchemaView
 from linkml_runtime.dumpers import json_dumper
 
-STATIC_PATH = Path("static")
 
-
-def initialize_static_directory(*, remove_existing=False):
+def initialize_static_directory(*, remove_existing=False) -> Path:
+    static_path = Path("static")
     if remove_existing:
         try:
-            shutil.rmtree(STATIC_PATH)
+            shutil.rmtree(static_path)
         except FileNotFoundError:
             pass
-    STATIC_PATH.mkdir(parents=True, exist_ok=True)
+    static_path.mkdir(parents=True, exist_ok=True)
+    return static_path
 
 
-def generate_submission_schema_files():
+def generate_submission_schema_files(directory: Path) -> None:
     submission_schema_files = importlib.resources.files("nmdc_submission_schema")
 
     # Load each class in the submission schema, ensure that each slot of the class
@@ -32,7 +32,7 @@ def generate_submission_schema_files():
     for class_definition in sv.all_classes().values():
         class_definition.slot_usage = None
 
-    out_dir = STATIC_PATH / "submission_schema"
+    out_dir = directory / "submission_schema"
     out_dir.mkdir(exist_ok=True)
 
     # The entire submission schema in JSON format
