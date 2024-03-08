@@ -1,8 +1,12 @@
 const Menus = [
   {
-    label: 'About',
+    label: 'About Us',
     href: 'https://microbiomedata.org/about/',
     items: [
+      {
+        label: 'Our Story',
+        href: 'https://microbiomedata.org/about/',
+      },
       {
         label: 'Team',
         href: 'https://microbiomedata.org/team/',
@@ -12,28 +16,16 @@ const Menus = [
         href: 'https://microbiomedata.org/advisory/',
       },
       {
-        label: 'IDEA Strategic Plan',
-        href: 'https://microbiomedata.org/idea-strategic-plan/',
-      },
-      {
-        label: 'Code of Conduct',
-        href: 'https://microbiomedata.org/nmdc-code-of-conduct/',
+        label: 'Diversity, Equity, and Inclusion',
+        href: 'https://microbiomedata.org/idea-action-plan/',
       },
       {
         label: 'Data Use Policy',
         href: 'https://microbiomedata.org/nmdc-data-use-policy/',
       },
       {
-        label: 'Fair',
-        href: 'https://microbiomedata.org/fair/',
-      },
-      {
-        label: 'Metadata',
-        href: 'https://microbiomedata.org/metadata/',
-      },
-      {
-        label: 'Workflows',
-        href: 'https://microbiomedata.org/workflows/',
+        label: 'Contact Us',
+        href: 'https://microbiomedata.org/contact/',
       },
     ],
   },
@@ -55,9 +47,38 @@ const Menus = [
     ],
   },
   {
-    label: 'Community',
+    label: 'Resources',
+    items: [
+      {
+        label: 'Data Standards',
+        to: 'https://microbiomedata.org/data-standards/',
+      },
+      {
+        label: 'Bioinformatics Workflows',
+        to: 'https://microbiomedata.org/workflows/',
+      },
+      {
+        label: 'GitHub',
+        to: 'https://github.com/microbiomedata',
+      },
+      {
+        label: 'Documentation',
+        to: 'https://microbiomedata.org/documentation/',
+      },
+      {
+        label: 'Data Management',
+        to: 'https://microbiomedata.org/data-management/',
+      },
+    ],
+  },
+  {
+    label: 'Partner with Us',
     href: 'https://microbiomedata.org/community/',
     items: [
+      {
+        label: 'Community',
+        href: 'https://microbiomedata.org/community/',
+      },
       {
         label: 'Ambassadors',
         href: 'https://microbiomedata.org/ambassadors/',
@@ -67,47 +88,27 @@ const Menus = [
         href: 'https://microbiomedata.org/community/championsprogram/',
       },
       {
-        label: 'NMDC Snapshots',
-        href: 'https://microbiomedata.org/nmdc-snapshots/',
-      },
-      {
         label: 'User Research',
         href: 'https://microbiomedata.org/user-research/',
-      },
-      {
-        label: 'Community Conversations',
-        href: 'https://microbiomedata.org/community/community-conversations/',
-      },
-      {
-        label: 'News and Events',
-        href: 'https://microbiomedata.org/events/',
       },
     ],
   },
   {
-    label: 'Resources',
+    label: 'News & Impact',
     items: [
+      {
+        label: 'Press Room',
+        href: 'https://microbiomedata.org/events/',
+      },
       {
         label: 'Annual Reports',
         href: 'https://microbiomedata.org/annual_report/',
-      },
-      {
-        label: 'Media Materials',
-        href: 'https://microbiomedata.org/media/',
-      },
-      {
-        label: 'Data Management',
-        href: 'https://microbiomedata.org/data-management/',
       },
       {
         label: 'Publications',
         href: 'https://microbiomedata.org/publications/',
       },
     ],
-  },
-  {
-    label: 'Contact',
-    href: 'https://microbiomedata.org/contact/',
   },
 ];
 
