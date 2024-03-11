@@ -2,7 +2,7 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.requests import Request
@@ -598,7 +598,7 @@ async def list_submissions(
     user: models.User = Depends(login_required),
     pagination: Pagination = Depends(),
 ):
-    query = db.query(SubmissionMetadata)
+    query = db.query(SubmissionMetadata).order_by(SubmissionMetadata.created.desc())
     try:
         await admin_required(user)
     except HTTPException:
@@ -722,6 +722,37 @@ async def update_submission(
         db.commit()
     crud.update_submission_lock(db, submission.id)
     return submission
+
+
+@router.delete(
+    "/metadata_submission/{id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def delete_submission(
+    id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(login_required),
+):
+    submission = db.query(SubmissionMetadata).get(id)
+    if submission is None:
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    if not (user.is_admin or user.orcid in submission.owners):
+        raise HTTPException(403, detail="Must have access.")
+
+    has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
+    if not has_lock:
+        raise HTTPException(
+            status_code=400,
+            detail="This submission is currently being edited by a different user.",
+        )
+
+    for role in submission.roles:  # type: ignore
+        db.delete(role)
+    db.delete(submission)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.put("/metadata_submission/{id}/unlock")
