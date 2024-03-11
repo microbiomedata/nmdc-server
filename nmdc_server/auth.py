@@ -1,11 +1,13 @@
 from enum import Enum
 from typing import Any, Dict, Optional
 from uuid import UUID
+from datetime import datetime
 
 from authlib.integrations import starlette_client
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.security.oauth2 import OAuth2AuthorizationCodeBearer
-from jose import jwt
+from jose import jwt, jws
+from jose import JWTError
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.requests import Request
@@ -15,6 +17,9 @@ from nmdc_server import crud, models
 from nmdc_server.config import settings, starlette_config
 from nmdc_server.database import get_db
 from nmdc_server.schemas import User
+from nmdc_server.logger import get_logger
+
+logger = get_logger(__name__)
 
 # The type is added to get around an error related to:
 #   https://github.com/python/mypy/issues/8477
@@ -23,6 +28,8 @@ login_required_responses: Dict[Any, Any] = {
     "403": {"description": "Insufficient permissions"},
 }
 oauth2_client = starlette_client.OAuth(starlette_config)
+
+# We can include oidc params like max-age, nonce etc. in client_kwargs
 oauth2_client.register(
     name="orcid",
     client_id=settings.client_id,
@@ -50,6 +57,7 @@ class Token(BaseModel):
     name: str
     orcid: str
     expires_at: int
+    id_token: Optional[str] = None
 
 
 async def get_token(
@@ -59,8 +67,30 @@ async def get_token(
     if token:
         return Token(**token)
     if access_token:
-        payload = jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
-        return Token(**payload)
+        try:
+            payload = jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
+            return Token(**payload)
+        except JWTError:
+            try:
+                # Catch JWTError and try to decode id_token
+                payload = jwt.get_unverified_claims(access_token)
+                # Verify the signature
+                jws.verify(access_token, settings.orcid_jwk, settings.orcid_jws_verify_algorithm)
+                # convert to a minimal token object with mostly null values
+                return Token(
+                    access_token=UUID(int=0),
+                    token_type="",
+                    refresh_token=UUID(int=0),
+                    expires_in=payload["exp"] - int(datetime.now().timestamp()),
+                    scope="",
+                    name=f"{payload['given_name']} {payload['family_name']}",
+                    orcid=payload["sub"],
+                    expires_at=payload["exp"],
+                    id_token=access_token,
+                )
+            except JWTError:
+                logger.debug("Error decoding JWT token")
+                return None
     return None
 
 
