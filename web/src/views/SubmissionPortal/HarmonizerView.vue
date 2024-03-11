@@ -465,6 +465,16 @@ export default defineComponent({
   >
     <SubmissionStepper />
     <div class="d-flex flex-column px-2">
+      <v-alert
+          v-if="canSubmit"
+          color="success"
+          icon="$success"
+      >
+        <p class="text-h5">
+          Validation Success
+        </p>
+        Your data has passed validation and can now be submitted.
+      </v-alert>
       <div class="d-flex align-center">
         <label
           for="tsv-file-select"
@@ -504,9 +514,6 @@ export default defineComponent({
             mdi-refresh
           </v-icon>
         </v-btn>
-        <v-banner v-if="canSubmit" single-line transition="slide-y-transition" color="primary" outlined>
-          Data is valid and can be submitted.
-        </v-banner>
         <v-card
           v-if="validationErrorGroups.length"
           color="error"
