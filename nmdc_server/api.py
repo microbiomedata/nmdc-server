@@ -277,67 +277,63 @@ async def search_study(
     q: query.SearchQuery = query.SearchQuery(),
     db: Session = Depends(get_db),
     pagination: Pagination = Depends(),
-    flat: bool = False,
 ):
-    if not flat:
-        top_level_condition: List[query.ConditionSchema] = [
-            query.SimpleConditionSchema(
-                **{
-                    "field": "part_of",
-                    "op": "==",
-                    "value": "null",
-                    "table": "study",
-                }
-            )
-        ]
-        children_condition: List[query.ConditionSchema] = [
-            query.SimpleConditionSchema(
-                **{
-                    "field": "part_of",
-                    "op": "!=",
-                    "value": "null",
-                    "table": "study",
-                }
-            )
-        ]
-
-        top_level_condition.extend(q.conditions)
-        children_condition.extend(q.conditions)
-
-        children_studies = crud.search_study(db, children_condition).all()
-        top_level_studies = crud.search_study(db, top_level_condition).all()
-
-        for parent in top_level_studies:
-            parent.children = []
-            for child in children_studies:
-                if child.part_of is not None and parent.id in child.part_of:
-                    parent.children.append(child)
-
-        # If there are children studies that match the query, but their top level studies do not,
-        # and they are not already listed as children of another top level study,
-        # add the child to the top level studies
-        for child in children_studies:
-            for parent_id in child.part_of:
-                if (
-                    parent_id not in [parent.id for parent in top_level_studies]
-                    and child.id not in [parent.id for parent in top_level_studies]
-                    and child.id
-                    not in [child.id for parent in top_level_studies for child in parent.children]
-                ):
-                    top_level_studies.append(child)
-
-        count = len(top_level_studies)
-
-        total = crud.search_study(db, q.conditions).count()
-
-        structured_results: query.StudySearchResponse = query.StudySearchResponse(
-            count=count,
-            results=top_level_studies[pagination.offset : pagination.limit + pagination.offset],
-            total=total,
+    top_level_condition: List[query.ConditionSchema] = [
+        query.SimpleConditionSchema(
+            **{
+                "field": "part_of",
+                "op": "==",
+                "value": "null",
+                "table": "study",
+            }
         )
-        return structured_results
+    ]
+    children_condition: List[query.ConditionSchema] = [
+        query.SimpleConditionSchema(
+            **{
+                "field": "part_of",
+                "op": "!=",
+                "value": "null",
+                "table": "study",
+            }
+        )
+    ]
 
-    return pagination.response(crud.search_study(db, q.conditions))
+    top_level_condition.extend(q.conditions)
+    children_condition.extend(q.conditions)
+
+    children_studies = crud.search_study(db, children_condition).all()
+    top_level_studies = crud.search_study(db, top_level_condition).all()
+
+    for parent in top_level_studies:
+        parent.children = []
+        for child in children_studies:
+            if child.part_of is not None and parent.id in child.part_of:
+                parent.children.append(child)
+
+    # If there are children studies that match the query, but their top level studies do not,
+    # and they are not already listed as children of another top level study,
+    # add the child to the top level studies
+    for child in children_studies:
+        for parent_id in child.part_of:
+            if (
+                parent_id not in [parent.id for parent in top_level_studies]
+                and child.id not in [parent.id for parent in top_level_studies]
+                and child.id
+                not in [child.id for parent in top_level_studies for child in parent.children]
+            ):
+                top_level_studies.append(child)
+
+    count = len(top_level_studies)
+
+    total = crud.search_study(db, q.conditions).count()
+
+    structured_results: query.StudySearchResponse = query.StudySearchResponse(
+        count=count,
+        results=top_level_studies[pagination.offset : pagination.limit + pagination.offset],
+        total=total,
+    )
+    return structured_results
 
 
 @router.post(
@@ -625,7 +621,7 @@ async def list_submissions(
     user: models.User = Depends(login_required),
     pagination: Pagination = Depends(),
 ):
-    query = db.query(SubmissionMetadata)
+    query = db.query(SubmissionMetadata).order_by(SubmissionMetadata.created.desc())
     try:
         await admin_required(user)
     except HTTPException:
@@ -749,6 +745,37 @@ async def update_submission(
         db.commit()
     crud.update_submission_lock(db, submission.id)
     return submission
+
+
+@router.delete(
+    "/metadata_submission/{id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def delete_submission(
+    id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(login_required),
+):
+    submission = db.query(SubmissionMetadata).get(id)
+    if submission is None:
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    if not (user.is_admin or user.orcid in submission.owners):
+        raise HTTPException(403, detail="Must have access.")
+
+    has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
+    if not has_lock:
+        raise HTTPException(
+            status_code=400,
+            detail="This submission is currently being edited by a different user.",
+        )
+
+    for role in submission.roles:  # type: ignore
+        db.delete(role)
+    db.delete(submission)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.put("/metadata_submission/{id}/unlock")

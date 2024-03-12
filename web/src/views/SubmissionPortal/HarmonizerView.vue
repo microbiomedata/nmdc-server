@@ -6,6 +6,7 @@ import {
   clamp, flattenDeep, has, sum,
 } from 'lodash';
 import { read, writeFile, utils } from 'xlsx';
+import { api } from '@/data/api';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
@@ -27,6 +28,7 @@ import {
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
+import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -87,7 +89,12 @@ const JGI_MG = 'jgi_mg';
 const JGT_MT = 'jgi_mt';
 
 export default defineComponent({
-  components: { FindReplace, SubmissionStepper, SubmissionDocsLink },
+  components: {
+    FindReplace,
+    SubmissionStepper,
+    SubmissionDocsLink,
+    SubmissionPermissionBanner,
+  },
 
   setup(_, { root }) {
     const harmonizerElement = ref();
@@ -163,10 +170,15 @@ export default defineComponent({
       tabsValidated.value[activeTemplateKey.value] = false;
     };
 
+    const { request: schemaRequest, loading: schemaLoading } = useRequest();
     onMounted(async () => {
+      const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
+        api.getSubmissionSchema(),
+        api.getGoldEcosystemTree(),
+      ]));
       const r = document.getElementById('harmonizer-root');
-      if (r) {
-        await harmonizerApi.init(r, activeTemplate.value.schemaClass);
+      if (r && schema) {
+        await harmonizerApi.init(r, schema, activeTemplate.value.schemaClass, goldEcosystemTree);
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
         harmonizerApi.addChangeHook(onDataChange);
@@ -254,8 +266,8 @@ export default defineComponent({
       return null;
     });
 
-    const { request, loading: submitLoading, count: submitCount } = useRequest();
-    const doSubmit = () => request(async () => {
+    const { request: submitRequest, loading: submitLoading, count: submitCount } = useRequest();
+    const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       await submit(root.$route.params.id, submissionStatus.SubmittedPendingReview);
@@ -463,6 +475,7 @@ export default defineComponent({
       submissionStatus,
       status,
       submitDialog,
+      schemaLoading,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -486,6 +499,9 @@ export default defineComponent({
     class="d-flex flex-column fill-height"
   >
     <SubmissionStepper />
+    <submission-permission-banner
+      v-if="!canEditSampleMetadata()"
+    />
     <div class="d-flex flex-column px-2">
       <div class="d-flex align-center">
         <label
@@ -729,6 +745,9 @@ export default defineComponent({
     </v-tabs>
 
     <div>
+      <div v-if="schemaLoading">
+        Loading...
+      </div>
       <div
         class="harmonizer-style-container"
         :style="{

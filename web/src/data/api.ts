@@ -21,6 +21,10 @@ const client = axios.create({
   adapter: cache.adapter,
 });
 
+const staticFileClient = axios.create({
+  baseURL: '/static',
+});
+
 /* The real entity types */
 export type entityType = 'biosample'
   | 'study'
@@ -156,9 +160,10 @@ export interface StudySearchResults extends BaseSearchResult {
   funding_sources: string[];
   relevant_protocols: string[];
   gold_study_identifiers: string[];
+  sample_count: number;
   study_category: string;
   part_of: string[] | null;
-  children: StudySearchResults[] | null;
+  children: StudySearchResults[];
   has_credit_associations: {
     applied_roles: string[];
     applies_to_person: {
@@ -636,6 +641,16 @@ async function getAppSettings() {
   return data;
 }
 
+async function getSubmissionSchema() {
+  const { data } = await staticFileClient.get('/submission_schema/submission_schema.json');
+  return data;
+}
+
+async function getGoldEcosystemTree() {
+  const { data } = await staticFileClient.get('/submission_schema/GoldEcosystemTree.json');
+  return data;
+}
+
 const api = {
   createBulkDownload,
   getBinnedFacet,
@@ -651,6 +666,8 @@ const api = {
   getEnvoTrees,
   getFacetSummary,
   getStudy,
+  getSubmissionSchema,
+  getGoldEcosystemTree,
   me,
   myOrcid,
   searchBiosample,
