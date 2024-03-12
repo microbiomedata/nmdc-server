@@ -58,7 +58,7 @@ async def my_orcid(request: Request, orcid: str = Depends(get_current_user_orcid
 
 
 @router.get(
-    "/session-cookie",
+    "/session_cookie",
     name="Get the session cookie",
     tags=["user"],
     responses={200: {"description": "Session cookie"}},
