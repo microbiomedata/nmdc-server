@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
@@ -55,6 +55,29 @@ async def me(request: Request, user: str = Depends(get_current_user)) -> Optiona
 @router.get("/me/orcid", tags=["user"], name="Return the ORCID iD of current user")
 async def my_orcid(request: Request, orcid: str = Depends(get_current_user_orcid)) -> Optional[str]:
     return orcid
+
+
+@router.get(
+    "/session_cookie",
+    name="Get the session cookie",
+    tags=["user"],
+    responses={200: {"description": "Session cookie"}},
+)
+async def get_session_cookie(request: Request):
+    r"""
+    Returns the web browser's session cookie in plain text format.
+
+    Note: This endpoint does not require authentication, since the server is only
+          returning information sent to it by the client (verbatim).
+    """
+    # Reference: https://fastapi.tiangolo.com/reference/request/#fastapi.Request.cookies
+    session_cookie = request.cookies.get("session", None)
+    if session_cookie is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Request did not contain a session cookie.",
+        )
+    return PlainTextResponse(content=session_cookie)
 
 
 # autocomplete search
