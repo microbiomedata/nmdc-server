@@ -16,7 +16,7 @@ import { setUniqueCondition, setConditions } from '@/store';
 import { useRouter } from '@/use/useRouter';
 import AttributeItem from '@/components/Presentation/AttributeItem.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
-import InvestigatorBio from '@/components/InvestigatorBio.vue';
+import TeamInfo from '@/components/TeamInfo.vue';
 /**
  * Override citations for certain DOIs
  */
@@ -33,7 +33,7 @@ export default defineComponent({
   components: {
     AttributeItem,
     IndividualTitle,
-    InvestigatorBio,
+    TeamInfo,
   },
 
   props: {
@@ -256,7 +256,7 @@ export default defineComponent({
                 </div>
               </template>
             </IndividualTitle>
-            <InvestigatorBio
+            <TeamInfo
               :item="item"
             />
           </v-container>
