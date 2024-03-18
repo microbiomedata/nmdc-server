@@ -10,7 +10,14 @@ import { api } from '@/data/api';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
-import { HarmonizerApi, HARMONIZER_TEMPLATES } from './harmonizerApi';
+import {
+  HarmonizerApi,
+  HARMONIZER_TEMPLATES,
+  EMSL,
+  JGI_MG,
+  JGT_MT,
+  JGI_MG_LR,
+} from './harmonizerApi';
 import {
   packageName,
   sampleData,
@@ -83,11 +90,6 @@ const ALWAYS_READ_ONLY_COLUMNS = [
   'dna_seq_project_name',
 ];
 
-// TODO: can this be imported from elsewhere?
-const EMSL = 'emsl';
-const JGI_MG = 'jgi_mg';
-const JGT_MT = 'jgi_mt';
-
 export default defineComponent({
   components: {
     FindReplace,
@@ -119,13 +121,15 @@ export default defineComponent({
     const submitDialog = ref(false);
 
     watch(activeTemplate, () => {
-      harmonizerApi.loadData(activeTemplateData.value);
+      // WARNING: It's important to do the column settings update /before/ data. Otherwise,
+      // columns will not be rendered with the correct width.
       harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
       // if we're not on the first tab, the common columns should be read-only
       if (activeTemplateKey.value !== templateList.value[0]) {
         harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
+      harmonizerApi.loadData(activeTemplateData.value);
     });
 
     watch(activeInvalidCells, () => {
@@ -289,6 +293,9 @@ export default defineComponent({
       }
       if (templateKey === JGI_MG) {
         return row_types.includes('metagenomics');
+      }
+      if (templateKey === JGI_MG_LR) {
+        return row_types.includes('metagenomics_long_read');
       }
       if (templateKey === JGT_MT) {
         return row_types.includes('metatranscriptomics');
@@ -941,6 +948,10 @@ export default defineComponent({
 </template>
 
 <style lang="scss">
+// Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
+// cannot be nested inside .harmonizer-style-container or else the measurements will be off.
+@import '~data-harmonizer/lib/dist/es/index';
+
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples
   Prevent back button overscrolling
@@ -968,18 +979,18 @@ html {
   @import '~bootstrap/scss/functions';
   @import '~bootstrap/scss/variables';
   @import '~bootstrap/scss/mixins';
+  @import "~bootstrap/scss/reboot";
+  @import '~bootstrap/scss/type';
   @import '~bootstrap/scss/modal';
   @import '~bootstrap/scss/buttons';
   @import '~bootstrap/scss/forms';
   @import '~bootstrap/scss/input-group';
   @import '~bootstrap/scss/utilities';
-
-  @import '~data-harmonizer/lib/dist/es/index';
 }
 
 .handsontable.listbox td {
-  border-radius:3px;
-  border:1px solid silver;
+  border-radius: 3px;
+  border: 1px solid silver;
   background-color: #DDD;
 
   &:hover, &.current.highlight {
@@ -990,6 +1001,7 @@ html {
 /* Grid */
 #harmonizer-root {
   overflow: hidden;
+  width: 100%;
   height: calc(100vh - 362px) !important;
   float: left;
   margin-top: 8px;
@@ -1006,18 +1018,21 @@ html {
     &.invalid-cell {
       background-color: #ffcccb !important;
     }
+
     &.empty-invalid-cell {
       background-color: #ff91a4 !important;
     }
   }
+
   th {
     text-align: left;
 
     &.required {
-      background-color:yellow;
+      background-color: yellow;
     }
+
     &.recommended {
-      background-color:plum;
+      background-color: plum;
     }
   }
 }
@@ -1031,9 +1046,10 @@ html {
 .listbox {
   white-space: pre !important;
 }
+
 .handsontable.listbox td {
-  border-radius:3px;
-  border:1px solid silver;
+  border-radius: 3px;
+  border: 1px solid silver;
   background-color: #DDD;
 
   &:hover, &.current.highlight {
@@ -1041,7 +1057,9 @@ html {
   }
 }
 
-.field-description-text select {min-width: 95%}
+.field-description-text select {
+  min-width: 95%
+}
 
 #harmonizer-footer-root {
   width: 50%;
@@ -1058,7 +1076,7 @@ html {
   background: white;
   z-index: 500;
   position: absolute;
-  border-color:rgb(152, 152, 152);
+  border-color: rgb(152, 152, 152);
   border-right-color: rgba(152, 152, 152, 0.0);
 }
 
