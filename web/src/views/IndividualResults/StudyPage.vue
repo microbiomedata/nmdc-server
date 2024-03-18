@@ -16,7 +16,7 @@ import { setUniqueCondition, setConditions } from '@/store';
 import { useRouter } from '@/use/useRouter';
 import AttributeItem from '@/components/Presentation/AttributeItem.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
-import InvestigatorBio from '@/components/InvestigatorBio.vue';
+import TeamInfo from '@/components/TeamInfo.vue';
 /**
  * Override citations for certain DOIs
  */
@@ -33,7 +33,7 @@ export default defineComponent({
   components: {
     AttributeItem,
     IndividualTitle,
-    InvestigatorBio,
+    TeamInfo,
   },
 
   props: {
@@ -238,27 +238,28 @@ export default defineComponent({
           cols="12"
           md="7"
         >
-          <IndividualTitle :item="item">
-            <template #default>
-              <div v-if="item.omics_processing_counts">
-                <template v-for="val in item.omics_processing_counts">
-                  <v-chip
-                    v-if="val.count && (val.type.toLowerCase() !== 'lipidomics')"
-                    :key="val.type"
-                    small
-                    class="mr-2 my-1"
-                    @click="seeOmicsForStudy(val.type)"
-                  >
-                    {{ fieldDisplayName(val.type) }}: {{ val.count }}
-                  </v-chip>
-                </template>
-              </div>
-            </template>
-          </IndividualTitle>
-          <InvestigatorBio
-            v-if="item.principal_investigator"
-            :item="item"
-          />
+          <v-container>
+            <IndividualTitle :item="item">
+              <template #default>
+                <div v-if="item.omics_processing_counts">
+                  <template v-for="val in item.omics_processing_counts">
+                    <v-chip
+                      v-if="val.count && (val.type.toLowerCase() !== 'lipidomics')"
+                      :key="val.type"
+                      small
+                      class="mr-2 my-1"
+                      @click="seeOmicsForStudy(val.type)"
+                    >
+                      {{ fieldDisplayName(val.type) }}: {{ val.count }}
+                    </v-chip>
+                  </template>
+                </div>
+              </template>
+            </IndividualTitle>
+            <TeamInfo
+              :item="item"
+            />
+          </v-container>
           <v-col offset="1">
             <div class="display-1">
               NMDC Details
@@ -285,15 +286,33 @@ export default defineComponent({
               <v-list
                 v-if="goldLinks || item.relevant_protocols.length > 0"
               >
-                <v-list-item
-                  v-if="(goldLinks && goldLinks.keys.length > 0) || item.relevant_protocols"
-                >
+                <v-list-item v-if="item.relevant_protocols">
                   <v-list-item-avatar>
                     <v-icon>mdi-file-document</v-icon>
                   </v-list-item-avatar>
                   <v-list-item-content>
                     <v-list-item-title class="text-h6">
-                      Data
+                      Protocols
+                    </v-list-item-title>
+                  </v-list-item-content>
+                </v-list-item>
+                <AttributeItem
+                  v-for="proto in (item.relevant_protocols || [])"
+                  :key="proto"
+                  style="padding-left: 60px;"
+                  v-bind="{
+                    item,
+                    link: { name: proto, target: proto},
+                    field: 'relevant_protocols' }
+                  "
+                />
+                <v-list-item v-if="item.principal_investigator_websites.length > 0">
+                  <v-list-item-avatar>
+                    <v-icon>mdi-file-document</v-icon>
+                  </v-list-item-avatar>
+                  <v-list-item-content>
+                    <v-list-item-title class="text-h6">
+                      Links
                     </v-list-item-title>
                   </v-list-item-content>
                 </v-list-item>
@@ -310,39 +329,6 @@ export default defineComponent({
                   }"
                   :image="images.gold"
                 />
-                <v-list-item v-if="item.relevant_protocols">
-                  <v-list-item-avatar>
-                    <v-icon>mdi-file-document</v-icon>
-                  </v-list-item-avatar>
-                  <v-list-item-content>
-                    <v-list-item-title class="text-h6">
-                      Protocols
-                    </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
-                <template
-                  v-for="proto in (item.relevant_protocols || [])"
-                >
-                  <AttributeItem
-                    :key="proto"
-                    style="padding-left: 60px;"
-                    v-bind="{
-                      item,
-                      link: { name: proto, target: proto},
-                      field: 'relevant_protocols' }
-                    "
-                  />
-                </template>
-                <v-list-item v-if="item.principal_investigator_websites.length > 0">
-                  <v-list-item-avatar>
-                    <v-icon>mdi-file-document</v-icon>
-                  </v-list-item-avatar>
-                  <v-list-item-content>
-                    <v-list-item-title class="text-h6">
-                      Links
-                    </v-list-item-title>
-                  </v-list-item-content>
-                </v-list-item>
                 <template
                   v-for="site in (item.principal_investigator_websites || [])"
                 >
