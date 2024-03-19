@@ -235,6 +235,7 @@ class StudyBase(AnnotatedBase):
     relevant_protocols: Optional[List[str]]
     funding_sources: Optional[List[str]]
     gold_study_identifiers: Optional[List[str]]
+    homepage_website: Optional[List[str]]
     part_of: Optional[List[str]]
     study_category: Optional[str]
     children: Optional[List[Study]] = []

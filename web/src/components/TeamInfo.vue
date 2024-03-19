@@ -83,6 +83,12 @@ export default defineComponent({
             </span>
           </div>
           <div
+            v-if="item.homepage_website"
+            class="text-h5 py-2 primary--text"
+          >
+            Consortium Homepage: <a :href="item.homepage_website">{{ item.homepage_website[0] }}</a>
+          </div>
+          <div
             v-if="team"
             class="text-h5 py-2 primary--text"
           >

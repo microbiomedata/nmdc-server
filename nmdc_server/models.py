@@ -236,6 +236,7 @@ class Study(Base, AnnotatedModel):
     gold_study_identifiers = Column(JSONB, nullable=True)
 
     study_category = Column(String, nullable=True)
+    homepage_website = Column(JSONB, nullable=True)
     part_of = Column(JSONB, nullable=True)
     children = Column(JSONB, nullable=True)
 
