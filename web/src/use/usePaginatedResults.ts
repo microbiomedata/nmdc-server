@@ -63,7 +63,7 @@ export default function usePaginatedResult<T>(
 
   function setItemsPerPage(newLimit: number) {
     data.limit = newLimit;
-    data.offset = 0;
+    data.offset = Math.floor(data.offset / newLimit) * newLimit;
     debouncedFetchResults();
   }
 
