@@ -1,5 +1,5 @@
 import {
-  watch, Ref, computed, toRef, shallowReactive,
+  watch, Ref, computed, shallowReactive,
 } from '@vue/composition-api';
 import { debounce } from 'lodash';
 import {
@@ -43,11 +43,6 @@ export default function usePaginatedResult<T>(
 
   const debouncedFetchResults = debounce(fetchResults, 500);
 
-  watch([
-    toRef(data, 'limit'),
-    toRef(data, 'offset'),
-  ], debouncedFetchResults);
-
   watch([conditions], () => {
     const doFetch = data.offset === 0;
     data.offset = 0;
@@ -63,10 +58,13 @@ export default function usePaginatedResult<T>(
 
   function setPage(newPage: number) {
     data.offset = (newPage - 1) * data.limit;
+    debouncedFetchResults();
   }
 
   function setItemsPerPage(newLimit: number) {
     data.limit = newLimit;
+    data.offset = Math.floor(data.offset / newLimit) * newLimit;
+    debouncedFetchResults();
   }
 
   return {
