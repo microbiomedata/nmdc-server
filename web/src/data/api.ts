@@ -162,6 +162,7 @@ export interface StudySearchResults extends BaseSearchResult {
   gold_study_identifiers: string[];
   sample_count: number;
   study_category: string;
+  homepage_website: string[] | null;
   part_of: string[] | null;
   children: StudySearchResults[];
   has_credit_associations: {
