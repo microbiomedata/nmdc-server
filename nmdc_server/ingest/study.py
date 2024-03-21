@@ -9,8 +9,11 @@ from sqlalchemy.orm import Session
 from nmdc_server.crud import create_study, get_doi
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.doi import upsert_doi
+from nmdc_server.logger import get_logger
 from nmdc_server.models import PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
+
+logger = get_logger(__name__)
 
 
 def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional[str]) -> str:
@@ -23,6 +26,8 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional
         r = requests.get(url)
         if r.ok:
             image_data = r.content
+        else:
+            logger.error(f"Failed to download image for {name} from {url} : {r.status_code}")
 
     pi = PrincipalInvestigator(name=name, image=image_data, orcid=orcid)
 
@@ -64,6 +69,7 @@ def load(db: Session, cursor: Cursor):
             pi_orcid = pi_obj.get("orcid")
             obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url, pi_orcid)
             obj["principal_investigator_websites"] = obj.pop("websites", [])
+            obj["pricipal_investigator_image_url"] = pi_url
         obj["image"] = get_study_image_data(obj.pop("study_image", []))
         dois = obj.pop("associated_dois", None)
         if dois:
