@@ -503,6 +503,16 @@ export default defineComponent({
       v-if="!canEditSampleMetadata()"
     />
     <div class="d-flex flex-column px-2">
+      <v-alert
+          v-if="canSubmit"
+          color="success"
+          icon="$success"
+      >
+        <p class="text-h5">
+          Validation Success
+        </p>
+        Your data has passed validation and can now be submitted.
+      </v-alert>
       <div class="d-flex align-center">
         <label
           for="tsv-file-select"
