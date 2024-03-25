@@ -202,6 +202,8 @@ export default defineComponent({
       return allTabsValid;
     });
 
+    const snackbar = computed(() => canSubmit.value);
+
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
         const val = {
@@ -442,6 +444,7 @@ export default defineComponent({
       submissionStatus,
       status,
       submitDialog,
+      snackbar,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -465,16 +468,6 @@ export default defineComponent({
   >
     <SubmissionStepper />
     <div class="d-flex flex-column px-2">
-      <v-alert
-          v-if="canSubmit"
-          color="success"
-          icon="$success"
-      >
-        <p class="text-h5">
-          Validation Success
-        </p>
-        Your data has passed validation and can now be submitted.
-      </v-alert>
       <div class="d-flex align-center">
         <label
           for="tsv-file-select"
@@ -866,6 +859,11 @@ export default defineComponent({
               <span v-else>
                 3. Submit
               </span>
+              <v-snackbar v-model="snackbar"
+                  color ="success"
+                  timeout="3000">
+                Validation Passed! You can now submit or continue editing.
+              </v-snackbar>
               <v-dialog
                 v-model="submitDialog"
                 activator="parent"
