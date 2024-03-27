@@ -116,7 +116,6 @@ export default defineComponent({
       }
       return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
     });
-    const activeInvalidCells = computed(() => invalidCells.value[activeTemplateKey.value] || {});
 
     const submitDialog = ref(false);
 
@@ -130,22 +129,19 @@ export default defineComponent({
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
       harmonizerApi.loadData(activeTemplateData.value);
-    });
-
-    watch(activeInvalidCells, () => {
-      harmonizerApi.setInvalidCells(activeInvalidCells.value);
+      harmonizerApi.setInvalidCells(invalidCells.value[activeTemplateKey.value] || {});
     });
 
     const validationErrors = computed(() => {
       const remapped: ValidationErrors = {};
-      const invalid: Record<number, Record<number, string>> = activeInvalidCells.value;
+      const invalid: Record<number, Record<number, string>> = invalidCells.value[activeTemplateKey.value] || {};
       if (Object.keys(invalid).length) {
         remapped['All Errors'] = [];
       }
       Object.entries(invalid).forEach(([row, rowErrors]) => {
         Object.entries(rowErrors).forEach(([col, errorText]) => {
           const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
-          const issue = errorText || 'Validation Error';
+          const issue = errorText || 'Other Validation Error';
           if (has(remapped, issue)) {
             remapped[issue].push(entry);
           } else {
