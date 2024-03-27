@@ -395,8 +395,8 @@ export class HarmonizerApi {
     this.dh.setupTemplate(folder);
   }
 
-  validate() {
-    this.dh.validate();
+  async validate() {
+    await this.dh.validate();
     this.refreshState();
     return this.dh.invalid_cells;
   }
