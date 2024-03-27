@@ -306,7 +306,12 @@ export class HarmonizerApi {
 
   _postTemplateChange() {
     this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
-      this.selectedColumn.value = this.dh.getFields()[col].title;
+      const column = this.dh.getFields()[col];
+      if (!column) {
+        this.selectedColumn.value = '';
+      } else {
+        this.selectedColumn.value = column.title;
+      }
     }, 200, { leading: true }));
     this.dh.hot.updateSettings({ search: true, customBorders: true });
     this.jumpToRowCol(0, 0);

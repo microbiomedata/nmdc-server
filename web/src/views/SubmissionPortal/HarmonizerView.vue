@@ -838,6 +838,17 @@ export default defineComponent({
               </v-icon>
             </v-btn>
           </div>
+          <div v-else>
+            <div class="mx-2">
+              <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
+                Column Help
+                <v-spacer />
+              </div>
+              <p class="my-2 text--disabled">
+                Click on a cell or column to view help
+              </p>
+            </div>
+          </div>
         </v-navigation-drawer>
       </div>
     </div>
