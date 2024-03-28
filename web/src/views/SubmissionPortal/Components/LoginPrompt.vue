@@ -12,15 +12,17 @@ export default defineComponent({
 
 <template>
   <v-alert
-    class="mb-0"
+    class="mt-6 mb-0"
     text
   >
     <v-container>
       <v-row align="center">
         <v-col class="justify-content-center">
+          <h3 class="text-h6 font-weight-bold mb-3">
+            Login to submit data
+          </h3>
           <p class="body-1">
-            Login with your ORCID iD
-            to access the Submission Portal.
+            Login with your ORCID iD to submit data.
           </p>
           <p class="body-2 mb-0">
             Don't have an ORCID iD? Individuals can
