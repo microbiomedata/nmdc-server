@@ -1,3 +1,6 @@
+// Note: Each object in each `items` array represents a link in a dropdown menu.
+//       When defining a link for client-side routing, use the `to` property.
+//       When defining a link for server-side routing, use the `href` property.
 const Menus = [
   {
     label: 'About Us',
@@ -51,23 +54,23 @@ const Menus = [
     items: [
       {
         label: 'Data Standards',
-        to: 'https://microbiomedata.org/data-standards/',
+        href: 'https://microbiomedata.org/data-standards/',
       },
       {
         label: 'Bioinformatics Workflows',
-        to: 'https://microbiomedata.org/workflows/',
+        href: 'https://microbiomedata.org/workflows/',
       },
       {
         label: 'GitHub',
-        to: 'https://github.com/microbiomedata',
+        href: 'https://github.com/microbiomedata',
       },
       {
         label: 'Documentation',
-        to: 'https://microbiomedata.org/documentation/',
+        href: 'https://microbiomedata.org/documentation/',
       },
       {
         label: 'Data Management',
-        to: 'https://microbiomedata.org/data-management/',
+        href: 'https://microbiomedata.org/data-management/',
       },
     ],
   },
