@@ -47,6 +47,10 @@ const Menus = [
         label: 'NMDC EDGE',
         href: 'https://nmdc-edge.org',
       },
+      {
+        label: 'Field Notes Mobile App',
+        href: 'https://microbiomedata.org/field-notes/',
+      },
     ],
   },
   {
