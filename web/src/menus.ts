@@ -108,6 +108,10 @@ const Menus = [
         href: 'https://microbiomedata.org/events/',
       },
       {
+        label: 'Newsletters',
+        href: 'https://microbiomedata.org/newsletters/',
+      },
+      {
         label: 'Annual Reports',
         href: 'https://microbiomedata.org/annual_report/',
       },
