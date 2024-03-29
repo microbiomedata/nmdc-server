@@ -1,6 +1,7 @@
 import {
-  watch, Ref, computed, toRef, shallowReactive,
+  watch, Ref, computed, shallowReactive,
 } from '@vue/composition-api';
+import { debounce } from 'lodash';
 import {
   SearchParams, Condition, DataObjectFilter, SearchResponse,
 } from '@/data/api';
@@ -40,25 +41,30 @@ export default function usePaginatedResult<T>(
     });
   }
 
-  watch([
-    toRef(data, 'limit'),
-    toRef(data, 'offset'),
-  ], fetchResults);
+  const debouncedFetchResults = debounce(fetchResults, 500);
+
   watch([conditions], () => {
     const doFetch = data.offset === 0;
     data.offset = 0;
     data.limit = limit;
-    if (doFetch) fetchResults();
+    if (doFetch) debouncedFetchResults();
   });
 
   if (dataObjectFilter !== undefined) {
-    watch(dataObjectFilter, fetchResults, { deep: true });
+    watch(dataObjectFilter, debouncedFetchResults, { deep: true });
   }
-  fetchResults();
+  debouncedFetchResults();
   // ENDTODO
 
   function setPage(newPage: number) {
     data.offset = (newPage - 1) * data.limit;
+    debouncedFetchResults();
+  }
+
+  function setItemsPerPage(newLimit: number) {
+    data.limit = newLimit;
+    data.offset = Math.floor(data.offset / newLimit) * newLimit;
+    debouncedFetchResults();
   }
 
   return {
@@ -67,5 +73,6 @@ export default function usePaginatedResult<T>(
     loading,
     page,
     setPage,
+    setItemsPerPage,
   };
 }

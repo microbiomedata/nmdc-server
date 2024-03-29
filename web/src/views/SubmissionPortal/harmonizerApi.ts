@@ -191,11 +191,9 @@ export class HarmonizerApi {
     this.selectedColumn = ref('');
   }
 
-  async init(r: HTMLElement, templateName: string | undefined) {
-    this.schema = (await import('nmdc-submission-schema/project/json/nmdc_submission_schema.json')).default;
-    // Taken from https://gold.jgi.doe.gov/download?mode=biosampleEcosystemsJson
-    // See also: https://gold.jgi.doe.gov/ecosystemtree
-    this.goldEcosystemTree = (await import('nmdc-submission-schema/project/thirdparty/GoldEcosystemTree.json')).default;
+  async init(r: HTMLElement, schema: any, templateName: string | undefined, goldEcosystemTree: any) {
+    this.schema = schema;
+    this.goldEcosystemTree = goldEcosystemTree;
 
     this.dh = new DataHarmonizer(r, {
       modalsRoot: document.querySelector('.harmonizer-style-container'),
@@ -414,15 +412,21 @@ export class HarmonizerApi {
     this._postTemplateChange();
   }
 
-  setColumnsReadOnly(columns: number[]) {
+  setColumnsReadOnly(slotNames: string[]) {
     const { hot } = this.dh;
-    const rowCount = hot.countRows();
-    columns.forEach((col) => {
-      for (let row = 0; row < rowCount; row += 1) {
-        hot.setCellMeta(row, col, 'readOnly', true);
+    const { columns } = hot.getSettings();
+    const fields = this.dh.getFields();
+    for (let col = 0; col < fields.length; col += 1) {
+      if (slotNames.includes(fields[col].name)) {
+        columns[col].readOnly = true;
       }
-    });
-    hot.render();
+    }
+    hot.updateSettings({ columns });
+  }
+
+  setTableReadOnly() {
+    this.dh.hot.updateSettings({ readOnly: true });
+    this.dh.hot.render();
   }
 
   setMaxRows(maxRows: number) {

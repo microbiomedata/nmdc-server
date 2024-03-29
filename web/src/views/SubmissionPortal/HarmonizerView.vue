@@ -6,6 +6,7 @@ import {
   clamp, flattenDeep, has, sum,
 } from 'lodash';
 import { read, writeFile, utils } from 'xlsx';
+import { api } from '@/data/api';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
@@ -21,10 +22,13 @@ import {
   hasChanged,
   tabsValidated,
   submissionStatus,
+  canEditSampleMetadata,
+  isOwner,
 } from './store';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
+import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -64,13 +68,33 @@ const TYPE_FIELD = ANALYSIS_TYPE;
 // TODO: should this be derived from schema?
 const COMMON_COLUMNS = [SAMP_NAME, SOURCE_MAT_ID, ANALYSIS_TYPE];
 
+const ALWAYS_READ_ONLY_COLUMNS = [
+  'dna_seq_project',
+  'rna_seq_project',
+  'dna_samp_id',
+  'rna_samp_id',
+  'rna_seq_project_pi',
+  'dna_seq_project_pi',
+  'dna_project_contact',
+  'rna_project_contact',
+  'proposal_rna',
+  'proposal_dna',
+  'rna_seq_project_name',
+  'dna_seq_project_name',
+];
+
 // TODO: can this be imported from elsewhere?
 const EMSL = 'emsl';
 const JGI_MG = 'jgi_mg';
 const JGT_MT = 'jgi_mt';
 
 export default defineComponent({
-  components: { FindReplace, SubmissionStepper, SubmissionDocsLink },
+  components: {
+    FindReplace,
+    SubmissionStepper,
+    SubmissionDocsLink,
+    SubmissionPermissionBanner,
+  },
 
   setup(_, { root }) {
     const harmonizerElement = ref();
@@ -96,9 +120,10 @@ export default defineComponent({
 
     watch(activeTemplate, () => {
       harmonizerApi.loadData(activeTemplateData.value);
+      harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
       // if we're not on the first tab, the common columns should be read-only
       if (activeTemplateKey.value !== templateList.value[0]) {
-        harmonizerApi.setColumnsReadOnly([0, 1, 2]);
+        harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
     });
@@ -145,13 +170,21 @@ export default defineComponent({
       tabsValidated.value[activeTemplateKey.value] = false;
     };
 
+    const { request: schemaRequest, loading: schemaLoading } = useRequest();
     onMounted(async () => {
+      const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
+        api.getSubmissionSchema(),
+        api.getGoldEcosystemTree(),
+      ]));
       const r = document.getElementById('harmonizer-root');
-      if (r) {
-        await harmonizerApi.init(r, activeTemplate.value.schemaClass);
+      if (r && schema) {
+        await harmonizerApi.init(r, schema, activeTemplate.value.schemaClass, goldEcosystemTree);
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
         harmonizerApi.addChangeHook(onDataChange);
+        if (!canEditSampleMetadata()) {
+          harmonizerApi.setTableReadOnly();
+        }
       }
     });
 
@@ -199,7 +232,7 @@ export default defineComponent({
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
-      return allTabsValid;
+      return allTabsValid && isOwner();
     });
 
     const snackbar = computed(() => canSubmit.value);
@@ -235,8 +268,8 @@ export default defineComponent({
       return null;
     });
 
-    const { request, loading: submitLoading, count: submitCount } = useRequest();
-    const doSubmit = () => request(async () => {
+    const { request: submitRequest, loading: submitLoading, count: submitCount } = useRequest();
+    const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       await submit(root.$route.params.id, submissionStatus.SubmittedPendingReview);
@@ -445,6 +478,7 @@ export default defineComponent({
       status,
       submitDialog,
       snackbar,
+      schemaLoading,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -456,6 +490,7 @@ export default defineComponent({
       validate,
       changeTemplate,
       urlify,
+      canEditSampleMetadata,
     };
   },
 });
@@ -467,6 +502,9 @@ export default defineComponent({
     class="d-flex flex-column fill-height"
   >
     <SubmissionStepper />
+    <submission-permission-banner
+      v-if="!canEditSampleMetadata()"
+    />
     <div class="d-flex flex-column px-2">
       <div class="d-flex align-center">
         <label
@@ -488,6 +526,7 @@ export default defineComponent({
             color="primary"
             class="mr-2"
             hide-details
+            :disabled="!canEditSampleMetadata()"
             @click="showOpenFileDialog"
           >
             1. Import XLSX file
@@ -500,6 +539,7 @@ export default defineComponent({
           v-if="validationErrorGroups.length === 0"
           color="primary"
           outlined
+          :disabled="!canEditSampleMetadata()"
           @click="validate"
         >
           2. Validate
@@ -713,6 +753,9 @@ export default defineComponent({
     </v-tabs>
 
     <div>
+      <div v-if="schemaLoading">
+        Loading...
+      </div>
       <div
         class="harmonizer-style-container"
         :style="{
@@ -805,7 +848,10 @@ export default defineComponent({
     </div>
 
     <div class="harmonizer-style-container">
-      <div id="harmonizer-footer-root" />
+      <div
+        v-if="canEditSampleMetadata()"
+        id="harmonizer-footer-root"
+      />
     </div>
     <div class="d-flex shrink ma-2">
       <v-btn
@@ -1025,5 +1071,9 @@ html {
 
 .sidebar-toggle-close {
   transform: rotate(180deg);
+}
+
+.htDimmed {
+  cursor: not-allowed;
 }
 </style>

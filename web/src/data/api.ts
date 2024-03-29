@@ -1,7 +1,7 @@
 import { merge } from 'lodash';
 import axios from 'axios';
 import { setupCache } from 'axios-cache-adapter';
-import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
 
 const cache = setupCache({
   key: (req) => req.url + JSON.stringify(req.params) + JSON.stringify(req.data),
@@ -19,6 +19,10 @@ const cache = setupCache({
 const client = axios.create({
   baseURL: process.env.VUE_APP_BASE_URL || '/api',
   adapter: cache.adapter,
+});
+
+const staticFileClient = axios.create({
+  baseURL: '/static',
 });
 
 /* The real entity types */
@@ -120,11 +124,13 @@ interface PrincipalInvestigator {
 export interface DOI {
   cite: string,
   id:string,
+  provider: string,
 }
 
 export interface DOIMAP {
   info: Record<string, any>,
-  category: string
+  category: string,
+  provider: string,
 }
 
 export interface StudySearchResults extends BaseSearchResult {
@@ -153,9 +159,12 @@ export interface StudySearchResults extends BaseSearchResult {
   open_in_gold: string;
   funding_sources: string[];
   relevant_protocols: string[];
-  ess_dive_datasets: string[];
-  massive_study_identifiers: string[];
   gold_study_identifiers: string[];
+  sample_count: number;
+  study_category: string;
+  homepage_website: string[] | null;
+  part_of: string[] | null;
+  children: StudySearchResults[];
   has_credit_associations: {
     applied_roles: string[];
     applies_to_person: {
@@ -633,6 +642,16 @@ async function getAppSettings() {
   return data;
 }
 
+async function getSubmissionSchema() {
+  const { data } = await staticFileClient.get('/submission_schema/submission_schema.json');
+  return data;
+}
+
+async function getGoldEcosystemTree() {
+  const { data } = await staticFileClient.get('/submission_schema/GoldEcosystemTree.json');
+  return data;
+}
+
 const api = {
   createBulkDownload,
   getBinnedFacet,
@@ -648,6 +667,8 @@ const api = {
   getEnvoTrees,
   getFacetSummary,
   getStudy,
+  getSubmissionSchema,
+  getGoldEcosystemTree,
   me,
   myOrcid,
   searchBiosample,

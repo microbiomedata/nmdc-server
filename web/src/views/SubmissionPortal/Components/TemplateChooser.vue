@@ -1,11 +1,17 @@
 <script lang="ts">
 import { defineComponent, computed } from '@vue/composition-api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
-import { templateChoiceDisabled, templateList, packageName } from '../store';
+import {
+  templateChoiceDisabled,
+  templateList,
+  packageName,
+  canEditSubmissionMetadata,
+} from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
+import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 
 export default defineComponent({
-  components: { SubmissionDocsLink },
+  components: { SubmissionDocsLink, SubmissionPermissionBanner },
   setup() {
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
@@ -17,6 +23,7 @@ export default defineComponent({
       templates: Object.entries(HARMONIZER_TEMPLATES),
       templateListDisplayNames,
       templateChoiceDisabled,
+      canEditSubmissionMetadata,
     };
   },
 });
@@ -31,9 +38,13 @@ export default defineComponent({
     <div class="text-h5">
       Choose environment package for your data.
     </div>
+    <submission-permission-banner
+      v-if="!canEditSubmissionMetadata()"
+    />
     <v-radio-group
       v-model="packageName"
       class="my-6"
+      :disabled="!canEditSubmissionMetadata()"
     >
       <v-radio
         v-for="option in templates.filter((v) => v[1].status === 'published')"

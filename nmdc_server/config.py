@@ -34,6 +34,7 @@ class Settings(BaseSettings):
     oauth_authorization_endpoint: str = "https://orcid.org/oauth/authorize"
     oauth_token_endpoint: str = "https://orcid.org/oauth/token"
     host: Optional[str] = None  # sets the host name for the oauth2 redirect
+    field_notes_host: str = "https://fieldnotes.microbiomedata.org"
 
     # mongo database used for ingest
     mongo_host: str = "mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org"
@@ -60,6 +61,9 @@ class Settings(BaseSettings):
     rancher_postgres_secret_id: Optional[str] = None
     rancher_backend_workload_id: Optional[str] = None
     rancher_worker_workload_id: Optional[str] = None
+
+    # CORS settings necessary for allowing request from Field Notes app
+    cors_allow_origins: Optional[str] = None  # comma separated list of allowed origins
 
     @property
     def current_db_uri(self) -> str:

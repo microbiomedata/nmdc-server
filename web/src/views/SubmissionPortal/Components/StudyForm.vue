@@ -1,20 +1,56 @@
 <script lang="ts">
-import { defineComponent, onMounted, ref } from '@vue/composition-api';
-import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+import {
+  defineComponent,
+  onMounted,
+  ref,
+  Ref,
+} from '@vue/composition-api';
 import Definitions from '@/definitions';
-import { studyForm, studyFormValid } from '../store';
+import {
+  studyForm,
+  studyFormValid,
+  permissionTitleToDbValueMap,
+  permissionTitle,
+  isOwner,
+  canEditSubmissionMetadata,
+} from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
+import { api } from '../../../data/api';
+import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 
 export default defineComponent({
-  components: { SubmissionDocsLink },
+  components: { SubmissionDocsLink, SubmissionPermissionBanner },
   setup() {
     const formRef = ref();
+
+    const currentUserOrcid = ref('');
+
+    const permissionHelpText = ref([
+      {
+        title: 'Viewer',
+        description: 'Viewers can see all components of a submission, but cannot edit.',
+      },
+      {
+        title: 'Metadata Contributor',
+        description: 'Metadata contributors can view all components of a submission and can only edit the sample metadata information on the last step of the submission process.',
+      },
+      {
+        title: 'Editor',
+        description: 'Editors of a submission have full permission to edit every aspect of the submission with the exception of permission levels.',
+      },
+      {
+        title: 'Owner',
+        description: 'This level of permission is automatically assigned to the submission author and Principal Investigator. These users can edit every aspect of the submission.',
+      },
+    ]);
 
     function addContributor() {
       studyForm.contributors.push({
         name: '',
         orcid: '',
         roles: [],
+        permissionLevel: null,
       });
     }
 
@@ -25,8 +61,30 @@ export default defineComponent({
       ];
     }
 
-    onMounted(() => {
+    const orcidRequiredRule = (idx: number) => (v: string) => {
+      if (idx > studyForm.contributors.length) return true;
+      const contributor = studyForm.contributors[idx];
+      // show error when: permission level exists, but orcid does not
+      return (contributor.permissionLevel && !!v) || !contributor.permissionLevel || 'ORCID iD is required if a permission level is specified';
+    };
+
+    const uniqueOrcidRule = (idx: number) => (v: string) => {
+      if (idx > studyForm.contributors.length) return true;
+      const existingOrcids = new Set(studyForm.contributors.filter((contributor, contributorListIndex) => idx !== contributorListIndex).map((contributor) => contributor.orcid));
+      return !existingOrcids.has(v) || 'ORCID iDs must be unique';
+    };
+
+    const permissionLevelChoices: Ref<{ title: string, value: string }[]> = ref([]);
+    Object.keys(permissionTitleToDbValueMap).forEach((title) => {
+      permissionLevelChoices.value.push({
+        title,
+        value: permissionTitleToDbValueMap[title as permissionTitle],
+      });
+    });
+
+    onMounted(async () => {
       formRef.value.validate();
+      currentUserOrcid.value = await api.myOrcid();
     });
 
     return {
@@ -37,6 +95,13 @@ export default defineComponent({
       Definitions,
       addContributor,
       requiredRules,
+      permissionLevelChoices,
+      isOwner,
+      canEditSubmissionMetadata,
+      orcidRequiredRule,
+      uniqueOrcidRule,
+      currentUserOrcid,
+      permissionHelpText,
     };
   },
 });
@@ -51,11 +116,15 @@ export default defineComponent({
     <div class="text-h5">
       {{ NmdcSchema.$defs.Study.description }}
     </div>
+    <submission-permission-banner
+      v-if="!canEditSubmissionMetadata()"
+    />
     <v-form
       ref="formRef"
       v-model="studyFormValid"
       class="my-6"
       style="max-width: 1000px;"
+      :disabled="!canEditSubmissionMetadata()"
     >
       <v-text-field
         v-model="studyForm.studyName"
@@ -98,6 +167,7 @@ export default defineComponent({
       <v-text-field
         v-model="studyForm.piOrcid"
         label="Principal Investigator ORCID"
+        :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid"
         outlined
         :hint="Definitions.piOrcid"
         persistent-hint
@@ -167,7 +237,9 @@ export default defineComponent({
             />
             <v-text-field
               v-model="contributor.orcid"
+              :rules="[orcidRequiredRule(i), uniqueOrcidRule(i)]"
               :hint="Definitions.contributorOrcid"
+              :disabled="currentUserOrcid === contributor.orcid"
               label="ORCID"
               outlined
               persistent-hint
@@ -179,27 +251,70 @@ export default defineComponent({
               </template>
             </v-text-field>
           </div>
-          <v-select
-            v-model="contributor.roles"
-            :rules="[v => v.length >= 1 || 'At least one role is required']"
-            :items="NmdcSchema.$defs.CreditEnum.enum"
-            label="Roles *"
-            :hint="Definitions.contributorRoles"
-            deletable-chips
-            multiple
-            outlined
-            chips
-            small-chips
-            dense
-            persistent-hint
-          >
-            <template #message="{ message }">
-              <span v-html="message" />
-            </template>
-          </v-select>
+          <div class="d-flex">
+            <v-select
+              v-model="contributor.roles"
+              :rules="[v => v.length >= 1 || 'At least one role is required']"
+              :items="NmdcSchema.$defs.CreditEnum.enum"
+              label="CRediT Roles *"
+              :hint="Definitions.contributorRoles"
+              deletable-chips
+              multiple
+              outlined
+              chips
+              small-chips
+              dense
+              persistent-hint
+              class="mb-2 mr-3"
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-select>
+            <v-select
+              v-if="isOwner()"
+              v-model="contributor.permissionLevel"
+              :items="permissionLevelChoices"
+              clearable
+              item-text="title"
+              item-value="value"
+              :style="{ maxWidth: '400px'}"
+              label="Permission Level"
+              hint="Level of permissions the contributor has for this submission"
+              outlined
+              dense
+              persistent-hint
+            >
+              <template #prepend-inner>
+                <v-tooltip
+                  bottom
+                  max-width="500px"
+                >
+                  <template #activator="{on, attrs}">
+                    <v-btn
+                      icon
+                      small
+                      v-bind="attrs"
+                      v-on="on"
+                    >
+                      <v-icon>mdi-help-circle</v-icon>
+                    </v-btn>
+                  </template>
+                  <div
+                    v-for="role in permissionHelpText"
+                    :key="role.title"
+                    class="pb-2"
+                  >
+                    <strong>{{ role.title }}: </strong><span>{{ role.description }}</span>
+                  </div>
+                </v-tooltip>
+              </template>
+            </v-select>
+          </div>
         </v-card>
         <v-btn
           icon
+          :disabled="!isOwner() || currentUserOrcid === contributor.orcid"
           @click="studyForm.contributors.splice(i, 1)"
         >
           <v-icon>mdi-minus-circle</v-icon>
@@ -207,6 +322,7 @@ export default defineComponent({
       </div>
       <v-btn
         depressed
+        :disabled="!canEditSubmissionMetadata()"
         @click="addContributor"
       >
         <v-icon class="pr-1">

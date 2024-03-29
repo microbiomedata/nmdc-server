@@ -7,8 +7,13 @@ import {
   ref,
   watch,
 } from '@vue/composition-api';
-import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
-import { addressForm, addressFormValid, BiosafetyLevels } from '../store';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+import {
+  addressForm,
+  addressFormValid,
+  BiosafetyLevels,
+  canEditSubmissionMetadata,
+} from '../store';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 
@@ -81,6 +86,7 @@ export default defineComponent({
       addressSummary,
       sampleEnumValues,
       shippingConditionsItems,
+      canEditSubmissionMetadata,
       requiredRules,
     };
   },
@@ -112,11 +118,13 @@ export default defineComponent({
       v-model="showAddressForm"
       scrollable
       width="1200"
+      eager
     >
       <template
         #activator="{ on, attrs }"
       >
         <v-btn
+          :disabled="!canEditSubmissionMetadata()"
           absolute
           top
           right
@@ -139,6 +147,7 @@ export default defineComponent({
             v-model="addressFormValid"
             class="ml-12"
             style="max-width: 1000px"
+            :disabled="!canEditSubmissionMetadata()"
           >
             <v-subheader>
               <span class="text-h6">Shipper</span>

@@ -68,7 +68,7 @@ export default defineComponent({
         v-if="getSubmissionLockedBy()"
         :orcid-id="getSubmissionLockedBy().orcid"
         :name="getSubmissionLockedBy().name"
-        authenticated="true"
+        :authenticated="true"
       />
       <a href="/submission/home">
         Return to submission list

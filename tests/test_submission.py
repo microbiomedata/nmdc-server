@@ -8,7 +8,7 @@ from starlette.testclient import TestClient
 from nmdc_server import fakes
 from nmdc_server.auth import Token
 from nmdc_server.models import SubmissionEditorRole, SubmissionRole
-from nmdc_server.schemas_submission import SubmissionMetadataSchema
+from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
 
 
 def test_list_submissions(db: Session, client: TestClient, token: Token, logged_in_user):
@@ -42,7 +42,7 @@ def test_try_edit_locked_submission(db: Session, client: TestClient, token: Toke
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-    payload = SubmissionMetadataSchema(**submission.__dict__).json()
+    payload = SubmissionMetadataSchema(**submission.__dict__).json(exclude_unset=True)
     db.commit()
 
     response = client.request(
@@ -69,7 +69,7 @@ def test_try_edit_expired_locked_submission(
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-    payload = SubmissionMetadataSchema(**submission.__dict__).json()
+    payload = SubmissionMetadataSchema(**submission.__dict__).json(exclude_unset=True)
     db.commit()
 
     response = client.request(
@@ -93,7 +93,7 @@ def test_try_edit_locked_by_current_user_submission(
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-    payload = SubmissionMetadataSchema(**submission.__dict__).json()
+    payload = SubmissionMetadataSchema(**submission.__dict__).json(exclude_unset=True)
     db.commit()
 
     response = client.request(
@@ -162,7 +162,7 @@ def test_edit_submission_with_roles(
     assert response.status_code == code
 
 
-def test_owner_role_created_for_pi(db: Session, client: TestClient, token: Token, logged_in_user):
+def test_create_role_on_patch(db: Session, client: TestClient, token: Token, logged_in_user):
     pi_orcid = fakes.Faker("pystr")
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
@@ -170,10 +170,10 @@ def test_owner_role_created_for_pi(db: Session, client: TestClient, token: Token
     fakes.SubmissionRoleFactory(
         submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid
     )
-    payload = SubmissionMetadataSchema(**submission.__dict__)
+    payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
     db.commit()
 
-    payload.metadata_submission.studyForm.piOrcid = str(pi_orcid)
+    payload.permissions = {str(pi_orcid): SubmissionEditorRole.owner.value}
     response = client.request(
         method="patch",
         url=f"/api/metadata_submission/{submission.id}",
@@ -189,3 +189,182 @@ def test_owner_role_created_for_pi(db: Session, client: TestClient, token: Token
     assert role.user_orcid == str(pi_orcid)
     assert role.submission_id == submission.id
     assert SubmissionEditorRole(role.role) == SubmissionEditorRole.owner
+
+
+@pytest.mark.parametrize("samples_only,code", [(True, 200), (False, 403)])
+def test_piecewise_patch_metadata_contributor(
+    db: Session, client: TestClient, token: Token, logged_in_user, samples_only, code
+):
+    user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=user, author_orcid=user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.metadata_contributor,
+    )
+    full_payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
+    db.commit()
+
+    if samples_only:
+        request_dict = {
+            "metadata_submission": {"sampleData": full_payload.metadata_submission.sampleData}
+        }
+        request_payload = SubmissionMetadataSchemaPatch(**request_dict).json(exclude_unset=True)
+    else:
+        request_payload = full_payload.json()
+
+    # Logged in user should not be able to submit full payload because it contains non-sample data
+    response = client.request(
+        method="patch",
+        url=f"/api/metadata_submission/{submission.id}",
+        json=json.loads(request_payload),
+    )
+    assert response.status_code == code
+
+
+def test_delete_role_on_patch(db: Session, client: TestClient, token: Token, logged_in_user):
+    user_orcid = fakes.Faker("pystr")
+    pi_orcid = fakes.Faker("pystr")
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=pi_orcid,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=user_orcid,
+        role=SubmissionEditorRole.viewer,
+    )
+    payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
+    db.commit()
+
+    payload.permissions = {}
+
+    response = client.request(
+        method="patch",
+        url=f"/api/metadata_submission/{submission.id}",
+        json=json.loads(payload.json()),
+    )
+    assert response.status_code == 200
+    roles = db.query(SubmissionRole)
+    # logged_in_user's, pi's owner roles should still exist
+    assert roles.count() == 2
+    assert all([role.role == SubmissionEditorRole.owner for role in roles.all()])
+
+
+def test_update_role_on_patch(db: Session, client: TestClient, token: Token, logged_in_user):
+    user_orcid = fakes.Faker("pystr")
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=user_orcid,
+        role=SubmissionEditorRole.viewer,
+    )
+    payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
+    db.commit()
+
+    payload.permissions = {str(user_orcid): SubmissionEditorRole.editor.value}
+    response = client.request(
+        method="patch",
+        url=f"/api/metadata_submission/{submission.id}",
+        json=json.loads(payload.json()),
+    )
+    assert response.status_code == 200
+    roles = db.query(SubmissionRole).filter(SubmissionRole.user_orcid == str(user_orcid))
+    assert roles.count() == 1
+    role = roles.first()
+    assert role and role.role == SubmissionEditorRole.editor
+
+
+def test_delete_submission_by_owner(db: Session, client: TestClient, token: Token, logged_in_user):
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Verify that the DELETE request goes through
+    response = client.request(method="DELETE", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 204
+
+    # Verify that it's really gone
+    response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 404
+
+
+def test_delete_submission_by_non_owner(
+    db: Session, client: TestClient, token: Token, logged_in_user
+):
+    user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=user, author_orcid=user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.metadata_contributor,
+    )
+    db.commit()
+
+    # Verify that a contributor cannot delete it
+    response = client.request(method="DELETE", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 403
+
+    # Verify that it is still there
+    response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 200
+
+
+def test_delete_submission_while_locked(
+    db: Session, client: TestClient, token: Token, logged_in_user
+):
+    user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        locked_by=user,
+        lock_updated=datetime.utcnow(),
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=user.orcid,
+        role=SubmissionEditorRole.metadata_contributor,
+    )
+    db.commit()
+
+    # Verify that a owner cannot delete while submission is locked
+    response = client.request(method="DELETE", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 400
+
+    # Verify that it is still there
+    response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 200

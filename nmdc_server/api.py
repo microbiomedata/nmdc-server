@@ -2,8 +2,8 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from fastapi.responses import JSONResponse, PlainTextResponse
 from sqlalchemy.orm import Session
 from starlette.requests import Request
 from starlette.responses import RedirectResponse, StreamingResponse
@@ -55,6 +55,29 @@ async def me(request: Request, user: str = Depends(get_current_user)) -> Optiona
 @router.get("/me/orcid", tags=["user"], name="Return the ORCID iD of current user")
 async def my_orcid(request: Request, orcid: str = Depends(get_current_user_orcid)) -> Optional[str]:
     return orcid
+
+
+@router.get(
+    "/session_cookie",
+    name="Get the session cookie",
+    tags=["user"],
+    responses={200: {"description": "Session cookie"}},
+)
+async def get_session_cookie(request: Request):
+    r"""
+    Returns the web browser's session cookie in plain text format.
+
+    Note: This endpoint does not require authentication, since the server is only
+          returning information sent to it by the client (verbatim).
+    """
+    # Reference: https://fastapi.tiangolo.com/reference/request/#fastapi.Request.cookies
+    session_cookie = request.cookies.get("session", None)
+    if session_cookie is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Request did not contain a session cookie.",
+        )
+    return PlainTextResponse(content=session_cookie)
 
 
 # autocomplete search
@@ -251,11 +274,66 @@ async def kegg_text_search(query: str, limit=20, db: Session = Depends(get_db)):
     description="Faceted search of study data.",
 )
 async def search_study(
-    query: query.SearchQuery = query.SearchQuery(),
+    q: query.SearchQuery = query.SearchQuery(),
     db: Session = Depends(get_db),
     pagination: Pagination = Depends(),
 ):
-    return pagination.response(crud.search_study(db, query.conditions))
+    top_level_condition: List[query.ConditionSchema] = [
+        query.SimpleConditionSchema(
+            **{
+                "field": "part_of",
+                "op": "==",
+                "value": "null",
+                "table": "study",
+            }
+        )
+    ]
+    children_condition: List[query.ConditionSchema] = [
+        query.SimpleConditionSchema(
+            **{
+                "field": "part_of",
+                "op": "!=",
+                "value": "null",
+                "table": "study",
+            }
+        )
+    ]
+
+    top_level_condition.extend(q.conditions)
+    children_condition.extend(q.conditions)
+
+    children_studies = crud.search_study(db, children_condition).all()
+    top_level_studies = crud.search_study(db, top_level_condition).all()
+
+    for parent in top_level_studies:
+        parent.children = []
+        for child in children_studies:
+            if child.part_of is not None and parent.id in child.part_of:
+                parent.children.append(child)
+
+    # If there are children studies that match the query, but their top level studies do not,
+    # and they are not already listed as children of another top level study,
+    # add the child to the top level studies
+    for child in children_studies:
+        for parent_id in child.part_of:
+            if (
+                parent_id not in [parent.id for parent in top_level_studies]
+                and child.id not in [parent.id for parent in top_level_studies]
+                and child.id
+                not in [child.id for parent in top_level_studies for child in parent.children]
+            ):
+                top_level_studies.append(child)
+
+    count = len(top_level_studies)
+
+    total = crud.search_study(db, q.conditions).count()
+
+    structured_results: query.StudySearchResponse = query.StudySearchResponse(
+        count=count,
+        results=top_level_studies[pagination.offset : pagination.limit + pagination.offset],
+        total=total,
+    )
+    return structured_results
 
 
 @router.post(
@@ -285,6 +363,20 @@ async def binned_facet_study(query: query.BinnedFacetQuery, db: Session = Depend
 )
 async def get_study(study_id: str, db: Session = Depends(get_db)):
     db_study = crud.get_study(db, study_id)
+
+    children_condition: List[query.ConditionSchema] = [
+        query.SimpleConditionSchema(
+            **{"field": "part_of", "op": "!=", "value": "null", "table": "study"}
+        )
+    ]
+
+    children_studies = crud.search_study(db, children_condition).all()
+    if db_study:
+        db_study.children = []
+        for child in children_studies:
+            if child.part_of is not None and db_study.id in child.part_of:
+                db_study.children.append(child)
+
     if db_study is None:
         raise HTTPException(status_code=404, detail="Study not found")
     return db_study
@@ -529,7 +621,7 @@ async def list_submissions(
     user: models.User = Depends(login_required),
     pagination: Pagination = Depends(),
 ):
-    query = db.query(SubmissionMetadata)
+    query = db.query(SubmissionMetadata).order_by(SubmissionMetadata.created.desc())
     try:
         await admin_required(user)
     except HTTPException:
@@ -552,9 +644,59 @@ async def get_submission(
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
     _ = crud.try_get_submission_lock(db, submission.id, user.id)
-    if user.is_admin or crud.can_edit_entire_submission(db, id, user.orcid):
-        return submission
+    if user.is_admin or crud.can_read_submission(db, id, user.orcid):
+        permission_level = None
+        if user.is_admin or user.orcid in submission.owners:
+            permission_level = models.SubmissionEditorRole.owner.value
+        elif user.orcid in submission.editors:
+            permission_level = models.SubmissionEditorRole.editor.value
+        elif user.orcid in submission.metadata_contributors:
+            permission_level = models.SubmissionEditorRole.metadata_contributor.value
+        elif user.orcid in submission.viewers:
+            permission_level = models.SubmissionEditorRole.viewer.value
+        return schemas_submission.SubmissionMetadataSchema(
+            status=submission.status,
+            id=submission.id,
+            metadata_submission=submission.metadata_submission,
+            author_orcid=submission.author_orcid,
+            created=submission.created,
+            author=schemas.User(**submission.author.__dict__),
+            locked_by=schemas.User(**submission.locked_by.__dict__),
+            permission_level=permission_level,
+        )
     raise HTTPException(status_code=403, detail="Must have access.")
+
+
+def can_save_submission(role: models.SubmissionRole, data: dict):
+    """Compare a patch payload with what the user can actually save."""
+    metadata_contributor_fields = set(["sampleData", "metadata_submission"])
+    editor_fields = set(
+        [
+            "packageName",
+            "contextForm",
+            "addressForm",
+            "templates",
+            "studyForm",
+            "multiOmicsForm",
+            "sampleData",
+            "metadata_submission",
+        ]
+    )
+    attempted_patch_fields = set(
+        [key for key in data] + [key for key in data.get("metadata_submission", {})]
+    )
+    fields_for_permission = {
+        models.SubmissionEditorRole.editor: editor_fields,
+        models.SubmissionEditorRole.metadata_contributor: metadata_contributor_fields,
+    }
+    permission_level = models.SubmissionEditorRole(role.role)
+    if permission_level == models.SubmissionEditorRole.owner:
+        return True
+    elif permission_level == models.SubmissionEditorRole.viewer:
+        return False
+    else:
+        allowed_fields = fields_for_permission[permission_level]
+        return all([field in allowed_fields for field in attempted_patch_fields])
 
 
 @router.patch(
@@ -565,35 +707,75 @@ async def get_submission(
 )
 async def update_submission(
     id: str,
-    body: schemas_submission.SubmissionMetadataSchemaCreate,
+    body: schemas_submission.SubmissionMetadataSchemaPatch,
     db: Session = Depends(get_db),
     user: models.User = Depends(login_required),
 ):
     submission = db.query(SubmissionMetadata).get(id)
-    body_dict = body.dict()
+    body_dict = body.dict(exclude_unset=True)
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
-    if not (user.is_admin or crud.can_edit_entire_submission(db, id, user.orcid)):
+
+    current_user_role = crud.get_submission_role(db, id, user.orcid)
+    if not (
+        user.is_admin or (current_user_role and can_save_submission(current_user_role, body_dict))
+    ):
         raise HTTPException(403, detail="Must have access.")
+
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
     if not has_lock:
         raise HTTPException(
             status_code=400,
             detail="This submission is currently being edited by a different user.",
         )
-    submission.metadata_submission = body_dict["metadata_submission"]
-    pi_orcid = body_dict["metadata_submission"].get("studyForm", {}).get("piOrcid", None)
-    if pi_orcid and pi_orcid not in submission.owners:
-        # Create an owner role for the PI if it doesn't exist
-        pi_owner_role = SubmissionRole(
-            submission_id=id, user_orcid=pi_orcid, role=SubmissionEditorRole.owner.value
-        )
-        db.add(pi_owner_role)
+
+    # Merge the submission metadata dicts
+    submission.metadata_submission = (
+        submission.metadata_submission | body_dict["metadata_submission"]
+    )
+
+    # Update permissions and status iff the user is an "owner"
+    if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner:
+        new_permissions = body_dict.get("permissions", None)
+        if new_permissions is not None:
+            crud.update_submission_contributor_roles(db, submission, new_permissions)
+
+        if body_dict.get("status", None):
+            submission.status = body_dict["status"]
+        db.commit()
     crud.update_submission_lock(db, submission.id)
-    if body_dict["status"]:
-        submission.status = body_dict["status"]
-    db.commit()
     return submission
+
+
+@router.delete(
+    "/metadata_submission/{id}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def delete_submission(
+    id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(login_required),
+):
+    submission = db.query(SubmissionMetadata).get(id)
+    if submission is None:
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    if not (user.is_admin or user.orcid in submission.owners):
+        raise HTTPException(403, detail="Must have access.")
+
+    has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
+    if not has_lock:
+        raise HTTPException(
+            status_code=400,
+            detail="This submission is currently being edited by a different user.",
+        )
+
+    for role in submission.roles:  # type: ignore
+        db.delete(role)
+    db.delete(submission)
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.put("/metadata_submission/{id}/unlock")

@@ -6,19 +6,21 @@ import {
   watch,
   nextTick,
 } from '@vue/composition-api';
-import NmdcSchema from 'nmdc-schema/jsonschema/nmdc.schema.json';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
 import Definitions from '@/definitions';
 import {
   contextForm,
   contextFormValid,
   AwardTypes,
   addressFormValid,
+  canEditSubmissionMetadata,
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
+import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 
 export default defineComponent({
-  components: { SubmissionContextShippingForm, SubmissionDocsLink },
+  components: { SubmissionContextShippingForm, SubmissionDocsLink, SubmissionPermissionBanner },
   setup() {
     const formRef = ref();
     const facilityEnum = NmdcSchema.$defs.ProcessingInstitutionEnum.enum.filter(
@@ -75,6 +77,7 @@ export default defineComponent({
       otherAwardValidationRules,
       doiRequiredRules,
       revalidate,
+      canEditSubmissionMetadata,
     };
   },
 });
@@ -89,11 +92,15 @@ export default defineComponent({
     <div class="text-h5">
       Data and sample status
     </div>
+    <submission-permission-banner
+      v-if="!canEditSubmissionMetadata()"
+    />
     <v-form
       ref="formRef"
       v-model="contextFormValid"
       style="max-width: 1000px;"
       class="mb-2"
+      :disabled="!canEditSubmissionMetadata()"
     >
       <v-radio-group
         v-model="contextForm.dataGenerated"

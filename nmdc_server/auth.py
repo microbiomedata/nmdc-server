@@ -1,9 +1,11 @@
+from enum import Enum
 from typing import Any, Dict, Optional
 from uuid import UUID
 
 from authlib.integrations import starlette_client
 from fastapi import APIRouter, Depends, HTTPException, Security, status
 from fastapi.security.oauth2 import OAuth2AuthorizationCodeBearer
+from jose import jwt
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette.requests import Request
@@ -51,11 +53,14 @@ class Token(BaseModel):
 
 
 async def get_token(
-    request: Request, access_token: Dict[str, Any] = Security(oauth2_scheme)
+    request: Request, access_token: Optional[str] = Security(oauth2_scheme)
 ) -> Optional[Token]:
     token = request.session.get("token")
     if token:
         return Token(**token)
+    if access_token:
+        payload = jwt.decode(access_token, settings.secret_key, algorithms=["HS256"])
+        return Token(**payload)
     return None
 
 
@@ -95,27 +100,49 @@ async def admin_required(user: models.User = Depends(login_required)) -> models.
     )
 
 
+def encode_token(data: dict):
+    encoded_jwt = jwt.encode(data, settings.secret_key, algorithm="HS256")
+    return encoded_jwt
+
+
 router = APIRouter()
+
+
+class LoginBehavior(str, Enum):
+    web = "web"
+    jwt = "jwt"
+    app = "app"
 
 
 # authentication
 @router.get("/login", include_in_schema=False)
-async def login_via_orcid(request: Request):
-    redirect_uri = request.url_for("token")
+async def login_via_orcid(request: Request, behavior: LoginBehavior = LoginBehavior.web):
+    qs = f"?behavior={behavior}"
     if settings.host:
-        redirect_uri = f"{settings.host.rstrip('/')}/token"
+        redirect_uri = f"{settings.host.rstrip('/')}/token{qs}"
+    else:
+        redirect_uri = request.url_for("token") + qs
     return await oauth2_client.orcid.authorize_redirect(request, redirect_uri)
 
 
 @router.get("/token", name="token", include_in_schema=False)
-async def authorize(request: Request, db: Session = Depends(get_db)):
+async def authorize(
+    request: Request, db: Session = Depends(get_db), behavior: LoginBehavior = LoginBehavior.web
+):
     token = await oauth2_client.orcid.authorize_access_token(request)
     user = User(orcid=token["orcid"], name=token["name"])
     user_model = crud.get_or_create_user(db, user)
     user_model.name = user.name
     db.commit()
-    request.session["token"] = token
-    return RedirectResponse(url="/")
+    if behavior == LoginBehavior.web:
+        request.session["token"] = token
+        return RedirectResponse(url="/")
+    if behavior == LoginBehavior.jwt:
+        return encode_token(token)
+    if behavior == LoginBehavior.app:
+        return RedirectResponse(
+            url=f"{settings.field_notes_host}/token?token=" + encode_token(token)
+        )
 
 
 @router.get(
