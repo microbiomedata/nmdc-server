@@ -507,6 +507,11 @@ export default defineComponent({
             mdi-refresh
           </v-icon>
         </v-btn>
+        <v-snackbar v-model="snackbar"
+                  color = "green"
+                  timeout="3000">
+          Validation Passed! You can now submit or continue editing.
+        </v-snackbar>
         <v-card
           v-if="validationErrorGroups.length"
           color="error"
@@ -802,7 +807,6 @@ export default defineComponent({
     <div class="harmonizer-style-container">
       <div id="harmonizer-footer-root" />
     </div>
-
     <div class="d-flex shrink ma-2">
       <v-btn
         color="gray"
@@ -846,7 +850,7 @@ export default defineComponent({
             v-on="on"
           >
             <v-btn
-              color="primary"
+              v-bind:color="type==='canSubmit' ? 'primary' : 'green'"
               depressed
               :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
               :loading="submitLoading"
@@ -859,11 +863,6 @@ export default defineComponent({
               <span v-else>
                 3. Submit
               </span>
-              <v-snackbar v-model="snackbar"
-                  color ="success"
-                  timeout="3000">
-                Validation Passed! You can now submit or continue editing.
-              </v-snackbar>
               <v-dialog
                 v-model="submitDialog"
                 activator="parent"
