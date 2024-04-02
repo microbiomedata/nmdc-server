@@ -69,7 +69,7 @@ export default defineComponent({
     };
 
     const uniqueOrcidRule = (idx: number) => (v: string) => {
-      if (idx > studyForm.contributors.length) return true;
+      if (idx > studyForm.contributors.length || !v) return true;
       const existingOrcids = new Set(studyForm.contributors.filter((contributor, contributorListIndex) => idx !== contributorListIndex).map((contributor) => contributor.orcid));
       return !existingOrcids.has(v) || 'ORCID iDs must be unique';
     };
