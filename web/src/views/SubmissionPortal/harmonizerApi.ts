@@ -28,9 +28,10 @@ const GOLD_FIELDS = {
   },
 };
 
-const EMSL = 'emsl';
-const JGI_MG = 'jgi_mg';
-const JGT_MT = 'jgi_mt';
+export const EMSL = 'emsl';
+export const JGI_MG = 'jgi_mg';
+export const JGI_MG_LR = 'jgi_mg_lr';
+export const JGT_MT = 'jgi_mt';
 export function getVariants(checkBoxes: string[], dataGenerated: boolean | undefined, base: string): string[] {
   const templates = [base];
   if (dataGenerated) {
@@ -41,6 +42,9 @@ export function getVariants(checkBoxes: string[], dataGenerated: boolean | undef
   }
   if (checkBoxes.includes('mg-jgi')) {
     templates.push(JGI_MG);
+  }
+  if (checkBoxes.includes('mg-lr-jgi')) {
+    templates.push(JGI_MG_LR);
   }
   if (checkBoxes.includes('mt-jgi')) {
     templates.push(JGT_MT);
@@ -154,6 +158,12 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     displayName: 'JGI MG',
     schemaClass: 'JgiMgInterface',
     sampleDataSlot: 'jgi_mg_data',
+    status: 'mixin',
+  },
+  [JGI_MG_LR]: {
+    displayName: 'JGI MG (Long Read)',
+    schemaClass: 'JgiMgLrInterface',
+    sampleDataSlot: 'jgi_mg_lr_data',
     status: 'mixin',
   },
   [JGT_MT]: {
@@ -296,7 +306,12 @@ export class HarmonizerApi {
 
   _postTemplateChange() {
     this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
-      this.selectedColumn.value = this.dh.getFields()[col].title;
+      const column = this.dh.getFields()[col];
+      if (!column) {
+        this.selectedColumn.value = '';
+      } else {
+        this.selectedColumn.value = column.title;
+      }
     }, 200, { leading: true }));
     this.dh.hot.updateSettings({ search: true, customBorders: true });
     this.jumpToRowCol(0, 0);
@@ -385,8 +400,8 @@ export class HarmonizerApi {
     this.dh.setupTemplate(folder);
   }
 
-  validate() {
-    this.dh.validate();
+  async validate() {
+    await this.dh.validate();
     this.refreshState();
     return this.dh.invalid_cells;
   }
