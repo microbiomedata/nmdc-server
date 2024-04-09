@@ -733,7 +733,7 @@ async def update_submission(
     #Create Github issue when metadata is being submitted
     if submission.status == 'in-progress' and body_dict.get("status", None) == "Submitted- Pending Review":
         create_github_issue(submission,user)
-    return
+    return #REMOVE AFTER TESTING
     # Merge the submission metadata dicts
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
@@ -752,12 +752,15 @@ async def update_submission(
     return submission
 
 def create_github_issue(submission,user):
-
-    url = "https://api.github.com/repos/JamesTessmer/Issue-bot-testing/issues?state=all"
+    settings = Settings()
+    gh_url = settings.github_issue_url
+    token = settings.github_authentication_token
+    if(gh_url == None or token == None):
+        return
 
     cookies = {'logged_in':'no'}
 
-    headers = {'Authorization':'Bearer TOKEN',
+    headers = {'Authorization':f'Bearer {settings.github_authentication_token}',
             'Content-Type': 'text/plain; charset=utf-8'}
     print(submission.metadata_submission)
     studyform = submission.metadata_submission['studyForm']
@@ -775,7 +778,7 @@ def create_github_issue(submission,user):
 
     payload = '{\n "title":'+f'"NMDC Submission: {submission.id}", \n "body":"Submitter: {user.orcid} \\n Submission ID: {submission.id} \\n Has data been generated: {datagenerated} \\n PI: {pi} {piorcid} \\n Status: Submitted -Pending Review \\n Data types: {omicsprocessingtypes} \\n Sample type: {sampletype} \\n Number of samples: {numsamples} \\n Note:", \n "assignees": ["JamesTessmer"], \n "labels":["testing"]'+'}'
     
-    res = requests.post(url,cookies=cookies,data=payload,headers=headers)
+    res = requests.post(gh_url,cookies=cookies,data=payload,headers=headers)
     return res
 
 
