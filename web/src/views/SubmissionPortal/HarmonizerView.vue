@@ -556,7 +556,7 @@ export default defineComponent({
         </v-btn>
         <v-snackbar 
           v-model="snackbar"
-          color = "green"
+          color = "success"
           timeout="3000">
           Validation Passed! You can now submit or continue editing.
         </v-snackbar>
@@ -904,7 +904,7 @@ export default defineComponent({
             v-on="on"
           >
             <v-btn
-              v-bind:color="type==='canSubmit' ? 'primary' : 'green'"
+              color="success"
               depressed
               :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
               :loading="submitLoading"
