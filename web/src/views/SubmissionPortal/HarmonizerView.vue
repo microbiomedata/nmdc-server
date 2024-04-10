@@ -118,6 +118,8 @@ export default defineComponent({
 
     const submitDialog = ref(false);
 
+    const snackbar = ref(false);
+
     watch(activeTemplate, () => {
       harmonizerApi.loadData(activeTemplateData.value);
       harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
@@ -213,6 +215,13 @@ export default defineComponent({
       if (!valid && !sidebarOpen.value) {
         sidebarOpen.value = true;
       }
+
+      if (valid){
+        snackbar.value = true;
+      } else {
+        snackbar.value = false;
+      }
+
       invalidCells.value = {
         ...invalidCells.value,
         [activeTemplateKey.value]: result,
@@ -234,8 +243,6 @@ export default defineComponent({
       });
       return allTabsValid && isOwner();
     });
-
-    const snackbar = computed(() => canSubmit.value);
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -547,9 +554,10 @@ export default defineComponent({
             mdi-refresh
           </v-icon>
         </v-btn>
-        <v-snackbar v-model="snackbar"
-                  color = "green"
-                  timeout="3000">
+        <v-snackbar 
+          v-model="snackbar"
+          color = "green"
+          timeout="3000">
           Validation Passed! You can now submit or continue editing.
         </v-snackbar>
         <v-card
