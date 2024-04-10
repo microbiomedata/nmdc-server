@@ -30,6 +30,8 @@ from nmdc_server.models import (
 )
 from nmdc_server.pagination import Pagination
 
+import requests
+
 router = APIRouter()
 
 
@@ -728,7 +730,10 @@ async def update_submission(
             status_code=400,
             detail="This submission is currently being edited by a different user.",
         )
-
+    #Create Github issue when metadata is being submitted
+    if submission.status == 'in-progress' and body_dict.get("status", None) == "Submitted- Pending Review":
+        create_github_issue(submission,user)
+    return
     # Merge the submission metadata dicts
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
@@ -745,6 +750,33 @@ async def update_submission(
         db.commit()
     crud.update_submission_lock(db, submission.id)
     return submission
+
+def create_github_issue(submission,user):
+
+    url = "https://api.github.com/repos/JamesTessmer/Issue-bot-testing/issues?state=all"
+
+    cookies = {'logged_in':'no'}
+
+    headers = {'Authorization':'Bearer TOKEN',
+            'Content-Type': 'text/plain; charset=utf-8'}
+    print(submission.metadata_submission)
+    studyform = submission.metadata_submission['studyForm']
+    contextform = submission.metadata_submission['contextForm']
+    multiomicsform = submission.metadata_submission['multiOmicsForm']
+    pi = studyform['piName']
+    piorcid = studyform['piOrcid']
+    datagenerated = contextform['dataGenerated']
+    omicsprocessingtypes = multiomicsform['omicsProcessingTypes']
+    sampletype = submission.metadata_submission['templates']
+    sampledata = submission.metadata_submission['sampleData']
+    numsamples = 0
+    for key in sampledata:
+        numsamples = numsamples + len(sampledata[key])
+
+    payload = '{\n "title":'+f'"NMDC Submission: {submission.id}", \n "body":"Submitter: {user.orcid} \\n Submission ID: {submission.id} \\n Has data been generated: {datagenerated} \\n PI: {pi} {piorcid} \\n Status: Submitted -Pending Review \\n Data types: {omicsprocessingtypes} \\n Sample type: {sampletype} \\n Number of samples: {numsamples} \\n Note:", \n "assignees": ["JamesTessmer"], \n "labels":["testing"]'+'}'
+    
+    res = requests.post(url,cookies=cookies,data=payload,headers=headers)
+    return res
 
 
 @router.delete(
