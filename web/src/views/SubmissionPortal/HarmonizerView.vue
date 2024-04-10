@@ -216,7 +216,7 @@ export default defineComponent({
         sidebarOpen.value = true;
       }
 
-      if (valid){
+      if (valid) {
         snackbar.value = true;
       } else {
         snackbar.value = false;
@@ -554,11 +554,11 @@ export default defineComponent({
             mdi-refresh
           </v-icon>
         </v-btn>
-        <v-snackbar 
+        <v-snackbar
           v-model="snackbar"
-          color = "success"
+          color="success"
           timeout="3000">
-          Validation Passed! You can now submit or continue editing.
+            Validation Passed! You can now submit or continue editing.
         </v-snackbar>
         <v-card
           v-if="validationErrorGroups.length"
