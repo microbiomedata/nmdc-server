@@ -453,36 +453,42 @@ export class HarmonizerApi {
     this.dh.hot.render();
   }
 
-  getSlot(slotName: string) {
+  getSlot(slotName: string, className: string) {
+    // If this slot has been fully materialized into the class's attributes, return that
+    const classAttributes = this.schema.classes?.[className]?.attributes;
+    if (classAttributes && slotName in classAttributes) {
+      return classAttributes[slotName];
+    }
+    // Otherwise return the top-level slot definition
     return this.schema.slots[slotName];
   }
 
-  getSlotRank(slotName: string) {
-    const slot = this.getSlot(slotName);
+  getSlotRank(slotName: string, className: string) {
+    const slot = this.getSlot(slotName, className);
     if (!slot) {
       return 9999;
     }
     return slot.rank;
   }
 
-  getSlotGroupRank(slotName: string) {
-    const slot = this.getSlot(slotName);
+  getSlotGroupRank(slotName: string, className: string) {
+    const slot = this.getSlot(slotName, className);
     if (!slot || !slot.slot_group) {
       return 9999;
     }
-    return this.getSlotRank(slot.slot_group);
+    return this.getSlotRank(slot.slot_group, className);
   }
 
   getOrderedAttributeNames(className: string): string[] {
     return Object.keys(this.schema.classes[className].attributes).sort(
       (a, b) => {
-        const aSlotGroupRank = this.getSlotGroupRank(a);
-        const bSlotGroupRank = this.getSlotGroupRank(b);
+        const aSlotGroupRank = this.getSlotGroupRank(a, className);
+        const bSlotGroupRank = this.getSlotGroupRank(b, className);
         if (aSlotGroupRank !== bSlotGroupRank) {
           return aSlotGroupRank - bSlotGroupRank;
         }
-        const aSlotRank = this.getSlotRank(a);
-        const bSlotRank = this.getSlotRank(b);
+        const aSlotRank = this.getSlotRank(a, className);
+        const bSlotRank = this.getSlotRank(b, className);
         return aSlotRank - bSlotRank;
       },
     );
