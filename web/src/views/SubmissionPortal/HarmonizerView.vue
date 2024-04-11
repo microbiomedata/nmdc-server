@@ -229,11 +229,7 @@ export default defineComponent({
         [activeTemplateKey.value]: valid,
       };
 
-      let allTabsValid = true;
-      Object.values(tabsValidated.value).forEach((value) => {
-        allTabsValid = allTabsValid && value;
-      });
-      snackbar.value = allTabsValid;
+      snackbar.value = Object.values(tabsValidated.value).every((value) => value);
     }
 
     const canSubmit = computed(() => {
@@ -559,7 +555,7 @@ export default defineComponent({
           color="success"
           timeout="3000"
         >
-            Validation Passed! You can now submit or continue editing.
+          Validation Passed! You can now submit or continue editing.
         </v-snackbar>
         <v-card
           v-if="validationErrorGroups.length"
