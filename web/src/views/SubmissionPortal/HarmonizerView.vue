@@ -216,12 +216,6 @@ export default defineComponent({
         sidebarOpen.value = true;
       }
 
-      if (valid) {
-        snackbar.value = true;
-      } else {
-        snackbar.value = false;
-      }
-
       invalidCells.value = {
         ...invalidCells.value,
         [activeTemplateKey.value]: result,
@@ -234,6 +228,12 @@ export default defineComponent({
         ...tabsValidated.value,
         [activeTemplateKey.value]: valid,
       };
+
+      let allTabsValid = true;
+      Object.values(tabsValidated.value).forEach((value) => {
+        allTabsValid = allTabsValid && value;
+      });
+      snackbar.value = allTabsValid;
     }
 
     const canSubmit = computed(() => {
@@ -557,7 +557,8 @@ export default defineComponent({
         <v-snackbar
           v-model="snackbar"
           color="success"
-          timeout="3000">
+          timeout="3000"
+        >
             Validation Passed! You can now submit or continue editing.
         </v-snackbar>
         <v-card
