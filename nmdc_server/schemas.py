@@ -223,8 +223,35 @@ class DOIInfo(BaseModel):
     class Config:
         orm_mode = True
 
+class OmicsCounts(BaseModel):
+    type: str
+    count: int
+
+    @validator("count", pre=True, always=True)
+    def insert_zero(cls, v):
+        return v or 0
+
+
 
 class StudyBase(AnnotatedBase):
+    part_of: Optional[List[str]]
+    study_category: Optional[str]
+    children: Optional[List[StudyBase]] = []
+    sample_count: Optional[int]
+    omics_counts: Optional[List[OmicsCounts]]
+    omics_processing_counts: Optional[List[OmicsCounts]]
+    multiomics: int
+
+    class Config:
+        orm_mode = True
+
+
+class StudyCreate(StudyBase):
+    principal_investigator_id: Optional[UUID]
+    image: Optional[bytes]
+
+
+class Study(StudyBase):
     principal_investigator_websites: Optional[List[str]] = []
     gold_name: str = ""
     gold_description: str = ""
@@ -236,45 +263,21 @@ class StudyBase(AnnotatedBase):
     funding_sources: Optional[List[str]]
     gold_study_identifiers: Optional[List[str]]
     homepage_website: Optional[List[str]]
-    part_of: Optional[List[str]]
-    study_category: Optional[str]
-    children: Optional[List[Study]] = []
+    open_in_gold: Optional[str]
+    principal_investigator: Optional[OrcidPerson]
+    principal_investigator_name: Optional[str]
+    image_url: str
+    principal_investigator_image_url: str
+    doi_map: Dict[str, Any] = {}
+
+    class Config:
+        orm_mode = True
 
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
         if isinstance(study_website, str):
             return study_website
         return study_website.website.url
-
-
-class StudyCreate(StudyBase):
-    principal_investigator_id: Optional[UUID]
-    image: Optional[bytes]
-
-
-class OmicsCounts(BaseModel):
-    type: str
-    count: int
-
-    @validator("count", pre=True, always=True)
-    def insert_zero(cls, v):
-        return v or 0
-
-
-class Study(StudyBase):
-    open_in_gold: Optional[str]
-    principal_investigator: Optional[OrcidPerson]
-    principal_investigator_name: Optional[str]
-    image_url: str
-    principal_investigator_image_url: str
-    sample_count: Optional[int]
-    omics_counts: Optional[List[OmicsCounts]]
-    omics_processing_counts: Optional[List[OmicsCounts]]
-    doi_map: Dict[str, Any] = {}
-    multiomics: int
-
-    class Config:
-        orm_mode = True
 
 
 # biosample
