@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     ingest_database_uri: str = "postgresql:///nmdc_testing"
     testing_database_uri: str = "postgresql:///nmdc_testing"
 
+    nmdc_ontology_version: str = "2024-03-15"
+
     # database tuning knobs
     # Note the important relationship between postgres max connections, the pool size
     # per worker (this number), and the number of uvicorn workers, each of which has

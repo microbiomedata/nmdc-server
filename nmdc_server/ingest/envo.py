@@ -9,11 +9,12 @@ from urllib import request
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from nmdc_server.config import settings
 from nmdc_server.database import SessionLocal
 from nmdc_server.models import Biosample, EnvoAncestor, EnvoTerm, EnvoTree
 from nmdc_server.schemas import EnvoTreeNode
 
-envo_url = "https://raw.githubusercontent.com/microbiomedata/nmdc-ontology/main/nmdco-classes.json"
+envo_url = f"https://raw.githubusercontent.com/microbiomedata/nmdc-ontology/{settings.nmdc_ontology_version}/nmdco-classes.json"  # noqa: E501
 
 
 def populate_envo_ancestor(
