@@ -223,6 +223,7 @@ class DOIInfo(BaseModel):
     class Config:
         orm_mode = True
 
+
 class OmicsCounts(BaseModel):
     type: str
     count: int
@@ -230,7 +231,6 @@ class OmicsCounts(BaseModel):
     @validator("count", pre=True, always=True)
     def insert_zero(cls, v):
         return v or 0
-
 
 
 class StudyBase(AnnotatedBase):
