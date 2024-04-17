@@ -119,6 +119,8 @@ export default defineComponent({
 
     const submitDialog = ref(false);
 
+    const snackbar = ref(false);
+
     watch(activeTemplate, () => {
       // WARNING: It's important to do the column settings update /before/ data. Otherwise,
       // columns will not be rendered with the correct width.
@@ -213,6 +215,7 @@ export default defineComponent({
       if (!valid && !sidebarOpen.value) {
         sidebarOpen.value = true;
       }
+
       invalidCells.value = {
         ...invalidCells.value,
         [activeTemplateKey.value]: result,
@@ -225,6 +228,8 @@ export default defineComponent({
         ...tabsValidated.value,
         [activeTemplateKey.value]: valid,
       };
+
+      snackbar.value = Object.values(tabsValidated.value).every((value) => value);
     }
 
     const canSubmit = computed(() => {
@@ -478,6 +483,7 @@ export default defineComponent({
       submissionStatus,
       status,
       submitDialog,
+      snackbar,
       schemaLoading,
       /* methods */
       doSubmit,
@@ -547,6 +553,13 @@ export default defineComponent({
             mdi-refresh
           </v-icon>
         </v-btn>
+        <v-snackbar
+          v-model="snackbar"
+          color="success"
+          timeout="3000"
+        >
+          Validation Passed! You can now submit or continue editing.
+        </v-snackbar>
         <v-card
           v-if="validationErrorGroups.length"
           color="error"
@@ -859,7 +872,6 @@ export default defineComponent({
         id="harmonizer-footer-root"
       />
     </div>
-
     <div class="d-flex shrink ma-2">
       <v-btn
         color="gray"
@@ -903,7 +915,7 @@ export default defineComponent({
             v-on="on"
           >
             <v-btn
-              color="primary"
+              color="success"
               depressed
               :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
               :loading="submitLoading"
