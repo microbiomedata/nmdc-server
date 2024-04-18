@@ -760,7 +760,6 @@ def create_github_issue(submission,user):
 
     headers = {'Authorization':f'Bearer {token}',
             'Content-Type': 'text/plain; charset=utf-8'}
-    print(submission.metadata_submission)
     studyform = submission.metadata_submission['studyForm']
     contextform = submission.metadata_submission['contextForm']
     multiomicsform = submission.metadata_submission['multiOmicsForm']
