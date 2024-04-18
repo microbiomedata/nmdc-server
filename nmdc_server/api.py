@@ -758,8 +758,6 @@ def create_github_issue(submission,user):
     if(gh_url == None or token == None):
         return
 
-    cookies = {'logged_in':'no'}
-
     headers = {'Authorization':f'Bearer {token}',
             'Content-Type': 'text/plain; charset=utf-8'}
     print(submission.metadata_submission)
