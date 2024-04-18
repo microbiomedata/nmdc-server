@@ -6,7 +6,13 @@
     icon="mdi-information"
     class="ma-4"
   >
-    <span class="title">Announcement: </span>The NMDC will be replacing legacy identifiers with
+    <span
+      class="title"
+      style="line-height: inherit"
+    >
+      Announcement:
+    </span>
+    The NMDC will be replacing legacy identifiers with
     <a href="https://microbiomedata.github.io/nmdc-schema/identifiers/#ids-minted-for-use-within-nmdc">
       NMDC persistent identifiers</a> on April 22, 2024 for studies,
     samples, analysis workflows, and files. Additionally, annotation will be reprocessed for legacy metagenomes
