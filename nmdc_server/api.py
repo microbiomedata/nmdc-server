@@ -760,7 +760,7 @@ def create_github_issue(submission,user):
 
     cookies = {'logged_in':'no'}
 
-    headers = {'Authorization':f'Bearer {settings.github_authentication_token}',
+    headers = {'Authorization':f'Bearer {token}',
             'Content-Type': 'text/plain; charset=utf-8'}
     print(submission.metadata_submission)
     studyform = submission.metadata_submission['studyForm']
