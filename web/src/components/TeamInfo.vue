@@ -51,6 +51,7 @@ export default defineComponent({
         <v-img
           :src="item.principal_investigator_image_url"
           :contain="item.id === 'gold:Gs0110119'"
+          position="40% 25%"
         />
       </v-avatar>
     </v-col>
