@@ -102,6 +102,10 @@ export default defineComponent({
       type: Number,
       default: 0,
     },
+    isLoading: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   setup() {
@@ -198,7 +202,10 @@ export default defineComponent({
     </ConditionChips>
 
     <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
-      Found {{ resultsCount }} results.
+      <span v-if="isLoading">
+        Loading results...
+      </span>
+      <span v-else>Found {{ resultsCount }} results.</span>
     </div>
 
     <v-divider class="my-3" />
