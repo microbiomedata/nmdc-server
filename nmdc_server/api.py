@@ -771,7 +771,7 @@ def create_github_issue(submission,user):
     sampledata = submission.metadata_submission['sampleData']
     numsamples = 0
     for key in sampledata:
-        numsamples = numsamples + len(sampledata[key])
+        numsamples = max(numsamples, len(sampledata[key]))
 
     payload = '{\n "title":'+f'"NMDC Submission: {submission.id}", \n "body":"Submitter: {user.orcid} \\n Submission ID: {submission.id} \\n Has data been generated: {datagenerated} \\n PI: {pi} {piorcid} \\n Status: Submitted -Pending Review \\n Data types: {omicsprocessingtypes} \\n Sample type: {sampletype} \\n Number of samples: {numsamples} \\n Note:", \n "assignees": ["JamesTessmer"], \n "labels":["testing"]'+'}'
     
