@@ -775,7 +775,8 @@ def create_github_issue(submission,user):
 
     payload = '{\n "title":'+f'"NMDC Submission: {submission.id}", \n "body":"Submitter: {user.orcid} \\n Submission ID: {submission.id} \\n Has data been generated: {datagenerated} \\n PI: {pi} {piorcid} \\n Status: Submitted -Pending Review \\n Data types: {omicsprocessingtypes} \\n Sample type: {sampletype} \\n Number of samples: {numsamples} \\n Note:", \n "assignees": ["JamesTessmer"], \n "labels":["testing"]'+'}'
     
-    res = requests.post(gh_url,cookies=cookies,data=payload,headers=headers)
+    res = requests.post(gh_url,data=payload,headers=headers)
+    print(res)
     return res
 
 
