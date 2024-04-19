@@ -32,6 +32,7 @@ from nmdc_server.pagination import Pagination
 
 import requests
 import logging
+import json
 
 router = APIRouter()
 
@@ -774,7 +775,17 @@ def create_github_issue(submission,user):
     for key in sampledata:
         numsamples = max(numsamples, len(sampledata[key]))
 
-    payload = '{\n "title":'+f'"NMDC Submission: {submission.id}", \n "body":"Submitter: {user.orcid} \\n Submission ID: {submission.id} \\n Has data been generated: {datagenerated} \\n PI: {pi} {piorcid} \\n Status: Submitted -Pending Review \\n Data types: {omicsprocessingtypes} \\n Sample type: {sampletype} \\n Number of samples: {numsamples} \\n Note:", \n "assignees": ["JamesTessmer"], \n "labels":["testing"]'+'}'
+    body_lis = [f"Submitter: {user.orcid}", f"Submission ID: {submission.id}",
+             f"Has data been generated: {datagenerated}", f"PI: {pi} {piorcid}", 
+             "Status: Submitted -Pending Review", f"Data types: {omicsprocessingtypes}", 
+             f"Sample type:{sampletype}", f"Number of samples:{numsamples}", "Note:"]
+    body_string = " \n ".join(body_lis)
+    payload_dict = {"title":f"NMDC Submission{submission.id}",
+                "body":body_string,
+                "assignees":['JamesTessmer'],
+                "labels":['testing']}
+
+    payload = json.dumps(payload_dict)
     
     res = requests.post(gh_url,data=payload,headers=headers)
     if res.status_code != 201:
