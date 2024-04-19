@@ -779,9 +779,10 @@ def create_github_issue(submission,user):
     res = requests.post(gh_url,data=payload,headers=headers)
     if res.status_code != 201:
         logging.error(f"Github issue creation failed with code {res.status_code}")
-        logging.error(res.text)
+        logging.error(res.reason)
     else:
         logging.info(f"Github issue creation successful with code {res.status_code}")
+        logging.info(res.reason)
     return res
 
 
