@@ -13,7 +13,7 @@
     </span>
     The NMDC will be replacing legacy identifiers with
     <a href="https://microbiomedata.github.io/nmdc-schema/identifiers/#ids-minted-for-use-within-nmdc">
-      NMDC persistent identifiers</a> on April 22, 2024 for studies,
+      NMDC persistent identifiers</a> on May 1, 2024 for studies,
     samples, analysis workflows, and files. Additionally, annotation will be reprocessed for legacy metagenomes
     and metatranscriptomes, along with binning for metagenomes. Legacy metaproteomics datasets will be reprocessed
     using the new metagenome annotations. For information on mapping between old and new identifiers please refer
