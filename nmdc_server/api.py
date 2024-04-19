@@ -29,7 +29,6 @@ from nmdc_server.models import (
     User,
 )
 from nmdc_server.pagination import Pagination
-
 import requests
 import logging
 import json
@@ -732,9 +731,13 @@ async def update_submission(
             status_code=400,
             detail="This submission is currently being edited by a different user.",
         )
-    #Create Github issue when metadata is being submitted
-    if submission.status == 'in-progress' and body_dict.get("status", None) == "Submitted- Pending Review":
-        create_github_issue(submission,user)
+    # Create Github issue when metadata is being submitted
+    if (
+        submission.status == "in-progress"
+        and body_dict.get("status", None) == "Submitted- Pending Review"
+    ):
+        create_github_issue(submission, user)
+    return  # REMOVE AFTER TESTING
     # Merge the submission metadata dicts
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
@@ -752,41 +755,50 @@ async def update_submission(
     crud.update_submission_lock(db, submission.id)
     return submission
 
-def create_github_issue(submission,user):
+
+def create_github_issue(submission, user):
     settings = Settings()
     gh_url = settings.github_issue_url
     token = settings.github_authentication_token
-    if(gh_url == None or token == None):
+    if gh_url == None or token == None:
         return
 
-    headers = {'Authorization':f'Bearer {token}',
-            'Content-Type': 'text/plain; charset=utf-8'}
-    studyform = submission.metadata_submission['studyForm']
-    contextform = submission.metadata_submission['contextForm']
-    multiomicsform = submission.metadata_submission['multiOmicsForm']
-    pi = studyform['piName']
-    piorcid = studyform['piOrcid']
-    datagenerated = "Yes" if contextform['dataGenerated'] else "No"
-    omicsprocessingtypes = ", ".join(multiomicsform['omicsProcessingTypes'])
-    sampletype = ", ".join(submission.metadata_submission['templates'])
-    sampledata = submission.metadata_submission['sampleData']
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
+    studyform = submission.metadata_submission["studyForm"]
+    contextform = submission.metadata_submission["contextForm"]
+    multiomicsform = submission.metadata_submission["multiOmicsForm"]
+    pi = studyform["piName"]
+    piorcid = studyform["piOrcid"]
+    datagenerated = "Yes" if contextform["dataGenerated"] else "No"
+    omicsprocessingtypes = ", ".join(multiomicsform["omicsProcessingTypes"])
+    sampletype = ", ".join(submission.metadata_submission["templates"])
+    sampledata = submission.metadata_submission["sampleData"]
     numsamples = 0
     for key in sampledata:
         numsamples = max(numsamples, len(sampledata[key]))
 
-    body_lis = [f"Submitter: {user.orcid}", f"Submission ID: {submission.id}",
-             f"Has data been generated: {datagenerated}", f"PI name and Orcid: {pi} {piorcid}", 
-             "Status: Submitted -Pending Review", f"Data types: {omicsprocessingtypes}", 
-             f"Sample type:{sampletype}", f"Number of samples:{numsamples}", "Note:"]
+    body_lis = [
+        f"Submitter: {user.orcid}",
+        f"Submission ID: {submission.id}",
+        f"Has data been generated: {datagenerated}",
+        f"PI name and Orcid: {pi} {piorcid}",
+        "Status: Submitted -Pending Review",
+        f"Data types: {omicsprocessingtypes}",
+        f"Sample type:{sampletype}",
+        f"Number of samples:{numsamples}",
+        "Note:",
+    ]
     body_string = " \n ".join(body_lis)
-    payload_dict = {"title":f"NMDC Submission{submission.id}",
-                "body":body_string,
-                "assignees":['JamesTessmer'],
-                "labels":['testing']}
+    payload_dict = {
+        "title": f"NMDC Submission{submission.id}",
+        "body": body_string,
+        "assignees": ["JamesTessmer"],
+        "labels": ["testing"],
+    }
 
     payload = json.dumps(payload_dict)
-    
-    res = requests.post(gh_url,data=payload,headers=headers)
+
+    res = requests.post(url=gh_url, data=payload, headers=headers)
     if res.status_code != 201:
         logging.error(f"Github issue creation failed with code {res.status_code}")
         logging.error(res.reason)
