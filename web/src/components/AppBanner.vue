@@ -1,6 +1,5 @@
 <template>
   <v-banner
-    app
     color="blue"
     dark
     icon="mdi-information"
