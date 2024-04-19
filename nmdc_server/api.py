@@ -735,7 +735,6 @@ async def update_submission(
     #Create Github issue when metadata is being submitted
     if submission.status == 'in-progress' and body_dict.get("status", None) == "Submitted- Pending Review":
         create_github_issue(submission,user)
-    return #REMOVE AFTER TESTING
     # Merge the submission metadata dicts
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
@@ -767,16 +766,16 @@ def create_github_issue(submission,user):
     multiomicsform = submission.metadata_submission['multiOmicsForm']
     pi = studyform['piName']
     piorcid = studyform['piOrcid']
-    datagenerated = contextform['dataGenerated']
-    omicsprocessingtypes = multiomicsform['omicsProcessingTypes']
-    sampletype = submission.metadata_submission['templates']
+    datagenerated = "Yes" if contextform['dataGenerated'] else "No"
+    omicsprocessingtypes = ", ".join(multiomicsform['omicsProcessingTypes'])
+    sampletype = ", ".join(submission.metadata_submission['templates'])
     sampledata = submission.metadata_submission['sampleData']
     numsamples = 0
     for key in sampledata:
         numsamples = max(numsamples, len(sampledata[key]))
 
     body_lis = [f"Submitter: {user.orcid}", f"Submission ID: {submission.id}",
-             f"Has data been generated: {datagenerated}", f"PI: {pi} {piorcid}", 
+             f"Has data been generated: {datagenerated}", f"PI name and Orcid: {pi} {piorcid}", 
              "Status: Submitted -Pending Review", f"Data types: {omicsprocessingtypes}", 
              f"Sample type:{sampletype}", f"Number of samples:{numsamples}", "Note:"]
     body_string = " \n ".join(body_lis)
