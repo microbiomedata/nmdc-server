@@ -757,7 +757,7 @@ async def update_submission(
 
 def create_github_issue(submission, user):
     settings = Settings()
-    gh_url = settings.github_issue_url
+    gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     if gh_url == None or token == None:
         return
