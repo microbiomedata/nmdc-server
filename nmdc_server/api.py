@@ -31,6 +31,7 @@ from nmdc_server.models import (
 from nmdc_server.pagination import Pagination
 
 import requests
+import logging
 
 router = APIRouter()
 
@@ -776,7 +777,10 @@ def create_github_issue(submission,user):
     payload = '{\n "title":'+f'"NMDC Submission: {submission.id}", \n "body":"Submitter: {user.orcid} \\n Submission ID: {submission.id} \\n Has data been generated: {datagenerated} \\n PI: {pi} {piorcid} \\n Status: Submitted -Pending Review \\n Data types: {omicsprocessingtypes} \\n Sample type: {sampletype} \\n Number of samples: {numsamples} \\n Note:", \n "assignees": ["JamesTessmer"], \n "labels":["testing"]'+'}'
     
     res = requests.post(gh_url,data=payload,headers=headers)
-    print(res)
+    if res.status_code != 201:
+        logging.error(f"Github issue creation failed with code {res.status_code}")
+    else:
+        logging.info(f"Github issue creation successful with code {res.status_code}")
     return res
 
 
