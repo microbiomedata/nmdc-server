@@ -183,8 +183,12 @@ def search_omics_processing(db: Session, conditions: List[query.ConditionSchema]
     return query.OmicsProcessingQuerySchema(conditions=conditions).execute(db)
 
 
-def search_omics_processing_for_biosamples(db: Session, conditions: List[query.ConditionSchema], biosample_ids: List[UUID]) -> Query:
-    return query.OmicsProcessingQuerySchema(conditions=conditions).omics_processing_for_biosample_ids(db, biosample_ids)
+def search_omics_processing_for_biosamples(
+    db: Session, conditions: List[query.ConditionSchema], biosample_ids: List[UUID]
+) -> Query:
+    return query.OmicsProcessingQuerySchema(
+        conditions=conditions
+    ).omics_processing_for_biosample_ids(db, biosample_ids)
 
 
 def facet_omics_processing(
