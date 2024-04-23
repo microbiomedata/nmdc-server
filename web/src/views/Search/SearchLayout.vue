@@ -206,13 +206,13 @@ export default defineComponent({
   <div>
     <SearchSidebar :results-count="biosample.data.results.count" />
     <v-main>
-      <AppBanner />
       <v-progress-linear
         v-show="biosample.loading.value || study.loading.value"
         indeterminate
         background-opacity="0"
         style="position: fixed; top: 64; z-index: 2;"
       />
+      <AppBanner />
       <v-container
         fluid
         class="py-0"
