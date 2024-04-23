@@ -16,7 +16,7 @@ import useFacetSummaryData from '@/use/useFacetSummaryData';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import useClockGate from '@/use/useClockGate';
 import SampleListExpansion from '@/components/SampleListExpansion.vue';
-
+import AppBanner from '@/components/AppBanner.vue';
 import BulkDownload from '@/components/BulkDownload.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
@@ -27,6 +27,7 @@ export default defineComponent({
   name: 'SearchLayout',
 
   components: {
+    AppBanner,
     BiosampleVisGroup,
     BulkDownload,
     EnvironmentVisGroup,
@@ -211,6 +212,7 @@ export default defineComponent({
         background-opacity="0"
         style="position: fixed; top: 64; z-index: 2;"
       />
+      <AppBanner />
       <v-container
         fluid
         class="py-0"
