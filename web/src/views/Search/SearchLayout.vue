@@ -204,7 +204,10 @@ export default defineComponent({
 
 <template>
   <div>
-    <SearchSidebar :results-count="biosample.data.results.count" />
+    <SearchSidebar
+      :results-count="biosample.data.results.count"
+      :is-loading="biosample.loading.value"
+    />
     <v-main>
       <v-progress-linear
         v-show="biosample.loading.value || study.loading.value"
@@ -616,8 +619,13 @@ export default defineComponent({
               <div class="ma-3">
                 <div class="d-flex align-center">
                   <v-card-title class="grow py-0">
-                    {{ biosample.data.results.count }}
-                    {{ biosample.data.results.count === 1 ? 'Sample' : 'Samples' }}
+                    <span v-if="biosample.loading.value">
+                      Samples
+                    </span>
+                    <span v-else>
+                      {{ biosample.data.results.count }}
+                      {{ biosample.data.results.count === 1 ? 'Sample' : 'Samples' }}
+                    </span>
                   </v-card-title>
                   <v-spacer />
                   <div
