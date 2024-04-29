@@ -189,8 +189,10 @@ def shell(print_sql: bool, script: Optional[Path]):
 @click.option(
     "-f",
     "--backup-file",
-    help=("Filename in NERSC's backup directory to load. "
-          "If not provided, the latest backup will be loaded."),
+    help=(
+        "Filename in NERSC's backup directory to load. "
+        "If not provided, the latest backup will be loaded."
+    ),
 )
 @click.option(
     "-k",
