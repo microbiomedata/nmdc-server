@@ -189,7 +189,8 @@ def shell(print_sql: bool, script: Optional[Path]):
 @click.option(
     "-f",
     "--backup-file",
-    help="Filename in NERSC's backup directory to load. If not provided, the latest backup will be loaded.",
+    help=("Filename in NERSC's backup directory to load. "
+          "If not provided, the latest backup will be loaded."),
 )
 @click.option(
     "-k",
@@ -245,7 +246,7 @@ def load_db(key_file, user, host, list_backups, backup_file):
     click.echo(f"Restoring from {backup_file}...")
     settings = Settings()
     # Use `Popen.communicate()` instead of `run()` to avoid buffering output
-    proc = subprocess.Popen(
+    open_proc = subprocess.Popen(
         [
             "pg_restore",
             "--dbname",
@@ -260,8 +261,8 @@ def load_db(key_file, user, host, list_backups, backup_file):
         stderr=sys.stderr,
         encoding="utf-8",
     )
-    proc.communicate()
-    if proc.returncode != 0:
+    open_proc.communicate()
+    if open_proc.returncode != 0:
         sys.exit(1)
 
     click.secho(f"\nSuccessfully loaded {settings.current_db_uri}", fg="green")
