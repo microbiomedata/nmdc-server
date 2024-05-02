@@ -736,12 +736,13 @@ async def update_submission(
         submission.status == "in-progress"
         and body_dict.get("status", None) == "Submitted- Pending Review"
     ):
+        print(submission.metadata_submission)
         create_github_issue(submission, user)
+    return
     # Merge the submission metadata dicts
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
     )
-
     # Update permissions and status iff the user is an "owner"
     if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner:
         new_permissions = body_dict.get("permissions", None)
@@ -776,11 +777,18 @@ def create_github_issue(submission, user):
     for key in sampledata:
         numsamples = max(numsamples, len(sampledata[key]))
 
+    #some variable data to supply depending on if data has been generated or not
+    data_ids = []
+    if contextForm["dataGenerated"]:
+        data_ids = [f"Gold IDs: {multiomicsform["NCBIBioProjectId"]}",
+                    f"NCBI IDs: {multiomcisform["JGIStudyId"]}"]
+
     body_lis = [
-        f"Submitter: {user.orcid}",
+        f"Submitter: {user.name}, {user.orcid}",
         f"Submission ID: {submission.id}",
         f"Has data been generated: {datagenerated}",
-        f"PI name and Orcid: {pi} {piorcid}",
+        f"PI name: {pi}",
+        f"PI orcid: {piorcid}",
         "Status: Submitted -Pending Review",
         f"Data types: {omicsprocessingtypes}",
         f"Sample type:{sampletype}",
@@ -804,8 +812,34 @@ def create_github_issue(submission, user):
     else:
         logging.info(f"Github issue creation successful with code {res.status_code}")
         logging.info(res.reason)
+        # if issue creation is successful we want to put the issue on a project board, if details for that are supplied
+        issue_node_id = res.json()['node_id']
+        project_res = github_issue_to_project(issue_node_id,settings)
+
     return res
 
+def github_issue_to_project(issue_node_id:str, settings):
+    gh_project_token = settings.gh_project_token
+    gh_project_id = settings.gh_project_id
+
+    if(gh_project_token == None or gh_project_id = None):
+        logging.error("Could not post created github issue to project board. Either access token or project ID are not supplied.")
+        return 
+
+    board_headers = {'Authorization':f'Bearer {gh_project_token}'}
+    payload = {"query":"mutation {addProjectV2ItemById(input: {projectId: "+f'"{gh_project_id}" contentId: "{issue_node_id}"'+"}) {item {id}}}"}
+    res = requests.post(url="https://api.github.com/graphql",
+                        json=payload, 
+                        headers=board_headers)
+
+    if res.status_code != 201:
+        logging.error(f"Could not post issue to project. Failed with code {res.status_code}")
+        logging.error(res.reason)
+    else:
+        logging.info(f"Github issue post to project board successful with code {res.status_code}")
+        logging.info(res.reason)
+
+    return res
 
 @router.delete(
     "/metadata_submission/{id}",
