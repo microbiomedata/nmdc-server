@@ -1,5 +1,6 @@
 <script lang="ts">
 import {
+  computed,
   defineComponent, PropType, toRef, watch,
 } from '@vue/composition-api';
 import { stateRefs } from '@/store';
@@ -25,7 +26,7 @@ export default defineComponent({
       default: null,
     },
   },
-  setup(props) {
+  setup(props, { root }) {
     const req = useRequest();
 
     function load() {
@@ -37,14 +38,16 @@ export default defineComponent({
     watch(toRef(props, 'id'), load);
     load();
 
-    return { stateRefs, req };
+    const showBanner = computed(() => root.$route.path === '/submission/home');
+
+    return { stateRefs, req, showBanner };
   },
 });
 </script>
 
 <template>
   <v-main>
-    <AppBanner />
+    <AppBanner v-if="showBanner" />
     <v-container v-if="!stateRefs.user.value && !req.loading.value">
       <v-container class="mt-4">
         <v-row>
