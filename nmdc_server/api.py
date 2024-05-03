@@ -826,7 +826,7 @@ def create_github_issue(submission, user):
     else:
         logging.info(f"Github issue creation successful with code {res.status_code}")
         logging.info(res.reason)
-        # if issue creation is successful we want to put the issue on a project board 
+        # if issue creation is successful we want to put the issue on a project board
         # if details for that are supplied
         issue_node_id = res.json()["node_id"]
         github_issue_to_project(issue_node_id, settings)
@@ -846,7 +846,7 @@ def github_issue_to_project(issue_node_id: str, settings):
         return
 
     # All project API requests go through the same end point.
-    # so all we specify is the project ID that we want to post to 
+    # so all we specify is the project ID that we want to post to
     # and the node id of the issue we want to post
     board_headers = {"Authorization": f"Bearer {gh_project_token}"}
     payload = {
