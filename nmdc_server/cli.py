@@ -238,12 +238,13 @@ def load_db(key_file, user, host, list_backups, backup_file):
 
         backup_file = dumps[-1]
 
-    click.echo(f"Downloading {backup_file}...")
-    subprocess.run(
-        ["scp", "-i", key_file, f"{user}@{host}:{pgdump_dir}/{backup_file}", "."],
-        check=True,
-        encoding="utf-8",
-    )
+    if not (Path(os.getcwd()) / backup_file).exists():
+        click.echo(f"Downloading {backup_file}...")
+        subprocess.run(
+            ["scp", "-i", key_file, f"{user}@{host}:{pgdump_dir}/{backup_file}", "."],
+            check=True,
+            encoding="utf-8",
+        )
 
     click.echo(f"Restoring from {backup_file}...")
     settings = Settings()
