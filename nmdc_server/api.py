@@ -840,9 +840,7 @@ def github_issue_to_project(issue_node_id: str, settings):
 
     # Same as github issue, if we're missing the settings then we return.
     if gh_project_token == None or gh_project_id == None:
-        logging.error(
-            "Posting issue to projec board failed. Missing token or id. See config"
-        )
+        logging.error("Posting issue to projec board failed. Missing token or id. See config")
         return
 
     # All project API requests go through the same end point.
