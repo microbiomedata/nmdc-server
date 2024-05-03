@@ -736,7 +736,6 @@ async def update_submission(
         submission.status == "in-progress"
         and body_dict.get("status", None) == "Submitted- Pending Review"
     ):
-        print(submission.metadata_submission)
         create_github_issue(submission, user)
     # Merge the submission metadata dicts
     submission.metadata_submission = (
