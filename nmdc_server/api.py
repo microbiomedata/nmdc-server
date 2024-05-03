@@ -760,9 +760,11 @@ def create_github_issue(submission, user):
     settings = Settings()
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
+    #If the settings for issue creation weren't supplied return, no need to do anything further
     if gh_url == None or token == None:
         return
 
+    #Gathering the fields we want to display in the issue
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
     studyform = submission.metadata_submission["studyForm"]
     contextform = submission.metadata_submission["contextForm"]
@@ -778,11 +780,12 @@ def create_github_issue(submission, user):
         numsamples = max(numsamples, len(sampledata[key]))
 
     #some variable data to supply depending on if data has been generated or not
-    #data_ids = []
-    #if contextForm["dataGenerated"]:
-        #data_ids = [f"Gold IDs: {multiomicsform["NCBIBioProjectId"]}",
-        #            f"NCBI IDs: {multiomcisform["JGIStudyId"]}"]
+    data_ids = []
+    if contextForm["dataGenerated"]:
+        data_ids = [f"Gold IDs: " + multiomicsform["NCBIBioProjectId"],
+                    f"NCBI IDs: {multiomcisform["JGIStudyId"]}"]
 
+    #assemble the body of the API request
     body_lis = [
         f"Submitter: {user.name}, {user.orcid}",
         f"Submission ID: {submission.id}",
@@ -797,7 +800,7 @@ def create_github_issue(submission, user):
     ]
     body_string = " \n ".join(body_lis)
     payload_dict = {
-        "title": f"NMDC Submission{submission.id}",
+        "title": f"NMDC Submission: {submission.id}",
         "body": body_string,
         "assignees": ["JamesTessmer"],
         "labels": ["testing"],
@@ -805,6 +808,7 @@ def create_github_issue(submission, user):
 
     payload = json.dumps(payload_dict)
 
+    #make request and log an error or success depending on reply
     res = requests.post(url=gh_url, data=payload, headers=headers)
     if res.status_code != 201:
         logging.error(f"Github issue creation failed with code {res.status_code}")
@@ -821,17 +825,20 @@ def create_github_issue(submission, user):
 def github_issue_to_project(issue_node_id:str, settings):
     gh_project_token = settings.gh_project_token
     gh_project_id = settings.gh_project_id
-    
+
+    #Same as github issue, if we're missing the settings then we return.
     if(gh_project_token == None or gh_project_id == None):
         logging.error("Could not post created github issue to project board. Either access token or project ID are not supplied.")
         return 
 
+    #All project API requests go through the same end point so all we specify is the project ID that we want to post to and the node id of the issue we want to post
     board_headers = {'Authorization':f'Bearer {gh_project_token}'}
     payload = {"query":"mutation {addProjectV2ItemById(input: {projectId: "+f'"{gh_project_id}" contentId: "{issue_node_id}"'+"}) {item {id}}}"}
     res = requests.post(url="https://api.github.com/graphql",
                         json=payload, 
                         headers=board_headers)
 
+    #do some logging based on reply of request
     if res.status_code != 200:
         logging.error(f"Could not post issue to project. Failed with code {res.status_code}")
         logging.error(res.reason)
