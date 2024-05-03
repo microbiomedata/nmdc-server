@@ -826,9 +826,10 @@ def create_github_issue(submission, user):
     else:
         logging.info(f"Github issue creation successful with code {res.status_code}")
         logging.info(res.reason)
-        # if issue creation is successful we want to put the issue on a project board, if details for that are supplied
+        # if issue creation is successful we want to put the issue on a project board 
+        # if details for that are supplied
         issue_node_id = res.json()["node_id"]
-        project_res = github_issue_to_project(issue_node_id, settings)
+        github_issue_to_project(issue_node_id, settings)
 
     return res
 
@@ -840,11 +841,13 @@ def github_issue_to_project(issue_node_id: str, settings):
     # Same as github issue, if we're missing the settings then we return.
     if gh_project_token == None or gh_project_id == None:
         logging.error(
-            "Could not post created github issue to project board. Either access token or project ID are not supplied."
+            "Posting issue to projec board failed. Missing token or id. See config"
         )
         return
 
-    # All project API requests go through the same end point so all we specify is the project ID that we want to post to and the node id of the issue we want to post
+    # All project API requests go through the same end point.
+    # so all we specify is the project ID that we want to post to 
+    # and the node id of the issue we want to post
     board_headers = {"Authorization": f"Bearer {gh_project_token}"}
     payload = {
         "query": "mutation {addProjectV2ItemById(input: {projectId: "
