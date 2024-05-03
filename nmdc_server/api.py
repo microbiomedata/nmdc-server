@@ -738,7 +738,6 @@ async def update_submission(
     ):
         print(submission.metadata_submission)
         create_github_issue(submission, user)
-    return
     # Merge the submission metadata dicts
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
@@ -781,9 +780,16 @@ def create_github_issue(submission, user):
 
     #some variable data to supply depending on if data has been generated or not
     data_ids = []
-    if contextForm["dataGenerated"]:
-        data_ids = [f"Gold IDs: " + multiomicsform["NCBIBioProjectId"],
-                    f"NCBI IDs: {multiomcisform["JGIStudyId"]}"]
+    if contextform["dataGenerated"]:
+        data_ids = ["NCBI ID: " + multiomicsform["NCBIBioProjectId"],
+                    "GOLD ID: " + multiomicsform["GOLDStudyId"],
+                    "Alternative IDs/Names: " + ', '.join(multiomicsform["alternativeNames"])]
+
+    else:
+        data_ids = ["JGI IDs: " + multiomicsform["JGIStudyId"],
+                    "EMSL IDs: " + multiomicsform["studyNumber"],
+                    "Alternative IDs/Names: " + ', '.join(multiomicsform["alternativeNames"])]
+
 
     #assemble the body of the API request
     body_lis = [
@@ -796,7 +802,10 @@ def create_github_issue(submission, user):
         f"Data types: {omicsprocessingtypes}",
         f"Sample type:{sampletype}",
         f"Number of samples:{numsamples}",
-        "Note:",
+        data_ids[0],
+        data_ids[1],
+        data_ids[2],
+        "Note:"
     ]
     body_string = " \n ".join(body_lis)
     payload_dict = {
