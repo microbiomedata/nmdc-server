@@ -814,7 +814,6 @@ def create_github_issue(submission, user):
         "title": f"NMDC Submission: {submission.id}",
         "body": body_string,
         "assignees": ["mslarae13"],
-        "labels": [],
     }
 
     payload = json.dumps(payload_dict)
