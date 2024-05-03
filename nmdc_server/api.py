@@ -778,10 +778,10 @@ def create_github_issue(submission, user):
         numsamples = max(numsamples, len(sampledata[key]))
 
     #some variable data to supply depending on if data has been generated or not
-    data_ids = []
-    if contextForm["dataGenerated"]:
-        data_ids = [f"Gold IDs: {multiomicsform["NCBIBioProjectId"]}",
-                    f"NCBI IDs: {multiomcisform["JGIStudyId"]}"]
+    #data_ids = []
+    #if contextForm["dataGenerated"]:
+        #data_ids = [f"Gold IDs: {multiomicsform["NCBIBioProjectId"]}",
+        #            f"NCBI IDs: {multiomcisform["JGIStudyId"]}"]
 
     body_lis = [
         f"Submitter: {user.name}, {user.orcid}",
@@ -821,8 +821,8 @@ def create_github_issue(submission, user):
 def github_issue_to_project(issue_node_id:str, settings):
     gh_project_token = settings.gh_project_token
     gh_project_id = settings.gh_project_id
-
-    if(gh_project_token == None or gh_project_id = None):
+    
+    if(gh_project_token == None or gh_project_id == None):
         logging.error("Could not post created github issue to project board. Either access token or project ID are not supplied.")
         return 
 
@@ -832,13 +832,12 @@ def github_issue_to_project(issue_node_id:str, settings):
                         json=payload, 
                         headers=board_headers)
 
-    if res.status_code != 201:
+    if res.status_code != 200:
         logging.error(f"Could not post issue to project. Failed with code {res.status_code}")
         logging.error(res.reason)
     else:
         logging.info(f"Github issue post to project board successful with code {res.status_code}")
         logging.info(res.reason)
-
     return res
 
 @router.delete(
