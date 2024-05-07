@@ -70,6 +70,7 @@ class Settings(BaseSettings):
     # Github Issue creation settings. Both are required for automated issue creation.
     github_issue_url: Optional[str] = None
     github_authentication_token: Optional[str] = None
+    github_issue_assignee: Optional[str] = None
 
     # Github Issue to Project board settings. Both are required to post issue to project.
     gh_project_token: Optional[str] = None

@@ -758,6 +758,7 @@ def create_github_issue(submission, user):
     settings = Settings()
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
+    assignee = settings.github_issue_assignee
     # If the settings for issue creation weren't supplied return, no need to do anything further
     if gh_url == None or token == None:
         return
@@ -804,16 +805,12 @@ def create_github_issue(submission, user):
         f"Data types: {omicsprocessingtypes}",
         f"Sample type:{sampletype}",
         f"Number of samples:{numsamples}",
-        data_ids[0],
-        data_ids[1],
-        data_ids[2],
-        "Note:",
-    ]
+    ] + data_ids
     body_string = " \n ".join(body_lis)
     payload_dict = {
         "title": f"NMDC Submission: {submission.id}",
         "body": body_string,
-        "assignees": ["mslarae13"],
+        "assignees": [assignee],
     }
 
     payload = json.dumps(payload_dict)
@@ -840,7 +837,7 @@ def github_issue_to_project(issue_node_id: str, settings):
 
     # Same as github issue, if we're missing the settings then we return.
     if gh_project_token == None or gh_project_id == None:
-        logging.error("Posting issue to projec board failed. Missing token or id. See config")
+        logging.error("Posting issue to project board failed. Missing token or id. See config")
         return
 
     # All project API requests go through the same end point.
