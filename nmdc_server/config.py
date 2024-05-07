@@ -73,8 +73,8 @@ class Settings(BaseSettings):
     github_issue_assignee: Optional[str] = None
 
     # Github Issue to Project board settings. Both are required to post issue to project.
-    gh_project_token: Optional[str] = None
-    gh_project_id: Optional[str] = None
+    github_project_token: Optional[str] = None
+    github_project_id: Optional[str] = None
 
     @property
     def current_db_uri(self) -> str:
