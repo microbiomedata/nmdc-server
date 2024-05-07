@@ -832,8 +832,8 @@ def create_github_issue(submission, user):
 
 
 def github_issue_to_project(issue_node_id: str, settings):
-    github_project_token = settings.gh_project_token
-    github_project_id = settings.gh_project_id
+    gh_project_token = settings.github_project_token
+    gh_project_id = settings.github_project_id
 
     # Same as github issue, if we're missing the settings then we return.
     if gh_project_token == None or gh_project_id == None:
