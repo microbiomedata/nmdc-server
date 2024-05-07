@@ -104,6 +104,7 @@ const router = new VueRouter({
       component: UserPage,
     },
   ],
+  scrollBehavior: () => ({ x: 0, y: 0 }),
   parseQuery,
   stringifyQuery,
 });

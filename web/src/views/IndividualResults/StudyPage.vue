@@ -14,6 +14,7 @@ import {
 } from '@/data/api';
 import { setUniqueCondition, setConditions } from '@/store';
 import { useRouter } from '@/use/useRouter';
+import AppBanner from '@/components/AppBanner.vue';
 import AttributeItem from '@/components/Presentation/AttributeItem.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
 import TeamInfo from '@/components/TeamInfo.vue';
@@ -31,6 +32,7 @@ const GoldStudyLinkBase = 'https://gold.jgi.doe.gov/study?id=';
 export default defineComponent({
 
   components: {
+    AppBanner,
     AttributeItem,
     IndividualTitle,
     TeamInfo,
@@ -233,6 +235,7 @@ export default defineComponent({
 <template>
   <v-container fluid>
     <v-main v-if="item !== null">
+      <AppBanner />
       <v-row :class="{'flex-column': $vuetify.breakpoint.xs}">
         <v-col
           cols="12"

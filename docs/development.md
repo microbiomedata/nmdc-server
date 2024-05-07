@@ -1,19 +1,18 @@
 # Development Setup
-## __Docker__
 
-* install docker and docker-compose
+## Docker
 
-### Configuration
+Install docker and docker-compose.
+
+## Configuration
 
 ```bash
 cp .env.example .env
 ```
 
-Edit values in `.env` to point to existing postgresql databases.
+Edit values in `.env` to point to existing postgresql databases. See `nmdc_server/config.py` for all configuration variables.  Variable names in `.env` should be all uppercase and prefixed with `NMDC_`.
 
-### OAuth setup
-
-See `nmdc_server/config` for configuration.  Env variable names begin with `NMDC_`.
+## OAuth setup
 
 1. Create an OrcID account at [orcid.org](https://orcid.org).
 1. Create an Application via the OrcID [developer tools](https://orcid.org/developer-tools) page.
@@ -29,7 +28,41 @@ NMDC_CLIENT_SECRET=changeme
 NMDC_HOST=http://localhost:8080
 ```
 
-### Running the server
+# Load production data
+
+The `nmdc-server` CLI has a `load-db` subcommand which populates your local database using a nightly production backup. These backups are stored on NERSC. You must have NERSC credentials to use this subcommand.
+
+First use NERSC's `sshproxy` [tool](https://docs.nersc.gov/connect/mfa/#sshproxy) to generate an ssh key.
+
+```bash
+sshproxy.sh -u <nersc_username>
+```
+
+Then run the `load-db` subcommand from a `backend` container, mounting the ssh key.
+
+```bash
+docker compose run \
+  --rm \
+  -v ~/.ssh/nersc:/tmp/nersc \
+  backend \
+  nmdc-server load-db -u <nersc_username>
+```
+
+To see all CLI options run:
+
+```bash
+nmdc-server load-db --help
+```
+
+**Note**: if you already have a local database set up, the first time you attempt to load from a production backup you may see an error about a missing `nmdc_data_reader` role. If you see this error, run the following command to remove existing docker volumes:
+
+```bash
+docker compose down -v
+```
+
+This should only need to be done once. When the `db` service starts up again (including via running the `load-db` command), the necessary roles and databases will be created automatically.
+
+# Running the server
 
 ```bash
 docker-compose up -d
@@ -39,7 +72,7 @@ View main application at `http://localhost:8080/` and the swagger page at `http:
 
 
 
-## __Outside Docker__
+## Outside Docker
 
 ```bash
 # Start only the service dependencies.
@@ -61,7 +94,7 @@ View swagger page at `http://localhost:8000/api/docs`.
 
 # Running ingest
 
-You need an active SSH tunnel connection to nersc attached to the compose network.  After running docker-compose up, run this container.
+You need an active SSH tunnel connection to NERSC attached to the compose network.  After running docker-compose up, run this container.
 
 If you haven't already, [set up MFA on your NERSC account](https://docs.nersc.gov/connect/mfa/) (it's required for SSHing in).
 
@@ -111,7 +144,7 @@ yarn serve
 tox
 ```
 
-## Generating new migrations
+# Generating new migrations
 
 ```bash
 # Autogenerate a migration diff from the current HEAD
@@ -130,23 +163,6 @@ docker-compose run backend psql -c "create database nmdc_a;" -d postgres
 docker-compose run backend alembic -c nmdc_server/alembic.ini upgrade head
 # Autogenerate a migration diff from the current HEAD
 docker-compose run backend alembic -c nmdc_server/alembic.ini revision --autogenerate
-```
-
-# Postgres import and export
-
-You can find existing database exports in Notion.
-
-```bash
-# export, and
-docker-compose run backend bash -c 'pg_dump nmdc_a > /app/nmdc_server/nmdc_a.sql'
-
-# import -- starting from an EMPTY database with DB running
-docker-compose down -v
-docker-compose up -d db
-docker-compose run backend psql -c "create database nmdc_a;" -d postgres
-cp downloads/nmdc_a.sql nmdc_server/nmdc_a.sql
-docker-compose run backend bash -c 'psql nmdc_a < /app/nmdc_server/nmdc_a.sql'
-docker-compose run backend nmdc-server migrate # stamp the migration db
 ```
 
 # Developing with the shell

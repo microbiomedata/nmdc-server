@@ -10,6 +10,7 @@ services:
     image: postgres:13
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
+      - ./scripts/docker/init.sql:/docker-entrypoint-initdb.d/init.sql
     env_file:
       - .docker-env
     environment:
@@ -21,7 +22,7 @@ services:
       # Our MGA ingest makes some *very* large transactions
       - "max_wal_size=2GB"
     ports:
-      - "5555:5432"
+      - "5432:5432"
 
   worker:
     image: ghcr.io/microbiomedata/nmdc-server/worker:main
