@@ -32,7 +32,7 @@
     "leaflet.markercluster": "^1.5.3",
     "linkify-it": "^4.0.1",
     "lodash": "^4.17.21",
-    "moment": "^2.29.2",
+    "moment": "^2.29.4",
     "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v10.2.0",
     "popper.js": "1.16.1",
     "protobufjs": "^6.11.3",
@@ -44,7 +44,7 @@
     "vue-router": "^3.5.3",
     "vue2-leaflet": "^2.7.1",
     "vue2-leaflet-markercluster": "^3.1.0",
-    "vuetify": "^2.6.1",
+    "vuetify": "^2.6.10",
     "xlsx": "^0.17.5"
   },
   "devDependencies": {
