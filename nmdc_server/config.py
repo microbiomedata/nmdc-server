@@ -67,6 +67,11 @@ class Settings(BaseSettings):
     # CORS settings necessary for allowing request from Field Notes app
     cors_allow_origins: Optional[str] = None  # comma separated list of allowed origins
 
+    # Github Issue creation settings. Both are required for automated issue creation.
+    github_issue_url: Optional[str] = None
+    github_authentication_token: Optional[str] = None
+    github_issue_assignee: Optional[str] = None
+
     @property
     def current_db_uri(self) -> str:
         if self.environment == "testing":
