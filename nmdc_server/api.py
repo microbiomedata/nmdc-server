@@ -823,41 +823,7 @@ def create_github_issue(submission, user):
     else:
         logging.info(f"Github issue creation successful with code {res.status_code}")
         logging.info(res.reason)
-        # if issue creation is successful we want to put the issue on a project board
-        # if details for that are supplied
-        issue_node_id = res.json()["node_id"]
-        github_issue_to_project(issue_node_id, settings)
 
-    return res
-
-
-def github_issue_to_project(issue_node_id: str, settings):
-    gh_project_token = settings.github_project_token
-    gh_project_id = settings.github_project_id
-
-    # Same as github issue, if we're missing the settings then we return.
-    if gh_project_token == None or gh_project_id == None:
-        logging.error("Posting issue to project board failed. Missing token or id. See config")
-        return
-
-    # All project API requests go through the same end point.
-    # so all we specify is the project ID that we want to post to
-    # and the node id of the issue we want to post
-    board_headers = {"Authorization": f"Bearer {gh_project_token}"}
-    payload = {
-        "query": "mutation {addProjectV2ItemById(input: {projectId: "
-        + f'"{gh_project_id}" contentId: "{issue_node_id}"'
-        + "}) {item {id}}}"
-    }
-    res = requests.post(url="https://api.github.com/graphql", json=payload, headers=board_headers)
-
-    # do some logging based on reply of request
-    if res.status_code != 200:
-        logging.error(f"Could not post issue to project. Failed with code {res.status_code}")
-        logging.error(res.reason)
-    else:
-        logging.info(f"Github issue post to project board successful with code {res.status_code}")
-        logging.info(res.reason)
     return res
 
 
