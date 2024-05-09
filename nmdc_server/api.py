@@ -32,6 +32,7 @@ from nmdc_server.models import (
     User,
 )
 from nmdc_server.pagination import Pagination
+from nmdc_server.table import Table
 
 router = APIRouter()
 
@@ -192,9 +193,25 @@ async def search_biosample(
                     da.selected = schemas.DataObject.is_selected(workflow, da, data_object_filter)
         return biosample
 
-    return pagination.response(
+    results = pagination.response(
         crud.search_biosample(db, query.conditions, data_object_filter), insert_selected
     )
+    if any(
+        [
+            condition.table == Table.omics_processing or condition.table == Table.gene_function
+            for condition in query.conditions
+        ]
+    ):
+        biosample_ids = [b.id for b in results["results"]]  # type: ignore
+        omics_results = crud.search_omics_processing_for_biosamples(
+            db, query.conditions, biosample_ids
+        )
+        omics_ids = set([str(o.id) for o in omics_results.all()])
+        for biosample in results["results"]:
+            biosample.omics_processing = [  # type: ignore
+                op for op in biosample.omics_processing if op.id in omics_ids  # type: ignore
+            ]
+    return results
 
 
 @router.post(

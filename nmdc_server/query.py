@@ -707,6 +707,17 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
     def table(self) -> Table:
         return Table.omics_processing
 
+    def omics_processing_for_biosample_ids(self, db: Session, biosample_ids):
+        # Do the normal query with the conditions
+        query = self.execute(db)
+        # Join to association table to get biosample IDs
+        query_by_sample_ids = (
+            query.join(models.biosample_input_association)
+            # Filter to only include bisoample ids in the given list
+            .filter(models.biosample_input_association.c.biosample_id.in_(biosample_ids))
+        )
+        return query_by_sample_ids
+
 
 class BiosampleQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
