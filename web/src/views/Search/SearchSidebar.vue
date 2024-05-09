@@ -202,16 +202,16 @@ export default defineComponent({
           />
         </template>
       </ConditionChips>
+
+      <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
+        <span v-if="isLoading">
+          Loading results...
+        </span>
+        <span v-else>Found {{ resultsCount }} results.</span>
+      </div>
+
+      <v-divider class="my-3" />
     </template>
-
-    <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
-      <span v-if="isLoading">
-        Loading results...
-      </span>
-      <span v-else>Found {{ resultsCount }} results.</span>
-    </div>
-
-    <v-divider class="my-3" />
 
     <FacetedSearch
       :filter-text.sync="filterText"
