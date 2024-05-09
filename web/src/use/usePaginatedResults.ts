@@ -46,7 +46,6 @@ export default function usePaginatedResult<T>(
   watch([conditions], () => {
     const doFetch = data.offset === 0;
     data.offset = 0;
-    data.limit = limit;
     if (doFetch) debouncedFetchResults();
   });
 
