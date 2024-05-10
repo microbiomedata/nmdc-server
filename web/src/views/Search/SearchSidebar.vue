@@ -153,62 +153,65 @@ export default defineComponent({
     permanent
     width="320"
   >
-    <div class="mx-3 my-2">
-      <div
-        v-if="conditions.length"
-        class="text-subtitle-2 primary--text d-flex flex-row"
-      >
-        <span class="grow">Active query terms</span>
-        <v-tooltip
-          bottom
-          open-delay="600"
+    <template #prepend>
+      <div class="mx-3 my-2">
+        <div
+          v-if="conditions.length"
+          class="text-subtitle-2 primary--text d-flex flex-row"
         >
-          <template #activator="{ on, attrs }">
-            <v-btn
-              icon
-              x-small
-              v-bind="attrs"
-              v-on="on"
-              @click="removeConditions"
-            >
-              <v-icon>mdi-filter-off</v-icon>
-            </v-btn>
-          </template>
-          <span>Clear query terms</span>
-        </v-tooltip>
+          <span class="grow">Active query terms</span>
+          <v-tooltip
+            bottom
+            open-delay="600"
+          >
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                x-small
+                v-bind="attrs"
+                v-on="on"
+                @click="removeConditions"
+              >
+                <v-icon>mdi-filter-off</v-icon>
+              </v-btn>
+            </template>
+            <span>Clear query terms</span>
+          </v-tooltip>
+        </div>
       </div>
-    </div>
 
-    <ConditionChips
-      :conditions="conditions"
-      :db-summary="dbSummary"
-      class="ma-3"
-      @remove="removeConditions([$event])"
-    >
-      <template #menu="{ field, table, isOpen, toggleMenu }">
-        <MenuContent
-          v-bind="{
-            field,
-            table,
-            isOpen,
-            conditions,
-            summary: dbSummaryForTable(table, field),
-          }"
-          update
-          @select="setConditions($event.conditions)"
-          @close="toggleMenu(false)"
-        />
-      </template>
-    </ConditionChips>
+      <ConditionChips
+        :conditions="conditions"
+        :db-summary="dbSummary"
+        class="ma-3"
+        style="max-height: 50vh; overflow: auto;"
+        @remove="removeConditions([$event])"
+      >
+        <template #menu="{ field, table, isOpen, toggleMenu }">
+          <MenuContent
+            v-bind="{
+              field,
+              table,
+              isOpen,
+              conditions,
+              summary: dbSummaryForTable(table, field),
+            }"
+            update
+            @select="setConditions($event.conditions)"
+            @close="toggleMenu(false)"
+          />
+        </template>
+      </ConditionChips>
 
-    <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
-      <span v-if="isLoading">
-        Loading results...
-      </span>
-      <span v-else>Found {{ resultsCount }} results.</span>
-    </div>
+      <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
+        <span v-if="isLoading">
+          Loading results...
+        </span>
+        <span v-else>Found {{ resultsCount }} results.</span>
+      </div>
 
-    <v-divider class="my-3" />
+      <v-divider class="my-3" />
+    </template>
 
     <FacetedSearch
       :filter-text.sync="filterText"
