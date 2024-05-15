@@ -6,12 +6,11 @@ from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
 
 from nmdc_server import fakes
-from nmdc_server.auth import Token
 from nmdc_server.models import SubmissionEditorRole, SubmissionRole
 from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
 
 
-def test_list_submissions(db: Session, client: TestClient, token: Token, logged_in_user):
+def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
@@ -28,7 +27,7 @@ def test_list_submissions(db: Session, client: TestClient, token: Token, logged_
     assert response.json()["results"][0]["id"] == str(submission.id)
 
 
-def test_try_edit_locked_submission(db: Session, client: TestClient, token: Token, logged_in_user):
+def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_user):
     # Locked by a random user at utcnow by default
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user,
@@ -53,9 +52,7 @@ def test_try_edit_locked_submission(db: Session, client: TestClient, token: Toke
     assert response.status_code == 400
 
 
-def test_try_edit_expired_locked_submission(
-    db: Session, client: TestClient, token: Token, logged_in_user
-):
+def test_try_edit_expired_locked_submission(db: Session, client: TestClient, logged_in_user):
     # initialize test submission with expired lock
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user,
@@ -79,7 +76,7 @@ def test_try_edit_expired_locked_submission(
 
 
 def test_try_edit_locked_by_current_user_submission(
-    db: Session, client: TestClient, token: Token, logged_in_user
+    db: Session, client: TestClient, logged_in_user
 ):
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user,
@@ -102,7 +99,7 @@ def test_try_edit_locked_by_current_user_submission(
     assert response.status_code == 200
 
 
-def test_submission_list_with_roles(db: Session, client: TestClient, token: Token, logged_in_user):
+def test_submission_list_with_roles(db: Session, client: TestClient, logged_in_user):
     user_a = fakes.UserFactory()
     submission_a = fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
     fakes.MetadataSubmissionFactory(author=logged_in_user, author_orcid=logged_in_user.orcid)
@@ -125,9 +122,7 @@ def test_submission_list_with_roles(db: Session, client: TestClient, token: Toke
 
 
 @pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
-def test_get_submission_with_roles(
-    db: Session, client: TestClient, token: Token, logged_in_user, role, code
-):
+def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
     if role == SubmissionEditorRole.owner:
         submission = fakes.MetadataSubmissionFactory()
         db.commit()
@@ -142,9 +137,7 @@ def test_get_submission_with_roles(
 
 
 @pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
-def test_edit_submission_with_roles(
-    db: Session, client: TestClient, token: Token, logged_in_user, role, code
-):
+def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
     if role == SubmissionEditorRole.owner:
         submission = fakes.MetadataSubmissionFactory()
         payload = SubmissionMetadataSchema(**submission.__dict__).json()
@@ -162,7 +155,7 @@ def test_edit_submission_with_roles(
     assert response.status_code == code
 
 
-def test_create_role_on_patch(db: Session, client: TestClient, token: Token, logged_in_user):
+def test_create_role_on_patch(db: Session, client: TestClient, logged_in_user):
     pi_orcid = fakes.Faker("pystr")
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
@@ -193,7 +186,7 @@ def test_create_role_on_patch(db: Session, client: TestClient, token: Token, log
 
 @pytest.mark.parametrize("samples_only,code", [(True, 200), (False, 403)])
 def test_piecewise_patch_metadata_contributor(
-    db: Session, client: TestClient, token: Token, logged_in_user, samples_only, code
+    db: Session, client: TestClient, logged_in_user, samples_only, code
 ):
     user = fakes.UserFactory()
     submission = fakes.MetadataSubmissionFactory(author=user, author_orcid=user.orcid)
@@ -223,7 +216,7 @@ def test_piecewise_patch_metadata_contributor(
     assert response.status_code == code
 
 
-def test_delete_role_on_patch(db: Session, client: TestClient, token: Token, logged_in_user):
+def test_delete_role_on_patch(db: Session, client: TestClient, logged_in_user):
     user_orcid = fakes.Faker("pystr")
     pi_orcid = fakes.Faker("pystr")
     submission = fakes.MetadataSubmissionFactory(
@@ -262,7 +255,7 @@ def test_delete_role_on_patch(db: Session, client: TestClient, token: Token, log
     assert all([role.role == SubmissionEditorRole.owner for role in roles.all()])
 
 
-def test_update_role_on_patch(db: Session, client: TestClient, token: Token, logged_in_user):
+def test_update_role_on_patch(db: Session, client: TestClient, logged_in_user):
     user_orcid = fakes.Faker("pystr")
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
@@ -294,7 +287,7 @@ def test_update_role_on_patch(db: Session, client: TestClient, token: Token, log
     assert role and role.role == SubmissionEditorRole.editor
 
 
-def test_delete_submission_by_owner(db: Session, client: TestClient, token: Token, logged_in_user):
+def test_delete_submission_by_owner(db: Session, client: TestClient, logged_in_user):
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
@@ -315,9 +308,7 @@ def test_delete_submission_by_owner(db: Session, client: TestClient, token: Toke
     assert response.status_code == 404
 
 
-def test_delete_submission_by_non_owner(
-    db: Session, client: TestClient, token: Token, logged_in_user
-):
+def test_delete_submission_by_non_owner(db: Session, client: TestClient, logged_in_user):
     user = fakes.UserFactory()
     submission = fakes.MetadataSubmissionFactory(author=user, author_orcid=user.orcid)
     fakes.SubmissionRoleFactory(
@@ -337,9 +328,7 @@ def test_delete_submission_by_non_owner(
     assert response.status_code == 200
 
 
-def test_delete_submission_while_locked(
-    db: Session, client: TestClient, token: Token, logged_in_user
-):
+def test_delete_submission_while_locked(db: Session, client: TestClient, logged_in_user):
     user = fakes.UserFactory()
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user,

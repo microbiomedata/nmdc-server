@@ -6,19 +6,12 @@ from uuid import UUID
 
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from starlette.requests import Request
-from starlette.responses import RedirectResponse, StreamingResponse
+from starlette.responses import StreamingResponse
 
 from nmdc_server import __version__, crud, jobs, models, query, schemas, schemas_submission
-from nmdc_server.auth import (
-    admin_required,
-    get_current_user,
-    get_current_user_orcid,
-    login_required,
-    login_required_responses,
-)
+from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
@@ -52,36 +45,8 @@ async def get_version() -> Dict[str, Any]:
 
 # get the current user information
 @router.get("/me", tags=["user"], name="Return the current user name")
-async def me(request: Request, user: str = Depends(get_current_user)) -> Optional[str]:
+async def me(user: User = Depends(get_current_user)) -> Optional[User]:
     return user
-
-
-@router.get("/me/orcid", tags=["user"], name="Return the ORCID iD of current user")
-async def my_orcid(request: Request, orcid: str = Depends(get_current_user_orcid)) -> Optional[str]:
-    return orcid
-
-
-@router.get(
-    "/session_cookie",
-    name="Get the session cookie",
-    tags=["user"],
-    responses={200: {"description": "Session cookie"}},
-)
-async def get_session_cookie(request: Request):
-    r"""
-    Returns the web browser's session cookie in plain text format.
-
-    Note: This endpoint does not require authentication, since the server is only
-          returning information sent to it by the client (verbatim).
-    """
-    # Reference: https://fastapi.tiangolo.com/reference/request/#fastapi.Request.cookies
-    session_cookie = request.cookies.get("session", None)
-    if session_cookie is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Request did not contain a session cookie.",
-        )
-    return PlainTextResponse(content=session_cookie)
 
 
 # autocomplete search
@@ -494,7 +459,7 @@ async def download_data_object(
     user_agent: Optional[str] = Header(None),
     x_forwarded_for: Optional[str] = Header(None),
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
     ip = (x_forwarded_for or "").split(",")[0].strip()
     data_object = crud.get_data_object(db, data_object_id)
@@ -511,7 +476,9 @@ async def download_data_object(
         data_object_id=data_object_id,
     )
     crud.create_file_download(db, file_download)
-    return RedirectResponse(url=url)
+    return {
+        "url": url,
+    }
 
 
 @router.post(
@@ -580,7 +547,7 @@ async def create_bulk_download(
     x_forwarded_for: Optional[str] = Header(None),
     query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(),
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
     ip = (x_forwarded_for or "").split(",")[0].strip()
     bulk_download = crud.create_bulk_download(
@@ -613,12 +580,10 @@ async def get_data_object_aggregation(
 @router.get(
     "/bulk_download/{bulk_download_id}",
     tags=["download"],
-    responses=login_required_responses,
 )
 async def download_zip_file(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
 ):
     table = crud.get_zip_download(db, bulk_download_id)
     return Response(
@@ -638,14 +603,10 @@ async def download_zip_file(
 )
 async def list_submissions(
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
     pagination: Pagination = Depends(),
 ):
-    query = db.query(SubmissionMetadata).order_by(SubmissionMetadata.created.desc())
-    try:
-        await admin_required(user)
-    except HTTPException:
-        query = crud.get_submissions_for_user(db, user)
+    query = crud.get_submissions_for_user(db, user)
     return pagination.response(query)
 
 
@@ -658,7 +619,7 @@ async def list_submissions(
 async def get_submission(
     id: str,
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
     submission = db.query(SubmissionMetadata).get(id)
     if submission is None:
@@ -729,7 +690,7 @@ async def update_submission(
     id: str,
     body: schemas_submission.SubmissionMetadataSchemaPatch,
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
     submission = db.query(SubmissionMetadata).get(id)
     body_dict = body.dict(exclude_unset=True)
@@ -852,7 +813,7 @@ def create_github_issue(submission, user):
 async def delete_submission(
     id: str,
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
     submission = db.query(SubmissionMetadata).get(id)
     if submission is None:
@@ -877,7 +838,7 @@ async def delete_submission(
 
 @router.put("/metadata_submission/{id}/unlock")
 async def unlock_submission(
-    id: str, db: Session = Depends(get_db), user: models.User = Depends(login_required)
+    id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
 ) -> str:
     submission = db.query(SubmissionMetadata).get(id)
     if not submission:
@@ -903,7 +864,7 @@ async def unlock_submission(
 async def submit_metadata(
     body: schemas_submission.SubmissionMetadataSchemaCreate,
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
     submission = SubmissionMetadata(**body.dict(), author_orcid=user.orcid)
     submission.author_id = user.id

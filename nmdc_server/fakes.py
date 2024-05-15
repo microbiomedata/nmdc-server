@@ -3,12 +3,12 @@ from datetime import datetime
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
-from factory import Factory, Faker, SubFactory, lazy_attribute, post_generation
+from factory import Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
 from sqlalchemy.orm.scoping import scoped_session
 
-from nmdc_server import auth, models
+from nmdc_server import models
 from nmdc_server.database import SessionLocal
 from nmdc_server.schemas import AnnotationValue
 
@@ -40,20 +40,6 @@ Faker.add_provider(misc)
 Faker.add_provider(person)
 Faker.add_provider(python)
 Faker.add_provider(EnumProvider)
-
-
-class TokenFactory(Factory):
-    class Meta:
-        model = auth.Token
-
-    access_token: UUID = Faker("uuid")
-    refresh_token: UUID = Faker("uuid")
-    token_type: str = "bearer"
-    expires_in: int = Faker("pyint", min_value=10000, max_value=99999)
-    scope: str = "/authorize"
-    name: str = Faker("name")
-    orcid: str = Faker("pystr")
-    expires_at: int = Faker("pyint", min_value=10000, max_value=99999)
 
 
 class DOIInfoFactory(SQLAlchemyModelFactory):
@@ -347,7 +333,7 @@ class UserFactory(SQLAlchemyModelFactory):
     id: UUID = Faker("uuid")
     name: str = Faker("name")
     orcid: str = Faker("pystr")
-    is_admin: bool = True
+    is_admin: bool = False
 
 
 class MetadataSubmissionFactory(SQLAlchemyModelFactory):

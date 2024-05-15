@@ -23,7 +23,7 @@ def attach_sentry(app: FastAPI):
     )
 
 
-def create_app(env: typing.Mapping[str, str], secure_cookies: bool = True) -> FastAPI:
+def create_app(env: typing.Mapping[str, str]) -> FastAPI:
     app = FastAPI(
         title="NMDC Data and Submission Portal API",
         version=__version__,
@@ -44,8 +44,8 @@ def create_app(env: typing.Mapping[str, str], secure_cookies: bool = True) -> Fa
     attach_sentry(app)
     errors.attach_error_handlers(app)
     app.include_router(api.router, prefix="/api")
-    app.include_router(auth.router, prefix="")
-    app.add_middleware(SessionMiddleware, secret_key=settings.secret_key, https_only=secure_cookies)
+    app.include_router(auth.router, prefix="/auth")
+    app.add_middleware(SessionMiddleware, secret_key=settings.session_secret_key)
 
     if settings.cors_allow_origins:
         app.add_middleware(

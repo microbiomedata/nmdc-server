@@ -48,7 +48,7 @@ def test_bulk_download_query(db: Session):
     assert qs.aggregate(db) == {"size": raw1.file_size_bytes, "count": 1}
 
 
-def test_generate_bulk_download(db: Session, client: TestClient, token):
+def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user):
     sample = fakes.BiosampleFactory()
     op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
     fakes.OmicsProcessingFactory(biosample_inputs=[sample])
@@ -79,7 +79,7 @@ def test_generate_bulk_download(db: Session, client: TestClient, token):
     assert resp.json()["count"] == 0
 
 
-def test_generate_bulk_download_filtered(db: Session, client: TestClient, token):
+def test_generate_bulk_download_filtered(db: Session, client: TestClient, logged_in_user):
     sample = fakes.BiosampleFactory()
     op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
     fakes.OmicsProcessingFactory(biosample_inputs=[sample])

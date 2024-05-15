@@ -2,7 +2,6 @@ import os
 from typing import Optional
 
 from pydantic import BaseSettings
-from starlette.config import Config
 
 
 class Settings(BaseSettings):
@@ -27,16 +26,18 @@ class Settings(BaseSettings):
     # after the session closes.
     db_pool_max_overflow: int = 3
 
+    # These values control the JWTs issued by nmdc-server as access and refresh tokens
+    api_jwt_secret: str = "generate me"
+    api_jwt_expiration: int = 24 * 60 * 60  # 24 hours
+    api_jwt_refresh_expiration: int = 60 * 60 * 24 * 365  # 365 days
+
     # for orcid oauth
-    secret_key: str = "secret"
-    client_id: str = "oauth client id"
-    client_secret: str = "oauth secret key"
-    open_id_config_url: str = "https://orcid.org/.well-known/openid-configuration"
-    oauth_scope: str = "/authenticate"
-    oauth_authorization_endpoint: str = "https://orcid.org/oauth/authorize"
-    oauth_token_endpoint: str = "https://orcid.org/oauth/token"
+    session_secret_key: str = "secret"
+    orcid_client_id: str = "oauth client id"
+    orcid_client_secret: str = "oauth secret key"
+    orcid_openid_config_url: str = "https://orcid.org/.well-known/openid-configuration"
+    orcid_authorize_scope: str = "/authenticate"
     host: Optional[str] = None  # sets the host name for the oauth2 redirect
-    field_notes_host: str = "https://fieldnotes.microbiomedata.org"
 
     # mongo database used for ingest
     mongo_host: str = "mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org"
@@ -67,6 +68,9 @@ class Settings(BaseSettings):
     # CORS settings necessary for allowing request from Field Notes app
     cors_allow_origins: Optional[str] = None  # comma separated list of allowed origins
 
+    # Comma separated list of allowed origins for post-login redirect
+    login_redirect_allow_origins: str = "http://127.0.0.1:8081"
+
     # Github Issue creation settings. Both are required for automated issue creation.
     github_issue_url: Optional[str] = None
     github_authentication_token: Optional[str] = None
@@ -84,4 +88,3 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-starlette_config = Config(environ=settings.dict())  # for authlib, incompatible with pydantic config

@@ -706,8 +706,9 @@ class MetaPGeneFunctionAggregation(Base):
 
 # Used to store a reference to a user requested zip download.  This is stored
 # in a table primarily to avoid a large query string in the zip download GET
-# endpoint.
-# TODO: consider expiring rows from this table
+# endpoint. Since the GET endpoint cannot be protected by Bearer token auth,
+# these rows are marked as expired after the first download. In the future,
+# we could also expire these rows after a certain amount of time.
 class BulkDownload(Base):
     __tablename__ = "bulk_download"
 
@@ -724,6 +725,8 @@ class BulkDownload(Base):
 
     # the filter on data objects `List[DataObjectFilter]`
     filter = Column(JSONB, nullable=True)
+
+    expired = Column(Boolean, nullable=False, default=False)
 
 
 class BulkDownloadDataObject(Base):
@@ -837,3 +840,23 @@ class SubmissionRole(Base):
     role = Column(Enum(SubmissionEditorRole))
 
     submission = relationship("SubmissionMetadata", back_populates="roles")
+
+
+class AuthorizationCode(Base):
+    __tablename__ = "authorization_code"
+
+    code = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey(User.id), nullable=False)
+    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    redirect_uri = Column(String, nullable=False)
+    exchanged = Column(Boolean, nullable=False, default=False)
+
+    user = relationship(
+        "User", foreign_keys=[user_id], primaryjoin="AuthorizationCode.user_id == User.id"
+    )
+
+
+class InvalidatedToken(Base):
+    __tablename__ = "invalidated_token"
+
+    token = Column(String, primary_key=True)
