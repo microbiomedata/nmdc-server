@@ -817,7 +817,7 @@ def create_github_issue(submission, user):
         f"Data types: {omicsprocessingtypes}",
         f"Sample type:{sampletype}",
         f"Number of samples:{numsamples}",
-    ] + data_ids
+    ] + valid_ids
     body_string = " \n ".join(body_lis)
     payload_dict = {
         "title": f"NMDC Submission: {submission.id}",
