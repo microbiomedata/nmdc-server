@@ -796,20 +796,15 @@ def create_github_issue(submission, user):
         numsamples = max(numsamples, len(sampledata[key]))
 
     # some variable data to supply depending on if data has been generated or not
-    data_ids = []
-    if contextform["dataGenerated"]:
-        data_ids = [
-            "NCBI ID: " + multiomicsform["NCBIBioProjectId"],
-            "GOLD ID: " + multiomicsform["GOLDStudyId"],
-            "Alternative IDs/Names: " + ", ".join(multiomicsform["alternativeNames"]),
-        ]
-
-    else:
-        data_ids = [
-            "JGI IDs: " + multiomicsform["JGIStudyId"],
-            "EMSL IDs: " + multiomicsform["studyNumber"],
-            "Alternative IDs/Names: " + ", ".join(multiomicsform["alternativeNames"]),
-        ]
+    id_dict = {'NCBI ID: ':multiomicsform["NCBIBioProjectId"],
+               'GOLD ID: ':multiomicsform["GOLDStudyId"],
+               'JGI ID: ':multiomicsform["JGIStudyId"],
+               'EMSL ID: ':multiomicsform["studyNumber"],
+               'Alternative IDs: ':", ".join(multiomicsform["alternativeNames"])}
+    valid_ids = []
+    for key,value in id_dict.items():
+        if str(value) != "":
+            valid_ids.append(key + value)
 
     # assemble the body of the API request
     body_lis = [
