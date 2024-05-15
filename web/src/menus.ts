@@ -19,6 +19,10 @@ const Menus = [
         href: 'https://microbiomedata.org/advisory/',
       },
       {
+        label: 'FAQs',
+        href: 'https://microbiomedata.org/faqs/',
+      },
+      {
         label: 'Diversity, Equity, and Inclusion',
         href: 'https://microbiomedata.org/idea-action-plan/',
       },
@@ -104,16 +108,24 @@ const Menus = [
     label: 'News & Impact',
     items: [
       {
-        label: 'Press Room',
+        label: 'Annual Reports',
+        href: 'https://microbiomedata.org/annual_report/',
+      },
+      {
+        label: 'Blog',
+        href: 'https://microbiomedata.org/blog/',
+      },
+      {
+        label: 'Events',
         href: 'https://microbiomedata.org/events/',
+      },
+      {
+        label: 'Media Materials',
+        href: 'https://microbiomedata.org/media/',
       },
       {
         label: 'Newsletters',
         href: 'https://microbiomedata.org/newsletters/',
-      },
-      {
-        label: 'Annual Reports',
-        href: 'https://microbiomedata.org/annual_report/',
       },
       {
         label: 'Publications',
