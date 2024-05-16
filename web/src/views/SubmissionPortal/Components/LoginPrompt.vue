@@ -1,10 +1,14 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
+import { api } from '@/data/api';
 
 export default defineComponent({
   setup() {
+    function handleLoginClick() {
+      api.initiateOrcidLogin();
+    }
     return {
-      loginHref: '/login',
+      handleLoginClick,
     };
   },
 });
@@ -34,10 +38,10 @@ export default defineComponent({
         </v-col>
         <v-col class="flex-grow-0">
           <v-btn
-            :href="loginHref"
             variant="plain"
             elevation="0"
             style="background: transparent"
+            @click="handleLoginClick"
           >
             <img
               width="28px"

@@ -1,6 +1,8 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
-import { stateRefs } from '@/store';
+import { init, stateRefs } from '@/store';
+import { api } from '@/data/api';
+import { useRouter } from '@/use/useRouter';
 
 export default defineComponent({
   props: {
@@ -10,9 +12,31 @@ export default defineComponent({
     },
   },
   setup() {
+    const router = useRouter();
+
+    function handleLogin() {
+      api.initiateOrcidLogin();
+    }
+
+    async function handleLogout() {
+      try {
+        await api.logout();
+      } catch (e) {
+        // This can happen if the user attempts to log out after their access token has expired
+        // and that's okay to silently ignore
+      } finally {
+        stateRefs.user.value = null;
+        if (router) {
+          await init(router, false);
+        }
+      }
+    }
+
     return {
+      handleLogin,
+      handleLogout,
       me: stateRefs.user,
-      orcid: stateRefs.orcid,
+      loading: stateRefs.userLoading,
     };
   },
 });
@@ -20,18 +44,33 @@ export default defineComponent({
 
 <template>
   <div>
-    <template v-if="me">
+    <template v-if="loading">
+      <div class="d-flex align-center user-loading">
+        <img
+          width="24px"
+          class="mx-2"
+          alt="ORCID logo"
+          src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+        >
+        <v-skeleton-loader
+          type="text"
+          min-width="100"
+          class="m-0"
+        />
+      </div>
+    </template>
+    <template v-else-if="me">
       <v-btn
         :text="!nav"
         :plain="nav"
         :small="nav"
         :ripple="!nav"
-        :href="orcid ? `https://orcid.org/${orcid}` : ''"
+        :href="me.orcid ? `https://orcid.org/${me.orcid}` : ''"
       >
         <v-icon left>
           mdi-account-circle
         </v-icon>
-        {{ me }}
+        {{ me.name }}
         <img
           width="24px"
           class="ml-2"
@@ -44,7 +83,7 @@ export default defineComponent({
         :plain="nav"
         :small="nav"
         :ripple="!nav"
-        href="/logout"
+        @click="handleLogout"
       >
         <v-icon>mdi-logout</v-icon>
       </v-btn>
@@ -64,9 +103,9 @@ export default defineComponent({
             :text="!nav"
             :plain="nav"
             :small="nav"
-            href="/login"
             v-bind="attrs"
             v-on="on"
+            @click="handleLogin"
           >
             <img
               width="28px"
@@ -103,5 +142,10 @@ export default defineComponent({
 <style scoped>
 .login-btn-orcid-help {
   background-color: white;
+}
+</style>
+<style>
+.v-skeleton-loader__text {
+  margin: 0;
 }
 </style>

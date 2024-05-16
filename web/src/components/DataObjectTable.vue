@@ -6,7 +6,7 @@ import { flattenDeep } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
 import { humanFileSize } from '@/data/utils';
-import { BiosampleSearchResult, OmicsProcessingResult } from '@/data/api';
+import { client, BiosampleSearchResult, OmicsProcessingResult } from '@/data/api';
 import { stateRefs, acceptTerms } from '@/store';
 
 import DownloadDialog from './DownloadDialog.vue';
@@ -118,10 +118,17 @@ export default defineComponent({
       return omicsData.inputIds.filter((id: string) => id !== props.biosample.id);
     }
 
-    function download(item: OmicsProcessingResult) {
+    async function getDownloadUrlAndOpen(item: OmicsProcessingResult) {
+      if (typeof item.url === 'string') {
+        const { data } = await client.get(item.url, { baseURL: '' });
+        window.open(data.url, '_blank', 'noopener,noreferrer');
+      }
+    }
+
+    async function handleDownload(item: OmicsProcessingResult) {
       if (typeof item.url === 'string') {
         if (stateRefs.hasAcceptedTerms.value) {
-          window.open(item.url, '_blank', 'noopener,noreferrer');
+          getDownloadUrlAndOpen(item);
         } else {
           termsDialog.item = item;
           termsDialog.value = true;
@@ -132,11 +139,13 @@ export default defineComponent({
     function onAcceptTerms() {
       termsDialog.value = false;
       acceptTerms();
+      getDownloadUrlAndOpen(termsDialog.item!);
+      termsDialog.item = null;
     }
 
     return {
       onAcceptTerms,
-      download,
+      handleDownload,
       descriptionMap,
       headers,
       items,
@@ -156,7 +165,6 @@ export default defineComponent({
       :width="400"
     >
       <DownloadDialog
-        :href="termsDialog.item.url"
         @clicked="onAcceptTerms"
       />
     </v-dialog>
@@ -221,7 +229,7 @@ export default defineComponent({
                     :disabled="!loggedInUser"
                     v-bind="attrs"
                     color="primary"
-                    @click="download(item)"
+                    @click="handleDownload(item)"
                   >
                     <v-icon>mdi-download</v-icon>
                   </v-btn>

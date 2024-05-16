@@ -154,7 +154,7 @@ export default defineComponent({
         })),
       })));
 
-    const loggedInUser = computed(() => typeof stateRefs.user.value === 'string');
+    const loggedInUser = computed(() => stateRefs.user.value !== null);
 
     const vistab = ref(0);
     const gatedOmicsVisConditions = useClockGate(

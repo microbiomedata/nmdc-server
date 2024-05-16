@@ -6,7 +6,7 @@ import { noop, uniqWith } from 'lodash';
 import VueRouter from 'vue-router';
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import {
-  api, Condition, DataObjectFilter, EnvoNode, EnvoTree,
+  api, Condition, DataObjectFilter, EnvoNode, EnvoTree, User,
 } from '@/data/api';
 
 // TODO: Remove in version 3;
@@ -16,8 +16,8 @@ let router: VueRouter | null = null;
 const state = reactive({
   conditions: [] as Condition[],
   bulkDownloadSelected: [] as string[],
-  user: null as string | null,
-  orcid: null as string | null,
+  userLoading: false,
+  user: null as User | null,
   hasAcceptedTerms: false,
   treeData: null as EnvoTree | null,
 });
@@ -100,13 +100,19 @@ const dataObjectFilter: ComputedRef<DataObjectFilter[]> = computed(() => state
 /**
  * load the current user on app start
  */
-async function init(_router: VueRouter) {
-  state.user = await api.me();
+async function init(_router: VueRouter, loadUser = true) {
+  if (loadUser) {
+    state.userLoading = true;
+    try {
+      state.user = await api.me();
+    } finally {
+      state.userLoading = false;
+    }
+  }
   router = _router;
   // @ts-ignore
   state.conditions = router.currentRoute.query?.conditions || [];
   if (state.user) {
-    state.orcid = await api.myOrcid();
     restoreState();
   } else {
     watchEffect(persistState);

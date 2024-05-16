@@ -1,10 +1,5 @@
-import axios from 'axios';
-import { SearchParams, User } from '@/data/api';
+import { client, SearchParams, User } from '@/data/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
-
-const client = axios.create({
-  baseURL: process.env.VUE_APP_BASE_URL || '/api',
-});
 
 interface NmdcAddress {
   name: string;
