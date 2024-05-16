@@ -923,7 +923,7 @@ export default defineComponent({
             >
               <span v-if="status === submissionStatus.SubmittedPendingReview || submitCount">
                 <v-icon>mdi-check-circle</v-icon>
-                Done
+                Submitted
               </span>
               <span v-else>
                 3. Submit
