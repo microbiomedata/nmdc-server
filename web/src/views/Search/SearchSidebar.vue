@@ -207,7 +207,24 @@ export default defineComponent({
         <span v-if="isLoading">
           Loading results...
         </span>
-        <span v-else>Found {{ resultsCount }} results.</span>
+        <span v-else>Found {{ resultsCount }} samples.
+          <v-tooltip
+            bottom
+            open-delay="600"
+          >
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                x-small
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon>mdi-help-circle</v-icon>
+              </v-btn>
+            </template>
+            <span>Sample Class definition</span>
+          </v-tooltip>
+        </span>
       </div>
 
       <v-divider class="my-3" />
