@@ -3,7 +3,7 @@ name: build-berkeley-image
 on:
   push:
     branches:
-      - main
+      - berkeley-schema-migration
 
 env:
   IS_ORIGINAL_REPO: ${{ github.repository == 'microbiomedata/nmdc-server' }}
@@ -16,37 +16,37 @@ jobs:
       matrix:
         image: [server, client, worker]
 
-      steps:
-        - name: Checkout code
-          uses: actions/checkout@v4
-          with:
-            fetch-depth: 0
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-        - name: Login to Github Container Registry
-          uses: docker/login-action@v3
-          with:
-            registry: ghcr.io
-            username: ${{ github.actor }}
-            password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Login to Github Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-        - name: Docker meta
-          id: meta
-          uses: docker/metadata-action@v5
-          with:
-            images: |
-              ghcr.io/microbiomedata/nmdc-server/${{ matrix.image }}
-            flavor: |
-              latest=false
-              prefix=berkeley
-            tags: |
-              type=ref,event=branch
-              type=raw,value=berkeley
+      - name: Docker meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/microbiomedata/nmdc-server/${{ matrix.image }}
+          flavor: |
+            latest=false
+            prefix=berkeley
+          tags: |
+            type=ref,event=branch
+            type=raw,value=berkeley
 
-        - name: Build and push
-          uses: docker/build-push-action@v5
-          with:
-            context: ${{ matrix.image == 'client' && 'web' || '.' }}
-            push: ${{ env.IS_ORIGINAL_REPO }}
-            file: ${{ matrix.image == 'worker' && 'Dockerfile.worker' || matrix.image == 'client' && 'web/Dockerfile' || 'Dockerfile' }}
-            tags: ${{ steps.meta.outputs.tags }}
-            labels: ${{ steps.meta.outputs.labels }}
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.image == 'client' && 'web' || '.' }}
+          push: ${{ env.IS_ORIGINAL_REPO }}
+          file: ${{ matrix.image == 'worker' && 'Dockerfile.worker' || matrix.image == 'client' && 'web/Dockerfile' || 'Dockerfile' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
