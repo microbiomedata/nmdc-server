@@ -48,7 +48,6 @@ export default defineComponent({
 
 <template>
   <v-main>
-    <AppBanner />
     <v-container>
       <v-card flat>
         <v-card-title class="text-h4">

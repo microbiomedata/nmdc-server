@@ -235,7 +235,6 @@ export default defineComponent({
 <template>
   <v-container fluid>
     <v-main v-if="item !== null">
-      <AppBanner />
       <v-row :class="{'flex-column': $vuetify.breakpoint.xs}">
         <v-col
           cols="12"
