@@ -36,7 +36,7 @@ export default defineComponent({
 
 <template>
   <v-main v-if="result.id">
-    <AppBanner />
+    <AppBanner v-if="false" />
     <v-container fluid>
       <IndividualTitle :item="result" />
       <AttributeList

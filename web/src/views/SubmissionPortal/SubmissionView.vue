@@ -50,7 +50,7 @@ export default defineComponent({
 
 <template>
   <v-main>
-    <AppBanner v-if="showBanner" />
+    <AppBanner v-if="false" />
     <v-container v-if="!stateRefs.user.value && !req.loading.value">
       <v-container class="mt-4">
         <v-row>
