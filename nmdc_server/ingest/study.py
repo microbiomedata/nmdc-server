@@ -23,11 +23,13 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional
 
     image_data = None
     if url:
-        r = requests.get(url)
-        if r.ok:
-            image_data = r.content
+        try:
+            r = requests.get(url)
+            r.raise_for_status()
+        except Exception as e:
+            logger.error(f"Failed to download image for {name} from {url} : {e}")
         else:
-            logger.error(f"Failed to download image for {name} from {url} : {r.status_code}")
+            image_data = r.content
 
     pi = PrincipalInvestigator(name=name, image=image_data, orcid=orcid)
 
