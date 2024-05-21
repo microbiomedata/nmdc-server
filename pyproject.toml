@@ -16,8 +16,8 @@ dependencies = [
     "click",
     "cryptography",
     # https://github.com/microbiomedata/nmdc-server/actions/runs/5671884086/job/15369921721
-    "dnspython==2.3.0",
-    "fastapi==0.71.0",
+    "dnspython==2.6.1",
+    "fastapi==0.109.1",
     "factory-boy==3.2.1",
     "httpx<=0.18.2",
     "ipython==7.31.1",
@@ -33,10 +33,10 @@ dependencies = [
     "python-dotenv",
     "python-jose[cryptography]",
     "requests==2.28.1",
-    "sentry-sdk[celery,sqlalchemy]",
+    "sentry-sdk[celery,sqlalchemy,fastapi]",
     "sqlalchemy>=1.4",
-    "starlette==0.17.1",
-    "typing-extensions==4.1.0",
+    "starlette==0.35.0",
+    "typing-extensions==4.8.0",
     # pinned 3rd party dependencies
     "importlib-metadata==4.12.0",
 ]
