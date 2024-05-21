@@ -16,7 +16,6 @@ dependencies = [
     "click",
     "cryptography",
     # https://github.com/microbiomedata/nmdc-server/actions/runs/5671884086/job/15369921721
-    "dnspython==2.6.1",
     "fastapi==0.109.1",
     "factory-boy==3.2.1",
     "httpx<=0.18.2",
