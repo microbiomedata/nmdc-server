@@ -33,7 +33,7 @@ dependencies = [
     "python-jose[cryptography]",
     "requests==2.28.1",
     "sentry-sdk[celery,sqlalchemy,fastapi]",
-    "sqlalchemy>=1.4",
+    "sqlalchemy==1.4.31",
     "starlette==0.35.0",
     "typing-extensions==4.8.0",
     # pinned 3rd party dependencies
