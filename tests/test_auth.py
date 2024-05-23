@@ -7,9 +7,11 @@ from nmdc_server.config import settings
 
 def test_login(client: TestClient):
     resp = client.request(method="get", url="/login", allow_redirects=False)
+    next_url = resp.next_request.url if resp.next_request else ""
 
     assert resp.status_code == 302
-    assert resp.next.url.startswith(settings.oauth_authorization_endpoint)  # type: ignore
+
+    assert str(next_url).startswith(settings.oauth_authorization_endpoint)  # type: ignore
 
 
 def test_current_user(client: TestClient, token: Token):
