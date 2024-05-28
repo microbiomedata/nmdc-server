@@ -776,6 +776,7 @@ export default defineComponent({
           'width': sidebarOpen ? '300px' : '0px',
           'font-size': '14px',
           'position': 'relative',
+          'flex-shrink': '0',
         }"
       >
         <v-btn
