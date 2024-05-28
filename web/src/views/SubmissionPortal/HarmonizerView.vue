@@ -769,9 +769,7 @@ export default defineComponent({
     <div
       class="harmonizer-style-container harmonizer-and-sidebar"
     >
-      <div class="harmonizer-container">
-        <div id="harmonizer-root" />
-      </div>
+      <div id="harmonizer-root" />
 
       <div
         :style="{
@@ -1024,14 +1022,11 @@ html {
   overflow: auto;
 }
 
-.harmonizer-container {
-  flex-grow: 1;
-  overflow: auto;
-}
-
 /* Grid */
 #harmonizer-root {
+  width: 100%;
   height: 100%;
+  overflow: auto;
 
   .secondary-header-cell:hover {
     cursor: pointer;
