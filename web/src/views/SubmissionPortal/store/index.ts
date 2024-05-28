@@ -275,7 +275,9 @@ async function incrementalSaveRecord(id: string) {
   }
 
   if (hasChanged.value) {
-    await api.updateRecord(id, payload, undefined, permissions);
+    const response = await api.updateRecord(id, payload, undefined, permissions);
+    // eslint-disable-next-line consistent-return
+    return response.httpStatus;
   }
   hasChanged.value = 0;
 }
