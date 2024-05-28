@@ -209,9 +209,16 @@ export class HarmonizerApi {
       modalsRoot: document.querySelector('.harmonizer-style-container'),
       fieldSettings: this._getFieldSettings(),
       columnHelpEntries: ['column', 'description', 'guidance', 'examples'],
+      // we use our own custom help sidebar, so turn off DataHarmonizer's built-in one
+      helpSidebar: {
+        enabled: false,
+      },
     });
     this.footer = new Footer(document.querySelector('#harmonizer-footer-root'), this.dh);
     this.dh.useSchema(this.schema, [], templateName);
+    // Let the Handsontable element take up as much space as it wants, it will be visually
+    // constrained by its containing elements
+    this.dh.hot.updateSettings({ height: 'auto', width: 'auto' });
     this._postTemplateChange();
 
     // @ts-ignore
