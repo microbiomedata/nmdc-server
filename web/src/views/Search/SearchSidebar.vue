@@ -144,17 +144,19 @@ export default defineComponent({
     watch(filterText, updateSearch);
 
     return {
+      /* data */
       biosampleDescription,
-      filterText,
-      textSearchResults,
-      setConditions,
-      FunctionSearchFacets,
       conditions: stateRefs.conditions,
       dbSummary,
+      textSearchResults,
+      filterText,
+      FunctionSearchFacets,
+      types,
+      /* methods */
       dbSummaryForTable,
       removeConditions,
+      setConditions,
       toggleConditions,
-      types,
     };
   },
 });
