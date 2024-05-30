@@ -1,5 +1,9 @@
 <script lang="ts">
-import { defineComponent, ref, watch } from '@vue/composition-api';
+import {
+  computed, defineComponent, ref, watch,
+} from '@vue/composition-api';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+
 import { types } from '@/encoding';
 import {
   api, Condition, DatabaseSummaryResponse, entityType,
@@ -112,6 +116,15 @@ export default defineComponent({
     const filterText = ref('');
     const textSearchResults = ref([] as Condition[]);
     const dbSummary = ref({} as DatabaseSummaryResponse);
+    const biosampleDescription = computed(() => {
+      const { schemaName } = types.biosample;
+      if (schemaName !== undefined) {
+        // @ts-ignore
+        const schema = NmdcSchema.$defs[schemaName];
+        return schema.description || '';
+      }
+      return '';
+    });
     api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
 
     function dbSummaryForTable(table: entityType, field: string) {
@@ -131,6 +144,7 @@ export default defineComponent({
     watch(filterText, updateSearch);
 
     return {
+      biosampleDescription,
       filterText,
       textSearchResults,
       setConditions,
@@ -214,15 +228,16 @@ export default defineComponent({
           >
             <template #activator="{ on, attrs }">
               <v-btn
+                class="mb-2"
                 icon
-                x-small
+                small
                 v-bind="attrs"
                 v-on="on"
               >
                 <v-icon>mdi-help-circle</v-icon>
               </v-btn>
             </template>
-            <span>Sample Class definition</span>
+            <span>{{ biosampleDescription }}</span>
           </v-tooltip>
         </span>
       </div>
