@@ -786,6 +786,8 @@ client.interceptors.response.use(undefined, async (error: AxiosError) => {
     const { config } = error;
     config.sent = true;
     const tokenResponse = await exchangeRefreshToken();
+    // Retrying the original request will *not* pick up the new default Authorization header. We
+    // must set it manually here before sending out the retry.
     config.headers = {
       ...config.headers,
       Authorization: `Bearer ${tokenResponse.access_token}`,
