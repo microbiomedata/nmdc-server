@@ -115,10 +115,12 @@ DECLARE
         SELECT tablename FROM pg_tables
         WHERE schemaname = 'public'
             and tablename <> 'alembic_version'
+            and tablename <> 'authorization_code'
+            and tablename <> 'bulk_download'
+            and tablename <> 'bulk_download_data_object'
             and tablename <> 'file_download'
             and tablename <> 'ingest_lock'
-            and tablename <> 'bulk_download'
-            and tablename <> 'bulk_download_data_object';
+            and tablename <> 'invalidated_token';
 BEGIN
     FOR stmt IN statements LOOP
         EXECUTE 'TRUNCATE TABLE ' || quote_ident(stmt.tablename) || ' CASCADE;';
