@@ -1,5 +1,9 @@
 <script lang="ts">
-import { defineComponent, ref, watch } from '@vue/composition-api';
+import {
+  computed, defineComponent, ref, watch,
+} from '@vue/composition-api';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+
 import { types } from '@/encoding';
 import {
   api, Condition, DatabaseSummaryResponse, entityType,
@@ -112,6 +116,15 @@ export default defineComponent({
     const filterText = ref('');
     const textSearchResults = ref([] as Condition[]);
     const dbSummary = ref({} as DatabaseSummaryResponse);
+    const biosampleDescription = computed(() => {
+      const { schemaName } = types.biosample;
+      if (schemaName !== undefined) {
+        // @ts-ignore
+        const schema = NmdcSchema.$defs[schemaName];
+        return schema.description || '';
+      }
+      return '';
+    });
     api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
 
     function dbSummaryForTable(table: entityType, field: string) {
@@ -131,16 +144,19 @@ export default defineComponent({
     watch(filterText, updateSearch);
 
     return {
-      filterText,
-      textSearchResults,
-      setConditions,
-      FunctionSearchFacets,
+      /* data */
+      biosampleDescription,
       conditions: stateRefs.conditions,
       dbSummary,
+      textSearchResults,
+      filterText,
+      FunctionSearchFacets,
+      types,
+      /* methods */
       dbSummaryForTable,
       removeConditions,
+      setConditions,
       toggleConditions,
-      types,
     };
   },
 });
@@ -207,7 +223,24 @@ export default defineComponent({
         <span v-if="isLoading">
           Loading results...
         </span>
-        <span v-else>Found {{ resultsCount }} results.</span>
+        <span v-else>Found {{ resultsCount }} samples.
+          <v-tooltip
+            bottom
+            open-delay="600"
+          >
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                x-small
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon>mdi-help-circle</v-icon>
+              </v-btn>
+            </template>
+            <span>{{ biosampleDescription }}</span>
+          </v-tooltip>
+        </span>
       </div>
 
       <v-divider class="my-3" />
