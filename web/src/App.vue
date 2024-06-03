@@ -3,7 +3,7 @@ import { defineComponent, onMounted } from '@vue/composition-api';
 import AppHeader from '@/components/Presentation/AppHeader.vue';
 import { stateRefs, init } from '@/store/';
 import { useRouter } from '@/use/useRouter';
-import { api, RefreshTokenExchangeError } from '@/data/api';
+import { api } from '@/data/api';
 
 export default defineComponent({
   name: 'App',
@@ -21,17 +21,15 @@ export default defineComponent({
       }
       // The first time the app is loaded, there will not yet be an access token configured on
       // the API client. There *may* be a refresh token in storage, so attempt to exchange it
-      // before calling the init() function.
+      // before calling the init() function. The exchangeRefreshToken function will throw a
+      // RefreshTokenExchangeError if the refresh token is invalid or expired. If that or any other
+      // exception is thrown during the exchange, we still want to call init() to finish setting up
+      // the app, but we don't want to re-throw the error.
       try {
         await api.exchangeRefreshToken();
-      } catch (error) {
-        if (error instanceof RefreshTokenExchangeError) {
-          // The refresh failed, carry on with a logged-out state
-        } else {
-          throw error;
-        }
+      } finally {
+        await init(router);
       }
-      await init(router);
     });
 
     return {
