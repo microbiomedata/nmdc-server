@@ -402,7 +402,7 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bulk download not found")
     if bulk_download.expired:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Bulk download expired"
+            status_code=status.HTTP_410_GONE, detail="Bulk download expired"
         )
     content = []
 
