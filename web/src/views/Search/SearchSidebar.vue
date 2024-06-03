@@ -230,9 +230,8 @@ export default defineComponent({
           >
             <template #activator="{ on, attrs }">
               <v-btn
-                class="mb-2"
                 icon
-                small
+                x-small
                 v-bind="attrs"
                 v-on="on"
               >
