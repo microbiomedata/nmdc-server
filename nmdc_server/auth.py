@@ -87,14 +87,6 @@ class OidcLoginRequestBody(BaseModel):
     id_token: str
 
 
-@lru_cache
-def fetch_orcid_jwks():
-    """Fetch the JWKS from the ORCID OpenID Connect configuration."""
-    orcid_openid_config = requests.get(settings.orcid_openid_config_url).json()
-    jwks_uri = orcid_openid_config["jwks_uri"]
-    return requests.get(jwks_uri).json()
-
-
 def encode_token(*, data: dict, expires_delta: timedelta) -> bytes:
     """Create a JWT with the given data and expiration.
 
@@ -301,6 +293,14 @@ async def token(
     authorization_code.exchanged = True
     db.commit()
     return create_token_response(user)
+
+
+@lru_cache
+def fetch_orcid_jwks():
+    """Fetch the JWKS from the ORCID OpenID Connect configuration."""
+    orcid_openid_config = requests.get(settings.orcid_openid_config_url).json()
+    jwks_uri = orcid_openid_config["jwks_uri"]
+    return requests.get(jwks_uri).json()
 
 
 @router.post("/oidc-login", response_model=TokenResponse, include_in_schema=False)
