@@ -285,7 +285,7 @@ async def token(
     When a user receives an authorization code from query parameters in the redirect_uri that they
     provided to the /auth/login route, they can exchange it for an nmdc-server access token using
     this route. The provided authorization code is looked up in the database. If it is missing,
-    already exchanged, wasn't generated from the same redirect_uri, or is older than 5 minutes, an
+    already exchanged, wasn't generated from the same redirect_uri, or is older than 45 seconds, an
     error is raised. Otherwise, the code is marked as exchanged and new tokens are generated for the
     user associated with the code.
     """
@@ -294,7 +294,7 @@ async def token(
         authorization_code is None
         or authorization_code.exchanged
         or authorization_code.redirect_uri != body.redirect_uri
-        or authorization_code.created < datetime.utcnow() - timedelta(minutes=5)
+        or authorization_code.created < datetime.utcnow() - timedelta(seconds=45)
     ):
         raise AUTHORIZATION_CODE_INVALID_EXCEPTION
     user = authorization_code.user
