@@ -115,6 +115,12 @@ def test_generate_bulk_download_filtered(db: Session, client: TestClient, logged
     assert resp.status_code == 200
     assert resp.json()["count"] == 1
 
+    # Verify that the bulk download can be accessed without authentication
     resp = client.get(f"/api/bulk_download/{id_}")
+    del client.headers["Authorization"]
     assert resp.status_code == 200
     assert b"/raw" not in resp.content and b"/metag" in resp.content
+
+    # Verify that the bulk download cannot be accessed a second time
+    resp = client.get(f"/api/bulk_download/{id_}")
+    assert resp.status_code == 410
