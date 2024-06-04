@@ -58,7 +58,6 @@ AUTHORIZATION_CODE_INVALID_EXCEPTION = HTTPException(
 )
 
 API_JWT_ALGORITHM = "HS256"
-API_JWT_ISSUER = "https://data.microbiomedata.org"
 ORCID_JWT_ISSUER = "https://orcid.org"
 
 
@@ -100,7 +99,7 @@ def encode_token(*, data: dict, expires_delta: timedelta) -> bytes:
     expire = now + expires_delta
     payload.update(
         {
-            "iss": API_JWT_ISSUER,
+            "iss": settings.host,
             "iat": now,
             "exp": expire,
         }
@@ -116,7 +115,7 @@ def decode_token(token: str) -> dict:
     must not have expired. Once validated, the claims are returned.
     """
     claims_options = {
-        "iss": {"essential": True, "value": API_JWT_ISSUER},
+        "iss": {"essential": True, "value": settings.host},
     }
     claims = jwt.decode(token, settings.api_jwt_secret, claims_options=claims_options)
     claims.validate()
@@ -228,10 +227,7 @@ async def login_via_orcid(request: Request, redirect_uri: str, state: Optional[s
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid redirect_uri",
         )
-    if settings.host:
-        orcid_redirect_uri = f"{settings.host.rstrip('/')}/auth/orcid-token"
-    else:
-        orcid_redirect_uri = request.url_for("orcid-token")
+    orcid_redirect_uri = f"{settings.host.rstrip('/')}/auth/orcid-token"
     request.session["redirect_uri"] = redirect_uri
     if state is not None:
         request.session["state"] = state

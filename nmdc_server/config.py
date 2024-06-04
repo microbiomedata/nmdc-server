@@ -37,7 +37,9 @@ class Settings(BaseSettings):
     orcid_client_secret: str = "oauth secret key"
     orcid_openid_config_url: str = "https://orcid.org/.well-known/openid-configuration"
     orcid_authorize_scope: str = "/authenticate"
-    host: Optional[str] = None  # sets the host name for the oauth2 redirect
+
+    # host name for the ORCID oauth2 redirect and our own JWT issuer
+    host: str = 'http://127.0.0.1:8000'
 
     # mongo database used for ingest
     mongo_host: str = "mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org"

@@ -16,7 +16,7 @@ Edit values in `.env` to point to existing postgresql databases. See `nmdc_serve
 
 1. Create an OrcID account at [orcid.org](https://orcid.org).
 1. Create an Application via the OrcID [developer tools](https://orcid.org/developer-tools) page.
-    - Set the Redirect URIs (the first and only one) to `http://127.0.0.1:8080`
+    - Set the Redirect URIs (the first and only one) to `http://127.0.0.1:8000`
         - Note: OrcID has changed the validation logic for this form field over time.
         - In case you run into validation errors, you may find [this issue](https://github.com/microbiomedata/nmdc-server/issues/1041) helpful.
     - You will use the resulting **Client ID** and **Client Secret** in the next step.
@@ -25,7 +25,6 @@ Edit values in `.env` to point to existing postgresql databases. See `nmdc_serve
 ```bash
 NMDC_CLIENT_ID=changeme
 NMDC_CLIENT_SECRET=changeme
-NMDC_HOST=http://127.0.0.1:8080
 ```
 
 # Load production data
