@@ -23,8 +23,8 @@ Edit values in `.env` to point to existing postgresql databases. See `nmdc_serve
 1. Set the following configuration in `.env`, and then restart the stack.
 
 ```bash
-NMDC_CLIENT_ID=changeme
-NMDC_CLIENT_SECRET=changeme
+NMDC_ORCID_CLIENT_ID=changeme
+NMDC_ORCID_CLIENT_SECRET=changeme
 ```
 
 # Load production data
