@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted } from '@vue/composition-api';
+import { defineComponent, onMounted, onUnmounted } from '@vue/composition-api';
 import AppHeader from '@/components/Presentation/AppHeader.vue';
 import { stateRefs, init } from '@/store/';
 import { useRouter } from '@/use/useRouter';
@@ -11,7 +11,16 @@ export default defineComponent({
   setup() {
     const router = useRouter();
 
+    const handleRefreshTokenExpired = () => {
+      stateRefs.user.value = null;
+      if (router) {
+        init(router, false);
+      }
+    };
+
     onMounted(async () => {
+      window.addEventListener('refreshTokenExpired', handleRefreshTokenExpired);
+
       if (!router) {
         return;
       }
@@ -34,6 +43,10 @@ export default defineComponent({
       } finally {
         await init(router);
       }
+    });
+
+    onUnmounted(() => {
+      window.removeEventListener('refreshTokenExpired', handleRefreshTokenExpired);
     });
 
     return {

@@ -764,6 +764,9 @@ function exchangeRefreshToken(): Promise<TokenResponse> {
       return data;
     } catch (error) {
       window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+      window.dispatchEvent(new CustomEvent('refreshTokenExpired', {
+        detail: { error },
+      }));
       throw new RefreshTokenExchangeError(`Refresh request failed: ${error}`);
     }
   }
