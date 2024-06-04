@@ -3,7 +3,7 @@ import { defineComponent, onMounted } from '@vue/composition-api';
 import AppHeader from '@/components/Presentation/AppHeader.vue';
 import { stateRefs, init } from '@/store/';
 import { useRouter } from '@/use/useRouter';
-import { api } from '@/data/api';
+import { api, RefreshTokenExchangeError } from '@/data/api';
 
 export default defineComponent({
   name: 'App',
@@ -27,6 +27,10 @@ export default defineComponent({
       // the app, but we don't want to re-throw the error.
       try {
         await api.exchangeRefreshToken();
+      } catch (error) {
+        if (!(error instanceof RefreshTokenExchangeError)) {
+          throw error;
+        }
       } finally {
         await init(router);
       }
