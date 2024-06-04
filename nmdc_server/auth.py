@@ -121,16 +121,16 @@ async def login_via_orcid(request: Request, behavior: LoginBehavior = LoginBehav
     if settings.host:
         redirect_uri = f"{settings.host.rstrip('/')}/token{qs}"
     else:
-        redirect_uri = request.url_for("token") + qs
-    return await oauth2_client.orcid.authorize_redirect(request, redirect_uri)
+        redirect_uri = request.url_for("token") + qs  # type: ignore
+    return await oauth2_client.orcid.authorize_redirect(request, redirect_uri)  # type: ignore
 
 
 @router.get("/token", name="token", include_in_schema=False)
 async def authorize(
     request: Request, db: Session = Depends(get_db), behavior: LoginBehavior = LoginBehavior.web
 ):
-    token = await oauth2_client.orcid.authorize_access_token(request)
-    user = User(orcid=token["orcid"], name=token["name"])
+    token = await oauth2_client.orcid.authorize_access_token(request)  # type: ignore
+    user = User(orcid=token["orcid"], name=token["name"])  # type: ignore
     user_model = crud.get_or_create_user(db, user)
     user_model.name = user.name
     db.commit()
