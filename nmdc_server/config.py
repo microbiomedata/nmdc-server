@@ -39,7 +39,7 @@ class Settings(BaseSettings):
     orcid_authorize_scope: str = "/authenticate"
 
     # host name for the ORCID oauth2 redirect and our own JWT issuer
-    host: str = 'http://127.0.0.1:8000'
+    host: str = "http://127.0.0.1:8000"
 
     # mongo database used for ingest
     mongo_host: str = "mongo-loadbalancer.nmdc-runtime-dev.development.svc.spin.nersc.org"
