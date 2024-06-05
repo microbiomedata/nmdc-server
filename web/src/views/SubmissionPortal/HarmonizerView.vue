@@ -460,6 +460,7 @@ export default defineComponent({
       activeTemplate.value = HARMONIZER_TEMPLATES[nextTemplate];
       harmonizerApi.useTemplate(HARMONIZER_TEMPLATES[nextTemplate].schemaClass);
       harmonizerApi.addChangeHook(onDataChange);
+      harmonizerApi.addBeforeChangeHook(onBeforeChange);
     }
 
     return {
