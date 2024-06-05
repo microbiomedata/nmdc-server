@@ -3,7 +3,7 @@ import { defineComponent, onMounted, onUnmounted } from '@vue/composition-api';
 import AppHeader from '@/components/Presentation/AppHeader.vue';
 import { stateRefs, init } from '@/store/';
 import { useRouter } from '@/use/useRouter';
-import { api, RefreshTokenExchangeError } from '@/data/api';
+import { api, REFRESH_TOKEN_EXPIRED_EVENT, RefreshTokenExchangeError } from '@/data/api';
 
 export default defineComponent({
   name: 'App',
@@ -19,7 +19,7 @@ export default defineComponent({
     };
 
     onMounted(async () => {
-      window.addEventListener('refreshTokenExpired', handleRefreshTokenExpired);
+      window.addEventListener(REFRESH_TOKEN_EXPIRED_EVENT, handleRefreshTokenExpired);
 
       if (!router) {
         return;
@@ -46,7 +46,7 @@ export default defineComponent({
     });
 
     onUnmounted(() => {
-      window.removeEventListener('refreshTokenExpired', handleRefreshTokenExpired);
+      window.removeEventListener(REFRESH_TOKEN_EXPIRED_EVENT, handleRefreshTokenExpired);
     });
 
     return {

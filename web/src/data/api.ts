@@ -10,6 +10,10 @@ declare module 'axios' {
   }
 }
 
+// The name of a custom event that is dispatched when a refresh token exchange fails
+// Consider moving this to a separate module if we end up having more custom events
+export const REFRESH_TOKEN_EXPIRED_EVENT = 'nmdc:refreshTokenExpired';
+
 const cache = setupCache({
   key: (req) => req.url + JSON.stringify(req.params) + JSON.stringify(req.data),
   maxAge: 15 * 60 * 1000,
@@ -764,7 +768,7 @@ function exchangeRefreshToken(): Promise<TokenResponse> {
       return data;
     } catch (error) {
       window.localStorage.removeItem(REFRESH_TOKEN_KEY);
-      window.dispatchEvent(new CustomEvent('refreshTokenExpired', {
+      window.dispatchEvent(new CustomEvent(REFRESH_TOKEN_EXPIRED_EVENT, {
         detail: { error },
       }));
       throw new RefreshTokenExchangeError(`Refresh request failed: ${error}`);
