@@ -399,7 +399,9 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
     """Return a download table compatible with mod_zip."""
     bulk_download = db.query(models.BulkDownload).get(id)
     if bulk_download is None:
-        return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bulk download not found")
+    if bulk_download.expired:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Bulk download expired")
     content = []
 
     for file in bulk_download.files:  # type: ignore
@@ -414,7 +416,15 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
         file_size_string = data_object.file_size_bytes if data_object.file_size_bytes else ""
         content.append(f"- {file_size_string} {url} {file.path}")
 
+    bulk_download.expired = True
+    db.commit()
+
     return "\n".join(content) + "\n"
+
+
+def get_user(db: Session, user_id: str) -> Optional[models.User]:
+    """Get a user by ID."""
+    return db.query(models.User).get(user_id)
 
 
 def get_or_create_user(db: Session, user: schemas.User) -> models.User:
@@ -435,6 +445,33 @@ def update_user(db: Session, user: schemas.User) -> Optional[models.User]:
     db_user.is_admin = user.is_admin
     db.commit()
     return db_user
+
+
+def add_invalidated_token(db: Session, token: str) -> None:
+    """Add a token to the invalidated token table."""
+    invalidated = models.InvalidatedToken(token=token)
+    db.add(invalidated)
+    db.commit()
+
+
+def get_invalidated_token(db: Session, token: str) -> Optional[models.InvalidatedToken]:
+    """Get an invalidated token by token."""
+    return db.query(models.InvalidatedToken).get(token)
+
+
+def create_authorization_code(
+    db: Session, user: models.User, redirect_uri: str
+) -> models.AuthorizationCode:
+    """Generate an authorization code tied to a user and redirect URI."""
+    code = models.AuthorizationCode(user_id=user.id, redirect_uri=redirect_uri)
+    db.add(code)
+    db.commit()
+    return code
+
+
+def get_authorization_code(db: Session, code: str) -> Optional[models.AuthorizationCode]:
+    """Get an authorization code by code."""
+    return db.query(models.AuthorizationCode).get(code)
 
 
 def update_submission_lock(db: Session, submission_id: str):
@@ -581,7 +618,9 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
 
 def get_submissions_for_user(db: Session, user: models.User):
     """Return all submissions that a user has permission to view."""
-    all_submissions = db.query(models.SubmissionMetadata)
+    all_submissions = db.query(models.SubmissionMetadata).order_by(
+        models.SubmissionMetadata.created.desc()
+    )
 
     if user.is_admin:
         return all_submissions

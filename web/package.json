@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "serve": "rimraf -rf ./node_modules/.cache/vue-loader && vue-cli-service serve src/main.ts",
+    "serve": "rimraf -rf ./node_modules/.cache/vue-loader && vue-cli-service serve --host 127.0.0.1 --port 8081 src/main.ts",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint"
   },

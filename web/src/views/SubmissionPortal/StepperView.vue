@@ -27,7 +27,7 @@ export default defineComponent({
       if (!lockedByUser) {
         return true;
       }
-      if (lockedByUser.orcid === stateRefs.orcid.value) {
+      if (lockedByUser.orcid === stateRefs.user.value?.orcid) {
         return true;
       }
       return false;

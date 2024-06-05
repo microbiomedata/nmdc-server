@@ -1,6 +1,7 @@
 <script lang="ts">
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
 import {
+  computed,
   defineComponent,
   onMounted,
   ref,
@@ -15,8 +16,8 @@ import {
   isOwner,
   canEditSubmissionMetadata,
 } from '../store';
+import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
-import { api } from '../../../data/api';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 
 export default defineComponent({
@@ -24,7 +25,7 @@ export default defineComponent({
   setup() {
     const formRef = ref();
 
-    const currentUserOrcid = ref('');
+    const currentUserOrcid = computed(() => stateRefs.user.value?.orcid);
 
     const permissionHelpText = ref([
       {
@@ -84,7 +85,6 @@ export default defineComponent({
 
     onMounted(async () => {
       formRef.value.validate();
-      currentUserOrcid.value = await api.myOrcid();
     });
 
     return {

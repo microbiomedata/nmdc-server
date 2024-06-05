@@ -74,6 +74,8 @@ def do_ingest(function_limit, skip_annotation):
             merge_download_artifact(ingest_db, prod_db.query(models.User))
             merge_download_artifact(ingest_db, prod_db.query(models.SubmissionMetadata))
             merge_download_artifact(ingest_db, prod_db.query(models.SubmissionRole))
+            merge_download_artifact(ingest_db, prod_db.query(models.AuthorizationCode))
+            merge_download_artifact(ingest_db, prod_db.query(models.InvalidatedToken))
 
             # ingest data
             logger.info(

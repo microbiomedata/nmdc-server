@@ -4,6 +4,8 @@ import VueRouter, { Route } from 'vue-router';
 import Search from '@/views/Search/SearchLayout.vue';
 import SamplePage from '@/views/IndividualResults/SamplePage.vue';
 import StudyPage from '@/views/IndividualResults/StudyPage.vue';
+import UserPage from '@/views/User/UserPage.vue';
+import LoginPage from '@/views/Login/LoginPage.vue';
 
 /* Submission portal */
 import MultiOmicsDataForm from '@/views/SubmissionPortal/Components/MultiOmicsDataForm.vue';
@@ -15,8 +17,6 @@ import TemplateChooser from '@/views/SubmissionPortal/Components/TemplateChooser
 import HarmonizerView from '@/views/SubmissionPortal/HarmonizerView.vue';
 import ValidateSubmit from '@/views/SubmissionPortal/Components/ValidateSubmit.vue';
 import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
-
-import UserPage from '@/views/User/UserPage.vue';
 
 import { unlockSubmission } from '@/views/SubmissionPortal/store/api';
 
@@ -102,6 +102,11 @@ const router = new VueRouter({
       path: '/users',
       name: 'Users',
       component: UserPage,
+    },
+    {
+      path: '/login',
+      name: 'Login',
+      component: LoginPage,
     },
   ],
   scrollBehavior: () => ({ x: 0, y: 0 }),

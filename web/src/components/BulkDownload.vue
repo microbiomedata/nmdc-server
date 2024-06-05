@@ -6,6 +6,7 @@ import { stateRefs, dataObjectFilter } from '@/store';
 import DownloadDialog from '@/components/DownloadDialog.vue';
 import useBulkDownload from '@/use/useBulkDownload';
 import { humanFileSize } from '@/data/utils';
+import { api } from '@/data/api';
 
 export default defineComponent({
 
@@ -50,6 +51,10 @@ export default defineComponent({
       window.location.assign(val.url);
     }
 
+    function handleLoginClick() {
+      api.initiateOrcidLogin();
+    }
+
     return {
       bulkDownloadSelected: stateRefs.bulkDownloadSelected,
       options,
@@ -58,6 +63,7 @@ export default defineComponent({
       termsDialog,
       createAndDownload,
       humanFileSize,
+      handleLoginClick,
     };
   },
 });
@@ -143,7 +149,7 @@ export default defineComponent({
       <v-chip
         v-else
         class="grow text-subtitle-1 ml-4"
-        href="/login"
+        @click="handleLoginClick"
       >
         Log in to download
       </v-chip>

@@ -2,24 +2,14 @@ import os
 
 import pytest
 from factory import random
-from starlette.requests import Request
 from starlette.testclient import TestClient
 
-from nmdc_server import auth, crud, database, schemas
+from nmdc_server import database, schemas
 from nmdc_server.app import create_app
+from nmdc_server.auth import create_token_response
 from nmdc_server.config import settings
-from nmdc_server.fakes import TokenFactory
+from nmdc_server.fakes import UserFactory
 from nmdc_server.fakes import db as _db
-
-
-@auth.router.post("/test-session", include_in_schema=False)
-async def create_test_session(request: Request) -> auth.Token:
-    token = TokenFactory()
-    data = token.dict()
-    data["access_token"] = str(data["access_token"])
-    data["refresh_token"] = str(data["refresh_token"])
-    request.session["token"] = data
-    return token
 
 
 @pytest.fixture(autouse=True)
@@ -51,7 +41,7 @@ def db(connection):
 
 @pytest.fixture
 def app(db):
-    return create_app(env=os.environ.copy(), secure_cookies=False)
+    return create_app(env=os.environ.copy())
 
 
 @pytest.fixture
@@ -60,13 +50,11 @@ def client(app):
 
 
 @pytest.fixture
-def token(client):
-    resp = client.post("/test-session")
-    return auth.Token(**resp.json())
+def logged_in_user(db, client) -> schemas.User:
+    user = UserFactory()
+    db.commit()
 
+    token_response = create_token_response(user)
+    client.headers["Authorization"] = f"Bearer {token_response.access_token.decode()}"
 
-@pytest.fixture
-def logged_in_user(token):
-    user_schema = schemas.User(name=token.name, orcid=token.orcid)
-    user = crud.get_or_create_user(_db, user_schema)
     return user
