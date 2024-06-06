@@ -1027,7 +1027,6 @@ html {
 #harmonizer-root {
   width: 100%;
   height: 100%;
-  overflow: auto;
 
   .secondary-header-cell:hover {
     cursor: pointer;

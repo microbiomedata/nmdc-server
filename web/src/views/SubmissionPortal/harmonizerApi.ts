@@ -216,9 +216,6 @@ export class HarmonizerApi {
     });
     this.footer = new Footer(document.querySelector('#harmonizer-footer-root'), this.dh);
     this.dh.useSchema(this.schema, [], templateName);
-    // Let the Handsontable element take up as much space as it wants, it will be visually
-    // constrained by its containing elements
-    this.dh.hot.updateSettings({ height: 'auto', width: 'auto' });
     this._postTemplateChange();
 
     // @ts-ignore
@@ -320,7 +317,12 @@ export class HarmonizerApi {
         this.selectedColumn.value = column.title;
       }
     }, 200, { leading: true }));
-    this.dh.hot.updateSettings({ search: true, customBorders: true });
+    this.dh.hot.updateSettings({
+      search: true,
+      customBorders: true,
+      height: '100%',
+      width: '100%',
+    });
     this.jumpToRowCol(0, 0);
   }
 
