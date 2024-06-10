@@ -406,6 +406,19 @@ export class HarmonizerApi {
     return this.dh.invalid_cells;
   }
 
+  addBeforeChangeHook(callback: Function) {
+    if (!this.ready.value) {
+      return;
+    }
+    // calls function on any non-programmatic change of the data
+    this.dh.hot.addHook('beforeChange', (changes: any[], source: string | null) => {
+      if (source === 'loadData') {
+        return;
+      }
+      callback();
+    });
+  }
+
   addChangeHook(callback: Function) {
     if (!this.ready.value) {
       return;

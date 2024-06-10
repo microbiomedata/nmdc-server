@@ -164,14 +164,20 @@ export default defineComponent({
       ])),
     ));
 
-    const onDataChange = () => {
+    const isSaving = ref();
+    const saveSuccess = ref();
+    const onBeforeChange = () => {
+      isSaving.value = true;
+    };
+    const onDataChange = async () => {
       hasChanged.value += 1;
       const data = harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      incrementalSaveRecord(root.$route.params.id);
+      const httpStatus = await incrementalSaveRecord(root.$route.params.id);
       tabsValidated.value[activeTemplateKey.value] = false;
+      saveSuccess.value = httpStatus === 200;
+      isSaving.value = false;
     };
-
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
     onMounted(async () => {
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
@@ -183,6 +189,7 @@ export default defineComponent({
         await harmonizerApi.init(r, schema, activeTemplate.value.schemaClass, goldEcosystemTree);
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
+        harmonizerApi.addBeforeChangeHook(onBeforeChange);
         harmonizerApi.addChangeHook(onDataChange);
         if (!canEditSampleMetadata()) {
           harmonizerApi.setTableReadOnly();
@@ -453,6 +460,7 @@ export default defineComponent({
       activeTemplate.value = HARMONIZER_TEMPLATES[nextTemplate];
       harmonizerApi.useTemplate(HARMONIZER_TEMPLATES[nextTemplate].schemaClass);
       harmonizerApi.addChangeHook(onDataChange);
+      harmonizerApi.addBeforeChangeHook(onBeforeChange);
     }
 
     return {
@@ -470,6 +478,8 @@ export default defineComponent({
       packageName,
       fields,
       highlightedValidationError,
+      isSaving,
+      saveSuccess,
       sidebarOpen,
       validationItems,
       validationActiveCategory,
@@ -615,6 +625,35 @@ export default defineComponent({
           </v-btn>
         </v-card>
         <submission-docs-link anchor="sample-metadata" />
+        <span
+          v-if="isSaving"
+          class="text-center"
+        >
+          <v-progress-circular
+            color="primary"
+            :width="1"
+            size="20"
+            value="70"
+          />
+          Saving progress
+        </span>
+        <span v-if="saveSuccess && !isSaving">
+          <v-icon
+
+            color="green"
+          >
+            mdi-check
+          </v-icon>
+          Changes saved successfully
+        </span>
+        <span v-else-if="saveSuccess === false">
+          <v-icon
+            color="red"
+          >
+            mdi-close
+          </v-icon>
+          Failed to save changes
+        </span>
         <v-spacer />
         <v-autocomplete
           v-model="jumpToModel"

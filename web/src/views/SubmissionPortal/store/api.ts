@@ -65,7 +65,7 @@ async function updateRecord(id: string, record: Partial<MetadataSubmission>, sta
     status,
     permissions,
   });
-  return resp.data;
+  return { data: resp.data, httpStatus: resp.status };
 }
 
 async function listRecords(params: SearchParams) {
