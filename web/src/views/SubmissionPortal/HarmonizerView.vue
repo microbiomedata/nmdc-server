@@ -36,6 +36,7 @@ import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
+import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -464,6 +465,7 @@ export default defineComponent({
     }
 
     return {
+      APP_HEADER_HEIGHT,
       ColorKey,
       HARMONIZER_TEMPLATES,
       columnVisibility,
@@ -514,8 +516,8 @@ export default defineComponent({
 
 <template>
   <div
-    style="overflow-y: hidden; overflow-x: hidden;"
-    class="d-flex flex-column fill-height"
+    :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT}px)`}"
+    class="d-flex flex-column"
   >
     <SubmissionStepper />
     <submission-permission-banner
@@ -799,26 +801,21 @@ export default defineComponent({
       </v-tooltip>
     </v-tabs>
 
-    <div>
-      <div v-if="schemaLoading">
-        Loading...
-      </div>
-      <div
-        class="harmonizer-style-container"
-        :style="{
-          'margin-right': sidebarOpen ? '300px' : '0px'
-        }"
-      >
-        <div id="harmonizer-root" />
-      </div>
+    <div v-if="schemaLoading">
+      Loading...
+    </div>
+
+    <div
+      class="harmonizer-style-container harmonizer-and-sidebar"
+    >
+      <div id="harmonizer-root" />
 
       <div
         :style="{
-          'float': 'right',
           'width': sidebarOpen ? '300px' : '0px',
-          'margin-top': '9px',
           'font-size': '14px',
-          'height': 'calc(100vh - 362px)'
+          'position': 'relative',
+          'flex-shrink': '0',
         }"
       >
         <v-btn
@@ -911,7 +908,7 @@ export default defineComponent({
         id="harmonizer-footer-root"
       />
     </div>
-    <div class="d-flex shrink ma-2">
+    <div class="d-flex ma-2">
       <v-btn
         color="gray"
         depressed
@@ -1056,13 +1053,19 @@ html {
   }
 }
 
+.harmonizer-and-sidebar {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100%;
+  flex-grow: 1;
+  overflow: auto;
+}
+
 /* Grid */
 #harmonizer-root {
-  overflow: hidden;
   width: 100%;
-  height: calc(100vh - 362px) !important;
-  float: left;
-  margin-top: 8px;
+  height: 100%;
 
   .secondary-header-cell:hover {
     cursor: pointer;
@@ -1129,11 +1132,12 @@ html {
 }
 
 .sidebar-toggle {
-  margin-top: -1px;
-  margin-left: -50px;
   background: white;
   z-index: 500;
   position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateX(-100%);
   border-color: rgb(152, 152, 152);
   border-right-color: rgba(152, 152, 152, 0.0);
 }

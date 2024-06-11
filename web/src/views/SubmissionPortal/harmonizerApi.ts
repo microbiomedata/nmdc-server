@@ -209,6 +209,10 @@ export class HarmonizerApi {
       modalsRoot: document.querySelector('.harmonizer-style-container'),
       fieldSettings: this._getFieldSettings(),
       columnHelpEntries: ['column', 'description', 'guidance', 'examples'],
+      // we use our own custom help sidebar, so turn off DataHarmonizer's built-in one
+      helpSidebar: {
+        enabled: false,
+      },
     });
     this.footer = new Footer(document.querySelector('#harmonizer-footer-root'), this.dh);
     this.dh.useSchema(this.schema, [], templateName);
@@ -313,7 +317,12 @@ export class HarmonizerApi {
         this.selectedColumn.value = column.title;
       }
     }, 200, { leading: true }));
-    this.dh.hot.updateSettings({ search: true, customBorders: true });
+    this.dh.hot.updateSettings({
+      search: true,
+      customBorders: true,
+      height: '100%',
+      width: '100%',
+    });
     this.jumpToRowCol(0, 0);
   }
 
