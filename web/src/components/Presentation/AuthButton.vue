@@ -15,7 +15,18 @@ export default defineComponent({
     const router = useRouter();
 
     function handleLogin() {
-      api.initiateOrcidLogin();
+      if (!router) {
+        api.initiateOrcidLogin();
+        return;
+      }
+
+      const submissionState = 'submission';
+      const submissionRegex = new RegExp(submissionState);
+      let state = '';
+      if (submissionRegex.test(router.currentRoute.path)) {
+        state += submissionState;
+      }
+      api.initiateOrcidLogin(state);
     }
 
     async function handleLogout() {
