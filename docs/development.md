@@ -27,6 +27,18 @@ NMDC_ORCID_CLIENT_ID=changeme
 NMDC_ORCID_CLIENT_SECRET=changeme
 ```
 
+### Production Redirect URIs
+
+These are the set of redirect URIs enabled in ORCiD. We need to file a support ticket with ORCID to modify these.
+
+- https://data.microbiomedata.org
+- https://data-dev.microbiomedata.org
+- https://data-sandbox.microbiomedata.org
+- https://api-dev.microbiomedata.org/orcid_code
+- https://api.microbiomedata.org/orcid_code
+- https://nmdc-edge.org/oauth
+- https://dev.nmdc-edge.org/oauth
+
 # Load production data
 
 The `nmdc-server` CLI has a `load-db` subcommand which populates your local database using a nightly production backup. These backups are stored on NERSC. You must have NERSC credentials to use this subcommand.
