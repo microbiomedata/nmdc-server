@@ -5,7 +5,7 @@ import { api } from '@/data/api';
 export default defineComponent({
   setup() {
     function handleLoginClick() {
-      api.initiateOrcidLogin();
+      api.initiateOrcidLogin('submission');
     }
     return {
       handleLoginClick,

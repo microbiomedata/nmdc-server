@@ -691,8 +691,12 @@ const REDIRECT_URI = `${window.location.origin}/login`;
  * Initiates the ORCID login flow by navigating to the /auth/login endpoint, providing the
  * redirect_uri as the frontend route (/login) which will handle the authorization code exchange.
  */
-function initiateOrcidLogin() {
-  window.location.href = `${window.location.origin}/auth/login?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+function initiateOrcidLogin(state: string = '') {
+  let loginUrl = `${window.location.origin}/auth/login?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+  if (state) {
+    loginUrl += `&state=${encodeURIComponent(state)}`;
+  }
+  window.location.href = loginUrl;
 }
 
 const REFRESH_TOKEN_KEY = 'storage.refreshToken';

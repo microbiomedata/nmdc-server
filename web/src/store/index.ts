@@ -100,7 +100,7 @@ const dataObjectFilter: ComputedRef<DataObjectFilter[]> = computed(() => state
 /**
  * load the current user on app start
  */
-async function init(_router: VueRouter, loadUser = true) {
+async function init(_router: VueRouter, loadUser = true, loginState = '' as string | (string | null)[]) {
   if (loadUser) {
     state.userLoading = true;
     try {
@@ -110,11 +110,21 @@ async function init(_router: VueRouter, loadUser = true) {
     }
   }
   router = _router;
-  // @ts-ignore
-  state.conditions = router.currentRoute.query?.conditions || [];
-  if (state.user) {
-    restoreState();
-  } else {
+  // Handle the login state
+  switch (loginState) {
+    case 'submission':
+      router.push('submission/home');
+      break;
+    default:
+      // Login normally
+      // @ts-ignore
+      state.conditions = router.currentRoute.query?.conditions || [];
+      if (state.user) {
+        restoreState();
+      }
+      break;
+  }
+  if (!state.user) {
     watchEffect(persistState);
   }
 }
