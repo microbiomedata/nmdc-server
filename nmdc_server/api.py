@@ -781,8 +781,8 @@ def create_github_issue(submission, user):
         f"Sample type:{sampletype}",
         f"Number of samples:{numsamples}",
     ] + valid_ids
-    #add the source of the issue (dev or prod)
-    body_lis.append(f"Issue created from {settings.environment} environment")
+    # add the source of the issue (dev or prod)
+    body_lis = body_lis.append(f"Issue created from {settings.environment} environment")
     body_string = " \n ".join(body_lis)
     payload_dict = {
         "title": f"NMDC Submission: {submission.id}",
