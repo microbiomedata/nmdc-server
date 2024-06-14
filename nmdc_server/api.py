@@ -771,6 +771,7 @@ def create_github_issue(submission, user):
 
     # assemble the body of the API request
     body_lis = [
+        f"Issue created from {settings.environment} environment",
         f"Submitter: {user.name}, {user.orcid}",
         f"Submission ID: {submission.id}",
         f"Has data been generated: {datagenerated}",
@@ -781,8 +782,6 @@ def create_github_issue(submission, user):
         f"Sample type:{sampletype}",
         f"Number of samples:{numsamples}",
     ] + valid_ids
-    # add the source of the issue (dev or prod)
-    body_lis = body_lis.append(f"Issue created from {settings.environment} environment")
     body_string = " \n ".join(body_lis)
     payload_dict = {
         "title": f"NMDC Submission: {submission.id}",
