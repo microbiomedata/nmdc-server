@@ -40,7 +40,6 @@ jobs:
             prefix=berkeley
           tags: |
             type=ref,event=branch
-            type=raw,value=berkeley
 
       - name: Build and push
         uses: docker/build-push-action@v5
