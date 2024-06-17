@@ -771,6 +771,7 @@ def create_github_issue(submission, user):
 
     # assemble the body of the API request
     body_lis = [
+        f"Issue created from host: {settings.host}",
         f"Submitter: {user.name}, {user.orcid}",
         f"Submission ID: {submission.id}",
         f"Has data been generated: {datagenerated}",
