@@ -362,7 +362,7 @@ export interface TokenResponse {
   access_token: string;
   refresh_token?: string;
   token_type: string;
-  expires: number;
+  expires_in: number;
 }
 
 export class RefreshTokenExchangeError extends Error {
