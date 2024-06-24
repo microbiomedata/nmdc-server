@@ -75,7 +75,7 @@ class TokenResponse(BaseModel):
     access_token: bytes
     refresh_token: Optional[bytes] = None
     token_type: str = "bearer"
-    expires: int
+    expires_in: int
 
 
 class RefreshRequestBody(BaseModel):
@@ -136,7 +136,7 @@ def create_token_response(user: models.User, *, create_refresh_token: bool = Tru
     access_token = encode_token(data=token_data, expires_delta=expires_delta)
     response = TokenResponse(
         access_token=access_token,
-        expires=expires_delta.total_seconds(),
+        expires_in=expires_delta.total_seconds(),
     )
     if create_refresh_token:
         token_data["typ"] = JwtTypes.Refresh
