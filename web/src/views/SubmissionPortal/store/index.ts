@@ -276,6 +276,7 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
 
   if (hasChanged.value) {
     const response = await api.updateRecord(id, payload, undefined, permissions);
+    hasChanged.value = 0;
     return response.httpStatus;
   }
   hasChanged.value = 0;
