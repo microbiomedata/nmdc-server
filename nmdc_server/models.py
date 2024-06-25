@@ -210,7 +210,7 @@ class DOIInfo(Base):
 
 
 class AnnotatedModel:
-    id = Column(String, primary_key=True)
+    id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=False, default="")
 
@@ -312,7 +312,7 @@ class Biosample(Base, AnnotatedModel):
     latitude = Column(Float, nullable=True)
     longitude = Column(Float, nullable=True)
 
-    study_id = Column(String, ForeignKey("study.id"), nullable=False)
+    study_id = Column(String, ForeignKey("study.id"), nullable=False, index=True)
     multiomics = Column(Integer, nullable=False, default=0)
     emsl_biosample_identifiers = Column(JSONB, nullable=True)
     omics_processing = relationship(
@@ -367,7 +367,7 @@ class OmicsProcessing(Base, AnnotatedModel):
     biosample_inputs = relationship(
         "Biosample", secondary=biosample_input_association, back_populates="omics_processing"
     )
-    study_id = Column(String, ForeignKey("study.id"), nullable=True)
+    study_id = Column(String, ForeignKey("study.id"), nullable=True, index=True)
     study = relationship("Study", backref="omics_processing")
 
     outputs = output_relationship(omics_processing_output_association)
