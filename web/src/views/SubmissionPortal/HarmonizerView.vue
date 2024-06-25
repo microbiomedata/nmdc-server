@@ -448,8 +448,6 @@ export default defineComponent({
         return;
       }
 
-      onDataChange();
-
       await validate();
 
       // When changing templates we may need to populate the common columns
@@ -781,7 +779,7 @@ export default defineComponent({
             <v-tab>
               <v-badge
                 :content="validationTotalCounts[templateKey] || '!'"
-                :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey] || status !== submissionStatus.InProgress"
+                :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey]"
                 :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
               >
                 {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
