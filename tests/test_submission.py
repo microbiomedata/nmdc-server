@@ -44,8 +44,14 @@ def test_get_metadata_submissions_report(db: Session, client: TestClient, logged
 
     # TODO: Check additional aspects of the HTTP response.
 
+    # The server will return an HTTP 403 Response when the client isn't an admin.
+    #
+    # TODO: Find an example of where a test request is submitted as an admin, or even
+    #       as any logged-in user (I assume the endpoint would have returned a 401
+    #       if the user wasn't logged in at all).
+    #
     response = client.request(method="GET", url="/api/metadata_submission/report")
-    assert response.status_code == 200
+    assert response.status_code == 403
 
 
 def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_user):
