@@ -654,14 +654,13 @@ async def get_metadata_submissions_report(
     ]
     data_rows = []
     for s in submissions:
-        author_name = s.author.name  # note: `s.author` is a `User` instance
-        study_form = (
-            s.metadata_submission["studyForm"] if "studyForm" in s.metadata_submission else {}
-        )
+        metadata = s.metadata_submission  # creates a concise alias
+        author_user = s.author  # note: `s.author` is a `models.User` instance
+        study_form = metadata["studyForm"] if "studyForm" in metadata else {}
         study_name = study_form["studyName"] if "studyName" in study_form else ""
         pi_name = study_form["piName"] if "piName" in study_form else ""
         pi_email = study_form["piEmail"] if "piEmail" in study_form else ""
-        data_row = [s.id, s.author_orcid, author_name, study_name, pi_name, pi_email]
+        data_row = [s.id, s.author_orcid, author_user.name, study_name, pi_name, pi_email]
         data_rows.append(data_row)
 
     # Build the report as an in-memory TSV "file" (buffer).
