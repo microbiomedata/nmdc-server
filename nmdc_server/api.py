@@ -1,6 +1,7 @@
+import csv
 import json
 import logging
-from io import BytesIO
+from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -621,6 +622,70 @@ async def download_zip_file(
             "Content-Disposition": "attachment; filename=archive.zip",
         },
     )
+
+
+@router.get(
+    "/metadata_submission/report",
+    tags=["metadata_submission"],
+)
+async def get_metadata_submissions_report(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    r"""
+    Download a TSV file containing a high-level report of Submission Portal submissions,
+    including their ID, author info, study info, and PI info.
+    """
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+
+    # Get the submissions from the database.
+    q = crud.get_query_for_all_submissions(db)
+    submissions = q.all()
+
+    # Iterate through the submissions, building the data rows for the report.
+    header_row = [
+        "Submission ID",
+        "Author ORCID",
+        "Author Name",
+        "Study Name",
+        "PI Name",
+        "PI Email",
+    ]
+    data_rows = []
+    for s in submissions:
+        author_name = s.author.name  # note: `s.author` is a `User` instance
+        study_form = (
+            s.metadata_submission["studyForm"] if "studyForm" in s.metadata_submission else {}
+        )
+        study_name = study_form["studyName"] if "studyName" in study_form else ""
+        pi_name = study_form["piName"] if "piName" in study_form else ""
+        pi_email = study_form["piEmail"] if "piEmail" in study_form else ""
+        data_row = [s.id, s.author_orcid, author_name, study_name, pi_name, pi_email]
+        data_rows.append(data_row)
+
+    # Build the report as an in-memory TSV "file" (buffer).
+    # Reference: https://docs.python.org/3/library/csv.html#csv.writer
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter="\t")
+    writer.writerow(header_row)
+    writer.writerows(data_rows)
+
+    # Reset the buffer's internal file pointer to the beginning of the buffer, so that,
+    # when we stream the buffer's contents later, all of its contents are included.
+    buffer.seek(0)
+
+    # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
+    # Reference: https://fastapi.tiangolo.com/advanced/custom-response/#using-streamingresponse-with-file-like-objects
+    # Reference: https://mimetype.io/text/tab-separated-values
+    filename = "submissions-report.tsv"
+    response = StreamingResponse(
+        buffer,
+        media_type="text/tab-separated-values",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+    return response
 
 
 @router.get(

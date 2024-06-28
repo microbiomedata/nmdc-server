@@ -27,6 +27,24 @@ def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     assert response.json()["results"][0]["id"] == str(submission.id)
 
 
+def test_get_metadata_submissions_report(db: Session, client: TestClient, logged_in_user):
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    fakes.SubmissionRoleFactory()
+    fakes.SubmissionRoleFactory()
+    db.commit()
+
+    response = client.request(method="GET", url="/api/metadata_submission/report")
+    assert response.status_code == 200
+
+
 def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_user):
     # Locked by a random user at utcnow by default
     submission = fakes.MetadataSubmissionFactory(

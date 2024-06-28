@@ -632,6 +632,19 @@ def get_submissions_for_user(db: Session, user: models.User):
     return permitted_submissions
 
 
+def get_query_for_all_submissions(db: Session):
+    r"""
+    Returns a SQLAlchemy query that can be used to retrieve all submissions.
+
+    Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
+    Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
+    """
+    all_submissions = db.query(models.SubmissionMetadata).order_by(
+        models.SubmissionMetadata.created.desc()
+    )
+    return all_submissions
+
+
 def get_roles_for_submission(
     db: Session, submission: models.SubmissionMetadata
 ) -> List[models.SubmissionRole]:
