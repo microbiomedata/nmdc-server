@@ -675,7 +675,7 @@ async def get_metadata_submissions_report(
     buffer.seek(0)
 
     # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
-    # Reference: https://fastapi.tiangolo.com/advanced/custom-response/#using-streamingresponse-with-file-like-objects
+    # Reference: https://fastapi.tiangolo.com/advanced/custom-response
     # Reference: https://mimetype.io/text/tab-separated-values
     filename = "submissions-report.tsv"
     response = StreamingResponse(
