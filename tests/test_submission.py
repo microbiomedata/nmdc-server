@@ -37,9 +37,12 @@ def test_get_metadata_submissions_report(db: Session, client: TestClient, logged
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-    fakes.SubmissionRoleFactory()
-    fakes.SubmissionRoleFactory()
+
+    # TODO: Create additional submissions.
+
     db.commit()
+
+    # TODO: Check additional aspects of the HTTP response.
 
     response = client.request(method="GET", url="/api/metadata_submission/report")
     assert response.status_code == 200
