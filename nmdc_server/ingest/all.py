@@ -90,7 +90,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     biosample.load(
         db,
         cursor,
-        omics_processing=mongodb["omics_processing_set"],
     )
     db.commit()
 

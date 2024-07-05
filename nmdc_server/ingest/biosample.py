@@ -92,7 +92,7 @@ class Biosample(BiosampleCreate):
                     return raw_value
 
 
-def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collection):
+def load_biosample(db: Session, obj: Dict[str, Any]):
     logger = get_logger(__name__)
     env_broad_scale_id = obj.pop("env_broad_scale", {}).get("term", {}).get("id", "")
     env_broad_scale = db.query(models.EnvoTerm).get(env_broad_scale_id.replace("_", ":"))
@@ -110,12 +110,8 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
 
     part_of = obj.pop("associated_studies", None)
     if part_of is None:
-        # omics_processing_record = omics_processing.find_one({"has_input": obj["id"]})
-        omics_processing_record = None
-        if omics_processing_record is None:
-            logger.error(f"Could not determine study for biosample {obj['id']}")
-            return
-        part_of = omics_processing_record["part_of"]
+        logger.error(f"Could not determine study for biosample {obj['id']}")
+        return
 
     obj["study_id"] = part_of[0]
     depth_obj = obj.get("depth", {})
@@ -144,11 +140,11 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     db.add(models.Biosample(**biosample.dict()))
 
 
-def load(db: Session, cursor: Cursor, omics_processing: Collection):
+def load(db: Session, cursor: Cursor):
     logger = get_logger(__name__)
     for obj in cursor:
         try:
-            load_biosample(db, obj, omics_processing)
+            load_biosample(db, obj)
         except Exception as err:
             logger.error(f"Error parsing biosample: {err}")
             logger.error(json.dumps(obj, indent=2, default=str))
