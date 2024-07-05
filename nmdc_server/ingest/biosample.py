@@ -108,9 +108,10 @@ def load_biosample(db: Session, obj: Dict[str, Any], omics_processing: Collectio
     if env_medium:
         obj["env_medium_id"] = env_medium.id
 
-    omics_processing_record = omics_processing.find_one({"has_input": obj["id"]})
-    part_of = obj.pop("part_of", None)
+    part_of = obj.pop("associated_studies", None)
     if part_of is None:
+        # omics_processing_record = omics_processing.find_one({"has_input": obj["id"]})
+        omics_processing_record = None
         if omics_processing_record is None:
             logger.error(f"Could not determine study for biosample {obj['id']}")
             return
