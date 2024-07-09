@@ -5,6 +5,7 @@ import Search from '@/views/Search/SearchLayout.vue';
 import SamplePage from '@/views/IndividualResults/SamplePage.vue';
 import StudyPage from '@/views/IndividualResults/StudyPage.vue';
 import UserPage from '@/views/User/UserPage.vue';
+import UserDetailPage from '@/views/User/UserDetailPage.vue';
 import LoginPage from '@/views/Login/LoginPage.vue';
 
 /* Submission portal */
@@ -102,6 +103,11 @@ const router = new VueRouter({
       path: '/users',
       name: 'Users',
       component: UserPage,
+    },
+    {
+      path: '/user',
+      name: 'User',
+      component: UserDetailPage,
     },
     {
       path: '/login',

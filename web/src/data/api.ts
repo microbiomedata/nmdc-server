@@ -701,6 +701,18 @@ function initiateOrcidLogin(state: string = '') {
 
 const REFRESH_TOKEN_KEY = 'storage.refreshToken';
 
+function getRefreshToken() {
+  return window.localStorage.getItem(REFRESH_TOKEN_KEY);
+}
+
+function setRefreshToken(token: string) {
+  return window.localStorage.setItem(REFRESH_TOKEN_KEY, token);
+}
+
+function clearRefreshToken() {
+  return window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
 /**
  * Handle a token response by setting the API client's default Authorization header with the access
  * token and storing the refresh token (if provided) in local storage.
@@ -711,7 +723,7 @@ function handleTokenResponse(response: TokenResponse) {
   const { access_token, refresh_token } = response;
   client.defaults.headers.common.Authorization = `Bearer ${access_token}`;
   if (refresh_token) {
-    window.localStorage.setItem(REFRESH_TOKEN_KEY, refresh_token);
+    setRefreshToken(refresh_token);
   }
 }
 
@@ -743,7 +755,7 @@ async function logout() {
     });
   } finally {
     delete client.defaults.headers.common.Authorization;
-    window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+    clearRefreshToken();
   }
 }
 
@@ -761,7 +773,7 @@ const REFRESH_REQUEST_MAX_AGE_MS: number = 1000 * 20;
  */
 function exchangeRefreshToken(): Promise<TokenResponse> {
   async function _doExchange(): Promise<TokenResponse> {
-    const refreshToken = window.localStorage.getItem(REFRESH_TOKEN_KEY);
+    const refreshToken = getRefreshToken();
     if (!refreshToken) {
       throw new RefreshTokenExchangeError('No refresh token found');
     }
@@ -771,7 +783,7 @@ function exchangeRefreshToken(): Promise<TokenResponse> {
       handleTokenResponse(data);
       return data;
     } catch (error) {
-      window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+      clearRefreshToken();
       window.dispatchEvent(new CustomEvent(REFRESH_TOKEN_EXPIRED_EVENT, {
         detail: { error },
       }));
@@ -842,6 +854,7 @@ const api = {
   exchangeAuthCode,
   exchangeRefreshToken,
   logout,
+  getRefreshToken,
 };
 
 export {
