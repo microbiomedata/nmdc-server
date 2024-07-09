@@ -16,7 +16,7 @@ jobs:
         submodules: 'recursive'
     - uses: actions/setup-node@v1
       with:
-        node-version: '14.x'
+        node-version: 'lts/*'
     - run: yarn install --frozen-lockfile --network-timeout 300000
     - run: yarn lint
     - run: yarn build
