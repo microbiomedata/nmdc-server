@@ -26,6 +26,11 @@ def attach_sentry(app: FastAPI):
 def create_app(env: typing.Mapping[str, str]) -> FastAPI:
     app = FastAPI(
         title="NMDC Data and Submission Portal API",
+        description="""
+To use authenticated endpoints, you must first obtain an Access Token by following the instructions in the Developer 
+Tools section <a href="/user">here</a>. Once you have an Access Token, click the "Authorize" button on this page. In the
+popup, paste the token in the "Value" field and click "Authorize".
+""",
         version=__version__,
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
