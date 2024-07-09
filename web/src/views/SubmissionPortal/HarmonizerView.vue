@@ -32,6 +32,7 @@ import {
   canEditSampleMetadata,
   isOwner,
 } from './store';
+import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
@@ -93,6 +94,7 @@ const ALWAYS_READ_ONLY_COLUMNS = [
 
 export default defineComponent({
   components: {
+    ContactCard,
     FindReplace,
     SubmissionStepper,
     SubmissionDocsLink,
@@ -797,6 +799,29 @@ export default defineComponent({
           {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
         </span>
       </v-tooltip>
+      <v-spacer />
+      <v-menu
+        offset-x
+        left
+        z-index="300"
+      >
+        <template #activator="{on, attrs}">
+          <v-btn
+            color="primary"
+            small
+            class="my-2 py-4"
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-icon
+              class="mt-1"
+            >
+              mdi-message-question
+            </v-icon>
+          </v-btn>
+        </template>
+        <ContactCard />
+      </v-menu>
     </v-tabs>
 
     <div v-if="schemaLoading">
@@ -1131,7 +1156,7 @@ html {
 
 .sidebar-toggle {
   background: white;
-  z-index: 500;
+  z-index: 200;
   position: absolute;
   top: 0;
   left: 0;
