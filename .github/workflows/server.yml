@@ -11,10 +11,10 @@ jobs:
     name: Client Tests
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
       with:
         submodules: 'recursive'
-    - uses: actions/setup-node@v1
+    - uses: actions/setup-node@v4
       with:
         node-version: 'lts/*'
     - run: yarn install --frozen-lockfile --network-timeout 300000
@@ -35,9 +35,9 @@ jobs:
         postgresql db: 'nmdc'
         postgresql user: 'nmdc'
         postgresql password: 'nmdc'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
     - name: Create environment
