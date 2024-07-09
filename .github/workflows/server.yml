@@ -8,6 +8,8 @@ jobs:
     defaults:
       run:
         working-directory: web
+    env:
+      NODE_OPTIONS: --openssl-legacy-provider
     name: Client Tests
     runs-on: ubuntu-latest
     steps:
