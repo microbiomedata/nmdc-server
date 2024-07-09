@@ -13,30 +13,30 @@ export default defineComponent({
 
   setup() {
     const refreshToken = api.getRefreshToken();
-    let tokenExpiration;
+    let refreshTokenExpirationDate;
     if (refreshToken != null) {
       const decodedToken = jwtDecode(refreshToken);
       if (decodedToken.exp != null) {
-        tokenExpiration = moment.unix(decodedToken.exp).format('YYYY-MM-DD HH:mm:ss');
+        refreshTokenExpirationDate = moment.unix(decodedToken.exp).format('YYYY-MM-DD HH:mm:ss');
       }
     }
-    const showToken = ref(false);
-    const showCopyRefreshTokenSnackbar = ref(false);
+    const isTokenVisible = ref(false);
+    const isCopyRefreshTokenSnackbarVisible = ref(false);
 
-    const copyRefreshTokenToClipboard = async () => {
+    const handleRefreshTokenCopyButtonClick = async () => {
       if (refreshToken != null) {
         await navigator.clipboard.writeText(refreshToken);
-        showCopyRefreshTokenSnackbar.value = true;
+        isCopyRefreshTokenSnackbarVisible.value = true;
       }
     };
 
-    const toggleTokenVisibility = () => {
-      showToken.value = !showToken.value;
+    const handleRefreshTokenVisibilityButtonClick = () => {
+      isTokenVisible.value = !isTokenVisible.value;
     };
 
     const handleRefreshTokenInputClick = (event: MouseEvent) => {
       event.preventDefault();
-      if (showToken.value) {
+      if (isTokenVisible.value) {
         (event.target as HTMLInputElement).select();
       }
     };
@@ -44,16 +44,14 @@ export default defineComponent({
     return {
       user: stateRefs.user,
       userLoading: stateRefs.userLoading,
-      // loading,
-      // error,
-      base: window.location.origin,
+      origin: window.location.origin,
       refreshToken,
-      tokenExpiration,
-      showCopyRefreshTokenSnackbar,
-      showToken,
-      toggleTokenVisibility,
+      refreshTokenExpirationDate,
+      isCopyRefreshTokenSnackbarVisible,
+      isTokenVisible,
+      handleRefreshTokenVisibilityButtonClick,
       handleRefreshTokenInputClick,
-      copyRefreshTokenToClipboard,
+      handleRefreshTokenCopyButtonClick,
     };
   },
 });
@@ -111,20 +109,20 @@ export default defineComponent({
                 label="Refresh Token"
                 readonly
                 filled
-                :type="showToken ? 'text' : 'password'"
+                :type="isTokenVisible ? 'text' : 'password'"
                 :value="refreshToken"
                 @click="handleRefreshTokenInputClick"
               >
                 <template #append>
                   <v-icon
                     right
-                    @click="toggleTokenVisibility"
+                    @click="handleRefreshTokenVisibilityButtonClick"
                   >
-                    {{ showToken ? 'mdi-eye' : 'mdi-eye-off' }}
+                    {{ isTokenVisible ? 'mdi-eye' : 'mdi-eye-off' }}
                   </v-icon>
                   <v-icon
                     right
-                    @click="copyRefreshTokenToClipboard"
+                    @click="handleRefreshTokenCopyButtonClick"
                   >
                     mdi-content-copy
                   </v-icon>
@@ -139,7 +137,7 @@ export default defineComponent({
                 readonly
                 filled
                 type="text"
-                :value="tokenExpiration"
+                :value="refreshTokenExpirationDate"
               />
             </v-col>
           </v-row>
@@ -157,8 +155,7 @@ export default defineComponent({
 curl \
   -H "content-type: application/json" \
   -d "{ \"refresh_token\": \"$REFRESH_TOKEN\"}" \
-  {{ base }}/auth/refresh
-              </pre>
+  {{ origin }}/auth/refresh</pre>
             </li>
             <li>
               Store the value returned in the <code>access_token</code> in your program and use it when making
@@ -167,7 +164,7 @@ curl \
 curl \
   -H "content-type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
-  {{ base }}/api/me
+  {{ origin }}/api/me
               </pre>
             </li>
             <li>
@@ -185,7 +182,7 @@ curl \
       </div>
 
       <v-snackbar
-        v-model="showCopyRefreshTokenSnackbar"
+        v-model="isCopyRefreshTokenSnackbarVisible"
         timeout="3000"
       >
         Refresh Token Copied to Clipboard
