@@ -151,7 +151,7 @@ export default defineComponent({
             </li>
             <li>
               Exchange your Refresh Token for an Access Token which will be valid for 24 hours.
-              <pre>
+              <pre class="grey lighten-4 my-2 pa-2">
 curl \
   -H "content-type: application/json" \
   -d "{ \"refresh_token\": \"$REFRESH_TOKEN\"}" \
@@ -160,12 +160,11 @@ curl \
             <li>
               Store the value returned in the <code>access_token</code> in your program and use it when making
               authenticated API requests.
-              <pre>
+              <pre class="grey lighten-4 my-2 pa-2">
 curl \
   -H "content-type: application/json" \
   -H "Authorization: Bearer $ACCESS_TOKEN" \
-  {{ origin }}/api/me
-              </pre>
+  {{ origin }}/api/me</pre>
             </li>
             <li>
               If your program runs for more than 24 hours. Step 2 will need to be repeated once the Access Token
