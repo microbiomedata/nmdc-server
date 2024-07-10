@@ -96,7 +96,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading omics processing...")
     omics_processing.load(
         db,
-        mongodb["omics_processing_set"].find(),
+        mongodb["data_generation_set"].find(),
         mongodb,
     )
     db.commit()
