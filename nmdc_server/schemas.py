@@ -566,7 +566,7 @@ class MAGsAnalysis(PipelineStep):
 
 class NOMAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.nom_analysis.value
-    used: str
+    used: str = ""
 
 
 class NOMAnalysis(PipelineStep):
@@ -591,7 +591,7 @@ class Metatranscriptome(PipelineStep):
 
 class MetabolomicsAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.metabolomics_analysis.value
-    used: str
+    used: str = ""
     has_calibration: str
 
 

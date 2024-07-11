@@ -228,7 +228,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         pipeline.load(
             db,
             mongodb["workflow_execution_set"].find(
-                {"type": "nmdc:MetaproteomicAnalysis"},
+                {"type": "nmdc:MetaproteomicsAnalysis"},
                 no_cursor_timeout=True,
             ),
             pipeline.load_mp_analysis,

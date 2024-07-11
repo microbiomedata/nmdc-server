@@ -23,7 +23,9 @@ date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
 omics_types = {
     "metagenome": "Metagenome",
     "metabolome": "Metabolomics",
+    "metabolomics": "Metabolomics",
     "metaproteome": "Proteomics",
+    "proteomics": "Proteomics",
     "metatranscriptome": "Metatranscriptome",
     "organic matter characterization": "Organic Matter Characterization",
     "nom": "Organic Matter Characterization",
