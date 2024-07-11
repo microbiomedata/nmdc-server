@@ -150,7 +150,7 @@ export default defineComponent({
         }],
       );
       /* @ts-ignore */
-      router.go(-1);
+      router.go({ name: 'Search' });
     }
 
     function seeStudyInContext(item: StudySearchResults) {
