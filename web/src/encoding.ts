@@ -291,26 +291,26 @@ const fields: Record<string, FieldsData> = {
     hideFacet: true,
   },
   /* END GOLD ecosystem type */
-  /* ENVO terms */
+  /* MIxS Environmental Triad terms */
   env_broad_scale: {
     name: 'Broad-scale Environmental Context',
-    group: 'ENVO',
+    group: 'MIxS Environmental Triad',
     sortKey: 1,
   },
   env_local_scale: {
     name: 'Local Environmental Context',
-    group: 'ENVO',
+    group: 'MIxS Environmental Triad',
     sortKey: 2,
   },
   env_medium: {
-    name: 'Environmental medium',
-    group: 'ENVO',
+    name: 'Environmental Medium',
+    group: 'MIxS Environmental Triad',
     sortKey: 3,
   },
   open_in_gold: {
     icon: 'mdi-link',
   },
-  /* END ENVO terms */
+  /* END MIxS Environmental Triad terms */
   /* disable uniques */
   scientific_objective: {
     hideFacet: true,
