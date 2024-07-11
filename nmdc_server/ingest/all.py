@@ -3,6 +3,7 @@ from typing import Any, Dict, Iterator
 import click
 from pymongo import MongoClient
 from pymongo.collection import Collection
+from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
@@ -101,10 +102,21 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     )
     db.commit()
 
+    """
+    nmdc:ReadQcAnalysis
+    nmdc:MagsAnalysis
+    nmdc:MetabolomicsAnalysis
+    nmdc:MetagenomeSequencing
+    nmdc:ReadBasedTaxonomyAnalysis
+    nmdc:MetagenomeAssembly
+    nmdc:MetagenomeAnnotation
+    nmdc:NomAnalysis
+    """
+
     logger.info("Loading metabolomics analysis...")
     pipeline.load(
         db,
-        mongodb["metabolomics_analysis_activity_set"].find(),
+        mongodb["workflow_execution_set"].find({"type": "nmdc:MetabolomicsAnalysis"}),
         pipeline.load_metabolomics_analysis,
         WorkflowActivityTypeEnum.metabolomics_analysis.value,
     )
@@ -113,7 +125,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading read based analysis...")
     pipeline.load(
         db,
-        mongodb["read_based_taxonomy_analysis_activity_set"].find(),
+        mongodb["workflow_execution_set"].find({"type": "nmdc:ReadBasedTaxonomyAnalysis"}),
         pipeline.load_read_based_analysis,
         WorkflowActivityTypeEnum.read_based_analysis.value,
     )
@@ -122,7 +134,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading metatranscriptome expression analyses...")
     pipeline.load(
         db,
-        mongodb["metatranscriptome_expression_analysis_set"].find(),
+        mongodb["workflow_execution_set"].find({"type": "nmdc:MetatranscriptomeAnalysis"}),
         pipeline.load_metatranscriptome,
         WorkflowActivityTypeEnum.metatranscriptome.value,
     )
@@ -138,7 +150,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading NOM analysis...")
     pipeline.load(
         db,
-        mongodb["nom_analysis_activity_set"].find(),
+        mongodb["workflow_execution_set"].find({"type": "nmdc:NomAnalysis"}),
         pipeline.load_nom_analysis,
         WorkflowActivityTypeEnum.nom_analysis.value,
     )
@@ -147,7 +159,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading MAGs...")
     pipeline.load(
         db,
-        mongodb["mags_activity_set"].find(),
+        mongodb["workflow_execution_set"].find({"type": "nmdc:MagsAnalysis"}),
         pipeline.load_mags,
         WorkflowActivityTypeEnum.mags_analysis.value,
     )
@@ -162,13 +174,14 @@ def load(db: Session, function_limit=None, skip_annotation=False):
 
             # This has historically been fast, but it is only for the progress bar.
             # It can be removed if it becomes slow.
-            count = mongodb["metagenome_annotation_activity_set"].estimated_document_count()
-            iterator = paginate_cursor(
-                mongodb["metagenome_annotation_activity_set"],
-                page_size=1,  # prevent cursor from timing out
-                no_cursor_timeout=True,
+            annotation_activities = list(
+                mongodb["workflow_execution_set"].find(
+                    {"type": "nmdc:MetagenomeAnnotation"}, batch_size=100
+                )
             )
-            with click.progressbar(iterator, length=count) as bar:
+            # TODO test this and make sure it works as expected
+            # this undoes the pagination that existed before
+            with click.progressbar(annotation_activities, length=len(annotation_activities)) as bar:
                 pipeline.load(
                     db,
                     bar,
@@ -204,7 +217,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading read qc...")
     pipeline.load(
         db,
-        mongodb["read_qc_analysis_activity_set"].find(),
+        mongodb["workflow_execution_set"].find({"type": "nmdc:ReadQcAnalysis"}),
         pipeline.load_reads_qc,
         WorkflowActivityTypeEnum.reads_qc.value,
     )
@@ -214,7 +227,8 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         logger.info("Loading metaproteomic analysis...")
         pipeline.load(
             db,
-            mongodb["metaproteomics_analysis_activity_set"].find(
+            mongodb["workflow_execution_set"].find(
+                {"type": "nmdc:MetaproteomicAnalysis"},
                 no_cursor_timeout=True,
             ),
             pipeline.load_mp_analysis,
@@ -231,7 +245,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading metagenome assembly...")
     pipeline.load(
         db,
-        mongodb["metagenome_assembly_set"].find(),
+        mongodb["workflow_execution_set"].find({"type": "nmdc:MetagenomeAssembly"}),
         pipeline.load_mg_assembly,
         WorkflowActivityTypeEnum.metagenome_assembly.value,
     )
