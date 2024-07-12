@@ -12,6 +12,8 @@ export default defineComponent({
   components: { OrcidId, AppBanner },
 
   setup() {
+    const refreshTokenInput = ref();
+
     const refreshToken = getRefreshToken();
     let refreshTokenExpirationDate;
     if (refreshToken != null) {
@@ -30,14 +32,14 @@ export default defineComponent({
       }
     };
 
-    const handleRefreshTokenVisibilityButtonClick = () => {
+    const handleRefreshTokenVisibilityButtonClick = async () => {
       isTokenVisible.value = !isTokenVisible.value;
-    };
-
-    const handleRefreshTokenInputClick = (event: MouseEvent) => {
-      event.preventDefault();
       if (isTokenVisible.value) {
-        (event.target as HTMLInputElement).select();
+        // Wait for the type of the input to change before selecting the text.
+        // For some reason, nextTick isn't enough in this case.
+        setTimeout(() => {
+          refreshTokenInput.value.$refs.input.select();
+        }, 50);
       }
     };
 
@@ -47,10 +49,10 @@ export default defineComponent({
       origin: window.location.origin,
       refreshToken,
       refreshTokenExpirationDate,
+      refreshTokenInput,
       isCopyRefreshTokenSnackbarVisible,
       isTokenVisible,
       handleRefreshTokenVisibilityButtonClick,
-      handleRefreshTokenInputClick,
       handleRefreshTokenCopyButtonClick,
     };
   },
@@ -106,26 +108,47 @@ export default defineComponent({
               cols="auto"
             >
               <v-text-field
+                ref="refreshTokenInput"
                 label="Refresh Token"
                 readonly
                 filled
                 :type="isTokenVisible ? 'text' : 'password'"
                 :value="refreshToken"
-                @click="handleRefreshTokenInputClick"
               >
                 <template #append>
-                  <v-icon
-                    right
-                    @click="handleRefreshTokenVisibilityButtonClick"
+                  <v-tooltip
+                    bottom
+                    open-delay="600"
                   >
-                    {{ isTokenVisible ? 'mdi-eye' : 'mdi-eye-off' }}
-                  </v-icon>
-                  <v-icon
-                    right
-                    @click="handleRefreshTokenCopyButtonClick"
+                    <template #activator="{ on, attrs }">
+                      <v-icon
+                        right
+                        v-bind="attrs"
+                        v-on="on"
+                        @click="handleRefreshTokenVisibilityButtonClick"
+                      >
+                        {{ isTokenVisible ? 'mdi-eye' : 'mdi-eye-off' }}
+                      </v-icon>
+                    </template>
+                    <span v-if="isTokenVisible">Hide Token</span>
+                    <span v-else>Show Token</span>
+                  </v-tooltip>
+                  <v-tooltip
+                    bottom
+                    open-delay="600"
                   >
-                    mdi-content-copy
-                  </v-icon>
+                    <template #activator="{ on, attrs }">
+                      <v-icon
+                        right
+                        v-bind="attrs"
+                        v-on="on"
+                        @click="handleRefreshTokenCopyButtonClick"
+                      >
+                        mdi-content-copy
+                      </v-icon>
+                    </template>
+                    <span>Copy Token</span>
+                  </v-tooltip>
                 </template>
               </v-text-field>
             </v-col>
