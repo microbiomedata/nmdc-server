@@ -3,16 +3,16 @@ import { defineComponent, ref } from '@vue/composition-api';
 import moment from 'moment';
 import { jwtDecode } from 'jwt-decode';
 import AppBanner from '@/components/AppBanner.vue';
-import { api } from '@/data/api';
 import OrcidId from '@/components/Presentation/OrcidId.vue';
 import { stateRefs } from '@/store';
+import { getRefreshToken } from '@/store/localStorage';
 
 export default defineComponent({
   name: 'UserDetailPage',
   components: { OrcidId, AppBanner },
 
   setup() {
-    const refreshToken = api.getRefreshToken();
+    const refreshToken = getRefreshToken();
     let refreshTokenExpirationDate;
     if (refreshToken != null) {
       const decodedToken = jwtDecode(refreshToken);

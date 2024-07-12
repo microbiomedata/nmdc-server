@@ -2,6 +2,7 @@ import { merge } from 'lodash';
 import axios, { AxiosError } from 'axios';
 import { setupCache } from 'axios-cache-adapter';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
 
 // The token refresh and retry logic stores an extra bit of state on the request config
 declare module 'axios' {
@@ -699,20 +700,6 @@ function initiateOrcidLogin(state: string = '') {
   window.location.href = loginUrl;
 }
 
-const REFRESH_TOKEN_KEY = 'storage.refreshToken';
-
-function getRefreshToken() {
-  return window.localStorage.getItem(REFRESH_TOKEN_KEY);
-}
-
-function setRefreshToken(token: string) {
-  return window.localStorage.setItem(REFRESH_TOKEN_KEY, token);
-}
-
-function clearRefreshToken() {
-  return window.localStorage.removeItem(REFRESH_TOKEN_KEY);
-}
-
 /**
  * Handle a token response by setting the API client's default Authorization header with the access
  * token and storing the refresh token (if provided) in local storage.
@@ -854,7 +841,6 @@ const api = {
   exchangeAuthCode,
   exchangeRefreshToken,
   logout,
-  getRefreshToken,
 };
 
 export {
