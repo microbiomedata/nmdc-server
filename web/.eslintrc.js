@@ -23,6 +23,9 @@ module.exports = {
     'vuejs-accessibility/anchor-has-content': 'off',
     'vuejs-accessibility/click-events-have-key-events': 'off',
     'vue/no-v-html': 'off',
+    // See: https://github.com/vuejs/eslint-plugin-vue/issues/365
+    // The issue is supposed to be resolved, but eslint complains without the ignore
+    'vue/html-indent': ['warn', 2, { ignores: ['VElement[name=pre].children'] }],
     camelcase: 0,
     // we should always disable console logs and debugging in production
     'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
