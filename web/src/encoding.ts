@@ -231,6 +231,7 @@ const fields: Record<string, FieldsData> = {
     hideAttr: true,
   },
   collection_date: {
+    name: 'Collection Date',
     icon: 'mdi-calendar',
   },
   ecosystem_path_id: {
@@ -256,8 +257,21 @@ const fields: Record<string, FieldsData> = {
   },
   gold_classification: {
     icon: 'mdi-pine-tree',
+    name: 'GOLD Classification',
     group: 'GOLD Ecosystems',
     sortKey: 0,
+  },
+  instrument_name: {
+    name: 'Instrument Name',
+    group: 'Omics Processing',
+  },
+  omics_type: {
+    name: 'Omics Type',
+    group: 'Omics Processing',
+  },
+  processing_institution: {
+    name: 'Processing Institution',
+    group: 'Omics Processing',
   },
   /* GOLD ecosystem type */
   ecosystem: {
