@@ -28,18 +28,16 @@ def get_local_data_url(url: Optional[str]) -> Optional[str]:
 
 
 class WorkflowActivityTypeEnum(Enum):
-    reads_qc = "nmdc:ReadQCAnalysisActivity"
+    mags_analysis = "nmdc:MagsAnalysis"
+    metabolomics_analysis = "nmdc:MetabolomicsAnalysis"
     metagenome_assembly = "nmdc:MetagenomeAssembly"
-    metagenome_annotation = "nmdc:MetagenomeAnnotation"  # TODO name out of date, fix
-    metatranscriptome_assembly = "nmdc:MetatranscriptomeAssembly"
-    metatranscriptome_annotation = "nmdc:MetatranscriptomeAnnotation"  # TODO name out of date, fix
-    metaproteomic_analysis = "nmdc:MetaProteomicAnalysis"
-    mags_analysis = "nmdc:MAGsAnalysisActivity"
-    read_based_analysis = "nmdc:ReadbasedAnalysis"  # TODO name out of date, fix
-    nom_analysis = "nmdc:NomAnalysisActivity"
-    metabolomics_analysis = "nmdc:MetabolomicsAnalysisActivity"
+    metagenome_annotation = "nmdc:MetagenomeAnnotation"
+    metaproteomic_analysis = "nmdc:MetaproteomicAnalysis"
+    metatranscriptome = "nmdc:MetatranscriptomeAnalysis"
+    nom_analysis = "nmdc:NomAnalysis"
     raw_data = "nmdc:RawData"
-    metatranscriptome = "nmdc:metaT"
+    read_based_analysis = "nmdc:ReadBasedTaxonomyAnalysis"
+    reads_qc = "nmdc:ReadQcAnalysis"
 
     @property
     def model(self):
