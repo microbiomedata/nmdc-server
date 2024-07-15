@@ -658,3 +658,10 @@ class User(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class LockOperationResult(BaseModel):
+    success: bool
+    message: str
+    locked_by: Optional[User]
+    lock_updated: Optional[datetime]
