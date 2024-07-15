@@ -114,6 +114,13 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
     obj["analyte_category"] = omics_types[obj["analyte_category"].lower()]
     obj["omics_type"] = omics_types[obj["analyte_category"].lower()]
 
+    # Get instrument name
+    instrument_id = obj.pop("instrument_used", [])
+    if instrument_id:
+        instrument = mongodb["instrument_set"].find_one({"id": instrument_id[0]})
+        if instrument:
+            obj["instrument_name"] = instrument["name"]
+
     omics_processing = models.OmicsProcessing(**OmicsProcessing(**obj).dict())
     for biosample_object in biosample_input_objects:
         # mypy thinks that omics_processing.biosample_inputs is of type Biosample
