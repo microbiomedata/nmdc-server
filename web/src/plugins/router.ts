@@ -54,6 +54,7 @@ const router = new VueRouter({
         {
           component: StepperView,
           path: '',
+          props: true,
           children: [
             {
               name: 'Submission root',
