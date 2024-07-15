@@ -110,7 +110,7 @@ export default defineComponent({
           color="primary"
           large
           class="mr-0"
-          style="transform:translateY(-50%) rotate(-90deg); right: -50px; top: 50%; position: absolute; z-index: 100;"
+          style="transform:translateY(-50%) rotate(-90deg); right: -50px; top: 50%; position: fixed; z-index: 100;"
           v-bind="attrs"
           v-on="on"
         >
