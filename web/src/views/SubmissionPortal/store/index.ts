@@ -3,6 +3,7 @@ import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
 import { clone, forEach } from 'lodash';
+import axios from 'axios';
 import * as api from './api';
 import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import { User } from '@/data/api';
@@ -301,8 +302,22 @@ async function loadRecord(id: string) {
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
-  _submissionLockedBy = val.locked_by;
   _permissionLevel = (val.permission_level as permissionLevelValues);
+
+  try {
+    const lockResponse = await api.lockSubmission(id);
+    _submissionLockedBy = lockResponse.locked_by || null;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 409) {
+        // Another user has the lock
+        _submissionLockedBy = error.response.data.locked_by || null;
+      }
+    } else {
+      // Something went wrong, and we don't know who has the lock
+      _submissionLockedBy = null;
+    }
+  }
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });

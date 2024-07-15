@@ -70,9 +70,9 @@ export default defineComponent({
         :name="getSubmissionLockedBy().name"
         :authenticated="true"
       />
-      <a href="/submission/home">
+      <router-link :to="{ name: 'Submission Home'}">
         Return to submission list
-      </a>
+      </router-link>
     </v-alert>
   </div>
 </template>
