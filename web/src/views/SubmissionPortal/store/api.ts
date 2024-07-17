@@ -1,3 +1,4 @@
+import { AxiosResponse } from 'axios';
 import { client, SearchParams, User } from '@/data/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
@@ -45,6 +46,7 @@ interface MetadataSubmissionRecord {
   locked_by: User;
   lock_updated: string;
   permission_level: string | null;
+  source_client: 'submission_portal' | 'field_notes' | null;
 }
 
 interface PaginatedResponse<T> {
@@ -53,8 +55,13 @@ interface PaginatedResponse<T> {
 }
 
 async function createRecord(record: MetadataSubmission) {
-  const resp = await client.post<MetadataSubmissionRecord>('metadata_submission', {
+  const resp = await client.post<
+    MetadataSubmissionRecord,
+    AxiosResponse<MetadataSubmissionRecord>,
+    Partial<MetadataSubmissionRecord>
+  >('metadata_submission', {
     metadata_submission: record,
+    source_client: 'submission_portal',
   });
   return resp.data;
 }
