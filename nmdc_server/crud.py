@@ -497,7 +497,7 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
     submission_record = db.query(models.SubmissionMetadata).get(submission_id)
     if not submission_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    user_record: models.User = db.query(models.User).get(user_id)
+    user_record: Optional[models.User] = db.query(models.User).get(user_id)
     if not user_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
