@@ -94,6 +94,7 @@ class PartialMetadataSubmissionRecord(BaseModel):
 class SubmissionMetadataSchemaCreate(BaseModel):
     metadata_submission: MetadataSubmissionRecord
     status: Optional[str]
+    source_client: Optional[str]
 
 
 class SubmissionMetadataSchemaPatch(BaseModel):

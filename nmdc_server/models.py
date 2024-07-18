@@ -770,6 +770,11 @@ class SubmissionEditorRole(str, enum.Enum):
     reviewer = "reviewer"
 
 
+class SubmissionSourceClient(str, enum.Enum):
+    submission_portal = "submission_portal"
+    field_notes = "field_notes"
+
+
 class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
 
@@ -779,6 +784,10 @@ class SubmissionMetadata(Base):
     status = Column(String, nullable=False, default="in-progress")
     metadata_submission = Column(JSONB, nullable=False)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
+
+    # The client which initially created the submission. A null value indicates it was created by
+    # an "unregistered" client. This could be legitimate usage, but it should be monitored.
+    source_client = Column(Enum(SubmissionSourceClient), nullable=True)
 
     author = relationship(
         "User", foreign_keys=[author_id], primaryjoin="SubmissionMetadata.author_id == User.id"
