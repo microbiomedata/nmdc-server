@@ -37,9 +37,8 @@ jobs:
             ghcr.io/microbiomedata/nmdc-server/${{ matrix.image }}
           flavor: |
             latest=false
-            prefix=berkeley
           tags: |
-            type=ref,event=branch
+            type=raw,value=berkeley
 
       - name: Build and push
         uses: docker/build-push-action@v5
