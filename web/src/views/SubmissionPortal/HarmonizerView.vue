@@ -250,7 +250,7 @@ export default defineComponent({
       return allTabsValid && isOwner();
     });
 
-    const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
+    const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
         const val = {
           text: columnName ? `  ${columnName}` : sectionName,
@@ -750,13 +750,13 @@ export default defineComponent({
                 Show section
               </span>
               <v-radio
-                v-for="(value, sectionName) in harmonizerApi.schemaSections.value"
+                v-for="(sectionName, sectionTitle) in harmonizerApi.schemaSectionNames.value"
                 :key="sectionName"
                 :value="sectionName"
               >
                 <template #label>
                   <span>
-                    {{ sectionName }}
+                    {{ sectionTitle }}
                   </span>
                 </template>
               </v-radio>

@@ -181,7 +181,9 @@ interface CellData {
 }
 
 export class HarmonizerApi {
-  schemaSections: Ref<Record<string, Record<string, number>>>;
+  schemaSectionNames: Ref<Record<string, string>>;
+
+  schemaSectionColumns: Ref<Record<string, Record<string, number>>>;
 
   ready: Ref<boolean>;
 
@@ -196,7 +198,8 @@ export class HarmonizerApi {
   schema: any;
 
   constructor() {
-    this.schemaSections = ref({});
+    this.schemaSectionNames = ref({});
+    this.schemaSectionColumns = ref({});
     this.ready = ref(false);
     this.selectedColumn = ref('');
   }
@@ -327,7 +330,11 @@ export class HarmonizerApi {
   }
 
   refreshState() {
-    this.schemaSections.value = this._getColumnCoordinates();
+    this.schemaSectionNames.value = this.dh.template.reduce((acc: any, section: any) => {
+      acc[section.title] = section.name;
+      return acc;
+    }, {});
+    this.schemaSectionColumns.value = this._getColumnCoordinates();
   }
 
   async loadData(data: any[]) {
