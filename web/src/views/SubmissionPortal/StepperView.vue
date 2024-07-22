@@ -6,7 +6,6 @@ import OrcidId from '@/components/Presentation/OrcidId.vue';
 
 import { stateRefs } from '@/store';
 import { getSubmissionLockedBy } from './store';
-import { useRouter } from '@/use/useRouter';
 import { unlockSubmission } from './store/api';
 
 export default defineComponent({
@@ -19,9 +18,7 @@ export default defineComponent({
     },
   },
 
-  setup() {
-    const router = useRouter();
-
+  setup(props) {
     const loggedInUserHasLock = computed(() => {
       const lockedByUser = getSubmissionLockedBy();
       if (!lockedByUser) {
@@ -33,17 +30,12 @@ export default defineComponent({
       return false;
     });
 
-    const isEditingSubmission = computed(() => {
-      if (router) {
-        return !!router.currentRoute.params.id;
-      }
-      return false;
-    });
+    const isEditingSubmission = computed(() => props.id !== null);
 
     window.addEventListener('beforeunload', () => {
       if (isEditingSubmission.value) {
-        if (router) {
-          unlockSubmission(router.currentRoute.params.id);
+        if (props.id) {
+          unlockSubmission(props.id);
         }
       }
     });
@@ -70,9 +62,9 @@ export default defineComponent({
         :name="getSubmissionLockedBy().name"
         :authenticated="true"
       />
-      <a href="/submission/home">
+      <router-link :to="{ name: 'Submission Home'}">
         Return to submission list
-      </a>
+      </router-link>
     </v-alert>
   </div>
 </template>

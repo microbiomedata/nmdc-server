@@ -6,7 +6,7 @@ import { DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  loadRecord, generateRecord, submissionStatus,
+  generateRecord, submissionStatus,
 } from '../store';
 import * as api from '../store/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
@@ -71,7 +71,6 @@ export default defineComponent({
     }
 
     async function resume(item: api.MetadataSubmissionRecord) {
-      await loadRecord(item.id);
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 

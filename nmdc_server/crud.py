@@ -497,9 +497,16 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
     submission_record = db.query(models.SubmissionMetadata).get(submission_id)
     if not submission_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    user_record = db.query(models.User).get(user_id)
+    user_record: Optional[models.User] = db.query(models.User).get(user_id)
     if not user_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # Check that the user has sufficient permissions to obtain the lock
+    if not (user_record.is_admin or can_read_submission(db, submission_id, user_record.orcid)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have permission to obtain lock",
+        )
 
     current_lock_holder = submission_record.locked_by
     if not current_lock_holder or current_lock_holder.id == user_id:
