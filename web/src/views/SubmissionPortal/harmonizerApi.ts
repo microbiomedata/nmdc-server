@@ -218,7 +218,6 @@ export class HarmonizerApi {
       }
       const classDefinition = schema.classes[template.schemaClass];
       if (!classDefinition) {
-        console.warn(`Template ${template.displayName} references class ${template.schemaClass} which is not defined in the schema`);
         return;
       }
       // eslint-disable-next-line no-param-reassign
