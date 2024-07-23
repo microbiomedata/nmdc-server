@@ -62,6 +62,8 @@ const ColorKey = {
   },
 };
 
+const HELP_SIDEBAR_WIDTH = '300px';
+
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
 
 const SAMP_NAME = 'samp_name';
@@ -466,6 +468,7 @@ export default defineComponent({
 
     return {
       APP_HEADER_HEIGHT,
+      HELP_SIDEBAR_WIDTH,
       ColorKey,
       HARMONIZER_TEMPLATES,
       columnVisibility,
@@ -831,14 +834,17 @@ export default defineComponent({
     <div
       class="harmonizer-style-container harmonizer-and-sidebar"
     >
-      <div id="harmonizer-root" />
+      <div
+        id="harmonizer-root"
+        :style="{
+          'padding-right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
+        }"
+      />
 
       <div
+        class="harmonizer-sidebar"
         :style="{
-          'width': sidebarOpen ? '300px' : '0px',
-          'font-size': '14px',
-          'position': 'relative',
-          'flex-shrink': '0',
+          'width': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
         }"
       >
         <v-btn
@@ -1077,12 +1083,19 @@ html {
 }
 
 .harmonizer-and-sidebar {
-  display: flex;
-  flex-direction: row;
+  position: relative;
   width: 100%;
   height: 100%;
   flex-grow: 1;
   overflow: auto;
+}
+
+.harmonizer-sidebar {
+  font-size: 14px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
 }
 
 /* Grid */
