@@ -179,21 +179,22 @@ def load(db: Session, function_limit=None, skip_annotation=False):
                     function_limit=function_limit,
                 )
 
-            logger.info("Loading metatranscriptome annotation...")
-            # TODO: flesh out MT annotation ingest
-            pipeline.load(
-                db,
-                mongodb["metatranscriptome_annotation_set"].find(),
-                pipeline.load_mt_annotation,
-                WorkflowActivityTypeEnum.metatranscriptome_annotation.value,
-            )
         except Exception:
             logger.exception("Failed during annotation ingest.")
         finally:
             db.commit()
 
     else:
-        logger.info("Skipping annotation ingest")
+        logger.info("Skipping mg annotation ingest")
+
+    logger.info("Loading metatranscriptome annotation...")
+    # TODO: flesh out MT annotation ingest
+    pipeline.load(
+        db,
+        mongodb["metatranscriptome_annotation_set"].find(),
+        pipeline.load_mt_annotation,
+        WorkflowActivityTypeEnum.metatranscriptome_annotation.value,
+    )
 
     logger.info("Loading read qc...")
     pipeline.load(
