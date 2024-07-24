@@ -96,7 +96,7 @@ def upgrade():
             ["metatranscriptome_annotation_id"],
             ["metatranscriptome_annotation.id"],
             name=op.f(
-                "fk_metatranscriptome_annotation_input_association_metatranscriptome_annotation_id_metatranscriptome_annotation"
+                "fk_metatranscriptome_annotation_input_association_metatranscriptome_annotation_id_metatranscriptome_annotation"  # noqa: E501
             ),
         ),
         sa.UniqueConstraint(
@@ -122,7 +122,7 @@ def upgrade():
             ["metatranscriptome_annotation_id"],
             ["metatranscriptome_annotation.id"],
             name=op.f(
-                "fk_metatranscriptome_annotation_output_association_metatranscriptome_annotation_id_metatranscriptome_annotation"
+                "fk_metatranscriptome_annotation_output_association_metatranscriptome_annotation_id_metatranscriptome_annotation"  # noqa: E501
             ),
         ),
         sa.UniqueConstraint(
@@ -146,7 +146,7 @@ def upgrade():
             ["metatranscriptome_assembly_id"],
             ["metatranscriptome_assembly.id"],
             name=op.f(
-                "fk_metatranscriptome_assembly_input_association_metatranscriptome_assembly_id_metatranscriptome_assembly"
+                "fk_metatranscriptome_assembly_input_association_metatranscriptome_assembly_id_metatranscriptome_assembly"  # noqa: E501
             ),
         ),
         sa.UniqueConstraint(
@@ -172,7 +172,7 @@ def upgrade():
             ["metatranscriptome_assembly_id"],
             ["metatranscriptome_assembly.id"],
             name=op.f(
-                "fk_metatranscriptome_assembly_output_association_metatranscriptome_assembly_id_metatranscriptome_assembly"
+                "fk_metatranscriptome_assembly_output_association_metatranscriptome_assembly_id_metatranscriptome_assembly"  # noqa: E501
             ),
         ),
         sa.UniqueConstraint(

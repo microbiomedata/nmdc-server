@@ -71,8 +71,8 @@ _workflow_enum_to_output_association = {
     WorkflowActivityTypeEnum.reads_qc: models.reads_qc_output_association,
     WorkflowActivityTypeEnum.metagenome_assembly: models.metagenome_assembly_output_association,
     WorkflowActivityTypeEnum.metagenome_annotation: models.metagenome_annotation_output_association,
-    WorkflowActivityTypeEnum.metatranscriptome_assembly: models.metatranscriptome_assembly_output_association,
-    WorkflowActivityTypeEnum.metatranscriptome_annotation: models.metatranscriptome_annotation_output_association,
+    WorkflowActivityTypeEnum.metatranscriptome_assembly: models.metatranscriptome_assembly_output_association,  # noqa: E501
+    WorkflowActivityTypeEnum.metatranscriptome_annotation: models.metatranscriptome_annotation_output_association,  # noqa: E501
     _mpa: models.metaproteomic_analysis_output_association,
     WorkflowActivityTypeEnum.mags_analysis: models.mags_analysis_output_association,
     WorkflowActivityTypeEnum.read_based_analysis: models.read_based_analysis_output_association,
