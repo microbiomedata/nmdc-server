@@ -161,6 +161,13 @@ load_metabolomics_analysis = generate_pipeline_loader(
 load_metatranscriptome = generate_pipeline_loader(
     schemas.MetatranscriptomeBase, models.Metatranscriptome
 )
+load_mt_assembly = generate_pipeline_loader(
+    schemas.MetatranscriptomeAssemblyBase, models.MetatranscriptomeAssembly
+)
+# TODO: flesh out MT annotation ingest
+load_mt_annotation = generate_pipeline_loader(
+    schemas.MetatranscriptomeAnnotationBase, models.MetatranscriptomeAnnotation
+)
 
 
 # This is a generic function for load workflow execution objects.  Some workflow types require

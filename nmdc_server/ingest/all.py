@@ -120,12 +120,20 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     )
     db.commit()
 
-    logger.info("Loading metatranscriptome activities...")
+    logger.info("Loading metatranscriptome expression analyses...")
     pipeline.load(
         db,
-        mongodb["metatranscriptome_activity_set"].find(),
+        mongodb["metatranscriptome_expression_analysis_set"].find(),
         pipeline.load_metatranscriptome,
         WorkflowActivityTypeEnum.metatranscriptome.value,
+    )
+
+    logger.info("Loading metatranscriptome assemblies...")
+    pipeline.load(
+        db,
+        mongodb["metatranscriptome_assembly_set"].find(),
+        pipeline.load_mt_assembly,
+        WorkflowActivityTypeEnum.metatranscriptome_assembly.value,
     )
 
     logger.info("Loading NOM analysis...")
@@ -170,8 +178,17 @@ def load(db: Session, function_limit=None, skip_annotation=False):
                     annotations=mongodb["functional_annotation_agg"],
                     function_limit=function_limit,
                 )
+
+            logger.info("Loading metatranscriptome annotation...")
+            # TODO: flesh out MT annotation ingest
+            pipeline.load(
+                db,
+                mongodb["metatranscriptome_annotation_set"].find(),
+                pipeline.load_mt_annotation,
+                WorkflowActivityTypeEnum.metatranscriptome_annotation.value,
+            )
         except Exception:
-            logger.exception("Failed during metag ingest.")
+            logger.exception("Failed during annotation ingest.")
         finally:
             db.commit()
 
