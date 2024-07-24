@@ -33,6 +33,8 @@ class Table(Enum):
     reads_qc = "reads_qc"
     metagenome_assembly = "metagenome_assembly"
     metagenome_annotation = "metagenome_annotation"
+    metatranscriptome_assembly = "metatranscriptome_assembly"
+    metatranscriptome_annotation = "metatranscriptome_annotation"
     metaproteomic_analysis = "metaproteomic_analysis"
     mags_analysis = "mags_analysis"
     nom_analysis = "nom_analysis"
@@ -65,6 +67,8 @@ DataObjectMagsAnalysis = aliased(models.DataObject)
 DataObjectReadBasedAnalysis = aliased(models.DataObject)
 DataObjectMetabolomicsAnalysis = aliased(models.DataObject)
 DataObjectMetatranscriptome = aliased(models.Metatranscriptome)
+DataObjectMetatranscriptomeAssembly = aliased(models.DataObject)
+DataObjectMetatranscriptomeAnnotation = aliased(models.DataObject)
 
 
 _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
@@ -73,7 +77,9 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.omics_processing: models.OmicsProcessing,
     Table.reads_qc: models.ReadsQC,
     Table.metagenome_assembly: models.MetagenomeAssembly,
+    Table.metatranscriptome_assembly: models.MetatranscriptomeAssembly,
     Table.metagenome_annotation: models.MetagenomeAnnotation,
+    Table.metatranscriptome_annotation: models.MetatranscriptomeAnnotation,
     Table.metaproteomic_analysis: models.MetaproteomicAnalysis,
     Table.mags_analysis: models.MAGsAnalysis,
     Table.nom_analysis: models.NOMAnalysis,
@@ -93,6 +99,8 @@ workflow_execution_tables = {
     Table.reads_qc,
     Table.metagenome_assembly,
     Table.metagenome_annotation,
+    Table.metatranscriptome_assembly,
+    Table.metatranscriptome_annotation,
     Table.metaproteomic_analysis,
     Table.mags_analysis,
     Table.nom_analysis,

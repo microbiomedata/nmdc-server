@@ -774,6 +774,18 @@ class MetagenomeAnnotationQuerySchema(BaseQuerySchema):
         return Table.metagenome_annotation
 
 
+class MetatranscriptomeAssemblyQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metatranscriptome_assembly
+
+
+class MetatranscriptomeAnnotationQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metatranscriptome_annotation
+
+
 class MetaproteomicAnalysisQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
@@ -940,6 +952,8 @@ workflow_search_classes = [
     ReadsQCQuerySchema,
     MetagenomeAssemblyQuerySchema,
     MetagenomeAnnotationQuerySchema,
+    MetatranscriptomeAssemblyQuerySchema,
+    MetatranscriptomeAnnotationQuerySchema,
     MetaproteomicAnalysisQuerySchema,
     MAGsAnalysisQuerySchema,
     ReadBasedAnalysisQuerySchema,

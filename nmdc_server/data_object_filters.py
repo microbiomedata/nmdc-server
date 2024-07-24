@@ -31,6 +31,8 @@ class WorkflowActivityTypeEnum(Enum):
     reads_qc = "nmdc:ReadQCAnalysisActivity"
     metagenome_assembly = "nmdc:MetagenomeAssembly"
     metagenome_annotation = "nmdc:MetagenomeAnnotation"  # TODO name out of date, fix
+    metatranscriptome_assembly = "nmdc:MetatranscriptomeAssembly"
+    metatranscriptome_annotation = "nmdc:MetatranscriptomeAnnotation"  # TODO name out of date, fix
     metaproteomic_analysis = "nmdc:MetaProteomicAnalysis"
     mags_analysis = "nmdc:MAGsAnalysisActivity"
     read_based_analysis = "nmdc:ReadbasedAnalysis"  # TODO name out of date, fix
@@ -52,6 +54,8 @@ _workflow_enum_to_model = {
     WorkflowActivityTypeEnum.reads_qc: models.ReadsQC,
     WorkflowActivityTypeEnum.metagenome_assembly: models.MetagenomeAssembly,
     WorkflowActivityTypeEnum.metagenome_annotation: models.MetagenomeAnnotation,
+    WorkflowActivityTypeEnum.metatranscriptome_assembly: models.MetatranscriptomeAssembly,
+    WorkflowActivityTypeEnum.metatranscriptome_annotation: models.MetatranscriptomeAnnotation,
     WorkflowActivityTypeEnum.metaproteomic_analysis: models.MetaproteomicAnalysis,
     WorkflowActivityTypeEnum.mags_analysis: models.MAGsAnalysis,
     WorkflowActivityTypeEnum.read_based_analysis: models.ReadBasedAnalysis,
@@ -67,6 +71,8 @@ _workflow_enum_to_output_association = {
     WorkflowActivityTypeEnum.reads_qc: models.reads_qc_output_association,
     WorkflowActivityTypeEnum.metagenome_assembly: models.metagenome_assembly_output_association,
     WorkflowActivityTypeEnum.metagenome_annotation: models.metagenome_annotation_output_association,
+    WorkflowActivityTypeEnum.metatranscriptome_assembly: models.metatranscriptome_assembly_output_association,
+    WorkflowActivityTypeEnum.metatranscriptome_annotation: models.metatranscriptome_annotation_output_association,
     _mpa: models.metaproteomic_analysis_output_association,
     WorkflowActivityTypeEnum.mags_analysis: models.mags_analysis_output_association,
     WorkflowActivityTypeEnum.read_based_analysis: models.read_based_analysis_output_association,
