@@ -761,6 +761,16 @@ class MetaPGeneFunctionAggregation(Base):
     best_protein = Column(Boolean, nullable=False)
 
 
+class MetaTGeneFunctionAggregation(Base):
+    __tablename__ = "metat_gene_function_aggregation"
+
+    metatranscriptome_annotation_id = Column(
+        String, ForeignKey(MetatranscriptomeAnnotation.id), primary_key=True
+    )
+    gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
+    count = Column(BigInteger, nullable=False)
+
+
 # Used to store a reference to a user requested zip download.  This is stored
 # in a table primarily to avoid a large query string in the zip download GET
 # endpoint. Since the GET endpoint cannot be protected by Bearer token auth,

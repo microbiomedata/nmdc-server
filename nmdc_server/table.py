@@ -18,6 +18,7 @@ EnvLocalScaleTerm = aliased(models.EnvoTerm)
 EnvMediumAncestor = aliased(models.EnvoAncestor)
 EnvMediumTerm = aliased(models.EnvoTerm)
 MetaPGeneFunction = aliased(models.GeneFunction)
+MetaTGeneFunction = aliased(models.GeneFunction)
 
 
 class KeggTerms:
@@ -43,6 +44,7 @@ class Table(Enum):
     metatranscriptome = "metatranscriptome"
     gene_function = "gene_function"
     metap_gene_function = "metap_gene_function"
+    metat_gene_function = "metat_gene_function"
     data_object = "data_object"
 
     env_broad_scale = "env_broad_scale"
@@ -88,6 +90,7 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.metabolomics_analysis: models.MetabolomicsAnalysis,
     Table.gene_function: models.GeneFunction,
     Table.metap_gene_function: MetaPGeneFunction,
+    Table.metat_gene_function: MetaTGeneFunction,
     Table.env_broad_scale: EnvBroadScaleTerm,
     Table.env_local_scale: EnvLocalScaleTerm,
     Table.env_medium: EnvMediumTerm,
