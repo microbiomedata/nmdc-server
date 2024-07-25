@@ -130,6 +130,55 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
     return pipeline
 
 
+def load_mt_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectReturn:
+    # Ingest the MetatranscriptomeAnnotation record
+    pipeline = cast(models.MetatranscriptomeAnnotation, load_mt_annotation_base(db, obj, **kwargs))
+
+    annotations: Collection = kwargs["annotations"]
+
+    # Query gene function annotations from mongo and build the appropriate objects
+    query = annotations.find(
+        {
+            "metagenome_annotation_id": pipeline.id,
+            "gene_function_id": {
+                "$regex": ko_regex,
+            },
+        },
+        no_cursor_timeout=True,
+        projection={
+            "_id": False,
+            "metatranscriptome_annotation_id": True,
+            "count": True,
+            "gene_function_id": True,
+        },
+    )
+    if kwargs.get("function_limit"):
+        query = query.limit(kwargs["function_limit"])
+
+    gene_functions: Set[str] = set()
+    gene_function_aggregations: List[models.MetaTGeneFunctionAggregation] = []
+    for annotation in query:
+        function_id = annotation["gene_function_id"]
+        gene_functions.add(function_id)
+        gene_function_aggregations.append(
+            models.MetaTGeneFunctionAggregation(
+                metatranscriptome_annotation_id=pipeline.id,
+                gene_function_id=function_id,
+                count=annotation["count"],
+            )
+        )
+    # Save both newly encountered gene functions and the gene function aggregations
+    if gene_function_aggregations:
+        db.execute(
+            insert(models.GeneFunction)
+            .on_conflict_do_nothing()
+            .values([(gf,) for gf in gene_functions])
+        )
+        db.bulk_save_objects(gene_function_aggregations)
+
+    return pipeline
+
+
 # This is a loader for a generic workflow type that doesn't need any
 # additional processing.
 def generate_pipeline_loader(schema, model) -> LoadObject:
@@ -164,8 +213,7 @@ load_metatranscriptome = generate_pipeline_loader(
 load_mt_assembly = generate_pipeline_loader(
     schemas.MetatranscriptomeAssemblyBase, models.MetatranscriptomeAssembly
 )
-# TODO: flesh out MT annotation ingest
-load_mt_annotation = generate_pipeline_loader(
+load_mt_annotation_base = generate_pipeline_loader(
     schemas.MetatranscriptomeAnnotationBase, models.MetatranscriptomeAnnotation
 )
 
