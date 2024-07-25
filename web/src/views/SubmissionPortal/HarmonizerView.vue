@@ -125,6 +125,8 @@ export default defineComponent({
     const submitDialog = ref(false);
 
     const snackbar = ref(false);
+    const importErrorSnackbar = ref(false);
+    const notImportedWorksheetNames = ref([] as string[]);
 
     watch(activeTemplate, () => {
       // WARNING: It's important to do the column settings update /before/ data. Otherwise,
@@ -386,7 +388,7 @@ export default defineComponent({
         ], {
           skipHeader: true,
         });
-        utils.book_append_sheet(workbook, worksheet, template.displayName);
+        utils.book_append_sheet(workbook, worksheet, template.excelWorksheetName || template.displayName);
       });
       writeFile(workbook, EXPORT_FILENAME, { compression: true });
     }
@@ -403,9 +405,13 @@ export default defineComponent({
         }
         const workbook = read(event.target.result);
         const imported = {} as Record<string, any>;
+        const notImported = [] as string[];
         Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
-          const template = Object.values(HARMONIZER_TEMPLATES).find((template) => template.displayName === name);
+          const template = Object.values(HARMONIZER_TEMPLATES).find((template) => (
+            template.excelWorksheetName === name || template.displayName === name
+          ));
           if (!template || !template.sampleDataSlot || !template.schemaClass) {
+            notImported.push(name);
             return;
           }
 
@@ -424,6 +430,11 @@ export default defineComponent({
             template.schemaClass,
           );
         });
+
+        // Alert the user if any worksheets were not imported
+        notImportedWorksheetNames.value = notImported;
+        importErrorSnackbar.value = notImported.length > 0;
+
         // Load imported data
         sampleData.value = imported;
 
@@ -500,6 +511,8 @@ export default defineComponent({
       submitDialog,
       snackbar,
       schemaLoading,
+      importErrorSnackbar,
+      notImportedWorksheetNames,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -574,6 +587,13 @@ export default defineComponent({
           timeout="3000"
         >
           Validation Passed! You can now submit or continue editing.
+        </v-snackbar>
+        <v-snackbar
+          v-model="importErrorSnackbar"
+          color="error"
+          timeout="5000"
+        >
+          The following worksheet names were not recognized: {{ notImportedWorksheetNames.join(', ') }}
         </v-snackbar>
         <v-card
           v-if="validationErrorGroups.length"
