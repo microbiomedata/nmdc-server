@@ -358,6 +358,9 @@ class MetaTGeneFunctionFilter(OmicsProcessingFilter):
             )
         )
 
+    def join_self(self, query: Query, parent: Table) -> Query:
+        return query
+
 
 def _get_all_subclasses(cls: Type[BaseFilter]) -> List[Type[BaseFilter]]:
     all_subclasses: List[Type[BaseFilter]] = []
