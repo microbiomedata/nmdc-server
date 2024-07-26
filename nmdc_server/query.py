@@ -339,7 +339,7 @@ class BaseQuerySchema(BaseModel):
             filter = create_filter_class(table, conditions)
 
             # Gene function queries are treated differently because they join
-            # in two different places (both metaG and metaP).
+            # in three different places (metaT, metaG and metaP).
             if table == Table.gene_function:
                 metag_matches = filter.matches(db, self.table)
                 metap_conditions = [
@@ -354,7 +354,19 @@ class BaseQuerySchema(BaseModel):
                     Table.metap_gene_function,
                     metap_conditions,
                 )
-                matches.append(metag_matches.union(metap_filter.matches(db, self.table)))
+                gene_matches = metag_matches.union(metap_filter.matches(db, self.table))
+
+                metat_conditions = [
+                    SimpleConditionSchema(
+                        table=Table.metat_gene_function,
+                        field=c.field,
+                        value=c.value,
+                    )
+                    for c in conditions
+                ]
+                metat_filter = create_filter_class(Table.metat_gene_function, metat_conditions)
+                gene_matches = gene_matches.union(metat_filter.matches(db, self.table))
+                matches.append(gene_matches)
             else:
                 matches.append(filter.matches(db, self.table))
 
@@ -774,6 +786,18 @@ class MetagenomeAnnotationQuerySchema(BaseQuerySchema):
         return Table.metagenome_annotation
 
 
+class MetatranscriptomeAssemblyQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metatranscriptome_assembly
+
+
+class MetatranscriptomeAnnotationQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metatranscriptome_annotation
+
+
 class MetaproteomicAnalysisQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
@@ -940,6 +964,8 @@ workflow_search_classes = [
     ReadsQCQuerySchema,
     MetagenomeAssemblyQuerySchema,
     MetagenomeAnnotationQuerySchema,
+    MetatranscriptomeAssemblyQuerySchema,
+    MetatranscriptomeAnnotationQuerySchema,
     MetaproteomicAnalysisQuerySchema,
     MAGsAnalysisQuerySchema,
     ReadBasedAnalysisQuerySchema,

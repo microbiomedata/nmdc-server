@@ -496,6 +496,46 @@ class MetagenomeAssembly(Base, PipelineStep):
     outputs = output_relationship(metagenome_assembly_output_association)
 
 
+metatranscriptome_assembly_input_association = input_association("metatranscriptome_assembly")
+metatranscriptome_assembly_output_association = output_association("metatranscriptome_assembly")
+
+
+class MetatranscriptomeAssembly(Base, PipelineStep):
+    __tablename__ = "metatranscriptome_assembly"
+
+    scaffolds = Column(BigInteger, nullable=True)
+    contigs = Column(BigInteger, nullable=True)
+    scaf_bp = Column(BigInteger, nullable=True)
+    contig_bp = Column(BigInteger, nullable=True)
+    scaf_n50 = Column(BigInteger, nullable=True)
+    scaf_l50 = Column(BigInteger, nullable=True)
+    ctg_n50 = Column(BigInteger, nullable=True)
+    ctg_l50 = Column(BigInteger, nullable=True)
+    scaf_n90 = Column(BigInteger, nullable=True)
+    scaf_l90 = Column(BigInteger, nullable=True)
+    ctg_n90 = Column(BigInteger, nullable=True)
+    ctg_l90 = Column(BigInteger, nullable=True)
+    scaf_max = Column(BigInteger, nullable=True)
+    ctg_max = Column(BigInteger, nullable=True)
+    scaf_n_gt50k = Column(BigInteger, nullable=True)
+    scaf_l_gt50k = Column(BigInteger, nullable=True)
+    scaf_pct_gt50k = Column(BigInteger, nullable=True)
+    num_input_reads = Column(BigInteger, nullable=True)
+    num_aligned_reads = Column(BigInteger, nullable=True)
+
+    scaf_logsum = Column(Float, nullable=True)
+    scaf_powsum = Column(Float, nullable=True)
+    ctg_logsum = Column(Float, nullable=True)
+    ctg_powsum = Column(Float, nullable=True)
+    asm_score = Column(Float, nullable=True)
+    gap_pct = Column(Float, nullable=True)
+    gc_avg = Column(Float, nullable=True)
+    gc_std = Column(Float, nullable=True)
+
+    inputs = input_relationship(metatranscriptome_assembly_input_association)
+    outputs = output_relationship(metatranscriptome_assembly_output_association)
+
+
 metagenome_annotation_input_association = input_association("metagenome_annotation")
 metagenome_annotation_output_association = output_association("metagenome_annotation")
 
@@ -505,6 +545,17 @@ class MetagenomeAnnotation(Base, PipelineStep):
 
     inputs = input_relationship(metagenome_annotation_input_association)
     outputs = output_relationship(metagenome_annotation_output_association)
+
+
+metatranscriptome_annotation_input_association = input_association("metatranscriptome_annotation")
+metatranscriptome_annotation_output_association = output_association("metatranscriptome_annotation")
+
+
+class MetatranscriptomeAnnotation(Base, PipelineStep):
+    __tablename__ = "metatranscriptome_annotation"
+
+    inputs = input_relationship(metatranscriptome_annotation_input_association)
+    outputs = output_relationship(metatranscriptome_annotation_output_association)
 
 
 metaproteomic_analysis_input_association = input_association("metaproteomic_analysis")
@@ -583,6 +634,8 @@ metatranscriptome_output_association = output_association("metatranscriptome")
 
 
 class Metatranscriptome(Base, PipelineStep):
+    """Corresponds to the metatranscriptome_expression_analysis_set"""
+
     __tablename__ = "metatranscriptome"
 
     inputs = input_relationship(metatranscriptome_input_association)
@@ -657,7 +710,9 @@ ModelType = Union[
     Type[Biosample],
     Type[ReadsQC],
     Type[MetagenomeAssembly],
+    Type[MetatranscriptomeAssembly],
     Type[MetagenomeAnnotation],
+    Type[MetatranscriptomeAnnotation],
     Type[MetaproteomicAnalysis],
     Type[MAGsAnalysis],
     Type[ReadBasedAnalysis],
@@ -671,7 +726,9 @@ ModelType = Union[
 workflow_activity_types = [
     ReadsQC,
     MetagenomeAssembly,
+    MetatranscriptomeAssembly,
     MetagenomeAnnotation,
+    MetatranscriptomeAnnotation,
     MetaproteomicAnalysis,
     MAGsAnalysis,
     ReadBasedAnalysis,
@@ -702,6 +759,16 @@ class MetaPGeneFunctionAggregation(Base):
     gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
     count = Column(BigInteger, nullable=False)
     best_protein = Column(Boolean, nullable=False)
+
+
+class MetaTGeneFunctionAggregation(Base):
+    __tablename__ = "metat_gene_function_aggregation"
+
+    metatranscriptome_annotation_id = Column(
+        String, ForeignKey(MetatranscriptomeAnnotation.id), primary_key=True
+    )
+    gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
+    count = Column(BigInteger, nullable=False)
 
 
 # Used to store a reference to a user requested zip download.  This is stored

@@ -51,6 +51,12 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         reads_qc=aggregations.get_table_summary(db, models.ReadsQC),
         metagenome_assembly=aggregations.get_table_summary(db, models.MetagenomeAssembly),
         metagenome_annotation=aggregations.get_table_summary(db, models.MetagenomeAnnotation),
+        metatranscriptome_assembly=aggregations.get_table_summary(
+            db, models.MetatranscriptomeAssembly
+        ),
+        metatranscriptome_annotation=aggregations.get_table_summary(
+            db, models.MetatranscriptomeAnnotation
+        ),
         metaproteomic_analysis=aggregations.get_table_summary(db, models.MetaproteomicAnalysis),
         mags_analysis=aggregations.get_table_summary(db, models.MAGsAnalysis),
         read_based_analysis=aggregations.get_table_summary(db, models.ReadBasedAnalysis),
