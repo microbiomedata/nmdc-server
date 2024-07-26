@@ -284,6 +284,7 @@ export default defineComponent({
               outlined
               dense
               persistent-hint
+              @change="() => formRef.validate()"
             >
               <template #prepend-inner>
                 <v-tooltip
