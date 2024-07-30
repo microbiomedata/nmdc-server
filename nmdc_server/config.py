@@ -71,8 +71,7 @@ class Settings(BaseSettings):
     cors_allow_origins: Optional[str] = None  # comma separated list of allowed origins
 
     # Comma separated list of allowed origins for post-login redirect
-    login_redirect_allow_origins: str = "http://127.0.0.1:8081"
-
+    login_redirect_allow_origins: str = "http://127.0.0.1:8081,http://127.0.0.1:8080"
     # Github Issue creation settings. Both are required for automated issue creation.
     github_issue_url: Optional[str] = None
     github_authentication_token: Optional[str] = None
