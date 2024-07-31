@@ -130,6 +130,7 @@ const studyFormDefault = {
   piOrcid: '',
   linkOutWebpage: [],
   studyDate: null,
+  funding_sources: '',
   description: '',
   notes: '',
   contributors: [] as {

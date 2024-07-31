@@ -783,6 +783,7 @@ def create_github_issue(submission, user):
     omicsprocessingtypes = ", ".join(multiomicsform["omicsProcessingTypes"])
     sampletype = ", ".join(submission.metadata_submission["templates"])
     sampledata = submission.metadata_submission["sampleData"]
+    funding_sources = studyform["funding_sources"]
     numsamples = 0
     for key in sampledata:
         numsamples = max(numsamples, len(sampledata[key]))
@@ -812,6 +813,7 @@ def create_github_issue(submission, user):
         f"Data types: {omicsprocessingtypes}",
         f"Sample type:{sampletype}",
         f"Number of samples:{numsamples}",
+        f"Funding source:{funding_sources}",
     ] + valid_ids
     body_string = " \n ".join(body_lis)
     payload_dict = {

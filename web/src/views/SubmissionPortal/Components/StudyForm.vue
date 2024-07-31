@@ -204,6 +204,19 @@ export default defineComponent({
         </template>
       </v-textarea>
       <v-text-field
+        v-model="studyForm.funding_sources"
+        label="Funding Source"
+        outlined
+        :hint="Definitions.funding_sources"
+        persistent-hint
+        dense
+        class="my-2"
+      >
+        <template #message="{ message }">
+          <span v-html="message" />
+        </template>
+      </v-text-field>
+      <v-text-field
         v-model="studyForm.notes"
         label="Optional Notes"
         :hint="Definitions.studyOptionalNotes"

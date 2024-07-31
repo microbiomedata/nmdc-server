@@ -363,6 +363,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "piEmail": "",
             "piOrcid": "",
             "linkOutWebpage": [],
+            "funding_sources": "",
             "description": "",
             "notes": "",
             "contributors": [],
