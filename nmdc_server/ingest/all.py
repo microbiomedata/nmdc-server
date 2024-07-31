@@ -142,7 +142,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading metatranscriptome assemblies...")
     pipeline.load(
         db,
-        mongodb["metatranscriptome_assembly_set"].find(),
+        mongodb["workflow_execution_set"].find({"type": "nmdc:MetatranscriptomeAssembly"}),
         pipeline.load_mt_assembly,
         WorkflowActivityTypeEnum.metatranscriptome_assembly.value,
     )
@@ -203,7 +203,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         logger.info("Loading metatranscriptome annotation...")
         pipeline.load(
             db,
-            mongodb["metatranscriptome_annotation_set"].find(),
+            mongodb["workflow_execution_set"].find({"type": "MetatranscriptomeAnnotation"}),
             pipeline.load_mt_annotation,
             WorkflowActivityTypeEnum.metatranscriptome_annotation.value,
             annotations=mongodb["functional_annotation_agg"],
