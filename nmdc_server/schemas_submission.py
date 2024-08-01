@@ -110,6 +110,8 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     created: datetime
     status: str
     author: schemas.User
+    templates: List[str]
+    study_name: str
 
     lock_updated: Optional[datetime]
     locked_by: Optional[schemas.User]

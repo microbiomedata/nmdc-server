@@ -47,6 +47,8 @@ interface MetadataSubmissionRecord {
   lock_updated: string;
   permission_level: string | null;
   source_client: 'submission_portal' | 'field_notes' | null;
+  study_name: string;
+  templates: string[];
 }
 
 interface PaginatedResponse<T> {

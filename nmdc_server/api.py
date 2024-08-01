@@ -633,10 +633,10 @@ async def list_submissions(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
     pagination: Pagination = Depends(),
-    columnSort: str = 'created',
-    sortOrder: str = 'desc',
+    column_sort: str = "created",
+    sortOrder: str = "desc",
 ):
-    query = crud.get_submissions_for_user(db, user, columnSort, sortOrder)
+    query = crud.get_submissions_for_user(db, user, column_sort, sortOrder)
     return pagination.response(query)
 
 
@@ -940,6 +940,9 @@ async def submit_metadata(
 ):
     submission = SubmissionMetadata(**body.dict(), author_orcid=user.orcid)
     submission.author_id = user.id
+    submission.study_name = submission.metadata_submission["studyForm"]["name"]
+    submission.templates = submission.metadata_submission["templates"]
+
     db.add(submission)
     db.commit()
     owner_role = SubmissionRole(
