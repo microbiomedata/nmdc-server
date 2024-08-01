@@ -4,7 +4,6 @@ from datetime import datetime
 from typing import Any, Dict
 
 from pydantic import root_validator, validator
-from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 

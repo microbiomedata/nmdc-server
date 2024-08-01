@@ -3,7 +3,6 @@ from typing import Any, Dict, Iterator
 import click
 from pymongo import MongoClient
 from pymongo.collection import Collection
-from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
