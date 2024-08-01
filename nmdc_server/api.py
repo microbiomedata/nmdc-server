@@ -175,14 +175,29 @@ async def search_biosample(
     # This could potentially be more efficient to do in the database query,
     # but the code to generate the query would be much more complicated.
     def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
+        omics_count = 0
+        omics_output_counts = 0
+        workflow_counts = 0
+        workflow_output_counts = 0
+        op_ids = [op.id for op in biosample.omics_processing]
+        op_outputs = db.query(models.DataObject).where(
+            models.DataObject.omics_processing_id.in_(op_ids)
+        )
+        # op_outputs_by_op_id = ...
+        # for op_output in op_outputs:
+        #    op_outputs_by_op_id[op_output.omics_processing_id] = op_output
         for op in biosample.omics_processing:
-            for da in op.outputs:
+            omics_count += 1
+            for da in op.outputs:  # op_outputs_by_op_id[op_id]
+                omics_output_counts += 1
                 da.selected = schemas.DataObject.is_selected(
                     WorkflowActivityTypeEnum.raw_data, da, data_object_filter
                 )
             for od in op.omics_data:
+                workflow_counts += 1
                 workflow = WorkflowActivityTypeEnum(od.type)
                 for da in od.outputs:
+                    workflow_output_counts += 1
                     da.selected = schemas.DataObject.is_selected(workflow, da, data_object_filter)
         return biosample
 
