@@ -87,6 +87,8 @@ async function listRecords(params: SearchParams) {
     params: {
       limit: params.limit,
       offset: params.offset,
+      columnSort: params.sortColumn,
+      sortOrder: params.sortOrder,
     },
   });
   return resp.data;

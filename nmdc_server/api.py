@@ -633,8 +633,10 @@ async def list_submissions(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
     pagination: Pagination = Depends(),
+    columnSort: str = 'created',
+    sortOrder: str = 'desc',
 ):
-    query = crud.get_submissions_for_user(db, user)
+    query = crud.get_submissions_for_user(db, user, columnSort, sortOrder)
     return pagination.response(query)
 
 

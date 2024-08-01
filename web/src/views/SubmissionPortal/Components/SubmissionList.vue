@@ -1,8 +1,8 @@
 <script lang="ts">
 import {
-  defineComponent, ref, watch,
+  defineComponent, ref, watch, Ref,
 } from '@vue/composition-api';
-import { DataTableHeader } from 'vuetify';
+import { DataOptions, DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
@@ -30,17 +30,14 @@ const headers: DataTableHeader[] = [
   {
     text: 'Template',
     value: 'metadata_submission.templates',
-    sortable: false,
   },
   {
     text: 'Status',
     value: 'status',
-    sortable: false,
   },
   {
     text: 'Created',
     value: 'created',
-    sortable: false,
   },
   {
     text: '',
@@ -57,9 +54,15 @@ export default defineComponent({
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
-    const options = ref({
+    const options: Ref<DataOptions> = ref<DataOptions>({
       page: 1,
       itemsPerPage,
+      sortBy: ['created'],
+      sortDesc: [true],
+      groupBy: [],
+      groupDesc: [],
+      multiSort: false,
+      mustSort: false,
     });
 
     function getStatus(item: api.MetadataSubmissionRecord) {
@@ -80,7 +83,11 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
-    watch(options, () => submission.setPage(options.value.page), { deep: true });
+    watch(options, () => {
+      submission.setPage(options.value.page);
+      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
+      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+    }, { deep: true });
 
     return {
       HARMONIZER_TEMPLATES,
