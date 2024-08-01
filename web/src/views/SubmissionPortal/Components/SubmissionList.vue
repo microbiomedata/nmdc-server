@@ -20,7 +20,6 @@ const headers: DataTableHeader[] = [
   {
     text: 'Study Name',
     value: 'metadata_submission.studyForm.studyName',
-    sortable: false,
   },
   {
     text: 'Author',
@@ -29,7 +28,7 @@ const headers: DataTableHeader[] = [
   },
   {
     text: 'Template',
-    value: 'metadata_submission.templates',
+    value: 'templates',
   },
   {
     text: 'Status',
@@ -180,7 +179,7 @@ export default defineComponent({
               :authenticated="true"
             />
           </template>
-          <template #[`item.metadata_submission.templates`]="{ item }">
+          <template #[`item.templates`]="{ item }">
             {{ item.metadata_submission.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
           </template>
           <template #[`item.created`]="{ item }">

@@ -634,9 +634,9 @@ async def list_submissions(
     user: models.User = Depends(get_current_user),
     pagination: Pagination = Depends(),
     column_sort: str = "created",
-    sortOrder: str = "desc",
+    sort_order: str = "desc",
 ):
-    query = crud.get_submissions_for_user(db, user, column_sort, sortOrder)
+    query = crud.get_submissions_for_user(db, user, column_sort, sort_order)
     return pagination.response(query)
 
 
@@ -673,6 +673,8 @@ async def get_submission(
             created=submission.created,
             author=schemas.User(**submission.author.__dict__),
             permission_level=permission_level,
+            templates=submission.templates,
+            study_name=submission.study_name,
         )
         if submission.locked_by is not None:
             submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
@@ -938,10 +940,13 @@ async def submit_metadata(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = SubmissionMetadata(**body.dict(), author_orcid=user.orcid)
+    submission = SubmissionMetadata(
+        **body.dict(),
+        author_orcid=user.orcid,
+    )
     submission.author_id = user.id
-    submission.study_name = submission.metadata_submission["studyForm"]["name"]
-    submission.templates = submission.metadata_submission["templates"]
+    submission.study_name = body.metadata_submission.studyForm.studyName
+    submission.templates = body.metadata_submission.templates
 
     db.add(submission)
     db.commit()
