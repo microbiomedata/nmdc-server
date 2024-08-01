@@ -102,17 +102,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     )
     db.commit()
 
-    """
-    nmdc:ReadQcAnalysis
-    nmdc:MagsAnalysis
-    nmdc:MetabolomicsAnalysis
-    nmdc:MetagenomeSequencing
-    nmdc:ReadBasedTaxonomyAnalysis
-    nmdc:MetagenomeAssembly
-    nmdc:MetagenomeAnnotation
-    nmdc:NomAnalysis
-    """
-
     logger.info("Loading metabolomics analysis...")
     pipeline.load(
         db,
