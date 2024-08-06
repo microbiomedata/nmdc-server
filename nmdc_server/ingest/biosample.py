@@ -107,12 +107,12 @@ def load_biosample(db: Session, obj: Dict[str, Any]):
     if env_medium:
         obj["env_medium_id"] = env_medium.id
 
-    part_of = obj.pop("associated_studies", None)
-    if part_of is None:
+    associated_studies = obj.pop("associated_studies", None)
+    if associated_studies is None:
         logger.error(f"Could not determine study for biosample {obj['id']}")
         return
 
-    obj["study_id"] = part_of[0]
+    obj["study_id"] = associated_studies[0]
     depth_obj = obj.get("depth", {})
     obj["depth"] = extract_quantity(depth_obj, "biosample", "depth")
 
