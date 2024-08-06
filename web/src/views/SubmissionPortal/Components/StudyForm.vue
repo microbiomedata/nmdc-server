@@ -204,10 +204,10 @@ export default defineComponent({
         </template>
       </v-textarea>
       <v-text-field
-        v-model="studyForm.funding_sources"
+        v-model="studyForm.fundingSource"
         label="Funding Source"
         outlined
-        :hint="Definitions.funding_sources"
+        :hint="Definitions.fundingSource"
         persistent-hint
         dense
         class="my-2"
