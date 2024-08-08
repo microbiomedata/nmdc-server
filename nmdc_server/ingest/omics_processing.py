@@ -20,28 +20,15 @@ from nmdc_server.schemas import OmicsProcessingCreate
 date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
 
 
-process_types = [
-    "pooling",
-    "extraction",
-    "library_preparation",
-]
-
-
-collections = {
-    "biosample": "biosample_set",
-    "processed_sample": "processed_sample_set",
-    "extraction": "extraction_set",
-    "library_preparation": "library_preparation_set",
-    "pooling": "pooling_set",
-}
-
-
 omics_types = {
     "metagenome": "Metagenome",
+    "metabolome": "Metabolomics",
     "metabolomics": "Metabolomics",
+    "metaproteome": "Proteomics",
     "proteomics": "Proteomics",
     "metatranscriptome": "Metatranscriptome",
     "organic matter characterization": "Organic Matter Characterization",
+    "nom": "Organic Matter Characterization",
 }
 
 
@@ -65,17 +52,11 @@ def is_biosample(object_id, biosample_collection):
 
 def find_parent_process(output_id: str, mongodb: Database) -> Optional[dict[str, Any]]:
     """Given a ProcessedSample ID, find the process (e.g. Extraction) that created it."""
-    output_found = False
-    collections_left = True
-    while not output_found and collections_left:
-        for name in process_types:
-            collection: Collection = mongodb[collections[name]]
-            query = collection.find({"has_output": output_id}, no_cursor_timeout=True)
-            result_list = list(query)
-            if len(result_list):
-                output_found = True
-                return result_list[0]
-        collections_left = False
+    material_processing_collection: Collection = mongodb["material_processing_set"]
+    query = material_processing_collection.find({"has_output": output_id}, no_cursor_timeout=True)
+    result_list = list(query)
+    if len(result_list):
+        return result_list[0]
     return None
 
 
@@ -117,10 +98,6 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
     biosample_input_ids: set[str] = set()
     for input_id in input_ids:
         biosample_input_ids.union(get_biosample_input_ids(input_id, mongodb, biosample_input_ids))
-    if len(biosample_input_ids) > 1:
-        logger.error("Processed sample input detected")
-        logger.error(obj["id"])
-        logger.error(biosample_input_ids)
 
     obj["biosample_inputs"] = []
     biosample_input_objects = []
@@ -133,9 +110,16 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
             biosample_input_objects.append(biosample_object)
 
     data_objects = obj.pop("has_output", [])
-    obj["study_id"] = obj.pop("part_of", [None])[0]
-    raw_omics_type: str = obj["omics_type"]["has_raw_value"]
-    obj["omics_type"]["has_raw_value"] = omics_types[raw_omics_type.lower()]
+    obj["study_id"] = obj.pop("associated_studies", [None])[0]
+    obj["analyte_category"] = omics_types[obj["analyte_category"].lower()]
+    obj["omics_type"] = omics_types[obj["analyte_category"].lower()]
+
+    # Get instrument name
+    instrument_id = obj.pop("instrument_used", [])
+    if instrument_id:
+        instrument = mongodb["instrument_set"].find_one({"id": instrument_id[0]})
+        if instrument:
+            obj["instrument_name"] = instrument["name"]
 
     omics_processing = models.OmicsProcessing(**OmicsProcessing(**obj).dict())
     for biosample_object in biosample_input_objects:
