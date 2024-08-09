@@ -47,6 +47,8 @@ interface MetadataSubmissionRecord {
   lock_updated: string;
   permission_level: string | null;
   source_client: 'submission_portal' | 'field_notes' | null;
+  study_name: string;
+  templates: string[];
 }
 
 interface PaginatedResponse<T> {
@@ -87,6 +89,8 @@ async function listRecords(params: SearchParams) {
     params: {
       limit: params.limit,
       offset: params.offset,
+      columnSort: params.sortColumn,
+      sortOrder: params.sortOrder,
     },
   });
   return resp.data;
