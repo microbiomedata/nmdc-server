@@ -11,7 +11,7 @@ const groupOrders = [
   'sample',
   'gold ecosystems',
   'mixs environmental triad',
-  'omics processing',
+  'data generation',
 ];
 
 export interface SearchFacet {

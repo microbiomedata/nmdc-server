@@ -100,9 +100,9 @@ const types: Record<entityType, EntityData> = {
   },
   omics_processing: {
     icon: 'mdi-file-table-box-multiple-outline',
-    heading: 'Omics Types',
+    heading: 'Data Types',
     name: 'omics_processing',
-    plural: 'Omics Processing',
+    plural: 'Data Generations',
     visible: true,
     schemaName: 'OmicsProcessing',
   },
@@ -263,15 +263,15 @@ const fields: Record<string, FieldsData> = {
   },
   instrument_name: {
     name: 'Instrument Name',
-    group: 'Omics Processing',
+    group: 'Data Generation',
   },
   omics_type: {
-    name: 'Omics Type',
-    group: 'Omics Processing',
+    name: 'Data Type',
+    group: 'Data Generation',
   },
   processing_institution: {
     name: 'Processing Institution',
-    group: 'Omics Processing',
+    group: 'Data Generation',
   },
   /* GOLD ecosystem type */
   ecosystem: {
