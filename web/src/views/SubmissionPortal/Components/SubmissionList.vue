@@ -19,7 +19,7 @@ import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 const headers: DataTableHeader[] = [
   {
     text: 'Study Name',
-    value: 'metadata_submission.studyForm.studyName',
+    value: 'study_name',
   },
   {
     text: 'Author',
