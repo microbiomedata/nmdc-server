@@ -58,7 +58,7 @@ AUTHORIZATION_CODE_INVALID_EXCEPTION = HTTPException(
 )
 
 API_JWT_ALGORITHM = "HS256"
-ORCID_JWT_ISSUER = settings.orcid_base_url  # e.g. "https://orcid.org" or "https://sandbox.orcid.org"
+ORCID_JWT_ISSUER = settings.orcid_base_url  # e.g. "https://orcid.org", "https://sandbox.orcid.org"
 
 
 class JwtTypes(str, Enum):
