@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from pydantic import BaseSettings
+from pydantic import BaseSettings, computed_field
 
 
 class Settings(BaseSettings):
@@ -33,10 +33,18 @@ class Settings(BaseSettings):
 
     # for orcid oauth
     session_secret_key: str = "secret"
+    orcid_base_url: str = "https://orcid.org"
     orcid_client_id: str = "oauth client id"
     orcid_client_secret: str = "oauth secret key"
-    orcid_openid_config_url: str = "https://orcid.org/.well-known/openid-configuration"
     orcid_authorize_scope: str = "/authenticate"
+
+    @computed_field
+    def orcid_openid_config_url(self) -> str:
+        r"""
+        Derives the `orcid_openid_config_url` field's value based upon another field's value.
+        Reference: https://docs.pydantic.dev/2.7/concepts/fields/#the-computed_field-decorator
+        """
+        return f"{self.orcid_base_url}/.well-known/openid-configuration"
 
     # host name for the ORCID oauth2 redirect and our own JWT issuer
     host: str = "http://127.0.0.1:8000"
