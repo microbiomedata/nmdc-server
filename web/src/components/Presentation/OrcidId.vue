@@ -20,6 +20,10 @@ export default defineComponent({
       type: Boolean,
       required: true,
     },
+    orcidBaseUrl: {
+      type: String,
+      default: ORCID_BASE_URL,
+    },
   },
 });
 </script>
@@ -27,7 +31,7 @@ export default defineComponent({
 <template>
   <div :style="{display: 'flex'}">
     <a
-      :href="`${ORCID_BASE_URL}/${orcidId}`"
+      :href="`${orcidBaseUrl}/${orcidId}`"
       :style="{display: 'flex'}"
     >
       <span
