@@ -1,5 +1,6 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
+import { ORCID_BASE_URL } from '@/util';
 
 export default defineComponent({
   props: {
@@ -26,7 +27,7 @@ export default defineComponent({
 <template>
   <div :style="{display: 'flex'}">
     <a
-      :href="`https://orcid.org/${orcidId}`"
+      :href="`${ORCID_BASE_URL}/${orcidId}`"
       :style="{display: 'flex'}"
     >
       <span
