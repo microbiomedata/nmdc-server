@@ -338,6 +338,8 @@ export interface BulkDownload {
 export interface SearchParams {
   offset?: number;
   limit?: number;
+  sortColumn?: string;
+  sortOrder?: string;
   conditions: Condition[];
   data_object_filter?: DataObjectFilter[];
 }
