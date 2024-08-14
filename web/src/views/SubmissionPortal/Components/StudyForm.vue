@@ -1,5 +1,6 @@
 <script lang="ts">
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
   computed,
   defineComponent,
@@ -114,7 +115,7 @@ export default defineComponent({
       <submission-docs-link anchor="study" />
     </div>
     <div class="text-h5">
-      {{ NmdcSchema.$defs.Study.description }}
+      {{ NmdcSchema.classes.Study.description }}
     </div>
     <submission-permission-banner
       v-if="!canEditSubmissionMetadata()"
@@ -268,7 +269,7 @@ export default defineComponent({
             <v-select
               v-model="contributor.roles"
               :rules="[v => v.length >= 1 || 'At least one role is required']"
-              :items="NmdcSchema.$defs.CreditEnum.enum"
+              :items="Object.keys(NmdcSchema.enums.CreditEnum.permissible_values)"
               label="CRediT Roles *"
               :hint="Definitions.contributorRoles"
               deletable-chips

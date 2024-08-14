@@ -2,7 +2,8 @@
 import {
   defineComponent, PropType, onBeforeUnmount, computed,
 } from '@vue/composition-api';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
 import { fieldDisplayName } from '@/util';
 import { getField, types } from '@/encoding';
@@ -62,7 +63,7 @@ export default defineComponent({
       const { schemaName } = types[props.table];
       if (schemaName !== undefined) {
         // @ts-ignore
-        const schema = NmdcSchema.$defs[schemaName];
+        const schema = NmdcSchema.classes[schemaName];
         // @ts-ignore
         return schema.properties?.[fieldSchemaName.schemaName || props.field]?.description || '';
       }
