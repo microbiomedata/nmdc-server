@@ -3,7 +3,7 @@ const Definitions = {
   piName: 'The Principal Investigator who led the study and/or generated the data.',
   piEmail: 'An email address for the Principal Investigator.',
   piOrcid: '<a href="https://orcid.org" target="_blank" rel="noopener noreferrer">ORCID iD</a> of the Principal Investigator.',
-  fundingSource: 'Source of funding for the study.',
+  fundingSource: 'The source of funding for your study. As an example please see <a href="https://data.microbiomedata.org/details/study/nmdc:sty-11-8fb6t785" target="_blank" rel="noopener noreferrer">this study\'s funding source</a>.',
   linkOutWebpage: 'Link to the Principal Investigator\'s research lab webpage or the study webpage associated with this collection of samples. Multiple links can be provided.',
   studyDescription: 'Provide a description of your study. This should include some general context of your research goals and study design. For examples, please see existing study landing pages on <a href="http://data.microbiomedata.org" target="_blank" rel="noopener noreferrer">the data portal</a>.',
   studyOptionalNotes: 'Add any additional notes or comments about this study.',
