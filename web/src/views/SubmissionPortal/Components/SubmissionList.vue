@@ -24,7 +24,6 @@ const headers: DataTableHeader[] = [
   {
     text: 'Author',
     value: 'author.name',
-    sortable: false,
   },
   {
     text: 'Template',

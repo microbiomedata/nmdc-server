@@ -631,11 +631,18 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
 
 def get_submissions_for_user(db: Session, user: models.User, column_sort: str, order: str):
     """Return all submissions that a user has permission to view."""
-    all_submissions = db.query(models.SubmissionMetadata).order_by(
-        getattr(models.SubmissionMetadata, column_sort).asc()
-        if order == "asc"
-        else getattr(models.SubmissionMetadata, column_sort).desc()
+    column = (
+        models.User.name
+        if column_sort == "author.name"
+        else getattr(models.SubmissionMetadata, column_sort)
     )
+
+    all_submissions = (
+        db.query(models.SubmissionMetadata)
+        .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
+        .order_by(column.asc() if order == "asc" else column.desc())
+    )
+
     if user.is_admin:
         return all_submissions
 
