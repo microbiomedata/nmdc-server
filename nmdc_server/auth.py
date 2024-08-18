@@ -305,7 +305,7 @@ async def oidc_login(body: OidcLoginRequestBody, db: Session = Depends(get_db)):
 
     The endpoint can be used as an alternative to the flow initiated by the /auth/login route. If a
     client has already obtained an OpenID Connect token from ORCID, they can exchange it for a
-    nmdc-server token using this route. The OIDC token is decoded and validated by looking for
+    nmdc-server tokens using this route. The OIDC token is decoded and validated by looking for
     ORCID as the issuer and the nmdc-server client ID as the audience. If the token is valid, the
     claims in the token are used to create or update a user in the database. Finally, new tokens are
     generated for the user.
