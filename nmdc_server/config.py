@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 
-from pydantic import BaseSettings, computed_field
+from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -38,7 +38,7 @@ class Settings(BaseSettings):
     orcid_client_secret: str = "oauth secret key"
     orcid_authorize_scope: str = "/authenticate"
 
-    @computed_field
+    @property
     def orcid_openid_config_url(self) -> str:
         r"""
         Derives the `orcid_openid_config_url` field's value based upon another field's value.
