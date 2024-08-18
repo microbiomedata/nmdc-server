@@ -42,7 +42,14 @@ class Settings(BaseSettings):
     def orcid_openid_config_url(self) -> str:
         r"""
         Derives the `orcid_openid_config_url` field's value based upon another field's value.
-        Reference: https://docs.pydantic.dev/2.7/concepts/fields/#the-computed_field-decorator
+
+        Note: This project currently depends upon Pydantic version 1, which does not offer
+              the `@computed_field` decorator offered by Pydantic version 2. So, we implement
+              a "getter" method using Python's built-in `@property` decorator instead.
+
+              References:
+              - https://docs.python.org/3/library/functions.html#property
+              - https://docs.pydantic.dev/2.7/concepts/fields/#the-computed_field-decorator
         """
         return f"{self.orcid_base_url}/.well-known/openid-configuration"
 
