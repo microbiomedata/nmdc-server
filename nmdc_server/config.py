@@ -33,10 +33,23 @@ class Settings(BaseSettings):
 
     # for orcid oauth
     session_secret_key: str = "secret"
+    orcid_base_url: str = "https://orcid.org"
     orcid_client_id: str = "oauth client id"
     orcid_client_secret: str = "oauth secret key"
-    orcid_openid_config_url: str = "https://orcid.org/.well-known/openid-configuration"
     orcid_authorize_scope: str = "/authenticate"
+
+    @property
+    def orcid_openid_config_url(self) -> str:
+        r"""
+        Derives the `orcid_openid_config_url` field's value based upon another field's value.
+        Note: This project currently depends upon Pydantic version 1, which does not offer
+              the `@computed_field` decorator offered by Pydantic version 2. So, we implement
+              a "getter" method using Python's built-in `@property` decorator instead.
+              References:
+              - https://docs.python.org/3/library/functions.html#property
+              - https://docs.pydantic.dev/2.7/concepts/fields/#the-computed_field-decorator
+        """
+        return f"{self.orcid_base_url}/.well-known/openid-configuration"
 
     # host name for the ORCID oauth2 redirect and our own JWT issuer
     host: str = "http://127.0.0.1:8000"
