@@ -31,7 +31,7 @@ NMDC_ORCID_CLIENT_SECRET=changeme
 ```bash
 NMDC_SESSION_SECRET_KEY=changeme
 NMDC_API_JWT_SECRET=changeme
-
+```
 ### Production Redirect URIs
 
 These are the set of redirect URIs enabled in ORCiD. We need to file a support ticket with ORCID to modify these.
