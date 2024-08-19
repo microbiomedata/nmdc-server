@@ -14,7 +14,7 @@ def test_login(client: TestClient):
     )
 
     assert resp.status_code == 302
-    assert resp.next.url.startswith(f"{settings.orcid_base_url}/oauth/authorize"),  # type: ignore
+    assert resp.next.url.startswith(f"{settings.orcid_base_url}/oauth/authorize")  # type: ignore
 
 
 def test_current_user(client: TestClient, logged_in_user):
