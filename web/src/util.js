@@ -193,4 +193,4 @@ export function formatBiosampleDepth(depthAnnotation, depth) {
  * Base URL (without a trailing slash) at which the user can access
  * the same ORCID environment being used by the backend API.
  */
-export const ORCID_BASE_URL = process.env.NMDC_ORCID_BASE_URL || "https://orcid.org";
+export const ORCID_BASE_URL = process.env.NMDC_ORCID_BASE_URL || 'https://orcid.org';
