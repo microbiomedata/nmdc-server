@@ -14,12 +14,7 @@ def test_login(client: TestClient):
     )
 
     assert resp.status_code == 302
-    assert any(
-        (
-            resp.next.url.startswith("https://orcid.org/oauth/authorize"),  # type: ignore
-            resp.next.url.startswith("https://sandbox.orcid.org/oauth/authorize"),  # type: ignore
-        )
-    )
+    assert resp.next.url.startswith(settings.orcid_base_url),  # type: ignore
 
 
 def test_current_user(client: TestClient, logged_in_user):
