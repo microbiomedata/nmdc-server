@@ -76,6 +76,122 @@ def test_get_metadata_submissions_report_as_admin(
     assert row["PI Email"] == ""
 
 
+def test_obtain_submission_lock(db: Session, client: TestClient, logged_in_user):
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Should be able to successfully GET this submission and the lock should not be set
+    response = client.request(method="get", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 200
+    body = response.json()
+    assert body.get("locked_by") is None
+
+    # Attempt to acquire the lock
+    response = client.request(method="put", url=f"/api/metadata_submission/{submission.id}/lock")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+    assert body["locked_by"]["id"] == str(logged_in_user.id)
+
+    # Verify that the lock is set
+    response = client.request(method="get", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["locked_by"]["id"] == str(logged_in_user.id)
+
+
+def test_cannot_acquire_lock_on_locked_submission(db: Session, client: TestClient, logged_in_user):
+    locking_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        locked_by=locking_user,
+        lock_updated=datetime.utcnow(),
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Attempt to acquire the lock, verify that it fails and reports the current lock holder
+    response = client.request(method="put", url=f"/api/metadata_submission/{submission.id}/lock")
+    assert response.status_code == 409
+    body = response.json()
+    assert body["success"] is False
+    assert body["locked_by"]["id"] == str(locking_user.id)
+
+
+def test_release_submission_lock(db: Session, client: TestClient, logged_in_user):
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        locked_by=logged_in_user,
+        lock_updated=datetime.utcnow(),
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Verify that the lock is set
+    response = client.request(method="get", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["locked_by"]["id"] == str(logged_in_user.id)
+
+    # Release the lock
+    response = client.request(method="put", url=f"/api/metadata_submission/{submission.id}/unlock")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["success"] is True
+
+    # Verify that the lock is released
+    response = client.request(method="get", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 200
+    body = response.json()
+    assert body["locked_by"] is None
+
+
+def test_cannot_release_other_users_submission_lock(
+    db: Session, client: TestClient, logged_in_user
+):
+    locking_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        locked_by=locking_user,
+        lock_updated=datetime.utcnow(),
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Attempt to release the lock, verify that it fails
+    response = client.request(method="put", url=f"/api/metadata_submission/{submission.id}/unlock")
+    assert response.status_code == 409
+    body = response.json()
+    assert body["success"] is False
+    assert body["locked_by"]["id"] == str(locking_user.id)
+
+
 def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_user):
     # Locked by a random user at utcnow by default
     submission = fakes.MetadataSubmissionFactory(

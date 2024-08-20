@@ -345,6 +345,8 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     author = SubFactory(UserFactory)
     author_orcid = Faker("pystr")
     status = "In Progress"
+    study_name = Faker("word")
+    templates = Faker("pylist", nb_elements=2, value_types=[str])
     created = datetime.utcnow()
     # TODO specify all fields!
     metadata_submission = {
@@ -363,6 +365,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "piEmail": "",
             "piOrcid": "",
             "linkOutWebpage": [],
+            "fundingSource": "",
             "description": "",
             "notes": "",
             "contributors": [],

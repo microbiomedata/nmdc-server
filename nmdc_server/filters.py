@@ -33,6 +33,7 @@ from nmdc_server.table import (
     EnvMediumAncestor,
     EnvMediumTerm,
     MetaPGeneFunction,
+    MetaTGeneFunction,
     Table,
     workflow_execution_tables,
 )
@@ -320,6 +321,40 @@ class MetaPGeneFunctionFilter(OmicsProcessingFilter):
             .join(
                 MetaPGeneFunction,
                 MetaPGeneFunction.id == models.MetaPGeneFunctionAggregation.gene_function_id,
+            )
+        )
+
+    def join_self(self, query: Query, parent: Table) -> Query:
+        return query
+
+
+class MetaTGeneFunctionFilter(OmicsProcessingFilter):
+    table = Table.metat_gene_function
+
+    def join(self, target_table: Table, query: Query) -> Query:
+        if target_table == Table.metatranscriptome_annotation:
+            return query.join(
+                models.MetaTGeneFunctionAggregation,
+                models.MetaTGeneFunctionAggregation.metatranscriptome_annotation_id
+                == models.MetatranscriptomeAnnotation.id,
+            ).join(
+                MetaTGeneFunction,
+                MetaTGeneFunction.id == models.MetaTGeneFunctionAggregation.gene_function_id,
+            )
+        query = super().join(target_table, query)
+        return (
+            query.join(
+                models.MetatranscriptomeAnnotation,
+                models.MetatranscriptomeAnnotation.omics_processing_id == models.OmicsProcessing.id,
+            )
+            .join(
+                models.MetaTGeneFunctionAggregation,
+                models.MetaTGeneFunctionAggregation.metatranscriptome_annotation_id
+                == models.MetatranscriptomeAnnotation.id,
+            )
+            .join(
+                MetaTGeneFunction,
+                MetaTGeneFunction.id == models.MetaTGeneFunctionAggregation.gene_function_id,
             )
         )
 

@@ -20,6 +20,7 @@ class StudyForm(BaseModel):
     piName: str
     piEmail: str
     piOrcid: str
+    fundingSource: Optional[str]
     linkOutWebpage: List[str]
     studyDate: Optional[str]
     description: str
@@ -94,6 +95,7 @@ class PartialMetadataSubmissionRecord(BaseModel):
 class SubmissionMetadataSchemaCreate(BaseModel):
     metadata_submission: MetadataSubmissionRecord
     status: Optional[str]
+    source_client: Optional[str]
 
 
 class SubmissionMetadataSchemaPatch(BaseModel):
@@ -109,6 +111,8 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     created: datetime
     status: str
     author: schemas.User
+    templates: List[str]
+    study_name: Optional[str]
 
     lock_updated: Optional[datetime]
     locked_by: Optional[schemas.User]

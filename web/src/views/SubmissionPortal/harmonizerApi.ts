@@ -60,6 +60,8 @@ interface HarmonizerTemplateInfo {
   schemaClass?: string,
   sampleDataSlot?: string,
   status: 'published' | 'mixin' | 'disabled',
+  // This value comes from annotations in the schema. It will be populated once the schema is loaded.
+  excelWorksheetName?: string,
 }
 export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
   air: {
@@ -181,7 +183,9 @@ interface CellData {
 }
 
 export class HarmonizerApi {
-  schemaSections: Ref<Record<string, Record<string, number>>>;
+  schemaSectionNames: Ref<Record<string, string>>;
+
+  schemaSectionColumns: Ref<Record<string, Record<string, number>>>;
 
   ready: Ref<boolean>;
 
@@ -196,7 +200,8 @@ export class HarmonizerApi {
   schema: any;
 
   constructor() {
-    this.schemaSections = ref({});
+    this.schemaSectionNames = ref({});
+    this.schemaSectionColumns = ref({});
     this.ready = ref(false);
     this.selectedColumn = ref('');
   }
@@ -204,6 +209,20 @@ export class HarmonizerApi {
   async init(r: HTMLElement, schema: any, templateName: string | undefined, goldEcosystemTree: any) {
     this.schema = schema;
     this.goldEcosystemTree = goldEcosystemTree;
+
+    // Attempt to find each template's underlying schema class, pull the excel_worksheet_name annotation from it
+    // and add it to the template object.
+    Object.values(HARMONIZER_TEMPLATES).forEach((template) => {
+      if (!template.schemaClass) {
+        return;
+      }
+      const classDefinition = schema.classes[template.schemaClass];
+      if (!classDefinition) {
+        return;
+      }
+      // eslint-disable-next-line no-param-reassign
+      template.excelWorksheetName = classDefinition.annotations?.excel_worksheet_name?.value;
+    });
 
     this.dh = new DataHarmonizer(r, {
       modalsRoot: document.querySelector('.harmonizer-style-container'),
@@ -327,7 +346,11 @@ export class HarmonizerApi {
   }
 
   refreshState() {
-    this.schemaSections.value = this._getColumnCoordinates();
+    this.schemaSectionNames.value = this.dh.template.reduce((acc: any, section: any) => {
+      acc[section.title] = section.name;
+      return acc;
+    }, {});
+    this.schemaSectionColumns.value = this._getColumnCoordinates();
   }
 
   async loadData(data: any[]) {

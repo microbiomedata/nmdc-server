@@ -17,6 +17,8 @@ export default function usePaginatedResult<T>(
     results: { count: 0, results: [] } as SearchResponse<T>,
     offset: 0,
     limit, // same as pageSize
+    sortColumn: '',
+    sortOrder: 'desc',
     pageSync: 1,
   });
   const { error, loading, request } = useRequest();
@@ -33,6 +35,8 @@ export default function usePaginatedResult<T>(
       data.results = await func({
         limit: data.limit,
         offset: data.offset,
+        sortColumn: data.sortColumn,
+        sortOrder: data.sortOrder,
         conditions: conditions.value,
         data_object_filter: dataObjectFilter?.value,
       });
@@ -66,6 +70,12 @@ export default function usePaginatedResult<T>(
     debouncedFetchResults();
   }
 
+  function setSortOptions(columnSort: string, sortOrder: string) {
+    data.sortColumn = columnSort;
+    data.sortOrder = sortOrder;
+    debouncedFetchResults();
+  }
+
   return {
     data,
     error,
@@ -73,5 +83,6 @@ export default function usePaginatedResult<T>(
     page,
     setPage,
     setItemsPerPage,
+    setSortOptions,
   };
 }

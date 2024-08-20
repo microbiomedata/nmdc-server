@@ -76,7 +76,7 @@ export default defineComponent({
         :plain="nav"
         :small="nav"
         :ripple="!nav"
-        :href="me.orcid ? `https://orcid.org/${me.orcid}` : ''"
+        :to="{ name: 'User' }"
       >
         <v-icon left>
           mdi-account-circle

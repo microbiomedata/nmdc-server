@@ -26,7 +26,7 @@ const FunctionSearchFacets: SearchFacet[] = [
     field: 'id',
     table: 'gene_function',
   },
-  /** ENVO */
+  /** MIxS Environmental Triad */
   {
     field: 'env_broad_scale',
     table: 'biosample',

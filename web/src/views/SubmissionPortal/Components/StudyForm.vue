@@ -204,6 +204,19 @@ export default defineComponent({
         </template>
       </v-textarea>
       <v-text-field
+        v-model="studyForm.fundingSource"
+        label="Funding Source"
+        outlined
+        :hint="Definitions.fundingSource"
+        persistent-hint
+        dense
+        class="my-2"
+      >
+        <template #message="{ message }">
+          <span v-html="message" />
+        </template>
+      </v-text-field>
+      <v-text-field
         v-model="studyForm.notes"
         label="Optional Notes"
         :hint="Definitions.studyOptionalNotes"
@@ -284,6 +297,7 @@ export default defineComponent({
               outlined
               dense
               persistent-hint
+              @change="() => formRef.validate()"
             >
               <template #prepend-inner>
                 <v-tooltip

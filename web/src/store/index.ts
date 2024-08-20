@@ -8,6 +8,7 @@ import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import {
   api, Condition, DataObjectFilter, EnvoNode, EnvoTree, User,
 } from '@/data/api';
+import { clearQueryState, getQueryState, setQueryState } from '@/store/localStorage';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -25,7 +26,6 @@ const unreactive = {
   nodeMapId: {} as Record<string, EnvoNode>,
   nodeMapLabel: {} as Record<string, EnvoNode>,
 };
-const queryStateKey = 'storage.queryState';
 
 /**
  * Persist state into localstorage
@@ -33,10 +33,10 @@ const queryStateKey = 'storage.queryState';
 function persistState() {
   /* If the user is browsing anonymously, stash their state in case they log in */
   if (!state.user) {
-    window.localStorage.setItem(queryStateKey, JSON.stringify({
+    setQueryState({
       conditions: state.conditions,
       bulkDownloadSelected: state.bulkDownloadSelected,
-    }));
+    });
   }
 }
 
@@ -75,12 +75,12 @@ function setUniqueCondition(
  * Restore state from localStorage and clear
  */
 function restoreState() {
-  const previousState = window.localStorage.getItem(queryStateKey);
+  const previousState = getQueryState();
   if (previousState) {
-    const { conditions, bulkDownloadSelected } = JSON.parse(previousState);
+    const { conditions, bulkDownloadSelected } = previousState;
     setConditions(conditions);
     state.bulkDownloadSelected = bulkDownloadSelected;
-    window.localStorage.removeItem(queryStateKey);
+    clearQueryState();
   }
 }
 

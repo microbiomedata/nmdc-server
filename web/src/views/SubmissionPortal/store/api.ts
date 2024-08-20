@@ -1,3 +1,4 @@
+import { AxiosResponse } from 'axios';
 import { client, SearchParams, User } from '@/data/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 
@@ -45,6 +46,9 @@ interface MetadataSubmissionRecord {
   locked_by: User;
   lock_updated: string;
   permission_level: string | null;
+  source_client: 'submission_portal' | 'field_notes' | null;
+  study_name: string;
+  templates: string[];
 }
 
 interface PaginatedResponse<T> {
@@ -52,9 +56,21 @@ interface PaginatedResponse<T> {
   results: T[];
 }
 
+interface LockOperationResult {
+  success: boolean;
+  message: string
+  locked_by?: User | null;
+  lock_updated?: string | null;
+}
+
 async function createRecord(record: MetadataSubmission) {
-  const resp = await client.post<MetadataSubmissionRecord>('metadata_submission', {
+  const resp = await client.post<
+    MetadataSubmissionRecord,
+    AxiosResponse<MetadataSubmissionRecord>,
+    Partial<MetadataSubmissionRecord>
+  >('metadata_submission', {
     metadata_submission: record,
+    source_client: 'submission_portal',
   });
   return resp.data;
 }
@@ -73,6 +89,8 @@ async function listRecords(params: SearchParams) {
     params: {
       limit: params.limit,
       offset: params.offset,
+      column_sort: params.sortColumn,
+      sort_order: params.sortOrder,
     },
   });
   return resp.data;
@@ -83,8 +101,13 @@ async function getRecord(id: string) {
   return resp.data;
 }
 
+async function lockSubmission(id: string) {
+  const resp = await client.put<LockOperationResult>(`metadata_submission/${id}/lock`);
+  return resp.data;
+}
+
 async function unlockSubmission(id: string) {
-  const resp = await client.put<string>(`metadata_submission/${id}/unlock`);
+  const resp = await client.put<LockOperationResult>(`metadata_submission/${id}/unlock`);
   return resp.data;
 }
 
@@ -97,5 +120,6 @@ export {
   getRecord,
   listRecords,
   updateRecord,
+  lockSubmission,
   unlockSubmission,
 };

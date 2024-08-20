@@ -18,6 +18,7 @@ import LoginPrompt from '@/views/SubmissionPortal/Components/LoginPrompt.vue';
 export default defineComponent({
   components: {
     AppBanner,
+
     IconBar,
     IntroBlurb,
     LoginPrompt,
@@ -43,7 +44,11 @@ export default defineComponent({
 
     const showBanner = computed(() => root.$route.path === '/submission/home');
 
-    return { stateRefs, req, showBanner };
+    return {
+      stateRefs,
+      req,
+      showBanner,
+    };
   },
 });
 </script>
@@ -51,8 +56,10 @@ export default defineComponent({
 <template>
   <v-main>
     <AppBanner v-if="false" />
-    <v-container v-if="!stateRefs.user.value && !req.loading.value">
-      <v-container class="mt-4">
+    <v-container
+      v-if="!stateRefs.user.value && !req.loading.value"
+    >
+      <v-container class="mt-4 ">
         <v-row>
           <v-col class="pb-0">
             <TitleBanner />

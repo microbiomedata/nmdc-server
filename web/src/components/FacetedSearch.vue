@@ -10,7 +10,7 @@ const groupOrders = [
   'function',
   'sample',
   'gold ecosystems',
-  'envo',
+  'mixs environmental triad',
   'omics processing',
 ];
 

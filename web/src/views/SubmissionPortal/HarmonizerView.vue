@@ -32,6 +32,7 @@ import {
   canEditSampleMetadata,
   isOwner,
 } from './store';
+import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
@@ -60,6 +61,8 @@ const ColorKey = {
     color: '#ff91a4',
   },
 };
+
+const HELP_SIDEBAR_WIDTH = '300px';
 
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
 
@@ -93,6 +96,7 @@ const ALWAYS_READ_ONLY_COLUMNS = [
 
 export default defineComponent({
   components: {
+    ContactCard,
     FindReplace,
     SubmissionStepper,
     SubmissionDocsLink,
@@ -121,6 +125,8 @@ export default defineComponent({
     const submitDialog = ref(false);
 
     const snackbar = ref(false);
+    const importErrorSnackbar = ref(false);
+    const notImportedWorksheetNames = ref([] as string[]);
 
     watch(activeTemplate, () => {
       // WARNING: It's important to do the column settings update /before/ data. Otherwise,
@@ -248,7 +254,7 @@ export default defineComponent({
       return allTabsValid && isOwner();
     });
 
-    const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
+    const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
         const val = {
           text: columnName ? `  ${columnName}` : sectionName,
@@ -382,7 +388,7 @@ export default defineComponent({
         ], {
           skipHeader: true,
         });
-        utils.book_append_sheet(workbook, worksheet, template.displayName);
+        utils.book_append_sheet(workbook, worksheet, template.excelWorksheetName || template.displayName);
       });
       writeFile(workbook, EXPORT_FILENAME, { compression: true });
     }
@@ -399,9 +405,13 @@ export default defineComponent({
         }
         const workbook = read(event.target.result);
         const imported = {} as Record<string, any>;
+        const notImported = [] as string[];
         Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
-          const template = Object.values(HARMONIZER_TEMPLATES).find((template) => template.displayName === name);
+          const template = Object.values(HARMONIZER_TEMPLATES).find((template) => (
+            template.excelWorksheetName === name || template.displayName === name
+          ));
           if (!template || !template.sampleDataSlot || !template.schemaClass) {
+            notImported.push(name);
             return;
           }
 
@@ -420,6 +430,11 @@ export default defineComponent({
             template.schemaClass,
           );
         });
+
+        // Alert the user if any worksheets were not imported
+        notImportedWorksheetNames.value = notImported;
+        importErrorSnackbar.value = notImported.length > 0;
+
         // Load imported data
         sampleData.value = imported;
 
@@ -464,6 +479,7 @@ export default defineComponent({
 
     return {
       APP_HEADER_HEIGHT,
+      HELP_SIDEBAR_WIDTH,
       ColorKey,
       HARMONIZER_TEMPLATES,
       columnVisibility,
@@ -495,6 +511,8 @@ export default defineComponent({
       submitDialog,
       snackbar,
       schemaLoading,
+      importErrorSnackbar,
+      notImportedWorksheetNames,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -569,6 +587,13 @@ export default defineComponent({
           timeout="3000"
         >
           Validation Passed! You can now submit or continue editing.
+        </v-snackbar>
+        <v-snackbar
+          v-model="importErrorSnackbar"
+          color="error"
+          timeout="5000"
+        >
+          The following worksheet names were not recognized: {{ notImportedWorksheetNames.join(', ') }}
         </v-snackbar>
         <v-card
           v-if="validationErrorGroups.length"
@@ -748,13 +773,13 @@ export default defineComponent({
                 Show section
               </span>
               <v-radio
-                v-for="(value, sectionName) in harmonizerApi.schemaSections.value"
+                v-for="(sectionName, sectionTitle) in harmonizerApi.schemaSectionNames.value"
                 :key="sectionName"
                 :value="sectionName"
               >
                 <template #label>
                   <span>
-                    {{ sectionName }}
+                    {{ sectionTitle }}
                   </span>
                 </template>
               </v-radio>
@@ -797,6 +822,29 @@ export default defineComponent({
           {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
         </span>
       </v-tooltip>
+      <v-spacer />
+      <v-menu
+        offset-x
+        left
+        z-index="300"
+      >
+        <template #activator="{on, attrs}">
+          <v-btn
+            color="primary"
+            small
+            class="my-2 py-4"
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-icon
+              class="mt-1"
+            >
+              mdi-message-question
+            </v-icon>
+          </v-btn>
+        </template>
+        <ContactCard />
+      </v-menu>
     </v-tabs>
 
     <div v-if="schemaLoading">
@@ -806,14 +854,17 @@ export default defineComponent({
     <div
       class="harmonizer-style-container harmonizer-and-sidebar"
     >
-      <div id="harmonizer-root" />
+      <div
+        id="harmonizer-root"
+        :style="{
+          'padding-right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
+        }"
+      />
 
       <div
+        class="harmonizer-sidebar"
         :style="{
-          'width': sidebarOpen ? '300px' : '0px',
-          'font-size': '14px',
-          'position': 'relative',
-          'flex-shrink': '0',
+          'width': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
         }"
       >
         <v-btn
@@ -1052,12 +1103,19 @@ html {
 }
 
 .harmonizer-and-sidebar {
-  display: flex;
-  flex-direction: row;
+  position: relative;
   width: 100%;
   height: 100%;
   flex-grow: 1;
   overflow: auto;
+}
+
+.harmonizer-sidebar {
+  font-size: 14px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
 }
 
 /* Grid */
@@ -1131,7 +1189,7 @@ html {
 
 .sidebar-toggle {
   background: white;
-  z-index: 500;
+  z-index: 200;
   position: absolute;
   top: 0;
   left: 0;

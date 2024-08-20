@@ -80,6 +80,10 @@ const Menus = [
         label: 'Data Management',
         href: 'https://microbiomedata.org/data-management/',
       },
+      {
+        label: 'Data Integration',
+        href: 'https://microbiomedata.org/data-integration/',
+      },
     ],
   },
   {

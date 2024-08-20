@@ -38,10 +38,6 @@ def generate_submission_schema_files(directory: Path) -> None:
     # The entire submission schema in JSON format
     json_dumper.dump(sv.schema, out_dir / "submission_schema.json")
 
-    # Each class of the submission schema in JSON format
-    for class_name, class_definition in sv.all_classes().items():
-        json_dumper.dump(class_definition, out_dir / f"{class_name}.json")
-
     # The GOLD ecosystem tree that the submission schema re-exports
     gold_tree_path = submission_schema_files / "project/thirdparty/GoldEcosystemTree.json"
     shutil.copyfile(str(gold_tree_path), out_dir / "GoldEcosystemTree.json")

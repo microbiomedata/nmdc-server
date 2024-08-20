@@ -231,6 +231,7 @@ const fields: Record<string, FieldsData> = {
     hideAttr: true,
   },
   collection_date: {
+    name: 'Collection Date',
     icon: 'mdi-calendar',
   },
   ecosystem_path_id: {
@@ -256,8 +257,21 @@ const fields: Record<string, FieldsData> = {
   },
   gold_classification: {
     icon: 'mdi-pine-tree',
+    name: 'GOLD Classification',
     group: 'GOLD Ecosystems',
     sortKey: 0,
+  },
+  instrument_name: {
+    name: 'Instrument Name',
+    group: 'Omics Processing',
+  },
+  omics_type: {
+    name: 'Omics Type',
+    group: 'Omics Processing',
+  },
+  processing_institution: {
+    name: 'Processing Institution',
+    group: 'Omics Processing',
   },
   /* GOLD ecosystem type */
   ecosystem: {
@@ -291,26 +305,26 @@ const fields: Record<string, FieldsData> = {
     hideFacet: true,
   },
   /* END GOLD ecosystem type */
-  /* ENVO terms */
+  /* MIxS Environmental Triad terms */
   env_broad_scale: {
     name: 'Broad-scale Environmental Context',
-    group: 'ENVO',
+    group: 'MIxS Environmental Triad',
     sortKey: 1,
   },
   env_local_scale: {
     name: 'Local Environmental Context',
-    group: 'ENVO',
+    group: 'MIxS Environmental Triad',
     sortKey: 2,
   },
   env_medium: {
-    name: 'Environmental medium',
-    group: 'ENVO',
+    name: 'Environmental Medium',
+    group: 'MIxS Environmental Triad',
     sortKey: 3,
   },
   open_in_gold: {
     icon: 'mdi-link',
   },
-  /* END ENVO terms */
+  /* END MIxS Environmental Triad terms */
   /* disable uniques */
   scientific_objective: {
     hideFacet: true,

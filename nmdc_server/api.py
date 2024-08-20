@@ -697,8 +697,10 @@ async def list_submissions(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
     pagination: Pagination = Depends(),
+    column_sort: str = "created",
+    sort_order: str = "desc",
 ):
-    query = crud.get_submissions_for_user(db, user)
+    query = crud.get_submissions_for_user(db, user, column_sort, sort_order)
     return pagination.response(query)
 
 
@@ -713,10 +715,10 @@ async def get_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = db.query(SubmissionMetadata).get(id)
+    submission: Optional[models.SubmissionMetadata] = db.query(SubmissionMetadata).get(id)
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
-    _ = crud.try_get_submission_lock(db, submission.id, user.id)
+
     if user.is_admin or crud.can_read_submission(db, id, user.orcid):
         permission_level = None
         if user.is_admin or user.orcid in submission.owners:
@@ -727,16 +729,21 @@ async def get_submission(
             permission_level = models.SubmissionEditorRole.metadata_contributor.value
         elif user.orcid in submission.viewers:
             permission_level = models.SubmissionEditorRole.viewer.value
-        return schemas_submission.SubmissionMetadataSchema(
+        submission_metadata_schema = schemas_submission.SubmissionMetadataSchema(
             status=submission.status,
             id=submission.id,
             metadata_submission=submission.metadata_submission,
             author_orcid=submission.author_orcid,
             created=submission.created,
             author=schemas.User(**submission.author.__dict__),
-            locked_by=schemas.User(**submission.locked_by.__dict__),
             permission_level=permission_level,
+            templates=submission.templates,
+            study_name=submission.study_name,
         )
+        if submission.locked_by is not None:
+            submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
+        return submission_metadata_schema
+
     raise HTTPException(status_code=403, detail="Must have access.")
 
 
@@ -844,6 +851,7 @@ def create_github_issue(submission, user):
     omicsprocessingtypes = ", ".join(multiomicsform["omicsProcessingTypes"])
     sampletype = ", ".join(submission.metadata_submission["templates"])
     sampledata = submission.metadata_submission["sampleData"]
+    fundingsource = studyform["fundingSource"]
     numsamples = 0
     for key in sampledata:
         numsamples = max(numsamples, len(sampledata[key]))
@@ -873,6 +881,7 @@ def create_github_issue(submission, user):
         f"Data types: {omicsprocessingtypes}",
         f"Sample type:{sampletype}",
         f"Number of samples:{numsamples}",
+        f"Funding source:{fundingsource}",
     ] + valid_ids
     body_string = " \n ".join(body_lis)
     payload_dict = {
@@ -926,22 +935,63 @@ async def delete_submission(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.put("/metadata_submission/{id}/lock")
+async def lock_submission(
+    response: Response,
+    id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> schemas.LockOperationResult:
+    submission: Optional[SubmissionMetadata] = db.query(SubmissionMetadata).get(id)
+    if not submission:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+
+    # Attempt to acquire the lock
+    lock_acquired = crud.try_get_submission_lock(db, submission.id, user.id)
+    if lock_acquired:
+        return schemas.LockOperationResult(
+            success=True,
+            message=f"Lock successfully acquired for submission with ID {id}.",
+            locked_by=submission.locked_by,
+            lock_updated=submission.lock_updated,
+        )
+    else:
+        response.status_code = status.HTTP_409_CONFLICT
+        return schemas.LockOperationResult(
+            success=False,
+            message="This submission is currently locked by a different user.",
+            locked_by=submission.locked_by,
+            lock_updated=submission.lock_updated,
+        )
+
+
 @router.put("/metadata_submission/{id}/unlock")
 async def unlock_submission(
-    id: str, db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
-) -> str:
+    response: Response,
+    id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> schemas.LockOperationResult:
     submission = db.query(SubmissionMetadata).get(id)
     if not submission:
-        raise HTTPException(status_code=404, detail="Submission not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+
     # Then verify session user has the lock
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
     if not has_lock:
-        raise HTTPException(
-            status_code=400, detail="This submission is currently being edited by a different user."
+        response.status_code = status.HTTP_409_CONFLICT
+        return schemas.LockOperationResult(
+            success=False,
+            message="This submission is currently locked by a different user.",
+            locked_by=submission.locked_by,
+            lock_updated=submission.lock_updated,
         )
     else:
         crud.release_submission_lock(db, submission.id)
-        return f"Submission lock released successfully for submission with ID {id}"
+        return schemas.LockOperationResult(
+            success=True,
+            message=f"Submission lock released successfully for submission with ID {id}",
+        )
 
 
 @router.post(
@@ -956,8 +1006,14 @@ async def submit_metadata(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = SubmissionMetadata(**body.dict(), author_orcid=user.orcid)
+    submission = SubmissionMetadata(
+        **body.dict(),
+        author_orcid=user.orcid,
+    )
     submission.author_id = user.id
+    submission.study_name = body.metadata_submission.studyForm.studyName
+    submission.templates = body.metadata_submission.templates
+
     db.add(submission)
     db.commit()
     owner_role = SubmissionRole(

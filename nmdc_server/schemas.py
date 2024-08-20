@@ -143,6 +143,8 @@ class DatabaseSummary(BaseModel):
     reads_qc: TableSummary
     metagenome_assembly: TableSummary
     metagenome_annotation: TableSummary
+    metatranscriptome_assembly: TableSummary
+    metatranscriptome_annotation: TableSummary
     metaproteomic_analysis: TableSummary
     mags_analysis: TableSummary
     read_based_analysis: TableSummary
@@ -453,8 +455,7 @@ class ReadsQC(PipelineStep):
     pass
 
 
-class MetagenomeAssemblyBase(PipelineStepBase):
-    type: str = WorkflowActivityTypeEnum.metagenome_assembly.value
+class AssemblyBase(PipelineStepBase):
     scaffolds: Optional[int]
     contigs: Optional[int]
     scaf_bp: Optional[int]
@@ -486,7 +487,19 @@ class MetagenomeAssemblyBase(PipelineStepBase):
     gc_std: Optional[float]
 
 
+class MetagenomeAssemblyBase(AssemblyBase):
+    type: str = WorkflowActivityTypeEnum.metagenome_assembly.value
+
+
+class MetatranscriptomeAssemblyBase(AssemblyBase):
+    type: str = WorkflowActivityTypeEnum.metatranscriptome_assembly.value
+
+
 class MetagenomeAssembly(PipelineStep):
+    pass
+
+
+class MetatranscriptomeAssembly(PipelineStep):
     pass
 
 
@@ -494,7 +507,15 @@ class MetagenomeAnnotationBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.metagenome_annotation.value
 
 
+class MetatranscriptomeAnnotationBase(PipelineStepBase):
+    type: str = WorkflowActivityTypeEnum.metatranscriptome_annotation.value
+
+
 class MetagenomeAnnotation(PipelineStep):
+    pass
+
+
+class MetatranscriptomeAnnotation(PipelineStep):
     pass
 
 
@@ -582,6 +603,8 @@ OmicsTypes = Union[
     ReadsQC,
     MetagenomeAnnotation,
     MetagenomeAssembly,
+    MetatranscriptomeAnnotation,
+    MetatranscriptomeAssembly,
     MetaproteomicAnalysis,
     MAGsAnalysis,
     NOMAnalysis,
@@ -658,3 +681,10 @@ class User(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class LockOperationResult(BaseModel):
+    success: bool
+    message: str
+    locked_by: Optional[User]
+    lock_updated: Optional[datetime]

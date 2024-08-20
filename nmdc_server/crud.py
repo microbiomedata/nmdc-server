@@ -51,6 +51,12 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         reads_qc=aggregations.get_table_summary(db, models.ReadsQC),
         metagenome_assembly=aggregations.get_table_summary(db, models.MetagenomeAssembly),
         metagenome_annotation=aggregations.get_table_summary(db, models.MetagenomeAnnotation),
+        metatranscriptome_assembly=aggregations.get_table_summary(
+            db, models.MetatranscriptomeAssembly
+        ),
+        metatranscriptome_annotation=aggregations.get_table_summary(
+            db, models.MetatranscriptomeAnnotation
+        ),
         metaproteomic_analysis=aggregations.get_table_summary(db, models.MetaproteomicAnalysis),
         mags_analysis=aggregations.get_table_summary(db, models.MAGsAnalysis),
         read_based_analysis=aggregations.get_table_summary(db, models.ReadBasedAnalysis),
@@ -497,9 +503,16 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
     submission_record = db.query(models.SubmissionMetadata).get(submission_id)
     if not submission_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    user_record = db.query(models.User).get(user_id)
+    user_record: Optional[models.User] = db.query(models.User).get(user_id)
     if not user_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # Check that the user has sufficient permissions to obtain the lock
+    if not (user_record.is_admin or can_read_submission(db, submission_id, user_record.orcid)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have permission to obtain lock",
+        )
 
     current_lock_holder = submission_record.locked_by
     if not current_lock_holder or current_lock_holder.id == user_id:
@@ -616,10 +629,18 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
     return (role and models.SubmissionEditorRole(role.role) in contributors_edit_roles) is True
 
 
-def get_submissions_for_user(db: Session, user: models.User):
+def get_submissions_for_user(db: Session, user: models.User, column_sort: str, order: str):
     """Return all submissions that a user has permission to view."""
-    all_submissions = db.query(models.SubmissionMetadata).order_by(
-        models.SubmissionMetadata.created.desc()
+    column = (
+        models.User.name
+        if column_sort == "author.name"
+        else getattr(models.SubmissionMetadata, column_sort)
+    )
+
+    all_submissions = (
+        db.query(models.SubmissionMetadata)
+        .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
+        .order_by(column.asc() if order == "asc" else column.desc())
     )
 
     if user.is_admin:
