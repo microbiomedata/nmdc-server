@@ -242,12 +242,12 @@ export default defineComponent({
           <div class="d-flex">
             <v-text-field
               v-model="fundingSource.value"
-              label="Funding Source"
               :rules="requiredRules('Field cannot be empty.')"
+              label="Funding Source *"
+              :hint="Definitions.fundingSources"
               outlined
-              :hint="Definitions.contributorOrcid"
-              persistent-hint
               dense
+              persistent-hint
               class="mb-2 mr-3"
             />
           </div>
