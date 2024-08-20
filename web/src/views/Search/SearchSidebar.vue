@@ -76,21 +76,21 @@ const FunctionSearchFacets: SearchFacet[] = [
     table: 'study',
     group: 'Study',
   },
-  /** Omics Processing */
+  /** Data Generation */
   {
     field: 'instrument_name',
     table: 'omics_processing',
-    group: 'Omics Processing',
+    group: 'Data Generation',
   },
   {
     field: 'omics_type',
     table: 'omics_processing',
-    group: 'Omics Processing',
+    group: 'Data Generation',
   },
   {
     field: 'processing_institution',
     table: 'omics_processing',
-    group: 'Omics Processing',
+    group: 'Data Generation',
   },
 ];
 
