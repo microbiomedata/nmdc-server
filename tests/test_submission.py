@@ -55,7 +55,7 @@ def test_get_metadata_submissions_report_as_admin(
 
     # Confirm the response payload is a TSV file having the fields and values we expect.
     # Reference: https://docs.python.org/3/library/csv.html#csv.DictReader
-    header_row = [
+    fieldnames = [
         "Submission ID",
         "Author ORCID",
         "Author Name",
@@ -63,17 +63,18 @@ def test_get_metadata_submissions_report_as_admin(
         "PI Name",
         "PI Email",
     ]
-    reader = DictReader(response.text.splitlines(), fieldnames=header_row, delimiter="\t")
-    data_rows = [data_row for data_row in reader]
-    assert len(data_rows) == 1  # does not count the header row
-    row = data_rows[0]
-    assert len(list(row.keys())) == len(header_row)
-    assert row["Submission ID"] == str(submission.id)
-    assert row["Author ORCID"] == logged_in_user.orcid
-    assert row["Author Name"] == logged_in_user.name
-    assert row["Study Name"] == ""
-    assert row["PI Name"] == ""
-    assert row["PI Email"] == ""
+    reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
+    rows = [row for row in reader]
+    assert len(rows) == 2  # includes the header row
+    header_row = rows[0]
+    assert len(list(header_row.keys())) == len(fieldnames)
+    data_row = rows[1]  # gets the first data row
+    assert data_row["Submission ID"] == str(submission.id)
+    assert data_row["Author ORCID"] == logged_in_user.orcid
+    assert data_row["Author Name"] == logged_in_user.name
+    assert data_row["Study Name"] == ""
+    assert data_row["PI Name"] == ""
+    assert data_row["PI Email"] == ""
 
 
 def test_obtain_submission_lock(db: Session, client: TestClient, logged_in_user):
