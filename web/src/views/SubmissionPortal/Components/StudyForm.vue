@@ -55,6 +55,20 @@ export default defineComponent({
       });
     }
 
+    function addFundingSource() {
+      if (studyForm.fundingSources.length === 0) {
+        studyForm.fundingSources = [
+          {
+            value: '',
+          },
+        ];
+      } else {
+        studyForm.fundingSources.push({
+          value: '',
+        });
+      }
+    }
+
     function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
       return [
         (v: string) => !!v || msg,
@@ -94,6 +108,7 @@ export default defineComponent({
       NmdcSchema,
       Definitions,
       addContributor,
+      addFundingSource,
       requiredRules,
       permissionLevelChoices,
       isOwner,
@@ -204,19 +219,6 @@ export default defineComponent({
         </template>
       </v-textarea>
       <v-text-field
-        v-model="studyForm.fundingSource"
-        label="Funding Source"
-        outlined
-        :hint="Definitions.fundingSource"
-        persistent-hint
-        dense
-        class="my-2"
-      >
-        <template #message="{ message }">
-          <span v-html="message" />
-        </template>
-      </v-text-field>
-      <v-text-field
         v-model="studyForm.notes"
         label="Optional Notes"
         :hint="Definitions.studyOptionalNotes"
@@ -225,6 +227,52 @@ export default defineComponent({
         dense
         class="my-2"
       />
+      <div class="text-h4">
+        Funding Sources
+      </div>
+      <div class="text-body-1 mb-2">
+        {{ "Any sources of funding for this study." }}
+      </div>
+      <div
+        v-for="fundingSource, i in studyForm.fundingSources"
+        :key="`fundingSource${i}`"
+        class="d-flex"
+      >
+        <v-card class="d-flex flex-column grow pa-4 mb-4">
+          <div class="d-flex">
+            <v-text-field
+              v-model="fundingSource.value"
+              label="Funding Source"
+              :rules="requiredRules('Field cannot be empty.')"
+              outlined
+              :hint="Definitions.contributorOrcid"
+              persistent-hint
+              dense
+              class="mb-2 mr-3"
+            />
+          </div>
+        </v-card>
+        <v-btn
+          icon
+          :disabled="!isOwner()"
+          @click="studyForm.fundingSources.splice(i, 1)"
+        >
+          <v-icon>mdi-minus-circle</v-icon>
+        </v-btn>
+      </div>
+      <v-btn
+        depressed
+        :disabled="!canEditSubmissionMetadata()"
+        @click="addFundingSource"
+      >
+        <v-icon class="pr-1">
+          mdi-plus-circle
+        </v-icon>
+        Add Funding Source
+      </v-btn>
+      <template #message="{ message }">
+        <span v-html="message" />
+      </template>
       <div class="text-h4">
         Contributors
       </div>
