@@ -27,13 +27,17 @@ def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     assert response.json()["results"][0]["id"] == str(submission.id)
 
 
-def test_get_metadata_submissions_report_as_non_admin(db: Session, client: TestClient, logged_in_user):
+def test_get_metadata_submissions_report_as_non_admin(
+    db: Session, client: TestClient, logged_in_user
+):
     response = client.request(method="GET", url="/api/metadata_submission/report")
     assert response.status_code == 403
 
 
-def test_get_metadata_submissions_report_as_admin(db: Session, client: TestClient, logged_in_admin_user):
-    logged_in_user = logged_in_admin_user  # makes a concise alias (also allows for verbatim code snippet reuse)
+def test_get_metadata_submissions_report_as_admin(
+    db: Session, client: TestClient, logged_in_admin_user
+):
+    logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
