@@ -21,7 +21,14 @@ export interface FieldsData {
   encode?: (input: string) => string,
 }
 
-const KeggPrefix = {
+interface PrefixInfo {
+    pattern: RegExp;
+    short: string;
+    long: string;
+    urlBase: string;
+}
+
+const KeggPrefix: Record<string, PrefixInfo> = {
   ORTHOLOGY: {
     pattern: /^((ko?:?)|(kegg\.orthology:k))(?=\d{5})/i,
     short: 'k',
@@ -29,7 +36,7 @@ const KeggPrefix = {
     urlBase: 'https://www.genome.jp/entry/',
   },
   PATHWAY: {
-    pattern: /^((map:?)|(path:?)|(kegg.pathway:map))(?=\d{5})/i,
+    pattern: /^((map:?)|(path:?)|(ko:?)|(ec:?)|(rn:?)|(org:?)|(kegg.pathway:map))(?=\d{5})/i,
     short: 'map',
     long: 'KEGG.PATHWAY:MAP',
     urlBase: 'https://www.genome.jp/kegg-bin/show_pathway?',
@@ -41,17 +48,29 @@ const KeggPrefix = {
     urlBase: 'https://www.genome.jp/brite/',
   },
 };
+
 /**
  * Encode a string as either the long or short variant of
  * a KEGG identifier term.
  */
 function keggEncode(v: string, url = false) {
-  const prefixes = Object.values(KeggPrefix);
+  const prefixes = Object.keys(KeggPrefix);
   for (let i = 0; i < prefixes.length; i += 1) {
     const {
       pattern, short, long, urlBase,
-    } = prefixes[i];
-    const transformed = v.replace(pattern, url ? short : long);
+    } = KeggPrefix[prefixes[i]];
+    const replacement = url ? short : long;
+    console.log(replacement);
+    const transformed = v.replace(pattern, replacement);
+    console.log(transformed);
+    if (prefixes[i] === 'PATHWAY') {
+      const match = v.match(pattern);
+      const prefix = match ? match[1] : 'map';
+      if (url) {
+        return urlBase + transformed.replace('map', prefix);
+      }
+      return transformed.replace('MAP', prefix.toUpperCase());
+    }
     if (transformed !== v) {
       if (url) {
         return urlBase + transformed;
