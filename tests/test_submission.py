@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+from csv import DictReader
 
 import pytest
 from sqlalchemy.orm.session import Session
@@ -47,13 +48,32 @@ def test_get_metadata_submissions_report_as_admin(
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-
-    # TODO: Create additional submissions.
     db.commit()
 
-    # TODO: Check additional aspects of the HTTP response.
     response = client.request(method="GET", url="/api/metadata_submission/report")
     assert response.status_code == 200
+
+    # Confirm the response payload is a TSV file having the fields and values we expect.
+    # Reference: https://docs.python.org/3/library/csv.html#csv.DictReader
+    header_row = [
+        "Submission ID",
+        "Author ORCID",
+        "Author Name",
+        "Study Name",
+        "PI Name",
+        "PI Email",
+    ]
+    reader = DictReader(response.text.splitlines(), fieldnames=header_row, delimiter="\t")
+    data_rows = [data_row for data_row in reader]
+    assert len(data_rows) == 1  # does not count the header row
+    row = data_rows[0]
+    assert len(list(row.keys())) == len(header_row)
+    assert row["Submission ID"] == str(submission.id)
+    assert row["Author ORCID"] == logged_in_user.orcid
+    assert row["Author Name"] == logged_in_user.name
+    assert row["Study Name"] == ""
+    assert row["PI Name"] == ""
+    assert row["PI Email"] == ""
 
 
 def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_user):
