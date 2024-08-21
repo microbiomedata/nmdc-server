@@ -15,16 +15,12 @@ class Contributor(BaseModel):
     permissionLevel: Optional[str]
 
 
-class FundingSource(BaseModel):
-    value: str
-
-
 class StudyForm(BaseModel):
     studyName: str
     piName: str
     piEmail: str
     piOrcid: str
-    fundingSources: Optional[List[FundingSource]]
+    fundingSources: Optional[List[str]]
     linkOutWebpage: List[str]
     studyDate: Optional[str]
     description: str

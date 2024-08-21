@@ -56,16 +56,10 @@ export default defineComponent({
     }
 
     function addFundingSource() {
-      if (studyForm.fundingSources.length === 0) {
-        studyForm.fundingSources = [
-          {
-            value: '',
-          },
-        ];
+      if (studyForm.fundingSources === null || studyForm.fundingSources.length === 0) {
+        studyForm.fundingSources = [''];
       } else {
-        studyForm.fundingSources.push({
-          value: '',
-        });
+        studyForm.fundingSources.push('');
       }
     }
 
@@ -231,17 +225,17 @@ export default defineComponent({
         Funding Sources
       </div>
       <div class="text-body-1 mb-2">
-        {{ "Any sources of funding for this study." }}
+        {{ "Sources of funding for this study." }}
       </div>
       <div
-        v-for="fundingSource, i in studyForm.fundingSources"
+        v-for="_, i in studyForm.fundingSources"
         :key="`fundingSource${i}`"
         class="d-flex"
       >
         <v-card class="d-flex flex-column grow pa-4 mb-4">
           <div class="d-flex">
             <v-text-field
-              v-model="fundingSource.value"
+              v-model="studyForm.fundingSources[i]"
               :rules="requiredRules('Field cannot be empty.')"
               label="Funding Source *"
               :hint="Definitions.fundingSources"
@@ -249,7 +243,11 @@ export default defineComponent({
               dense
               persistent-hint
               class="mb-2 mr-3"
-            />
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-text-field>
           </div>
         </v-card>
         <v-btn
@@ -261,6 +259,7 @@ export default defineComponent({
         </v-btn>
       </div>
       <v-btn
+        class="mb-4"
         depressed
         :disabled="!canEditSubmissionMetadata()"
         @click="addFundingSource"
