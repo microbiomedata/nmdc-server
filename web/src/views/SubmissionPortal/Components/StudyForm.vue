@@ -235,6 +235,7 @@ export default defineComponent({
         <v-card class="d-flex flex-column grow pa-4 mb-4">
           <div class="d-flex">
             <v-text-field
+              v-if="studyForm.fundingSources !== null"
               v-model="studyForm.fundingSources[i]"
               :rules="requiredRules('Field cannot be empty.')"
               label="Funding Source *"
@@ -251,6 +252,7 @@ export default defineComponent({
           </div>
         </v-card>
         <v-btn
+          v-if="studyForm.fundingSources !== null"
           icon
           :disabled="!isOwner()"
           @click="studyForm.fundingSources.splice(i, 1)"
