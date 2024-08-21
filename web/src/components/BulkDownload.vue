@@ -35,13 +35,21 @@ export default defineComponent({
       download,
     } = useBulkDownload(stateRefs.conditions, dataObjectFilter);
 
+    function createLabelString(label: string, count: number, size: number): string {
+      const labelString = `${label} (${count}`;
+      if (size > 0) {
+        return `${labelString}, ${humanFileSize(size)})`;
+      }
+      return `${labelString})`;
+    }
+
     const options = computed(() => Object.entries(downloadOptions.value)
       .map(([key, val]) => ({
         id: key,
-        label: `${key} (${val.count})`,
-        children: Object.entries(val.file_types).map(([filetype, count]) => ({
+        label: createLabelString(key, val.count, val.size),
+        children: Object.entries(val.file_types).map(([filetype, fileTypeStats]) => ({
           id: `${key}::${filetype}`,
-          label: `${filetype} (${count})`,
+          label: createLabelString(filetype, fileTypeStats.count, fileTypeStats.size),
         })),
       })));
 

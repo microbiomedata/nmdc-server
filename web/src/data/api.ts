@@ -294,7 +294,8 @@ export const opMap: Record<opType, string> = {
 // See https://github.com/microbiomedata/nmdc-server/pull/403 for documentation
 export type BulkDownloadSummary = Record<string, {
   count: number;
-  file_types: Record<string, number>,
+  size: number;
+  file_types: Record<string, { count: number, size: number }>,
 }>;
 
 export type BulkDownloadAggregateSummary = {
