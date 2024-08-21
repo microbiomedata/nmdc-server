@@ -246,7 +246,6 @@ def list_ko_terms_for_pathway(db: Session, pathway: str) -> List[str]:
 def kegg_text_search(db: Session, query: str, limit: int) -> List[models.KoTermText]:
     pathway_prefix = has_pathway_prefix(query)
     term = query.replace(pathway_prefix, "map") if pathway_prefix else query
-    print(f"\n\n\n{term}\n\n\n")
     q = (
         db.query(models.KoTermText)
         .filter(models.KoTermText.text.ilike(f"%{term}%") | models.KoTermText.term.ilike(term))

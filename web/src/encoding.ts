@@ -32,7 +32,6 @@ const pathwayRegex = /^((map:?)|(path:?)|(ko:?)|(ec:?)|(rn:?)|(kegg.pathway:(map
 
 function pathwayPrefixShort(v: string) {
   const match = v.match(pathwayRegex);
-  console.log(match);
   if (match) {
     const prefix = match[8] ? match[8] : match[1].replace(/:$/, '');
     return prefix.toLowerCase();
@@ -42,7 +41,6 @@ function pathwayPrefixShort(v: string) {
 
 function pathwayPrefixLong(v: string) {
   const match = v.match(pathwayRegex);
-  console.log(match);
   if (match) {
     const prefix = match[7] ? match[7] : match[1].replace(match[1], `kegg.pathway:${match[1]}`);
     return prefix.toUpperCase();
