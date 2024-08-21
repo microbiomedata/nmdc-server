@@ -23,28 +23,50 @@ export interface FieldsData {
 
 interface PrefixInfo {
     pattern: RegExp;
-    short: string;
-    long: string;
+    short: Function;
+    long: Function;
     urlBase: string;
+}
+
+const pathwayRegex = /^((map:?)|(path:?)|(ko:?)|(ec:?)|(rn:?)|(kegg.pathway:(map|path|ec|ko|rn)))(?=\d{5})/i;
+
+function pathwayPrefixShort(v: string) {
+  const match = v.match(pathwayRegex);
+  console.log(match);
+  if (match) {
+    const prefix = match[8] ? match[8] : match[1].replace(/:$/, '');
+    return prefix.toLowerCase();
+  }
+  return 'map';
+}
+
+function pathwayPrefixLong(v: string) {
+  const match = v.match(pathwayRegex);
+  console.log(match);
+  if (match) {
+    const prefix = match[7] ? match[7] : match[1].replace(match[1], `kegg.pathway:${match[1]}`);
+    return prefix.toUpperCase();
+  }
+  return 'KEGG.PATHWAY.MAP';
 }
 
 const KeggPrefix: Record<string, PrefixInfo> = {
   ORTHOLOGY: {
-    pattern: /^((ko?:?)|(kegg\.orthology:k))(?=\d{5})/i,
-    short: 'k',
-    long: 'KEGG.ORTHOLOGY:K',
+    pattern: /^((k:?)|(kegg\.orthology:k))(?=\d{5})/i,
+    short: () => 'k',
+    long: () => 'KEGG.ORTHOLOGY:K',
     urlBase: 'https://www.genome.jp/entry/',
   },
   PATHWAY: {
-    pattern: /^((map:?)|(path:?)|(ko:?)|(ec:?)|(rn:?)|(org:?)|(kegg.pathway:map))(?=\d{5})/i,
-    short: 'map',
-    long: 'KEGG.PATHWAY:MAP',
+    pattern: pathwayRegex,
+    short: pathwayPrefixShort,
+    long: pathwayPrefixLong,
     urlBase: 'https://www.genome.jp/kegg-bin/show_pathway?',
   },
   MODULE: {
     pattern: /^((m:?)|(kegg.module:m))(?=\d{5})/i,
-    short: 'M',
-    long: 'KEGG.MODULE:M',
+    short: () => 'M',
+    long: () => 'KEGG.MODULE:M',
     urlBase: 'https://www.genome.jp/brite/',
   },
 };
@@ -59,18 +81,8 @@ function keggEncode(v: string, url = false) {
     const {
       pattern, short, long, urlBase,
     } = KeggPrefix[prefixes[i]];
-    const replacement = url ? short : long;
-    console.log(replacement);
+    const replacement = url ? short(v) : long(v);
     const transformed = v.replace(pattern, replacement);
-    console.log(transformed);
-    if (prefixes[i] === 'PATHWAY') {
-      const match = v.match(pattern);
-      const prefix = match ? match[1] : 'map';
-      if (url) {
-        return urlBase + transformed.replace('map', prefix);
-      }
-      return transformed.replace('MAP', prefix.toUpperCase());
-    }
     if (transformed !== v) {
       if (url) {
         return urlBase + transformed;
