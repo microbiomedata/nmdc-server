@@ -74,11 +74,11 @@ const KeggPrefix: Record<string, PrefixInfo> = {
  * a KEGG identifier term.
  */
 function keggEncode(v: string, url = false) {
-  const prefixes = Object.keys(KeggPrefix);
+  const prefixes = Object.values(KeggPrefix);
   for (let i = 0; i < prefixes.length; i += 1) {
     const {
       pattern, short, long, urlBase,
-    } = KeggPrefix[prefixes[i]];
+    } = prefixes[i];
     const replacement = url ? short(v) : long(v);
     const transformed = v.replace(pattern, replacement);
     if (transformed !== v) {
