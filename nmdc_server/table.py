@@ -28,7 +28,6 @@ class KeggTerms:
             "KEGG.PATHWAY:MAP",
             "KEGG.PATHWAY:EC",
             "KEGG.PATHWAY:RN",
-            "KEGG.PATHWAY:ORG",
             "KEGG.PATHWAY:KO",
         ],
         "MAP",
