@@ -101,8 +101,8 @@ export default defineComponent({
         <p>
           KEGG Gene Function search filters results to
           samples that have at least one of the chosen KEGG terms.
-          Orthology, Pathway, and Module are supported.
-          Expected format: <code>K00000, M00000 or map00000</code>
+          Orthology, Module, and Pathway are supported.
+          Expected formats: <code>K00000, M00000, map00000, ko00000, rn00000, and ec00000</code>
         </p>
         <p class="text-subtitle-2">
           More information at <a href="https://www.genome.jp/kegg/">genome.jp/kegg</a>
