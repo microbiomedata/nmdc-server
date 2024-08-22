@@ -58,6 +58,13 @@ def test_get_metadata_submissions_report_as_admin(
         author=other_user,
         author_orcid=other_user.orcid,
         created=now + timedelta(seconds=1),
+        metadata_submission={
+            "studyForm": {
+                "studyName": "My study name",
+                "piName": "My PI name",
+                "piEmail": "My PI email",
+            },
+        },
     )
     db.commit()
 
@@ -87,9 +94,9 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["Submission ID"] == str(other_submission.id)
     assert data_row["Author ORCID"] == other_user.orcid
     assert data_row["Author Name"] == other_user.name
-    assert data_row["Study Name"] == ""
-    assert data_row["PI Name"] == ""
-    assert data_row["PI Email"] == ""
+    assert data_row["Study Name"] == "My study name"
+    assert data_row["PI Name"] == "My PI name"
+    assert data_row["PI Email"] == "My PI email"
 
     data_row = rows[2]  # gets the second data row
     assert data_row["Submission ID"] == str(submission.id)
