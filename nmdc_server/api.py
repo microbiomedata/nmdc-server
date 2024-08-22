@@ -10,7 +10,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from nmdc_server import __version__, crud, jobs, models, query, schemas, schemas_submission
+from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import Settings
@@ -38,9 +38,9 @@ async def get_settings() -> Dict[str, Any]:
 
 
 # get application version number
-@router.get("/version", name="Get application version identifier")
-async def get_version() -> Dict[str, Any]:
-    return {"nmdc-server": __version__}
+@router.get("/version", name="Get application and schema version identifiers")
+async def get_version() -> schemas.VersionInfo:
+    return schemas.VersionInfo()
 
 
 # get the current user information
