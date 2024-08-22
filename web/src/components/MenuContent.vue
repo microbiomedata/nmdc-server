@@ -6,7 +6,7 @@ import {
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
 import { fieldDisplayName } from '@/util';
-import { getField, types } from '@/encoding';
+import { getField } from '@/encoding';
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
@@ -60,12 +60,13 @@ export default defineComponent({
 
     const description = computed(() => {
       const fieldSchemaName = getField(props.field, props.table);
-      const { schemaName } = types[props.table];
+      const schemaName = fieldSchemaName.schemaName || props.field;
       if (schemaName !== undefined) {
-        // @ts-ignore
-        const schema = NmdcSchema.classes[schemaName];
-        // @ts-ignore
-        return schema.properties?.[fieldSchemaName.schemaName || props.field]?.description || '';
+        const schema = NmdcSchema.classes[schemaName] || NmdcSchema.slots[schemaName];
+        // Avoid restating the field name as a description
+        if (schema && schema.description !== schemaName) {
+          return schema?.description || '';
+        }
       }
       return '';
     });
