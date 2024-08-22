@@ -64,6 +64,12 @@ def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
         "field": "name",
         "op": "like",
     }
+    study_id_filter = {
+        "table": "study",
+        "value": terms.lower(),
+        "field": "id",
+        "op": "like",
+    }
     study_description_filter = {
         "table": "study",
         "value": terms.lower(),
@@ -104,6 +110,7 @@ def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
     filters = crud.text_search(db, terms, limit)
     plaintext_filters = [
         query.SimpleConditionSchema(**study_name_filter),
+        query.SimpleConditionSchema(**study_id_filter),
         query.SimpleConditionSchema(**study_description_filter),
         query.SimpleConditionSchema(**study_title_filter),
         query.SimpleConditionSchema(**biosample_name_filter),
