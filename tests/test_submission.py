@@ -73,7 +73,7 @@ def test_get_metadata_submissions_report_as_admin(
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
     rows = [row for row in reader]
     assert len(rows) == 3  # includes the header row
-    
+
     header_row = rows[0]  # gets the header row
     assert len(list(header_row.keys())) == len(fieldnames)
 
