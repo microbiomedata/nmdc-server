@@ -38,10 +38,14 @@ def test_get_metadata_submissions_report_as_non_admin(
 def test_get_metadata_submissions_report_as_admin(
     db: Session, client: TestClient, logged_in_admin_user
 ):
+    now = datetime.utcnow()
+
     # Create two submissions, only one of which is owned by the logged-in user.
     logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
     submission = fakes.MetadataSubmissionFactory(
-        author=logged_in_user, author_orcid=logged_in_user.orcid
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        created=now,
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -51,7 +55,9 @@ def test_get_metadata_submissions_report_as_admin(
     )
     other_user = fakes.UserFactory()
     other_submission = fakes.MetadataSubmissionFactory(
-        author=other_user, author_orcid=other_user.orcid
+        author=other_user,
+        author_orcid=other_user.orcid,
+        created=now + timedelta(seconds=1),
     )
     db.commit()
 
@@ -77,7 +83,7 @@ def test_get_metadata_submissions_report_as_admin(
     header_row = rows[0]  # gets the header row
     assert len(list(header_row.keys())) == len(fieldnames)
 
-    data_row = rows[1]  # gets the first data row (i.e. the newer submission)
+    data_row = rows[1]  # gets the first data row (the most recently-created submission)
     assert data_row["Submission ID"] == str(other_submission.id)
     assert data_row["Author ORCID"] == other_user.orcid
     assert data_row["Author Name"] == other_user.name
@@ -85,7 +91,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["PI Name"] == ""
     assert data_row["PI Email"] == ""
 
-    data_row = rows[2]  # gets the second data row (i.e. the older submission)
+    data_row = rows[2]  # gets the second data row
     assert data_row["Submission ID"] == str(submission.id)
     assert data_row["Author ORCID"] == logged_in_user.orcid
     assert data_row["Author Name"] == logged_in_user.name
