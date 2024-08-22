@@ -1,4 +1,5 @@
 import json
+from csv import DictReader
 from datetime import datetime, timedelta
 
 import pytest
@@ -25,6 +26,85 @@ def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     response = client.request(method="GET", url="/api/metadata_submission")
     assert response.status_code == 200
     assert response.json()["results"][0]["id"] == str(submission.id)
+
+
+def test_get_metadata_submissions_report_as_non_admin(
+    db: Session, client: TestClient, logged_in_user
+):
+    response = client.request(method="GET", url="/api/metadata_submission/report")
+    assert response.status_code == 403
+
+
+def test_get_metadata_submissions_report_as_admin(
+    db: Session, client: TestClient, logged_in_admin_user
+):
+    now = datetime.utcnow()
+
+    # Create two submissions, only one of which is owned by the logged-in user.
+    logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        created=now,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    other_user = fakes.UserFactory()
+    other_submission = fakes.MetadataSubmissionFactory(
+        author=other_user,
+        author_orcid=other_user.orcid,
+        created=now + timedelta(seconds=1),
+        metadata_submission={
+            "studyForm": {
+                "studyName": "My study name",
+                "piName": "My PI name",
+                "piEmail": "My PI email",
+            },
+        },
+    )
+    db.commit()
+
+    response = client.request(method="GET", url="/api/metadata_submission/report")
+    assert response.status_code == 200
+
+    # Confirm the response payload is a TSV file having the fields and values we expect;
+    # i.e. below its header row, it has two data rows, each representing a submission,
+    # ordered from most recently-created to least recently-created.
+    # Reference: https://docs.python.org/3/library/csv.html#csv.DictReader
+    fieldnames = [
+        "Submission ID",
+        "Author ORCID",
+        "Author Name",
+        "Study Name",
+        "PI Name",
+        "PI Email",
+    ]
+    reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
+    rows = [row for row in reader]
+    assert len(rows) == 3  # includes the header row
+
+    header_row = rows[0]  # gets the header row
+    assert len(list(header_row.keys())) == len(fieldnames)
+
+    data_row = rows[1]  # gets the first data row (the most recently-created submission)
+    assert data_row["Submission ID"] == str(other_submission.id)
+    assert data_row["Author ORCID"] == other_user.orcid
+    assert data_row["Author Name"] == other_user.name
+    assert data_row["Study Name"] == "My study name"
+    assert data_row["PI Name"] == "My PI name"
+    assert data_row["PI Email"] == "My PI email"
+
+    data_row = rows[2]  # gets the second data row
+    assert data_row["Submission ID"] == str(submission.id)
+    assert data_row["Author ORCID"] == logged_in_user.orcid
+    assert data_row["Author Name"] == logged_in_user.name
+    assert data_row["Study Name"] == ""
+    assert data_row["PI Name"] == ""
+    assert data_row["PI Email"] == ""
 
 
 def test_obtain_submission_lock(db: Session, client: TestClient, logged_in_user):
