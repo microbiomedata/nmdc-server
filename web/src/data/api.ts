@@ -2,7 +2,7 @@ import { merge } from 'lodash';
 import axios, { AxiosError } from 'axios';
 import { setupCache } from 'axios-cache-adapter';
 // @ts-ignore
-import nmdc from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
 
 // The token refresh and retry logic stores an extra bit of state on the request config
@@ -61,7 +61,7 @@ export type entityType = 'biosample'
  * we get build-time typescript support for the dynamic types coming
  * out of an entirely different repository.
  */
-export type entitySchemaType = keyof typeof nmdc.classes;
+export type entitySchemaType = keyof typeof NmdcSchema.classes;
 
 export interface BaseSearchResult {
   id: string;
