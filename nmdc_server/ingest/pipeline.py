@@ -13,7 +13,7 @@ from nmdc_server.logger import get_logger
 
 DataObjectList = List[str]
 LoadObjectReturn = models.PipelineStep
-ko_regex = re.compile(r"^KEGG\.ORTHOLOGY")
+gene_regex = re.compile(r"^(KEGG\.ORTHOLOGY|COG)")
 
 
 class LoadObject(Protocol):
@@ -33,7 +33,7 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
         {
             "metagenome_annotation_id": pipeline.id,
             "gene_function_id": {
-                "$regex": ko_regex,
+                "$regex": gene_regex,
             },
         },
         no_cursor_timeout=True,
@@ -90,7 +90,7 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
         {
             "metaproteomic_analysis_id": pipeline.id,
             "gene_function_id": {
-                "$regex": ko_regex,
+                "$regex": gene_regex,
             },
             "best_protein": True,
         },
@@ -141,7 +141,7 @@ def load_mt_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
         {
             "metagenome_annotation_id": pipeline.id,
             "gene_function_id": {
-                "$regex": ko_regex,
+                "$regex": gene_regex,
             },
         },
         no_cursor_timeout=True,
