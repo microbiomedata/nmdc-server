@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import Enum
+from importlib.metadata import version
 from typing import Any, Dict, List, Optional, Union
 from urllib.parse import quote
 from uuid import UUID
@@ -18,7 +19,7 @@ from pydantic import BaseModel, Field, validator
 from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, LargeBinary, String
 from sqlalchemy.dialects.postgresql.json import JSONB
 
-from nmdc_server import models
+from nmdc_server import __version__, models
 from nmdc_server.data_object_filters import DataObjectFilter, WorkflowActivityTypeEnum
 
 DateType = Union[datetime, date]
@@ -688,3 +689,20 @@ class LockOperationResult(BaseModel):
     message: str
     locked_by: Optional[User]
     lock_updated: Optional[datetime]
+
+
+class VersionInfo(BaseModel):
+    """Version information for the nmdc-server itself and the schemas.
+
+    This model has default field values and is immutable because these values cannot
+    change at runtime.
+    """
+
+    nmdc_server: str = __version__
+    nmdc_schema: str = version("nmdc-schema")
+    nmdc_submission_schema: str = version("nmdc-submission-schema")
+
+    class Config:
+        # In Pydantic V2, use `frozen=True`
+        # https://docs.pydantic.dev/2.8/concepts/models/#faux-immutability
+        allow_mutation = False
