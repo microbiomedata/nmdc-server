@@ -65,7 +65,7 @@ const KeggPrefix: Record<string, PrefixInfo> = {
     pattern: /^((m:?)|(kegg.module:m))(?=\d{5})/i,
     short: () => 'M',
     long: () => 'KEGG.MODULE:M',
-    urlBase: 'https://www.genome.jp/brite/',
+    urlBase: 'https://www.kegg.jp/entry/',
   },
 };
 
