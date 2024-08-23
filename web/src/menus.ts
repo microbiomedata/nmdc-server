@@ -55,6 +55,10 @@ const Menus = [
         label: 'Field Notes Mobile App',
         href: 'https://microbiomedata.org/field-notes/',
       },
+      {
+        label: 'Data API',
+        href: 'https://api.microbiomedata.org/docs',
+      },
     ],
   },
   {
