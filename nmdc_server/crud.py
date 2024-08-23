@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
@@ -224,6 +225,14 @@ def list_omics_processing_data_objects(db: Session, id: str) -> Query:
     )
 
 
+# KEGG
+def get_pathway_prefix(term) -> Optional[str]:
+    pathway_prefixes = set(["map", "ko", "ec", "rn", "org"])
+    pathway_re = f"^({'|'.join(re.escape(p) for p in pathway_prefixes)})"
+    match = re.match(pathway_re, term)
+    return match.group(0) if match else None
+
+
 def list_ko_terms_for_module(db: Session, module: str) -> List[str]:
     q = db.query(models.KoTermToModule.term).filter(models.KoTermToModule.module.ilike(module))
     return [row[0] for row in q]
@@ -235,13 +244,24 @@ def list_ko_terms_for_pathway(db: Session, pathway: str) -> List[str]:
 
 
 def kegg_text_search(db: Session, query: str, limit: int) -> List[models.KoTermText]:
+    pathway_prefix = get_pathway_prefix(query)
+    term = query.replace(pathway_prefix, "map") if pathway_prefix else query
     q = (
         db.query(models.KoTermText)
-        .filter(models.KoTermText.text.ilike(f"%{query}%") | models.KoTermText.term.ilike(query))
+        .filter(models.KoTermText.text.ilike(f"%{term}%") | models.KoTermText.term.ilike(term))
         .order_by(models.KoTermText.term)
         .limit(limit)
     )
-    return list(q)
+    results = list(q)
+    if pathway_prefix:
+        default_pathway_prefix = "map"
+        # Transform pathway results to match given prefix. They are ingested with the
+        # 'map' prefix, but can searched for with various other prefixes.
+        for term_text in results:
+            if term_text.term.startswith(default_pathway_prefix):
+                term_text.term = term_text.term.replace(default_pathway_prefix, pathway_prefix)
+            term_text.text = term_text.text.replace(default_pathway_prefix, pathway_prefix)
+    return results
 
 
 # biosample

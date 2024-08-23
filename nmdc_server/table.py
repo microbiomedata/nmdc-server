@@ -23,7 +23,15 @@ MetaTGeneFunction = aliased(models.GeneFunction)
 
 class KeggTerms:
     ORTHOLOGY = ("KEGG.ORTHOLOGY:K", "K")
-    PATHWAY = ("KEGG.PATHWAY:MAP", "MAP")
+    PATHWAY = (
+        [
+            "KEGG.PATHWAY:MAP",
+            "KEGG.PATHWAY:EC",
+            "KEGG.PATHWAY:RN",
+            "KEGG.PATHWAY:KO",
+        ],
+        "MAP",
+    )
     MODULE = ("KEGG.MODULE:M", "M")
 
 
