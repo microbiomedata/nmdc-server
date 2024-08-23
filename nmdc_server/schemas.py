@@ -190,9 +190,13 @@ class EnvironmentGeospatialAggregation(BaseModel):
         orm_mode = True
 
 
-class DataObjectAggregationElement(BaseModel):
+class DataObjectAggregationNode(BaseModel):
     count: int = 0
-    file_types: Dict[str, int] = {}
+    size: int = 0
+
+
+class DataObjectAggregationElement(DataObjectAggregationNode):
+    file_types: Dict[str, DataObjectAggregationNode] = {}
 
 
 DataObjectAggregation = Dict[str, DataObjectAggregationElement]
