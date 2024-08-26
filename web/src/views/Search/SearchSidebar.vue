@@ -2,7 +2,8 @@
 import {
   computed, defineComponent, ref, watch,
 } from '@vue/composition-api';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
 import { types } from '@/encoding';
 import {
@@ -120,11 +121,12 @@ export default defineComponent({
       const { schemaName } = types.biosample;
       if (schemaName !== undefined) {
         // @ts-ignore
-        const schema = NmdcSchema.$defs[schemaName];
+        const schema = NmdcSchema.classes[schemaName];
         return schema.description || '';
       }
       return '';
     });
+
     api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
 
     function dbSummaryForTable(table: entityType, field: string) {

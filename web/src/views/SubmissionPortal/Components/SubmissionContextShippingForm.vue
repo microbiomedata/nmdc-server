@@ -7,7 +7,8 @@ import {
   ref,
   watch,
 } from '@vue/composition-api';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
   addressForm,
   addressFormValid,
@@ -24,7 +25,7 @@ export default defineComponent({
     const showAddressForm = ref(false);
     const datePicker = ref(false);
     const sampleItems = ref(['water_extract_soil']);
-    const sampleEnumValues = NmdcSchema.$defs.SampleTypeEnum.enum;
+    const sampleEnumValues = Object.keys(NmdcSchema.enums.SampleTypeEnum.permissible_values);
     const biosafetyLevelValues = Object.values(BiosafetyLevels);
     const shippingConditionsItems = [
       'Store frozen: transported within a cold chain and stored at -70°C to -80°C upon delivery.',

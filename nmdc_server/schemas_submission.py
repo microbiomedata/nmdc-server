@@ -20,7 +20,7 @@ class StudyForm(BaseModel):
     piName: str
     piEmail: str
     piOrcid: str
-    fundingSource: Optional[str]
+    fundingSources: Optional[List[str]]
     linkOutWebpage: List[str]
     studyDate: Optional[str]
     description: str

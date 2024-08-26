@@ -1,4 +1,5 @@
 import json
+from importlib.metadata import version
 from itertools import product
 
 import pytest
@@ -33,7 +34,11 @@ def test_get_settings(client: TestClient):
 def test_get_version(client: TestClient):
     resp = client.get("/api/version")
     assert resp.status_code == 200
-    assert resp.json()["nmdc-server"] == nmdc_server.__version__
+
+    body = resp.json()
+    assert body["nmdc_server"] == nmdc_server.__version__
+    assert body["nmdc_schema"] == version("nmdc-schema")
+    assert body["nmdc_submission_schema"] == version("nmdc-submission-schema")
 
 
 @pytest.mark.parametrize(

@@ -58,3 +58,21 @@ def logged_in_user(db, client) -> schemas.User:
     client.headers["Authorization"] = f"Bearer {token_response.access_token.decode()}"
 
     return user
+
+
+@pytest.fixture
+def logged_in_admin_user(db, client) -> schemas.User:
+    r"""
+    Returns a logged-in user that is an admin.
+
+    TODO: Consider adding an `is_admin: bool = False` parameter to the `logged_in_user` fixture
+          and then consolidating this fixture with that one.
+    """
+
+    user = UserFactory(is_admin=True)
+    db.commit()
+
+    token_response = create_token_response(user)
+    client.headers["Authorization"] = f"Bearer {token_response.access_token.decode()}"
+
+    return user

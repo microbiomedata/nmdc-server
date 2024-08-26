@@ -292,10 +292,9 @@ class BaseQuerySchema(BaseModel):
     def transform_condition(self, db, condition: BaseConditionSchema) -> List[BaseConditionSchema]:
         # Transform KEGG.(PATH|MODULE) queries into their respective ORTHOLOGY terms
         if condition.key == "Table.gene_function:id" and type(condition.value) is str:
-            if condition.value.startswith(KeggTerms.PATHWAY[0]):
-                searchable_name = condition.value.replace(
-                    KeggTerms.PATHWAY[0], KeggTerms.PATHWAY[1]
-                )
+            if any([condition.value.startswith(val) for val in KeggTerms.PATHWAY[0]]):
+                prefix = [val for val in KeggTerms.PATHWAY[0] if condition.value.startswith(val)][0]
+                searchable_name = condition.value.replace(prefix, KeggTerms.PATHWAY[1])
                 ko_terms = db.query(models.KoTermToPathway.term).filter(
                     models.KoTermToPathway.pathway.ilike(searchable_name)
                 )
