@@ -1,5 +1,6 @@
 <script lang="ts">
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
   computed,
   defineComponent,
@@ -55,6 +56,14 @@ export default defineComponent({
       });
     }
 
+    function addFundingSource() {
+      if (studyForm.fundingSources === null || studyForm.fundingSources.length === 0) {
+        studyForm.fundingSources = [''];
+      } else {
+        studyForm.fundingSources.push('');
+      }
+    }
+
     function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
       return [
         (v: string) => !!v || msg,
@@ -94,6 +103,7 @@ export default defineComponent({
       NmdcSchema,
       Definitions,
       addContributor,
+      addFundingSource,
       requiredRules,
       permissionLevelChoices,
       isOwner,
@@ -114,7 +124,7 @@ export default defineComponent({
       <submission-docs-link anchor="study" />
     </div>
     <div class="text-h5">
-      {{ NmdcSchema.$defs.Study.description }}
+      {{ NmdcSchema.classes.Study.description }}
     </div>
     <submission-permission-banner
       v-if="!canEditSubmissionMetadata()"
@@ -204,19 +214,6 @@ export default defineComponent({
         </template>
       </v-textarea>
       <v-text-field
-        v-model="studyForm.fundingSource"
-        label="Funding Source"
-        outlined
-        :hint="Definitions.fundingSource"
-        persistent-hint
-        dense
-        class="my-2"
-      >
-        <template #message="{ message }">
-          <span v-html="message" />
-        </template>
-      </v-text-field>
-      <v-text-field
         v-model="studyForm.notes"
         label="Optional Notes"
         :hint="Definitions.studyOptionalNotes"
@@ -225,6 +222,59 @@ export default defineComponent({
         dense
         class="my-2"
       />
+      <div class="text-h4">
+        Funding Sources
+      </div>
+      <div class="text-body-1 mb-2">
+        {{ "Sources of funding for this study." }}
+      </div>
+      <div
+        v-for="_, i in studyForm.fundingSources"
+        :key="`fundingSource${i}`"
+        class="d-flex"
+      >
+        <v-card class="d-flex flex-column grow pa-4 mb-4">
+          <div class="d-flex">
+            <v-text-field
+              v-if="studyForm.fundingSources !== null"
+              v-model="studyForm.fundingSources[i]"
+              :rules="requiredRules('Field cannot be empty.')"
+              label="Funding Source *"
+              :hint="Definitions.fundingSources"
+              outlined
+              dense
+              persistent-hint
+              class="mb-2 mr-3"
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-text-field>
+          </div>
+        </v-card>
+        <v-btn
+          v-if="studyForm.fundingSources !== null"
+          icon
+          :disabled="!isOwner()"
+          @click="studyForm.fundingSources.splice(i, 1)"
+        >
+          <v-icon>mdi-minus-circle</v-icon>
+        </v-btn>
+      </div>
+      <v-btn
+        class="mb-4"
+        depressed
+        :disabled="!canEditSubmissionMetadata()"
+        @click="addFundingSource"
+      >
+        <v-icon class="pr-1">
+          mdi-plus-circle
+        </v-icon>
+        Add Funding Source
+      </v-btn>
+      <template #message="{ message }">
+        <span v-html="message" />
+      </template>
       <div class="text-h4">
         Contributors
       </div>
@@ -268,7 +318,7 @@ export default defineComponent({
             <v-select
               v-model="contributor.roles"
               :rules="[v => v.length >= 1 || 'At least one role is required']"
-              :items="NmdcSchema.$defs.CreditEnum.enum"
+              :items="Object.keys(NmdcSchema.enums.CreditEnum.permissible_values)"
               label="CRediT Roles *"
               :hint="Definitions.contributorRoles"
               deletable-chips
