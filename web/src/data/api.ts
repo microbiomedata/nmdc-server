@@ -796,17 +796,19 @@ function exchangeRefreshToken(): Promise<TokenResponse> {
 // refresh token exchange is attempted. If the refresh token exchange is successful, the original
 // request is retried with the new access token. The `sent` flag is used to prevent infinite loops.
 client.interceptors.response.use(undefined, async (error: AxiosError) => {
-  if (error.response?.status === 401 && error.config.sent !== true) {
-    const { config } = error;
-    config.sent = true;
-    const tokenResponse = await exchangeRefreshToken();
-    // Retrying the original request will *not* pick up the new default Authorization header. We
-    // must set it manually here before sending out the retry.
-    config.headers = {
-      ...config.headers,
-      Authorization: `Bearer ${tokenResponse.access_token}`,
-    };
-    return client.request(config);
+  if (error.response?.status === 401) {
+    if (error.config && error.config.sent !== true) {
+      const { config } = error;
+      config.sent = true;
+      const tokenResponse = await exchangeRefreshToken();
+      // Retrying the original request will *not* pick up the new default Authorization header. We
+      // must set it manually here before sending out the retry.
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${tokenResponse.access_token}`,
+      };
+      return client.request(config);
+    }
   }
   throw error;
 });
