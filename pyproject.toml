@@ -27,15 +27,15 @@ dependencies = [
     "nmdc-submission-schema==10.8.0",
     "pint==0.18",
     "psycopg2==2.9.3",
-    "pydantic==1.10.2",
+    "pydantic==1.10.13",
     "pymongo>=4.0.0",
     "python-dateutil",
     "python-dotenv",
     "requests==2.32.2",
     "sentry-sdk[celery,sqlalchemy]",
-    "sqlalchemy>=1.4",
+    "sqlalchemy~=1.4",
     "starlette==0.17.1",
-    "typing-extensions==4.1.0",
+    "typing-extensions==4.2.0",
     # pinned 3rd party dependencies
     "importlib-metadata==4.12.0",
 ]
