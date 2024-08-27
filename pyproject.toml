@@ -33,7 +33,7 @@ dependencies = [
     "python-dotenv",
     "requests==2.32.2",
     "sentry-sdk[celery,sqlalchemy]",
-    "sqlalchemy>=1.4",
+    "sqlalchemy~=1.4",
     "starlette==0.17.1",
     "typing-extensions==4.2.0",
     # pinned 3rd party dependencies
