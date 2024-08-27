@@ -34,7 +34,7 @@ dependencies = [
     "requests==2.32.2",
     "sentry-sdk[celery,sqlalchemy]",
     "sqlalchemy~=1.4",
-    "starlette==0.17.1",
+    "starlette==0.36.2",
     "typing-extensions==4.2.0",
     # pinned 3rd party dependencies
     "importlib-metadata==4.12.0",
