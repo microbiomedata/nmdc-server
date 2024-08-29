@@ -24,7 +24,7 @@ export default defineComponent({
   components: { SubmissionContextShippingForm, SubmissionDocsLink, SubmissionPermissionBanner },
   setup() {
     const formRef = ref();
-    const facilityEnum = Object.keys(NmdcSchema.enums.processing_institution_enum.permissible_values).filter(
+    const facilityEnum = Object.keys(NmdcSchema.enums.ProcessingInstitutionEnum.permissible_values).filter(
       (facility: string) => ['EMSL', 'JGI'].includes(facility),
     );
     const projectAwardValidationRules = () => [(v: string) => {
