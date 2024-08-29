@@ -24,7 +24,7 @@ dependencies = [
     "itsdangerous==2.0.1",
     "mypy<0.920",
     "nmdc-schema==11.0.0rc20",
-    "nmdc-submission-schema==10.7.0",
+    "nmdc-submission-schema==11.0.0rc1",
     "pint==0.18",
     "psycopg2==2.9.3",
     "pydantic==1.10.2",
