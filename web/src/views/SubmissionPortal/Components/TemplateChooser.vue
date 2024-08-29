@@ -32,11 +32,11 @@ export default defineComponent({
 <template>
   <div>
     <div class="text-h2">
-      Environment Package
+      Environmental Extensions
       <submission-docs-link anchor="environmental-package" />
     </div>
     <div class="text-h5">
-      Choose environment package for your data.
+      Choose environmental extensions for your data.
     </div>
     <submission-permission-banner
       v-if="!canEditSubmissionMetadata()"
