@@ -41,29 +41,30 @@ export default defineComponent({
     <submission-permission-banner
       v-if="!canEditSubmissionMetadata()"
     />
-    <v-radio-group
+
+    <v-checkbox
+      v-for="option in templates.filter((v) => v[1].status === 'published')"
+      :key="option[0]"
       v-model="packageName"
+      dense
+      hide-details
       class="my-6"
-      :disabled="!canEditSubmissionMetadata()"
-    >
-      <v-radio
-        v-for="option in templates.filter((v) => v[1].status === 'published')"
-        :key="option[0]"
-        :value="option[0]"
-        :disabled="templateChoiceDisabled"
-        :label="HARMONIZER_TEMPLATES[option[0]].displayName"
-      />
-      <p class="grey--text text--darken-1 my-5">
-        Under development
-      </p>
-      <v-radio
-        v-for="option in templates.filter((v) => v[1].status === 'disabled')"
-        :key="option[0]"
-        :value="option[0]"
-        :disabled="true"
-        :label="HARMONIZER_TEMPLATES[option[0]].displayName"
-      />
-    </v-radio-group>
+      :disabled="templateChoiceDisabled && !canEditSubmissionMetadata()"
+      :label="HARMONIZER_TEMPLATES[option[0]].displayName"
+      :value="option[0]"
+    />
+    <p class="grey--text text--darken-1 my-5">
+      Under development
+    </p>
+    <v-checkbox
+      v-for="option in templates.filter((v) => v[1].status === 'disabled')"
+      :key="option[0]"
+      v-model="packageName"
+      hide-details
+      :disabled="true"
+      :label="HARMONIZER_TEMPLATES[option[0]].displayName"
+      :value="option[0]"
+    />
     <v-alert
       v-if="!templateChoiceDisabled"
       color="grey lighten-2"
