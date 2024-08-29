@@ -32,8 +32,8 @@ export const EMSL = 'emsl';
 export const JGI_MG = 'jgi_mg';
 export const JGI_MG_LR = 'jgi_mg_lr';
 export const JGT_MT = 'jgi_mt';
-export function getVariants(checkBoxes: string[], dataGenerated: boolean | undefined, base: string): string[] {
-  const templates = [base];
+export function getVariants(checkBoxes: string[], dataGenerated: boolean | undefined, base: string[]): string[] {
+  const templates = base;
   if (dataGenerated) {
     return templates;
   }

@@ -167,7 +167,7 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 /**
  * Environment Package Step
  */
-const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
+const packageName = ref(['soil'] as (keyof typeof HARMONIZER_TEMPLATES)[]);
 const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
   const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
@@ -254,7 +254,7 @@ function reset() {
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
-  packageName.value = 'soil';
+  packageName.value = ['soil'];
   sampleData.value = {};
   status.value = submissionStatus.InProgress;
 }
