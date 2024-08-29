@@ -73,7 +73,7 @@ class ContextForm(BaseModel):
 
 
 class MetadataSubmissionRecord(BaseModel):
-    packageName: str
+    packageName: List[str]
     contextForm: ContextForm
     addressForm: AddressForm
     templates: List[str]
@@ -83,7 +83,7 @@ class MetadataSubmissionRecord(BaseModel):
 
 
 class PartialMetadataSubmissionRecord(BaseModel):
-    packageName: Optional[str]
+    packageName: Optional[List[str]]
     contextForm: Optional[ContextForm]
     addressForm: Optional[AddressForm]
     templates: Optional[List[str]]
