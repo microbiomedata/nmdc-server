@@ -77,6 +77,20 @@ export default defineComponent({
 
       select(el).selectAll('g').remove();
 
+      const selectSamples = (event, values) => {
+        const value = values.sets.reduce((prev, cur) => {
+          const next = prev | MultiomicsValue[cur]; //eslint-disable-line no-bitwise
+          return next;
+        }, 0);
+        const conditions = [{
+          field: 'multiomics',
+          table: 'biosample',
+          op: 'has',
+          value,
+        }];
+        emit('select', { conditions });
+      };
+
       const svg = select(el)
         .attr('width', width + margin.left + margin.right)
         .attr('height', height + margin.top + margin.bottom)
@@ -153,26 +167,16 @@ export default defineComponent({
               .attr('height', y.bandwidth())
               .attr('fill', root.$vuetify.theme.currentTheme.blue)
               .classed('upset-bar-clickable', true)
-              .on('click', (event, values) => {
-                const value = values.sets.reduce((prev, cur) => {
-                  const next = prev | MultiomicsValue[cur]; //eslint-disable-line no-bitwise
-                  return next;
-                }, 0);
-                const conditions = [{
-                  field: 'multiomics',
-                  table: 'biosample',
-                  op: 'has',
-                  value,
-                }];
-                emit('select', { conditions });
-              });
+              .on('click', selectSamples);
             parent.append('text')
               .attr('class', 'count')
+              .attr('class', 'upset-bar-clickable')
               .attr('x', (d) => countsX(count) + barX(d.counts[count]) + 3)
               .attr('y', (d, i) => y(i) + (y.bandwidth() / 2) + 4)
               .attr('font-size', fontSize)
               .text((d) => d.counts[count])
-              .attr('fill', 'black');
+              .attr('fill', 'black')
+              .on('click', selectSamples);
           });
       });
     }
