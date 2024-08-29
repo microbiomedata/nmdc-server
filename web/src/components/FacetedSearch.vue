@@ -83,7 +83,7 @@ export default Vue.extend({
     goldDescription() {
       // @ts-ignore
       const schema = NmdcSchema.slots.gold_path_field;
-      return schema.annotations.tooltip.value || '';
+      return schema.annotations?.tooltip?.value || '';
     },
   },
   methods: {
