@@ -15,12 +15,10 @@ MODULE_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00002&format
 PATHWAY_FILE = "/data/ingest/kegg/kegg_pathway.tab.txt"
 
 # Ingest COG terms, pathways, and functions with these files
-COG_PATHWAY_DEFS = "/data/ingest/cog/cog_pathway.txt"
-COG_FUNCTION_DEFS = "/data/ingest/cog/cog_function.txt"
-COG_TERM_DEFS = "/data/ingest/cog/cog.txt"
+COG_FUNCTION_DEFS = "/data/ingest/cog/fun-20.tab"
 
-COG_FUNCTION_MAPPINGS = "/data/ingest/cog/cog2functions.txt"
-COG_PATHWAY_MAPPINGS = "/data/ingest/cog/cog_pathway_cog_members.txt"
+# Note that we're using the same file for both COG terms and pathways
+COG_PATHWAY_DEFS = COG_TERM_DEFS = "/data/ingest/cog/cog-20.def.tab"
 
 
 def load(db: Session) -> None:
@@ -37,7 +35,13 @@ def ingest_ko_search(db: Session) -> None:
 
 
 def get_search_records_from_delimeted_file(
-    file, term_key, text_key, records, delimeter="\t", fallback_text_key=None
+    file,
+    term_key,
+    text_key,
+    records,
+    delimeter="\t",
+    fallback_text_key=None,
+    fieldnames=None,
 ):
     """
     Given a delimeted file containing term, pathway, module, etc. itentifiers and
@@ -46,7 +50,9 @@ def get_search_records_from_delimeted_file(
     """
     try:
         with open(file) as fd:
-            for row in csv.DictReader(fd, delimiter=delimeter):
+            for row in csv.DictReader(fd, fieldnames=fieldnames, delimiter=delimeter):
+                if not row[term_key]:
+                    continue
                 if fallback_text_key:
                     records[row[term_key]] = row[text_key] or row[fallback_text_key]
                 else:
@@ -55,6 +61,16 @@ def get_search_records_from_delimeted_file(
         errors["kegg_search"].add(f"Missing {file}")
 
 
+cog_def_headers = [
+    "cog_id",
+    "cog_functional_category",
+    "cog_name",
+    "gene",
+    "pathway",
+    "pubmed_id",
+    "pdb_id",
+]
+
 delimeted_files = {
     PATHWAY_FILE: {
         "term_key": "image_id",
@@ -62,14 +78,17 @@ delimeted_files = {
         "fallback_text_key": "pathway_name",
     },
     COG_FUNCTION_DEFS: {
+        "fieldnames": ["function_code", "sequence", "definition"],
         "term_key": "function_code",
         "text_key": "definition",
     },
     COG_PATHWAY_DEFS: {
-        "term_key": "cog_pathway_oid",
-        "text_key": "cog_pathway_name",
+        "fieldnames": cog_def_headers,
+        "term_key": "pathway",
+        "text_key": "pathway",
     },
     COG_TERM_DEFS: {
+        "fieldnames": cog_def_headers,
         "term_key": "cog_id",
         "text_key": "cog_name",
     },
@@ -99,6 +118,7 @@ def get_search_records():
             keys["text_key"],
             records,
             fallback_text_key=keys.get("fallback_text_key", None),
+            fieldnames=keys.get("fieldnames", None),
         )
     return records
 
@@ -115,10 +135,19 @@ def ingest_ko_module_map(db: Session) -> None:
         )
         db.commit()
 
-    with open(COG_FUNCTION_MAPPINGS) as fd:
-        reader = csv.DictReader(fd, delimiter="\t")
+    with open(COG_TERM_DEFS) as fd:
+        reader = csv.DictReader(fd, fieldnames=cog_def_headers, delimiter="\t")
+        records = []
+        for row in reader:
+            function_count = len(row.get("cog_functional_category", ""))
+            if function_count > 1:
+                for char in list(row["cog_functional_category"]):
+                    records.append((row["cog_id"], char))
+            elif function_count == 1:
+                records.append((row["cog_id"], row["cog_functional_category"]))
+
         db.bulk_save_objects(
-            [KoTermToModule(term=row["cog_id"], module=row["functions"]) for row in reader]
+            [KoTermToModule(term=record[0], module=record[1]) for record in records]
         )
         db.commit()
 
@@ -135,9 +164,9 @@ def ingest_ko_pathway_map(db: Session) -> None:
         )
         db.commit()
 
-    with open(COG_PATHWAY_MAPPINGS) as fd:
-        reader = csv.DictReader(fd, delimiter="\t")
-        mappings = set([(row["cog_members"], row["cog_pathway_oid"]) for row in reader])
+    with open(COG_TERM_DEFS) as fd:
+        reader = csv.DictReader(fd, fieldnames=cog_def_headers, delimiter="\t")
+        mappings = set([(row["cog_id"], row["pathway"]) for row in reader])
         db.bulk_save_objects(
             [KoTermToPathway(term=mapping[0], pathway=mapping[1]) for mapping in mappings]
         )
