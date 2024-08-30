@@ -1,6 +1,6 @@
 import csv
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Union
 
 import requests
 from sqlalchemy.orm import Session
@@ -71,7 +71,7 @@ cog_def_headers = [
     "pdb_id",
 ]
 
-delimeted_files = {
+delimeted_files: Dict[str, Dict[str, Union[str, List[str]]]] = {
     PATHWAY_FILE: {
         "term_key": "image_id",
         "text_key": "title",
