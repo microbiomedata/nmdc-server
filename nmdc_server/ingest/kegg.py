@@ -12,6 +12,7 @@ from nmdc_server.models import (
     KoTermText,
     KoTermToModule,
     KoTermToPathway,
+    PfamEntryToClan,
 )
 
 ORTHOLOGY_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00001&format=json"
@@ -33,6 +34,7 @@ def load(db: Session) -> None:
     ingest_ko_search(db)
     ingest_ko_module_map(db)
     ingest_ko_pathway_map(db)
+    ingest_pfam_clan_map(db)
 
 
 def ingest_ko_search(db: Session) -> None:
@@ -196,5 +198,17 @@ def ingest_ko_pathway_map(db: Session) -> None:
         mappings = set([(row["cog_id"], row["pathway"]) for row in reader])
         db.bulk_save_objects(
             [CogTermToPathway(term=mapping[0], pathway=mapping[1]) for mapping in mappings]
+        )
+        db.commit()
+
+
+def ingest_pfam_clan_map(db: Session) -> None:
+    """Ingest a mapping of Pfam entries to clans"""
+    db.execute(f"truncate table {PfamEntryToClan.__tablename__}")
+    with open(PFAM_CLAN_DEFS) as fd:
+        reader = csv.DictReader(fd, fieldnames=pfam_headers, delimiter="\t")
+        mappings = set([(row[pfam_headers[0]], row[pfam_headers[1]]) for row in reader])
+        db.bulk_save_objects(
+            [PfamEntryToClan(entry=mapping[0], clan=mapping[1]) for mapping in mappings]
         )
         db.commit()

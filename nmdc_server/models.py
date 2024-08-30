@@ -163,6 +163,13 @@ class CogTermToFunction(Base):
     function = Column(String, nullable=False, primary_key=True, index=True)
 
 
+class PfamEntryToClan(Base):
+    __tablename__ = "pfam_entry_to_clan"
+
+    entry = Column(String, nullable=False, primary_key=True)
+    clan = Column(String, nullable=False, primary_key=True, index=True)
+
+
 class KoTermText(Base):
     __tablename__ = "ko_term_text"
 
