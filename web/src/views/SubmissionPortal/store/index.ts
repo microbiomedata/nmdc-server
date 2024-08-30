@@ -173,7 +173,6 @@ const templateList = computed(() => {
   const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
   return list;
 });
-
 /**
  * DataHarmonizer Step
  */
