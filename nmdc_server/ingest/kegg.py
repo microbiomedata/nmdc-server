@@ -6,7 +6,13 @@ import requests
 from sqlalchemy.orm import Session
 
 from nmdc_server.ingest.errors import errors
-from nmdc_server.models import KoTermText, KoTermToModule, KoTermToPathway
+from nmdc_server.models import (
+    CogTermToFunction,
+    CogTermToPathway,
+    KoTermText,
+    KoTermToModule,
+    KoTermToPathway,
+)
 
 ORTHOLOGY_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00001&format=json"
 MODULE_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00002&format=json"
@@ -147,7 +153,7 @@ def ingest_ko_module_map(db: Session) -> None:
                 records.append((row["cog_id"], row["cog_functional_category"]))
 
         db.bulk_save_objects(
-            [KoTermToModule(term=record[0], module=record[1]) for record in records]
+            [CogTermToFunction(term=record[0], function=record[1]) for record in records]
         )
         db.commit()
 
@@ -168,6 +174,6 @@ def ingest_ko_pathway_map(db: Session) -> None:
         reader = csv.DictReader(fd, fieldnames=cog_def_headers, delimiter="\t")
         mappings = set([(row["cog_id"], row["pathway"]) for row in reader])
         db.bulk_save_objects(
-            [KoTermToPathway(term=mapping[0], pathway=mapping[1]) for mapping in mappings]
+            [CogTermToPathway(term=mapping[0], pathway=mapping[1]) for mapping in mappings]
         )
         db.commit()
