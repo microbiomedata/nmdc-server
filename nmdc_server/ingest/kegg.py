@@ -26,6 +26,8 @@ COG_FUNCTION_DEFS = "/data/ingest/cog/fun-20.tab"
 # Note that we're using the same file for both COG terms and pathways
 COG_PATHWAY_DEFS = COG_TERM_DEFS = "/data/ingest/cog/cog-20.def.tab"
 
+PFAM_TERM_DEFS = PFAM_CLAN_DEFS = "/data/ingest/pfam/Pfam-A.clans.tsv"
+
 
 def load(db: Session) -> None:
     ingest_ko_search(db)
@@ -76,6 +78,13 @@ cog_def_headers = [
     "pubmed_id",
     "pdb_id",
 ]
+pfam_headers = [
+    "pfam_accession",
+    "clan_accession",
+    "clan_name",
+    "pfam_short_name",
+    "pfam_name",
+]
 
 cog_function_headers = ["function_code", "sequence", "definition"]
 
@@ -99,6 +108,16 @@ delimeted_files: Dict[str, Dict[str, Union[str, List[str]]]] = {
         "fieldnames": cog_def_headers,
         "term_key": cog_def_headers[0],
         "text_key": cog_def_headers[2],
+    },
+    PFAM_TERM_DEFS: {
+        "fieldnames": pfam_headers,
+        "term_key": "pfam_accession",
+        "text_key": "pfam_name",
+    },
+    PFAM_CLAN_DEFS: {
+        "fieldnames": pfam_headers,
+        "term_key": "clan_accession",
+        "text_key": "clan_name",
     },
 }
 
