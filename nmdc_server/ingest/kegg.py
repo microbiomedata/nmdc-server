@@ -77,6 +77,8 @@ cog_def_headers = [
     "pdb_id",
 ]
 
+cog_function_headers = ["function_code", "sequence", "definition"]
+
 delimeted_files: Dict[str, Dict[str, Union[str, List[str]]]] = {
     PATHWAY_FILE: {
         "term_key": "image_id",
@@ -84,19 +86,19 @@ delimeted_files: Dict[str, Dict[str, Union[str, List[str]]]] = {
         "fallback_text_key": "pathway_name",
     },
     COG_FUNCTION_DEFS: {
-        "fieldnames": ["function_code", "sequence", "definition"],
-        "term_key": "function_code",
-        "text_key": "definition",
+        "fieldnames": cog_function_headers,
+        "term_key": cog_function_headers[0],
+        "text_key": cog_function_headers[2],
     },
     COG_PATHWAY_DEFS: {
         "fieldnames": cog_def_headers,
-        "term_key": "pathway",
-        "text_key": "pathway",
+        "term_key": cog_def_headers[4],
+        "text_key": cog_def_headers[4],
     },
     COG_TERM_DEFS: {
         "fieldnames": cog_def_headers,
-        "term_key": "cog_id",
-        "text_key": "cog_name",
+        "term_key": cog_def_headers[0],
+        "text_key": cog_def_headers[2],
     },
 }
 
