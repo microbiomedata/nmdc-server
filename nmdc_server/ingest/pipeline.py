@@ -13,7 +13,7 @@ from nmdc_server.logger import get_logger
 
 DataObjectList = List[str]
 LoadObjectReturn = models.PipelineStep
-gene_regex = re.compile(r"^(KEGG\.ORTHOLOGY|COG)")
+gene_regex = re.compile(r"^(KEGG\.ORTHOLOGY|COG|PFAM)")
 
 
 class LoadObject(Protocol):
