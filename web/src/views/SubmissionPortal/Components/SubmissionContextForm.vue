@@ -45,7 +45,7 @@ export default defineComponent({
       return true;
     }];
     const doiRequiredRules = () => [(v: string) => {
-      const valid = !!v || !contextForm.facilityGenerated;
+      const valid = !!v || (!contextForm.facilityGenerated && contextForm.dataGenerated) || (contextForm.unknownDOI && !contextForm.dataGenerated);
       return valid || 'Award DOI associated with DOE user facility project';
     }];
     const revalidate = () => {
@@ -126,18 +126,6 @@ export default defineComponent({
         class="mb-2 mt-0"
         @change="revalidate"
       />
-      <v-text-field
-        v-if="contextForm.dataGenerated"
-        v-model="contextForm.datasetDoi"
-        :label="`Dataset DOI ${contextForm.facilityGenerated ? '*' : ''}`"
-        :hint="Definitions.doi"
-        :rules="doiRequiredRules()"
-        persistent-hint
-        validate-on-blur
-        outlined
-        dense
-        @change="revalidate"
-      />
       <div v-if="contextForm.dataGenerated === false">
         <legend
           class="v-label theme--light mb-2"
@@ -162,6 +150,7 @@ export default defineComponent({
           v-model="contextForm.award"
           label="What kind of project have you been awarded? *"
           :rules="projectAwardValidationRules()"
+          class="pb-5"
         >
           <div class="d-flex">
             <v-radio
@@ -250,6 +239,29 @@ export default defineComponent({
           </v-radio>
         </v-radio-group>
       </div>
+      <v-text-field
+        v-if="contextForm.dataGenerated || contextForm.facilities.includes('EMSL') || contextForm.facilities.includes('JGI')"
+        v-model="contextForm.datasetDoi"
+        :label="`Award DOI ${contextForm.facilityGenerated ? '*' : ''}`"
+        :hint="Definitions.doi"
+        :rules="doiRequiredRules()"
+        persistent-hint
+        validate-on-blur
+        outlined
+        dense
+        @change="revalidate"
+      >
+        <template #message="{ message }">
+          <span v-html="message" />
+        </template>
+      </v-text-field>
+      <v-checkbox
+        v-if="!contextForm.dataGenerated && (contextForm.facilities.includes('EMSL') || contextForm.facilities.includes('JGI'))"
+        v-model="contextForm.unknownDOI"
+        class="pa-0 ma-0"
+        :label="`I don't know my award DOI`"
+        @change="revalidate"
+      />
     </v-form>
     <strong>* indicates required field</strong>
     <div class="d-flex">

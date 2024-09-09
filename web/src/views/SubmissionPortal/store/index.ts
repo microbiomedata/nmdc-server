@@ -114,6 +114,7 @@ const contextFormDefault = {
   facilities: [] as string[],
   award: undefined as undefined | string,
   otherAward: '',
+  unknownDOI: undefined as undefined | boolean,
 };
 const contextForm = reactive(clone(contextFormDefault));
 const contextFormValid = ref(false);

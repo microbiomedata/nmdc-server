@@ -71,6 +71,7 @@ class ContextForm(BaseModel):
     facilities: List[str]
     award: Optional[str]
     otherAward: str
+    unknownDOI: Optional[bool]
 
 
 class MetadataSubmissionRecord(BaseModel):
