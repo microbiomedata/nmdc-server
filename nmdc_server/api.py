@@ -825,7 +825,8 @@ async def update_submission(
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
     )
-    submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
+    if "studyForm" in body_dict["metadata_submission"]:
+        submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
     # Update permissions and status iff the user is an "owner"
     if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner:
         new_permissions = body_dict.get("permissions", None)
