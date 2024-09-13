@@ -1,7 +1,7 @@
 """Add COG mappings
 
 Revision ID: 317274ad8137
-Revises: 0ff690fb929d
+Revises: 5403c7fe0b33
 Create Date: 2024-08-30 20:13:12.480955
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "317274ad8137"
-down_revision: Optional[str] = "0ff690fb929d"
+down_revision: Optional[str] = "5403c7fe0b33"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
