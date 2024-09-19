@@ -100,7 +100,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :disabled="!packageName"
+        :disabled="packageName.length === 0"
         :to="{
           name: 'Submission Sample Editor',
         }"
