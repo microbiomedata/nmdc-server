@@ -1,7 +1,7 @@
 """Add PFAM mappings
 
 Revision ID: 5fb9910ca8e6
-Revises: 317274ad8137
+Revises: ff4e651c3007
 Create Date: 2024-08-30 21:12:14.993046
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "5fb9910ca8e6"
-down_revision: Optional[str] = "317274ad8137"
+down_revision: Optional[str] = "ff4e651c3007"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
