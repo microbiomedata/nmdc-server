@@ -553,3 +553,60 @@ def test_delete_submission_while_locked(db: Session, client: TestClient, logged_
     # Verify that it is still there
     response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
     assert response.status_code == 200
+
+
+def test_sync_submission_templates(db: Session, client: TestClient, logged_in_user):
+    template = "foo"
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        locked_by=logged_in_user,
+        lock_updated=datetime.utcnow(),
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    payload = json.loads(
+        SubmissionMetadataSchemaPatch(**submission.__dict__).json(exclude_unset=True)
+    )
+    payload["metadata_submission"]["templates"] = [template]
+    db.commit()
+
+    _ = client.request(
+        method="PATCH", url=f"/api/metadata_submission/{submission.id}", json=payload
+    )
+    response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 200
+    assert len(response.json()["templates"]) == 1
+    assert response.json()["templates"][0] == template
+
+
+def test_sync_submission_study_name(db: Session, client: TestClient, logged_in_user):
+    expected_val = "my study"
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        locked_by=logged_in_user,
+        lock_updated=datetime.utcnow(),
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    payload = json.loads(
+        SubmissionMetadataSchemaPatch(**submission.__dict__).json(exclude_unset=True)
+    )
+    payload["metadata_submission"]["studyForm"]["studyName"] = expected_val
+    db.commit()
+
+    _ = client.request(
+        method="PATCH", url=f"/api/metadata_submission/{submission.id}", json=payload
+    )
+    response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
+    assert response.status_code == 200
+    assert response.json()["study_name"] == expected_val

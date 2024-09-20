@@ -825,8 +825,12 @@ async def update_submission(
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
     )
+    # TODO: remove the child properties "studyName" and "templates" in favor of the top-
+    # level property. Requires some coordination between this API and its clients.
     if "studyForm" in body_dict["metadata_submission"]:
         submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
+    if "templates" in body_dict["metadata_submission"]:
+        submission.templates = body_dict["metadata_submission"]["templates"]
     # Update permissions and status iff the user is an "owner"
     if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner:
         new_permissions = body_dict.get("permissions", None)
