@@ -49,7 +49,7 @@ export default defineComponent({
       dense
       hide-details
       class="my-6"
-      :disabled="templateChoiceDisabled && !canEditSubmissionMetadata()"
+      :disabled="templateChoiceDisabled || !canEditSubmissionMetadata()"
       :label="HARMONIZER_TEMPLATES[option[0]].displayName"
       :value="option[0]"
     />
