@@ -135,10 +135,10 @@ export default defineComponent({
       // WARNING: It's important to do the column settings update /before/ data. Otherwise,
       // columns will not be rendered with the correct width.
       harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
-      // if we're not on the first tab, the common columns should be read-only
 
-      const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
-      if (!environmentList.includes(activeTemplateKey.value)) {
+      // If the environment tab selected is a misin it should be readonly
+      const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'mixin');
+      if (environmentList.includes(activeTemplateKey.value)) {
         harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
@@ -319,7 +319,8 @@ export default defineComponent({
     }
 
     function synchronizeTabData(templateKey: string) {
-      if (templateKey === templateList.value[0]) {
+      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
+      if (environmentKeys.includes(templateKey)) {
         return;
       }
       const nextData = { ...sampleData.value };
@@ -474,7 +475,6 @@ export default defineComponent({
       }
 
       await validate();
-
       // When changing templates we may need to populate the common columns
       // from the first tab
       const nextTemplate = templateList.value[index];
