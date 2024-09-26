@@ -149,6 +149,27 @@ class KoTermToPathway(Base):
     pathway = Column(String, nullable=False, primary_key=True, index=True)
 
 
+class CogTermToPathway(Base):
+    __tablename__ = "cog_term_to_pathway"
+
+    term = Column(String, nullable=False, primary_key=True)
+    pathway = Column(String, nullable=False, primary_key=True, index=True)
+
+
+class CogTermToFunction(Base):
+    __tablename__ = "cog_term_to_function"
+
+    term = Column(String, nullable=False, primary_key=True)
+    function = Column(String, nullable=False, primary_key=True, index=True)
+
+
+class PfamEntryToClan(Base):
+    __tablename__ = "pfam_entry_to_clan"
+
+    entry = Column(String, nullable=False, primary_key=True)
+    clan = Column(String, nullable=False, primary_key=True, index=True)
+
+
 class KoTermText(Base):
     __tablename__ = "ko_term_text"
 
