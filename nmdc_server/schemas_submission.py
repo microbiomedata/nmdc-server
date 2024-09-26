@@ -65,7 +65,7 @@ class AddressForm(BaseModel):
 
 
 class ContextForm(BaseModel):
-    datasetDoi: str
+    awardDois: Optional[List[str]]
     dataGenerated: Optional[bool]
     facilityGenerated: Optional[bool]
     facilities: List[str]

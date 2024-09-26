@@ -109,7 +109,7 @@ const addressFormDefault = {
 };
 const contextFormDefault = {
   dataGenerated: undefined as undefined | boolean,
-  datasetDoi: '',
+  awardDois: [] as string[] | null,
   facilityGenerated: undefined as undefined | boolean,
   facilities: [] as string[],
   award: undefined as undefined | string,
