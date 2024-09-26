@@ -61,6 +61,9 @@ export default defineComponent({
     }
 
     function removeAwardDoi(i: number) {
+      if (contextForm.awardDois === null) {
+        contextForm.awardDois = ['']
+      }
       if ((contextForm.facilities.length < contextForm.awardDois.length && !contextForm.dataGenerated) || (contextForm.facilityGenerated && contextForm.dataGenerated && contextForm.awardDois.length > 1) || (!contextForm.facilityGenerated && contextForm.dataGenerated)) {
         contextForm.awardDois.splice(i, 1);
       }
