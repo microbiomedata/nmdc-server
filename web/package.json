@@ -13,7 +13,7 @@
     "@vue/composition-api": "^1.4.1",
     "axios": "^0.28.0",
     "axios-cache-adapter": "^2.7.3",
-    "bootstrap": "4.3.1",
+    "bootstrap": "5.0.0",
     "chrono-node": "^2.4.1",
     "citation-js": "^0.5.4",
     "core-js": "^3.19.3",
