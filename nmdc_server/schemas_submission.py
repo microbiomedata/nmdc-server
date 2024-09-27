@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, validator
@@ -144,3 +144,15 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
 
 
 SubmissionMetadataSchema.update_forward_refs()
+
+
+class MetadataSuggestionRequest(BaseModel):
+    row: int
+    data: Dict[str, str]
+
+
+class MetadataSuggestion(BaseModel):
+    op: Literal["add", "remove", "replace"]
+    row: int
+    slot: str
+    value: str

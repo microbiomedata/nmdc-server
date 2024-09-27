@@ -610,3 +610,18 @@ def test_sync_submission_study_name(db: Session, client: TestClient, logged_in_u
     response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
     assert response.status_code == 200
     assert response.json()["study_name"] == expected_val
+
+
+def test_metadata_suggest_elevation(client: TestClient, logged_in_user):
+    payload = [
+        {"row": 1, "data": {"foo": "bar", "lat_lon": "44.058648, -123.095277"}},
+        {"row": 3, "data": {"elev": 0, "lat_lon": "44.046389 -123.051910"}},
+        {"row": 4, "data": {"foo": "bar"}},
+        {"row": 5, "data": {"lat_lon": "garbage foo bar"}},
+    ]
+    response = client.request(method="POST", url="/api/metadata_submission/suggest", json=payload)
+    assert response.status_code == 200
+    assert response.json() == [
+        {"op": "add", "row": 1, "slot": "elev", "value": "16.0"},
+        {"op": "replace", "row": 3, "slot": "elev", "value": "16.0"},
+    ]

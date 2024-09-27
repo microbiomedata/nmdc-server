@@ -18,6 +18,7 @@ from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
+from nmdc_server.metadata import SampleMetadataSuggester
 from nmdc_server.models import (
     IngestLock,
     SubmissionEditorRole,
@@ -1038,6 +1039,31 @@ async def submit_metadata(
     db.commit()
     crud.try_get_submission_lock(db, submission.id, user.id)
     return submission
+
+
+@router.post(
+    "/metadata_submission/suggest",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def suggest_metadata(
+    body: List[schemas_submission.MetadataSuggestionRequest],
+    suggester: SampleMetadataSuggester = Depends(SampleMetadataSuggester),
+    user: models.User = Depends(get_current_user),
+) -> List[schemas_submission.MetadataSuggestion]:
+    response: List[schemas_submission.MetadataSuggestion] = []
+    for item in body:
+        suggestions = suggester.get_suggestions(item.data)
+        for slot, value in suggestions.items():
+            response.append(
+                schemas_submission.MetadataSuggestion(
+                    op="replace" if slot in item.data else "add",
+                    row=item.row,
+                    slot=slot,
+                    value=value,
+                )
+            )
+    return response
 
 
 @router.get(
