@@ -111,8 +111,8 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["Study Name"] == ""
     assert data_row["PI Name"] == ""
     assert data_row["PI Email"] == ""
-    assert data_row["Source Client"] is None
-    assert data_row["Status"] == "In Progress"  # matches the default value defined in the faker
+    assert data_row["Source Client"] == ""  # upstream faker does not have a `source_client` attribute
+    assert data_row["Status"] == "In Progress"  # matches the default value defined in upstream faker
 
 
 def test_obtain_submission_lock(db: Session, client: TestClient, logged_in_user):
