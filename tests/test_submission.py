@@ -65,6 +65,8 @@ def test_get_metadata_submissions_report_as_admin(
                 "piEmail": "My PI email",
             },
         },
+        status="in-progress",
+        source_client="field_notes",
     )
     db.commit()
 
@@ -82,6 +84,8 @@ def test_get_metadata_submissions_report_as_admin(
         "Study Name",
         "PI Name",
         "PI Email",
+        "Source Client",
+        "Status",
     ]
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
     rows = [row for row in reader]
@@ -97,6 +101,8 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["Study Name"] == "My study name"
     assert data_row["PI Name"] == "My PI name"
     assert data_row["PI Email"] == "My PI email"
+    assert data_row["Source Client"] == "field_notes"
+    assert data_row["Status"] == "in-progress"
 
     data_row = rows[2]  # gets the second data row
     assert data_row["Submission ID"] == str(submission.id)
@@ -105,6 +111,8 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["Study Name"] == ""
     assert data_row["PI Name"] == ""
     assert data_row["PI Email"] == ""
+    assert data_row["Source Client"] is None
+    assert data_row["Status"] == "In Progress"  # matches the default value defined in the faker
 
 
 def test_obtain_submission_lock(db: Session, client: TestClient, logged_in_user):

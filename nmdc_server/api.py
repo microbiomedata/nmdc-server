@@ -658,6 +658,8 @@ async def get_metadata_submissions_report(
         "Study Name",
         "PI Name",
         "PI Email",
+        "Source Client",
+        "Status",
     ]
     data_rows = []
     for s in submissions:
@@ -667,7 +669,7 @@ async def get_metadata_submissions_report(
         study_name = study_form["studyName"] if "studyName" in study_form else ""
         pi_name = study_form["piName"] if "piName" in study_form else ""
         pi_email = study_form["piEmail"] if "piEmail" in study_form else ""
-        data_row = [s.id, s.author_orcid, author_user.name, study_name, pi_name, pi_email]
+        data_row = [s.id, s.author_orcid, author_user.name, study_name, pi_name, pi_email, s.source_client, s.status]
         data_rows.append(data_row)
 
     # Build the report as an in-memory TSV "file" (buffer).
