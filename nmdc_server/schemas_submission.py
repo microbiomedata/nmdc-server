@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Literal
+from enum import Enum
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, validator
@@ -151,8 +152,13 @@ class MetadataSuggestionRequest(BaseModel):
     data: Dict[str, str]
 
 
+class MetadataSuggestionType(str, Enum):
+    ADD = "add"
+    REPLACE = "replace"
+
+
 class MetadataSuggestion(BaseModel):
-    op: Literal["add", "remove", "replace"]
+    type: MetadataSuggestionType
     row: int
     slot: str
     value: str

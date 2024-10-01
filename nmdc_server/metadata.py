@@ -1,7 +1,9 @@
 import re
-from typing import Dict, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from nmdc_geoloc_tools import GeoEngine
+
+from nmdc_server.schemas_submission import MetadataSuggestionType
 
 
 class SampleMetadataSuggester:
@@ -17,7 +19,7 @@ class SampleMetadataSuggester:
             self._geo_engine = GeoEngine()
         return self._geo_engine
 
-    def suggest_elevation(self, sample: Dict[str, str]) -> Optional[float]:
+    def suggest_elevation_from_lat_lon(self, sample: Dict[str, str]) -> Optional[float]:
         """Suggest an elevation for a sample based on its lat_lon."""
         lat_lon = sample.get("lat_lon", None)
         if lat_lon is None:
@@ -34,14 +36,36 @@ class SampleMetadataSuggester:
                 pass
         return None
 
-    def get_suggestions(self, sample: Dict[str, str]) -> Dict[str, str]:
+    def get_suggestions(
+        self, sample: Dict[str, str], *, types: Optional[List[MetadataSuggestionType]] = None
+    ) -> Dict[str, str]:
         """Suggest metadata values for a sample.
 
         Returns a dictionary where the keys are sample metadata slots and the values are suggested
         values.
         """
+
+        # Not explicitly supplying types implies using all types.
+        if types is None:
+            types = list(MetadataSuggestionType)
+
+        do_add = MetadataSuggestionType.ADD in types
+        do_replace = MetadataSuggestionType.REPLACE in types
+
+        # Map from sample metadata slot to a list of functions that can suggest values for
+        # that slot.
+        suggesters: dict[str, list[Callable[[dict[str, str]], Optional[Any]]]] = {
+            "elev": [self.suggest_elevation_from_lat_lon],
+        }
+
         suggestions = {}
-        elevation = self.suggest_elevation(sample)
-        if elevation is not None:
-            suggestions["elev"] = str(elevation)
+
+        for target_slot, suggester_list in suggesters.items():
+            has_data = target_slot in sample and sample[target_slot]
+            if (do_add and not has_data) or (do_replace and has_data):
+                for suggester_fn in suggester_list:
+                    suggestion = suggester_fn(sample)
+                    if suggestion is not None:
+                        suggestions[target_slot] = str(suggestion)
+
         return suggestions

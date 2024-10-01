@@ -2,11 +2,11 @@ import csv
 import json
 import logging
 from io import BytesIO, StringIO
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 import requests
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
@@ -1049,15 +1049,20 @@ async def submit_metadata(
 async def suggest_metadata(
     body: List[schemas_submission.MetadataSuggestionRequest],
     suggester: SampleMetadataSuggester = Depends(SampleMetadataSuggester),
+    types: Union[List[schemas_submission.MetadataSuggestionType], None] = Query(None),
     user: models.User = Depends(get_current_user),
 ) -> List[schemas_submission.MetadataSuggestion]:
     response: List[schemas_submission.MetadataSuggestion] = []
     for item in body:
-        suggestions = suggester.get_suggestions(item.data)
+        suggestions = suggester.get_suggestions(item.data, types=types)
         for slot, value in suggestions.items():
             response.append(
                 schemas_submission.MetadataSuggestion(
-                    op="replace" if slot in item.data else "add",
+                    type=(
+                        schemas_submission.MetadataSuggestionType.REPLACE
+                        if slot in item.data
+                        else schemas_submission.MetadataSuggestionType.ADD
+                    ),
                     row=item.row,
                     slot=slot,
                     value=value,
