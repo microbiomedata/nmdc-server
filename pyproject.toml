@@ -23,6 +23,7 @@ dependencies = [
     "ipython==8.10.0",
     "itsdangerous==2.0.1",
     "mypy<0.920",
+    "nmdc-geoloc-tools==0.1.1",
     "nmdc-schema==10.8.0",
     "nmdc-submission-schema==10.8.0",
     "pint==0.18",

@@ -11,6 +11,16 @@ from nmdc_server.models import SubmissionEditorRole, SubmissionRole
 from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
 
 
+@pytest.fixture
+def suggest_payload():
+    return [
+        {"row": 1, "data": {"foo": "bar", "lat_lon": "44.058648, -123.095277"}},
+        {"row": 3, "data": {"elev": 0, "lat_lon": "44.046389 -123.051910"}},
+        {"row": 4, "data": {"foo": "bar"}},
+        {"row": 5, "data": {"lat_lon": "garbage foo bar"}},
+    ]
+
+
 def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
@@ -618,3 +628,48 @@ def test_sync_submission_study_name(db: Session, client: TestClient, logged_in_u
     response = client.request(method="GET", url=f"/api/metadata_submission/{submission.id}")
     assert response.status_code == 200
     assert response.json()["study_name"] == expected_val
+
+
+def test_metadata_suggest(client: TestClient, suggest_payload, logged_in_user):
+    response = client.request(
+        method="POST", url="/api/metadata_submission/suggest", json=suggest_payload
+    )
+    assert response.status_code == 200
+    assert response.json() == [
+        {"type": "add", "row": 1, "slot": "elev", "value": "16.0"},
+        {"type": "replace", "row": 3, "slot": "elev", "value": "16.0"},
+    ]
+
+
+def test_metadata_suggest_single_type(client: TestClient, suggest_payload, logged_in_user):
+    response = client.request(
+        method="POST",
+        url="/api/metadata_submission/suggest?types=add",
+        json=suggest_payload,
+    )
+    assert response.status_code == 200
+    assert response.json() == [
+        {"type": "add", "row": 1, "slot": "elev", "value": "16.0"},
+    ]
+
+
+def test_metadata_suggest_multiple_types(client: TestClient, suggest_payload, logged_in_user):
+    response = client.request(
+        method="POST",
+        url="/api/metadata_submission/suggest?types=add&types=replace",
+        json=suggest_payload,
+    )
+    assert response.status_code == 200
+    assert response.json() == [
+        {"type": "add", "row": 1, "slot": "elev", "value": "16.0"},
+        {"type": "replace", "row": 3, "slot": "elev", "value": "16.0"},
+    ]
+
+
+def test_metadata_suggest_invalid_type(client: TestClient, suggest_payload, logged_in_user):
+    response = client.request(
+        method="POST",
+        url="/api/metadata_submission/suggest?types=whatever",
+        json=suggest_payload,
+    )
+    assert response.status_code == 422
