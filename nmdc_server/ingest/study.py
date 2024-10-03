@@ -86,6 +86,14 @@ def load(db: Session, cursor: Cursor):
                     doi_provider=doi.get("doi_provider", ""),
                 )
 
+        protocols = obj.pop("protocol_link", [])
+        relevant_protocols = []
+        if protocols:
+            for protocol in protocols:
+                if "url" in protocol:
+                    relevant_protocols.append(protocol["url"])
+        obj["relevant_protocols"] = relevant_protocols
+
         new_study = create_study(db, Study(**obj))
         if dois:
             for doi in dois:
