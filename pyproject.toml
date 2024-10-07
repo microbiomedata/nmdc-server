@@ -25,6 +25,7 @@ dependencies = [
     "mypy<0.920",
     "nmdc-schema==11.0.0rc20",
     "nmdc-submission-schema==11.0.0rc1",
+    "nmdc-geoloc-tools==0.1.1",
     "pint==0.18",
     "psycopg2==2.9.3",
     "pydantic==1.10.13",

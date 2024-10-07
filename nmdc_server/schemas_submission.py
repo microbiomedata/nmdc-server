@@ -1,4 +1,5 @@
 from datetime import datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
@@ -144,3 +145,20 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
 
 
 SubmissionMetadataSchema.update_forward_refs()
+
+
+class MetadataSuggestionRequest(BaseModel):
+    row: int
+    data: Dict[str, str]
+
+
+class MetadataSuggestionType(str, Enum):
+    ADD = "add"
+    REPLACE = "replace"
+
+
+class MetadataSuggestion(BaseModel):
+    type: MetadataSuggestionType
+    row: int
+    slot: str
+    value: str

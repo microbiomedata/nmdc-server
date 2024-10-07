@@ -2,11 +2,11 @@ import csv
 import json
 import logging
 from io import BytesIO, StringIO
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 import requests
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
@@ -18,6 +18,7 @@ from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
+from nmdc_server.metadata import SampleMetadataSuggester
 from nmdc_server.models import (
     IngestLock,
     SubmissionEditorRole,
@@ -658,6 +659,8 @@ async def get_metadata_submissions_report(
         "Study Name",
         "PI Name",
         "PI Email",
+        "Source Client",
+        "Status",
     ]
     data_rows = []
     for s in submissions:
@@ -667,7 +670,16 @@ async def get_metadata_submissions_report(
         study_name = study_form["studyName"] if "studyName" in study_form else ""
         pi_name = study_form["piName"] if "piName" in study_form else ""
         pi_email = study_form["piEmail"] if "piEmail" in study_form else ""
-        data_row = [s.id, s.author_orcid, author_user.name, study_name, pi_name, pi_email]
+        data_row = [
+            s.id,
+            s.author_orcid,
+            author_user.name,
+            study_name,
+            pi_name,
+            pi_email,
+            s.source_client,
+            s.status,
+        ]
         data_rows.append(data_row)
 
     # Build the report as an in-memory TSV "file" (buffer).
@@ -1038,6 +1050,36 @@ async def submit_metadata(
     db.commit()
     crud.try_get_submission_lock(db, submission.id, user.id)
     return submission
+
+
+@router.post(
+    "/metadata_submission/suggest",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def suggest_metadata(
+    body: List[schemas_submission.MetadataSuggestionRequest],
+    suggester: SampleMetadataSuggester = Depends(SampleMetadataSuggester),
+    types: Union[List[schemas_submission.MetadataSuggestionType], None] = Query(None),
+    user: models.User = Depends(get_current_user),
+) -> List[schemas_submission.MetadataSuggestion]:
+    response: List[schemas_submission.MetadataSuggestion] = []
+    for item in body:
+        suggestions = suggester.get_suggestions(item.data, types=types)
+        for slot, value in suggestions.items():
+            response.append(
+                schemas_submission.MetadataSuggestion(
+                    type=(
+                        schemas_submission.MetadataSuggestionType.REPLACE
+                        if slot in item.data
+                        else schemas_submission.MetadataSuggestionType.ADD
+                    ),
+                    row=item.row,
+                    slot=slot,
+                    value=value,
+                )
+            )
+    return response
 
 
 @router.get(

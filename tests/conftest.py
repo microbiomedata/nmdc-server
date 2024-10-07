@@ -2,6 +2,7 @@ import os
 
 import pytest
 from factory import random
+from nmdc_geoloc_tools import GeoEngine
 from starlette.testclient import TestClient
 
 from nmdc_server import database, schemas
@@ -15,6 +16,27 @@ from nmdc_server.fakes import db as _db
 @pytest.fixture(autouse=True)
 def set_seed(connection):
     random.reseed_random("nmdc")
+
+
+@pytest.fixture(autouse=True)
+def patch_geo_engine(monkeypatch):
+    """Patch all the GeoEngine methods that make external network requests."""
+
+    def mock_get_elevation(self, lat_lon):
+        lat, lon = lat_lon
+        if not -90 <= lat <= 90:
+            raise ValueError(f"Invalid Latitude: {lat}")
+        if not -180 <= lon <= 180:
+            raise ValueError(f"Invalid Longitude: {lon}")
+        return 16.0
+
+    def mock_not_implemented(self, *args, **kwargs):
+        raise NotImplementedError()
+
+    monkeypatch.setattr(GeoEngine, "get_elevation", mock_get_elevation)
+    monkeypatch.setattr(GeoEngine, "get_fao_soil_type", mock_not_implemented)
+    monkeypatch.setattr(GeoEngine, "get_landuse", mock_not_implemented)
+    monkeypatch.setattr(GeoEngine, "get_landuse_dates", mock_not_implemented)
 
 
 @pytest.fixture(scope="session")
