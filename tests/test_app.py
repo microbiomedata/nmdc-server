@@ -153,7 +153,7 @@ def test_get_environmental_aggregation(db: Session, client: TestClient):
 @pytest.mark.parametrize(
     "endpoint",
     [
-        "omics_processing",
+        "data_generation",
     ],
 )
 def test_list_data_objects(db: Session, client: TestClient, endpoint: str):

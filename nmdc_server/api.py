@@ -412,13 +412,18 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
 
 
-# omics_processing
+# data_generation
+# Note the intermingling of the terms "data generation" and "omics processing."
+# The Berkeley schema (NMDC schema v11) did away with the phrase "omics processing."
+# As a result, public-facing uses of "omics processing" should be replaced with
+# "data generation."
+# Future work should go in to a more thorough conversion of omics process to data generation.
 @router.post(
-    "/omics_processing/search",
+    "/data_generation/search",
     response_model=query.OmicsProcessingSearchResponse,
-    tags=["omics_processing"],
-    name="Search for omics processings",
-    description="Faceted search of omics_processing data.",
+    tags=["data_generation"],
+    name="Search for data generations",
+    description="Faceted search of data_generation data.",
 )
 async def search_omics_processing(
     query: query.SearchQuery = query.SearchQuery(),
@@ -429,9 +434,9 @@ async def search_omics_processing(
 
 
 @router.post(
-    "/omics_processing/facet",
+    "/data_generation/facet",
     response_model=query.FacetResponse,
-    tags=["omics_processing"],
+    tags=["data_generation"],
     name="Get all values of an attribute",
 )
 async def facet_omics_processing(query: query.FacetQuery, db: Session = Depends(get_db)):
@@ -439,9 +444,9 @@ async def facet_omics_processing(query: query.FacetQuery, db: Session = Depends(
 
 
 @router.post(
-    "/omics_processing/binned_facet",
+    "/data_generation/binned_facet",
     response_model=query.BinnedFacetResponse,
-    tags=["omics_processing"],
+    tags=["data_generation"],
     name="Get all values of a non-string attribute with binning",
 )
 async def binned_facet_omics_processing(
@@ -451,26 +456,26 @@ async def binned_facet_omics_processing(
 
 
 @router.get(
-    "/omics_processing/{omics_processing_id}",
+    "/data_generation/{data_generation_id}",
     response_model=schemas.OmicsProcessing,
-    tags=["omics_processing"],
+    tags=["data_generation"],
 )
-async def get_omics_processing(omics_processing_id: str, db: Session = Depends(get_db)):
-    db_omics_processing = crud.get_omics_processing(db, omics_processing_id)
+async def get_omics_processing(data_generation_id: str, db: Session = Depends(get_db)):
+    db_omics_processing = crud.get_omics_processing(db, data_generation_id)
     if db_omics_processing is None:
         raise HTTPException(status_code=404, detail="OmicsProcessing not found")
     return db_omics_processing
 
 
 @router.get(
-    "/omics_processing/{omics_processing_id}/outputs",
+    "/data_generation/{data_generation_id}/outputs",
     response_model=List[schemas.DataObject],
-    tags=["omics_processing"],
+    tags=["data_generation"],
 )
 async def list_omics_processing_data_objects(
-    omics_processing_id: str, db: Session = Depends(get_db)
+    data_generation_id: str, db: Session = Depends(get_db)
 ):
-    return crud.list_omics_processing_data_objects(db, omics_processing_id).all()
+    return crud.list_omics_processing_data_objects(db, data_generation_id).all()
 
 
 # data object

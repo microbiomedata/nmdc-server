@@ -402,7 +402,7 @@ async function searchStudy(params: SearchParams) {
 }
 
 async function searchOmicsProcessing(params: SearchParams) {
-  return _search<OmicsProcessingResult>('omics_processing', params);
+  return _search<OmicsProcessingResult>('data_generation', params);
 }
 
 async function searchReadsQC(params: SearchParams) {
@@ -483,7 +483,7 @@ async function getFacetSummary(
   field: string,
   conditions: Condition[],
 ): Promise<FacetSummaryResponse[]> {
-  const path = type;
+  const path = type === 'omics_processing' ? 'data_generation' : type;
   const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/facet`, {
     conditions, attribute: field,
   });
@@ -504,7 +504,8 @@ async function getBinnedFacet<T = string | number>(
   numBins: number,
   resolution: 'day' | 'week' | 'month' | 'year' = 'month',
 ) {
-  const { data } = await client.post<BinResponse<T>>(`${table}/binned_facet`, {
+  const path = table === 'omics_processing' ? 'data_generation' : table;
+  const { data } = await client.post<BinResponse<T>>(`${path}/binned_facet`, {
     attribute,
     conditions,
     resolution,
@@ -588,7 +589,8 @@ async function getDataObjectList(
     'metaproteomic_analysis',
   ];
   if (supportedTypes.indexOf(type) >= 0) {
-    const { data } = await client.get<DataObjectSearchResult[]>(`${type}/${parentId}/outputs`);
+    const path = type === 'omics_processing' ? 'data_generation' : type;
+    const { data } = await client.get<DataObjectSearchResult[]>(`${path}/${parentId}/outputs`);
     return data;
   }
   return [];
