@@ -54,7 +54,9 @@ export type entityType = 'biosample'
   | 'metagenome_annotation'
   | 'metaproteomic_analysis'
   | 'data_object'
-  | 'gene_function';
+  | 'kegg_function'
+  | 'cog_function'
+  | 'pfam_function';
 
 /**
  * By including this file in source with a git submodule,
@@ -227,7 +229,7 @@ export interface UnitSchema {
 
 export interface AttributeSummary {
   count: number;
-  type: 'string' | 'date' | 'integer' | 'float' | 'kegg_search';
+  type: 'string' | 'date' | 'integer' | 'float' | 'kegg_search' | 'gene_search';
   min?: string | number;
   max?: string | number;
   units?: UnitSchema;
@@ -542,7 +544,7 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
     gene_function: {
       attributes: {
         id: {
-          type: 'kegg_search',
+          type: 'gene_search',
         },
       },
     },
