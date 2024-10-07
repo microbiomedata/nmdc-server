@@ -182,17 +182,43 @@ const types: Record<entityType, EntityData> = {
     visible: false,
     schemaName: 'DataObject',
   },
-  gene_function: {
+  kegg_function: {
     icon: 'mdi-dna',
     heading: 'Gene Function',
     name: 'gene_function',
     plural: 'Gene functions',
     visible: true,
   },
+  pfam_function: {
+    icon: 'mdi-dna',
+    heading: 'Gene Function',
+    name: 'gene_function',
+    plural: 'Gene functions',
+    visible: true,
+  },
+  cog_function: {
+    icon: 'mdi-dna',
+    heading: 'Gene Function',
+    name: 'gene_function',
+    plural: 'Gene functions',
+    visible: true,
+  }
 };
 
 const fields: Record<string, FieldsData> = {
   id: {
+    icon: 'mdi-key',
+    hideFacet: true,
+  },
+  kegg: {
+    icon: 'mdi-key',
+    hideFacet: true,
+  },
+  pfam: {
+    icon: 'mdi-key',
+    hideFacet: true,
+  },
+  cog: {
     icon: 'mdi-key',
     hideFacet: true,
   },
@@ -405,12 +431,26 @@ const fields: Record<string, FieldsData> = {
  * override them here
  */
 const tableFields: Record<entityType, Record<string, FieldsData>> = {
-  gene_function: {
+  kegg_function: {
     id: {
       icon: 'mdi-dna',
       group: 'Function',
-      name: 'KEGG Term',
+      name: 'KEGG',
       encode: keggEncode,
+    },
+  },
+  cog_function: {
+    id: {
+      icon: 'mdi-dna',
+      group: 'Function',
+      name: 'PFAM',
+    },
+  },
+  pfam_function: {
+    id: {
+      icon: 'mdi-dna',
+      group: 'Function',
+      name: 'COG',
     },
   },
   biosample: {},
