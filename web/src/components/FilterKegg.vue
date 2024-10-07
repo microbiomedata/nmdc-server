@@ -99,6 +99,7 @@ export default defineComponent({
     <v-row no-gutters>
       <div class="px-4 text-caption">
         <p>
+          <!-- MLN KEGG-specific stuff -->
           KEGG Gene Function search filters results to
           samples that have at least one of the chosen KEGG terms.
           Orthology, Module, and Pathway are supported.
