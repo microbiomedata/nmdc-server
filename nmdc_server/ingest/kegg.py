@@ -7,12 +7,14 @@ from sqlalchemy.orm import Session
 
 from nmdc_server.ingest.errors import errors
 from nmdc_server.models import (
+    CogTermText,
     CogTermToFunction,
     CogTermToPathway,
     KoTermText,
     KoTermToModule,
     KoTermToPathway,
     PfamEntryToClan,
+    PfamTermText,
 )
 
 ORTHOLOGY_URL = "https://www.genome.jp/kegg-bin/download_htext?htext=ko00001&format=json"
@@ -39,8 +41,16 @@ def load(db: Session) -> None:
 
 def ingest_ko_search(db: Session) -> None:
     db.execute(f"truncate table {KoTermText.__tablename__}")
+    db.execute(f"truncate table {CogTermText.__tablename__}")
+    db.execute(f"truncate table {PfamTermText.__tablename__}")
     records = get_search_records()
-    db.bulk_save_objects([KoTermText(term=term, text=text) for term, text in records.items()])
+    db.bulk_save_objects([KoTermText(term=term, text=text) for term, text in records["ko"].items()])
+    db.bulk_save_objects(
+        [CogTermText(term=term, text=text) for term, text in records["cog"].items()]
+    )
+    db.bulk_save_objects(
+        [PfamTermText(term=term, text=text) for term, text in records["pfam"].items()]
+    )
     db.commit()
 
 
@@ -95,37 +105,47 @@ delimeted_files: Dict[str, Dict[str, Union[str, List[str]]]] = {
         "term_key": "image_id",
         "text_key": "title",
         "fallback_text_key": "pathway_name",
+        "hierarchy": "ko",
     },
     COG_FUNCTION_DEFS: {
         "fieldnames": cog_function_headers,
         "term_key": cog_function_headers[0],
         "text_key": cog_function_headers[2],
+        "hierarchy": "cog",
     },
     COG_PATHWAY_DEFS: {
         "fieldnames": cog_def_headers,
         "term_key": cog_def_headers[4],
         "text_key": cog_def_headers[4],
+        "hierarchy": "cog",
     },
     COG_TERM_DEFS: {
         "fieldnames": cog_def_headers,
         "term_key": cog_def_headers[0],
         "text_key": cog_def_headers[2],
+        "hierarchy": "cog",
     },
     PFAM_TERM_DEFS: {
         "fieldnames": pfam_headers,
         "term_key": "pfam_accession",
         "text_key": "pfam_name",
+        "hierarchy": "pfam",
     },
     PFAM_CLAN_DEFS: {
         "fieldnames": pfam_headers,
         "term_key": "clan_accession",
         "text_key": "clan_name",
+        "hierarchy": "pfam",
     },
 }
 
 
 def get_search_records():
-    records: Dict[str, str] = {}
+    records: Dict[str, Dict[str, str]] = {
+        "ko": {},
+        "pfam": {},
+        "cog": {},
+    }
 
     def ingest_tree(node: dict) -> None:
         if not node.get("children", False):
@@ -147,7 +167,7 @@ def get_search_records():
             file,
             keys["term_key"],
             keys["text_key"],
-            records,
+            records[str(keys["hierarchy"])],
             fallback_text_key=keys.get("fallback_text_key", None),
             fieldnames=keys.get("fieldnames", None),
         )
