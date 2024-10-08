@@ -202,7 +202,7 @@ const types: Record<entityType, EntityData> = {
     name: 'gene_function',
     plural: 'Gene functions',
     visible: true,
-  }
+  },
 };
 
 const fields: Record<string, FieldsData> = {
