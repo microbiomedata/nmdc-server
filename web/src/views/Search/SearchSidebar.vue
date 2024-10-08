@@ -25,7 +25,15 @@ import {
 const FunctionSearchFacets: SearchFacet[] = [
   {
     field: 'id',
-    table: 'gene_function',
+    table: 'kegg_function',
+  },
+  {
+    field: 'id',
+    table: 'cog_function',
+  },
+  {
+    field: 'id',
+    table: 'pfam_function',
   },
   /** MIxS Environmental Triad */
   {
@@ -132,6 +140,11 @@ export default defineComponent({
     function dbSummaryForTable(table: entityType, field: string) {
       if (table in dbSummary.value) {
         return dbSummary.value[table].attributes[field];
+      }
+      if (['kegg_function', 'cog_function', 'pfam_function'].includes(table)) {
+        return {
+          type: 'kegg_search',
+        };
       }
       return {};
     }
