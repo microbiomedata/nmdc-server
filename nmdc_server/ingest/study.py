@@ -79,7 +79,16 @@ def load(db: Session, cursor: Cursor):
                 doi["doi_value"] = transform_doi(doi.pop("doi_value"))
 
             for doi in dois:
-                upsert_doi(db, **doi)
+                upsert_doi(
+                    db,
+                    doi_value=doi["doi_value"],
+                    doi_category=doi["doi_category"],
+                    doi_provider=doi.get("doi_provider", ""),
+                )
+
+        protocol_links = obj.pop("protocol_link", None)
+        if protocol_links:
+            obj["relevant_protocols"] = [p["url"] for p in protocol_links if "url" in p]
 
         new_study = create_study(db, Study(**obj))
         if dois:

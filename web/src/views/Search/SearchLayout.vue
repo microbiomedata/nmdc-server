@@ -229,7 +229,7 @@ export default defineComponent({
                   height="30px"
                 >
                   <v-tab key="omics">
-                    Omics
+                    Data Type
                   </v-tab>
                   <v-tab key="environments">
                     Environment
