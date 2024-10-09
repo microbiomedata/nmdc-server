@@ -39,6 +39,10 @@ def upgrade():
     mappings = []
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
+
+        if isinstance(metadata_submission, list):
+            continue
+
         context_form = metadata_submission["contextForm"]
 
         if not context_form.get("awardDoi", None) and context_form.get("datasetDoi", None):
@@ -57,6 +61,10 @@ def downgrade():
     mappings = []
     for submission_metadata in session.query(SubmissionMetadata):
         metadata_submission = submission_metadata.metadata_submission
+
+        if isinstance(metadata_submission, list):
+            continue
+
         context_form = metadata_submission["contextForm"]
 
         if not context_form.get("datasetDoi", None) and context_form.get("awardDoi", None):
