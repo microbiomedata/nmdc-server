@@ -109,11 +109,12 @@ const addressFormDefault = {
 };
 const contextFormDefault = {
   dataGenerated: undefined as undefined | boolean,
-  datasetDoi: '',
+  awardDois: [] as string[] | null,
   facilityGenerated: undefined as undefined | boolean,
   facilities: [] as string[],
   award: undefined as undefined | string,
   otherAward: '',
+  unknownDoi: undefined as undefined | boolean,
 };
 const contextForm = reactive(clone(contextFormDefault));
 const contextFormValid = ref(false);
