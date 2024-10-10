@@ -12,6 +12,7 @@ from sqlalchemy import (
     Enum,
     Float,
     ForeignKey,
+    Index,
     Integer,
     LargeBinary,
     String,
@@ -832,6 +833,9 @@ class BulkDownloadDataObject(Base):
     data_object = relationship(
         DataObject, lazy="joined", cascade="all", backref="bulk_download_entities"
     )
+
+
+Index("bulk_download_data_object_id_idx", BulkDownloadDataObject.data_object_id)
 
 
 class EnvoTree(Base):
