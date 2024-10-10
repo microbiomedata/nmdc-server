@@ -237,7 +237,8 @@ class StudyBase(AnnotatedBase):
     study_category: Optional[str] = None
     children: Optional[List[Study]] = []
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator`
+    # manually.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
@@ -255,7 +256,8 @@ class OmicsCounts(BaseModel):
     type: str
     count: int
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator`
+    # manually.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("count", pre=True, always=True)
     def insert_zero(cls, v):
@@ -336,7 +338,8 @@ class OmicsProcessing(OmicsProcessingBase):
     omics_data: List["OmicsTypes"]
     outputs: List["DataObject"]
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator`
+    # manually.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("biosample_ids")
     @classmethod
@@ -372,7 +375,8 @@ class DataObject(DataObjectBase):
     selected: Optional[bool] = None
     model_config = ConfigDict(from_attributes=True)
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator`
+    # manually.
     # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("url")
     def replace_url(cls, url, values):

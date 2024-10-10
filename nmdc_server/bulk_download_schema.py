@@ -2,10 +2,11 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 
+from pydantic import ConfigDict
+
 from nmdc_server.data_object_filters import DataObjectFilter
 from nmdc_server.query import ConditionSchema
 from nmdc_server.schemas import FileDownloadMetadata
-from pydantic import ConfigDict
 
 
 # schemas related to bulk download endpoints extracted
