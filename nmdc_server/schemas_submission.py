@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, validator
+from pydantic import ConfigDict, BaseModel, validator
 
 from nmdc_server import schemas
 from nmdc_server.models import SubmissionEditorRole
@@ -13,7 +13,7 @@ class Contributor(BaseModel):
     name: str
     orcid: str
     roles: List[str]
-    permissionLevel: Optional[str]
+    permissionLevel: Optional[str] = None
 
 
 class StudyForm(BaseModel):
@@ -21,9 +21,9 @@ class StudyForm(BaseModel):
     piName: str
     piEmail: str
     piOrcid: str
-    fundingSources: Optional[List[str]]
+    fundingSources: Optional[List[str]] = None
     linkOutWebpage: List[str]
-    studyDate: Optional[str]
+    studyDate: Optional[str] = None
     description: str
     notes: str
     contributors: List[Contributor]
@@ -51,25 +51,25 @@ class NmcdAddress(BaseModel):
 
 class AddressForm(BaseModel):
     shipper: NmcdAddress
-    expectedShippingDate: Optional[datetime]
+    expectedShippingDate: Optional[datetime] = None
     shippingConditions: str
     sample: str
     description: str
     experimentalGoals: str
     randomization: str
-    usdaRegulated: Optional[bool]
+    usdaRegulated: Optional[bool] = None
     permitNumber: str
     biosafetyLevel: str
-    irbOrHipaa: Optional[bool]
+    irbOrHipaa: Optional[bool] = None
     comments: str
 
 
 class ContextForm(BaseModel):
     datasetDoi: str
-    dataGenerated: Optional[bool]
-    facilityGenerated: Optional[bool]
+    dataGenerated: Optional[bool] = None
+    facilityGenerated: Optional[bool] = None
     facilities: List[str]
-    award: Optional[str]
+    award: Optional[str] = None
     otherAward: str
 
 
@@ -84,26 +84,26 @@ class MetadataSubmissionRecord(BaseModel):
 
 
 class PartialMetadataSubmissionRecord(BaseModel):
-    packageName: Optional[str]
-    contextForm: Optional[ContextForm]
-    addressForm: Optional[AddressForm]
-    templates: Optional[List[str]]
-    studyForm: Optional[StudyForm]
-    multiOmicsForm: Optional[MultiOmicsForm]
-    sampleData: Optional[Dict[str, List[Any]]]
+    packageName: Optional[str] = None
+    contextForm: Optional[ContextForm] = None
+    addressForm: Optional[AddressForm] = None
+    templates: Optional[List[str]] = None
+    studyForm: Optional[StudyForm] = None
+    multiOmicsForm: Optional[MultiOmicsForm] = None
+    sampleData: Optional[Dict[str, List[Any]]] = None
 
 
 class SubmissionMetadataSchemaCreate(BaseModel):
     metadata_submission: MetadataSubmissionRecord
-    status: Optional[str]
-    source_client: Optional[str]
+    status: Optional[str] = None
+    source_client: Optional[str] = None
 
 
 class SubmissionMetadataSchemaPatch(BaseModel):
     metadata_submission: PartialMetadataSubmissionRecord
-    status: Optional[str]
+    status: Optional[str] = None
     # Map of ORCID iD to permission level
-    permissions: Optional[Dict[str, str]]
+    permissions: Optional[Dict[str, str]] = None
 
 
 class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
@@ -113,16 +113,16 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     status: str
     author: schemas.User
     templates: List[str]
-    study_name: Optional[str]
+    study_name: Optional[str] = None
 
-    lock_updated: Optional[datetime]
-    locked_by: Optional[schemas.User]
+    lock_updated: Optional[datetime] = None
+    locked_by: Optional[schemas.User] = None
 
-    permission_level: Optional[str]
+    permission_level: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        orm_mode = True
-
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("metadata_submission", pre=True, always=True)
     def populate_roles(cls, metadata_submission, values):
         owners = set(values.get("owners", []))

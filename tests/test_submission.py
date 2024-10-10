@@ -15,7 +15,7 @@ from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionM
 def suggest_payload():
     return [
         {"row": 1, "data": {"foo": "bar", "lat_lon": "44.058648, -123.095277"}},
-        {"row": 3, "data": {"elev": 0, "lat_lon": "44.046389 -123.051910"}},
+        {"row": 3, "data": {"elev": "0", "lat_lon": "44.046389 -123.051910"}},
         {"row": 4, "data": {"foo": "bar"}},
         {"row": 5, "data": {"lat_lon": "garbage foo bar"}},
     ]

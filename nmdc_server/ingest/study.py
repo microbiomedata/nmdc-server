@@ -2,7 +2,7 @@ import re
 from typing import Optional
 
 import requests
-from pydantic import root_validator, validator
+from pydantic import model_validator, validator
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
@@ -41,7 +41,8 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional
 class Study(StudyCreate):
     _extract_value = validator("*", pre=True, allow_reuse=True)(extract_value)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def extract_extras(cls, values):
         return extract_extras(cls, values)
 

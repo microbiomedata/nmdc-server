@@ -10,11 +10,11 @@ def test_login(client: TestClient):
     resp = client.request(
         method="get",
         url=f"/auth/login?redirect_uri={allowed_redirect_uri}/whatever",
-        allow_redirects=False,
+        follow_redirects=False,
     )
 
     assert resp.status_code == 302
-    assert resp.next.url.startswith(f"{settings.orcid_base_url}/oauth/authorize")  # type: ignore
+    assert str(resp.next_request.url).startswith(f"{settings.orcid_base_url}/oauth/authorize")  # type: ignore
 
 
 def test_current_user(client: TestClient, logged_in_user):

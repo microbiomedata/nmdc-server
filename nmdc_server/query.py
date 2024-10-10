@@ -9,7 +9,7 @@ from enum import Enum
 from itertools import groupby
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import ConfigDict, BaseModel, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, desc, func, inspect, or_
 from sqlalchemy.orm import Query, Session, aliased, with_expression
 from sqlalchemy.orm.util import AliasedClass
@@ -106,11 +106,11 @@ RangeValue = Annotated[List[schemas.AnnotationValue], Field(min_items=2, max_ite
 
 
 class GoldTreeValue(BaseModel):
-    ecosystem: Optional[str]
-    ecosystem_category: Optional[str]
-    ecosystem_type: Optional[str]
-    ecosystem_subtype: Optional[str]
-    specific_ecosystem: Optional[str]
+    ecosystem: Optional[str] = None
+    ecosystem_category: Optional[str] = None
+    ecosystem_type: Optional[str] = None
+    ecosystem_subtype: Optional[str] = None
+    specific_ecosystem: Optional[str] = None
 
 
 ConditionValue = Union[schemas.AnnotationValue, RangeValue, List[GoldTreeValue]]
@@ -902,8 +902,7 @@ class SearchQuery(BaseModel):
 
 
 class ConditionResultSchema(SimpleConditionSchema):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FacetQuery(SearchQuery):
@@ -915,14 +914,14 @@ class BiosampleSearchQuery(SearchQuery):
 
 
 class BinnedRangeFacetQuery(FacetQuery):
-    minimum: Optional[NumericValue]
-    maximum: Optional[NumericValue]
+    minimum: Optional[NumericValue] = None
+    maximum: Optional[NumericValue] = None
     num_bins: PositiveInt
 
 
 class BinnedDateFacetQuery(FacetQuery):
-    minimum: Optional[datetime]
-    maximum: Optional[datetime]
+    minimum: Optional[datetime] = None
+    maximum: Optional[datetime] = None
     resolution: DateBinResolution
 
 
@@ -931,7 +930,7 @@ BinnedFacetQuery = Union[BinnedRangeFacetQuery, BinnedDateFacetQuery]
 
 class StudySearchResponse(BaseSearchResponse):
     results: List[schemas.Study]
-    total: Optional[int]
+    total: Optional[int] = None
 
 
 class OmicsProcessingSearchResponse(BaseSearchResponse):

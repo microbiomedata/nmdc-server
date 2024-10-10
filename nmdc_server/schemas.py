@@ -15,7 +15,7 @@ from urllib.parse import quote
 from uuid import UUID
 
 from pint import Unit
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, ConfigDict, Field, validator
 from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, LargeBinary, String
 from sqlalchemy.dialects.postgresql.json import JSONB
 
@@ -35,7 +35,7 @@ class ErrorSchema(BaseModel):
     message: str = Field(
         ...,
         description="Human-readable error message.",
-        example="Something went wrong.",
+        examples=["Something went wrong."],
     )
 
 
@@ -44,7 +44,7 @@ class InternalErrorSchema(ErrorSchema):
         ...,
         description="Unique identifier for the error that occurred. Provide this to system "
         "administrators if you are reporting an error.",
-        example="dd4c4fa3-8d22-4768-8b0d-0923140d9f8a",
+        examples=["dd4c4fa3-8d22-4768-8b0d-0923140d9f8a"],
     )
 
 
@@ -77,9 +77,7 @@ class EnvoTerm(BaseModel):
     label: str
     url: str
     data: Dict[str, Any]
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AnnotatedBase(BaseModel):
@@ -125,10 +123,10 @@ class UnitInfo(BaseModel):
 
 class AttributeSummary(BaseModel):
     count: int
-    min: Optional[Union[float, datetime]]
-    max: Optional[Union[float, datetime]]
+    min: Optional[Union[float, datetime]] = None
+    max: Optional[Union[float, datetime]] = None
     type: AttributeType
-    units: Optional[UnitInfo]
+    units: Optional[UnitInfo] = None
 
 
 class TableSummary(BaseModel):
@@ -169,25 +167,21 @@ class AggregationSummary(BaseModel):
 
 class EnvironmentSankeyAggregation(BaseModel):
     count: int
-    ecosystem: Optional[str]
-    ecosystem_category: Optional[str]
-    ecosystem_type: Optional[str]
-    ecosystem_subtype: Optional[str]
-    specific_ecosystem: Optional[str]
-
-    class Config:
-        orm_mode = True
+    ecosystem: Optional[str] = None
+    ecosystem_category: Optional[str] = None
+    ecosystem_type: Optional[str] = None
+    ecosystem_subtype: Optional[str] = None
+    specific_ecosystem: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class EnvironmentGeospatialAggregation(BaseModel):
     count: int
-    latitude: Optional[float]
-    longitude: Optional[float]
-    ecosystem: Optional[str]
-    ecosystem_category: Optional[str]
-
-    class Config:
-        orm_mode = True
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    ecosystem: Optional[str] = None
+    ecosystem_category: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DataObjectAggregationNode(BaseModel):
@@ -205,13 +199,11 @@ DataObjectAggregation = Dict[str, DataObjectAggregationElement]
 class OrcidPerson(BaseModel):
     """https://microbiomedata.github.io/nmdc-schema/PersonValue/"""
 
-    name: Optional[str]
-    email: Optional[str]
-    orcid: Optional[str]
-    profile_image_url: Optional[str]
-
-    class Config:
-        orm_mode = True
+    name: Optional[str] = None
+    email: Optional[str] = None
+    orcid: Optional[str] = None
+    profile_image_url: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class CreditAssociation(BaseModel):
@@ -226,9 +218,7 @@ class DOIInfo(BaseModel):
     info: dict
     doi_category: models.DOIType
     doi_provider: str
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StudyBase(AnnotatedBase):
@@ -236,17 +226,19 @@ class StudyBase(AnnotatedBase):
     gold_name: str = ""
     gold_description: str = ""
     scientific_objective: str = ""
-    add_date: Optional[DateType]
-    mod_date: Optional[DateType]
-    has_credit_associations: Optional[List[CreditAssociation]]
-    relevant_protocols: Optional[List[str]]
-    funding_sources: Optional[List[str]]
-    gold_study_identifiers: Optional[List[str]]
-    homepage_website: Optional[List[str]]
-    part_of: Optional[List[str]]
-    study_category: Optional[str]
+    add_date: Optional[DateType] = None
+    mod_date: Optional[DateType] = None
+    has_credit_associations: Optional[List[CreditAssociation]] = None
+    relevant_protocols: Optional[List[str]] = None
+    funding_sources: Optional[List[str]] = None
+    gold_study_identifiers: Optional[List[str]] = None
+    homepage_website: Optional[List[str]] = None
+    part_of: Optional[List[str]] = None
+    study_category: Optional[str] = None
     children: Optional[List[Study]] = []
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("principal_investigator_websites", pre=True, each_item=True)
     def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
         if isinstance(study_website, str):
@@ -255,57 +247,55 @@ class StudyBase(AnnotatedBase):
 
 
 class StudyCreate(StudyBase):
-    principal_investigator_id: Optional[UUID]
-    image: Optional[bytes]
+    principal_investigator_id: Optional[UUID] = None
+    image: Optional[bytes] = None
 
 
 class OmicsCounts(BaseModel):
     type: str
     count: int
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("count", pre=True, always=True)
     def insert_zero(cls, v):
         return v or 0
 
 
 class Study(StudyBase):
-    open_in_gold: Optional[str]
-    principal_investigator: Optional[OrcidPerson]
-    principal_investigator_name: Optional[str]
+    open_in_gold: Optional[str] = None
+    principal_investigator: Optional[OrcidPerson] = None
+    principal_investigator_name: Optional[str] = None
     image_url: str
     principal_investigator_image_url: str
-    sample_count: Optional[int]
-    omics_counts: Optional[List[OmicsCounts]]
-    omics_processing_counts: Optional[List[OmicsCounts]]
+    sample_count: Optional[int] = None
+    omics_counts: Optional[List[OmicsCounts]] = None
+    omics_processing_counts: Optional[List[OmicsCounts]] = None
     doi_map: Dict[str, Any] = {}
     multiomics: int
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # biosample
 class BiosampleBase(AnnotatedBase):
     study_id: str
-    depth: Optional[float]
-    env_broad_scale_id: Optional[str]
-    env_local_scale_id: Optional[str]
-    env_medium_id: Optional[str]
+    depth: Optional[float] = None
+    env_broad_scale_id: Optional[str] = None
+    env_local_scale_id: Optional[str] = None
+    env_medium_id: Optional[str] = None
     # https://github.com/samuelcolvin/pydantic/issues/156
     longitude: Optional[float] = Field(default=None, gt=-180, le=180)
     latitude: Optional[float] = Field(default=None, ge=-90, le=90)
-    add_date: Optional[DateType]
-    mod_date: Optional[DateType]
+    add_date: Optional[DateType] = None
+    mod_date: Optional[DateType] = None
 
-    collection_date: Optional[DateType]
-    ecosystem: Optional[str]
-    ecosystem_category: Optional[str]
-    ecosystem_type: Optional[str]
-    ecosystem_subtype: Optional[str]
-    specific_ecosystem: Optional[str]
-
-    class Config:
-        orm_mode = True
+    collection_date: Optional[DateType] = None
+    ecosystem: Optional[str] = None
+    ecosystem_category: Optional[str] = None
+    ecosystem_type: Optional[str] = None
+    ecosystem_subtype: Optional[str] = None
+    specific_ecosystem: Optional[str] = None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BiosampleCreate(BiosampleBase):
@@ -313,28 +303,26 @@ class BiosampleCreate(BiosampleBase):
 
 
 class Biosample(BiosampleBase):
-    open_in_gold: Optional[str]
-    env_broad_scale: Optional[EnvoTerm]
-    env_local_scale: Optional[EnvoTerm]
-    env_medium: Optional[EnvoTerm]
+    open_in_gold: Optional[str] = None
+    env_broad_scale: Optional[EnvoTerm] = None
+    env_local_scale: Optional[EnvoTerm] = None
+    env_medium: Optional[EnvoTerm] = None
     env_broad_scale_terms: List[str] = []
     env_local_scale_terms: List[str] = []
     env_medium_terms: List[str] = []
-    emsl_biosample_identifiers: Optional[List[str]]
+    emsl_biosample_identifiers: Optional[List[str]] = None
 
     omics_processing: List["OmicsProcessing"]
     multiomics: int
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # omics_processing
 class OmicsProcessingBase(AnnotatedBase):
-    study_id: Optional[str]
+    study_id: Optional[str] = None
     biosample_inputs: list[BiosampleBase] = []
-    add_date: Optional[DateType]
-    mod_date: Optional[DateType]
+    add_date: Optional[DateType] = None
+    mod_date: Optional[DateType] = None
 
 
 class OmicsProcessingCreate(OmicsProcessingBase):
@@ -342,12 +330,14 @@ class OmicsProcessingCreate(OmicsProcessingBase):
 
 
 class OmicsProcessing(OmicsProcessingBase):
-    open_in_gold: Optional[str]
+    open_in_gold: Optional[str] = None
     biosample_ids: list[str] = []
 
     omics_data: List["OmicsTypes"]
     outputs: List["DataObject"]
 
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("biosample_ids")
     @classmethod
     def set_biosample_ids(cls, biosample_ids: list[str], values: dict[str, Any]) -> list[str]:
@@ -358,8 +348,7 @@ class OmicsProcessing(OmicsProcessingBase):
 
         return biosample_ids
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # data_object
@@ -367,9 +356,9 @@ class DataObjectBase(BaseModel):
     id: str
     name: str
     description: str = ""
-    file_size_bytes: Optional[int]
-    md5_checksum: Optional[str]
-    url: Optional[str]
+    file_size_bytes: Optional[int] = None
+    md5_checksum: Optional[str] = None
+    url: Optional[str] = None
     downloads: int
     file_type: Optional[str] = None
     file_type_description: Optional[str] = None
@@ -381,10 +370,10 @@ class DataObjectCreate(DataObjectBase):
 
 class DataObject(DataObjectBase):
     selected: Optional[bool] = None
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        orm_mode = True
-
+    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator` manually.
+    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
     @validator("url")
     def replace_url(cls, url, values):
         id_str = quote(values["id"])
@@ -422,8 +411,7 @@ class DataObject(DataObjectBase):
 
 
 class GeneFunction(BaseModel):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
     id: str
 
@@ -443,17 +431,15 @@ class PipelineStep(PipelineStepBase):
     # has_inputs: List[str]
     # has_outputs: List[str]
     outputs: List[DataObject]
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ReadsQCBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.reads_qc.value
-    input_read_count: Optional[int]
-    input_read_bases: Optional[int]
-    output_read_count: Optional[int]
-    output_read_bases: Optional[int]
+    input_read_count: Optional[int] = None
+    input_read_bases: Optional[int] = None
+    output_read_count: Optional[int] = None
+    output_read_bases: Optional[int] = None
 
 
 class ReadsQC(PipelineStep):
@@ -461,35 +447,35 @@ class ReadsQC(PipelineStep):
 
 
 class AssemblyBase(PipelineStepBase):
-    scaffolds: Optional[int]
-    contigs: Optional[int]
-    scaf_bp: Optional[int]
-    contig_bp: Optional[int]
-    scaf_n50: Optional[int]
-    scaf_l50: Optional[int]
-    ctg_n50: Optional[int]
-    ctg_l50: Optional[int]
-    scaf_n90: Optional[int]
-    scaf_l90: Optional[int]
-    ctg_n90: Optional[int]
-    ctg_l90: Optional[int]
-    scaf_max: Optional[int]
-    ctg_max: Optional[int]
-    scaf_n_gt50k: Optional[int]
+    scaffolds: Optional[int] = None
+    contigs: Optional[int] = None
+    scaf_bp: Optional[int] = None
+    contig_bp: Optional[int] = None
+    scaf_n50: Optional[int] = None
+    scaf_l50: Optional[int] = None
+    ctg_n50: Optional[int] = None
+    ctg_l50: Optional[int] = None
+    scaf_n90: Optional[int] = None
+    scaf_l90: Optional[int] = None
+    ctg_n90: Optional[int] = None
+    ctg_l90: Optional[int] = None
+    scaf_max: Optional[int] = None
+    ctg_max: Optional[int] = None
+    scaf_n_gt50k: Optional[int] = None
 
     # TODO: fix the data on ingest or make this optional on the schema
-    scaf_l_gt50k: Optional[int]
-    scaf_pct_gt50k: Optional[int]
-    num_input_reads: Optional[int]
-    num_aligned_reads: Optional[int]
-    scaf_logsum: Optional[float]
-    scaf_powsum: Optional[float]
-    ctg_logsum: Optional[float]
-    ctg_powsum: Optional[float]
-    asm_score: Optional[float]
-    gap_pct: Optional[float]
-    gc_avg: Optional[float]
-    gc_std: Optional[float]
+    scaf_l_gt50k: Optional[int] = None
+    scaf_pct_gt50k: Optional[int] = None
+    num_input_reads: Optional[int] = None
+    num_aligned_reads: Optional[int] = None
+    scaf_logsum: Optional[float] = None
+    scaf_powsum: Optional[float] = None
+    ctg_logsum: Optional[float] = None
+    ctg_powsum: Optional[float] = None
+    asm_score: Optional[float] = None
+    gap_pct: Optional[float] = None
+    gc_avg: Optional[float] = None
+    gc_std: Optional[float] = None
 
 
 class MetagenomeAssemblyBase(AssemblyBase):
@@ -533,16 +519,16 @@ class MetaproteomicAnalysis(PipelineStep):
 
 
 class MAG(BaseModel):
-    bin_name: Optional[str]
-    number_of_contig: Optional[int]
-    completeness: Optional[float]
-    contamination: Optional[float]
-    gene_count: Optional[int]
-    bin_quality: Optional[str]
-    num_16s: Optional[int]
-    num_5s: Optional[int]
-    num_23s: Optional[int]
-    num_t_rna: Optional[int]
+    bin_name: Optional[str] = None
+    number_of_contig: Optional[int] = None
+    completeness: Optional[float] = None
+    contamination: Optional[float] = None
+    gene_count: Optional[int] = None
+    bin_quality: Optional[str] = None
+    num_16s: Optional[int] = None
+    num_5s: Optional[int] = None
+    num_23s: Optional[int] = None
+    num_t_rna: Optional[int] = None
 
 
 class MAGCreate(MAG):
@@ -551,20 +537,20 @@ class MAGCreate(MAG):
 
 class MAGsAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.mags_analysis.value
-    input_contig_num: Optional[int]
-    too_short_contig_num: Optional[int]
-    low_depth_contig_num: Optional[int]
-    unbinned_contig_num: Optional[int]
-    binned_contig_num: Optional[int]
+    input_contig_num: Optional[int] = None
+    too_short_contig_num: Optional[int] = None
+    low_depth_contig_num: Optional[int] = None
+    unbinned_contig_num: Optional[int] = None
+    binned_contig_num: Optional[int] = None
 
 
 class MAGsAnalysis(PipelineStep):
     type: str = WorkflowActivityTypeEnum.mags_analysis.value
-    input_contig_num: Optional[int]
-    too_short_contig_num: Optional[int]
-    low_depth_contig_num: Optional[int]
-    unbinned_contig_num: Optional[int]
-    binned_contig_num: Optional[int]
+    input_contig_num: Optional[int] = None
+    too_short_contig_num: Optional[int] = None
+    low_depth_contig_num: Optional[int] = None
+    unbinned_contig_num: Optional[int] = None
+    binned_contig_num: Optional[int] = None
 
     mags_list: List[MAG]
 
@@ -664,9 +650,7 @@ class KeggTermListResponse(BaseModel):
 class KeggTermText(BaseModel):
     term: str
     text: str
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class KeggTermTextListResponse(BaseModel):
@@ -679,20 +663,18 @@ class IngestArgumentSchema(BaseModel):
 
 
 class User(BaseModel):
-    id: Optional[UUID]
+    id: Optional[UUID] = None
     orcid: str
     name: str = ""
-    is_admin = False
-
-    class Config:
-        orm_mode = True
+    is_admin: bool = False
+    model_config = ConfigDict(from_attributes=True)
 
 
 class LockOperationResult(BaseModel):
     success: bool
     message: str
-    locked_by: Optional[User]
-    lock_updated: Optional[datetime]
+    locked_by: Optional[User] = None
+    lock_updated: Optional[datetime] = None
 
 
 class VersionInfo(BaseModel):
@@ -705,8 +687,4 @@ class VersionInfo(BaseModel):
     nmdc_server: str = __version__
     nmdc_schema: str = version("nmdc-schema")
     nmdc_submission_schema: str = version("nmdc-submission-schema")
-
-    class Config:
-        # In Pydantic V2, use `frozen=True`
-        # https://docs.pydantic.dev/2.8/concepts/models/#faux-immutability
-        allow_mutation = False
+    model_config = ConfigDict(frozen=False)

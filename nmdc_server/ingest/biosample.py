@@ -3,7 +3,7 @@ import re
 from datetime import datetime
 from typing import Any, Dict
 
-from pydantic import root_validator, validator
+from pydantic import field_validator, model_validator, validator
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
@@ -20,7 +20,8 @@ date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
 class Biosample(BiosampleCreate):
     _extract_value = validator("*", pre=True, allow_reuse=True)(extract_value)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
+    @classmethod
     def extract_extras(cls, values):
         if "lat_lon" in values:
             if "latitude" in values["lat_lon"] and "longitude" in values["lat_lon"]:
@@ -32,20 +33,23 @@ class Biosample(BiosampleCreate):
                 values["longitude"] = float(lon)
         return extract_extras(cls, values)
 
-    @validator("depth", pre=True)
+    @field_validator("depth", mode="before")
+    @classmethod
     def normalize_depth(cls, value):
         value = extract_value(value)
         if isinstance(value, str):
             return float(value.split(" ")[0])
         return value
 
-    @validator("add_date", "mod_date", pre=True)
+    @field_validator("add_date", "mod_date", mode="before")
+    @classmethod
     def coerce_date(cls, v):
         if isinstance(v, str) and date_fmt.match(v):
             return datetime.strptime(v, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()
         return v
 
-    @validator("collection_date", pre=True)
+    @field_validator("collection_date", mode="before")
+    @classmethod
     def coerce_collection_date(cls, value):
         # { "has_raw_value": ... }
         raw_value = value["has_raw_value"]

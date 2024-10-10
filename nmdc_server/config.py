@@ -1,7 +1,6 @@
 import os
 from typing import Optional
-
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -96,9 +95,7 @@ class Settings(BaseSettings):
             return self.testing_database_uri
         return self.database_uri
 
-    class Config:
-        env_prefix = "nmdc_"
-        env_file = os.getenv("DOTENV_PATH", ".env")
+    model_config = SettingsConfigDict(env_prefix="nmdc_", env_file=os.getenv("DOTENV_PATH", ".env"))
 
 
 settings = Settings()
