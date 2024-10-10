@@ -1,6 +1,7 @@
 import typing
 
 import sentry_sdk
+from debug_toolbar.middleware import DebugToolbarMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -35,7 +36,9 @@ field and click "Authorize".
         version=__version__,
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
+        debug=True,
     )
+    app.add_middleware(DebugToolbarMiddleware)
 
     @app.get("/docs", response_class=RedirectResponse, status_code=301, include_in_schema=False)
     async def redirect_docs():
