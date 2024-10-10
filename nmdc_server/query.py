@@ -930,7 +930,7 @@ BinnedFacetQuery = Union[BinnedRangeFacetQuery, BinnedDateFacetQuery]
 
 
 class StudySearchResponse(BaseSearchResponse):
-    results: List[schemas.Study]
+    results: List[schemas.StudyBase]
     total: Optional[int]
 
 
