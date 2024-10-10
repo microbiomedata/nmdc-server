@@ -3,7 +3,8 @@ import re
 from datetime import datetime
 from typing import Any, Dict
 
-from pydantic import field_validator, model_validator, validator
+from pydantic import field_validator
+from pydantic.v1 import root_validator, validator
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
@@ -20,8 +21,7 @@ date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
 class Biosample(BiosampleCreate):
     _extract_value = validator("*", pre=True, allow_reuse=True)(extract_value)
 
-    @model_validator(mode="before")
-    @classmethod
+    @root_validator(pre=True)
     def extract_extras(cls, values):
         if "lat_lon" in values:
             if "latitude" in values["lat_lon"] and "longitude" in values["lat_lon"]:
