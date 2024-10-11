@@ -12,16 +12,16 @@ Revises: 2ec2d0b4f840
 Create Date: 2024-10-11 18:06:08.521445
 
 """
+
 from typing import Optional
 
-from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.sql import table, column
-
+from alembic import op
+from sqlalchemy.sql import column, table
 
 # revision identifiers, used by Alembic.
-revision: str = 'e54d37bfb90b'
-down_revision: Optional[str] = '2ec2d0b4f840'
+revision: str = "e54d37bfb90b"
+down_revision: Optional[str] = "2ec2d0b4f840"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
