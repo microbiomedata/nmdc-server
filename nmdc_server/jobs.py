@@ -81,9 +81,14 @@ def do_ingest(function_limit, skip_annotation):
             load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
 
             # copy persistent data from the production db to the ingest db
+            logger.info("Merging file_download")
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
+            logger.info("Merging bulk_download")
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
+            logger.info("Merging bulk_download_data_object")
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownloadDataObject))
+
+    logger.info("Ingest finished successfully")
 
 
 @celery_app.task

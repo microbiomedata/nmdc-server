@@ -253,5 +253,3 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading search indices")
     search_index.load(db)
     db.commit()
-
-    logger.info("Ingest finished successfully")
