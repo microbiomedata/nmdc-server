@@ -24,9 +24,6 @@ def ping():
 
 def update_nmdc_functions():
     """Update NMDC custom functions for both databases."""
-    logger = get_logger(__name__)
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    logger.setLevel(logging.INFO)
     for db_info in [(database.SessionLocal, "active"), (database.SessionLocalIngest, "ingest")]:
         db_to_update, db_type = db_info
         with db_to_update() as db:
