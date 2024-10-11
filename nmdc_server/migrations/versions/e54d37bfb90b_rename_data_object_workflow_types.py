@@ -2,7 +2,7 @@
 
 The Berkeley schema migration changed a number of workflow type names. Even though
 the `data_object` table is truncated at the start of the ingest process, the old
-workflow types were being introduced by a merge operation from the production database
+workflow types were being introduced by a merge operation from the live database
 to the ingest database.
 
 See also: https://github.com/microbiomedata/nmdc-server/issues/1415
