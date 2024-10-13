@@ -124,13 +124,19 @@ delimeted_files: Dict[str, Dict[str, Union[str, List[str]]]] = {
 }
 
 
+def is_brite_hierarchy_term(term: str):
+    pass
+
+
 def get_search_records():
     records: Dict[str, str] = {}
 
     def ingest_tree(node: dict) -> None:
         if not node.get("children", False):
             term, *text = node["name"].split("  ", maxsplit=1)
-            records[term] = text[0] if text else ""
+            if "BR:" not in term:
+                # Skip over BRITE term hierarchies that have no children
+                records[term] = text[0] if text else ""
 
         for child in node.get("children", ()):
             ingest_tree(child)
