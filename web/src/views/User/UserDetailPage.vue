@@ -61,7 +61,8 @@ export default defineComponent({
 
 <template>
   <v-main>
-    <AppBanner v-if="false" />
+    <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
+    <AppBanner v-if="true" />
     <v-container>
       <div v-if="userLoading">
         Loading...
