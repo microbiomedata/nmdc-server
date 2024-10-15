@@ -69,6 +69,12 @@ class Settings(BaseSettings):
 
     sentry_dsn: Optional[str] = None
 
+    # Enable/disable and configure tracing through environment
+    # variables to lessen friction when fine-tuning settings
+    # for useful tracing.
+    sentry_tracing_enabled: bool = False
+    sentry_traces_sample_rate: float = 0.0
+
     print_sql: bool = False
 
     # App settings related to UI behavior
