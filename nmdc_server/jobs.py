@@ -24,9 +24,6 @@ def ping():
 
 def update_nmdc_functions():
     """Update NMDC custom functions for both databases."""
-    logger = get_logger(__name__)
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    logger.setLevel(logging.INFO)
     for db_info in [(database.SessionLocal, "active"), (database.SessionLocalIngest, "ingest")]:
         db_to_update, db_type = db_info
         with db_to_update() as db:
@@ -84,9 +81,14 @@ def do_ingest(function_limit, skip_annotation):
             load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
 
             # copy persistent data from the production db to the ingest db
+            logger.info("Merging file_download")
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
+            logger.info("Merging bulk_download")
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
+            logger.info("Merging bulk_download_data_object")
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownloadDataObject))
+
+    logger.info("Ingest finished successfully")
 
 
 @celery_app.task

@@ -12,7 +12,6 @@ from nmdc_server import jobs
 from nmdc_server.config import Settings
 from nmdc_server.database import SessionLocalIngest
 from nmdc_server.ingest import errors
-from nmdc_server.logger import get_logger
 
 
 @click.group()
@@ -75,9 +74,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         level = logging.INFO
     elif verbose > 1:
         level = logging.DEBUG
-    logger = get_logger(__name__)
     logging.basicConfig(level=level, format="%(message)s")
-    logger.setLevel(logging.INFO)
 
     jobs.do_ingest(function_limit, skip_annotation)
 
@@ -269,3 +266,7 @@ def load_db(key_file, user, host, list_backups, backup_file):
         sys.exit(1)
 
     click.secho(f"\nSuccessfully loaded {settings.current_db_uri}", fg="green")
+
+
+if __name__ == "__main__":
+    cli()
