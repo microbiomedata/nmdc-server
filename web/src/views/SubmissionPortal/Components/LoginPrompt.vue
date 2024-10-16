@@ -13,18 +13,14 @@ export default defineComponent({
 <template>
   <v-alert
     class="mt-6 mb-0"
-    text
+    type="warning"
+    color="primary lighten-2"
+    prominent
   >
-    <v-container>
-      <v-row align="center">
-        <v-col class="justify-content-center">
-          <h3 class="text-h6 font-weight-bold mb-3">
-            Login to submit data
-          </h3>
-          <p class="body-1">
-            Login with your ORCID iD to submit data.
-          </p>
-          <p class="body-2 mb-0">
+  <span class="text-h6 font-weight-bold mb-3">
+      Login to submit data
+    </span>
+    <!-- <p class="body-1">
             Don't have an ORCID iD? Individuals can
             <a
               href="https://support.orcid.org/hc/en-us/articles/360006973953"
@@ -32,25 +28,37 @@ export default defineComponent({
               target="_blank"
               title="Learn about registering an ORCiD"
             >get one for free</a>.
-          </p>
-        </v-col>
-        <v-col class="flex-grow-0">
-          <v-btn
-            :href="loginHref"
-            variant="plain"
-            elevation="0"
-            style="background: transparent"
-          >
-            <img
-              width="28px"
-              class="mr-2"
-              alt="Login with ORCiD"
-              src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
-            >
-            OrcID Login
-          </v-btn>
-        </v-col>
-      </v-row>
-    </v-container>
+      </p> -->
+    <v-btn
+      :href="loginHref"
+      variant="plain"
+      elevation="0"
+      style="background: transparent"
+      right
+      absolute
+      class="mr-4"
+    >
+      <img
+        width="28px"
+        class="mr-2"
+        alt="Login with ORCiD"
+        src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+      >
+      OrcID Login
+    </v-btn>
+    <template #append>
+      <a
+        href="https://support.orcid.org/hc/en-us/articles/360006973953"
+        rel="noreferrer noopener"
+        target="_blank"
+        title="Learn about registering an ORCiD"
+      >
+        <v-icon
+          v-on="on"
+        >
+          mdi-help-circle
+        </v-icon>
+      </a>
+    </template>
   </v-alert>
 </template>
