@@ -7,7 +7,7 @@ to a list/array, and update any values that need it to be list
 (such as comma delimited lists users have entered).
 
 Revision ID: 988105f6581d
-Revises: 5fb9910ca8e6
+Revises: e54d37bfb90b
 Create Date: 2024-10-07 18:14:38.465850
 
 """
@@ -23,7 +23,7 @@ from sqlalchemy.ext.declarative import declarative_base
 Base = declarative_base()
 # revision identifiers, used by Alembic.
 revision: str = "988105f6581d"
-down_revision: Optional[str] = "5fb9910ca8e6"
+down_revision: Optional[str] = "e54d37bfb90b"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
