@@ -52,7 +52,8 @@ field and click "Authorize".
         debug=True,
         lifespan=lifespan,
     )
-    app.add_middleware(DebugToolbarMiddleware)
+    if settings.environment == "development":
+        app.add_middleware(DebugToolbarMiddleware)
 
     @app.get("/docs", response_class=RedirectResponse, status_code=301, include_in_schema=False)
     async def redirect_docs():
