@@ -3,7 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, validator
+from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
 
 from nmdc_server import schemas
 from nmdc_server.models import SubmissionEditorRole
@@ -121,15 +121,12 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     permission_level: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator`
-    # manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("metadata_submission", pre=True, always=True)
-    def populate_roles(cls, metadata_submission, values):
-        owners = set(values.get("owners", []))
-        editors = set(values.get("editors", []))
-        viewers = set(values.get("viewers", []))
-        metadata_contributors = set(values.get("metadata_contributors", []))
+    @field_validator("metadata_submission", mode="before")
+    def populate_roles(cls, metadata_submission, info: ValidationInfo):
+        owners = set(info.data.get("owners", []))
+        editors = set(info.data.get("editors", []))
+        viewers = set(info.data.get("viewers", []))
+        metadata_contributors = set(info.data.get("metadata_contributors", []))
 
         for contributor in metadata_submission.get("studyForm", {}).get("contributors", []):
             orcid = contributor.get("orcid", None)
@@ -145,7 +142,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
         return metadata_submission
 
 
-SubmissionMetadataSchema.update_forward_refs()
+SubmissionMetadataSchema.model_rebuild()
 
 
 class MetadataSuggestionRequest(BaseModel):

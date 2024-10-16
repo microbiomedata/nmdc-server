@@ -10,12 +10,12 @@ from __future__ import annotations
 from datetime import date, datetime
 from enum import Enum
 from importlib.metadata import version
-from typing import Any, Dict, List, Optional, Union
+from typing import Annotated, Any, Dict, List, Optional, Union
 from urllib.parse import quote
 from uuid import UUID
 
 from pint import Unit
-from pydantic import BaseModel, ConfigDict, Field, validator
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, ValidationInfo, field_validator
 from sqlalchemy import BigInteger, Column, DateTime, Float, Integer, LargeBinary, String
 from sqlalchemy.dialects.postgresql.json import JSONB
 
@@ -221,8 +221,17 @@ class DOIInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+def replace_website(site: Union[str, models.StudyWebsite]) -> str:
+    if isinstance(site, models.StudyWebsite):
+        return site.website.url
+    return site
+
+
+PiSite = Annotated[str, BeforeValidator(replace_website)]
+
+
 class StudyBase(AnnotatedBase):
-    principal_investigator_websites: Optional[List[str]] = []
+    principal_investigator_websites: Optional[List[PiSite]] = []
     gold_name: str = ""
     gold_description: str = ""
     scientific_objective: str = ""
@@ -237,15 +246,6 @@ class StudyBase(AnnotatedBase):
     study_category: Optional[str] = None
     children: Optional[List[Study]] = []
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator`
-    # manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("principal_investigator_websites", pre=True, each_item=True)
-    def replace_websites(cls, study_website: Union[models.StudyWebsite, str]) -> str:
-        if isinstance(study_website, str):
-            return study_website
-        return study_website.website.url
-
 
 class StudyCreate(StudyBase):
     principal_investigator_id: Optional[UUID] = None
@@ -256,10 +256,7 @@ class OmicsCounts(BaseModel):
     type: str
     count: int
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator`
-    # manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("count", pre=True, always=True)
+    @field_validator("count", mode="before")
     def insert_zero(cls, v):
         return v or 0
 
@@ -338,16 +335,13 @@ class OmicsProcessing(OmicsProcessingBase):
     omics_data: List["OmicsTypes"]
     outputs: List["DataObject"]
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator`
-    # manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("biosample_ids")
+    @field_validator("biosample_ids")
     @classmethod
-    def set_biosample_ids(cls, biosample_ids: list[str], values: dict[str, Any]) -> list[str]:
+    def set_biosample_ids(cls, biosample_ids: list[str], info: ValidationInfo) -> list[str]:
         # Only capture biosample IDs in responses
-        biosample_objects: list[BiosampleBase] = values.get("biosample_inputs", [])
+        biosample_objects: list[BiosampleBase] = info.data.get("biosample_inputs", [])
         biosample_ids = biosample_ids + [biosample.id for biosample in biosample_objects]
-        values.pop("biosample_inputs")
+        info.data.pop("biosample_inputs")
 
         return biosample_ids
 
@@ -375,12 +369,9 @@ class DataObject(DataObjectBase):
     selected: Optional[bool] = None
     model_config = ConfigDict(from_attributes=True)
 
-    # TODO[pydantic]: We couldn't refactor the `validator`, please replace it by `field_validator`
-    # manually.
-    # Check https://docs.pydantic.dev/dev-v2/migration/#changes-to-validators for more information.
-    @validator("url")
-    def replace_url(cls, url, values):
-        id_str = quote(values["id"])
+    @field_validator("url")
+    def replace_url(cls, url, info: ValidationInfo):
+        id_str = quote(info.data["id"])
         return f"/api/data_object/{id_str}/download" if url else None
 
     # Determine if the data object is selected by the provided filter.
@@ -607,9 +598,9 @@ OmicsTypes = Union[
     MetabolomicsAnalysis,
     Metatranscriptome,
 ]
-OmicsProcessing.update_forward_refs()
-Biosample.update_forward_refs()
-MAGCreate.update_forward_refs()
+OmicsProcessing.model_rebuild()
+Biosample.model_rebuild()
+MAGCreate.model_rebuild()
 
 
 class FileDownloadMetadata(BaseModel):
@@ -640,7 +631,7 @@ class EnvoTreeNode(BaseModel):
     children: List[EnvoTreeNode]
 
 
-EnvoTreeNode.update_forward_refs()
+EnvoTreeNode.model_rebuild()
 
 
 class EnvoTreeResponse(BaseModel):
