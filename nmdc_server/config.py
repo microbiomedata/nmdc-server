@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     environment: str = "production"
+    debug: bool = False
 
     # Several different database urls are configured for different
     # environments.  In production, only database_uri and ingest_database_uri

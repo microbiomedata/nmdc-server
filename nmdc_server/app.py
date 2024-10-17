@@ -49,7 +49,7 @@ field and click "Authorize".
         version=__version__,
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
-        debug=True,
+        debug=settings.debug,
         lifespan=lifespan,
     )
     if settings.environment == "development":
