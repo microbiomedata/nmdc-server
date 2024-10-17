@@ -28,8 +28,9 @@ def log_extras(req: Request) -> Dict[str, Any]:
 
     :param req: the current request.
     """
+    ip = req.client.host if req.client else ""
     return {
-        "ip": req.client.host,
+        "ip": ip,
         "method": req.method,
         "url": req.url,
     }

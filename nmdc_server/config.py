@@ -1,11 +1,14 @@
+from __future__ import annotations
+
 import os
 from typing import Optional
 
-from pydantic import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     environment: str = "production"
+    debug: bool = False
 
     # Several different database urls are configured for different
     # environments.  In production, only database_uri and ingest_database_uri
@@ -67,6 +70,12 @@ class Settings(BaseSettings):
 
     sentry_dsn: Optional[str] = None
 
+    # Enable/disable and configure tracing through environment
+    # variables to lessen friction when fine-tuning settings
+    # for useful tracing.
+    sentry_tracing_enabled: bool = False
+    sentry_traces_sample_rate: float = 0.0
+
     print_sql: bool = False
 
     # App settings related to UI behavior
@@ -96,9 +105,7 @@ class Settings(BaseSettings):
             return self.testing_database_uri
         return self.database_uri
 
-    class Config:
-        env_prefix = "nmdc_"
-        env_file = os.getenv("DOTENV_PATH", ".env")
+    model_config = SettingsConfigDict(env_prefix="nmdc_", env_file=os.getenv("DOTENV_PATH", ".env"))
 
 
 settings = Settings()

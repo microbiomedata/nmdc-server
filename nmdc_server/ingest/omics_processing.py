@@ -3,7 +3,8 @@ import re
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from pydantic import root_validator, validator
+from pydantic import field_validator
+from pydantic.v1 import root_validator, validator
 from pymongo.collection import Collection
 from pymongo.cursor import Cursor
 from pymongo.database import Database
@@ -39,7 +40,8 @@ class OmicsProcessing(OmicsProcessingCreate):
     def extract_extras(cls, values):
         return extract_extras(cls, values)
 
-    @validator("add_date", "mod_date", pre=True)
+    @field_validator("add_date", "mod_date", mode="before")
+    @classmethod
     def coerce_date(cls, v):
         if isinstance(v, str) and date_fmt.match(v):
             return datetime.strptime(v, "%d-%b-%y %I.%M.%S.%f000 %p").isoformat()

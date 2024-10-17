@@ -47,7 +47,7 @@ async def get_version() -> schemas.VersionInfo:
 
 # get the current user information
 @router.get("/me", tags=["user"], name="Return the current user name")
-async def me(user: User = Depends(get_current_user)) -> Optional[User]:
+async def me(user: User = Depends(get_current_user)):
     return user
 
 

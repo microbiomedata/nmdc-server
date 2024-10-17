@@ -4,7 +4,7 @@ from itertools import product
 
 import pytest
 from fastapi.testclient import TestClient
-from requests.models import Response
+from httpx import Response
 from sqlalchemy.orm.session import Session
 
 import nmdc_server

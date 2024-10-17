@@ -84,5 +84,5 @@ _workflow_enum_to_output_association = {
 
 
 class DataObjectFilter(BaseModel):
-    workflow: Optional[WorkflowActivityTypeEnum]
-    file_type: Optional[str]
+    workflow: Optional[WorkflowActivityTypeEnum] = None
+    file_type: Optional[str] = None

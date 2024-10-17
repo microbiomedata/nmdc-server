@@ -27,7 +27,7 @@ def get_or_create(
     else:
         params = dict(**kwargs)
         params.update(defaults or {})
-        instance = model(**params)  # type: ignore
+        instance = model(**params)
         db.add(instance)
         return instance, True
 

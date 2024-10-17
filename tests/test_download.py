@@ -32,20 +32,24 @@ def test_bulk_download_query(db: Session):
     qs = query.DataObjectQuerySchema()
     rows = qs.execute(db).all()
     assert len(rows) == 0
-    assert qs.aggregate(db) == {
-        "size": 0,
-        "count": 0,
-    }
+
+    data_object_agg_obj = qs.aggregate(db)
+    assert data_object_agg_obj.size == 0
+    assert data_object_agg_obj.count == 0
 
     qs = query.DataObjectQuerySchema(data_object_filter=[{"workflow": "nmdc:RawData"}])
     rows = qs.execute(db).all()
     assert [raw1.id] == [d.id for d in rows]
-    assert qs.aggregate(db) == {"size": raw1.file_size_bytes, "count": 1}
+    data_object_agg_obj = qs.aggregate(db)
+    assert data_object_agg_obj.size == raw1.file_size_bytes
+    assert data_object_agg_obj.count == 1
 
     qs = query.DataObjectQuerySchema(data_object_filter=[{"file_type": "ftype1"}])
     rows = qs.execute(db).all()
     assert [raw1.id] == [d.id for d in rows]
-    assert qs.aggregate(db) == {"size": raw1.file_size_bytes, "count": 1}
+    data_object_agg_obj = qs.aggregate(db)
+    assert data_object_agg_obj.size == raw1.file_size_bytes
+    assert data_object_agg_obj.count == 1
 
 
 def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user):

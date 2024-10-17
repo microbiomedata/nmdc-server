@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Any, Dict, Set, Union
+from typing import Any, Dict, Optional, Set, Union
 
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
@@ -45,7 +45,7 @@ def extract_value(value: Any) -> Any:
 
 
 def extract_extras(
-    cls: BaseModel, values: Dict[str, Any], exclude: Set[str] = None
+    cls: BaseModel, values: Dict[str, Any], exclude: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
     # Move unknown attributes into values['annotations']
     fields = set(cls.__fields__.keys())
