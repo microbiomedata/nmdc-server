@@ -22,8 +22,12 @@ def attach_sentry(app: FastAPI):
 
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
-        integrations=[SqlalchemyIntegration()],
-        enable_tracing=settings.sentry_tracing_enabled,
+        integrations=[
+               LoggingIntegration(level=logging.INFO, event_level=logging.WARNING),
+               SqlalchemyIntegration(),
+        ],
+        in_app_include=["nmdc_server"],
+        attach_stacktrace=True,
         traces_sample_rate=settings.sentry_traces_sample_rate,
     )
 
