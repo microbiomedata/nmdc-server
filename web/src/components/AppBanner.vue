@@ -3,7 +3,7 @@ import { defineComponent, ref } from '@vue/composition-api';
 
 export default defineComponent({
   setup() {
-    const showAppBanner = ref(true);
+    const showAppBanner = ref(false);
     return { showAppBanner };
   },
 });
