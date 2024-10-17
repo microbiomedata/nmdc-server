@@ -6,6 +6,7 @@ import AppBanner from '@/components/AppBanner.vue';
 import OrcidId from '@/components/Presentation/OrcidId.vue';
 import { stateRefs } from '@/store';
 import { getRefreshToken } from '@/store/localStorage';
+import { api, User } from '@/data/api';
 
 export default defineComponent({
   name: 'UserDetailPage',
@@ -31,7 +32,7 @@ export default defineComponent({
         isCopyRefreshTokenSnackbarVisible.value = true;
       }
     };
-
+    const { user, userLoading } = stateRefs;
     const handleRefreshTokenVisibilityButtonClick = async () => {
       isTokenVisible.value = !isTokenVisible.value;
       if (isTokenVisible.value) {
@@ -42,10 +43,26 @@ export default defineComponent({
         }, 50);
       }
     };
+    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
+      return [
+        (v: string) => !!v || msg,
+        ...otherRules,
+      ];
+    }
+    const updateUser = async (value:string) => {
+      const update: User = {
+        id: user.value?.id as string,
+        orcid: user.value?.orcid as string,
+        name: user.value?.name as string,
+        email: value,
+        is_admin: user.value?.is_admin as boolean,
+      };
+      await api.updateUser(user.value?.id as string, update);
+    };
 
     return {
-      user: stateRefs.user,
-      userLoading: stateRefs.userLoading,
+      user,
+      userLoading,
       origin: window.location.origin,
       refreshToken,
       refreshTokenExpirationDate,
@@ -54,6 +71,8 @@ export default defineComponent({
       isTokenVisible,
       handleRefreshTokenVisibilityButtonClick,
       handleRefreshTokenCopyButtonClick,
+      updateUser,
+      requiredRules,
     };
   },
 });
@@ -89,6 +108,44 @@ export default defineComponent({
             :authenticated="false"
             :width="24"
           />
+          <v-row>
+            <v-col
+              cols="2"
+              class="pt-6"
+            >
+              <v-text-field
+                v-model="user.email"
+                label="Email"
+                dense
+                filled
+                :rules="requiredRules('E-mail is required',[
+                  v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+                ])"
+                @blur="updateUser($event.target.value)"
+              >
+                <template
+                  v-if="!user.email"
+                  #append
+                >
+                  <v-tooltip
+                    right
+                  >
+                    <template #activator="{ on, attrs }">
+                      <v-icon
+                        right
+                        color="red"
+                        v-bind="attrs"
+                        v-on="on"
+                      >
+                        mdi-alert-circle
+                      </v-icon>
+                    </template>
+                    <span>Email is required</span>
+                  </v-tooltip>
+                </template>
+              </v-text-field>
+            </v-col>
+          </v-row>
         </div>
 
         <div class="mb-8">

@@ -495,6 +495,7 @@ def update_user(db: Session, user: schemas.User) -> Optional[models.User]:
             detail="User not found",
         )
     db_user.is_admin = user.is_admin
+    db_user.email = user.email
     db.commit()
     return db_user
 
