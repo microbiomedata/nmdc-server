@@ -1,3 +1,4 @@
+import logging
 import typing
 from contextlib import asynccontextmanager
 
@@ -23,8 +24,8 @@ def attach_sentry(app: FastAPI):
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
         integrations=[
-               LoggingIntegration(level=logging.INFO, event_level=logging.WARNING),
-               SqlalchemyIntegration(),
+            LoggingIntegration(level=logging.INFO, event_level=logging.WARNING),
+            SqlalchemyIntegration(),
         ],
         in_app_include=["nmdc_server"],
         attach_stacktrace=True,
