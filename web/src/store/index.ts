@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import CompositionApi, {
-  computed, ComputedRef, reactive, toRefs, watchEffect,
+  computed, ComputedRef, ref, reactive, toRefs, watchEffect,
 } from '@vue/composition-api';
 import { noop, uniqWith } from 'lodash';
 import VueRouter from 'vue-router';
@@ -200,10 +200,13 @@ function acceptTerms() {
 
 const stateRefs = toRefs(state);
 
+const showAppBanner = ref(true);
+
 export {
   stateRefs,
   dataObjectFilter,
   unreactive,
+  showAppBanner,
   acceptTerms,
   getTreeData,
   init,

@@ -36,8 +36,7 @@ export default defineComponent({
 
 <template>
   <v-main v-if="result.id">
-    <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
-    <AppBanner v-if="false" />
+    <AppBanner />
     <v-container fluid>
       <IndividualTitle :item="result" />
       <AttributeList
