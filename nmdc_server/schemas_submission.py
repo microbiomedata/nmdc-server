@@ -65,13 +65,13 @@ class AddressForm(BaseModel):
 
 
 class ContextForm(BaseModel):
-    awardDois: Optional[List[str]]
+    awardDois: Optional[List[str]] = None
     dataGenerated: Optional[bool] = None
     facilityGenerated: Optional[bool] = None
     facilities: List[str]
     award: Optional[str] = None
     otherAward: str
-    unknownDoi: Optional[bool]
+    unknownDoi: Optional[bool] = None
 
 
 class MetadataSubmissionRecord(BaseModel):
