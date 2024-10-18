@@ -56,7 +56,7 @@ export default defineComponent({
 <template>
   <v-main>
     <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
-    <AppBanner v-if="true" />
+    <AppBanner v-if="false" />
     <v-container
       v-if="!stateRefs.user.value && !req.loading.value"
     >
