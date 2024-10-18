@@ -9,7 +9,7 @@ from enum import Enum
 from itertools import groupby
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, desc, func, inspect, or_
 from sqlalchemy.orm import Query, Session, aliased, with_expression
 from sqlalchemy.orm.util import AliasedClass
@@ -106,11 +106,11 @@ RangeValue = Annotated[List[schemas.AnnotationValue], Field(min_items=2, max_ite
 
 
 class GoldTreeValue(BaseModel):
-    ecosystem: Optional[str]
-    ecosystem_category: Optional[str]
-    ecosystem_type: Optional[str]
-    ecosystem_subtype: Optional[str]
-    specific_ecosystem: Optional[str]
+    ecosystem: Optional[str] = None
+    ecosystem_category: Optional[str] = None
+    ecosystem_type: Optional[str] = None
+    ecosystem_subtype: Optional[str] = None
+    specific_ecosystem: Optional[str] = None
 
 
 ConditionValue = Union[schemas.AnnotationValue, RangeValue, List[GoldTreeValue]]
@@ -184,7 +184,7 @@ class SimpleConditionSchema(BaseConditionSchema):
             elif self.op == Operation.like:
                 return column.ilike(f"%{self.value}%")
         if hasattr(model, "annotations"):
-            json_field = model.annotations  # type: ignore
+            json_field = model.annotations
         else:
             raise InvalidAttributeException(self.table.value, self.field)
         if self.op == Operation.like:
@@ -208,12 +208,8 @@ class RangeConditionSchema(BaseConditionSchema):
             return and_(column >= self.value[0], column <= self.value[1])
         if hasattr(model, "annotations"):
             return and_(
-                func.nmdc_compare(
-                    model.annotations[self.field].astext, ">=", self.value[0]  # type: ignore
-                ),
-                func.nmdc_compare(
-                    model.annotations[self.field].astext, "<=", self.value[1]  # type: ignore
-                ),
+                func.nmdc_compare(model.annotations[self.field].astext, ">=", self.value[0]),
+                func.nmdc_compare(model.annotations[self.field].astext, "<=", self.value[1]),
             )
         else:
             raise InvalidAttributeException(self.table.value, self.field)
@@ -393,8 +389,8 @@ class BaseQuerySchema(BaseModel):
         db: Session,
         column: Column,
         subquery: Any,
-        minimum: NumericValue = None,
-        maximum: NumericValue = None,
+        minimum: Optional[NumericValue] = None,
+        maximum: Optional[NumericValue] = None,
     ) -> Tuple[Optional[NumericValue], Optional[NumericValue]]:
         """Get the range of a numeric/datetime quantity matching the conditions.
 
@@ -416,9 +412,9 @@ class BaseQuerySchema(BaseModel):
     def validate_binning_args(
         self,
         attribute: str,
-        minimum: NumericValue = None,
-        maximum: NumericValue = None,
-        resolution: DateBinResolution = None,
+        minimum: Optional[NumericValue] = None,
+        maximum: Optional[NumericValue] = None,
+        resolution: Optional[DateBinResolution] = None,
     ):
         """Raise an exception if binning arguments aren't valid for the data type."""
         # TODO: Validation like this should happen at the schema layer, but it requires refactoring
@@ -454,8 +450,8 @@ class BaseQuerySchema(BaseModel):
         self,
         db: Session,
         attribute: str,
-        minimum: NumericValue = None,
-        maximum: NumericValue = None,
+        minimum: Optional[NumericValue] = None,
+        maximum: Optional[NumericValue] = None,
         **kwargs,
     ) -> Tuple[List[NumericValue], List[int]]:
         """Perform a binned faceting aggregation on an attribute."""
@@ -902,8 +898,7 @@ class SearchQuery(BaseModel):
 
 
 class ConditionResultSchema(SimpleConditionSchema):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FacetQuery(SearchQuery):
@@ -915,14 +910,14 @@ class BiosampleSearchQuery(SearchQuery):
 
 
 class BinnedRangeFacetQuery(FacetQuery):
-    minimum: Optional[NumericValue]
-    maximum: Optional[NumericValue]
+    minimum: Optional[NumericValue] = None
+    maximum: Optional[NumericValue] = None
     num_bins: PositiveInt
 
 
 class BinnedDateFacetQuery(FacetQuery):
-    minimum: Optional[datetime]
-    maximum: Optional[datetime]
+    minimum: Optional[datetime] = None
+    maximum: Optional[datetime] = None
     resolution: DateBinResolution
 
 
@@ -931,7 +926,7 @@ BinnedFacetQuery = Union[BinnedRangeFacetQuery, BinnedDateFacetQuery]
 
 class StudySearchResponse(BaseSearchResponse):
     results: List[schemas.Study]
-    total: Optional[int]
+    total: Optional[int] = None
 
 
 class OmicsProcessingSearchResponse(BaseSearchResponse):

@@ -3,9 +3,9 @@ import re
 import requests
 from requests.adapters import HTTPAdapter
 from requests.models import Response
-from requests.packages.urllib3.util.retry import Retry
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
+from urllib3.util.retry import Retry
 
 from nmdc_server.logger import get_logger
 from nmdc_server.models import DOIInfo, DOIType
