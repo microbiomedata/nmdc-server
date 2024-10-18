@@ -2,7 +2,7 @@ import re
 from typing import Optional
 
 import requests
-from pydantic import root_validator, validator
+from pydantic.v1 import root_validator, validator
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
