@@ -48,7 +48,7 @@ def extract_extras(
     cls: BaseModel, values: Dict[str, Any], exclude: Optional[Set[str]] = None
 ) -> Dict[str, Any]:
     # Move unknown attributes into values['annotations']
-    fields = set(cls.__fields__.keys())
+    fields = set(cls.model_fields.keys())
     exclude = (exclude or set()).union(EXCLUDED_FIELDS)
     values.setdefault("annotations", {})
     for key, value in values.items():

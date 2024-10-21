@@ -46,6 +46,10 @@ class Study(StudyCreate):
         return extract_extras(cls, values)
 
 
+List = list
+Study.model_rebuild()
+
+
 def transform_doi(doi: str) -> str:
     matches = re.findall(r"10.\d{4,9}/[-._;()/:a-zA-Z0-9]+$", doi)
     return matches[0]
