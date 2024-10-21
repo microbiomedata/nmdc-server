@@ -30,6 +30,7 @@ def attach_sentry(app: FastAPI):
         in_app_include=["nmdc_server"],
         attach_stacktrace=True,
         traces_sample_rate=settings.sentry_traces_sample_rate,
+        profiles_sample_rate=1,
     )
 
 
