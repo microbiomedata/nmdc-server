@@ -44,7 +44,7 @@ class Study(StudyCreate):
 
     @model_validator(mode="before")
     def extract_extras(cls, values):
-        return extract_extras(cls, values)
+        return extract_extras(cls, values)  # type: ignore
 
 
 List = list
@@ -95,7 +95,6 @@ def load(db: Session, cursor: Cursor):
         if protocol_links:
             obj["relevant_protocols"] = [p["url"] for p in protocol_links if "url" in p]
 
-        study = Study(**obj)
         new_study = create_study(db, Study(**obj))
         if dois:
             for doi in dois:

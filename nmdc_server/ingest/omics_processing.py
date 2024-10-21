@@ -38,7 +38,7 @@ class OmicsProcessing(OmicsProcessingCreate):
 
     @model_validator(mode="before")
     def extract_extras(cls, values):
-        return extract_extras(cls, values)
+        return extract_extras(cls, values)  # type: ignore
 
     @field_validator("add_date", "mod_date", mode="before")
     @classmethod
