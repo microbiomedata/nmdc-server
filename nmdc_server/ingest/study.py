@@ -1,5 +1,5 @@
 import re
-from typing import Optional
+from typing import List, Optional
 
 import requests
 from pydantic import model_validator
@@ -47,16 +47,12 @@ class Study(StudyCreate):
         return extract_extras(cls, values)  # type: ignore
 
 
-List = list
-Study.model_rebuild()
-
-
 def transform_doi(doi: str) -> str:
     matches = re.findall(r"10.\d{4,9}/[-._;()/:a-zA-Z0-9]+$", doi)
     return matches[0]
 
 
-def get_study_image_data(image_urls: list[dict[str, str]]) -> Optional[bytes]:
+def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
     if image_urls:
         r = requests.get(image_urls[0]["url"])
         if r.ok:
