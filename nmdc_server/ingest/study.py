@@ -2,7 +2,8 @@ import re
 from typing import Optional
 
 import requests
-from pydantic.v1 import root_validator, validator
+from pydantic import model_validator
+from pydantic.v1 import validator
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
@@ -41,7 +42,7 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional
 class Study(StudyCreate):
     _extract_value = validator("*", pre=True, allow_reuse=True)(extract_value)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def extract_extras(cls, values):
         return extract_extras(cls, values)
 
@@ -94,6 +95,7 @@ def load(db: Session, cursor: Cursor):
         if protocol_links:
             obj["relevant_protocols"] = [p["url"] for p in protocol_links if "url" in p]
 
+        study = Study(**obj)
         new_study = create_study(db, Study(**obj))
         if dois:
             for doi in dois:
