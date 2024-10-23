@@ -216,7 +216,7 @@ export default defineComponent({
         style="position: fixed; top: 64; z-index: 2;"
       />
       <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
-      <AppBanner v-if="true" />
+      <AppBanner v-if="false" />
       <v-container
         fluid
         class="py-0"
