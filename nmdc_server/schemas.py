@@ -442,27 +442,27 @@ class ReadsQC(PipelineStep):
 
 
 class AssemblyBase(PipelineStepBase):
-    scaffolds: Optional[int] = None
-    contigs: Optional[int] = None
-    scaf_bp: Optional[int] = None
-    contig_bp: Optional[int] = None
-    scaf_n50: Optional[int] = None
-    scaf_l50: Optional[int] = None
-    ctg_n50: Optional[int] = None
-    ctg_l50: Optional[int] = None
-    scaf_n90: Optional[int] = None
-    scaf_l90: Optional[int] = None
-    ctg_n90: Optional[int] = None
-    ctg_l90: Optional[int] = None
-    scaf_max: Optional[int] = None
-    ctg_max: Optional[int] = None
-    scaf_n_gt50k: Optional[int] = None
+    scaffolds: Optional[float] = None
+    contigs: Optional[float] = None
+    scaf_bp: Optional[float] = None
+    contig_bp: Optional[float] = None
+    scaf_n50: Optional[float] = None
+    scaf_l50: Optional[float] = None
+    ctg_n50: Optional[float] = None
+    ctg_l50: Optional[float] = None
+    scaf_n90: Optional[float] = None
+    scaf_l90: Optional[float] = None
+    ctg_n90: Optional[float] = None
+    ctg_l90: Optional[float] = None
+    scaf_max: Optional[float] = None
+    ctg_max: Optional[float] = None
+    scaf_n_gt50k: Optional[float] = None
 
     # TODO: fix the data on ingest or make this optional on the schema
-    scaf_l_gt50k: Optional[int] = None
-    scaf_pct_gt50k: Optional[int] = None
-    num_input_reads: Optional[int] = None
-    num_aligned_reads: Optional[int] = None
+    scaf_l_gt50k: Optional[float] = None
+    scaf_pct_gt50k: Optional[float] = None
+    num_input_reads: Optional[float] = None
+    num_aligned_reads: Optional[float] = None
     scaf_logsum: Optional[float] = None
     scaf_powsum: Optional[float] = None
     ctg_logsum: Optional[float] = None

@@ -1,8 +1,9 @@
 import re
-from typing import Optional
+from typing import List, Optional
 
 import requests
-from pydantic.v1 import root_validator, validator
+from pydantic import model_validator
+from pydantic.v1 import validator
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
@@ -41,9 +42,9 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional
 class Study(StudyCreate):
     _extract_value = validator("*", pre=True, allow_reuse=True)(extract_value)
 
-    @root_validator(pre=True)
+    @model_validator(mode="before")
     def extract_extras(cls, values):
-        return extract_extras(cls, values)
+        return extract_extras(cls, values)  # type: ignore
 
 
 def transform_doi(doi: str) -> str:
@@ -51,7 +52,7 @@ def transform_doi(doi: str) -> str:
     return matches[0]
 
 
-def get_study_image_data(image_urls: list[dict[str, str]]) -> Optional[bytes]:
+def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
     if image_urls:
         r = requests.get(image_urls[0]["url"])
         if r.ok:
