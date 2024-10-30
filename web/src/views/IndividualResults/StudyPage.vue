@@ -236,7 +236,7 @@ export default defineComponent({
   <v-container fluid>
     <v-main v-if="item !== null">
       <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
-      <AppBanner v-if="true" />
+      <AppBanner v-if="false" />
       <v-row :class="{'flex-column': $vuetify.breakpoint.xs}">
         <v-col
           cols="12"
