@@ -35,6 +35,16 @@ class KeggTerms:
     MODULE = ("KEGG.MODULE:M", "M")
 
 
+class CogTerms:
+    FUNCTION = "COG.FUNCTION:"
+    PATHWAY = "COG.PATHWAY:"
+
+
+class PfamEntries:
+    ENTRY = "PFAM.ENTRY:"
+    CLAN = "PFAM.CLAN:"
+
+
 class Table(Enum):
     biosample = "biosample"
     study = "study"

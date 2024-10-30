@@ -23,6 +23,7 @@ from nmdc_server.data_object_filters import DataObjectFilter
 from nmdc_server.filters import create_filter_class
 from nmdc_server.multiomics import MultiomicsValue
 from nmdc_server.table import (
+    CogTerms,
     EnvBroadScaleAncestor,
     EnvBroadScaleTerm,
     EnvLocalScaleAncestor,
@@ -30,6 +31,7 @@ from nmdc_server.table import (
     EnvMediumAncestor,
     EnvMediumTerm,
     KeggTerms,
+    PfamEntries,
     Table,
 )
 
@@ -287,29 +289,55 @@ class BaseQuerySchema(BaseModel):
 
     def transform_condition(self, db, condition: BaseConditionSchema) -> List[BaseConditionSchema]:
         # Transform KEGG.(PATH|MODULE) queries into their respective ORTHOLOGY terms
+        gene_terms = []
         if condition.key == "Table.gene_function:id" and type(condition.value) is str:
             if any([condition.value.startswith(val) for val in KeggTerms.PATHWAY[0]]):
                 prefix = [val for val in KeggTerms.PATHWAY[0] if condition.value.startswith(val)][0]
                 searchable_name = condition.value.replace(prefix, KeggTerms.PATHWAY[1])
-                ko_terms = db.query(models.KoTermToPathway.term).filter(
+                gene_terms = db.query(models.KoTermToPathway.term).filter(
                     models.KoTermToPathway.pathway.ilike(searchable_name)
                 )
             elif condition.value.startswith(KeggTerms.MODULE[0]):
                 searchable_name = condition.value.replace(KeggTerms.MODULE[0], KeggTerms.MODULE[1])
-                ko_terms = db.query(models.KoTermToModule.term).filter(
+                gene_terms = db.query(models.KoTermToModule.term).filter(
                     models.KoTermToModule.module.ilike(searchable_name)
+                )
+            # Check for searches on cog or pfam as well
+            elif condition.value.startswith(CogTerms.FUNCTION):
+                searchable_name = condition.value.replace(CogTerms.FUNCTION, "")
+                gene_terms = db.query(models.CogTermToFunction.term).filter(
+                    models.CogTermToFunction.function.ilike(searchable_name)
+                )
+            elif condition.value.startswith(CogTerms.PATHWAY):
+                searchable_name = condition.value.replace(CogTerms.PATHWAY, "")
+                gene_terms = db.query(models.CogTermToPathway.term).filter(
+                    models.CogTermToPathway.pathway.ilike(searchable_name)
+                )
+            elif condition.value.startswith(PfamEntries.CLAN):
+                searchable_name = condition.value.replace(PfamEntries.CLAN, "")
+                gene_terms = db.query(models.PfamEntryToClan.entry).filter(
+                    models.PfamEntryToClan.clan.ilike(searchable_name)
                 )
             else:
                 # This is not a condition we know how to transform.
                 return [condition]
+            if gene_terms:
+                if gene_terms[0][0].startswith("KO:K"):
+                    gene_terms = [
+                        term[0].replace("KO:K", KeggTerms.ORTHOLOGY[0]) for term in gene_terms
+                    ]
+                elif gene_terms[0][0].startswith("COG"):
+                    gene_terms = [term[0].replace("COG", "COG:COG") for term in gene_terms]
+                elif gene_terms[0][0].startswith("PF"):
+                    gene_terms = [term[0].replace("PF", "PFAM:PF") for term in gene_terms]
             return [
                 SimpleConditionSchema(
                     op="==",
                     field=condition.field,
-                    value=term[0].replace("KO:K", KeggTerms.ORTHOLOGY[0]),
+                    value=term,
                     table=condition.table,
                 )
-                for term in ko_terms
+                for term in gene_terms
             ]
         return [condition]
 
