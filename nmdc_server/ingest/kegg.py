@@ -100,43 +100,53 @@ pfam_headers = [
 
 cog_function_headers = ["function_code", "sequence", "definition"]
 
-delimeted_files: Dict[str, Dict[str, Union[str, List[str]]]] = {
-    PATHWAY_FILE: {
-        "term_key": "image_id",
-        "text_key": "title",
-        "fallback_text_key": "pathway_name",
-        "hierarchy": "ko",
-    },
-    COG_FUNCTION_DEFS: {
-        "fieldnames": cog_function_headers,
-        "term_key": cog_function_headers[0],
-        "text_key": cog_function_headers[2],
-        "hierarchy": "cog",
-    },
-    COG_PATHWAY_DEFS: {
-        "fieldnames": cog_def_headers,
-        "term_key": cog_def_headers[4],
-        "text_key": cog_def_headers[4],
-        "hierarchy": "cog",
-    },
-    COG_TERM_DEFS: {
-        "fieldnames": cog_def_headers,
-        "term_key": cog_def_headers[0],
-        "text_key": cog_def_headers[2],
-        "hierarchy": "cog",
-    },
-    PFAM_TERM_DEFS: {
-        "fieldnames": pfam_headers,
-        "term_key": "pfam_accession",
-        "text_key": "pfam_name",
-        "hierarchy": "pfam",
-    },
-    PFAM_CLAN_DEFS: {
-        "fieldnames": pfam_headers,
-        "term_key": "clan_accession",
-        "text_key": "clan_name",
-        "hierarchy": "pfam",
-    },
+delimeted_files: Dict[str, List[Dict[str, Union[str, List[str]]]]] = {
+    PATHWAY_FILE: [
+        {
+            "term_key": "image_id",
+            "text_key": "title",
+            "fallback_text_key": "pathway_name",
+            "hierarchy": "ko",
+        }
+    ],
+    COG_FUNCTION_DEFS: [
+        {
+            "fieldnames": cog_function_headers,
+            "term_key": cog_function_headers[0],
+            "text_key": cog_function_headers[2],
+            "hierarchy": "cog",
+        }
+    ],
+    COG_PATHWAY_DEFS: [
+        {
+            "fieldnames": cog_def_headers,
+            "term_key": cog_def_headers[4],
+            "text_key": cog_def_headers[4],
+            "hierarchy": "cog",
+        }
+    ],
+    COG_TERM_DEFS: [
+        {
+            "fieldnames": cog_def_headers,
+            "term_key": cog_def_headers[0],
+            "text_key": cog_def_headers[2],
+            "hierarchy": "cog",
+        }
+    ],
+    PFAM_TERM_DEFS: [
+        {
+            "fieldnames": pfam_headers,
+            "term_key": "pfam_accession",
+            "text_key": "pfam_name",
+            "hierarchy": "pfam",
+        },
+        {
+            "fieldnames": pfam_headers,
+            "term_key": "clan_accession",
+            "text_key": "clan_name",
+            "hierarchy": "pfam",
+        },
+    ],
 }
 
 
@@ -163,14 +173,15 @@ def get_search_records():
         ingest_tree(req.json())
 
     for file, keys in delimeted_files.items():
-        get_search_records_from_delimeted_file(
-            file,
-            keys["term_key"],
-            keys["text_key"],
-            records[str(keys["hierarchy"])],
-            fallback_text_key=keys.get("fallback_text_key", None),
-            fieldnames=keys.get("fieldnames", None),
-        )
+        for key_set in keys:
+            get_search_records_from_delimeted_file(
+                file,
+                key_set["term_key"],
+                key_set["text_key"],
+                records[str(key_set["hierarchy"])],
+                fallback_text_key=key_set.get("fallback_text_key", None),
+                fieldnames=key_set.get("fieldnames", None),
+            )
     return records
 
 
