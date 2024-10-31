@@ -264,6 +264,32 @@ def kegg_text_search(db: Session, query: str, limit: int) -> List[models.KoTermT
     return results
 
 
+def cog_text_search(db: Session, query: str, limit: int) -> List[models.CogTermText]:
+    q = (
+        db.query(models.CogTermText)
+        .filter(
+            models.CogTermText.text.ilike(f"%{query}%")
+            | models.CogTermText.term.ilike(f"%{query}%")
+        )
+        .order_by(models.CogTermText.term)
+        .limit(limit)
+    )
+    return list(q)
+
+
+def pfam_text_search(db: Session, query: str, limit: int) -> List[models.CogTermText]:
+    q = (
+        db.query(models.PfamTermText)
+        .filter(
+            models.PfamTermText.text.ilike(f"%{query}%")
+            | models.PfamTermText.term.ilike(f"%{query}%")
+        )
+        .order_by(models.PfamTermText.term)
+        .limit(limit)
+    )
+    return list(q)
+
+
 # biosample
 def get_biosample(db: Session, biosample_id: str) -> Optional[models.Biosample]:
     return db.query(models.Biosample).filter(models.Biosample.id == biosample_id).first()
