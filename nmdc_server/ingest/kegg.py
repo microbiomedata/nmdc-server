@@ -124,10 +124,6 @@ delimeted_files: Dict[str, Dict[str, Union[str, List[str]]]] = {
 }
 
 
-def is_brite_hierarchy_term(term: str):
-    pass
-
-
 def get_search_records():
     records: Dict[str, str] = {}
 
