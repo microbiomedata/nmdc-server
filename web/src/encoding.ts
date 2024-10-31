@@ -1,5 +1,5 @@
 import colors from './colors';
-import { entityType, entitySchemaType } from './data/api';
+import { entityType, entitySchemaType, KeggTermSearchResponse, api } from './data/api';
 
 export interface EntityData {
   icon: string;
@@ -27,6 +27,41 @@ interface PrefixInfo {
     long: Function;
     urlBase: string;
 }
+
+type geneFunctionType = 'kegg' | 'pfam' | 'cog';
+
+interface geneFunctionTypeDescription {
+  label: string;
+  description: string;
+  expectedFormats: string;
+  encodeFunction: Function;
+  searchFunction: (query: string) => Promise<KeggTermSearchResponse[]>;
+}
+
+export const geneFunctionTypeInfo: Record<geneFunctionType, geneFunctionTypeDescription> = {
+  kegg: {
+    label: '',
+    description: '',
+    expectedFormats: '',
+    encodeFunction: () => undefined,
+    searchFunction: api.keggSearch,
+  },
+  cog: {
+    label: '',
+    description: '',
+    expectedFormats: '',
+    encodeFunction: () => undefined,
+    searchFunction: api.cogSearch,
+
+  },
+  pfam: {
+    label: '',
+    description: '',
+    expectedFormats: '',
+    encodeFunction: () => undefined,
+    searchFunction: api.pfamSearch,
+  },
+};
 
 const pathwayRegex = /^((map:?)|(path:?)|(ko:?)|(ec:?)|(rn:?)|(kegg.pathway:(map|path|ec|ko|rn)))(?=\d{5})/i;
 

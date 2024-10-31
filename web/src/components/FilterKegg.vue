@@ -3,7 +3,7 @@ import {
   defineComponent, PropType, toRef, ref, watch, nextTick,
 } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
-import { Condition, entityType, api } from '@/data/api';
+import { Condition, entityType, api, KeggTermSearchResponse } from '@/data/api';
 import { keggEncode, stringIsKegg } from '@/encoding';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import useRequest from '@/use/useRequest';
@@ -14,10 +14,6 @@ export default defineComponent({
     conditions: {
       type: Array as PropType<Condition[]>,
       required: true,
-    },
-    description: {
-      type: String,
-      default: '',
     },
     geneType: {
       type: String,
@@ -37,9 +33,36 @@ export default defineComponent({
     const items = ref([] as { text: string; value: string }[]);
     const search = ref('');
 
+    /** Change based on gene type */
+    const description: Ref<string> = ref('');
+    const expectedFormats: Ref<string> = ref('');
+
+    function description(): string {
+      switch (props.geneType) {
+        case 'kegg':
+          return request(() => api.keggSearch(search.value || ''));
+        case 'cog':
+        case 'pfam':
+        default:
+          throw new Error(`Unexpected gene type: ${props.geneType}`);
+      }
+    }
+
+    async function geneSearch(): Promise<KeggTermSearchResponse[]> {
+      switch (props.geneType) {
+        case 'kegg':
+          return request(() => api.keggSearch(search.value || ''));
+        case 'cog':
+        case 'pfam':
+        default:
+          throw new Error(`Unexpected gene type: ${props.geneType}`);
+      }
+    }
+
     watch(search, async () => {
-      const resp = (await request(() => api.keggSearch(search.value || '')))
-        .map((v) => ({ text: `${v.term}: ${v.text}`, value: v.term }));
+      // MLN change this to be non-kegg specific
+      const resp = (await geneSearch())
+        .map((v: KeggTermSearchResponse) => ({ text: `${v.term}: ${v.text}`, value: v.term }));
       if (resp.length === 0 && search.value && stringIsKegg(search.value)) {
         resp.push({ value: search.value, text: search.value });
       }
@@ -48,6 +71,7 @@ export default defineComponent({
 
     const headers: DataTableHeader[] = [
       {
+        // MLN change from KEGG
         text: 'Kegg Term',
         value: 'value',
         width: '300',
@@ -63,6 +87,7 @@ export default defineComponent({
     ];
 
     function addTerm(term: string) {
+      // MLN change from KEGG
       if (!term) return;
       const newConditions = [...conditions.value, {
         op: '==',
@@ -119,6 +144,7 @@ export default defineComponent({
         </p>
       </div>
       <slot name="subtitle" />
+      <!-- MLN change this label -->
       <v-autocomplete
         v-model="selected"
         :loading="loading"
@@ -143,6 +169,7 @@ export default defineComponent({
       :headers="headers"
     >
       <template #[`item.value`]="{ item }">
+        <!-- MLN change this -->
         <a :href="keggEncode(item.value, true)">
           {{ item.value }}
         </a>

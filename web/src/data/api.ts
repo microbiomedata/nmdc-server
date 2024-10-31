@@ -645,6 +645,16 @@ async function keggSearch(query: string) {
   return data.terms as KeggTermSearchResponse[];
 }
 
+async function cogSearch(query: string) {
+  const { data } = await client.get('cog/term/search', { params: { query } });
+  return data.tersms as KeggTermSearchResponse[];
+}
+
+async function pfamSearch(query: string) {
+  const { data } = await client.get('pfam/term/search', { params: { query } });
+  return data.tersms as KeggTermSearchResponse[];
+}
+
 /**
  * Discover facet values by text search
  */
@@ -844,6 +854,8 @@ const api = {
   searchMetaproteomicAnalysis,
   search,
   keggSearch,
+  cogSearch,
+  pfamSearch,
   textSearch,
   getAllUsers,
   updateUser,
