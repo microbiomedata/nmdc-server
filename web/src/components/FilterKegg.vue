@@ -15,6 +15,14 @@ export default defineComponent({
       type: Array as PropType<Condition[]>,
       required: true,
     },
+    description: {
+      type: String,
+      default: '',
+    },
+    geneType: {
+      type: String,
+      default: 'kegg', // can be kegg, cog, or pfam
+    },
   },
 
   setup(props, { emit }) {
@@ -100,6 +108,7 @@ export default defineComponent({
       <div class="px-4 text-caption">
         <p>
           <!-- MLN KEGG-specific stuff -->
+          {{ description }}
           KEGG Gene Function search filters results to
           samples that have at least one of the chosen KEGG terms.
           Orthology, Module, and Pathway are supported.
