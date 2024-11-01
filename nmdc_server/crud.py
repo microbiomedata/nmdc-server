@@ -1,3 +1,4 @@
+import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
@@ -26,7 +27,7 @@ def get_or_create(
     else:
         params = dict(**kwargs)
         params.update(defaults or {})
-        instance = model(**params)  # type: ignore
+        instance = model(**params)
         db.add(instance)
         return instance, True
 
@@ -51,6 +52,12 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         reads_qc=aggregations.get_table_summary(db, models.ReadsQC),
         metagenome_assembly=aggregations.get_table_summary(db, models.MetagenomeAssembly),
         metagenome_annotation=aggregations.get_table_summary(db, models.MetagenomeAnnotation),
+        metatranscriptome_assembly=aggregations.get_table_summary(
+            db, models.MetatranscriptomeAssembly
+        ),
+        metatranscriptome_annotation=aggregations.get_table_summary(
+            db, models.MetatranscriptomeAnnotation
+        ),
         metaproteomic_analysis=aggregations.get_table_summary(db, models.MetaproteomicAnalysis),
         mags_analysis=aggregations.get_table_summary(db, models.MAGsAnalysis),
         read_based_analysis=aggregations.get_table_summary(db, models.ReadBasedAnalysis),
@@ -183,6 +190,14 @@ def search_omics_processing(db: Session, conditions: List[query.ConditionSchema]
     return query.OmicsProcessingQuerySchema(conditions=conditions).execute(db)
 
 
+def search_omics_processing_for_biosamples(
+    db: Session, conditions: List[query.ConditionSchema], biosample_ids: List[UUID]
+) -> Query:
+    return query.OmicsProcessingQuerySchema(
+        conditions=conditions
+    ).omics_processing_for_biosample_ids(db, biosample_ids)
+
+
 def facet_omics_processing(
     db: Session, attribute: str, conditions: List[query.ConditionSchema]
 ) -> query.FacetResponse:
@@ -210,6 +225,14 @@ def list_omics_processing_data_objects(db: Session, id: str) -> Query:
     )
 
 
+# KEGG
+def get_pathway_prefix(term) -> Optional[str]:
+    pathway_prefixes = set(["map", "ko", "ec", "rn", "org"])
+    pathway_re = f"^({'|'.join(re.escape(p) for p in pathway_prefixes)})"
+    match = re.match(pathway_re, term)
+    return match.group(0) if match else None
+
+
 def list_ko_terms_for_module(db: Session, module: str) -> List[str]:
     q = db.query(models.KoTermToModule.term).filter(models.KoTermToModule.module.ilike(module))
     return [row[0] for row in q]
@@ -221,13 +244,24 @@ def list_ko_terms_for_pathway(db: Session, pathway: str) -> List[str]:
 
 
 def kegg_text_search(db: Session, query: str, limit: int) -> List[models.KoTermText]:
+    pathway_prefix = get_pathway_prefix(query)
+    term = query.replace(pathway_prefix, "map") if pathway_prefix else query
     q = (
         db.query(models.KoTermText)
-        .filter(models.KoTermText.text.ilike(f"%{query}%") | models.KoTermText.term.ilike(query))
+        .filter(models.KoTermText.text.ilike(f"%{term}%") | models.KoTermText.term.ilike(term))
         .order_by(models.KoTermText.term)
         .limit(limit)
     )
-    return list(q)
+    results = list(q)
+    if pathway_prefix:
+        default_pathway_prefix = "map"
+        # Transform pathway results to match given prefix. They are ingested with the
+        # 'map' prefix, but can searched for with various other prefixes.
+        for term_text in results:
+            if term_text.term.startswith(default_pathway_prefix):
+                term_text.term = term_text.term.replace(default_pathway_prefix, pathway_prefix)
+            term_text.text = term_text.text.replace(default_pathway_prefix, pathway_prefix)
+    return results
 
 
 # biosample
@@ -391,7 +425,9 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
     """Return a download table compatible with mod_zip."""
     bulk_download = db.query(models.BulkDownload).get(id)
     if bulk_download is None:
-        return None
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bulk download not found")
+    if bulk_download.expired:
+        raise HTTPException(status_code=status.HTTP_410_GONE, detail="Bulk download expired")
     content = []
 
     for file in bulk_download.files:  # type: ignore
@@ -406,7 +442,15 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
         file_size_string = data_object.file_size_bytes if data_object.file_size_bytes else ""
         content.append(f"- {file_size_string} {url} {file.path}")
 
+    bulk_download.expired = True
+    db.commit()
+
     return "\n".join(content) + "\n"
+
+
+def get_user(db: Session, user_id: str) -> Optional[models.User]:
+    """Get a user by ID."""
+    return db.query(models.User).get(user_id)
 
 
 def get_or_create_user(db: Session, user: schemas.User) -> models.User:
@@ -427,6 +471,33 @@ def update_user(db: Session, user: schemas.User) -> Optional[models.User]:
     db_user.is_admin = user.is_admin
     db.commit()
     return db_user
+
+
+def add_invalidated_token(db: Session, token: str) -> None:
+    """Add a token to the invalidated token table."""
+    invalidated = models.InvalidatedToken(token=token)
+    db.add(invalidated)
+    db.commit()
+
+
+def get_invalidated_token(db: Session, token: str) -> Optional[models.InvalidatedToken]:
+    """Get an invalidated token by token."""
+    return db.query(models.InvalidatedToken).get(token)
+
+
+def create_authorization_code(
+    db: Session, user: models.User, redirect_uri: str
+) -> models.AuthorizationCode:
+    """Generate an authorization code tied to a user and redirect URI."""
+    code = models.AuthorizationCode(user_id=user.id, redirect_uri=redirect_uri)
+    db.add(code)
+    db.commit()
+    return code
+
+
+def get_authorization_code(db: Session, code: str) -> Optional[models.AuthorizationCode]:
+    """Get an authorization code by code."""
+    return db.query(models.AuthorizationCode).get(code)
 
 
 def update_submission_lock(db: Session, submission_id: str):
@@ -452,9 +523,16 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
     submission_record = db.query(models.SubmissionMetadata).get(submission_id)
     if not submission_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    user_record = db.query(models.User).get(user_id)
+    user_record: Optional[models.User] = db.query(models.User).get(user_id)
     if not user_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # Check that the user has sufficient permissions to obtain the lock
+    if not (user_record.is_admin or can_read_submission(db, submission_id, user_record.orcid)):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not have permission to obtain lock",
+        )
 
     current_lock_holder = submission_record.locked_by
     if not current_lock_holder or current_lock_holder.id == user_id:
@@ -571,9 +649,19 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
     return (role and models.SubmissionEditorRole(role.role) in contributors_edit_roles) is True
 
 
-def get_submissions_for_user(db: Session, user: models.User):
+def get_submissions_for_user(db: Session, user: models.User, column_sort: str, order: str):
     """Return all submissions that a user has permission to view."""
-    all_submissions = db.query(models.SubmissionMetadata)
+    column = (
+        models.User.name
+        if column_sort == "author.name"
+        else getattr(models.SubmissionMetadata, column_sort)
+    )
+
+    all_submissions = (
+        db.query(models.SubmissionMetadata)
+        .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
+        .order_by(column.asc() if order == "asc" else column.desc())
+    )
 
     if user.is_admin:
         return all_submissions
@@ -583,6 +671,19 @@ def get_submissions_for_user(db: Session, user: models.User):
         models.SubmissionRole.user_orcid == user.orcid
     )
     return permitted_submissions
+
+
+def get_query_for_all_submissions(db: Session):
+    r"""
+    Returns a SQLAlchemy query that can be used to retrieve all submissions.
+
+    Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
+    Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
+    """
+    all_submissions = db.query(models.SubmissionMetadata).order_by(
+        models.SubmissionMetadata.created.desc()
+    )
+    return all_submissions
 
 
 def get_roles_for_submission(

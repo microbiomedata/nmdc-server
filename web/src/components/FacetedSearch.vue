@@ -1,6 +1,10 @@
 <script lang="ts">
 import Vue, { PropType } from 'vue';
 import { groupBy } from 'lodash';
+
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
 import { Condition, entityType } from '@/data/api';
@@ -10,8 +14,8 @@ const groupOrders = [
   'function',
   'sample',
   'gold ecosystems',
-  'envo',
-  'omics processing',
+  'mixs environmental triad',
+  'data generation',
 ];
 
 export interface SearchFacet {
@@ -76,6 +80,11 @@ export default Vue.extend({
           return ai - bi;
         });
     },
+    goldDescription() {
+      // @ts-ignore
+      const schema = NmdcSchema.slots.gold_path_field;
+      return schema.annotations?.tooltip?.value || '';
+    },
   },
   methods: {
     fieldDisplayName,
@@ -130,6 +139,24 @@ export default Vue.extend({
           v-show="groupedFields.length > 1 && filteredFields.length > 0"
         >
           {{ groupname !== 'undefined' ? groupname : 'Other' }}
+          <v-tooltip
+            v-if="groupname === 'GOLD Ecosystems'"
+            right
+            open-delay="600"
+          >
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                x-small
+                v-bind="attrs"
+                class="ml-2"
+                v-on="on"
+              >
+                <v-icon>mdi-help-circle</v-icon>
+              </v-btn>
+            </template>
+            <span> {{ goldDescription }}</span>
+          </v-tooltip>
         </v-subheader>
         <template v-for="sf in filteredFields">
           <v-menu

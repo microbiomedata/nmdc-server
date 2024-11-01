@@ -1,5 +1,5 @@
 import {
-  watch, Ref, computed, toRef, shallowReactive,
+  watch, Ref, computed, shallowReactive,
 } from '@vue/composition-api';
 import { debounce } from 'lodash';
 import {
@@ -17,6 +17,8 @@ export default function usePaginatedResult<T>(
     results: { count: 0, results: [] } as SearchResponse<T>,
     offset: 0,
     limit, // same as pageSize
+    sortColumn: '',
+    sortOrder: 'desc',
     pageSync: 1,
   });
   const { error, loading, request } = useRequest();
@@ -33,6 +35,8 @@ export default function usePaginatedResult<T>(
       data.results = await func({
         limit: data.limit,
         offset: data.offset,
+        sortColumn: data.sortColumn,
+        sortOrder: data.sortOrder,
         conditions: conditions.value,
         data_object_filter: dataObjectFilter?.value,
       });
@@ -43,15 +47,9 @@ export default function usePaginatedResult<T>(
 
   const debouncedFetchResults = debounce(fetchResults, 500);
 
-  watch([
-    toRef(data, 'limit'),
-    toRef(data, 'offset'),
-  ], debouncedFetchResults);
-
   watch([conditions], () => {
     const doFetch = data.offset === 0;
     data.offset = 0;
-    data.limit = limit;
     if (doFetch) debouncedFetchResults();
   });
 
@@ -63,10 +61,19 @@ export default function usePaginatedResult<T>(
 
   function setPage(newPage: number) {
     data.offset = (newPage - 1) * data.limit;
+    debouncedFetchResults();
   }
 
   function setItemsPerPage(newLimit: number) {
     data.limit = newLimit;
+    data.offset = Math.floor(data.offset / newLimit) * newLimit;
+    debouncedFetchResults();
+  }
+
+  function setSortOptions(columnSort: string, sortOrder: string) {
+    data.sortColumn = columnSort;
+    data.sortOrder = sortOrder;
+    debouncedFetchResults();
   }
 
   return {
@@ -76,5 +83,6 @@ export default function usePaginatedResult<T>(
     page,
     setPage,
     setItemsPerPage,
+    setSortOptions,
   };
 }

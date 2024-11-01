@@ -28,16 +28,18 @@ def get_local_data_url(url: Optional[str]) -> Optional[str]:
 
 
 class WorkflowActivityTypeEnum(Enum):
-    reads_qc = "nmdc:ReadQCAnalysisActivity"
+    mags_analysis = "nmdc:MagsAnalysis"
+    metabolomics_analysis = "nmdc:MetabolomicsAnalysis"
     metagenome_assembly = "nmdc:MetagenomeAssembly"
-    metagenome_annotation = "nmdc:MetagenomeAnnotation"  # TODO name out of date, fix
-    metaproteomic_analysis = "nmdc:MetaProteomicAnalysis"
-    mags_analysis = "nmdc:MAGsAnalysisActivity"
-    read_based_analysis = "nmdc:ReadbasedAnalysis"  # TODO name out of date, fix
-    nom_analysis = "nmdc:NomAnalysisActivity"
-    metabolomics_analysis = "nmdc:MetabolomicsAnalysisActivity"
+    metagenome_annotation = "nmdc:MetagenomeAnnotation"
+    metaproteomic_analysis = "nmdc:MetaproteomicAnalysis"
+    metatranscriptome = "nmdc:MetatranscriptomeAnalysis"
+    metatranscriptome_assembly = "nmdc:MetatranscriptomeAssembly"
+    metatranscriptome_annotation = "nmdc:MetatranscriptomeAnnotation"
+    nom_analysis = "nmdc:NomAnalysis"
     raw_data = "nmdc:RawData"
-    metatranscriptome = "nmdc:metaT"
+    read_based_analysis = "nmdc:ReadBasedTaxonomyAnalysis"
+    reads_qc = "nmdc:ReadQcAnalysis"
 
     @property
     def model(self):
@@ -52,6 +54,8 @@ _workflow_enum_to_model = {
     WorkflowActivityTypeEnum.reads_qc: models.ReadsQC,
     WorkflowActivityTypeEnum.metagenome_assembly: models.MetagenomeAssembly,
     WorkflowActivityTypeEnum.metagenome_annotation: models.MetagenomeAnnotation,
+    WorkflowActivityTypeEnum.metatranscriptome_assembly: models.MetatranscriptomeAssembly,
+    WorkflowActivityTypeEnum.metatranscriptome_annotation: models.MetatranscriptomeAnnotation,
     WorkflowActivityTypeEnum.metaproteomic_analysis: models.MetaproteomicAnalysis,
     WorkflowActivityTypeEnum.mags_analysis: models.MAGsAnalysis,
     WorkflowActivityTypeEnum.read_based_analysis: models.ReadBasedAnalysis,
@@ -67,6 +71,8 @@ _workflow_enum_to_output_association = {
     WorkflowActivityTypeEnum.reads_qc: models.reads_qc_output_association,
     WorkflowActivityTypeEnum.metagenome_assembly: models.metagenome_assembly_output_association,
     WorkflowActivityTypeEnum.metagenome_annotation: models.metagenome_annotation_output_association,
+    WorkflowActivityTypeEnum.metatranscriptome_assembly: models.metatranscriptome_assembly_output_association,  # noqa: E501
+    WorkflowActivityTypeEnum.metatranscriptome_annotation: models.metatranscriptome_annotation_output_association,  # noqa: E501
     _mpa: models.metaproteomic_analysis_output_association,
     WorkflowActivityTypeEnum.mags_analysis: models.mags_analysis_output_association,
     WorkflowActivityTypeEnum.read_based_analysis: models.read_based_analysis_output_association,
@@ -78,5 +84,5 @@ _workflow_enum_to_output_association = {
 
 
 class DataObjectFilter(BaseModel):
-    workflow: Optional[WorkflowActivityTypeEnum]
-    file_type: Optional[str]
+    workflow: Optional[WorkflowActivityTypeEnum] = None
+    file_type: Optional[str] = None

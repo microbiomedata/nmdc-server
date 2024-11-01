@@ -12,6 +12,7 @@ from sqlalchemy import (
     Enum,
     Float,
     ForeignKey,
+    Index,
     Integer,
     LargeBinary,
     String,
@@ -149,6 +150,27 @@ class KoTermToPathway(Base):
     pathway = Column(String, nullable=False, primary_key=True, index=True)
 
 
+class CogTermToPathway(Base):
+    __tablename__ = "cog_term_to_pathway"
+
+    term = Column(String, nullable=False, primary_key=True)
+    pathway = Column(String, nullable=False, primary_key=True, index=True)
+
+
+class CogTermToFunction(Base):
+    __tablename__ = "cog_term_to_function"
+
+    term = Column(String, nullable=False, primary_key=True)
+    function = Column(String, nullable=False, primary_key=True, index=True)
+
+
+class PfamEntryToClan(Base):
+    __tablename__ = "pfam_entry_to_clan"
+
+    entry = Column(String, nullable=False, primary_key=True)
+    clan = Column(String, nullable=False, primary_key=True, index=True)
+
+
 class KoTermText(Base):
     __tablename__ = "ko_term_text"
 
@@ -236,6 +258,7 @@ class Study(Base, AnnotatedModel):
     gold_study_identifiers = Column(JSONB, nullable=True)
 
     study_category = Column(String, nullable=True)
+    homepage_website = Column(JSONB, nullable=True)
     part_of = Column(JSONB, nullable=True)
     children = Column(JSONB, nullable=True)
 
@@ -495,6 +518,46 @@ class MetagenomeAssembly(Base, PipelineStep):
     outputs = output_relationship(metagenome_assembly_output_association)
 
 
+metatranscriptome_assembly_input_association = input_association("metatranscriptome_assembly")
+metatranscriptome_assembly_output_association = output_association("metatranscriptome_assembly")
+
+
+class MetatranscriptomeAssembly(Base, PipelineStep):
+    __tablename__ = "metatranscriptome_assembly"
+
+    scaffolds = Column(BigInteger, nullable=True)
+    contigs = Column(BigInteger, nullable=True)
+    scaf_bp = Column(BigInteger, nullable=True)
+    contig_bp = Column(BigInteger, nullable=True)
+    scaf_n50 = Column(BigInteger, nullable=True)
+    scaf_l50 = Column(BigInteger, nullable=True)
+    ctg_n50 = Column(BigInteger, nullable=True)
+    ctg_l50 = Column(BigInteger, nullable=True)
+    scaf_n90 = Column(BigInteger, nullable=True)
+    scaf_l90 = Column(BigInteger, nullable=True)
+    ctg_n90 = Column(BigInteger, nullable=True)
+    ctg_l90 = Column(BigInteger, nullable=True)
+    scaf_max = Column(BigInteger, nullable=True)
+    ctg_max = Column(BigInteger, nullable=True)
+    scaf_n_gt50k = Column(BigInteger, nullable=True)
+    scaf_l_gt50k = Column(BigInteger, nullable=True)
+    scaf_pct_gt50k = Column(BigInteger, nullable=True)
+    num_input_reads = Column(BigInteger, nullable=True)
+    num_aligned_reads = Column(BigInteger, nullable=True)
+
+    scaf_logsum = Column(Float, nullable=True)
+    scaf_powsum = Column(Float, nullable=True)
+    ctg_logsum = Column(Float, nullable=True)
+    ctg_powsum = Column(Float, nullable=True)
+    asm_score = Column(Float, nullable=True)
+    gap_pct = Column(Float, nullable=True)
+    gc_avg = Column(Float, nullable=True)
+    gc_std = Column(Float, nullable=True)
+
+    inputs = input_relationship(metatranscriptome_assembly_input_association)
+    outputs = output_relationship(metatranscriptome_assembly_output_association)
+
+
 metagenome_annotation_input_association = input_association("metagenome_annotation")
 metagenome_annotation_output_association = output_association("metagenome_annotation")
 
@@ -504,6 +567,17 @@ class MetagenomeAnnotation(Base, PipelineStep):
 
     inputs = input_relationship(metagenome_annotation_input_association)
     outputs = output_relationship(metagenome_annotation_output_association)
+
+
+metatranscriptome_annotation_input_association = input_association("metatranscriptome_annotation")
+metatranscriptome_annotation_output_association = output_association("metatranscriptome_annotation")
+
+
+class MetatranscriptomeAnnotation(Base, PipelineStep):
+    __tablename__ = "metatranscriptome_annotation"
+
+    inputs = input_relationship(metatranscriptome_annotation_input_association)
+    outputs = output_relationship(metatranscriptome_annotation_output_association)
 
 
 metaproteomic_analysis_input_association = input_association("metaproteomic_analysis")
@@ -582,6 +656,8 @@ metatranscriptome_output_association = output_association("metatranscriptome")
 
 
 class Metatranscriptome(Base, PipelineStep):
+    """Corresponds to the metatranscriptome_expression_analysis_set"""
+
     __tablename__ = "metatranscriptome"
 
     inputs = input_relationship(metatranscriptome_input_association)
@@ -656,7 +732,9 @@ ModelType = Union[
     Type[Biosample],
     Type[ReadsQC],
     Type[MetagenomeAssembly],
+    Type[MetatranscriptomeAssembly],
     Type[MetagenomeAnnotation],
+    Type[MetatranscriptomeAnnotation],
     Type[MetaproteomicAnalysis],
     Type[MAGsAnalysis],
     Type[ReadBasedAnalysis],
@@ -670,7 +748,9 @@ ModelType = Union[
 workflow_activity_types = [
     ReadsQC,
     MetagenomeAssembly,
+    MetatranscriptomeAssembly,
     MetagenomeAnnotation,
+    MetatranscriptomeAnnotation,
     MetaproteomicAnalysis,
     MAGsAnalysis,
     ReadBasedAnalysis,
@@ -703,10 +783,21 @@ class MetaPGeneFunctionAggregation(Base):
     best_protein = Column(Boolean, nullable=False)
 
 
+class MetaTGeneFunctionAggregation(Base):
+    __tablename__ = "metat_gene_function_aggregation"
+
+    metatranscriptome_annotation_id = Column(
+        String, ForeignKey(MetatranscriptomeAnnotation.id), primary_key=True
+    )
+    gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
+    count = Column(BigInteger, nullable=False)
+
+
 # Used to store a reference to a user requested zip download.  This is stored
 # in a table primarily to avoid a large query string in the zip download GET
-# endpoint.
-# TODO: consider expiring rows from this table
+# endpoint. Since the GET endpoint cannot be protected by Bearer token auth,
+# these rows are marked as expired after the first download. In the future,
+# we could also expire these rows after a certain amount of time.
 class BulkDownload(Base):
     __tablename__ = "bulk_download"
 
@@ -724,6 +815,8 @@ class BulkDownload(Base):
     # the filter on data objects `List[DataObjectFilter]`
     filter = Column(JSONB, nullable=True)
 
+    expired = Column(Boolean, nullable=False, default=False)
+
 
 class BulkDownloadDataObject(Base):
     __tablename__ = "bulk_download_data_object"
@@ -740,6 +833,9 @@ class BulkDownloadDataObject(Base):
     data_object = relationship(
         DataObject, lazy="joined", cascade="all", backref="bulk_download_entities"
     )
+
+
+Index("bulk_download_data_object_id_idx", BulkDownloadDataObject.data_object_id)
 
 
 class EnvoTree(Base):
@@ -766,6 +862,11 @@ class SubmissionEditorRole(str, enum.Enum):
     reviewer = "reviewer"
 
 
+class SubmissionSourceClient(str, enum.Enum):
+    submission_portal = "submission_portal"
+    field_notes = "field_notes"
+
+
 class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
 
@@ -775,6 +876,12 @@ class SubmissionMetadata(Base):
     status = Column(String, nullable=False, default="in-progress")
     metadata_submission = Column(JSONB, nullable=False)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
+    study_name = Column(String, nullable=True)
+    templates = Column(JSONB, nullable=True)
+
+    # The client which initially created the submission. A null value indicates it was created by
+    # an "unregistered" client. This could be legitimate usage, but it should be monitored.
+    source_client = Column(Enum(SubmissionSourceClient), nullable=True)
 
     author = relationship(
         "User", foreign_keys=[author_id], primaryjoin="SubmissionMetadata.author_id == User.id"
@@ -836,3 +943,23 @@ class SubmissionRole(Base):
     role = Column(Enum(SubmissionEditorRole))
 
     submission = relationship("SubmissionMetadata", back_populates="roles")
+
+
+class AuthorizationCode(Base):
+    __tablename__ = "authorization_code"
+
+    code = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey(User.id), nullable=False)
+    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    redirect_uri = Column(String, nullable=False)
+    exchanged = Column(Boolean, nullable=False, default=False)
+
+    user = relationship(
+        "User", foreign_keys=[user_id], primaryjoin="AuthorizationCode.user_id == User.id"
+    )
+
+
+class InvalidatedToken(Base):
+    __tablename__ = "invalidated_token"
+
+    token = Column(String, primary_key=True)

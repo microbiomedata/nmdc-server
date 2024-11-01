@@ -1,3 +1,6 @@
+// Note: Each object in each `items` array represents a link in a dropdown menu.
+//       When defining a link for client-side routing, use the `to` property.
+//       When defining a link for server-side routing, use the `href` property.
 const Menus = [
   {
     label: 'About Us',
@@ -14,6 +17,10 @@ const Menus = [
       {
         label: 'Advisory',
         href: 'https://microbiomedata.org/advisory/',
+      },
+      {
+        label: 'FAQs',
+        href: 'https://microbiomedata.org/faqs/',
       },
       {
         label: 'Diversity, Equity, and Inclusion',
@@ -44,6 +51,14 @@ const Menus = [
         label: 'NMDC EDGE',
         href: 'https://nmdc-edge.org',
       },
+      {
+        label: 'Field Notes Mobile App',
+        href: 'https://microbiomedata.org/field-notes/',
+      },
+      {
+        label: 'Data API',
+        href: 'https://api.microbiomedata.org/docs',
+      },
     ],
   },
   {
@@ -51,23 +66,27 @@ const Menus = [
     items: [
       {
         label: 'Data Standards',
-        to: 'https://microbiomedata.org/data-standards/',
+        href: 'https://microbiomedata.org/data-standards/',
       },
       {
         label: 'Bioinformatics Workflows',
-        to: 'https://microbiomedata.org/workflows/',
+        href: 'https://microbiomedata.org/workflows/',
       },
       {
         label: 'GitHub',
-        to: 'https://github.com/microbiomedata',
+        href: 'https://github.com/microbiomedata',
       },
       {
         label: 'Documentation',
-        to: 'https://microbiomedata.org/documentation/',
+        href: 'https://microbiomedata.org/documentation/',
       },
       {
         label: 'Data Management',
-        to: 'https://microbiomedata.org/data-management/',
+        href: 'https://microbiomedata.org/data-management/',
+      },
+      {
+        label: 'Data Integration',
+        href: 'https://microbiomedata.org/data-integration/',
       },
     ],
   },
@@ -97,12 +116,24 @@ const Menus = [
     label: 'News & Impact',
     items: [
       {
-        label: 'Press Room',
+        label: 'Annual Reports',
+        href: 'https://microbiomedata.org/annual_report/',
+      },
+      {
+        label: 'Blog',
+        href: 'https://microbiomedata.org/blog/',
+      },
+      {
+        label: 'Events',
         href: 'https://microbiomedata.org/events/',
       },
       {
-        label: 'Annual Reports',
-        href: 'https://microbiomedata.org/annual_report/',
+        label: 'Media Materials',
+        href: 'https://microbiomedata.org/media/',
+      },
+      {
+        label: 'Newsletters',
+        href: 'https://microbiomedata.org/newsletters/',
       },
       {
         label: 'Publications',

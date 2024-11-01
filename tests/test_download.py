@@ -32,23 +32,27 @@ def test_bulk_download_query(db: Session):
     qs = query.DataObjectQuerySchema()
     rows = qs.execute(db).all()
     assert len(rows) == 0
-    assert qs.aggregate(db) == {
-        "size": 0,
-        "count": 0,
-    }
+
+    data_object_agg_obj = qs.aggregate(db)
+    assert data_object_agg_obj.size == 0
+    assert data_object_agg_obj.count == 0
 
     qs = query.DataObjectQuerySchema(data_object_filter=[{"workflow": "nmdc:RawData"}])
     rows = qs.execute(db).all()
     assert [raw1.id] == [d.id for d in rows]
-    assert qs.aggregate(db) == {"size": raw1.file_size_bytes, "count": 1}
+    data_object_agg_obj = qs.aggregate(db)
+    assert data_object_agg_obj.size == raw1.file_size_bytes
+    assert data_object_agg_obj.count == 1
 
     qs = query.DataObjectQuerySchema(data_object_filter=[{"file_type": "ftype1"}])
     rows = qs.execute(db).all()
     assert [raw1.id] == [d.id for d in rows]
-    assert qs.aggregate(db) == {"size": raw1.file_size_bytes, "count": 1}
+    data_object_agg_obj = qs.aggregate(db)
+    assert data_object_agg_obj.size == raw1.file_size_bytes
+    assert data_object_agg_obj.count == 1
 
 
-def test_generate_bulk_download(db: Session, client: TestClient, token):
+def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user):
     sample = fakes.BiosampleFactory()
     op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
     fakes.OmicsProcessingFactory(biosample_inputs=[sample])
@@ -79,7 +83,7 @@ def test_generate_bulk_download(db: Session, client: TestClient, token):
     assert resp.json()["count"] == 0
 
 
-def test_generate_bulk_download_filtered(db: Session, client: TestClient, token):
+def test_generate_bulk_download_filtered(db: Session, client: TestClient, logged_in_user):
     sample = fakes.BiosampleFactory()
     op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
     fakes.OmicsProcessingFactory(biosample_inputs=[sample])
@@ -115,6 +119,12 @@ def test_generate_bulk_download_filtered(db: Session, client: TestClient, token)
     assert resp.status_code == 200
     assert resp.json()["count"] == 1
 
+    # Verify that the bulk download can be accessed without authentication
     resp = client.get(f"/api/bulk_download/{id_}")
+    del client.headers["Authorization"]
     assert resp.status_code == 200
     assert b"/raw" not in resp.content and b"/metag" in resp.content
+
+    # Verify that the bulk download cannot be accessed a second time
+    resp = client.get(f"/api/bulk_download/{id_}")
+    assert resp.status_code == 410

@@ -5,7 +5,6 @@ import { init as SentryInit } from '@sentry/vue';
 import AsyncComputed from 'vue-async-computed';
 
 import router from '@/plugins/router';
-import { init } from '@/store';
 import vuetify from '@/plugins/vuetify';
 import { provideRouter } from '@/use/useRouter';
 
@@ -31,8 +30,6 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 Vue.config.productionTip = false;
-
-init(router);
 
 new Vue({
   router,

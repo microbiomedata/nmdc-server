@@ -1,6 +1,7 @@
 from typing import Dict, Optional
 
-from pint import Quantity, Unit, UnitRegistry
+from pint import Quantity, UnitRegistry
+from pint.facets.plain.unit import PlainUnit
 
 _registry = UnitRegistry()
 
@@ -8,14 +9,14 @@ _registry = UnitRegistry()
 #       hard code relevant attributes here.
 
 
-_unit_info: Dict[str, Dict[str, Unit]] = {
+_unit_info: Dict[str, Dict[str, PlainUnit]] = {
     "biosample": {
         "depth": _registry("meter").units,
     }
 }
 
 
-def get_attribute_units(table: str, attribute: str) -> Optional[Unit]:
+def get_attribute_units(table: str, attribute: str) -> Optional[PlainUnit]:
     return _unit_info.get(table, {}).get(attribute)
 
 

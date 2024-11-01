@@ -4,10 +4,11 @@ import { DataTableHeader } from 'vuetify';
 import { api, User } from '@/data/api';
 import { stateRefs } from '@/store';
 import usePaginatedResults from '@/use/usePaginatedResults';
+import AppBanner from '@/components/AppBanner.vue';
 import OrcidId from '../../components/Presentation/OrcidId.vue';
 
 export default defineComponent({
-  components: { OrcidId },
+  components: { AppBanner, OrcidId },
 
   setup() {
     const currentUser = stateRefs.user;
@@ -47,6 +48,8 @@ export default defineComponent({
 
 <template>
   <v-main>
+    <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
+    <AppBanner v-if="true" />
     <v-container>
       <v-card flat>
         <v-card-title class="text-h4">

@@ -6,6 +6,7 @@ import { stateRefs, dataObjectFilter } from '@/store';
 import DownloadDialog from '@/components/DownloadDialog.vue';
 import useBulkDownload from '@/use/useBulkDownload';
 import { humanFileSize } from '@/data/utils';
+import { api } from '@/data/api';
 
 export default defineComponent({
 
@@ -34,13 +35,21 @@ export default defineComponent({
       download,
     } = useBulkDownload(stateRefs.conditions, dataObjectFilter);
 
+    function createLabelString(label: string, count: number, size: number): string {
+      const labelString = `${label} (${count}`;
+      if (size > 0) {
+        return `${labelString}, ${humanFileSize(size)})`;
+      }
+      return `${labelString})`;
+    }
+
     const options = computed(() => Object.entries(downloadOptions.value)
       .map(([key, val]) => ({
         id: key,
-        label: `${key} (${val.count})`,
-        children: Object.entries(val.file_types).map(([filetype, count]) => ({
+        label: createLabelString(key, val.count, val.size),
+        children: Object.entries(val.file_types).map(([filetype, fileTypeStats]) => ({
           id: `${key}::${filetype}`,
-          label: `${filetype} (${count})`,
+          label: createLabelString(filetype, fileTypeStats.count, fileTypeStats.size),
         })),
       })));
 
@@ -48,6 +57,10 @@ export default defineComponent({
       const val = await download();
       termsDialog.value = false;
       window.location.assign(val.url);
+    }
+
+    function handleLoginClick() {
+      api.initiateOrcidLogin();
     }
 
     return {
@@ -58,6 +71,7 @@ export default defineComponent({
       termsDialog,
       createAndDownload,
       humanFileSize,
+      handleLoginClick,
     };
   },
 });
@@ -143,7 +157,7 @@ export default defineComponent({
       <v-chip
         v-else
         class="grow text-subtitle-1 ml-4"
-        href="/login"
+        @click="handleLoginClick"
       >
         Log in to download
       </v-chip>

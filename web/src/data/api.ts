@@ -1,7 +1,20 @@
 import { merge } from 'lodash';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { setupCache } from 'axios-cache-adapter';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
+
+// The token refresh and retry logic stores an extra bit of state on the request config
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    sent?: boolean;
+  }
+}
+
+// The name of a custom event that is dispatched when a refresh token exchange fails
+// Consider moving this to a separate module if we end up having more custom events
+export const REFRESH_TOKEN_EXPIRED_EVENT = 'nmdc:refreshTokenExpired';
 
 const cache = setupCache({
   key: (req) => req.url + JSON.stringify(req.params) + JSON.stringify(req.data),
@@ -10,7 +23,10 @@ const cache = setupCache({
     query: false,
     methods: ['delete'],
     paths: [
+      /me/,
+      /users/,
       /logout/,
+      /bulk_download/,
       /data_object\/.*/,
     ],
   },
@@ -23,6 +39,10 @@ const client = axios.create({
 
 const staticFileClient = axios.create({
   baseURL: '/static',
+});
+
+const authClient = axios.create({
+  baseURL: '/auth',
 });
 
 /* The real entity types */
@@ -41,7 +61,7 @@ export type entityType = 'biosample'
  * we get build-time typescript support for the dynamic types coming
  * out of an entirely different repository.
  */
-export type entitySchemaType = keyof typeof NmdcSchema.$defs;
+export type entitySchemaType = keyof typeof NmdcSchema.classes;
 
 export interface BaseSearchResult {
   id: string;
@@ -162,6 +182,7 @@ export interface StudySearchResults extends BaseSearchResult {
   gold_study_identifiers: string[];
   sample_count: number;
   study_category: string;
+  homepage_website: string[] | null;
   part_of: string[] | null;
   children: StudySearchResults[];
   has_credit_associations: {
@@ -274,7 +295,8 @@ export const opMap: Record<opType, string> = {
 // See https://github.com/microbiomedata/nmdc-server/pull/403 for documentation
 export type BulkDownloadSummary = Record<string, {
   count: number;
-  file_types: Record<string, number>,
+  size: number;
+  file_types: Record<string, { count: number, size: number }>,
 }>;
 
 export type BulkDownloadAggregateSummary = {
@@ -318,6 +340,8 @@ export interface BulkDownload {
 export interface SearchParams {
   offset?: number;
   limit?: number;
+  sortColumn?: string;
+  sortOrder?: string;
   conditions: Condition[];
   data_object_filter?: DataObjectFilter[];
 }
@@ -337,6 +361,20 @@ export interface User{
     orcid: string;
     name: string;
     is_admin: boolean;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  token_type: string;
+  expires_in: number;
+}
+
+export class RefreshTokenExchangeError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RefreshTokenExchangeError';
+  }
 }
 
 async function _search<T>(
@@ -364,7 +402,7 @@ async function searchStudy(params: SearchParams) {
 }
 
 async function searchOmicsProcessing(params: SearchParams) {
-  return _search<OmicsProcessingResult>('omics_processing', params);
+  return _search<OmicsProcessingResult>('data_generation', params);
 }
 
 async function searchReadsQC(params: SearchParams) {
@@ -445,7 +483,7 @@ async function getFacetSummary(
   field: string,
   conditions: Condition[],
 ): Promise<FacetSummaryResponse[]> {
-  const path = type;
+  const path = type === 'omics_processing' ? 'data_generation' : type;
   const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/facet`, {
     conditions, attribute: field,
   });
@@ -466,7 +504,8 @@ async function getBinnedFacet<T = string | number>(
   numBins: number,
   resolution: 'day' | 'week' | 'month' | 'year' = 'month',
 ) {
-  const { data } = await client.post<BinResponse<T>>(`${table}/binned_facet`, {
+  const path = table === 'omics_processing' ? 'data_generation' : table;
+  const { data } = await client.post<BinResponse<T>>(`${path}/binned_facet`, {
     attribute,
     conditions,
     resolution,
@@ -550,7 +589,8 @@ async function getDataObjectList(
     'metaproteomic_analysis',
   ];
   if (supportedTypes.indexOf(type) >= 0) {
-    const { data } = await client.get<DataObjectSearchResult[]>(`${type}/${parentId}/outputs`);
+    const path = type === 'omics_processing' ? 'data_generation' : type;
+    const { data } = await client.get<DataObjectSearchResult[]>(`${path}/${parentId}/outputs`);
     return data;
   }
   return [];
@@ -611,14 +651,16 @@ async function textSearch(terms: string) {
   return data;
 }
 
-async function me(): Promise<string> {
-  const { data } = await client.get<string>('me');
-  return data;
-}
-
-async function myOrcid(): Promise<string> {
-  const { data } = await client.get<string>('me/orcid');
-  return data;
+async function me(): Promise<User | null> {
+  try {
+    const { data } = await client.get<User>('me');
+    return data;
+  } catch (error) {
+    if (error instanceof RefreshTokenExchangeError) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 async function getAllUsers(params: SearchParams) {
@@ -651,6 +693,128 @@ async function getGoldEcosystemTree() {
   return data;
 }
 
+const REDIRECT_URI = `${window.location.origin}/login`;
+/**
+ * Initiates the ORCID login flow by navigating to the /auth/login endpoint, providing the
+ * redirect_uri as the frontend route (/login) which will handle the authorization code exchange.
+ */
+function initiateOrcidLogin(state: string = '') {
+  let loginUrl = `${window.location.origin}/auth/login?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+  if (state) {
+    loginUrl += `&state=${encodeURIComponent(state)}`;
+  }
+  window.location.href = loginUrl;
+}
+
+/**
+ * Handle a token response by setting the API client's default Authorization header with the access
+ * token and storing the refresh token (if provided) in local storage.
+ *
+ * @param response TokenResponse object
+ */
+function handleTokenResponse(response: TokenResponse) {
+  const { access_token, refresh_token } = response;
+  client.defaults.headers.common.Authorization = `Bearer ${access_token}`;
+  if (refresh_token) {
+    setRefreshToken(refresh_token);
+  }
+}
+
+/**
+ * Exchange an authorization code for access token and refresh tokens
+ *
+ * @param code Authorization code
+ */
+async function exchangeAuthCode(code: string): Promise<void> {
+  const { data } = await authClient.post('/token', {
+    code,
+    redirect_uri: REDIRECT_URI,
+  });
+  handleTokenResponse(data);
+}
+
+/**
+ * Logout by sending a POST request to the /auth/logout endpoint. This is the only /auth endpoint
+ * which requires an Authorization header. Use the API client's Authorization header, which was set
+ * on login. After the request is sent, remove the default Authorization header from the API client
+ * and remove the refresh token from local storage.
+ */
+async function logout() {
+  try {
+    await authClient.post('/logout', null, {
+      headers: {
+        Authorization: client.defaults.headers.common.Authorization,
+      },
+    });
+  } finally {
+    delete client.defaults.headers.common.Authorization;
+    clearRefreshToken();
+  }
+}
+
+let refreshRequestCache: Promise<TokenResponse> | null = null;
+const REFRESH_REQUEST_MAX_AGE_MS: number = 1000 * 20;
+
+/**
+ * Exchange a refresh token for a new access token. Retrieve the refresh token from local storage.
+ * If one exists, send a POST request to the /auth/refresh endpoint. If the request is successful,
+ * save the returned token. If the request fails, remove the refresh token from local storage
+ * assuming that it either expired or has been invalidated.
+ *
+ * The returned promise is memoized for up to 20 seconds to prevent multiple concurrent refresh
+ * token exchange requests which could happen on page load.
+ */
+function exchangeRefreshToken(): Promise<TokenResponse> {
+  async function _doExchange(): Promise<TokenResponse> {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      throw new RefreshTokenExchangeError('No refresh token found');
+    }
+    delete client.defaults.headers.common.Authorization;
+    try {
+      const { data } = await authClient.post<TokenResponse>('/refresh', { refresh_token: refreshToken });
+      handleTokenResponse(data);
+      return data;
+    } catch (error) {
+      clearRefreshToken();
+      window.dispatchEvent(new CustomEvent(REFRESH_TOKEN_EXPIRED_EVENT, {
+        detail: { error },
+      }));
+      throw new RefreshTokenExchangeError(`Refresh request failed: ${error}`);
+    }
+  }
+
+  if (refreshRequestCache !== null) {
+    return refreshRequestCache;
+  }
+  refreshRequestCache = _doExchange();
+  setTimeout(() => {
+    refreshRequestCache = null;
+  }, REFRESH_REQUEST_MAX_AGE_MS);
+  return refreshRequestCache;
+}
+
+// Add a response interceptor to the API client which handles 401 errors. If a 401 is received, a
+// refresh token exchange is attempted. If the refresh token exchange is successful, the original
+// request is retried with the new access token. The `sent` flag is used to prevent infinite loops.
+client.interceptors.response.use(undefined, async (error: AxiosError) => {
+  if (error.response?.status === 401) {
+    if (error.config && error.config.sent !== true) {
+      const { config } = error;
+      config.sent = true;
+      const tokenResponse = await exchangeRefreshToken();
+      // Retrying the original request will *not* pick up the new default Authorization header. We
+      // must set it manually here before sending out the retry.
+      config.headers = {
+        ...config.headers,
+        Authorization: `Bearer ${tokenResponse.access_token}`,
+      };
+      return client.request(config);
+    }
+  }
+  throw error;
+});
+
 const api = {
   createBulkDownload,
   getBinnedFacet,
@@ -669,7 +833,6 @@ const api = {
   getSubmissionSchema,
   getGoldEcosystemTree,
   me,
-  myOrcid,
   searchBiosample,
   searchOmicsProcessing,
   searchStudy,
@@ -682,6 +845,10 @@ const api = {
   textSearch,
   getAllUsers,
   updateUser,
+  initiateOrcidLogin,
+  exchangeAuthCode,
+  exchangeRefreshToken,
+  logout,
 };
 
 export {

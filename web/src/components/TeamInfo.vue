@@ -29,7 +29,11 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-row class="my-6">
+  <!-- Adjust alignment when there isn't an image to display -->
+  <v-row
+    class="my-6"
+    :no-gutters=" !item.image_url && !item.principal_investigator_image_url"
+  >
     <v-col
       class="shrink"
       offset="1"
@@ -41,23 +45,26 @@ export default defineComponent({
         width="200"
       />
       <v-avatar
-        v-else
+        v-else-if="item.principal_investigator_image_url"
         :size="200"
       >
         <v-img
           :src="item.principal_investigator_image_url"
           :contain="item.id === 'gold:Gs0110119'"
+          position="40% 25%"
         />
       </v-avatar>
     </v-col>
-    <v-col class="grow mx-2 pr-8">
+    <v-col
+      class="grow mx-4 pr-8"
+    >
       <v-row
         align="center"
         justify="start"
         style="height: 100%"
       >
         <v-card flat>
-          <div v-if="item.study_category != 'consortium'">
+          <div v-if="item.study_category != 'consortium' && item.principal_investigator">
             <div class="text-h3">
               {{ item.principal_investigator_name }}
             </div>
@@ -75,6 +82,12 @@ export default defineComponent({
                 :width="24"
               />
             </span>
+          </div>
+          <div
+            v-if="item.homepage_website && item.homepage_website[0]"
+            class="text-h5 py-2 primary--text"
+          >
+            Consortium Homepage: <a :href="item.homepage_website">{{ item.homepage_website[0] }}</a>
           </div>
           <div
             v-if="team"

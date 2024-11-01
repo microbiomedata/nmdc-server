@@ -6,7 +6,8 @@ import {
   watch,
   nextTick,
 } from '@vue/composition-api';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import Definitions from '@/definitions';
 import {
   contextForm,
@@ -23,7 +24,7 @@ export default defineComponent({
   components: { SubmissionContextShippingForm, SubmissionDocsLink, SubmissionPermissionBanner },
   setup() {
     const formRef = ref();
-    const facilityEnum = NmdcSchema.$defs.ProcessingInstitutionEnum.enum.filter(
+    const facilityEnum = Object.keys(NmdcSchema.enums.ProcessingInstitutionEnum.permissible_values).filter(
       (facility: string) => ['EMSL', 'JGI'].includes(facility),
     );
     const projectAwardValidationRules = () => [(v: string) => {

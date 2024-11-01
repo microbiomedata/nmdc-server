@@ -3,6 +3,8 @@ import { defineComponent } from '@vue/composition-api';
 import AuthButton from '@/components/Presentation/AuthButton.vue';
 import Menus from '@/menus';
 
+export const APP_HEADER_HEIGHT = 82;
+
 export default defineComponent({
   components: {
     AuthButton,
@@ -10,6 +12,7 @@ export default defineComponent({
   setup() {
     return {
       Menus,
+      APP_HEADER_HEIGHT,
     };
   },
 });
@@ -22,7 +25,7 @@ export default defineComponent({
     color="white"
     clipped-left
     elevation="4"
-    height="82"
+    :height="APP_HEADER_HEIGHT"
   >
     <a
       class="header-logo"
@@ -59,6 +62,7 @@ export default defineComponent({
         content-class="navigation-button-text-animate elevation-4"
         :open-on-hover="true"
         transition="fade-transition"
+        z-index="501"
       >
         <template #activator="{ on, attrs }">
           <v-btn

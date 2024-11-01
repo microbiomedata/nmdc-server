@@ -9,7 +9,7 @@ from enum import Enum
 from itertools import groupby
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
-from pydantic import BaseModel, Field, PositiveInt
+from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, desc, func, inspect, or_
 from sqlalchemy.orm import Query, Session, aliased, with_expression
 from sqlalchemy.orm.util import AliasedClass
@@ -106,11 +106,11 @@ RangeValue = Annotated[List[schemas.AnnotationValue], Field(min_items=2, max_ite
 
 
 class GoldTreeValue(BaseModel):
-    ecosystem: Optional[str]
-    ecosystem_category: Optional[str]
-    ecosystem_type: Optional[str]
-    ecosystem_subtype: Optional[str]
-    specific_ecosystem: Optional[str]
+    ecosystem: Optional[str] = None
+    ecosystem_category: Optional[str] = None
+    ecosystem_type: Optional[str] = None
+    ecosystem_subtype: Optional[str] = None
+    specific_ecosystem: Optional[str] = None
 
 
 ConditionValue = Union[schemas.AnnotationValue, RangeValue, List[GoldTreeValue]]
@@ -184,7 +184,7 @@ class SimpleConditionSchema(BaseConditionSchema):
             elif self.op == Operation.like:
                 return column.ilike(f"%{self.value}%")
         if hasattr(model, "annotations"):
-            json_field = model.annotations  # type: ignore
+            json_field = model.annotations
         else:
             raise InvalidAttributeException(self.table.value, self.field)
         if self.op == Operation.like:
@@ -208,12 +208,8 @@ class RangeConditionSchema(BaseConditionSchema):
             return and_(column >= self.value[0], column <= self.value[1])
         if hasattr(model, "annotations"):
             return and_(
-                func.nmdc_compare(
-                    model.annotations[self.field].astext, ">=", self.value[0]  # type: ignore
-                ),
-                func.nmdc_compare(
-                    model.annotations[self.field].astext, "<=", self.value[1]  # type: ignore
-                ),
+                func.nmdc_compare(model.annotations[self.field].astext, ">=", self.value[0]),
+                func.nmdc_compare(model.annotations[self.field].astext, "<=", self.value[1]),
             )
         else:
             raise InvalidAttributeException(self.table.value, self.field)
@@ -292,10 +288,9 @@ class BaseQuerySchema(BaseModel):
     def transform_condition(self, db, condition: BaseConditionSchema) -> List[BaseConditionSchema]:
         # Transform KEGG.(PATH|MODULE) queries into their respective ORTHOLOGY terms
         if condition.key == "Table.gene_function:id" and type(condition.value) is str:
-            if condition.value.startswith(KeggTerms.PATHWAY[0]):
-                searchable_name = condition.value.replace(
-                    KeggTerms.PATHWAY[0], KeggTerms.PATHWAY[1]
-                )
+            if any([condition.value.startswith(val) for val in KeggTerms.PATHWAY[0]]):
+                prefix = [val for val in KeggTerms.PATHWAY[0] if condition.value.startswith(val)][0]
+                searchable_name = condition.value.replace(prefix, KeggTerms.PATHWAY[1])
                 ko_terms = db.query(models.KoTermToPathway.term).filter(
                     models.KoTermToPathway.pathway.ilike(searchable_name)
                 )
@@ -339,7 +334,7 @@ class BaseQuerySchema(BaseModel):
             filter = create_filter_class(table, conditions)
 
             # Gene function queries are treated differently because they join
-            # in two different places (both metaG and metaP).
+            # in three different places (metaT, metaG and metaP).
             if table == Table.gene_function:
                 metag_matches = filter.matches(db, self.table)
                 metap_conditions = [
@@ -354,7 +349,19 @@ class BaseQuerySchema(BaseModel):
                     Table.metap_gene_function,
                     metap_conditions,
                 )
-                matches.append(metag_matches.union(metap_filter.matches(db, self.table)))
+                gene_matches = metag_matches.union(metap_filter.matches(db, self.table))
+
+                metat_conditions = [
+                    SimpleConditionSchema(
+                        table=Table.metat_gene_function,
+                        field=c.field,
+                        value=c.value,
+                    )
+                    for c in conditions
+                ]
+                metat_filter = create_filter_class(Table.metat_gene_function, metat_conditions)
+                gene_matches = gene_matches.union(metat_filter.matches(db, self.table))
+                matches.append(gene_matches)
             else:
                 matches.append(filter.matches(db, self.table))
 
@@ -382,8 +389,8 @@ class BaseQuerySchema(BaseModel):
         db: Session,
         column: Column,
         subquery: Any,
-        minimum: NumericValue = None,
-        maximum: NumericValue = None,
+        minimum: Optional[NumericValue] = None,
+        maximum: Optional[NumericValue] = None,
     ) -> Tuple[Optional[NumericValue], Optional[NumericValue]]:
         """Get the range of a numeric/datetime quantity matching the conditions.
 
@@ -405,9 +412,9 @@ class BaseQuerySchema(BaseModel):
     def validate_binning_args(
         self,
         attribute: str,
-        minimum: NumericValue = None,
-        maximum: NumericValue = None,
-        resolution: DateBinResolution = None,
+        minimum: Optional[NumericValue] = None,
+        maximum: Optional[NumericValue] = None,
+        resolution: Optional[DateBinResolution] = None,
     ):
         """Raise an exception if binning arguments aren't valid for the data type."""
         # TODO: Validation like this should happen at the schema layer, but it requires refactoring
@@ -443,8 +450,8 @@ class BaseQuerySchema(BaseModel):
         self,
         db: Session,
         attribute: str,
-        minimum: NumericValue = None,
-        maximum: NumericValue = None,
+        minimum: Optional[NumericValue] = None,
+        maximum: Optional[NumericValue] = None,
         **kwargs,
     ) -> Tuple[List[NumericValue], List[int]]:
         """Perform a binned faceting aggregation on an attribute."""
@@ -707,6 +714,17 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
     def table(self) -> Table:
         return Table.omics_processing
 
+    def omics_processing_for_biosample_ids(self, db: Session, biosample_ids):
+        # Do the normal query with the conditions
+        query = self.execute(db)
+        # Join to association table to get biosample IDs
+        query_by_sample_ids = (
+            query.join(models.biosample_input_association)
+            # Filter to only include bisoample ids in the given list
+            .filter(models.biosample_input_association.c.biosample_id.in_(biosample_ids))
+        )
+        return query_by_sample_ids
+
 
 class BiosampleQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
@@ -761,6 +779,18 @@ class MetagenomeAnnotationQuerySchema(BaseQuerySchema):
     @property
     def table(self) -> Table:
         return Table.metagenome_annotation
+
+
+class MetatranscriptomeAssemblyQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metatranscriptome_assembly
+
+
+class MetatranscriptomeAnnotationQuerySchema(BaseQuerySchema):
+    @property
+    def table(self) -> Table:
+        return Table.metatranscriptome_annotation
 
 
 class MetaproteomicAnalysisQuerySchema(BaseQuerySchema):
@@ -868,8 +898,7 @@ class SearchQuery(BaseModel):
 
 
 class ConditionResultSchema(SimpleConditionSchema):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FacetQuery(SearchQuery):
@@ -881,14 +910,14 @@ class BiosampleSearchQuery(SearchQuery):
 
 
 class BinnedRangeFacetQuery(FacetQuery):
-    minimum: Optional[NumericValue]
-    maximum: Optional[NumericValue]
+    minimum: Optional[NumericValue] = None
+    maximum: Optional[NumericValue] = None
     num_bins: PositiveInt
 
 
 class BinnedDateFacetQuery(FacetQuery):
-    minimum: Optional[datetime]
-    maximum: Optional[datetime]
+    minimum: Optional[datetime] = None
+    maximum: Optional[datetime] = None
     resolution: DateBinResolution
 
 
@@ -897,7 +926,7 @@ BinnedFacetQuery = Union[BinnedRangeFacetQuery, BinnedDateFacetQuery]
 
 class StudySearchResponse(BaseSearchResponse):
     results: List[schemas.Study]
-    total: Optional[int]
+    total: Optional[int] = None
 
 
 class OmicsProcessingSearchResponse(BaseSearchResponse):
@@ -929,6 +958,8 @@ workflow_search_classes = [
     ReadsQCQuerySchema,
     MetagenomeAssemblyQuerySchema,
     MetagenomeAnnotationQuerySchema,
+    MetatranscriptomeAssemblyQuerySchema,
+    MetatranscriptomeAnnotationQuerySchema,
     MetaproteomicAnalysisQuerySchema,
     MAGsAnalysisQuerySchema,
     ReadBasedAnalysisQuerySchema,

@@ -6,8 +6,9 @@ import { noop, uniqWith } from 'lodash';
 import VueRouter from 'vue-router';
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import {
-  api, Condition, DataObjectFilter, EnvoNode, EnvoTree,
+  api, Condition, DataObjectFilter, EnvoNode, EnvoTree, User,
 } from '@/data/api';
+import { clearQueryState, getQueryState, setQueryState } from '@/store/localStorage';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -16,8 +17,8 @@ let router: VueRouter | null = null;
 const state = reactive({
   conditions: [] as Condition[],
   bulkDownloadSelected: [] as string[],
-  user: null as string | null,
-  orcid: null as string | null,
+  userLoading: false,
+  user: null as User | null,
   hasAcceptedTerms: false,
   treeData: null as EnvoTree | null,
 });
@@ -25,7 +26,6 @@ const unreactive = {
   nodeMapId: {} as Record<string, EnvoNode>,
   nodeMapLabel: {} as Record<string, EnvoNode>,
 };
-const queryStateKey = 'storage.queryState';
 
 /**
  * Persist state into localstorage
@@ -33,10 +33,10 @@ const queryStateKey = 'storage.queryState';
 function persistState() {
   /* If the user is browsing anonymously, stash their state in case they log in */
   if (!state.user) {
-    window.localStorage.setItem(queryStateKey, JSON.stringify({
+    setQueryState({
       conditions: state.conditions,
       bulkDownloadSelected: state.bulkDownloadSelected,
-    }));
+    });
   }
 }
 
@@ -75,12 +75,12 @@ function setUniqueCondition(
  * Restore state from localStorage and clear
  */
 function restoreState() {
-  const previousState = window.localStorage.getItem(queryStateKey);
+  const previousState = getQueryState();
   if (previousState) {
-    const { conditions, bulkDownloadSelected } = JSON.parse(previousState);
+    const { conditions, bulkDownloadSelected } = previousState;
     setConditions(conditions);
     state.bulkDownloadSelected = bulkDownloadSelected;
-    window.localStorage.removeItem(queryStateKey);
+    clearQueryState();
   }
 }
 
@@ -100,15 +100,31 @@ const dataObjectFilter: ComputedRef<DataObjectFilter[]> = computed(() => state
 /**
  * load the current user on app start
  */
-async function init(_router: VueRouter) {
-  state.user = await api.me();
+async function init(_router: VueRouter, loadUser = true, loginState = '' as string | (string | null)[]) {
+  if (loadUser) {
+    state.userLoading = true;
+    try {
+      state.user = await api.me();
+    } finally {
+      state.userLoading = false;
+    }
+  }
   router = _router;
-  // @ts-ignore
-  state.conditions = router.currentRoute.query?.conditions || [];
-  if (state.user) {
-    state.orcid = await api.myOrcid();
-    restoreState();
-  } else {
+  // Handle the login state
+  switch (loginState) {
+    case 'submission':
+      router.push('submission/home');
+      break;
+    default:
+      // Login normally
+      // @ts-ignore
+      state.conditions = router.currentRoute.query?.conditions || [];
+      if (state.user) {
+        restoreState();
+      }
+      break;
+  }
+  if (!state.user) {
     watchEffect(persistState);
   }
 }

@@ -1,10 +1,14 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
+import { api } from '@/data/api';
 
 export default defineComponent({
   setup() {
+    function handleLoginClick() {
+      api.initiateOrcidLogin('submission');
+    }
     return {
-      loginHref: '/login',
+      handleLoginClick,
     };
   },
 });

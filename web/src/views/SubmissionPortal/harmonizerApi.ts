@@ -28,9 +28,10 @@ const GOLD_FIELDS = {
   },
 };
 
-const EMSL = 'emsl';
-const JGI_MG = 'jgi_mg';
-const JGT_MT = 'jgi_mt';
+export const EMSL = 'emsl';
+export const JGI_MG = 'jgi_mg';
+export const JGI_MG_LR = 'jgi_mg_lr';
+export const JGT_MT = 'jgi_mt';
 export function getVariants(checkBoxes: string[], dataGenerated: boolean | undefined, base: string): string[] {
   const templates = [base];
   if (dataGenerated) {
@@ -41,6 +42,9 @@ export function getVariants(checkBoxes: string[], dataGenerated: boolean | undef
   }
   if (checkBoxes.includes('mg-jgi')) {
     templates.push(JGI_MG);
+  }
+  if (checkBoxes.includes('mg-lr-jgi')) {
+    templates.push(JGI_MG_LR);
   }
   if (checkBoxes.includes('mt-jgi')) {
     templates.push(JGT_MT);
@@ -56,6 +60,8 @@ interface HarmonizerTemplateInfo {
   schemaClass?: string,
   sampleDataSlot?: string,
   status: 'published' | 'mixin' | 'disabled',
+  // This value comes from annotations in the schema. It will be populated once the schema is loaded.
+  excelWorksheetName?: string,
 }
 export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
   air: {
@@ -156,6 +162,12 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     sampleDataSlot: 'jgi_mg_data',
     status: 'mixin',
   },
+  [JGI_MG_LR]: {
+    displayName: 'JGI MG (Long Read)',
+    schemaClass: 'JgiMgLrInterface',
+    sampleDataSlot: 'jgi_mg_lr_data',
+    status: 'mixin',
+  },
   [JGT_MT]: {
     displayName: 'JGI MT',
     schemaClass: 'JgiMtInterface',
@@ -171,7 +183,9 @@ interface CellData {
 }
 
 export class HarmonizerApi {
-  schemaSections: Ref<Record<string, Record<string, number>>>;
+  schemaSectionNames: Ref<Record<string, string>>;
+
+  schemaSectionColumns: Ref<Record<string, Record<string, number>>>;
 
   ready: Ref<boolean>;
 
@@ -186,7 +200,8 @@ export class HarmonizerApi {
   schema: any;
 
   constructor() {
-    this.schemaSections = ref({});
+    this.schemaSectionNames = ref({});
+    this.schemaSectionColumns = ref({});
     this.ready = ref(false);
     this.selectedColumn = ref('');
   }
@@ -195,10 +210,28 @@ export class HarmonizerApi {
     this.schema = schema;
     this.goldEcosystemTree = goldEcosystemTree;
 
+    // Attempt to find each template's underlying schema class, pull the excel_worksheet_name annotation from it
+    // and add it to the template object.
+    Object.values(HARMONIZER_TEMPLATES).forEach((template) => {
+      if (!template.schemaClass) {
+        return;
+      }
+      const classDefinition = schema.classes[template.schemaClass];
+      if (!classDefinition) {
+        return;
+      }
+      // eslint-disable-next-line no-param-reassign
+      template.excelWorksheetName = classDefinition.annotations?.excel_worksheet_name?.value;
+    });
+
     this.dh = new DataHarmonizer(r, {
       modalsRoot: document.querySelector('.harmonizer-style-container'),
       fieldSettings: this._getFieldSettings(),
       columnHelpEntries: ['column', 'description', 'guidance', 'examples'],
+      // we use our own custom help sidebar, so turn off DataHarmonizer's built-in one
+      helpSidebar: {
+        enabled: false,
+      },
     });
     this.footer = new Footer(document.querySelector('#harmonizer-footer-root'), this.dh);
     this.dh.useSchema(this.schema, [], templateName);
@@ -296,14 +329,28 @@ export class HarmonizerApi {
 
   _postTemplateChange() {
     this.dh.hot.addHook('afterSelection', debounce((_, col: number) => {
-      this.selectedColumn.value = this.dh.getFields()[col].title;
+      const column = this.dh.getFields()[col];
+      if (!column) {
+        this.selectedColumn.value = '';
+      } else {
+        this.selectedColumn.value = column.title;
+      }
     }, 200, { leading: true }));
-    this.dh.hot.updateSettings({ search: true, customBorders: true });
+    this.dh.hot.updateSettings({
+      search: true,
+      customBorders: true,
+      height: '100%',
+      width: '100%',
+    });
     this.jumpToRowCol(0, 0);
   }
 
   refreshState() {
-    this.schemaSections.value = this._getColumnCoordinates();
+    this.schemaSectionNames.value = this.dh.template.reduce((acc: any, section: any) => {
+      acc[section.title] = section.name;
+      return acc;
+    }, {});
+    this.schemaSectionColumns.value = this._getColumnCoordinates();
   }
 
   async loadData(data: any[]) {
@@ -385,10 +432,23 @@ export class HarmonizerApi {
     this.dh.setupTemplate(folder);
   }
 
-  validate() {
-    this.dh.validate();
+  async validate() {
+    await this.dh.validate();
     this.refreshState();
     return this.dh.invalid_cells;
+  }
+
+  addBeforeChangeHook(callback: Function) {
+    if (!this.ready.value) {
+      return;
+    }
+    // calls function on any non-programmatic change of the data
+    this.dh.hot.addHook('beforeChange', (changes: any[], source: string | null) => {
+      if (source === 'loadData') {
+        return;
+      }
+      callback();
+    });
   }
 
   addChangeHook(callback: Function) {
@@ -438,36 +498,42 @@ export class HarmonizerApi {
     this.dh.hot.render();
   }
 
-  getSlot(slotName: string) {
+  getSlot(slotName: string, className: string) {
+    // If this slot has been fully materialized into the class's attributes, return that
+    const classAttributes = this.schema.classes?.[className]?.attributes;
+    if (classAttributes && slotName in classAttributes) {
+      return classAttributes[slotName];
+    }
+    // Otherwise return the top-level slot definition
     return this.schema.slots[slotName];
   }
 
-  getSlotRank(slotName: string) {
-    const slot = this.getSlot(slotName);
+  getSlotRank(slotName: string, className: string) {
+    const slot = this.getSlot(slotName, className);
     if (!slot) {
       return 9999;
     }
     return slot.rank;
   }
 
-  getSlotGroupRank(slotName: string) {
-    const slot = this.getSlot(slotName);
+  getSlotGroupRank(slotName: string, className: string) {
+    const slot = this.getSlot(slotName, className);
     if (!slot || !slot.slot_group) {
       return 9999;
     }
-    return this.getSlotRank(slot.slot_group);
+    return this.getSlotRank(slot.slot_group, className);
   }
 
   getOrderedAttributeNames(className: string): string[] {
     return Object.keys(this.schema.classes[className].attributes).sort(
       (a, b) => {
-        const aSlotGroupRank = this.getSlotGroupRank(a);
-        const bSlotGroupRank = this.getSlotGroupRank(b);
+        const aSlotGroupRank = this.getSlotGroupRank(a, className);
+        const bSlotGroupRank = this.getSlotGroupRank(b, className);
         if (aSlotGroupRank !== bSlotGroupRank) {
           return aSlotGroupRank - bSlotGroupRank;
         }
-        const aSlotRank = this.getSlotRank(a);
-        const bSlotRank = this.getSlotRank(b);
+        const aSlotRank = this.getSlotRank(a, className);
+        const bSlotRank = this.getSlotRank(b, className);
         return aSlotRank - bSlotRank;
       },
     );

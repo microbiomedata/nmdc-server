@@ -1,26 +1,24 @@
-from io import BytesIO
-from typing import Any, Dict, List, Optional
+import csv
+import json
+import logging
+from io import BytesIO, StringIO
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
-from fastapi.responses import JSONResponse, PlainTextResponse
+import requests
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
-from starlette.requests import Request
-from starlette.responses import RedirectResponse, StreamingResponse
+from starlette.responses import StreamingResponse
 
-from nmdc_server import __version__, crud, jobs, models, query, schemas, schemas_submission
-from nmdc_server.auth import (
-    admin_required,
-    get_current_user,
-    get_current_user_orcid,
-    login_required,
-    login_required_responses,
-)
+from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
+from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
+from nmdc_server.metadata import SampleMetadataSuggester
 from nmdc_server.models import (
     IngestLock,
     SubmissionEditorRole,
@@ -29,6 +27,7 @@ from nmdc_server.models import (
     User,
 )
 from nmdc_server.pagination import Pagination
+from nmdc_server.table import Table
 
 router = APIRouter()
 
@@ -41,43 +40,15 @@ async def get_settings() -> Dict[str, Any]:
 
 
 # get application version number
-@router.get("/version", name="Get application version identifier")
-async def get_version() -> Dict[str, Any]:
-    return {"nmdc-server": __version__}
+@router.get("/version", name="Get application and schema version identifiers")
+async def get_version() -> schemas.VersionInfo:
+    return schemas.VersionInfo()
 
 
 # get the current user information
 @router.get("/me", tags=["user"], name="Return the current user name")
-async def me(request: Request, user: str = Depends(get_current_user)) -> Optional[str]:
+async def me(user: User = Depends(get_current_user)):
     return user
-
-
-@router.get("/me/orcid", tags=["user"], name="Return the ORCID iD of current user")
-async def my_orcid(request: Request, orcid: str = Depends(get_current_user_orcid)) -> Optional[str]:
-    return orcid
-
-
-@router.get(
-    "/session_cookie",
-    name="Get the session cookie",
-    tags=["user"],
-    responses={200: {"description": "Session cookie"}},
-)
-async def get_session_cookie(request: Request):
-    r"""
-    Returns the web browser's session cookie in plain text format.
-
-    Note: This endpoint does not require authentication, since the server is only
-          returning information sent to it by the client (verbatim).
-    """
-    # Reference: https://fastapi.tiangolo.com/reference/request/#fastapi.Request.cookies
-    session_cookie = request.cookies.get("session", None)
-    if session_cookie is None:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Request did not contain a session cookie.",
-        )
-    return PlainTextResponse(content=session_cookie)
 
 
 # autocomplete search
@@ -87,11 +58,17 @@ async def get_session_cookie(request: Request):
     response_model=List[query.ConditionResultSchema],
 )
 def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
-    # Add 'ilike' filters for study columns users may want to search by
+    # Add 'ilike' filters for study and biosample columns users may want to search by
     study_name_filter = {
         "table": "study",
         "value": terms.lower(),
         "field": "name",
+        "op": "like",
+    }
+    study_id_filter = {
+        "table": "study",
+        "value": terms.lower(),
+        "field": "id",
         "op": "like",
     }
     study_description_filter = {
@@ -106,12 +83,41 @@ def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
         "field": "title",
         "op": "like",
     }
+    biosample_name_filter = {
+        "table": "biosample",
+        "value": terms.lower(),
+        "field": "name",
+        "op": "like",
+    }
+    biosample_description_filter = {
+        "table": "biosample",
+        "value": terms.lower(),
+        "field": "description",
+        "op": "like",
+    }
+    biosample_title_filter = {
+        "table": "biosample",
+        "value": terms.lower(),
+        "field": "title",
+        "op": "like",
+    }
+    biosample_id_filter = {
+        "table": "biosample",
+        "value": terms.lower(),
+        "field": "id",
+        "op": "like",
+    }
     # These two lists are of objects of separate types
     filters = crud.text_search(db, terms, limit)
     plaintext_filters = [
         query.SimpleConditionSchema(**study_name_filter),
+        query.SimpleConditionSchema(**study_id_filter),
         query.SimpleConditionSchema(**study_description_filter),
         query.SimpleConditionSchema(**study_title_filter),
+        query.SimpleConditionSchema(**biosample_name_filter),
+        query.SimpleConditionSchema(**biosample_description_filter),
+        query.SimpleConditionSchema(**biosample_title_filter),
+        query.SimpleConditionSchema(**biosample_id_filter),
     ]
     return [*filters, *plaintext_filters]
 
@@ -189,9 +195,25 @@ async def search_biosample(
                     da.selected = schemas.DataObject.is_selected(workflow, da, data_object_filter)
         return biosample
 
-    return pagination.response(
+    results = pagination.response(
         crud.search_biosample(db, query.conditions, data_object_filter), insert_selected
     )
+    if any(
+        [
+            condition.table == Table.omics_processing or condition.table == Table.gene_function
+            for condition in query.conditions
+        ]
+    ):
+        biosample_ids = [b.id for b in results["results"]]  # type: ignore
+        omics_results = crud.search_omics_processing_for_biosamples(
+            db, query.conditions, biosample_ids
+        )
+        omics_ids = set([str(o.id) for o in omics_results.all()])
+        for biosample in results["results"]:
+            biosample.omics_processing = [  # type: ignore
+                op for op in biosample.omics_processing if op.id in omics_ids  # type: ignore
+            ]
+    return results
 
 
 @router.post(
@@ -390,13 +412,18 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
 
 
-# omics_processing
+# data_generation
+# Note the intermingling of the terms "data generation" and "omics processing."
+# The Berkeley schema (NMDC schema v11) did away with the phrase "omics processing."
+# As a result, public-facing uses of "omics processing" should be replaced with
+# "data generation."
+# Future work should go in to a more thorough conversion of omics process to data generation.
 @router.post(
-    "/omics_processing/search",
+    "/data_generation/search",
     response_model=query.OmicsProcessingSearchResponse,
-    tags=["omics_processing"],
-    name="Search for omics processings",
-    description="Faceted search of omics_processing data.",
+    tags=["data_generation"],
+    name="Search for data generations",
+    description="Faceted search of data_generation data.",
 )
 async def search_omics_processing(
     query: query.SearchQuery = query.SearchQuery(),
@@ -407,9 +434,9 @@ async def search_omics_processing(
 
 
 @router.post(
-    "/omics_processing/facet",
+    "/data_generation/facet",
     response_model=query.FacetResponse,
-    tags=["omics_processing"],
+    tags=["data_generation"],
     name="Get all values of an attribute",
 )
 async def facet_omics_processing(query: query.FacetQuery, db: Session = Depends(get_db)):
@@ -417,9 +444,9 @@ async def facet_omics_processing(query: query.FacetQuery, db: Session = Depends(
 
 
 @router.post(
-    "/omics_processing/binned_facet",
+    "/data_generation/binned_facet",
     response_model=query.BinnedFacetResponse,
-    tags=["omics_processing"],
+    tags=["data_generation"],
     name="Get all values of a non-string attribute with binning",
 )
 async def binned_facet_omics_processing(
@@ -429,26 +456,26 @@ async def binned_facet_omics_processing(
 
 
 @router.get(
-    "/omics_processing/{omics_processing_id}",
+    "/data_generation/{data_generation_id}",
     response_model=schemas.OmicsProcessing,
-    tags=["omics_processing"],
+    tags=["data_generation"],
 )
-async def get_omics_processing(omics_processing_id: str, db: Session = Depends(get_db)):
-    db_omics_processing = crud.get_omics_processing(db, omics_processing_id)
+async def get_omics_processing(data_generation_id: str, db: Session = Depends(get_db)):
+    db_omics_processing = crud.get_omics_processing(db, data_generation_id)
     if db_omics_processing is None:
         raise HTTPException(status_code=404, detail="OmicsProcessing not found")
     return db_omics_processing
 
 
 @router.get(
-    "/omics_processing/{omics_processing_id}/outputs",
+    "/data_generation/{data_generation_id}/outputs",
     response_model=List[schemas.DataObject],
-    tags=["omics_processing"],
+    tags=["data_generation"],
 )
 async def list_omics_processing_data_objects(
-    omics_processing_id: str, db: Session = Depends(get_db)
+    data_generation_id: str, db: Session = Depends(get_db)
 ):
-    return crud.list_omics_processing_data_objects(db, omics_processing_id).all()
+    return crud.list_omics_processing_data_objects(db, data_generation_id).all()
 
 
 # data object
@@ -474,7 +501,7 @@ async def download_data_object(
     user_agent: Optional[str] = Header(None),
     x_forwarded_for: Optional[str] = Header(None),
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
     ip = (x_forwarded_for or "").split(",")[0].strip()
     data_object = crud.get_data_object(db, data_object_id)
@@ -491,7 +518,9 @@ async def download_data_object(
         data_object_id=data_object_id,
     )
     crud.create_file_download(db, file_download)
-    return RedirectResponse(url=url)
+    return {
+        "url": url,
+    }
 
 
 @router.post(
@@ -560,7 +589,7 @@ async def create_bulk_download(
     x_forwarded_for: Optional[str] = Header(None),
     query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(),
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
     ip = (x_forwarded_for or "").split(",")[0].strip()
     bulk_download = crud.create_bulk_download(
@@ -593,12 +622,10 @@ async def get_data_object_aggregation(
 @router.get(
     "/bulk_download/{bulk_download_id}",
     tags=["download"],
-    responses=login_required_responses,
 )
 async def download_zip_file(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
 ):
     table = crud.get_zip_download(db, bulk_download_id)
     return Response(
@@ -611,6 +638,80 @@ async def download_zip_file(
 
 
 @router.get(
+    "/metadata_submission/report",
+    tags=["metadata_submission"],
+)
+async def get_metadata_submissions_report(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    r"""
+    Download a TSV file containing a high-level report of Submission Portal submissions,
+    including their ID, author info, study info, and PI info.
+    """
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+
+    # Get the submissions from the database.
+    q = crud.get_query_for_all_submissions(db)
+    submissions = q.all()
+
+    # Iterate through the submissions, building the data rows for the report.
+    header_row = [
+        "Submission ID",
+        "Author ORCID",
+        "Author Name",
+        "Study Name",
+        "PI Name",
+        "PI Email",
+        "Source Client",
+        "Status",
+    ]
+    data_rows = []
+    for s in submissions:
+        metadata = s.metadata_submission  # creates a concise alias
+        author_user = s.author  # note: `s.author` is a `models.User` instance
+        study_form = metadata["studyForm"] if "studyForm" in metadata else {}
+        study_name = study_form["studyName"] if "studyName" in study_form else ""
+        pi_name = study_form["piName"] if "piName" in study_form else ""
+        pi_email = study_form["piEmail"] if "piEmail" in study_form else ""
+        data_row = [
+            s.id,
+            s.author_orcid,
+            author_user.name,
+            study_name,
+            pi_name,
+            pi_email,
+            s.source_client,
+            s.status,
+        ]
+        data_rows.append(data_row)
+
+    # Build the report as an in-memory TSV "file" (buffer).
+    # Reference: https://docs.python.org/3/library/csv.html#csv.writer
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter="\t")
+    writer.writerow(header_row)
+    writer.writerows(data_rows)
+
+    # Reset the buffer's internal file pointer to the beginning of the buffer, so that,
+    # when we stream the buffer's contents later, all of its contents are included.
+    buffer.seek(0)
+
+    # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
+    # Reference: https://fastapi.tiangolo.com/advanced/custom-response
+    # Reference: https://mimetype.io/text/tab-separated-values
+    filename = "submissions-report.tsv"
+    response = StreamingResponse(
+        buffer,
+        media_type="text/tab-separated-values",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+    return response
+
+
+@router.get(
     "/metadata_submission",
     tags=["metadata_submission"],
     responses=login_required_responses,
@@ -618,14 +719,12 @@ async def download_zip_file(
 )
 async def list_submissions(
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
     pagination: Pagination = Depends(),
+    column_sort: str = "created",
+    sort_order: str = "desc",
 ):
-    query = db.query(SubmissionMetadata).order_by(SubmissionMetadata.created.desc())
-    try:
-        await admin_required(user)
-    except HTTPException:
-        query = crud.get_submissions_for_user(db, user)
+    query = crud.get_submissions_for_user(db, user, column_sort, sort_order)
     return pagination.response(query)
 
 
@@ -638,12 +737,12 @@ async def list_submissions(
 async def get_submission(
     id: str,
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
-    submission = db.query(SubmissionMetadata).get(id)
+    submission: Optional[models.SubmissionMetadata] = db.query(SubmissionMetadata).get(id)
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
-    _ = crud.try_get_submission_lock(db, submission.id, user.id)
+
     if user.is_admin or crud.can_read_submission(db, id, user.orcid):
         permission_level = None
         if user.is_admin or user.orcid in submission.owners:
@@ -654,16 +753,21 @@ async def get_submission(
             permission_level = models.SubmissionEditorRole.metadata_contributor.value
         elif user.orcid in submission.viewers:
             permission_level = models.SubmissionEditorRole.viewer.value
-        return schemas_submission.SubmissionMetadataSchema(
+        submission_metadata_schema = schemas_submission.SubmissionMetadataSchema(
             status=submission.status,
             id=submission.id,
             metadata_submission=submission.metadata_submission,
             author_orcid=submission.author_orcid,
             created=submission.created,
             author=schemas.User(**submission.author.__dict__),
-            locked_by=schemas.User(**submission.locked_by.__dict__),
             permission_level=permission_level,
+            templates=submission.templates,
+            study_name=submission.study_name,
         )
+        if submission.locked_by is not None:
+            submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
+        return submission_metadata_schema
+
     raise HTTPException(status_code=403, detail="Must have access.")
 
 
@@ -709,7 +813,7 @@ async def update_submission(
     id: str,
     body: schemas_submission.SubmissionMetadataSchemaPatch,
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
     submission = db.query(SubmissionMetadata).get(id)
     body_dict = body.dict(exclude_unset=True)
@@ -728,12 +832,22 @@ async def update_submission(
             status_code=400,
             detail="This submission is currently being edited by a different user.",
         )
-
+    # Create Github issue when metadata is being submitted
+    if (
+        submission.status == "in-progress"
+        and body_dict.get("status", None) == "Submitted- Pending Review"
+    ):
+        create_github_issue(submission, user)
     # Merge the submission metadata dicts
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
     )
-
+    # TODO: remove the child properties "studyName" and "templates" in favor of the top-
+    # level property. Requires some coordination between this API and its clients.
+    if "studyForm" in body_dict["metadata_submission"]:
+        submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
+    if "templates" in body_dict["metadata_submission"]:
+        submission.templates = body_dict["metadata_submission"]["templates"]
     # Update permissions and status iff the user is an "owner"
     if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner:
         new_permissions = body_dict.get("permissions", None)
@@ -747,6 +861,77 @@ async def update_submission(
     return submission
 
 
+def create_github_issue(submission, user):
+    settings = Settings()
+    gh_url = str(settings.github_issue_url)
+    token = settings.github_authentication_token
+    assignee = settings.github_issue_assignee
+    # If the settings for issue creation weren't supplied return, no need to do anything further
+    if gh_url == None or token == None:
+        return
+
+    # Gathering the fields we want to display in the issue
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
+    studyform = submission.metadata_submission["studyForm"]
+    contextform = submission.metadata_submission["contextForm"]
+    multiomicsform = submission.metadata_submission["multiOmicsForm"]
+    pi = studyform["piName"]
+    piorcid = studyform["piOrcid"]
+    datagenerated = "Yes" if contextform["dataGenerated"] else "No"
+    omicsprocessingtypes = ", ".join(multiomicsform["omicsProcessingTypes"])
+    sampletype = ", ".join(submission.metadata_submission["templates"])
+    sampledata = submission.metadata_submission["sampleData"]
+    numsamples = 0
+    for key in sampledata:
+        numsamples = max(numsamples, len(sampledata[key]))
+
+    # some variable data to supply depending on if data has been generated or not
+    id_dict = {
+        "NCBI ID: ": multiomicsform["NCBIBioProjectId"],
+        "GOLD ID: ": multiomicsform["GOLDStudyId"],
+        "JGI ID: ": multiomicsform["JGIStudyId"],
+        "EMSL ID: ": multiomicsform["studyNumber"],
+        "Alternative IDs: ": ", ".join(multiomicsform["alternativeNames"]),
+    }
+    valid_ids = []
+    for key, value in id_dict.items():
+        if str(value) != "":
+            valid_ids.append(key + value)
+
+    # assemble the body of the API request
+    body_lis = [
+        f"Issue created from host: {settings.host}",
+        f"Submitter: {user.name}, {user.orcid}",
+        f"Submission ID: {submission.id}",
+        f"Has data been generated: {datagenerated}",
+        f"PI name: {pi}",
+        f"PI orcid: {piorcid}",
+        "Status: Submitted -Pending Review",
+        f"Data types: {omicsprocessingtypes}",
+        f"Sample type:{sampletype}",
+        f"Number of samples:{numsamples}",
+    ] + valid_ids
+    body_string = " \n ".join(body_lis)
+    payload_dict = {
+        "title": f"NMDC Submission: {submission.id}",
+        "body": body_string,
+        "assignees": [assignee],
+    }
+
+    payload = json.dumps(payload_dict)
+
+    # make request and log an error or success depending on reply
+    res = requests.post(url=gh_url, data=payload, headers=headers)
+    if res.status_code != 201:
+        logging.error(f"Github issue creation failed with code {res.status_code}")
+        logging.error(res.reason)
+    else:
+        logging.info(f"Github issue creation successful with code {res.status_code}")
+        logging.info(res.reason)
+
+    return res
+
+
 @router.delete(
     "/metadata_submission/{id}",
     tags=["metadata_submission"],
@@ -755,7 +940,7 @@ async def update_submission(
 async def delete_submission(
     id: str,
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
     submission = db.query(SubmissionMetadata).get(id)
     if submission is None:
@@ -778,22 +963,63 @@ async def delete_submission(
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+@router.put("/metadata_submission/{id}/lock")
+async def lock_submission(
+    response: Response,
+    id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> schemas.LockOperationResult:
+    submission: Optional[SubmissionMetadata] = db.query(SubmissionMetadata).get(id)
+    if not submission:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+
+    # Attempt to acquire the lock
+    lock_acquired = crud.try_get_submission_lock(db, submission.id, user.id)
+    if lock_acquired:
+        return schemas.LockOperationResult(
+            success=True,
+            message=f"Lock successfully acquired for submission with ID {id}.",
+            locked_by=submission.locked_by,
+            lock_updated=submission.lock_updated,
+        )
+    else:
+        response.status_code = status.HTTP_409_CONFLICT
+        return schemas.LockOperationResult(
+            success=False,
+            message="This submission is currently locked by a different user.",
+            locked_by=submission.locked_by,
+            lock_updated=submission.lock_updated,
+        )
+
+
 @router.put("/metadata_submission/{id}/unlock")
 async def unlock_submission(
-    id: str, db: Session = Depends(get_db), user: models.User = Depends(login_required)
-) -> str:
+    response: Response,
+    id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> schemas.LockOperationResult:
     submission = db.query(SubmissionMetadata).get(id)
     if not submission:
-        raise HTTPException(status_code=404, detail="Submission not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+
     # Then verify session user has the lock
     has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
     if not has_lock:
-        raise HTTPException(
-            status_code=400, detail="This submission is currently being edited by a different user."
+        response.status_code = status.HTTP_409_CONFLICT
+        return schemas.LockOperationResult(
+            success=False,
+            message="This submission is currently locked by a different user.",
+            locked_by=submission.locked_by,
+            lock_updated=submission.lock_updated,
         )
     else:
         crud.release_submission_lock(db, submission.id)
-        return f"Submission lock released successfully for submission with ID {id}"
+        return schemas.LockOperationResult(
+            success=True,
+            message=f"Submission lock released successfully for submission with ID {id}",
+        )
 
 
 @router.post(
@@ -806,10 +1032,16 @@ async def unlock_submission(
 async def submit_metadata(
     body: schemas_submission.SubmissionMetadataSchemaCreate,
     db: Session = Depends(get_db),
-    user: models.User = Depends(login_required),
+    user: models.User = Depends(get_current_user),
 ):
-    submission = SubmissionMetadata(**body.dict(), author_orcid=user.orcid)
+    submission = SubmissionMetadata(
+        **body.dict(),
+        author_orcid=user.orcid,
+    )
     submission.author_id = user.id
+    submission.study_name = body.metadata_submission.studyForm.studyName
+    submission.templates = body.metadata_submission.templates
+
     db.add(submission)
     db.commit()
     owner_role = SubmissionRole(
@@ -823,6 +1055,36 @@ async def submit_metadata(
     db.commit()
     crud.try_get_submission_lock(db, submission.id, user.id)
     return submission
+
+
+@router.post(
+    "/metadata_submission/suggest",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def suggest_metadata(
+    body: List[schemas_submission.MetadataSuggestionRequest],
+    suggester: SampleMetadataSuggester = Depends(SampleMetadataSuggester),
+    types: Union[List[schemas_submission.MetadataSuggestionType], None] = Query(None),
+    user: models.User = Depends(get_current_user),
+) -> List[schemas_submission.MetadataSuggestion]:
+    response: List[schemas_submission.MetadataSuggestion] = []
+    for item in body:
+        suggestions = suggester.get_suggestions(item.data, types=types)
+        for slot, value in suggestions.items():
+            response.append(
+                schemas_submission.MetadataSuggestion(
+                    type=(
+                        schemas_submission.MetadataSuggestionType.REPLACE
+                        if slot in item.data
+                        else schemas_submission.MetadataSuggestionType.ADD
+                    ),
+                    row=item.row,
+                    slot=slot,
+                    value=value,
+                )
+            )
+    return response
 
 
 @router.get(

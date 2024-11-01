@@ -1,5 +1,10 @@
 <script lang="ts">
-import { defineComponent, ref, watch } from '@vue/composition-api';
+import {
+  computed, defineComponent, ref, watch,
+} from '@vue/composition-api';
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+
 import { types } from '@/encoding';
 import {
   api, Condition, DatabaseSummaryResponse, entityType,
@@ -22,7 +27,7 @@ const FunctionSearchFacets: SearchFacet[] = [
     field: 'id',
     table: 'gene_function',
   },
-  /** ENVO */
+  /** MIxS Environmental Triad */
   {
     field: 'env_broad_scale',
     table: 'biosample',
@@ -72,21 +77,21 @@ const FunctionSearchFacets: SearchFacet[] = [
     table: 'study',
     group: 'Study',
   },
-  /** Omics Processing */
+  /** Data Generation */
   {
     field: 'instrument_name',
     table: 'omics_processing',
-    group: 'Omics Processing',
+    group: 'Data Generation',
   },
   {
     field: 'omics_type',
     table: 'omics_processing',
-    group: 'Omics Processing',
+    group: 'Data Generation',
   },
   {
     field: 'processing_institution',
     table: 'omics_processing',
-    group: 'Omics Processing',
+    group: 'Data Generation',
   },
 ];
 
@@ -102,12 +107,26 @@ export default defineComponent({
       type: Number,
       default: 0,
     },
+    isLoading: {
+      type: Boolean,
+      default: false,
+    },
   },
 
   setup() {
     const filterText = ref('');
     const textSearchResults = ref([] as Condition[]);
     const dbSummary = ref({} as DatabaseSummaryResponse);
+    const biosampleDescription = computed(() => {
+      const { schemaName } = types.biosample;
+      if (schemaName !== undefined) {
+        // @ts-ignore
+        const schema = NmdcSchema.classes[schemaName];
+        return schema.description || '';
+      }
+      return '';
+    });
+
     api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
 
     function dbSummaryForTable(table: entityType, field: string) {
@@ -127,16 +146,19 @@ export default defineComponent({
     watch(filterText, updateSearch);
 
     return {
-      filterText,
-      textSearchResults,
-      setConditions,
-      FunctionSearchFacets,
+      /* data */
+      biosampleDescription,
       conditions: stateRefs.conditions,
       dbSummary,
+      textSearchResults,
+      filterText,
+      FunctionSearchFacets,
+      types,
+      /* methods */
       dbSummaryForTable,
       removeConditions,
+      setConditions,
       toggleConditions,
-      types,
     };
   },
 });
@@ -149,59 +171,82 @@ export default defineComponent({
     permanent
     width="320"
   >
-    <div class="mx-3 my-2">
-      <div
-        v-if="conditions.length"
-        class="text-subtitle-2 primary--text d-flex flex-row"
-      >
-        <span class="grow">Active query terms</span>
-        <v-tooltip
-          bottom
-          open-delay="600"
+    <template #prepend>
+      <div class="mx-3 my-2">
+        <div
+          v-if="conditions.length"
+          class="text-subtitle-2 primary--text d-flex flex-row"
         >
-          <template #activator="{ on, attrs }">
-            <v-btn
-              icon
-              x-small
-              v-bind="attrs"
-              v-on="on"
-              @click="removeConditions"
-            >
-              <v-icon>mdi-filter-off</v-icon>
-            </v-btn>
-          </template>
-          <span>Clear query terms</span>
-        </v-tooltip>
+          <span class="grow">Active query terms</span>
+          <v-tooltip
+            bottom
+            open-delay="600"
+          >
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                x-small
+                v-bind="attrs"
+                v-on="on"
+                @click="removeConditions"
+              >
+                <v-icon>mdi-filter-off</v-icon>
+              </v-btn>
+            </template>
+            <span>Clear query terms</span>
+          </v-tooltip>
+        </div>
       </div>
-    </div>
 
-    <ConditionChips
-      :conditions="conditions"
-      :db-summary="dbSummary"
-      class="ma-3"
-      @remove="removeConditions([$event])"
-    >
-      <template #menu="{ field, table, isOpen, toggleMenu }">
-        <MenuContent
-          v-bind="{
-            field,
-            table,
-            isOpen,
-            conditions,
-            summary: dbSummaryForTable(table, field),
-          }"
-          update
-          @select="setConditions($event.conditions)"
-          @close="toggleMenu(false)"
-        />
-      </template>
-    </ConditionChips>
+      <ConditionChips
+        :conditions="conditions"
+        :db-summary="dbSummary"
+        class="ma-3"
+        style="max-height: 50vh; overflow: auto;"
+        @remove="removeConditions([$event])"
+      >
+        <template #menu="{ field, table, isOpen, toggleMenu }">
+          <MenuContent
+            v-bind="{
+              field,
+              table,
+              isOpen,
+              conditions,
+              summary: dbSummaryForTable(table, field),
+            }"
+            update
+            @select="setConditions($event.conditions)"
+            @close="toggleMenu(false)"
+          />
+        </template>
+      </ConditionChips>
 
-    <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
-      Found {{ resultsCount }} results.
-    </div>
+      <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
+        <span v-if="isLoading">
+          Loading results...
+        </span>
+        <span v-else>Found {{ resultsCount }} samples.
+          <v-tooltip
+            bottom
+            open-delay="600"
+          >
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                x-small
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon>mdi-help-circle</v-icon>
+              </v-btn>
+            </template>
+            <span>{{ biosampleDescription }}</span>
+          </v-tooltip>
+        </span>
+      </div>
 
-    <v-divider class="my-3" />
+      <v-divider class="my-3" />
+    </template>
 
     <FacetedSearch
       :filter-text.sync="filterText"

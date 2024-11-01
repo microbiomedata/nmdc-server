@@ -1,6 +1,8 @@
 <script lang="ts">
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc.schema.json';
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
+  computed,
   defineComponent,
   onMounted,
   ref,
@@ -15,8 +17,8 @@ import {
   isOwner,
   canEditSubmissionMetadata,
 } from '../store';
+import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
-import { api } from '../../../data/api';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 
 export default defineComponent({
@@ -24,7 +26,7 @@ export default defineComponent({
   setup() {
     const formRef = ref();
 
-    const currentUserOrcid = ref('');
+    const currentUserOrcid = computed(() => stateRefs.user.value?.orcid);
 
     const permissionHelpText = ref([
       {
@@ -54,6 +56,14 @@ export default defineComponent({
       });
     }
 
+    function addFundingSource() {
+      if (studyForm.fundingSources === null || studyForm.fundingSources.length === 0) {
+        studyForm.fundingSources = [''];
+      } else {
+        studyForm.fundingSources.push('');
+      }
+    }
+
     function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
       return [
         (v: string) => !!v || msg,
@@ -69,7 +79,7 @@ export default defineComponent({
     };
 
     const uniqueOrcidRule = (idx: number) => (v: string) => {
-      if (idx > studyForm.contributors.length) return true;
+      if (idx > studyForm.contributors.length || !v) return true;
       const existingOrcids = new Set(studyForm.contributors.filter((contributor, contributorListIndex) => idx !== contributorListIndex).map((contributor) => contributor.orcid));
       return !existingOrcids.has(v) || 'ORCID iDs must be unique';
     };
@@ -84,7 +94,6 @@ export default defineComponent({
 
     onMounted(async () => {
       formRef.value.validate();
-      currentUserOrcid.value = await api.myOrcid();
     });
 
     return {
@@ -94,6 +103,7 @@ export default defineComponent({
       NmdcSchema,
       Definitions,
       addContributor,
+      addFundingSource,
       requiredRules,
       permissionLevelChoices,
       isOwner,
@@ -114,7 +124,7 @@ export default defineComponent({
       <submission-docs-link anchor="study" />
     </div>
     <div class="text-h5">
-      {{ NmdcSchema.$defs.Study.description }}
+      {{ NmdcSchema.classes.Study.description }}
     </div>
     <submission-permission-banner
       v-if="!canEditSubmissionMetadata()"
@@ -213,6 +223,59 @@ export default defineComponent({
         class="my-2"
       />
       <div class="text-h4">
+        Funding Sources
+      </div>
+      <div class="text-body-1 mb-2">
+        {{ "Sources of funding for this study." }}
+      </div>
+      <div
+        v-for="_, i in studyForm.fundingSources"
+        :key="`fundingSource${i}`"
+        class="d-flex"
+      >
+        <v-card class="d-flex flex-column grow pa-4 mb-4">
+          <div class="d-flex">
+            <v-text-field
+              v-if="studyForm.fundingSources !== null"
+              v-model="studyForm.fundingSources[i]"
+              :rules="requiredRules('Field cannot be empty.')"
+              label="Funding Source *"
+              :hint="Definitions.fundingSources"
+              outlined
+              dense
+              persistent-hint
+              class="mb-2 mr-3"
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-text-field>
+          </div>
+        </v-card>
+        <v-btn
+          v-if="studyForm.fundingSources !== null"
+          icon
+          :disabled="!isOwner()"
+          @click="studyForm.fundingSources.splice(i, 1)"
+        >
+          <v-icon>mdi-minus-circle</v-icon>
+        </v-btn>
+      </div>
+      <v-btn
+        class="mb-4"
+        depressed
+        :disabled="!canEditSubmissionMetadata()"
+        @click="addFundingSource"
+      >
+        <v-icon class="pr-1">
+          mdi-plus-circle
+        </v-icon>
+        Add Funding Source
+      </v-btn>
+      <template #message="{ message }">
+        <span v-html="message" />
+      </template>
+      <div class="text-h4">
         Contributors
       </div>
       <div class="text-body-1 mb-2">
@@ -255,7 +318,7 @@ export default defineComponent({
             <v-select
               v-model="contributor.roles"
               :rules="[v => v.length >= 1 || 'At least one role is required']"
-              :items="NmdcSchema.$defs.CreditEnum.enum"
+              :items="Object.keys(NmdcSchema.enums.CreditEnum.permissible_values)"
               label="CRediT Roles *"
               :hint="Definitions.contributorRoles"
               deletable-chips
@@ -284,6 +347,7 @@ export default defineComponent({
               outlined
               dense
               persistent-hint
+              @change="() => formRef.validate()"
             >
               <template #prepend-inner>
                 <v-tooltip

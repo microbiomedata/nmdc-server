@@ -2,15 +2,18 @@ import re
 from typing import Optional
 
 import requests
-from pydantic import root_validator, validator
+from pydantic.v1 import root_validator, validator
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server.crud import create_study, get_doi
 from nmdc_server.ingest.common import extract_extras, extract_value
 from nmdc_server.ingest.doi import upsert_doi
+from nmdc_server.logger import get_logger
 from nmdc_server.models import PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
+
+logger = get_logger(__name__)
 
 
 def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional[str]) -> str:
@@ -20,8 +23,12 @@ def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional
 
     image_data = None
     if url:
-        r = requests.get(url)
-        if r.ok:
+        try:
+            r = requests.get(url)
+            r.raise_for_status()
+        except Exception as e:
+            logger.error(f"Failed to download image for {name} from {url} : {e}")
+        else:
             image_data = r.content
 
     pi = PrincipalInvestigator(name=name, image=image_data, orcid=orcid)
@@ -64,6 +71,7 @@ def load(db: Session, cursor: Cursor):
             pi_orcid = pi_obj.get("orcid")
             obj["principal_investigator_id"] = get_or_create_pi(db, pi_name, pi_url, pi_orcid)
             obj["principal_investigator_websites"] = obj.pop("websites", [])
+            obj["pricipal_investigator_image_url"] = pi_url
         obj["image"] = get_study_image_data(obj.pop("study_image", []))
         dois = obj.pop("associated_dois", None)
         if dois:
@@ -71,7 +79,16 @@ def load(db: Session, cursor: Cursor):
                 doi["doi_value"] = transform_doi(doi.pop("doi_value"))
 
             for doi in dois:
-                upsert_doi(db, **doi)
+                upsert_doi(
+                    db,
+                    doi_value=doi["doi_value"],
+                    doi_category=doi["doi_category"],
+                    doi_provider=doi.get("doi_provider", ""),
+                )
+
+        protocol_links = obj.pop("protocol_link", None)
+        if protocol_links:
+            obj["relevant_protocols"] = [p["url"] for p in protocol_links if "url" in p]
 
         new_study = create_study(db, Study(**obj))
         if dois:

@@ -16,7 +16,7 @@ import useFacetSummaryData from '@/use/useFacetSummaryData';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import useClockGate from '@/use/useClockGate';
 import SampleListExpansion from '@/components/SampleListExpansion.vue';
-
+import AppBanner from '@/components/AppBanner.vue';
 import BulkDownload from '@/components/BulkDownload.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
@@ -27,6 +27,7 @@ export default defineComponent({
   name: 'SearchLayout',
 
   components: {
+    AppBanner,
     BiosampleVisGroup,
     BulkDownload,
     EnvironmentVisGroup,
@@ -153,7 +154,7 @@ export default defineComponent({
         })),
       })));
 
-    const loggedInUser = computed(() => typeof stateRefs.user.value === 'string');
+    const loggedInUser = computed(() => stateRefs.user.value !== null);
 
     const vistab = ref(0);
     const gatedOmicsVisConditions = useClockGate(
@@ -203,7 +204,10 @@ export default defineComponent({
 
 <template>
   <div>
-    <SearchSidebar :results-count="biosample.data.results.count" />
+    <SearchSidebar
+      :results-count="biosample.data.results.count"
+      :is-loading="biosample.loading.value"
+    />
     <v-main>
       <v-progress-linear
         v-show="biosample.loading.value || study.loading.value"
@@ -211,6 +215,8 @@ export default defineComponent({
         background-opacity="0"
         style="position: fixed; top: 64; z-index: 2;"
       />
+      <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
+      <AppBanner v-if="true" />
       <v-container
         fluid
         class="py-0"
@@ -224,7 +230,7 @@ export default defineComponent({
                   height="30px"
                 >
                   <v-tab key="omics">
-                    Omics
+                    Data Type
                   </v-tab>
                   <v-tab key="environments">
                     Environment
@@ -614,8 +620,13 @@ export default defineComponent({
               <div class="ma-3">
                 <div class="d-flex align-center">
                   <v-card-title class="grow py-0">
-                    {{ biosample.data.results.count }}
-                    {{ biosample.data.results.count === 1 ? 'Sample' : 'Samples' }}
+                    <span v-if="biosample.loading.value">
+                      Samples
+                    </span>
+                    <span v-else>
+                      {{ biosample.data.results.count }}
+                      {{ biosample.data.results.count === 1 ? 'Sample' : 'Samples' }}
+                    </span>
                   </v-card-title>
                   <v-spacer />
                   <div

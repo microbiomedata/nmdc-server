@@ -15,9 +15,8 @@ module.exports = {
       '/static': {
         target: 'http://localhost:8000/',
       },
-      '/DataHarmonizer': {
-        target: 'http://localhost:3333',
-        pathRewrite: { '^/DataHarmonizer': '' },
+      '/auth': {
+        target: 'http://localhost:8000',
       },
     },
   },

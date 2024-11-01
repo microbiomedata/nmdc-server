@@ -18,11 +18,20 @@ EnvLocalScaleTerm = aliased(models.EnvoTerm)
 EnvMediumAncestor = aliased(models.EnvoAncestor)
 EnvMediumTerm = aliased(models.EnvoTerm)
 MetaPGeneFunction = aliased(models.GeneFunction)
+MetaTGeneFunction = aliased(models.GeneFunction)
 
 
 class KeggTerms:
     ORTHOLOGY = ("KEGG.ORTHOLOGY:K", "K")
-    PATHWAY = ("KEGG.PATHWAY:MAP", "MAP")
+    PATHWAY = (
+        [
+            "KEGG.PATHWAY:MAP",
+            "KEGG.PATHWAY:EC",
+            "KEGG.PATHWAY:RN",
+            "KEGG.PATHWAY:KO",
+        ],
+        "MAP",
+    )
     MODULE = ("KEGG.MODULE:M", "M")
 
 
@@ -33,6 +42,8 @@ class Table(Enum):
     reads_qc = "reads_qc"
     metagenome_assembly = "metagenome_assembly"
     metagenome_annotation = "metagenome_annotation"
+    metatranscriptome_assembly = "metatranscriptome_assembly"
+    metatranscriptome_annotation = "metatranscriptome_annotation"
     metaproteomic_analysis = "metaproteomic_analysis"
     mags_analysis = "mags_analysis"
     nom_analysis = "nom_analysis"
@@ -41,6 +52,7 @@ class Table(Enum):
     metatranscriptome = "metatranscriptome"
     gene_function = "gene_function"
     metap_gene_function = "metap_gene_function"
+    metat_gene_function = "metat_gene_function"
     data_object = "data_object"
 
     env_broad_scale = "env_broad_scale"
@@ -65,6 +77,8 @@ DataObjectMagsAnalysis = aliased(models.DataObject)
 DataObjectReadBasedAnalysis = aliased(models.DataObject)
 DataObjectMetabolomicsAnalysis = aliased(models.DataObject)
 DataObjectMetatranscriptome = aliased(models.Metatranscriptome)
+DataObjectMetatranscriptomeAssembly = aliased(models.DataObject)
+DataObjectMetatranscriptomeAnnotation = aliased(models.DataObject)
 
 
 _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
@@ -73,7 +87,9 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.omics_processing: models.OmicsProcessing,
     Table.reads_qc: models.ReadsQC,
     Table.metagenome_assembly: models.MetagenomeAssembly,
+    Table.metatranscriptome_assembly: models.MetatranscriptomeAssembly,
     Table.metagenome_annotation: models.MetagenomeAnnotation,
+    Table.metatranscriptome_annotation: models.MetatranscriptomeAnnotation,
     Table.metaproteomic_analysis: models.MetaproteomicAnalysis,
     Table.mags_analysis: models.MAGsAnalysis,
     Table.nom_analysis: models.NOMAnalysis,
@@ -82,6 +98,7 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.metabolomics_analysis: models.MetabolomicsAnalysis,
     Table.gene_function: models.GeneFunction,
     Table.metap_gene_function: MetaPGeneFunction,
+    Table.metat_gene_function: MetaTGeneFunction,
     Table.env_broad_scale: EnvBroadScaleTerm,
     Table.env_local_scale: EnvLocalScaleTerm,
     Table.env_medium: EnvMediumTerm,
@@ -93,6 +110,8 @@ workflow_execution_tables = {
     Table.reads_qc,
     Table.metagenome_assembly,
     Table.metagenome_annotation,
+    Table.metatranscriptome_assembly,
+    Table.metatranscriptome_annotation,
     Table.metaproteomic_analysis,
     Table.mags_analysis,
     Table.nom_analysis,

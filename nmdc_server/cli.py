@@ -1,4 +1,7 @@
 import logging
+import os
+import subprocess
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -9,7 +12,6 @@ from nmdc_server import jobs
 from nmdc_server.config import Settings
 from nmdc_server.database import SessionLocalIngest
 from nmdc_server.ingest import errors
-from nmdc_server.logger import get_logger
 
 
 @click.group()
@@ -72,9 +74,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         level = logging.INFO
     elif verbose > 1:
         level = logging.DEBUG
-    logger = get_logger(__name__)
     logging.basicConfig(level=level, format="%(message)s")
-    logger.setLevel(logging.INFO)
 
     jobs.do_ingest(function_limit, skip_annotation)
 
@@ -177,3 +177,96 @@ def shell(print_sql: bool, script: Optional[Path]):
         c.InteractiveShellApp.file_to_run = script
 
     start_ipython(argv=[], config=c)
+
+
+@cli.command()
+@click.option("-u", "--user", help="NERSC username", default=os.getenv("USER"), show_default=True)
+@click.option("-h", "--host", help="NERSC host", default="dtn01.nersc.gov", show_default=True)
+@click.option("--list-backups", is_flag=True, help="Only list available backup filenames")
+@click.option(
+    "-f",
+    "--backup-file",
+    help=(
+        "Filename in NERSC's backup directory to load. "
+        "If not provided, the latest backup will be loaded."
+    ),
+)
+@click.option(
+    "-k",
+    "--key-file",
+    default="/tmp/nersc",
+    show_default=True,
+    help="Path to NERSC SSH key file within Docker container. Use if not using standard mounting.",
+)
+def load_db(key_file, user, host, list_backups, backup_file):
+    """Load a local database from a production backup on NERSC."""
+    pgdump_dir = "/global/cfs/cdirs/m3408/pgdump"
+
+    if list_backups or not backup_file:
+        click.echo("Finding latest production backups...")
+        proc = subprocess.run(
+            [
+                "ssh",
+                "-i",
+                key_file,
+                "-o",
+                "StrictHostKeyChecking=no",
+                f"{user}@{host}",
+                f'find {pgdump_dir} -type f -iname "*pg_main-prod*.dump" -printf "%f\n"',
+            ],
+            capture_output=True,
+            encoding="utf-8",
+        )
+        if proc.returncode != 0:
+            click.echo("Error finding backups:")
+            print(proc.stderr)
+            sys.exit(1)
+
+        dumps = sorted(proc.stdout.splitlines())
+        if list_backups:
+            click.echo("Available backups:")
+            for dump in dumps:
+                click.echo(dump)
+            return
+
+        if not dumps:
+            click.echo("No backups found")
+            sys.exit(1)
+
+        backup_file = dumps[-1]
+
+    if not (Path(os.getcwd()) / backup_file).exists():
+        click.echo(f"Downloading {backup_file}...")
+        subprocess.run(
+            ["scp", "-i", key_file, f"{user}@{host}:{pgdump_dir}/{backup_file}", "."],
+            check=True,
+            encoding="utf-8",
+        )
+
+    click.echo(f"Restoring from {backup_file}...")
+    settings = Settings()
+    # Use `Popen.communicate()` instead of `run()` to avoid buffering output
+    open_proc = subprocess.Popen(
+        [
+            "pg_restore",
+            "--dbname",
+            settings.current_db_uri,
+            "--clean",
+            "--if-exists",
+            "--verbose",
+            "--single-transaction",
+            backup_file,
+        ],
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+        encoding="utf-8",
+    )
+    open_proc.communicate()
+    if open_proc.returncode != 0:
+        sys.exit(1)
+
+    click.secho(f"\nSuccessfully loaded {settings.current_db_uri}", fg="green")
+
+
+if __name__ == "__main__":
+    cli()

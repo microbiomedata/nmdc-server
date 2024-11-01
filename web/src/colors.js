@@ -23,4 +23,5 @@ export default {
   metagenome: blue,
   metatranscriptome: green,
   sequencing: red,
+  success: green,
 };

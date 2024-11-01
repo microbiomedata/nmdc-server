@@ -113,6 +113,13 @@ export default defineComponent({
         />
         <v-checkbox
           v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Metagenome (Long Read)"
+          value="mg-lr-jgi"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
           label="Metatranscriptome"
           value="mt-jgi"
           :disabled="templateChoiceDisabled"

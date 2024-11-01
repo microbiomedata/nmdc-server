@@ -7,6 +7,5 @@ __pycache__/
 .idea/
 .venv
 vetur.config.js
-*.sql
 **.local**
 build/**

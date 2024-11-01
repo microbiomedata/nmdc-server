@@ -3,6 +3,7 @@ import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
 import { clone, forEach } from 'lodash';
+import axios from 'axios';
 import * as api from './api';
 import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import { User } from '@/data/api';
@@ -129,6 +130,7 @@ const studyFormDefault = {
   piOrcid: '',
   linkOutWebpage: [],
   studyDate: null,
+  fundingSources: [] as string[] | null,
   description: '',
   notes: '',
   contributors: [] as {
@@ -256,9 +258,9 @@ function reset() {
   status.value = submissionStatus.InProgress;
 }
 
-async function incrementalSaveRecord(id: string) {
+async function incrementalSaveRecord(id: string): Promise<number | void> {
   if (!canEditSampleMetadata()) {
-    return;
+    return Promise.resolve();
   }
 
   let payload: Partial<api.MetadataSubmission> = {};
@@ -275,9 +277,13 @@ async function incrementalSaveRecord(id: string) {
   }
 
   if (hasChanged.value) {
-    await api.updateRecord(id, payload, undefined, permissions);
+    const response = await api.updateRecord(id, payload, undefined, permissions);
+    hasChanged.value = 0;
+    return response.httpStatus;
   }
   hasChanged.value = 0;
+  // Return a resolved Promise when hasChanged.value is false
+  return Promise.resolve();
 }
 
 async function generateRecord() {
@@ -297,8 +303,22 @@ async function loadRecord(id: string) {
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
-  _submissionLockedBy = val.locked_by;
   _permissionLevel = (val.permission_level as permissionLevelValues);
+
+  try {
+    const lockResponse = await api.lockSubmission(id);
+    _submissionLockedBy = lockResponse.locked_by || null;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 409) {
+        // Another user has the lock
+        _submissionLockedBy = error.response.data.locked_by || null;
+      }
+    } else {
+      // Something went wrong, and we don't know who has the lock
+      _submissionLockedBy = null;
+    }
+  }
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });

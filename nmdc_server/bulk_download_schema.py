@@ -2,6 +2,8 @@ from datetime import datetime
 from typing import List
 from uuid import UUID
 
+from pydantic import ConfigDict
+
 from nmdc_server.data_object_filters import DataObjectFilter
 from nmdc_server.query import ConditionSchema
 from nmdc_server.schemas import FileDownloadMetadata
@@ -17,9 +19,7 @@ class BulkDownloadBase(FileDownloadMetadata):
 class BulkDownload(BulkDownloadBase):
     id: UUID
     created: datetime
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class BulkDownloadCreate(BulkDownloadBase):

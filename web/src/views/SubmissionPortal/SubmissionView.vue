@@ -1,10 +1,15 @@
 <script lang="ts">
 import {
-  defineComponent, PropType, toRef, watch,
+  computed,
+  defineComponent,
+  PropType,
+  toRef,
+  watch,
 } from '@vue/composition-api';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';
 import { loadRecord } from './store';
+import AppBanner from '@/components/AppBanner.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
@@ -12,7 +17,12 @@ import LoginPrompt from '@/views/SubmissionPortal/Components/LoginPrompt.vue';
 
 export default defineComponent({
   components: {
-    IconBar, IntroBlurb, LoginPrompt, TitleBanner,
+    AppBanner,
+
+    IconBar,
+    IntroBlurb,
+    LoginPrompt,
+    TitleBanner,
   },
   props: {
     id: {
@@ -20,7 +30,7 @@ export default defineComponent({
       default: null,
     },
   },
-  setup(props) {
+  setup(props, { root }) {
     const req = useRequest();
 
     function load() {
@@ -32,15 +42,25 @@ export default defineComponent({
     watch(toRef(props, 'id'), load);
     load();
 
-    return { stateRefs, req };
+    const showBanner = computed(() => root.$route.path === '/submission/home');
+
+    return {
+      stateRefs,
+      req,
+      showBanner,
+    };
   },
 });
 </script>
 
 <template>
   <v-main>
-    <v-container v-if="!stateRefs.user.value && !req.loading.value">
-      <v-container class="mt-4">
+    <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
+    <AppBanner v-if="true" />
+    <v-container
+      v-if="!stateRefs.user.value && !req.loading.value"
+    >
+      <v-container class="mt-4 ">
         <v-row>
           <v-col class="pb-0">
             <TitleBanner />

@@ -10,7 +10,14 @@ import { api } from '@/data/api';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
-import { HarmonizerApi, HARMONIZER_TEMPLATES } from './harmonizerApi';
+import {
+  HarmonizerApi,
+  HARMONIZER_TEMPLATES,
+  EMSL,
+  JGI_MG,
+  JGT_MT,
+  JGI_MG_LR,
+} from './harmonizerApi';
 import {
   packageName,
   sampleData,
@@ -25,10 +32,12 @@ import {
   canEditSampleMetadata,
   isOwner,
 } from './store';
+import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
+import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -52,6 +61,8 @@ const ColorKey = {
     color: '#ff91a4',
   },
 };
+
+const HELP_SIDEBAR_WIDTH = '300px';
 
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
 
@@ -83,13 +94,9 @@ const ALWAYS_READ_ONLY_COLUMNS = [
   'dna_seq_project_name',
 ];
 
-// TODO: can this be imported from elsewhere?
-const EMSL = 'emsl';
-const JGI_MG = 'jgi_mg';
-const JGT_MT = 'jgi_mt';
-
 export default defineComponent({
   components: {
+    ContactCard,
     FindReplace,
     SubmissionStepper,
     SubmissionDocsLink,
@@ -114,34 +121,36 @@ export default defineComponent({
       }
       return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
     });
-    const activeInvalidCells = computed(() => invalidCells.value[activeTemplateKey.value] || {});
 
     const submitDialog = ref(false);
 
+    const snackbar = ref(false);
+    const importErrorSnackbar = ref(false);
+    const notImportedWorksheetNames = ref([] as string[]);
+
     watch(activeTemplate, () => {
-      harmonizerApi.loadData(activeTemplateData.value);
+      // WARNING: It's important to do the column settings update /before/ data. Otherwise,
+      // columns will not be rendered with the correct width.
       harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
       // if we're not on the first tab, the common columns should be read-only
       if (activeTemplateKey.value !== templateList.value[0]) {
         harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
-    });
-
-    watch(activeInvalidCells, () => {
-      harmonizerApi.setInvalidCells(activeInvalidCells.value);
+      harmonizerApi.loadData(activeTemplateData.value);
+      harmonizerApi.setInvalidCells(invalidCells.value[activeTemplateKey.value] || {});
     });
 
     const validationErrors = computed(() => {
       const remapped: ValidationErrors = {};
-      const invalid: Record<number, Record<number, string>> = activeInvalidCells.value;
+      const invalid: Record<number, Record<number, string>> = invalidCells.value[activeTemplateKey.value] || {};
       if (Object.keys(invalid).length) {
         remapped['All Errors'] = [];
       }
       Object.entries(invalid).forEach(([row, rowErrors]) => {
         Object.entries(rowErrors).forEach(([col, errorText]) => {
           const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
-          const issue = errorText || 'Validation Error';
+          const issue = errorText || 'Other Validation Error';
           if (has(remapped, issue)) {
             remapped[issue].push(entry);
           } else {
@@ -162,14 +171,20 @@ export default defineComponent({
       ])),
     ));
 
-    const onDataChange = () => {
+    const isSaving = ref();
+    const saveSuccess = ref();
+    const onBeforeChange = () => {
+      isSaving.value = true;
+    };
+    const onDataChange = async () => {
       hasChanged.value += 1;
       const data = harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      incrementalSaveRecord(root.$route.params.id);
+      const httpStatus = await incrementalSaveRecord(root.$route.params.id);
       tabsValidated.value[activeTemplateKey.value] = false;
+      saveSuccess.value = httpStatus === 200;
+      isSaving.value = false;
     };
-
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
     onMounted(async () => {
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
@@ -181,6 +196,7 @@ export default defineComponent({
         await harmonizerApi.init(r, schema, activeTemplate.value.schemaClass, goldEcosystemTree);
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
+        harmonizerApi.addBeforeChangeHook(onBeforeChange);
         harmonizerApi.addChangeHook(onDataChange);
         if (!canEditSampleMetadata()) {
           harmonizerApi.setTableReadOnly();
@@ -213,6 +229,7 @@ export default defineComponent({
       if (!valid && !sidebarOpen.value) {
         sidebarOpen.value = true;
       }
+
       invalidCells.value = {
         ...invalidCells.value,
         [activeTemplateKey.value]: result,
@@ -225,6 +242,8 @@ export default defineComponent({
         ...tabsValidated.value,
         [activeTemplateKey.value]: valid,
       };
+
+      snackbar.value = Object.values(tabsValidated.value).every((value) => value);
     }
 
     const canSubmit = computed(() => {
@@ -235,7 +254,7 @@ export default defineComponent({
       return allTabsValid && isOwner();
     });
 
-    const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSections.value)
+    const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
         const val = {
           text: columnName ? `  ${columnName}` : sectionName,
@@ -289,6 +308,9 @@ export default defineComponent({
       }
       if (templateKey === JGI_MG) {
         return row_types.includes('metagenomics');
+      }
+      if (templateKey === JGI_MG_LR) {
+        return row_types.includes('metagenomics_long_read');
       }
       if (templateKey === JGT_MT) {
         return row_types.includes('metatranscriptomics');
@@ -366,7 +388,7 @@ export default defineComponent({
         ], {
           skipHeader: true,
         });
-        utils.book_append_sheet(workbook, worksheet, template.displayName);
+        utils.book_append_sheet(workbook, worksheet, template.excelWorksheetName || template.displayName);
       });
       writeFile(workbook, EXPORT_FILENAME, { compression: true });
     }
@@ -383,9 +405,13 @@ export default defineComponent({
         }
         const workbook = read(event.target.result);
         const imported = {} as Record<string, any>;
+        const notImported = [] as string[];
         Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
-          const template = Object.values(HARMONIZER_TEMPLATES).find((template) => template.displayName === name);
+          const template = Object.values(HARMONIZER_TEMPLATES).find((template) => (
+            template.excelWorksheetName === name || template.displayName === name
+          ));
           if (!template || !template.sampleDataSlot || !template.schemaClass) {
+            notImported.push(name);
             return;
           }
 
@@ -404,6 +430,11 @@ export default defineComponent({
             template.schemaClass,
           );
         });
+
+        // Alert the user if any worksheets were not imported
+        notImportedWorksheetNames.value = notImported;
+        importErrorSnackbar.value = notImported.length > 0;
+
         // Load imported data
         sampleData.value = imported;
 
@@ -432,8 +463,6 @@ export default defineComponent({
         return;
       }
 
-      onDataChange();
-
       await validate();
 
       // When changing templates we may need to populate the common columns
@@ -445,9 +474,12 @@ export default defineComponent({
       activeTemplate.value = HARMONIZER_TEMPLATES[nextTemplate];
       harmonizerApi.useTemplate(HARMONIZER_TEMPLATES[nextTemplate].schemaClass);
       harmonizerApi.addChangeHook(onDataChange);
+      harmonizerApi.addBeforeChangeHook(onBeforeChange);
     }
 
     return {
+      APP_HEADER_HEIGHT,
+      HELP_SIDEBAR_WIDTH,
       ColorKey,
       HARMONIZER_TEMPLATES,
       columnVisibility,
@@ -462,6 +494,8 @@ export default defineComponent({
       packageName,
       fields,
       highlightedValidationError,
+      isSaving,
+      saveSuccess,
       sidebarOpen,
       validationItems,
       validationActiveCategory,
@@ -475,7 +509,10 @@ export default defineComponent({
       submissionStatus,
       status,
       submitDialog,
+      snackbar,
       schemaLoading,
+      importErrorSnackbar,
+      notImportedWorksheetNames,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -495,8 +532,8 @@ export default defineComponent({
 
 <template>
   <div
-    style="overflow-y: hidden; overflow-x: hidden;"
-    class="d-flex flex-column fill-height"
+    :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT}px)`}"
+    class="d-flex flex-column"
   >
     <SubmissionStepper />
     <submission-permission-banner
@@ -544,6 +581,20 @@ export default defineComponent({
             mdi-refresh
           </v-icon>
         </v-btn>
+        <v-snackbar
+          v-model="snackbar"
+          color="success"
+          timeout="3000"
+        >
+          Validation Passed! You can now submit or continue editing.
+        </v-snackbar>
+        <v-snackbar
+          v-model="importErrorSnackbar"
+          color="error"
+          timeout="5000"
+        >
+          The following worksheet names were not recognized: {{ notImportedWorksheetNames.join(', ') }}
+        </v-snackbar>
         <v-card
           v-if="validationErrorGroups.length"
           color="error"
@@ -599,6 +650,35 @@ export default defineComponent({
           </v-btn>
         </v-card>
         <submission-docs-link anchor="sample-metadata" />
+        <span
+          v-if="isSaving"
+          class="text-center"
+        >
+          <v-progress-circular
+            color="primary"
+            :width="1"
+            size="20"
+            value="70"
+          />
+          Saving progress
+        </span>
+        <span v-if="saveSuccess && !isSaving">
+          <v-icon
+
+            color="green"
+          >
+            mdi-check
+          </v-icon>
+          Changes saved successfully
+        </span>
+        <span v-else-if="saveSuccess === false">
+          <v-icon
+            color="red"
+          >
+            mdi-close
+          </v-icon>
+          Failed to save changes
+        </span>
         <v-spacer />
         <v-autocomplete
           v-model="jumpToModel"
@@ -693,13 +773,13 @@ export default defineComponent({
                 Show section
               </span>
               <v-radio
-                v-for="(value, sectionName) in harmonizerApi.schemaSections.value"
+                v-for="(sectionName, sectionTitle) in harmonizerApi.schemaSectionNames.value"
                 :key="sectionName"
                 :value="sectionName"
               >
                 <template #label>
                   <span>
-                    {{ sectionName }}
+                    {{ sectionTitle }}
                   </span>
                 </template>
               </v-radio>
@@ -724,7 +804,7 @@ export default defineComponent({
             <v-tab>
               <v-badge
                 :content="validationTotalCounts[templateKey] || '!'"
-                :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey] || status !== submissionStatus.InProgress"
+                :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey]"
                 :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
               >
                 {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
@@ -742,28 +822,49 @@ export default defineComponent({
           {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
         </span>
       </v-tooltip>
+      <v-spacer />
+      <v-menu
+        offset-x
+        left
+        z-index="300"
+      >
+        <template #activator="{on, attrs}">
+          <v-btn
+            color="primary"
+            small
+            class="my-2 py-4"
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-icon
+              class="mt-1"
+            >
+              mdi-message-question
+            </v-icon>
+          </v-btn>
+        </template>
+        <ContactCard />
+      </v-menu>
     </v-tabs>
 
-    <div>
-      <div v-if="schemaLoading">
-        Loading...
-      </div>
+    <div v-if="schemaLoading">
+      Loading...
+    </div>
+
+    <div
+      class="harmonizer-style-container harmonizer-and-sidebar"
+    >
       <div
-        class="harmonizer-style-container"
+        id="harmonizer-root"
         :style="{
-          'margin-right': sidebarOpen ? '300px' : '0px'
+          'padding-right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
         }"
-      >
-        <div id="harmonizer-root" />
-      </div>
+      />
 
       <div
+        class="harmonizer-sidebar"
         :style="{
-          'float': 'right',
-          'width': sidebarOpen ? '300px' : '0px',
-          'margin-top': '9px',
-          'font-size': '14px',
-          'height': 'calc(100vh - 362px)'
+          'width': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
         }"
       >
         <v-btn
@@ -835,6 +936,17 @@ export default defineComponent({
               </v-icon>
             </v-btn>
           </div>
+          <div v-else>
+            <div class="mx-2">
+              <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
+                Column Help
+                <v-spacer />
+              </div>
+              <p class="my-2 text--disabled">
+                Click on a cell or column to view help
+              </p>
+            </div>
+          </div>
         </v-navigation-drawer>
       </div>
     </div>
@@ -845,8 +957,7 @@ export default defineComponent({
         id="harmonizer-footer-root"
       />
     </div>
-
-    <div class="d-flex shrink ma-2">
+    <div class="d-flex ma-2">
       <v-btn
         color="gray"
         depressed
@@ -889,7 +1000,7 @@ export default defineComponent({
             v-on="on"
           >
             <v-btn
-              color="primary"
+              color="success"
               depressed
               :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
               :loading="submitLoading"
@@ -897,7 +1008,7 @@ export default defineComponent({
             >
               <span v-if="status === submissionStatus.SubmittedPendingReview || submitCount">
                 <v-icon>mdi-check-circle</v-icon>
-                Done
+                Submitted
               </span>
               <span v-else>
                 3. Submit
@@ -941,6 +1052,10 @@ export default defineComponent({
 </template>
 
 <style lang="scss">
+// Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
+// cannot be nested inside .harmonizer-style-container or else the measurements will be off.
+@import '~data-harmonizer/lib/dist/es/index';
+
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples
   Prevent back button overscrolling
@@ -968,18 +1083,18 @@ html {
   @import '~bootstrap/scss/functions';
   @import '~bootstrap/scss/variables';
   @import '~bootstrap/scss/mixins';
+  @import "~bootstrap/scss/reboot";
+  @import '~bootstrap/scss/type';
   @import '~bootstrap/scss/modal';
   @import '~bootstrap/scss/buttons';
   @import '~bootstrap/scss/forms';
   @import '~bootstrap/scss/input-group';
   @import '~bootstrap/scss/utilities';
-
-  @import '~data-harmonizer/lib/dist/es/index';
 }
 
 .handsontable.listbox td {
-  border-radius:3px;
-  border:1px solid silver;
+  border-radius: 3px;
+  border: 1px solid silver;
   background-color: #DDD;
 
   &:hover, &.current.highlight {
@@ -987,12 +1102,26 @@ html {
   }
 }
 
+.harmonizer-and-sidebar {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.harmonizer-sidebar {
+  font-size: 14px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 0;
+}
+
 /* Grid */
 #harmonizer-root {
-  overflow: hidden;
-  height: calc(100vh - 362px) !important;
-  float: left;
-  margin-top: 8px;
+  width: 100%;
+  height: 100%;
 
   .secondary-header-cell:hover {
     cursor: pointer;
@@ -1006,18 +1135,21 @@ html {
     &.invalid-cell {
       background-color: #ffcccb !important;
     }
+
     &.empty-invalid-cell {
       background-color: #ff91a4 !important;
     }
   }
+
   th {
     text-align: left;
 
     &.required {
-      background-color:yellow;
+      background-color: yellow;
     }
+
     &.recommended {
-      background-color:plum;
+      background-color: plum;
     }
   }
 }
@@ -1031,9 +1163,10 @@ html {
 .listbox {
   white-space: pre !important;
 }
+
 .handsontable.listbox td {
-  border-radius:3px;
-  border:1px solid silver;
+  border-radius: 3px;
+  border: 1px solid silver;
   background-color: #DDD;
 
   &:hover, &.current.highlight {
@@ -1041,7 +1174,9 @@ html {
   }
 }
 
-.field-description-text select {min-width: 95%}
+.field-description-text select {
+  min-width: 95%
+}
 
 #harmonizer-footer-root {
   width: 50%;
@@ -1053,12 +1188,13 @@ html {
 }
 
 .sidebar-toggle {
-  margin-top: -1px;
-  margin-left: -50px;
   background: white;
-  z-index: 500;
+  z-index: 200;
   position: absolute;
-  border-color:rgb(152, 152, 152);
+  top: 0;
+  left: 0;
+  transform: translateX(-100%);
+  border-color: rgb(152, 152, 152);
   border-right-color: rgba(152, 152, 152, 0.0);
 }
 

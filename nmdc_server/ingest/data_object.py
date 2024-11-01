@@ -14,7 +14,7 @@ file_type_map: Dict[str, Tuple[str, str]] = {}
 
 def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
     logger = get_logger(__name__)
-    fields = set(DataObjectCreate.__fields__.keys()) | {"data_object_type"}
+    fields = set(DataObjectCreate.model_fields.keys()) | {"data_object_type"}
     file_type_map: Dict[str, Tuple[str, str]] = {}
 
     # Load descriptors from mongo collection.
