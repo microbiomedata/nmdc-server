@@ -638,6 +638,82 @@ async def download_zip_file(
 
 
 @router.get(
+    "/metadata_submission/mixs",
+    tags=["metadata_submission"],
+)
+async def get_metadata_submissions_mixs(
+    db: Session = Depends(get_db),
+):
+    r"""
+    Generate a report of NMDC submissions that are submitted pending review to allow review
+    of submission triads and evaluate for approval
+    """
+    # Get the submissions from the database.
+    q = crud.get_query_for_submitted_pending_review(db)
+    submissions = q.all()
+
+    # Iterate through the submissions, building the data rows for the report.
+    header_row = [
+        "Submission ID",
+        "Status",
+        "Sample Name",
+        # "Environmental Package/Extension", 
+        # "Environmental Broad Scale", 
+        # "Environmental Local Scale", 
+        # "Environmental Medium",
+    ]
+    data_rows = []
+    for s in submissions:
+        metadata = s.metadata_submission  # creates a concise aliass
+        sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
+        sample_name = []
+
+        # Get templates
+        templates = metadata["templates"] if "templates" in metadata else []
+        for t in templates: 
+            # # Get samples for each template
+            # samples = sample_data["{t}_data"] if "{t}_data" in sample_data else {}
+
+            # # Iterate through each sample and extract the name 
+            # for x in samples:
+            #     # get the sample name first
+            #     name = x["samp_name"] if "samp_name" in x else {}
+            #     sample_name.append(name, ", ")
+
+            sample_name.append(t, ", ")
+        
+        data_row = [
+            s.id, 
+            s.status,
+            sample_name,
+        ]
+        data_rows.append(data_row)
+
+    # Build the report as an in-memory TSV "file" (buffer).
+    # Reference: https://docs.python.org/3/library/csv.html#csv.writer
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter="\t")
+    writer.writerow(header_row)
+    writer.writerows(data_rows)
+
+    # Reset the buffer's internal file pointer to the beginning of the buffer, so that,
+    # when we stream the buffer's contents later, all of its contents are included.
+    buffer.seek(0)
+
+    # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
+    # Reference: https://fastapi.tiangolo.com/advanced/custom-response
+    # Reference: https://mimetype.io/text/tab-separated-values
+    filename = "mixs-report.tsv"
+    response = StreamingResponse(
+        buffer,
+        media_type="text/tab-separated-values",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+    return response
+
+
+@router.get(
     "/metadata_submission/report",
     tags=["metadata_submission"],
 )
