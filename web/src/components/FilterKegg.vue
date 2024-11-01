@@ -1,10 +1,24 @@
 <script lang="ts">
 import {
-  defineComponent, PropType, toRef, ref, watch, nextTick,
+  computed,
+  defineComponent,
+  PropType,
+  toRef,
+  ref,
+  watch,
+  nextTick,
 } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
-import { Condition, entityType, api, KeggTermSearchResponse } from '@/data/api';
-import { keggEncode, stringIsKegg } from '@/encoding';
+import {
+  Condition, entityType, api, KeggTermSearchResponse,
+} from '@/data/api';
+import {
+  keggEncode,
+  stringIsKegg,
+  cogEncode,
+  pfamEncode,
+  geneFunctionType,
+} from '@/encoding';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import useRequest from '@/use/useRequest';
 
@@ -34,19 +48,55 @@ export default defineComponent({
     const search = ref('');
 
     /** Change based on gene type */
-    const description: Ref<string> = ref('');
-    const expectedFormats: Ref<string> = ref('');
-
-    function description(): string {
+    const description = computed(() => {
       switch (props.geneType) {
         case 'kegg':
-          return request(() => api.keggSearch(search.value || ''));
+          return 'KEGG Gene Function search filters results to'
+          + 'samples that have at least one of the chosen KEGG terms.'
+          + 'Orthology, Module, and Pathway are supported.';
         case 'cog':
+          return 'COG Gene Function search filters results to'
+          + 'samples that have at least one of the chosen COG terms.'
+          + 'Term, Function, and Pathway are supported.';
         case 'pfam':
+          return 'Pfam Gene Function search filters results to'
+          + 'samples that have at least one of the chosen Pfam terms.'
+          + 'Accession and Clan are supported.';
         default:
           throw new Error(`Unexpected gene type: ${props.geneType}`);
       }
-    }
+    });
+
+    const expectedFormats = computed(() => {
+      switch (props.geneType) {
+        case 'kegg':
+          return 'K00000, M00000, map00000, ko00000, rn00000, and ec00000';
+        case 'cog':
+          return '';
+        case 'pfam':
+          return '';
+        default:
+          throw new Error(`Unexpected gene type: ${props.geneType}`);
+      }
+    });
+
+    const label = computed(() => {
+      let readableType = '';
+      switch (props.geneType) {
+        case 'kegg':
+          readableType = 'KEGG';
+          break;
+        case 'cog':
+          readableType = 'COG';
+          break;
+        case 'pfam':
+          readableType = 'PFAM';
+          break;
+        default:
+          throw new Error(`Unexpected gene type: ${props.geneType}`);
+      }
+      return `Search for ${readableType} terms`;
+    });
 
     async function geneSearch(): Promise<KeggTermSearchResponse[]> {
       switch (props.geneType) {
@@ -59,8 +109,17 @@ export default defineComponent({
       }
     }
 
+    const encodeFunctionMap: Record<geneFunctionType, (val: string, url: boolean) => string> = {
+      kegg: keggEncode,
+      cog: cogEncode,
+      pfam: pfamEncode,
+    };
+
+    function encode(value: string, url: boolean = false): string {
+      return encodeFunctionMap[props.geneType as geneFunctionType](value, url);
+    }
+
     watch(search, async () => {
-      // MLN change this to be non-kegg specific
       const resp = (await geneSearch())
         .map((v: KeggTermSearchResponse) => ({ text: `${v.term}: ${v.text}`, value: v.term }));
       if (resp.length === 0 && search.value && stringIsKegg(search.value)) {
@@ -71,8 +130,7 @@ export default defineComponent({
 
     const headers: DataTableHeader[] = [
       {
-        // MLN change from KEGG
-        text: 'Kegg Term',
+        text: 'Term',
         value: 'value',
         width: '300',
         sortable: true,
@@ -92,7 +150,7 @@ export default defineComponent({
       const newConditions = [...conditions.value, {
         op: '==',
         field: field.value,
-        value: keggEncode(term),
+        value: encode(term),
         table: table.value,
       }];
       emit('select', { conditions: newConditions });
@@ -114,6 +172,10 @@ export default defineComponent({
       table,
       headers,
       myConditions,
+      description,
+      expectedFormats,
+      label,
+      encode,
       /* Autocomplete */
       loading,
       search,
@@ -132,12 +194,10 @@ export default defineComponent({
     <v-row no-gutters>
       <div class="px-4 text-caption">
         <p>
-          <!-- MLN KEGG-specific stuff -->
           {{ description }}
-          KEGG Gene Function search filters results to
-          samples that have at least one of the chosen KEGG terms.
-          Orthology, Module, and Pathway are supported.
-          Expected formats: <code>K00000, M00000, map00000, ko00000, rn00000, and ec00000</code>
+        </p>
+        <p v-if="expectedFormats">
+          Expected formats: <code>{{ expectedFormats }}</code>
         </p>
         <p class="text-subtitle-2">
           More information at <a href="https://www.genome.jp/kegg/">genome.jp/kegg</a>
@@ -150,7 +210,7 @@ export default defineComponent({
         :loading="loading"
         :items="items"
         :search-input.sync="search"
-        label="Search for KEGG terms"
+        :label="label"
         clearable
         class="px-3 grow"
         dense
@@ -170,7 +230,7 @@ export default defineComponent({
     >
       <template #[`item.value`]="{ item }">
         <!-- MLN change this -->
-        <a :href="keggEncode(item.value, true)">
+        <a :href="encode(item.value, true)">
           {{ item.value }}
         </a>
       </template>

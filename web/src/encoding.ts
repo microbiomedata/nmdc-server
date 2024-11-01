@@ -1,5 +1,7 @@
 import colors from './colors';
-import { entityType, entitySchemaType, KeggTermSearchResponse, api } from './data/api';
+import {
+  entityType, entitySchemaType, KeggTermSearchResponse, api,
+} from './data/api';
 
 export interface EntityData {
   icon: string;
@@ -124,6 +126,46 @@ function keggEncode(v: string, url = false) {
     }
   }
   return v;
+}
+
+function cogEncode(v: string, url = false) {
+  // COG terms, pathways and functions don't need to be transformed
+  // So either just return it with a prefix so our backend can process it.
+  if (!url) {
+    // COG categories are just identified by a single letter
+    if (v.length === 1) {
+      return `COG.FUNCTION${v}`;
+    }
+    // COGs themselves start with this prefix
+    if (v.startsWith('COG')) {
+      return v;
+    }
+    // Pathways are identified by a name. If the other two conditions have not
+    // been met at this point, assume it is a pathway.
+    return `COG.PATHWAY${v}`;
+  }
+  // Or figure out if it is a term, pathway, or function
+  const urlBase = '';
+  if (v.length === 1) {
+    return `${urlBase}/category/${v}`;
+  }
+  if (v.startsWith('COG')) {
+    return `${urlBase}/cog/${v}`;
+  }
+  return `${urlBase}/pathway/${v}`;
+}
+
+function pfamEncode(v: string, url = false) {
+  if (!url) {
+    if (v.startsWith('PF')) {
+      return `PFAM.ENTRY:${v}`;
+    }
+    return `PFAM.CLAN:${v}`;
+  }
+  if (v.startsWith('PF')) {
+    return `https://www.ebi.ac.uk/interpro/entry/pfam/${v}`;
+  }
+  return `https://www.ebi.ac.uk/interpro/set/pfam/${v}`;
 }
 
 function stringIsKegg(v: string) {
@@ -478,14 +520,16 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
     id: {
       icon: 'mdi-dna',
       group: 'Function',
-      name: 'PFAM',
+      name: 'COG',
+      encode: cogEncode,
     },
   },
   pfam_function: {
     id: {
       icon: 'mdi-dna',
       group: 'Function',
-      name: 'COG',
+      name: 'PFAM',
+      encode: pfamEncode,
     },
   },
   biosample: {},
@@ -539,10 +583,13 @@ const MultiomicsValue = {
 
 export {
   types,
+  geneFunctionType,
   ecosystems,
   MultiomicsValue,
   getField,
   keggEncode,
+  cogEncode,
+  pfamEncode,
   stringIsKegg,
   makeSetsFromBitmask,
 };

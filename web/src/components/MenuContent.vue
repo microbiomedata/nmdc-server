@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  defineComponent, PropType, onBeforeUnmount, computed,
+  defineComponent, PropType, onBeforeUnmount, onMounted, computed,
 } from '@vue/composition-api';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
@@ -71,6 +71,10 @@ export default defineComponent({
       return '';
     });
 
+    onMounted(() => {
+      console.log(props);
+    });
+
     return {
       description, fieldDisplayName, getField, urlify,
     };
@@ -114,6 +118,7 @@ export default defineComponent({
         :field="field"
         :table="table"
         :conditions="conditions"
+        :gene-type="table.split('_')[0]"
         @select="$emit('select', $event)"
       />
       <filter-date
