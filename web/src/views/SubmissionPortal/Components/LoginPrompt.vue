@@ -13,22 +13,15 @@ export default defineComponent({
 <template>
   <v-alert
     class="mt-6 mb-0"
+    outlined
+    text
     type="warning"
-    color="primary lighten-2"
+    color="primary"
     prominent
   >
-  <span class="text-h6 font-weight-bold mb-3">
+    <span class="text-h6 font-weight-bold mb-3">
       Login to submit data
     </span>
-    <!-- <p class="body-1">
-            Don't have an ORCID iD? Individuals can
-            <a
-              href="https://support.orcid.org/hc/en-us/articles/360006973953"
-              rel="noreferrer noopener"
-              target="_blank"
-              title="Learn about registering an ORCiD"
-            >get one for free</a>.
-      </p> -->
     <v-btn
       :href="loginHref"
       variant="plain"
