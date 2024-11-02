@@ -28,12 +28,13 @@ export default defineComponent({
     </span>
     <v-btn
       :href="loginHref"
-      variant="plain"
-      elevation="0"
-      style="background: transparent"
+      plain
+      depressed
+      text
       right
       absolute
       class="mr-4"
+      @click="handleLoginClick"
     >
       <img
         width="28px"
