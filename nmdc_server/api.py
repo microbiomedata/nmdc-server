@@ -657,30 +657,51 @@ async def get_metadata_submissions_mixs(
         "Submission ID",
         "Status",
         "Sample Name",
-        # "Environmental Package/Extension", 
-        # "Environmental Broad Scale", 
-        # "Environmental Local Scale", 
-        # "Environmental Medium",
+        "Environmental Package/Extension", 
+        "Environmental Broad Scale", 
+        "Environmental Local Scale", 
+        "Environmental Medium",
     ]
     data_rows = []
     for s in submissions:
         metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
         sample_name = []
+        env_package = metadata["packageName"] if "packageName" in metadata else {}
+        env_broad = []
+        env_local = []
+        env_medium = []
 
         # Get sample names from each sample type 
         for sample_type in sample_data:
             samples = sample_data[sample_type] if sample_type in sample_data else {}
             # Iterate through each sample and extract the name 
             for x in samples:
-                # get the sample name first
+                # Get the sample name 
                 name = x["samp_name"] if "samp_name" in x else {}
                 sample_name.append(name)
+
+                # Get the env broad scale
+                broad = x["env_broad_scale"] if "env_broad_scale" in x else {}
+                env_broad.append(broad)
+
+                # Get the env local scale
+                local = x["env_local_scale"] if "env_local_scale" in x else {}
+                env_local.append(local)
+
+                # Get the env medium
+                medium = x["env_medium"] if "env_medium" in x else {}
+                env_medium.append(medium)
+
         
         data_row = [
             s.id, 
             s.status,
             sample_name,
+            env_package, 
+            env_broad, 
+            env_local, 
+            env_medium,
         ]
         data_rows.append(data_row)
 
