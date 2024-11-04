@@ -664,23 +664,18 @@ async def get_metadata_submissions_mixs(
     ]
     data_rows = []
     for s in submissions:
-        metadata = s.metadata_submission  # creates a concise aliass
+        metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
         sample_name = []
 
-        # Get templates
-        templates = metadata["templates"] if "templates" in metadata else []
-        for t in templates: 
-            # # Get samples for each template
-            # samples = sample_data["{t}_data"] if "{t}_data" in sample_data else {}
-
-            # # Iterate through each sample and extract the name 
-            # for x in samples:
-            #     # get the sample name first
-            #     name = x["samp_name"] if "samp_name" in x else {}
-            #     sample_name.append(name, ", ")
-
-            sample_name.append(t, ", ")
+        # Get sample names from each sample type 
+        for sample_type in sample_data:
+            samples = sample_data[sample_type] if sample_type in sample_data else {}
+            # Iterate through each sample and extract the name 
+            for x in samples:
+                # get the sample name first
+                name = x["samp_name"] if "samp_name" in x else {}
+                sample_name.append(name)
         
         data_row = [
             s.id, 
