@@ -142,8 +142,13 @@ export default defineComponent({
         return dbSummary.value[table].attributes[field];
       }
       if (['kegg_function', 'cog_function', 'pfam_function'].includes(table)) {
+        const tableToType: Record<string, string> = {
+          kegg_function: 'kegg_search',
+          cog_function: 'cog_search',
+          pfam_function: 'pfam_search',
+        };
         return {
-          type: 'kegg_search',
+          type: tableToType[table],
         };
       }
       return {};

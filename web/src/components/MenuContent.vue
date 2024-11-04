@@ -114,7 +114,7 @@ export default defineComponent({
         @select="$emit('select', $event)"
       />
       <FilterKegg
-        v-if="summary.type === 'kegg_search'"
+        v-if="['kegg_search', 'cog_search', 'pfam_search'].includes(summary.type)"
         :field="field"
         :table="table"
         :conditions="conditions"

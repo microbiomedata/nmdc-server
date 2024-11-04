@@ -39,7 +39,14 @@ export default defineComponent({
     const selected = ref(null);
     const conditions = toRef(props, 'conditions');
     const field = ref('id');
-    const table = ref('gene_function' as entityType);
+    const table = computed(() => {
+      const typeToTable: Record<string, entityType> = {
+        kegg: 'kegg_function',
+        cog: 'cog_function',
+        pfam: 'pfam_function',
+      };
+      return typeToTable[props.geneType];
+    });
     const { myConditions } = useFacetSummaryData({ conditions, field, table });
 
     /** Autocomplete state */
@@ -103,7 +110,9 @@ export default defineComponent({
         case 'kegg':
           return request(() => api.keggSearch(search.value || ''));
         case 'cog':
+          return request(() => api.cogSearch(search.value || ''));
         case 'pfam':
+          return request(() => api.pfamSearch(search.value || ''));
         default:
           throw new Error(`Unexpected gene type: ${props.geneType}`);
       }

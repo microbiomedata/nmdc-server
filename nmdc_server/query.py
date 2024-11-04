@@ -146,6 +146,7 @@ class BaseConditionSchema(BaseModel):
     # now serves to replace the table attribute for "special" fields.  For example,
     # the API uses the `biosample` table for `env_medium`, where the property actually
     # exists on a different table.
+    # TODO: use this to fix gene function search
     @classmethod
     def from_schema(
         cls, condition: "BaseConditionSchema", default_table: Table

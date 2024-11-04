@@ -229,7 +229,7 @@ export interface UnitSchema {
 
 export interface AttributeSummary {
   count: number;
-  type: 'string' | 'date' | 'integer' | 'float' | 'kegg_search' | 'gene_search';
+  type: 'string' | 'date' | 'integer' | 'float' | 'kegg_search' | 'gene_search' | 'cog_search' | 'pfam_search';
   min?: string | number;
   max?: string | number;
   units?: UnitSchema;
@@ -647,12 +647,12 @@ async function keggSearch(query: string) {
 
 async function cogSearch(query: string) {
   const { data } = await client.get('cog/term/search', { params: { query } });
-  return data.tersms as KeggTermSearchResponse[];
+  return data.terms as KeggTermSearchResponse[];
 }
 
 async function pfamSearch(query: string) {
   const { data } = await client.get('pfam/term/search', { params: { query } });
-  return data.tersms as KeggTermSearchResponse[];
+  return data.terms as KeggTermSearchResponse[];
 }
 
 /**
