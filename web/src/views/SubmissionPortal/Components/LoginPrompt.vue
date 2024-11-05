@@ -27,7 +27,6 @@ export default defineComponent({
       Login to submit data
     </span>
     <v-btn
-      :href="loginHref"
       plain
       depressed
       text
