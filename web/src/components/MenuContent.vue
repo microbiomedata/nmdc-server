@@ -118,7 +118,7 @@ export default defineComponent({
         :field="field"
         :table="table"
         :conditions="conditions"
-        :gene-type="table.split('_')[0]"
+        :gene-type="summary.type.split('_')[0]"
         @select="$emit('select', $event)"
       />
       <filter-date

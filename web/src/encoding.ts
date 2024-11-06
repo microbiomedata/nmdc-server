@@ -131,28 +131,32 @@ function keggEncode(v: string, url = false) {
 function cogEncode(v: string, url = false) {
   // COG terms, pathways and functions don't need to be transformed
   // So either just return it with a prefix so our backend can process it.
+  console.log({ v });
   if (!url) {
     // COG categories are just identified by a single letter
     if (v.length === 1) {
-      return `COG.FUNCTION${v}`;
+      return `COG.FUNCTION:${v}`;
     }
     // COGs themselves start with this prefix
     if (v.startsWith('COG')) {
-      return v;
+      return `COG:${v}`;
     }
     // Pathways are identified by a name. If the other two conditions have not
     // been met at this point, assume it is a pathway.
-    return `COG.PATHWAY${v}`;
+    return `COG.PATHWAY:${v}`;
   }
   // Or figure out if it is a term, pathway, or function
-  const urlBase = '';
-  if (v.length === 1) {
-    return `${urlBase}/category/${v}`;
+  const urlBase = 'https://www.ncbi.nlm.nih.gov/research/cog';
+  if (v.length === 1 || v.startsWith('COG.FUNCTION:')) {
+    return `${urlBase}/cogcategory/${v.split(':')[1]}`;
   }
-  if (v.startsWith('COG')) {
-    return `${urlBase}/cog/${v}`;
+  if (v.startsWith('COG.PATHWAY')) {
+    return `${urlBase}/pathway/${v.split(':')[1]}`;
   }
-  return `${urlBase}/pathway/${v}`;
+  if (v.startsWith('COG:COG')) {
+    return `${urlBase}/cog/${v.split(':')[1]}`;
+  }
+  return v;
 }
 
 function pfamEncode(v: string, url = false) {
