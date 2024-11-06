@@ -58,20 +58,29 @@ export default defineComponent({
     const description = computed(() => {
       switch (props.geneType) {
         case 'kegg':
-          return 'KEGG Gene Function search filters results to'
-          + 'samples that have at least one of the chosen KEGG terms.'
+          return 'KEGG Gene Function search filters results to '
+          + 'samples that have at least one of the chosen KEGG terms. '
           + 'Orthology, Module, and Pathway are supported.';
         case 'cog':
-          return 'COG Gene Function search filters results to'
-          + 'samples that have at least one of the chosen COG terms.'
+          return 'COG Gene Function search filters results to '
+          + 'samples that have at least one of the chosen COG terms. '
           + 'Term, Function, and Pathway are supported.';
         case 'pfam':
-          return 'Pfam Gene Function search filters results to'
-          + 'samples that have at least one of the chosen Pfam terms.'
+          return 'Pfam Gene Function search filters results to '
+          + 'samples that have at least one of the chosen Pfam terms. '
           + 'Accession and Clan are supported.';
         default:
           throw new Error(`Unexpected gene type: ${props.geneType}`);
       }
+    });
+
+    const helpSite = computed(() => {
+      const sites: Record<geneFunctionType, string> = {
+        kegg: 'https://wwwigenome.jp/kegg/',
+        cog: 'https://www.ncbi.nlm.nih.gov/research/cog/',
+        pfam: 'https://www.ebi.ac.uk/interpro/set/all/entry/pfam/',
+      };
+      return sites[props.geneType as geneFunctionType];
     });
 
     const expectedFormats = computed(() => {
@@ -79,9 +88,9 @@ export default defineComponent({
         case 'kegg':
           return 'K00000, M00000, map00000, ko00000, rn00000, and ec00000';
         case 'cog':
-          return '';
+          return 'COG0000';
         case 'pfam':
-          return '';
+          return 'PF00000, CL0000';
         default:
           throw new Error(`Unexpected gene type: ${props.geneType}`);
       }
@@ -125,6 +134,7 @@ export default defineComponent({
     };
 
     function encode(value: string, url: boolean = false): string {
+      console.log({ value, url });
       return encodeFunctionMap[props.geneType as geneFunctionType](value, url);
     }
 
@@ -185,6 +195,7 @@ export default defineComponent({
       expectedFormats,
       label,
       encode,
+      helpSite,
       /* Autocomplete */
       loading,
       search,
@@ -209,7 +220,7 @@ export default defineComponent({
           Expected formats: <code>{{ expectedFormats }}</code>
         </p>
         <p class="text-subtitle-2">
-          More information at <a href="https://www.genome.jp/kegg/">genome.jp/kegg</a>
+          More information at <a :href="helpSite">{{ helpSite }}</a>
         </p>
       </div>
       <slot name="subtitle" />
