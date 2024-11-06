@@ -18,6 +18,7 @@ import {
   cogEncode,
   pfamEncode,
   geneFunctionType,
+  GeneFunctionSearchParams,
 } from '@/encoding';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import useRequest from '@/use/useRequest';
@@ -27,6 +28,10 @@ export default defineComponent({
   props: {
     conditions: {
       type: Array as PropType<Condition[]>,
+      required: true,
+    },
+    geneTypeParams: {
+      type: Object as PropType<GeneFunctionSearchParams>,
       required: true,
     },
     geneType: {

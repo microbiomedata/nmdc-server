@@ -32,39 +32,6 @@ interface PrefixInfo {
 
 type geneFunctionType = 'kegg' | 'pfam' | 'cog';
 
-interface geneFunctionTypeDescription {
-  label: string;
-  description: string;
-  expectedFormats: string;
-  encodeFunction: Function;
-  searchFunction: (query: string) => Promise<KeggTermSearchResponse[]>;
-}
-
-export const geneFunctionTypeInfo: Record<geneFunctionType, geneFunctionTypeDescription> = {
-  kegg: {
-    label: '',
-    description: '',
-    expectedFormats: '',
-    encodeFunction: () => undefined,
-    searchFunction: api.keggSearch,
-  },
-  cog: {
-    label: '',
-    description: '',
-    expectedFormats: '',
-    encodeFunction: () => undefined,
-    searchFunction: api.cogSearch,
-
-  },
-  pfam: {
-    label: '',
-    description: '',
-    expectedFormats: '',
-    encodeFunction: () => undefined,
-    searchFunction: api.pfamSearch,
-  },
-};
-
 const pathwayRegex = /^((map:?)|(path:?)|(ko:?)|(ec:?)|(rn:?)|(kegg.pathway:(map|path|ec|ko|rn)))(?=\d{5})/i;
 
 function pathwayPrefixShort(v: string) {
@@ -131,7 +98,6 @@ function keggEncode(v: string, url = false) {
 function cogEncode(v: string, url = false) {
   // COG terms, pathways and functions don't need to be transformed
   // So either just return it with a prefix so our backend can process it.
-  console.log({ v });
   if (!url) {
     // COG categories are just identified by a single letter
     if (v.length === 1) {
@@ -171,6 +137,59 @@ function pfamEncode(v: string, url = false) {
   }
   return `https://www.ebi.ac.uk/interpro/set/pfam/${v.split(':')[1]}`;
 }
+
+export interface GeneFunctionSearchParams {
+  description: string;
+  label: string;
+  expectedFormats: string;
+  helpSite: string;
+  table: entityType;
+  encodeFunction: (value: string, url: boolean) => string;
+  searchFunction: (query: string) => Promise<KeggTermSearchResponse[]>;
+}
+
+export const geneFunctionTypeInfo: Record<geneFunctionType, GeneFunctionSearchParams> = {
+  kegg: {
+    label: 'KEGG',
+    description: `
+      KEGG Gene Function search filters results to
+      samples that have at least one of the chosen KEGG terms.
+      Orthology, Module, and Pathway are supported.
+    `,
+    expectedFormats: 'K00000, M00000, map00000, ko00000, rn00000, and ec00000',
+    helpSite: 'https://wwwigenome.jp/kegg/',
+    table: 'kegg_function',
+    encodeFunction: keggEncode,
+    searchFunction: api.keggSearch,
+  },
+  cog: {
+    label: 'COG',
+    description: `
+      COG Gene Function search filters results to
+      samples that have at least one of the chosen COG terms.
+      Term, Function, and Pathway are supported.
+    `,
+    expectedFormats: 'COG0000',
+    helpSite: 'https://www.ncbi.nlm.nih.gov/research/cog/',
+    table: 'cog_function',
+    encodeFunction: cogEncode,
+    searchFunction: api.cogSearch,
+
+  },
+  pfam: {
+    label: 'PFAM',
+    description: `
+      Pfam Gene Function search filters results to
+      samples that have at least one of the chosen Pfam terms.
+      Accession and Clan are supported.
+    `,
+    expectedFormats: 'PF00000, CL0000',
+    helpSite: 'https://www.ebi.ac.uk/interpro/set/all/entry/pfam/',
+    table: 'pfam_function',
+    encodeFunction: pfamEncode,
+    searchFunction: api.pfamSearch,
+  },
+};
 
 function stringIsKegg(v: string) {
   return Object.values(KeggPrefix).find((item) => v.match(item.pattern));
