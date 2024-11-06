@@ -162,14 +162,14 @@ function cogEncode(v: string, url = false) {
 function pfamEncode(v: string, url = false) {
   if (!url) {
     if (v.startsWith('PF')) {
-      return `PFAM.ENTRY:${v}`;
+      return `PFAM:${v}`;
     }
     return `PFAM.CLAN:${v}`;
   }
-  if (v.startsWith('PF')) {
-    return `https://www.ebi.ac.uk/interpro/entry/pfam/${v}`;
+  if (v.startsWith('PF') || v.startsWith('PFAM:')) {
+    return `https://www.ebi.ac.uk/interpro/entry/pfam/${v.split(':')[1]}`;
   }
-  return `https://www.ebi.ac.uk/interpro/set/pfam/${v}`;
+  return `https://www.ebi.ac.uk/interpro/set/pfam/${v.split(':')[1]}`;
 }
 
 function stringIsKegg(v: string) {
