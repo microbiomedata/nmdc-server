@@ -16,43 +16,46 @@ export default defineComponent({
 
 <template>
   <v-alert
-    class="mb-0"
+    class="mt-6 mb-0"
+    outlined
     text
+    type="warning"
+    color="primary"
+    prominent
   >
-    <v-container>
-      <v-row align="center">
-        <v-col class="justify-content-center">
-          <p class="body-1">
-            Login with your ORCID iD
-            to access the Submission Portal.
-          </p>
-          <p class="body-2 mb-0">
-            Don't have an ORCID iD? Individuals can
-            <a
-              href="https://support.orcid.org/hc/en-us/articles/360006973953"
-              rel="noreferrer noopener"
-              target="_blank"
-              title="Learn about registering an ORCiD"
-            >get one for free</a>.
-          </p>
-        </v-col>
-        <v-col class="flex-grow-0">
-          <v-btn
-            variant="plain"
-            elevation="0"
-            style="background: transparent"
-            @click="handleLoginClick"
-          >
-            <img
-              width="28px"
-              class="mr-2"
-              alt="Login with ORCiD"
-              src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
-            >
-            OrcID Login
-          </v-btn>
-        </v-col>
-      </v-row>
-    </v-container>
+    <span class="text-h6 font-weight-bold mb-3">
+      Login to submit data
+    </span>
+    <v-btn
+      plain
+      depressed
+      text
+      right
+      absolute
+      class="mr-4"
+      @click="handleLoginClick"
+    >
+      <img
+        width="28px"
+        class="mr-2"
+        alt="Login with ORCiD"
+        src="https://orcid.org/assets/vectors/orcid.logo.icon.svg"
+      >
+      OrcID Login
+    </v-btn>
+    <template #append>
+      <a
+        href="https://support.orcid.org/hc/en-us/articles/360006973953"
+        rel="noreferrer noopener"
+        target="_blank"
+        title="Learn about registering an ORCiD"
+      >
+        <v-icon
+          v-on="on"
+        >
+          mdi-help-circle
+        </v-icon>
+      </a>
+    </template>
   </v-alert>
 </template>
