@@ -102,6 +102,12 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
     **_envo_keys,
 }
 
+_special_tables: Dict[str, Tuple[Table, str]] = {
+    "kegg_function": (Table.gene_function, "id"),
+    "cog_function": (Table.gene_function, "id"),
+    "pfam_function": (Table.gene_function, "id"),
+}
+
 
 NumericValue = Union[float, int, datetime]
 RangeValue = Annotated[List[schemas.AnnotationValue], Field(min_items=2, max_items=2)]
@@ -154,6 +160,8 @@ class BaseConditionSchema(BaseModel):
         kwargs = condition.dict()
         if condition.field in _special_keys:
             kwargs["table"], kwargs["field"] = _special_keys[condition.field]
+        elif condition.table in _special_tables:
+            kwargs["table"], kwargs["field"] = _speicial_tables[condition.table]
         elif not condition.table:
             kwargs["table"] = default_table
         return cls(**kwargs)
@@ -291,7 +299,12 @@ class BaseQuerySchema(BaseModel):
     def transform_condition(self, db, condition: BaseConditionSchema) -> List[BaseConditionSchema]:
         # Transform KEGG.(PATH|MODULE) queries into their respective ORTHOLOGY terms
         gene_terms = []
-        if condition.key == "Table.gene_function:id" and type(condition.value) is str:
+        gene_search_keys = [
+            "Table.kegg_function:id",
+            "Table.cog_function:id",
+            "Table.pfam_function:id",
+        ]
+        if condition.key in gene_search_keys and type(condition.value) is str:
             if any([condition.value.startswith(val) for val in KeggTerms.PATHWAY[0]]):
                 prefix = [val for val in KeggTerms.PATHWAY[0] if condition.value.startswith(val)][0]
                 searchable_name = condition.value.replace(prefix, KeggTerms.PATHWAY[1])
@@ -353,6 +366,10 @@ class BaseQuerySchema(BaseModel):
             conditions = [
                 c for condition in _conditions for c in self.transform_condition(db, condition)
             ]
+            print("CONDITIONS")
+            for c in conditions:
+                print(f"\n\n{c.key}\n\n")
+                print(f"\n\n{c.table}\n\n")
             # If transformation eliminated the condition group, report no filters
             has_filters = len(conditions) > 0
             match = table_re.match(key)
@@ -360,6 +377,7 @@ class BaseQuerySchema(BaseModel):
                 # Not an expected user error
                 raise Exception("Invalid group key")
             table = Table(match.groups()[0])
+            print({"match": match, "table": table})
             filter = create_filter_class(table, conditions)
 
             # Gene function queries are treated differently because they join

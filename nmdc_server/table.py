@@ -111,6 +111,7 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.metatranscriptome: models.Metatranscriptome,
     Table.metabolomics_analysis: models.MetabolomicsAnalysis,
     Table.gene_function: models.GeneFunction,
+    Table.kegg_function: models.GeneFunction,
     Table.cog_function: models.GeneFunction,
     Table.pfam_function: models.GeneFunction,
     Table.metap_gene_function: MetaPGeneFunction,
