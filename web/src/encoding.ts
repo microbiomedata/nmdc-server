@@ -146,6 +146,11 @@ export interface GeneFunctionSearchParams {
   table: entityType;
   encodeFunction: (value: string, url: boolean) => string;
   searchFunction: (query: string) => Promise<KeggTermSearchResponse[]>;
+  searchWithInputText: (value: string) => boolean;
+}
+
+function stringIsKegg(v: string) {
+  return !!Object.values(KeggPrefix).find((item) => v.match(item.pattern));
 }
 
 export const geneFunctionTypeInfo: Record<geneFunctionType, GeneFunctionSearchParams> = {
@@ -161,6 +166,7 @@ export const geneFunctionTypeInfo: Record<geneFunctionType, GeneFunctionSearchPa
     table: 'kegg_function',
     encodeFunction: keggEncode,
     searchFunction: api.keggSearch,
+    searchWithInputText: stringIsKegg,
   },
   cog: {
     label: 'COG',
@@ -174,6 +180,7 @@ export const geneFunctionTypeInfo: Record<geneFunctionType, GeneFunctionSearchPa
     table: 'cog_function',
     encodeFunction: cogEncode,
     searchFunction: api.cogSearch,
+    searchWithInputText: () => false,
 
   },
   pfam: {
@@ -188,12 +195,9 @@ export const geneFunctionTypeInfo: Record<geneFunctionType, GeneFunctionSearchPa
     table: 'pfam_function',
     encodeFunction: pfamEncode,
     searchFunction: api.pfamSearch,
+    searchWithInputText: () => false,
   },
 };
-
-function stringIsKegg(v: string) {
-  return Object.values(KeggPrefix).find((item) => v.match(item.pattern));
-}
 
 function makeSetsFromBitmask(mask_str: string) {
   const mask = parseInt(mask_str, 10); // the bitmask comes in as a string

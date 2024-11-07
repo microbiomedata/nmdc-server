@@ -13,7 +13,7 @@ import {
   Condition, entityType, KeggTermSearchResponse,
 } from '@/data/api';
 import {
-  keggEncode, stringIsKegg, GeneFunctionSearchParams,
+  keggEncode, GeneFunctionSearchParams,
 } from '@/encoding';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import useRequest from '@/use/useRequest';
@@ -61,7 +61,7 @@ export default defineComponent({
     watch(search, async () => {
       const resp = (await geneSearch())
         .map((v: KeggTermSearchResponse) => ({ text: `${v.term}: ${v.text}`, value: v.term }));
-      if (resp.length === 0 && search.value && stringIsKegg(search.value)) {
+      if (resp.length === 0 && search.value && props.geneTypeParams.searchWithInputText(search.value)) {
         resp.push({ value: search.value, text: search.value });
       }
       items.value = resp;
