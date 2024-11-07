@@ -76,7 +76,11 @@ export default defineComponent({
     });
 
     return {
-      description, fieldDisplayName, getField, urlify,
+      description,
+      fieldDisplayName,
+      getField,
+      urlify,
+      geneFunctionTypeInfo,
     };
   },
 });

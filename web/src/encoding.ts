@@ -181,7 +181,7 @@ export const geneFunctionTypeInfo: Record<geneFunctionType, GeneFunctionSearchPa
     description: `
       Pfam Gene Function search filters results to
       samples that have at least one of the chosen Pfam terms.
-      Accession and Clan are supported.
+      Entry and Clan are supported.
     `,
     expectedFormats: 'PF00000, CL0000',
     helpSite: 'https://www.ebi.ac.uk/interpro/set/all/entry/pfam/',
