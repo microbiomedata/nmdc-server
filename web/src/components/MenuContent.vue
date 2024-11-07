@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  defineComponent, PropType, onBeforeUnmount, onMounted, computed,
+  defineComponent, PropType, onBeforeUnmount, computed,
 } from '@vue/composition-api';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
@@ -69,10 +69,6 @@ export default defineComponent({
         }
       }
       return '';
-    });
-
-    onMounted(() => {
-      console.log(props);
     });
 
     return {

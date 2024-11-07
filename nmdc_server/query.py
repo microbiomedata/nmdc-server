@@ -366,10 +366,6 @@ class BaseQuerySchema(BaseModel):
             conditions = [
                 c for condition in _conditions for c in self.transform_condition(db, condition)
             ]
-            print("CONDITIONS")
-            for c in conditions:
-                print(f"\n\n{c.key}\n\n")
-                print(f"\n\n{c.table}\n\n")
             # If transformation eliminated the condition group, report no filters
             has_filters = len(conditions) > 0
             match = table_re.match(key)
@@ -377,7 +373,6 @@ class BaseQuerySchema(BaseModel):
                 # Not an expected user error
                 raise Exception("Invalid group key")
             table = Table(match.groups()[0])
-            print({"match": match, "table": table})
             filter = create_filter_class(table, conditions)
 
             # Gene function queries are treated differently because they join
