@@ -102,13 +102,6 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
     **_envo_keys,
 }
 
-_special_tables: Dict[str, Tuple[Table, str]] = {
-    "kegg_function": (Table.gene_function, "id"),
-    "cog_function": (Table.gene_function, "id"),
-    "pfam_function": (Table.gene_function, "id"),
-}
-
-
 NumericValue = Union[float, int, datetime]
 RangeValue = Annotated[List[schemas.AnnotationValue], Field(min_items=2, max_items=2)]
 
@@ -152,7 +145,6 @@ class BaseConditionSchema(BaseModel):
     # now serves to replace the table attribute for "special" fields.  For example,
     # the API uses the `biosample` table for `env_medium`, where the property actually
     # exists on a different table.
-    # TODO: use this to fix gene function search
     @classmethod
     def from_schema(
         cls, condition: "BaseConditionSchema", default_table: Table
@@ -160,8 +152,6 @@ class BaseConditionSchema(BaseModel):
         kwargs = condition.dict()
         if condition.field in _special_keys:
             kwargs["table"], kwargs["field"] = _special_keys[condition.field]
-        elif condition.table in _special_tables:
-            kwargs["table"], kwargs["field"] = _speicial_tables[condition.table]
         elif not condition.table:
             kwargs["table"] = default_table
         return cls(**kwargs)

@@ -277,7 +277,7 @@ def cog_text_search(db: Session, query: str, limit: int) -> List[models.CogTermT
     return list(q)
 
 
-def pfam_text_search(db: Session, query: str, limit: int) -> List[models.CogTermText]:
+def pfam_text_search(db: Session, query: str, limit: int) -> List[models.PfamTermText]:
     q = (
         db.query(models.PfamTermText)
         .filter(
