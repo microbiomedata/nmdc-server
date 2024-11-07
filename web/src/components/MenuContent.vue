@@ -12,7 +12,7 @@ import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
 import FilterSankeyTree from '@/components/FilterSankeyTree.vue';
-import FilterKegg from '@/components/FilterKegg.vue';
+import FilterGene from '@/components/FilterGene.vue';
 import FilterTree from '@/components/FilterTree.vue';
 import { urlify } from '@/data/utils';
 import { AttributeSummary, Condition, entityType } from '@/data/api';
@@ -23,7 +23,7 @@ export default defineComponent({
     FilterDate,
     FilterFloat,
     FilterList,
-    FilterKegg,
+    FilterGene,
     FilterSankeyTree,
     FilterTree,
   },
@@ -113,7 +113,7 @@ export default defineComponent({
         :conditions="conditions"
         @select="$emit('select', $event)"
       />
-      <FilterKegg
+      <FilterGene
         v-if="['kegg_search', 'cog_search', 'pfam_search'].includes(summary.type)"
         :field="field"
         :table="table"
