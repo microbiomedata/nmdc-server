@@ -48,8 +48,7 @@ export default defineComponent({
 
 <template>
   <v-main>
-    <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
-    <AppBanner v-if="false" />
+    <AppBanner />
     <v-container>
       <v-card flat>
         <v-card-title class="text-h4">
