@@ -14,6 +14,7 @@
     corepack enable
     corepack install --global yarn@1
     ```
+* A local clone of the `nmdc-server` repository
 
 ## Configuration
 
@@ -61,6 +62,18 @@ To load production data or to run an ingest locally, you will need NERSC credent
     NERSC_USER=changeme
     ```
 3. Install the `sshproxy` tool by following the instructions at https://docs.nersc.gov/connect/mfa/#sshproxy.
+
+#### Don't have a NERSC account?
+
+If you're an NMDC team member, but don't have a NERSC account yet: talk to your team lead about getting a NERSC account—specifically, one that has access to NMDC's project files. The process takes about a week. Docs: https://docs.nersc.gov/accounts/
+
+If that is not an option for you:
+
+<!-- Note: This list of instructions is under construction. -->
+
+1. ... get postgres dump from an NMDC team member ...
+2. ... Run docker compose up db ...
+3. ... run pg_restore ..., pointing it to the postgres container ...
 
 ### MongoDB Credentials
 
@@ -133,9 +146,18 @@ Although the project is designed to be run in Docker, having the dependencies in
 
 Run the full stack via Docker Compose:
 
+<!-- Note: Add `--build` to this command so that Docker Compose builds
+           the containers, rather than pulling from from GHCR (unless you
+           want to use the versions that happen to currently be on GHCR).
+           This has to do with the fact that the `docker-compose.yml` file 
+           contains service specs having both an `image` and `build` section. -->
+
 ```bash
 docker compose up -d
 ```
+> The `-d` is short for `--detach` and makes it so the container logs _don't_ take over your shell, causing you to have to open up a new shell in order to run more commands.
+
+Troubleshooting: If the building of one of the service fails due to networking timeouts, but the building of all other services completes successfully, we recommend you retry building that service alone. Our thinking is that there will be less demand on your network that way. You can do that via `$ docker compose build {service_name}` (e.g. `$ docker compose build web`).
 
 View the main application at `http://127.0.0.1:8080/` and the API documentation page at `http://127.0.0.1:8080/api/docs`.
 
