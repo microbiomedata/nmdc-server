@@ -157,7 +157,7 @@ docker compose up -d
 ```
 > The `-d` is short for `--detach` and makes it so the container logs (i.e. STDOUT and STDERR streams) _don't_ take over your shell, causing you to have to open up a new shell in order to run more commands.
 
-Troubleshooting: If the building of one of the service fails due to networking timeouts, but the building of all other services completes successfully, we recommend you retry building that service alone. Our thinking is that there will be less demand on your network that way. You can do that via `$ docker compose build {service_name}` (e.g. `$ docker compose build web`).
+Troubleshooting: If the building of one of the services fails with an error citing networking timeouts, _but_ the building of _other_ services completes successfully, we recommend you retry building only the service that failed, by itself. Our thinking is that there will be less demand on your network that way. You can do that via `$ docker compose build {service_name}` (e.g. `$ docker compose build web`).
 
 View the main application at `http://127.0.0.1:8080/` and the API documentation page at `http://127.0.0.1:8080/api/docs`.
 
