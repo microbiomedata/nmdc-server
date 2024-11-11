@@ -171,6 +171,13 @@ class PfamEntryToClan(Base):
     clan = Column(String, nullable=False, primary_key=True, index=True)
 
 
+class GoTermToPfamEntry(Base):
+    __tablename__ = "go_term_to_pfam_entry"
+
+    term = Column(String, nullable=False, primary_key=True)
+    entry = Column(String, nullable=False, primary_key=True, index=True)
+
+
 class KoTermText(Base):
     __tablename__ = "ko_term_text"
 
@@ -187,6 +194,13 @@ class PfamTermText(Base):
 
 class CogTermText(Base):
     __tablename__ = "cog_term_text"
+
+    term = Column(String, nullable=False, primary_key=True)
+    text = Column(Text, nullable=False)
+
+
+class GoTermText(Base):
+    __tablename__ = "go_term_text"
 
     term = Column(String, nullable=False, primary_key=True)
     text = Column(Text, nullable=False)
