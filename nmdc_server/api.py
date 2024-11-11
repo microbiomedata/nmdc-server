@@ -307,6 +307,16 @@ async def pfam_text_search(query: str, limit=20, db: Session = Depends(get_db)):
     return schemas.KeggTermTextListResponse(terms=terms)
 
 
+@router.get(
+    "/go/term/search",
+    response_model=schemas.KeggTermTextListResponse,
+    tags=["gene_function"],
+)
+async def go_text_search(query: str, limit=20, db: Session = Depends(get_db)):
+    terms = crud.go_text_search(db, query, limit)
+    return schemas.KeggTermTextListResponse(terms=terms)
+
+
 # study
 @router.post(
     "/study/search",
