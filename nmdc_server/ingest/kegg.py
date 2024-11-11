@@ -10,6 +10,8 @@ from nmdc_server.models import (
     CogTermText,
     CogTermToFunction,
     CogTermToPathway,
+    GoTermText,
+    GoTermToPfamEntry,
     KoTermText,
     KoTermToModule,
     KoTermToPathway,
@@ -37,6 +39,7 @@ def load(db: Session) -> None:
     ingest_ko_module_map(db)
     ingest_ko_pathway_map(db)
     ingest_pfam_clan_map(db)
+    ingest_go_pfam_map(db)
 
 
 def ingest_ko_search(db: Session) -> None:
@@ -249,3 +252,32 @@ def ingest_pfam_clan_map(db: Session) -> None:
             [PfamEntryToClan(entry=mapping[0], clan=mapping[1]) for mapping in mappings]
         )
         db.commit()
+
+
+def ingest_go_pfam_map(db: Session) -> None:
+    """
+    Ingest a mapping of GO terms to Pfam entries.
+
+    The mappings file has a header with lines that start with '!' that should be skipped.
+    Of the lines we do care about, they are formatted as follows:
+        Pfam:PF00001 7tm_1 > GO:G protein-coupled receptor activity ; GO:0004930
+    """
+    db.execute(f"truncate table {GoTermToPfamEntry.__tablename__}")
+    db.execute(f"truncate table {GoTermText.__tablename__}")
+    pfam_go_mappings = "/data/ingest/go/pfam_go_mappings.txt"
+    go_terms = set()
+    mappings = []
+    with open(pfam_go_mappings) as fd:
+        for line in fd.readlines():
+            # Skip rows that don't contain the " > " delimiter
+            tokens = line.split(" > ")
+            if len(tokens) > 1:
+                pfam_entry = tokens[0].split(" ")[0].split(":")[1].strip()
+                go_description, go_term = tokens[1].split(";")
+                go_description = go_description.strip()
+                go_term = go_term.strip()
+                mappings.append((go_term, pfam_entry))
+                go_terms.add((go_term, go_description))
+    db.bulk_save_objects([GoTermText(term=row[0], text=row[1]) for row in go_terms])
+    db.bulk_save_objects([GoTermToPfamEntry(term=row[0], entry=row[1]) for row in mappings])
+    db.commit()
