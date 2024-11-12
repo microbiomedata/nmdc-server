@@ -38,6 +38,7 @@ import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
+import { stateRefs } from '@/store';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -104,6 +105,8 @@ export default defineComponent({
   },
 
   setup(_, { root }) {
+    const { user } = stateRefs;
+
     const harmonizerElement = ref();
     const harmonizerApi = new HarmonizerApi();
     const jumpToModel = ref();
@@ -472,6 +475,7 @@ export default defineComponent({
     }
 
     return {
+      user,
       APP_HEADER_HEIGHT,
       HELP_SIDEBAR_WIDTH,
       ColorKey,
@@ -996,7 +1000,7 @@ export default defineComponent({
             <v-btn
               color="success"
               depressed
-              :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
+              :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0 || !user.email"
               :loading="submitLoading"
               @click="submitDialog = true"
             >
@@ -1036,6 +1040,9 @@ export default defineComponent({
         </template>
         <span v-if="!canSubmit">
           You must validate all tabs before submitting your study and metadata.
+        </span>
+        <span v-else-if="!user.email">
+          You must provide an email address to your user profile before submitting.
         </span>
         <span v-else>
           Submit for NMDC review.

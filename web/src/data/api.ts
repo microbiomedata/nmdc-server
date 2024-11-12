@@ -362,8 +362,8 @@ export interface User{
     id: string,
     orcid: string;
     name: string;
-    email: string;
     is_admin: boolean;
+    email?: string;
 }
 
 export interface TokenResponse {
