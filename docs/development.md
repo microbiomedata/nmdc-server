@@ -224,7 +224,7 @@ It is recommended to use `127.0.0.1` instead of `localhost` for local developmen
   
     > From within a Docker container `host.docker.internal` can be used to access the `localhost` of your computer. When ingesting from the dev or prod MongoDB instances, be sure to set `NMDC_MONGO_HOST=host.docker.internal` in your `.env` file.
 
-    > See https://github.com/microbiomedata/infra-admin/blob/main/mongodb/connection-guide.md for more information on connecting to the MongoDB instances.
+    > See https://github.com/microbiomedata/infra-admin/blob/main/mongodb/connection-guide.md (internal) for more information on connecting to the MongoDB instances.
 4. Create a local copy of ingest support files:
     ```bash
     mkdir -p data && scp \
