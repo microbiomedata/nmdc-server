@@ -63,18 +63,6 @@ To load production data or to run an ingest locally, you will need NERSC credent
     ```
 3. Install the `sshproxy` tool by following the instructions at https://docs.nersc.gov/connect/mfa/#sshproxy.
 
-#### Don't have a NERSC account?
-
-If you're an NMDC team member, but don't have a NERSC account yet: talk to your team lead about getting a NERSC account—specifically, one that has access to NMDC's project files. The process takes about a week. Docs: https://docs.nersc.gov/accounts/
-
-If that is not an option for you:
-
-<!-- Note: This list of instructions is under construction. -->
-
-1. ... get postgres dump from an NMDC team member ...
-2. ... Run docker compose up db ...
-3. ... run pg_restore ..., pointing it to the postgres container ...
-
 ### MongoDB Credentials
 
 In order to connect to the dev or prod MongoDB instances for ingest, you will need your own credentials to connect to them. If you do not have these, ask a team member to create accounts for you. Then add the credentials to your `.env` file.
@@ -117,6 +105,25 @@ docker compose down -v
 ```
 
 This should only need to be done once. When the `db` service starts up again (including via running the `load-db` command), the necessary roles and databases will be created automatically.
+
+<details>
+<summary><b>Don't have a NERSC account?</b></summary>
+If you're an NMDC team member, but don't have a NERSC account yet: talk to your team lead about getting a NERSC account, specifically one that has access to NMDC's project files. The process takes about a week. Docs: https://docs.nersc.gov/accounts/
+
+If that is not an option for you:
+
+1. Ask an NMDC team member with NERSC access to get a recent production backup for you. This will come in the form of a `.dump` file. Save the file locally.
+2. Bring your local database up
+    ```bash
+    docker compose up db -d
+    ```
+3. Load data from the `.dump` file into the running database
+    ```bash
+    docker compose run --rm \
+        -v <absolute path to .dump file>:/tmp/backup.dump \
+       db pg_restore --dbname postgresql://postgres:postgres@host.docker.internal:5432/nmdc_a --clean --if-exists --verbose --single-transaction /tmp/backup.dump
+    ```
+</details>
 
 ## Installing dependencies locally
 
