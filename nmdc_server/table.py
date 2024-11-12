@@ -72,6 +72,7 @@ class Table(Enum):
     kegg_function = "kegg_function"
     cog_function = "cog_function"
     pfam_function = "pfam_function"
+    go_function = "go_function"
 
     principal_investigator = "principal_investigator"
 
@@ -114,6 +115,7 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.kegg_function: models.GeneFunction,
     Table.cog_function: models.GeneFunction,
     Table.pfam_function: models.GeneFunction,
+    Table.go_function: models.GeneFunction,
     Table.metap_gene_function: MetaPGeneFunction,
     Table.metat_gene_function: MetaTGeneFunction,
     Table.env_broad_scale: EnvBroadScaleTerm,
