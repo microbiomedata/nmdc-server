@@ -14,6 +14,8 @@ http {
 
         server_name localhost;
 
+        client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
+
         location / {
             try_files ${DOLLAR}uri ${DOLLAR}uri/ /index.html;
         }
