@@ -172,12 +172,13 @@ export default defineComponent({
     ));
 
     const saveRecordRequest = useRequest();
+    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
 
     const onDataChange = async () => {
       hasChanged.value += 1;
       const data = harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
+      saveRecord(); // This is a background save that we intentionally don't wait for
       tabsValidated.value[activeTemplateKey.value] = false;
     };
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
@@ -228,7 +229,7 @@ export default defineComponent({
         ...invalidCells.value,
         [activeTemplateKey.value]: result,
       };
-      incrementalSaveRecord(root.$route.params.id);
+      saveRecord(); // This is a background save that we intentionally don't wait for
       if (valid === false) {
         errorClick(0);
       }
@@ -441,7 +442,7 @@ export default defineComponent({
 
         // Sync with backend
         hasChanged.value += 1;
-        incrementalSaveRecord(root.$route.params.id);
+        saveRecord(); // This is a background save that we intentionally don't wait for
 
         // Load data for active tab into DataHarmonizer
         harmonizerApi.loadData(activeTemplateData.value);
