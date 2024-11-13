@@ -676,31 +676,31 @@ async def get_metadata_submissions_mixs(
             for x in samples:
 
                 # Get the sample name
-                sample_name = x['samp_name'] if 'samp_name' in x else {}
-                sample_name = str(sample_name)
-                sample_name = sample_name.replace('\t', '').replace('\r', '').replace('\n', '').lstrip('_')
+                name = x['samp_name'] if 'samp_name' in x else {}
+                name = str(name)
+                name = name.replace('\t', '').replace('\r', '').replace('\n', '').lstrip('_')
                 # Get the env broad scale
-                env_broad = x['env_broad_scale'] if 'env_broad_scale' in x else {}
-                env_broad = str(env_broad)
-                env_broad = env_broad.replace('\t', '').replace('\r', '').replace('\n', '').lstrip('_')
+                broad = x['env_broad_scale'] if 'env_broad_scale' in x else {}
+                broad = str(broad)
+                broad = broad.replace('\t', '').replace('\r', '').replace('\n', '').lstrip('_')
                 # Get the env local scale
-                env_local = x['env_local_scale'] if 'env_local_scale' in x else {}
-                env_local = str(env_local)
-                env_local = env_local.replace('\t', '').replace('\r', '').replace('\n', '').lstrip('_')
+                local = x['env_local_scale'] if 'env_local_scale' in x else {}
+                local = str(local)
+                local = local.replace('\t', '').replace('\r', '').replace('\n', '').lstrip('_')
                 # Get the env medium
-                env_medium = x['env_medium'] if 'env_medium' in x else {}
-                env_medium = str(env_medium)
-                env_medium = env_medium.replace('\t', '').replace('\r', '').replace('\n', '').lstrip('_')
+                medium = x['env_medium'] if 'env_medium' in x else {}
+                medium = str(medium)
+                medium = medium.replace('\t', '').replace('\r', '').replace('\n', '').lstrip('_')
 
                 # Append each sample as new row (with env data)
                 data_row = [
                     s.id,
                     s.status,
-                    sample_name,
+                    name,
                     env_package,
-                    env_broad,
-                    env_local,
-                    env_medium,
+                    broad,
+                    local,
+                    medium,
                 ]
                 data_rows.append(data_row)
 
