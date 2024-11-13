@@ -694,7 +694,7 @@ def get_query_for_submitted_pending_review(db: Session):
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
     submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == 'Submitted- Pending Review'
+        models.SubmissionMetadata.status == "Submitted- Pending Review"
     )
     return submitted_pending_review
 
