@@ -658,7 +658,7 @@ export default defineComponent({
             color="primary"
             :width="1"
             size="20"
-            value="70"
+            indeterminate
           />
           Saving progress
         </span>
