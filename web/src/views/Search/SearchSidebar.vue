@@ -145,7 +145,7 @@ export default defineComponent({
       if (table in dbSummary.value) {
         return dbSummary.value[table].attributes[field];
       }
-      if ([geneFunctionTables.includes(table)) {
+      if (geneFunctionTables.includes(table)) {
         const tableToType: Record<string, string> = {
           kegg_function: 'kegg_search',
           cog_function: 'cog_search',

@@ -329,6 +329,13 @@ const types: Record<entityType, EntityData> = {
     plural: 'Gene functions',
     visible: true,
   },
+  go_function: {
+    icon: 'mdi-dna',
+    heading: 'Gene Function',
+    name: 'gene_function',
+    plural: 'Gene functions',
+    visible: true,
+  },
 };
 
 const fields: Record<string, FieldsData> = {
