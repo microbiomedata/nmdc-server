@@ -6,7 +6,7 @@ import {
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
 import { fieldDisplayName } from '@/util';
-import { getField, geneFunctionTypeInfo } from '@/encoding';
+import { getField, geneFunctionTypeInfo, geneFunctionTables } from '@/encoding';
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
@@ -77,6 +77,7 @@ export default defineComponent({
       getField,
       urlify,
       geneFunctionTypeInfo,
+      geneFunctionTables,
     };
   },
 });
@@ -114,7 +115,7 @@ export default defineComponent({
         @select="$emit('select', $event)"
       />
       <FilterGene
-        v-if="['kegg_search', 'cog_search', 'pfam_search'].includes(summary.type)"
+        v-if="geneFunctionTables.includes(summary.type)"
         :field="field"
         :table="table"
         :conditions="conditions"

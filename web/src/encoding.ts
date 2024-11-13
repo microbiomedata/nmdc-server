@@ -30,7 +30,9 @@ interface PrefixInfo {
     urlBase: string;
 }
 
-type geneFunctionType = 'kegg' | 'pfam' | 'cog';
+type geneFunctionType = 'kegg' | 'pfam' | 'cog' | 'go';
+
+export const geneFunctionTables = ['kegg_function', 'pfam_function', 'cog_function', 'go_function'];
 
 const pathwayRegex = /^((map:?)|(path:?)|(ko:?)|(ec:?)|(rn:?)|(kegg.pathway:(map|path|ec|ko|rn)))(?=\d{5})/i;
 
@@ -141,6 +143,10 @@ function pfamEncode(v: string, url = false) {
   return `${urlBase}:/${id}`;
 }
 
+function goEncode(v: string, url = false) {
+  return v;
+}
+
 export interface GeneFunctionSearchParams {
   description: string;
   label: string;
@@ -198,6 +204,19 @@ export const geneFunctionTypeInfo: Record<geneFunctionType, GeneFunctionSearchPa
     table: 'pfam_function',
     encodeFunction: pfamEncode,
     searchFunction: api.pfamSearch,
+    searchWithInputText: () => false,
+  },
+  go: {
+    label: 'GO',
+    description: `
+      GO gene function search filters result to samples that match
+      at least one of the chosen GO terms.
+    `,
+    expectedFormats: 'GO:0000000',
+    helpSite: 'https://www.geneontology.org/',
+    table: 'go_function',
+    encodeFunction: goEncode,
+    searchFunction: api.goSearch,
     searchWithInputText: () => false,
   },
 };
@@ -304,6 +323,13 @@ const types: Record<entityType, EntityData> = {
     visible: true,
   },
   cog_function: {
+    icon: 'mdi-dna',
+    heading: 'Gene Function',
+    name: 'gene_function',
+    plural: 'Gene functions',
+    visible: true,
+  },
+  go_function: {
     icon: 'mdi-dna',
     heading: 'Gene Function',
     name: 'gene_function',
@@ -561,6 +587,14 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
       name: 'PFAM',
       encode: pfamEncode,
     },
+  },
+  go_function: {
+    id: {
+      icon: 'mdi-dna',
+      group: 'Function',
+      name: 'GO',
+      encode: goEncode,
+    }
   },
   biosample: {},
   study: {},

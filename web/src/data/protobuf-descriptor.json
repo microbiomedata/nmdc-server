@@ -52,7 +52,8 @@
                 "biosample": 4,
                 "kegg_function": 5,
                 "cog_function": 6,
-                "pfam_function": 7
+                "pfam_function": 7,
+                "go_function": 8
               }
             },
             "FieldName": {
