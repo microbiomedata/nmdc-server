@@ -84,7 +84,6 @@ export default defineComponent({
     ];
 
     function addTerm(term: string) {
-      // MLN change from KEGG
       if (!term) return;
       const newConditions = [...conditions.value, {
         op: '==',
@@ -163,7 +162,6 @@ export default defineComponent({
       :headers="headers"
     >
       <template #[`item.value`]="{ item }">
-        <!-- MLN change this -->
         <a :href="geneTypeParams.encodeFunction(item.value, true)">
           {{ item.value }}
         </a>
