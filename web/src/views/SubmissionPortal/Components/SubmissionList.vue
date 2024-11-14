@@ -40,6 +40,11 @@ const headers: DataTableHeader[] = [
   {
     text: '',
     value: 'action',
+    sortable: false,
+  },
+  {
+    text: '',
+    value: 'menu',
     align: 'end',
     sortable: false,
   },
@@ -80,6 +85,10 @@ export default defineComponent({
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
+    async function deleteSubmission(item: api.MetadataSubmissionRecord) {
+      return item;
+    }
+
     const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
     watch(options, () => {
       submission.setPage(options.value.page);
@@ -95,6 +104,7 @@ export default defineComponent({
       createNewSubmission,
       getStatus,
       resume,
+      deleteSubmission,
       headers,
       options,
       submission,
@@ -103,9 +113,7 @@ export default defineComponent({
   data: () => ({
     OverFlowMenuItems: [
       { title: 'Delete' },
-      { title: 'Click Me' },
-      { title: 'Click Me' },
-      { title: 'Click Me 2' },
+      { title: 'Future button' },
     ],
   }),
 });
@@ -210,13 +218,15 @@ export default defineComponent({
                 mdi-arrow-right-circle
               </v-icon>
             </v-btn>
-            <v-menu offset-y>
-              <template #activator="{ props }">
+          </template>
+          <template #[`item.menu`]="{ item }">
+            <v-menu>
+              <template #activator="{ on }">
                 <v-btn
                   class="ml-1"
                   icon="mdi-dots-vertical"
                   variant="text"
-                  v-bind="props"
+                  v-on="on"
                 >
                   <v-icon>
                     mdi-dots-vertical
@@ -227,6 +237,7 @@ export default defineComponent({
                 <v-list-item
                   v-for="(entry, i) in OverFlowMenuItems"
                   :key="i"
+                  @click="() => deleteSubmission(item)"
                 >
                   <v-list-item-title>{{ entry.title }}</v-list-item-title>
                 </v-list-item>
