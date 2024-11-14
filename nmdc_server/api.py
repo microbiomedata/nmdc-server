@@ -287,6 +287,26 @@ async def kegg_text_search(query: str, limit=20, db: Session = Depends(get_db)):
     return schemas.KeggTermTextListResponse(terms=terms)
 
 
+@router.get(
+    "/cog/term/search",
+    response_model=schemas.KeggTermTextListResponse,
+    tags=["gene_function"],
+)
+async def cog_text_search(query: str, limit=20, db: Session = Depends(get_db)):
+    terms = crud.cog_text_search(db, query, limit)
+    return schemas.KeggTermTextListResponse(terms=terms)
+
+
+@router.get(
+    "/pfam/term/search",
+    response_model=schemas.KeggTermTextListResponse,
+    tags=["gene_function"],
+)
+async def pfam_text_search(query: str, limit=20, db: Session = Depends(get_db)):
+    terms = crud.pfam_text_search(db, query, limit)
+    return schemas.KeggTermTextListResponse(terms=terms)
+
+
 # study
 @router.post(
     "/study/search",

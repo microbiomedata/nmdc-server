@@ -178,6 +178,20 @@ class KoTermText(Base):
     text = Column(Text, nullable=False)
 
 
+class PfamTermText(Base):
+    __tablename__ = "pfam_term_text"
+
+    term = Column(String, nullable=False, primary_key=True)
+    text = Column(Text, nullable=False)
+
+
+class CogTermText(Base):
+    __tablename__ = "cog_term_text"
+
+    term = Column(String, nullable=False, primary_key=True)
+    text = Column(Text, nullable=False)
+
+
 class SearchIndex(Base):
     __tablename__ = "search_index"
 

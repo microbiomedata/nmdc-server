@@ -54,7 +54,7 @@ export default Vue.extend({
       }
       const summary = ((this.dbSummary[type] || {}).attributes || {})[field];
       if (summary) {
-        if (['float', 'integer', 'string', 'kegg_search'].includes(summary.type)) {
+        if (['float', 'integer', 'string', 'gene_search'].includes(summary.type)) {
           return fieldDisplayName(val);
         }
         if (['date'].includes(summary.type)) {

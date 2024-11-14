@@ -6,13 +6,13 @@ import {
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
 import { fieldDisplayName } from '@/util';
-import { getField } from '@/encoding';
+import { getField, geneFunctionTypeInfo } from '@/encoding';
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
 import FilterSankeyTree from '@/components/FilterSankeyTree.vue';
-import FilterKegg from '@/components/FilterKegg.vue';
+import FilterGene from '@/components/FilterGene.vue';
 import FilterTree from '@/components/FilterTree.vue';
 import { urlify } from '@/data/utils';
 import { AttributeSummary, Condition, entityType } from '@/data/api';
@@ -23,7 +23,7 @@ export default defineComponent({
     FilterDate,
     FilterFloat,
     FilterList,
-    FilterKegg,
+    FilterGene,
     FilterSankeyTree,
     FilterTree,
   },
@@ -72,7 +72,11 @@ export default defineComponent({
     });
 
     return {
-      description, fieldDisplayName, getField, urlify,
+      description,
+      fieldDisplayName,
+      getField,
+      urlify,
+      geneFunctionTypeInfo,
     };
   },
 });
@@ -109,11 +113,13 @@ export default defineComponent({
         :conditions="conditions"
         @select="$emit('select', $event)"
       />
-      <FilterKegg
-        v-if="summary.type === 'kegg_search'"
+      <FilterGene
+        v-if="['kegg_search', 'cog_search', 'pfam_search'].includes(summary.type)"
         :field="field"
         :table="table"
         :conditions="conditions"
+        :gene-type-params="geneFunctionTypeInfo[summary.type.split('_')[0]]"
+        :gene-type="summary.type.split('_')[0]"
         @select="$emit('select', $event)"
       />
       <filter-date

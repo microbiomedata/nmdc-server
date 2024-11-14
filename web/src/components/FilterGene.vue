@@ -1,10 +1,20 @@
 <script lang="ts">
 import {
-  defineComponent, PropType, toRef, ref, watch, nextTick,
+  computed,
+  defineComponent,
+  PropType,
+  toRef,
+  ref,
+  watch,
+  nextTick,
 } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
-import { Condition, entityType, api } from '@/data/api';
-import { keggEncode, stringIsKegg } from '@/encoding';
+import {
+  Condition, entityType, KeggTermSearchResponse,
+} from '@/data/api';
+import {
+  keggEncode, GeneFunctionSearchParams,
+} from '@/encoding';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import useRequest from '@/use/useRequest';
 
@@ -15,13 +25,28 @@ export default defineComponent({
       type: Array as PropType<Condition[]>,
       required: true,
     },
+    geneTypeParams: {
+      type: Object as PropType<GeneFunctionSearchParams>,
+      required: true,
+    },
+    geneType: {
+      type: String,
+      default: 'kegg', // can be kegg, cog, or pfam
+    },
   },
 
   setup(props, { emit }) {
     const selected = ref(null);
     const conditions = toRef(props, 'conditions');
     const field = ref('id');
-    const table = ref('gene_function' as entityType);
+    const table = computed(() => {
+      const typeToTable: Record<string, entityType> = {
+        kegg: 'kegg_function',
+        cog: 'cog_function',
+        pfam: 'pfam_function',
+      };
+      return typeToTable[props.geneType];
+    });
     const { myConditions } = useFacetSummaryData({ conditions, field, table });
 
     /** Autocomplete state */
@@ -29,10 +54,14 @@ export default defineComponent({
     const items = ref([] as { text: string; value: string }[]);
     const search = ref('');
 
+    async function geneSearch(): Promise<KeggTermSearchResponse[]> {
+      return request(() => props.geneTypeParams.searchFunction(search.value || ''));
+    }
+
     watch(search, async () => {
-      const resp = (await request(() => api.keggSearch(search.value || '')))
-        .map((v) => ({ text: `${v.term}: ${v.text}`, value: v.term }));
-      if (resp.length === 0 && search.value && stringIsKegg(search.value)) {
+      const resp = (await geneSearch())
+        .map((v: KeggTermSearchResponse) => ({ text: `${v.term}: ${v.text}`, value: v.term }));
+      if (resp.length === 0 && search.value && props.geneTypeParams.searchWithInputText(search.value)) {
         resp.push({ value: search.value, text: search.value });
       }
       items.value = resp;
@@ -40,7 +69,7 @@ export default defineComponent({
 
     const headers: DataTableHeader[] = [
       {
-        text: 'Kegg Term',
+        text: 'Term',
         value: 'value',
         width: '300',
         sortable: true,
@@ -59,7 +88,7 @@ export default defineComponent({
       const newConditions = [...conditions.value, {
         op: '==',
         field: field.value,
-        value: keggEncode(term),
+        value: props.geneTypeParams.encodeFunction(term, false),
         table: table.value,
       }];
       emit('select', { conditions: newConditions });
@@ -99,13 +128,13 @@ export default defineComponent({
     <v-row no-gutters>
       <div class="px-4 text-caption">
         <p>
-          KEGG Gene Function search filters results to
-          samples that have at least one of the chosen KEGG terms.
-          Orthology, Module, and Pathway are supported.
-          Expected formats: <code>K00000, M00000, map00000, ko00000, rn00000, and ec00000</code>
+          {{ geneTypeParams.description }}
+        </p>
+        <p v-if="geneTypeParams.expectedFormats">
+          Expected formats: <code>{{ geneTypeParams.expectedFormats }}</code>
         </p>
         <p class="text-subtitle-2">
-          More information at <a href="https://www.genome.jp/kegg/">genome.jp/kegg</a>
+          More information at <a :href="geneTypeParams.helpSite">{{ geneTypeParams.helpSite }}</a>
         </p>
       </div>
       <slot name="subtitle" />
@@ -114,7 +143,7 @@ export default defineComponent({
         :loading="loading"
         :items="items"
         :search-input.sync="search"
-        label="Search for KEGG terms"
+        :label="geneTypeParams.label"
         clearable
         class="px-3 grow"
         dense
@@ -133,7 +162,7 @@ export default defineComponent({
       :headers="headers"
     >
       <template #[`item.value`]="{ item }">
-        <a :href="keggEncode(item.value, true)">
+        <a :href="geneTypeParams.encodeFunction(item.value, true)">
           {{ item.value }}
         </a>
       </template>
