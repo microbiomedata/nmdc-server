@@ -100,6 +100,14 @@ export default defineComponent({
       submission,
     };
   },
+  data: () => ({
+    OverFlowMenuItems: [
+      { title: 'Delete' },
+      { title: 'Click Me' },
+      { title: 'Click Me' },
+      { title: 'Click Me 2' },
+    ],
+  }),
 });
 </script>
 
@@ -202,6 +210,28 @@ export default defineComponent({
                 mdi-arrow-right-circle
               </v-icon>
             </v-btn>
+            <v-menu offset-y>
+              <template #activator="{ props }">
+                <v-btn
+                  class="ml-1"
+                  icon="mdi-dots-vertical"
+                  variant="text"
+                  v-bind="props"
+                >
+                  <v-icon>
+                    mdi-dots-vertical
+                  </v-icon>
+                </v-btn>
+              </template>
+              <v-list>
+                <v-list-item
+                  v-for="(entry, i) in OverFlowMenuItems"
+                  :key="i"
+                >
+                  <v-list-item-title>{{ entry.title }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
           </template>
         </v-data-table>
       </v-card>
