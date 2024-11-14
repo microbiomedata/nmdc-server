@@ -113,14 +113,15 @@ function cogEncode(v: string, url = false) {
   }
   // Or figure out if it is a term, pathway, or function
   const urlBase = 'https://www.ncbi.nlm.nih.gov/research/cog';
+  const id = v.split(':')[1];
   if (v.length === 1 || v.startsWith('COG.FUNCTION:')) {
-    return `${urlBase}/cogcategory/${v.split(':')[1]}`;
+    return `${urlBase}/cogcategory/${id}`;
   }
   if (v.startsWith('COG.PATHWAY')) {
-    return `${urlBase}/pathway/${v.split(':')[1]}`;
+    return `${urlBase}/pathway/${id}`;
   }
   if (v.startsWith('COG:COG')) {
-    return `${urlBase}/cog/${v.split(':')[1]}`;
+    return `${urlBase}/cog/${id}`;
   }
   return v;
 }
@@ -132,10 +133,12 @@ function pfamEncode(v: string, url = false) {
     }
     return `PFAM.CLAN:${v}`;
   }
+  const urlBase = 'https://www.ebi.ac.uk/interpro';
+  const id = v.split(':')[1];
   if (v.startsWith('PF') || v.startsWith('PFAM:')) {
-    return `https://www.ebi.ac.uk/interpro/entry/pfam/${v.split(':')[1]}`;
+    return `${urlBase}/entry/pfam/${id}`;
   }
-  return `https://www.ebi.ac.uk/interpro/set/pfam/${v.split(':')[1]}`;
+  return `${urlBase}/set/pfam/${id}`;
 }
 
 export interface GeneFunctionSearchParams {
