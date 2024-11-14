@@ -171,19 +171,15 @@ export default defineComponent({
       ])),
     ));
 
-    const isSaving = ref();
-    const saveSuccess = ref();
-    const onBeforeChange = () => {
-      isSaving.value = true;
-    };
+    const saveRecordRequest = useRequest();
+    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
+
     const onDataChange = async () => {
       hasChanged.value += 1;
       const data = harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      const httpStatus = await incrementalSaveRecord(root.$route.params.id);
+      saveRecord(); // This is a background save that we intentionally don't wait for
       tabsValidated.value[activeTemplateKey.value] = false;
-      saveSuccess.value = httpStatus === 200;
-      isSaving.value = false;
     };
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
     onMounted(async () => {
@@ -196,7 +192,6 @@ export default defineComponent({
         await harmonizerApi.init(r, schema, activeTemplate.value.schemaClass, goldEcosystemTree);
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
-        harmonizerApi.addBeforeChangeHook(onBeforeChange);
         harmonizerApi.addChangeHook(onDataChange);
         if (!canEditSampleMetadata()) {
           harmonizerApi.setTableReadOnly();
@@ -234,7 +229,7 @@ export default defineComponent({
         ...invalidCells.value,
         [activeTemplateKey.value]: result,
       };
-      incrementalSaveRecord(root.$route.params.id);
+      saveRecord(); // This is a background save that we intentionally don't wait for
       if (valid === false) {
         errorClick(0);
       }
@@ -447,7 +442,7 @@ export default defineComponent({
 
         // Sync with backend
         hasChanged.value += 1;
-        incrementalSaveRecord(root.$route.params.id);
+        saveRecord(); // This is a background save that we intentionally don't wait for
 
         // Load data for active tab into DataHarmonizer
         harmonizerApi.loadData(activeTemplateData.value);
@@ -474,7 +469,6 @@ export default defineComponent({
       activeTemplate.value = HARMONIZER_TEMPLATES[nextTemplate];
       harmonizerApi.useTemplate(HARMONIZER_TEMPLATES[nextTemplate].schemaClass);
       harmonizerApi.addChangeHook(onDataChange);
-      harmonizerApi.addBeforeChangeHook(onBeforeChange);
     }
 
     return {
@@ -488,14 +482,13 @@ export default defineComponent({
       harmonizerApi,
       canSubmit,
       tabsValidated,
+      saveRecordRequest,
       submitLoading,
       submitCount,
       selectedHelpDict,
       packageName,
       fields,
       highlightedValidationError,
-      isSaving,
-      saveSuccess,
       sidebarOpen,
       validationItems,
       validationActiveCategory,
@@ -650,34 +643,35 @@ export default defineComponent({
           </v-btn>
         </v-card>
         <submission-docs-link anchor="sample-metadata" />
-        <span
-          v-if="isSaving"
-          class="text-center"
-        >
-          <v-progress-circular
-            color="primary"
-            :width="1"
-            size="20"
-            value="70"
-          />
-          Saving progress
-        </span>
-        <span v-if="saveSuccess && !isSaving">
-          <v-icon
-
-            color="green"
+        <span v-if="saveRecordRequest.count.value > 0">
+          <span
+            v-if="saveRecordRequest.loading.value"
+            class="text-center"
           >
-            mdi-check
-          </v-icon>
-          Changes saved successfully
-        </span>
-        <span v-else-if="saveSuccess === false">
-          <v-icon
-            color="red"
-          >
-            mdi-close
-          </v-icon>
-          Failed to save changes
+            <v-progress-circular
+              color="primary"
+              :width="1"
+              size="20"
+              indeterminate
+            />
+            Saving progress
+          </span>
+          <span v-if="!saveRecordRequest.error.value && !saveRecordRequest.loading.value">
+            <v-icon
+              color="green"
+            >
+              mdi-check
+            </v-icon>
+            Changes saved successfully
+          </span>
+          <span v-else-if="saveRecordRequest.error.value && !saveRecordRequest.loading.value">
+            <v-icon
+              color="red"
+            >
+              mdi-close
+            </v-icon>
+            Failed to save changes
+          </span>
         </span>
         <v-spacer />
         <v-autocomplete
