@@ -675,36 +675,47 @@ async def get_metadata_submissions_mixs(
 
         # Get sample names from each sample type
         for sample_type in sample_data:
-            samples = sample_data[sample_type] if sample_type in sample_data else {}
+            samples = sample_data[sample_type] if sample_type in sample_data else []
             # Iterate through each sample and extract the name
             for x in samples:
 
                 # Get the sample name
-                name = x["samp_name"] if "samp_name" in x else {}
-                name = str(name)
-                name = name.replace("\t", "").replace("\r", "").replace("\n", "").lstrip("_")
+                sample_name = x["samp_name"] if "samp_name" in x else ""
+                sample_name = str(sample_name)
+                sample_name = sample_name.replace("\t", "")
+                sample_name = sample_name.replace("\r", "")
+                sample_name = sample_name.replace("\n", "").lstrip("_")
+
                 # Get the env broad scale
-                broad = x["env_broad_scale"] if "env_broad_scale" in x else {}
-                broad = str(broad)
-                broad = broad.replace("\t", "").replace("\r", "").replace("\n", "").lstrip("_")
+                env_broad_scale = x["env_broad_scale"] if "env_broad_scale" in x else ""
+                env_broad_scale = str(env_broad_scale)
+                env_broad_scale = env_broad_scale.replace("\t", "")
+                env_broad_scale = env_broad_scale.replace("\r", "")
+                env_broad_scale = env_broad_scale.replace("\n", "").lstrip("_")
+
                 # Get the env local scale
-                local = x["env_local_scale"] if "env_local_scale" in x else {}
-                local = str(local)
-                local = local.replace("\t", "").replace("\r", "").replace("\n", "").lstrip("_")
+                env_local_scale = x["env_local_scale"] if "env_local_scale" in x else ""
+                env_local_scale = str(env_local_scale)
+                env_local_scale = env_local_scale.replace("\t", "")
+                env_local_scale = env_local_scale.replace("\r", "")
+                env_local_scale = env_local_scale.replace("\n", "").lstrip("_")
+
                 # Get the env medium
-                medium = x["env_medium"] if "env_medium" in x else {}
-                medium = str(medium)
-                medium = medium.replace("\t", "").replace("\r", "").replace("\n", "").lstrip("_")
+                env_medium = x["env_medium"] if "env_medium" in x else ""
+                env_medium = str(env_medium)
+                env_medium = env_medium.replace("\t", "")
+                env_medium = env_medium.replace("\r", "")
+                env_medium = env_medium.replace("\n", "").lstrip("_")
 
                 # Append each sample as new row (with env data)
                 data_row = [
                     s.id,
                     s.status,
-                    name,
+                    sample_name,
                     env_package,
-                    broad,
-                    local,
-                    medium,
+                    env_broad_scale,
+                    env_local_scale,
+                    env_medium,
                 ]
                 data_rows.append(data_row)
 
