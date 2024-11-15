@@ -91,7 +91,7 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
     ]
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
     rows = [row for row in reader]
-    assert len(rows) == 3  # including the header row
+    assert len(rows) == 4  # including the header row
 
     header_row = rows[0]  # get the header row
     assert len(list(header_row.keys())) == len(fieldnames)
