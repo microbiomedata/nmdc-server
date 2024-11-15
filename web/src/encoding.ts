@@ -133,12 +133,12 @@ function pfamEncode(v: string, url = false) {
     }
     return `PFAM.CLAN:${v}`;
   }
-  const urlBase = 'https://www.ebi.ac.uk/interpro';
+  const urlBase = 'https://bioregistry.io/pfam';
   const id = v.split(':')[1];
-  if (v.startsWith('PF') || v.startsWith('PFAM:')) {
-    return `${urlBase}/entry/pfam/${id}`;
+  if (v.includes('CLAN')) {
+    return `${urlBase}.clan:/${id}`;
   }
-  return `${urlBase}/set/pfam/${id}`;
+  return `${urlBase}:/${id}`;
 }
 
 export interface GeneFunctionSearchParams {
