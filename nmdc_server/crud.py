@@ -686,7 +686,7 @@ def get_query_for_all_submissions(db: Session):
     return all_submissions
 
 
-def get_query_for_submitted_pending_review(db: Session):
+def get_query_for_submitted_pending_review_submissions(db: Session):
     r"""
     Returns a SQLAlchemy query that can be used to retrieve submissions pending review.
 

@@ -653,7 +653,7 @@ async def get_metadata_submissions_mixs(
     designed to facilitate the review of submissions by NMDC team members.
     """
     # Get the submissions from the database.
-    q = crud.get_query_for_submitted_pending_review(db)
+    q = crud.get_query_for_submitted_pending_review_submissions(db)
     submissions = q.all()
 
     # Iterate through the submissions, building the data rows for the report.
