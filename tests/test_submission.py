@@ -69,7 +69,7 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
                 ]
             },
             "packageName": "Env Pkg 1"
-        },
+        }
     )
     db.commit()
     response = client.request(method="get", url="/api/metadata_submission/mixs_report")
