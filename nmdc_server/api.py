@@ -638,7 +638,7 @@ async def download_zip_file(
 
 
 @router.get(
-    "/metadata_submission/mixs",
+    "/metadata_submission/mixs_report",
     tags=["metadata_submission"],
 )
 async def get_metadata_submissions_mixs(
