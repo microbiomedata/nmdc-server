@@ -58,9 +58,16 @@ export default defineComponent({
       return request(() => props.geneTypeParams.searchFunction(search.value || ''));
     }
 
+    function getTermDisplayText(term: string, text: string) {
+      if (text) {
+        return `${term}: ${text}`;
+      }
+      return term;
+    }
+
     watch(search, async () => {
       const resp = (await geneSearch())
-        .map((v: KeggTermSearchResponse) => ({ text: `${v.term}: ${v.text}`, value: v.term }));
+        .map((v: KeggTermSearchResponse) => ({ text: getTermDisplayText(v.term, v.text), value: v.term }));
       if (resp.length === 0 && search.value && props.geneTypeParams.searchWithInputText(search.value)) {
         resp.push({ value: search.value, text: search.value });
       }
