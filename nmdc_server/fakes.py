@@ -314,7 +314,6 @@ class MetabolomicsAnalysisFactory(PipelineStepBase):
         sqlalchemy_session = db
 
     used: str = Faker("word")
-    has_calibration: str = Faker("word")
 
 
 class GeneFunction(SQLAlchemyModelFactory):

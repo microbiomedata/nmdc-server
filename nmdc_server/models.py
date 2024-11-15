@@ -686,7 +686,6 @@ class MetabolomicsAnalysis(Base, PipelineStep):
     __tablename__ = "metabolomics_analysis"
 
     used = Column(String, nullable=False)
-    has_calibration = Column(String, nullable=False)
 
     inputs = input_relationship(metabolomics_analysis_input_association)
     outputs = output_relationship(metabolomics_analysis_output_association)

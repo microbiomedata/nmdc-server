@@ -578,7 +578,6 @@ class Metatranscriptome(PipelineStep):
 class MetabolomicsAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.metabolomics_analysis.value
     used: str = ""
-    has_calibration: str
 
 
 class MetabolomicsAnalysis(PipelineStep):
