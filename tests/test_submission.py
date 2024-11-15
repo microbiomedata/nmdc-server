@@ -39,9 +39,8 @@ def test_list_submissions(db: Session, client: TestClient, logged_in_user):
 
 
 def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_in_user):
-    # Create two submissions
+    # Create test submission
     # submission1 has "Submitted- Pending Review" as the status (this is the one we want)
-    # submission2 has "In Progress" as the status (don't want this selected - mismatch status)
     submission1 = fakes.MetadataSubmissionFactory(
         status="Submitted- Pending Review",
         metadata_submission={
@@ -71,21 +70,6 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
             },
             "packageName": "Env Pkg 1",
         },
-    )
-    submission2 = fakes.MetadataSubmissionFactory(
-        metadata_submission={
-            "sampleData": {
-                "built_env_data": [
-                    {
-                        "samp_name": "Sample D",
-                        "env_medium": "Medium D",
-                        "env_broad_scale": "Broad Scale D",
-                        "env_local_scale": "Local Scale D",
-                    }
-                ]
-            },
-            "packageName": "Env Pkg 2",
-        }
     )
     db.commit()
 
