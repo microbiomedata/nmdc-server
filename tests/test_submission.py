@@ -43,7 +43,7 @@ def test_get_metadata_submissions_mixs(
 ):
     # Create two submissions
     # submission1 has "Submitted- Pending Review" as the status (this is the one we want)
-    # submission2 has "In Progress" as the status (default value for fakes)
+    # submission2 has "In Progress" as the status (don't want this selected - mismatch status)
     submission1 = fakes.MetadataSubmissionFactory(
         status = "Submitted- Pending Review",
         metadata_submission = {
