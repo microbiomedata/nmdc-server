@@ -112,16 +112,16 @@ function cogEncode(v: string, url = false) {
     return `COG.PATHWAY:${v}`;
   }
   // Or figure out if it is a term, pathway, or function
-  const urlBase = 'https://www.ncbi.nlm.nih.gov/research/cog';
+  const urlBase = 'https://bioregistry.io/cog';
   const id = v.split(':')[1];
   if (v.length === 1 || v.startsWith('COG.FUNCTION:')) {
-    return `${urlBase}/cogcategory/${id}`;
+    return `${urlBase}.category:/${id}`;
   }
   if (v.startsWith('COG.PATHWAY')) {
-    return `${urlBase}/pathway/${id}`;
+    return `${urlBase}.pathway:/${id}`;
   }
   if (v.startsWith('COG:COG')) {
-    return `${urlBase}/cog/${id}`;
+    return `${urlBase}:/${id}`;
   }
   return v;
 }
