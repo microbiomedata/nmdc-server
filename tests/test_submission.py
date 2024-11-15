@@ -50,30 +50,29 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
                         "samp_name": "Sample A",
                         "env_medium": "Medium A",
                         "env_broad_scale": "Broad Scale A",
-                        "env_local_scale": "Local Scale A",
+                        "env_local_scale": "Local Scale A"
                     },
                     {
                         "samp_name": "Sample B",
                         "env_medium": "Medium B",
                         "env_broad_scale": "Broad Scale B",
-                        "env_local_scale": "Local Scale B",
-                    },
+                        "env_local_scale": "Local Scale B"
+                    }
                 ],
                 "water_data": [
                     {
                         "samp_name": "Sample C",
                         "env_medium": "Medium C",
                         "env_broad_scale": "Broad Scale C",
-                        "env_local_scale": "Local Scale C",
+                        "env_local_scale": "Local Scale C"
                     }
-                ],
+                ]
             },
-            "packageName": "Env Pkg 1",
+            "packageName": "Env Pkg 1"
         },
     )
     db.commit()
-
-    response = client.request(method="get", url=f"/api/metadata_submission/mixs_report")
+    response = client.request(method="get", url="/api/metadata_submission/mixs_report")
     assert response.status_code == 200
 
     # Check that the reponse payload is a TSV and that the result has the correct
