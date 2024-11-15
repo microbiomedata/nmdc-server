@@ -87,7 +87,7 @@ function keggEncode(v: string, url = false) {
     const transformed = v.replace(pattern, replacement);
     if (transformed !== v) {
       if (url) {
-        return urlBase + transformed;
+        return urlBase + transformed.toUpperCase();
       }
       return transformed;
     }
