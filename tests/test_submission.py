@@ -38,28 +38,26 @@ def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     assert response.json()["results"][0]["id"] == str(submission.id)
 
 
-def test_get_metadata_submissions_mixs(
-    db: Session, client: TestClient, logged_in_user
-):
+def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_in_user):
     # Create two submissions
     # submission1 has "Submitted- Pending Review" as the status (this is the one we want)
     # submission2 has "In Progress" as the status (don't want this selected - mismatch status)
     submission1 = fakes.MetadataSubmissionFactory(
-        status = "Submitted- Pending Review",
-        metadata_submission = {
+        status="Submitted- Pending Review",
+        metadata_submission={
             "sampleData": {
                 "built_env_data": [
                     {
                         "samp_name": "Sample A",
                         "env_medium": "Medium A",
                         "env_broad_scale": "Broad Scale A",
-                        "env_local_scale": "Local Scale A"
+                        "env_local_scale": "Local Scale A",
                     },
                     {
                         "samp_name": "Sample B",
                         "env_medium": "Medium B",
                         "env_broad_scale": "Broad Scale B",
-                        "env_local_scale": "Local Scale B"
+                        "env_local_scale": "Local Scale B",
                     },
                 ],
                 "water_data": [
@@ -67,22 +65,22 @@ def test_get_metadata_submissions_mixs(
                         "samp_name": "Sample C",
                         "env_medium": "Medium C",
                         "env_broad_scale": "Broad Scale C",
-                        "env_local_scale": "Local Scale C"
+                        "env_local_scale": "Local Scale C",
                     }
-                ]
+                ],
             },
             "packageName": "Env Pkg 1",
-        }
+        },
     )
     submission2 = fakes.MetadataSubmissionFactory(
-        metadata_submission = {
+        metadata_submission={
             "sampleData": {
                 "built_env_data": [
                     {
                         "samp_name": "Sample D",
                         "env_medium": "Medium D",
                         "env_broad_scale": "Broad Scale D",
-                        "env_local_scale": "Local Scale D"
+                        "env_local_scale": "Local Scale D",
                     }
                 ]
             },

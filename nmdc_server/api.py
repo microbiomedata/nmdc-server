@@ -645,9 +645,9 @@ async def get_metadata_submissions_mixs(
     db: Session = Depends(get_db),
 ):
     r"""
-    Generate a TSV-formatted report of biosamples belonging to submissions 
+    Generate a TSV-formatted report of biosamples belonging to submissions
     that have a status of "Submitted- Pending Review".
-    
+
     The report indicates which environmental package/extension, broad scale,
     local scale, and medium are specified for each biosample. The report is
     designed to facilitate the review of submissions by NMDC team members.
