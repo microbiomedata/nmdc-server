@@ -51,13 +51,13 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
                         "env_medium": "Medium A",
                         "env_broad_scale": "Broad Scale A",
                         "env_local_scale": "Local Scale A"
+                    },
+                    {
+                        "samp_name": "Sample B",
+                        "env_medium": "Medium B",
+                        "env_broad_scale": "Broad Scale B",
+                        "env_local_scale": "Local Scale B"
                     }
-                    # {
-                    #     "samp_name": "Sample B",
-                    #     "env_medium": "Medium B",
-                    #     "env_broad_scale": "Broad Scale B",
-                    #     "env_local_scale": "Local Scale B"
-                    # }
                 ],
                 "water_data": [
                     {
@@ -99,29 +99,29 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
     data_row = rows[1]  # first data row (data about Sample A in submission1)
     assert data_row["Submission ID"] == str(submission1.id)
     assert data_row["Status"] == "Submitted- Pending Review"
+    assert data_row["Sample Name"] == "Sample C"
+    assert data_row["Environmental Package/Extension"] == "Env Pkg 1"
+    assert data_row["Environmental Broad Scale"] == "Broad Scale C"
+    assert data_row["Environmental Local Scale"] == "Local Scale C"
+    assert data_row["Environmental Medium"] == "Medium C"
+
+    data_row = rows[2]  # second data row (data about Sample B in submission1)
+    assert data_row["Submission ID"] == str(submission1.id)
+    assert data_row["Status"] == "Submitted- Pending Review"
     assert data_row["Sample Name"] == "Sample A"
     assert data_row["Environmental Package/Extension"] == "Env Pkg 1"
     assert data_row["Environmental Broad Scale"] == "Broad Scale A"
     assert data_row["Environmental Local Scale"] == "Local Scale A"
     assert data_row["Environmental Medium"] == "Medium A"
 
-    # data_row = rows[2]  # second data row (data about Sample B in submission1)
-    # assert data_row["Submission ID"] == str(submission1.id)
-    # assert data_row["Status"] == "Submitted- Pending Review"
-    # assert data_row["Sample Name"] == "Sample B"
-    # assert data_row["Environmental Package/Extension"] == "Env Pkg 1"
-    # assert data_row["Environmental Broad Scale"] == "Broad Scale B"
-    # assert data_row["Environmental Local Scale"] == "Local Scale B"
-    # assert data_row["Environmental Medium"] == "Medium B"
-
-    data_row = rows[2]  # third data row (data about Sample C in submission1)
+    data_row = rows[3]  # third data row (data about Sample C in submission1)
     assert data_row["Submission ID"] == str(submission1.id)
     assert data_row["Status"] == "Submitted- Pending Review"
-    assert data_row["Sample Name"] == "Sample C"
+    assert data_row["Sample Name"] == "Sample B"
     assert data_row["Environmental Package/Extension"] == "Env Pkg 1"
-    assert data_row["Environmental Broad Scale"] == "Broad Scale C"
-    assert data_row["Environmental Local Scale"] == "Local Scale C"
-    assert data_row["Environmental Medium"] == "Medium C"
+    assert data_row["Environmental Broad Scale"] == "Broad Scale B"
+    assert data_row["Environmental Local Scale"] == "Local Scale B"
+    assert data_row["Environmental Medium"] == "Medium B"
 
 
 def test_get_metadata_submissions_report_as_non_admin(
