@@ -57,8 +57,8 @@ def ingest_ko_search(db: Session) -> None:
 def get_search_records_from_delimeted_file(
     file,
     term_key,
-    text_key,
     records,
+    text_key=None,
     delimeter="\t",
     fallback_text_key=None,
     fieldnames=None,
@@ -75,8 +75,10 @@ def get_search_records_from_delimeted_file(
                     continue
                 if fallback_text_key:
                     records[row[term_key]] = row[text_key] or row[fallback_text_key]
-                else:
+                elif text_key:
                     records[row[term_key]] = row[text_key]
+                else:
+                    records[row[term_key]] = ""
     except FileNotFoundError:
         errors["kegg_search"].add(f"Missing {file}")
 
@@ -100,7 +102,7 @@ pfam_headers = [
 
 cog_function_headers = ["function_code", "sequence", "definition"]
 
-delimeted_files: Dict[str, List[Dict[str, Union[str, List[str]]]]] = {
+delimeted_files: Dict[str, List[Dict[str, Union[None, str, List[str]]]]] = {
     PATHWAY_FILE: [
         {
             "term_key": "image_id",
@@ -117,22 +119,24 @@ delimeted_files: Dict[str, List[Dict[str, Union[str, List[str]]]]] = {
             "hierarchy": "cog",
         }
     ],
+    # Cog pathways and terms come out of the same file
     COG_PATHWAY_DEFS: [
+        # Pathways
         {
             "fieldnames": cog_def_headers,
             "term_key": cog_def_headers[4],
-            "text_key": cog_def_headers[4],
+            "text_key": None,  # COG pathways just have a name
             "hierarchy": "cog",
-        }
-    ],
-    COG_TERM_DEFS: [
+        },
+        # Terms
         {
             "fieldnames": cog_def_headers,
             "term_key": cog_def_headers[0],
             "text_key": cog_def_headers[2],
             "hierarchy": "cog",
-        }
+        },
     ],
+    # PFAM terms and clans come out of the same file
     PFAM_TERM_DEFS: [
         {
             "fieldnames": pfam_headers,
@@ -157,28 +161,28 @@ def get_search_records():
         "cog": {},
     }
 
-    def ingest_tree(node: dict) -> None:
+    def ingest_tree(node: dict, hierarchy: str) -> None:
         if not node.get("children", False):
             term, *text = node["name"].split("  ", maxsplit=1)
             if "BR:" not in term:
                 # Skip over BRITE term hierarchies that have no children
-                records[term] = text[0] if text else ""
+                records[hierarchy][term] = text[0] if text else ""
 
         for child in node.get("children", ()):
-            ingest_tree(child)
+            ingest_tree(child, hierarchy)
 
     for url in [MODULE_URL, ORTHOLOGY_URL]:
         req = requests.get(url)
         req.raise_for_status()
-        ingest_tree(req.json())
+        ingest_tree(req.json(), "ko")
 
     for file, keys in delimeted_files.items():
         for key_set in keys:
             get_search_records_from_delimeted_file(
                 file,
                 key_set["term_key"],
-                key_set["text_key"],
                 records[str(key_set["hierarchy"])],
+                text_key=key_set["text_key"],
                 fallback_text_key=key_set.get("fallback_text_key", None),
                 fieldnames=key_set.get("fieldnames", None),
             )
