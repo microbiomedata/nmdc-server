@@ -90,6 +90,7 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
         "Environmental Medium",
     ]
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
+    print(reader)
     rows = [row for row in reader]
     assert len(rows) == 4  # including the header row
 
