@@ -57,19 +57,19 @@ const KeggPrefix: Record<string, PrefixInfo> = {
     pattern: /^((k:?)|(kegg\.orthology:k))(?=\d{5})/i,
     short: () => 'k',
     long: () => 'KEGG.ORTHOLOGY:K',
-    urlBase: 'https://www.genome.jp/entry/',
+    urlBase: 'https://bioregistry.io/kegg.orthology:/',
   },
   PATHWAY: {
     pattern: pathwayRegex,
     short: pathwayPrefixShort,
     long: pathwayPrefixLong,
-    urlBase: 'https://www.genome.jp/kegg-bin/show_pathway?',
+    urlBase: 'https://bioregistry.io/kegg.pathway:/',
   },
   MODULE: {
     pattern: /^((m:?)|(kegg.module:m))(?=\d{5})/i,
     short: () => 'M',
     long: () => 'KEGG.MODULE:M',
-    urlBase: 'https://www.kegg.jp/entry/',
+    urlBase: 'https://bioregistry.io/kegg.module:/',
   },
 };
 
@@ -87,7 +87,7 @@ function keggEncode(v: string, url = false) {
     const transformed = v.replace(pattern, replacement);
     if (transformed !== v) {
       if (url) {
-        return urlBase + transformed;
+        return urlBase + transformed.toUpperCase();
       }
       return transformed;
     }
