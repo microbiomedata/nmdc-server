@@ -645,8 +645,12 @@ async def get_metadata_submissions_mixs(
     db: Session = Depends(get_db),
 ):
     r"""
-    Generate a report of NMDC submissions that are submitted pending review to allow review
-    of submission triads and evaluate for approval
+    Generate a TSV-formatted report of biosamples belonging to submissions 
+    that have a status of "Submitted- Pending Review".
+    
+    The report indicates which environmental package/extension, broad scale,
+    local scale, and medium are specified for each biosample. The report is
+    designed to facilitate the review of submissions by NMDC team members.
     """
     # Get the submissions from the database.
     q = crud.get_query_for_submitted_pending_review(db)
