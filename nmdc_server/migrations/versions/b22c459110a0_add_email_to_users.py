@@ -1,7 +1,7 @@
 """add_email_to_users
 
 Revision ID: b22c459110a0
-Revises: 224db8f7e8df
+Revises: 9ba1b6ff84e9
 Create Date: 2024-10-17 18:54:51.145636
 
 """
@@ -13,7 +13,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "b22c459110a0"
-down_revision: Optional[str] = "224db8f7e8df"
+down_revision: Optional[str] = "9ba1b6ff84e9"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
