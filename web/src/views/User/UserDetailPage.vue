@@ -60,11 +60,14 @@ export default defineComponent({
       await api.updateUser(user.value?.id as string, update);
     };
     const editEmail = ref(false);
-    editEmail.value = user.value?.email === null;
+
     const isEmailValid = ref(false);
 
     const updateEmail = (email: string | undefined) => {
-      if (editEmail.value && email) {
+      if (editEmail.value) {
+        if (email == null) {
+          return;
+        }
         isEmailValid.value = /.+@.+\..+/.test(email);
         if (isEmailValid.value) {
           updateUser(email);
@@ -128,22 +131,34 @@ export default defineComponent({
           />
           <v-row>
             <v-col
-              cols="2"
+              cols="3"
               class="pt-6"
             >
               <v-text-field
                 v-model="user.email"
                 label="Email"
                 dense
-                :readonly="!editEmail "
+                :readonly="!editEmail"
                 filled
                 :rules="requiredRules('E-mail is required',[
                   v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
                 ])"
               >
                 <template
-                  v-if="!user.email"
                   #append
+                >
+                  <v-btn
+                    icon
+                    @click="updateEmail(user.email)"
+                  >
+                    <v-icon
+                      v-text="!editEmail ? 'mdi-pencil' : 'mdi-content-save'"
+                    />
+                  </v-btn>
+                </template>
+                <template
+                  v-if="!user.email"
+                  #append-outer
                 >
                   <v-tooltip
                     right
@@ -160,19 +175,6 @@ export default defineComponent({
                     </template>
                     <span>Email is required</span>
                   </v-tooltip>
-                </template>
-                <template
-                  v-else
-                  #append
-                >
-                  <v-btn
-                    icon
-                    @click="updateEmail(user.email)"
-                  >
-                    <v-icon
-                      v-text="!editEmail ? 'mdi-pencil' : 'mdi-content-save'"
-                    />
-                  </v-btn>
                 </template>
               </v-text-field>
             </v-col>
