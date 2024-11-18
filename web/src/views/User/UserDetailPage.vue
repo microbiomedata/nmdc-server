@@ -59,8 +59,26 @@ export default defineComponent({
       };
       await api.updateUser(user.value?.id as string, update);
     };
+    const editEmail = ref(false);
+    editEmail.value = user.value?.email === null;
+    const isEmailValid = ref(false);
+
+    const updateEmail = (email: string | undefined) => {
+      if (editEmail.value && email) {
+        isEmailValid.value = /.+@.+\..+/.test(email);
+        if (isEmailValid.value) {
+          updateUser(email);
+          editEmail.value = !editEmail.value;
+        }
+      } else {
+        editEmail.value = !editEmail.value;
+      }
+    };
 
     return {
+      editEmail,
+      updateEmail,
+      isEmailValid,
       user,
       userLoading,
       origin: window.location.origin,
@@ -117,11 +135,11 @@ export default defineComponent({
                 v-model="user.email"
                 label="Email"
                 dense
+                :readonly="!editEmail "
                 filled
                 :rules="requiredRules('E-mail is required',[
                   v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
                 ])"
-                @blur="updateUser($event.target.value)"
               >
                 <template
                   v-if="!user.email"
@@ -142,6 +160,19 @@ export default defineComponent({
                     </template>
                     <span>Email is required</span>
                   </v-tooltip>
+                </template>
+                <template
+                  v-else
+                  #append
+                >
+                  <v-btn
+                    icon
+                    @click="updateEmail(user.email)"
+                  >
+                    <v-icon
+                      v-text="!editEmail ? 'mdi-pencil' : 'mdi-content-save'"
+                    />
+                  </v-btn>
                 </template>
               </v-text-field>
             </v-col>
