@@ -253,7 +253,7 @@ async def orcid_authorize(request: Request, db: Session = Depends(get_db)):
     user = User(orcid=token_response["orcid"], name=token_response["name"])
 
     orcid_email_response = await oauth2_client.orcid.get(
-        "https://pub.orcid.org/v3.0/0009-0004-9185-506X/email", token=token_response
+        f"https://pub.orcid.org/v3.0/{token_response['orcid']}/email", token=token_response
     )
 
     # XML data from ORCID API
@@ -274,8 +274,6 @@ async def orcid_authorize(request: Request, db: Session = Depends(get_db)):
         if email.text and "@" in email.text:
             user_email = email.text
             break
-
-    user_email = user_email
 
     user_model = crud.get_or_create_user(db, user)
     if user_model.email is None:
