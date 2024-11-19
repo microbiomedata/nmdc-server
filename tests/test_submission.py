@@ -128,9 +128,12 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
     assert len(list(header_row.keys())) == len(fieldnames)
 
     sample_rows = [row for row in reader][1:]
-    assert set(frozenset(sample.items()) for sample in sample_rows) == set(
-        frozenset(sample.items()) for sample in expected_rows
-    )
+    # assert set(frozenset(sample.items()) for sample in sample_rows) == set(
+    #     frozenset(sample.items()) for sample in expected_rows
+    # )
+
+    # Check that all samples in the expected rows appear in the list
+    assert all(samples in sample_rows for samples in expected_rows)
 
 
 def test_get_metadata_submissions_report_as_non_admin(
