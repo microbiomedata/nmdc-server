@@ -673,36 +673,42 @@ async def get_metadata_submissions_mixs(
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
         env_package = metadata["packageName"] if "packageName" in metadata else {}
 
-        # Get sample names from each sample type
-        for sample_type in sample_data:
-            samples = sample_data[sample_type] if sample_type in sample_data else []
-            # Iterate through each sample and extract the name
-            for x in samples:
 
+        for sample_type, samples in sample_data.items():
+        # Get sample names from each sample type
+        # for sample_type in sample_data:
+        #     samples = sample_data[sample_type] if sample_type in sample_data else []
+        #     sorted_samples = sorted(samples, key=lambda x: x.get('samp_name', ''))
+        #     # Iterate through each sample and extract the name
+            for x in samples:
                 # Get the sample name
-                sample_name = x["samp_name"] if "samp_name" in x else ""
-                sample_name = str(sample_name)
+                # sample_name = x["samp_name"] if "samp_name" in x else ""
+                # sample_name = str(sample_name)
+                sample_name = x.get('samp_name', '').strip()
                 sample_name = sample_name.replace("\t", "")
                 sample_name = sample_name.replace("\r", "")
                 sample_name = sample_name.replace("\n", "").lstrip("_")
 
                 # Get the env broad scale
-                env_broad_scale = x["env_broad_scale"] if "env_broad_scale" in x else ""
-                env_broad_scale = str(env_broad_scale)
+                # env_broad_scale = x["env_broad_scale"] if "env_broad_scale" in x else ""
+                # env_broad_scale = str(env_broad_scale)
+                env_broad_scale = x.get('env_broad_scale', '').strip()
                 env_broad_scale = env_broad_scale.replace("\t", "")
                 env_broad_scale = env_broad_scale.replace("\r", "")
                 env_broad_scale = env_broad_scale.replace("\n", "").lstrip("_")
 
                 # Get the env local scale
-                env_local_scale = x["env_local_scale"] if "env_local_scale" in x else ""
-                env_local_scale = str(env_local_scale)
+                # env_local_scale = x["env_local_scale"] if "env_local_scale" in x else ""
+                # env_local_scale = str(env_local_scale)
+                env_local_scale = x.get('env_local_scale', '').strip()
                 env_local_scale = env_local_scale.replace("\t", "")
                 env_local_scale = env_local_scale.replace("\r", "")
                 env_local_scale = env_local_scale.replace("\n", "").lstrip("_")
 
                 # Get the env medium
-                env_medium = x["env_medium"] if "env_medium" in x else ""
-                env_medium = str(env_medium)
+                # env_medium = x["env_medium"] if "env_medium" in x else ""
+                # env_medium = str(env_medium)
+                env_medium = x.get('env_medium', '').strip()
                 env_medium = env_medium.replace("\t", "")
                 env_medium = env_medium.replace("\r", "")
                 env_medium = env_medium.replace("\n", "").lstrip("_")
