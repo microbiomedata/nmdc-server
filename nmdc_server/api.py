@@ -673,13 +673,12 @@ async def get_metadata_submissions_mixs(
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
         env_package = metadata["packageName"] if "packageName" in metadata else {}
 
-        for sample_type, samples in sample_data.items():
         # Get sample names from each sample type
-        # for sample_type in sample_data:
-        #     samples = sample_data[sample_type] if sample_type in sample_data else []
-        #     sorted_samples = sorted(samples, key=lambda x: x.get('samp_name', ''))
+        for sample_type in sample_data:
+            samples = sample_data[sample_type] if sample_type in sample_data else []
+            sorted_samples = sorted(samples, key=lambda x: x.get('samp_name', ''))
         #     # Iterate through each sample and extract the name
-            for x in samples:
+            for x in sorted_samples:
                 # Get the sample name
                 # sample_name = x["samp_name"] if "samp_name" in x else ""
                 # sample_name = str(sample_name)
