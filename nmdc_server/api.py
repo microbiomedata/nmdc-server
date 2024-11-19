@@ -673,7 +673,6 @@ async def get_metadata_submissions_mixs(
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
         env_package = metadata["packageName"] if "packageName" in metadata else {}
 
-
         for sample_type, samples in sample_data.items():
         # Get sample names from each sample type
         # for sample_type in sample_data:
