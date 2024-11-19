@@ -128,7 +128,7 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
     assert len(list(header_row.keys())) == len(fieldnames)
 
     # Check that all samples in the expected rows appear in the list
-    assert all(samples in rows for samples in expected_rows)
+    assert all(samples in expected_rows for samples in rows)
     # assert set(expected_rows).issubset(set(rows))
 
 
