@@ -9,3 +9,4 @@ __pycache__/
 vetur.config.js
 **.local**
 build/**
+data/
