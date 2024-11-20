@@ -660,6 +660,7 @@ class User(BaseModel):
     id: Optional[UUID] = None
     orcid: str
     name: str = ""
+    email: Optional[str] = None
     is_admin: bool = False
     model_config = ConfigDict(from_attributes=True)
 

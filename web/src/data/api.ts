@@ -363,6 +363,7 @@ export interface User{
     orcid: string;
     name: string;
     is_admin: boolean;
+    email?: string;
 }
 
 export interface TokenResponse {
