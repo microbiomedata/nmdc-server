@@ -50,18 +50,18 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
                         "samp_name": "Sample A",
                         "env_medium": "Medium A",
                         "env_broad_scale": "Broad Scale A",
-                        "env_local_scale": "Local Scale A"
+                        "env_local_scale": "Local Scale A",
                     },
                     {
                         "samp_name": "Sample B",
                         "env_medium": "Medium B",
                         "env_broad_scale": "Broad Scale B",
-                        "env_local_scale": "Local Scale B"
-                    }
+                        "env_local_scale": "Local Scale B",
+                    },
                 ]
             },
-            "packageName": "Env Pkg 1"
-        }
+            "packageName": "Env Pkg 1",
+        },
     )
     db.commit()
     response = client.request(method="get", url="/api/metadata_submission/mixs_report")
