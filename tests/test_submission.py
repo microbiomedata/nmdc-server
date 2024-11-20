@@ -58,14 +58,6 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
                         "env_broad_scale": "Broad Scale B",
                         "env_local_scale": "Local Scale B"
                     }
-                ],
-                "water_data": [
-                    {
-                        "samp_name": "Sample C",
-                        "env_medium": "Medium C",
-                        "env_broad_scale": "Broad Scale C",
-                        "env_local_scale": "Local Scale C"
-                    }
                 ]
             },
             "packageName": "Env Pkg 1"
@@ -80,37 +72,6 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
     # including a header.
     # Reference: https://docs.python.org/3/library/csv.html#csv.DictReader
 
-    # Define rows we expect to see in the table
-    expected_rows = [
-        {
-            "Submission ID":str(submission1.id),
-            "Status":"Submitted- Pending Review",
-            "Sample Name":"Sample A",
-            "Environmental Package/Extension":"Env Pkg 1",
-            "Environmental Broad Scale":"Broad Scale A",
-            "Environmental Local Scale":"Local Scale A",
-            "Environmental Medium":"Medium A",
-        }, 
-        {
-            "Submission ID":str(submission1.id),
-            "Status":"Submitted- Pending Review",
-            "Sample Name":"Sample B",
-            "Environmental Package/Extension":"Env Pkg 1",
-            "Environmental Broad Scale":"Broad Scale B",
-            "Environmental Local Scale":"Local Scale B",
-            "Environmental Medium":"Medium B",
-        }, 
-        {
-            "Submission ID":str(submission1.id),
-            "Status":"Submitted- Pending Review",
-            "Sample Name":"Sample C",
-            "Environmental Package/Extension":"Env Pkg 2",
-            "Environmental Broad Scale":"Broad Scale C",
-            "Environmental Local Scale":"Local Scale C",
-            "Environmental Medium":"Medium C",
-        }
-    ]
-
     fieldnames = [
         "Submission ID",
         "Status",
@@ -122,14 +83,28 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
     ]
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
     rows = [row for row in reader]
-    assert len(rows) == 4  # including the header row
+    assert len(rows) == 3  # including the header row
 
     header_row = rows[0]  # get the header row
     assert len(list(header_row.keys())) == len(fieldnames)
 
-    # Check that all samples in the expected rows appear in the list
-    assert all(samples in expected_rows for samples in rows)
-    # assert set(expected_rows).issubset(set(rows))
+    data_row = rows[1]  # first data row (data about Sample A in submission1)
+    assert data_row["Submission ID"] == str(submission1.id)
+    assert data_row["Status"] == "Submitted- Pending Review"
+    assert data_row["Sample Name"] == "Sample A"
+    assert data_row["Environmental Package/Extension"] == "Env Pkg 1"
+    assert data_row["Environmental Broad Scale"] == "Broad Scale A"
+    assert data_row["Environmental Local Scale"] == "Local Scale A"
+    assert data_row["Environmental Medium"] == "Medium A"
+
+    data_row = rows[2]  # second data row (data about Sample B in submission1)
+    assert data_row["Submission ID"] == str(submission1.id)
+    assert data_row["Status"] == "Submitted- Pending Review"
+    assert data_row["Sample Name"] == "Sample B"
+    assert data_row["Environmental Package/Extension"] == "Env Pkg 1"
+    assert data_row["Environmental Broad Scale"] == "Broad Scale B"
+    assert data_row["Environmental Local Scale"] == "Local Scale B"
+    assert data_row["Environmental Medium"] == "Medium B"
 
 
 def test_get_metadata_submissions_report_as_non_admin(

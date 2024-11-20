@@ -676,7 +676,7 @@ async def get_metadata_submissions_mixs(
         # Get sample names from each sample type
         for sample_type in sample_data:
             samples = sample_data[sample_type] if sample_type in sample_data else []
-        #     # Iterate through each sample and extract the name
+            # Iterate through each sample and extract the name
             for x in samples:
                 # Get the sample name
                 sample_name = x["samp_name"] if "samp_name" in x else ""
