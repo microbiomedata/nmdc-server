@@ -67,6 +67,9 @@ export default defineComponent({
       multiSort: false,
       mustSort: false,
     });
+    const deleteDialog = ref(false);
+    let deleteConfirmation = false;
+    let dialogUpdated = false;
 
     function getStatus(item: api.MetadataSubmissionRecord) {
       const color = item.status === submissionStatus.Complete ? 'success' : 'default';
@@ -85,8 +88,45 @@ export default defineComponent({
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
+    function waitForDialogUpdate(): Promise<void> {
+      return new Promise<void>((resolve) => {
+        const intervalId = setInterval(() => {
+          if (dialogUpdated === true) {
+            clearInterval(intervalId);
+            resolve();
+          }
+        }, 600);
+      });
+    }
+
     async function deleteSubmission(item: api.MetadataSubmissionRecord) {
+      deleteDialog.value = true;
+      await waitForDialogUpdate();
+      if (deleteConfirmation) {
+        //do the deletion
+        //for now we just resume as a confirmation that the logic worked
+        resume(item);
+      }
+
+      deleteDialog.value = false;
+      deleteConfirmation = false;
+      dialogUpdated = false;
       return item;
+    }
+
+    function deleteDialogUpdate(confirmation: boolean) {
+      deleteConfirmation = confirmation;
+      dialogUpdated = true;
+    }
+
+    async function handleOverflowMenu(item: api.MetadataSubmissionRecord, title: String) {
+      switch (title) {
+        case 'Delete':
+          deleteSubmission(item);
+          break;
+        default:
+          console.log('Something went wrong');
+      }
     }
 
     const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
@@ -98,13 +138,17 @@ export default defineComponent({
 
     return {
       HARMONIZER_TEMPLATES,
+      deleteDialog,
+      deleteConfirmation,
+      dialogUpdated,
       IconBar,
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
       getStatus,
       resume,
-      deleteSubmission,
+      handleOverflowMenu,
+      deleteDialogUpdate,
       headers,
       options,
       submission,
@@ -220,12 +264,14 @@ export default defineComponent({
             </v-btn>
           </template>
           <template #[`item.menu`]="{ item }">
-            <v-menu>
+            <v-menu
+              offset-x
+            >
               <template #activator="{ on }">
                 <v-btn
                   class="ml-1"
                   icon="mdi-dots-vertical"
-                  variant="text"
+                  text
                   v-on="on"
                 >
                   <v-icon>
@@ -237,7 +283,7 @@ export default defineComponent({
                 <v-list-item
                   v-for="(entry, i) in OverFlowMenuItems"
                   :key="i"
-                  @click="() => deleteSubmission(item)"
+                  @click="() => handleOverflowMenu(item,entry.title)"
                 >
                   <v-list-item-title>{{ entry.title }}</v-list-item-title>
                 </v-list-item>
@@ -247,5 +293,28 @@ export default defineComponent({
         </v-data-table>
       </v-card>
     </v-card>
+    <v-row justify="center">
+      <v-dialog
+        v-model="deleteDialog"
+        class="ma-5"
+        persistent
+      >
+        <v-card>
+          <v-card-title class="text-h5">
+            Are you sure you want to delete this submission in progress?
+          </v-card-title>
+          <v-btn
+            @click="deleteDialogUpdate(true)"
+          >
+            Delete
+          </v-btn>
+          <v-btn
+            @click="deleteDialogUpdate(false)"
+          >
+            Cancel
+          </v-btn>
+        </v-card>
+      </v-dialog>
+    </v-row>
   </div>
 </template>
