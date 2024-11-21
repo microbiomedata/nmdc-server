@@ -272,8 +272,15 @@ def ingest_go_search_records(db: Session) -> None:
     terms = []
     for node in nodes:
         # Node ids look like: http://purl.obolibrary.org/obo/GO_0000000
-        # Transform them to use the "GO:" prefix
-        id = node["id"].split("/")[-1].replace("_", ":")
+        # Transform them to use a colon, skipping those that don't
+        # have a prefix of "GO"
+        term = node["id"].split("/")[-1]
+        if not term.startswith("GO"):
+            continue
+
+        prefix, id = term.split("_")
+
+        id = f"{prefix}:{id}"
 
         # Some node defs don't have a label. All of these should be marked as
         # "deprecated"
@@ -285,7 +292,7 @@ def ingest_go_search_records(db: Session) -> None:
                 errors["go_terms"].add(
                     f"Node with id {id} has no label and is not marked as deprecated"
                 )
-    db.bulk_save_objects([GoTermText(term[0], term[1]) for term in terms])
+    db.bulk_save_objects([GoTermText(term=term[0], text=term[1]) for term in terms])
     db.commit()
 
 
