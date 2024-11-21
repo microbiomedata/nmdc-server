@@ -147,10 +147,10 @@ export default defineComponent({
       }
       if (geneFunctionTables.includes(table)) {
         const tableToType: Record<string, string> = {
-          kegg_function: 'kegg_search',
-          cog_function: 'cog_search',
-          pfam_function: 'pfam_search',
-          go_function: 'go_search',
+          kegg_function: 'kegg_function',
+          cog_function: 'cog_function',
+          pfam_function: 'pfam_function',
+          go_function: 'go_function',
         };
         return {
           type: tableToType[table],
