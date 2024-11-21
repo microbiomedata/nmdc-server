@@ -1,7 +1,7 @@
 """Add PFAM to GO mappings
 
 Revision ID: 224d48e7ebe9
-Revises: d89192564855
+Revises: b22c459110a0
 Create Date: 2024-11-11 21:45:37.459451
 
 """
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 from alembic import op
 
 # revision identifiers, used by Alembic.
-revision: str = "224d48e7ebe9"
-down_revision: Optional[str] = "d89192564855"
+revision: str = "224d48e7ebe9 "
+down_revision: Optional[str] = "b22c459110a0"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
