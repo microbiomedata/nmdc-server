@@ -144,6 +144,9 @@ function pfamEncode(v: string, url = false) {
 }
 
 function goEncode(v: string, url = false) {
+  if (url) {
+    return `https://bioregistry.io/go:/${v.split(':')[1]}`;
+  }
   return v;
 }
 
@@ -594,7 +597,7 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
       group: 'Function',
       name: 'GO',
       encode: goEncode,
-    }
+    },
   },
   biosample: {},
   study: {},
