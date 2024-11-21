@@ -68,8 +68,8 @@ export default defineComponent({
       mustSort: false,
     });
     const deleteDialog = ref(false);
-    let deleteConfirmation = false;
-    let dialogUpdated = false;
+    const deleteConfirmation = ref(false);
+    const dialogUpdated = ref(false);
 
     function getStatus(item: api.MetadataSubmissionRecord) {
       const color = item.status === submissionStatus.Complete ? 'success' : 'default';
@@ -91,7 +91,7 @@ export default defineComponent({
     function waitForDialogUpdate(): Promise<void> {
       return new Promise<void>((resolve) => {
         const intervalId = setInterval(() => {
-          if (dialogUpdated === true) {
+          if (dialogUpdated.value === true) {
             clearInterval(intervalId);
             resolve();
           }
@@ -109,14 +109,14 @@ export default defineComponent({
       }
 
       deleteDialog.value = false;
-      deleteConfirmation = false;
-      dialogUpdated = false;
+      deleteConfirmation.value = false;
+      dialogUpdated.value = false;
       return item;
     }
 
     function deleteDialogUpdate(confirmation: boolean) {
-      deleteConfirmation = confirmation;
-      dialogUpdated = true;
+      deleteConfirmation.value = confirmation;
+      dialogUpdated.value = true;
     }
 
     async function handleOverflowMenu(item: api.MetadataSubmissionRecord, title: String) {
@@ -125,7 +125,7 @@ export default defineComponent({
           deleteSubmission(item);
           break;
         default:
-          console.log('Something went wrong');
+          break;
       }
     }
 
@@ -297,7 +297,6 @@ export default defineComponent({
       <v-dialog
         v-model="deleteDialog"
         class="ma-5"
-        persistent
       >
         <v-card>
           <v-card-title class="text-h5">
