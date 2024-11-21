@@ -68,7 +68,7 @@ def test_get_metadata_submissions_mixs(db: Session, client: TestClient, logged_i
     assert response.status_code == 200
 
     # Check that the reponse payload is a TSV and that the result has the correct
-    # number of rows and information populated. The result should have 4 rows
+    # number of rows and information populated. The result should have 3 rows
     # including a header.
     # Reference: https://docs.python.org/3/library/csv.html#csv.DictReader
 
