@@ -146,7 +146,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
 
     # Post a message to Slack if a Slack webhook URL is defined.
     # Reference: https://api.slack.com/messaging/webhooks#posting_with_webhooks
-    if settings.slack_webhook_url_for_ingester not in [None, ""]:
+    if isinstance(settings.slack_webhook_url_for_ingester, str):
         click.echo("Posting message to Slack.")
         response = requests.post(
             settings.slack_webhook_url_for_ingester,
