@@ -89,6 +89,10 @@ class Settings(BaseSettings):
     rancher_backend_workload_id: Optional[str] = None
     rancher_worker_workload_id: Optional[str] = None
 
+    # Parameters related to posting messages to Slack.
+    # Reference: https://api.slack.com/messaging/webhooks
+    slack_webhook_url_for_ingester: Optional[str] = None
+
     # CORS settings necessary for allowing request from Field Notes app
     cors_allow_origins: Optional[str] = None  # comma separated list of allowed origins
 
