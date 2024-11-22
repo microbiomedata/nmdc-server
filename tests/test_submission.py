@@ -38,15 +38,15 @@ def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     assert response.json()["results"][0]["id"] == str(submission.id)
 
 
-def test_get_metadata_submissions_mixs_as_non_admin( 
-     db: Session, client: TestClient, logged_in_user 
-): 
-     response = client.request(method="GET", url="/api/metadata_submission/mixs_report") 
-     assert response.status_code == 403 
+def test_get_metadata_submissions_mixs_as_non_admin(
+    db: Session, client: TestClient, logged_in_user
+):
+    response = client.request(method="GET", url="/api/metadata_submission/mixs_report")
+    assert response.status_code == 403
 
 
 def test_get_metadata_submissions_mixs_as_admin(
-        db: Session, client: TestClient, logged_in_admin_user
+    db: Session, client: TestClient, logged_in_admin_user
 ):
     now = datetime.utcnow()
 
