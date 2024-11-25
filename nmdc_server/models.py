@@ -178,6 +178,13 @@ class GoTermToPfamEntry(Base):
     entry = Column(String, nullable=False, primary_key=True, index=True)
 
 
+class GoTermToKegg(Base):
+    __tablename__ = "go_term_to_kegg_ortholog"
+
+    term = Column(String, nullable=False, primary_key=True)
+    kegg_term = Column(String, nullable=False, primary_key=True)
+
+
 class KoTermText(Base):
     __tablename__ = "ko_term_text"
 
