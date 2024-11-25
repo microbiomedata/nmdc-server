@@ -331,7 +331,7 @@ def ingest_go_kegg_map(db: Session) -> None:
     with open(kegg_go_mappings) as fd:
         reader = csv.DictReader(fd, delimiter="\t")
         for row in reader:
-            ko = row["#KO"]
+            ko = f"KO:{row['#KO']}"
             go_terms = [
                 f"GO:{term}" if not term.startswith("GO:") else term
                 for term in row["GO"].strip("[]").split()
