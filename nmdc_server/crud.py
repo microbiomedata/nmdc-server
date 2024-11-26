@@ -713,6 +713,19 @@ def get_query_for_all_submissions(db: Session):
     return all_submissions
 
 
+def get_query_for_submitted_pending_review_submissions(db: Session):
+    r"""
+    Returns a SQLAlchemy query that can be used to retrieve submissions pending review.
+
+    Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
+    Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
+    """
+    submitted_pending_review = db.query(models.SubmissionMetadata).filter(
+        models.SubmissionMetadata.status == "Submitted- Pending Review"
+    )
+    return submitted_pending_review
+
+
 def get_roles_for_submission(
     db: Session, submission: models.SubmissionMetadata
 ) -> List[models.SubmissionRole]:

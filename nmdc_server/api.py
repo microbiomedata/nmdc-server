@@ -658,6 +658,114 @@ async def download_zip_file(
 
 
 @router.get(
+    "/metadata_submission/mixs_report",
+    tags=["metadata_submission"],
+)
+async def get_metadata_submissions_mixs(
+    db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+):
+    r"""
+    Generate a TSV-formatted report of biosamples belonging to submissions
+    that have a status of "Submitted- Pending Review".
+
+    The report indicates which environmental package/extension, broad scale,
+    local scale, and medium are specified for each biosample. The report is
+    designed to facilitate the review of submissions by NMDC team members.
+    """
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+
+    # Get the submissions from the database.
+    q = crud.get_query_for_submitted_pending_review_submissions(db)
+    submissions = q.all()
+
+    # Iterate through the submissions, building the data rows for the report.
+    header_row = [
+        "Submission ID",
+        "Status",
+        "Sample Name",
+        "Environmental Package/Extension",
+        "Environmental Broad Scale",
+        "Environmental Local Scale",
+        "Environmental Medium",
+    ]
+    data_rows = []
+    for s in submissions:
+
+        metadata = s.metadata_submission  # creates a concise alias
+        sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
+        env_package = metadata["packageName"] if "packageName" in metadata else {}
+
+        # Get sample names from each sample type
+        for sample_type in sample_data:
+            samples = sample_data[sample_type] if sample_type in sample_data else []
+            # Iterate through each sample and extract the name
+            for x in samples:
+                # Get the sample name
+                sample_name = x["samp_name"] if "samp_name" in x else ""
+                sample_name = str(sample_name)
+                sample_name = sample_name.replace("\t", "")
+                sample_name = sample_name.replace("\r", "")
+                sample_name = sample_name.replace("\n", "").lstrip("_")
+
+                # Get the env broad scale
+                env_broad_scale = x["env_broad_scale"] if "env_broad_scale" in x else ""
+                env_broad_scale = str(env_broad_scale)
+                env_broad_scale = env_broad_scale.replace("\t", "")
+                env_broad_scale = env_broad_scale.replace("\r", "")
+                env_broad_scale = env_broad_scale.replace("\n", "").lstrip("_")
+
+                # Get the env local scale
+                env_local_scale = x["env_local_scale"] if "env_local_scale" in x else ""
+                env_local_scale = str(env_local_scale)
+                env_local_scale = env_local_scale.replace("\t", "")
+                env_local_scale = env_local_scale.replace("\r", "")
+                env_local_scale = env_local_scale.replace("\n", "").lstrip("_")
+
+                # Get the env medium
+                env_medium = x["env_medium"] if "env_medium" in x else ""
+                env_medium = str(env_medium)
+                env_medium = env_medium.replace("\t", "")
+                env_medium = env_medium.replace("\r", "")
+                env_medium = env_medium.replace("\n", "").lstrip("_")
+
+                # Append each sample as new row (with env data)
+                data_row = [
+                    s.id,
+                    s.status,
+                    sample_name,
+                    env_package,
+                    env_broad_scale,
+                    env_local_scale,
+                    env_medium,
+                ]
+                data_rows.append(data_row)
+
+    # Build the report as an in-memory TSV "file" (buffer).
+    # Reference: https://docs.python.org/3/library/csv.html#csv.writer
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter="\t")
+    writer.writerow(header_row)
+    writer.writerows(data_rows)
+
+    # Reset the buffer's internal file pointer to the beginning of the buffer, so that,
+    # when we stream the buffer's contents later, all of its contents are included.
+    buffer.seek(0)
+
+    # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
+    # Reference: https://fastapi.tiangolo.com/advanced/custom-response
+    # Reference: https://mimetype.io/text/tab-separated-values
+    filename = "mixs-report.tsv"
+    response = StreamingResponse(
+        buffer,
+        media_type="text/tab-separated-values",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+    return response
+
+
+@router.get(
     "/metadata_submission/report",
     tags=["metadata_submission"],
 )
