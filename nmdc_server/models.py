@@ -879,6 +879,7 @@ class SubmissionEditorRole(str, enum.Enum):
 class SubmissionSourceClient(str, enum.Enum):
     submission_portal = "submission_portal"
     field_notes = "field_notes"
+    nmdc_edge = "nmdc_edge"
 
 
 class SubmissionMetadata(Base):
