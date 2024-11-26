@@ -46,7 +46,7 @@ interface MetadataSubmissionRecord {
   locked_by: User;
   lock_updated: string;
   permission_level: string | null;
-  source_client: 'submission_portal' | 'field_notes' | null;
+  source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
   study_name: string;
   templates: string[];
 }
