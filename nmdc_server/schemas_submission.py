@@ -105,6 +105,7 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     status: Optional[str] = None
     # Map of ORCID iD to permission level
     permissions: Optional[Dict[str, str]] = None
+    field_notes_metadata: Optional[Dict[str, Any]] = None
 
 
 class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
@@ -115,6 +116,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     author: schemas.User
     templates: List[str]
     study_name: Optional[str] = None
+    field_notes_metadata: Optional[Dict[str, Any]] = None
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None

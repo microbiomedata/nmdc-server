@@ -891,6 +891,7 @@ async def get_submission(
             permission_level=permission_level,
             templates=submission.templates,
             study_name=submission.study_name,
+            field_notes_metadata=submission.field_notes_metadata,
         )
         if submission.locked_by is not None:
             submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
@@ -960,12 +961,17 @@ async def update_submission(
             status_code=400,
             detail="This submission is currently being edited by a different user.",
         )
-    # Create Github issue when metadata is being submitted
+
+    # Create GitHub issue when metadata is being submitted
     if (
         submission.status == "in-progress"
         and body_dict.get("status", None) == "Submitted- Pending Review"
     ):
         create_github_issue(submission, user)
+
+    if body.field_notes_metadata is not None:
+        submission.field_notes_metadata = body.field_notes_metadata
+
     # Merge the submission metadata dicts
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
