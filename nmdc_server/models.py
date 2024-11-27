@@ -907,6 +907,7 @@ class SubmissionMetadata(Base):
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
     study_name = Column(String, nullable=True)
     templates = Column(JSONB, nullable=True)
+    field_notes_metadata = Column(JSONB, nullable=True)
 
     # The client which initially created the submission. A null value indicates it was created by
     # an "unregistered" client. This could be legitimate usage, but it should be monitored.
