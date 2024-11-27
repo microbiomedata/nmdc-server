@@ -44,6 +44,7 @@ export default defineComponent({
         kegg: 'kegg_function',
         cog: 'cog_function',
         pfam: 'pfam_function',
+        go: 'go_function',
       };
       return typeToTable[props.geneType];
     });

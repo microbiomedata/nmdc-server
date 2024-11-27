@@ -56,7 +56,8 @@ export type entityType = 'biosample'
   | 'data_object'
   | 'kegg_function'
   | 'cog_function'
-  | 'pfam_function';
+  | 'pfam_function'
+  | 'go_function';
 
 /**
  * By including this file in source with a git submodule,
@@ -656,6 +657,11 @@ async function pfamSearch(query: string) {
   return data.terms as KeggTermSearchResponse[];
 }
 
+async function goSearch(query: string) {
+  const { data } = await client.get('go/term/search', { params: { query } });
+  return data.terms as KeggTermSearchResponse[];
+}
+
 /**
  * Discover facet values by text search
  */
@@ -857,6 +863,7 @@ const api = {
   keggSearch,
   cogSearch,
   pfamSearch,
+  goSearch,
   textSearch,
   getAllUsers,
   updateUser,
