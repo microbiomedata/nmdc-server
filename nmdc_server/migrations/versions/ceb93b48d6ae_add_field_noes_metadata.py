@@ -22,7 +22,11 @@ depends_on: Optional[str] = None
 def upgrade():
     op.add_column(
         "submission_metadata",
-        sa.Column("field_notes_metadata", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column(
+            "field_notes_metadata",
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore
+            nullable=True,
+        ),
     )
 
 
