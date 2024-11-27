@@ -1,7 +1,7 @@
 """Add field_notes_metadata column to submission_metadata
 
 Revision ID: ceb93b48d6ae
-Revises: 4aee1e10bb24
+Revises: 224d48e7ebe9
 Create Date: 2024-11-18 21:49:50.640253
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "ceb93b48d6ae"
-down_revision: Optional[str] = "4aee1e10bb24"
+down_revision: Optional[str] = "224d48e7ebe9"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
