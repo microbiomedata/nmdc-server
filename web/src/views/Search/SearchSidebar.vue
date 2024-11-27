@@ -5,7 +5,7 @@ import {
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
-import { types } from '@/encoding';
+import { geneFunctionTables, types } from '@/encoding';
 import {
   api, Condition, DatabaseSummaryResponse, entityType,
 } from '@/data/api';
@@ -34,6 +34,10 @@ const FunctionSearchFacets: SearchFacet[] = [
   {
     field: 'id',
     table: 'pfam_function',
+  },
+  {
+    field: 'id',
+    table: 'go_function',
   },
   /** MIxS Environmental Triad */
   {
@@ -141,11 +145,12 @@ export default defineComponent({
       if (table in dbSummary.value) {
         return dbSummary.value[table].attributes[field];
       }
-      if (['kegg_function', 'cog_function', 'pfam_function'].includes(table)) {
+      if (geneFunctionTables.includes(table)) {
         const tableToType: Record<string, string> = {
-          kegg_function: 'kegg_search',
-          cog_function: 'cog_search',
-          pfam_function: 'pfam_search',
+          kegg_function: 'kegg_function',
+          cog_function: 'cog_function',
+          pfam_function: 'pfam_function',
+          go_function: 'go_function',
         };
         return {
           type: tableToType[table],

@@ -290,6 +290,18 @@ def pfam_text_search(db: Session, query: str, limit: int) -> List[models.PfamTer
     return list(q)
 
 
+def go_text_search(db: Session, query: str, limit: int) -> List[models.GoTermText]:
+    q = (
+        db.query(models.GoTermText)
+        .filter(
+            models.GoTermText.text.ilike(f"%{query}%") | models.GoTermText.term.ilike(f"%{query}%")
+        )
+        .order_by(models.GoTermText.term)
+        .limit(limit)
+    )
+    return list(q)
+
+
 # biosample
 def get_biosample(db: Session, biosample_id: str) -> Optional[models.Biosample]:
     return db.query(models.Biosample).filter(models.Biosample.id == biosample_id).first()

@@ -293,6 +293,7 @@ class BaseQuerySchema(BaseModel):
             "Table.kegg_function:id",
             "Table.cog_function:id",
             "Table.pfam_function:id",
+            "Table.go_function:id",
         ]
         if condition.key in gene_search_keys and type(condition.value) is str:
             if any([condition.value.startswith(val) for val in KeggTerms.PATHWAY[0]]):
@@ -321,6 +322,10 @@ class BaseQuerySchema(BaseModel):
                 searchable_name = condition.value.replace(PfamEntries.CLAN, "")
                 gene_terms = db.query(models.PfamEntryToClan.entry).filter(
                     models.PfamEntryToClan.clan.ilike(searchable_name)
+                )
+            elif condition.value.startswith("GO:"):
+                gene_terms = db.query(models.GoTermToPfamEntry.entry).filter(
+                    models.GoTermToPfamEntry.term.ilike(condition.value)
                 )
             else:
                 # This is not a condition we know how to transform.
