@@ -31,7 +31,7 @@ def send_slack_message(text: str, slack_incoming_webhook_url: str) -> bool:
 
     # Check whether the message was sent successfully.
     if response.status_code == 200:
-        click.echo(f"Sent Slack message.")
+        click.echo("Sent Slack message.")
         return True
     else:
         click.echo("Failed to send Slack message.", err=True)
@@ -100,10 +100,11 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         level = logging.DEBUG
     logging.basicConfig(level=level, format="%(message)s")
 
-    send_slack_message(
-        text="Ingest is starting.",
-        slack_incoming_webhook_url=settings.slack_webhook_url_for_ingester,
-    )
+    if isinstance(settings.slack_webhook_url_for_ingester, str):
+        send_slack_message(
+            text="Ingest is starting.",
+            slack_incoming_webhook_url=settings.slack_webhook_url_for_ingester,
+        )
 
     jobs.do_ingest(function_limit, skip_annotation)
 
@@ -171,17 +172,19 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         )
         response.raise_for_status()
 
-        send_slack_message(
-            text="Ingester updated secrets and redeployed workloads.",
-            slack_incoming_webhook_url=settings.slack_webhook_url_for_ingester,
-        )
+        if isinstance(settings.slack_webhook_url_for_ingester, str):
+            send_slack_message(
+                text="Ingester updated secrets and redeployed workloads.",
+                slack_incoming_webhook_url=settings.slack_webhook_url_for_ingester,
+            )
 
         click.echo("Done")
 
-    send_slack_message(
-        text="Ingest is done.",
-        slack_incoming_webhook_url=settings.slack_webhook_url_for_ingester,
-    )
+    if isinstance(settings.slack_webhook_url_for_ingester, str):
+        send_slack_message(
+            text="Ingest is done.",
+            slack_incoming_webhook_url=settings.slack_webhook_url_for_ingester,
+        )
 
 
 @cli.command()
