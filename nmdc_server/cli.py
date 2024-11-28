@@ -14,28 +14,37 @@ from nmdc_server.database import SessionLocalIngest
 from nmdc_server.ingest import errors
 
 
-def send_slack_message(text: str, slack_incoming_webhook_url: str) -> bool:
+def send_slack_message(text: str) -> bool:
     r"""
-    Posts a message having the specified text to Slack via the specified
-    Slack Incoming Webhook URL. The posting Slack user and the destination
-    Slack channel are both dictated by that Slack Incoming Webhook URL.
+    Sends a Slack message having the specified text if the application has
+    a Slack Incoming Webhook URL defined. If the application does not have
+    a Slack Incoming Webhook URL defined, no message is sent.
+    
+    The function returns `True` if the message was sent; otherwise, `False`.
 
     Reference: https://api.slack.com/messaging/webhooks#posting_with_webhooks
     """
-    click.echo(f"Sending Slack message having text: {text}")
-    response = requests.post(
-        slack_incoming_webhook_url,
-        json={"text": text},
-        headers={"Content-type": "application/json"},
-    )
+    is_sent = False
 
-    # Check whether the message was sent successfully.
-    if response.status_code == 200:
-        click.echo("Sent Slack message.")
-        return True
+    # Check whether a Slack Incoming Webhook URL is defined.
+    if isinstance(settings.slack_webhook_url_for_ingester, str):
+        click.echo(f"Sending Slack message having text: {text}")
+        response = requests.post(
+            slack_incoming_webhook_url,
+            json={"text": text},
+            headers={"Content-type": "application/json"},
+        )
+
+        # Check whether the message was sent successfully.
+        if response.status_code == 200:
+            click.echo("Sent Slack message.")
+            is_sent = True
+        else:
+            click.echo("Failed to send Slack message.", err=True)
     else:
-        click.echo("Failed to send Slack message.", err=True)
-        return False
+        click.echo("No Slack Incoming Webhook URL is defined.", err=True)
+    
+    return is_sent
 
 
 @click.group()
@@ -100,11 +109,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         level = logging.DEBUG
     logging.basicConfig(level=level, format="%(message)s")
 
-    if isinstance(settings.slack_webhook_url_for_ingester, str):
-        send_slack_message(
-            text="Ingest is starting.",
-            slack_incoming_webhook_url=settings.slack_webhook_url_for_ingester,
-        )
+    send_slack_message("Ingest is starting.")
 
     jobs.do_ingest(function_limit, skip_annotation)
 
@@ -172,19 +177,11 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         )
         response.raise_for_status()
 
-        if isinstance(settings.slack_webhook_url_for_ingester, str):
-            send_slack_message(
-                text="Ingester updated secrets and redeployed workloads.",
-                slack_incoming_webhook_url=settings.slack_webhook_url_for_ingester,
-            )
-
+        send_slack_message("Ingester updated secrets and redeployed workloads.")
+        
         click.echo("Done")
 
-    if isinstance(settings.slack_webhook_url_for_ingester, str):
-        send_slack_message(
-            text="Ingest is done.",
-            slack_incoming_webhook_url=settings.slack_webhook_url_for_ingester,
-        )
+    send_slack_message("Ingest is done.")
 
 
 @cli.command()
