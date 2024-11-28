@@ -19,7 +19,7 @@ def send_slack_message(text: str) -> bool:
     Sends a Slack message having the specified text if the application has
     a Slack Incoming Webhook URL defined. If the application does not have
     a Slack Incoming Webhook URL defined, no message is sent.
-    
+
     The function returns `True` if the message was sent; otherwise, `False`.
 
     Reference: https://api.slack.com/messaging/webhooks#posting_with_webhooks
@@ -27,10 +27,11 @@ def send_slack_message(text: str) -> bool:
     is_sent = False
 
     # Check whether a Slack Incoming Webhook URL is defined.
+    settings = Settings()
     if isinstance(settings.slack_webhook_url_for_ingester, str):
         click.echo(f"Sending Slack message having text: {text}")
         response = requests.post(
-            slack_incoming_webhook_url,
+            settings.slack_webhook_url_for_ingester,
             json={"text": text},
             headers={"Content-type": "application/json"},
         )
@@ -43,7 +44,7 @@ def send_slack_message(text: str) -> bool:
             click.echo("Failed to send Slack message.", err=True)
     else:
         click.echo("No Slack Incoming Webhook URL is defined.", err=True)
-    
+
     return is_sent
 
 
@@ -178,7 +179,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         response.raise_for_status()
 
         send_slack_message("Ingester updated secrets and redeployed workloads.")
-        
+
         click.echo("Done")
 
     send_slack_message("Ingest is done.")
