@@ -30,6 +30,8 @@ omics_types = {
     "metatranscriptome": "Metatranscriptome",
     "organic matter characterization": "Organic Matter Characterization",
     "nom": "Organic Matter Characterization",
+    "lipidome": "Lipidomics",
+    "lipidomics": "Lipidomics",
 }
 
 
