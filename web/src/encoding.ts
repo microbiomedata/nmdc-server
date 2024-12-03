@@ -229,20 +229,23 @@ function makeSetsFromBitmask(mask_str: string) {
   const sets = [];
 
   /* eslint-disable no-bitwise */
-  if (1 & mask) {
+  if ((1 << 1) & mask) {
     sets.push('NOM');
   }
-  if ((1 << 4) & mask) {
+  if ((1 << 5) & mask) {
     sets.push('MB');
   }
-  if ((1 << 2) & mask) {
+  if ((1 << 3) & mask) {
     sets.push('MP');
   }
-  if ((1 << 1) & mask) {
+  if ((1 << 2) & mask) {
     sets.push('MT');
   }
-  if ((1 << 3) & mask) {
+  if ((1 << 4) & mask) {
     sets.push('MG');
+  }
+  if (1 & mask) {
+    sets.push('LI');
   }
   return sets;
 }
@@ -641,11 +644,12 @@ function getField(name: string, table?: entityType): FieldsData {
 }
 
 const MultiomicsValue = {
-  MB: 0b10000,
-  MG: 0b01000,
-  MP: 0b00100,
-  MT: 0b00010,
-  NOM: 0b00001,
+  MB: 0b100000,
+  MG: 0b010000,
+  MP: 0b001000,
+  MT: 0b000100,
+  NOM: 0b000010,
+  LI: 0b000001,
 };
 
 export {

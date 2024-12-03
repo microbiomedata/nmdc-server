@@ -31,6 +31,7 @@ const staticUpsetTooltips = {
   MB: 'Metabolomics',
   MT: 'Metatranscriptomics',
   NOM: 'Natural Organic Matter',
+  LI: 'Lipidomics',
 };
 
 export default defineComponent({
@@ -210,6 +211,7 @@ export default defineComponent({
             <span>MP: metaproteomics</span>
             <span>MB: metabolomics</span>
             <span>NOM: natural organic matter</span>
+            <span>LI: Lipidomics</span>
           </div>
         </TooltipCard>
       </v-col>

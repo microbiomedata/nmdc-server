@@ -39,7 +39,7 @@ export default defineComponent({
     };
     const fontSize = 12;
 
-    const setOrder = ['MG', 'MT', 'MP', 'MB', 'NOM'];
+    const setOrder = ['MG', 'MT', 'MP', 'MB', 'NOM', 'LI'];
     const Samples = 'Samples';
     const Studies = 'Studies';
     const seriesTitles = [Samples, Studies];
