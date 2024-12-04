@@ -1,9 +1,11 @@
+import contextlib
 import os
 
 import pytest
 from factory import random
 from nmdc_geoloc_tools import GeoEngine
 from starlette.testclient import TestClient
+from sqlalchemy import event
 
 from nmdc_server import database, schemas
 from nmdc_server.app import create_app
@@ -80,6 +82,25 @@ def logged_in_user(db, client) -> schemas.User:
     client.headers["Authorization"] = f"Bearer {token_response.access_token.decode()}"
 
     return user
+
+
+# see https://github.com/sqlalchemy/sqlalchemy/issues/5709#issuecomment-729689097
+@pytest.fixture
+def count_queries():
+    @contextlib.contextmanager
+    def inner(connection):
+        queries = []
+
+        def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            queries.append(statement)
+
+        event.listen(connection, "before_cursor_execute", before_cursor_execute)
+        try:
+            yield queries
+        finally:
+            event.remove(connection, "before_cursor_execute", before_cursor_execute)
+
+    return inner
 
 
 @pytest.fixture
