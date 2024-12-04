@@ -65,6 +65,33 @@ def test_api_query(db: Session, client: TestClient, condition, expected):
     assert {s["id"] for s in results} == expected
 
 
+def test_api_prefetches_data(app, db: Session, client: TestClient, count_queries):
+    # make sure the get_db dependency uses the exact same connection as the count_queries fixture
+    def _get_db():
+        return db
+
+    from nmdc_server.api import get_db
+
+    app.dependency_overrides[get_db] = _get_db
+
+    biosamples = [
+        fakes.BiosampleFactory(id="sample1", annotations={"key1": "value1", "key2": "value2"}),
+        fakes.BiosampleFactory(id="sample2", annotations={"key1": "value1", "key2": "value3"}),
+        fakes.BiosampleFactory(id="sample3", annotations={"key1": "value4", "key2": "value2"}),
+    ]
+
+    fakes.OmicsProcessingFactory(biosample_inputs=biosamples)
+    db.commit()
+
+    with count_queries(db.bind.engine) as queries:
+        resp = client.post(
+            "/api/biosample/search",
+        )
+        assert_status(resp)
+
+    assert len(queries) == 3
+
+
 def test_api_faceting(db: Session, client: TestClient):
     fakes.BiosampleFactory(id="sample1", annotations={"key1": "value1", "key2": "value2"})
     fakes.BiosampleFactory(id="sample2", annotations={"key1": "value1", "key2": "value3"})
