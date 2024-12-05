@@ -40,6 +40,7 @@ const headers: DataTableHeader[] = [
   {
     text: '',
     value: 'action',
+    align: 'end',
     sortable: false,
   },
 ];
@@ -98,12 +99,13 @@ export default defineComponent({
       await waitForDialogUpdate();
       if (deleteConfirmation.value) {
         //router?.push({})
-        router?.push({ name: 'Submission Context', params: { id: item.id } });
+        //router?.push({ name: 'Submission Context', params: { id: item.id } });
       }
 
       deleteDialog.value = false;
       deleteConfirmation.value = false;
       dialogUpdated.value = false;
+      return item;
     }
 
     function deleteDialogUpdate(confirmation: boolean) {
@@ -114,7 +116,9 @@ export default defineComponent({
     async function handleOverflowMenu(item: api.MetadataSubmissionRecord, title: String) {
       switch (title) {
         case 'Delete':
-          deleteSubmission(item);
+          if (getStatus(item).text === 'in-progress') {
+            deleteSubmission(item);
+          }
           break;
         default:
           break;
@@ -259,8 +263,9 @@ export default defineComponent({
             >
               <template #activator="{ on }">
                 <v-btn
-                  icon="mdi-dots-vertical"
                   text
+                  icon
+                  class="ml-1"
                   v-on="on"
                 >
                   <v-icon>
