@@ -15,6 +15,7 @@ import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
+import { deleteSubmission } from '../store/api';
 
 const headers: DataTableHeader[] = [
   {
@@ -94,12 +95,24 @@ export default defineComponent({
       });
     }
 
-    async function deleteSubmission(item: api.MetadataSubmissionRecord) {
+    const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
+    watch(options, () => {
+      submission.setPage(options.value.page);
+      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
+      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+    }, { deep: true });
+
+    function deleteDialogUpdate(confirmation: boolean) {
+      deleteConfirmation.value = confirmation;
+      dialogUpdated.value = true;
+    }
+
+    async function handleDeleteSubmission(item: api.MetadataSubmissionRecord) {
       deleteDialog.value = true;
       await waitForDialogUpdate();
       if (deleteConfirmation.value) {
-        //router?.push({})
-        //router?.push({ name: 'Submission Context', params: { id: item.id } });
+        deleteSubmission(item.id);
+        submission.setPage(options.value.page);
       }
 
       deleteDialog.value = false;
@@ -108,29 +121,17 @@ export default defineComponent({
       return item;
     }
 
-    function deleteDialogUpdate(confirmation: boolean) {
-      deleteConfirmation.value = confirmation;
-      dialogUpdated.value = true;
-    }
-
     async function handleOverflowMenu(item: api.MetadataSubmissionRecord, title: String) {
       switch (title) {
         case 'Delete':
           if (getStatus(item).text === 'in-progress') {
-            deleteSubmission(item);
+            handleDeleteSubmission(item);
           }
           break;
         default:
           break;
       }
     }
-
-    const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
-    watch(options, () => {
-      submission.setPage(options.value.page);
-      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
-      submission.setSortOptions(options.value.sortBy[0], sortOrder);
-    }, { deep: true });
 
     return {
       HARMONIZER_TEMPLATES,

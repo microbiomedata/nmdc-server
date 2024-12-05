@@ -111,6 +111,11 @@ async function unlockSubmission(id: string) {
   return resp.data;
 }
 
+async function deleteSubmission(id: string) {
+  const resp = await client.delete(`metadata_submission/${id}`);
+  return resp.data;
+}
+
 export {
   NmdcAddress,
   addressToString,
@@ -122,4 +127,5 @@ export {
   updateRecord,
   lockSubmission,
   unlockSubmission,
+  deleteSubmission,
 };
