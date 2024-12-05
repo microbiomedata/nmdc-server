@@ -31,7 +31,7 @@ const staticUpsetTooltips = {
   MB: 'Metabolomics',
   MT: 'Metatranscriptomics',
   NOM: 'Natural Organic Matter',
-  LI: 'Lipidomics',
+  LIP: 'Lipidomics',
 };
 
 export default defineComponent({

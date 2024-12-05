@@ -245,7 +245,7 @@ function makeSetsFromBitmask(mask_str: string) {
     sets.push('MG');
   }
   if (1 & mask) {
-    sets.push('LI');
+    sets.push('LIP');
   }
   return sets;
 }
@@ -649,7 +649,7 @@ const MultiomicsValue = {
   MP: 0b001000,
   MT: 0b000100,
   NOM: 0b000010,
-  LI: 0b000001,
+  LIP: 0b000001,
 };
 
 export {
