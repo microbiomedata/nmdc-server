@@ -221,6 +221,8 @@ export default defineComponent({
 
 <style scoped>
 .upset-legend {
+  display: flex;
+  flex-wrap: wrap;
   line-height: 0.9em;
 }
 .upset-legend > span {
