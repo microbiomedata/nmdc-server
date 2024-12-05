@@ -42,12 +42,6 @@ const headers: DataTableHeader[] = [
     value: 'action',
     sortable: false,
   },
-  {
-    text: '',
-    value: 'menu',
-    align: 'end',
-    sortable: false,
-  },
 ];
 
 export default defineComponent({
@@ -95,23 +89,21 @@ export default defineComponent({
             clearInterval(intervalId);
             resolve();
           }
-        }, 600);
+        }, 100);
       });
     }
 
     async function deleteSubmission(item: api.MetadataSubmissionRecord) {
       deleteDialog.value = true;
       await waitForDialogUpdate();
-      if (deleteConfirmation) {
-        //do the deletion
-        //for now we just resume as a confirmation that the logic worked
-        resume(item);
+      if (deleteConfirmation.value) {
+        //router?.push({})
+        router?.push({ name: 'Submission Context', params: { id: item.id } });
       }
 
       deleteDialog.value = false;
       deleteConfirmation.value = false;
       dialogUpdated.value = false;
-      return item;
     }
 
     function deleteDialogUpdate(confirmation: boolean) {
@@ -262,14 +254,11 @@ export default defineComponent({
                 mdi-arrow-right-circle
               </v-icon>
             </v-btn>
-          </template>
-          <template #[`item.menu`]="{ item }">
             <v-menu
               offset-x
             >
               <template #activator="{ on }">
                 <v-btn
-                  class="ml-1"
                   icon="mdi-dots-vertical"
                   text
                   v-on="on"
@@ -296,22 +285,35 @@ export default defineComponent({
     <v-row justify="center">
       <v-dialog
         v-model="deleteDialog"
+        :width="630"
         class="ma-5"
       >
         <v-card>
-          <v-card-title class="text-h5">
+          <v-spacer />
+          <v-card-title class="ma-3 text-h4">
             Are you sure you want to delete this submission in progress?
           </v-card-title>
-          <v-btn
-            @click="deleteDialogUpdate(true)"
-          >
-            Delete
-          </v-btn>
-          <v-btn
-            @click="deleteDialogUpdate(false)"
-          >
-            Cancel
-          </v-btn>
+          <v-card-text class="ma-3 text-h5">
+            This cannot be undone.
+          </v-card-text>
+          <v-divider />
+          <v-card-actions>
+            <v-spacer />
+            <v-btn
+              color="red"
+              class="ml-3 white--text"
+              @click="deleteDialogUpdate(true)"
+            >
+              Delete
+            </v-btn>
+            <v-btn
+              color="primary"
+              class="ma-3"
+              @click="deleteDialogUpdate(false)"
+            >
+              Cancel
+            </v-btn>
+          </v-card-actions>
         </v-card>
       </v-dialog>
     </v-row>
