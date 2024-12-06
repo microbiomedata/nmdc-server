@@ -136,7 +136,7 @@ export default defineComponent({
       // columns will not be rendered with the correct width.
       harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
 
-      // If the environment tab selected is a misin it should be readonly
+      // If the environment tab selected is a mixin it should be readonly
       const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'mixin');
       if (environmentList.includes(activeTemplateKey.value)) {
         harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);

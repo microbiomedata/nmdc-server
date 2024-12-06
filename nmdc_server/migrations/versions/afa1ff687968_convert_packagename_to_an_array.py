@@ -37,7 +37,7 @@ def upgrade():
 
     for submission in submissions:
         metadata_submission = submission.metadata_submission
-        package_name = metadata_submission.get("packageName")
+        package_name = metadata_submission.get("packageName", None)
 
         if isinstance(package_name, str):
             metadata_submission["packageName"] = [package_name]
