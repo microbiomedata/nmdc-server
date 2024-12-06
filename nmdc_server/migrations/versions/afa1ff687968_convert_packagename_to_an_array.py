@@ -1,7 +1,7 @@
 """Convert packageName to an array
 
 Revision ID: afa1ff687968
-Revises: 317274ad8137
+Revises: 605ae36be6b5
 Create Date: 2024-08-28 22:27:28.622234
 
 """
@@ -15,7 +15,7 @@ from sqlalchemy.sql import column, table
 
 # revision identifiers, used by Alembic.
 revision: str = "afa1ff687968"
-down_revision: Optional[str] = "317274ad8137"
+down_revision: Optional[str] = "605ae36be6b5"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
