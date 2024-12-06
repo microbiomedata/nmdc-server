@@ -15,6 +15,7 @@ import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
+import { deleteSubmission } from '../store/api';
 
 const headers: DataTableHeader[] = [
   {
@@ -62,6 +63,9 @@ export default defineComponent({
       multiSort: false,
       mustSort: false,
     });
+    const deleteDialog = ref(false);
+    const deleteConfirmation = ref(false);
+    const dialogUpdated = ref(false);
 
     function getStatus(item: api.MetadataSubmissionRecord) {
       const color = item.status === submissionStatus.Complete ? 'success' : 'default';
@@ -80,6 +84,17 @@ export default defineComponent({
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
+    function waitForDialogUpdate(): Promise<void> {
+      return new Promise<void>((resolve) => {
+        const intervalId = setInterval(() => {
+          if (dialogUpdated.value === true) {
+            clearInterval(intervalId);
+            resolve();
+          }
+        }, 100);
+      });
+    }
+
     const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
     watch(options, () => {
       submission.setPage(options.value.page);
@@ -87,19 +102,61 @@ export default defineComponent({
       submission.setSortOptions(options.value.sortBy[0], sortOrder);
     }, { deep: true });
 
+    function deleteDialogUpdate(confirmation: boolean) {
+      deleteConfirmation.value = confirmation;
+      dialogUpdated.value = true;
+    }
+
+    async function handleDeleteSubmission(item: api.MetadataSubmissionRecord) {
+      deleteDialog.value = true;
+      await waitForDialogUpdate();
+      if (deleteConfirmation.value) {
+        deleteSubmission(item.id);
+        submission.setPage(options.value.page);
+      }
+
+      deleteDialog.value = false;
+      deleteConfirmation.value = false;
+      dialogUpdated.value = false;
+      return item;
+    }
+
+    async function handleOverflowMenu(item: api.MetadataSubmissionRecord, title: String) {
+      switch (title) {
+        case 'Delete':
+          if (getStatus(item).text === 'in-progress') {
+            handleDeleteSubmission(item);
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
     return {
       HARMONIZER_TEMPLATES,
+      deleteDialog,
+      deleteConfirmation,
+      dialogUpdated,
       IconBar,
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
       getStatus,
       resume,
+      handleOverflowMenu,
+      deleteDialogUpdate,
       headers,
       options,
       submission,
     };
   },
+  data: () => ({
+    OverFlowMenuItems: [
+      { title: 'Delete' },
+      { title: 'Future button' },
+    ],
+  }),
 });
 </script>
 
@@ -202,9 +259,69 @@ export default defineComponent({
                 mdi-arrow-right-circle
               </v-icon>
             </v-btn>
+            <v-menu
+              offset-x
+            >
+              <template #activator="{ on }">
+                <v-btn
+                  text
+                  icon
+                  class="ml-1"
+                  v-on="on"
+                >
+                  <v-icon>
+                    mdi-dots-vertical
+                  </v-icon>
+                </v-btn>
+              </template>
+              <v-list>
+                <v-list-item
+                  v-for="(entry, i) in OverFlowMenuItems"
+                  :key="i"
+                  @click="() => handleOverflowMenu(item,entry.title)"
+                >
+                  <v-list-item-title>{{ entry.title }}</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
           </template>
         </v-data-table>
       </v-card>
     </v-card>
+    <v-row justify="center">
+      <v-dialog
+        v-model="deleteDialog"
+        :width="630"
+        class="ma-5"
+      >
+        <v-card>
+          <v-spacer />
+          <v-card-title class="ma-3 text-h4">
+            Are you sure you want to delete this submission in progress?
+          </v-card-title>
+          <v-card-text class="ma-3 text-h5">
+            This cannot be undone.
+          </v-card-text>
+          <v-divider />
+          <v-card-actions>
+            <v-spacer />
+            <v-btn
+              color="red"
+              class="ml-3 white--text"
+              @click="deleteDialogUpdate(true)"
+            >
+              Delete
+            </v-btn>
+            <v-btn
+              color="primary"
+              class="ma-3"
+              @click="deleteDialogUpdate(false)"
+            >
+              Cancel
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </v-row>
   </div>
 </template>
