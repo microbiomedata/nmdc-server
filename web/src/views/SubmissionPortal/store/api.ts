@@ -28,7 +28,7 @@ function addressToString(address: NmdcAddress): string {
 }
 
 interface MetadataSubmission {
-  packageName: keyof typeof HARMONIZER_TEMPLATES;
+  packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
   contextForm: any;
   addressForm: any;
   templates: string[];
