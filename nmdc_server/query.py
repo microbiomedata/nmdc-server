@@ -324,8 +324,14 @@ class BaseQuerySchema(BaseModel):
                     models.PfamEntryToClan.clan.ilike(searchable_name)
                 )
             elif condition.value.startswith("GO:"):
-                gene_terms = db.query(models.GoTermToPfamEntry.entry).filter(
-                    models.GoTermToPfamEntry.term.ilike(condition.value)
+                gene_terms = (
+                    db.query(models.GoTermToPfamEntry.entry.label("mapped_term"))
+                    .filter(models.GoTermToPfamEntry.term.ilike(condition.value))
+                    .union(
+                        db.query(models.GoTermToKegg.kegg_term.label("mapped_term")).filter(
+                            models.GoTermToKegg.term.ilike(condition.value)
+                        )
+                    )
                 )
             else:
                 # This is not a condition we know how to transform.
