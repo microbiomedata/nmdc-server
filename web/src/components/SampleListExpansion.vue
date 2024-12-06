@@ -5,10 +5,6 @@ import { fieldDisplayName } from '@/util';
 import { BiosampleSearchResult } from '@/data/api';
 import DataObjectTable from './DataObjectTable.vue';
 
-const hiddenOmicsTypes = [
-  'lipidomics',
-];
-
 const buttonOrder = [
   'metagenome',
   'metatranscriptome',
@@ -44,8 +40,7 @@ export default defineComponent({
     }
 
     const filteredOmicsProcessing = computed(() => Object.entries(groupBy(
-      props.result.omics_processing
-        .filter((p) => hiddenOmicsTypes.indexOf((p.annotations.omics_type as string).toLowerCase()) === -1),
+      props.result.omics_processing,
       (p) => p.annotations.omics_type,
     )).sort(([agroup], [bgroup]) => {
       const ai = buttonOrder.indexOf(agroup.toLowerCase());
