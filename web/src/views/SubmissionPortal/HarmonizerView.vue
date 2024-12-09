@@ -1000,7 +1000,7 @@ export default defineComponent({
             <v-btn
               color="success"
               depressed
-              :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0 || !user.email"
+              :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
               :loading="submitLoading"
               @click="submitDialog = true"
             >
@@ -1040,9 +1040,6 @@ export default defineComponent({
         </template>
         <span v-if="!canSubmit">
           You must validate all tabs before submitting your study and metadata.
-        </span>
-        <span v-else-if="!user.email">
-          You must provide an email address to your user profile before submitting.
         </span>
         <span v-else>
           Submit for NMDC review.
