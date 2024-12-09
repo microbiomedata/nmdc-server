@@ -217,6 +217,7 @@ export default defineComponent({
           </template>
           <template #[`item.action`]="{ item }">
             <div class="d-flex align-center">
+              <v-spacer />
               <v-btn
                 small
                 color="primary"
