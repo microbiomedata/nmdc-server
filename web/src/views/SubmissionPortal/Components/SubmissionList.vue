@@ -216,39 +216,41 @@ export default defineComponent({
             </v-chip>
           </template>
           <template #[`item.action`]="{ item }">
-            <v-btn
-              small
-              color="primary"
-              @click="() => resume(item)"
-            >
-              Resume
-              <v-icon class="pl-1">
-                mdi-arrow-right-circle
-              </v-icon>
-            </v-btn>
-            <v-menu
-              offset-x
-            >
-              <template #activator="{ on }">
-                <v-btn
-                  text
-                  icon
-                  class="ml-1"
-                  v-on="on"
-                >
-                  <v-icon>
-                    mdi-dots-vertical
-                  </v-icon>
-                </v-btn>
-              </template>
-              <v-list>
-                <v-list-item
-                  @click="() => handleOpenDeleteDialog(item)"
-                >
-                  <v-list-item-title>Delete</v-list-item-title>
-                </v-list-item>
-              </v-list>
-            </v-menu>
+            <div class="d-flex align-center">
+              <v-btn
+                small
+                color="primary"
+                @click="() => resume(item)"
+              >
+                Resume
+                <v-icon class="pl-1">
+                  mdi-arrow-right-circle
+                </v-icon>
+              </v-btn>
+              <v-menu
+                offset-x
+              >
+                <template #activator="{ on }">
+                  <v-btn
+                    text
+                    icon
+                    class="ml-1"
+                    v-on="on"
+                  >
+                    <v-icon>
+                      mdi-dots-vertical
+                    </v-icon>
+                  </v-btn>
+                </template>
+                <v-list>
+                  <v-list-item
+                    @click="() => handleOpenDeleteDialog(item)"
+                  >
+                    <v-list-item-title>Delete</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+            </div>
           </template>
         </v-data-table>
       </v-card>
