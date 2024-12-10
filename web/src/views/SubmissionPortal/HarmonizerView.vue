@@ -135,8 +135,10 @@ export default defineComponent({
       // WARNING: It's important to do the column settings update /before/ data. Otherwise,
       // columns will not be rendered with the correct width.
       harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
-      // if we're not on the first tab, the common columns should be read-only
-      if (activeTemplateKey.value !== templateList.value[0]) {
+
+      // If the environment tab selected is a mixin it should be readonly
+      const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'mixin');
+      if (environmentList.includes(activeTemplateKey.value)) {
         harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
@@ -292,7 +294,8 @@ export default defineComponent({
     });
 
     function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
-      if (templateKey === templateList.value[0]) {
+      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
+      if (environmentKeys.includes(templateKey)) {
         return true;
       }
       const row_types = row[TYPE_FIELD];
@@ -317,44 +320,54 @@ export default defineComponent({
     }
 
     function synchronizeTabData(templateKey: string) {
-      if (templateKey === templateList.value[0]) {
+      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
+      if (environmentKeys.includes(templateKey)) {
         return;
       }
       const nextData = { ...sampleData.value };
       const templateSlot = HARMONIZER_TEMPLATES[templateKey].sampleDataSlot;
-      const environmentSlot = HARMONIZER_TEMPLATES[templateList.value[0]].sampleDataSlot;
 
-      if (!templateSlot || !environmentSlot) {
+      const environmentSlots = templateList.value
+        .filter((t) => HARMONIZER_TEMPLATES[t].status === 'published')
+        .map((t) => HARMONIZER_TEMPLATES[t].sampleDataSlot);
+
+      if (!templateSlot || !environmentSlots) {
         return;
       }
 
       // ensure the necessary keys exist in the data object
-      if (!nextData[environmentSlot]) {
-        nextData[environmentSlot] = [];
-      }
+      environmentSlots.forEach((slot) => {
+        if (!nextData[slot as string]) {
+          nextData[slot as string] = [];
+        }
+      });
+
       if (!nextData[templateSlot]) {
         nextData[templateSlot] = [];
       }
 
-      // add/update any rows from the first tab to the active tab if they apply and if
+      // add/update any rows from the environment tabs to the active tab if they apply and if
       // they aren't there already.
-      nextData[environmentSlot].forEach((row) => {
-        const rowId = row[SCHEMA_ID];
-        const existing = nextData[templateSlot] && nextData[templateSlot].find((r) => r[SCHEMA_ID] === rowId);
-        if (!existing && rowIsVisibleForTemplate(row, templateKey)) {
-          const newRow = {} as Record<string, any>;
-          COMMON_COLUMNS.forEach((col) => {
-            newRow[col] = row[col];
-          });
-          nextData[templateSlot].push(newRow);
-        }
-        if (existing) {
-          COMMON_COLUMNS.forEach((col) => {
-            existing[col] = row[col];
-          });
-        }
+      environmentSlots.forEach((environmentSlot) => {
+        nextData[environmentSlot as string].forEach((row) => {
+          const rowId = row[SCHEMA_ID];
+
+          const existing = nextData[templateSlot] && nextData[templateSlot].find((r) => r[SCHEMA_ID] === rowId);
+          if (!existing && rowIsVisibleForTemplate(row, templateKey)) {
+            const newRow = {} as Record<string, any>;
+            COMMON_COLUMNS.forEach((col) => {
+              newRow[col] = row[col];
+            });
+            nextData[templateSlot].push(newRow);
+          }
+          if (existing) {
+            COMMON_COLUMNS.forEach((col) => {
+              existing[col] = row[col];
+            });
+          }
+        });
       });
-      // remove any rows from the active tab if they were removed from the first tab
+      // remove any rows from the active tab if they were removed from the environment tabs
       // or no longer apply to the active tab
       if (nextData[templateSlot].length > 0) {
         nextData[templateSlot] = nextData[templateSlot].filter((row) => {
@@ -362,8 +375,10 @@ export default defineComponent({
             return false;
           }
           const rowId = row[SCHEMA_ID];
-          const environmentRow = nextData[environmentSlot].findIndex((r) => r[SCHEMA_ID] === rowId);
-          return environmentRow >= 0;
+          return environmentSlots.some((environmentSlot) => {
+            const environmentRow = nextData[environmentSlot as string].findIndex((r) => r[SCHEMA_ID] === rowId);
+            return environmentRow >= 0;
+          });
         });
       }
       sampleData.value = nextData;
@@ -462,9 +477,8 @@ export default defineComponent({
       }
 
       await validate();
-
       // When changing templates we may need to populate the common columns
-      // from the first tab
+      // from the environment tabs
       const nextTemplate = templateList.value[index];
       synchronizeTabData(nextTemplate);
 

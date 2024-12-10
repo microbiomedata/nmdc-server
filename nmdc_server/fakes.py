@@ -395,7 +395,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "facilities": [],
             "otherAward": "",
         },
-        "packageName": "",
+        "packageName": [],
     }
     locked_by = None
     lock_updated = None

@@ -32,24 +32,24 @@ export const EMSL = 'emsl';
 export const JGI_MG = 'jgi_mg';
 export const JGI_MG_LR = 'jgi_mg_lr';
 export const JGT_MT = 'jgi_mt';
-export function getVariants(checkBoxes: string[], dataGenerated: boolean | undefined, base: string): string[] {
-  const templates = [base];
+export function getVariants(checkBoxes: string[], dataGenerated: boolean | undefined, base: string[]): string[] {
+  const templates = new Set(base);
   if (dataGenerated) {
-    return templates;
+    return Array.from(templates);
   }
   if (checkBoxes.includes('mp-emsl') || checkBoxes.includes('mb-emsl') || checkBoxes.includes('nom-emsl')) {
-    templates.push(EMSL);
+    templates.add(EMSL);
   }
   if (checkBoxes.includes('mg-jgi')) {
-    templates.push(JGI_MG);
+    templates.add(JGI_MG);
   }
   if (checkBoxes.includes('mg-lr-jgi')) {
-    templates.push(JGI_MG_LR);
+    templates.add(JGI_MG_LR);
   }
   if (checkBoxes.includes('mt-jgi')) {
-    templates.push(JGT_MT);
+    templates.add(JGT_MT);
   }
-  return templates;
+  return Array.from(templates);
 }
 
 /**
