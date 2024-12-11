@@ -356,7 +356,7 @@ export default defineComponent({
                             v-for="item in props.result.omics_processing_counts"
                           >
                             <v-chip
-                              v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                              v-if="item.count"
                               :key="item.type"
                               small
                               class="mr-2 my-1"
@@ -414,7 +414,7 @@ export default defineComponent({
                                   v-for="item in childProps.result.omics_processing_counts"
                                 >
                                   <v-chip
-                                    v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                                    v-if="item.count"
                                     :key="item.type"
                                     small
                                     class="mr-2 my-1"
@@ -535,7 +535,7 @@ export default defineComponent({
                             v-for="item in props.result.omics_processing_counts"
                           >
                             <v-chip
-                              v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                              v-if="item.count"
                               :key="item.type"
                               small
                               class="mr-2 my-1"
@@ -593,7 +593,7 @@ export default defineComponent({
                                   v-for="item in childProps.result.omics_processing_counts"
                                 >
                                   <v-chip
-                                    v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                                    v-if="item.count"
                                     :key="item.type"
                                     small
                                     class="mr-2 my-1"
