@@ -259,6 +259,16 @@ ConditionSchema = Union[
 ]
 
 
+def _transform_gene_term(term: tuple[str, Any]) -> str:
+    if term[0].startswith("KO:K"):
+        return term[0].replace("KO:K", KeggTerms.ORTHOLOGY[0])
+    if term[0].startswith("COG"):
+        return term[0].replace("COG", "COG:COG")
+    if term[0].startswith("PF"):
+        return term[0].replace("PF", "PFAM:PF")
+    return term[0]
+
+
 # This is the base class for all table specific queries.  It is responsible for performing
 # both searches and facet aggregations.  At a high level, the queries are generated as follows:
 #   1. group conditions by table/field
@@ -333,18 +343,14 @@ class BaseQuerySchema(BaseModel):
                         )
                     )
                 )
+                term_list = list(gene_terms)
+                if not term_list:
+                    return [condition]
             else:
                 # This is not a condition we know how to transform.
                 return [condition]
             if gene_terms:
-                if gene_terms[0][0].startswith("KO:K"):
-                    gene_terms = [
-                        term[0].replace("KO:K", KeggTerms.ORTHOLOGY[0]) for term in gene_terms
-                    ]
-                elif gene_terms[0][0].startswith("COG"):
-                    gene_terms = [term[0].replace("COG", "COG:COG") for term in gene_terms]
-                elif gene_terms[0][0].startswith("PF"):
-                    gene_terms = [term[0].replace("PF", "PFAM:PF") for term in gene_terms]
+                gene_terms = [_transform_gene_term(term) for term in gene_terms]
             return [
                 SimpleConditionSchema(
                     op="==",
