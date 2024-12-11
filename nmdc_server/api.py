@@ -1178,6 +1178,14 @@ async def submit_metadata(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
+    # Old versions of the Field Notes app will continue to send a string for packageName
+    # for a little while. This code is to ease that transition and can be removed in the future.
+    if isinstance(body.metadata_submission.packageName, str):
+        if body.metadata_submission.packageName:
+            body.metadata_submission.packageName = [body.metadata_submission.packageName]
+        else:
+            body.metadata_submission.packageName = []
+
     submission = SubmissionMetadata(
         **body.dict(),
         author_orcid=user.orcid,
