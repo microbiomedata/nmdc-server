@@ -496,8 +496,6 @@ async function getFacetSummary(
       facet: facetName,
       count: data.facets[facetName],
     }))
-    /* TODO: Take out all these lipidomics hacks */
-    .filter((facetName) => (facetName.facet !== 'Lipidomics'))
     .sort((a, b) => b.count - a.count);
 }
 
