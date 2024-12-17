@@ -175,7 +175,13 @@ export default defineComponent({
           @click="createNewSubmission"
         >
           <v-icon>mdi-plus</v-icon>
-          Create New Submission
+          Create Submission
+        </v-btn>
+        <v-btn
+          color="primary"
+        >
+          <v-icon>mdi-plus</v-icon>
+          Create Test Submission
         </v-btn>
       </v-card-text>
       <v-card-title class="text-h4">
