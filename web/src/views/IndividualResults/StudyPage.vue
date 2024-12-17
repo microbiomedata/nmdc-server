@@ -309,7 +309,7 @@ export default defineComponent({
                     field: 'relevant_protocols' }
                   "
                 />
-                <v-list-item v-if="item.principal_investigator_websites.length > 0">
+                <v-list-item v-if="goldLinks.size > 0 || item.principal_investigator_websites.length > 0">
                   <v-list-item-avatar>
                     <v-icon>mdi-file-document</v-icon>
                   </v-list-item-avatar>
