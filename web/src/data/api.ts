@@ -180,7 +180,7 @@ export interface StudySearchResults extends BaseSearchResult {
   add_date: string;
   mod_date: string;
   open_in_gold: string;
-  funding_sources: string[];
+  funding_sources?: string[];
   relevant_protocols: string[];
   gold_study_identifiers: string[];
   sample_count: number;

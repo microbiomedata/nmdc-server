@@ -127,11 +127,13 @@ export default defineComponent({
               </v-card>
             </v-menu>
           </div>
-          <div class="text-h5 py-2 primary--text">
-            Funding Sources
-          </div>
-          <div>
-            {{ item.funding_sources.flat().toString() }}
+          <div v-if="item.funding_sources">
+            <div class="text-h5 py-2 primary--text">
+              Funding Sources
+            </div>
+            <div>
+              {{ item.funding_sources.flat().toString() }}
+            </div>
           </div>
         </v-card>
       </v-row>
