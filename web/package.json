@@ -10,7 +10,6 @@
   "dependencies": {
     "@riophae/vue-treeselect": "^0.4.0",
     "@sentry/vue": "^6.16.1",
-    "@vue/composition-api": "^1.4.1",
     "axios": "^0.28.0",
     "axios-cache-adapter": "^2.7.3",
     "bootstrap": "4.3.1",
@@ -38,7 +37,7 @@
     "popper.js": "1.16.1",
     "protobufjs": "^6.11.3",
     "serialize-javascript": "^6.0.0",
-    "vue": "^2.6.14",
+    "vue": "^2.7.0",
     "vue-async-computed": "^3.9.0",
     "vue-google-charts": "^0.3.3",
     "vue-gtag": "^1.16.1",
@@ -79,7 +78,7 @@
     "typescript": "^4.5.3",
     "vue-cli-plugin-vuetify": "^2.4.5",
     "vue-cli-plugin-yaml": "^1.0.2",
-    "vue-template-compiler": "^2.6.14",
+    "vue-template-compiler": "^2.7.14",
     "vuetify-loader": "^1.7.3"
   },
   "browserslist": [
