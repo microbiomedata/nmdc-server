@@ -92,7 +92,6 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
             "gene_function_id": {
                 "$regex": gene_regex,
             },
-            "best_protein": True,
         },
         no_cursor_timeout=True,
         projection={
@@ -100,7 +99,6 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
             "was_generated_by": True,
             "count": True,
             "gene_function_id": True,
-            "best_protein": True,
         },
     )
     if kwargs.get("function_limit"):
@@ -116,7 +114,7 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
                 metaproteomic_analysis_id=pipeline.id,
                 gene_function_id=function_id,
                 count=annotation["count"],
-                best_protein=annotation["best_protein"],
+                best_protein=True,
             )
         )
     if metap_gene_function_aggregations:

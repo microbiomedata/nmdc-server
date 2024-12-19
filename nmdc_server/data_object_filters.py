@@ -34,7 +34,7 @@ class WorkflowActivityTypeEnum(Enum):
     metabolomics_analysis = "nmdc:MetabolomicsAnalysis"
     metagenome_assembly = "nmdc:MetagenomeAssembly"
     metagenome_annotation = "nmdc:MetagenomeAnnotation"
-    metaproteomic_analysis = "nmdc:MetaproteomicAnalysis"
+    metaproteomic_analysis = "nmdc:MetaproteomicsAnalysis"
     metatranscriptome = "nmdc:MetatranscriptomeAnalysis"
     metatranscriptome_assembly = "nmdc:MetatranscriptomeAssembly"
     metatranscriptome_annotation = "nmdc:MetatranscriptomeAnnotation"

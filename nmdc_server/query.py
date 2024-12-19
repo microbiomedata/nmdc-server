@@ -384,7 +384,13 @@ class BaseQuerySchema(BaseModel):
 
             # Gene function queries are treated differently because they join
             # in three different places (metaT, metaG and metaP).
-            if table == Table.gene_function:
+            if table in [
+                Table.gene_function,
+                Table.kegg_function,
+                Table.go_function,
+                Table.pfam_function,
+                Table.cog_function,
+            ]:
                 metag_matches = filter.matches(db, self.table)
                 metap_conditions = [
                     SimpleConditionSchema(
