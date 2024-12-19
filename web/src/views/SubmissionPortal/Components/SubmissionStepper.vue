@@ -1,7 +1,8 @@
 <script lang="ts">
 import {
-  computed, defineComponent, reactive, toRef, watch,
-} from '@vue/composition-api';
+  computed, defineComponent, reactive, toRef, watch, getCurrentInstance,
+} from 'vue';
+import VueRouter from 'vue-router';
 import { incrementalSaveRecord } from '../store';
 
 const StepperMap: Record<string | number, number | string> = {
@@ -28,22 +29,24 @@ const StepperMap: Record<string | number, number | string> = {
 };
 
 export default defineComponent({
-  setup(props, { root }) {
-    const currentRoute = toRef(reactive(root.$router), 'currentRoute');
+  setup() {
+    const root = getCurrentInstance();
+
+    const currentRoute = toRef(reactive(root?.proxy.$router as VueRouter), 'currentRoute');
     const step = computed(() => StepperMap[currentRoute.value.name || ''] || 0);
 
-    const currentRouteName = computed(() => root.$route.name);
+    const currentRouteName = computed(() => root?.proxy.$route.name);
 
     watch(currentRouteName, () => {
-      if (root.$route.params.id) {
-        incrementalSaveRecord(root.$route.params.id);
+      if (root?.proxy.$route.params.id) {
+        incrementalSaveRecord(root?.proxy.$route.params.id);
       }
     });
 
     function gotoStep(newstep: number) {
       const routeName = StepperMap[newstep];
       if (newstep < step.value && typeof routeName === 'string') {
-        root.$router.push({ name: routeName });
+        root?.proxy.$router.push({ name: routeName });
       }
     }
 

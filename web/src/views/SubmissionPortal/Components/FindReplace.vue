@@ -5,8 +5,8 @@ import {
   ref,
   watch,
   PropType,
-} from '@vue/composition-api';
-import type { Ref } from '@vue/composition-api';
+  Ref,
+} from 'vue';
 import type { HarmonizerApi } from '../harmonizerApi';
 
 type SearchResult = {

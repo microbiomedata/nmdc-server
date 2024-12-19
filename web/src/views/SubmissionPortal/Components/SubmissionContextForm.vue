@@ -5,7 +5,7 @@ import {
   onMounted,
   watch,
   nextTick,
-} from '@vue/composition-api';
+} from 'vue';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import Definitions from '@/definitions';

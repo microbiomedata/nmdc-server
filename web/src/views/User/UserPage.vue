@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref, watch } from '@vue/composition-api';
+import { defineComponent, ref, watch } from 'vue';
 import { DataTableHeader } from 'vuetify';
 import { api, User } from '@/data/api';
 import { stateRefs } from '@/store';

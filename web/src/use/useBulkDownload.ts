@@ -1,4 +1,4 @@
-import { Ref, ref, watch } from '@vue/composition-api';
+import { Ref, ref, watch } from 'vue';
 import {
   api, BulkDownload, BulkDownloadAggregateSummary, BulkDownloadSummary, Condition, DataObjectFilter,
 } from '@/data/api';

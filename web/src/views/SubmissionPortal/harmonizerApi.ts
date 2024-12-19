@@ -1,6 +1,6 @@
 import {
   Ref, ref, nextTick,
-} from '@vue/composition-api';
+} from 'vue';
 import { debounce } from 'lodash';
 import { DataHarmonizer, Footer } from 'data-harmonizer';
 

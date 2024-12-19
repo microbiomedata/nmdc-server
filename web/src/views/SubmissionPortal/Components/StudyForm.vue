@@ -7,8 +7,9 @@ import {
   onMounted,
   ref,
   Ref,
-} from '@vue/composition-api';
+} from 'vue';
 import Definitions from '@/definitions';
+import { stateRefs } from '@/store';
 import {
   studyForm,
   studyFormValid,
@@ -17,7 +18,6 @@ import {
   isOwner,
   canEditSubmissionMetadata,
 } from '../store';
-import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 

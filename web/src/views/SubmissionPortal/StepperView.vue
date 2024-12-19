@@ -1,10 +1,10 @@
 <script lang="ts">
-import { computed, defineComponent, PropType } from '@vue/composition-api';
+import { computed, defineComponent, PropType } from 'vue';
 
-import SubmissionStepper from './Components/SubmissionStepper.vue';
 import OrcidId from '@/components/Presentation/OrcidId.vue';
 
 import { stateRefs } from '@/store';
+import SubmissionStepper from './Components/SubmissionStepper.vue';
 import { getSubmissionLockedBy } from './store';
 import { unlockSubmission } from './store/api';
 

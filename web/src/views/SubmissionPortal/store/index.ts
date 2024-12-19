@@ -1,15 +1,11 @@
-import Vue from 'vue';
-import CompositionApi, {
+import {
   computed, reactive, Ref, ref, shallowRef, watch,
-} from '@vue/composition-api';
+} from 'vue';
 import { clone, forEach } from 'lodash';
 import axios from 'axios';
+import { User } from '@/data/api';
 import * as api from './api';
 import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
-import { User } from '@/data/api';
-
-// TODO: Remove in version 3;
-Vue.use(CompositionApi);
 
 enum BiosafetyLevels {
   BSL1 = 'BSL1',

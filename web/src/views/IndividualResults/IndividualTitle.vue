@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, PropType } from '@vue/composition-api';
+import { defineComponent, PropType } from 'vue';
 
 import { BaseSearchResult } from '@/data/api';
 import { urlify } from '@/data/utils';

@@ -2,7 +2,7 @@
 import {
   computed,
   defineComponent, PropType, reactive, ref, toRef, watch, watchEffect,
-} from '@vue/composition-api';
+} from 'vue';
 
 /**
  * LEAFLET imports

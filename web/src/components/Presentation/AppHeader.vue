@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
 import AuthButton from '@/components/Presentation/AuthButton.vue';
 import Menus from '@/menus';
 

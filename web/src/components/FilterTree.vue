@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   defineComponent, computed, toRef, PropType,
-} from '@vue/composition-api';
+} from 'vue';
 // @ts-ignore
 import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';

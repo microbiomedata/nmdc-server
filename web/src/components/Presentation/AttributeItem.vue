@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, PropType } from '@vue/composition-api';
+import { defineComponent, PropType } from 'vue';
 import { getField } from '@/encoding';
 import { fieldDisplayName, formatBiosampleDepth, valueDisplayName } from '@/util';
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';

@@ -1,20 +1,20 @@
 <script lang="ts">
 import {
   defineComponent, ref, watch, Ref,
-} from '@vue/composition-api';
+} from 'vue';
 import { DataOptions, DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
+import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
+import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
+import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
+import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import {
   generateRecord, submissionStatus,
 } from '../store';
 import * as api from '../store/api';
 import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
-import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
-import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
-import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
-import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { deleteSubmission } from '../store/api';
 
 const headers: DataTableHeader[] = [
