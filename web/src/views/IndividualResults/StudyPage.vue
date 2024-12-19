@@ -280,14 +280,14 @@ export default defineComponent({
             <template
               v-if="
                 goldLinks.size > 0 ||
-                  item.relevant_protocols||
+                  (item.relevant_protocols && item.relevant_protocols.length > 0) ||
                   item.principal_investigator_websites.length > 0"
             >
               <div class="display-1">
                 Additional Resources
               </div>
               <v-list
-                v-if="goldLinks.size > 0 || item.relevant_protocols.length > 0"
+                v-if="goldLinks.size > 0 || (item.relevant_protocols && item.relevant_protocols.length > 0) || item.principal_investigator_websites.length > 0"
               >
                 <v-list-item v-if="item.relevant_protocols">
                   <v-list-item-avatar>
