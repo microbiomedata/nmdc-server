@@ -7,7 +7,7 @@ import {
   ref,
   watch,
   nextTick,
-} from '@vue/composition-api';
+} from 'vue';
 import { DataTableHeader } from 'vuetify';
 import {
   Condition, entityType, KeggTermSearchResponse,

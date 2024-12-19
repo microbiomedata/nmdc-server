@@ -3,7 +3,7 @@ import {
   defineComponent,
   watchEffect,
   ref,
-} from '@vue/composition-api';
+} from 'vue';
 import { select } from 'd3-selection';
 import { max } from 'd3-array';
 import { axisBottom } from 'd3-axis';

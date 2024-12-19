@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   computed, defineComponent, PropType, reactive,
-} from '@vue/composition-api';
+} from 'vue';
 import { flattenDeep } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
