@@ -1,5 +1,7 @@
 <script>
-import { defineComponent, watchEffect, ref } from '@vue/composition-api';
+import {
+  defineComponent, watchEffect, ref, getCurrentInstance,
+} from 'vue';
 import { select } from 'd3-selection';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { MultiomicsValue } from '@/encoding';
@@ -28,7 +30,8 @@ export default defineComponent({
     },
   },
 
-  setup(props, { root, emit }) {
+  setup(props) {
+    const root = getCurrentInstance();
     const svgRoot = ref(undefined);
 
     const margin = {
@@ -132,7 +135,7 @@ export default defineComponent({
         .attr('y1', (d, i) => y(i) + y.step() / 2)
         .attr('y2', (d, i) => y(i) + y.step() / 2)
         .attr('stroke-width', 3)
-        .attr('stroke', root.$vuetify.theme.currentTheme.blue);
+        .attr('stroke', root.proxy.$vuetify.theme.currentTheme.blue);
 
       svg.selectAll('circle')
         .data(setMembers)
@@ -140,7 +143,7 @@ export default defineComponent({
         .attr('cx', (d) => membershipX(d.set))
         .attr('cy', (d) => y(d.index) + y.step() / 2)
         .attr('r', 5)
-        .attr('fill', root.$vuetify.theme.currentTheme.blue);
+        .attr('fill', root.proxy.$vuetify.theme.currentTheme.blue);
 
       uniqueCounts.forEach((count, _i) => {
         const barX = scaleLinear()
@@ -165,7 +168,7 @@ export default defineComponent({
               .attr('y', (d, i) => y(i))
               .attr('width', (d) => barX(d.counts[count]))
               .attr('height', y.bandwidth())
-              .attr('fill', root.$vuetify.theme.currentTheme.blue)
+              .attr('fill', root.proxy.$vuetify.theme.currentTheme.blue)
               .classed('upset-bar-clickable', true)
               .on('click', selectSamples);
             parent.append('text')

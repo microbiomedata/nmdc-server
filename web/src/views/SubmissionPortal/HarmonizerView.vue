@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
-} from '@vue/composition-api';
+  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, getCurrentInstance,
+} from 'vue';
 import {
   clamp, flattenDeep, has, sum,
 } from 'lodash';
@@ -10,6 +10,9 @@ import { api } from '@/data/api';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
+import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
+import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
+import { stateRefs } from '@/store';
 import {
   HarmonizerApi,
   HARMONIZER_TEMPLATES,
@@ -32,13 +35,10 @@ import {
   canEditSampleMetadata,
   isOwner,
 } from './store';
-import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
-import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
-import { stateRefs } from '@/store';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -104,7 +104,9 @@ export default defineComponent({
     SubmissionPermissionBanner,
   },
 
-  setup(_, { root }) {
+  setup() {
+    const root = getCurrentInstance();
+
     const { user } = stateRefs;
 
     const harmonizerElement = ref();
@@ -177,7 +179,7 @@ export default defineComponent({
     ));
 
     const saveRecordRequest = useRequest();
-    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
+    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root?.proxy.$route.params.id as string));
 
     const onDataChange = async () => {
       hasChanged.value += 1;
@@ -289,7 +291,7 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id, submissionStatus.SubmittedPendingReview);
+      await submit(root?.proxy.$route.params.id as string, submissionStatus.SubmittedPendingReview);
       submitDialog.value = false;
     });
 
