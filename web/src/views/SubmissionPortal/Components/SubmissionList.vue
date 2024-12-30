@@ -78,9 +78,10 @@ export default defineComponent({
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
-    async function createNewSubmission() {
+    async function createNewSubmission(isTest : boolean) {
       const item = await generateRecord();
       router?.push({ name: 'Submission Context', params: { id: item.id } });
+      item.isTestSubmission = isTest;
     }
 
     const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
@@ -172,13 +173,15 @@ export default defineComponent({
       <v-card-text>
         <v-btn
           color="primary"
-          @click="createNewSubmission"
+          @click="createNewSubmission(false)"
         >
           <v-icon>mdi-plus</v-icon>
           Create Submission
         </v-btn>
         <v-btn
           color="primary"
+          class="ml-3"
+          @click="createNewSubmission(true)"
         >
           <v-icon>mdi-plus</v-icon>
           Create Test Submission

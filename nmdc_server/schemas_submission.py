@@ -75,6 +75,7 @@ class ContextForm(BaseModel):
 
 
 class MetadataSubmissionRecord(BaseModel):
+    isTestSubmission: bool
     packageName: str
     contextForm: ContextForm
     addressForm: AddressForm
