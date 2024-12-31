@@ -75,8 +75,8 @@ class ContextForm(BaseModel):
 
 
 class MetadataSubmissionRecord(BaseModel):
-    isTestSubmission: bool
     packageName: str
+    isTestSubmission: bool
     contextForm: ContextForm
     addressForm: AddressForm
     templates: List[str]
@@ -87,6 +87,7 @@ class MetadataSubmissionRecord(BaseModel):
 
 class PartialMetadataSubmissionRecord(BaseModel):
     packageName: Optional[str] = None
+    isTestSubmission: Optional[bool] = None
     contextForm: Optional[ContextForm] = None
     addressForm: Optional[AddressForm] = None
     templates: Optional[List[str]] = None

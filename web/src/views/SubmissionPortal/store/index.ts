@@ -168,6 +168,7 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
  * Environment Package Step
  */
 const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
+const isTestSubmission = ref(false);
 const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
   const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
@@ -206,6 +207,7 @@ watch(templateList, () => {
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
+  isTestSubmission: isTestSubmission.value,
   contextForm,
   addressForm,
   templates: templateList.value,
@@ -297,6 +299,7 @@ async function loadRecord(id: string) {
   reset();
   const val = await api.getRecord(id);
   packageName.value = val.metadata_submission.packageName;
+  isTestSubmission.value = val.metadata_submission.isTestSubmission;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
   Object.assign(contextForm, val.metadata_submission.contextForm);
@@ -357,6 +360,7 @@ export {
   studyFormValid,
   submitPayload,
   packageName,
+  isTestSubmission,
   templateList,
   templateChoiceDisabled,
   hasChanged,

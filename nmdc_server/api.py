@@ -971,7 +971,7 @@ async def update_submission(
             status_code=400,
             detail="This submission is currently being edited by a different user.",
         )
-
+    print(submission.metadata_submission)
     # Create GitHub issue when metadata is being submitted
     if (
         submission.status == "in-progress"

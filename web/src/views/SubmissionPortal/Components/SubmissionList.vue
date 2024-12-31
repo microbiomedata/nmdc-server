@@ -80,8 +80,8 @@ export default defineComponent({
 
     async function createNewSubmission(isTest : boolean) {
       const item = await generateRecord();
+      item.metadata_submission.isTestSubmission = isTest;
       router?.push({ name: 'Submission Context', params: { id: item.id } });
-      item.isTestSubmission = isTest;
     }
 
     const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
