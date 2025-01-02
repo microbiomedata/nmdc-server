@@ -50,6 +50,8 @@ const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(
 
 const status = ref(submissionStatus.InProgress);
 
+const isTestSubmission = ref(false);
+
 /**
  * Submission record locking information
  */
@@ -168,7 +170,6 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
  * Environment Package Step
  */
 const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
-const isTestSubmission = ref(false);
 const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
   const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
@@ -206,8 +207,8 @@ watch(templateList, () => {
 
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
-  packageName: packageName.value,
   isTestSubmission: isTestSubmission.value,
+  packageName: packageName.value,
   contextForm,
   addressForm,
   templates: templateList.value,
@@ -360,7 +361,6 @@ export {
   studyFormValid,
   submitPayload,
   packageName,
-  isTestSubmission,
   templateList,
   templateChoiceDisabled,
   hasChanged,
