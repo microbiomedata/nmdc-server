@@ -13,6 +13,7 @@ export default defineComponent({
         addressForm.shipper.city,
         addressForm.shipper.state,
         addressForm.shipper.postalCode,
+        addressForm.shipper.country,
       ];
       const existingShipperData = shipperData.filter((shipperDatum) => !!shipperDatum.trim());
       return existingShipperData.join(', ');

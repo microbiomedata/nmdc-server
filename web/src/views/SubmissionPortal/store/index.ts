@@ -4,9 +4,9 @@ import CompositionApi, {
 } from '@vue/composition-api';
 import { clone, forEach } from 'lodash';
 import axios from 'axios';
+import { User } from '@/data/api';
 import * as api from './api';
 import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
-import { User } from '@/data/api';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -94,6 +94,7 @@ const addressFormDefault = {
     city: '',
     state: '',
     postalCode: '',
+    country: '',
   } as api.NmdcAddress,
   expectedShippingDate: undefined as undefined | Date,
   shippingConditions: '',
@@ -111,6 +112,7 @@ const addressFormDefault = {
 const contextFormDefault = {
   dataGenerated: undefined as undefined | boolean,
   awardDois: [] as string[] | null,
+  ship: undefined as undefined | boolean,
   facilityGenerated: undefined as undefined | boolean,
   facilities: [] as string[],
   award: undefined as undefined | string,

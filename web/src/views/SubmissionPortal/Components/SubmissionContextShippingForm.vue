@@ -157,18 +157,15 @@ export default defineComponent({
             <!-- Shipper Name, E-mail address, etc. -->
             <v-text-field
               v-model="addressForm.shipper.name"
-              :rules="requiredRules('Name is required', [])"
-              label="Shipper Name *"
+              label="Shipper Name"
               outlined
               dense
               class="mt-2"
             />
             <v-text-field
               v-model="addressForm.shipper.email"
-              :rules="requiredRules('E-mail is required', [
-                v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
-              ])"
-              label="E-mail Address *"
+              :rules="[v => !v || /.+@.+\..+/.test(v) || 'E-mail must be valid']"
+              label="E-mail Address"
               outlined
               dense
             />
@@ -180,8 +177,7 @@ export default defineComponent({
             />
             <v-text-field
               v-model="addressForm.shipper.line1"
-              :rules="requiredRules('Address Line 1 is required', [])"
-              label="Address Line 1 *"
+              label="Address Line 1"
               outlined
               dense
             />
@@ -193,33 +189,37 @@ export default defineComponent({
             />
             <v-text-field
               v-model="addressForm.shipper.city"
-              :rules="requiredRules('City is required', [])"
-              label="City *"
+              label="City"
               outlined
               dense
             />
             <div class="d-flex">
               <v-text-field
                 v-model="addressForm.shipper.state"
-                :rules="requiredRules('State is required', [])"
-                label="State *"
+                label="State"
                 outlined
                 dense
                 class="mr-4"
               />
               <v-text-field
                 v-model="addressForm.shipper.postalCode"
-                :rules="requiredRules('Zip code is required', [])"
-                label="Zip Code *"
+                label="Zip Code"
+                outlined
+                dense
+                class="mr-4"
+              />
+              <v-text-field
+                v-model="addressForm.shipper.country"
+                :rules="requiredRules('Country is required', [])"
+                label="Country *"
                 outlined
                 dense
               />
             </div>
             <v-combobox
               v-model="addressForm.shippingConditions"
-              label="Shipping Conditions *"
+              label="Shipping Conditions"
               :items="shippingConditionsItems"
-              :rules="requiredRules('Shipping conditions are required', [])"
               outlined
               dense
             />
@@ -234,8 +234,7 @@ export default defineComponent({
               <template #activator="{ on, attrs }">
                 <v-text-field
                   v-model="expectedShippingDateString"
-                  :rules="requiredRules('Expected Shipping Date is required', [])"
-                  label="Expected Shipping Date *"
+                  label="Expected Shipping Date"
                   prepend-icon="mdi-calendar"
                   clearable
                   readonly
@@ -259,7 +258,6 @@ export default defineComponent({
             <v-divider />
             <v-select
               v-model="addressForm.sample"
-              :rules="requiredRules('Sample Type/Species is required', [])"
               class="mt-2"
               :items="sampleEnumValues"
               label="Sample Type/Species"
@@ -277,7 +275,6 @@ export default defineComponent({
             <v-textarea
               v-model="addressForm.experimentalGoals"
               label="Experiment Goals"
-              :rules="requiredRules('Experiment Goals are required', [])"
               hint="Briefly describe the goal for your experiment"
               outlined
               dense
@@ -309,10 +306,9 @@ export default defineComponent({
             <div class="d-flex">
               <v-select
                 v-model="addressForm.biosafetyLevel"
-                :rules="requiredRules('Biosafety level is required', [])"
                 class="mr-4"
                 :items="biosafetyLevelValues"
-                label="Biosafety Level *"
+                label="Biosafety Level"
                 dense
                 outlined
               />

@@ -380,6 +380,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
                 "city": "",
                 "state": "",
                 "postalCode": "",
+                "country": "",
             },
             "shippingConditions": "",
             "sample": "",

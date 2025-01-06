@@ -47,6 +47,7 @@ class NmcdAddress(BaseModel):
     city: str
     state: str
     postalCode: str
+    country: str
 
 
 class AddressForm(BaseModel):
