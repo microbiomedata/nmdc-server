@@ -78,9 +78,8 @@ export default defineComponent({
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
-    async function createNewSubmission(isTest : boolean) {
+    async function createNewSubmission() {
       const item = await generateRecord();
-      item.metadata_submission.isTestSubmission = isTest;
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
@@ -173,7 +172,7 @@ export default defineComponent({
       <v-card-text>
         <v-btn
           color="primary"
-          @click="createNewSubmission(false)"
+          @click="createNewSubmission"
         >
           <v-icon>mdi-plus</v-icon>
           Create Submission
@@ -181,7 +180,7 @@ export default defineComponent({
         <v-btn
           color="primary"
           class="ml-3"
-          @click="createNewSubmission(true)"
+          @click="createNewSubmission"
         >
           <v-icon>mdi-plus</v-icon>
           Create Test Submission

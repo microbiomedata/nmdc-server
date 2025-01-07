@@ -50,8 +50,6 @@ const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(
 
 const status = ref(submissionStatus.InProgress);
 
-const isTestSubmission = ref(false);
-
 /**
  * Submission record locking information
  */
@@ -207,7 +205,6 @@ watch(templateList, () => {
 
 /** Submit page */
 const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
-  isTestSubmission: isTestSubmission.value,
   packageName: packageName.value,
   contextForm,
   addressForm,
@@ -300,7 +297,6 @@ async function loadRecord(id: string) {
   reset();
   const val = await api.getRecord(id);
   packageName.value = val.metadata_submission.packageName;
-  isTestSubmission.value = val.metadata_submission.isTestSubmission;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
   Object.assign(contextForm, val.metadata_submission.contextForm);

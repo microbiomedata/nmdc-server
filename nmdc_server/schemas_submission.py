@@ -76,7 +76,6 @@ class ContextForm(BaseModel):
 
 class MetadataSubmissionRecord(BaseModel):
     packageName: str
-    isTestSubmission: bool
     contextForm: ContextForm
     addressForm: AddressForm
     templates: List[str]
@@ -87,7 +86,6 @@ class MetadataSubmissionRecord(BaseModel):
 
 class PartialMetadataSubmissionRecord(BaseModel):
     packageName: Optional[str] = None
-    isTestSubmission: Optional[bool] = None
     contextForm: Optional[ContextForm] = None
     addressForm: Optional[AddressForm] = None
     templates: Optional[List[str]] = None
@@ -119,6 +117,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     templates: List[str]
     study_name: Optional[str] = None
     field_notes_metadata: Optional[Dict[str, Any]] = None
+    isTestSubmission: bool = False
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None
