@@ -12,6 +12,7 @@ from nmdc_server import jobs
 from nmdc_server.config import Settings
 from nmdc_server.database import SessionLocalIngest
 from nmdc_server.ingest import errors
+from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
 
 
 @click.group()
@@ -281,6 +282,16 @@ def load_db(key_file, user, host, list_backups, backup_file):
         sys.exit(1)
 
     click.secho(f"\nSuccessfully loaded {settings.current_db_uri}", fg="green")
+
+
+@cli.command()
+@click.option("--remove-existing", is_flag=True, default=False)
+def generate_static_files(remove_existing):
+    click.echo("Generating static files...")
+    static_path = initialize_static_directory(remove_existing=remove_existing)
+    click.echo("Generating submission schema files...")
+    generate_submission_schema_files(directory=static_path)
+    click.echo("Done generating static files.")
 
 
 if __name__ == "__main__":
