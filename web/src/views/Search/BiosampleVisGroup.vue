@@ -206,12 +206,12 @@ export default defineComponent({
             </template>
           </ChartContainer>
           <div class="mx-5 upset-legend">
-            <span>MG: metagenomics</span>
-            <span>MT: metatranscriptomics</span>
-            <span>MP: metaproteomics</span>
-            <span>MB: metabolomics</span>
-            <span>NOM: natural organic matter</span>
-            <span>LI: Lipidomics</span>
+            <span
+              v-for="value, key in staticUpsetTooltips"
+              :key="key"
+            >
+              {{ key }}: {{ value }}
+            </span>
           </div>
         </TooltipCard>
       </v-col>
