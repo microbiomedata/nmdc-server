@@ -109,7 +109,7 @@ export default defineComponent({
         v-if="!addressFormValid"
         class="error--text"
       >
-        Shipping information is required
+        Sender's shipping information is required
       </p>
       <submission-context-shipping-summary
         class="mt-6"
@@ -133,13 +133,28 @@ export default defineComponent({
           v-bind="attrs"
           v-on="on"
         >
-          Enter shipping info
+          Enter sender info
         </v-btn>
       </template>
       <v-card>
         <v-card-title>
           <v-spacer />
           <span class="text-h5">Shipping Information</span>
+          <v-tooltip bottom>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                color="primary"
+                v-bind="attrs"
+                v-on="on"
+              >
+                <v-icon>
+                  mdi-information
+                </v-icon>
+              </v-btn>
+            </template>
+            <span>Provide the address that the samples are being shipped from. </span>
+          </v-tooltip>
           <v-spacer />
         </v-card-title>
         <v-card-text>
@@ -151,13 +166,13 @@ export default defineComponent({
             :disabled="!canEditSubmissionMetadata()"
           >
             <v-subheader>
-              <span class="text-h6">Shipper</span>
+              <span class="text-h6">Sender</span>
             </v-subheader>
             <v-divider />
             <!-- Shipper Name, E-mail address, etc. -->
             <v-text-field
               v-model="addressForm.shipper.name"
-              label="Shipper Name"
+              label="Sender Name"
               outlined
               dense
               class="mt-2"
