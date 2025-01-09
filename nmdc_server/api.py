@@ -188,6 +188,7 @@ async def search_biosample(
     # This could potentially be more efficient to do in the database query,
     # but the code to generate the query would be much more complicated.
     def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
+        return biosample
         for op in biosample.omics_processing:
             for da in op.outputs:
                 da.selected = schemas.DataObject.is_selected(
@@ -202,6 +203,7 @@ async def search_biosample(
     results = pagination.response(
         crud.search_biosample(db, query.conditions, data_object_filter), insert_selected
     )
+    return results
     if any(
         [
             condition.table == Table.omics_processing or condition.table == Table.gene_function

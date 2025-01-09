@@ -76,10 +76,11 @@ def test_api_prefetches_data(app, db: Session, client: TestClient, count_queries
 
     biosamples = [
         fakes.BiosampleFactory(id="sample1", annotations={"key1": "value1", "key2": "value2"}),
-        fakes.BiosampleFactory(id="sample2", annotations={"key1": "value1", "key2": "value3"}),
-        fakes.BiosampleFactory(id="sample3", annotations={"key1": "value4", "key2": "value2"}),
+        # fakes.BiosampleFactory(id="sample2", annotations={"key1": "value1", "key2": "value3"}),
+        # fakes.BiosampleFactory(id="sample3", annotations={"key1": "value4", "key2": "value2"}),
     ]
 
+    fakes.OmicsProcessingFactory(biosample_inputs=biosamples)
     fakes.OmicsProcessingFactory(biosample_inputs=biosamples)
     db.commit()
 
@@ -88,6 +89,9 @@ def test_api_prefetches_data(app, db: Session, client: TestClient, count_queries
             "/api/biosample/search",
         )
         assert_status(resp)
+    for query in queries:
+        print(query)
+        print("\n")
 
     assert len(queries) == 3
 
