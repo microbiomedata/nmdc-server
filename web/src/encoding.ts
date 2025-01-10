@@ -174,7 +174,7 @@ export const geneFunctionTypeInfo: Record<geneFunctionType, GeneFunctionSearchPa
       Orthology, Module, and Pathway are supported.
     `,
     expectedFormats: 'K00000, M00000, map00000, ko00000, rn00000, and ec00000',
-    helpSite: 'https://wwwigenome.jp/kegg/',
+    helpSite: 'https://www.genome.jp/kegg/',
     table: 'kegg_function',
     encodeFunction: keggEncode,
     searchFunction: api.keggSearch,
