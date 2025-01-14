@@ -80,6 +80,7 @@ class Settings(BaseSettings):
 
     # App settings related to UI behavior
     disable_bulk_download: str = ""
+    portal_banner_title: Optional[str] = None
     portal_banner_message: Optional[str] = None
 
     # Rancher information to swap databases after ingest
