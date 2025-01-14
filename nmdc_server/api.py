@@ -36,7 +36,10 @@ router = APIRouter()
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
     settings = Settings()
-    return {"disable_bulk_download": settings.disable_bulk_download.upper() == "YES"}
+    return {
+        "disable_bulk_download": settings.disable_bulk_download.upper() == "YES",
+        "portal_banner_message": settings.portal_banner_message,
+    }
 
 
 # get application version number
