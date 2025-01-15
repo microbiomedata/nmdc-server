@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
@@ -74,8 +74,8 @@ class ContextForm(BaseModel):
     unknownDoi: Optional[bool] = None
 
 
-class MetadataSubmissionRecord(BaseModel):
-    packageName: str
+class MetadataSubmissionRecordCreate(BaseModel):
+    packageName: Union[str, List[str]]
     contextForm: ContextForm
     addressForm: AddressForm
     templates: List[str]
@@ -84,8 +84,12 @@ class MetadataSubmissionRecord(BaseModel):
     sampleData: Dict[str, List[Any]]
 
 
+class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
+    packageName: List[str]
+
+
 class PartialMetadataSubmissionRecord(BaseModel):
-    packageName: Optional[str] = None
+    packageName: Optional[List[str]] = None
     contextForm: Optional[ContextForm] = None
     addressForm: Optional[AddressForm] = None
     templates: Optional[List[str]] = None
@@ -95,7 +99,7 @@ class PartialMetadataSubmissionRecord(BaseModel):
 
 
 class SubmissionMetadataSchemaCreate(BaseModel):
-    metadata_submission: MetadataSubmissionRecord
+    metadata_submission: MetadataSubmissionRecordCreate
     status: Optional[str] = None
     source_client: Optional[str] = None
     isTestSubmission: bool = False
