@@ -1,10 +1,13 @@
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api';
+import { computed, defineComponent } from '@vue/composition-api';
+import { stateRefs } from '@/store';
 
 export default defineComponent({
   setup() {
-    const showAppBanner = ref(false);
-    return { showAppBanner };
+    const message = stateRefs.bannerMessage;
+    const title = stateRefs.bannerTitle;
+    const showAppBanner = computed(() => message.value || title.value);
+    return { showAppBanner, message, title };
   },
 });
 </script>
@@ -20,10 +23,10 @@ export default defineComponent({
     <p
       class="title"
     >
-      Banner title (replace me)
+      {{ title || '' }}
     </p>
     <p>
-      Banner content (replace me)
+      {{ message || '' }}
     </p>
   </v-banner>
 </template>

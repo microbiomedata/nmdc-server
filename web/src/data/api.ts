@@ -695,8 +695,14 @@ async function updateUser(id: string, body: User) {
   return data;
 }
 
-async function getAppSettings() {
-  const { data } = await client.get<Record<string, boolean>>('settings');
+interface PortalSettings {
+  portal_banner_title: string | null;
+  portal_banner_message: string | null;
+  disable_bulk_download: boolean;
+}
+
+async function getAppSettings(): Promise<PortalSettings> {
+  const { data } = await client.get<PortalSettings>('settings');
   return data;
 }
 
