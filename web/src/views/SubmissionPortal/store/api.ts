@@ -49,6 +49,7 @@ interface MetadataSubmissionRecord {
   source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
   study_name: string;
   templates: string[];
+  isTestSubmission: boolean;
 }
 
 interface PaginatedResponse<T> {
@@ -63,7 +64,7 @@ interface LockOperationResult {
   lock_updated?: string | null;
 }
 
-async function createRecord(record: MetadataSubmission) {
+async function createRecord(record: MetadataSubmission, is_test_submission: boolean) {
   const resp = await client.post<
     MetadataSubmissionRecord,
     AxiosResponse<MetadataSubmissionRecord>,
@@ -71,6 +72,7 @@ async function createRecord(record: MetadataSubmission) {
   >('metadata_submission', {
     metadata_submission: record,
     source_client: 'submission_portal',
+    isTestSubmission: is_test_submission,
   });
   return resp.data;
 }

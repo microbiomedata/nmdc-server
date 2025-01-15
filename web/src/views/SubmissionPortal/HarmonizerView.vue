@@ -1020,7 +1020,10 @@ export default defineComponent({
                   <v-card-title>
                     Submit
                   </v-card-title>
-                  <v-card-text>You are about to submit this study and metadata for NMDC review. Would you like to continue?</v-card-text>
+                  <v-card-text>
+                    You are about to submit this study and metadata for NMDC review. Would you like to continue?
+                    Test submissions will not actually be submitted.
+                  </v-card-text>
                   <v-card-actions>
                     <v-btn
                       color="primary"

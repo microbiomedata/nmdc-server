@@ -98,6 +98,7 @@ class SubmissionMetadataSchemaCreate(BaseModel):
     metadata_submission: MetadataSubmissionRecord
     status: Optional[str] = None
     source_client: Optional[str] = None
+    isTestSubmission: bool = False
 
 
 class SubmissionMetadataSchemaPatch(BaseModel):
@@ -117,7 +118,6 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     templates: List[str]
     study_name: Optional[str] = None
     field_notes_metadata: Optional[Dict[str, Any]] = None
-    isTestSubmission: bool = False
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None

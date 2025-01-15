@@ -971,11 +971,13 @@ async def update_submission(
             status_code=400,
             detail="This submission is currently being edited by a different user.",
         )
-    print(submission.metadata_submission)
-    # Create GitHub issue when metadata is being submitted
+
+    # Create GitHub issue when metadata is being submitted and not a test submission
+    print(submission.isTestSubmission)
     if (
         submission.status == "in-progress"
         and body_dict.get("status", None) == "Submitted- Pending Review"
+        and submission.isTestSubmission is False
     ):
         create_github_issue(submission, user)
 
@@ -999,7 +1001,11 @@ async def update_submission(
             crud.update_submission_contributor_roles(db, submission, new_permissions)
 
         if body_dict.get("status", None):
-            submission.status = body_dict["status"]
+            if (
+                body_dict.get("status", None) == "Submitted- Pending Review"
+                and submission.isTestSubmission is False
+            ):
+                submission.status = body_dict["status"]
         db.commit()
     crud.update_submission_lock(db, submission.id)
     return submission

@@ -287,9 +287,9 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   return Promise.resolve();
 }
 
-async function generateRecord() {
+async function generateRecord(isTestSubmission: boolean) {
   reset();
-  const record = await api.createRecord(payloadObject.value);
+  const record = await api.createRecord(payloadObject.value, isTestSubmission);
   return record;
 }
 
