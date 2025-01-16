@@ -34,6 +34,7 @@ import {
 } from './store';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import FindReplace from './Components/FindReplace.vue';
+import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
@@ -64,6 +65,7 @@ const ColorKey = {
 };
 
 const HELP_SIDEBAR_WIDTH = '300px';
+const TABS_HEIGHT = '48px';
 
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
 
@@ -97,6 +99,7 @@ const ALWAYS_READ_ONLY_COLUMNS = [
 
 export default defineComponent({
   components: {
+    HarmonizerSidebar,
     ContactCard,
     FindReplace,
     SubmissionStepper,
@@ -492,6 +495,7 @@ export default defineComponent({
       user,
       APP_HEADER_HEIGHT,
       HELP_SIDEBAR_WIDTH,
+      TABS_HEIGHT,
       ColorKey,
       HARMONIZER_TEMPLATES,
       columnVisibility,
@@ -801,166 +805,88 @@ export default defineComponent({
       </div>
     </div>
 
-    <v-tabs @change="changeTemplate">
-      <v-tooltip
-        v-for="templateKey in templateList"
-        :key="templateKey"
-        right
-      >
-        <template #activator="{on, attrs}">
-          <div
-            style="display: flex;"
-            v-bind="attrs"
-            v-on="on"
-          >
-            <v-tab>
-              <v-badge
-                :content="validationTotalCounts[templateKey] || '!'"
-                :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey]"
-                :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
-              >
-                {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
-              </v-badge>
-            </v-tab>
-          </div>
-        </template>
-        <span v-if="validationTotalCounts[templateKey] > 0">
-          {{ validationTotalCounts[templateKey] }} validation errors
-        </span>
-        <span v-else-if="!tabsValidated[templateKey]">
-          This tab must be validated before submission
-        </span>
-        <span v-else>
-          {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
-        </span>
-      </v-tooltip>
-      <v-spacer />
-      <v-menu
-        offset-x
-        left
-        z-index="300"
-      >
-        <template #activator="{on, attrs}">
-          <v-btn
-            color="primary"
-            small
-            class="my-2 py-4"
-            v-bind="attrs"
-            v-on="on"
-          >
-            <v-icon
-              class="mt-1"
+    <div class="harmonizer-and-sidebar">
+      <v-tabs @change="changeTemplate">
+        <v-tooltip
+          v-for="templateKey in templateList"
+          :key="templateKey"
+          right
+        >
+          <template #activator="{on, attrs}">
+            <div
+              style="display: flex;"
+              v-bind="attrs"
+              v-on="on"
             >
-              mdi-message-question
-            </v-icon>
-          </v-btn>
-        </template>
-        <ContactCard />
-      </v-menu>
-    </v-tabs>
+              <v-tab>
+                <v-badge
+                  :content="validationTotalCounts[templateKey] || '!'"
+                  :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey]"
+                  :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
+                >
+                  {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+                </v-badge>
+              </v-tab>
+            </div>
+          </template>
+          <span v-if="validationTotalCounts[templateKey] > 0">
+            {{ validationTotalCounts[templateKey] }} validation errors
+          </span>
+          <span v-else-if="!tabsValidated[templateKey]">
+            This tab must be validated before submission
+          </span>
+          <span v-else>
+            {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+          </span>
+        </v-tooltip>
+      </v-tabs>
 
-    <div v-if="schemaLoading">
-      Loading...
-    </div>
+      <div v-if="schemaLoading">
+        Loading...
+      </div>
 
-    <div
-      class="harmonizer-style-container harmonizer-and-sidebar"
-    >
       <div
         id="harmonizer-root"
+        class="harmonizer-style-container"
         :style="{
-          'padding-right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
+          'right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
+          'top': TABS_HEIGHT,
         }"
       />
 
-      <div
-        class="harmonizer-sidebar"
+      <v-btn
+        class="sidebar-toggle"
+        tile
+        plain
+        color="black"
+        :ripple="false"
+        :height="TABS_HEIGHT"
+        :width="TABS_HEIGHT"
         :style="{
-          'width': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
+          'right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
         }"
+        @click="sidebarOpen = !sidebarOpen"
       >
-        <v-btn
-          class="sidebar-toggle"
-          small
-          outlined
-          tile
-          @click="sidebarOpen = !sidebarOpen"
+        <v-icon
+          v-if="sidebarOpen"
+          class="sidebar-toggle-close"
         >
-          <v-icon
-            v-if="sidebarOpen"
-            class="sidebar-toggle-close"
-          >
-            mdi-menu-open
-          </v-icon>
-          <v-icon v-else>
-            mdi-menu-open
-          </v-icon>
-        </v-btn>
-        <v-navigation-drawer
-          width="100%"
-          :value="sidebarOpen"
-          right
-        >
-          <FindReplace
-            :harmonizer-api="harmonizerApi"
-            class="ml-2 mr-2"
-          />
-          <div
-            v-if="selectedHelpDict"
-            class="mx-2"
-          >
-            <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
-              Column Help
-              <v-spacer />
-            </div>
-            <div class="my-2">
-              <span class="font-weight-bold pr-2">Column:</span>
-              <span
-                :title="selectedHelpDict.name"
-                v-html="selectedHelpDict.title"
-              />
-            </div>
-            <div class="my-2">
-              <span class="font-weight-bold pr-2">Description:</span>
-              <span v-html="urlify(selectedHelpDict.description)" />
-            </div>
-            <div class="my-2">
-              <span class="font-weight-bold pr-2">Guidance:</span>
-              <span v-html="urlify(selectedHelpDict.guidance)" />
-            </div>
-            <div
-              v-if="selectedHelpDict.examples"
-              class="my-2"
-            >
-              <span class="font-weight-bold pr-2">Examples:</span>
-              <span v-html="urlify(selectedHelpDict.examples)" />
-            </div>
-            <v-btn
-              color="grey"
-              outlined
-              small
-              block
-              @click="harmonizerApi.launchReference()"
-            >
-              Full {{ activeTemplate.displayName }} Reference
-              <v-icon class="pl-1">
-                mdi-open-in-new
-              </v-icon>
-            </v-btn>
-          </div>
-          <div v-else>
-            <div class="mx-2">
-              <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
-                Column Help
-                <v-spacer />
-              </div>
-              <p class="my-2 text--disabled">
-                Click on a cell or column to view help
-              </p>
-            </div>
-          </div>
-        </v-navigation-drawer>
-      </div>
+          mdi-menu-open
+        </v-icon>
+        <v-icon v-else>
+          mdi-menu-open
+        </v-icon>
+      </v-btn>
+
+      <v-navigation-drawer
+        :width="HELP_SIDEBAR_WIDTH"
+        :value="sidebarOpen"
+        absolute
+        floating
+        right
+      >
+        <HarmonizerSidebar />
+      </v-navigation-drawer>
     </div>
 
     <div class="harmonizer-style-container">
@@ -1119,7 +1045,7 @@ html {
   width: 100%;
   height: 100%;
   flex-grow: 1;
-  overflow: auto;
+  overflow: hidden;
 }
 
 .harmonizer-sidebar {
@@ -1132,8 +1058,9 @@ html {
 
 /* Grid */
 #harmonizer-root {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
 
   .secondary-header-cell:hover {
     cursor: pointer;
@@ -1200,14 +1127,10 @@ html {
 }
 
 .sidebar-toggle {
-  background: white;
   z-index: 200;
   position: absolute;
   top: 0;
-  left: 0;
-  transform: translateX(-100%);
-  border-color: rgb(152, 152, 152);
-  border-right-color: rgba(152, 152, 152, 0.0);
+  right: 0;
 }
 
 .sidebar-toggle-close {
