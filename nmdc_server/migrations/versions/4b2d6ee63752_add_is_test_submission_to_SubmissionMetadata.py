@@ -22,7 +22,10 @@ depends_on: Optional[str] = None
 
 def upgrade():
     op.add_column(
-        "submission_metadata", sa.Column("is_test_submission", sa.Boolean(), nullable=False, server_default=sa.sql.False_())
+        "submission_metadata",
+        sa.Column(
+            "is_test_submission", sa.Boolean(), nullable=False, server_default=sa.sql.False_()
+        ),
     )
     # ### end Alembic commands ###
 
