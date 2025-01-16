@@ -7,7 +7,6 @@ import {
 } from 'lodash';
 import { read, writeFile, utils } from 'xlsx';
 import { api } from '@/data/api';
-import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
 import {
@@ -538,7 +537,6 @@ export default defineComponent({
       jumpTo,
       validate,
       changeTemplate,
-      urlify,
       canEditSampleMetadata,
     };
   },
@@ -885,7 +883,11 @@ export default defineComponent({
         floating
         right
       >
-        <HarmonizerSidebar />
+        <HarmonizerSidebar
+          :column-help="selectedHelpDict"
+          :template="activeTemplate"
+          @template-reference-button-click="harmonizerApi.launchReference()"
+        />
       </v-navigation-drawer>
     </div>
 
@@ -1046,14 +1048,6 @@ html {
   height: 100%;
   flex-grow: 1;
   overflow: hidden;
-}
-
-.harmonizer-sidebar {
-  font-size: 14px;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
 }
 
 /* Grid */
