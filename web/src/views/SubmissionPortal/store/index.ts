@@ -298,7 +298,6 @@ async function generateRecord(isTestSubBool: boolean) {
 async function loadRecord(id: string) {
   reset();
   const val = await api.getRecord(id);
-  console.log(val);
   packageName.value = val.metadata_submission.packageName;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
