@@ -902,6 +902,7 @@ async def get_submission(
             templates=submission.templates,
             study_name=submission.study_name,
             field_notes_metadata=submission.field_notes_metadata,
+            is_test_submission=submission.is_test_submission,
         )
         if submission.locked_by is not None:
             submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
@@ -976,7 +977,7 @@ async def update_submission(
     if (
         submission.status == "in-progress"
         and body_dict.get("status", None) == "Submitted- Pending Review"
-        and submission.isTestSubmission is False
+        and submission.is_test_submission is False
     ):
         create_github_issue(submission, user)
 
@@ -1002,7 +1003,7 @@ async def update_submission(
         if body_dict.get("status", None):
             if (
                 body_dict.get("status", None) == "Submitted- Pending Review"
-                and submission.isTestSubmission is False
+                and submission.is_test_submission is False
             ):
                 submission.status = body_dict["status"]
         db.commit()

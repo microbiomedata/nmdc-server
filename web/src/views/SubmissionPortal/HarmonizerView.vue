@@ -31,7 +31,7 @@ import {
   submissionStatus,
   canEditSampleMetadata,
   isOwner,
-  is_test_submission,
+  isTestSubmission,
 } from './store';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import FindReplace from './Components/FindReplace.vue';
@@ -525,7 +525,7 @@ export default defineComponent({
       schemaLoading,
       importErrorSnackbar,
       notImportedWorksheetNames,
-      is_test_submission,
+      isTestSubmission,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -1032,7 +1032,7 @@ export default defineComponent({
                 activator="parent"
                 width="auto"
               >
-                <v-card v-if="is_test_submission">
+                <v-card v-if="isTestSubmission">
                   <v-card-title>
                     Submit
                   </v-card-title>

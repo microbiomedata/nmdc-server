@@ -1,4 +1,4 @@
-""" Migrator for isTestSubmission on SubmissionMetadata
+""" Migrator for is_test_submission on SubmissionMetadata
 This field added as a change to enable the differentiation between test submissions
 (those done in training/at a conference demo) and real submissions
 
@@ -22,11 +22,11 @@ depends_on: Optional[str] = None
 
 def upgrade():
     op.add_column(
-        "submission_metadata", sa.Column("isTestSubmission", sa.Boolean(), nullable=False, server_default=sa.sql.False_())
+        "submission_metadata", sa.Column("is_test_submission", sa.Boolean(), nullable=False, server_default=sa.sql.False_())
     )
     # ### end Alembic commands ###
 
 
 def downgrade():
-    op.drop_column("submission_metadata", "isTestSubmission")
+    op.drop_column("submission_metadata", "is_test_submission")
     # ### end Alembic commands ###

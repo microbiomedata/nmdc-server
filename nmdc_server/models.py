@@ -915,7 +915,7 @@ class SubmissionMetadata(Base):
     study_name = Column(String, nullable=True)
     templates = Column(JSONB, nullable=True)
     field_notes_metadata = Column(JSONB, nullable=True)
-    isTestSubmission = Column(Boolean, nullable=False, default=False)
+    is_test_submission = Column(Boolean, nullable=False, default=False)
 
     # The client which initially created the submission. A null value indicates it was created by
     # an "unregistered" client. This could be legitimate usage, but it should be monitored.
