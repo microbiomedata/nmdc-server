@@ -973,7 +973,6 @@ async def update_submission(
         )
 
     # Create GitHub issue when metadata is being submitted and not a test submission
-    print(submission.isTestSubmission)
     if (
         submission.status == "in-progress"
         and body_dict.get("status", None) == "Submitted- Pending Review"
