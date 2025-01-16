@@ -885,8 +885,8 @@ export default defineComponent({
       >
         <HarmonizerSidebar
           :column-help="selectedHelpDict"
+          :harmonizer-api="harmonizerApi"
           :template="activeTemplate"
-          @template-reference-button-click="harmonizerApi.launchReference()"
         />
       </v-navigation-drawer>
     </div>

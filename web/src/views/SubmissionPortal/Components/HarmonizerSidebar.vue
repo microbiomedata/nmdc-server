@@ -1,10 +1,15 @@
 <script lang="ts">
 import {
-  defineComponent, ref,
+  defineComponent, PropType, ref,
 } from '@vue/composition-api';
 import { urlify } from '@/data/utils';
+import FindReplace from '@/views/SubmissionPortal/Components/FindReplace.vue';
+import type { HarmonizerApi } from '@/views/SubmissionPortal/harmonizerApi';
 
 export default defineComponent({
+  components: {
+    FindReplace,
+  },
   props: {
     columnHelp: {
       type: Object,
@@ -14,10 +19,11 @@ export default defineComponent({
       type: Object,
       default: null,
     },
+    harmonizerApi: {
+      type: Object as PropType<HarmonizerApi>,
+      required: true,
+    },
   },
-  emits: [
-    'template-reference-button-click',
-  ],
   setup() {
     const tab = ref(0);
 
@@ -39,7 +45,7 @@ export default defineComponent({
         <v-icon>mdi-information-outline</v-icon>
       </v-tab>
       <v-tab>
-        <v-icon>mdi-magnify</v-icon>
+        <v-icon>mdi-text-search</v-icon>
       </v-tab>
       <v-tab>
         <v-icon>mdi-assistant</v-icon>
@@ -89,7 +95,7 @@ export default defineComponent({
             outlined
             small
             block
-            @click="$emit('template-reference-button-click')"
+            @click="harmonizerApi.launchReference()"
           >
             Full {{ template.displayName }} Reference
             <v-icon class="pl-1">
@@ -110,7 +116,10 @@ export default defineComponent({
         </div>
       </v-tab-item>
       <v-tab-item>
-        FIND AND REPLACE
+        <FindReplace
+          :harmonizer-api="harmonizerApi"
+          class="mx-2"
+        />
       </v-tab-item>
       <v-tab-item>
         SUGGESTER

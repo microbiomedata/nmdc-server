@@ -28,8 +28,6 @@ export default defineComponent({
     },
   },
   setup({ harmonizerApi }) {
-    // whether the find/replace dialog is visible
-    const isReplaceVisible: Ref<boolean> = ref(false);
     // search matches, sorted by (col, row)
     const results: Ref<SearchResult[]> = ref([]);
     // search query
@@ -120,7 +118,6 @@ export default defineComponent({
       result,
       results,
       cursor,
-      isReplaceVisible,
       replace,
       replaceOnce,
       replaceAll,
@@ -130,51 +127,34 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-toolbar
-    flat
-    outlined
-    rounded
-  >
-    <v-btn
-      icon
-      @click="isReplaceVisible = !isReplaceVisible"
-    >
-      <v-icon
-        class="toggleUpDown"
-        :class="{ rotate: isReplaceVisible }"
+  <div>
+    <div class="d-flex align-center">
+      <v-form
+        style="width: 100%"
+        @submit.prevent="next"
       >
-        mdi-menu-right
-      </v-icon>
-    </v-btn>
-    <v-form
-      style="width: 100%"
-      @submit.prevent="next"
-    >
-      <v-text-field
-        v-model="query"
-        :prepend-icon="isReplaceVisible ? 'mdi-find-replace' : 'mdi-text-search'"
-        clearable
-        label="Find"
-        :counter="query ? count : undefined"
-        :counter-value="query ? () => (count ? cursor + 1 : 0) : null"
-        dense
-        style="padding-top: 10px"
-      />
-    </v-form>
-    <v-tooltip left>
-      <template #activator="{ on, attrs }">
-        <v-btn
-          icon
-          v-bind="attrs"
-          v-on="on"
-          @click="previous"
-        >
-          <v-icon>mdi-arrow-up-thin</v-icon>
-        </v-btn>
-      </template>
-      <span>Find previous</span>
-    </v-tooltip>
-    <v-tooltip left>
+        <v-text-field
+          v-model="query"
+          clearable
+          label="Find"
+          :counter="query ? count : undefined"
+          :counter-value="query ? () => (count ? cursor + 1 : 0) : null"
+        />
+      </v-form>
+      <v-tooltip left>
+        <template #activator="{ on, attrs }">
+          <v-btn
+            icon
+            v-bind="attrs"
+            v-on="on"
+            @click="previous"
+          >
+            <v-icon>mdi-arrow-up-thin</v-icon>
+          </v-btn>
+        </template>
+        <span>Find previous</span>
+      </v-tooltip>
+      <v-tooltip left>
       <template #activator="{ on, attrs }">
         <v-btn
           icon
@@ -187,17 +167,13 @@ export default defineComponent({
       </template>
       <span>Find next</span>
     </v-tooltip>
-    <template
-      v-if="isReplaceVisible"
-      #extension
-    >
+    </div>
+
+    <div class="d-flex align-center">
       <v-text-field
         v-model="replacement"
-        hide-details
-        class="replacement"
         clearable
         label="Replace"
-        dense
       />
       <v-tooltip left>
         <template #activator="{ on, attrs }">
@@ -213,30 +189,21 @@ export default defineComponent({
         <span>Replace</span>
       </v-tooltip>
       <v-tooltip left>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            icon
-            v-bind="attrs"
-            v-on="on"
-            @click="replaceAll"
-          >
-            <v-icon>mdi-repeat</v-icon>
-          </v-btn>
-        </template>
-        <span>Replace all</span>
-      </v-tooltip>
-    </template>
-  </v-toolbar>
+      <template #activator="{ on, attrs }">
+        <v-btn
+          icon
+          v-bind="attrs"
+          v-on="on"
+          @click="replaceAll"
+        >
+          <v-icon>mdi-repeat</v-icon>
+        </v-btn>
+      </template>
+      <span>Replace all</span>
+    </v-tooltip>
+    </div>
+  </div>
 </template>
 
 <style lang="scss">
-.toggleUpDown {
-  transition: transform 0.1s ease-in-out !important;
-}
-.toggleUpDown.rotate {
-  transform: rotate(90deg);
-}
-.replacement {
-  margin-left: 70px;
-}
 </style>
