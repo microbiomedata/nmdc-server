@@ -180,6 +180,7 @@ export default defineComponent({
         <v-btn
           color="primary"
           class="ml-3"
+          outlined
           @click="createNewSubmission(true)"
         >
           <v-icon>mdi-plus</v-icon>

@@ -49,6 +49,7 @@ const submissionStatus: Record<string, SubmissionStatus> = {
 const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(submissionStatus).includes(str);
 
 const status = ref(submissionStatus.InProgress);
+const is_test_submission = ref(false);
 
 /**
  * Submission record locking information
@@ -256,6 +257,7 @@ function reset() {
   packageName.value = ['soil'];
   sampleData.value = {};
   status.value = submissionStatus.InProgress;
+  is_test_submission.value = false;
 }
 
 async function incrementalSaveRecord(id: string): Promise<number | void> {
@@ -289,12 +291,18 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
 async function generateRecord(isTestSubmission: boolean) {
   reset();
   const record = await api.createRecord(payloadObject.value, isTestSubmission);
+  is_test_submission.value = isTestSubmission;
+  console.log('Printing from generateRecord, is_test then isTest');
+  console.log(is_test_submission.value);
+  console.log(isTestSubmission);
+  console.log(record);
   return record;
 }
 
 async function loadRecord(id: string) {
   reset();
   const val = await api.getRecord(id);
+  console.log(val);
   packageName.value = val.metadata_submission.packageName;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
@@ -304,6 +312,10 @@ async function loadRecord(id: string) {
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
   _permissionLevel = (val.permission_level as permissionLevelValues);
+  is_test_submission.value = val.isTestSubmission;
+  console.log('printing from loadRecord');
+  console.log(val);
+  console.log(val.isTestSubmission);
 
   try {
     const lockResponse = await api.lockSubmission(id);
@@ -361,6 +373,7 @@ export {
   hasChanged,
   tabsValidated,
   status,
+  is_test_submission,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,

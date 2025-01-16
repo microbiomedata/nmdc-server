@@ -31,6 +31,7 @@ import {
   submissionStatus,
   canEditSampleMetadata,
   isOwner,
+  is_test_submission,
 } from './store';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import FindReplace from './Components/FindReplace.vue';
@@ -524,6 +525,7 @@ export default defineComponent({
       schemaLoading,
       importErrorSnackbar,
       notImportedWorksheetNames,
+      is_test_submission,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -1030,13 +1032,32 @@ export default defineComponent({
                 activator="parent"
                 width="auto"
               >
-                <v-card>
+                <v-card v-if="is_test_submission">
+                  <v-card-title>
+                    Submit
+                  </v-card-title>
+                  <v-card-text>
+                    Test submissions will not actually be submitted for NMDC review.
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-btn
+                      color="primary"
+                      class="mr-2"
+                      @click="doSubmit"
+                    >
+                      Yes- Submit
+                    </v-btn>
+                    <v-btn @click="submitDialog = false">
+                      Cancel
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+                <v-card v-else>
                   <v-card-title>
                     Submit
                   </v-card-title>
                   <v-card-text>
                     You are about to submit this study and metadata for NMDC review. Would you like to continue?
-                    Test submissions will not actually be submitted.
                   </v-card-text>
                   <v-card-actions>
                     <v-btn
