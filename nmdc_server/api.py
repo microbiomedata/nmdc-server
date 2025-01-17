@@ -906,6 +906,7 @@ async def get_submission(
             templates=submission.templates,
             study_name=submission.study_name,
             field_notes_metadata=submission.field_notes_metadata,
+            is_test_submission=submission.is_test_submission,
         )
         if submission.locked_by is not None:
             submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
@@ -976,10 +977,11 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # Create GitHub issue when metadata is being submitted
+    # Create GitHub issue when metadata is being submitted and not a test submission
     if (
         submission.status == "in-progress"
         and body_dict.get("status", None) == "Submitted- Pending Review"
+        and submission.is_test_submission is False
     ):
         create_github_issue(submission, user)
 
@@ -1003,7 +1005,11 @@ async def update_submission(
             crud.update_submission_contributor_roles(db, submission, new_permissions)
 
         if body_dict.get("status", None):
-            submission.status = body_dict["status"]
+            if (
+                body_dict.get("status", None) == "Submitted- Pending Review"
+                and submission.is_test_submission is False
+            ):
+                submission.status = body_dict["status"]
         db.commit()
     crud.update_submission_lock(db, submission.id)
     return submission

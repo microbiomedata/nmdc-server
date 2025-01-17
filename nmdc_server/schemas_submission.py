@@ -102,6 +102,7 @@ class SubmissionMetadataSchemaCreate(BaseModel):
     metadata_submission: MetadataSubmissionRecordCreate
     status: Optional[str] = None
     source_client: Optional[str] = None
+    is_test_submission: bool = False
 
 
 class SubmissionMetadataSchemaPatch(BaseModel):
