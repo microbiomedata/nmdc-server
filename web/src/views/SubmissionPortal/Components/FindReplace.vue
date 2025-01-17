@@ -155,18 +155,18 @@ export default defineComponent({
         <span>Find previous</span>
       </v-tooltip>
       <v-tooltip left>
-      <template #activator="{ on, attrs }">
-        <v-btn
-          icon
-          v-bind="attrs"
-          v-on="on"
-          @click="next"
-        >
-          <v-icon>mdi-arrow-down-thin</v-icon>
-        </v-btn>
-      </template>
-      <span>Find next</span>
-    </v-tooltip>
+        <template #activator="{ on, attrs }">
+          <v-btn
+            icon
+            v-bind="attrs"
+            v-on="on"
+            @click="next"
+          >
+            <v-icon>mdi-arrow-down-thin</v-icon>
+          </v-btn>
+        </template>
+        <span>Find next</span>
+      </v-tooltip>
     </div>
 
     <div class="d-flex align-center">
@@ -189,18 +189,18 @@ export default defineComponent({
         <span>Replace</span>
       </v-tooltip>
       <v-tooltip left>
-      <template #activator="{ on, attrs }">
-        <v-btn
-          icon
-          v-bind="attrs"
-          v-on="on"
-          @click="replaceAll"
-        >
-          <v-icon>mdi-repeat</v-icon>
-        </v-btn>
-      </template>
-      <span>Replace all</span>
-    </v-tooltip>
+        <template #activator="{ on, attrs }">
+          <v-btn
+            icon
+            v-bind="attrs"
+            v-on="on"
+            @click="replaceAll"
+          >
+            <v-icon>mdi-repeat</v-icon>
+          </v-btn>
+        </template>
+        <span>Replace all</span>
+      </v-tooltip>
     </div>
   </div>
 </template>
