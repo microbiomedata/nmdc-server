@@ -35,7 +35,29 @@ export default defineComponent({
   },
   emits: ['export-xlsx', 'import-xlsx'],
   setup(props, { emit }) {
-    const tab = ref(0);
+    const tabModel = ref(0);
+    const TABS = [
+      {
+        icon: 'mdi-information-outline',
+        label: 'Column Help',
+      },
+      {
+        icon: 'mdi-text-search',
+        label: 'Find & Replace',
+      },
+      {
+        icon: 'mdi-assistant',
+        label: 'Metadata Suggester',
+      },
+      {
+        icon: 'mdi-swap-vertical',
+        label: 'Import & Export',
+      },
+      {
+        icon: 'mdi-help-circle-outline',
+        label: 'Help',
+      },
+    ];
 
     // TODO: not sure why this can't be an inline arrow function in the template
     const handleImport = (...args: never[]) => {
@@ -43,8 +65,9 @@ export default defineComponent({
     };
 
     return {
+      TABS,
       handleImport,
-      tab,
+      tabModel,
     };
   },
 });
@@ -53,27 +76,29 @@ export default defineComponent({
 <template>
   <div class="harmonizer-sidebar-content">
     <v-tabs
-      v-model="tab"
+      v-model="tabModel"
       grow
     >
-      <v-tab>
-        <v-icon>mdi-information-outline</v-icon>
-      </v-tab>
-      <v-tab>
-        <v-icon>mdi-text-search</v-icon>
-      </v-tab>
-      <v-tab>
-        <v-icon>mdi-assistant</v-icon>
-      </v-tab>
-      <v-tab>
-        <v-icon>mdi-swap-vertical</v-icon>
-      </v-tab>
-      <v-tab>
-        <v-icon>mdi-help-circle-outline</v-icon>
-      </v-tab>
+      <v-tooltip
+        v-for="tab in TABS"
+        :key="tab.label"
+        open-delay="600"
+        top
+        z-index="400"
+      >
+        <template #activator="{ on, attrs }">
+          <v-tab
+            v-bind="attrs"
+            v-on="on"
+          >
+            <v-icon>{{ tab.icon }}</v-icon>
+          </v-tab>
+        </template>
+        <span>{{ tab.label }}</span>
+      </v-tooltip>
     </v-tabs>
 
-    <v-tabs-items v-model="tab">
+    <v-tabs-items v-model="tabModel">
       <v-tab-item class="pa-2">
         <ColumnHelp
           :column-help="columnHelp"
