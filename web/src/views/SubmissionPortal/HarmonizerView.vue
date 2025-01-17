@@ -31,8 +31,6 @@ import {
   canEditSampleMetadata,
   isOwner,
 } from './store';
-import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
-import FindReplace from './Components/FindReplace.vue';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
@@ -99,8 +97,6 @@ const ALWAYS_READ_ONLY_COLUMNS = [
 export default defineComponent({
   components: {
     HarmonizerSidebar,
-    ContactCard,
-    FindReplace,
     SubmissionStepper,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
