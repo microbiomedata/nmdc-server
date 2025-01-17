@@ -1037,18 +1037,14 @@ export default defineComponent({
                     Submit
                   </v-card-title>
                   <v-card-text>
-                    Test submissions will not actually be submitted for NMDC review.
+                    Test submissions cannot be submitted for NMDC review.
                   </v-card-text>
                   <v-card-actions>
                     <v-btn
-                      color="primary"
-                      class="mr-2"
-                      @click="doSubmit"
+                      text
+                      @click="submitDialog = false"
                     >
-                      Yes- Submit
-                    </v-btn>
-                    <v-btn @click="submitDialog = false">
-                      Cancel
+                      Close
                     </v-btn>
                   </v-card-actions>
                 </v-card>
