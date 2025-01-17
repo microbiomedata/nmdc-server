@@ -2,6 +2,12 @@
 import { defineComponent } from '@vue/composition-api';
 
 export default defineComponent({
+  props: {
+    elevation: {
+      type: String,
+      default: '24',
+    },
+  },
   setup() {
     function emailTemplate(value: string) {
       const subjects: { [key: string]: string } = {
@@ -20,15 +26,11 @@ export default defineComponent({
 </script>
 <template>
   <v-card
-    elevation="24"
+    :elevation="elevation"
   >
-    <v-toolbar
-      color="grey lighten-2"
-      dense
-      flat
-    >
+    <v-card-title>
       We are here to help
-    </v-toolbar>
+    </v-card-title>
     <v-list
       subheader
     >
@@ -53,7 +55,7 @@ export default defineComponent({
         </v-btn>
         <v-list-item-content>
           <v-list-item-title
-            class="text-h6 primary--text"
+            class="primary--text"
           >
             Visit our support page
           </v-list-item-title>
@@ -76,7 +78,7 @@ export default defineComponent({
         </v-btn>
         <v-list-item-content>
           <v-list-item-title
-            class="text-h6 blue--text"
+            class="blue--text"
           >
             Send us a message
           </v-list-item-title>
@@ -102,7 +104,7 @@ export default defineComponent({
         </v-btn>
         <v-list-item-content>
           <v-list-item-title
-            class="text-h6 red--text"
+            class="red--text"
           >
             Report an issue
           </v-list-item-title>
@@ -128,7 +130,7 @@ export default defineComponent({
         </v-btn>
         <v-list-item-content>
           <v-list-item-title
-            class="text-h6 grey--text text--darken-2"
+            class="grey--text text--darken-2"
           >
             Request a feature
           </v-list-item-title>

@@ -5,9 +5,11 @@ import {
 import { urlify } from '@/data/utils';
 import FindReplace from '@/views/SubmissionPortal/Components/FindReplace.vue';
 import type { HarmonizerApi } from '@/views/SubmissionPortal/harmonizerApi';
+import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 
 export default defineComponent({
   components: {
+    ContactCard,
     FindReplace,
   },
   props: {
@@ -128,7 +130,9 @@ export default defineComponent({
         IMPORT / EXPORT
       </v-tab-item>
       <v-tab-item>
-        SITE HELP
+        <ContactCard
+          elevation="0"
+        />
       </v-tab-item>
     </v-tabs-items>
   </div>
