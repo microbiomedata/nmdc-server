@@ -404,10 +404,6 @@ export default defineComponent({
       writeFile(workbook, EXPORT_FILENAME, { compression: true });
     }
 
-    function showOpenFileDialog() {
-      document.getElementById('tsv-file-select')?.click();
-    }
-
     function openFile(file: File) {
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -462,9 +458,6 @@ export default defineComponent({
 
         // Load data for active tab into DataHarmonizer
         harmonizerApi.loadData(activeTemplateData.value);
-
-        // Reset the file input so that the same filename can be loaded multiple times
-        (document.getElementById('tsv-file-select') as HTMLInputElement).value = '';
       };
       reader.readAsArrayBuffer(file);
     }
@@ -527,7 +520,6 @@ export default defineComponent({
       doSubmit,
       downloadSamples,
       errorClick,
-      showOpenFileDialog,
       openFile,
       focus,
       jumpTo,
@@ -550,34 +542,6 @@ export default defineComponent({
     />
     <div class="d-flex flex-column px-2">
       <div class="d-flex align-center">
-        <label
-          for="tsv-file-select"
-        >
-          <input
-            id="tsv-file-select"
-            type="file"
-            style="position: fixed; top: -100em"
-            accept=".xls,.xlsx"
-            @change="(evt) => openFile(evt.target.files[0])"
-          >
-          <v-btn
-            label="Choose spreadsheet file..."
-            prepend-inner-icon="mdi-file-table"
-            :prepend-icon="null"
-            outlined
-            dense
-            color="primary"
-            class="mr-2"
-            hide-details
-            :disabled="!canEditSampleMetadata()"
-            @click="showOpenFileDialog"
-          >
-            1. Import XLSX file
-            <v-icon class="pl-2">
-              mdi-file-table
-            </v-icon>
-          </v-btn>
-        </label>
         <v-btn
           v-if="validationErrorGroups.length === 0"
           color="primary"
@@ -585,7 +549,7 @@ export default defineComponent({
           :disabled="!canEditSampleMetadata()"
           @click="validate"
         >
-          2. Validate
+          Validate
           <v-icon class="pl-2">
             mdi-refresh
           </v-icon>
@@ -882,7 +846,10 @@ export default defineComponent({
         <HarmonizerSidebar
           :column-help="selectedHelpDict"
           :harmonizer-api="harmonizerApi"
+          :import-disabled="!canEditSampleMetadata()"
           :template="activeTemplate"
+          @import-xlsx="openFile"
+          @export-xlsx="downloadSamples"
         />
       </v-navigation-drawer>
     </div>
@@ -918,17 +885,6 @@ export default defineComponent({
         </v-chip>
       </div>
       <v-spacer />
-      <v-btn
-        color="primary"
-        class="mr-2"
-        outlined
-        @click="downloadSamples"
-      >
-        <v-icon class="pr-2">
-          mdi-file-table
-        </v-icon>
-        Download XLSX
-      </v-btn>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <div
@@ -947,7 +903,7 @@ export default defineComponent({
                 Submitted
               </span>
               <span v-else>
-                3. Submit
+                Submit
               </span>
               <v-dialog
                 v-model="submitDialog"
