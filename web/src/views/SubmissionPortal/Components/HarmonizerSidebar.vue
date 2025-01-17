@@ -6,9 +6,11 @@ import { urlify } from '@/data/utils';
 import FindReplace from '@/views/SubmissionPortal/Components/FindReplace.vue';
 import type { HarmonizerApi } from '@/views/SubmissionPortal/harmonizerApi';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
+import ImportExportButtons from '@/views/SubmissionPortal/Components/ImportExportButtons.vue';
 
 export default defineComponent({
   components: {
+    ImportExportButtons,
     ContactCard,
     FindReplace,
   },
@@ -33,29 +35,16 @@ export default defineComponent({
   emits: ['export-xlsx', 'import-xlsx'],
   setup(props, { emit }) {
     const tab = ref(0);
-    const xlsxFileInput = ref();
 
-    function showOpenFileDialog() {
-      xlsxFileInput.value.click();
-    }
-
-    function handleFileInputChange(event: Event) {
-      const target = event.target as HTMLInputElement;
-      if (!target || !target.files) {
-        return;
-      }
-      emit('import-xlsx', target.files[0]);
-
-      // Reset the file input so that the same filename can be loaded multiple times
-      target.value = '';
-    }
+    // TODO: not sure why this can't be an inline arrow function in the template
+    const handleImport = (...args: never[]) => {
+      emit('import-xlsx', ...args);
+    };
 
     return {
-      handleFileInputChange,
-      showOpenFileDialog,
+      handleImport,
       tab,
       urlify,
-      xlsxFileInput,
     };
   },
 });
@@ -151,41 +140,11 @@ export default defineComponent({
         SUGGESTER
       </v-tab-item>
       <v-tab-item class="pa-2">
-        <v-btn
-          class="mb-8"
-          color="primary"
-          block
-          outlined
-          @click="$emit('export-xlsx')"
-        >
-          <v-icon class="pr-2">
-            mdi-file-download
-          </v-icon>
-          Export to XLSX
-        </v-btn>
-        <label
-          for="tsv-file-select"
-        >
-          <input
-            ref="xlsxFileInput"
-            type="file"
-            style="position: fixed; top: -100em"
-            accept=".xls,.xlsx"
-            @change="handleFileInputChange"
-          >
-          <v-btn
-            color="primary"
-            block
-            outlined
-            :disabled="importDisabled"
-            @click="showOpenFileDialog"
-          >
-            <v-icon class="pr-2">
-              mdi-file-upload
-            </v-icon>
-            Import from XLSX
-          </v-btn>
-        </label>
+        <ImportExportButtons
+          :import-disabled="importDisabled"
+          @export="$emit('export-xlsx')"
+          @import="handleImport"
+        />
       </v-tab-item>
       <v-tab-item>
         <ContactCard
