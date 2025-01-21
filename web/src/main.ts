@@ -14,7 +14,7 @@ Vue.use(AsyncComputed);
 /**
  * Enable instrumentation in production
  */
-if (process.env.NODE_ENV === 'production') {
+if (import.meta.env.NODE_ENV === 'production') {
   const gaId = 'UA-68089198-4';
   Vue.use(VueGtag, {
     config: { id: gaId },
