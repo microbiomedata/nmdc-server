@@ -1238,6 +1238,7 @@ async def suggest_metadata(
                     row=item.row,
                     slot=slot,
                     value=value,
+                    current_value=item.data.get(slot, None),
                 )
             )
     return response

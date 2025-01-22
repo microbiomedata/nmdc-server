@@ -30,7 +30,9 @@ import {
   submissionStatus,
   canEditSampleMetadata,
   isOwner,
+  addMetadataSuggestions,
 } from './store';
+import { getMetadataSuggestions } from '@/views/SubmissionPortal/store/api';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
@@ -177,13 +179,25 @@ export default defineComponent({
     const saveRecordRequest = useRequest();
     const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
 
-    const onDataChange = async () => {
+    let changeBatch: any[] = [];
+    let changeTimer: ReturnType<typeof setTimeout>;
+    const onDataChange = async (changes: any[]) => {
+      changeBatch.push(...changes);
+      clearTimeout(changeTimer);
+      changeTimer = setTimeout(async () => {
+        const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
+        const suggestions = await getMetadataSuggestions(changedRowData);
+        addMetadataSuggestions(suggestions);
+        changeBatch = [];
+      }, 3000);
+
       hasChanged.value += 1;
       const data = harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       saveRecord(); // This is a background save that we intentionally don't wait for
       tabsValidated.value[activeTemplateKey.value] = false;
     };
+
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
     onMounted(async () => {
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([

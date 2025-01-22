@@ -7,9 +7,11 @@ import type { HarmonizerApi } from '@/views/SubmissionPortal/harmonizerApi';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import ImportExportButtons from '@/views/SubmissionPortal/Components/ImportExportButtons.vue';
 import ColumnHelp from '@/views/SubmissionPortal/Components/ColumnHelp.vue';
+import MetadataSuggester from '@/views/SubmissionPortal/Components/MetadataSuggester.vue';
 
 export default defineComponent({
   components: {
+    MetadataSuggester,
     ColumnHelp,
     ImportExportButtons,
     ContactCard,
@@ -98,6 +100,8 @@ export default defineComponent({
       </v-tooltip>
     </v-tabs>
 
+    <v-divider />
+
     <v-tabs-items v-model="tabModel">
       <v-tab-item class="pa-2">
         <ColumnHelp
@@ -111,8 +115,8 @@ export default defineComponent({
           :harmonizer-api="harmonizerApi"
         />
       </v-tab-item>
-      <v-tab-item class="pa-2">
-        SUGGESTER
+      <v-tab-item>
+        <MetadataSuggester />
       </v-tab-item>
       <v-tab-item class="pa-2">
         <ImportExportButtons

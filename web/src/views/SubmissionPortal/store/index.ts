@@ -5,7 +5,7 @@ import CompositionApi, {
 import { clone, forEach } from 'lodash';
 import axios from 'axios';
 import * as api from './api';
-import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
+import { getVariants, HARMONIZER_TEMPLATES, MetadataSuggestion } from '../harmonizerApi';
 import { User } from '@/data/api';
 
 // TODO: Remove in version 3;
@@ -192,6 +192,7 @@ const templateChoiceDisabled = computed(() => {
   }
   return false;
 });
+const metadataSuggestions = ref([] as MetadataSuggestion[]);
 
 const tabsValidated = ref({} as Record<string, boolean>);
 watch(templateList, () => {
@@ -333,6 +334,19 @@ function mergeSampleData(key: string | undefined, data: any[]) {
   };
 }
 
+function addMetadataSuggestions(suggestions: MetadataSuggestion[]) {
+  suggestions.forEach((suggestion) => {
+    const existingSuggestionIndex = metadataSuggestions.value.findIndex(
+      (s) => s.row === suggestion.row && s.slot === suggestion.slot,
+    );
+    if (existingSuggestionIndex < 0) {
+      metadataSuggestions.value.push(suggestion);
+    } else {
+      metadataSuggestions.value.splice(existingSuggestionIndex, 1, suggestion);
+    }
+  });
+}
+
 export {
   SubmissionStatus,
   submissionStatus,
@@ -361,6 +375,7 @@ export {
   hasChanged,
   tabsValidated,
   status,
+  metadataSuggestions,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,
@@ -372,4 +387,5 @@ export {
   isOwner,
   canEditSampleMetadata,
   canEditSubmissionMetadata,
+  addMetadataSuggestions,
 };

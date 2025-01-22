@@ -182,6 +182,19 @@ interface CellData {
   text: string,
 }
 
+export interface MetadataSuggestionRequest {
+  row: number,
+  data: Record<string, string>,
+}
+
+export interface MetadataSuggestion {
+  type: 'add' | 'replace'
+  row: number
+  slot: string
+  value: string
+  current_value?: string
+}
+
 export class HarmonizerApi {
   schemaSectionNames: Ref<Record<string, string>>;
 
@@ -199,11 +212,14 @@ export class HarmonizerApi {
 
   schema: any;
 
+  slotNames: string[];
+
   constructor() {
     this.schemaSectionNames = ref({});
     this.schemaSectionColumns = ref({});
     this.ready = ref(false);
     this.selectedColumn = ref('');
+    this.slotNames = [];
   }
 
   async init(r: HTMLElement, schema: any, templateName: string | undefined, goldEcosystemTree: any) {
@@ -343,6 +359,7 @@ export class HarmonizerApi {
       width: '100%',
     });
     this.jumpToRowCol(0, 0);
+    this.slotNames = this.dh.getFields().map((f: any) => f.name);
   }
 
   refreshState() {
@@ -412,6 +429,23 @@ export class HarmonizerApi {
     this.dh.hot.setDataAtCell(data.map((d) => [d.row, d.col, d.text]));
   }
 
+  getDataByRows(rows: number[]): MetadataSuggestionRequest[] {
+    const rowData: MetadataSuggestionRequest[] = [];
+    rows.forEach((row) => {
+      if (rowData.find((r) => r.row === row)) {
+        return;
+      }
+      const currentRowDataArray = this.dh.hot.getDataAtRow(row);
+      const currentRowData = Object.fromEntries(
+        currentRowDataArray
+          .map((value: string, index: number) => [this.slotNames[index], value])
+          .filter(([, value]: [string, string]) => value != null && value !== ''),
+      );
+      rowData.push({ row, data: currentRowData });
+    });
+    return rowData;
+  }
+
   exportJson() {
     return this.dh.getDataObjects(false);
   }
@@ -460,7 +494,7 @@ export class HarmonizerApi {
       if (source === 'loadData') {
         return;
       }
-      callback();
+      callback(changes, source);
     });
   }
 

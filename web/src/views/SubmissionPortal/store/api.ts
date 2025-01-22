@@ -1,6 +1,6 @@
 import { AxiosResponse } from 'axios';
 import { client, SearchParams, User } from '@/data/api';
-import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
+import { HARMONIZER_TEMPLATES, MetadataSuggestion, MetadataSuggestionRequest } from '../harmonizerApi';
 
 interface NmdcAddress {
   name: string;
@@ -116,6 +116,15 @@ async function deleteSubmission(id: string) {
   return resp.data;
 }
 
+async function getMetadataSuggestions(data: MetadataSuggestionRequest[]) {
+  const resp = await client.post<
+    MetadataSuggestion[],
+    AxiosResponse<MetadataSuggestion[]>,
+    MetadataSuggestionRequest[]
+  >('metadata_submission/suggest', data);
+  return resp.data;
+}
+
 export {
   NmdcAddress,
   addressToString,
@@ -128,4 +137,5 @@ export {
   lockSubmission,
   unlockSubmission,
   deleteSubmission,
+  getMetadataSuggestions,
 };
