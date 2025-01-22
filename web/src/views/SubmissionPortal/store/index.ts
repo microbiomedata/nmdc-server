@@ -194,6 +194,13 @@ const templateChoiceDisabled = computed(() => {
 });
 const metadataSuggestions = ref([] as MetadataSuggestion[]);
 
+enum SuggestionsMode {
+  LIVE = 'Live',
+  ON_DEMAND = 'On Demand',
+  OFF = 'Off',
+}
+const suggestionMode = ref(SuggestionsMode.LIVE);
+
 const tabsValidated = ref({} as Record<string, boolean>);
 watch(templateList, () => {
   const newTabsValidated = {} as Record<string, boolean>;
@@ -352,6 +359,7 @@ export {
   submissionStatus,
   BiosafetyLevels,
   AwardTypes,
+  SuggestionsMode,
   permissionTitle,
   permissionTitleToDbValueMap,
   permissionLevelValues,
@@ -376,6 +384,7 @@ export {
   tabsValidated,
   status,
   metadataSuggestions,
+  suggestionMode,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,

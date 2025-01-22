@@ -1,13 +1,17 @@
 <script lang="ts">
 import { computed, defineComponent } from '@vue/composition-api';
 import { groupBy } from 'lodash';
-import { metadataSuggestions } from '@/views/SubmissionPortal/store';
+import { metadataSuggestions, suggestionMode, SuggestionsMode } from '@/views/SubmissionPortal/store';
+
+const suggestionModeOptions = Object.values(SuggestionsMode);
 
 export default defineComponent({
   setup() {
     const suggestionsByRow = computed(() => groupBy(metadataSuggestions.value, 'row'));
 
     return {
+      suggestionModeOptions,
+      suggestionMode,
       suggestionsByRow,
     };
   },
@@ -43,9 +47,11 @@ export default defineComponent({
       <v-row dense>
         <v-col cols="6">
           <v-select
-            :items="['On Demand', 'Live', 'Off']"
+            v-model="suggestionMode"
+            :items="suggestionModeOptions"
             dense
             hide-details
+            label="Suggestion Mode"
             outlined
           />
         </v-col>

@@ -31,6 +31,8 @@ import {
   canEditSampleMetadata,
   isOwner,
   addMetadataSuggestions,
+  SuggestionsMode,
+  suggestionMode,
 } from './store';
 import { getMetadataSuggestions } from '@/views/SubmissionPortal/store/api';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
@@ -181,15 +183,25 @@ export default defineComponent({
 
     let changeBatch: any[] = [];
     let changeTimer: ReturnType<typeof setTimeout>;
-    const onDataChange = async (changes: any[]) => {
-      changeBatch.push(...changes);
-      clearTimeout(changeTimer);
-      changeTimer = setTimeout(async () => {
-        const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-        const suggestions = await getMetadataSuggestions(changedRowData);
-        addMetadataSuggestions(suggestions);
+    watch(suggestionMode, () => {
+      // If live suggestions are disabled, clear the queue and cancel the timer
+      if (suggestionMode.value !== SuggestionsMode.LIVE) {
         changeBatch = [];
-      }, 3000);
+        clearTimeout(changeTimer);
+      }
+    });
+
+    const onDataChange = async (changes: any[]) => {
+      if (suggestionMode.value === SuggestionsMode.LIVE) {
+        changeBatch.push(...changes);
+        clearTimeout(changeTimer);
+        changeTimer = setTimeout(async () => {
+          const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
+          const suggestions = await getMetadataSuggestions(changedRowData);
+          addMetadataSuggestions(suggestions);
+          changeBatch = [];
+        }, 3000);
+      }
 
       hasChanged.value += 1;
       const data = harmonizerApi.exportJson();
