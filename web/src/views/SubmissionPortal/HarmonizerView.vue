@@ -6,7 +6,7 @@ import {
   clamp, flattenDeep, has, sum,
 } from 'lodash';
 import { read, writeFile, utils } from 'xlsx';
-import { api } from '@/data/api';
+import { api } from '@/data/api.ts';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
@@ -1088,7 +1088,7 @@ export default defineComponent({
 <style lang="scss">
 // Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
 // cannot be nested inside .harmonizer-style-container or else the measurements will be off.
-@import '~data-harmonizer/lib/dist/es/index';
+@import '/node_modules/data-harmonizer/lib/dist/es/index.css';
 
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples
@@ -1114,16 +1114,16 @@ html {
     There's also some kind of performance bottleneck with "Force Reflow" when you include the whole
     stylesheet, so I brought in the minimum modules for things not to break.
   */
-  @import '~bootstrap/scss/functions';
-  @import '~bootstrap/scss/variables';
-  @import '~bootstrap/scss/mixins';
-  @import "~bootstrap/scss/reboot";
-  @import '~bootstrap/scss/type';
-  @import '~bootstrap/scss/modal';
-  @import '~bootstrap/scss/buttons';
-  @import '~bootstrap/scss/forms';
-  @import '~bootstrap/scss/input-group';
-  @import '~bootstrap/scss/utilities';
+  @import '/node_modules/bootstrap/scss/_functions.scss';
+  @import '/node_modules/bootstrap/scss/_variables.scss';
+  @import '/node_modules/bootstrap/scss/_mixins.scss';
+  @import "/node_modules/bootstrap/scss/_reboot.scss";
+  @import '/node_modules/bootstrap/scss/_type.scss';
+  @import '/node_modules/bootstrap/scss/_modal.scss';
+  @import '/node_modules/bootstrap/scss/_buttons.scss';
+  @import '/node_modules/bootstrap/scss/_forms.scss';
+  @import '/node_modules/bootstrap/scss/_input-group.scss';
+  @import '/node_modules/bootstrap/scss/_utilities.scss';
 }
 
 .handsontable.listbox td {
