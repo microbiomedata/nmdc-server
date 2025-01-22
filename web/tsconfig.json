@@ -1,16 +1,20 @@
 {
   "compilerOptions": {
-    "target": "es2018",
-    "module": "esnext",
+    "types": [
+      "vite/client",
+      "@modyfi/vite-plugin-yaml/modules"
+    ],
+    "target": "ESNext",
+    "module": "ESNext",
+    "isolatedModules": true,
     "strict": true,
-    "jsx": "preserve",
     "importHelpers": true,
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
+    "moduleResolution": "bundler",
     "allowJs": true,
-    "outDir": "./dist",
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "outDir": "./dist",
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
@@ -31,8 +35,12 @@
     "src/**/*.vue",
     "tests/**/*.ts",
     "tests/**/*.tsx",
+    "*.d.ts",
+    "./vite.config.mjs"
+
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "dist",
   ]
 }
