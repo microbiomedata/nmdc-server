@@ -3,7 +3,7 @@ import {
   computed, defineComponent, PropType, ref, getCurrentInstance,
 } from 'vue';
 // @ts-ignore
-import { GChart } from 'vue-google-charts';
+import { GChart } from 'vue-google-charts/legacy';
 import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
 import { FacetSummaryResponse } from '@/data/api';

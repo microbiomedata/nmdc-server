@@ -41,7 +41,7 @@
     "vite-plugin-vue2": "^2.0.3",
     "vue": "^2.7.0",
     "vue-async-computed": "^3.9.0",
-    "vue-google-charts": "^0.3.3",
+    "vue-google-charts": "^0.4",
     "vue-gtag": "^1.16.1",
     "vue-router": "^3.5.3",
     "vue2-leaflet": "^2.7.1",
@@ -75,6 +75,7 @@
     "sass": "^1.83.1",
     "sass-loader": "^16.0.4",
     "typescript": "^4.5.3",
+    "unplugin-vue-components": "^28.0.0",
     "vue-template-compiler": "^2.7.16"
   },
   "browserslist": [
