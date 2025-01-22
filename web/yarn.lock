@@ -3679,11 +3679,6 @@ neo-async@^2.6.2:
   resolved "https://registry.yarnpkg.com/neo-async/-/neo-async-2.6.2.tgz#b4aafb93e3aeb2d8174ca53cf163ab7d7308305f"
   integrity sha512-Yd3UES5mWCSqR+qNT93S3UoYUkqAZ9lLg8a7g9rimsWmYGK8cVToA4/sF3RrshdyV3sAGMXVUmpMYOw+dLpOuw==
 
-nice-try@^1.0.4:
-  version "1.0.5"
-  resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
-  integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
-
 "nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v11.3.0":
   version "0.0.0"
   resolved "https://github.com/microbiomedata/nmdc-schema#bdf58f09d47c72dd0a7fa2b3c2ab030aa5965cd4"
@@ -4687,7 +4682,7 @@ vue-eslint-parser@^9.0.1:
     lodash "^4.17.21"
     semver "^7.3.6"
 
-vue-google-charts@0.4:
+vue-google-charts@^0.4:
   version "0.4.0"
   resolved "https://registry.yarnpkg.com/vue-google-charts/-/vue-google-charts-0.4.0.tgz#28d1fba11dd3555d5a56d6843842833e482663c0"
   integrity sha512-BwvMRgSlZH0pSA37UdkJ1Fe6qaHAS/f+ZYpZ4ls8RdP/Nejm+VVjpitjUeLT26GkyrLWkJhRxuRAHAE3rVZoCg==
