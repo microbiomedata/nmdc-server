@@ -13,10 +13,10 @@ import {
   studyForm,
   studyFormValid,
   permissionTitleToDbValueMap,
-  permissionTitle,
   isOwner,
   canEditSubmissionMetadata,
 } from '../store';
+import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
@@ -88,7 +88,7 @@ export default defineComponent({
     Object.keys(permissionTitleToDbValueMap).forEach((title) => {
       permissionLevelChoices.value.push({
         title,
-        value: permissionTitleToDbValueMap[title as permissionTitle],
+        value: permissionTitleToDbValueMap[title as PermissionTitle],
       });
     });
 

@@ -9,14 +9,7 @@ import { read, writeFile, utils } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
 
-import {
-  HarmonizerApi,
-  HARMONIZER_TEMPLATES,
-  EMSL,
-  JGI_MG,
-  JGT_MT,
-  JGI_MG_LR,
-} from './harmonizerApi';
+import { HarmonizerApi } from './harmonizerApi';
 import {
   packageName,
   sampleData,
@@ -31,9 +24,16 @@ import {
   canEditSampleMetadata,
   isOwner,
   addMetadataSuggestions,
-  SuggestionsMode,
   suggestionMode,
 } from './store';
+import {
+  HARMONIZER_TEMPLATES,
+  EMSL,
+  JGI_MG,
+  JGT_MT,
+  JGI_MG_LR,
+  SuggestionsMode,
+} from '@/views/SubmissionPortal/types';
 import { getMetadataSuggestions } from '@/views/SubmissionPortal/store/api';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';

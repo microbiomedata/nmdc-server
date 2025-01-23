@@ -3,6 +3,14 @@ import {
 } from '@vue/composition-api';
 import { debounce } from 'lodash';
 import { DataHarmonizer, Footer } from 'data-harmonizer';
+import {
+  HARMONIZER_TEMPLATES,
+  EMSL,
+  JGI_MG,
+  JGI_MG_LR,
+  JGT_MT,
+  MetadataSuggestionRequest,
+} from '@/views/SubmissionPortal/types';
 
 // a simple data structure to define the relationships between the GOLD ecosystem fields
 const GOLD_FIELDS = {
@@ -28,10 +36,6 @@ const GOLD_FIELDS = {
   },
 };
 
-export const EMSL = 'emsl';
-export const JGI_MG = 'jgi_mg';
-export const JGI_MG_LR = 'jgi_mg_lr';
-export const JGT_MT = 'jgi_mt';
 export function getVariants(checkBoxes: string[], dataGenerated: boolean | undefined, base: string[]): string[] {
   const templates = new Set(base);
   if (dataGenerated) {
@@ -52,147 +56,10 @@ export function getVariants(checkBoxes: string[], dataGenerated: boolean | undef
   return Array.from(templates);
 }
 
-/**
- * A manifest of the options available in DataHarmonizer
- */
-interface HarmonizerTemplateInfo {
-  displayName: string,
-  schemaClass?: string,
-  sampleDataSlot?: string,
-  status: 'published' | 'mixin' | 'disabled',
-  // This value comes from annotations in the schema. It will be populated once the schema is loaded.
-  excelWorksheetName?: string,
-}
-export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
-  air: {
-    displayName: 'air',
-    schemaClass: 'AirInterface',
-    sampleDataSlot: 'air_data',
-    status: 'published',
-  },
-  'built environment': {
-    displayName: 'built environment',
-    schemaClass: 'BuiltEnvInterface',
-    sampleDataSlot: 'built_env_data',
-    status: 'published',
-  },
-  'host-associated': {
-    displayName: 'host-associated',
-    schemaClass: 'HostAssociatedInterface',
-    sampleDataSlot: 'host_associated_data',
-    status: 'published',
-  },
-  'human-associated': {
-    displayName: 'human-associated',
-    status: 'disabled',
-  },
-  'human-gut': {
-    displayName: 'human - gut',
-    status: 'disabled',
-  },
-  'human-oral': {
-    displayName: 'human - oral',
-    status: 'disabled',
-  },
-  'human-skin': {
-    displayName: 'human - skin',
-    status: 'disabled',
-  },
-  'human-vaginal': {
-    displayName: 'human - vaginal',
-    status: 'disabled',
-  },
-  'hydrocarbon resources-cores': {
-    displayName: 'hydrocarbon resources - cores',
-    schemaClass: 'HcrCoresInterface',
-    sampleDataSlot: 'hcr_cores_data',
-    status: 'published',
-  },
-  'hydrocarbon resources-fluids_swabs': {
-    displayName: 'hydrocarbon resources - fluids swabs',
-    schemaClass: 'HcrFluidsSwabsInterface',
-    sampleDataSlot: 'hcr_fluids_swabs_data',
-    status: 'published',
-  },
-  'microbial mat_biofilm': {
-    displayName: 'microbial mat_biofilm',
-    schemaClass: 'BiofilmInterface',
-    sampleDataSlot: 'biofilm_data',
-    status: 'published',
-  },
-  'miscellaneous natural or artificial environment': {
-    displayName: 'miscellaneous natural or artificial environment',
-    schemaClass: 'MiscEnvsInterface',
-    sampleDataSlot: 'misc_envs_data',
-    status: 'published',
-  },
-  'plant-associated': {
-    displayName: 'plant-associated',
-    schemaClass: 'PlantAssociatedInterface',
-    sampleDataSlot: 'plant_associated_data',
-    status: 'published',
-  },
-  sediment: {
-    displayName: 'sediment',
-    schemaClass: 'SedimentInterface',
-    sampleDataSlot: 'sediment_data',
-    status: 'published',
-  },
-  soil: {
-    displayName: 'soil',
-    schemaClass: 'SoilInterface',
-    sampleDataSlot: 'soil_data',
-    status: 'published',
-  },
-  water: {
-    displayName: 'water',
-    schemaClass: 'WaterInterface',
-    sampleDataSlot: 'water_data',
-    status: 'published',
-  },
-  [EMSL]: {
-    displayName: 'EMSL',
-    schemaClass: 'EmslInterface',
-    sampleDataSlot: 'emsl_data',
-    status: 'mixin',
-  },
-  [JGI_MG]: {
-    displayName: 'JGI MG',
-    schemaClass: 'JgiMgInterface',
-    sampleDataSlot: 'jgi_mg_data',
-    status: 'mixin',
-  },
-  [JGI_MG_LR]: {
-    displayName: 'JGI MG (Long Read)',
-    schemaClass: 'JgiMgLrInterface',
-    sampleDataSlot: 'jgi_mg_lr_data',
-    status: 'mixin',
-  },
-  [JGT_MT]: {
-    displayName: 'JGI MT',
-    schemaClass: 'JgiMtInterface',
-    sampleDataSlot: 'jgi_mt_data',
-    status: 'mixin',
-  },
-};
-
 interface CellData {
   row: number,
   col: number,
   text: string,
-}
-
-export interface MetadataSuggestionRequest {
-  row: number,
-  data: Record<string, string>,
-}
-
-export interface MetadataSuggestion {
-  type: 'add' | 'replace'
-  row: number
-  slot: string
-  value: string
-  current_value?: string
 }
 
 export class HarmonizerApi {

@@ -1,7 +1,11 @@
 <script lang="ts">
 import { computed, defineComponent } from '@vue/composition-api';
 import { groupBy } from 'lodash';
-import { metadataSuggestions, suggestionMode, SuggestionsMode } from '@/views/SubmissionPortal/store';
+import {
+  metadataSuggestions,
+  suggestionMode,
+} from '@/views/SubmissionPortal/store';
+import { SuggestionsMode } from '@/views/SubmissionPortal/types';
 
 const suggestionModeOptions = Object.values(SuggestionsMode);
 

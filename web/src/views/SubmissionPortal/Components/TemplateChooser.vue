@@ -1,6 +1,5 @@
 <script lang="ts">
 import { defineComponent, computed } from '@vue/composition-api';
-import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import {
   templateChoiceDisabled,
   templateList,
@@ -9,6 +8,7 @@ import {
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
+import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 
 export default defineComponent({
   components: { SubmissionDocsLink, SubmissionPermissionBanner },
