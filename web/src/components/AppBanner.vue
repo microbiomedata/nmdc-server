@@ -21,7 +21,7 @@ export default defineComponent({
     class="ma-4"
   >
     <p
-      class="title"
+      class="text-h6"
     >
       {{ title || '' }}
     </p>
