@@ -25,6 +25,9 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:vue/recommended',
+    'plugin:vuetify/recommended',
+    'plugin:import/typescript',
+    '@vue/eslint-config-typescript',
   ],
   rules: {
     'max-len': 'off',

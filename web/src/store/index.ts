@@ -1,5 +1,5 @@
 import Vue, {
-  computed, ComputedRef, reactive, toRefs, watchEffect,
+  computed, ComputedRef, reactive, toRefs, watchEffect, set,
 } from 'vue';
 import { noop, uniqWith } from 'lodash';
 import VueRouter from 'vue-router';
@@ -146,7 +146,7 @@ function makeNodeMap(node: EnvoNode) {
   } else {
     node.children?.forEach(makeNodeMap);
     if (node.children?.length === 1) {
-      Vue.set(node, 'isExpanded', true);
+      set(node, 'isExpanded', true);
     }
   }
 }

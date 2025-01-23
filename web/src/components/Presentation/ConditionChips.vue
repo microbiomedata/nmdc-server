@@ -1,6 +1,6 @@
 <script>
 import moment from 'moment';
-import Vue from 'vue';
+import { set } from 'vue';
 import { groupBy } from 'lodash';
 import { opMap } from '@/data/api';
 import { fieldDisplayName } from '@/util';
@@ -68,7 +68,7 @@ export default Vue.extend({
       return val;
     },
     toggleMenu(category, value) {
-      Vue.set(this.menuState, category, value);
+      set(this.menuState, category, value);
     },
   },
 });

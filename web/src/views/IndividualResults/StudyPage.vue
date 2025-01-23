@@ -264,7 +264,7 @@ export default defineComponent({
             />
           </v-container>
           <v-col offset="1">
-            <div class="display-1">
+            <div class="text-h4">
               NMDC Details
             </div>
             <v-list>
@@ -283,7 +283,7 @@ export default defineComponent({
                   (item.relevant_protocols && item.relevant_protocols.length > 0) ||
                   item.principal_investigator_websites.length > 0"
             >
-              <div class="display-1">
+              <div class="text-h4">
                 Additional Resources
               </div>
               <v-list
@@ -482,7 +482,7 @@ export default defineComponent({
             v-if="item.part_of && item.part_of.length > 0"
             flat
           >
-            <v-card-title class="display-1">
+            <v-card-title class="text-h4">
               Part of:
             </v-card-title>
             <v-list>
@@ -506,7 +506,7 @@ export default defineComponent({
             v-if="item.children && item.children.length > 0"
             flat
           >
-            <v-card-title class="display-1">
+            <v-card-title class="text-h4">
               Associated Studies:
             </v-card-title>
             <v-list>

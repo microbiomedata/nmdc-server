@@ -35,12 +35,12 @@ export default defineComponent({
         </v-btn>
       </v-col>
       <v-col class="grow">
-        <div class="headline">
+        <div class="text-h5">
           {{ item.annotations.title || item.name }}
         </div>
         <div
           v-if="item[subtitleKey]"
-          class="subtitle-1"
+          class="text-subtitle-1"
         >
           <span class="font-weight-bold pr-1">{{ fieldDisplayName(subtitleKey) }}</span>
           <span v-html="urlify(item[subtitleKey])" />
