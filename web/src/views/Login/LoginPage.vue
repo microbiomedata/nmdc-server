@@ -1,6 +1,6 @@
 <script lang="ts">
 
-import { defineComponent, onMounted, ref } from '@vue/composition-api';
+import { defineComponent, onMounted, ref } from 'vue';
 import { useRouter } from '@/use/useRouter';
 import { api } from '@/data/api';
 import { init } from '@/store';

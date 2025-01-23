@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent } from '@vue/composition-api';
+import { computed, defineComponent } from 'vue';
 import { stateRefs } from '@/store';
 
 export default defineComponent({
@@ -21,7 +21,7 @@ export default defineComponent({
     class="ma-4"
   >
     <p
-      class="title"
+      class="text-h6"
     >
       {{ title || '' }}
     </p>

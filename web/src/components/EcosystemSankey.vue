@@ -13,7 +13,7 @@
 
 <script>
 import Vue from 'vue';
-import { GChart } from 'vue-google-charts';
+import { GChart } from 'vue-google-charts/legacy';
 
 import colors from '@/colors';
 import { api } from '@/data/api';

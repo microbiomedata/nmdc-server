@@ -1,15 +1,18 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
-} from '@vue/composition-api';
+  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, getCurrentInstance,
+} from 'vue';
 import {
   clamp, flattenDeep, has, sum,
 } from 'lodash';
 import { read, writeFile, utils } from 'xlsx';
-import { api } from '@/data/api';
+import { api } from '@/data/api.ts';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
+import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
+import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
+import { stateRefs } from '@/store';
 import {
   HarmonizerApi,
   HARMONIZER_TEMPLATES,
@@ -33,13 +36,10 @@ import {
   isOwner,
   isTestSubmission,
 } from './store';
-import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import FindReplace from './Components/FindReplace.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
-import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
-import { stateRefs } from '@/store';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -105,7 +105,9 @@ export default defineComponent({
     SubmissionPermissionBanner,
   },
 
-  setup(_, { root }) {
+  setup() {
+    const root = getCurrentInstance();
+
     const { user } = stateRefs;
 
     const harmonizerElement = ref();
@@ -178,7 +180,7 @@ export default defineComponent({
     ));
 
     const saveRecordRequest = useRequest();
-    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
+    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root?.proxy.$route.params.id as string));
 
     const onDataChange = async () => {
       hasChanged.value += 1;
@@ -290,7 +292,7 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id, submissionStatus.SubmittedPendingReview);
+      await submit(root?.proxy.$route.params.id as string, submissionStatus.SubmittedPendingReview);
       submitDialog.value = false;
     });
 
@@ -1086,7 +1088,7 @@ export default defineComponent({
 <style lang="scss">
 // Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
 // cannot be nested inside .harmonizer-style-container or else the measurements will be off.
-@import '~data-harmonizer/lib/dist/es/index';
+@import '/node_modules/data-harmonizer/lib/dist/es/index.css';
 
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples
@@ -1112,16 +1114,16 @@ html {
     There's also some kind of performance bottleneck with "Force Reflow" when you include the whole
     stylesheet, so I brought in the minimum modules for things not to break.
   */
-  @import '~bootstrap/scss/functions';
-  @import '~bootstrap/scss/variables';
-  @import '~bootstrap/scss/mixins';
-  @import "~bootstrap/scss/reboot";
-  @import '~bootstrap/scss/type';
-  @import '~bootstrap/scss/modal';
-  @import '~bootstrap/scss/buttons';
-  @import '~bootstrap/scss/forms';
-  @import '~bootstrap/scss/input-group';
-  @import '~bootstrap/scss/utilities';
+  @import '/node_modules/bootstrap/scss/_functions.scss';
+  @import '/node_modules/bootstrap/scss/_variables.scss';
+  @import '/node_modules/bootstrap/scss/_mixins.scss';
+  @import "/node_modules/bootstrap/scss/_reboot.scss";
+  @import '/node_modules/bootstrap/scss/_type.scss';
+  @import '/node_modules/bootstrap/scss/_modal.scss';
+  @import '/node_modules/bootstrap/scss/_buttons.scss';
+  @import '/node_modules/bootstrap/scss/_forms.scss';
+  @import '/node_modules/bootstrap/scss/_input-group.scss';
+  @import '/node_modules/bootstrap/scss/_utilities.scss';
 }
 
 .handsontable.listbox td {

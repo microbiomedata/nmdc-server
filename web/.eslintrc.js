@@ -1,9 +1,20 @@
 module.exports = {
+  settings: {
+    'import/resolver': {
+      alias: {
+        map: [
+          ['@', './src'],
+        ],
+        extensions: ['.ts', '.js', '.jsx', '.json', '.vue', '.yaml'],
+      },
+    },
+  },
   root: true,
   env: {
     // this section will be used to determine which APIs are available to us
     // (i.e are we running in a browser environment or a node.js env)
     node: true,
+    es2022: true,
   },
   parser: 'vue-eslint-parser',
   parserOptions: {
@@ -14,7 +25,9 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:vue/recommended',
-    '@vue/airbnb',
+    'plugin:vuetify/recommended',
+    'plugin:import/typescript',
+    '@vue/eslint-config-typescript',
   ],
   rules: {
     'max-len': 'off',
@@ -46,5 +59,10 @@ module.exports = {
         'no-shadow': 'off',
       },
     },
+  ],
+  ignorePatterns: [
+    'node_modules',
+    'dist',
+    'public',
   ],
 };

@@ -4,19 +4,18 @@
   "private": true,
   "scripts": {
     "serve": "rimraf -rf ./node_modules/.cache/vue-loader && vue-cli-service serve --host 127.0.0.1 --port 8081 src/main.ts",
-    "build": "vue-cli-service build",
-    "lint": "vue-cli-service lint"
+    "lint:fix": "eslint . --fix",
+    "dev": "vite --host 127.0.0.1 --port 8081",
+    "build": "vite build"
   },
   "dependencies": {
     "@riophae/vue-treeselect": "^0.4.0",
     "@sentry/vue": "^6.16.1",
-    "@vue/composition-api": "^1.4.1",
     "axios": "^0.28.0",
     "axios-cache-adapter": "^2.7.3",
     "bootstrap": "4.3.1",
     "chrono-node": "^2.4.1",
     "citation-js": "^0.5.4",
-    "core-js": "^3.19.3",
     "d3": "^7.2.1",
     "d3-array": "^3.1.1",
     "d3-axis": "^3.0.0",
@@ -38,17 +37,22 @@
     "popper.js": "1.16.1",
     "protobufjs": "^6.11.3",
     "serialize-javascript": "^6.0.0",
-    "vue": "^2.6.14",
+    "vite": "4",
+    "vite-plugin-vue2": "^2.0.3",
+    "vue": "^2.7.0",
     "vue-async-computed": "^3.9.0",
-    "vue-google-charts": "^0.3.3",
+    "vue-google-charts": "^0.4",
     "vue-gtag": "^1.16.1",
     "vue-router": "^3.5.3",
     "vue2-leaflet": "^2.7.1",
     "vue2-leaflet-markercluster": "^3.1.0",
     "vuetify": "^2.6.10",
-    "xlsx": "^0.17.5"
+    "xlsx": "^0.17.5",
+    "yaml": "^2.7.0"
   },
   "devDependencies": {
+    "@modyfi/vite-plugin-yaml": "^1.1.0",
+    "@rollup/plugin-yaml": "^4.1.2",
     "@types/axios": "^0.14.0",
     "@types/d3": "^7.1.0",
     "@types/d3-array": "^3.0.2",
@@ -61,26 +65,20 @@
     "@types/lodash": "^4.14.178",
     "@typescript-eslint/eslint-plugin": "^5.6.0",
     "@typescript-eslint/parser": "^5.6.0",
-    "@vue/cli-plugin-babel": "^4.5.15",
-    "@vue/cli-plugin-eslint": "^4.5.15",
-    "@vue/cli-plugin-typescript": "^4.5.15",
-    "@vue/cli-service": "^4.5.15",
-    "@vue/eslint-config-airbnb": "^6.0.0",
+    "@vitejs/plugin-vue2": "^2.3.3",
     "@vue/eslint-config-typescript": "^9.1.0",
-    "babel-eslint": "^10.0.3",
-    "copy-webpack-plugin": "^6.4.0",
-    "eslint": "^7.32.0",
+    "eslint": "8",
+    "eslint-import-resolver-alias": "^1.1.2",
     "eslint-plugin-import": "^2.25.3",
-    "eslint-plugin-vue": "^8.2.0",
+    "eslint-plugin-vue": "8",
     "eslint-plugin-vuejs-accessibility": "^1.1.0",
-    "raw-loader": "^4.0.2",
-    "sass": "~1.32.0",
-    "sass-loader": "^10.1.1",
+    "eslint-plugin-vuetify": "^1.1.0",
+    "js-yaml": "^4.1.0",
+    "sass": "^1.83.1",
+    "sass-loader": "^16.0.4",
     "typescript": "^4.5.3",
-    "vue-cli-plugin-vuetify": "^2.4.5",
-    "vue-cli-plugin-yaml": "^1.0.2",
-    "vue-template-compiler": "^2.6.14",
-    "vuetify-loader": "^1.7.3"
+    "unplugin-vue-components": "^28.0.0",
+    "vue-template-compiler": "^2.7.16"
   },
   "browserslist": [
     "> 1%",
@@ -91,5 +89,5 @@
     "serialize-javascript": "^3.1",
     "http-proxy": "1.18.1"
   },
-  "packageManager": "yarn@1.22.19+sha1.4ba7fc5c6e704fce2066ecbfb0b0d8976fe62447"
+  "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
 }

@@ -1,11 +1,11 @@
 <script lang="ts">
-import { computed, defineComponent, PropType } from '@vue/composition-api';
+import { computed, defineComponent, PropType } from 'vue';
 import { isObject } from 'lodash';
 
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
-import AttributeItem from './AttributeItem.vue';
 import { formatBiosampleDepth } from '@/util';
+import AttributeItem from './AttributeItem.vue';
 
 export default defineComponent({
   components: { AttributeItem },
@@ -105,7 +105,7 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="display-1">
+    <div class="text-h4">
       Attributes
     </div>
     <v-list
@@ -121,7 +121,7 @@ export default defineComponent({
       </v-col>
     </v-list>
     <v-list v-if="alternateIdentifiers.length > 0 || item.emsl_biosample_identifiers.length > 0">
-      <div class="display-1">
+      <div class="text-h4">
         Alternative Identifiers
       </div>
       <AttributeItem
@@ -136,7 +136,7 @@ export default defineComponent({
       />
     </v-list>
     <v-list v-if="type === 'biosample' && relatedBiosamples.length">
-      <div class="display-1">
+      <div class="text-h4">
         Related Biosamples
       </div>
       <v-list-item

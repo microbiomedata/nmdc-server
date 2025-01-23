@@ -1,4 +1,4 @@
-import { InjectionKey, inject, provide } from '@vue/composition-api';
+import { InjectionKey, inject, provide } from 'vue';
 import VueRouter from 'vue-router';
 
 const routerKey: InjectionKey<VueRouter> = Symbol('router');

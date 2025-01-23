@@ -1,5 +1,4 @@
 import Vue from 'vue';
-import CompositionPlugin from '@vue/composition-api';
 import VueGtag from 'vue-gtag';
 import { init as SentryInit } from '@sentry/vue';
 import AsyncComputed from 'vue-async-computed';
@@ -11,12 +10,11 @@ import { provideRouter } from '@/use/useRouter';
 import App from './App.vue';
 
 Vue.use(AsyncComputed);
-Vue.use(CompositionPlugin);
 
 /**
  * Enable instrumentation in production
  */
-if (process.env.NODE_ENV === 'production') {
+if (import.meta.env.NODE_ENV === 'production') {
   const gaId = 'UA-68089198-4';
   Vue.use(VueGtag, {
     config: { id: gaId },

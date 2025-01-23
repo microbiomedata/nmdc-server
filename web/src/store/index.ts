@@ -1,7 +1,6 @@
-import Vue from 'vue';
-import CompositionApi, {
-  computed, ComputedRef, reactive, toRefs, watchEffect,
-} from '@vue/composition-api';
+import Vue, {
+  computed, ComputedRef, reactive, toRefs, watchEffect, set,
+} from 'vue';
 import { noop, uniqWith } from 'lodash';
 import VueRouter from 'vue-router';
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
@@ -9,9 +8,6 @@ import {
   api, Condition, DataObjectFilter, EnvoNode, EnvoTree, User,
 } from '@/data/api';
 import { clearQueryState, getQueryState, setQueryState } from '@/store/localStorage';
-
-// TODO: Remove in version 3;
-Vue.use(CompositionApi);
 
 let router: VueRouter | null = null;
 const state = reactive({
@@ -150,7 +146,7 @@ function makeNodeMap(node: EnvoNode) {
   } else {
     node.children?.forEach(makeNodeMap);
     if (node.children?.length === 1) {
-      Vue.set(node, 'isExpanded', true);
+      set(node, 'isExpanded', true);
     }
   }
 }

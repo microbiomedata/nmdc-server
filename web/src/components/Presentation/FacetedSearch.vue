@@ -1,5 +1,5 @@
 <script lang="ts">
-import Vue, { PropType } from 'vue';
+import Vue, { PropType, set } from 'vue';
 import { groupBy } from 'lodash';
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
@@ -46,7 +46,7 @@ export default Vue.extend({
   methods: {
     fieldDisplayName,
     toggleMenu(category: string, value: boolean): void {
-      Vue.set(this.menuState, category, value);
+      set(this.menuState, category, value);
     },
     hasActiveConditions(category: string): boolean {
       return this.conditions.some((cond) => cond.field === category);
