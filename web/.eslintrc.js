@@ -1,5 +1,3 @@
-const { set } = require("lodash");
-
 module.exports = {
   settings: {
     'import/resolver': {
@@ -27,7 +25,6 @@ module.exports = {
   extends: [
     'eslint:recommended',
     'plugin:vue/recommended',
-    '@vue/airbnb',
   ],
   rules: {
     'max-len': 'off',
@@ -41,8 +38,8 @@ module.exports = {
     'vue/html-indent': ['warn', 2, { ignores: ['VElement[name=pre].children'] }],
     camelcase: 0,
     // we should always disable console logs and debugging in production
-    'no-console': import.meta.env.NODE_ENV === 'production' ? 'error' : 'off',
-    'no-debugger': import.meta.env.NODE_ENV === 'production' ? 'error' : 'off',
+    'no-console': process.env.NODE_ENV === 'production' ? 'error' : 'off',
+    'no-debugger': process.env.NODE_ENV === 'production' ? 'error' : 'off',
   },
   overrides: [
     {
@@ -59,5 +56,10 @@ module.exports = {
         'no-shadow': 'off',
       },
     },
+  ],
+  ignorePatterns: [
+    'node_modules',
+    'dist',
+    'public',
   ],
 };
