@@ -78,12 +78,18 @@ async function deleteSubmission(id: string) {
   return resp.data;
 }
 
-async function getMetadataSuggestions(data: MetadataSuggestionRequest[]) {
+async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: SuggestionType) {
+  let endpoint = 'metadata_submission/suggest';
+  if (type === SuggestionType.ADDITIONS) {
+    endpoint += '?types=add';
+  } else if (type === SuggestionType.REPLACEMENTS) {
+    endpoint += '?types=replace';
+  }
   const resp = await client.post<
     MetadataSuggestion[],
     AxiosResponse<MetadataSuggestion[]>,
     MetadataSuggestionRequest[]
-  >('metadata_submission/suggest', data);
+  >(endpoint, data);
   return resp.data;
 }
 

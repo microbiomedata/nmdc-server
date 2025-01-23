@@ -25,6 +25,7 @@ import {
   isOwner,
   addMetadataSuggestions,
   suggestionMode,
+  suggestionType,
 } from './store';
 import {
   HARMONIZER_TEMPLATES,
@@ -197,7 +198,7 @@ export default defineComponent({
         clearTimeout(changeTimer);
         changeTimer = setTimeout(async () => {
           const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-          const suggestions = await getMetadataSuggestions(changedRowData);
+          const suggestions = await getMetadataSuggestions(changedRowData, suggestionType.value);
           addMetadataSuggestions(suggestions);
           changeBatch = [];
         }, 3000);

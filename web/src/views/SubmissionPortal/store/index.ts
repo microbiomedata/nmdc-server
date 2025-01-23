@@ -189,6 +189,7 @@ const templateChoiceDisabled = computed(() => {
 });
 const metadataSuggestions = ref([] as MetadataSuggestion[]);
 const suggestionMode = ref(SuggestionsMode.LIVE);
+const suggestionType = ref(SuggestionType.ALL);
 
 const tabsValidated = ref({} as Record<string, boolean>);
 watch(templateList, () => {
@@ -368,6 +369,7 @@ export {
   status,
   metadataSuggestions,
   suggestionMode,
+  suggestionType,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,

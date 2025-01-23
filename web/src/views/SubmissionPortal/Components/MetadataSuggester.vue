@@ -4,10 +4,12 @@ import { groupBy } from 'lodash';
 import {
   metadataSuggestions,
   suggestionMode,
+  suggestionType,
 } from '@/views/SubmissionPortal/store';
-import { SuggestionsMode } from '@/views/SubmissionPortal/types';
+import { SuggestionsMode, SuggestionType } from '@/views/SubmissionPortal/types';
 
 const suggestionModeOptions = Object.values(SuggestionsMode);
+const suggestionTypeOptions = Object.values(SuggestionType);
 
 export default defineComponent({
   setup() {
@@ -16,6 +18,8 @@ export default defineComponent({
     return {
       suggestionModeOptions,
       suggestionMode,
+      suggestionTypeOptions,
+      suggestionType,
       suggestionsByRow,
     };
   },
@@ -61,9 +65,11 @@ export default defineComponent({
         </v-col>
         <v-col cols="6">
           <v-select
-            :items="['All Types', 'Missing values only']"
+            v-model="suggestionType"
+            :items="suggestionTypeOptions"
             dense
             hide-details
+            label="Suggestion Type"
             outlined
           />
         </v-col>
