@@ -91,11 +91,28 @@ export default defineComponent({
 
     function getOmicsDataWithInputIds(omicsProcessing: OmicsProcessingResult) {
       const biosampleInputIds = (omicsProcessing.biosample_inputs as BiosampleSearchResult[]).map((input) => input.id);
+      const annotations = omicsProcessing.annotations as Record<string, string | string[]>;
       return omicsProcessing.omics_data.map((omics) => {
         const omicsCopy = { ...omics };
         omicsCopy.inputIds = biosampleInputIds;
+        omicsCopy.omicsProcessingName = omicsProcessing.name;
+        if (annotations.mass_spectrometry_configuration_id) {
+          omicsCopy.massSpecConfigId = annotations.mass_spectrometry_configuration_id || '';
+          omicsCopy.massSpecConfigName = annotations.mass_spectrometry_configuration_name || '';
+        }
+        if (annotations.chromatography_configuration_id) {
+          omicsCopy.chromConfigId = annotations.chromatography_configuration_id || '';
+          omicsCopy.chromConfigName = annotations.chromatography_configuration_name || '';
+        }
         return omicsCopy;
       });
+    }
+
+    function getGroupName(omicsData: {id: string, name: string}): string {
+      if (omicsData.name) {
+        return omicsData.name.replace('Metagenome', props.omicsType) || omicsData.id;
+      }
+      return `${props.omicsType} Analysis ${omicsData.id}`;
     }
 
     const items = computed(() => flattenDeep(
@@ -106,7 +123,7 @@ export default defineComponent({
             ...data_object,
             omics_data,
             /* TODO Hack to replace metagenome with omics type name */
-            group_name: omics_data.name.replace('Metagenome', props.omicsType),
+            group_name: getGroupName(omics_data),
             newgroup: i === 0,
           }))),
     ));
@@ -180,6 +197,18 @@ export default defineComponent({
         >
           <td colspan="6">
             <b>Workflow Activity:</b> {{ item.group_name }}
+            <span v-if="omicsType === 'Metabolomics' || omicsType === 'Lipidomics'">
+              <br>
+              <b>Data Generation Activity: </b> {{ item.omics_data.omicsProcessingName }} {{ item.omics_data.omics_processing_id }}
+            </span>
+            <span v-if="item.omics_data.massSpecConfigId">
+              <br>
+              <b>LC/MS Configurations: </b>
+              {{ item.omics_data.massSpecConfigName }}:
+              {{ item.omics_data.massSpecConfigId }};
+              {{ item.omics_data.chromConfigName }}:
+              {{ ' ' + item.omics_data.chromConfigId }}
+            </span>
             <br>
             <div v-if="getRelatedBiosampleIds(item.omics_data).length">
               <v-icon>
