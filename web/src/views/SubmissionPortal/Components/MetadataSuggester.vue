@@ -1,16 +1,26 @@
 <script lang="ts">
-import { computed, defineComponent, PropType } from '@vue/composition-api';
+import {
+  computed,
+  defineComponent,
+  PropType,
+  ref,
+} from '@vue/composition-api';
 import { groupBy } from 'lodash';
 import {
   metadataSuggestions,
   suggestionMode,
   suggestionType,
 } from '@/views/SubmissionPortal/store';
-import { SuggestionsMode, SuggestionType } from '@/views/SubmissionPortal/types';
+import { MetadataSuggestion, SuggestionsMode, SuggestionType } from '@/views/SubmissionPortal/types';
 import type { HarmonizerApi } from '@/views/SubmissionPortal/harmonizerApi';
+import { getRejectedSuggestions, setRejectedSuggestions } from '@/store/localStorage';
 
 const suggestionModeOptions = Object.values(SuggestionsMode);
 const suggestionTypeOptions = Object.values(SuggestionType);
+
+function getSuggestionKey(suggestion: MetadataSuggestion) {
+  return `${suggestion.row}__${suggestion.slot}__${suggestion.value}`;
+}
 
 export default defineComponent({
   props: {
@@ -21,21 +31,38 @@ export default defineComponent({
   },
 
   setup({ harmonizerApi }) {
-    const suggestionsByRow = computed(() => groupBy(metadataSuggestions.value, 'row'));
+    const rejectedSuggestions = ref(getRejectedSuggestions());
 
-    function handleJumpToCell(row: number, slot: string) {
+    const displaySuggestions = computed(() => {
+      const filteredSuggestions = metadataSuggestions.value.filter((suggestion) => {
+        const key = getSuggestionKey(suggestion);
+        return !rejectedSuggestions.value.includes(key);
+      });
+      return groupBy(filteredSuggestions, 'row');
+    });
+
+    function handleJumpToCell(suggestion: MetadataSuggestion) {
+      const { row, slot } = suggestion;
       const col = harmonizerApi.slotColumns[slot];
       harmonizerApi.jumpToRowCol(row, col);
     }
 
+    function handleRejectSuggestion(suggestion: MetadataSuggestion) {
+      const key = getSuggestionKey(suggestion);
+      rejectedSuggestions.value.push(key);
+      setRejectedSuggestions(rejectedSuggestions.value);
+    }
+
     return {
       handleJumpToCell,
+      handleRejectSuggestion,
+      rejectedSuggestions,
       SuggestionsMode,
       suggestionModeOptions,
       suggestionMode,
       suggestionTypeOptions,
       suggestionType,
-      suggestionsByRow,
+      suggestionsByRow: displaySuggestions,
     };
   },
 });
@@ -125,80 +152,87 @@ export default defineComponent({
         </v-col>
       </v-row>
 
-      <div v-if="Object.keys(suggestionsByRow).length === 0">
-        No suggestions available.
-      </div>
-
-      <div
-        v-for="(suggestion, row) in suggestionsByRow"
-        :key="row"
-        class="mt-4"
-      >
-        <div class="text-body-2">
-          Row: {{ Number(row) + 1 }}
-        </div>
-
-        <v-sheet
-          :key="row"
-          elevation="0"
-          rounded
-          outlined
-        >
+      <v-row>
+        <v-col>
           <div
-            v-for="s in suggestion"
-            :key="s.slot"
-            class="ma-2 d-flex flex-wrap justify-end"
+            v-if="Object.keys(suggestionsByRow).length === 0"
+            class="text--disabled"
           >
-            <div class="flex-grow-1 full-width">
-              <div
-                class="text-body-2"
-              >
-                <span class="grey--text">Column:</span> {{ s.slot }}
-              </div>
-              <div>
-                <span
-                  v-if="s.current_value"
-                  class="value previous"
-                  v-text="s.current_value"
-                />
-                <span
-                  class="value suggested"
-                  v-text="s.value"
-                />
-              </div>
-            </div>
-            <div
-              class="flex-shrink-0 flex-grow-0"
-            >
-              <v-btn
-                icon
-                color="primary"
-                @click="handleJumpToCell(s.row, s.slot)"
-              >
-                <v-icon>
-                  mdi-target
-                </v-icon>
-              </v-btn>
-              <v-btn
-                icon
-                color="primary"
-              >
-                <v-icon>
-                  mdi-close
-                </v-icon>
-              </v-btn>
-              <v-btn
-                icon
-                color="primary"
-              >
-                <v-icon>
-                  mdi-check
-                </v-icon>
-              </v-btn>
-            </div>
+            No suggestions available.
           </div>
-        </v-sheet>
-      </div>
+
+          <div
+            v-for="(suggestion, row) in suggestionsByRow"
+            :key="row"
+          >
+            <div class="text-body-2">
+              Row: {{ Number(row) + 1 }}
+            </div>
+
+            <v-sheet
+              :key="row"
+              elevation="0"
+              rounded
+              outlined
+            >
+              <div
+                v-for="s in suggestion"
+                :key="s.slot"
+                class="ma-2 d-flex flex-wrap justify-end"
+              >
+                <div class="flex-grow-1 full-width">
+                  <div
+                    class="text-body-2"
+                  >
+                    <span class="grey--text">Column:</span> {{ s.slot }}
+                  </div>
+                  <div>
+                    <span
+                      v-if="s.current_value"
+                      class="value previous"
+                      v-text="s.current_value"
+                    />
+                    <span
+                      class="value suggested"
+                      v-text="s.value"
+                    />
+                  </div>
+                </div>
+                <div
+                  class="flex-shrink-0 flex-grow-0"
+                >
+                  <v-btn
+                    icon
+                    color="primary"
+                    @click="handleJumpToCell(s)"
+                  >
+                    <v-icon>
+                      mdi-target
+                    </v-icon>
+                  </v-btn>
+                  <v-btn
+                    icon
+                    color="primary"
+                    @click="handleRejectSuggestion(s)"
+                  >
+                    <v-icon>
+                      mdi-close
+                    </v-icon>
+                  </v-btn>
+                  <v-btn
+                    icon
+                    color="primary"
+                  >
+                    <v-icon>
+                      mdi-check
+                    </v-icon>
+                  </v-btn>
+                </div>
+              </div>
+            </v-sheet>
+          </div>
+        </v-col>
+      </v-row>
     </v-container>
   </v-card>
 </template>

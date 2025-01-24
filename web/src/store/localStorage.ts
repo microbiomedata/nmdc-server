@@ -1,5 +1,6 @@
 const QUERY_STATE_KEY = 'storage.queryState';
 const REFRESH_TOKEN_KEY = 'storage.refreshToken';
+const REJECTED_SUGGESTIONS = 'storage.rejectedSuggestions';
 
 function getQueryState() {
   const state = window.localStorage.getItem(QUERY_STATE_KEY);
@@ -26,6 +27,15 @@ function clearRefreshToken() {
   return window.localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
+function getRejectedSuggestions(): string[] {
+  const suggestions = window.localStorage.getItem(REJECTED_SUGGESTIONS);
+  return suggestions ? JSON.parse(suggestions) : [];
+}
+
+function setRejectedSuggestions(suggestions: string[]) {
+  return window.localStorage.setItem(REJECTED_SUGGESTIONS, JSON.stringify(suggestions));
+}
+
 export {
   getQueryState,
   setQueryState,
@@ -33,4 +43,6 @@ export {
   getRefreshToken,
   setRefreshToken,
   clearRefreshToken,
+  getRejectedSuggestions,
+  setRejectedSuggestions,
 };
