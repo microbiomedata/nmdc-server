@@ -53,7 +53,17 @@ export default defineComponent({
       setRejectedSuggestions(rejectedSuggestions.value);
     }
 
+    function handleAcceptSuggestion(suggestion: MetadataSuggestion) {
+      const { row, slot } = suggestion;
+      const col = harmonizerApi.slotColumns[slot];
+      harmonizerApi.setCellData([{ row, col, text: suggestion.value }]);
+
+      const index = metadataSuggestions.value.findIndex((s) => s === suggestion);
+      metadataSuggestions.value.splice(index, 1);
+    }
+
     return {
+      handleAcceptSuggestion,
       handleJumpToCell,
       handleRejectSuggestion,
       rejectedSuggestions,
@@ -222,6 +232,7 @@ export default defineComponent({
                   <v-btn
                     icon
                     color="primary"
+                    @click="handleAcceptSuggestion(s)"
                   >
                     <v-icon>
                       mdi-check
