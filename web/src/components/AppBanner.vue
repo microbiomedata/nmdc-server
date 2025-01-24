@@ -20,20 +20,19 @@ export default defineComponent({
     <p
       class="title"
     >
-      Upcoming maintenance (January 26-February 3)
+      Upcoming maintenance (January 26 - February 3)
     </p>
     <p>
-      From Sunday, January 26 to Sunday, February 2, our data storage system will be
-      undergoing scheduled maintenance. During that time, the downloading of data files
-      will be disabled.
+      Sunday, 01/26/2025 - Sunday, 02/02/2025: Storage system will be undergoing
+      scheduled maintenance. Downloading of data files will be disabled.
     </p>
     <p>
-      Then, on Monday, February 3, the NMDC Data Portal and NMDC Submission Portal will be
-      undergoing software updates. During that time, both portals will be offline.
+      Monday, 02/03/2025 (until 5pm PST): NMDC Data Portal, Submission Portal, and
+      API will be offline for software updates.
     </p>
     <p>
-      Both portals will be back online and fully functional by Monday, February 3,
-      at 5:00 p.m. Pacific time.
+      We expect our systems to be back online and fully functional by Monday,
+      02/03/2025 at 5pm PST.
     </p>
   </v-banner>
 </template>
