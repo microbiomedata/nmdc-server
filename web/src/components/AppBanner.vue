@@ -27,8 +27,8 @@ export default defineComponent({
       scheduled maintenance. Downloading of data files will be disabled.
     </p>
     <p>
-      Monday, 02/03/2025 (until 5pm PST): NMDC Data Portal, Submission Portal, and
-      API will be offline for software updates.
+      Monday, 02/03/2025 (until 5pm PST): The NMDC API will be offline for
+      software updates.
     </p>
     <p>
       We expect our systems to be back online and fully functional by Monday,
