@@ -1,7 +1,7 @@
 """add-country-to-shipper-info
 
 Revision ID: 18127fd43a8b
-Revises: afa1ff687968
+Revises: 4b2d6ee63752
 Create Date: 2025-01-24 15:53:45.897421
 
 """
@@ -21,7 +21,7 @@ Base = declarative_base()
 
 # revision identifiers, used by Alembic.
 revision: str = "18127fd43a8b"
-down_revision: Optional[str] = "afa1ff687968"
+down_revision: Optional[str] = "4b2d6ee63752"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
