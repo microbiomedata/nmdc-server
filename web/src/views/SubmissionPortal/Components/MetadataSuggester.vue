@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent } from '@vue/composition-api';
+import { computed, defineComponent, PropType } from '@vue/composition-api';
 import { groupBy } from 'lodash';
 import {
   metadataSuggestions,
@@ -7,15 +7,30 @@ import {
   suggestionType,
 } from '@/views/SubmissionPortal/store';
 import { SuggestionsMode, SuggestionType } from '@/views/SubmissionPortal/types';
+import type { HarmonizerApi } from '@/views/SubmissionPortal/harmonizerApi';
 
 const suggestionModeOptions = Object.values(SuggestionsMode);
 const suggestionTypeOptions = Object.values(SuggestionType);
 
 export default defineComponent({
-  setup() {
+  props: {
+    harmonizerApi: {
+      type: Object as PropType<HarmonizerApi>,
+      required: true,
+    },
+  },
+
+  setup({ harmonizerApi }) {
     const suggestionsByRow = computed(() => groupBy(metadataSuggestions.value, 'row'));
 
+    function handleJumpToCell(row: number, slot: string) {
+      const col = harmonizerApi.slotColumns[slot];
+      harmonizerApi.jumpToRowCol(row, col);
+    }
+
     return {
+      handleJumpToCell,
+      SuggestionsMode,
       suggestionModeOptions,
       suggestionMode,
       suggestionTypeOptions,
@@ -75,7 +90,7 @@ export default defineComponent({
         </v-col>
       </v-row>
 
-      <v-row>
+      <v-row v-if="suggestionMode === SuggestionsMode.ON_DEMAND">
         <v-col>
           <v-btn
             color="primary"
@@ -158,7 +173,7 @@ export default defineComponent({
               <v-btn
                 icon
                 color="primary"
-                @click="$emit('jump-to-cell', row, s.slot)"
+                @click="handleJumpToCell(s.row, s.slot)"
               >
                 <v-icon>
                   mdi-target

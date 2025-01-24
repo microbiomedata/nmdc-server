@@ -81,12 +81,15 @@ export class HarmonizerApi {
 
   slotNames: string[];
 
+  slotColumns: Record<string, number>;
+
   constructor() {
     this.schemaSectionNames = ref({});
     this.schemaSectionColumns = ref({});
     this.ready = ref(false);
     this.selectedColumn = ref('');
     this.slotNames = [];
+    this.slotColumns = {};
   }
 
   async init(r: HTMLElement, schema: any, templateName: string | undefined, goldEcosystemTree: any) {
@@ -227,6 +230,7 @@ export class HarmonizerApi {
     });
     this.jumpToRowCol(0, 0);
     this.slotNames = this.dh.getFields().map((f: any) => f.name);
+    this.slotColumns = Object.fromEntries(this.slotNames.map((name, idx) => [name, idx]));
   }
 
   refreshState() {

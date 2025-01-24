@@ -116,7 +116,9 @@ export default defineComponent({
         />
       </v-tab-item>
       <v-tab-item>
-        <MetadataSuggester />
+        <MetadataSuggester
+          :harmonizer-api="harmonizerApi"
+        />
       </v-tab-item>
       <v-tab-item class="pa-2">
         <ImportExportButtons
