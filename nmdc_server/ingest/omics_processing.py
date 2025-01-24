@@ -96,7 +96,7 @@ def get_biosample_input_ids(input_id: str, mongodb: Database, results: set) -> s
     return results
 
 
-def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, logger):
+def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, logger, config_map):
     logger = get_logger(__name__)
     input_ids: list[str] = obj.pop("has_input", [""])
     biosample_input_ids: set[str] = set()
@@ -125,6 +125,30 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
         if instrument:
             obj["instrument_name"] = instrument["name"]
 
+    # Get configuration info
+    config_set = "configuration_set"
+    mass_spec_config_id = obj.pop("has_mass_spectrometry_configuration", None)
+    if mass_spec_config_id:
+        if mass_spec_config_id in config_map:
+            config_record = config_map[mass_spec_config_id]
+        else:
+            config_record = mongodb[config_set].find_one({"id": mass_spec_config_id})
+            config_map[mass_spec_config_id] = config_record
+        if config_record:
+            obj["mass_spectrometry_configuration_name"] = config_record["name"]
+            obj["mass_spectrometry_configuration_id"] = config_record["id"]
+
+    chromatography_config_id = obj.pop("has_chromatography_configuration", None)
+    if chromatography_config_id:
+        if chromatography_config_id in config_map:
+            config_record = config_map[chromatography_config_id]
+        else:
+            config_record = mongodb[config_set].find_one({"id": chromatography_config_id})
+            config_map[chromatography_config_id] = config_record
+        if config_record:
+            obj["chromatography_configuration_name"] = config_record["name"]
+            obj["chromatography_configuration_id"] = config_record["id"]
+
     omics_processing = models.OmicsProcessing(**OmicsProcessing(**obj).dict())
     for biosample_object in biosample_input_objects:
         # mypy thinks that omics_processing.biosample_inputs is of type Biosample
@@ -150,9 +174,10 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
 
 def load(db: Session, cursor: Cursor, mongodb: Database):
     logger = get_logger(__name__)
+    config_map = {}
     for obj in cursor:
         try:
-            load_omics_processing(db, obj, mongodb, logger)
+            load_omics_processing(db, obj, mongodb, logger, config_map)
         except Exception as err:
             logger.error(err)
             logger.error("Error parsing omics_processing:")
