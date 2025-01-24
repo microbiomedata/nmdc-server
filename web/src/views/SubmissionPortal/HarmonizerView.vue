@@ -1034,6 +1034,7 @@ html {
   position: absolute;
   bottom: 0;
   left: 0;
+  padding-right: 8px;
 
   .secondary-header-cell:hover {
     cursor: pointer;
