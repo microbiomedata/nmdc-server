@@ -177,8 +177,24 @@ export default defineComponent({
           hide-details
           @change="facilityChange"
         />
-        <submission-context-shipping-form
+        <v-radio-group
           v-if="contextForm.dataGenerated === false && contextForm.facilities.includes('EMSL')"
+          v-model="contextForm.ship"
+          label="Will samples be shipped? *"
+          :rules="[v => (v === true || v === false) || 'This field is required']"
+          @change="revalidate"
+        >
+          <v-radio
+            label="No"
+            :value="false"
+          />
+          <v-radio
+            label="Yes"
+            :value="true"
+          />
+        </v-radio-group>
+        <submission-context-shipping-form
+          v-if="contextForm.dataGenerated === false && contextForm.ship"
         />
         <v-radio-group
           v-if="contextForm.dataGenerated === false && contextForm.facilities.length > 0"
@@ -338,7 +354,7 @@ export default defineComponent({
         color="gray"
         depressed
         :to="{ name: 'Study Form' }"
-        :disabled="!contextFormValid || (contextForm.facilities.includes('EMSL') && !addressFormValid)"
+        :disabled="!contextFormValid || ((contextForm.facilities.includes('EMSL') && contextForm.ship) && !addressFormValid)"
       >
         Go to next step
         <v-icon class="pl-1">

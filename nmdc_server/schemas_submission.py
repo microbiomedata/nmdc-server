@@ -47,6 +47,7 @@ class NmcdAddress(BaseModel):
     city: str
     state: str
     postalCode: str
+    country: str
 
 
 class AddressForm(BaseModel):
@@ -72,6 +73,7 @@ class ContextForm(BaseModel):
     award: Optional[str] = None
     otherAward: str
     unknownDoi: Optional[bool] = None
+    ship: Optional[bool] = None
 
 
 class MetadataSubmissionRecordCreate(BaseModel):

@@ -11,6 +11,7 @@ interface NmdcAddress {
   city: string;
   state: string;
   postalCode: string;
+  country: string;
 }
 
 function addressToString(address: NmdcAddress): string {
