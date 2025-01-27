@@ -2,7 +2,7 @@ import Vue from 'vue';
 import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
-import { clone, forEach } from 'lodash';
+import { chunk, clone, forEach } from 'lodash';
 import axios from 'axios';
 import * as api from './api';
 import { getVariants } from '../harmonizerApi';
@@ -17,6 +17,7 @@ import {
   SubmissionStatus,
   SuggestionType,
   SuggestionsMode,
+  MetadataSuggestionRequest,
 } from '@/views/SubmissionPortal/types';
 
 // TODO: Remove in version 3;
@@ -331,17 +332,24 @@ function mergeSampleData(key: string | undefined, data: any[]) {
   };
 }
 
-function addMetadataSuggestions(suggestions: MetadataSuggestion[]) {
-  suggestions.forEach((suggestion) => {
-    const existingSuggestionIndex = metadataSuggestions.value.findIndex(
-      (s) => s.row === suggestion.row && s.slot === suggestion.slot,
-    );
-    if (existingSuggestionIndex < 0) {
-      metadataSuggestions.value.push(suggestion);
-    } else {
-      metadataSuggestions.value.splice(existingSuggestionIndex, 1, suggestion);
-    }
-  });
+async function addMetadataSuggestions(requests: MetadataSuggestionRequest[], batchSize: number = 10) {
+  const batches = chunk(requests, batchSize);
+  for (let i = 0; i < batches.length; i += 1) {
+    const batch = batches[i];
+    // eslint-disable-next-line no-await-in-loop -- we are intentionally throttling requests to the sever
+    const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
+
+    suggestions.forEach((suggestion) => {
+      const existingSuggestionIndex = metadataSuggestions.value.findIndex(
+        (s) => s.row === suggestion.row && s.slot === suggestion.slot,
+      );
+      if (existingSuggestionIndex < 0) {
+        metadataSuggestions.value.push(suggestion);
+      } else {
+        metadataSuggestions.value.splice(existingSuggestionIndex, 1, suggestion);
+      }
+    });
+  }
 }
 
 export {

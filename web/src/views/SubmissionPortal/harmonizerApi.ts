@@ -227,6 +227,7 @@ export class HarmonizerApi {
       customBorders: true,
       height: '100%',
       width: '100%',
+      outsideClickDeselects: false,
     });
     this.jumpToRowCol(0, 0);
     this.slotNames = this.dh.getFields().map((f: any) => f.name);
@@ -327,6 +328,10 @@ export class HarmonizerApi {
 
   jumpToRowCol(row: number, column: number) {
     this.dh.scrollTo(row, column);
+  }
+
+  getSelectedCells(): number[][] {
+    return this.dh.hot.getSelected();
   }
 
   launchReference() {

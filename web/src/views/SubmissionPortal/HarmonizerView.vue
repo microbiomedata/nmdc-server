@@ -25,7 +25,6 @@ import {
   isOwner,
   addMetadataSuggestions,
   suggestionMode,
-  suggestionType,
 } from './store';
 import {
   HARMONIZER_TEMPLATES,
@@ -35,7 +34,6 @@ import {
   JGI_MG_LR,
   SuggestionsMode,
 } from '@/views/SubmissionPortal/types';
-import { getMetadataSuggestions } from '@/views/SubmissionPortal/store/api';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
@@ -198,8 +196,7 @@ export default defineComponent({
         clearTimeout(changeTimer);
         changeTimer = setTimeout(async () => {
           const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-          const suggestions = await getMetadataSuggestions(changedRowData, suggestionType.value);
-          addMetadataSuggestions(suggestions);
+          await addMetadataSuggestions(changedRowData);
           changeBatch = [];
         }, 3000);
       }

@@ -7,6 +7,7 @@ import {
 } from '@vue/composition-api';
 import { groupBy } from 'lodash';
 import {
+  addMetadataSuggestions,
   metadataSuggestions,
   suggestionMode,
   suggestionType,
@@ -32,6 +33,7 @@ export default defineComponent({
 
   setup({ harmonizerApi }) {
     const rejectedSuggestions = ref(getRejectedSuggestions());
+    const onDemandSuggestionsLoading = ref(false);
 
     const displaySuggestions = computed(() => {
       const filteredSuggestions = metadataSuggestions.value.filter((suggestion) => {
@@ -62,10 +64,29 @@ export default defineComponent({
       metadataSuggestions.value.splice(index, 1);
     }
 
+    async function handleSuggestForSelectedRows() {
+      onDemandSuggestionsLoading.value = true;
+      const selectedRanges = harmonizerApi.getSelectedCells();
+      const rows = selectedRanges.reduce((acc, range) => {
+        for (let i = range[0]; i <= range[2]; i += 1) {
+          acc.push(i);
+        }
+        return acc;
+      }, [] as number[]);
+      const changedRowData = harmonizerApi.getDataByRows(rows);
+      try {
+        await addMetadataSuggestions(changedRowData);
+      } finally {
+        onDemandSuggestionsLoading.value = false;
+      }
+    }
+
     return {
       handleAcceptSuggestion,
       handleJumpToCell,
       handleRejectSuggestion,
+      handleSuggestForSelectedRows,
+      onDemandSuggestionsLoading,
       rejectedSuggestions,
       SuggestionsMode,
       suggestionModeOptions,
@@ -132,8 +153,10 @@ export default defineComponent({
           <v-btn
             color="primary"
             block
+            :loading="onDemandSuggestionsLoading"
+            @click="handleSuggestForSelectedRows"
           >
-            Suggest for Selected Row(s)
+            Suggest for Selected Rows
           </v-btn>
         </v-col>
       </v-row>
