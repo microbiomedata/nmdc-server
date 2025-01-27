@@ -1,3 +1,4 @@
+from debug_toolbar.panels.sqlalchemy import SQLAlchemyPanel as BasePanel
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
@@ -18,6 +19,12 @@ engine = create_engine(settings.current_db_uri, **_engine_kwargs)
 engine_ingest = create_engine(settings.ingest_database_uri, **_engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 SessionLocalIngest = sessionmaker(autocommit=False, autoflush=False, bind=engine_ingest)
+
+
+class SQLAlchemyPanel(BasePanel):
+    async def add_engines(self, request):
+        self.engines.add(engine)
+
 
 # This is to avoid having to manually name all constraints
 # See: http://alembic.zzzcomputing.com/en/latest/naming.html
