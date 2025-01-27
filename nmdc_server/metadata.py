@@ -1,7 +1,7 @@
 import re
 from typing import Callable, Dict, List, Optional
 
-from nmdc_geoloc_tools import GeoEngine
+import nmdc_geoloc_tools
 
 from nmdc_server.schemas_submission import MetadataSuggestionType
 
@@ -9,17 +9,8 @@ from nmdc_server.schemas_submission import MetadataSuggestionType
 class SampleMetadataSuggester:
     """A class to suggest sample metadata values based on partial sample metadata."""
 
-    def __init__(self):
-        self._geo_engine: Optional[GeoEngine] = None
-
-    @property
-    def geo_engine(self) -> GeoEngine:
-        """A GeoEngine instance for looking up geospatial data."""
-        if self._geo_engine is None:
-            self._geo_engine = GeoEngine()
-        return self._geo_engine
-
-    def suggest_elevation_from_lat_lon(self, sample: Dict[str, str]) -> Optional[str]:
+    @staticmethod
+    def suggest_elevation_from_lat_lon(sample: Dict[str, str]) -> Optional[str]:
         """Suggest an elevation for a sample based on its lat_lon."""
         lat_lon = sample.get("lat_lon", None)
         if lat_lon is None:
@@ -28,7 +19,7 @@ class SampleMetadataSuggester:
         if len(lat_lon_split) == 2:
             try:
                 lat, lon = map(float, lat_lon_split)
-                elev = self.geo_engine.get_elevation((lat, lon))
+                elev = nmdc_geoloc_tools.elevation((lat, lon))
                 return f"{elev:.16g}"
             except ValueError:
                 # This could happen if the lat_lon string is not parseable as a float
