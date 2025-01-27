@@ -45,7 +45,10 @@ export default defineComponent({
 
     function handleJumpToCell(suggestion: MetadataSuggestion) {
       const { row, slot } = suggestion;
-      const col = harmonizerApi.slotColumns[slot];
+      const col = harmonizerApi.slotInfo.get(slot)?.columnIndex;
+      if (col === undefined) {
+        return;
+      }
       harmonizerApi.jumpToRowCol(row, col);
     }
 
@@ -57,7 +60,10 @@ export default defineComponent({
 
     function handleAcceptSuggestion(suggestion: MetadataSuggestion) {
       const { row, slot } = suggestion;
-      const col = harmonizerApi.slotColumns[slot];
+      const col = harmonizerApi.slotInfo.get(slot)?.columnIndex;
+      if (col === undefined) {
+        return;
+      }
       harmonizerApi.setCellData([{ row, col, text: suggestion.value }]);
 
       const index = metadataSuggestions.value.findIndex((s) => s === suggestion);
@@ -81,7 +87,12 @@ export default defineComponent({
       }
     }
 
+    function getSlotTitle(slot: string) {
+      return harmonizerApi.slotInfo.get(slot)?.title ?? slot;
+    }
+
     return {
+      getSlotTitle,
       handleAcceptSuggestion,
       handleJumpToCell,
       handleRejectSuggestion,
@@ -204,6 +215,7 @@ export default defineComponent({
 
             <v-sheet
               :key="row"
+              class="mb-4"
               elevation="0"
               rounded
               outlined
@@ -211,15 +223,16 @@ export default defineComponent({
               <div
                 v-for="s in suggestion"
                 :key="s.slot"
-                class="ma-2 d-flex flex-wrap justify-end"
+                class="ma-2"
               >
                 <div class="flex-grow-1 full-width">
-                  <div
-                    class="text-body-2"
-                  >
-                    <span class="grey--text">Column:</span> {{ s.slot }}
+                  <div class="text-body-2">
+                    <span class="grey--text">Column:</span> {{ getSlotTitle(s.slot) }}
                   </div>
-                  <div>
+                </div>
+
+                <div class="d-flex flex-wrap align-center justify-end">
+                  <div class="flex-grow-1">
                     <span
                       v-if="s.current_value"
                       class="value previous"
@@ -230,37 +243,36 @@ export default defineComponent({
                       v-text="s.value"
                     />
                   </div>
-                </div>
-                <div
-                  class="flex-shrink-0 flex-grow-0"
-                >
-                  <v-btn
-                    icon
-                    color="primary"
-                    @click="handleJumpToCell(s)"
-                  >
-                    <v-icon>
-                      mdi-target
-                    </v-icon>
-                  </v-btn>
-                  <v-btn
-                    icon
-                    color="primary"
-                    @click="handleRejectSuggestion(s)"
-                  >
-                    <v-icon>
-                      mdi-close
-                    </v-icon>
-                  </v-btn>
-                  <v-btn
-                    icon
-                    color="primary"
-                    @click="handleAcceptSuggestion(s)"
-                  >
-                    <v-icon>
-                      mdi-check
-                    </v-icon>
-                  </v-btn>
+
+                  <div class="flex-shrink-0 flex-grow-0">
+                    <v-btn
+                      icon
+                      color="primary"
+                      @click="handleJumpToCell(s)"
+                    >
+                      <v-icon>
+                        mdi-target
+                      </v-icon>
+                    </v-btn>
+                    <v-btn
+                      icon
+                      color="primary"
+                      @click="handleRejectSuggestion(s)"
+                    >
+                      <v-icon>
+                        mdi-close
+                      </v-icon>
+                    </v-btn>
+                    <v-btn
+                      icon
+                      color="primary"
+                      @click="handleAcceptSuggestion(s)"
+                    >
+                      <v-icon>
+                        mdi-check
+                      </v-icon>
+                    </v-btn>
+                  </div>
                 </div>
               </div>
             </v-sheet>
