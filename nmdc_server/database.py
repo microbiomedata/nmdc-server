@@ -19,6 +19,15 @@ engine_ingest = create_engine(settings.ingest_database_uri, **_engine_kwargs)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 SessionLocalIngest = sessionmaker(autocommit=False, autoflush=False, bind=engine_ingest)
 
+
+from debug_toolbar.panels.sqlalchemy import SQLAlchemyPanel as BasePanel
+
+
+class SQLAlchemyPanel(BasePanel):
+    async def add_engines(self, request):
+        self.engines.add(engine)
+
+
 # This is to avoid having to manually name all constraints
 # See: http://alembic.zzzcomputing.com/en/latest/naming.html
 metadata = MetaData(
