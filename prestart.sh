@@ -20,3 +20,6 @@ PGDATABASE=postgres psql -c "create database nmdc_b;" || true
 
 # Apply pending alembic migrations
 nmdc-server migrate
+
+# Generate static content
+nmdc-server generate-static-files --remove-existing
