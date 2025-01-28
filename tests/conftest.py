@@ -1,8 +1,8 @@
 import os
 
+import nmdc_geoloc_tools
 import pytest
 from factory import random
-import nmdc_geoloc_tools
 from starlette.testclient import TestClient
 
 from nmdc_server import database, schemas
