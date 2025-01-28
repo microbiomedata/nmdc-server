@@ -336,19 +336,19 @@ async function addMetadataSuggestions(requests: MetadataSuggestionRequest[], bat
   const batches = chunk(requests, batchSize);
   for (let i = 0; i < batches.length; i += 1) {
     const batch = batches[i];
+
     // eslint-disable-next-line no-await-in-loop -- we are intentionally throttling requests to the sever
     const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
 
-    suggestions.forEach((suggestion) => {
-      const existingSuggestionIndex = metadataSuggestions.value.findIndex(
-        (s) => s.row === suggestion.row && s.slot === suggestion.slot,
+    // Drop all the existing suggestions for the rows in this batch
+    batch.forEach((request) => {
+      metadataSuggestions.value = metadataSuggestions.value.filter(
+        (suggestion) => suggestion.row !== request.row,
       );
-      if (existingSuggestionIndex < 0) {
-        metadataSuggestions.value.push(suggestion);
-      } else {
-        metadataSuggestions.value.splice(existingSuggestionIndex, 1, suggestion);
-      }
     });
+
+    // Add the new suggestions to the list
+    metadataSuggestions.value.push(...suggestions);
   }
 }
 
