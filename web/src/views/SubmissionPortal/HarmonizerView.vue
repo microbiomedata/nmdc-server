@@ -64,7 +64,7 @@ const ColorKey = {
   },
 };
 
-const HELP_SIDEBAR_WIDTH = '300px';
+const HELP_SIDEBAR_WIDTH = '320px';
 const TABS_HEIGHT = '48px';
 
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
@@ -190,9 +190,14 @@ export default defineComponent({
       }
     });
 
+    // DataHarmonizer is a bit loose in its definition of empty cells. They can be null or and empty string.
+    const isNonEmpty = (val: any) => val !== null && val !== '';
     const onDataChange = async (changes: any[]) => {
       if (suggestionMode.value === SuggestionsMode.LIVE) {
-        changeBatch.push(...changes);
+        // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
+        // where either the previous value or updated value (or both) are non-empty.
+        const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
+        changeBatch.push(...nonEmptyChanges);
         clearTimeout(changeTimer);
         changeTimer = setTimeout(async () => {
           const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));

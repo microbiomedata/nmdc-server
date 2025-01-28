@@ -12,7 +12,12 @@ import {
   suggestionMode,
   suggestionType,
 } from '@/views/SubmissionPortal/store';
-import { MetadataSuggestion, SuggestionsMode, SuggestionType } from '@/views/SubmissionPortal/types';
+import {
+  CellData,
+  MetadataSuggestion,
+  SuggestionsMode,
+  SuggestionType,
+} from '@/views/SubmissionPortal/types';
 import type { HarmonizerApi } from '@/views/SubmissionPortal/harmonizerApi';
 import { getRejectedSuggestions, setRejectedSuggestions } from '@/store/localStorage';
 
@@ -35,13 +40,40 @@ export default defineComponent({
     const rejectedSuggestions = ref(getRejectedSuggestions());
     const onDemandSuggestionsLoading = ref(false);
 
-    const displaySuggestions = computed(() => {
+    const suggestionsByRow = computed(() => {
       const filteredSuggestions = metadataSuggestions.value.filter((suggestion) => {
         const key = getSuggestionKey(suggestion);
         return !rejectedSuggestions.value.includes(key);
       });
       return groupBy(filteredSuggestions, 'row');
     });
+
+    const hasSuggestions = computed(() => Object.keys(suggestionsByRow.value).length > 0);
+
+    function acceptSuggestions(suggestions: MetadataSuggestion[]) {
+      const cellData = [] as CellData[];
+      suggestions.forEach((suggestion) => {
+        const { row, slot } = suggestion;
+        const col = harmonizerApi.slotInfo.get(slot)?.columnIndex;
+        if (col === undefined) {
+          return;
+        }
+        cellData.push({ row, col, text: suggestion.value });
+      });
+
+      // Do this outside of the forEach so that the DataHarmonizer afterChange hook is only triggered once
+      harmonizerApi.setCellData(cellData);
+
+      metadataSuggestions.value = metadataSuggestions.value.filter((suggestion) => !suggestions.includes(suggestion));
+    }
+
+    function rejectSuggestions(suggestions: MetadataSuggestion[]) {
+      suggestions.forEach((suggestion) => {
+        const key = getSuggestionKey(suggestion);
+        rejectedSuggestions.value.push(key);
+      });
+      setRejectedSuggestions(rejectedSuggestions.value);
+    }
 
     function handleJumpToCell(suggestion: MetadataSuggestion) {
       const { row, slot } = suggestion;
@@ -53,21 +85,19 @@ export default defineComponent({
     }
 
     function handleRejectSuggestion(suggestion: MetadataSuggestion) {
-      const key = getSuggestionKey(suggestion);
-      rejectedSuggestions.value.push(key);
-      setRejectedSuggestions(rejectedSuggestions.value);
+      rejectSuggestions([suggestion]);
     }
 
     function handleAcceptSuggestion(suggestion: MetadataSuggestion) {
-      const { row, slot } = suggestion;
-      const col = harmonizerApi.slotInfo.get(slot)?.columnIndex;
-      if (col === undefined) {
-        return;
-      }
-      harmonizerApi.setCellData([{ row, col, text: suggestion.value }]);
+      acceptSuggestions([suggestion]);
+    }
 
-      const index = metadataSuggestions.value.findIndex((s) => s === suggestion);
-      metadataSuggestions.value.splice(index, 1);
+    function handleAcceptAllSuggestions() {
+      acceptSuggestions(Object.values(suggestionsByRow.value).flat());
+    }
+
+    function handleRejectAllSuggestions() {
+      rejectSuggestions(Object.values(suggestionsByRow.value).flat());
     }
 
     async function handleSuggestForSelectedRows() {
@@ -93,10 +123,13 @@ export default defineComponent({
 
     return {
       getSlotTitle,
+      handleAcceptAllSuggestions,
       handleAcceptSuggestion,
       handleJumpToCell,
+      handleRejectAllSuggestions,
       handleRejectSuggestion,
       handleSuggestForSelectedRows,
+      hasSuggestions,
       onDemandSuggestionsLoading,
       rejectedSuggestions,
       SuggestionsMode,
@@ -104,7 +137,7 @@ export default defineComponent({
       suggestionMode,
       suggestionTypeOptions,
       suggestionType,
-      suggestionsByRow: displaySuggestions,
+      suggestionsByRow,
     };
   },
 });
@@ -172,34 +205,40 @@ export default defineComponent({
         </v-col>
       </v-row>
 
-      <v-row>
+      <v-row v-if="hasSuggestions">
         <v-col>
-          <v-btn
-            class="rounded-r-0"
-            color="primary"
-            outlined
-          >
-            <v-icon>
-              mdi-close
-            </v-icon>
-          </v-btn>
-          <v-btn
-            class="rounded-l-0"
-            style="border-left-width: 0"
-            color="primary"
-            outlined
-          >
-            <v-icon>
-              mdi-check
-            </v-icon>
-          </v-btn>
+          <div class="d-flex justify-space-between align-center">
+            <div class="text-body-1 text--primary font-weight-medium">
+              All Suggestions
+            </div>
+            <div>
+              <v-btn
+                color="primary"
+                icon
+                @click="handleRejectAllSuggestions"
+              >
+                <v-icon>
+                  mdi-close
+                </v-icon>
+              </v-btn>
+              <v-btn
+                color="primary"
+                icon
+                @click="handleAcceptAllSuggestions"
+              >
+                <v-icon>
+                  mdi-check
+                </v-icon>
+              </v-btn>
+            </div>
+          </div>
         </v-col>
       </v-row>
 
       <v-row>
         <v-col>
           <div
-            v-if="Object.keys(suggestionsByRow).length === 0"
+            v-if="!hasSuggestions"
             class="text--disabled"
           >
             No suggestions available.

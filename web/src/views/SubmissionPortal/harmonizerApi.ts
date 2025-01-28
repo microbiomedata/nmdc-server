@@ -4,6 +4,7 @@ import {
 import { debounce } from 'lodash';
 import { DataHarmonizer, Footer } from 'data-harmonizer';
 import {
+  CellData,
   HARMONIZER_TEMPLATES,
   EMSL,
   JGI_MG,
@@ -54,12 +55,6 @@ export function getVariants(checkBoxes: string[], dataGenerated: boolean | undef
     templates.add(JGT_MT);
   }
   return Array.from(templates);
-}
-
-interface CellData {
-  row: number,
-  col: number,
-  text: string,
 }
 
 export class HarmonizerApi {

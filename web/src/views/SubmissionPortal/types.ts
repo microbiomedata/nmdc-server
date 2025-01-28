@@ -153,6 +153,12 @@ export enum SuggestionsMode {
   OFF = 'Off',
 }
 
+export interface CellData {
+  row: number,
+  col: number,
+  text: string,
+}
+
 export interface MetadataSuggestionRequest {
   row: number,
   data: Record<string, string>,
