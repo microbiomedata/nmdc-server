@@ -181,6 +181,7 @@ export interface NmdcAddress {
   city: string;
   state: string;
   postalCode: string;
+  country: string;
 }
 
 export interface MetadataSubmission {
@@ -205,6 +206,7 @@ export interface MetadataSubmissionRecord {
   source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
   study_name: string;
   templates: string[];
+  is_test_submission: boolean;
 }
 
 export interface PaginatedResponse<T> {

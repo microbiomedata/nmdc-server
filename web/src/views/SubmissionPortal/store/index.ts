@@ -46,6 +46,7 @@ const submissionStatus: Record<string, SubmissionStatus> = {
 const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(submissionStatus).includes(str);
 
 const status = ref(submissionStatus.InProgress);
+const isTestSubmission = ref(false);
 
 /**
  * Submission record locking information
@@ -90,6 +91,7 @@ const addressFormDefault = {
     city: '',
     state: '',
     postalCode: '',
+    country: '',
   } as NmdcAddress,
   expectedShippingDate: undefined as undefined | Date,
   shippingConditions: '',
@@ -107,6 +109,7 @@ const addressFormDefault = {
 const contextFormDefault = {
   dataGenerated: undefined as undefined | boolean,
   awardDois: [] as string[] | null,
+  ship: undefined as undefined | boolean,
   facilityGenerated: undefined as undefined | boolean,
   facilities: [] as string[],
   award: undefined as undefined | string,
@@ -256,6 +259,7 @@ function reset() {
   packageName.value = ['soil'];
   sampleData.value = {};
   status.value = submissionStatus.InProgress;
+  isTestSubmission.value = false;
 }
 
 async function incrementalSaveRecord(id: string): Promise<number | void> {
@@ -286,9 +290,10 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   return Promise.resolve();
 }
 
-async function generateRecord() {
+async function generateRecord(isTestSubBool: boolean) {
   reset();
-  const record = await api.createRecord(payloadObject.value);
+  const record = await api.createRecord(payloadObject.value, isTestSubBool);
+  isTestSubmission.value = isTestSubBool;
   return record;
 }
 
@@ -304,6 +309,7 @@ async function loadRecord(id: string) {
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
   _permissionLevel = (val.permission_level as PermissionLevelValues);
+  isTestSubmission.value = val.is_test_submission;
 
   try {
     const lockResponse = await api.lockSubmission(id);
@@ -386,6 +392,7 @@ export {
   hasChanged,
   tabsValidated,
   status,
+  isTestSubmission,
   metadataSuggestions,
   suggestionMode,
   suggestionType,

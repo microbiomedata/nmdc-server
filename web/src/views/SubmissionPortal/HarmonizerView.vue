@@ -26,6 +26,7 @@ import {
   addMetadataSuggestions,
   suggestionMode,
   metadataSuggestions,
+  isTestSubmission,
 } from './store';
 import {
   HARMONIZER_TEMPLATES,
@@ -554,6 +555,7 @@ export default defineComponent({
       schemaLoading,
       importErrorSnackbar,
       notImportedWorksheetNames,
+      isTestSubmission,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -948,11 +950,29 @@ export default defineComponent({
                 activator="parent"
                 width="auto"
               >
-                <v-card>
+                <v-card v-if="isTestSubmission">
                   <v-card-title>
                     Submit
                   </v-card-title>
-                  <v-card-text>You are about to submit this study and metadata for NMDC review. Would you like to continue?</v-card-text>
+                  <v-card-text>
+                    Test submissions cannot be submitted for NMDC review.
+                  </v-card-text>
+                  <v-card-actions>
+                    <v-btn
+                      text
+                      @click="submitDialog = false"
+                    >
+                      Close
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+                <v-card v-else>
+                  <v-card-title>
+                    Submit
+                  </v-card-title>
+                  <v-card-text>
+                    You are about to submit this study and metadata for NMDC review. Would you like to continue?
+                  </v-card-text>
                   <v-card-actions>
                     <v-btn
                       color="primary"

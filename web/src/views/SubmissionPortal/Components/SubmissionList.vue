@@ -78,8 +78,8 @@ export default defineComponent({
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
-    async function createNewSubmission() {
-      const item = await generateRecord();
+    async function createNewSubmission(isTestSubmission: boolean) {
+      const item = await generateRecord(isTestSubmission);
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
@@ -172,11 +172,32 @@ export default defineComponent({
       <v-card-text>
         <v-btn
           color="primary"
-          @click="createNewSubmission"
+          @click="createNewSubmission(false)"
         >
           <v-icon>mdi-plus</v-icon>
-          Create New Submission
+          Create Submission
         </v-btn>
+        <v-btn
+          color="primary"
+          class="ml-3"
+          outlined
+          @click="createNewSubmission(true)"
+        >
+          <v-icon>mdi-plus</v-icon>
+          Create Test Submission
+        </v-btn>
+        <v-tooltip right>
+          <template #activator="{ on }">
+            <v-icon
+              class="pl-2"
+              color="primary"
+              v-on="on"
+            >
+              mdi-information
+            </v-icon>
+          </template>
+          <span>Test submissions should be used when at a workshop or doing a test, example, or training. These cannot be submitted.</span>
+        </v-tooltip>
       </v-card-text>
       <v-card-title class="text-h4">
         Past submissions

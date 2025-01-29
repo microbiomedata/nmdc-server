@@ -25,7 +25,7 @@ function addressToString(address: NmdcAddress): string {
   return result;
 }
 
-async function createRecord(record: MetadataSubmission) {
+async function createRecord(record: MetadataSubmission, isTestSubmission: boolean) {
   const resp = await client.post<
     MetadataSubmissionRecord,
     AxiosResponse<MetadataSubmissionRecord>,
@@ -33,6 +33,7 @@ async function createRecord(record: MetadataSubmission) {
   >('metadata_submission', {
     metadata_submission: record,
     source_client: 'submission_portal',
+    is_test_submission: isTestSubmission,
   });
   return resp.data;
 }
