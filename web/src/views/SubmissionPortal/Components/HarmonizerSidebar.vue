@@ -110,7 +110,7 @@ export default defineComponent({
           @full-reference-click="harmonizerApi.launchReference()"
         />
       </v-tab-item>
-      <v-tab-item class="pa-2">
+      <v-tab-item>
         <FindReplace
           :harmonizer-api="harmonizerApi"
         />

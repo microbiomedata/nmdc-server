@@ -127,82 +127,102 @@ export default defineComponent({
 </script>
 
 <template>
-  <div>
-    <div class="d-flex align-center">
-      <v-form
-        style="width: 100%"
-        @submit.prevent="next"
-      >
-        <v-text-field
-          v-model="query"
-          clearable
-          label="Find"
-          :counter="query ? count : undefined"
-          :counter-value="query ? () => (count ? cursor + 1 : 0) : null"
-        />
-      </v-form>
-      <v-tooltip left>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            icon
-            v-bind="attrs"
-            v-on="on"
-            @click="previous"
-          >
-            <v-icon>mdi-arrow-up-thin</v-icon>
-          </v-btn>
-        </template>
-        <span>Find previous</span>
-      </v-tooltip>
-      <v-tooltip left>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            icon
-            v-bind="attrs"
-            v-on="on"
-            @click="next"
-          >
-            <v-icon>mdi-arrow-down-thin</v-icon>
-          </v-btn>
-        </template>
-        <span>Find next</span>
-      </v-tooltip>
-    </div>
+  <v-card elevation="0">
+    <v-card-title>
+      Find and Replace
+    </v-card-title>
 
-    <div class="d-flex align-center">
-      <v-text-field
-        v-model="replacement"
-        clearable
-        label="Replace"
-      />
-      <v-tooltip left>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            icon
-            v-bind="attrs"
-            v-on="on"
-            @click="replaceOnce"
+    <v-card-text>
+      <v-row
+        align="center"
+        dense
+      >
+        <v-col class="flex-grow-1">
+          <v-form
+            style="width: 100%"
+            @submit.prevent="next"
           >
-            <v-icon>mdi-repeat-once</v-icon>
-          </v-btn>
-        </template>
-        <span>Replace</span>
-      </v-tooltip>
-      <v-tooltip left>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            icon
-            v-bind="attrs"
-            v-on="on"
-            @click="replaceAll"
-          >
-            <v-icon>mdi-repeat</v-icon>
-          </v-btn>
-        </template>
-        <span>Replace all</span>
-      </v-tooltip>
-    </div>
-  </div>
+            <v-text-field
+              v-model="query"
+              clearable
+              label="Find"
+              :counter="query ? count : undefined"
+              :counter-value="query ? () => (count ? cursor + 1 : 0) : null"
+            />
+          </v-form>
+        </v-col>
+        <v-col class="flex-grow-0 flex-shrink-0 text-no-wrap">
+          <v-tooltip left>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                v-bind="attrs"
+                v-on="on"
+                @click="previous"
+              >
+                <v-icon>mdi-arrow-up-thin</v-icon>
+              </v-btn>
+            </template>
+            <span>Find previous</span>
+          </v-tooltip>
+          <v-tooltip left>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                v-bind="attrs"
+                v-on="on"
+                @click="next"
+              >
+                <v-icon>mdi-arrow-down-thin</v-icon>
+              </v-btn>
+            </template>
+            <span>Find next</span>
+          </v-tooltip>
+        </v-col>
+      </v-row>
+
+      <v-row
+        align="center"
+        dense
+      >
+        <v-col class="flex-grow-1">
+          <v-text-field
+            v-model="replacement"
+            clearable
+            label="Replace"
+          />
+        </v-col>
+        <v-col class="flex-grow-0 flex-shrink-0 text-no-wrap">
+          <v-tooltip left>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                v-bind="attrs"
+                v-on="on"
+                @click="replaceOnce"
+              >
+                <v-icon>mdi-repeat-once</v-icon>
+              </v-btn>
+            </template>
+            <span>Replace</span>
+          </v-tooltip>
+          <v-tooltip left>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                v-bind="attrs"
+                v-on="on"
+                @click="replaceAll"
+              >
+                <v-icon>mdi-repeat</v-icon>
+              </v-btn>
+            </template>
+            <span>Replace all</span>
+          </v-tooltip>
+        </v-col>
+      </v-row>
+    </v-card-text>
+  </v-card>
 </template>
 
 <style lang="scss">
