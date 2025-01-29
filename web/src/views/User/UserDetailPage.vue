@@ -6,7 +6,8 @@ import AppBanner from '@/components/AppBanner.vue';
 import OrcidId from '@/components/Presentation/OrcidId.vue';
 import { stateRefs } from '@/store';
 import { getRefreshToken } from '@/store/localStorage';
-import { api, User } from '@/data/api';
+import { User } from '@/types';
+import { api } from '@/data/api';
 
 export default defineComponent({
   name: 'UserDetailPage',

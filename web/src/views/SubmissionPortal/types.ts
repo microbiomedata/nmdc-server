@@ -1,4 +1,4 @@
-import { User } from '@/data/api';
+import { User } from '@/types';
 
 /**
  * A manifest of the options available in DataHarmonizer

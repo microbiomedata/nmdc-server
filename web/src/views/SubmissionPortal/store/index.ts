@@ -6,7 +6,7 @@ import { chunk, clone, forEach } from 'lodash';
 import axios from 'axios';
 import * as api from './api';
 import { getVariants } from '../harmonizerApi';
-import { User } from '@/data/api';
+import { User } from '@/types';
 import {
   HARMONIZER_TEMPLATES,
   MetadataSubmission,
