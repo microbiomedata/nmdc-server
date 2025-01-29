@@ -118,6 +118,7 @@ export default defineComponent({
       <v-tab-item>
         <MetadataSuggester
           :harmonizer-api="harmonizerApi"
+          :schema-class-name="template.schemaClass"
         />
       </v-tab-item>
       <v-tab-item class="pa-2">

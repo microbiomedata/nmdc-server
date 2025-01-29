@@ -1,6 +1,9 @@
+import { MetadataSuggestion } from '@/views/SubmissionPortal/types';
+
 const QUERY_STATE_KEY = 'storage.queryState';
 const REFRESH_TOKEN_KEY = 'storage.refreshToken';
 const REJECTED_SUGGESTIONS = 'storage.rejectedSuggestions';
+const PENDING_SUGGESTIONS = 'storage.pendingSuggestions';
 
 function getQueryState() {
   const state = window.localStorage.getItem(QUERY_STATE_KEY);
@@ -36,6 +39,19 @@ function setRejectedSuggestions(suggestions: string[]) {
   return window.localStorage.setItem(REJECTED_SUGGESTIONS, JSON.stringify(suggestions));
 }
 
+function getPendingSuggestions(schemaClassName: string) {
+  const suggestionsStr = window.localStorage.getItem(PENDING_SUGGESTIONS);
+  const suggestionsObj = suggestionsStr ? JSON.parse(suggestionsStr) : {};
+  return suggestionsObj[schemaClassName] || [];
+}
+
+function setPendingSuggestions(schemaClassName: string, suggestions: MetadataSuggestion[]) {
+  const pendingSuggestions = window.localStorage.getItem(PENDING_SUGGESTIONS);
+  const pendingSuggestionsObj = pendingSuggestions ? JSON.parse(pendingSuggestions) : {};
+  pendingSuggestionsObj[schemaClassName] = suggestions;
+  window.localStorage.setItem(PENDING_SUGGESTIONS, JSON.stringify(pendingSuggestionsObj));
+}
+
 export {
   getQueryState,
   setQueryState,
@@ -45,4 +61,6 @@ export {
   clearRefreshToken,
   getRejectedSuggestions,
   setRejectedSuggestions,
+  getPendingSuggestions,
+  setPendingSuggestions,
 };

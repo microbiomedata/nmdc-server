@@ -19,6 +19,7 @@ import {
   SuggestionsMode,
   MetadataSuggestionRequest,
 } from '@/views/SubmissionPortal/types';
+import { setPendingSuggestions } from '@/store/localStorage';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -332,7 +333,7 @@ function mergeSampleData(key: string | undefined, data: any[]) {
   };
 }
 
-async function addMetadataSuggestions(requests: MetadataSuggestionRequest[], batchSize: number = 10) {
+async function addMetadataSuggestions(requests: MetadataSuggestionRequest[], schemaClassName: string, batchSize: number = 10) {
   const batches = chunk(requests, batchSize);
   for (let i = 0; i < batches.length; i += 1) {
     const batch = batches[i];
@@ -350,6 +351,16 @@ async function addMetadataSuggestions(requests: MetadataSuggestionRequest[], bat
     // Add the new suggestions to the list
     metadataSuggestions.value.push(...suggestions);
   }
+
+  setPendingSuggestions(schemaClassName, metadataSuggestions.value);
+}
+
+function removeMetadataSuggestions(suggestions: MetadataSuggestion[], schemaClassName: string) {
+  metadataSuggestions.value = metadataSuggestions.value.filter(
+    (suggestion) => !suggestions.includes(suggestion),
+  );
+
+  setPendingSuggestions(schemaClassName, metadataSuggestions.value);
 }
 
 export {
@@ -390,4 +401,5 @@ export {
   canEditSampleMetadata,
   canEditSubmissionMetadata,
   addMetadataSuggestions,
+  removeMetadataSuggestions,
 };

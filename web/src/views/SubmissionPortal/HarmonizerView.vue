@@ -25,6 +25,7 @@ import {
   isOwner,
   addMetadataSuggestions,
   suggestionMode,
+  metadataSuggestions,
 } from './store';
 import {
   HARMONIZER_TEMPLATES,
@@ -40,6 +41,7 @@ import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
 import { stateRefs } from '@/store';
+import { getPendingSuggestions } from '@/store/localStorage';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -201,7 +203,7 @@ export default defineComponent({
         clearTimeout(changeTimer);
         changeTimer = setTimeout(async () => {
           const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-          await addMetadataSuggestions(changedRowData);
+          await addMetadataSuggestions(changedRowData, activeTemplate.value.schemaClass!);
           changeBatch = [];
         }, 3000);
       }
@@ -225,6 +227,7 @@ export default defineComponent({
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
         harmonizerApi.addChangeHook(onDataChange);
+        metadataSuggestions.value = getPendingSuggestions(activeTemplate.value.schemaClass!);
         if (!canEditSampleMetadata()) {
           harmonizerApi.setTableReadOnly();
         }
@@ -497,14 +500,20 @@ export default defineComponent({
       }
 
       await validate();
+
+      const nextTemplateKey = templateList.value[index];
+      const nextTemplate = HARMONIZER_TEMPLATES[nextTemplateKey];
+
+      // Get the stashed suggestions (if any) for the next template and present them.
+      metadataSuggestions.value = getPendingSuggestions(nextTemplate.schemaClass!);
+
       // When changing templates we may need to populate the common columns
       // from the environment tabs
-      const nextTemplate = templateList.value[index];
-      synchronizeTabData(nextTemplate);
+      synchronizeTabData(nextTemplateKey);
 
-      activeTemplateKey.value = nextTemplate;
-      activeTemplate.value = HARMONIZER_TEMPLATES[nextTemplate];
-      harmonizerApi.useTemplate(HARMONIZER_TEMPLATES[nextTemplate].schemaClass);
+      activeTemplateKey.value = nextTemplateKey;
+      activeTemplate.value = nextTemplate;
+      harmonizerApi.useTemplate(nextTemplate.schemaClass);
       harmonizerApi.addChangeHook(onDataChange);
     }
 

@@ -8,6 +8,7 @@ import {
 import { groupBy } from 'lodash';
 import {
   addMetadataSuggestions,
+  removeMetadataSuggestions,
   metadataSuggestions,
   suggestionMode,
   suggestionType,
@@ -34,9 +35,13 @@ export default defineComponent({
       type: Object as PropType<HarmonizerApi>,
       required: true,
     },
+    schemaClassName: {
+      type: String,
+      required: true,
+    },
   },
 
-  setup({ harmonizerApi }) {
+  setup({ harmonizerApi, schemaClassName }) {
     const rejectedSuggestions = ref(getRejectedSuggestions());
     const onDemandSuggestionsLoading = ref(false);
 
@@ -64,7 +69,7 @@ export default defineComponent({
       // Do this outside of the forEach so that the DataHarmonizer afterChange hook is only triggered once
       harmonizerApi.setCellData(cellData);
 
-      metadataSuggestions.value = metadataSuggestions.value.filter((suggestion) => !suggestions.includes(suggestion));
+      removeMetadataSuggestions(suggestions, schemaClassName);
     }
 
     function rejectSuggestions(suggestions: MetadataSuggestion[]) {
@@ -111,7 +116,7 @@ export default defineComponent({
       }, [] as number[]);
       const changedRowData = harmonizerApi.getDataByRows(rows);
       try {
-        await addMetadataSuggestions(changedRowData);
+        await addMetadataSuggestions(changedRowData, schemaClassName);
       } finally {
         onDemandSuggestionsLoading.value = false;
       }
