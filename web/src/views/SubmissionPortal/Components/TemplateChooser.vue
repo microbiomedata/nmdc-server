@@ -32,11 +32,11 @@ export default defineComponent({
 <template>
   <div>
     <div class="text-h2">
-      Environmental Extensions
+      Sample Environment
       <submission-docs-link anchor="environmental-package" />
     </div>
     <div class="text-h5">
-      Choose environmental extensions for your data.
+      Choose the MIxS Extension for your samples.
     </div>
     <submission-permission-banner
       v-if="!canEditSubmissionMetadata()"
