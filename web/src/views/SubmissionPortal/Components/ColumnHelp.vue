@@ -23,31 +23,33 @@ export default defineComponent({
 </script>
 
 <template>
-  <div>
-    <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
+  <v-card elevation="0">
+    <v-card-title>
       Column Help
-      <v-spacer />
-    </div>
+    </v-card-title>
 
-    <div v-if="columnHelp">
-      <div class="my-2">
+    <v-card-text
+      v-if="columnHelp"
+      class="text--primary"
+    >
+      <div class="mb-2">
         <span class="font-weight-bold pr-2">Column:</span>
         <span
           :title="columnHelp.name"
           v-html="columnHelp.title"
         />
       </div>
-      <div class="my-2">
+      <div class="mb-2">
         <span class="font-weight-bold pr-2">Description:</span>
         <span v-html="urlify(columnHelp.description)" />
       </div>
-      <div class="my-2">
+      <div class="mb-2">
         <span class="font-weight-bold pr-2">Guidance:</span>
         <span v-html="urlify(columnHelp.guidance)" />
       </div>
       <div
         v-if="columnHelp.examples"
-        class="my-2"
+        class="mb-2"
       >
         <span class="font-weight-bold pr-2">Examples:</span>
         <span v-html="urlify(columnHelp.examples)" />
@@ -65,11 +67,13 @@ export default defineComponent({
           mdi-open-in-new
         </v-icon>
       </v-btn>
-    </div>
-    <div v-else>
-      <p class="my-2 text--disabled">
-        Click on a cell or column to view help
-      </p>
-    </div>
-  </div>
+    </v-card-text>
+
+    <v-card-text
+      v-else
+      class="text--disabled"
+    >
+      Click on a cell or column to view help
+    </v-card-text>
+  </v-card>
 </template>

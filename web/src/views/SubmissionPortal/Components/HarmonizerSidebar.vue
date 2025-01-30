@@ -103,7 +103,7 @@ export default defineComponent({
     <v-divider />
 
     <v-tabs-items v-model="tabModel">
-      <v-tab-item class="pa-2">
+      <v-tab-item>
         <ColumnHelp
           :column-help="columnHelp"
           :template="template"
