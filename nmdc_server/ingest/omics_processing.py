@@ -175,7 +175,7 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
 
 def load(db: Session, cursor: Cursor, mongodb: Database):
     logger = get_logger(__name__)
-    config_map = {}
+    config_map: dict[str, dict[str, Any]] = {}
     for obj in cursor:
         try:
             load_omics_processing(db, obj, mongodb, logger, config_map)
