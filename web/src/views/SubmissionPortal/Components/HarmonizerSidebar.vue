@@ -129,9 +129,7 @@ export default defineComponent({
         />
       </v-tab-item>
       <v-tab-item>
-        <ContactCard
-          elevation="0"
-        />
+        <ContactCard elevation="0" />
       </v-tab-item>
     </v-tabs-items>
   </div>

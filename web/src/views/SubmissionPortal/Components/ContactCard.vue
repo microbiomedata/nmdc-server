@@ -31,114 +31,116 @@ export default defineComponent({
     <v-card-title>
       We are here to help
     </v-card-title>
-    <v-list
-      subheader
-    >
-      <v-list-item
-        two-line
-        style="background-color: #eeeeee;"
-        class="ma-2"
-        href="https://microbiomedata.org/contact/"
+    <v-card-text>
+      <v-list
+        subheader
       >
-        <v-btn
-          icon
-          outlined
-          color="primary"
-          class="mr-4"
-          style="border: solid #4F3B80;"
+        <v-list-item
+          two-line
+          style="background-color: #eeeeee;"
+          class="mb-2"
+          href="https://microbiomedata.org/contact/"
         >
-          <v-icon
+          <v-btn
+            icon
+            outlined
             color="primary"
+            class="mr-4"
+            style="border: solid #4F3B80;"
           >
-            mdi-open-in-new
-          </v-icon>
-        </v-btn>
-        <v-list-item-content>
-          <v-list-item-title
-            class="primary--text"
-          >
-            Visit our support page
-          </v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
-      <v-list-item
-        two-line
-        class="ma-2"
-        style="background-color: #eeeeee"
-        :href="emailTemplate('support')"
-      >
-        <v-btn
-          icon
-          outlined
-          color="blue"
-          class="mr-4"
-          style="border: solid;"
+            <v-icon
+              color="primary"
+            >
+              mdi-open-in-new
+            </v-icon>
+          </v-btn>
+          <v-list-item-content>
+            <v-list-item-title
+              class="primary--text"
+            >
+              Visit our support page
+            </v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item
+          two-line
+          class="mb-2"
+          style="background-color: #eeeeee"
+          :href="emailTemplate('support')"
         >
-          <v-icon>mdi-email</v-icon>
-        </v-btn>
-        <v-list-item-content>
-          <v-list-item-title
-            class="blue--text"
+          <v-btn
+            icon
+            outlined
+            color="blue"
+            class="mr-4"
+            style="border: solid;"
           >
-            Send us a message
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            Ask us for help
-          </v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-      <v-list-item
-        two-line
-        class="ma-2"
-        style="background-color: #eeeeee"
-        :href="emailTemplate('bug')"
-      >
-        <v-btn
-          icon
-          outlined
-          color="red"
-          class="mr-4"
-          style="border: solid;"
+            <v-icon>mdi-email</v-icon>
+          </v-btn>
+          <v-list-item-content>
+            <v-list-item-title
+              class="blue--text"
+            >
+              Send us a message
+            </v-list-item-title>
+            <v-list-item-subtitle>
+              Ask us for help
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item
+          two-line
+          class="mb-2"
+          style="background-color: #eeeeee"
+          :href="emailTemplate('bug')"
         >
-          <v-icon>mdi-bug</v-icon>
-        </v-btn>
-        <v-list-item-content>
-          <v-list-item-title
-            class="red--text"
+          <v-btn
+            icon
+            outlined
+            color="red"
+            class="mr-4"
+            style="border: solid;"
           >
-            Report an issue
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            Let us know of any bugs
-          </v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-      <v-list-item
-        two-line
-        class="ma-2"
-        style="background-color: #eeeeee"
-        :href="emailTemplate('feature')"
-      >
-        <v-btn
-          icon
-          outlined
-          color="grey darken-2"
-          class="mr-4"
-          style="border: solid;"
+            <v-icon>mdi-bug</v-icon>
+          </v-btn>
+          <v-list-item-content>
+            <v-list-item-title
+              class="red--text"
+            >
+              Report an issue
+            </v-list-item-title>
+            <v-list-item-subtitle>
+              Let us know of any bugs
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+        <v-list-item
+          two-line
+          class="mb-2"
+          style="background-color: #eeeeee"
+          :href="emailTemplate('feature')"
         >
-          <v-icon>mdi-plus-circle</v-icon>
-        </v-btn>
-        <v-list-item-content>
-          <v-list-item-title
-            class="grey--text text--darken-2"
+          <v-btn
+            icon
+            outlined
+            color="grey darken-2"
+            class="mr-4"
+            style="border: solid;"
           >
-            Request a feature
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            Suggest a new feature
-          </v-list-item-subtitle>
-        </v-list-item-content>
-      </v-list-item>
-    </v-list>
+            <v-icon>mdi-plus-circle</v-icon>
+          </v-btn>
+          <v-list-item-content>
+            <v-list-item-title
+              class="grey--text text--darken-2"
+            >
+              Request a feature
+            </v-list-item-title>
+            <v-list-item-subtitle>
+              Suggest a new feature
+            </v-list-item-subtitle>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-card-text>
   </v-card>
 </template>
