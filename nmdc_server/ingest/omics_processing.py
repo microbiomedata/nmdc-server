@@ -96,6 +96,16 @@ def get_biosample_input_ids(input_id: str, mongodb: Database, results: set) -> s
     return results
 
 
+def get_configuration_name(mongodb: Database, configuration_id: str, config_map) -> Optional[str]:
+    config_set = "configuration_set"
+    if configuration_id in config_map:
+        config_record = config_map[configuration_id]
+    else:
+        config_record = mongodb[config_set].find_one({"id": configuration_id})
+        config_map[configuration_id] = config_record
+    return config_record["name"] if config_record else None
+
+
 def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, logger, config_map):
     logger = get_logger(__name__)
     input_ids: list[str] = obj.pop("has_input", [""])
@@ -126,28 +136,19 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
             obj["instrument_name"] = instrument["name"]
 
     # Get configuration info
-    config_set = "configuration_set"
     mass_spec_config_id = obj.pop("has_mass_spectrometry_configuration", None)
-    if mass_spec_config_id:
-        if mass_spec_config_id in config_map:
-            config_record = config_map[mass_spec_config_id]
-        else:
-            config_record = mongodb[config_set].find_one({"id": mass_spec_config_id})
-            config_map[mass_spec_config_id] = config_record
-        if config_record:
-            obj["mass_spectrometry_configuration_name"] = config_record["name"]
-            obj["mass_spectrometry_configuration_id"] = config_record["id"]
+    mass_spec_config_name = get_configuration_name(mongodb, mass_spec_config_id, config_map)
+    if mass_spec_config_name:
+        obj["mass_spectrometry_configuration_name"] = mass_spec_config_name
+        obj["mass_spectrometry_configuration_id"] = mass_spec_config_id
 
     chromatography_config_id = obj.pop("has_chromatography_configuration", None)
-    if chromatography_config_id:
-        if chromatography_config_id in config_map:
-            config_record = config_map[chromatography_config_id]
-        else:
-            config_record = mongodb[config_set].find_one({"id": chromatography_config_id})
-            config_map[chromatography_config_id] = config_record
-        if config_record:
-            obj["chromatography_configuration_name"] = config_record["name"]
-            obj["chromatography_configuration_id"] = config_record["id"]
+    chromatography_config_name = get_configuration_name(
+        mongodb, chromatography_config_id, config_map
+    )
+    if chromatography_config_name:
+        obj["chromatography_configuration_name"] = chromatography_config_name
+        obj["chromatography_configuration_id"] = chromatography_config_id
 
     omics_processing = models.OmicsProcessing(**OmicsProcessing(**obj).dict())
     for biosample_object in biosample_input_objects:
