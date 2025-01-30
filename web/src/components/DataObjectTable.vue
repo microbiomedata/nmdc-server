@@ -95,7 +95,6 @@ export default defineComponent({
       return omicsProcessing.omics_data.map((omics) => {
         const omicsCopy = { ...omics };
         omicsCopy.inputIds = biosampleInputIds;
-        omicsCopy.omicsProcessingName = omicsProcessing.name;
         if (annotations.mass_spectrometry_configuration_id) {
           omicsCopy.massSpecConfigId = annotations.mass_spectrometry_configuration_id || '';
           omicsCopy.massSpecConfigName = annotations.mass_spectrometry_configuration_name || '';
@@ -197,17 +196,22 @@ export default defineComponent({
         >
           <td colspan="6">
             <b>Workflow Activity:</b> {{ item.group_name }}
-            <span v-if="omicsType === 'Metabolomics' || omicsType === 'Lipidomics'">
+            <span
+              v-if="
+                (omicsType === 'Metabolomics' || omicsType === 'Lipidomics')
+                  && (item.omics_data.massSpecConfigId || item.omics_data.chromConfigId)
+              "
+            >
               <br>
-              <b>Data Generation Activity: </b> {{ item.omics_data.omicsProcessingName }} {{ item.omics_data.omics_processing_id }}
-            </span>
-            <span v-if="item.omics_data.massSpecConfigId">
-              <br>
-              <b>LC/MS Configurations: </b>
-              {{ item.omics_data.massSpecConfigName }}:
-              {{ item.omics_data.massSpecConfigId }};
-              {{ item.omics_data.chromConfigName }}:
-              {{ ' ' + item.omics_data.chromConfigId }}
+              <b>Data Generation Configurations</b>
+              <span v-if="item.omics_data.massSpecConfigId">
+                {{ item.omics_data.massSpecConfigName }}:
+                {{ item.omics_data.massSpecConfigId }};
+              </span>
+              <span v-if="item.omics_data.chromConfigId">
+                {{ item.omics_data.chromConfigName }}:
+                {{ ' ' + item.omics_data.chromConfigId }}
+              </span>
             </span>
             <br>
             <div v-if="getRelatedBiosampleIds(item.omics_data).length">
