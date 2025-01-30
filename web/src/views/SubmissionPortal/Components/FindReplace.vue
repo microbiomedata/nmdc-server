@@ -129,7 +129,7 @@ export default defineComponent({
 <template>
   <v-card elevation="0">
     <v-card-title>
-      Find and Replace
+      Find & Replace
     </v-card-title>
 
     <v-card-text>

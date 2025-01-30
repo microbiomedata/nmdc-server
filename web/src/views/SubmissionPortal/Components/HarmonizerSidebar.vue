@@ -121,7 +121,7 @@ export default defineComponent({
           :schema-class-name="template.schemaClass"
         />
       </v-tab-item>
-      <v-tab-item class="pa-2">
+      <v-tab-item>
         <ImportExportButtons
           :import-disabled="importDisabled"
           @export="$emit('export-xlsx')"
