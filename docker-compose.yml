@@ -54,6 +54,8 @@ services:
       - default
     ports:
       - "8000:8000"
+    volumes:
+      - ./data/ingest:/data/ingest
 
   web:
     image: ghcr.io/microbiomedata/nmdc-server/client:main
