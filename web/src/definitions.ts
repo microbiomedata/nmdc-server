@@ -1,5 +1,5 @@
 const Definitions = {
-  studyName: 'The Study Information page requires a valid ‘Study Name’. We recommend the use of standardized, informative study names as described by the GOLD team (Mukherjee et. al., 2023).',
+  studyName: 'A Study Name is required. We recommend the use of standardized, informative study names as described by the GOLD team (Mukherjee et. al., 2023).',
   piName: 'The Principal Investigator who led the study and/or generated the data.',
   piEmail: 'The Principle Investigator\'s email is required for submission. The submitter does not have to be the Principle Investigator.',
   piOrcid: '<a href="https://orcid.org" target="_blank" rel="noopener noreferrer">ORCID iD</a> of the Principal Investigator.',
