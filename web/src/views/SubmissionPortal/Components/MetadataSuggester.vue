@@ -4,6 +4,7 @@ import {
   defineComponent,
   PropType,
   ref,
+  watchEffect,
 } from '@vue/composition-api';
 import { groupBy } from 'lodash';
 import {
@@ -41,9 +42,13 @@ export default defineComponent({
     },
   },
 
-  setup({ harmonizerApi, schemaClassName }) {
-    const rejectedSuggestions = ref(getRejectedSuggestions());
+  setup(props) {
+    const rejectedSuggestions = ref([] as string[]);
     const onDemandSuggestionsLoading = ref(false);
+
+    watchEffect(() => {
+      rejectedSuggestions.value = getRejectedSuggestions(props.schemaClassName);
+    });
 
     const suggestionsByRow = computed(() => {
       const filteredSuggestions = metadataSuggestions.value.filter((suggestion) => {
@@ -59,7 +64,7 @@ export default defineComponent({
       const cellData = [] as CellData[];
       suggestions.forEach((suggestion) => {
         const { row, slot } = suggestion;
-        const col = harmonizerApi.slotInfo.get(slot)?.columnIndex;
+        const col = props.harmonizerApi.slotInfo.get(slot)?.columnIndex;
         if (col === undefined) {
           return;
         }
@@ -67,9 +72,9 @@ export default defineComponent({
       });
 
       // Do this outside of the forEach so that the DataHarmonizer afterChange hook is only triggered once
-      harmonizerApi.setCellData(cellData);
+      props.harmonizerApi.setCellData(cellData);
 
-      removeMetadataSuggestions(suggestions, schemaClassName);
+      removeMetadataSuggestions(suggestions, props.schemaClassName);
     }
 
     function rejectSuggestions(suggestions: MetadataSuggestion[]) {
@@ -77,16 +82,16 @@ export default defineComponent({
         const key = getSuggestionKey(suggestion);
         rejectedSuggestions.value.push(key);
       });
-      setRejectedSuggestions(rejectedSuggestions.value);
+      setRejectedSuggestions(props.schemaClassName, rejectedSuggestions.value);
     }
 
     function handleJumpToCell(suggestion: MetadataSuggestion) {
       const { row, slot } = suggestion;
-      const col = harmonizerApi.slotInfo.get(slot)?.columnIndex;
+      const col = props.harmonizerApi.slotInfo.get(slot)?.columnIndex;
       if (col === undefined) {
         return;
       }
-      harmonizerApi.jumpToRowCol(row, col);
+      props.harmonizerApi.jumpToRowCol(row, col);
     }
 
     function handleRejectSuggestion(suggestion: MetadataSuggestion) {
@@ -107,26 +112,27 @@ export default defineComponent({
 
     async function handleSuggestForSelectedRows() {
       onDemandSuggestionsLoading.value = true;
-      const selectedRanges = harmonizerApi.getSelectedCells();
+      const selectedRanges = props.harmonizerApi.getSelectedCells();
       const rows = selectedRanges.reduce((acc, range) => {
         for (let i = range[0]; i <= range[2]; i += 1) {
           acc.push(i);
         }
         return acc;
       }, [] as number[]);
-      const changedRowData = harmonizerApi.getDataByRows(rows);
+      const changedRowData = props.harmonizerApi.getDataByRows(rows);
       try {
-        await addMetadataSuggestions(changedRowData, schemaClassName);
+        await addMetadataSuggestions(changedRowData, props.schemaClassName);
       } finally {
         onDemandSuggestionsLoading.value = false;
       }
     }
 
     function getSlotTitle(slot: string) {
-      return harmonizerApi.slotInfo.get(slot)?.title ?? slot;
+      return props.harmonizerApi.slotInfo.get(slot)?.title ?? slot;
     }
 
     return {
+      SuggestionsMode,
       getSlotTitle,
       handleAcceptAllSuggestions,
       handleAcceptSuggestion,
@@ -137,11 +143,10 @@ export default defineComponent({
       hasSuggestions,
       onDemandSuggestionsLoading,
       rejectedSuggestions,
-      SuggestionsMode,
-      suggestionModeOptions,
       suggestionMode,
-      suggestionTypeOptions,
+      suggestionModeOptions,
       suggestionType,
+      suggestionTypeOptions,
       suggestionsByRow,
     };
   },

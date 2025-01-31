@@ -30,26 +30,44 @@ function clearRefreshToken() {
   return window.localStorage.removeItem(REFRESH_TOKEN_KEY);
 }
 
-function getRejectedSuggestions(): string[] {
-  const suggestions = window.localStorage.getItem(REJECTED_SUGGESTIONS);
-  return suggestions ? JSON.parse(suggestions) : [];
+class StoredMap<T> {
+  private readonly storageKey: string;
+
+  constructor(storageKey: string) {
+    this.storageKey = storageKey;
+  }
+
+  get(key: string): T {
+    const str = window.localStorage.getItem(this.storageKey);
+    const obj = str ? JSON.parse(str) : {};
+    return obj[key];
+  }
+
+  set(key: string, value: T) {
+    const str = window.localStorage.getItem(this.storageKey);
+    const obj = str ? JSON.parse(str) : {};
+    obj[key] = value;
+    window.localStorage.setItem(this.storageKey, JSON.stringify(obj));
+  }
 }
 
-function setRejectedSuggestions(suggestions: string[]) {
-  return window.localStorage.setItem(REJECTED_SUGGESTIONS, JSON.stringify(suggestions));
+const rejectedSuggestions = new StoredMap<string[]>(REJECTED_SUGGESTIONS);
+const pendingSuggestions = new StoredMap<MetadataSuggestion[]>(PENDING_SUGGESTIONS);
+
+function getRejectedSuggestions(schemaClassName: string): string[] {
+  return rejectedSuggestions.get(schemaClassName) || [];
+}
+
+function setRejectedSuggestions(schemaClassName: string, suggestions: string[]) {
+  rejectedSuggestions.set(schemaClassName, suggestions);
 }
 
 function getPendingSuggestions(schemaClassName: string) {
-  const suggestionsStr = window.localStorage.getItem(PENDING_SUGGESTIONS);
-  const suggestionsObj = suggestionsStr ? JSON.parse(suggestionsStr) : {};
-  return suggestionsObj[schemaClassName] || [];
+  return pendingSuggestions.get(schemaClassName) || [];
 }
 
 function setPendingSuggestions(schemaClassName: string, suggestions: MetadataSuggestion[]) {
-  const pendingSuggestions = window.localStorage.getItem(PENDING_SUGGESTIONS);
-  const pendingSuggestionsObj = pendingSuggestions ? JSON.parse(pendingSuggestions) : {};
-  pendingSuggestionsObj[schemaClassName] = suggestions;
-  window.localStorage.setItem(PENDING_SUGGESTIONS, JSON.stringify(pendingSuggestionsObj));
+  return pendingSuggestions.set(schemaClassName, suggestions);
 }
 
 export {
