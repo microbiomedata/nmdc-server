@@ -38,7 +38,7 @@ export default defineComponent({
     <div class="text-h5">
       Choose the
       <a
-        href="URL GOES HERE"
+        href="https://genomicsstandardsconsortium.github.io/mixs/#extensions"
         target="_blank"
         rel="noopener noreferrer"
       >MIxS Extension</a>
