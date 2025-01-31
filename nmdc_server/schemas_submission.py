@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
@@ -47,6 +47,7 @@ class NmcdAddress(BaseModel):
     city: str
     state: str
     postalCode: str
+    country: str
 
 
 class AddressForm(BaseModel):
@@ -72,10 +73,11 @@ class ContextForm(BaseModel):
     award: Optional[str] = None
     otherAward: str
     unknownDoi: Optional[bool] = None
+    ship: Optional[bool] = None
 
 
-class MetadataSubmissionRecord(BaseModel):
-    packageName: str
+class MetadataSubmissionRecordCreate(BaseModel):
+    packageName: Union[str, List[str]]
     contextForm: ContextForm
     addressForm: AddressForm
     templates: List[str]
@@ -84,8 +86,12 @@ class MetadataSubmissionRecord(BaseModel):
     sampleData: Dict[str, List[Any]]
 
 
+class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
+    packageName: List[str]
+
+
 class PartialMetadataSubmissionRecord(BaseModel):
-    packageName: Optional[str] = None
+    packageName: Optional[List[str]] = None
     contextForm: Optional[ContextForm] = None
     addressForm: Optional[AddressForm] = None
     templates: Optional[List[str]] = None
@@ -95,9 +101,10 @@ class PartialMetadataSubmissionRecord(BaseModel):
 
 
 class SubmissionMetadataSchemaCreate(BaseModel):
-    metadata_submission: MetadataSubmissionRecord
+    metadata_submission: MetadataSubmissionRecordCreate
     status: Optional[str] = None
     source_client: Optional[str] = None
+    is_test_submission: bool = False
 
 
 class SubmissionMetadataSchemaPatch(BaseModel):
@@ -105,6 +112,7 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     status: Optional[str] = None
     # Map of ORCID iD to permission level
     permissions: Optional[Dict[str, str]] = None
+    field_notes_metadata: Optional[Dict[str, Any]] = None
 
 
 class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
@@ -115,6 +123,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     author: schemas.User
     templates: List[str]
     study_name: Optional[str] = None
+    field_notes_metadata: Optional[Dict[str, Any]] = None
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None

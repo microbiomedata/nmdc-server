@@ -264,6 +264,44 @@ def kegg_text_search(db: Session, query: str, limit: int) -> List[models.KoTermT
     return results
 
 
+def cog_text_search(db: Session, query: str, limit: int) -> List[models.CogTermText]:
+    q = (
+        db.query(models.CogTermText)
+        .filter(
+            models.CogTermText.text.ilike(f"%{query}%")
+            | models.CogTermText.term.ilike(f"%{query}%")
+        )
+        .order_by(models.CogTermText.term)
+        .limit(limit)
+    )
+    return list(q)
+
+
+def pfam_text_search(db: Session, query: str, limit: int) -> List[models.PfamTermText]:
+    q = (
+        db.query(models.PfamTermText)
+        .filter(
+            models.PfamTermText.text.ilike(f"%{query}%")
+            | models.PfamTermText.term.ilike(f"%{query}%")
+        )
+        .order_by(models.PfamTermText.term)
+        .limit(limit)
+    )
+    return list(q)
+
+
+def go_text_search(db: Session, query: str, limit: int) -> List[models.GoTermText]:
+    q = (
+        db.query(models.GoTermText)
+        .filter(
+            models.GoTermText.text.ilike(f"%{query}%") | models.GoTermText.term.ilike(f"%{query}%")
+        )
+        .order_by(models.GoTermText.term)
+        .limit(limit)
+    )
+    return list(q)
+
+
 # biosample
 def get_biosample(db: Session, biosample_id: str) -> Optional[models.Biosample]:
     return db.query(models.Biosample).filter(models.Biosample.id == biosample_id).first()
@@ -469,6 +507,7 @@ def update_user(db: Session, user: schemas.User) -> Optional[models.User]:
             detail="User not found",
         )
     db_user.is_admin = user.is_admin
+    db_user.email = user.email
     db.commit()
     return db_user
 
@@ -684,6 +723,19 @@ def get_query_for_all_submissions(db: Session):
         models.SubmissionMetadata.created.desc()
     )
     return all_submissions
+
+
+def get_query_for_submitted_pending_review_submissions(db: Session):
+    r"""
+    Returns a SQLAlchemy query that can be used to retrieve submissions pending review.
+
+    Reference: https://fastapi.tiangolo.com/tutorial/sql-databases/#crud-utils
+    Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
+    """
+    submitted_pending_review = db.query(models.SubmissionMetadata).filter(
+        models.SubmissionMetadata.status == "Submitted- Pending Review"
+    )
+    return submitted_pending_review
 
 
 def get_roles_for_submission(

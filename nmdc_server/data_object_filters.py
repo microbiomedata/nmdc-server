@@ -15,6 +15,8 @@ from nmdc_server import models
 data_url_hosts = [
     (re.compile("^https://data.microbiomedata.org(/data)?"), "/data"),
     (re.compile("^https://nmdcdemo.emsl.pnnl.gov"), "/nmdcdemo"),
+    (re.compile("^https://portal.nersc.gov"), "/nerscportal"),
+    (re.compile("^https://storage.neonscience.org"), "/neonscience"),
 ]
 
 
@@ -32,7 +34,7 @@ class WorkflowActivityTypeEnum(Enum):
     metabolomics_analysis = "nmdc:MetabolomicsAnalysis"
     metagenome_assembly = "nmdc:MetagenomeAssembly"
     metagenome_annotation = "nmdc:MetagenomeAnnotation"
-    metaproteomic_analysis = "nmdc:MetaproteomicAnalysis"
+    metaproteomic_analysis = "nmdc:MetaproteomicsAnalysis"
     metatranscriptome = "nmdc:MetatranscriptomeAnalysis"
     metatranscriptome_assembly = "nmdc:MetatranscriptomeAssembly"
     metatranscriptome_annotation = "nmdc:MetatranscriptomeAnnotation"

@@ -1,5 +1,7 @@
 import colors from './colors';
-import { entityType, entitySchemaType } from './data/api';
+import {
+  entityType, entitySchemaType, KeggTermSearchResponse, api,
+} from './data/api';
 
 export interface EntityData {
   icon: string;
@@ -28,6 +30,10 @@ interface PrefixInfo {
     urlBase: string;
 }
 
+type geneFunctionType = 'kegg' | 'pfam' | 'cog' | 'go';
+
+export const geneFunctionTables = ['kegg_function', 'pfam_function', 'cog_function', 'go_function'];
+
 const pathwayRegex = /^((map:?)|(path:?)|(ko:?)|(ec:?)|(rn:?)|(kegg.pathway:(map|path|ec|ko|rn)))(?=\d{5})/i;
 
 function pathwayPrefixShort(v: string) {
@@ -53,19 +59,19 @@ const KeggPrefix: Record<string, PrefixInfo> = {
     pattern: /^((k:?)|(kegg\.orthology:k))(?=\d{5})/i,
     short: () => 'k',
     long: () => 'KEGG.ORTHOLOGY:K',
-    urlBase: 'https://www.genome.jp/entry/',
+    urlBase: 'https://bioregistry.io/kegg.orthology:/',
   },
   PATHWAY: {
     pattern: pathwayRegex,
     short: pathwayPrefixShort,
     long: pathwayPrefixLong,
-    urlBase: 'https://www.genome.jp/kegg-bin/show_pathway?',
+    urlBase: 'https://bioregistry.io/kegg.pathway:/',
   },
   MODULE: {
     pattern: /^((m:?)|(kegg.module:m))(?=\d{5})/i,
     short: () => 'M',
     long: () => 'KEGG.MODULE:M',
-    urlBase: 'https://www.kegg.jp/entry/',
+    urlBase: 'https://bioregistry.io/kegg.module:/',
   },
 };
 
@@ -83,7 +89,7 @@ function keggEncode(v: string, url = false) {
     const transformed = v.replace(pattern, replacement);
     if (transformed !== v) {
       if (url) {
-        return urlBase + transformed;
+        return urlBase + transformed.toUpperCase();
       }
       return transformed;
     }
@@ -91,29 +97,155 @@ function keggEncode(v: string, url = false) {
   return v;
 }
 
-function stringIsKegg(v: string) {
-  return Object.values(KeggPrefix).find((item) => v.match(item.pattern));
+function cogEncode(v: string, url = false) {
+  // COG terms, pathways and functions don't need to be transformed
+  // So either just return it with a prefix so our backend can process it.
+  if (!url) {
+    // COG categories are just identified by a single letter
+    if (v.length === 1) {
+      return `COG.FUNCTION:${v}`;
+    }
+    // COGs themselves start with this prefix
+    if (v.startsWith('COG')) {
+      return `COG:${v}`;
+    }
+    // Pathways are identified by a name. If the other two conditions have not
+    // been met at this point, assume it is a pathway.
+    return `COG.PATHWAY:${v}`;
+  }
+  // Or figure out if it is a term, pathway, or function
+  const urlBase = 'https://bioregistry.io/cog';
+  const id = v.split(':')[1];
+  if (v.length === 1 || v.startsWith('COG.FUNCTION:')) {
+    return `${urlBase}.category:/${id}`;
+  }
+  if (v.startsWith('COG.PATHWAY')) {
+    return `${urlBase}.pathway:/${id}`;
+  }
+  if (v.startsWith('COG:COG')) {
+    return `${urlBase}:/${id}`;
+  }
+  return v;
 }
+
+function pfamEncode(v: string, url = false) {
+  if (!url) {
+    if (v.startsWith('PF')) {
+      return `PFAM:${v}`;
+    }
+    return `PFAM.CLAN:${v}`;
+  }
+  const urlBase = 'https://bioregistry.io/pfam';
+  const id = v.split(':')[1];
+  if (v.includes('CLAN')) {
+    return `${urlBase}.clan:/${id}`;
+  }
+  return `${urlBase}:/${id}`;
+}
+
+function goEncode(v: string, url = false) {
+  if (url) {
+    return `https://bioregistry.io/go:/${v.split(':')[1]}`;
+  }
+  return v;
+}
+
+export interface GeneFunctionSearchParams {
+  description: string;
+  label: string;
+  expectedFormats: string;
+  helpSite: string;
+  table: entityType;
+  encodeFunction: (value: string, url: boolean) => string;
+  searchFunction: (query: string) => Promise<KeggTermSearchResponse[]>;
+  searchWithInputText: (value: string) => boolean;
+}
+
+function stringIsKegg(v: string) {
+  return !!Object.values(KeggPrefix).find((item) => v.match(item.pattern));
+}
+
+export const geneFunctionTypeInfo: Record<geneFunctionType, GeneFunctionSearchParams> = {
+  kegg: {
+    label: 'KEGG',
+    description: `
+      KEGG Gene Function search filters results to
+      samples that have at least one of the chosen KEGG terms.
+      Orthology, Module, and Pathway are supported.
+    `,
+    expectedFormats: 'K00000, M00000, map00000, ko00000, rn00000, and ec00000',
+    helpSite: 'https://www.genome.jp/kegg/',
+    table: 'kegg_function',
+    encodeFunction: keggEncode,
+    searchFunction: api.keggSearch,
+    searchWithInputText: stringIsKegg,
+  },
+  cog: {
+    label: 'COG',
+    description: `
+      COG Gene Function search filters results to
+      samples that have at least one of the chosen COG terms.
+      Term, Function, and Pathway are supported.
+    `,
+    expectedFormats: 'COG0000',
+    helpSite: 'https://www.ncbi.nlm.nih.gov/research/cog/',
+    table: 'cog_function',
+    encodeFunction: cogEncode,
+    searchFunction: api.cogSearch,
+    searchWithInputText: () => false,
+
+  },
+  pfam: {
+    label: 'PFAM',
+    description: `
+      Pfam Gene Function search filters results to
+      samples that have at least one of the chosen Pfam terms.
+      Entry and Clan are supported.
+    `,
+    expectedFormats: 'PF00000, CL0000',
+    helpSite: 'https://www.ebi.ac.uk/interpro/set/all/entry/pfam/',
+    table: 'pfam_function',
+    encodeFunction: pfamEncode,
+    searchFunction: api.pfamSearch,
+    searchWithInputText: () => false,
+  },
+  go: {
+    label: 'GO',
+    description: `
+      GO gene function search filters result to samples that match
+      at least one of the chosen GO terms.
+    `,
+    expectedFormats: 'GO:0000000',
+    helpSite: 'https://www.geneontology.org/',
+    table: 'go_function',
+    encodeFunction: goEncode,
+    searchFunction: api.goSearch,
+    searchWithInputText: () => false,
+  },
+};
 
 function makeSetsFromBitmask(mask_str: string) {
   const mask = parseInt(mask_str, 10); // the bitmask comes in as a string
   const sets = [];
 
   /* eslint-disable no-bitwise */
-  if (1 & mask) {
+  if ((1 << 1) & mask) {
     sets.push('NOM');
   }
-  if ((1 << 4) & mask) {
+  if ((1 << 5) & mask) {
     sets.push('MB');
   }
-  if ((1 << 2) & mask) {
+  if ((1 << 3) & mask) {
     sets.push('MP');
   }
-  if ((1 << 1) & mask) {
+  if ((1 << 2) & mask) {
     sets.push('MT');
   }
-  if ((1 << 3) & mask) {
+  if ((1 << 4) & mask) {
     sets.push('MG');
+  }
+  if (1 & mask) {
+    sets.push('LIP');
   }
   return sets;
 }
@@ -182,7 +314,28 @@ const types: Record<entityType, EntityData> = {
     visible: false,
     schemaName: 'DataObject',
   },
-  gene_function: {
+  kegg_function: {
+    icon: 'mdi-dna',
+    heading: 'Gene Function',
+    name: 'gene_function',
+    plural: 'Gene functions',
+    visible: true,
+  },
+  pfam_function: {
+    icon: 'mdi-dna',
+    heading: 'Gene Function',
+    name: 'gene_function',
+    plural: 'Gene functions',
+    visible: true,
+  },
+  cog_function: {
+    icon: 'mdi-dna',
+    heading: 'Gene Function',
+    name: 'gene_function',
+    plural: 'Gene functions',
+    visible: true,
+  },
+  go_function: {
     icon: 'mdi-dna',
     heading: 'Gene Function',
     name: 'gene_function',
@@ -193,6 +346,18 @@ const types: Record<entityType, EntityData> = {
 
 const fields: Record<string, FieldsData> = {
   id: {
+    icon: 'mdi-key',
+    hideFacet: true,
+  },
+  kegg: {
+    icon: 'mdi-key',
+    hideFacet: true,
+  },
+  pfam: {
+    icon: 'mdi-key',
+    hideFacet: true,
+  },
+  cog: {
     icon: 'mdi-key',
     hideFacet: true,
   },
@@ -405,12 +570,36 @@ const fields: Record<string, FieldsData> = {
  * override them here
  */
 const tableFields: Record<entityType, Record<string, FieldsData>> = {
-  gene_function: {
+  kegg_function: {
     id: {
       icon: 'mdi-dna',
       group: 'Function',
-      name: 'KEGG Term',
+      name: 'KEGG',
       encode: keggEncode,
+    },
+  },
+  cog_function: {
+    id: {
+      icon: 'mdi-dna',
+      group: 'Function',
+      name: 'COG',
+      encode: cogEncode,
+    },
+  },
+  pfam_function: {
+    id: {
+      icon: 'mdi-dna',
+      group: 'Function',
+      name: 'PFAM',
+      encode: pfamEncode,
+    },
+  },
+  go_function: {
+    id: {
+      icon: 'mdi-dna',
+      group: 'Function',
+      name: 'GO',
+      encode: goEncode,
     },
   },
   biosample: {},
@@ -455,19 +644,23 @@ function getField(name: string, table?: entityType): FieldsData {
 }
 
 const MultiomicsValue = {
-  MB: 0b10000,
-  MG: 0b01000,
-  MP: 0b00100,
-  MT: 0b00010,
-  NOM: 0b00001,
+  MB: 0b100000,
+  MG: 0b010000,
+  MP: 0b001000,
+  MT: 0b000100,
+  NOM: 0b000010,
+  LIP: 0b000001,
 };
 
 export {
   types,
+  geneFunctionType,
   ecosystems,
   MultiomicsValue,
   getField,
   keggEncode,
+  cogEncode,
+  pfamEncode,
   stringIsKegg,
   makeSetsFromBitmask,
 };

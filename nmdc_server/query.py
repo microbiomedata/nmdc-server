@@ -23,6 +23,7 @@ from nmdc_server.data_object_filters import DataObjectFilter
 from nmdc_server.filters import create_filter_class
 from nmdc_server.multiomics import MultiomicsValue
 from nmdc_server.table import (
+    CogTerms,
     EnvBroadScaleAncestor,
     EnvBroadScaleTerm,
     EnvLocalScaleAncestor,
@@ -30,6 +31,7 @@ from nmdc_server.table import (
     EnvMediumAncestor,
     EnvMediumTerm,
     KeggTerms,
+    PfamEntries,
     Table,
 )
 
@@ -99,7 +101,6 @@ _special_keys: Dict[str, Tuple[Table, str]] = {
     "omics_processing_id": (Table.omics_processing, "id"),
     **_envo_keys,
 }
-
 
 NumericValue = Union[float, int, datetime]
 RangeValue = Annotated[List[schemas.AnnotationValue], Field(min_items=2, max_items=2)]
@@ -258,6 +259,16 @@ ConditionSchema = Union[
 ]
 
 
+def _transform_gene_term(term: tuple[str, Any]) -> str:
+    if term[0].startswith("KO:K"):
+        return term[0].replace("KO:K", KeggTerms.ORTHOLOGY[0])
+    if term[0].startswith("COG"):
+        return term[0].replace("COG", "COG:COG")
+    if term[0].startswith("PF"):
+        return term[0].replace("PF", "PFAM:PF")
+    return term[0]
+
+
 # This is the base class for all table specific queries.  It is responsible for performing
 # both searches and facet aggregations.  At a high level, the queries are generated as follows:
 #   1. group conditions by table/field
@@ -287,29 +298,67 @@ class BaseQuerySchema(BaseModel):
 
     def transform_condition(self, db, condition: BaseConditionSchema) -> List[BaseConditionSchema]:
         # Transform KEGG.(PATH|MODULE) queries into their respective ORTHOLOGY terms
-        if condition.key == "Table.gene_function:id" and type(condition.value) is str:
+        gene_terms = []
+        gene_search_keys = [
+            "Table.kegg_function:id",
+            "Table.cog_function:id",
+            "Table.pfam_function:id",
+            "Table.go_function:id",
+        ]
+        if condition.key in gene_search_keys and type(condition.value) is str:
             if any([condition.value.startswith(val) for val in KeggTerms.PATHWAY[0]]):
                 prefix = [val for val in KeggTerms.PATHWAY[0] if condition.value.startswith(val)][0]
                 searchable_name = condition.value.replace(prefix, KeggTerms.PATHWAY[1])
-                ko_terms = db.query(models.KoTermToPathway.term).filter(
+                gene_terms = db.query(models.KoTermToPathway.term).filter(
                     models.KoTermToPathway.pathway.ilike(searchable_name)
                 )
             elif condition.value.startswith(KeggTerms.MODULE[0]):
                 searchable_name = condition.value.replace(KeggTerms.MODULE[0], KeggTerms.MODULE[1])
-                ko_terms = db.query(models.KoTermToModule.term).filter(
+                gene_terms = db.query(models.KoTermToModule.term).filter(
                     models.KoTermToModule.module.ilike(searchable_name)
                 )
+            # Check for searches on cog or pfam as well
+            elif condition.value.startswith(CogTerms.FUNCTION):
+                searchable_name = condition.value.replace(CogTerms.FUNCTION, "")
+                gene_terms = db.query(models.CogTermToFunction.term).filter(
+                    models.CogTermToFunction.function.ilike(searchable_name)
+                )
+            elif condition.value.startswith(CogTerms.PATHWAY):
+                searchable_name = condition.value.replace(CogTerms.PATHWAY, "")
+                gene_terms = db.query(models.CogTermToPathway.term).filter(
+                    models.CogTermToPathway.pathway.ilike(searchable_name)
+                )
+            elif condition.value.startswith(PfamEntries.CLAN):
+                searchable_name = condition.value.replace(PfamEntries.CLAN, "")
+                gene_terms = db.query(models.PfamEntryToClan.entry).filter(
+                    models.PfamEntryToClan.clan.ilike(searchable_name)
+                )
+            elif condition.value.startswith("GO:"):
+                gene_terms = (
+                    db.query(models.GoTermToPfamEntry.entry.label("mapped_term"))
+                    .filter(models.GoTermToPfamEntry.term.ilike(condition.value))
+                    .union(
+                        db.query(models.GoTermToKegg.kegg_term.label("mapped_term")).filter(
+                            models.GoTermToKegg.term.ilike(condition.value)
+                        )
+                    )
+                )
+                term_list = list(gene_terms)
+                if not term_list:
+                    return [condition]
             else:
                 # This is not a condition we know how to transform.
                 return [condition]
+            if gene_terms:
+                gene_terms = [_transform_gene_term(term) for term in gene_terms]
             return [
                 SimpleConditionSchema(
                     op="==",
                     field=condition.field,
-                    value=term[0].replace("KO:K", KeggTerms.ORTHOLOGY[0]),
+                    value=term,
                     table=condition.table,
                 )
-                for term in ko_terms
+                for term in gene_terms
             ]
         return [condition]
 
@@ -335,7 +384,13 @@ class BaseQuerySchema(BaseModel):
 
             # Gene function queries are treated differently because they join
             # in three different places (metaT, metaG and metaP).
-            if table == Table.gene_function:
+            if table in [
+                Table.gene_function,
+                Table.kegg_function,
+                Table.go_function,
+                Table.pfam_function,
+                Table.cog_function,
+            ]:
                 metag_matches = filter.matches(db, self.table)
                 metap_conditions = [
                     SimpleConditionSchema(

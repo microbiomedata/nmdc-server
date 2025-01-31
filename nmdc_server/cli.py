@@ -144,6 +144,21 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
 
         click.echo("Done")
 
+    # Post a message to Slack if a Slack webhook URL is defined.
+    # Reference: https://api.slack.com/messaging/webhooks#posting_with_webhooks
+    if isinstance(settings.slack_webhook_url_for_ingester, str):
+        click.echo("Posting message to Slack.")
+        response = requests.post(
+            settings.slack_webhook_url_for_ingester,
+            json={"text": "Ingest is done."},
+            headers={"Content-type": "application/json"},
+        )
+        # Note: We currently consider the posting of a Slack message to be a "nice
+        #       to have" as opposed to a "must have." So, if it happens to fail,
+        #       we just echo an error message instead of `raise`-ing an exception.
+        if response.status_code != 200:
+            click.echo("Failed to post message to Slack.", err=True)
+
 
 @cli.command()
 @click.option("--print-sql", is_flag=True, default=False)

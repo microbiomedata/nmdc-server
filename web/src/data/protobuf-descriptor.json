@@ -49,7 +49,11 @@
                 "gene_function": 1,
                 "omics_processing": 2,
                 "study": 3,
-                "biosample": 4
+                "biosample": 4,
+                "kegg_function": 5,
+                "cog_function": 6,
+                "pfam_function": 7,
+                "go_function": 8
               }
             },
             "FieldName": {

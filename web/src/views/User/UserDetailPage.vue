@@ -6,6 +6,7 @@ import AppBanner from '@/components/AppBanner.vue';
 import OrcidId from '@/components/Presentation/OrcidId.vue';
 import { stateRefs } from '@/store';
 import { getRefreshToken } from '@/store/localStorage';
+import { api, User } from '@/data/api';
 
 export default defineComponent({
   name: 'UserDetailPage',
@@ -31,7 +32,7 @@ export default defineComponent({
         isCopyRefreshTokenSnackbarVisible.value = true;
       }
     };
-
+    const { user, userLoading } = stateRefs;
     const handleRefreshTokenVisibilityButtonClick = async () => {
       isTokenVisible.value = !isTokenVisible.value;
       if (isTokenVisible.value) {
@@ -42,10 +43,47 @@ export default defineComponent({
         }, 50);
       }
     };
+    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
+      return [
+        (v: string) => !!v || msg,
+        ...otherRules,
+      ];
+    }
+    const updateUser = async (value:string) => {
+      const update: User = {
+        id: user.value?.id as string,
+        orcid: user.value?.orcid as string,
+        name: user.value?.name as string,
+        email: value,
+        is_admin: user.value?.is_admin as boolean,
+      };
+      await api.updateUser(user.value?.id as string, update);
+    };
+    const editEmail = ref(false);
+
+    const isEmailValid = ref(false);
+
+    const updateEmail = (email: string | undefined) => {
+      if (editEmail.value) {
+        if (email == null) {
+          return;
+        }
+        isEmailValid.value = /.+@.+\..+/.test(email);
+        if (isEmailValid.value) {
+          updateUser(email);
+          editEmail.value = !editEmail.value;
+        }
+      } else {
+        editEmail.value = !editEmail.value;
+      }
+    };
 
     return {
-      user: stateRefs.user,
-      userLoading: stateRefs.userLoading,
+      editEmail,
+      updateEmail,
+      isEmailValid,
+      user,
+      userLoading,
       origin: window.location.origin,
       refreshToken,
       refreshTokenExpirationDate,
@@ -54,6 +92,8 @@ export default defineComponent({
       isTokenVisible,
       handleRefreshTokenVisibilityButtonClick,
       handleRefreshTokenCopyButtonClick,
+      updateUser,
+      requiredRules,
     };
   },
 });
@@ -61,8 +101,7 @@ export default defineComponent({
 
 <template>
   <v-main>
-    <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
-    <AppBanner v-if="false" />
+    <AppBanner />
     <v-container>
       <div v-if="userLoading">
         Loading...
@@ -90,6 +129,56 @@ export default defineComponent({
             :authenticated="false"
             :width="24"
           />
+          <v-row>
+            <v-col
+              cols="3"
+              class="pt-6"
+            >
+              <v-text-field
+                v-model="user.email"
+                label="Email"
+                dense
+                :readonly="!editEmail"
+                filled
+                :rules="requiredRules('E-mail is required',[
+                  v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+                ])"
+              >
+                <template
+                  #append
+                >
+                  <v-btn
+                    icon
+                    @click="updateEmail(user.email)"
+                  >
+                    <v-icon
+                      v-text="!editEmail ? 'mdi-pencil' : 'mdi-content-save'"
+                    />
+                  </v-btn>
+                </template>
+                <template
+                  v-if="!user.email"
+                  #append-outer
+                >
+                  <v-tooltip
+                    right
+                  >
+                    <template #activator="{ on, attrs }">
+                      <v-icon
+                        right
+                        color="red"
+                        v-bind="attrs"
+                        v-on="on"
+                      >
+                        mdi-alert-circle
+                      </v-icon>
+                    </template>
+                    <span>Email is required</span>
+                  </v-tooltip>
+                </template>
+              </v-text-field>
+            </v-col>
+          </v-row>
         </div>
 
         <div class="mb-8">

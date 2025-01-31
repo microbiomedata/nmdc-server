@@ -314,7 +314,6 @@ class MetabolomicsAnalysisFactory(PipelineStepBase):
         sqlalchemy_session = db
 
     used: str = Faker("word")
-    has_calibration: str = Faker("word")
 
 
 class GeneFunction(SQLAlchemyModelFactory):
@@ -381,6 +380,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
                 "city": "",
                 "state": "",
                 "postalCode": "",
+                "country": "",
             },
             "shippingConditions": "",
             "sample": "",
@@ -396,7 +396,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "facilities": [],
             "otherAward": "",
         },
-        "packageName": "",
+        "packageName": [],
     }
     locked_by = None
     lock_updated = None

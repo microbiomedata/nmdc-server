@@ -1,5 +1,20 @@
+<script lang="ts">
+import { computed, defineComponent } from '@vue/composition-api';
+import { stateRefs } from '@/store';
+
+export default defineComponent({
+  setup() {
+    const message = stateRefs.bannerMessage;
+    const title = stateRefs.bannerTitle;
+    const showAppBanner = computed(() => message.value || title.value);
+    return { showAppBanner, message, title };
+  },
+});
+</script>
+
 <template>
   <v-banner
+    v-if="showAppBanner"
     color="blue"
     dark
     icon="mdi-information"
@@ -8,10 +23,10 @@
     <p
       class="title"
     >
-      Banner title (replace me)
+      {{ title || '' }}
     </p>
     <p>
-      Banner content (replace me)
+      {{ message || '' }}
     </p>
   </v-banner>
 </template>

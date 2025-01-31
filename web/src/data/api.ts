@@ -54,7 +54,10 @@ export type entityType = 'biosample'
   | 'metagenome_annotation'
   | 'metaproteomic_analysis'
   | 'data_object'
-  | 'gene_function';
+  | 'kegg_function'
+  | 'cog_function'
+  | 'pfam_function'
+  | 'go_function';
 
 /**
  * By including this file in source with a git submodule,
@@ -177,7 +180,7 @@ export interface StudySearchResults extends BaseSearchResult {
   add_date: string;
   mod_date: string;
   open_in_gold: string;
-  funding_sources: string[];
+  funding_sources?: string[];
   relevant_protocols: string[];
   gold_study_identifiers: string[];
   sample_count: number;
@@ -227,7 +230,7 @@ export interface UnitSchema {
 
 export interface AttributeSummary {
   count: number;
-  type: 'string' | 'date' | 'integer' | 'float' | 'kegg_search';
+  type: 'string' | 'date' | 'integer' | 'float' | 'kegg_search' | 'gene_search' | 'cog_search' | 'pfam_search';
   min?: string | number;
   max?: string | number;
   units?: UnitSchema;
@@ -361,6 +364,7 @@ export interface User{
     orcid: string;
     name: string;
     is_admin: boolean;
+    email?: string;
 }
 
 export interface TokenResponse {
@@ -492,8 +496,6 @@ async function getFacetSummary(
       facet: facetName,
       count: data.facets[facetName],
     }))
-    /* TODO: Take out all these lipidomics hacks */
-    .filter((facetName) => (facetName.facet !== 'Lipidomics'))
     .sort((a, b) => b.count - a.count);
 }
 
@@ -542,7 +544,7 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
     gene_function: {
       attributes: {
         id: {
-          type: 'kegg_search',
+          type: 'gene_search',
         },
       },
     },
@@ -643,6 +645,21 @@ async function keggSearch(query: string) {
   return data.terms as KeggTermSearchResponse[];
 }
 
+async function cogSearch(query: string) {
+  const { data } = await client.get('cog/term/search', { params: { query } });
+  return data.terms as KeggTermSearchResponse[];
+}
+
+async function pfamSearch(query: string) {
+  const { data } = await client.get('pfam/term/search', { params: { query } });
+  return data.terms as KeggTermSearchResponse[];
+}
+
+async function goSearch(query: string) {
+  const { data } = await client.get('go/term/search', { params: { query } });
+  return data.terms as KeggTermSearchResponse[];
+}
+
 /**
  * Discover facet values by text search
  */
@@ -678,8 +695,14 @@ async function updateUser(id: string, body: User) {
   return data;
 }
 
-async function getAppSettings() {
-  const { data } = await client.get<Record<string, boolean>>('settings');
+interface PortalSettings {
+  portal_banner_title: string | null;
+  portal_banner_message: string | null;
+  disable_bulk_download: boolean;
+}
+
+async function getAppSettings(): Promise<PortalSettings> {
+  const { data } = await client.get<PortalSettings>('settings');
   return data;
 }
 
@@ -842,6 +865,9 @@ const api = {
   searchMetaproteomicAnalysis,
   search,
   keggSearch,
+  cogSearch,
+  pfamSearch,
+  goSearch,
   textSearch,
   getAllUsers,
   updateUser,

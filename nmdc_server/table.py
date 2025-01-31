@@ -35,6 +35,16 @@ class KeggTerms:
     MODULE = ("KEGG.MODULE:M", "M")
 
 
+class CogTerms:
+    FUNCTION = "COG.FUNCTION:"
+    PATHWAY = "COG.PATHWAY:"
+
+
+class PfamEntries:
+    ENTRY = "PFAM.ENTRY:"
+    CLAN = "PFAM.CLAN:"
+
+
 class Table(Enum):
     biosample = "biosample"
     study = "study"
@@ -50,7 +60,6 @@ class Table(Enum):
     read_based_analysis = "read_based_analysis"
     metabolomics_analysis = "metabolomics_analysis"
     metatranscriptome = "metatranscriptome"
-    gene_function = "gene_function"
     metap_gene_function = "metap_gene_function"
     metat_gene_function = "metat_gene_function"
     data_object = "data_object"
@@ -58,6 +67,12 @@ class Table(Enum):
     env_broad_scale = "env_broad_scale"
     env_local_scale = "env_local_scale"
     env_medium = "env_medium"
+
+    gene_function = "gene_function"
+    kegg_function = "kegg_function"
+    cog_function = "cog_function"
+    pfam_function = "pfam_function"
+    go_function = "go_function"
 
     principal_investigator = "principal_investigator"
 
@@ -97,6 +112,10 @@ _table_model_map: Dict[Table, Union[models.ModelType, AliasedClass]] = {
     Table.metatranscriptome: models.Metatranscriptome,
     Table.metabolomics_analysis: models.MetabolomicsAnalysis,
     Table.gene_function: models.GeneFunction,
+    Table.kegg_function: models.GeneFunction,
+    Table.cog_function: models.GeneFunction,
+    Table.pfam_function: models.GeneFunction,
+    Table.go_function: models.GeneFunction,
     Table.metap_gene_function: MetaPGeneFunction,
     Table.metat_gene_function: MetaTGeneFunction,
     Table.env_broad_scale: EnvBroadScaleTerm,

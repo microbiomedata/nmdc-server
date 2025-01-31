@@ -15,6 +15,7 @@ import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
+import { deleteSubmission } from '../store/api';
 
 const headers: DataTableHeader[] = [
   {
@@ -62,6 +63,8 @@ export default defineComponent({
       multiSort: false,
       mustSort: false,
     });
+    const isDeleteDialogOpen = ref(false);
+    const deleteDialogSubmission = ref<api.MetadataSubmissionRecord | null>(null);
 
     function getStatus(item: api.MetadataSubmissionRecord) {
       const color = item.status === submissionStatus.Complete ? 'success' : 'default';
@@ -75,8 +78,8 @@ export default defineComponent({
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
-    async function createNewSubmission() {
-      const item = await generateRecord();
+    async function createNewSubmission(isTestSubmission: boolean) {
+      const item = await generateRecord(isTestSubmission);
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
@@ -87,14 +90,35 @@ export default defineComponent({
       submission.setSortOptions(options.value.sortBy[0], sortOrder);
     }, { deep: true });
 
+    function handleOpenDeleteDialog(item: api.MetadataSubmissionRecord | null) {
+      deleteDialogSubmission.value = item;
+      if (deleteDialogSubmission) {
+        isDeleteDialogOpen.value = true;
+      }
+    }
+
+    async function handleDelete(item: api.MetadataSubmissionRecord | null) {
+      if (!item) {
+        return;
+      }
+      await deleteSubmission(item.id);
+      submission.refetch();
+      deleteDialogSubmission.value = null;
+      isDeleteDialogOpen.value = false;
+    }
+
     return {
       HARMONIZER_TEMPLATES,
+      isDeleteDialogOpen,
+      deleteDialogSubmission,
       IconBar,
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
       getStatus,
       resume,
+      handleDelete,
+      handleOpenDeleteDialog,
       headers,
       options,
       submission,
@@ -148,11 +172,32 @@ export default defineComponent({
       <v-card-text>
         <v-btn
           color="primary"
-          @click="createNewSubmission"
+          @click="createNewSubmission(false)"
         >
           <v-icon>mdi-plus</v-icon>
-          Create New Submission
+          Create Submission
         </v-btn>
+        <v-btn
+          color="primary"
+          class="ml-3"
+          outlined
+          @click="createNewSubmission(true)"
+        >
+          <v-icon>mdi-plus</v-icon>
+          Create Test Submission
+        </v-btn>
+        <v-tooltip right>
+          <template #activator="{ on }">
+            <v-icon
+              class="pl-2"
+              color="primary"
+              v-on="on"
+            >
+              mdi-information
+            </v-icon>
+          </template>
+          <span>Test submissions should be used when at a workshop or doing a test, example, or training. These cannot be submitted.</span>
+        </v-tooltip>
       </v-card-text>
       <v-card-title class="text-h4">
         Past submissions
@@ -192,19 +237,81 @@ export default defineComponent({
             </v-chip>
           </template>
           <template #[`item.action`]="{ item }">
-            <v-btn
-              small
-              color="primary"
-              @click="() => resume(item)"
-            >
-              Resume
-              <v-icon class="pl-1">
-                mdi-arrow-right-circle
-              </v-icon>
-            </v-btn>
+            <div class="d-flex align-center">
+              <v-spacer />
+              <v-btn
+                small
+                color="primary"
+                @click="() => resume(item)"
+              >
+                Resume
+                <v-icon class="pl-1">
+                  mdi-arrow-right-circle
+                </v-icon>
+              </v-btn>
+              <v-menu
+                offset-x
+              >
+                <template #activator="{ on }">
+                  <v-btn
+                    text
+                    icon
+                    class="ml-1"
+                    v-on="on"
+                  >
+                    <v-icon>
+                      mdi-dots-vertical
+                    </v-icon>
+                  </v-btn>
+                </template>
+                <v-list>
+                  <v-list-item
+                    @click="() => handleOpenDeleteDialog(item)"
+                  >
+                    <v-list-item-title>Delete</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+            </div>
           </template>
         </v-data-table>
       </v-card>
     </v-card>
+    <v-dialog
+      v-model="isDeleteDialogOpen"
+      :width="550"
+    >
+      <v-card>
+        <v-spacer />
+        <v-card-title class="text-h5">
+          Delete Submission
+        </v-card-title>
+        <v-card-text class="text-h5">
+          <p v-if="deleteDialogSubmission && deleteDialogSubmission.study_name != ''">
+            This will delete "{{ deleteDialogSubmission.study_name }}" and all associated data.
+          </p>
+          <p v-else>
+            This will delete this submission and all associated data.
+          </p>
+          <p>This cannot be undone.</p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn
+            class="ma-3"
+            @click="isDeleteDialogOpen=False"
+          >
+            Cancel
+          </v-btn>
+          <v-btn
+            color="red"
+            class="ml-3 white--text"
+            @click="handleDelete(deleteDialogSubmission)"
+          >
+            Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
 </template>

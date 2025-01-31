@@ -4,9 +4,9 @@ import CompositionApi, {
 } from '@vue/composition-api';
 import { clone, forEach } from 'lodash';
 import axios from 'axios';
+import { User } from '@/data/api';
 import * as api from './api';
 import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
-import { User } from '@/data/api';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -49,6 +49,7 @@ const submissionStatus: Record<string, SubmissionStatus> = {
 const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(submissionStatus).includes(str);
 
 const status = ref(submissionStatus.InProgress);
+const isTestSubmission = ref(false);
 
 /**
  * Submission record locking information
@@ -93,6 +94,7 @@ const addressFormDefault = {
     city: '',
     state: '',
     postalCode: '',
+    country: '',
   } as api.NmdcAddress,
   expectedShippingDate: undefined as undefined | Date,
   shippingConditions: '',
@@ -110,6 +112,7 @@ const addressFormDefault = {
 const contextFormDefault = {
   dataGenerated: undefined as undefined | boolean,
   awardDois: [] as string[] | null,
+  ship: undefined as undefined | boolean,
   facilityGenerated: undefined as undefined | boolean,
   facilities: [] as string[],
   award: undefined as undefined | string,
@@ -167,13 +170,12 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 /**
  * Environment Package Step
  */
-const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
+const packageName = ref(['soil'] as (keyof typeof HARMONIZER_TEMPLATES)[]);
 const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
   const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
   return list;
 });
-
 /**
  * DataHarmonizer Step
  */
@@ -254,9 +256,10 @@ function reset() {
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
-  packageName.value = 'soil';
+  packageName.value = ['soil'];
   sampleData.value = {};
   status.value = submissionStatus.InProgress;
+  isTestSubmission.value = false;
 }
 
 async function incrementalSaveRecord(id: string): Promise<number | void> {
@@ -287,9 +290,10 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   return Promise.resolve();
 }
 
-async function generateRecord() {
+async function generateRecord(isTestSubBool: boolean) {
   reset();
-  const record = await api.createRecord(payloadObject.value);
+  const record = await api.createRecord(payloadObject.value, isTestSubBool);
+  isTestSubmission.value = isTestSubBool;
   return record;
 }
 
@@ -305,6 +309,7 @@ async function loadRecord(id: string) {
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
   _permissionLevel = (val.permission_level as permissionLevelValues);
+  isTestSubmission.value = val.is_test_submission;
 
   try {
     const lockResponse = await api.lockSubmission(id);
@@ -362,6 +367,7 @@ export {
   hasChanged,
   tabsValidated,
   status,
+  isTestSubmission,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,

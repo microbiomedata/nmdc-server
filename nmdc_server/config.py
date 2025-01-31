@@ -80,6 +80,8 @@ class Settings(BaseSettings):
 
     # App settings related to UI behavior
     disable_bulk_download: str = ""
+    portal_banner_title: Optional[str] = None
+    portal_banner_message: Optional[str] = None
 
     # Rancher information to swap databases after ingest
     rancher_api_base_url: Optional[str] = None
@@ -88,6 +90,10 @@ class Settings(BaseSettings):
     rancher_postgres_secret_id: Optional[str] = None
     rancher_backend_workload_id: Optional[str] = None
     rancher_worker_workload_id: Optional[str] = None
+
+    # Parameters related to posting messages to Slack.
+    # Reference: https://api.slack.com/messaging/webhooks
+    slack_webhook_url_for_ingester: Optional[str] = None
 
     # CORS settings necessary for allowing request from Field Notes app
     cors_allow_origins: Optional[str] = None  # comma separated list of allowed origins

@@ -171,8 +171,43 @@ class PfamEntryToClan(Base):
     clan = Column(String, nullable=False, primary_key=True, index=True)
 
 
+class GoTermToPfamEntry(Base):
+    __tablename__ = "go_term_to_pfam_entry"
+
+    term = Column(String, nullable=False, primary_key=True)
+    entry = Column(String, nullable=False, primary_key=True, index=True)
+
+
+class GoTermToKegg(Base):
+    __tablename__ = "go_term_to_kegg_ortholog"
+
+    term = Column(String, nullable=False, primary_key=True)
+    kegg_term = Column(String, nullable=False, primary_key=True)
+
+
 class KoTermText(Base):
     __tablename__ = "ko_term_text"
+
+    term = Column(String, nullable=False, primary_key=True)
+    text = Column(Text, nullable=False)
+
+
+class PfamTermText(Base):
+    __tablename__ = "pfam_term_text"
+
+    term = Column(String, nullable=False, primary_key=True)
+    text = Column(Text, nullable=False)
+
+
+class CogTermText(Base):
+    __tablename__ = "cog_term_text"
+
+    term = Column(String, nullable=False, primary_key=True)
+    text = Column(Text, nullable=False)
+
+
+class GoTermText(Base):
+    __tablename__ = "go_term_text"
 
     term = Column(String, nullable=False, primary_key=True)
     text = Column(Text, nullable=False)
@@ -672,7 +707,6 @@ class MetabolomicsAnalysis(Base, PipelineStep):
     __tablename__ = "metabolomics_analysis"
 
     used = Column(String, nullable=False)
-    has_calibration = Column(String, nullable=False)
 
     inputs = input_relationship(metabolomics_analysis_input_association)
     outputs = output_relationship(metabolomics_analysis_output_association)
@@ -851,6 +885,7 @@ class User(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     orcid = Column(String, nullable=False)
     name = Column(String)
+    email = Column(String, nullable=True)
     is_admin = Column(Boolean, nullable=False, default=False)
 
 
@@ -865,6 +900,7 @@ class SubmissionEditorRole(str, enum.Enum):
 class SubmissionSourceClient(str, enum.Enum):
     submission_portal = "submission_portal"
     field_notes = "field_notes"
+    nmdc_edge = "nmdc_edge"
 
 
 class SubmissionMetadata(Base):
@@ -878,6 +914,8 @@ class SubmissionMetadata(Base):
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
     study_name = Column(String, nullable=True)
     templates = Column(JSONB, nullable=True)
+    field_notes_metadata = Column(JSONB, nullable=True)
+    is_test_submission = Column(Boolean, nullable=False, default=False)
 
     # The client which initially created the submission. A null value indicates it was created by
     # an "unregistered" client. This could be legitimate usage, but it should be monitored.

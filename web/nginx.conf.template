@@ -14,6 +14,8 @@ http {
 
         server_name localhost;
 
+        client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
+
         location / {
             try_files ${DOLLAR}uri ${DOLLAR}uri/ /index.html;
         }
@@ -39,6 +41,14 @@ http {
 
         location /nmdcdemo/ {
             proxy_pass https://nmdcdemo.emsl.pnnl.gov/;
+        }
+
+        location /nerscportal {
+            proxy_pass https://portal.nersc.gov/;
+        }
+
+        location /neonscience {
+            proxy_pass https://storage.neonscience.org/;
         }
     }
 }

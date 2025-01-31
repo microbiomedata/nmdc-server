@@ -1,3 +1,4 @@
+import xml.etree.ElementTree as ElementTree
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import lru_cache
@@ -250,7 +251,33 @@ async def orcid_authorize(request: Request, db: Session = Depends(get_db)):
     # TODO: use token_response.access_token to make requests to the ORCID API for more user info?
     # Or possibly store the access token in the database for later use?
     user = User(orcid=token_response["orcid"], name=token_response["name"])
+
+    orcid_email_response = await oauth2_client.orcid.get(
+        f"https://pub.orcid.org/v3.0/{token_response['orcid']}/email", token=token_response
+    )
+
+    # XML data from ORCID API
+    xml_content = orcid_email_response._content
+
+    root = ElementTree.fromstring(xml_content)
+
+    namespace = {
+        "email": "http://www.orcid.org/ns/email",
+    }
+
+    email_elements = root.findall(".//email:email", namespace)
+
+    user_email = None
+    # Get the first valid email
+    # TODO - Consider storing all valid emails in the future
+    for email in email_elements:
+        if email.text and "@" in email.text:
+            user_email = email.text
+            break
+
     user_model = crud.get_or_create_user(db, user)
+    if user_model.email is None:
+        user_model.email = user_email
     user_model.name = user.name
     db.commit()
     redirect_uri = request.session.pop("redirect_uri")

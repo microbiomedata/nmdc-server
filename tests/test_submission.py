@@ -38,6 +38,92 @@ def test_list_submissions(db: Session, client: TestClient, logged_in_user):
     assert response.json()["results"][0]["id"] == str(submission.id)
 
 
+def test_get_metadata_submissions_mixs_as_non_admin(
+    db: Session, client: TestClient, logged_in_user
+):
+    response = client.request(method="GET", url="/api/metadata_submission/mixs_report")
+    assert response.status_code == 403
+
+
+def test_get_metadata_submissions_mixs_as_admin(
+    db: Session, client: TestClient, logged_in_admin_user
+):
+    now = datetime.utcnow()
+
+    # Create logged in user
+    logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
+
+    # Create test submission
+    # submission1 has "Submitted- Pending Review" as the status (this is the one we want)
+    submission1 = fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        created=now,
+        status="Submitted- Pending Review",
+        metadata_submission={
+            "sampleData": {
+                "built_env_data": [
+                    {
+                        "samp_name": "Sample A",
+                        "env_medium": "Medium A",
+                        "env_broad_scale": "Broad Scale A",
+                        "env_local_scale": "Local Scale A",
+                    },
+                    {
+                        "samp_name": "Sample B",
+                        "env_medium": "Medium B",
+                        "env_broad_scale": "Broad Scale B",
+                        "env_local_scale": "Local Scale B",
+                    },
+                ]
+            },
+            "packageName": "Env Pkg 1",
+        },
+    )
+    db.commit()
+    response = client.request(method="get", url="/api/metadata_submission/mixs_report")
+    assert response.status_code == 200
+
+    # Check that the reponse payload is a TSV and that the result has the correct
+    # number of rows and information populated. The result should have 3 rows
+    # including a header.
+    # Reference: https://docs.python.org/3/library/csv.html#csv.DictReader
+
+    fieldnames = [
+        "Submission ID",
+        "Status",
+        "Sample Name",
+        "Environmental Package/Extension",
+        "Environmental Broad Scale",
+        "Environmental Local Scale",
+        "Environmental Medium",
+    ]
+    reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
+    rows = [row for row in reader]
+    assert len(rows) == 3  # including the header row
+
+    header_row = rows[0]  # get the header row
+    assert len(list(header_row.keys())) == len(fieldnames)
+
+    data_row = rows[1]  # first data row (data about Sample A in submission1)
+    assert data_row["Submission ID"] == str(submission1.id)
+    assert data_row["Status"] == "Submitted- Pending Review"
+    assert data_row["Sample Name"] == "Sample A"
+    assert data_row["Environmental Package/Extension"] == "Env Pkg 1"
+    assert data_row["Environmental Broad Scale"] == "Broad Scale A"
+    assert data_row["Environmental Local Scale"] == "Local Scale A"
+    assert data_row["Environmental Medium"] == "Medium A"
+
+    data_row = rows[2]  # second data row (data about Sample B in submission1)
+    assert data_row["Submission ID"] == str(submission1.id)
+    assert data_row["Status"] == "Submitted- Pending Review"
+    assert data_row["Sample Name"] == "Sample B"
+    assert data_row["Environmental Package/Extension"] == "Env Pkg 1"
+    assert data_row["Environmental Broad Scale"] == "Broad Scale B"
+    assert data_row["Environmental Local Scale"] == "Local Scale B"
+    assert data_row["Environmental Medium"] == "Medium B"
+
+
 def test_get_metadata_submissions_report_as_non_admin(
     db: Session, client: TestClient, logged_in_user
 ):

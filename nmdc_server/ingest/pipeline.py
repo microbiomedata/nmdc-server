@@ -31,7 +31,7 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
 
     query = annotations.find(
         {
-            "metagenome_annotation_id": pipeline.id,
+            "was_generated_by": pipeline.id,
             "gene_function_id": {
                 "$regex": gene_regex,
             },
@@ -39,7 +39,7 @@ def load_mg_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
         no_cursor_timeout=True,
         projection={
             "_id": False,
-            "metagenome_annotation_id": True,
+            "was_generated_by": True,
             "count": True,
             "gene_function_id": True,
         },
@@ -88,19 +88,17 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
 
     query = annotations.find(
         {
-            "metaproteomic_analysis_id": pipeline.id,
+            "was_generated_by": pipeline.id,
             "gene_function_id": {
                 "$regex": gene_regex,
             },
-            "best_protein": True,
         },
         no_cursor_timeout=True,
         projection={
             "_id": False,
-            "metaproteomic_analysis_id": True,
+            "was_generated_by": True,
             "count": True,
             "gene_function_id": True,
-            "best_protein": True,
         },
     )
     if kwargs.get("function_limit"):
@@ -116,7 +114,7 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
                 metaproteomic_analysis_id=pipeline.id,
                 gene_function_id=function_id,
                 count=annotation["count"],
-                best_protein=annotation["best_protein"],
+                best_protein=True,
             )
         )
     if metap_gene_function_aggregations:
@@ -139,7 +137,7 @@ def load_mt_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
     # Query gene function annotations from mongo and build the appropriate objects
     query = annotations.find(
         {
-            "metagenome_annotation_id": pipeline.id,
+            "was_generated_by": pipeline.id,
             "gene_function_id": {
                 "$regex": gene_regex,
             },
@@ -147,7 +145,7 @@ def load_mt_annotation(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObject
         no_cursor_timeout=True,
         projection={
             "_id": False,
-            "metatranscriptome_annotation_id": True,
+            "was_generated_by": True,
             "count": True,
             "gene_function_id": True,
         },

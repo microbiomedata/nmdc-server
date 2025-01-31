@@ -293,6 +293,22 @@ class GeneFunctionFilter(OmicsProcessingFilter):
         return query
 
 
+class KeggFunctionFilter(GeneFunctionFilter):
+    table = Table.kegg_function
+
+
+class CogFunctionFilter(GeneFunctionFilter):
+    table = Table.cog_function
+
+
+class PfamFunctionFilter(GeneFunctionFilter):
+    table = Table.pfam_function
+
+
+class GoFunctionFilter(GeneFunctionFilter):
+    table = Table.go_function
+
+
 class MetaPGeneFunctionFilter(OmicsProcessingFilter):
     table = Table.metap_gene_function
 

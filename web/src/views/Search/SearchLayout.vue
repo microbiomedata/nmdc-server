@@ -215,8 +215,7 @@ export default defineComponent({
         background-opacity="0"
         style="position: fixed; top: 64; z-index: 2;"
       />
-      <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
-      <AppBanner v-if="false" />
+      <AppBanner />
       <v-container
         fluid
         class="py-0"
@@ -357,7 +356,7 @@ export default defineComponent({
                             v-for="item in props.result.omics_processing_counts"
                           >
                             <v-chip
-                              v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                              v-if="item.count"
                               :key="item.type"
                               small
                               class="mr-2 my-1"
@@ -415,7 +414,7 @@ export default defineComponent({
                                   v-for="item in childProps.result.omics_processing_counts"
                                 >
                                   <v-chip
-                                    v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                                    v-if="item.count"
                                     :key="item.type"
                                     small
                                     class="mr-2 my-1"
@@ -536,7 +535,7 @@ export default defineComponent({
                             v-for="item in props.result.omics_processing_counts"
                           >
                             <v-chip
-                              v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                              v-if="item.count"
                               :key="item.type"
                               small
                               class="mr-2 my-1"
@@ -594,7 +593,7 @@ export default defineComponent({
                                   v-for="item in childProps.result.omics_processing_counts"
                                 >
                                   <v-chip
-                                    v-if="item.count && (item.type.toLowerCase() !== 'lipidomics')"
+                                    v-if="item.count"
                                     :key="item.type"
                                     small
                                     class="mr-2 my-1"

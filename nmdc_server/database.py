@@ -145,15 +145,17 @@ with m as (select
     bit_or(
         case
             when op.annotations->>'omics_type' = 'Metabolomics' then
-                b'{MultiomicsValue.mb.value:05b}'
+                b'{MultiomicsValue.mb.value:06b}'
             when op.annotations->>'omics_type' = 'Metagenome' then
-                b'{MultiomicsValue.mg.value:05b}'
+                b'{MultiomicsValue.mg.value:06b}'
             when op.annotations->>'omics_type' = 'Proteomics' then
-                b'{MultiomicsValue.mp.value:05b}'
+                b'{MultiomicsValue.mp.value:06b}'
             when op.annotations->>'omics_type' = 'Metatranscriptome' then
-                b'{MultiomicsValue.mt.value:05b}'
+                b'{MultiomicsValue.mt.value:06b}'
             when op.annotations->>'omics_type' = 'Organic Matter Characterization' then
-                b'{MultiomicsValue.om.value:05b}'
+                b'{MultiomicsValue.om.value:06b}'
+            when op.annotations->>'omics_type' = 'Lipidomics' then
+                b'{MultiomicsValue.li.value:06b}'
         end
     )::integer as multiomics
 from biosample b
@@ -169,15 +171,17 @@ with m as (select
     bit_or(
         case
             when op.annotations->>'omics_type' = 'Metabolomics' then
-                b'{MultiomicsValue.mb.value:05b}'
+                b'{MultiomicsValue.mb.value:06b}'
             when op.annotations->>'omics_type' = 'Metagenome' then
-                b'{MultiomicsValue.mg.value:05b}'
+                b'{MultiomicsValue.mg.value:06b}'
             when op.annotations->>'omics_type' = 'Proteomics' then
-                b'{MultiomicsValue.mp.value:05b}'
+                b'{MultiomicsValue.mp.value:06b}'
             when op.annotations->>'omics_type' = 'Metatranscriptome' then
-                b'{MultiomicsValue.mt.value:05b}'
+                b'{MultiomicsValue.mt.value:06b}'
             when op.annotations->>'omics_type' = 'Organic Matter Characterization' then
-                b'{MultiomicsValue.om.value:05b}'
+                b'{MultiomicsValue.om.value:06b}'
+            when op.annotations->>'omics_type' = 'Lipidomics' then
+                b'{MultiomicsValue.li.value:06b}'
         end
     )::integer as multiomics
 from study s

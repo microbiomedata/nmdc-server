@@ -36,7 +36,11 @@ router = APIRouter()
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
     settings = Settings()
-    return {"disable_bulk_download": settings.disable_bulk_download.upper() == "YES"}
+    return {
+        "disable_bulk_download": settings.disable_bulk_download.upper() == "YES",
+        "portal_banner_message": settings.portal_banner_message,
+        "portal_banner_title": settings.portal_banner_title,
+    }
 
 
 # get application version number
@@ -284,6 +288,36 @@ async def get_kegg_terms_for_pathway(pathway: str, db: Session = Depends(get_db)
 )
 async def kegg_text_search(query: str, limit=20, db: Session = Depends(get_db)):
     terms = crud.kegg_text_search(db, query, limit)
+    return schemas.KeggTermTextListResponse(terms=terms)
+
+
+@router.get(
+    "/cog/term/search",
+    response_model=schemas.KeggTermTextListResponse,
+    tags=["gene_function"],
+)
+async def cog_text_search(query: str, limit=20, db: Session = Depends(get_db)):
+    terms = crud.cog_text_search(db, query, limit)
+    return schemas.KeggTermTextListResponse(terms=terms)
+
+
+@router.get(
+    "/pfam/term/search",
+    response_model=schemas.KeggTermTextListResponse,
+    tags=["gene_function"],
+)
+async def pfam_text_search(query: str, limit=20, db: Session = Depends(get_db)):
+    terms = crud.pfam_text_search(db, query, limit)
+    return schemas.KeggTermTextListResponse(terms=terms)
+
+
+@router.get(
+    "/go/term/search",
+    response_model=schemas.KeggTermTextListResponse,
+    tags=["gene_function"],
+)
+async def go_text_search(query: str, limit=20, db: Session = Depends(get_db)):
+    terms = crud.go_text_search(db, query, limit)
     return schemas.KeggTermTextListResponse(terms=terms)
 
 
@@ -638,6 +672,114 @@ async def download_zip_file(
 
 
 @router.get(
+    "/metadata_submission/mixs_report",
+    tags=["metadata_submission"],
+)
+async def get_metadata_submissions_mixs(
+    db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+):
+    r"""
+    Generate a TSV-formatted report of biosamples belonging to submissions
+    that have a status of "Submitted- Pending Review".
+
+    The report indicates which environmental package/extension, broad scale,
+    local scale, and medium are specified for each biosample. The report is
+    designed to facilitate the review of submissions by NMDC team members.
+    """
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+
+    # Get the submissions from the database.
+    q = crud.get_query_for_submitted_pending_review_submissions(db)
+    submissions = q.all()
+
+    # Iterate through the submissions, building the data rows for the report.
+    header_row = [
+        "Submission ID",
+        "Status",
+        "Sample Name",
+        "Environmental Package/Extension",
+        "Environmental Broad Scale",
+        "Environmental Local Scale",
+        "Environmental Medium",
+    ]
+    data_rows = []
+    for s in submissions:
+
+        metadata = s.metadata_submission  # creates a concise alias
+        sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
+        env_package = metadata["packageName"] if "packageName" in metadata else {}
+
+        # Get sample names from each sample type
+        for sample_type in sample_data:
+            samples = sample_data[sample_type] if sample_type in sample_data else []
+            # Iterate through each sample and extract the name
+            for x in samples:
+                # Get the sample name
+                sample_name = x["samp_name"] if "samp_name" in x else ""
+                sample_name = str(sample_name)
+                sample_name = sample_name.replace("\t", "")
+                sample_name = sample_name.replace("\r", "")
+                sample_name = sample_name.replace("\n", "").lstrip("_")
+
+                # Get the env broad scale
+                env_broad_scale = x["env_broad_scale"] if "env_broad_scale" in x else ""
+                env_broad_scale = str(env_broad_scale)
+                env_broad_scale = env_broad_scale.replace("\t", "")
+                env_broad_scale = env_broad_scale.replace("\r", "")
+                env_broad_scale = env_broad_scale.replace("\n", "").lstrip("_")
+
+                # Get the env local scale
+                env_local_scale = x["env_local_scale"] if "env_local_scale" in x else ""
+                env_local_scale = str(env_local_scale)
+                env_local_scale = env_local_scale.replace("\t", "")
+                env_local_scale = env_local_scale.replace("\r", "")
+                env_local_scale = env_local_scale.replace("\n", "").lstrip("_")
+
+                # Get the env medium
+                env_medium = x["env_medium"] if "env_medium" in x else ""
+                env_medium = str(env_medium)
+                env_medium = env_medium.replace("\t", "")
+                env_medium = env_medium.replace("\r", "")
+                env_medium = env_medium.replace("\n", "").lstrip("_")
+
+                # Append each sample as new row (with env data)
+                data_row = [
+                    s.id,
+                    s.status,
+                    sample_name,
+                    env_package,
+                    env_broad_scale,
+                    env_local_scale,
+                    env_medium,
+                ]
+                data_rows.append(data_row)
+
+    # Build the report as an in-memory TSV "file" (buffer).
+    # Reference: https://docs.python.org/3/library/csv.html#csv.writer
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter="\t")
+    writer.writerow(header_row)
+    writer.writerows(data_rows)
+
+    # Reset the buffer's internal file pointer to the beginning of the buffer, so that,
+    # when we stream the buffer's contents later, all of its contents are included.
+    buffer.seek(0)
+
+    # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
+    # Reference: https://fastapi.tiangolo.com/advanced/custom-response
+    # Reference: https://mimetype.io/text/tab-separated-values
+    filename = "mixs-report.tsv"
+    response = StreamingResponse(
+        buffer,
+        media_type="text/tab-separated-values",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+    return response
+
+
+@router.get(
     "/metadata_submission/report",
     tags=["metadata_submission"],
 )
@@ -763,6 +905,8 @@ async def get_submission(
             permission_level=permission_level,
             templates=submission.templates,
             study_name=submission.study_name,
+            field_notes_metadata=submission.field_notes_metadata,
+            is_test_submission=submission.is_test_submission,
         )
         if submission.locked_by is not None:
             submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
@@ -832,12 +976,18 @@ async def update_submission(
             status_code=400,
             detail="This submission is currently being edited by a different user.",
         )
-    # Create Github issue when metadata is being submitted
+
+    # Create GitHub issue when metadata is being submitted and not a test submission
     if (
         submission.status == "in-progress"
         and body_dict.get("status", None) == "Submitted- Pending Review"
+        and submission.is_test_submission is False
     ):
         create_github_issue(submission, user)
+
+    if body.field_notes_metadata is not None:
+        submission.field_notes_metadata = body.field_notes_metadata
+
     # Merge the submission metadata dicts
     submission.metadata_submission = (
         submission.metadata_submission | body_dict["metadata_submission"]
@@ -855,7 +1005,11 @@ async def update_submission(
             crud.update_submission_contributor_roles(db, submission, new_permissions)
 
         if body_dict.get("status", None):
-            submission.status = body_dict["status"]
+            if (
+                body_dict.get("status", None) == "Submitted- Pending Review"
+                and submission.is_test_submission is False
+            ):
+                submission.status = body_dict["status"]
         db.commit()
     crud.update_submission_lock(db, submission.id)
     return submission
@@ -1034,6 +1188,14 @@ async def submit_metadata(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
+    # Old versions of the Field Notes app will continue to send a string for packageName
+    # for a little while. This code is to ease that transition and can be removed in the future.
+    if isinstance(body.metadata_submission.packageName, str):
+        if body.metadata_submission.packageName:
+            body.metadata_submission.packageName = [body.metadata_submission.packageName]
+        else:
+            body.metadata_submission.packageName = []
+
     submission = SubmissionMetadata(
         **body.dict(),
         author_orcid=user.orcid,

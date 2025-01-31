@@ -11,6 +11,7 @@ interface NmdcAddress {
   city: string;
   state: string;
   postalCode: string;
+  country: string;
 }
 
 function addressToString(address: NmdcAddress): string {
@@ -28,7 +29,7 @@ function addressToString(address: NmdcAddress): string {
 }
 
 interface MetadataSubmission {
-  packageName: keyof typeof HARMONIZER_TEMPLATES;
+  packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
   contextForm: any;
   addressForm: any;
   templates: string[];
@@ -46,9 +47,10 @@ interface MetadataSubmissionRecord {
   locked_by: User;
   lock_updated: string;
   permission_level: string | null;
-  source_client: 'submission_portal' | 'field_notes' | null;
+  source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
   study_name: string;
   templates: string[];
+  is_test_submission: boolean;
 }
 
 interface PaginatedResponse<T> {
@@ -63,7 +65,7 @@ interface LockOperationResult {
   lock_updated?: string | null;
 }
 
-async function createRecord(record: MetadataSubmission) {
+async function createRecord(record: MetadataSubmission, isTestSubmission: boolean) {
   const resp = await client.post<
     MetadataSubmissionRecord,
     AxiosResponse<MetadataSubmissionRecord>,
@@ -71,6 +73,7 @@ async function createRecord(record: MetadataSubmission) {
   >('metadata_submission', {
     metadata_submission: record,
     source_client: 'submission_portal',
+    is_test_submission: isTestSubmission,
   });
   return resp.data;
 }
@@ -111,6 +114,11 @@ async function unlockSubmission(id: string) {
   return resp.data;
 }
 
+async function deleteSubmission(id: string) {
+  const resp = await client.delete(`metadata_submission/${id}`);
+  return resp.data;
+}
+
 export {
   NmdcAddress,
   addressToString,
@@ -122,4 +130,5 @@ export {
   updateRecord,
   lockSubmission,
   unlockSubmission,
+  deleteSubmission,
 };

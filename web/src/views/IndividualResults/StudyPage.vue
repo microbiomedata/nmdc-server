@@ -95,7 +95,7 @@ export default defineComponent({
 
     const goldLinks = computed(() => {
       if (!item.value?.gold_study_identifiers && !item.value?.open_in_gold) {
-        return [];
+        return new Set();
       }
       const links = new Set();
       if (item.value.open_in_gold) {
@@ -235,8 +235,7 @@ export default defineComponent({
 <template>
   <v-container fluid>
     <v-main v-if="item !== null">
-      <!-- TODO: Reference a boolean variable defined elsewhere (TBD). -->
-      <AppBanner v-if="false" />
+      <AppBanner />
       <v-row :class="{'flex-column': $vuetify.breakpoint.xs}">
         <v-col
           cols="12"
@@ -280,15 +279,15 @@ export default defineComponent({
             </v-list>
             <template
               v-if="
-                goldLinks.keys.length > 0 ||
-                  item.relevant_protocols||
+                goldLinks.size > 0 ||
+                  (item.relevant_protocols && item.relevant_protocols.length > 0) ||
                   item.principal_investigator_websites.length > 0"
             >
               <div class="display-1">
                 Additional Resources
               </div>
               <v-list
-                v-if="goldLinks || item.relevant_protocols.length > 0"
+                v-if="goldLinks.size > 0 || (item.relevant_protocols && item.relevant_protocols.length > 0) || item.principal_investigator_websites.length > 0"
               >
                 <v-list-item v-if="item.relevant_protocols">
                   <v-list-item-avatar>
@@ -310,7 +309,7 @@ export default defineComponent({
                     field: 'relevant_protocols' }
                   "
                 />
-                <v-list-item v-if="item.principal_investigator_websites.length > 0">
+                <v-list-item v-if="goldLinks.size > 0 || item.principal_investigator_websites.length > 0">
                   <v-list-item-avatar>
                     <v-icon>mdi-file-document</v-icon>
                   </v-list-item-avatar>
