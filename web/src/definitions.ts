@@ -3,7 +3,7 @@ const Definitions = {
   piName: 'The Principal Investigator who led the study and/or generated the data.',
   piEmail: 'The Principal Investigator\'s email is required for submission. The submitter does not have to be the Principal Investigator.',
   piOrcid: '<a href="https://orcid.org" target="_blank" rel="noopener noreferrer">ORCID iD</a> of the Principal Investigator.',
-  fundingSources: 'The Funding Source of the research performed under this study should be provided and include an awarding program and the award or grant number. See an [existing study](https://data.microbiomedata.org/details/study/nmdc:sty-11-8fb6t785) for an example.',
+  fundingSources: 'The Funding Source of the research performed under this study should be provided and include an awarding program and the award or grant number. See an <a href="https://data.microbiomedata.org/details/study/nmdc:sty-11-8fb6t785" target="_blank" rel="noopener noreferrer">existing study</a> for an example.',
   linkOutWebpage: 'Optionally, institute, project, or research lab weblinks can be provided. If your research group or program has a website to share, please include the links.',
   studyDescription: 'The `Study Description` should provide a summary that includes the context of your study, research, goals, and design. We recommend this be similar to abstract format, describing the entire study similar to how an abstract describes a single publication.',
   studyOptionalNotes: 'Any additional information that is of value to your study can be provided here.',
