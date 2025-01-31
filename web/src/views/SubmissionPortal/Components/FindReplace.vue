@@ -27,7 +27,7 @@ export default defineComponent({
       required: true,
     },
   },
-  setup({ harmonizerApi }) {
+  setup(props) {
     // search matches, sorted by (col, row)
     const results: Ref<SearchResult[]> = ref([]);
     // search query
@@ -47,7 +47,7 @@ export default defineComponent({
       const i = cursor.value + offset;
       cursor.value = ((i % n) + n) % n;
       // clear highlighting
-      harmonizerApi.highlight();
+      props.harmonizerApi.highlight();
       if (query.value === null) {
         // reset to result origin if the query has been cleared
         result.value = { row: 0, col: 0 };
@@ -55,8 +55,8 @@ export default defineComponent({
         // update result if there's a valid query
         result.value = results.value[cursor.value];
         // highlight the result
-        harmonizerApi.highlight(result.value.row, result.value.col);
-        harmonizerApi.scrollViewportTo(result.value.row, result.value.col);
+        props.harmonizerApi.highlight(result.value.row, result.value.col);
+        props.harmonizerApi.scrollViewportTo(result.value.row, result.value.col);
       }
     }
     const next = () => scroll(1);
@@ -69,7 +69,7 @@ export default defineComponent({
         return a.col - b.col || a.row - b.row;
       }
       // update results
-      results.value = harmonizerApi
+      results.value = props.harmonizerApi
         .find(query.value || '')
         .sort(comparator);
       // find leftmost insertion point
@@ -93,12 +93,12 @@ export default defineComponent({
       const resultsToChange = all ? results.value : [result.value];
       // array of CellDatas with the replacement applied
       const replacements = resultsToChange.map((r) => {
-        const data = harmonizerApi.getCellData(r.row, r.col);
+        const data = props.harmonizerApi.getCellData(r.row, r.col);
         data.text = data.text.replace(query.value || '', replacement.value || '');
         return data;
       });
       // replace the text in Handsontable
-      harmonizerApi.setCellData(replacements);
+      props.harmonizerApi.setCellData(replacements);
       // update the results to respect the new text
       updateResults();
     }
