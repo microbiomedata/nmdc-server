@@ -65,7 +65,7 @@ To load production data or to run an ingest locally, you will need NERSC credent
 
 ### MongoDB Credentials
 
-In order to connect to the dev or prod MongoDB instances for ingest, you will need your own credentials to connect to them. If you do not have these, ask a team member to create accounts for you. Then add the credentials to your `.env` file.
+In order to connect to the dev or prod MongoDB instances for ingest, you will need credentials to connect to them. If you do not have credentials, ask a team member to either create accounts for you or to provide you with the generic `org.microbiomedata.data_reader` credentials. Then add the credentials to your `.env` file.
 
 ```bash
 NMDC_MONGO_USER=changeme
