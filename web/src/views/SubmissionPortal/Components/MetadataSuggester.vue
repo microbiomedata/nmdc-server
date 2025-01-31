@@ -127,6 +127,11 @@ export default defineComponent({
       }
     }
 
+    function handleResetRejectedSuggestions() {
+      rejectedSuggestions.value = [];
+      setRejectedSuggestions(props.schemaClassName, rejectedSuggestions.value);
+    }
+
     function getSlotTitle(slot: string) {
       return props.harmonizerApi.slotInfo.get(slot)?.title ?? slot;
     }
@@ -139,6 +144,7 @@ export default defineComponent({
       handleJumpToCell,
       handleRejectAllSuggestions,
       handleRejectSuggestion,
+      handleResetRejectedSuggestions,
       handleSuggestForSelectedRows,
       hasSuggestions,
       onDemandSuggestionsLoading,
@@ -328,6 +334,20 @@ export default defineComponent({
           </div>
         </v-col>
       </v-row>
+
+      <v-row v-if="rejectedSuggestions.length > 0">
+        <v-col>
+          <v-btn
+            class="text-no-transform"
+            color="grey darken-2"
+            block
+            plain
+            @click="handleResetRejectedSuggestions"
+          >
+            Reset rejected suggestions
+          </v-btn>
+        </v-col>
+      </v-row>
     </v-container>
   </v-card>
 </template>
@@ -349,5 +369,9 @@ export default defineComponent({
     color: red;
     text-decoration: line-through;
   }
+}
+
+.text-no-transform {
+  text-transform: none !important;
 }
 </style>
