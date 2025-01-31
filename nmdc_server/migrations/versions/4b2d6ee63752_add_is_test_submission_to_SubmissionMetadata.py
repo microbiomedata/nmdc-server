@@ -1,4 +1,4 @@
-""" Migrator for is_test_submission on SubmissionMetadata
+"""Migrator for is_test_submission on SubmissionMetadata
 This field added as a change to enable the differentiation between test submissions
 (those done in training/at a conference demo) and real submissions
 
