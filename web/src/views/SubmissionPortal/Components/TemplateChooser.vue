@@ -36,7 +36,13 @@ export default defineComponent({
       <submission-docs-link anchor="environmental-package" />
     </div>
     <div class="text-h5">
-      Choose the MIxS Extension for your samples.
+      Choose the
+      <a
+        href="URL GOES HERE"
+        target="_blank"
+        rel="noopener noreferrer"
+      >MIxS Extension</a>
+      for your samples.
     </div>
     <submission-permission-banner
       v-if="!canEditSubmissionMetadata()"
