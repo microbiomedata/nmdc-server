@@ -238,7 +238,7 @@ It is recommended to use `127.0.0.1` instead of `localhost` for local developmen
     docker-compose run backend nmdc-server ingest -vv --function-limit 100
     ```
    
-    > **Note**: The `--function-limit` flag is optional. It is used to reduce the time that the ingest takes by limiting the number of certain types of objects loaded. This can be useful for testing purposes.
+    > **Note**: The `--function-limit` flag is optional. It is used to reduce the time that the ingest takes by limiting the number of certain types of objects loaded. This can be useful for testing purposes. For more information on options run `nmdc-server ingest --help`.
 
 ## Testing
 
