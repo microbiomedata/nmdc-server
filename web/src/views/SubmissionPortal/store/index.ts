@@ -339,7 +339,7 @@ function mergeSampleData(key: string | undefined, data: any[]) {
   };
 }
 
-async function addMetadataSuggestions(requests: MetadataSuggestionRequest[], schemaClassName: string, batchSize: number = 10) {
+async function addMetadataSuggestions(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
   const batches = chunk(requests, batchSize);
   for (let i = 0; i < batches.length; i += 1) {
     const batch = batches[i];
@@ -358,15 +358,15 @@ async function addMetadataSuggestions(requests: MetadataSuggestionRequest[], sch
     metadataSuggestions.value.push(...suggestions);
   }
 
-  setPendingSuggestions(schemaClassName, metadataSuggestions.value);
+  setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
 }
 
-function removeMetadataSuggestions(suggestions: MetadataSuggestion[], schemaClassName: string) {
+function removeMetadataSuggestions(submissionId: string, schemaClassName: string, suggestions: MetadataSuggestion[]) {
   metadataSuggestions.value = metadataSuggestions.value.filter(
     (suggestion) => !suggestions.includes(suggestion),
   );
 
-  setPendingSuggestions(schemaClassName, metadataSuggestions.value);
+  setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
 }
 
 export {

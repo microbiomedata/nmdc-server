@@ -46,12 +46,12 @@ export default defineComponent({
     },
   },
 
-  setup(props) {
+  setup(props, { root }) {
     const rejectedSuggestions = ref([] as string[]);
     const onDemandSuggestionsLoading = ref(false);
 
     watchEffect(() => {
-      rejectedSuggestions.value = getRejectedSuggestions(props.schemaClassName);
+      rejectedSuggestions.value = getRejectedSuggestions(root.$route.params.id, props.schemaClassName);
     });
 
     const suggestionsByRow = computed(() => {
@@ -78,7 +78,7 @@ export default defineComponent({
       // Do this outside of the forEach so that the DataHarmonizer afterChange hook is only triggered once
       props.harmonizerApi.setCellData(cellData);
 
-      removeMetadataSuggestions(suggestions, props.schemaClassName);
+      removeMetadataSuggestions(root.$route.params.id, props.schemaClassName, suggestions);
     }
 
     function rejectSuggestions(suggestions: MetadataSuggestion[]) {
@@ -86,7 +86,7 @@ export default defineComponent({
         const key = getSuggestionKey(suggestion);
         rejectedSuggestions.value.push(key);
       });
-      setRejectedSuggestions(props.schemaClassName, rejectedSuggestions.value);
+      setRejectedSuggestions(root.$route.params.id, props.schemaClassName, rejectedSuggestions.value);
     }
 
     function handleJumpToCell(suggestion: MetadataSuggestion) {
@@ -125,7 +125,7 @@ export default defineComponent({
       }, [] as number[]);
       const changedRowData = props.harmonizerApi.getDataByRows(rows);
       try {
-        await addMetadataSuggestions(changedRowData, props.schemaClassName);
+        await addMetadataSuggestions(root.$route.params.id, props.schemaClassName, changedRowData);
       } finally {
         onDemandSuggestionsLoading.value = false;
       }
@@ -133,7 +133,7 @@ export default defineComponent({
 
     function handleResetRejectedSuggestions() {
       rejectedSuggestions.value = [];
-      setRejectedSuggestions(props.schemaClassName, rejectedSuggestions.value);
+      setRejectedSuggestions(root.$route.params.id, props.schemaClassName, rejectedSuggestions.value);
     }
 
     function getSlotTitle(slot: string) {

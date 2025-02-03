@@ -204,7 +204,7 @@ export default defineComponent({
         clearTimeout(changeTimer);
         changeTimer = setTimeout(async () => {
           const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-          await addMetadataSuggestions(changedRowData, activeTemplate.value.schemaClass!);
+          await addMetadataSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!, changedRowData);
           changeBatch = [];
         }, 3000);
       }
@@ -228,7 +228,7 @@ export default defineComponent({
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
         harmonizerApi.addChangeHook(onDataChange);
-        metadataSuggestions.value = getPendingSuggestions(activeTemplate.value.schemaClass!);
+        metadataSuggestions.value = getPendingSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!);
         if (!canEditSampleMetadata()) {
           harmonizerApi.setTableReadOnly();
         }
@@ -506,7 +506,7 @@ export default defineComponent({
       const nextTemplate = HARMONIZER_TEMPLATES[nextTemplateKey];
 
       // Get the stashed suggestions (if any) for the next template and present them.
-      metadataSuggestions.value = getPendingSuggestions(nextTemplate.schemaClass!);
+      metadataSuggestions.value = getPendingSuggestions(root.$route.params.id, nextTemplate.schemaClass!);
 
       // When changing templates we may need to populate the common columns
       // from the environment tabs

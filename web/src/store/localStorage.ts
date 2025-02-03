@@ -37,16 +37,20 @@ class StoredMap<T> {
     this.storageKey = storageKey;
   }
 
-  get(key: string): T {
-    const str = window.localStorage.getItem(this.storageKey);
-    const obj = str ? JSON.parse(str) : {};
-    return obj[key];
+  private static joinKeys(keys: string | string[]): string {
+    return Array.isArray(keys) ? keys.join('__') : keys;
   }
 
-  set(key: string, value: T) {
+  get(key: string | string[]): T {
     const str = window.localStorage.getItem(this.storageKey);
     const obj = str ? JSON.parse(str) : {};
-    obj[key] = value;
+    return obj[StoredMap.joinKeys(key)];
+  }
+
+  set(key: string | string[], value: T) {
+    const str = window.localStorage.getItem(this.storageKey);
+    const obj = str ? JSON.parse(str) : {};
+    obj[StoredMap.joinKeys(key)] = value;
     window.localStorage.setItem(this.storageKey, JSON.stringify(obj));
   }
 }
@@ -54,20 +58,20 @@ class StoredMap<T> {
 const rejectedSuggestions = new StoredMap<string[]>(REJECTED_SUGGESTIONS);
 const pendingSuggestions = new StoredMap<MetadataSuggestion[]>(PENDING_SUGGESTIONS);
 
-function getRejectedSuggestions(schemaClassName: string): string[] {
-  return rejectedSuggestions.get(schemaClassName) || [];
+function getRejectedSuggestions(submissionId: string, schemaClassName: string): string[] {
+  return rejectedSuggestions.get([submissionId, schemaClassName]) || [];
 }
 
-function setRejectedSuggestions(schemaClassName: string, suggestions: string[]) {
-  rejectedSuggestions.set(schemaClassName, suggestions);
+function setRejectedSuggestions(submissionId: string, schemaClassName: string, suggestions: string[]) {
+  rejectedSuggestions.set([submissionId, schemaClassName], suggestions);
 }
 
-function getPendingSuggestions(schemaClassName: string) {
-  return pendingSuggestions.get(schemaClassName) || [];
+function getPendingSuggestions(submissionId: string, schemaClassName: string) {
+  return pendingSuggestions.get([submissionId, schemaClassName]) || [];
 }
 
-function setPendingSuggestions(schemaClassName: string, suggestions: MetadataSuggestion[]) {
-  return pendingSuggestions.set(schemaClassName, suggestions);
+function setPendingSuggestions(submissionId: string, schemaClassName: string, suggestions: MetadataSuggestion[]) {
+  return pendingSuggestions.set([submissionId, schemaClassName], suggestions);
 }
 
 export {
