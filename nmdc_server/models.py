@@ -12,6 +12,7 @@ from sqlalchemy import (
     Enum,
     Float,
     ForeignKey,
+    func,
     Index,
     Integer,
     LargeBinary,
@@ -916,6 +917,7 @@ class SubmissionMetadata(Base):
     templates = Column(JSONB, nullable=True)
     field_notes_metadata = Column(JSONB, nullable=True)
     is_test_submission = Column(Boolean, nullable=False, default=False)
+    date_last_modified = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=func.now())
 
     # The client which initially created the submission. A null value indicates it was created by
     # an "unregistered" client. This could be legitimate usage, but it should be monitored.

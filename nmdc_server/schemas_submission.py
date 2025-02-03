@@ -124,6 +124,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     templates: List[str]
     study_name: Optional[str] = None
     field_notes_metadata: Optional[Dict[str, Any]] = None
+    date_last_modified: datetime
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None

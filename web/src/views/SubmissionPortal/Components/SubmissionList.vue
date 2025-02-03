@@ -35,8 +35,8 @@ const headers: DataTableHeader[] = [
     value: 'status',
   },
   {
-    text: 'Created',
-    value: 'created',
+    text: 'Date Last Modified',
+    value: 'date_last_modified',
   },
   {
     text: '',
@@ -226,8 +226,8 @@ export default defineComponent({
           <template #[`item.templates`]="{ item }">
             {{ item.metadata_submission.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
           </template>
-          <template #[`item.created`]="{ item }">
-            {{ new Date(item.created).toLocaleString() }}
+          <template #[`item.date_last_modified`]="{ item }">
+            {{ new Date(item.date_last_modified).toLocaleString() }}
           </template>
           <template #[`item.status`]="{ item }">
             <v-chip
