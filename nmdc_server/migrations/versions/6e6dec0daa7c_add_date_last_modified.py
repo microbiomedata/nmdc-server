@@ -7,12 +7,10 @@ Revises: 18127fd43a8b
 Create Date: 2025-02-03 18:58:55.592754
 
 """
-
 from typing import Optional
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "6e6dec0daa7c"

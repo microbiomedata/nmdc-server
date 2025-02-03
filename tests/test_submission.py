@@ -458,7 +458,6 @@ def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_u
             submission=submission,
             submission_id=submission.id,
             user_orcid=logged_in_user.orcid,
-            date_last_modified=datetime.utcnow(),
         )
     else:
         submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())

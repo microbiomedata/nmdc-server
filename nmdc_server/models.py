@@ -12,7 +12,6 @@ from sqlalchemy import (
     Enum,
     Float,
     ForeignKey,
-    func,
     Index,
     Integer,
     LargeBinary,
@@ -20,6 +19,7 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
+    func,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
