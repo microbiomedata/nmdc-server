@@ -335,6 +335,7 @@ def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_u
         author_orcid=logged_in_user.orcid,
         locked_by=fakes.UserFactory(),
         lock_updated=datetime.utcnow(),
+        date_last_modified=datetime.utcnow(),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -404,9 +405,17 @@ def test_try_edit_locked_by_current_user_submission(
 
 def test_submission_list_with_roles(db: Session, client: TestClient, logged_in_user):
     user_a = fakes.UserFactory()
-    submission_a = fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid,date_last_modified=datetime.utcnow())
-    fakes.MetadataSubmissionFactory(author=logged_in_user, author_orcid=logged_in_user.orcid,date_last_modified=datetime.utcnow())
-    fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid,date_last_modified=datetime.utcnow())
+    submission_a = fakes.MetadataSubmissionFactory(
+        author=user_a, author_orcid=user_a.orcid, date_last_modified=datetime.utcnow()
+    )
+    fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        date_last_modified=datetime.utcnow(),
+    )
+    fakes.MetadataSubmissionFactory(
+        author=user_a, author_orcid=user_a.orcid, date_last_modified=datetime.utcnow()
+    )
     db.commit()
     fakes.SubmissionRoleFactory(
         submission=submission_a,
@@ -442,14 +451,17 @@ def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_us
 @pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
 def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
     if role == SubmissionEditorRole.owner:
-        submission = fakes.MetadataSubmissionFactory()
+        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
         payload = SubmissionMetadataSchema(**submission.__dict__).json()
         db.commit()
         role = fakes.SubmissionRoleFactory(
-            submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid,date_last_modified=datetime.utcnow()
+            submission=submission,
+            submission_id=submission.id,
+            user_orcid=logged_in_user.orcid,
+            date_last_modified=datetime.utcnow(),
         )
     else:
-        submission = fakes.MetadataSubmissionFactory()
+        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
         payload = SubmissionMetadataSchema(**submission.__dict__).json()
     db.commit()
     response = client.request(
