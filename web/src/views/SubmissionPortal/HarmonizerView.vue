@@ -196,7 +196,7 @@ export default defineComponent({
     // DataHarmonizer is a bit loose in its definition of empty cells. They can be null or and empty string.
     const isNonEmpty = (val: any) => val !== null && val !== '';
     const onDataChange = async (changes: any[]) => {
-      if (suggestionMode.value === SuggestionsMode.LIVE) {
+      if (suggestionMode.value === SuggestionsMode.LIVE && canEditSampleMetadata()) {
         // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
         // where either the previous value or updated value (or both) are non-empty.
         const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
@@ -886,7 +886,7 @@ export default defineComponent({
         <HarmonizerSidebar
           :column-help="selectedHelpDict"
           :harmonizer-api="harmonizerApi"
-          :import-disabled="!canEditSampleMetadata()"
+          :metadata-editing-allowed="canEditSampleMetadata()"
           :template="activeTemplate"
           @import-xlsx="openFile"
           @export-xlsx="downloadSamples"

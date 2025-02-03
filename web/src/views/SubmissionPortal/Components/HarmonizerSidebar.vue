@@ -26,7 +26,7 @@ export default defineComponent({
       type: Object,
       default: null,
     },
-    importDisabled: {
+    metadataEditingAllowed: {
       type: Boolean,
       default: false,
     },
@@ -117,13 +117,14 @@ export default defineComponent({
       </v-tab-item>
       <v-tab-item>
         <MetadataSuggester
+          :enabled="metadataEditingAllowed"
           :harmonizer-api="harmonizerApi"
           :schema-class-name="template.schemaClass"
         />
       </v-tab-item>
       <v-tab-item>
         <ImportExportButtons
-          :import-disabled="importDisabled"
+          :import-disabled="!metadataEditingAllowed"
           @export="$emit('export-xlsx')"
           @import="handleImport"
         />

@@ -32,6 +32,10 @@ function getSuggestionKey(suggestion: MetadataSuggestion) {
 
 export default defineComponent({
   props: {
+    enabled: {
+      type: Boolean,
+      required: true,
+    },
     harmonizerApi: {
       type: Object as PropType<HarmonizerApi>,
       required: true,
@@ -187,7 +191,7 @@ export default defineComponent({
       </v-tooltip>
     </v-card-title>
 
-    <v-container>
+    <v-card-text v-if="enabled">
       <v-row dense>
         <v-col cols="6">
           <v-select
@@ -404,7 +408,11 @@ export default defineComponent({
           </v-btn>
         </v-col>
       </v-row>
-    </v-container>
+    </v-card-text>
+
+    <v-card-text v-else>
+      Suggestions are disabled because you do not have permission to edit the metadata.
+    </v-card-text>
   </v-card>
 </template>
 
