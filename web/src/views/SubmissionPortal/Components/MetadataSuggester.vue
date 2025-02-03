@@ -154,6 +154,7 @@ export default defineComponent({
       suggestionType,
       suggestionTypeOptions,
       suggestionsByRow,
+      TOOLTIP_DELAY: '600',
     };
   },
 });
@@ -167,6 +168,8 @@ export default defineComponent({
       <v-tooltip
         bottom
         min-width="300px"
+        max-width="600px"
+        :open-delay="TOOLTIP_DELAY"
         z-index="400"
       >
         <span>
@@ -228,24 +231,45 @@ export default defineComponent({
               All Suggestions
             </div>
             <div>
-              <v-btn
-                color="primary"
-                icon
-                @click="handleRejectAllSuggestions"
+              <v-tooltip
+                bottom
+                :open-delay="TOOLTIP_DELAY"
               >
-                <v-icon>
-                  mdi-close
-                </v-icon>
-              </v-btn>
-              <v-btn
-                color="primary"
-                icon
-                @click="handleAcceptAllSuggestions"
+                <template #activator="{ on, attrs }">
+                  <v-btn
+                    color="primary"
+                    icon
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="handleRejectAllSuggestions"
+                  >
+                    <v-icon>
+                      mdi-close
+                    </v-icon>
+                  </v-btn>
+                </template>
+                <span>Reject all suggestions</span>
+              </v-tooltip>
+
+              <v-tooltip
+                bottom
+                :open-delay="TOOLTIP_DELAY"
               >
-                <v-icon>
-                  mdi-check
-                </v-icon>
-              </v-btn>
+                <template #activator="{ on, attrs }">
+                  <v-btn
+                    color="primary"
+                    icon
+                    v-bind="attrs"
+                    v-on="on"
+                    @click="handleAcceptAllSuggestions"
+                  >
+                    <v-icon>
+                      mdi-check
+                    </v-icon>
+                  </v-btn>
+                </template>
+                <span>Accept all suggestions</span>
+              </v-tooltip>
             </div>
           </div>
         </v-col>
@@ -300,33 +324,65 @@ export default defineComponent({
                   </div>
 
                   <div class="flex-shrink-0 flex-grow-0">
-                    <v-btn
-                      icon
-                      color="primary"
-                      @click="handleJumpToCell(s)"
+                    <v-tooltip
+                      bottom
+                      :open-delay="TOOLTIP_DELAY"
                     >
-                      <v-icon>
-                        mdi-target
-                      </v-icon>
-                    </v-btn>
-                    <v-btn
-                      icon
-                      color="primary"
-                      @click="handleRejectSuggestion(s)"
+                      <template #activator="{ on, attrs }">
+                        <v-btn
+                          icon
+                          color="primary"
+                          v-bind="attrs"
+                          v-on="on"
+                          @click="handleJumpToCell(s)"
+                        >
+                          <v-icon>
+                            mdi-target
+                          </v-icon>
+                        </v-btn>
+                      </template>
+                      <span>Jump to cell</span>
+                    </v-tooltip>
+
+                    <v-tooltip
+                      bottom
+                      :open-delay="TOOLTIP_DELAY"
                     >
-                      <v-icon>
-                        mdi-close
-                      </v-icon>
-                    </v-btn>
-                    <v-btn
-                      icon
-                      color="primary"
-                      @click="handleAcceptSuggestion(s)"
+                      <template #activator="{ on, attrs }">
+                        <v-btn
+                          icon
+                          color="primary"
+                          v-bind="attrs"
+                          v-on="on"
+                          @click="handleRejectSuggestion(s)"
+                        >
+                          <v-icon>
+                            mdi-close
+                          </v-icon>
+                        </v-btn>
+                      </template>
+                      <span>Reject suggestion</span>
+                    </v-tooltip>
+
+                    <v-tooltip
+                      bottom
+                      :open-delay="TOOLTIP_DELAY"
                     >
-                      <v-icon>
-                        mdi-check
-                      </v-icon>
-                    </v-btn>
+                      <template #activator="{ on, attrs }">
+                        <v-btn
+                          icon
+                          color="primary"
+                          v-bind="attrs"
+                          v-on="on"
+                          @click="handleAcceptSuggestion(s)"
+                        >
+                          <v-icon>
+                            mdi-check
+                          </v-icon>
+                        </v-btn>
+                      </template>
+                      <span>Accept suggestion</span>
+                    </v-tooltip>
                   </div>
                 </div>
               </div>
