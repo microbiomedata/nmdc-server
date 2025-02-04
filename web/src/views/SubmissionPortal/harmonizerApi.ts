@@ -302,13 +302,26 @@ export class HarmonizerApi {
     this.dh.hot.setDataAtCell(data.map((d) => [d.row, d.col, d.text]));
   }
 
+  /**
+   * Get data from the DataHarmonizer grid for the given rows.
+   *
+   * Like `DataHarmonizer.getDataObjects`, this method returns the data as objects with keys corresponding to the slot
+   * names (as opposed to Handsontable's native format, which is an array of arrays) filtering out empty cells, However,
+   * unlike `DataHarmonizer.getDataObjects`, this method *does not* attempt to convert the data into native types based
+   * on the schema. Instead, it returns the raw data (i.e. always strings).
+   * @param rows
+   */
   getDataByRows(rows: number[]): MetadataSuggestionRequest[] {
     const rowData: MetadataSuggestionRequest[] = [];
     rows.forEach((row) => {
+      // Skip rows that are already in the rowData array
       if (rowData.find((r) => r.row === row)) {
         return;
       }
+      // Get the raw data from Handsontable
       const currentRowDataArray = this.dh.hot.getDataAtRow(row);
+      // Convert the raw data into an object with keys corresponding to the slot names, filtering out empty cells, and
+      // add it to the rowData array
       const currentRowData = Object.fromEntries(
         currentRowDataArray
           .map((value: string, index: number) => [this.slotNames[index], value])
@@ -331,6 +344,11 @@ export class HarmonizerApi {
     this.dh.scrollTo(row, column);
   }
 
+  /**
+   * Get the currently selected cells in the DataHarmonizer grid.
+   *
+   * Returns an array of arrays, where each inner array is of the format [startRow, startCol, endRow, endCol].
+   */
   getSelectedCells(): number[][] {
     return this.dh.hot.getSelected();
   }

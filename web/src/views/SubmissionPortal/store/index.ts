@@ -339,6 +339,15 @@ function mergeSampleData(key: string | undefined, data: any[]) {
   };
 }
 
+/**
+ * Get metadata suggestions from the server and add them to the list of pending suggestions. Then sync the pending
+ * suggestions with local storage.
+ *
+ * @param submissionId
+ * @param schemaClassName
+ * @param requests
+ * @param batchSize
+ */
 async function addMetadataSuggestions(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
   const batches = chunk(requests, batchSize);
   for (let i = 0; i < batches.length; i += 1) {
@@ -361,6 +370,14 @@ async function addMetadataSuggestions(submissionId: string, schemaClassName: str
   setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
 }
 
+/**
+ * Remove the given metadata suggestions from the list of pending suggestions. Then sync the pending suggestions with
+ * local storage.
+ *
+ * @param submissionId
+ * @param schemaClassName
+ * @param suggestions
+ */
 function removeMetadataSuggestions(submissionId: string, schemaClassName: string, suggestions: MetadataSuggestion[]) {
   metadataSuggestions.value = metadataSuggestions.value.filter(
     (suggestion) => !suggestions.includes(suggestion),

@@ -70,6 +70,8 @@ const ColorKey = {
 const HELP_SIDEBAR_WIDTH = '320px';
 const TABS_HEIGHT = '48px';
 
+const SUGGESTION_REQUEST_DELAY = 3000;
+
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
 
 const SAMP_NAME = 'samp_name';
@@ -184,29 +186,32 @@ export default defineComponent({
     const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
 
     let changeBatch: any[] = [];
-    let changeTimer: ReturnType<typeof setTimeout>;
+    let suggestionRequestTimer: ReturnType<typeof setTimeout>;
     watch(suggestionMode, () => {
       // If live suggestions are disabled, clear the queue and cancel the timer
       if (suggestionMode.value !== SuggestionsMode.LIVE) {
         changeBatch = [];
-        clearTimeout(changeTimer);
+        clearTimeout(suggestionRequestTimer);
       }
     });
 
     // DataHarmonizer is a bit loose in its definition of empty cells. They can be null or and empty string.
     const isNonEmpty = (val: any) => val !== null && val !== '';
+
     const onDataChange = async (changes: any[]) => {
+      // If we're in live suggestion mode and the user can edit the metadata, add the changes to a batch. Once the user
+      // has not made further changes for a certain amount of time, send the batch to the backend for suggestions.
       if (suggestionMode.value === SuggestionsMode.LIVE && canEditSampleMetadata()) {
         // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
         // where either the previous value or updated value (or both) are non-empty.
         const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
         changeBatch.push(...nonEmptyChanges);
-        clearTimeout(changeTimer);
-        changeTimer = setTimeout(async () => {
+        clearTimeout(suggestionRequestTimer);
+        suggestionRequestTimer = setTimeout(async () => {
           const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
           await addMetadataSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!, changedRowData);
           changeBatch = [];
-        }, 3000);
+        }, SUGGESTION_REQUEST_DELAY);
       }
 
       hasChanged.value += 1;

@@ -30,16 +30,29 @@ function getSuggestionKey(suggestion: MetadataSuggestion) {
   return `${suggestion.row}__${suggestion.slot}__${suggestion.value}`;
 }
 
+/**
+ * Component to display metadata suggestions and allow users to accept or reject them.
+ */
 export default defineComponent({
   props: {
+    /**
+     * Whether the suggester UI is displayed or not. If false, the component will display a message indicating that
+     * the user does not have permission to edit the metadata.
+     */
     enabled: {
       type: Boolean,
       required: true,
     },
+    /**
+     * The Harmonizer API instance.
+     */
     harmonizerApi: {
       type: Object as PropType<HarmonizerApi>,
       required: true,
     },
+    /**
+     * The schema class name for the active template.
+     */
     schemaClassName: {
       type: String,
       required: true,
@@ -50,10 +63,13 @@ export default defineComponent({
     const rejectedSuggestions = ref([] as string[]);
     const onDemandSuggestionsLoading = ref(false);
 
+    // When the route or schema class name changes (because of changing the active template tab), update the rejected
+    // suggestions list from local storage.
     watchEffect(() => {
       rejectedSuggestions.value = getRejectedSuggestions(root.$route.params.id, props.schemaClassName);
     });
 
+    // Filter out rejected suggestions and group by row
     const suggestionsByRow = computed(() => {
       const filteredSuggestions = metadataSuggestions.value.filter((suggestion) => {
         const key = getSuggestionKey(suggestion);
@@ -64,6 +80,11 @@ export default defineComponent({
 
     const hasSuggestions = computed(() => Object.keys(suggestionsByRow.value).length > 0);
 
+    /**
+     * Accepts the given suggestions by setting the cell data via the Harmonizer API and removing the suggestions from
+     * the store.
+     * @param suggestions
+     */
     function acceptSuggestions(suggestions: MetadataSuggestion[]) {
       const cellData = [] as CellData[];
       suggestions.forEach((suggestion) => {
@@ -81,6 +102,10 @@ export default defineComponent({
       removeMetadataSuggestions(root.$route.params.id, props.schemaClassName, suggestions);
     }
 
+    /**
+     * Rejects the given suggestions by adding them to the rejected suggestions list in local storage.
+     * @param suggestions
+     */
     function rejectSuggestions(suggestions: MetadataSuggestion[]) {
       suggestions.forEach((suggestion) => {
         const key = getSuggestionKey(suggestion);
@@ -89,6 +114,10 @@ export default defineComponent({
       setRejectedSuggestions(root.$route.params.id, props.schemaClassName, rejectedSuggestions.value);
     }
 
+    /**
+     * Handles jumping to the cell associated with the given suggestion.
+     * @param suggestion
+     */
     function handleJumpToCell(suggestion: MetadataSuggestion) {
       const { row, slot } = suggestion;
       const col = props.harmonizerApi.slotInfo.get(slot)?.columnIndex;
@@ -98,25 +127,48 @@ export default defineComponent({
       props.harmonizerApi.jumpToRowCol(row, col);
     }
 
+    /**
+     * Handle clicking the reject button for a single suggestion.
+     * @param suggestion
+     */
     function handleRejectSuggestion(suggestion: MetadataSuggestion) {
       rejectSuggestions([suggestion]);
     }
 
+    /**
+     * Handle clicking the accept button for a single suggestion.
+     * @param suggestion
+     */
     function handleAcceptSuggestion(suggestion: MetadataSuggestion) {
       acceptSuggestions([suggestion]);
     }
 
+    /**
+     * Handle clicking the accept all button.
+     */
     function handleAcceptAllSuggestions() {
       acceptSuggestions(Object.values(suggestionsByRow.value).flat());
     }
 
+    /**
+     * Handle clicking the reject all button.
+     */
     function handleRejectAllSuggestions() {
       rejectSuggestions(Object.values(suggestionsByRow.value).flat());
     }
 
+    /**
+     * Handle clicking the "Suggest for Selected Rows" button.
+     *
+     * This will get the data for the selected rows, send it to the backend to get suggestions, and then add the
+     * suggestions to the store.
+     */
     async function handleSuggestForSelectedRows() {
       onDemandSuggestionsLoading.value = true;
       const selectedRanges = props.harmonizerApi.getSelectedCells();
+      // selectedRanges is an array of arrays, representing all (possibly discontinuous) ranges of selected cells. Each
+      // inner array is [startRow, startCol, endRow, endCol]. Reduce this to a flat array of row numbers contained in
+      // the selected ranges.
       const rows = selectedRanges.reduce((acc, range) => {
         for (let i = range[0]; i <= range[2]; i += 1) {
           acc.push(i);
@@ -131,11 +183,18 @@ export default defineComponent({
       }
     }
 
+    /**
+     * Handle resetting the rejected suggestions list.
+     */
     function handleResetRejectedSuggestions() {
       rejectedSuggestions.value = [];
       setRejectedSuggestions(root.$route.params.id, props.schemaClassName, rejectedSuggestions.value);
     }
 
+    /**
+     * Translate a slot name to its title.
+     * @param slot
+     */
     function getSlotTitle(slot: string) {
       return props.harmonizerApi.slotInfo.get(slot)?.title ?? slot;
     }

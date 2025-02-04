@@ -9,6 +9,9 @@ import ImportExportButtons from '@/views/SubmissionPortal/Components/ImportExpor
 import ColumnHelp from '@/views/SubmissionPortal/Components/ColumnHelp.vue';
 import MetadataSuggester from '@/views/SubmissionPortal/Components/MetadataSuggester.vue';
 
+/**
+ * The tabbed Data Harmonizer sidebar.
+ */
 export default defineComponent({
   components: {
     MetadataSuggester,
@@ -18,18 +21,30 @@ export default defineComponent({
     FindReplace,
   },
   props: {
+    /**
+     * Help information for the currently selected column.
+     */
     columnHelp: {
       type: Object,
       default: null,
     },
+    /**
+     * Information about the active template.
+     */
     template: {
       type: Object,
       default: null,
     },
+    /**
+     * Whether the current user is allowed to edit metadata.
+     */
     metadataEditingAllowed: {
       type: Boolean,
       default: false,
     },
+    /**
+     * The Harmonizer API instance.
+     */
     harmonizerApi: {
       type: Object as PropType<HarmonizerApi>,
       required: true,
@@ -61,7 +76,6 @@ export default defineComponent({
       },
     ];
 
-    // TODO: not sure why this can't be an inline arrow function in the template
     const handleImport = (...args: never[]) => {
       emit('import-xlsx', ...args);
     };
