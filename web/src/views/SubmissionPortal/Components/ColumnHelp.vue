@@ -1,16 +1,17 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent, PropType } from '@vue/composition-api';
 import { urlify } from '@/data/utils';
+import { ColumnHelpInfo, HarmonizerTemplateInfo } from '@/views/SubmissionPortal/types';
 
 export default defineComponent({
   props: {
     columnHelp: {
-      type: Object,
+      type: Object as PropType<ColumnHelpInfo | null>,
       default: null,
     },
-    template: {
-      type: Object,
-      default: null,
+    harmonizerTemplate: {
+      type: Object as PropType<HarmonizerTemplateInfo>,
+      required: true,
     },
   },
   emits: ['full-reference-click'],
@@ -55,14 +56,13 @@ export default defineComponent({
         <span v-html="urlify(columnHelp.examples)" />
       </div>
       <v-btn
-        v-if="template"
         color="grey"
         outlined
         small
         block
         @click="$emit('full-reference-click')"
       >
-        Full {{ template.displayName }} Reference
+        Full {{ harmonizerTemplate.displayName }} Reference
         <v-icon class="pl-1">
           mdi-open-in-new
         </v-icon>

@@ -159,6 +159,15 @@ export interface CellData {
   text: string,
 }
 
+export interface ColumnHelpInfo {
+  title: string,
+  name: string,
+  description: string,
+  guidance: string,
+  examples: string,
+  sources: string,
+}
+
 export interface MetadataSuggestionRequest {
   row: number,
   data: Record<string, string>,

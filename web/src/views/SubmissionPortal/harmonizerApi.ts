@@ -11,6 +11,7 @@ import {
   JGI_MG_LR,
   JGT_MT,
   MetadataSuggestionRequest,
+  ColumnHelpInfo,
 } from '@/views/SubmissionPortal/types';
 
 // a simple data structure to define the relationships between the GOLD ecosystem fields
@@ -270,7 +271,7 @@ export class HarmonizerApi {
 
   getHelp(title: string) {
     const field = this.dh.getFields().filter((f: any) => f.title === title)[0];
-    return this.dh.getCommentDict(field);
+    return this.dh.getCommentDict(field) as ColumnHelpInfo;
   }
 
   find(query: string) {

@@ -891,8 +891,8 @@ export default defineComponent({
         <HarmonizerSidebar
           :column-help="selectedHelpDict"
           :harmonizer-api="harmonizerApi"
+          :harmonizer-template="activeTemplate"
           :metadata-editing-allowed="canEditSampleMetadata()"
-          :template="activeTemplate"
           @import-xlsx="openFile"
           @export-xlsx="downloadSamples"
         />

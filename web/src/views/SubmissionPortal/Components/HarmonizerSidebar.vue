@@ -8,6 +8,7 @@ import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import ImportExportButtons from '@/views/SubmissionPortal/Components/ImportExportButtons.vue';
 import ColumnHelp from '@/views/SubmissionPortal/Components/ColumnHelp.vue';
 import MetadataSuggester from '@/views/SubmissionPortal/Components/MetadataSuggester.vue';
+import { ColumnHelpInfo, HarmonizerTemplateInfo } from '@/views/SubmissionPortal/types';
 
 /**
  * The tabbed Data Harmonizer sidebar.
@@ -25,15 +26,15 @@ export default defineComponent({
      * Help information for the currently selected column.
      */
     columnHelp: {
-      type: Object,
+      type: Object as PropType<ColumnHelpInfo | null>,
       default: null,
     },
     /**
      * Information about the active template.
      */
-    template: {
-      type: Object,
-      default: null,
+    harmonizerTemplate: {
+      type: Object as PropType<HarmonizerTemplateInfo>,
+      required: true,
     },
     /**
      * Whether the current user is allowed to edit metadata.
@@ -120,7 +121,7 @@ export default defineComponent({
       <v-tab-item>
         <ColumnHelp
           :column-help="columnHelp"
-          :template="template"
+          :harmonizer-template="harmonizerTemplate"
           @full-reference-click="harmonizerApi.launchReference()"
         />
       </v-tab-item>
@@ -133,7 +134,7 @@ export default defineComponent({
         <MetadataSuggester
           :enabled="metadataEditingAllowed"
           :harmonizer-api="harmonizerApi"
-          :schema-class-name="template.schemaClass"
+          :schema-class-name="harmonizerTemplate.schemaClass"
         />
       </v-tab-item>
       <v-tab-item>
