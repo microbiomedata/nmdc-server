@@ -51,37 +51,6 @@ export default defineComponent({
       style="max-width: 1000px;"
       :disabled="!canEditSubmissionMetadata()"
     >
-      <div v-if="contextForm.dataGenerated === true">
-        <v-text-field
-          v-model="multiOmicsForm.GOLDStudyId"
-          label="GOLD Study ID"
-          :hint="Definitions.studyGoldID"
-          persistent-hint
-          outlined
-          dense
-        />
-        <v-text-field
-          v-model="multiOmicsForm.NCBIBioProjectId"
-          label="NCBI BioProject Accession"
-          :hint="Definitions.studyNCBIBioProjectAccession"
-          persistent-hint
-          outlined
-          dense
-        />
-        <v-combobox
-          v-model="multiOmicsForm.alternativeNames"
-          label="Alternative Names / IDs"
-          :hint="Definitions.studyAlternativeNames"
-          persistent-hint
-          deletable-chips
-          multiple
-          outlined
-          chips
-          small-chips
-          dense
-          append-icon=""
-        />
-      </div>
       <div class="text-h4">
         Data types *
       </div>

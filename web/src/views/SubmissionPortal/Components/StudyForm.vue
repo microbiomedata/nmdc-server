@@ -10,6 +10,7 @@ import {
 } from '@vue/composition-api';
 import Definitions from '@/definitions';
 import {
+  multiOmicsForm,
   studyForm,
   studyFormValid,
   permissionTitleToDbValueMap,
@@ -99,6 +100,7 @@ export default defineComponent({
     return {
       formRef,
       studyForm,
+      multiOmicsForm,
       studyFormValid,
       NmdcSchema,
       Definitions,
@@ -387,6 +389,7 @@ export default defineComponent({
       <v-btn
         depressed
         :disabled="!canEditSubmissionMetadata()"
+        class="mb-4"
         @click="addContributor"
       >
         <v-icon class="pr-1">
@@ -394,13 +397,45 @@ export default defineComponent({
         </v-icon>
         Add Contributor
       </v-btn>
+      <div class="text-h4">
+        External Identifiers
+        <v-text-field
+          v-model="studyForm.GOLDStudyId"
+          label="GOLD Study ID"
+          :hint="Definitions.studyGoldID"
+          persistent-hint
+          outlined
+          dense
+        />
+        <v-text-field
+          v-model="studyForm.NCBIBioProjectId"
+          label="NCBI BioProject Accession"
+          :hint="Definitions.studyNCBIBioProjectAccession"
+          persistent-hint
+          outlined
+          dense
+        />
+        <v-combobox
+          v-model="studyForm.alternativeNames"
+          label="Alternative Names / IDs"
+          :hint="Definitions.studyAlternativeNames"
+          persistent-hint
+          deletable-chips
+          multiple
+          outlined
+          chips
+          small-chips
+          dense
+          append-icon=""
+        />
+      </div>
     </v-form>
     <strong>* indicates required field</strong>
     <div class="d-flex mt-5">
       <v-btn
         color="gray"
         depressed
-        :to="{ name: 'Study Form' }"
+        :to="{ name: 'Submission Home' }"
       >
         <v-icon class="pl-1">
           mdi-arrow-left-circle
