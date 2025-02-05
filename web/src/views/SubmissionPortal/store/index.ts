@@ -143,6 +143,9 @@ const studyFormDefault = {
     roles: string[];
     permissionLevel: permissionLevelValues | null;
   }[],
+  alternativeNames: [] as string[],
+  GOLDStudyId: '',
+  NCBIBioProjectId: '',
 };
 const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
@@ -151,11 +154,8 @@ const studyForm = reactive(clone(studyFormDefault));
  * Multi-Omics Form Step
  */
 const multiOmicsFormDefault = {
-  alternativeNames: [] as string[],
   studyNumber: '',
-  GOLDStudyId: '',
   JGIStudyId: '',
-  NCBIBioProjectId: '',
   omicsProcessingTypes: [] as string[],
 };
 const multiOmicsFormValid = ref(false);
