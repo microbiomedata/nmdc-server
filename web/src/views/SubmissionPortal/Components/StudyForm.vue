@@ -400,7 +400,7 @@ export default defineComponent({
       <v-btn
         color="gray"
         depressed
-        :to="{ name: 'Submission Context' }"
+        :to="{ name: 'Study Form' }"
       >
         <v-icon class="pl-1">
           mdi-arrow-left-circle
