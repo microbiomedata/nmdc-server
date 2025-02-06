@@ -35,7 +35,7 @@ const headers: DataTableHeader[] = [
     value: 'status',
   },
   {
-    text: 'Date Last Modified',
+    text: 'Last Modified',
     value: 'date_last_modified',
   },
   {
