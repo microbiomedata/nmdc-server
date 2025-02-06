@@ -170,3 +170,4 @@ class MetadataSuggestion(BaseModel):
     row: int
     slot: str
     value: str
+    current_value: Optional[str] = None

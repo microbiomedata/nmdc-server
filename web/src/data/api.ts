@@ -4,6 +4,7 @@ import { setupCache } from 'axios-cache-adapter';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
+import { User } from '@/types';
 
 // The token refresh and retry logic stores an extra bit of state on the request config
 declare module 'axios' {
@@ -357,14 +358,6 @@ export interface SearchResponse<T> {
 export interface BinResponse<T = string | number> {
   bins: T[];
   facets: number[];
-}
-
-export interface User{
-    id: string,
-    orcid: string;
-    name: string;
-    is_admin: boolean;
-    email?: string;
 }
 
 export interface TokenResponse {

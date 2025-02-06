@@ -9,13 +9,13 @@ import {
   generateRecord, submissionStatus,
 } from '../store';
 import * as api from '../store/api';
-import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { deleteSubmission } from '../store/api';
+import { HARMONIZER_TEMPLATES, MetadataSubmissionRecord } from '@/views/SubmissionPortal/types';
 
 const headers: DataTableHeader[] = [
   {
@@ -64,9 +64,9 @@ export default defineComponent({
       mustSort: false,
     });
     const isDeleteDialogOpen = ref(false);
-    const deleteDialogSubmission = ref<api.MetadataSubmissionRecord | null>(null);
+    const deleteDialogSubmission = ref<MetadataSubmissionRecord | null>(null);
 
-    function getStatus(item: api.MetadataSubmissionRecord) {
+    function getStatus(item: MetadataSubmissionRecord) {
       const color = item.status === submissionStatus.Complete ? 'success' : 'default';
       return {
         text: item.status,
@@ -74,7 +74,7 @@ export default defineComponent({
       };
     }
 
-    async function resume(item: api.MetadataSubmissionRecord) {
+    async function resume(item: MetadataSubmissionRecord) {
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
@@ -90,14 +90,14 @@ export default defineComponent({
       submission.setSortOptions(options.value.sortBy[0], sortOrder);
     }, { deep: true });
 
-    function handleOpenDeleteDialog(item: api.MetadataSubmissionRecord | null) {
+    function handleOpenDeleteDialog(item: MetadataSubmissionRecord | null) {
       deleteDialogSubmission.value = item;
       if (deleteDialogSubmission) {
         isDeleteDialogOpen.value = true;
       }
     }
 
-    async function handleDelete(item: api.MetadataSubmissionRecord | null) {
+    async function handleDelete(item: MetadataSubmissionRecord | null) {
       if (!item) {
         return;
       }

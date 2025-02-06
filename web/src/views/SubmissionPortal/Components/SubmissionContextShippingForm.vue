@@ -12,9 +12,9 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml'
 import {
   addressForm,
   addressFormValid,
-  BiosafetyLevels,
   canEditSubmissionMetadata,
 } from '../store';
+import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 

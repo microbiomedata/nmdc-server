@@ -12,10 +12,10 @@ import Definitions from '@/definitions';
 import {
   contextForm,
   contextFormValid,
-  AwardTypes,
   addressFormValid,
   canEditSubmissionMetadata,
 } from '../store';
+import { AwardTypes } from '@/views/SubmissionPortal/types';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
