@@ -907,6 +907,7 @@ async def get_submission(
             study_name=submission.study_name,
             field_notes_metadata=submission.field_notes_metadata,
             is_test_submission=submission.is_test_submission,
+            date_last_modified=submission.date_last_modified,
         )
         if submission.locked_by is not None:
             submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)

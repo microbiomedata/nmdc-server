@@ -51,6 +51,7 @@ interface MetadataSubmissionRecord {
   study_name: string;
   templates: string[];
   is_test_submission: boolean;
+  date_last_modified: string;
 }
 
 interface PaginatedResponse<T> {

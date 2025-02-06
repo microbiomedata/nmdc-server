@@ -35,8 +35,8 @@ const headers: DataTableHeader[] = [
     value: 'status',
   },
   {
-    text: 'Created',
-    value: 'created',
+    text: 'Last Modified',
+    value: 'date_last_modified',
   },
   {
     text: '',
@@ -56,7 +56,7 @@ export default defineComponent({
     const options: Ref<DataOptions> = ref<DataOptions>({
       page: 1,
       itemsPerPage,
-      sortBy: ['created'],
+      sortBy: ['date_last_modified'],
       sortDesc: [true],
       groupBy: [],
       groupDesc: [],
@@ -226,8 +226,8 @@ export default defineComponent({
           <template #[`item.templates`]="{ item }">
             {{ item.metadata_submission.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
           </template>
-          <template #[`item.created`]="{ item }">
-            {{ new Date(item.created).toLocaleString() }}
+          <template #[`item.date_last_modified`]="{ item }">
+            {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
           <template #[`item.status`]="{ item }">
             <v-chip
