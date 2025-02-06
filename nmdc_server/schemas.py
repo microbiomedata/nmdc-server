@@ -319,9 +319,20 @@ class Biosample(BiosampleBase):
 # omics_processing
 class OmicsProcessingBase(AnnotatedBase):
     study_id: Optional[str] = None
-    biosample_inputs: list[BiosampleBase] = []
+    # biosample_inputs: list[BiosampleBase] = []
     add_date: Optional[DateType] = None
     mod_date: Optional[DateType] = None
+    biosample_ids: list[str] = []
+
+    @field_validator("biosample_ids")
+    @classmethod
+    def set_biosample_ids(cls, biosample_ids: list[str], info: ValidationInfo) -> list[str]:
+        # Only capture biosample IDs in responses
+        biosample_objects: list[BiosampleBase] = info.data.get("biosample_inputs", [])
+        biosample_ids = biosample_ids + [biosample.id for biosample in biosample_objects]
+        info.data.pop("biosample_inputs")
+
+        return biosample_ids
 
 
 class OmicsProcessingCreate(OmicsProcessingBase):
@@ -334,16 +345,6 @@ class OmicsProcessing(OmicsProcessingBase):
 
     omics_data: List["OmicsTypes"]
     outputs: List["DataObject"]
-
-    @field_validator("biosample_ids")
-    @classmethod
-    def set_biosample_ids(cls, biosample_ids: list[str], info: ValidationInfo) -> list[str]:
-        # Only capture biosample IDs in responses
-        biosample_objects: list[BiosampleBase] = info.data.get("biosample_inputs", [])
-        biosample_ids = biosample_ids + [biosample.id for biosample in biosample_objects]
-        info.data.pop("biosample_inputs")
-
-        return biosample_ids
 
     model_config = ConfigDict(from_attributes=True)
 

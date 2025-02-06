@@ -470,8 +470,8 @@ class DataObject(Base):
     @hybrid_property
     def downloads(self) -> int:
         # TODO: This can probably be done with a more efficient aggregation
-        # return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
-        return 0
+        return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
+        # return 0
 
 
 # This is a base class for all workflow processing activities.
