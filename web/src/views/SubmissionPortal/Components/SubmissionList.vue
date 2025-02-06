@@ -56,7 +56,7 @@ export default defineComponent({
     const options: Ref<DataOptions> = ref<DataOptions>({
       page: 1,
       itemsPerPage,
-      sortBy: ['created'],
+      sortBy: ['date_last_modified'],
       sortDesc: [true],
       groupBy: [],
       groupDesc: [],
@@ -227,7 +227,7 @@ export default defineComponent({
             {{ item.metadata_submission.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
           </template>
           <template #[`item.date_last_modified`]="{ item }">
-            {{ new Date(item.date_last_modified).toLocaleString() }}
+            {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
           <template #[`item.status`]="{ item }">
             <v-chip
