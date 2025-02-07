@@ -57,7 +57,7 @@ export default defineComponent({
     const TABS = [
       {
         icon: 'mdi-information-outline',
-        label: 'Column Help',
+        label: 'Column Info',
       },
       {
         icon: 'mdi-text-search',

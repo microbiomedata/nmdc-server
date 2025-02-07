@@ -26,7 +26,7 @@ export default defineComponent({
 <template>
   <v-card elevation="0">
     <v-card-title>
-      Column Help
+      Column Info
     </v-card-title>
 
     <v-card-text
