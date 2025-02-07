@@ -32,11 +32,17 @@ export default defineComponent({
 <template>
   <div>
     <div class="text-h2">
-      Environmental Extensions
+      Sample Environment
       <submission-docs-link anchor="environmental-package" />
     </div>
     <div class="text-h5">
-      Choose environmental extensions for your data.
+      Choose the
+      <a
+        href="https://genomicsstandardsconsortium.github.io/mixs/#extensions"
+        target="_blank"
+        rel="noopener noreferrer"
+      >MIxS Extension</a>
+      for your samples.
     </div>
     <submission-permission-banner
       v-if="!canEditSubmissionMetadata()"
