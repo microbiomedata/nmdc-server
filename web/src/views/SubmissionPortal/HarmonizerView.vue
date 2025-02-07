@@ -3,7 +3,7 @@ import {
   computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
 } from '@vue/composition-api';
 import {
-  clamp, flattenDeep, has, sum,
+  clamp, debounce, flattenDeep, has, sum,
 } from 'lodash';
 import { read, writeFile, utils } from 'xlsx';
 import { api } from '@/data/api';
@@ -186,12 +186,17 @@ export default defineComponent({
     const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
 
     let changeBatch: any[] = [];
-    let suggestionRequestTimer: ReturnType<typeof setTimeout>;
+    const debouncedSuggestionRequest = debounce(async () => {
+      const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
+      await addMetadataSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!, changedRowData);
+      changeBatch = [];
+    }, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
+
     watch(suggestionMode, () => {
       // If live suggestions are disabled, clear the queue and cancel the timer
       if (suggestionMode.value !== SuggestionsMode.LIVE) {
         changeBatch = [];
-        clearTimeout(suggestionRequestTimer);
+        debouncedSuggestionRequest.cancel();
       }
     });
 
@@ -206,12 +211,7 @@ export default defineComponent({
         // where either the previous value or updated value (or both) are non-empty.
         const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
         changeBatch.push(...nonEmptyChanges);
-        clearTimeout(suggestionRequestTimer);
-        suggestionRequestTimer = setTimeout(async () => {
-          const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-          await addMetadataSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!, changedRowData);
-          changeBatch = [];
-        }, SUGGESTION_REQUEST_DELAY);
+        debouncedSuggestionRequest();
       }
 
       hasChanged.value += 1;
