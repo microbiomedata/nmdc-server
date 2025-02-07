@@ -493,8 +493,4 @@ export default defineComponent({
     text-decoration: line-through;
   }
 }
-
-.text-no-transform {
-  text-transform: none !important;
-}
 </style>
