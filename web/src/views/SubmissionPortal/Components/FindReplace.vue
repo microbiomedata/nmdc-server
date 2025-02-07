@@ -224,6 +224,3 @@ export default defineComponent({
     </v-card-text>
   </v-card>
 </template>
-
-<style lang="scss">
-</style>
