@@ -585,7 +585,7 @@ export default defineComponent({
     <submission-permission-banner
       v-if="!canEditSampleMetadata()"
     />
-    <div class="d-flex flex-column px-2">
+    <div class="d-flex flex-column px-2 pb-2">
       <div class="d-flex align-center">
         <v-btn
           v-if="validationErrorGroups.length === 0"
@@ -624,9 +624,9 @@ export default defineComponent({
             :items="validationItems"
             solo
             color="error"
-            style="z-index: 200 !important; background-color: red;"
+            style="background-color: red;"
             dense
-            class="mx-2"
+            class="mx-2 z-above-sidebar"
             hide-details
           >
             <template #selection="{ item }">
@@ -703,8 +703,7 @@ export default defineComponent({
           v-model="jumpToModel"
           :items="fields"
           label="Jump to column..."
-          class="shrink mr-2"
-          style="z-index: 200 !important;"
+          class="shrink mr-2 z-above-sidebar"
           outlined
           dense
           hide-details
@@ -725,15 +724,14 @@ export default defineComponent({
           </template>
         </v-autocomplete>
         <v-menu
+          class="z-above-sidebar"
           offset-y
           nudge-bottom="4px"
-          style="z-index: 200 !important;"
           :close-on-click="true"
         >
           <template #activator="{on, attrs}">
             <v-btn
               outlined
-              class="mr-2"
               v-bind="attrs"
               v-on="on"
             >
@@ -885,8 +883,12 @@ export default defineComponent({
         :width="HELP_SIDEBAR_WIDTH"
         :value="sidebarOpen"
         absolute
+        class="z-above-data-harmonizer"
         floating
+        hide-overlay
         right
+        stateless
+        temporary
       >
         <HarmonizerSidebar
           :column-help="selectedHelpDict"
@@ -1070,7 +1072,6 @@ html {
   position: absolute;
   bottom: 0;
   left: 0;
-  padding-right: 8px;
 
   .secondary-header-cell:hover {
     cursor: pointer;
@@ -1078,6 +1079,11 @@ html {
 
   .htAutocompleteArrow {
     color: gray;
+  }
+
+  table {
+    padding-right: 16px;
+    padding-bottom: 16px;
   }
 
   td {
@@ -1149,5 +1155,13 @@ html {
 
 .htDimmed {
   cursor: not-allowed;
+}
+
+.z-above-data-harmonizer {
+  z-index: 200 !important;
+}
+
+.z-above-sidebar {
+  z-index: 201 !important;
 }
 </style>
