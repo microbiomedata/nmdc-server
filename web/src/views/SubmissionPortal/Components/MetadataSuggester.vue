@@ -457,10 +457,10 @@ export default defineComponent({
       <v-row v-if="rejectedSuggestions.length > 0">
         <v-col>
           <v-btn
-            class="text-no-transform"
-            color="grey darken-2"
+            color="grey"
+            outlined
+            small
             block
-            plain
             @click="handleResetRejectedSuggestions"
           >
             Reset rejected suggestions
