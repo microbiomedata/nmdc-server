@@ -1083,7 +1083,6 @@ html {
 
   table {
     padding-right: 16px;
-    padding-bottom: 16px;
   }
 
   td {

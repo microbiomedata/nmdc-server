@@ -91,33 +91,37 @@ export default defineComponent({
 </script>
 
 <template>
-  <div class="harmonizer-sidebar-content">
-    <v-tabs
-      v-model="tabModel"
-      grow
-    >
-      <v-tooltip
-        v-for="tab in TABS"
-        :key="tab.label"
-        open-delay="600"
-        top
-        z-index="400"
+  <div class="harmonizer-sidebar-content d-flex flex-column fill-height">
+    <div class="flex-grow-0 flex-shrink-0">
+      <v-tabs
+        v-model="tabModel"
+        grow
       >
-        <template #activator="{ on, attrs }">
-          <v-tab
-            v-bind="attrs"
-            v-on="on"
-          >
-            <v-icon>{{ tab.icon }}</v-icon>
-          </v-tab>
-        </template>
-        <span>{{ tab.label }}</span>
-      </v-tooltip>
-    </v-tabs>
+        <v-tooltip
+          v-for="tab in TABS"
+          :key="tab.label"
+          open-delay="600"
+          top
+          z-index="400"
+        >
+          <template #activator="{ on, attrs }">
+            <v-tab
+              v-bind="attrs"
+              v-on="on"
+            >
+              <v-icon>{{ tab.icon }}</v-icon>
+            </v-tab>
+          </template>
+          <span>{{ tab.label }}</span>
+        </v-tooltip>
+      </v-tabs>
+      <v-divider />
+    </div>
 
-    <v-divider />
-
-    <v-tabs-items v-model="tabModel">
+    <v-tabs-items
+      v-model="tabModel"
+      class="flex-grow-1 overflow-y-auto"
+    >
       <v-tab-item>
         <ColumnHelp
           :column-help="columnHelp"
