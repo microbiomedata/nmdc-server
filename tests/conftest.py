@@ -20,7 +20,7 @@ def set_seed(connection):
 
 @pytest.fixture(autouse=True)
 def patch_geo_engine(monkeypatch):
-    """Patch all the GeoEngine methods that make external network requests."""
+    """Patch all the nmdc_geoloc_tools functions that make external network requests."""
 
     def mock_get_elevation(lat_lon):
         lat, lon = lat_lon

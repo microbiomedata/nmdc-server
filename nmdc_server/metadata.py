@@ -23,7 +23,7 @@ class SampleMetadataSuggester:
                 return f"{elev:.16g}"
             except ValueError:
                 # This could happen if the lat_lon string is not parseable as a float
-                # or the GeoEngine determined they are invalid values. In either case,
+                # or nmdc_geoloc_tools determined they are invalid values. In either case,
                 # just don't suggest an elevation.
                 pass
         return None
