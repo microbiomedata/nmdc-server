@@ -6,8 +6,9 @@ import { noop, uniqWith } from 'lodash';
 import VueRouter from 'vue-router';
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import {
-  api, Condition, DataObjectFilter, EnvoNode, EnvoTree, User,
+  api, Condition, DataObjectFilter, EnvoNode, EnvoTree,
 } from '@/data/api';
+import { User } from '@/types';
 import { clearQueryState, getQueryState, setQueryState } from '@/store/localStorage';
 
 // TODO: Remove in version 3;

@@ -736,8 +736,8 @@ def test_metadata_suggest(client: TestClient, suggest_payload, logged_in_user):
     )
     assert response.status_code == 200
     assert response.json() == [
-        {"type": "add", "row": 1, "slot": "elev", "value": "16.0"},
-        {"type": "replace", "row": 3, "slot": "elev", "value": "16.0"},
+        {"type": "add", "row": 1, "slot": "elev", "value": "16", "current_value": None},
+        {"type": "replace", "row": 3, "slot": "elev", "value": "16", "current_value": "0"},
     ]
 
 
@@ -749,7 +749,7 @@ def test_metadata_suggest_single_type(client: TestClient, suggest_payload, logge
     )
     assert response.status_code == 200
     assert response.json() == [
-        {"type": "add", "row": 1, "slot": "elev", "value": "16.0"},
+        {"type": "add", "row": 1, "slot": "elev", "value": "16", "current_value": None},
     ]
 
 
@@ -761,8 +761,8 @@ def test_metadata_suggest_multiple_types(client: TestClient, suggest_payload, lo
     )
     assert response.status_code == 200
     assert response.json() == [
-        {"type": "add", "row": 1, "slot": "elev", "value": "16.0"},
-        {"type": "replace", "row": 3, "slot": "elev", "value": "16.0"},
+        {"type": "add", "row": 1, "slot": "elev", "value": "16", "current_value": None},
+        {"type": "replace", "row": 3, "slot": "elev", "value": "16", "current_value": "0"},
     ]
 
 

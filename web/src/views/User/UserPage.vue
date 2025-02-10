@@ -1,8 +1,9 @@
 <script lang="ts">
 import { defineComponent, ref, watch } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
-import { api, User } from '@/data/api';
+import { api } from '@/data/api';
 import { stateRefs } from '@/store';
+import { User } from '@/types';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import AppBanner from '@/components/AppBanner.vue';
 import OrcidId from '../../components/Presentation/OrcidId.vue';

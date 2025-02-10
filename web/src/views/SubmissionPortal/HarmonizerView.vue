@@ -3,21 +3,13 @@ import {
   computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
 } from '@vue/composition-api';
 import {
-  clamp, flattenDeep, has, sum,
+  clamp, debounce, flattenDeep, has, sum,
 } from 'lodash';
 import { read, writeFile, utils } from 'xlsx';
 import { api } from '@/data/api';
-import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
 
-import {
-  HarmonizerApi,
-  HARMONIZER_TEMPLATES,
-  EMSL,
-  JGI_MG,
-  JGT_MT,
-  JGI_MG_LR,
-} from './harmonizerApi';
+import { HarmonizerApi } from './harmonizerApi';
 import {
   packageName,
   sampleData,
@@ -31,15 +23,26 @@ import {
   submissionStatus,
   canEditSampleMetadata,
   isOwner,
+  addMetadataSuggestions,
+  suggestionMode,
+  metadataSuggestions,
   isTestSubmission,
 } from './store';
-import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
-import FindReplace from './Components/FindReplace.vue';
+import {
+  HARMONIZER_TEMPLATES,
+  EMSL,
+  JGI_MG,
+  JGT_MT,
+  JGI_MG_LR,
+  SuggestionsMode,
+} from '@/views/SubmissionPortal/types';
+import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
 import { stateRefs } from '@/store';
+import { getPendingSuggestions } from '@/store/localStorage';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -64,7 +67,10 @@ const ColorKey = {
   },
 };
 
-const HELP_SIDEBAR_WIDTH = '300px';
+const HELP_SIDEBAR_WIDTH = '320px';
+const TABS_HEIGHT = '48px';
+
+const SUGGESTION_REQUEST_DELAY = 3000;
 
 const EXPORT_FILENAME = 'nmdc_sample_export.xlsx';
 
@@ -98,8 +104,7 @@ const ALWAYS_READ_ONLY_COLUMNS = [
 
 export default defineComponent({
   components: {
-    ContactCard,
-    FindReplace,
+    HarmonizerSidebar,
     SubmissionStepper,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
@@ -180,13 +185,42 @@ export default defineComponent({
     const saveRecordRequest = useRequest();
     const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
 
-    const onDataChange = async () => {
+    let changeBatch: any[] = [];
+    const debouncedSuggestionRequest = debounce(async () => {
+      const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
+      await addMetadataSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!, changedRowData);
+      changeBatch = [];
+    }, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
+
+    watch(suggestionMode, () => {
+      // If live suggestions are disabled, clear the queue and cancel the timer
+      if (suggestionMode.value !== SuggestionsMode.LIVE) {
+        changeBatch = [];
+        debouncedSuggestionRequest.cancel();
+      }
+    });
+
+    // DataHarmonizer is a bit loose in its definition of empty cells. They can be null or and empty string.
+    const isNonEmpty = (val: any) => val !== null && val !== '';
+
+    const onDataChange = async (changes: any[]) => {
+      // If we're in live suggestion mode and the user can edit the metadata, add the changes to a batch. Once the user
+      // has not made further changes for a certain amount of time, send the batch to the backend for suggestions.
+      if (suggestionMode.value === SuggestionsMode.LIVE && canEditSampleMetadata()) {
+        // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
+        // where either the previous value or updated value (or both) are non-empty.
+        const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
+        changeBatch.push(...nonEmptyChanges);
+        debouncedSuggestionRequest();
+      }
+
       hasChanged.value += 1;
       const data = harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       saveRecord(); // This is a background save that we intentionally don't wait for
       tabsValidated.value[activeTemplateKey.value] = false;
     };
+
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
     onMounted(async () => {
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
@@ -199,6 +233,7 @@ export default defineComponent({
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
         harmonizerApi.addChangeHook(onDataChange);
+        metadataSuggestions.value = getPendingSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!);
         if (!canEditSampleMetadata()) {
           harmonizerApi.setTableReadOnly();
         }
@@ -407,10 +442,6 @@ export default defineComponent({
       writeFile(workbook, EXPORT_FILENAME, { compression: true });
     }
 
-    function showOpenFileDialog() {
-      document.getElementById('tsv-file-select')?.click();
-    }
-
     function openFile(file: File) {
       const reader = new FileReader();
       reader.onload = (event) => {
@@ -465,9 +496,6 @@ export default defineComponent({
 
         // Load data for active tab into DataHarmonizer
         harmonizerApi.loadData(activeTemplateData.value);
-
-        // Reset the file input so that the same filename can be loaded multiple times
-        (document.getElementById('tsv-file-select') as HTMLInputElement).value = '';
       };
       reader.readAsArrayBuffer(file);
     }
@@ -478,14 +506,20 @@ export default defineComponent({
       }
 
       await validate();
+
+      const nextTemplateKey = templateList.value[index];
+      const nextTemplate = HARMONIZER_TEMPLATES[nextTemplateKey];
+
+      // Get the stashed suggestions (if any) for the next template and present them.
+      metadataSuggestions.value = getPendingSuggestions(root.$route.params.id, nextTemplate.schemaClass!);
+
       // When changing templates we may need to populate the common columns
       // from the environment tabs
-      const nextTemplate = templateList.value[index];
-      synchronizeTabData(nextTemplate);
+      synchronizeTabData(nextTemplateKey);
 
-      activeTemplateKey.value = nextTemplate;
-      activeTemplate.value = HARMONIZER_TEMPLATES[nextTemplate];
-      harmonizerApi.useTemplate(HARMONIZER_TEMPLATES[nextTemplate].schemaClass);
+      activeTemplateKey.value = nextTemplateKey;
+      activeTemplate.value = nextTemplate;
+      harmonizerApi.useTemplate(nextTemplate.schemaClass);
       harmonizerApi.addChangeHook(onDataChange);
     }
 
@@ -493,6 +527,7 @@ export default defineComponent({
       user,
       APP_HEADER_HEIGHT,
       HELP_SIDEBAR_WIDTH,
+      TABS_HEIGHT,
       ColorKey,
       HARMONIZER_TEMPLATES,
       columnVisibility,
@@ -530,13 +565,11 @@ export default defineComponent({
       doSubmit,
       downloadSamples,
       errorClick,
-      showOpenFileDialog,
       openFile,
       focus,
       jumpTo,
       validate,
       changeTemplate,
-      urlify,
       canEditSampleMetadata,
     };
   },
@@ -552,36 +585,8 @@ export default defineComponent({
     <submission-permission-banner
       v-if="!canEditSampleMetadata()"
     />
-    <div class="d-flex flex-column px-2">
+    <div class="d-flex flex-column px-2 pb-2">
       <div class="d-flex align-center">
-        <label
-          for="tsv-file-select"
-        >
-          <input
-            id="tsv-file-select"
-            type="file"
-            style="position: fixed; top: -100em"
-            accept=".xls,.xlsx"
-            @change="(evt) => openFile(evt.target.files[0])"
-          >
-          <v-btn
-            label="Choose spreadsheet file..."
-            prepend-inner-icon="mdi-file-table"
-            :prepend-icon="null"
-            outlined
-            dense
-            color="primary"
-            class="mr-2"
-            hide-details
-            :disabled="!canEditSampleMetadata()"
-            @click="showOpenFileDialog"
-          >
-            1. Import XLSX file
-            <v-icon class="pl-2">
-              mdi-file-table
-            </v-icon>
-          </v-btn>
-        </label>
         <v-btn
           v-if="validationErrorGroups.length === 0"
           color="primary"
@@ -589,7 +594,7 @@ export default defineComponent({
           :disabled="!canEditSampleMetadata()"
           @click="validate"
         >
-          2. Validate
+          Validate
           <v-icon class="pl-2">
             mdi-refresh
           </v-icon>
@@ -619,9 +624,9 @@ export default defineComponent({
             :items="validationItems"
             solo
             color="error"
-            style="z-index: 200 !important; background-color: red;"
+            style="background-color: red;"
             dense
-            class="mx-2"
+            class="mx-2 z-above-sidebar"
             hide-details
           >
             <template #selection="{ item }">
@@ -698,8 +703,7 @@ export default defineComponent({
           v-model="jumpToModel"
           :items="fields"
           label="Jump to column..."
-          class="shrink mr-2"
-          style="z-index: 200 !important;"
+          class="shrink mr-2 z-above-sidebar"
           outlined
           dense
           hide-details
@@ -720,15 +724,14 @@ export default defineComponent({
           </template>
         </v-autocomplete>
         <v-menu
+          class="z-above-sidebar"
           offset-y
           nudge-bottom="4px"
-          style="z-index: 200 !important;"
           :close-on-click="true"
         >
           <template #activator="{on, attrs}">
             <v-btn
               outlined
-              class="mr-2"
               v-bind="attrs"
               v-on="on"
             >
@@ -803,166 +806,99 @@ export default defineComponent({
       </div>
     </div>
 
-    <v-tabs @change="changeTemplate">
-      <v-tooltip
-        v-for="templateKey in templateList"
-        :key="templateKey"
-        right
-      >
-        <template #activator="{on, attrs}">
-          <div
-            style="display: flex;"
-            v-bind="attrs"
-            v-on="on"
-          >
-            <v-tab>
-              <v-badge
-                :content="validationTotalCounts[templateKey] || '!'"
-                :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey]"
-                :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
-              >
-                {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
-              </v-badge>
-            </v-tab>
-          </div>
-        </template>
-        <span v-if="validationTotalCounts[templateKey] > 0">
-          {{ validationTotalCounts[templateKey] }} validation errors
-        </span>
-        <span v-else-if="!tabsValidated[templateKey]">
-          This tab must be validated before submission
-        </span>
-        <span v-else>
-          {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
-        </span>
-      </v-tooltip>
-      <v-spacer />
-      <v-menu
-        offset-x
-        left
-        z-index="300"
-      >
-        <template #activator="{on, attrs}">
-          <v-btn
-            color="primary"
-            small
-            class="my-2 py-4"
-            v-bind="attrs"
-            v-on="on"
-          >
-            <v-icon
-              class="mt-1"
+    <div class="harmonizer-and-sidebar">
+      <v-tabs @change="changeTemplate">
+        <v-tooltip
+          v-for="templateKey in templateList"
+          :key="templateKey"
+          right
+        >
+          <template #activator="{on, attrs}">
+            <div
+              style="display: flex;"
+              v-bind="attrs"
+              v-on="on"
             >
-              mdi-message-question
-            </v-icon>
-          </v-btn>
-        </template>
-        <ContactCard />
-      </v-menu>
-    </v-tabs>
+              <v-tab>
+                <v-badge
+                  :content="validationTotalCounts[templateKey] || '!'"
+                  :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey]"
+                  :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
+                >
+                  {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+                </v-badge>
+              </v-tab>
+            </div>
+          </template>
+          <span v-if="validationTotalCounts[templateKey] > 0">
+            {{ validationTotalCounts[templateKey] }} validation errors
+          </span>
+          <span v-else-if="!tabsValidated[templateKey]">
+            This tab must be validated before submission
+          </span>
+          <span v-else>
+            {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+          </span>
+        </v-tooltip>
+      </v-tabs>
 
-    <div v-if="schemaLoading">
-      Loading...
-    </div>
+      <div v-if="schemaLoading">
+        Loading...
+      </div>
 
-    <div
-      class="harmonizer-style-container harmonizer-and-sidebar"
-    >
       <div
         id="harmonizer-root"
+        class="harmonizer-style-container"
         :style="{
-          'padding-right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
+          'right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
+          'top': TABS_HEIGHT,
         }"
       />
 
-      <div
-        class="harmonizer-sidebar"
+      <v-btn
+        class="sidebar-toggle"
+        tile
+        plain
+        color="black"
+        :ripple="false"
+        :height="TABS_HEIGHT"
+        :width="TABS_HEIGHT"
         :style="{
-          'width': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
+          'right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
         }"
+        @click="sidebarOpen = !sidebarOpen"
       >
-        <v-btn
-          class="sidebar-toggle"
-          small
-          outlined
-          tile
-          @click="sidebarOpen = !sidebarOpen"
+        <v-icon
+          v-if="sidebarOpen"
+          class="sidebar-toggle-close"
         >
-          <v-icon
-            v-if="sidebarOpen"
-            class="sidebar-toggle-close"
-          >
-            mdi-menu-open
-          </v-icon>
-          <v-icon v-else>
-            mdi-menu-open
-          </v-icon>
-        </v-btn>
-        <v-navigation-drawer
-          width="100%"
-          :value="sidebarOpen"
-          right
-        >
-          <FindReplace
-            :harmonizer-api="harmonizerApi"
-            class="ml-2 mr-2"
-          />
-          <div
-            v-if="selectedHelpDict"
-            class="mx-2"
-          >
-            <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
-              Column Help
-              <v-spacer />
-            </div>
-            <div class="my-2">
-              <span class="font-weight-bold pr-2">Column:</span>
-              <span
-                :title="selectedHelpDict.name"
-                v-html="selectedHelpDict.title"
-              />
-            </div>
-            <div class="my-2">
-              <span class="font-weight-bold pr-2">Description:</span>
-              <span v-html="urlify(selectedHelpDict.description)" />
-            </div>
-            <div class="my-2">
-              <span class="font-weight-bold pr-2">Guidance:</span>
-              <span v-html="urlify(selectedHelpDict.guidance)" />
-            </div>
-            <div
-              v-if="selectedHelpDict.examples"
-              class="my-2"
-            >
-              <span class="font-weight-bold pr-2">Examples:</span>
-              <span v-html="urlify(selectedHelpDict.examples)" />
-            </div>
-            <v-btn
-              color="grey"
-              outlined
-              small
-              block
-              @click="harmonizerApi.launchReference()"
-            >
-              Full {{ activeTemplate.displayName }} Reference
-              <v-icon class="pl-1">
-                mdi-open-in-new
-              </v-icon>
-            </v-btn>
-          </div>
-          <div v-else>
-            <div class="mx-2">
-              <div class="text-h6 mt-3 font-weight-bold d-flex align-center">
-                Column Help
-                <v-spacer />
-              </div>
-              <p class="my-2 text--disabled">
-                Click on a cell or column to view help
-              </p>
-            </div>
-          </div>
-        </v-navigation-drawer>
-      </div>
+          mdi-menu-open
+        </v-icon>
+        <v-icon v-else>
+          mdi-menu-open
+        </v-icon>
+      </v-btn>
+
+      <v-navigation-drawer
+        :width="HELP_SIDEBAR_WIDTH"
+        :value="sidebarOpen"
+        absolute
+        class="z-above-data-harmonizer"
+        floating
+        hide-overlay
+        right
+        stateless
+        temporary
+      >
+        <HarmonizerSidebar
+          :column-help="selectedHelpDict"
+          :harmonizer-api="harmonizerApi"
+          :harmonizer-template="activeTemplate"
+          :metadata-editing-allowed="canEditSampleMetadata()"
+          @import-xlsx="openFile"
+          @export-xlsx="downloadSamples"
+        />
+      </v-navigation-drawer>
     </div>
 
     <div class="harmonizer-style-container">
@@ -996,17 +932,6 @@ export default defineComponent({
         </v-chip>
       </div>
       <v-spacer />
-      <v-btn
-        color="primary"
-        class="mr-2"
-        outlined
-        @click="downloadSamples"
-      >
-        <v-icon class="pr-2">
-          mdi-file-table
-        </v-icon>
-        Download XLSX
-      </v-btn>
       <v-tooltip top>
         <template #activator="{ on, attrs }">
           <div
@@ -1025,7 +950,7 @@ export default defineComponent({
                 Submitted
               </span>
               <span v-else>
-                3. Submit
+                Submit
               </span>
               <v-dialog
                 v-model="submitDialog"
@@ -1139,21 +1064,14 @@ html {
   width: 100%;
   height: 100%;
   flex-grow: 1;
-  overflow: auto;
-}
-
-.harmonizer-sidebar {
-  font-size: 14px;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  right: 0;
+  overflow: hidden;
 }
 
 /* Grid */
 #harmonizer-root {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
 
   .secondary-header-cell:hover {
     cursor: pointer;
@@ -1161,6 +1079,10 @@ html {
 
   .htAutocompleteArrow {
     color: gray;
+  }
+
+  table {
+    padding-right: 16px;
   }
 
   td {
@@ -1220,14 +1142,10 @@ html {
 }
 
 .sidebar-toggle {
-  background: white;
   z-index: 200;
   position: absolute;
   top: 0;
-  left: 0;
-  transform: translateX(-100%);
-  border-color: rgb(152, 152, 152);
-  border-right-color: rgba(152, 152, 152, 0.0);
+  right: 0;
 }
 
 .sidebar-toggle-close {
@@ -1236,5 +1154,13 @@ html {
 
 .htDimmed {
   cursor: not-allowed;
+}
+
+.z-above-data-harmonizer {
+  z-index: 200 !important;
+}
+
+.z-above-sidebar {
+  z-index: 201 !important;
 }
 </style>
