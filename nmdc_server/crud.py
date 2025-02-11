@@ -477,7 +477,7 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
 
         if not data_object.file_size_bytes:
             logger.warning(
-                f"Data object file_size_bytes for {file.path} was {data_object.file_sizey_bytes}"
+                f"Data object file_size_bytes for {file.path} was {data_object.file_size_bytes}"
             )
             continue
 
