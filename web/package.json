@@ -5,6 +5,8 @@
   "scripts": {
     "serve": "rimraf -rf ./node_modules/.cache/vue-loader && vue-cli-service serve --host 127.0.0.1 --port 8081 src/main.ts",
     "lint:fix": "eslint . --fix",
+    "lint:check": "vue-tsc --noEmit",
+    "lint": "yarn lint:check && yarn lint:fix",
     "dev": "vite --host 127.0.0.1 --port 8081",
     "build": "vite build"
   },
@@ -76,9 +78,10 @@
     "js-yaml": "^4.1.0",
     "sass": "^1.83.1",
     "sass-loader": "^16.0.4",
-    "typescript": "^4.5.3",
+    "typescript": "^5.3.3",
     "unplugin-vue-components": "^28.0.0",
-    "vue-template-compiler": "^2.7.16"
+    "vue-template-compiler": "^2.7.16",
+    "vue-tsc": "^2.2.0"
   },
   "browserslist": [
     "> 1%",
