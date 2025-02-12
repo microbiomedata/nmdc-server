@@ -113,7 +113,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
     logging.basicConfig(level=level, format="%(message)s")
 
     # Get the current time as a human-readable string that indicates the timezone.
-    ingest_start_datetime: datetime = datetime.datetime.now(datetime.timezone.utc)
+    ingest_start_datetime: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
     ingest_start_datetime_str: str = ingest_start_datetime.isoformat(timespec="seconds")
 
     # Send a Slack message announcing that this ingest is starting.
@@ -198,7 +198,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         click.echo("Done")
 
     # Calculate the total duration of this ingest (in minutes).
-    ingest_end_datetime: datetime = datetime.datetime.now(datetime.timezone.utc)
+    ingest_end_datetime: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
     ingest_duration: datetime.timedelta = ingest_end_datetime - ingest_start_datetime
     ingest_duration_minutes = math.floor(ingest_duration.total_seconds() / 60)
 
