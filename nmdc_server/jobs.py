@@ -54,6 +54,12 @@ def migrate(ingest_db: bool = False):
 
 
 def do_ingest(function_limit, skip_annotation):
+    r"""
+    Note: The `ingest_lock()` function invoked within this function may raise an exception.
+          Since such an exception will not be caught within this function, it will propagate
+          up to the code that _invoked_ this function.
+    """
+
     with database.SessionLocalIngest() as ingest_db:
         try:
             ingest_db.execute("select truncate_tables()").all()
