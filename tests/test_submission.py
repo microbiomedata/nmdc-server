@@ -186,7 +186,7 @@ def test_get_metadata_submissions_report_as_admin(
         "PI Email",
         "Source Client",
         "Status",
-        "Is Test Submission"
+        "Is Test Submission",
         "Date Last Modified",
     ]
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
