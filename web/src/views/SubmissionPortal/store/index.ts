@@ -111,6 +111,7 @@ const contextFormDefault = {
   awardDois: [] as string[] | null,
   ship: undefined as undefined | boolean,
   facilityGenerated: undefined as undefined | boolean,
+  doe: undefined as undefined | boolean,
   facilities: [] as string[],
   award: undefined as undefined | string,
   otherAward: '',

@@ -11,7 +11,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml'
 
 import Definitions from '@/definitions';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm, canEditSubmissionMetadata,
+  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm, canEditSubmissionMetadata, AwardTypes,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
@@ -161,7 +161,7 @@ export default defineComponent({
       <v-radio-group
         v-if="contextForm.dataGenerated"
         v-model="contextForm.facilityGenerated"
-        label="Was data generated at a DOE user facility? *"
+        label="Was data generated at a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
         @change="facilityGeneratedChange"
       >
@@ -178,9 +178,8 @@ export default defineComponent({
           class="mb-2 mt-0"
         />
       </v-radio-group>
-      <v-checkbox-group
+      <div
         v-if="contextForm.facilityGenerated"
-        v-model="contextForm.facilities"
       >
         <legend
           class="v-label theme--light mb-2"
@@ -189,40 +188,60 @@ export default defineComponent({
           Which facility?
         </legend>
         <v-checkbox
+          v-model="contextForm.facilities"
           label="EMSL"
           value="EMSL"
           hide-details
           class="mb-2 mt-0"
         />
         <v-checkbox
+          v-model="contextForm.facilities"
           label="JGI"
           value="JGI"
           hide-details
           class="mb-2 mt-0"
         />
-      </v-checkbox-group>
-      <div v-if="contextForm.dataGenerated === false">
+      </div>
+      <v-radio-group
+        v-if="contextForm.dataGenerated === false"
+        v-model="contextForm.doe"
+        label="Are you submitting samples to a DOE user facility (JGI, EMSL)? *"
+        @change="reValidate"
+      >
+        <v-radio
+          label="No"
+          :value="false"
+          class="mb-2 mt-0"
+        />
+        <v-radio
+          label="Yes"
+          :value="true"
+          class="mb-2 mt-0"
+        />
+      </v-radio-group>
+      <div
+        v-if="contextForm.doe"
+      >
         <legend
           class="v-label theme--light mb-2"
           style="font-size: 14px;"
         >
-          Are you submitting metadata for samples that will be sent to a DOE user facility?
+          Which facility?
         </legend>
         <v-checkbox
-          v-for="facility in facilityEnum"
-          :key="facility"
           v-model="contextForm.facilities"
-          :label="facility"
-          :value="facility"
+          label="EMSL"
+          value="EMSL"
           hide-details
-          @change="facilityChange"
+          class="mb-2 mt-0"
         />
-      </div>
-      <!-- <div class="text-h4">
-        Data types *
-      </div>
-      <div class="text-body-2 grey--text text--darken-2 mb-4">
-        {{ Definitions.metadataTypes }}
+        <v-checkbox
+          v-model="contextForm.facilities"
+          label="JGI"
+          value="JGI"
+          hide-details
+          class="mb-2 mt-0"
+        />
       </div>
 
       <v-alert
@@ -233,10 +252,10 @@ export default defineComponent({
           Data type choice disabled
         </p>
         Data types cannot be changed when there are already metadata rows in step 6.  To change the template, return to step 6 and remove all data.
-      </v-alert> -->
+      </v-alert>
 
       <!-- JGI -->
-      <!-- <div v-if="contextForm.facilities.includes('JGI') || contextForm.facilityGenerated === true">
+      <div v-if="contextForm.facilities.includes('JGI')">
         <div class="text-h6">
           Joint Genome Institute (JGI)
         </div>
@@ -283,10 +302,10 @@ export default defineComponent({
           validate-on-blur
           dense
         />
-      </div> -->
+      </div>
 
       <!-- EMSL -->
-      <!-- <div v-if="contextForm.facilities.includes('EMSL') || contextForm.facilityGenerated === true">
+      <div v-if="contextForm.facilities.includes('EMSL')">
         <div class="text-h6 mt-4">
           Environmental Molecular Science Laboratory (EMSL)
         </div>
@@ -326,46 +345,53 @@ export default defineComponent({
           validate-on-blur
           dense
         />
-      </div> -->
-      <!-- Other -->
-      <!-- <div class="text-h6 mt-4">
-        Other Non-DOE
       </div>
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metagenome"
-        value="mg"
-        :disabled="templateChoiceDisabled"
-        hide-details
-      />
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metatranscriptome"
-        value="mt"
-        :disabled="templateChoiceDisabled"
-        hide-details
-      />
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metaproteome"
-        value="mp"
-        :disabled="templateChoiceDisabled"
-        hide-details
-      />
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metabolome"
-        value="mb"
-        :disabled="templateChoiceDisabled"
-        hide-details
-      />
-      <v-checkbox
-        v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Natural Organic Matter (FT-ICR MS)"
-        value="nom"
-        :disabled="templateChoiceDisabled"
-        hide-details
-      /> -->
+      <!-- Other -->
+      <div
+        v-if="contextForm.doe == false"
+        class="text-h6 mt-4"
+      >
+        <legend
+          class="v-label theme--light mb-2"
+          style="font-size: 14px;"
+        >
+          Which datatypes were generated?
+        </legend>
+        <v-checkbox
+          label="Metagenome"
+          value="mg"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Metatranscriptome"
+          value="mt"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Metaproteome"
+          value="mp"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Metabolome"
+          value="mb"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+        <v-checkbox
+          v-model="multiOmicsForm.omicsProcessingTypes"
+          label="Natural Organic Matter (FT-ICR MS)"
+          value="nom"
+          :disabled="templateChoiceDisabled"
+          hide-details
+        />
+      </div>
     </v-form>
     <strong>* indicates required field</strong>
     <div class="d-flex mt-5">
