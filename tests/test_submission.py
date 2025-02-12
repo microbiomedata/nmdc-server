@@ -142,6 +142,8 @@ def test_get_metadata_submissions_report_as_admin(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         created=now,
+        date_last_modified=datetime.utcnow(),
+        is_test_submission=False,
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -154,6 +156,8 @@ def test_get_metadata_submissions_report_as_admin(
         author=other_user,
         author_orcid=other_user.orcid,
         created=now + timedelta(seconds=1),
+        date_last_modified=datetime.utcnow(),
+        is_test_submission=False,
         metadata_submission={
             "studyForm": {
                 "studyName": "My study name",
@@ -182,6 +186,8 @@ def test_get_metadata_submissions_report_as_admin(
         "PI Email",
         "Source Client",
         "Status",
+        "Is Test Submission"
+        "Date Last Modified",
     ]
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
     rows = [row for row in reader]
