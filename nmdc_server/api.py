@@ -819,8 +819,8 @@ async def get_metadata_submissions_report(
         study_name = study_form["studyName"] if "studyName" in study_form else ""
         pi_name = study_form["piName"] if "piName" in study_form else ""
         pi_email = study_form["piEmail"] if "piEmail" in study_form else ""
-        date_last_modified = s.date_last_modified if "date_last_modified" in s else ""
-        is_test_submission = s.is_test_submission if "is_test_submission" in s else ""
+        date_last_modified = s.date_last_modified
+        is_test_submission = s.is_test_submission
         data_row = [
             s.id,
             s.author_orcid,
