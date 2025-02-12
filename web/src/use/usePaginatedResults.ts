@@ -81,6 +81,7 @@ export default function usePaginatedResult<T>(
     error,
     loading,
     page,
+    refetch: fetchResults,
     setPage,
     setItemsPerPage,
     setSortOptions,

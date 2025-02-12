@@ -13,6 +13,7 @@ export default defineComponent({
         addressForm.shipper.city,
         addressForm.shipper.state,
         addressForm.shipper.postalCode,
+        addressForm.shipper.country,
       ];
       const existingShipperData = shipperData.filter((shipperDatum) => !!shipperDatum.trim());
       return existingShipperData.join(', ');
@@ -91,7 +92,7 @@ export default defineComponent({
           </v-icon>
         </template>
         <div class="header">
-          <span class="mr-2">Shipper</span>
+          <span class="mr-2">Sender</span>
           <span class="expansion-panel-preview">{{ shipperAddressOneLiner }}</span>
         </div>
       </v-expansion-panel-header>

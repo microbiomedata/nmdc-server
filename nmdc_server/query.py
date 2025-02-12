@@ -259,6 +259,16 @@ ConditionSchema = Union[
 ]
 
 
+def _transform_gene_term(term: tuple[str, Any]) -> str:
+    if term[0].startswith("KO:K"):
+        return term[0].replace("KO:K", KeggTerms.ORTHOLOGY[0])
+    if term[0].startswith("COG"):
+        return term[0].replace("COG", "COG:COG")
+    if term[0].startswith("PF"):
+        return term[0].replace("PF", "PFAM:PF")
+    return term[0]
+
+
 # This is the base class for all table specific queries.  It is responsible for performing
 # both searches and facet aggregations.  At a high level, the queries are generated as follows:
 #   1. group conditions by table/field
@@ -324,21 +334,23 @@ class BaseQuerySchema(BaseModel):
                     models.PfamEntryToClan.clan.ilike(searchable_name)
                 )
             elif condition.value.startswith("GO:"):
-                gene_terms = db.query(models.GoTermToPfamEntry.entry).filter(
-                    models.GoTermToPfamEntry.term.ilike(condition.value)
+                gene_terms = (
+                    db.query(models.GoTermToPfamEntry.entry.label("mapped_term"))
+                    .filter(models.GoTermToPfamEntry.term.ilike(condition.value))
+                    .union(
+                        db.query(models.GoTermToKegg.kegg_term.label("mapped_term")).filter(
+                            models.GoTermToKegg.term.ilike(condition.value)
+                        )
+                    )
                 )
+                term_list = list(gene_terms)
+                if not term_list:
+                    return [condition]
             else:
                 # This is not a condition we know how to transform.
                 return [condition]
             if gene_terms:
-                if gene_terms[0][0].startswith("KO:K"):
-                    gene_terms = [
-                        term[0].replace("KO:K", KeggTerms.ORTHOLOGY[0]) for term in gene_terms
-                    ]
-                elif gene_terms[0][0].startswith("COG"):
-                    gene_terms = [term[0].replace("COG", "COG:COG") for term in gene_terms]
-                elif gene_terms[0][0].startswith("PF"):
-                    gene_terms = [term[0].replace("PF", "PFAM:PF") for term in gene_terms]
+                gene_terms = [_transform_gene_term(term) for term in gene_terms]
             return [
                 SimpleConditionSchema(
                     op="==",
@@ -372,7 +384,13 @@ class BaseQuerySchema(BaseModel):
 
             # Gene function queries are treated differently because they join
             # in three different places (metaT, metaG and metaP).
-            if table == Table.gene_function:
+            if table in [
+                Table.gene_function,
+                Table.kegg_function,
+                Table.go_function,
+                Table.pfam_function,
+                Table.cog_function,
+            ]:
                 metag_matches = filter.matches(db, self.table)
                 metap_conditions = [
                     SimpleConditionSchema(

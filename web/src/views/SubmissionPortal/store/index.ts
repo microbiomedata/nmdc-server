@@ -2,44 +2,41 @@ import Vue from 'vue';
 import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
-import { clone, forEach } from 'lodash';
+import { chunk, clone, forEach } from 'lodash';
 import axios from 'axios';
 import * as api from './api';
-import { getVariants, HARMONIZER_TEMPLATES } from '../harmonizerApi';
-import { User } from '@/data/api';
+import { getVariants } from '../harmonizerApi';
+import { User } from '@/types';
+import {
+  HARMONIZER_TEMPLATES,
+  MetadataSubmission,
+  MetadataSuggestion,
+  NmdcAddress,
+  PermissionLevelValues,
+  PermissionTitle,
+  SubmissionStatus,
+  SuggestionType,
+  SuggestionsMode,
+  MetadataSuggestionRequest,
+} from '@/views/SubmissionPortal/types';
+import { setPendingSuggestions } from '@/store/localStorage';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
 
-enum BiosafetyLevels {
-  BSL1 = 'BSL1',
-  BSL2 = 'BSL2'
-}
-
-enum AwardTypes {
-  CSP = 'CSP',
-  BERSS = 'BERSS',
-  BRCS = 'BRCs',
-  MONET = 'MONet',
-  FICUS = 'FICUS'
-}
-
-type permissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
-type permissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor' | 'owner';
-const permissionTitleToDbValueMap: Record<permissionTitle, permissionLevelValues> = {
+const permissionTitleToDbValueMap: Record<PermissionTitle, PermissionLevelValues> = {
   Viewer: 'viewer',
   'Metadata Contributor': 'metadata_contributor',
   Editor: 'editor',
 };
 
-const permissionLevelHierarchy: Record<permissionLevelValues, number> = {
+const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
   owner: 4,
   editor: 3,
   metadata_contributor: 2,
   viewer: 1,
 };
 
-type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
 const submissionStatus: Record<string, SubmissionStatus> = {
   InProgress: 'In Progress',
   SubmittedPendingReview: 'Submitted- Pending Review',
@@ -49,6 +46,7 @@ const submissionStatus: Record<string, SubmissionStatus> = {
 const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(submissionStatus).includes(str);
 
 const status = ref(submissionStatus.InProgress);
+const isTestSubmission = ref(false);
 
 /**
  * Submission record locking information
@@ -58,8 +56,8 @@ function getSubmissionLockedBy(): User | null {
   return _submissionLockedBy;
 }
 
-let _permissionLevel: permissionLevelValues | null = null;
-function getPermissionLevel(): permissionLevelValues | null {
+let _permissionLevel: PermissionLevelValues | null = null;
+function getPermissionLevel(): PermissionLevelValues | null {
   return _permissionLevel;
 }
 
@@ -93,7 +91,8 @@ const addressFormDefault = {
     city: '',
     state: '',
     postalCode: '',
-  } as api.NmdcAddress,
+    country: '',
+  } as NmdcAddress,
   expectedShippingDate: undefined as undefined | Date,
   shippingConditions: '',
   // Sample info
@@ -110,6 +109,7 @@ const addressFormDefault = {
 const contextFormDefault = {
   dataGenerated: undefined as undefined | boolean,
   awardDois: [] as string[] | null,
+  ship: undefined as undefined | boolean,
   facilityGenerated: undefined as undefined | boolean,
   facilities: [] as string[],
   award: undefined as undefined | string,
@@ -138,7 +138,7 @@ const studyFormDefault = {
     name: string;
     orcid: string;
     roles: string[];
-    permissionLevel: permissionLevelValues | null;
+    permissionLevel: PermissionLevelValues | null;
   }[],
 };
 const studyFormValid = ref(false);
@@ -167,13 +167,12 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 /**
  * Environment Package Step
  */
-const packageName = ref('soil' as keyof typeof HARMONIZER_TEMPLATES);
+const packageName = ref(['soil'] as (keyof typeof HARMONIZER_TEMPLATES)[]);
 const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
   const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
   return list;
 });
-
 /**
  * DataHarmonizer Step
  */
@@ -193,6 +192,9 @@ const templateChoiceDisabled = computed(() => {
   }
   return false;
 });
+const metadataSuggestions = ref([] as MetadataSuggestion[]);
+const suggestionMode = ref(SuggestionsMode.LIVE);
+const suggestionType = ref(SuggestionType.ALL);
 
 const tabsValidated = ref({} as Record<string, boolean>);
 watch(templateList, () => {
@@ -204,7 +206,7 @@ watch(templateList, () => {
 });
 
 /** Submit page */
-const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
+const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
   contextForm,
   addressForm,
@@ -214,8 +216,8 @@ const payloadObject: Ref<api.MetadataSubmission> = computed(() => ({
   sampleData: sampleData.value,
 }));
 
-function getPermissions(): Record<string, permissionLevelValues> {
-  const permissions: Record<string, permissionLevelValues> = {};
+function getPermissions(): Record<string, PermissionLevelValues> {
+  const permissions: Record<string, PermissionLevelValues> = {};
   studyForm.contributors.forEach((contributor) => {
     const { orcid, permissionLevel } = contributor;
     if (orcid && permissionLevel) {
@@ -254,9 +256,10 @@ function reset() {
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
-  packageName.value = 'soil';
+  packageName.value = ['soil'];
   sampleData.value = {};
   status.value = submissionStatus.InProgress;
+  isTestSubmission.value = false;
 }
 
 async function incrementalSaveRecord(id: string): Promise<number | void> {
@@ -264,8 +267,8 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
     return Promise.resolve();
   }
 
-  let payload: Partial<api.MetadataSubmission> = {};
-  let permissions: Record<string, permissionLevelValues> | undefined;
+  let payload: Partial<MetadataSubmission> = {};
+  let permissions: Record<string, PermissionLevelValues> | undefined;
   if (isOwner()) {
     payload = payloadObject.value;
     permissions = getPermissions();
@@ -287,9 +290,10 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   return Promise.resolve();
 }
 
-async function generateRecord() {
+async function generateRecord(isTestSubBool: boolean) {
   reset();
-  const record = await api.createRecord(payloadObject.value);
+  const record = await api.createRecord(payloadObject.value, isTestSubBool);
+  isTestSubmission.value = isTestSubBool;
   return record;
 }
 
@@ -304,7 +308,8 @@ async function loadRecord(id: string) {
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
-  _permissionLevel = (val.permission_level as permissionLevelValues);
+  _permissionLevel = (val.permission_level as PermissionLevelValues);
+  isTestSubmission.value = val.is_test_submission;
 
   try {
     const lockResponse = await api.lockSubmission(id);
@@ -334,14 +339,56 @@ function mergeSampleData(key: string | undefined, data: any[]) {
   };
 }
 
+/**
+ * Get metadata suggestions from the server and add them to the list of pending suggestions. Then sync the pending
+ * suggestions with local storage.
+ *
+ * @param submissionId
+ * @param schemaClassName
+ * @param requests
+ * @param batchSize
+ */
+async function addMetadataSuggestions(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
+  const batches = chunk(requests, batchSize);
+  for (let i = 0; i < batches.length; i += 1) {
+    const batch = batches[i];
+
+    // eslint-disable-next-line no-await-in-loop -- we are intentionally throttling requests to the sever
+    const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
+
+    // Drop all the existing suggestions for the rows in this batch
+    batch.forEach((request) => {
+      metadataSuggestions.value = metadataSuggestions.value.filter(
+        (suggestion) => suggestion.row !== request.row,
+      );
+    });
+
+    // Add the new suggestions to the list
+    metadataSuggestions.value.push(...suggestions);
+  }
+
+  setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
+}
+
+/**
+ * Remove the given metadata suggestions from the list of pending suggestions. Then sync the pending suggestions with
+ * local storage.
+ *
+ * @param submissionId
+ * @param schemaClassName
+ * @param suggestions
+ */
+function removeMetadataSuggestions(submissionId: string, schemaClassName: string, suggestions: MetadataSuggestion[]) {
+  metadataSuggestions.value = metadataSuggestions.value.filter(
+    (suggestion) => !suggestions.includes(suggestion),
+  );
+
+  setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
+}
+
 export {
-  SubmissionStatus,
   submissionStatus,
-  BiosafetyLevels,
-  AwardTypes,
-  permissionTitle,
   permissionTitleToDbValueMap,
-  permissionLevelValues,
   permissionLevelHierarchy,
   /* state */
   multiOmicsForm,
@@ -362,6 +409,10 @@ export {
   hasChanged,
   tabsValidated,
   status,
+  isTestSubmission,
+  metadataSuggestions,
+  suggestionMode,
+  suggestionType,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,
@@ -373,4 +424,6 @@ export {
   isOwner,
   canEditSampleMetadata,
   canEditSubmissionMetadata,
+  addMetadataSuggestions,
+  removeMetadataSuggestions,
 };

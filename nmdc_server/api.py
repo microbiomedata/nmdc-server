@@ -36,7 +36,11 @@ router = APIRouter()
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
     settings = Settings()
-    return {"disable_bulk_download": settings.disable_bulk_download.upper() == "YES"}
+    return {
+        "disable_bulk_download": settings.disable_bulk_download.upper() == "YES",
+        "portal_banner_message": settings.portal_banner_message,
+        "portal_banner_title": settings.portal_banner_title,
+    }
 
 
 # get application version number
@@ -902,6 +906,8 @@ async def get_submission(
             templates=submission.templates,
             study_name=submission.study_name,
             field_notes_metadata=submission.field_notes_metadata,
+            is_test_submission=submission.is_test_submission,
+            date_last_modified=submission.date_last_modified,
         )
         if submission.locked_by is not None:
             submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
@@ -972,10 +978,11 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # Create GitHub issue when metadata is being submitted
+    # Create GitHub issue when metadata is being submitted and not a test submission
     if (
         submission.status == "in-progress"
         and body_dict.get("status", None) == "Submitted- Pending Review"
+        and submission.is_test_submission is False
     ):
         create_github_issue(submission, user)
 
@@ -999,7 +1006,11 @@ async def update_submission(
             crud.update_submission_contributor_roles(db, submission, new_permissions)
 
         if body_dict.get("status", None):
-            submission.status = body_dict["status"]
+            if (
+                body_dict.get("status", None) == "Submitted- Pending Review"
+                and submission.is_test_submission is False
+            ):
+                submission.status = body_dict["status"]
         db.commit()
     crud.update_submission_lock(db, submission.id)
     return submission
@@ -1178,6 +1189,14 @@ async def submit_metadata(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
+    # Old versions of the Field Notes app will continue to send a string for packageName
+    # for a little while. This code is to ease that transition and can be removed in the future.
+    if isinstance(body.metadata_submission.packageName, str):
+        if body.metadata_submission.packageName:
+            body.metadata_submission.packageName = [body.metadata_submission.packageName]
+        else:
+            body.metadata_submission.packageName = []
+
     submission = SubmissionMetadata(
         **body.dict(),
         author_orcid=user.orcid,
@@ -1226,6 +1245,7 @@ async def suggest_metadata(
                     row=item.row,
                     slot=slot,
                     value=value,
+                    current_value=item.data.get(slot, None),
                 )
             )
     return response

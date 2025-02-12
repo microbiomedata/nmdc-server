@@ -1,17 +1,15 @@
 import { AxiosResponse } from 'axios';
-import { client, SearchParams, User } from '@/data/api';
-import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
-
-interface NmdcAddress {
-  name: string;
-  email: string;
-  phone: string;
-  line1: string;
-  line2: string;
-  city: string;
-  state: string;
-  postalCode: string;
-}
+import { client, SearchParams } from '@/data/api';
+import {
+  LockOperationResult,
+  MetadataSubmission,
+  MetadataSubmissionRecord,
+  MetadataSuggestion,
+  MetadataSuggestionRequest,
+  NmdcAddress,
+  PaginatedResponse,
+  SuggestionType,
+} from '@/views/SubmissionPortal/types';
 
 function addressToString(address: NmdcAddress): string {
   let result = '';
@@ -27,43 +25,7 @@ function addressToString(address: NmdcAddress): string {
   return result;
 }
 
-interface MetadataSubmission {
-  packageName: keyof typeof HARMONIZER_TEMPLATES;
-  contextForm: any;
-  addressForm: any;
-  templates: string[];
-  studyForm: any;
-  multiOmicsForm: any;
-  sampleData: Record<string, any[]>;
-}
-
-interface MetadataSubmissionRecord {
-  id: string;
-  author_orcid: string;
-  created: string;
-  metadata_submission: MetadataSubmission;
-  status: string;
-  locked_by: User;
-  lock_updated: string;
-  permission_level: string | null;
-  source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
-  study_name: string;
-  templates: string[];
-}
-
-interface PaginatedResponse<T> {
-  count: number;
-  results: T[];
-}
-
-interface LockOperationResult {
-  success: boolean;
-  message: string
-  locked_by?: User | null;
-  lock_updated?: string | null;
-}
-
-async function createRecord(record: MetadataSubmission) {
+async function createRecord(record: MetadataSubmission, isTestSubmission: boolean) {
   const resp = await client.post<
     MetadataSubmissionRecord,
     AxiosResponse<MetadataSubmissionRecord>,
@@ -71,6 +33,7 @@ async function createRecord(record: MetadataSubmission) {
   >('metadata_submission', {
     metadata_submission: record,
     source_client: 'submission_portal',
+    is_test_submission: isTestSubmission,
   });
   return resp.data;
 }
@@ -111,15 +74,34 @@ async function unlockSubmission(id: string) {
   return resp.data;
 }
 
+async function deleteSubmission(id: string) {
+  const resp = await client.delete(`metadata_submission/${id}`);
+  return resp.data;
+}
+
+async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: SuggestionType) {
+  let endpoint = 'metadata_submission/suggest';
+  if (type === SuggestionType.ADDITIONS) {
+    endpoint += '?types=add';
+  } else if (type === SuggestionType.REPLACEMENTS) {
+    endpoint += '?types=replace';
+  }
+  const resp = await client.post<
+    MetadataSuggestion[],
+    AxiosResponse<MetadataSuggestion[]>,
+    MetadataSuggestionRequest[]
+  >(endpoint, data);
+  return resp.data;
+}
+
 export {
-  NmdcAddress,
   addressToString,
-  MetadataSubmission,
-  MetadataSubmissionRecord,
   createRecord,
   getRecord,
   listRecords,
   updateRecord,
   lockSubmission,
   unlockSubmission,
+  deleteSubmission,
+  getMetadataSuggestions,
 };

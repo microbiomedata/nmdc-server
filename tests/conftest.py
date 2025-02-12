@@ -1,8 +1,8 @@
 import os
 
+import nmdc_geoloc_tools
 import pytest
 from factory import random
-from nmdc_geoloc_tools import GeoEngine
 from starlette.testclient import TestClient
 
 from nmdc_server import database, schemas
@@ -20,9 +20,9 @@ def set_seed(connection):
 
 @pytest.fixture(autouse=True)
 def patch_geo_engine(monkeypatch):
-    """Patch all the GeoEngine methods that make external network requests."""
+    """Patch all the nmdc_geoloc_tools functions that make external network requests."""
 
-    def mock_get_elevation(self, lat_lon):
+    def mock_get_elevation(lat_lon):
         lat, lon = lat_lon
         if not -90 <= lat <= 90:
             raise ValueError(f"Invalid Latitude: {lat}")
@@ -30,13 +30,13 @@ def patch_geo_engine(monkeypatch):
             raise ValueError(f"Invalid Longitude: {lon}")
         return 16.0
 
-    def mock_not_implemented(self, *args, **kwargs):
+    def mock_not_implemented(*args, **kwargs):
         raise NotImplementedError()
 
-    monkeypatch.setattr(GeoEngine, "get_elevation", mock_get_elevation)
-    monkeypatch.setattr(GeoEngine, "get_fao_soil_type", mock_not_implemented)
-    monkeypatch.setattr(GeoEngine, "get_landuse", mock_not_implemented)
-    monkeypatch.setattr(GeoEngine, "get_landuse_dates", mock_not_implemented)
+    monkeypatch.setattr(nmdc_geoloc_tools, "elevation", mock_get_elevation)
+    monkeypatch.setattr(nmdc_geoloc_tools, "fao_soil_type", mock_not_implemented)
+    monkeypatch.setattr(nmdc_geoloc_tools, "landuse", mock_not_implemented)
+    monkeypatch.setattr(nmdc_geoloc_tools, "landuse_dates", mock_not_implemented)
 
 
 @pytest.fixture(scope="session")

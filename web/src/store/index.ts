@@ -6,8 +6,9 @@ import { noop, uniqWith } from 'lodash';
 import VueRouter from 'vue-router';
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import {
-  api, Condition, DataObjectFilter, EnvoNode, EnvoTree, User,
+  api, Condition, DataObjectFilter, EnvoNode, EnvoTree,
 } from '@/data/api';
+import { User } from '@/types';
 import { clearQueryState, getQueryState, setQueryState } from '@/store/localStorage';
 
 // TODO: Remove in version 3;
@@ -21,6 +22,8 @@ const state = reactive({
   user: null as User | null,
   hasAcceptedTerms: false,
   treeData: null as EnvoTree | null,
+  bannerTitle: null as string | null,
+  bannerMessage: null as string | null,
 });
 const unreactive = {
   nodeMapId: {} as Record<string, EnvoNode>,
@@ -108,6 +111,14 @@ async function init(_router: VueRouter, loadUser = true, loginState = '' as stri
     } finally {
       state.userLoading = false;
     }
+  }
+  try {
+    const appSettings = await api.getAppSettings();
+    state.bannerTitle = appSettings.portal_banner_title;
+    state.bannerMessage = appSettings.portal_banner_message;
+  } catch (exception) {
+    // eslint-disable-next-line no-console
+    console.error(exception);
   }
   router = _router;
   // Handle the login state

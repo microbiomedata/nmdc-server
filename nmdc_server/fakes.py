@@ -380,6 +380,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
                 "city": "",
                 "state": "",
                 "postalCode": "",
+                "country": "",
             },
             "shippingConditions": "",
             "sample": "",
@@ -395,7 +396,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "facilities": [],
             "otherAward": "",
         },
-        "packageName": "",
+        "packageName": [],
     }
     locked_by = None
     lock_updated = None

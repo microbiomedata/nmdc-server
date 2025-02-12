@@ -23,10 +23,6 @@ const Menus = [
         href: 'https://microbiomedata.org/faqs/',
       },
       {
-        label: 'Diversity, Equity, and Inclusion',
-        href: 'https://microbiomedata.org/idea-action-plan/',
-      },
-      {
         label: 'Data Use Policy',
         href: 'https://microbiomedata.org/nmdc-data-use-policy/',
       },

@@ -1,6 +1,5 @@
 <script lang="ts">
 import { defineComponent, computed } from '@vue/composition-api';
-import { HARMONIZER_TEMPLATES } from '../harmonizerApi';
 import {
   templateChoiceDisabled,
   templateList,
@@ -9,6 +8,7 @@ import {
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
+import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 
 export default defineComponent({
   components: { SubmissionDocsLink, SubmissionPermissionBanner },
@@ -32,38 +32,45 @@ export default defineComponent({
 <template>
   <div>
     <div class="text-h2">
-      Environment Package
+      Sample Environment
       <submission-docs-link anchor="environmental-package" />
     </div>
     <div class="text-h5">
-      Choose environment package for your data.
+      Choose the
+      <a
+        href="https://genomicsstandardsconsortium.github.io/mixs/#extensions"
+        target="_blank"
+        rel="noopener noreferrer"
+      >MIxS Extension</a>
+      for your samples.
     </div>
     <submission-permission-banner
       v-if="!canEditSubmissionMetadata()"
     />
-    <v-radio-group
+
+    <v-checkbox
+      v-for="option in templates.filter((v) => v[1].status === 'published')"
+      :key="option[0]"
       v-model="packageName"
+      dense
+      hide-details
       class="my-6"
-      :disabled="!canEditSubmissionMetadata()"
-    >
-      <v-radio
-        v-for="option in templates.filter((v) => v[1].status === 'published')"
-        :key="option[0]"
-        :value="option[0]"
-        :disabled="templateChoiceDisabled"
-        :label="HARMONIZER_TEMPLATES[option[0]].displayName"
-      />
-      <p class="grey--text text--darken-1 my-5">
-        Under development
-      </p>
-      <v-radio
-        v-for="option in templates.filter((v) => v[1].status === 'disabled')"
-        :key="option[0]"
-        :value="option[0]"
-        :disabled="true"
-        :label="HARMONIZER_TEMPLATES[option[0]].displayName"
-      />
-    </v-radio-group>
+      :disabled="templateChoiceDisabled || !canEditSubmissionMetadata()"
+      :label="HARMONIZER_TEMPLATES[option[0]].displayName"
+      :value="option[0]"
+    />
+    <p class="grey--text text--darken-1 my-5">
+      Under development
+    </p>
+    <v-checkbox
+      v-for="option in templates.filter((v) => v[1].status === 'disabled')"
+      :key="option[0]"
+      v-model="packageName"
+      hide-details
+      :disabled="true"
+      :label="HARMONIZER_TEMPLATES[option[0]].displayName"
+      :value="option[0]"
+    />
     <v-alert
       v-if="!templateChoiceDisabled"
       color="grey lighten-2"
@@ -99,7 +106,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :disabled="!packageName"
+        :disabled="packageName.length === 0"
         :to="{
           name: 'Submission Sample Editor',
         }"

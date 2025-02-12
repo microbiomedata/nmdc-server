@@ -310,6 +310,7 @@ def test_cannot_release_other_users_submission_lock(
         author_orcid=logged_in_user.orcid,
         locked_by=locking_user,
         lock_updated=datetime.utcnow(),
+        date_last_modified=datetime.utcnow(),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -334,6 +335,7 @@ def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_u
         author_orcid=logged_in_user.orcid,
         locked_by=fakes.UserFactory(),
         lock_updated=datetime.utcnow(),
+        date_last_modified=datetime.utcnow(),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -359,6 +361,7 @@ def test_try_edit_expired_locked_submission(db: Session, client: TestClient, log
         author_orcid=logged_in_user.orcid,
         locked_by=fakes.UserFactory(),
         lock_updated=datetime.utcnow() - timedelta(hours=1),
+        date_last_modified=datetime.utcnow(),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -383,6 +386,7 @@ def test_try_edit_locked_by_current_user_submission(
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
         lock_updated=datetime.utcnow(),
+        date_last_modified=datetime.utcnow(),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -401,9 +405,17 @@ def test_try_edit_locked_by_current_user_submission(
 
 def test_submission_list_with_roles(db: Session, client: TestClient, logged_in_user):
     user_a = fakes.UserFactory()
-    submission_a = fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
-    fakes.MetadataSubmissionFactory(author=logged_in_user, author_orcid=logged_in_user.orcid)
-    fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
+    submission_a = fakes.MetadataSubmissionFactory(
+        author=user_a, author_orcid=user_a.orcid, date_last_modified=datetime.utcnow()
+    )
+    fakes.MetadataSubmissionFactory(
+        author=logged_in_user,
+        author_orcid=logged_in_user.orcid,
+        date_last_modified=datetime.utcnow(),
+    )
+    fakes.MetadataSubmissionFactory(
+        author=user_a, author_orcid=user_a.orcid, date_last_modified=datetime.utcnow()
+    )
     db.commit()
     fakes.SubmissionRoleFactory(
         submission=submission_a,
@@ -424,13 +436,13 @@ def test_submission_list_with_roles(db: Session, client: TestClient, logged_in_u
 @pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
 def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
     if role == SubmissionEditorRole.owner:
-        submission = fakes.MetadataSubmissionFactory()
+        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
         db.commit()
         role = fakes.SubmissionRoleFactory(
             submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid
         )
     else:
-        submission = fakes.MetadataSubmissionFactory()
+        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
     db.commit()
     response = client.request(method="get", url=f"/api/metadata_submission/{submission.id}")
     assert response.status_code == code
@@ -439,14 +451,16 @@ def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_us
 @pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
 def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
     if role == SubmissionEditorRole.owner:
-        submission = fakes.MetadataSubmissionFactory()
+        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
         payload = SubmissionMetadataSchema(**submission.__dict__).json()
         db.commit()
         role = fakes.SubmissionRoleFactory(
-            submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid
+            submission=submission,
+            submission_id=submission.id,
+            user_orcid=logged_in_user.orcid,
         )
     else:
-        submission = fakes.MetadataSubmissionFactory()
+        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
         payload = SubmissionMetadataSchema(**submission.__dict__).json()
     db.commit()
     response = client.request(
@@ -722,8 +736,8 @@ def test_metadata_suggest(client: TestClient, suggest_payload, logged_in_user):
     )
     assert response.status_code == 200
     assert response.json() == [
-        {"type": "add", "row": 1, "slot": "elev", "value": "16.0"},
-        {"type": "replace", "row": 3, "slot": "elev", "value": "16.0"},
+        {"type": "add", "row": 1, "slot": "elev", "value": "16", "current_value": None},
+        {"type": "replace", "row": 3, "slot": "elev", "value": "16", "current_value": "0"},
     ]
 
 
@@ -735,7 +749,7 @@ def test_metadata_suggest_single_type(client: TestClient, suggest_payload, logge
     )
     assert response.status_code == 200
     assert response.json() == [
-        {"type": "add", "row": 1, "slot": "elev", "value": "16.0"},
+        {"type": "add", "row": 1, "slot": "elev", "value": "16", "current_value": None},
     ]
 
 
@@ -747,8 +761,8 @@ def test_metadata_suggest_multiple_types(client: TestClient, suggest_payload, lo
     )
     assert response.status_code == 200
     assert response.json() == [
-        {"type": "add", "row": 1, "slot": "elev", "value": "16.0"},
-        {"type": "replace", "row": 3, "slot": "elev", "value": "16.0"},
+        {"type": "add", "row": 1, "slot": "elev", "value": "16", "current_value": None},
+        {"type": "replace", "row": 3, "slot": "elev", "value": "16", "current_value": "0"},
     ]
 
 

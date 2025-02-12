@@ -27,9 +27,7 @@ export default defineComponent({
       required: true,
     },
   },
-  setup({ harmonizerApi }) {
-    // whether the find/replace dialog is visible
-    const isReplaceVisible: Ref<boolean> = ref(false);
+  setup(props) {
     // search matches, sorted by (col, row)
     const results: Ref<SearchResult[]> = ref([]);
     // search query
@@ -49,7 +47,7 @@ export default defineComponent({
       const i = cursor.value + offset;
       cursor.value = ((i % n) + n) % n;
       // clear highlighting
-      harmonizerApi.highlight();
+      props.harmonizerApi.highlight();
       if (query.value === null) {
         // reset to result origin if the query has been cleared
         result.value = { row: 0, col: 0 };
@@ -57,8 +55,8 @@ export default defineComponent({
         // update result if there's a valid query
         result.value = results.value[cursor.value];
         // highlight the result
-        harmonizerApi.highlight(result.value.row, result.value.col);
-        harmonizerApi.scrollViewportTo(result.value.row, result.value.col);
+        props.harmonizerApi.highlight(result.value.row, result.value.col);
+        props.harmonizerApi.scrollViewportTo(result.value.row, result.value.col);
       }
     }
     const next = () => scroll(1);
@@ -71,7 +69,7 @@ export default defineComponent({
         return a.col - b.col || a.row - b.row;
       }
       // update results
-      results.value = harmonizerApi
+      results.value = props.harmonizerApi
         .find(query.value || '')
         .sort(comparator);
       // find leftmost insertion point
@@ -95,12 +93,12 @@ export default defineComponent({
       const resultsToChange = all ? results.value : [result.value];
       // array of CellDatas with the replacement applied
       const replacements = resultsToChange.map((r) => {
-        const data = harmonizerApi.getCellData(r.row, r.col);
+        const data = props.harmonizerApi.getCellData(r.row, r.col);
         data.text = data.text.replace(query.value || '', replacement.value || '');
         return data;
       });
       // replace the text in Handsontable
-      harmonizerApi.setCellData(replacements);
+      props.harmonizerApi.setCellData(replacements);
       // update the results to respect the new text
       updateResults();
     }
@@ -120,7 +118,6 @@ export default defineComponent({
       result,
       results,
       cursor,
-      isReplaceVisible,
       replace,
       replaceOnce,
       replaceAll,
@@ -130,113 +127,100 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-toolbar
-    flat
-    outlined
-    rounded
-  >
-    <v-btn
-      icon
-      @click="isReplaceVisible = !isReplaceVisible"
-    >
-      <v-icon
-        class="toggleUpDown"
-        :class="{ rotate: isReplaceVisible }"
-      >
-        mdi-menu-right
-      </v-icon>
-    </v-btn>
-    <v-form
-      style="width: 100%"
-      @submit.prevent="next"
-    >
-      <v-text-field
-        v-model="query"
-        :prepend-icon="isReplaceVisible ? 'mdi-find-replace' : 'mdi-text-search'"
-        clearable
-        label="Find"
-        :counter="query ? count : undefined"
-        :counter-value="query ? () => (count ? cursor + 1 : 0) : null"
-        dense
-        style="padding-top: 10px"
-      />
-    </v-form>
-    <v-tooltip left>
-      <template #activator="{ on, attrs }">
-        <v-btn
-          icon
-          v-bind="attrs"
-          v-on="on"
-          @click="previous"
-        >
-          <v-icon>mdi-arrow-up-thin</v-icon>
-        </v-btn>
-      </template>
-      <span>Find previous</span>
-    </v-tooltip>
-    <v-tooltip left>
-      <template #activator="{ on, attrs }">
-        <v-btn
-          icon
-          v-bind="attrs"
-          v-on="on"
-          @click="next"
-        >
-          <v-icon>mdi-arrow-down-thin</v-icon>
-        </v-btn>
-      </template>
-      <span>Find next</span>
-    </v-tooltip>
-    <template
-      v-if="isReplaceVisible"
-      #extension
-    >
-      <v-text-field
-        v-model="replacement"
-        hide-details
-        class="replacement"
-        clearable
-        label="Replace"
-        dense
-      />
-      <v-tooltip left>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            icon
-            v-bind="attrs"
-            v-on="on"
-            @click="replaceOnce"
-          >
-            <v-icon>mdi-repeat-once</v-icon>
-          </v-btn>
-        </template>
-        <span>Replace</span>
-      </v-tooltip>
-      <v-tooltip left>
-        <template #activator="{ on, attrs }">
-          <v-btn
-            icon
-            v-bind="attrs"
-            v-on="on"
-            @click="replaceAll"
-          >
-            <v-icon>mdi-repeat</v-icon>
-          </v-btn>
-        </template>
-        <span>Replace all</span>
-      </v-tooltip>
-    </template>
-  </v-toolbar>
-</template>
+  <v-card elevation="0">
+    <v-card-title>
+      Find & Replace
+    </v-card-title>
 
-<style lang="scss">
-.toggleUpDown {
-  transition: transform 0.1s ease-in-out !important;
-}
-.toggleUpDown.rotate {
-  transform: rotate(90deg);
-}
-.replacement {
-  margin-left: 70px;
-}
-</style>
+    <v-card-text>
+      <v-row
+        align="center"
+        dense
+      >
+        <v-col class="flex-grow-1">
+          <v-form
+            style="width: 100%"
+            @submit.prevent="next"
+          >
+            <v-text-field
+              v-model="query"
+              clearable
+              label="Find"
+              :counter="query ? count : undefined"
+              :counter-value="query ? () => (count ? cursor + 1 : 0) : null"
+            />
+          </v-form>
+        </v-col>
+        <v-col class="flex-grow-0 flex-shrink-0 text-no-wrap">
+          <v-tooltip left>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                v-bind="attrs"
+                v-on="on"
+                @click="previous"
+              >
+                <v-icon>mdi-arrow-up-thin</v-icon>
+              </v-btn>
+            </template>
+            <span>Find previous</span>
+          </v-tooltip>
+          <v-tooltip left>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                v-bind="attrs"
+                v-on="on"
+                @click="next"
+              >
+                <v-icon>mdi-arrow-down-thin</v-icon>
+              </v-btn>
+            </template>
+            <span>Find next</span>
+          </v-tooltip>
+        </v-col>
+      </v-row>
+
+      <v-row
+        align="center"
+        dense
+      >
+        <v-col class="flex-grow-1">
+          <v-text-field
+            v-model="replacement"
+            clearable
+            label="Replace"
+          />
+        </v-col>
+        <v-col class="flex-grow-0 flex-shrink-0 text-no-wrap">
+          <v-tooltip left>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                v-bind="attrs"
+                v-on="on"
+                @click="replaceOnce"
+              >
+                <v-icon>mdi-repeat-once</v-icon>
+              </v-btn>
+            </template>
+            <span>Replace</span>
+          </v-tooltip>
+          <v-tooltip left>
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                v-bind="attrs"
+                v-on="on"
+                @click="replaceAll"
+              >
+                <v-icon>mdi-repeat</v-icon>
+              </v-btn>
+            </template>
+            <span>Replace all</span>
+          </v-tooltip>
+        </v-col>
+      </v-row>
+    </v-card-text>
+  </v-card>
+</template>

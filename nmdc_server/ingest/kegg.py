@@ -11,6 +11,7 @@ from nmdc_server.models import (
     CogTermToFunction,
     CogTermToPathway,
     GoTermText,
+    GoTermToKegg,
     GoTermToPfamEntry,
     KoTermText,
     KoTermToModule,
@@ -42,6 +43,7 @@ def load(db: Session) -> None:
     ingest_ko_pathway_map(db)
     ingest_pfam_clan_map(db)
     ingest_go_pfam_map(db)
+    ingest_go_kegg_map(db)
 
 
 def ingest_ko_search(db: Session) -> None:
@@ -318,4 +320,23 @@ def ingest_go_pfam_map(db: Session) -> None:
                 go_term = go_term.strip()
                 mappings.append((go_term, pfam_entry))
     db.bulk_save_objects([GoTermToPfamEntry(term=row[0], entry=row[1]) for row in mappings])
+    db.commit()
+
+
+def ingest_go_kegg_map(db: Session) -> None:
+    db.execute(f"truncate table {GoTermToKegg.__tablename__}")
+    # TSV file with headers '#KO' and 'GO'
+    kegg_go_mappings = "/data/ingest/go/ko2go.tsv"
+    mappings = []
+    with open(kegg_go_mappings) as fd:
+        reader = csv.DictReader(fd, delimiter="\t")
+        for row in reader:
+            ko = f"KO:{row['#KO']}"
+            go_terms = [
+                f"GO:{term}" if not term.startswith("GO:") else term
+                for term in row["GO"].strip("[]").split()
+            ]
+            for term in go_terms:
+                mappings.append((term, ko))
+    db.bulk_save_objects([GoTermToKegg(term=row[0], kegg_term=row[1]) for row in mappings])
     db.commit()

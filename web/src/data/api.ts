@@ -4,6 +4,7 @@ import { setupCache } from 'axios-cache-adapter';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
+import { User } from '@/types';
 
 // The token refresh and retry logic stores an extra bit of state on the request config
 declare module 'axios' {
@@ -180,7 +181,7 @@ export interface StudySearchResults extends BaseSearchResult {
   add_date: string;
   mod_date: string;
   open_in_gold: string;
-  funding_sources: string[];
+  funding_sources?: string[];
   relevant_protocols: string[];
   gold_study_identifiers: string[];
   sample_count: number;
@@ -359,14 +360,6 @@ export interface BinResponse<T = string | number> {
   facets: number[];
 }
 
-export interface User{
-    id: string,
-    orcid: string;
-    name: string;
-    is_admin: boolean;
-    email?: string;
-}
-
 export interface TokenResponse {
   access_token: string;
   refresh_token?: string;
@@ -496,8 +489,6 @@ async function getFacetSummary(
       facet: facetName,
       count: data.facets[facetName],
     }))
-    /* TODO: Take out all these lipidomics hacks */
-    .filter((facetName) => (facetName.facet !== 'Lipidomics'))
     .sort((a, b) => b.count - a.count);
 }
 
@@ -697,8 +688,14 @@ async function updateUser(id: string, body: User) {
   return data;
 }
 
-async function getAppSettings() {
-  const { data } = await client.get<Record<string, boolean>>('settings');
+interface PortalSettings {
+  portal_banner_title: string | null;
+  portal_banner_message: string | null;
+  disable_bulk_download: boolean;
+}
+
+async function getAppSettings(): Promise<PortalSettings> {
+  const { data } = await client.get<PortalSettings>('settings');
   return data;
 }
 
