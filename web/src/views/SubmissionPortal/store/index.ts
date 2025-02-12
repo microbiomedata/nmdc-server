@@ -334,13 +334,13 @@ function mergeSampleData(key: string | undefined, data: any[]) {
 }
 
 export {
-  SubmissionStatus,
+  type SubmissionStatus,
   submissionStatus,
   BiosafetyLevels,
   AwardTypes,
-  permissionTitle,
+  type permissionTitle,
   permissionTitleToDbValueMap,
-  permissionLevelValues,
+  type permissionLevelValues,
   permissionLevelHierarchy,
   /* state */
   multiOmicsForm,

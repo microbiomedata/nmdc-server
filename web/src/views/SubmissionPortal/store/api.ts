@@ -119,10 +119,10 @@ async function deleteSubmission(id: string) {
 }
 
 export {
-  NmdcAddress,
+  type NmdcAddress,
   addressToString,
-  MetadataSubmission,
-  MetadataSubmissionRecord,
+  type MetadataSubmission,
+  type MetadataSubmissionRecord,
   createRecord,
   getRecord,
   listRecords,

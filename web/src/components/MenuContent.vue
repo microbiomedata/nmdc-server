@@ -6,7 +6,7 @@ import {
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
 import { fieldDisplayName } from '@/util';
-import { getField, geneFunctionTypeInfo, geneFunctionTables } from '@/encoding';
+import { getField, geneFunctionTypeInfo, geneFunctionTables, geneFunctionType } from '@/encoding';
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
@@ -119,7 +119,7 @@ export default defineComponent({
         :field="field"
         :table="table"
         :conditions="conditions"
-        :gene-type-params="geneFunctionTypeInfo[summary.type.split('_')[0]]"
+        :gene-type-params="geneFunctionTypeInfo[summary.type.split('_')[0] as geneFunctionType]"
         :gene-type="summary.type.split('_')[0]"
         @select="$emit('select', $event)"
       />

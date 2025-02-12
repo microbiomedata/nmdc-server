@@ -58,8 +58,8 @@ export default defineComponent({
       </p>
       <orcid-id
         v-if="getSubmissionLockedBy()"
-        :orcid-id="getSubmissionLockedBy().orcid"
-        :name="getSubmissionLockedBy().name"
+        :orcid-id="getSubmissionLockedBy()?.orcid as string"
+        :name="getSubmissionLockedBy()?.name"
         :authenticated="true"
       />
       <router-link :to="{ name: 'Submission Home'}">

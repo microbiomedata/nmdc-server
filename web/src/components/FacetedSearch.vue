@@ -190,7 +190,7 @@ export default Vue.extend({
                   field: sf.field,
                   table: sf.table,
                   isOpen: menuState[sf.key],
-                  toggleMenu: (val) => toggleMenu(sf.key, val),
+                  toggleMenu: (val: boolean) => toggleMenu(sf.key, val),
                 }"
               />
             </v-card>
