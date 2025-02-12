@@ -1,11 +1,11 @@
+import datetime
 import logging
+import math
 import os
 import subprocess
 import sys
 from pathlib import Path
 from typing import Optional
-import datetime
-import math
 
 import click
 import requests
@@ -113,23 +113,27 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
     logging.basicConfig(level=level, format="%(message)s")
 
     # Get the current time as a human-readable string that indicates the timezone.
-    ingest_start_datetime: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
-    ingest_start_datetime_str: str = ingest_start_datetime.isoformat(timespec="seconds")
+    ingest_start_datetime = datetime.datetime.now(datetime.timezone.utc)
+    ingest_start_datetime_str = ingest_start_datetime.isoformat(timespec="seconds")
 
     # Send a Slack message announcing that this ingest is starting.
-    send_slack_message(f"Ingest is starting.\n"
-                       f"• Start time: `{ingest_start_datetime_str}`\n"
-                       f"• MongoDB host: `{settings.mongo_host}`")
+    send_slack_message(
+        f"Ingest is starting.\n"
+        f"• Start time: `{ingest_start_datetime_str}`\n"
+        f"• MongoDB host: `{settings.mongo_host}`"
+    )
 
     try:
         jobs.do_ingest(function_limit, skip_annotation)
     except Exception as e:
-        send_slack_message(f"Ingest failed.\n"
-                           f"• Start time: `{ingest_start_datetime_str}`\n"
-                           f"• MongoDB host: `{settings.mongo_host}`\n"
-                           f"• Error message: {e}")
+        send_slack_message(
+            f"Ingest failed.\n"
+            f"• Start time: `{ingest_start_datetime_str}`\n"
+            f"• MongoDB host: `{settings.mongo_host}`\n"
+            f"• Error message: {e}"
+        )
 
-        # Now that we've processed the Exception at this level, continue to propagate it.
+        # Now that we've processed the Exception at this level, propagate it.
         raise e
 
     for m, s in errors.missing.items():
@@ -198,14 +202,16 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         click.echo("Done")
 
     # Calculate the total duration of this ingest (in minutes).
-    ingest_end_datetime: datetime.datetime = datetime.datetime.now(datetime.timezone.utc)
+    ingest_end_datetime = datetime.datetime.now(datetime.timezone.utc)
     ingest_duration: datetime.timedelta = ingest_end_datetime - ingest_start_datetime
     ingest_duration_minutes = math.floor(ingest_duration.total_seconds() / 60)
 
     # Send a Slack message announcing that this ingest is done.
-    send_slack_message(f"Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
-                       f"• Start time: `{ingest_start_datetime_str}`\n"
-                       f"• MongoDB host: `{settings.mongo_host}`")
+    send_slack_message(
+        f"Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
+        f"• Start time: `{ingest_start_datetime_str}`\n"
+        f"• MongoDB host: `{settings.mongo_host}`"
+    )
 
 
 @cli.command()
