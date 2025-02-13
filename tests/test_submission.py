@@ -157,7 +157,7 @@ def test_get_metadata_submissions_report_as_admin(
         author_orcid=other_user.orcid,
         created=now + timedelta(seconds=1),
         date_last_modified=datetime.utcnow(),
-        is_test_submission=False,
+        is_test_submission=True,
         metadata_submission={
             "studyForm": {
                 "studyName": "My study name",
@@ -206,6 +206,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["Source Client"] == "field_notes"
     assert data_row["Status"] == "in-progress"
     assert data_row["Is Test Submission"] == "False"
+    assert isinstance(data_row["Date Last Modified"], str)
 
     data_row = rows[2]  # gets the second data row
     assert data_row["Submission ID"] == str(submission.id)
@@ -216,7 +217,8 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["PI Email"] == ""
     assert data_row["Source Client"] == ""  # upstream faker lacks `source_client` attribute
     assert data_row["Status"] == "In Progress"  # matches value in upstream faker
-    assert data_row["Is Test Submission"] == "False"
+    assert data_row["Is Test Submission"] == "True"
+    assert isinstance(data_row["Date Last Modified"], str)
 
 
 def test_obtain_submission_lock(db: Session, client: TestClient, logged_in_user):
