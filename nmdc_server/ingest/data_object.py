@@ -52,6 +52,12 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
         else:
             objects_without_type += 1
 
+        if obj.get("file_size_bytes", None) is None:
+            logger.warning(
+                f"data_object {obj['id']} has file_size_bytes {obj.get('file_size_bytes')} "
+                "and cannot be included in bulk downloads"
+            )
+
         db.add(DataObject(**obj))
 
     if objects_without_type:
