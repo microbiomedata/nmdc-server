@@ -808,6 +808,8 @@ async def get_metadata_submissions_report(
         "PI Email",
         "Source Client",
         "Status",
+        "Is Test Submission",
+        "Date Last Modified",
     ]
     data_rows = []
     for s in submissions:
@@ -826,6 +828,8 @@ async def get_metadata_submissions_report(
             pi_email,
             s.source_client,
             s.status,
+            s.is_test_submission,
+            s.date_last_modified,
         ]
         data_rows.append(data_row)
 
