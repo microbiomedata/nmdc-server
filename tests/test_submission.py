@@ -205,7 +205,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["PI Email"] == "My PI email"
     assert data_row["Source Client"] == "field_notes"
     assert data_row["Status"] == "in-progress"
-    assert data_row["Is Test Submission"] == "False"
+    assert data_row["Is Test Submission"] == "True"
     assert isinstance(data_row["Date Last Modified"], str)
 
     data_row = rows[2]  # gets the second data row
@@ -217,7 +217,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["PI Email"] == ""
     assert data_row["Source Client"] == ""  # upstream faker lacks `source_client` attribute
     assert data_row["Status"] == "In Progress"  # matches value in upstream faker
-    assert data_row["Is Test Submission"] == "True"
+    assert data_row["Is Test Submission"] == "False"
     assert isinstance(data_row["Date Last Modified"], str)
 
 
