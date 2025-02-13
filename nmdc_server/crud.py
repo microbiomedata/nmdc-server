@@ -475,14 +475,6 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
             continue
 
-        # Skip data objects whose `file_size_bytes` is `0` or `None`, since `mod_zip`
-        # considers a file list containing any file sizes of "0" or "" to be invalid.
-        if not data_object.file_size_bytes:
-            logger.warning(
-                f"Data object file_size_bytes for {file.path} was {data_object.file_size_bytes}"
-            )
-            continue
-
         # TODO: add crc checksums to support retries
         # TODO: add directory structure and metadata
         content.append(f"- {data_object.file_size_bytes} {url} {file.path}")

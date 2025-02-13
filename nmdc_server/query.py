@@ -926,7 +926,12 @@ class DataObjectQuerySchema(BaseQuerySchema):
 
     def aggregate(self, db: Session) -> DataObjectAggregation:
         """Return the number of files and total size of matched data objects."""
-        subquery = self.query(db).filter(models.DataObject.url != None).subquery()
+        subquery = (
+            self.query(db)
+            .filter(models.DataObject.url != None)
+            .filter(models.DataObject.file_size_bytes != None)
+            .subquery()
+        )
         row = db.query(
             func.count(subquery.c.id),
             func.sum(func.coalesce(subquery.c.file_size_bytes, 0)),
