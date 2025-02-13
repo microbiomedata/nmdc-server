@@ -205,7 +205,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["PI Email"] == "My PI email"
     assert data_row["Source Client"] == "field_notes"
     assert data_row["Status"] == "in-progress"
-    assert data_row["Is Test Submission"] == False
+    assert data_row["Is Test Submission"] == "False"
 
     data_row = rows[2]  # gets the second data row
     assert data_row["Submission ID"] == str(submission.id)
@@ -216,7 +216,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["PI Email"] == ""
     assert data_row["Source Client"] == ""  # upstream faker lacks `source_client` attribute
     assert data_row["Status"] == "In Progress"  # matches value in upstream faker
-    assert data_row["Is Test Submission"] == False
+    assert data_row["Is Test Submission"] == "False"
 
 
 def test_obtain_submission_lock(db: Session, client: TestClient, logged_in_user):
