@@ -1,4 +1,6 @@
+import datetime
 import logging
+import math
 import os
 import subprocess
 import sys
@@ -12,6 +14,40 @@ from nmdc_server import jobs
 from nmdc_server.config import Settings
 from nmdc_server.database import SessionLocalIngest
 from nmdc_server.ingest import errors
+
+
+def send_slack_message(text: str) -> bool:
+    r"""
+    Sends a Slack message having the specified text if the application has
+    a Slack Incoming Webhook URL defined. If the application does not have
+    a Slack Incoming Webhook URL defined, no message is sent.
+
+    The function returns `True` if the message was sent; otherwise, `False`.
+
+    Reference: https://api.slack.com/messaging/webhooks#posting_with_webhooks
+    """
+    is_sent = False
+
+    # Check whether a Slack Incoming Webhook URL is defined.
+    settings = Settings()
+    if isinstance(settings.slack_webhook_url_for_ingester, str):
+        click.echo(f"Sending Slack message having text: {text}")
+        response = requests.post(
+            settings.slack_webhook_url_for_ingester,
+            json={"text": text},
+            headers={"Content-type": "application/json"},
+        )
+
+        # Check whether the message was sent successfully.
+        if response.status_code == 200:
+            click.echo("Sent Slack message.")
+            is_sent = True
+        else:
+            click.echo("Failed to send Slack message.", err=True)
+    else:
+        click.echo("No Slack Incoming Webhook URL is defined.", err=True)
+
+    return is_sent
 
 
 @click.group()
@@ -76,7 +112,29 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         level = logging.DEBUG
     logging.basicConfig(level=level, format="%(message)s")
 
-    jobs.do_ingest(function_limit, skip_annotation)
+    # Get the current time as a human-readable string that indicates the timezone.
+    ingest_start_datetime = datetime.datetime.now(datetime.timezone.utc)
+    ingest_start_datetime_str = ingest_start_datetime.isoformat(timespec="seconds")
+
+    # Send a Slack message announcing that this ingest is starting.
+    send_slack_message(
+        f"Ingest is starting.\n"
+        f"• Start time: `{ingest_start_datetime_str}`\n"
+        f"• MongoDB host: `{settings.mongo_host}`"
+    )
+
+    try:
+        jobs.do_ingest(function_limit, skip_annotation)
+    except Exception as e:
+        send_slack_message(
+            f"Ingest failed.\n"
+            f"• Start time: `{ingest_start_datetime_str}`\n"
+            f"• MongoDB host: `{settings.mongo_host}`\n"
+            f"• Error message: {e}"
+        )
+
+        # Now that we've processed the Exception at this level, propagate it.
+        raise e
 
     for m, s in errors.missing.items():
         click.echo(f"missing {m}:")
@@ -141,23 +199,19 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
             headers=headers,
         )
         response.raise_for_status()
-
         click.echo("Done")
 
-    # Post a message to Slack if a Slack webhook URL is defined.
-    # Reference: https://api.slack.com/messaging/webhooks#posting_with_webhooks
-    if isinstance(settings.slack_webhook_url_for_ingester, str):
-        click.echo("Posting message to Slack.")
-        response = requests.post(
-            settings.slack_webhook_url_for_ingester,
-            json={"text": "Ingest is done."},
-            headers={"Content-type": "application/json"},
-        )
-        # Note: We currently consider the posting of a Slack message to be a "nice
-        #       to have" as opposed to a "must have." So, if it happens to fail,
-        #       we just echo an error message instead of `raise`-ing an exception.
-        if response.status_code != 200:
-            click.echo("Failed to post message to Slack.", err=True)
+    # Calculate the total duration of this ingest (in minutes).
+    ingest_end_datetime = datetime.datetime.now(datetime.timezone.utc)
+    ingest_duration: datetime.timedelta = ingest_end_datetime - ingest_start_datetime
+    ingest_duration_minutes = math.floor(ingest_duration.total_seconds() / 60)
+
+    # Send a Slack message announcing that this ingest is done.
+    send_slack_message(
+        f"Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
+        f"• Start time: `{ingest_start_datetime_str}`\n"
+        f"• MongoDB host: `{settings.mongo_host}`"
+    )
 
 
 @cli.command()

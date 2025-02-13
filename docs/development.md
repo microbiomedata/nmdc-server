@@ -191,9 +191,21 @@ cd web
 yarn serve
 ```
 
+<details>
+<summary>Running yarn via npx?</summary>
+
+When you run `$ npx yarn serve` while using a Node.js version newer than 17, the frontend development server may fail to start and may, instead, display the error code "`ERR_OSSL_EVP_UNSUPPORTED`". 
+
+You can work around that error by prefixing the command with "`NODE_OPTIONS=--openssl-legacy-provider`", as explained [here](https://stackoverflow.com/a/70582385) and shown below: 
+
+```bash
+NODE_OPTIONS=--openssl-legacy-provider npx yarn serve
+```
+</details>
+
 View the main application at `http://127.0.0.1:8081/`. Changes to files in the `web` directory will automatically trigger a reload in your browser. 
 
-> **Note**: the frontend application will still be served via Docker Compose on port `8080`, but it will not pick up changes to the `web` directory automatically. Be aware of which port you are accessing when doing frontend development.
+> **Note**: An instance of the frontend application will continue to be served via Docker Compose on port `8080`, but that instance will not pick up changes to the `web` directory automatically. Be aware of which port you are accessing when doing frontend development.
 
 ### Why not `localhost`?
 
