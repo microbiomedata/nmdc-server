@@ -156,7 +156,9 @@ const multiOmicsFormDefault = {
   JGIStudyId: '',
   omicsProcessingTypes: [] as string[],
   mgCompatible: undefined as undefined | boolean,
+  mgInterleaved: undefined as undefined | boolean,
   mtCompatible: undefined as undefined | boolean,
+  mtInterleaved: undefined as undefined | boolean,
 };
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
