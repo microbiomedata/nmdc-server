@@ -13,11 +13,12 @@ import Definitions from '@/definitions';
 import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm, canEditSubmissionMetadata, AwardTypes,
 } from '../store';
+import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 
 export default defineComponent({
-  components: { SubmissionDocsLink, SubmissionPermissionBanner },
+  components: { SubmissionContextShippingForm, SubmissionDocsLink, SubmissionPermissionBanner },
   setup() {
     const formRef = ref();
 
@@ -219,6 +220,99 @@ export default defineComponent({
           class="mb-2 mt-0"
         />
       </v-radio-group>
+      <v-radio-group
+        v-if="contextForm.dataGenerated === false && contextForm.doe"
+        v-model="contextForm.award"
+        label="What kind of project have you been awarded? *"
+        :rules="projectAwardValidationRules()"
+        class="pb-5"
+      >
+        <div class="d-flex">
+          <v-radio
+            value="CSP"
+            label="CSP"
+          />
+          <div class="ml-1">
+            (<a
+              href="https://jgi.doe.gov/user-programs/program-info/csp-overview/csp-annual-call/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Community Science Program</a>)
+          </div>
+        </div>
+
+        <div class="d-flex">
+          <v-radio
+            value="BERSS"
+            label="BERSS"
+          />
+          <div class="ml-1">
+            (<a
+              href="https://jgi.doe.gov/user-programs/other-programs/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Biological and Environmental Research Support Science</a>)
+          </div>
+        </div>
+
+        <div class="d-flex">
+          <v-radio
+            value="BRCs"
+            label="BRCs"
+          />
+          <div class="ml-1">
+            (<a
+              href="https://jgi.doe.gov/user-programs/other-programs/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Bioenergy Research Centers</a>)
+          </div>
+        </div>
+
+        <div class="d-flex">
+          <v-radio
+            value="FICUS"
+            label="FICUS"
+          />
+          <div class="ml-1">
+            (<a
+              href="https://www.emsl.pnnl.gov/basic/ficus-program/1872"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Facilities Integrating Collaborations for User Science</a>)
+          </div>
+        </div>
+
+        <div class="d-flex">
+          <v-radio
+            value="MONet"
+            label="MONet"
+          />
+          <div class="ml-1">
+            (<a
+              href="https://www.emsl.pnnl.gov/monet"
+              target="_blank"
+              rel="noopener noreferrer"
+            >Molecular Observation Network</a>)
+          </div>
+        </div>
+
+        <v-radio
+          :value="contextForm.otherAward"
+        >
+          <template #label>
+            <span class="mr-4">Other</span>
+            <v-text-field
+              v-model="contextForm.otherAward"
+              class="pa-0 ma-0"
+              dense
+              hide-details
+              outlined
+              :rules="otherAwardValidationRules()"
+            />
+          </template>
+        </v-radio>
+      </v-radio-group>
       <div
         v-if="contextForm.doe"
       >
@@ -243,6 +337,25 @@ export default defineComponent({
           class="mb-2 mt-0"
         />
       </div>
+      <v-radio-group
+        v-if="contextForm.dataGenerated === false && contextForm.facilities.includes('EMSL')"
+        v-model="contextForm.ship"
+        label="Will samples be shipped? *"
+        :rules="[v => (v === true || v === false) || 'This field is required']"
+        @change="revalidate"
+      >
+        <v-radio
+          label="No"
+          :value="false"
+        />
+        <v-radio
+          label="Yes"
+          :value="true"
+        />
+      </v-radio-group>
+      <submission-context-shipping-form
+        v-if="contextForm.dataGenerated === false && contextForm.ship && contextForm.facilities.includes('EMSL')"
+      />
 
       <v-alert
         v-if="templateChoiceDisabled"
