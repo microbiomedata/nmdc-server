@@ -401,6 +401,20 @@ export default defineComponent({
               :value="true"
             />
           </v-radio-group>
+          <v-radio-group
+            v-if="multiOmicsForm.mgCompatible"
+            v-model="multiOmicsForm.mgInterleaved"
+            label="Is the data in interleaved format? *"
+          >
+            <v-radio
+              label="No"
+              :value="false"
+            />
+            <v-radio
+              label="Yes"
+              :value="true"
+            />
+          </v-radio-group>
         </div>
         <v-checkbox
           v-model="multiOmicsForm.omicsProcessingTypes"
@@ -439,6 +453,20 @@ export default defineComponent({
           <v-radio-group
             v-model="multiOmicsForm.mtCompatible"
             label="Is the generated data compatible? *"
+          >
+            <v-radio
+              label="No"
+              :value="false"
+            />
+            <v-radio
+              label="Yes"
+              :value="true"
+            />
+          </v-radio-group>
+          <v-radio-group
+            v-if="multiOmicsForm.mtCompatible"
+            v-model="multiOmicsForm.mtInterleaved"
+            label="Is the dasta in interleaved format? *"
           >
             <v-radio
               label="No"
