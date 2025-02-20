@@ -1,4 +1,5 @@
 import re
+from collections import defaultdict
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
@@ -6,6 +7,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
+from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 from nmdc_server.data_object_filters import get_local_data_url
@@ -318,6 +320,27 @@ def create_biosample(db: Session, biosample: schemas.BiosampleCreate) -> models.
 def delete_biosample(db: Session, biosample: models.Biosample) -> None:
     db.delete(biosample)
     db.commit()
+
+
+def get_data_object_counts(db: Session, data_object_ids: list[str]) -> defaultdict[str, int]:
+    file_downloads = (
+        db.query(models.FileDownload.data_object_id, func.count().label("file_count"))
+        .filter(models.FileDownload.data_object_id.in_(data_object_ids))
+        .group_by(models.FileDownload.data_object_id)
+        .order_by(models.FileDownload.data_object_id)
+    )
+    bulk_downloads = (
+        db.query(models.BulkDownloadDataObject.data_object_id, func.count().label("bulk_count"))
+        .filter(models.BulkDownloadDataObject.data_object_id.in_(data_object_ids))
+        .group_by(models.BulkDownloadDataObject.data_object_id)
+        .order_by(models.BulkDownloadDataObject.data_object_id)
+    )
+    counts = defaultdict(int)
+    for row in file_downloads:
+        counts[row[0]] += row[1]
+    for row in bulk_downloads:
+        counts[row[0]] += row[1]
+    return counts
 
 
 def search_biosample(
