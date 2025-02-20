@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
+from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
 from nmdc_server.data_object_filters import get_local_data_url
@@ -318,6 +319,31 @@ def create_biosample(db: Session, biosample: schemas.BiosampleCreate) -> models.
 def delete_biosample(db: Session, biosample: models.Biosample) -> None:
     db.delete(biosample)
     db.commit()
+
+
+def get_data_object_counts(db: Session, data_object_ids: list[str]) -> Query:
+    file_downloads = (
+        db.query(models.FileDownload.data_object_id, func.count().label("file_count"))
+        .filter(models.FileDownload.data_object_id.in_(data_object_ids))
+        .group_by(models.FileDownload.data_object_id)
+        .subquery()
+    )
+    bulk_downloads = (
+        db.query(models.BulkDownloadDataObject.data_object_id, func.count().label("bulk_count"))
+        .filter(models.BulkDownloadDataObject.data_object_id.in_(data_object_ids))
+        .group_by(models.BulkDownloadDataObject.data_object_id)
+        .subquery()
+    )
+    query = db.query(
+        models.DataObject.id,
+        (
+            func.coalesce(file_downloads.c.file_count, 0)
+            + func.coalesce(bulk_downloads.c.bulk_count, 0)
+        ).label("count"),
+    )
+    query = query.join(file_downloads, models.DataObject.id == file_downloads.c.data_object_id)
+    query = query.join(bulk_downloads, models.DataObject.id == bulk_downloads.c.data_object_id)
+    return query
 
 
 def search_biosample(

@@ -467,11 +467,17 @@ class DataObject(Base):
     omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
     omics_processing = relationship(OmicsProcessing)
 
+    # Define a property that can be used to shortcut calculating counts.
+    # Useful when downstream code can more efficiently determine download
+    # counts for a batch of DataObjects and inject those counts.
+    _download_count = None
+
     @hybrid_property
     def downloads(self) -> int:
         # TODO: This can probably be done with a more efficient aggregation
-        return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
-        # return 0
+        if self._download_count is None:
+            return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
+        return self._download_count
 
 
 # This is a base class for all workflow processing activities.

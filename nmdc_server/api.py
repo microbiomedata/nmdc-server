@@ -169,6 +169,36 @@ async def get_environmental_geospatial(
     return crud.get_environmental_geospatial(db, query)
 
 
+def results_with_counts(db: Session, biosample_results):
+    """
+    Hydrate paginated biosample results with data object download counts.
+
+    This consolidates counting downloads into a single database query, rather than
+    two queries for each data object included in the results (one for file_downloads, and
+    another for bulk_downloads).
+    """
+    data_object_download_counts = {}
+    biosamples = biosample_results["results"]
+    for b in biosamples:
+        for op in b.omics_processing:
+            for da in op.outputs:
+                data_object_download_counts[da.id] = 0
+            for od in op.omics_data:
+                for da in od.outputs:
+                    data_object_download_counts[da.id] = 0
+    counts = crud.get_data_object_counts(db, list(data_object_download_counts))
+    for row in counts:
+        data_object_download_counts[row[0]] = row[1]
+    for b in biosamples:
+        for op in b.omics_processing:
+            for da in op.outputs:
+                da._download_count = data_object_download_counts[da.id]
+            for od in op.omics_data:
+                for da in od.outputs:
+                    da._download_count = data_object_download_counts[da.id]
+    return biosample_results
+
+
 # biosample
 @router.post(
     "/biosample/search",
@@ -188,6 +218,7 @@ async def search_biosample(
     # This could potentially be more efficient to do in the database query,
     # but the code to generate the query would be much more complicated.
     def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
+        print(biosample)
         for op in biosample.omics_processing:
             for da in op.outputs:
                 da.selected = schemas.DataObject.is_selected(
@@ -217,7 +248,7 @@ async def search_biosample(
             biosample.omics_processing = [  # type: ignore
                 op for op in biosample.omics_processing if op.id in omics_ids  # type: ignore
             ]
-    return results
+    return results_with_counts(db, results)
 
 
 @router.post(
