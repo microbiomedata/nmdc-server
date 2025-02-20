@@ -17,10 +17,12 @@ import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
+import DoeFacility from './DoeFacility.vue';
 
 export default defineComponent({
   components: {
     DataTypes,
+    DoeFacility,
     SubmissionContextShippingForm,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
@@ -188,26 +190,7 @@ export default defineComponent({
       <div
         v-if="contextForm.facilityGenerated"
       >
-        <legend
-          class="v-label theme--light mb-2"
-          style="font-size: 14px;"
-        >
-          Which facility?
-        </legend>
-        <v-checkbox
-          v-model="contextForm.facilities"
-          label="EMSL"
-          value="EMSL"
-          hide-details
-          class="mb-2 mt-0"
-        />
-        <v-checkbox
-          v-model="contextForm.facilities"
-          label="JGI"
-          value="JGI"
-          hide-details
-          class="mb-2 mt-0"
-        />
+        <DoeFacility />
       </div>
       <v-radio-group
         v-if="contextForm.dataGenerated === false"
@@ -323,26 +306,7 @@ export default defineComponent({
       <div
         v-if="contextForm.doe"
       >
-        <legend
-          class="v-label theme--light mb-2"
-          style="font-size: 14px;"
-        >
-          Which facility?
-        </legend>
-        <v-checkbox
-          v-model="contextForm.facilities"
-          label="EMSL"
-          value="EMSL"
-          hide-details
-          class="mb-2 mt-0"
-        />
-        <v-checkbox
-          v-model="contextForm.facilities"
-          label="JGI"
-          value="JGI"
-          hide-details
-          class="mb-2 mt-0"
-        />
+        <DoeFacility />
       </div>
       <v-radio-group
         v-if="contextForm.dataGenerated === false && contextForm.facilities.includes('EMSL')"
@@ -374,98 +338,6 @@ export default defineComponent({
         Data types cannot be changed when there are already metadata rows in step 6.  To change the template, return to step 6 and remove all data.
       </v-alert>
 
-      <!-- JGI -->
-      <div v-if="contextForm.facilities.includes('JGI')">
-        <div class="text-h6">
-          Joint Genome Institute (JGI)
-        </div>
-        <v-checkbox
-          v-model="multiOmicsForm.omicsProcessingTypes"
-          label="Metagenome"
-          value="mg-jgi"
-          :disabled="templateChoiceDisabled"
-          hide-details
-        />
-        <v-checkbox
-          v-model="multiOmicsForm.omicsProcessingTypes"
-          label="Metagenome (Long Read)"
-          value="mg-lr-jgi"
-          :disabled="templateChoiceDisabled"
-          hide-details
-        />
-        <v-checkbox
-          v-model="multiOmicsForm.omicsProcessingTypes"
-          label="Metatranscriptome"
-          value="mt-jgi"
-          :disabled="templateChoiceDisabled"
-          hide-details
-        />
-        <v-checkbox
-          v-model="multiOmicsForm.omicsProcessingTypes"
-          label="Metabolome"
-          value="mb-jgi"
-          disabled
-          hide-details
-        />
-        <v-text-field
-          v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('jgi'))"
-          v-model="multiOmicsForm.JGIStudyId"
-          :rules="[
-            v => !!v || 'JGI Proposal ID/Study ID is required when processing was done at JGI' ,
-            v => /^\d{6}$/.test(v) || 'JGI Proposal ID/Study ID must be a 6 digit numerical value'
-          ]"
-          label="JGI Proposal ID/Study ID *"
-          hint="This is the 6 digit ID assigned to your JGI Proposal and is required when completing metadata for samples to be sent to JGI for sequencing."
-          persistent-hint
-          class="mt-4"
-          outlined
-          validate-on-blur
-          dense
-        />
-      </div>
-
-      <!-- EMSL -->
-      <div v-if="contextForm.facilities.includes('EMSL')">
-        <div class="text-h6 mt-4">
-          Environmental Molecular Science Laboratory (EMSL)
-        </div>
-        <v-checkbox
-          v-model="multiOmicsForm.omicsProcessingTypes"
-          label="Metaproteome"
-          value="mp-emsl"
-          :disabled="templateChoiceDisabled"
-          hide-details
-        />
-        <v-checkbox
-          v-model="multiOmicsForm.omicsProcessingTypes"
-          label="Metabolome"
-          value="mb-emsl"
-          :disabled="templateChoiceDisabled"
-          hide-details
-        />
-        <v-checkbox
-          v-model="multiOmicsForm.omicsProcessingTypes"
-          label="Natural Organic Matter (FT-ICR MS)"
-          value="nom-emsl"
-          :disabled="templateChoiceDisabled"
-          hide-details
-        />
-        <v-text-field
-          v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('emsl'))"
-          v-model="multiOmicsForm.studyNumber"
-          :rules="[
-            v => !!v || 'EMSL Study Number is required when processing was done at EMSL',
-            v => /^\d{5}$/.test(v) || 'EMSL Study Number must be a 5 digit numerical value'
-          ]"
-          hint="EMSL Study Number is required when processing was done at EMSL"
-          persistent-hint
-          label="EMSL Proposal / Study Number *"
-          class="mt-4"
-          outlined
-          validate-on-blur
-          dense
-        />
-      </div>
       <DataTypes
         v-if="contextForm.dataGenerated === false && contextForm.doe === false"
         legend="Which datatypes may be generated later?"
