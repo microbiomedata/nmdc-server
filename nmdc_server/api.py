@@ -169,7 +169,7 @@ async def get_environmental_geospatial(
     return crud.get_environmental_geospatial(db, query)
 
 
-def inject_download_counts(db: Session, data_object_ids: set[str]):
+def inject_download_counts(db: Session, results, data_object_ids: set[str]):
     """
     Hydrate paginated biosample results with data object download counts.
 
@@ -177,15 +177,15 @@ def inject_download_counts(db: Session, data_object_ids: set[str]):
     two queries for each data object included in the results (one for file_downloads, and
     another for bulk_downloads).
     """
-    counts = crud.get_data_object_counts(db, list(data_object_download_counts))
-    for b in biosamples:
+    counts = crud.get_data_object_counts(db, list(data_object_ids))
+    for b in results["results"]:
         for op in b.omics_processing:
             for da in op.outputs:
                 da._download_count = counts[da.id]
             for od in op.omics_data:
                 for da in od.outputs:
                     da._download_count = counts[da.id]
-    return biosample_results
+    return results
 
 
 # biosample
@@ -244,7 +244,7 @@ async def search_biosample(
             biosample.omics_processing = [  # type: ignore
                 op for op in biosample.omics_processing if op.id in omics_ids  # type: ignore
             ]
-    return results_with_counts(db, results)
+    return inject_download_counts(db, results, data_object_ids)
 
 
 @router.post(

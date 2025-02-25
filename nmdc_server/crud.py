@@ -323,22 +323,25 @@ def delete_biosample(db: Session, biosample: models.Biosample) -> None:
 
 
 def get_data_object_counts(db: Session, data_object_ids: list[str]) -> defaultdict[str, int]:
+    labels = ("data_object_id", "count")
     file_downloads = (
-        db.query(models.FileDownload.data_object_id, func.count().label("file_count"))
+        db.query(models.FileDownload.data_object_id.label(labels[0]), func.count().label(labels[1]))
         .filter(models.FileDownload.data_object_id.in_(data_object_ids))
         .group_by(models.FileDownload.data_object_id)
         .order_by(models.FileDownload.data_object_id)
     )
     bulk_downloads = (
-        db.query(models.BulkDownloadDataObject.data_object_id, func.count().label("bulk_count"))
+        db.query(
+            models.BulkDownloadDataObject.data_object_id.label(labels[0]),
+            func.count().label(labels[1]),
+        )
         .filter(models.BulkDownloadDataObject.data_object_id.in_(data_object_ids))
         .group_by(models.BulkDownloadDataObject.data_object_id)
         .order_by(models.BulkDownloadDataObject.data_object_id)
     )
-    counts = defaultdict(int)
-    for row in file_downloads:
-        counts[row[0]] += row[1]
-    for row in bulk_downloads:
+    all_counts = file_downloads.union(bulk_downloads).order_by("data_object_id")
+    counts: defaultdict[str, int] = defaultdict(int)
+    for row in all_counts:
         counts[row[0]] += row[1]
     return counts
 
