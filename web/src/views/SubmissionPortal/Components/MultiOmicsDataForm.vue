@@ -135,8 +135,8 @@ export default defineComponent({
         <v-text-field
           v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('jgi'))"
           v-model="multiOmicsForm.JGIStudyId"
-          :rules="[ 
-            v => !!v || 'JGI Proposal ID/Study ID is required when processing was done at JGI' , 
+          :rules="[
+            v => !!v || 'JGI Proposal ID/Study ID is required when processing was done at JGI' ,
             v => /^\d{6}$/.test(v) || 'JGI Proposal ID/Study ID must be a 6 digit numerical value'
           ]"
           label="JGI Proposal ID/Study ID *"
@@ -178,7 +178,10 @@ export default defineComponent({
         <v-text-field
           v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('emsl'))"
           v-model="multiOmicsForm.studyNumber"
-          :rules="[ v => !!v || 'EMSL Study Number is required when processing was done at EMSL' ]"
+          :rules="[
+            v => !!v || 'EMSL Study Number is required when processing was done at EMSL',
+            v => /^\d{5}$/.test(v) || 'EMSL Study Number must be a 5 digit numerical value'
+          ]"
           hint="EMSL Study Number is required when processing was done at EMSL"
           persistent-hint
           label="EMSL Proposal / Study Number *"
