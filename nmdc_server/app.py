@@ -60,7 +60,12 @@ field and click "Authorize".
         lifespan=lifespan,
     )
     if settings.environment == "development":
-        app.add_middleware(DebugToolbarMiddleware)
+        app.add_middleware(
+            DebugToolbarMiddleware,
+            panels=["nmdc_server.database.SQLAlchemyPanel"],
+            # Uncheck the profiling feature since it doesn't work for AJAX requests
+            disable_panels=["debug_toolbar.panels.profiling.ProfilingPanel"],
+        )
 
     @app.get("/docs", response_class=RedirectResponse, status_code=301, include_in_schema=False)
     async def redirect_docs():
