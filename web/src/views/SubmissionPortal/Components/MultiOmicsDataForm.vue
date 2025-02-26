@@ -135,7 +135,10 @@ export default defineComponent({
         <v-text-field
           v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('jgi'))"
           v-model="multiOmicsForm.JGIStudyId"
-          :rules="[ v => !!v || 'JGI Proposal ID/Study ID is required when processing was done at JGI' ]"
+          :rules="[ 
+            v => !!v || 'JGI Proposal ID/Study ID is required when processing was done at JGI' , 
+            v => /^\d{6}$/.test(v) || 'JGI Proposal ID/Study ID must be a 6 digit numerical value'
+          ]"
           label="JGI Proposal ID/Study ID *"
           hint="This is the 6 digit ID assigned to your JGI Proposal and is required when completing metadata for samples to be sent to JGI for sequencing."
           persistent-hint
