@@ -604,7 +604,16 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
   },
   biosample: {},
   study: {},
-  omics_processing: {},
+  omics_processing: {
+    mass_spectrometry_configuration_name: {
+      name: 'Mass Spectrometry Method',
+      schemaName: 'MassSpectrometryConfiguration',
+    },
+    chromatography_configuration_name: {
+      name: 'Chromatography Method',
+      schemaName: 'ChromatographyConfiguration',
+    },
+  },
   reads_qc: {},
   metagenome_annotation: {},
   metagenome_assembly: {},
