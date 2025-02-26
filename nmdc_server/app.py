@@ -14,6 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from nmdc_server import __version__, api, auth, errors
 from nmdc_server.config import settings
+from nmdc_server.database import after_cursor_execute, before_cursor_execute, listen
 from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
 
 
@@ -35,6 +36,12 @@ def attach_sentry(app: FastAPI):
 
 
 def create_app(env: typing.Mapping[str, str]) -> FastAPI:
+    if settings.print_sql:
+        from sqlalchemy.engine import Engine
+
+        listen(Engine, "before_cursor_execute", before_cursor_execute)
+        listen(Engine, "after_cursor_execute", after_cursor_execute)
+
     def generate_and_mount_static_files():
         static_path = initialize_static_directory(remove_existing=True)
         generate_submission_schema_files(directory=static_path)

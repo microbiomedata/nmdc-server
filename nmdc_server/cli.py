@@ -238,6 +238,10 @@ def shell(print_sql: bool, script: Optional[Path]):
         exec_lines.append("settings.print_sql = True")
         print("SQL debugging is ON")
 
+    exec_lines.append("import os")
+    exec_lines.append("from nmdc_server.app import create_app")
+    exec_lines.append("app = create_app(env=os.environ.copy())")
+
     c = Config()
     c.InteractiveShellApp.exec_lines = exec_lines
     c.InteractiveShellApp.extensions = ["autoreload"]
