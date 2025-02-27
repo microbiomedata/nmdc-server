@@ -229,13 +229,22 @@ export interface UnitSchema {
 }
 
 export interface AttributeSummary {
-  count: number;
-  type: 'string' | 'date' | 'integer' | 'float' | 'kegg_search' | 'gene_search' | 'cog_search' | 'pfam_search';
+  type?: AttributeSummaryType;
+  count?: number;
   min?: string | number;
   max?: string | number;
   units?: UnitSchema;
 }
 
+export type AttributeSummaryType =
+  'string' |
+  'date' |
+  'integer' |
+  'float' |
+  'kegg_search' |
+  'gene_search' |
+  'cog_search' |
+  'pfam_search'
 export interface TableSummary {
   total: number;
   attributes: Record<string, AttributeSummary>;

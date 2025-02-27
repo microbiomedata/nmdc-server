@@ -317,7 +317,7 @@ export default defineComponent({
           <div class="d-flex">
             <v-select
               v-model="contributor.roles"
-              :rules="[v => v.length >= 1 || 'At least one role is required']"
+              :rules="requiredRules('At least one role is required', [(v) => v.length >= 1])"
               :items="Object.keys(NmdcSchema.enums.CreditEnum.permissible_values)"
               label="CRediT Roles *"
               :hint="Definitions.contributorRoles"

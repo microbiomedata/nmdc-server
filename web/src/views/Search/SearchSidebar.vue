@@ -7,7 +7,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml'
 
 import { geneFunctionTables, types } from '@/encoding';
 import {
-  api, Condition, DatabaseSummaryResponse, entityType,
+  api, Condition, DatabaseSummaryResponse, entityType, AttributeSummaryType
 } from '@/data/api';
 
 import ConditionChips from '@/components/Presentation/ConditionChips.vue';
@@ -153,7 +153,7 @@ export default defineComponent({
           go_function: 'go_function',
         };
         return {
-          type: tableToType[table],
+          type: tableToType[table] as AttributeSummaryType,
         };
       }
       return {};

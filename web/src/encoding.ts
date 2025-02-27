@@ -654,7 +654,7 @@ const MultiomicsValue = {
 
 export {
   types,
-  geneFunctionType,
+  type geneFunctionType,
   ecosystems,
   MultiomicsValue,
   getField,

@@ -189,7 +189,7 @@ export default Vue.extend({
                 v-bind="{
                   field: sf.field,
                   table: sf.table,
-                  isOpen: menuState[sf.key],
+                  isOpen: menuState[sf.key], // eslint-disable-next-line @typescript-eslint/no-implicit-any
                   toggleMenu: (val: boolean) => toggleMenu(sf.key, val),
                 }"
               />

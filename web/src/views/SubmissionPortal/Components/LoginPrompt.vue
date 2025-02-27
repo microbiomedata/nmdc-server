@@ -50,9 +50,7 @@ export default defineComponent({
         target="_blank"
         title="Learn about registering an ORCiD"
       >
-        <v-icon
-          v-on="on"
-        >
+        <v-icon>
           mdi-help-circle
         </v-icon>
       </a>

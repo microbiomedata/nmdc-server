@@ -121,14 +121,14 @@ export default defineComponent({
       </v-col>
     </v-list>
 
-    <v-list v-if="alternateIdentifiers.length > 0 || item.emsl_biosample_identifiers.length > 0">
+    <v-list v-if="alternateIdentifiers.length > 0 || (item as BiosampleSearchResult).emsl_biosample_identifiers.length > 0">
       <div class="text-h4">
         Alternative Identifiers
       </div>
       <AttributeItem
         v-for="({ name, target }) in alternateIdentifiers"
         :key="name"
-        v-bind="{ item, field, link: { name, target } }"
+        v-bind="{ item, link: { name, target } }"
       />
       <AttributeItem
         v-for="emslId, index in item.emsl_biosample_identifiers"
@@ -136,7 +136,7 @@ export default defineComponent({
         v-bind="{ item, field: 'emsl_biosample_identifiers', index, displayName: 'EMSL Identifier' }"
       />
     </v-list>
-    <v-list v-if="type === 'biosample' && relatedBiosamples.length">
+    <v-list v-if="type === 'biosample' && (Array.isArray(relatedBiosamples) ? relatedBiosamples.length : relatedBiosamples.size) > 0">
       <div class="text-h4">
         Related Biosamples
       </div>

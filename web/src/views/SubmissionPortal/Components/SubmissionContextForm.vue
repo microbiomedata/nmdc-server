@@ -83,6 +83,10 @@ export default defineComponent({
       revalidate();
     }
 
+    function requiredRadio(v: boolean) {
+      return (v === true || v === false) || 'This field is required';
+    }
+
     watch(
       () => contextForm.award,
       (award) => {
@@ -114,6 +118,7 @@ export default defineComponent({
       facilityChange,
       facilityGeneratedChange,
       canEditSubmissionMetadata,
+      requiredRadio
     };
   },
 });
@@ -141,7 +146,7 @@ export default defineComponent({
       <v-radio-group
         v-model="contextForm.dataGenerated"
         label="Have data already been generated for your study? *"
-        :rules="[v => (v === true || v === false) || 'This field is required']"
+        :rules="requiredRadio"
         @change="revalidate"
       >
         <v-radio

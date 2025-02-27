@@ -138,19 +138,19 @@ export default defineComponent({
     const studyResults = computed(() => Object.values(study.data.results.results)
       .map((r) => ({
         ...r,
-        name: r.annotations.title || r.name,
+        name: r.annotations.title as string || r.name,
         children: r.children?.map((c) => ({
           ...c,
-          name: c.annotations.title || c.name,
+          name: c.annotations.title as string || c.name,
         })),
       })));
     const consortiumStudyResults = computed(() => Object.values(consortium.data.results.results)
       .map((r) => ({
         ...r,
-        name: r.annotations.title || r.name,
+        name: r.annotations.title as string || r.name,
         children: r.children?.map((c) => ({
           ...c,
-          name: c.annotations.title || c.name,
+          name: c.annotations.title as string || c.name,
         })),
       })));
 

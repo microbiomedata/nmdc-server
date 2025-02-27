@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, computed } from 'vue';
 import Definitions from '@/definitions';
 import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm, canEditSubmissionMetadata,
@@ -16,6 +16,14 @@ export default defineComponent({
       formRef.value.validate();
     }
 
+    const jgiStudyIdRules = computed(() => [
+      (v: any) => !!v || 'JGI Proposal ID/Study ID is required when processing was done at JGI',
+    ]);
+
+    const emslStudyNumberRules = computed(() => [
+      (v: any) => !!v || 'EMSL Study Number is required when processing was done at EMSL',
+    ]);
+
     return {
       formRef,
       multiOmicsForm,
@@ -24,6 +32,8 @@ export default defineComponent({
       Definitions,
       templateChoiceDisabled,
       contextForm,
+      jgiStudyIdRules,
+      emslStudyNumberRules,
       /* functions */
       reValidate,
       canEditSubmissionMetadata,
@@ -135,7 +145,7 @@ export default defineComponent({
         <v-text-field
           v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('jgi'))"
           v-model="multiOmicsForm.JGIStudyId"
-          :rules="[ v => !!v || 'JGI Proposal ID/Study ID is required when processing was done at JGI' ]"
+          :rules="jgiStudyIdRules"
           label="JGI Proposal ID/Study ID *"
           hint="This is the 6 digit ID assigned to your JGI Proposal and is required when completing metadata for samples to be sent to JGI for sequencing."
           persistent-hint
@@ -175,7 +185,7 @@ export default defineComponent({
         <v-text-field
           v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('emsl'))"
           v-model="multiOmicsForm.studyNumber"
-          :rules="[ v => !!v || 'EMSL Study Number is required when processing was done at EMSL' ]"
+          :rules="emslStudyNumberRules"
           hint="EMSL Study Number is required when processing was done at EMSL"
           persistent-hint
           label="EMSL Proposal / Study Number *"

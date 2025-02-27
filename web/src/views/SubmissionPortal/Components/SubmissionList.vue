@@ -224,7 +224,7 @@ export default defineComponent({
             />
           </template>
           <template #[`item.templates`]="{ item }">
-            {{ item.metadata_submission.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
+            {{ item.metadata_submission.templates.map((template: string | number) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
           </template>
           <template #[`item.created`]="{ item }">
             {{ new Date(item.created).toLocaleString() }}
@@ -299,7 +299,7 @@ export default defineComponent({
           <v-spacer />
           <v-btn
             class="ma-3"
-            @click="isDeleteDialogOpen=False"
+            @click="isDeleteDialogOpen=false"
           >
             Cancel
           </v-btn>

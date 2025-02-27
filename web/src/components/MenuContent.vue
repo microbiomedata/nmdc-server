@@ -15,7 +15,7 @@ import FilterSankeyTree from '@/components/FilterSankeyTree.vue';
 import FilterGene from '@/components/FilterGene.vue';
 import FilterTree from '@/components/FilterTree.vue';
 import { urlify } from '@/data/utils';
-import { AttributeSummary, Condition, entityType } from '@/data/api';
+import { AttributeSummary, Condition, entityType, } from '@/data/api';
 
 export default defineComponent({
   components: {
@@ -115,12 +115,12 @@ export default defineComponent({
         @select="$emit('select', $event)"
       />
       <FilterGene
-        v-if="geneFunctionTables.includes(summary.type)"
+        v-if="geneFunctionTables.includes(summary.type as string)"
         :field="field"
         :table="table"
         :conditions="conditions"
-        :gene-type-params="geneFunctionTypeInfo[summary.type.split('_')[0] as geneFunctionType]"
-        :gene-type="summary.type.split('_')[0]"
+        :gene-type-params="geneFunctionTypeInfo[summary.type?.split('_')[0] as geneFunctionType]"
+        :gene-type="summary.type?.split('_')[0]"
         @select="$emit('select', $event)"
       />
       <filter-date
@@ -135,7 +135,7 @@ export default defineComponent({
         @select="$emit('select', $event)"
       />
       <filter-float
-        v-else-if="['float', 'integer'].includes(summary.type)"
+        v-else-if="['float', 'integer'].includes(summary.type as string)"
         v-bind="{
           field, type: table, conditions,
           min: summary.min,
@@ -146,12 +146,12 @@ export default defineComponent({
         @select="$emit('select', $event)"
       />
       <filter-sankey-tree
-        v-else-if="['sankey-tree'].includes(summary.type)"
+        v-else-if="['sankey-tree'].includes(summary.type as string)"
         v-bind="{ field, table, conditions }"
         @select="$emit('select', $event)"
       />
       <facet-summary-wrapper
-        v-else-if="['tree'].includes(summary.type)"
+        v-else-if="['tree'].includes(summary.type as string)"
         v-bind="{ table, field, conditions }"
       >
         <template #default="props">

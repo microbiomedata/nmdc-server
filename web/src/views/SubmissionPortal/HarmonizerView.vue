@@ -1,6 +1,14 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, getCurrentInstance,
+  computed,
+  defineComponent,
+  ref,
+  nextTick,
+  watch,
+  onMounted,
+  shallowRef,
+  getCurrentInstance,
+
 } from 'vue';
 import {
   clamp, flattenDeep, has, sum,
@@ -564,7 +572,7 @@ export default defineComponent({
             type="file"
             style="position: fixed; top: -100em"
             accept=".xls,.xlsx"
-            @change="(evt) => openFile(evt.target.files[0])"
+            @change="(evt: any) => openFile(evt.target.files[0])"
           >
           <v-btn
             label="Choose spreadsheet file..."

@@ -33,7 +33,7 @@ export default defineComponent({
     const root = getCurrentInstance();
 
     const currentRoute = toRef(reactive(root?.proxy.$router as VueRouter), 'currentRoute');
-    const step = computed(() => StepperMap[currentRoute.value.name || ''] || 0);
+    const step = computed(() => StepperMap[currentRoute.value.name || ''] as number || 0);
 
     const currentRouteName = computed(() => root?.proxy.$route.name);
 

@@ -112,7 +112,7 @@ export default defineComponent({
           />
           <v-list-item-avatar>
             <v-icon
-              v-if="result.children && result.children.length > 0 && result.study_category === 'research_study'"
+              v-if="Array.isArray(result.children) && result.children.length > 0 && result.study_category === 'research_study'"
             >
               mdi-book-multiple-outline
             </v-icon>
