@@ -11,8 +11,10 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml'
 
 import Definitions from '@/definitions';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm, canEditSubmissionMetadata, AwardTypes,
+  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm, canEditSubmissionMetadata,
 } from '../store';
+import { AwardTypes } from '@/views/SubmissionPortal/types';
+
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
