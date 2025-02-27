@@ -1,4 +1,13 @@
+import sys
+import time
+import traceback
+
+import click
+import sqlparse
 from debug_toolbar.panels.sqlalchemy import SQLAlchemyPanel as BasePanel
+from pygments import highlight
+from pygments.formatters import TerminalFormatter
+from pygments.lexers import SqlLexer
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
 from sqlalchemy.ext.declarative import declarative_base
@@ -9,9 +18,63 @@ from nmdc_server.config import settings
 from nmdc_server.multiomics import MultiomicsValue
 from nmdc_server.utils import json_serializer
 
+
+def pretty_format_sql(sql, params=None):
+    """
+    Interpolate SQL with params and add formatting and syntax highlighting.
+    """
+    if params and isinstance(params, dict):
+        sql = sql % {k: repr(v) for k, v in params.items()}
+    elif params:
+        raise Exception("Failed to format SQL for debug logging")
+
+    sql = sqlparse.format(
+        sql,
+        reindent=True,
+        keyword_case="upper",
+        wrap_after=80,
+        strip_whitespace=True,
+    )
+
+    return highlight(sql, SqlLexer(), TerminalFormatter())
+
+
+def before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    conn.info.setdefault("query_start_time", []).append(time.time())
+
+
+def after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+    total = time.time() - conn.info["query_start_time"].pop()
+
+    stack = traceback.extract_stack()
+
+    caller = None
+    for frame in reversed(stack[:-1]):  # skip the current frame
+        # ignore frames that come from sqlalchemy directly
+        if "sqlalchemy" not in frame.filename:
+            caller = frame
+            break
+
+    if not executemany:
+        parameters = [parameters]
+
+    for parameter_set in parameters:
+        formatted_sql = pretty_format_sql(statement, parameter_set)
+        click.echo(formatted_sql, file=sys.stderr, nl=False)
+
+        if caller:
+            click.secho(
+                f"Source: {caller.filename}:{caller.lineno}",
+                fg="yellow",
+                file=sys.stderr,
+            )
+        # This is technically the execution time for all of the queries in this commit. So for bulk
+        # operations, this will be the total execution time for the entire operation.
+        click.secho("Execution time: {:.3f}s\n".format(total), fg="red", bold=True, file=sys.stderr)
+
+
 _engine_kwargs = {
     "json_serializer": json_serializer,
-    "echo": settings.print_sql,
     "pool_size": settings.db_pool_size,
     "max_overflow": settings.db_pool_max_overflow,
 }

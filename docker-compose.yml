@@ -56,6 +56,8 @@ services:
       - "8000:8000"
     volumes:
       - ./data/ingest:/data/ingest
+    # Use a TTY so colors are preserved in the log output
+    tty: true
 
   web:
     image: ghcr.io/microbiomedata/nmdc-server/client:main
