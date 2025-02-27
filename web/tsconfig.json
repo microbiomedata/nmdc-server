@@ -15,6 +15,7 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "allowImportingTsExtensions": true,
+    "noEmit": true,
     "outDir": "./dist",
     "sourceMap": true,
     "baseUrl": ".",
@@ -29,6 +30,16 @@
       "dom.iterable",
       "scripthost"
     ],
+  },
+  "vueCompilerOptions": {
+    "experimentalModelPropName": {
+      "checked": {
+        "input": {
+          "type": "checkbox"
+        },
+        "v-checkbox": true
+      }
+    }
   },
   "include": [
     "src/**/*.ts",
