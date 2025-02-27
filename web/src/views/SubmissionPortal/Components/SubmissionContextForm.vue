@@ -290,62 +290,6 @@ export default defineComponent({
           </v-radio>
         </v-radio-group>
       </div>
-      <div
-        v-for="_, i in contextForm.awardDois"
-        :key="`awardDoi${i}`"
-        class="d-flex"
-      >
-        <v-card
-          v-if="contextForm.dataGenerated || contextForm.facilities.includes('EMSL') || contextForm.facilities.includes('JGI')"
-          class="d-flex flex-column grow pa-4 mb-4"
-        >
-          <div class="d-flex">
-            <v-text-field
-              v-if="(contextForm.dataGenerated || contextForm.facilities.includes('EMSL') || contextForm.facilities.includes('JGI')) && contextForm.awardDois !== null"
-              v-model="contextForm.awardDois[i]"
-              :label="`Award DOI ${contextForm.facilityGenerated ? '*' : ''}`"
-              :hint="Definitions.doi"
-              :rules="doiRequiredRules()"
-              persistent-hint
-              validate-on-blur
-              outlined
-              dense
-              @change="revalidate"
-            >
-              <template #message="{ message }">
-                <span v-html="message" />
-              </template>
-            </v-text-field>
-          </div>
-        </v-card>
-        <v-btn
-          v-if="(contextForm.dataGenerated || contextForm.facilities.includes('EMSL') || contextForm.facilities.includes('JGI')) && contextForm.awardDois !== null"
-          icon
-          @click="removeAwardDoi(i)"
-        >
-          <v-icon>mdi-minus-circle</v-icon>
-        </v-btn>
-      </div>
-      <v-btn
-        v-if="contextForm.dataGenerated || contextForm.facilities.includes('EMSL') || contextForm.facilities.includes('JGI')"
-        class="mb-4"
-        depressed
-        @click="addAwardDoi"
-      >
-        <v-icon class="pr-1">
-          mdi-plus-circle
-        </v-icon>
-        Add Award DOI
-      </v-btn>
-      <v-checkbox
-        v-if="!contextForm.dataGenerated && (contextForm.facilities.includes('EMSL') || contextForm.facilities.includes('JGI'))"
-        v-model="contextForm.unknownDoi"
-        class="pa-0 ma-0"
-        :label="`I don't know my award DOI`"
-        :hint="Definitions.unknownDoi"
-        persistent-hint
-        @change="revalidate"
-      />
     </v-form>
     <strong>* indicates required field</strong>
     <div class="d-flex">

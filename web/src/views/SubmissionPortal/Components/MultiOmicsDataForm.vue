@@ -13,7 +13,6 @@ import Definitions from '@/definitions';
 import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, contextForm, canEditSubmissionMetadata, AwardTypes,
 } from '../store';
-import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
@@ -23,7 +22,6 @@ export default defineComponent({
   components: {
     DataTypes,
     DoeFacility,
-    SubmissionContextShippingForm,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
   },
@@ -308,25 +306,6 @@ export default defineComponent({
       >
         <DoeFacility />
       </div>
-      <v-radio-group
-        v-if="contextForm.dataGenerated === false && contextForm.facilities.includes('EMSL')"
-        v-model="contextForm.ship"
-        label="Will samples be shipped? *"
-        :rules="[v => (v === true || v === false) || 'This field is required']"
-        @change="revalidate"
-      >
-        <v-radio
-          label="No"
-          :value="false"
-        />
-        <v-radio
-          label="Yes"
-          :value="true"
-        />
-      </v-radio-group>
-      <submission-context-shipping-form
-        v-if="contextForm.dataGenerated === false && contextForm.ship && contextForm.facilities.includes('EMSL')"
-      />
 
       <v-alert
         v-if="templateChoiceDisabled"
