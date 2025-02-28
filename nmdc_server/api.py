@@ -869,9 +869,24 @@ async def list_submissions(
     pagination: Pagination = Depends(),
     column_sort: str = "created",
     sort_order: str = "desc",
+    filter_column: Optional[str] = None,
+    filter_value: Optional[str] = None,
 ):
     query = crud.get_submissions_for_user(db, user, column_sort, sort_order)
-    return pagination.response(query)
+    result = pagination.response(query)
+    if filter_column and filter_value:
+        filtered_result = []
+        tables = result["results"]
+        print(tables[0])
+        print(type(tables[0]))
+        if filter_column in tables[0].__table__.columns.keys():  # type: ignore
+            for table in tables:
+                if filter_value.lower() in (str(getattr(table, filter_column))).lower():
+                    filtered_result.append(table)
+            result["results"] = filtered_result
+            result["count"] = len(filtered_result)
+
+    return result
 
 
 @router.get(
