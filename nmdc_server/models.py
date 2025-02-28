@@ -750,7 +750,7 @@ class FileDownload(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
-    data_object_id = Column(String, ForeignKey("data_object.id"), nullable=False)
+    data_object_id = Column(String, ForeignKey("data_object.id"), nullable=False, index=True)
     ip = Column(String, nullable=False)
     user_agent = Column(String, nullable=True)
     orcid = Column(String, nullable=False)
