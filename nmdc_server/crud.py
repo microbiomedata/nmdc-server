@@ -688,7 +688,11 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
 
 
 def get_submissions_for_user(
-    db: Session, user: models.User, column_sort: str, order: str, is_test_submission_filter: bool | None
+    db: Session,
+    user: models.User,
+    column_sort: str,
+    order: str,
+    is_test_submission_filter: bool | None,
 ):
     """Return all submissions that a user has permission to view."""
     column = (
