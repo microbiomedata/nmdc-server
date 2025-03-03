@@ -350,10 +350,11 @@ def search_biosample(
     db: Session,
     conditions: List[query.ConditionSchema],
     data_object_filter: List[query.DataObjectFilter],
+    prefetch_omics_processing_data: bool = False,
 ) -> Query:
     return query.BiosampleQuerySchema(
         conditions=conditions, data_object_filter=data_object_filter
-    ).execute(db)
+    ).execute(db, prefetch_omics_processing_data)
 
 
 def facet_biosample(

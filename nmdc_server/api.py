@@ -227,7 +227,10 @@ async def search_biosample(
         return biosample
 
     results = pagination.response(
-        crud.search_biosample(db, query.conditions, data_object_filter), insert_selected
+        crud.search_biosample(
+            db, query.conditions, data_object_filter, prefetch_omics_processing_data=True
+        ),
+        insert_selected,
     )
     if any(
         [

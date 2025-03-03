@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
 from sqlalchemy import ARRAY, Column, and_, cast, desc, func, inspect, or_
-from sqlalchemy.orm import Query, Session, aliased, with_expression
+from sqlalchemy.orm import Query, Session, aliased, selectinload, with_expression
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement, intersect, union
 from sqlalchemy.sql.selectable import CTE
@@ -802,14 +802,43 @@ class BiosampleQuerySchema(BaseQuerySchema):
             )
         return sample_query
 
-    def execute(self, db: Session) -> Query:
+    def execute(self, db: Session, prefetch_omics_processing_data: bool = False) -> Query:
         model = self.table.model
         subquery = self.query(db).subquery()
-        return (
+        biosample_query = (
             db.query(model)
             .join(subquery, model.id == subquery.c.id)  # type: ignore
             .order_by(desc(self.table.model.multiomics))  # type: ignore
         )
+
+        if prefetch_omics_processing_data:
+            from nmdc_server.models import workflow_activity_types
+
+            biosample_query = biosample_query.options(
+                selectinload(models.Biosample.omics_processing).selectinload(
+                    models.OmicsProcessing.outputs
+                ),
+                selectinload(models.Biosample.omics_processing).selectinload(
+                    models.OmicsProcessing.biosample_inputs
+                ),
+            )
+
+            for model in workflow_activity_types:
+                biosample_query = biosample_query.options(
+                    selectinload(models.Biosample.omics_processing)
+                    .selectinload(getattr(models.OmicsProcessing, model.__tablename__))  # type: ignore[attr-defined] # noqa: E501
+                    .selectinload(model.outputs)  # type: ignore[attr-defined]
+                )
+
+                # The MAGsAnalysis specifically needs to also prefetch the mags_list
+                if model == models.MAGsAnalysis:
+                    biosample_query = biosample_query.options(
+                        selectinload(models.Biosample.omics_processing)
+                        .selectinload(getattr(models.OmicsProcessing, model.__tablename__))  # type: ignore[attr-defined] # noqa: E501
+                        .selectinload(model.mags_list)  # type: ignore[attr-defined]
+                    )
+
+        return biosample_query
 
 
 class ReadsQCQuerySchema(BaseQuerySchema):
