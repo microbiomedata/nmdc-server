@@ -692,7 +692,7 @@ def get_submissions_for_user(
     user: models.User,
     column_sort: str,
     order: str,
-    is_test_submission_filter: bool | None,
+    is_test_submission_filter: Optional[bool] = None,
 ):
     """Return all submissions that a user has permission to view."""
     column = (
