@@ -105,6 +105,16 @@ const FunctionSearchFacets: SearchFacet[] = [
     table: 'omics_processing',
     group: 'Data Generation',
   },
+  {
+    field: 'mass_spectrometry_configuration_name',
+    table: 'omics_processing',
+    group: 'Data Generation',
+  },
+  {
+    field: 'chromatography_configuration_name',
+    table: 'omics_processing',
+    group: 'Data Generation',
+  },
 ];
 
 export default defineComponent({
