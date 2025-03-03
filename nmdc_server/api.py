@@ -212,7 +212,6 @@ async def search_biosample(
     # They will be used to get download counts for all data objects in one
     # query.
     def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
-        print(biosample)
         for op in biosample.omics_processing:
             for da in op.outputs:
                 data_object_ids.add(da.id)
