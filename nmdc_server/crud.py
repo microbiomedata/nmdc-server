@@ -339,7 +339,7 @@ def get_data_object_counts(db: Session, data_object_ids: list[str]) -> defaultdi
         .group_by(models.BulkDownloadDataObject.data_object_id)
         .order_by(models.BulkDownloadDataObject.data_object_id)
     )
-    all_counts = file_downloads.union(bulk_downloads).order_by("data_object_id")
+    all_counts = file_downloads.union(bulk_downloads)
     counts: defaultdict[str, int] = defaultdict(int)
     for row in all_counts:
         counts[row[0]] += row[1]
