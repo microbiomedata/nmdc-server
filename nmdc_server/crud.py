@@ -687,7 +687,9 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
     return (role and models.SubmissionEditorRole(role.role) in contributors_edit_roles) is True
 
 
-def get_submissions_for_user(db: Session, user: models.User, column_sort: str, order: str):
+def get_submissions_for_user(
+    db: Session, user: models.User, column_sort: str, order: str, is_test_submission_filter: bool | None
+):
     """Return all submissions that a user has permission to view."""
     column = (
         models.User.name
@@ -700,6 +702,11 @@ def get_submissions_for_user(db: Session, user: models.User, column_sort: str, o
         .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
         .order_by(column.asc() if order == "asc" else column.desc())
     )
+
+    if is_test_submission_filter != None:
+        all_submissions = all_submissions.filter(
+            models.SubmissionMetadata.is_test_submission == is_test_submission_filter
+        )
 
     if user.is_admin:
         return all_submissions
