@@ -467,10 +467,17 @@ class DataObject(Base):
     omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
     omics_processing = relationship(OmicsProcessing)
 
+    # Define a property that can be used to shortcut calculating counts.
+    # Useful when downstream code can more efficiently determine download
+    # counts for a batch of DataObjects and inject those counts.
+    _download_count: Optional[int] = None
+
     @hybrid_property
     def downloads(self) -> int:
         # TODO: This can probably be done with a more efficient aggregation
-        return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
+        if self._download_count is None:
+            return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
+        return self._download_count
 
 
 # This is a base class for all workflow processing activities.
@@ -743,7 +750,7 @@ class FileDownload(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
-    data_object_id = Column(String, ForeignKey("data_object.id"), nullable=False)
+    data_object_id = Column(String, ForeignKey("data_object.id"), nullable=False, index=True)
     ip = Column(String, nullable=False)
     user_agent = Column(String, nullable=True)
     orcid = Column(String, nullable=False)

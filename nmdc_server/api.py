@@ -169,6 +169,25 @@ async def get_environmental_geospatial(
     return crud.get_environmental_geospatial(db, query)
 
 
+def inject_download_counts(db: Session, results, data_object_ids: set[str]):
+    """
+    Hydrate paginated biosample results with data object download counts.
+
+    This consolidates counting downloads into a single database query, rather than
+    two queries for each data object included in the results (one for file_downloads, and
+    another for bulk_downloads).
+    """
+    counts = crud.get_data_object_counts(db, list(data_object_ids))
+    for b in results["results"]:
+        for op in b.omics_processing:
+            for da in op.outputs:
+                da._download_count = counts[da.id]
+            for od in op.omics_data:
+                for da in od.outputs:
+                    da._download_count = counts[da.id]
+    return results
+
+
 # biosample
 @router.post(
     "/biosample/search",
@@ -184,12 +203,18 @@ async def search_biosample(
 ):
     data_object_filter = query.data_object_filter
 
+    data_object_ids = set()
+
     # Inject file object selection information before serialization.
     # This could potentially be more efficient to do in the database query,
     # but the code to generate the query would be much more complicated.
+    # As a side effect, track all relevant data object IDs for this query.
+    # They will be used to get download counts for all data objects in one
+    # query.
     def insert_selected(biosample: schemas.Biosample) -> schemas.Biosample:
         for op in biosample.omics_processing:
             for da in op.outputs:
+                data_object_ids.add(da.id)
                 da.selected = schemas.DataObject.is_selected(
                     WorkflowActivityTypeEnum.raw_data, da, data_object_filter
                 )
@@ -197,6 +222,7 @@ async def search_biosample(
                 workflow = WorkflowActivityTypeEnum(od.type)
                 for da in od.outputs:
                     da.selected = schemas.DataObject.is_selected(workflow, da, data_object_filter)
+                    data_object_ids.add(da.id)
         return biosample
 
     results = pagination.response(
@@ -217,7 +243,7 @@ async def search_biosample(
             biosample.omics_processing = [  # type: ignore
                 op for op in biosample.omics_processing if op.id in omics_ids  # type: ignore
             ]
-    return results
+    return inject_download_counts(db, results, data_object_ids)
 
 
 @router.post(
