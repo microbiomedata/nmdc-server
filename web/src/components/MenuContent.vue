@@ -5,7 +5,7 @@ import {
 // @ts-ignore
 import NmdcSchema from 'nmdc_schema';
 import { fieldDisplayName } from '@/util';
-import { getField, geneFunctionTypeInfo, geneFunctionTables, geneFunctionType } from '@/encoding';
+import { getField, geneFunctionTypeInfo, geneFunctionTables } from '@/encoding';
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
