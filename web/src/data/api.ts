@@ -2,7 +2,7 @@ import { merge } from 'lodash';
 import axios, { AxiosError } from 'axios';
 import { setupCache } from 'axios-cache-adapter';
 // @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc_schema';
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
 
 // The token refresh and retry logic stores an extra bit of state on the request config

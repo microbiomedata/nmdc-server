@@ -3,7 +3,7 @@ import Vue, { PropType, set } from 'vue';
 import { groupBy } from 'lodash';
 
 // @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc_schema';
 
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';

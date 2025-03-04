@@ -1,4 +1,5 @@
 {
+  "extends": "@vue/tsconfig/tsconfig.json",
   "compilerOptions": {
     "types": [
       "vite/client",
@@ -9,13 +10,15 @@
     "isolatedModules": true,
     "strict": true,
     "importHelpers": true,
-    "moduleResolution": "bundler",
+    "moduleResolution": "node",
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    "verbatimModuleSyntax": false,
     "outDir": "./dist",
     "sourceMap": true,
     "baseUrl": ".",
@@ -32,6 +35,8 @@
     ],
   },
   "vueCompilerOptions": {
+    "target": 2.7,
+    "skipTemplateCodegen": true,
     "experimentalModelPropName": {
       "checked": {
         "input": {
@@ -45,11 +50,13 @@
     "src/**/*.ts",
     "src/**/*.tsx",
     "src/**/*.vue",
+    "src/**/*.yaml",
+    "src/**/*.yml",
     "tests/**/*.ts",
     "tests/**/*.tsx",
-    "*.d.ts",
+    "src/**/*.d.ts",
+    "./components.d.ts",
     "./vite.config.mjs"
-
   ],
   "exclude": [
     "node_modules",

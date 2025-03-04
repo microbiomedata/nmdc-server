@@ -8,7 +8,7 @@ import {
   watch,
 } from 'vue';
 // @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc_schema';
 import {
   addressForm,
   addressFormValid,
