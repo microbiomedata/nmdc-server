@@ -238,13 +238,13 @@ export default defineComponent({
             <v-text-field
               v-if="studyForm.fundingSources !== null"
               v-model="studyForm.fundingSources[i]"
-              :rules="requiredRules('Field cannot be empty.')"
               label="Funding Source *"
               :hint="Definitions.fundingSources"
+              persistent-hint
               outlined
               dense
-              persistent-hint
               class="mb-2 mr-3"
+              :error-messages="studyForm.fundingSources[i] ? undefined : ['Field cannot be empty.']"
             >
               <template #message="{ message }">
                 <span v-html="message" />
@@ -290,12 +290,12 @@ export default defineComponent({
           <div class="d-flex">
             <v-text-field
               v-model="contributor.name"
-              :rules="requiredRules('Full name is required')"
               label="Full name *"
               :hint="Definitions.contributorFullName"
               outlined
               dense
               persistent-hint
+              :error-messages="contributor.name ? undefined : ['Field cannot be empty.']"
               class="mb-2 mr-3"
             />
             <v-text-field
@@ -317,7 +317,6 @@ export default defineComponent({
           <div class="d-flex">
             <v-select
               v-model="contributor.roles"
-              :rules="[v => v.length >= 1 || 'At least one role is required']"
               :items="Object.keys(NmdcSchema.enums.CreditEnum.permissible_values)"
               label="CRediT Roles *"
               :hint="Definitions.contributorRoles"
@@ -328,6 +327,7 @@ export default defineComponent({
               small-chips
               dense
               persistent-hint
+              :error-messages="!contributor.roles || contributor.roles.length === 0 ? ['At least one role is required'] : undefined"
               class="mb-2 mr-3"
             >
               <template #message="{ message }">
