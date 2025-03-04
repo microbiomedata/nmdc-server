@@ -327,7 +327,7 @@ export default defineComponent({
                     item,
                     link: {
                       name: 'GOLD Metadata',
-                      target: link as string
+                      target: (link)
                     }
                   }"
                   :image="images.gold"

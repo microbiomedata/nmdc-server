@@ -55,7 +55,7 @@ export default defineComponent({
     const itemsPerPage = 10;
     const options: Ref<DataOptions> = ref<DataOptions>({
       page: 1,
-      itemsPerPage,
+      itemsPerPage: 10,
       sortBy: ['created'],
       sortDesc: [true],
       groupBy: [],

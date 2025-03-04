@@ -121,7 +121,7 @@ export default defineComponent({
       </v-col>
     </v-list>
 
-    <v-list v-if="alternateIdentifiers.length > 0 || (item as BiosampleSearchResult).emsl_biosample_identifiers.length > 0">
+    <v-list v-if="alternateIdentifiers.length > 0 || (item).emsl_biosample_identifiers.length > 0">
       <div class="text-h4">
         Alternative Identifiers
       </div>

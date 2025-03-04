@@ -58,7 +58,7 @@ export default defineComponent({
       </p>
       <orcid-id
         v-if="getSubmissionLockedBy()"
-        :orcid-id="getSubmissionLockedBy()?.orcid as string"
+        :orcid-id="getSubmissionLockedBy()?.orcid"
         :name="getSubmissionLockedBy()?.name"
         :authenticated="true"
       />

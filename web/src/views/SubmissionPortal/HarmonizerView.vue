@@ -572,7 +572,7 @@ export default defineComponent({
             type="file"
             style="position: fixed; top: -100em"
             accept=".xls,.xlsx"
-            @change="(evt: any) => openFile(evt.target.files[0])"
+            @change="(evt) => openFile(evt.target.files[0])"
           >
           <v-btn
             label="Choose spreadsheet file..."
@@ -1093,7 +1093,7 @@ export default defineComponent({
   </div>
 </template>
 
-<style lang="scss">
+<style lang="scss" scoped>
 // Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
 // cannot be nested inside .harmonizer-style-container or else the measurements will be off.
 @import '/node_modules/data-harmonizer/lib/dist/es/index.css';
@@ -1122,16 +1122,16 @@ html {
     There's also some kind of performance bottleneck with "Force Reflow" when you include the whole
     stylesheet, so I brought in the minimum modules for things not to break.
   */
-  @import '/node_modules/bootstrap/scss/_functions.scss';
-  @import '/node_modules/bootstrap/scss/_variables.scss';
-  @import '/node_modules/bootstrap/scss/_mixins.scss';
-  @import "/node_modules/bootstrap/scss/_reboot.scss";
-  @import '/node_modules/bootstrap/scss/_type.scss';
-  @import '/node_modules/bootstrap/scss/_modal.scss';
-  @import '/node_modules/bootstrap/scss/_buttons.scss';
-  @import '/node_modules/bootstrap/scss/_forms.scss';
-  @import '/node_modules/bootstrap/scss/_input-group.scss';
-  @import '/node_modules/bootstrap/scss/_utilities.scss';
+  @import '~bootstrap/scss/_functions.scss';
+  @import '~bootstrap/scss/_variables.scss';
+  @import '~bootstrap/scss/_mixins.scss';
+  @import "~bootstrap/scss/_reboot.scss";
+  @import '~bootstrap/scss/_type.scss';
+  @import '~bootstrap/scss/_modal.scss';
+  @import '~bootstrap/scss/_buttons.scss';
+  @import '~bootstrap/scss/_forms.scss';
+  @import '~bootstrap/scss/_input-group.scss';
+  @import '~bootstrap/scss/_utilities.scss';
 }
 
 .handsontable.listbox td {

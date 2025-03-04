@@ -30,6 +30,15 @@ export default defineConfig({
   commonjsOptoins: {
     esmExternals: true
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        quietDeps: true,
+        api: 'modern',
+        silenceDeprecations: ['legacy-js-api'],
+      },
+    }
+  },
   server: {
     proxy: {
       '/api': {

@@ -43,7 +43,7 @@ export default defineComponent({
           class="text-subtitle-1"
         >
           <span class="font-weight-bold pr-1">{{ fieldDisplayName(subtitleKey) }}</span>
-          <span v-html="urlify(item[subtitleKey] as string)" />
+          <span v-html="urlify((item[subtitleKey]))" />
         </div>
         <slot />
       </v-col>
