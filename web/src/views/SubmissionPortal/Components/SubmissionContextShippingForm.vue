@@ -111,9 +111,7 @@ export default defineComponent({
       >
         Sender's shipping information is required
       </p>
-      <submission-context-shipping-summary
-        class="mt-6"
-      />
+      <submission-context-shipping-summary class="mt-6" />
     </v-card-text>
     <v-dialog
       v-model="showAddressForm"
@@ -121,9 +119,7 @@ export default defineComponent({
       width="1200"
       eager
     >
-      <template
-        #activator="{ on, attrs }"
-      >
+      <template #activator="{ on, attrs }">
         <v-btn
           :disabled="!canEditSubmissionMetadata()"
           absolute
@@ -172,15 +168,18 @@ export default defineComponent({
             <!-- Shipper Name, E-mail address, etc. -->
             <v-text-field
               v-model="addressForm.shipper.name"
-              label="Sender Name"
+              :rules="requiredRules('Name is required', [])"
+              label="Sender Name *"
               outlined
               dense
               class="mt-2"
             />
             <v-text-field
               v-model="addressForm.shipper.email"
-              :rules="[v => !v || /.+@.+\..+/.test(v) || 'E-mail must be valid']"
-              label="E-mail Address"
+              :rules="requiredRules('E-mail is required', [
+                v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+              ])"
+              label="E-mail Address *"
               outlined
               dense
             />
@@ -233,7 +232,8 @@ export default defineComponent({
             </div>
             <v-combobox
               v-model="addressForm.shippingConditions"
-              label="Shipping Conditions"
+              :rules="requiredRules('Shipping conditions are required', [])"
+              label="Shipping Conditions *"
               :items="shippingConditionsItems"
               outlined
               dense
@@ -249,7 +249,8 @@ export default defineComponent({
               <template #activator="{ on, attrs }">
                 <v-text-field
                   v-model="expectedShippingDateString"
-                  label="Expected Shipping Date"
+                  :rules="requiredRules('Expected Shipping Date is required', [])"
+                  label="Expected Shipping Date *"
                   prepend-icon="mdi-calendar"
                   clearable
                   readonly
@@ -274,14 +275,16 @@ export default defineComponent({
             <v-select
               v-model="addressForm.sample"
               class="mt-2"
+              :rules="requiredRules('Sample Type/Species is required', [])"
               :items="sampleEnumValues"
-              label="Sample Type/Species"
+              label="Sample Type/Species *"
               dense
               outlined
             />
             <v-textarea
               v-model="addressForm.description"
               label="Sample Description"
+              :rules="requiredRules('Sample Description is required', [])"
               hint="Number of samples, sample container type..."
               outlined
               dense
@@ -289,7 +292,8 @@ export default defineComponent({
             />
             <v-textarea
               v-model="addressForm.experimentalGoals"
-              label="Experiment Goals"
+              :rules="requiredRules('Experiment Goals are required', [])"
+              label="Experiment Goals *"
               hint="Briefly describe the goal for your experiment"
               outlined
               dense
