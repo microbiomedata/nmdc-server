@@ -48,7 +48,6 @@ async function updateRecord(id: string, record: Partial<MetadataSubmission>, sta
 }
 
 async function listRecords(params: SearchParams, isTestFilter: boolean | null) {
-  console.log(isTestFilter);
   if (isTestFilter !== null) {
     const resp = await client.get<PaginatedResponse<MetadataSubmissionRecord>>('metadata_submission', {
       params: {

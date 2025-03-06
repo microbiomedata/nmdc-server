@@ -96,7 +96,6 @@ export default defineComponent({
       submission.setSortOptions(options.value.sortBy[0], sortOrder);
     }, { deep: true });
     watch(isTestFilter, () => {
-      console.log(isTestFilter.value);
       options.value.page = 1;
       submission.setPage(options.value.page);
       const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
