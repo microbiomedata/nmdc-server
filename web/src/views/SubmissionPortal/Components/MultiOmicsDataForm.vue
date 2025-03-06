@@ -146,6 +146,7 @@ export default defineComponent({
           outlined
           validate-on-blur
           dense
+          :error-messages="multiOmicsForm.JGIStudyId ? undefined : ['JGI Proposal ID/Study ID is required when processing was done at JGI']"
         />
       </div>
 
@@ -189,6 +190,7 @@ export default defineComponent({
           outlined
           validate-on-blur
           dense
+          :error-messages="multiOmicsForm.studyNumber ? undefined : ['EMSL Study Number is required when processing was done at EMSL']"
         />
       </div>
       <!-- Other -->
