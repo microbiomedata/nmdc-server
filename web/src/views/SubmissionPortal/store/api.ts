@@ -47,7 +47,20 @@ async function updateRecord(id: string, record: Partial<MetadataSubmission>, sta
   return { data: resp.data, httpStatus: resp.status };
 }
 
-async function listRecords(params: SearchParams) {
+async function listRecords(params: SearchParams, isTestFilter: boolean | null) {
+  console.log(isTestFilter);
+  if (isTestFilter !== null) {
+    const resp = await client.get<PaginatedResponse<MetadataSubmissionRecord>>('metadata_submission', {
+      params: {
+        limit: params.limit,
+        offset: params.offset,
+        column_sort: params.sortColumn,
+        sort_order: params.sortOrder,
+        is_test_submission_filter: isTestFilter,
+      },
+    });
+    return resp.data;
+  }
   const resp = await client.get<PaginatedResponse<MetadataSubmissionRecord>>('metadata_submission', {
     params: {
       limit: params.limit,

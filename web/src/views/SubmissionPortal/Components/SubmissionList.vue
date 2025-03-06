@@ -14,8 +14,9 @@ import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
+import { SearchParams } from '@/data/api';
 import { deleteSubmission } from '../store/api';
-import { HARMONIZER_TEMPLATES, MetadataSubmissionRecord } from '@/views/SubmissionPortal/types';
+import { HARMONIZER_TEMPLATES, MetadataSubmissionRecord, PaginatedResponse } from '@/views/SubmissionPortal/types';
 
 const headers: DataTableHeader[] = [
   {
@@ -65,6 +66,11 @@ export default defineComponent({
     });
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecord | null>(null);
+    const isTestFilter = ref(null);
+
+    async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecord>> {
+      return api.listRecords(params, isTestFilter.value);
+    }
 
     function getStatus(item: MetadataSubmissionRecord) {
       const color = item.status === submissionStatus.Complete ? 'success' : 'default';
@@ -83,8 +89,15 @@ export default defineComponent({
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
-    const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
+    const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
     watch(options, () => {
+      submission.setPage(options.value.page);
+      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
+      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+    }, { deep: true });
+    watch(isTestFilter, () => {
+      console.log(isTestFilter.value);
+      options.value.page = 1;
       submission.setPage(options.value.page);
       const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
       submission.setSortOptions(options.value.sortBy[0], sortOrder);
@@ -110,6 +123,7 @@ export default defineComponent({
     return {
       HARMONIZER_TEMPLATES,
       isDeleteDialogOpen,
+      isTestFilter,
       deleteDialogSubmission,
       IconBar,
       IntroBlurb,
@@ -124,6 +138,12 @@ export default defineComponent({
       submission,
     };
   },
+  data: () => ({
+    filterSelectValues: [
+      { text: 'All Submissions', val: null },
+      { text: 'Test Only', val: true },
+      { text: 'Real Only', val: false }],
+  }),
 });
 </script>
 
@@ -202,9 +222,31 @@ export default defineComponent({
       <v-card-title class="text-h4">
         Past submissions
       </v-card-title>
-      <v-card-text>
-        Pick up where you left off or review a previous submission.
-      </v-card-text>
+      <v-row
+        align="center"
+      >
+        <v-col
+          class="d-flex"
+          cols="12"
+          sm="7"
+          align="top"
+        >
+          <v-card-text>
+            Pick up where you left off or review a previous submission.
+          </v-card-text>
+          <v-select
+            v-model="isTestFilter"
+            class="my-2"
+            :items="filterSelectValues"
+            item-text="text"
+            item-value="val"
+            :max-width="330"
+            label="Test Submission Filter"
+            hint="Filter whether all submissions should be shown or only some."
+            target="#submissionFilterDropdown"
+          />
+        </v-col>
+      </v-row>
       <v-card outlined>
         <v-data-table
           :headers="headers"
