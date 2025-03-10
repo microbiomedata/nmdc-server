@@ -898,8 +898,12 @@ async def list_submissions(
     pagination: Pagination = Depends(),
     column_sort: str = "created",
     sort_order: str = "desc",
+    is_test_submission_filter: Optional[bool] = None,
 ):
-    query = crud.get_submissions_for_user(db, user, column_sort, sort_order)
+    query = crud.get_submissions_for_user(
+        db, user, column_sort, sort_order, is_test_submission_filter
+    )
+    # print(filters)
     return pagination.response(query)
 
 
