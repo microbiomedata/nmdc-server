@@ -630,6 +630,8 @@ metaproteomic_analysis_output_association = output_association("metaproteomic_an
 class MetaproteomicAnalysis(Base, PipelineStep):
     __tablename__ = "metaproteomic_analysis"
 
+    metaproteomics_analysis_category = Column(String, nullable=False, default="")
+
     inputs = input_relationship(metaproteomic_analysis_input_association)
     outputs = output_relationship(metaproteomic_analysis_output_association)
 
