@@ -7,7 +7,7 @@ import {
   PropType,
 } from '@vue/composition-api';
 import type { Ref } from '@vue/composition-api';
-import type { HarmonizerApi } from '../harmonizerApi';
+import type HarmonizerApi from '../harmonizerApi';
 
 type SearchResult = {
   row: number;
