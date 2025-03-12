@@ -68,9 +68,31 @@ export default defineComponent({
         label="Is the generated data compatible? *"
       >
         <v-radio
-          label="No"
           :value="false"
-        />
+        >
+          <template #label>
+            <span>
+              No
+            </span>
+            <v-tooltip
+              right
+              class="x-2"
+            >
+              <template #activator="{ on }">
+                <v-icon
+                  class="ml-2"
+                  dense
+                  v-on="on"
+                >
+                  mdi-help-circle
+                </v-icon>
+              </template>
+              <span>
+                You may proceed with your submission for sample metadata capture. However, there will not be place to provide information about your existing sequencing data as the methods are not supported by NMDC Workflows
+              </span>
+            </v-tooltip>
+          </template>
+        </v-radio>
         <v-radio
           label="Yes"
           :value="true"
@@ -130,9 +152,31 @@ export default defineComponent({
         label="Is the generated data compatible? *"
       >
         <v-radio
-          label="No"
           :value="false"
-        />
+        >
+          <template #label>
+            <span>
+              No
+            </span>
+            <v-tooltip
+              right
+              class="x-2"
+            >
+              <template #activator="{ on }">
+                <v-icon
+                  class="ml-2"
+                  dense
+                  v-on="on"
+                >
+                  mdi-help-circle
+                </v-icon>
+              </template>
+              <span>
+                You may proceed with your submission for sample metadata capture. However, there will not be place to provide information about your existing sequencing data as the methods are not supported by NMDC Workflows
+              </span>
+            </v-tooltip>
+          </template>
+        </v-radio>
         <v-radio
           label="Yes"
           :value="true"
