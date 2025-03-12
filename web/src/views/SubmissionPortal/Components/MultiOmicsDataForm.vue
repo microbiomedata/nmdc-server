@@ -62,34 +62,19 @@ export default defineComponent({
       nextTick(() => formRef.value.validate());
     };
 
-    function addAwardDoi() {
-      if (contextForm.awardDois === null || contextForm.awardDois.length === 0) {
-        contextForm.awardDois = [''];
-      } else {
-        contextForm.awardDois.push('');
+    function resetFields(field: string) {
+      if (field === 'dataGenerated') {
+        contextForm.facilityGenerated = undefined;
       }
-    }
-
-    function removeAwardDoi(i: number) {
-      if (contextForm.awardDois === null) {
-        contextForm.awardDois = [''];
-      }
-      if ((contextForm.facilities.length < contextForm.awardDois.length && !contextForm.dataGenerated) || (contextForm.facilityGenerated && contextForm.dataGenerated && contextForm.awardDois.length > 1) || (!contextForm.facilityGenerated && contextForm.dataGenerated)) {
-        contextForm.awardDois.splice(i, 1);
-      }
-    }
-
-    function facilityChange() {
-      if (contextForm.awardDois === null || contextForm.awardDois.length < contextForm.facilities.length) {
-        addAwardDoi();
-      }
-      revalidate();
-    }
-
-    function facilityGeneratedChange() {
-      if (contextForm.facilityGenerated && (contextForm.awardDois === null || contextForm.awardDois.length < 1)) {
-        addAwardDoi();
-      }
+      contextForm.doe = undefined;
+      contextForm.award = '';
+      contextForm.otherAward = '';
+      multiOmicsForm.mgCompatible = undefined;
+      multiOmicsForm.mgInterleaved = undefined;
+      multiOmicsForm.omicsProcessingTypes = [];
+      multiOmicsForm.mtCompatible = undefined;
+      multiOmicsForm.mtInterleaved = undefined;
+      contextForm.facilities = [];
       revalidate();
     }
 
@@ -114,10 +99,7 @@ export default defineComponent({
       otherAwardValidationRules,
       doiRequiredRules,
       revalidate,
-      addAwardDoi,
-      removeAwardDoi,
-      facilityChange,
-      facilityGeneratedChange,
+      resetFields,
       formRef,
       multiOmicsForm,
       multiOmicsAssociations,
@@ -156,7 +138,7 @@ export default defineComponent({
         v-model="contextForm.dataGenerated"
         label="Have data already been generated for your study? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        @change="revalidate"
+        @change="resetFields('dataGenerated')"
       >
         <v-radio
           label="No"
@@ -172,7 +154,7 @@ export default defineComponent({
         v-model="contextForm.facilityGenerated"
         label="Was data generated at a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        @change="facilityGeneratedChange"
+        @change="resetFields('facilityGenerated')"
       >
         <v-radio
           label="No"
