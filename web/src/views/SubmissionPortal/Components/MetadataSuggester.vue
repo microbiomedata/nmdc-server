@@ -20,7 +20,7 @@ import {
   SuggestionsMode,
   SuggestionType,
 } from '@/views/SubmissionPortal/types';
-import type { HarmonizerApi } from '@/views/SubmissionPortal/harmonizerApi';
+import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
 import { getRejectedSuggestions, setRejectedSuggestions } from '@/store/localStorage';
 
 const suggestionModeOptions = Object.values(SuggestionsMode);
