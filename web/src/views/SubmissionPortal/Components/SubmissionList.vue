@@ -67,6 +67,10 @@ export default defineComponent({
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecord | null>(null);
     const isTestFilter = ref(null);
+    const filterSelectValues = [
+      { text: 'All Submissions', val: null },
+      { text: 'Test Only', val: true },
+      { text: 'Real Only', val: false }];
 
     async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecord>> {
       return api.listRecords(params, isTestFilter.value);
@@ -135,14 +139,9 @@ export default defineComponent({
       headers,
       options,
       submission,
+      filterSelectValues,
     };
   },
-  data: () => ({
-    filterSelectValues: [
-      { text: 'All Submissions', val: null },
-      { text: 'Test Only', val: true },
-      { text: 'Real Only', val: false }],
-  }),
 });
 </script>
 
@@ -222,27 +221,27 @@ export default defineComponent({
         Past submissions
       </v-card-title>
       <v-row
-        align="center"
+        justify="space-between"
+        class="pb-2"
+        no-gutters
       >
         <v-col
-          class="d-flex"
-          cols="12"
-          sm="7"
-          align="top"
+          cols="5"
         >
           <v-card-text>
             Pick up where you left off or review a previous submission.
           </v-card-text>
+        </v-col>
+        <v-col
+          cols="3"
+        >
           <v-select
             v-model="isTestFilter"
-            class="my-2"
             :items="filterSelectValues"
             item-text="text"
             item-value="val"
-            :max-width="330"
-            label="Test Submission Filter"
-            hint="Filter whether all submissions should be shown or only some."
-            target="#submissionFilterDropdown"
+            label="Filter My Submissions"
+            hide-details
           />
         </v-col>
       </v-row>
