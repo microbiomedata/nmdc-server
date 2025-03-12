@@ -81,7 +81,6 @@ export default defineComponent({
       v-if="contextForm.facilities.includes('EMSL')"
       class="mb-4 ml-4"
     >
-      <!-- Still want the ability to add and remove DOIs? -->
       <div
         :key="`awardDoi${i}`"
         class="d-flex"
@@ -94,12 +93,12 @@ export default defineComponent({
             v-if="contextForm.facilities.includes('EMSL')"
             v-model="multiOmicsForm.studyNumber"
             :rules="[
-              v => !!v || 'EMSL Study Number is required when processing was done at EMSL',
-              v => /^\d{5}$/.test(v) || 'EMSL Study Number must be a 5 digit numerical value'
+              v => !!v || 'EMSL Proposal Number is required when processing was done at EMSL',
+              v => /^\d{5}$/.test(v) || 'EMSL Proposal Number must be a 5 digit numerical value'
             ]"
-            hint="EMSL Study Number is required when processing was done at EMSL"
+            hint="EMSL Proposal Number is required when processing was done at EMSL"
             persistent-hint
-            label="EMSL Proposal / Study Number *"
+            label="EMSL Proposal Number *"
             class="mt-4"
             outlined
             validate-on-blur
@@ -203,10 +202,10 @@ export default defineComponent({
           <v-text-field
             v-if="contextForm.facilities.includes('JGI')"
             v-model="multiOmicsForm.studyNumber"
-            :rules="[ v => !!v || 'JGI Study Number is required when processing was done at JGI' ]"
-            hint="JGI Study Number is required when processing was done at JGI"
+            :rules="[ v => !!v || 'JGI Proposal Number is required when processing was done at JGI' ]"
+            hint="JGI Proposal Number is required when processing was done at JGI"
             persistent-hint
-            label="JGI Proposal / Study Number *"
+            label="JGI Proposal Number *"
             class="mt-4"
             outlined
             validate-on-blur
