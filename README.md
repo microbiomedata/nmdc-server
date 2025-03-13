@@ -7,4 +7,4 @@
 * [Search API Guide](https://github.com/microbiomedata/nmdc-server/wiki/Search-API-Docs)
 * [NMDC Data Portal End User Guide](https://nmdc-documentation.readthedocs.io/en/latest/howto_guides/portal_guide.html)
 * [NMDC Public General Documentation](https://nmdc-documentation.readthedocs.io/en/latest/index.html)
-* [Development Docs](/docs/development.md)
+* [Development Docs](./docs/development.md)
