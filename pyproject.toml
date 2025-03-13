@@ -74,7 +74,7 @@ dependencies = [
     "jsonschema==4.23.0",
     "jsonschema-specifications==2024.10.1",
     "kombu==5.4.2",
-    "linkml==1.8.4",
+    "linkml==1.8.5",
     "linkml-dataops==0.1.0",
     "linkml-runtime==1.8.3",
     "mako==1.3.5",
