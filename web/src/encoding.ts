@@ -661,6 +661,11 @@ const MultiomicsValue = {
   LIP: 0b000001,
 };
 
+const metaproteomicCategoryEnumToDisplay = {
+  matched_metagenome: 'NMDC metagenome matched',
+  in_silico_metagenome: 'Uniprot reference genome matched',
+};
+
 export {
   types,
   geneFunctionType,
@@ -672,4 +677,5 @@ export {
   pfamEncode,
   stringIsKegg,
   makeSetsFromBitmask,
+  metaproteomicCategoryEnumToDisplay,
 };
