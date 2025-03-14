@@ -24,6 +24,11 @@ const headers: DataTableHeader[] = [
     value: 'study_name',
   },
   {
+    text: '',
+    value: 'is_test_submission',
+    sortable: false,
+  },
+  {
     text: 'Author',
     value: 'author.name',
   },
@@ -67,10 +72,10 @@ export default defineComponent({
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecord | null>(null);
     const isTestFilter = ref(null);
-    const filterSelectValues = [
-      { text: 'All Submissions', val: null },
-      { text: 'Test Only', val: true },
-      { text: 'Real Only', val: false }];
+    const testSubmissions = [
+      { text: 'Show all submissions', val: null },
+      { text: 'Show only test submissions', val: true },
+      { text: 'Hide test submissions', val: false }];
 
     async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecord>> {
       return api.listRecords(params, isTestFilter.value);
@@ -139,7 +144,7 @@ export default defineComponent({
       headers,
       options,
       submission,
-      filterSelectValues,
+      testSubmissions,
     };
   },
 });
@@ -237,7 +242,7 @@ export default defineComponent({
         >
           <v-select
             v-model="isTestFilter"
-            :items="filterSelectValues"
+            :items="testSubmissions"
             item-text="text"
             item-value="val"
             label="Filter My Submissions"
@@ -255,6 +260,26 @@ export default defineComponent({
           :items-per-page.sync="submission.data.limit"
           :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
         >
+          <template #[`item.is_test_submission`]="{ item }">
+            <v-tooltip
+              v-if="item.is_test_submission"
+              top
+            >
+              <template #activator="{ on }">
+                <!--- This is an alternate solution that would show an icon and tooltip for both
+                  <v-icon v-on="on">
+                    {{ item.is_test_submission ? 'mdi-test-tube' : 'mdi-test-tube-empty' }}
+                  </v-icon>
+                </template>
+                <span> {{ item.is_test_submission ? 'This is a test submission' : 'This is a genuine submission' }} </span>
+                --->
+                <v-icon v-on="on">
+                  mdi-test-tube
+                </v-icon>
+              </template>
+              <span> This is a test submission. </span>
+            </v-tooltip>
+          </template>
           <template #[`item.author.name`]="{ item }">
             <orcid-id
               :orcid-id="item.author.orcid"
