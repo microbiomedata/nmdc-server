@@ -14,13 +14,19 @@ import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
+import { SearchParams } from '@/data/api';
 import { deleteSubmission } from '../store/api';
-import { HARMONIZER_TEMPLATES, MetadataSubmissionRecord } from '@/views/SubmissionPortal/types';
+import { HARMONIZER_TEMPLATES, MetadataSubmissionRecord, PaginatedResponse } from '@/views/SubmissionPortal/types';
 
 const headers: DataTableHeader[] = [
   {
     text: 'Study Name',
     value: 'study_name',
+  },
+  {
+    text: '',
+    value: 'is_test_submission',
+    sortable: false,
   },
   {
     text: 'Author',
@@ -65,6 +71,15 @@ export default defineComponent({
     });
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecord | null>(null);
+    const isTestFilter = ref(null);
+    const testSubmissions = [
+      { text: 'Show all submissions', val: null },
+      { text: 'Show only test submissions', val: true },
+      { text: 'Hide test submissions', val: false }];
+
+    async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecord>> {
+      return api.listRecords(params, isTestFilter.value);
+    }
 
     function getStatus(item: MetadataSubmissionRecord) {
       const color = item.status === submissionStatus.Complete ? 'success' : 'default';
@@ -83,8 +98,14 @@ export default defineComponent({
       router?.push({ name: 'Submission Context', params: { id: item.id } });
     }
 
-    const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
+    const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
     watch(options, () => {
+      submission.setPage(options.value.page);
+      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
+      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+    }, { deep: true });
+    watch(isTestFilter, () => {
+      options.value.page = 1;
       submission.setPage(options.value.page);
       const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
       submission.setSortOptions(options.value.sortBy[0], sortOrder);
@@ -110,6 +131,7 @@ export default defineComponent({
     return {
       HARMONIZER_TEMPLATES,
       isDeleteDialogOpen,
+      isTestFilter,
       deleteDialogSubmission,
       IconBar,
       IntroBlurb,
@@ -122,6 +144,7 @@ export default defineComponent({
       headers,
       options,
       submission,
+      testSubmissions,
     };
   },
 });
@@ -202,9 +225,31 @@ export default defineComponent({
       <v-card-title class="text-h4">
         Past submissions
       </v-card-title>
-      <v-card-text>
-        Pick up where you left off or review a previous submission.
-      </v-card-text>
+      <v-row
+        justify="space-between"
+        class="pb-2"
+        no-gutters
+      >
+        <v-col
+          cols="5"
+        >
+          <v-card-text>
+            Pick up where you left off or review a previous submission.
+          </v-card-text>
+        </v-col>
+        <v-col
+          cols="3"
+        >
+          <v-select
+            v-model="isTestFilter"
+            :items="testSubmissions"
+            item-text="text"
+            item-value="val"
+            label="Filter My Submissions"
+            hide-details
+          />
+        </v-col>
+      </v-row>
       <v-card outlined>
         <v-data-table
           :headers="headers"
@@ -215,6 +260,26 @@ export default defineComponent({
           :items-per-page.sync="submission.data.limit"
           :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
         >
+          <template #[`item.is_test_submission`]="{ item }">
+            <v-tooltip
+              v-if="item.is_test_submission"
+              top
+            >
+              <template #activator="{ on }">
+                <!--- This is an alternate solution that would show an icon and tooltip for both
+                  <v-icon v-on="on">
+                    {{ item.is_test_submission ? 'mdi-test-tube' : 'mdi-test-tube-empty' }}
+                  </v-icon>
+                </template>
+                <span> {{ item.is_test_submission ? 'This is a test submission' : 'This is a genuine submission' }} </span>
+                --->
+                <v-icon v-on="on">
+                  mdi-test-tube
+                </v-icon>
+              </template>
+              <span> This is a test submission. </span>
+            </v-tooltip>
+          </template>
           <template #[`item.author.name`]="{ item }">
             <orcid-id
               :orcid-id="item.author.orcid"
