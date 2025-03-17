@@ -72,7 +72,7 @@ export default defineComponent({
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecord | null>(null);
     const isTestFilter = ref(null);
-    const testSubmissions = [
+    const testFilterValues = [
       { text: 'Show all submissions', val: null },
       { text: 'Show only test submissions', val: true },
       { text: 'Hide test submissions', val: false }];
@@ -144,7 +144,7 @@ export default defineComponent({
       headers,
       options,
       submission,
-      testSubmissions,
+      testFilterValues,
     };
   },
 });
@@ -242,10 +242,10 @@ export default defineComponent({
         >
           <v-select
             v-model="isTestFilter"
-            :items="testSubmissions"
+            :items="testFilterValues"
             item-text="text"
             item-value="val"
-            label="Filter My Submissions"
+            label="Test Submissions"
             hide-details
           />
         </v-col>
