@@ -260,25 +260,16 @@ export default defineComponent({
           :items-per-page.sync="submission.data.limit"
           :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
         >
-          <template #[`item.is_test_submission`]="{ item }">
-            <v-tooltip
+          <template #[`item.study_name`]="{ item }">
+            {{ item.study_name }}
+            <v-chip
               v-if="item.is_test_submission"
-              top
+              color="orange"
+              text-color="white"
+              small
             >
-              <template #activator="{ on }">
-                <!--- This is an alternate solution that would show an icon and tooltip for both
-                  <v-icon v-on="on">
-                    {{ item.is_test_submission ? 'mdi-test-tube' : 'mdi-test-tube-empty' }}
-                  </v-icon>
-                </template>
-                <span> {{ item.is_test_submission ? 'This is a test submission' : 'This is a genuine submission' }} </span>
-                --->
-                <v-icon v-on="on">
-                  mdi-test-tube
-                </v-icon>
-              </template>
-              <span> This is a test submission. </span>
-            </v-tooltip>
+              TEST
+            </v-chip>
           </template>
           <template #[`item.author.name`]="{ item }">
             <orcid-id
