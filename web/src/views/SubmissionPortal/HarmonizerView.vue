@@ -258,7 +258,25 @@ export default defineComponent({
     }
 
     async function validate() {
-      const data = harmonizerApi.exportJson();
+      const data = harmonizerApi.exportJson(); // Gets data from harmonizer API
+      
+      // Check if the spreadsheet is empty
+      const isEmpty = Object.keys(data).length === 0;
+      // Update invalid cells if empty
+      if (isEmpty) {
+        invalidCells.value = {
+          ...invalidCells.value,
+          [activeTemplateKey.value]: data,
+        };
+        tabsValidated.value = {
+          ...tabsValidated.value,
+          [activeTemplateKey.value]: false,
+        };
+        snackbar.value = Object.values(tabsValidated.value).every((value) => value);
+        // maybe return message here?
+        return;
+      }
+
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       const result = await harmonizerApi.validate();
       const valid = Object.keys(result).length === 0;
