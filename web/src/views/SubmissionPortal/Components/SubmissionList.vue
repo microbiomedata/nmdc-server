@@ -24,11 +24,6 @@ const headers: DataTableHeader[] = [
     value: 'study_name',
   },
   {
-    text: '',
-    value: 'is_test_submission',
-    sortable: false,
-  },
-  {
     text: 'Author',
     value: 'author.name',
   },
