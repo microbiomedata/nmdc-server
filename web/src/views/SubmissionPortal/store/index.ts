@@ -5,7 +5,6 @@ import CompositionApi, {
 import { chunk, clone, forEach } from 'lodash';
 import axios from 'axios';
 import * as api from './api';
-import { getVariants } from '../harmonizerApi';
 import { User } from '@/types';
 import {
   HARMONIZER_TEMPLATES,
@@ -18,6 +17,14 @@ import {
   SuggestionType,
   SuggestionsMode,
   MetadataSuggestionRequest,
+  DATA_MG_INTERLEAVED,
+  DATA_MG,
+  DATA_MT_INTERLEAVED,
+  DATA_MT,
+  EMSL,
+  JGI_MG,
+  JGI_MG_LR,
+  JGI_MT,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 
@@ -174,9 +181,56 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
  */
 const packageName = ref(['soil'] as (keyof typeof HARMONIZER_TEMPLATES)[]);
 const templateList = computed(() => {
-  const checkBoxes = multiOmicsForm.omicsProcessingTypes;
-  const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
-  return list;
+  const templates = new Set(packageName.value);
+  if (contextForm.dataGenerated) { // Have data already been generated? Yes
+    if (!contextForm.doe) { // Were the data generated at a DOE facility? No
+      if (multiOmicsForm.omicsProcessingTypes.includes('mg')) { // Which datatypes were generated? Metagenome
+        if (multiOmicsForm.mgCompatible) { // Is the generated data compatible? Yes
+          if (multiOmicsForm.mgInterleaved) { // Is the generated data interleaved? Yes
+            templates.add(DATA_MG_INTERLEAVED);
+          } else { // Is the generated data interleaved? No
+            templates.add(DATA_MG);
+          }
+        }
+      }
+      if (multiOmicsForm.omicsProcessingTypes.includes('mt')) { // Which datatypes were generated? Metatranscriptome
+        if (multiOmicsForm.mtCompatible) { // Is the generated data compatible? Yes
+          if (multiOmicsForm.mtInterleaved) { // Is the generated data interleaved? Yes
+            templates.add(DATA_MT_INTERLEAVED);
+          } else { // Is the generated data interleaved? No
+            templates.add(DATA_MT);
+          }
+        }
+      }
+    }
+  } else { // Have data already been generated? No
+    // eslint-disable-next-line no-lonely-if
+    if (contextForm.doe) { // Are you submitting samples to a DOE user facility? Yes
+      if (contextForm.facilities.includes('EMSL')) { // Which facility? EMSL
+        if (multiOmicsForm.omicsProcessingTypes.includes('mp-emsl')) { // Data types? Metaproteome
+          templates.add(EMSL);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('mb-emsl')) { // Data types? Metabolome
+          templates.add(EMSL);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('nom-emsl')) { // Data types? Natural Organic Matter
+          templates.add(EMSL);
+        }
+      }
+      if (contextForm.facilities.includes('JGI')) { // Which facility? JGI
+        if (multiOmicsForm.omicsProcessingTypes.includes('mg-jgi')) { // Data types? Metagenome
+          templates.add(JGI_MG);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('mg-lr-jgi')) { // Data types? Metagenome Long Read
+          templates.add(JGI_MG_LR);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('mt-jgi')) { // Data types? Metatranscriptome
+          templates.add(JGI_MT);
+        }
+      }
+    }
+  }
+  return Array.from(templates);
 });
 /**
  * DataHarmonizer Step
