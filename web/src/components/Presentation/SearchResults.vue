@@ -55,38 +55,29 @@ export default defineComponent({
 
 <template>
   <div>
-    <v-col
+    <div
       v-if="!disablePagination"
-      cols="12"
-      class="pb-0"
+      class="d-flex pt-2 pb-0 align-end justify-center"
     >
-      <v-row
-        no-gutters
-        justify="center"
-      >
-        <v-col
-          cols="3"
-        >
-          <v-pagination
-            :value="page"
-            :length="Math.ceil(count / rows)"
-            :total-visible="7"
-            class="pt-3"
-            depressed
-            @input="$emit('set-page', $event)"
-          />
-        </v-col>
-        <v-col cols="1">
-          <v-select
-            v-model="rows"
-            :items="[5, 10, 15, 20]"
-            label="Items per page"
-            class="px-4"
-            @input="$emit('set-items-per-page', $event)"
-          />
-        </v-col>
-      </v-row>
-    </v-col>
+      <v-pagination
+        :value="page"
+        :length="Math.ceil(count / rows)"
+        :total-visible="7"
+        depressed
+        @input="$emit('set-page', $event)"
+      />
+      <!-- flex-basis is based on the "Items per page" label. Since it is absolutely
+           positioned it doesn't count towards the `auto` width -->
+      <v-select
+        v-model="rows"
+        :items="[5, 10, 15, 20]"
+        label="Items per page"
+        class="ml-4 mb-1 flex-grow-0"
+        :style="{ 'flex-basis': '6rem' }"
+        hide-details
+        @input="$emit('set-items-per-page', $event)"
+      />
+    </div>
     <v-list dense>
       <template
         v-for="(result, resultIndex) in results"
