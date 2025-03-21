@@ -72,7 +72,7 @@ export default defineComponent({
         v-model="rows"
         :items="[5, 10, 15, 20]"
         label="Items per page"
-        class="ml-4 flex-grow-0"
+        class="ml-4 mb-1 flex-grow-0"
         :style="{ 'flex-basis': '6rem' }"
         hide-details
         @input="$emit('set-items-per-page', $event)"
