@@ -195,7 +195,6 @@ export interface NmdcAddress {
 
 export interface MetadataSubmission {
   packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
-  contextForm: any;
   addressForm: any;
   templates: string[];
   studyForm: any;
