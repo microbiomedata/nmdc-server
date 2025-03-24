@@ -84,9 +84,7 @@ function canEditSampleMetadata(): boolean {
 }
 
 const hasChanged = ref(0);
-/**
- * Submission Context Step
- */
+
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -179,49 +177,69 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 const packageName = ref(['soil'] as (keyof typeof HARMONIZER_TEMPLATES)[]);
 const templateList = computed(() => {
   const templates = new Set(packageName.value);
-  if (contextForm.dataGenerated) { // Have data already been generated? Yes
-    if (!contextForm.doe) { // Were the data generated at a DOE facility? No
-      if (multiOmicsForm.omicsProcessingTypes.includes('mg')) { // Which datatypes were generated? Metagenome
-        if (multiOmicsForm.mgCompatible) { // Is the generated data compatible? Yes
-          if (multiOmicsForm.mgInterleaved) { // Is the generated data interleaved? Yes
+  if (multiOmicsForm.dataGenerated) {
+    // Have data already been generated? Yes
+    if (!multiOmicsForm.doe) {
+      // Were the data generated at a DOE facility? No
+      if (multiOmicsForm.omicsProcessingTypes.includes('mg')) {
+        // Which datatypes were generated? Metagenome
+        if (multiOmicsForm.mgCompatible) {
+          // Is the generated data compatible? Yes
+          if (multiOmicsForm.mgInterleaved) {
+            // Is the generated data interleaved? Yes
             templates.add(DATA_MG_INTERLEAVED);
-          } else { // Is the generated data interleaved? No
+          } else {
+            // Is the generated data interleaved? No
             templates.add(DATA_MG);
           }
         }
       }
-      if (multiOmicsForm.omicsProcessingTypes.includes('mt')) { // Which datatypes were generated? Metatranscriptome
-        if (multiOmicsForm.mtCompatible) { // Is the generated data compatible? Yes
-          if (multiOmicsForm.mtInterleaved) { // Is the generated data interleaved? Yes
+      if (multiOmicsForm.omicsProcessingTypes.includes('mt')) {
+        // Which datatypes were generated? Metatranscriptome
+        if (multiOmicsForm.mtCompatible) {
+          // Is the generated data compatible? Yes
+          if (multiOmicsForm.mtInterleaved) {
+            // Is the generated data interleaved? Yes
             templates.add(DATA_MT_INTERLEAVED);
-          } else { // Is the generated data interleaved? No
+          } else {
+            // Is the generated data interleaved? No
             templates.add(DATA_MT);
           }
         }
       }
     }
-  } else { // Have data already been generated? No
+  } else {
+    // Have data already been generated? No
     // eslint-disable-next-line no-lonely-if
-    if (contextForm.doe) { // Are you submitting samples to a DOE user facility? Yes
-      if (contextForm.facilities.includes('EMSL')) { // Which facility? EMSL
-        if (multiOmicsForm.omicsProcessingTypes.includes('mp-emsl')) { // Data types? Metaproteome
+    if (multiOmicsForm.doe) {
+      // Are you submitting samples to a DOE user facility? Yes
+      if (multiOmicsForm.facilities.includes('EMSL')) {
+        // Which facility? EMSL
+        if (multiOmicsForm.omicsProcessingTypes.includes('mp-emsl')) {
+          // Data types? Metaproteome
           templates.add(EMSL);
         }
-        if (multiOmicsForm.omicsProcessingTypes.includes('mb-emsl')) { // Data types? Metabolome
+        if (multiOmicsForm.omicsProcessingTypes.includes('mb-emsl')) {
+          // Data types? Metabolome
           templates.add(EMSL);
         }
-        if (multiOmicsForm.omicsProcessingTypes.includes('nom-emsl')) { // Data types? Natural Organic Matter
+        if (multiOmicsForm.omicsProcessingTypes.includes('nom-emsl')) {
+          // Data types? Natural Organic Matter
           templates.add(EMSL);
         }
       }
-      if (contextForm.facilities.includes('JGI')) { // Which facility? JGI
-        if (multiOmicsForm.omicsProcessingTypes.includes('mg-jgi')) { // Data types? Metagenome
+      if (multiOmicsForm.facilities.includes('JGI')) {
+        // Which facility? JGI
+        if (multiOmicsForm.omicsProcessingTypes.includes('mg-jgi')) {
+          // Data types? Metagenome
           templates.add(JGI_MG);
         }
-        if (multiOmicsForm.omicsProcessingTypes.includes('mg-lr-jgi')) { // Data types? Metagenome Long Read
+        if (multiOmicsForm.omicsProcessingTypes.includes('mg-lr-jgi')) {
+          // Data types? Metagenome Long Read
           templates.add(JGI_MG_LR);
         }
-        if (multiOmicsForm.omicsProcessingTypes.includes('mt-jgi')) { // Data types? Metatranscriptome
+        if (multiOmicsForm.omicsProcessingTypes.includes('mt-jgi')) {
+          // Data types? Metatranscriptome
           templates.add(JGI_MT);
         }
       }
