@@ -106,19 +106,7 @@ const addressFormDefault = {
   irbOrHipaa: undefined as undefined | boolean,
   comments: '',
 };
-const contextFormDefault = {
-  dataGenerated: undefined as undefined | boolean,
-  awardDois: [] as string[] | null,
-  ship: undefined as undefined | boolean,
-  facilityGenerated: undefined as undefined | boolean,
-  doe: undefined as undefined | boolean,
-  facilities: [] as string[],
-  award: undefined as undefined | string,
-  otherAward: '',
-  unknownDoi: undefined as undefined | boolean,
-};
-const contextForm = reactive(clone(contextFormDefault));
-const contextFormValid = ref(false);
+
 const addressForm = reactive(clone(addressFormDefault));
 const addressFormValid = ref(false);
 
@@ -152,13 +140,22 @@ const studyForm = reactive(clone(studyFormDefault));
  * Multi-Omics Form Step
  */
 const multiOmicsFormDefault = {
-  studyNumber: '',
+  award: undefined as undefined | string,
+  awardDois: [] as string[] | null,
+  dataGenerated: undefined as undefined | boolean,
+  doe: undefined as undefined | boolean,
+  facilities: [] as string[],
+  facilityGenerated: undefined as undefined | boolean,
   JGIStudyId: '',
-  omicsProcessingTypes: [] as string[],
   mgCompatible: undefined as undefined | boolean,
   mgInterleaved: undefined as undefined | boolean,
   mtCompatible: undefined as undefined | boolean,
   mtInterleaved: undefined as undefined | boolean,
+  omicsProcessingTypes: [] as string[],
+  otherAward: '',
+  ship: undefined as undefined | boolean,
+  studyNumber: '',
+  unknownDoi: undefined as undefined | boolean,
 };
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
@@ -175,7 +172,7 @@ const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 const packageName = ref(['soil'] as (keyof typeof HARMONIZER_TEMPLATES)[]);
 const templateList = computed(() => {
   const checkBoxes = multiOmicsForm.omicsProcessingTypes;
-  const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
+  const list = getVariants(checkBoxes, multiOmicsForm.dataGenerated, packageName.value);
   return list;
 });
 /**
@@ -213,7 +210,6 @@ watch(templateList, () => {
 /** Submit page */
 const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
-  contextForm,
   addressForm,
   templates: templateList.value,
   studyForm,
@@ -249,13 +245,10 @@ function submit(id: string, status: SubmissionStatus = submissionStatus.InProgre
 }
 
 function reset() {
-  Object.assign(contextForm, contextFormDefault);
-  contextFormValid.value = false;
   Object.assign(addressForm, addressFormDefault);
   addressFormValid.value = false;
   studyFormValid.value = false;
   addressFormValid.value = false;
-  Object.assign(contextForm, contextFormDefault);
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
@@ -308,7 +301,6 @@ async function loadRecord(id: string) {
   packageName.value = val.metadata_submission.packageName;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
-  Object.assign(contextForm, val.metadata_submission.contextForm);
   Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
@@ -400,8 +392,6 @@ export {
   multiOmicsAssociations,
   multiOmicsFormValid,
   sampleData,
-  contextForm,
-  contextFormValid,
   addressForm,
   addressFormDefault,
   addressFormValid,

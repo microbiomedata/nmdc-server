@@ -1032,11 +1032,10 @@ def create_github_issue(submission, user):
     # Gathering the fields we want to display in the issue
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
     studyform = submission.metadata_submission["studyForm"]
-    contextform = submission.metadata_submission["contextForm"]
     multiomicsform = submission.metadata_submission["multiOmicsForm"]
     pi = studyform["piName"]
     piorcid = studyform["piOrcid"]
-    datagenerated = "Yes" if contextform["dataGenerated"] else "No"
+    datagenerated = "Yes" if multiomicsform["dataGenerated"] else "No"
     omicsprocessingtypes = ", ".join(multiomicsform["omicsProcessingTypes"])
     sampletype = ", ".join(submission.metadata_submission["templates"])
     sampledata = submission.metadata_submission["sampleData"]

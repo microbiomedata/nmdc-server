@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
 import {
-  multiOmicsForm, templateChoiceDisabled, contextForm,
+  multiOmicsForm, templateChoiceDisabled,
 } from '../store';
 
 export default defineComponent({
@@ -14,7 +14,6 @@ export default defineComponent({
   setup() {
     return {
       multiOmicsForm,
-      contextForm,
       templateChoiceDisabled,
     };
   },
