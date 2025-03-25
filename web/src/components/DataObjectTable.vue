@@ -8,6 +8,7 @@ import { DataTableHeader } from 'vuetify';
 import { humanFileSize } from '@/data/utils';
 import { client, BiosampleSearchResult, OmicsProcessingResult } from '@/data/api';
 import { stateRefs, acceptTerms } from '@/store';
+import { metaproteomicCategoryEnumToDisplay } from '@/encoding';
 
 import DownloadDialog from './DownloadDialog.vue';
 
@@ -168,6 +169,7 @@ export default defineComponent({
       humanFileSize,
       termsDialog,
       getRelatedBiosampleIds,
+      metaproteomicCategoryEnumToDisplay,
     };
   },
 });
@@ -212,6 +214,10 @@ export default defineComponent({
                 {{ item.omics_data.chromConfigName }}:
                 {{ ' ' + item.omics_data.chromConfigId }}
               </span>
+            </span>
+            <span v-if="omicsType === 'Proteomics'">
+              <br>
+              <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category] }}</b>
             </span>
             <br>
             <div v-if="getRelatedBiosampleIds(item.omics_data).length">

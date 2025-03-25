@@ -507,10 +507,11 @@ class MetatranscriptomeAnnotation(PipelineStep):
 
 class MetaproteomicAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.metaproteomic_analysis.value
+    metaproteomics_analysis_category: str
 
 
 class MetaproteomicAnalysis(PipelineStep):
-    pass
+    metaproteomics_analysis_category: str
 
 
 class MAG(BaseModel):
