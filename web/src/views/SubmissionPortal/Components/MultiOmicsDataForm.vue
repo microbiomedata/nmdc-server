@@ -136,17 +136,17 @@ export default defineComponent({
           v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('jgi'))"
           v-model="multiOmicsForm.JGIStudyId"
           :rules="[
-            v => !!v || 'JGI Proposal ID/Study ID is required when processing was done at JGI' ,
-            v => /^\d{6}$/.test(v) || 'JGI Proposal ID/Study ID must be a 6 digit numerical value'
+            v => !!v || 'JGI Proposal ID is required when processing was done at JGI' ,
+            v => /^\d{6}$/.test(v) || 'JGI Proposal ID must be a 6 digit numerical value'
           ]"
-          label="JGI Proposal ID/Study ID *"
+          label="JGI Proposal ID *"
           hint="This is the 6 digit ID assigned to your JGI Proposal and is required when completing metadata for samples to be sent to JGI for sequencing."
           persistent-hint
           class="mt-4"
           outlined
           validate-on-blur
           dense
-          :error-messages="multiOmicsForm.JGIStudyId ? undefined : ['JGI Proposal ID/Study ID is required when processing was done at JGI']"
+          :error-messages="multiOmicsForm.JGIStudyId ? undefined : ['JGI Proposal ID is required when processing was done at JGI']"
         />
       </div>
 
@@ -180,17 +180,17 @@ export default defineComponent({
           v-if="multiOmicsForm.omicsProcessingTypes.some((v) => v.endsWith('emsl'))"
           v-model="multiOmicsForm.studyNumber"
           :rules="[
-            v => !!v || 'EMSL Study Number is required when processing was done at EMSL',
-            v => /^\d{5}$/.test(v) || 'EMSL Study Number must be a 5 digit numerical value'
+            v => !!v || 'EMSL Proposal ID is required when processing was done at EMSL',
+            v => /^\d{5}$/.test(v) || 'EMSL Proposal ID must be a 5 digit numerical value'
           ]"
-          hint="EMSL Study Number is required when processing was done at EMSL"
+          hint="EMSL Proposal ID is required when processing was done at EMSL"
           persistent-hint
-          label="EMSL Proposal / Study Number *"
+          label="EMSL Proposal ID *"
           class="mt-4"
           outlined
           validate-on-blur
           dense
-          :error-messages="multiOmicsForm.studyNumber ? undefined : ['EMSL Study Number is required when processing was done at EMSL']"
+          :error-messages="multiOmicsForm.studyNumber ? undefined : ['EMSL Proposal ID is required when processing was done at EMSL']"
         />
       </div>
       <!-- Other -->
