@@ -136,7 +136,7 @@ export default defineComponent({
         v-for="({ name, target }) in alternateIdentifiers"
         :key="name"
         v-bind="{ item, field, link: { name, target } }"
-        :image="name.startsWith('gold') ? images.gold : name.startsWith('img') ? images.img : undefined"
+        :image="name.startsWith('gold') ? images.gold : name.startsWith('img') ? images.img : ''"
       />
       <AttributeItem
         v-for="emslId, index in item.emsl_biosample_identifiers"
