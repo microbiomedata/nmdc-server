@@ -11,7 +11,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml'
 
 import Definitions from '@/definitions';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, canEditSubmissionMetadata,
+  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
 } from '../store';
 import { AwardTypes } from '@/views/SubmissionPortal/types';
 
@@ -94,6 +94,8 @@ export default defineComponent({
     });
 
     return {
+      addAwardDoi,
+      removeAwardDoi,
       facilityEnum,
       projectAwardValidationRules,
       otherAwardValidationRules,
@@ -308,6 +310,37 @@ export default defineComponent({
         v-if="multiOmicsForm.facilityGenerated === false"
         legend="Which datatypes were generated?"
       />
+      <div
+        v-if="multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')"
+        class="d-flex flex-column grow mb-4"
+      >
+        <v-text-field
+          v-for="(awardDoi, i) in multiOmicsForm.awardDois"
+          :key="`awardDoi${i}`"
+          v-model="multiOmicsForm.awardDois[i]"
+          label="Award DOI *"
+          :hint="Definitions.doi"
+          :rules="doiRequiredRules()"
+          persistent-hint
+          validate-on-blur
+          outlined
+          dense
+          @change="revalidate"
+        >
+          <template #message="{ message }">
+            <span v-html="message" />
+          </template>
+        </v-text-field>
+
+        <v-checkbox
+          v-if="!multiOmicsForm.dataGenerated && (multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI'))"
+          v-model="multiOmicsForm.unknownDoi"
+          :label="`I don't know my award DOI`"
+          :hint="Definitions.unknownDoi"
+          persistent-hint
+          @change="revalidate"
+        />
+      </div>
     </v-form>
     <strong>* indicates required field</strong>
     <div class="d-flex mt-5">

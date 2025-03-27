@@ -171,6 +171,23 @@ const multiOmicsAssociationsDefault = {
 };
 const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 
+function addAwardDoi() {
+  if (multiOmicsForm.awardDois === null || multiOmicsForm.awardDois.length === 0) {
+    multiOmicsForm.awardDois = [''];
+  } else {
+    multiOmicsForm.awardDois.push('');
+  }
+}
+
+function removeAwardDoi(i: number) {
+  if (multiOmicsForm.awardDois === null) {
+    multiOmicsForm.awardDois = [''];
+  }
+  if ((multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
+    multiOmicsForm.awardDois.splice(i, 1);
+  }
+}
+
 /**
  * Environment Package Step
  */
@@ -463,6 +480,8 @@ export {
   multiOmicsForm,
   multiOmicsAssociations,
   multiOmicsFormValid,
+  addAwardDoi,
+  removeAwardDoi,
   sampleData,
   addressForm,
   addressFormDefault,
