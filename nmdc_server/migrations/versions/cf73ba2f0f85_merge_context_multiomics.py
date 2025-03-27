@@ -1,7 +1,7 @@
 """merge_context_multiomics
 
 Revision ID: cf73ba2f0f85
-Revises: 6e6dec0daa7c
+Revises: efd01ffd23b2
 Create Date: 2025-03-20 20:23:15.379005
 
 """
@@ -19,7 +19,7 @@ Base = declarative_base()
 
 # revision identifiers, used by Alembic.
 revision: str = "cf73ba2f0f85"
-down_revision: Optional[str] = "6e6dec0daa7c"
+down_revision: Optional[str] = "efd01ffd23b2"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
