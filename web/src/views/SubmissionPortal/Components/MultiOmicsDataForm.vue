@@ -330,6 +330,17 @@ export default defineComponent({
           <template #message="{ message }">
             <span v-html="message" />
           </template>
+          <template #append-outer>
+            <v-btn
+              v-if="(multiOmicsForm.dataGenerated || multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')) && multiOmicsForm.awardDois !== null"
+              icon
+              class="pb-2"
+              :disabled="!(multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length)"
+              @click="removeAwardDoi(i)"
+            >
+              <v-icon>mdi-minus-circle</v-icon>
+            </v-btn>
+          </template>
         </v-text-field>
 
         <v-checkbox
@@ -341,6 +352,17 @@ export default defineComponent({
           @change="revalidate"
         />
       </div>
+      <v-btn
+        v-if="multiOmicsForm.dataGenerated || multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')"
+        class="mb-4"
+        depressed
+        @click="addAwardDoi"
+      >
+        <v-icon class="pr-1">
+          mdi-plus-circle
+        </v-icon>
+        Add Award DOI
+      </v-btn>
     </v-form>
     <strong>* indicates required field</strong>
     <div class="d-flex mt-5">
