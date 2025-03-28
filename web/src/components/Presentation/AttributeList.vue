@@ -98,6 +98,14 @@ export default defineComponent({
       alternateIdentifiers,
       displayFields,
       relatedBiosamples,
+      images: {
+        // eslint-disable-next-line global-require
+        gold: require('@/assets/GOLD.png'),
+        // eslint-disable-next-line global-require
+        img: require('@/assets/IMG.png'),
+        // eslint-disable-next-line global-require
+        emsl: require('@/assets/EMSL.png'),
+      },
     };
   },
 });
@@ -128,11 +136,13 @@ export default defineComponent({
         v-for="({ name, target }) in alternateIdentifiers"
         :key="name"
         v-bind="{ item, field, link: { name, target } }"
+        :image="name.startsWith('gold') ? images.gold : name.startsWith('img') ? images.img : ''"
       />
       <AttributeItem
         v-for="emslId, index in item.emsl_biosample_identifiers"
         :key="emslId"
         v-bind="{ item, field: 'emsl_biosample_identifiers', index, displayName: 'EMSL Identifier' }"
+        :image="images.emsl"
       />
     </v-list>
     <v-list v-if="type === 'biosample' && relatedBiosamples.length">
