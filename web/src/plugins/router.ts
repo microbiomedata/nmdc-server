@@ -11,7 +11,6 @@ import LoginPage from '@/views/Login/LoginPage.vue';
 /* Submission portal */
 import MultiOmicsDataForm from '@/views/SubmissionPortal/Components/MultiOmicsDataForm.vue';
 import StepperView from '@/views/SubmissionPortal/StepperView.vue';
-import SubmissionContextForm from '@/views/SubmissionPortal/Components/SubmissionContextForm.vue';
 import StudyForm from '@/views/SubmissionPortal/Components/StudyForm.vue';
 import SubmissionView from '@/views/SubmissionPortal/SubmissionView.vue';
 import TemplateChooser from '@/views/SubmissionPortal/Components/TemplateChooser.vue';
@@ -65,11 +64,6 @@ const router = new VueRouter({
               name: 'Submission Home',
               path: 'home',
               component: SubmissionList,
-            },
-            {
-              name: 'Submission Context',
-              path: ':id/context',
-              component: SubmissionContextForm,
             },
             {
               name: 'Study Form',

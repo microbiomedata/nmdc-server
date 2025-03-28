@@ -3,7 +3,7 @@ import {
   defineComponent, PropType, ref,
 } from '@vue/composition-api';
 import FindReplace from '@/views/SubmissionPortal/Components/FindReplace.vue';
-import type { HarmonizerApi } from '@/views/SubmissionPortal/harmonizerApi';
+import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import ImportExportButtons from '@/views/SubmissionPortal/Components/ImportExportButtons.vue';
 import ColumnHelp from '@/views/SubmissionPortal/Components/ColumnHelp.vue';
