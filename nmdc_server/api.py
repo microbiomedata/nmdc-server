@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, 
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
+from linkml_runtime.utils.schemaview import SchemaView
 
 from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
@@ -28,6 +29,8 @@ from nmdc_server.models import (
 )
 from nmdc_server.pagination import Pagination
 from nmdc_server.table import Table
+
+import yaml
 
 router = APIRouter()
 
@@ -704,8 +707,12 @@ async def download_zip_file(
     "/metadata_submission/mixs_report",
     tags=["metadata_submission"],
 )
+# async def get_metadata_submissions_mixs(
+#     db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+# ):
+    
 async def get_metadata_submissions_mixs(
-    db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     r"""
     Generate a TSV-formatted report of biosamples belonging to submissions
@@ -715,8 +722,8 @@ async def get_metadata_submissions_mixs(
     local scale, and medium are specified for each biosample. The report is
     designed to facilitate the review of submissions by NMDC team members.
     """
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+    # if not user.is_admin:
+    #     raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     # Get the submissions from the database.
     q = crud.get_query_for_submitted_pending_review_submissions(db)
@@ -731,7 +738,24 @@ async def get_metadata_submissions_mixs(
         "Environmental Broad Scale",
         "Environmental Local Scale",
         "Environmental Medium",
+        # "Enum T/F",
     ]
+
+    # Check enum values for env package, local scale,
+    # broad scale, and medium
+
+    # Use SchemaView to open nmdc_submission_schema.yaml before checking other items
+                    
+    # view = SchemaView("../../submission-schema/src/nmdc-submission-schema/schema/nmdc_submission_schema.yaml")
+    # if (view):
+    #     print("YES")
+    # # print(len(view.all_slots()))
+
+    view = fetch_nmdc_submission_schema_view()
+    # if (view):
+    #     # print("\n\n\n", len(view.all_enums()), "\n\n\n")
+    #     print("\n\n\n", view, "\n\n\n")
+    
     data_rows = []
     for s in submissions:
 
@@ -781,6 +805,7 @@ async def get_metadata_submissions_mixs(
                     env_broad_scale,
                     env_local_scale,
                     env_medium,
+                    # enum_tf,
                 ]
                 data_rows.append(data_row)
 
@@ -806,6 +831,49 @@ async def get_metadata_submissions_mixs(
     )
 
     return response
+
+def fetch_nmdc_submission_schema_view():
+    # Try different methods for extracting yaml
+
+    # Use SchemaView to open nmdc_submission_schema.yaml and isolate the enums
+    # Isolating enums is an issue because the schema is brought in as a dict of objects of dicts - extra layer is interesting to work with 
+    view = SchemaView("https://raw.githubusercontent.com/microbiomedata/submission-schema/refs/heads/main/src/nmdc_submission_schema/schema/nmdc_submission_schema.yaml")
+    enum_view = view.all_enums()
+
+    # Using requests and yaml to get the yaml file
+    url = "https://raw.githubusercontent.com/microbiomedata/submission-schema/refs/heads/main/src/nmdc_submission_schema/schema/nmdc_submission_schema.yaml"
+    response = requests.get(url)
+    
+    if response.status_code != 200:
+        print("\n\n\nError loading yaml\n\n\n")
+
+    schema = response.content.decode("utf-8")
+    schema = yaml.safe_load(schema)
+
+    enums = schema.get("enums", {})
+    selected_enums = {key: value for key, value in enums.items() if "EnvPackage" in key or "EnvMedium" in key or "EnvLocalScale" in key or "EnvBroadScale" in key}
+
+
+    print("\n\n\n", type(selected_enums))
+    # print("\n\n\n", selected_enums) 
+
+    return schema
+
+    # isolated_enum_view = {}
+
+    # for enum in enum_view: 
+    #     if (('EnvPackage' in enum["name"] or 'EnvMedium' in enum["name"])):
+    #         isolated_enum_view.append(enum)
+
+    # print(isolated_enum_view)
+
+    # Grab only the enums that we want to check against in MIxS API endpoint
+    # Env package, medium, broad scale, and local scale
+    # for enum in enum_view:
+    #     print("\n\n", enum)
+    #     print(enum["permissible_values"])
+
+    # return enum_view
 
 
 @router.get(
