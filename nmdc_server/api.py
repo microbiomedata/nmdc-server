@@ -741,20 +741,7 @@ async def get_metadata_submissions_mixs(
         # "Enum T/F",
     ]
 
-    # Check enum values for env package, local scale,
-    # broad scale, and medium
-
-    # Use SchemaView to open nmdc_submission_schema.yaml before checking other items
-                    
-    # view = SchemaView("../../submission-schema/src/nmdc-submission-schema/schema/nmdc_submission_schema.yaml")
-    # if (view):
-    #     print("YES")
-    # # print(len(view.all_slots()))
-
     view = fetch_nmdc_submission_schema_view()
-    # if (view):
-    #     # print("\n\n\n", len(view.all_enums()), "\n\n\n")
-    #     print("\n\n\n", view, "\n\n\n")
     
     data_rows = []
     for s in submissions:
@@ -833,47 +820,25 @@ async def get_metadata_submissions_mixs(
     return response
 
 def fetch_nmdc_submission_schema_view():
-    # Try different methods for extracting yaml
 
-    # Use SchemaView to open nmdc_submission_schema.yaml and isolate the enums
-    # Isolating enums is an issue because the schema is brought in as a dict of objects of dicts - extra layer is interesting to work with 
+    # Use SchemaView to open nmdc_submission_schema.yaml
     view = SchemaView("https://raw.githubusercontent.com/microbiomedata/submission-schema/refs/heads/main/src/nmdc_submission_schema/schema/nmdc_submission_schema.yaml")
     enum_view = view.all_enums()
 
-    # Using requests and yaml to get the yaml file
-    url = "https://raw.githubusercontent.com/microbiomedata/submission-schema/refs/heads/main/src/nmdc_submission_schema/schema/nmdc_submission_schema.yaml"
-    response = requests.get(url)
-    
-    if response.status_code != 200:
-        print("\n\n\nError loading yaml\n\n\n")
+    # Get only the enums to have a smaller schema to pass and compare against
+    isolated_enums = {
+        enum_name: {
+            # Also only grab the relevant pieces - name and perm. values
+            "name": enum_data["name"],
+            "permissible_values": list(enum_data["permissible_values"].keys())
+        }
+        for enum_name, enum_data in enum_view.items()
 
-    schema = response.content.decode("utf-8")
-    schema = yaml.safe_load(schema)
+        # Only grab the enums that are relevant to the MIxS data check
+        if "EnvPackage" in enum_name or "EnvMedium" in enum_name or "EnvBroadScale" in enum_name or "EnvLocalScale" in enum_name
+    }
 
-    enums = schema.get("enums", {})
-    selected_enums = {key: value for key, value in enums.items() if "EnvPackage" in key or "EnvMedium" in key or "EnvLocalScale" in key or "EnvBroadScale" in key}
-
-
-    print("\n\n\n", type(selected_enums))
-    # print("\n\n\n", selected_enums) 
-
-    return schema
-
-    # isolated_enum_view = {}
-
-    # for enum in enum_view: 
-    #     if (('EnvPackage' in enum["name"] or 'EnvMedium' in enum["name"])):
-    #         isolated_enum_view.append(enum)
-
-    # print(isolated_enum_view)
-
-    # Grab only the enums that we want to check against in MIxS API endpoint
-    # Env package, medium, broad scale, and local scale
-    # for enum in enum_view:
-    #     print("\n\n", enum)
-    #     print(enum["permissible_values"])
-
-    # return enum_view
+    return isolated_enums
 
 
 @router.get(
