@@ -769,6 +769,18 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
     def table(self) -> Table:
         return Table.omics_processing
 
+    def facet(self, db: Session, attribute: str) -> Dict[schemas.AnnotationValue, int]:
+        if attribute == "omics_type":
+            annotations_column = models.OmicsProcessing.annotations
+            id_column = models.OmicsProcessing.poolable_replicates_manifest_id
+            query = self.query(db)
+            aggregated_query = query.with_entities(
+                func.count(func.distinct(id_column)).label("id_count"),
+                annotations_column["omics_type"].astext,
+            ).group_by(annotations_column["omics_type"].astext)
+            return {value: count for count, value in aggregated_query if value is not None}
+        return super().facet(db, attribute)
+
     def omics_processing_for_biosample_ids(self, db: Session, biosample_ids):
         # Do the normal query with the conditions
         query = self.execute(db)
