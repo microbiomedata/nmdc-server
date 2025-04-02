@@ -70,9 +70,7 @@ export default defineComponent({
       v-if="multiOmicsForm.facilities.includes('EMSL')"
       class="mb-4 ml-4"
     >
-      <div
-        class="d-flex flex-column grow mb-4"
-      >
+      <div class="d-flex flex-column grow mb-4">
         <v-text-field
           v-if="multiOmicsForm.facilities.includes('EMSL')"
           v-model="multiOmicsForm.studyNumber"
@@ -149,13 +147,14 @@ export default defineComponent({
       v-if="multiOmicsForm.facilities.includes('JGI')"
       class="mb-4 ml-4"
     >
-      <div
-        class="d-flex flex-column grow mb-4"
-      >
+      <div class="d-flex flex-column grow mb-4">
         <v-text-field
           v-if="multiOmicsForm.facilities.includes('JGI')"
           v-model="multiOmicsForm.JGIStudyId"
-          :rules="[ v => !!v || 'JGI Proposal Number is required when processing was done at JGI' ]"
+          :rules="[
+            v => !!v || 'JGI Proposal Number is required when processing was done at JGI',
+            v => /^\d{6}$/.test(v) || 'JGI Proposal ID must be a 6 digit numerical value'
+          ]"
           hint="JGI Proposal Number is required when processing was done at JGI"
           persistent-hint
           label="JGI Proposal Number *"

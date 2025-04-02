@@ -67,7 +67,7 @@ def upgrade():
 
         if metadata_submission.get("contextForm", None):
             context_form = metadata_submission.get("contextForm", {})
-            multiomics_form = metadata_submission.get("multiomicsForm", {})
+            multiomics_form = metadata_submission.get("multiOmicsForm", {})
 
             multiomics_form.setdefault("datasetDoi", context_form.get("datasetDoi", ""))
             multiomics_form.setdefault("dataGenerated", context_form.get("dataGenerated", None))
@@ -79,8 +79,8 @@ def upgrade():
             multiomics_form.setdefault("otherAward", context_form.get("otherAward", ""))
 
             metadata_submission.pop("contextForm", None)
-        if metadata_submission.get("multiomicsForm", None):
-            multiomics_form = metadata_submission.get("multiomicsForm", {})
+        if metadata_submission.get("multiOmicsForm", None):
+            multiomics_form = metadata_submission.get("multiOmicsForm", {})
             study_form = metadata_submission.get("studyForm", {})
 
             study_form.setdefault("alternativeNames", multiomics_form.get("alternativeNames", []))
@@ -103,8 +103,8 @@ def downgrade():
         if isinstance(metadata_submission, List):
             continue
 
-        if metadata_submission.get("multiomicsForm", None):
-            multiomics_form = metadata_submission.get("multiomicsForm", {})
+        if metadata_submission.get("multiOmicsForm", None):
+            multiomics_form = metadata_submission.get("multiOmicsForm", {})
             context_form = {}
 
             context_form["datasetDoi"] = multiomics_form.get("datasetDoi", "")
@@ -118,13 +118,13 @@ def downgrade():
 
         if metadata_submission.get("studyForm", None):
             study_form = metadata_submission.get("studyForm", {})
-            multiomics_form = metadata_submission.get("multiomicsForm", {})
+            multiomics_form = metadata_submission.get("multiOmicsForm", {})
 
             multiomics_form["alternativeNames"] = study_form.get("alternativeNames", [])
             multiomics_form["GOLDStudyId"] = study_form.get("GOLDStudyId", "")
             multiomics_form["NCBIBioProjectId"] = study_form.get("NCBIBioProjectId", "")
 
-            metadata_submission["multiomicsForm"] = multiomics_form
+            metadata_submission["multiOmicsForm"] = multiomics_form
 
         mappings.append({"id": submission_metadata.id, "metadata_submission": metadata_submission})
     session.bulk_update_mappings(SubmissionMetadata, mappings)
