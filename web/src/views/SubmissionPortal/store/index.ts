@@ -157,7 +157,7 @@ const multiOmicsFormDefault = {
   mtCompatible: undefined as undefined | boolean,
   mtInterleaved: undefined as undefined | boolean,
   omicsProcessingTypes: [] as string[],
-  otherAward: '',
+  otherAward: undefined as undefined | string,
   ship: undefined as undefined | boolean,
   studyNumber: '',
   unknownDoi: undefined as undefined | boolean,

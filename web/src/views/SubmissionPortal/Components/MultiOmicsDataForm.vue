@@ -6,8 +6,6 @@ import {
   watch,
   nextTick,
 } from '@vue/composition-api';
-// @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
 import Definitions from '@/definitions';
 import {
@@ -34,16 +32,16 @@ export default defineComponent({
       formRef.value.validate();
     }
 
-    const facilityEnum = Object.keys(NmdcSchema.enums.ProcessingInstitutionEnum.permissible_values).filter(
-      (facility: string) => ['EMSL', 'JGI'].includes(facility),
-    );
     const projectAwardValidationRules = () => [(v: string) => {
       const awardTypes = Object.values(AwardTypes) as string[];
       const awardChosen = awardTypes.includes(v) || v === multiOmicsForm.otherAward;
       const valid = awardChosen || multiOmicsForm.facilities.length === 0;
       return valid || 'If submitting to a use facility, this field is required.';
     }];
-    const otherAwardValidationRules = () => [(v: string) => {
+    const otherAwardValidationRules = () => [(v: string | undefined) => {
+      if (v === undefined) {
+        return 'Please enter the kind of project award.';
+      }
       const awardTypes = Object.values(AwardTypes) as string[];
       if (multiOmicsForm.award && awardTypes.includes(multiOmicsForm.award)) {
         return true;
@@ -65,10 +63,10 @@ export default defineComponent({
     function resetFields(field: string) {
       if (field === 'dataGenerated') {
         multiOmicsForm.facilityGenerated = undefined;
+        multiOmicsForm.doe = undefined;
       }
-      multiOmicsForm.doe = undefined;
-      multiOmicsForm.award = '';
-      multiOmicsForm.otherAward = '';
+      multiOmicsForm.award = undefined;
+      multiOmicsForm.otherAward = undefined;
       multiOmicsForm.mgCompatible = undefined;
       multiOmicsForm.mgInterleaved = undefined;
       multiOmicsForm.omicsProcessingTypes = [];
@@ -96,7 +94,6 @@ export default defineComponent({
     return {
       addAwardDoi,
       removeAwardDoi,
-      facilityEnum,
       projectAwardValidationRules,
       otherAwardValidationRules,
       doiRequiredRules,
@@ -179,7 +176,7 @@ export default defineComponent({
         v-if="multiOmicsForm.dataGenerated === false"
         v-model="multiOmicsForm.doe"
         label="Are you submitting samples to a DOE user facility (JGI, EMSL)? *"
-        @change="reValidate"
+        @change="resetFields('doe')"
       >
         <v-radio
           label="No"
@@ -289,7 +286,9 @@ export default defineComponent({
       <div
         v-if="multiOmicsForm.doe"
       >
-        <DoeFacility />
+        <DoeFacility
+          @revalidate="revalidate"
+        />
       </div>
 
       <v-alert
