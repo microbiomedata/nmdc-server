@@ -12,7 +12,10 @@ export default defineComponent({
     },
   },
   setup() {
+    const dataCaveat = 'You may proceed with your submission for sample metadata capture. However, there will not be place to provide information about your existing sequencing data as the methods are not supported by NMDC Workflows';
+
     return {
+      dataCaveat,
       multiOmicsForm,
       templateChoiceDisabled,
     };
@@ -87,7 +90,7 @@ export default defineComponent({
                 </v-icon>
               </template>
               <span>
-                You may proceed with your submission for sample metadata capture. However, there will not be place to provide information about your existing sequencing data as the methods are not supported by NMDC Workflows
+                {{ dataCaveat }}
               </span>
             </v-tooltip>
           </template>
@@ -171,7 +174,7 @@ export default defineComponent({
                 </v-icon>
               </template>
               <span>
-                You may proceed with your submission for sample metadata capture. However, there will not be place to provide information about your existing sequencing data as the methods are not supported by NMDC Workflows
+                {{ dataCaveat }}
               </span>
             </v-tooltip>
           </template>
