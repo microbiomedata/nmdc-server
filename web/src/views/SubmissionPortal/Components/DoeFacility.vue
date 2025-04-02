@@ -28,6 +28,7 @@ export default defineComponent({
       if (multiOmicsForm.awardDois === null || multiOmicsForm.awardDois.length < multiOmicsForm.facilities.length) {
         addAwardDoi();
       }
+      // @ts-ignore
       this.$emit('revalidate');
     }
 

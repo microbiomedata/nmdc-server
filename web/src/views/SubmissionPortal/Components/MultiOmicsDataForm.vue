@@ -285,6 +285,7 @@ export default defineComponent({
       </v-radio-group>
       <div
         v-if="multiOmicsForm.doe"
+        class="pb-4"
       >
         <DoeFacility
           @revalidate="revalidate"
@@ -311,7 +312,7 @@ export default defineComponent({
       />
       <div
         v-if="multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')"
-        class="d-flex flex-column grow mb-4"
+        class="d-flex flex-column grow my-4"
       >
         <v-text-field
           v-for="(awardDoi, i) in multiOmicsForm.awardDois"
@@ -345,6 +346,7 @@ export default defineComponent({
         <v-checkbox
           v-if="!multiOmicsForm.dataGenerated && (multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI'))"
           v-model="multiOmicsForm.unknownDoi"
+          class="mt-0"
           :label="`I don't know my award DOI`"
           :hint="Definitions.unknownDoi"
           persistent-hint
