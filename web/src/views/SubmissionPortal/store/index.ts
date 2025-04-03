@@ -191,7 +191,7 @@ function removeAwardDoi(i: number) {
 /**
  * Environment Package Step
  */
-const packageName = ref(['soil'] as (keyof typeof HARMONIZER_TEMPLATES)[]);
+const packageName = ref([] as (keyof typeof HARMONIZER_TEMPLATES)[]);
 const templateList = computed(() => {
   const templates = new Set(packageName.value);
   if (multiOmicsForm.dataGenerated) {
@@ -343,7 +343,7 @@ function reset() {
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
-  packageName.value = ['soil'];
+  packageName.value = [];
   sampleData.value = {};
   status.value = submissionStatus.InProgress;
   isTestSubmission.value = false;
