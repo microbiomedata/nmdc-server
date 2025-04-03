@@ -9,7 +9,7 @@ import { read, writeFile, utils } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
 
-import { HarmonizerApi } from './harmonizerApi';
+import HarmonizerApi from './harmonizerApi';
 import {
   packageName,
   sampleData,
@@ -29,10 +29,14 @@ import {
   isTestSubmission,
 } from './store';
 import {
+  DATA_MG_INTERLEAVED,
+  DATA_MG,
+  DATA_MT,
+  DATA_MT_INTERLEAVED,
   HARMONIZER_TEMPLATES,
   EMSL,
   JGI_MG,
-  JGT_MT,
+  JGI_MT,
   JGI_MG_LR,
   SuggestionsMode,
 } from '@/views/SubmissionPortal/types';
@@ -349,7 +353,19 @@ export default defineComponent({
       if (templateKey === JGI_MG_LR) {
         return row_types.includes('metagenomics_long_read');
       }
-      if (templateKey === JGT_MT) {
+      if (templateKey === JGI_MT) {
+        return row_types.includes('metatranscriptomics');
+      }
+      if (templateKey === DATA_MG) {
+        return row_types.includes('metagenomics');
+      }
+      if (templateKey === DATA_MG_INTERLEAVED) {
+        return row_types.includes('metagenomics');
+      }
+      if (templateKey === DATA_MT) {
+        return row_types.includes('metatranscriptomics');
+      }
+      if (templateKey === DATA_MT_INTERLEAVED) {
         return row_types.includes('metatranscriptomics');
       }
       return false;

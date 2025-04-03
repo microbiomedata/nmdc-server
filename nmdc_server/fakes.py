@@ -351,12 +351,17 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     metadata_submission = {
         "sampleData": {},
         "multiOmicsForm": {
-            "alternativeNames": [],
             "studyNumber": "",
-            "GOLDStudyId": "",
             "JGIStudyId": "",
-            "NCBIBioProjectId": "",
             "omicsProcessingTypes": [],
+            "facilities": [],
+            "otherAward": "",
+            "doe": None,
+            "dataGenerated": None,
+            "facilityGenerated": None,
+            "award": None,
+            "awardDois": [],
+            "mgCompatible": None,
         },
         "studyForm": {
             "studyName": "",
@@ -368,6 +373,9 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "description": "",
             "notes": "",
             "contributors": [],
+            "alternativeNames": [],
+            "GOLDStudyId": "",
+            "NCBIBioProjectId": "",
         },
         "templates": [],
         "addressForm": {
@@ -390,11 +398,6 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "permitNumber": "",
             "biosafetyLevel": "",
             "comments": "",
-        },
-        "contextForm": {
-            "datasetDoi": "",
-            "facilities": [],
-            "otherAward": "",
         },
         "packageName": [],
     }

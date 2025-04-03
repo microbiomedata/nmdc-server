@@ -27,15 +27,28 @@ class StudyForm(BaseModel):
     description: str
     notes: str
     contributors: List[Contributor]
+    alternativeNames: List[str]
+    GOLDStudyId: str
+    NCBIBioProjectId: str
 
 
 class MultiOmicsForm(BaseModel):
-    alternativeNames: List[str]
-    studyNumber: str
-    GOLDStudyId: str
+    award: Optional[str] = None
+    awardDois: Optional[List[str]] = None
+    dataGenerated: Optional[bool] = None
+    doe: Optional[bool] = None
+    facilities: Optional[List[str]] = None
+    facilityGenerated: Optional[bool] = None
     JGIStudyId: str
-    NCBIBioProjectId: str
+    mgCompatible: Optional[bool] = None
+    mgInterleaved: Optional[bool] = None
+    mtCompatible: Optional[bool] = None
+    mtInterleaved: Optional[bool] = None
     omicsProcessingTypes: List[str]
+    otherAward: Optional[str] = None
+    ship: Optional[bool] = None
+    studyNumber: str
+    unknownDoi: Optional[bool] = None
 
 
 class NmcdAddress(BaseModel):
@@ -65,20 +78,8 @@ class AddressForm(BaseModel):
     comments: str
 
 
-class ContextForm(BaseModel):
-    awardDois: Optional[List[str]] = None
-    dataGenerated: Optional[bool] = None
-    facilityGenerated: Optional[bool] = None
-    facilities: List[str]
-    award: Optional[str] = None
-    otherAward: str
-    unknownDoi: Optional[bool] = None
-    ship: Optional[bool] = None
-
-
 class MetadataSubmissionRecordCreate(BaseModel):
     packageName: Union[str, List[str]]
-    contextForm: ContextForm
     addressForm: AddressForm
     templates: List[str]
     studyForm: StudyForm
@@ -92,7 +93,6 @@ class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
 
 class PartialMetadataSubmissionRecord(BaseModel):
     packageName: Optional[List[str]] = None
-    contextForm: Optional[ContextForm] = None
     addressForm: Optional[AddressForm] = None
     templates: Optional[List[str]] = None
     studyForm: Optional[StudyForm] = None

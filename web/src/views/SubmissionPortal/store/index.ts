@@ -5,7 +5,6 @@ import CompositionApi, {
 import { chunk, clone, forEach } from 'lodash';
 import axios from 'axios';
 import * as api from './api';
-import { getVariants } from '../harmonizerApi';
 import { User } from '@/types';
 import {
   HARMONIZER_TEMPLATES,
@@ -18,6 +17,14 @@ import {
   SuggestionType,
   SuggestionsMode,
   MetadataSuggestionRequest,
+  DATA_MG_INTERLEAVED,
+  DATA_MG,
+  DATA_MT_INTERLEAVED,
+  DATA_MT,
+  EMSL,
+  JGI_MG,
+  JGI_MG_LR,
+  JGI_MT,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 
@@ -77,9 +84,7 @@ function canEditSampleMetadata(): boolean {
 }
 
 const hasChanged = ref(0);
-/**
- * Submission Context Step
- */
+
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -106,18 +111,7 @@ const addressFormDefault = {
   irbOrHipaa: undefined as undefined | boolean,
   comments: '',
 };
-const contextFormDefault = {
-  dataGenerated: undefined as undefined | boolean,
-  awardDois: [] as string[] | null,
-  ship: undefined as undefined | boolean,
-  facilityGenerated: undefined as undefined | boolean,
-  facilities: [] as string[],
-  award: undefined as undefined | string,
-  otherAward: '',
-  unknownDoi: undefined as undefined | boolean,
-};
-const contextForm = reactive(clone(contextFormDefault));
-const contextFormValid = ref(false);
+
 const addressForm = reactive(clone(addressFormDefault));
 const addressFormValid = ref(false);
 
@@ -140,6 +134,9 @@ const studyFormDefault = {
     roles: string[];
     permissionLevel: PermissionLevelValues | null;
   }[],
+  alternativeNames: [] as string[],
+  GOLDStudyId: '',
+  NCBIBioProjectId: '',
 };
 const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
@@ -148,12 +145,22 @@ const studyForm = reactive(clone(studyFormDefault));
  * Multi-Omics Form Step
  */
 const multiOmicsFormDefault = {
-  alternativeNames: [] as string[],
-  studyNumber: '',
-  GOLDStudyId: '',
+  award: undefined as undefined | string,
+  awardDois: [] as string[] | null,
+  dataGenerated: undefined as undefined | boolean,
+  doe: undefined as undefined | boolean,
+  facilities: [] as string[],
+  facilityGenerated: undefined as undefined | boolean,
   JGIStudyId: '',
-  NCBIBioProjectId: '',
+  mgCompatible: undefined as undefined | boolean,
+  mgInterleaved: undefined as undefined | boolean,
+  mtCompatible: undefined as undefined | boolean,
+  mtInterleaved: undefined as undefined | boolean,
   omicsProcessingTypes: [] as string[],
+  otherAward: undefined as undefined | string,
+  ship: undefined as undefined | boolean,
+  studyNumber: '',
+  unknownDoi: undefined as undefined | boolean,
 };
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
@@ -164,14 +171,98 @@ const multiOmicsAssociationsDefault = {
 };
 const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 
+function addAwardDoi() {
+  if (multiOmicsForm.awardDois === null || multiOmicsForm.awardDois.length === 0) {
+    multiOmicsForm.awardDois = [''];
+  } else {
+    multiOmicsForm.awardDois.push('');
+  }
+}
+
+function removeAwardDoi(i: number) {
+  if (multiOmicsForm.awardDois === null) {
+    multiOmicsForm.awardDois = [''];
+  }
+  if ((multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
+    multiOmicsForm.awardDois.splice(i, 1);
+  }
+}
+
 /**
  * Environment Package Step
  */
 const packageName = ref(['soil'] as (keyof typeof HARMONIZER_TEMPLATES)[]);
 const templateList = computed(() => {
-  const checkBoxes = multiOmicsForm.omicsProcessingTypes;
-  const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
-  return list;
+  const templates = new Set(packageName.value);
+  if (multiOmicsForm.dataGenerated) {
+    // Have data already been generated? Yes
+    if (!multiOmicsForm.doe) {
+      // Were the data generated at a DOE facility? No
+      if (multiOmicsForm.omicsProcessingTypes.includes('mg')) {
+        // Which datatypes were generated? Metagenome
+        if (multiOmicsForm.mgCompatible) {
+          // Is the generated data compatible? Yes
+          if (multiOmicsForm.mgInterleaved) {
+            // Is the generated data interleaved? Yes
+            templates.add(DATA_MG_INTERLEAVED);
+          } else {
+            // Is the generated data interleaved? No
+            templates.add(DATA_MG);
+          }
+        }
+      }
+      if (multiOmicsForm.omicsProcessingTypes.includes('mt')) {
+        // Which datatypes were generated? Metatranscriptome
+        if (multiOmicsForm.mtCompatible) {
+          // Is the generated data compatible? Yes
+          if (multiOmicsForm.mtInterleaved) {
+            // Is the generated data interleaved? Yes
+            templates.add(DATA_MT_INTERLEAVED);
+          } else {
+            // Is the generated data interleaved? No
+            templates.add(DATA_MT);
+          }
+        }
+      }
+    }
+  } else {
+    // Have data already been generated? No
+    // eslint-disable-next-line no-lonely-if
+    if (multiOmicsForm.doe) {
+      // Are you submitting samples to a DOE user facility? Yes
+      if (multiOmicsForm.facilities.includes('EMSL')) {
+        // Which facility? EMSL
+        if (multiOmicsForm.omicsProcessingTypes.includes('mp-emsl')) {
+          // Data types? Metaproteome
+          templates.add(EMSL);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('mb-emsl')) {
+          // Data types? Metabolome
+          templates.add(EMSL);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('nom-emsl')) {
+          // Data types? Natural Organic Matter
+          templates.add(EMSL);
+        }
+      }
+      if (multiOmicsForm.facilities.includes('JGI')) {
+        // Which facility? JGI
+        if (multiOmicsForm.omicsProcessingTypes.includes('mg-jgi')) {
+          // Data types? Metagenome
+          templates.add(JGI_MG);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('mg-lr-jgi')) {
+          // Data types? Metagenome Long Read
+          templates.add(JGI_MG_LR);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('mt-jgi')) {
+          // Data types? Metatranscriptome
+          templates.add(JGI_MT);
+        }
+      }
+    }
+  }
+  return Array.from(templates);
 });
 /**
  * DataHarmonizer Step
@@ -208,7 +299,6 @@ watch(templateList, () => {
 /** Submit page */
 const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
-  contextForm,
   addressForm,
   templates: templateList.value,
   studyForm,
@@ -244,13 +334,10 @@ function submit(id: string, status: SubmissionStatus = submissionStatus.InProgre
 }
 
 function reset() {
-  Object.assign(contextForm, contextFormDefault);
-  contextFormValid.value = false;
   Object.assign(addressForm, addressFormDefault);
   addressFormValid.value = false;
   studyFormValid.value = false;
   addressFormValid.value = false;
-  Object.assign(contextForm, contextFormDefault);
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
@@ -303,7 +390,6 @@ async function loadRecord(id: string) {
   packageName.value = val.metadata_submission.packageName;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
-  Object.assign(contextForm, val.metadata_submission.contextForm);
   Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
@@ -394,9 +480,9 @@ export {
   multiOmicsForm,
   multiOmicsAssociations,
   multiOmicsFormValid,
+  addAwardDoi,
+  removeAwardDoi,
   sampleData,
-  contextForm,
-  contextFormValid,
   addressForm,
   addressFormDefault,
   addressFormValid,
