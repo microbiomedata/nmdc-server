@@ -738,9 +738,13 @@ async def get_metadata_submissions_mixs(
         "Environmental Broad Scale",
         "Environmental Local Scale",
         "Environmental Medium",
-        # "Enum T/F",
+        "Package T/F",
+        "Broad Scale T/F",
+        "Local Scale T/F",
+        "Medium T/F",
     ]
 
+    # Get submission schema view for enum validation
     view = fetch_nmdc_submission_schema_view()
     
     data_rows = []
@@ -748,7 +752,14 @@ async def get_metadata_submissions_mixs(
 
         metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
-        env_package = metadata["packageName"] if "packageName" in metadata else {}
+        if "packageName" in metadata: 
+            for package_name in metadata["packageName"]:
+                env_package = package_name
+        else: 
+            env_package = ''
+        # env_package = metadata["packageName"] if "packageName" in metadata else {}
+        # env_package = env_package.lstrip("[").lstrip("]")
+        print(env_package)
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -783,6 +794,69 @@ async def get_metadata_submissions_mixs(
                 env_medium = env_medium.replace("\r", "")
                 env_medium = env_medium.replace("\n", "").lstrip("_")
 
+                # Perform enum checks
+                env_package_enum = True
+                env_broad_scale_enum = True
+                env_local_scale_enum = True
+                env_medium_enum = True
+
+                # 1. Check whether the env package is water, soil, built, plant, etc
+                # 2. Check correct enums based on package/envo
+                # 3. Switch flag to T/F as needed
+                # 4. Update new col
+
+                # Questions
+                # - Does the ENVO number need to match exactly or are just keywords ok?
+                # - Preferred name for enum T/F col?
+                # - Expectations around updating schema?s
+
+                # Enums exist currently for water, soil, sediment, and plant-associated
+                # Outside this category needs to be updated
+
+                # Find more robust solution here?
+
+                if env_package not in view['EnvPackageEnum']['permissible_values']:
+                    env_package_enum = False
+
+                if env_package == 'water':
+                    if env_broad_scale not in view['EnvBroadScaleWaterEnum']['permissible_values']:
+                        env_broad_scale_enum = False
+                    if env_local_scale not in view['EnvLocalScaleWaterEnum']['permissible_values']:
+                        env_local_scale_enum = False
+                    if env_medium not in view['EnvMediumWaterEnum']['permissible_values']:
+                        env_medium_enum = False
+
+                elif env_package == 'soil':
+                    if env_broad_scale not in view['EnvBroadScaleSoilEnum']['permissible_values']:
+                        env_broad_scale_enum = False
+                    if env_local_scale not in view['EnvLocalScaleSoilEnum']['permissible_values']:
+                        env_local_scale_enum = False
+                    if env_medium not in view['EnvMediumSoilEnum']['permissible_values']:
+                        env_medium_enum = False
+
+                elif env_package == 'sediment':
+                    if env_broad_scale not in view['EnvBroadScaleSedimentEnum']['permissible_values']:
+                        env_broad_scale_enum = False
+                    if env_local_scale not in view['EnvLocalScaleSedimentEnum']['permissible_values']:
+                        env_local_scale_enum = False
+                    if env_medium not in view['EnvMediumSedimentEnum']['permissible_values']:
+                        env_medium_enum = False
+
+                elif env_package == 'plant-associated':
+                    if env_broad_scale not in view['EnvBroadScalePlantAssociatedEnum']['permissible_values']:
+                        env_broad_scale_enum = False
+                    if env_local_scale not in view['EnvLocalScalePlantAssociatedEnum']['permissible_values']:
+                        env_local_scale_enum = False
+                    if env_medium not in view['EnvMediumPlantAssociatedEnum']['permissible_values']:
+                        env_medium_enum = False
+
+                else:
+                    env_broad_scale_enum = False
+                    env_local_scale_enum = False
+                    env_medium_enum = False
+
+
+
                 # Append each sample as new row (with env data)
                 data_row = [
                     s.id,
@@ -792,7 +866,10 @@ async def get_metadata_submissions_mixs(
                     env_broad_scale,
                     env_local_scale,
                     env_medium,
-                    # enum_tf,
+                    env_package_enum,
+                    env_broad_scale_enum,
+                    env_local_scale_enum,
+                    env_medium_enum,
                 ]
                 data_rows.append(data_row)
 
@@ -821,7 +898,7 @@ async def get_metadata_submissions_mixs(
 
 def fetch_nmdc_submission_schema_view():
 
-    # Use SchemaView to open nmdc_submission_schema.yaml
+    # Use SchemaView to open nmdc_submission_schema.yaml and get the enums
     view = SchemaView("https://raw.githubusercontent.com/microbiomedata/submission-schema/refs/heads/main/src/nmdc_submission_schema/schema/nmdc_submission_schema.yaml")
     enum_view = view.all_enums()
 
