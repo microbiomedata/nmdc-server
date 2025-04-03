@@ -757,9 +757,6 @@ async def get_metadata_submissions_mixs(
                 env_package = package_name
         else: 
             env_package = ''
-        # env_package = metadata["packageName"] if "packageName" in metadata else {}
-        # env_package = env_package.lstrip("[").lstrip("]")
-        print(env_package)
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -800,20 +797,13 @@ async def get_metadata_submissions_mixs(
                 env_local_scale_enum = True
                 env_medium_enum = True
 
-                # 1. Check whether the env package is water, soil, built, plant, etc
-                # 2. Check correct enums based on package/envo
-                # 3. Switch flag to T/F as needed
-                # 4. Update new col
-
                 # Questions
                 # - Does the ENVO number need to match exactly or are just keywords ok?
                 # - Preferred name for enum T/F col?
-                # - Expectations around updating schema?s
+                # - Expectations around updating schema?
 
                 # Enums exist currently for water, soil, sediment, and plant-associated
                 # Outside this category needs to be updated
-
-                # Find more robust solution here?
 
                 if env_package not in view['EnvPackageEnum']['permissible_values']:
                     env_package_enum = False
