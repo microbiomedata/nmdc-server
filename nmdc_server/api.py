@@ -752,10 +752,10 @@ async def get_metadata_submissions_mixs(
 
         metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
-        if "packageName" in metadata: 
+        if "packageName" in metadata:
             for package_name in metadata["packageName"]:
                 env_package = package_name
-        else: 
+        else:
             env_package = ''
 
         # Get sample names from each sample type
@@ -844,8 +844,6 @@ async def get_metadata_submissions_mixs(
                     env_broad_scale_enum = False
                     env_local_scale_enum = False
                     env_medium_enum = False
-
-
 
                 # Append each sample as new row (with env data)
                 data_row = [
