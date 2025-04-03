@@ -20,6 +20,7 @@ import ValidateSubmit from '@/views/SubmissionPortal/Components/ValidateSubmit.v
 import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
 
 import { unlockSubmission } from '@/views/SubmissionPortal/store/api';
+import { incrementalSaveRecord } from '@/views/SubmissionPortal/store';
 
 import { parseQuery, stringifyQuery } from './utils';
 
@@ -122,7 +123,8 @@ const router = new VueRouter({
 });
 router.beforeEach((to: Route, from: Route, next: Function) => {
   if (from.fullPath.includes('submission') && !!from.params.id) {
-    // We are navigating away from a submission edit screen
+    // We are navigating away from a submission edit screen, so save the progress
+    incrementalSaveRecord(from.params.id);
     if (to.fullPath.includes('submission') && !!to.params.id && to.params.id === from.params.id) {
       // We are navigating to a submission edit screen for the same submission, no need to  unlock
       next();
