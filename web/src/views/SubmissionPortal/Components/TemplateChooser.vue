@@ -54,7 +54,7 @@ export default defineComponent({
       v-model="packageName"
       dense
       hide-details
-      class="my-6"
+      class="my-2"
       :disabled="templateChoiceDisabled || !canEditSubmissionMetadata()"
       :label="HARMONIZER_TEMPLATES[option[0]].displayName"
       :value="option[0]"
@@ -67,6 +67,7 @@ export default defineComponent({
       :key="option[0]"
       v-model="packageName"
       hide-details
+      class="my-2"
       :disabled="true"
       :label="HARMONIZER_TEMPLATES[option[0]].displayName"
       :value="option[0]"
@@ -74,6 +75,7 @@ export default defineComponent({
     <v-alert
       v-if="!templateChoiceDisabled"
       color="grey lighten-2"
+      class="mt-3"
     >
       <p class="text-h5">
         DataHarmonizer Template Choice
