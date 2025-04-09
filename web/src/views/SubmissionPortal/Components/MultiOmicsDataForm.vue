@@ -18,6 +18,8 @@ import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
 import DoeFacility from './DoeFacility.vue';
 
+const OTHER = 'OTHER';
+
 export default defineComponent({
   components: {
     DataTypes,
@@ -32,23 +34,29 @@ export default defineComponent({
       formRef.value.validate();
     }
 
-    const projectAwardValidationRules = () => [(v: string) => {
-      const awardTypes = Object.values(AwardTypes) as string[];
-      const awardChosen = awardTypes.includes(v) || v === multiOmicsForm.otherAward;
-      const valid = awardChosen || multiOmicsForm.facilities.length === 0;
-      return valid || 'If submitting to a use facility, this field is required.';
-    }];
-    const otherAwardValidationRules = () => [(v: string | undefined) => {
-      if (v === undefined) {
-        return 'Please enter the kind of project award.';
-      }
-      const awardTypes = Object.values(AwardTypes) as string[];
-      if (multiOmicsForm.award && awardTypes.includes(multiOmicsForm.award)) {
+    const projectAwardValidationRules = () => [(v: string | undefined) => {
+      const facilityChosen = multiOmicsForm.facilities.length > 0;
+      if (!facilityChosen) {
         return true;
       }
-      const inputEmpty = v.trim().length === 0;
-      if (multiOmicsForm.facilities.length > 0) {
-        return !inputEmpty || 'Please enter the kind of project award.';
+      const awardChosen = v !== undefined;
+      if (!awardChosen) {
+        return 'If submitting to a use facility, this field is required.';
+      }
+      return true;
+    }];
+    const otherAwardValidationRules = () => [(v: string | undefined) => {
+      const facilityChosen = multiOmicsForm.facilities.length > 0;
+      const awardChosen = multiOmicsForm.award !== undefined;
+      if (!facilityChosen && !awardChosen) {
+        return true;
+      }
+      if (!awardChosen || multiOmicsForm.award !== OTHER) {
+        return true;
+      }
+      const inputEmpty = v === undefined || v.trim().length === 0;
+      if (inputEmpty) {
+        return 'Please enter the kind of project award.';
       }
       return true;
     }];
@@ -92,6 +100,7 @@ export default defineComponent({
     });
 
     return {
+      OTHER,
       addAwardDoi,
       removeAwardDoi,
       projectAwardValidationRules,
@@ -268,7 +277,7 @@ export default defineComponent({
         </div>
 
         <v-radio
-          :value="multiOmicsForm.otherAward"
+          :value="OTHER"
         >
           <template #label>
             <span class="mr-4">Other</span>
@@ -276,7 +285,7 @@ export default defineComponent({
               v-model="multiOmicsForm.otherAward"
               class="pa-0 ma-0"
               dense
-              hide-details
+              hide-details="auto"
               outlined
               :rules="otherAwardValidationRules()"
             />
