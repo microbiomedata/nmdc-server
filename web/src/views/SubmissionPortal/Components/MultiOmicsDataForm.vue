@@ -314,11 +314,13 @@ export default defineComponent({
       <DataTypes
         v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.doe === false"
         legend="Which datatypes may be generated later?"
+        :show-data-compatibility-questions="false"
         @revalidate="revalidate"
       />
       <DataTypes
         v-if="multiOmicsForm.facilityGenerated === false"
         legend="Which datatypes were generated?"
+        :show-data-compatibility-questions="true"
         @revalidate="revalidate"
       />
       <div

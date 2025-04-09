@@ -10,6 +10,10 @@ export default defineComponent({
       type: String,
       default: 'Data Types',
     },
+    showDataCompatibilityQuestions: {
+      type: Boolean,
+      default: true,
+    },
   },
   setup(props, { emit }) {
     const dataCaveat = 'You may proceed with your submission for sample metadata capture. However, there will not be place to provide information about your existing sequencing data as the methods are not supported by NMDC Workflows';
@@ -62,7 +66,7 @@ export default defineComponent({
 <template>
   <div
 
-    class="text-h6 mt-4"
+    class="text-h6 my-4"
   >
     <legend
       class="v-label theme--light mb-2"
@@ -79,7 +83,7 @@ export default defineComponent({
       @change="handleMetagenomeChange"
     />
     <div
-      v-if="multiOmicsForm.omicsProcessingTypes.includes('mg')"
+      v-if="showDataCompatibilityQuestions && multiOmicsForm.omicsProcessingTypes.includes('mg')"
       class="v-label theme--light my-2 mx-8"
       style="font-size: 14px;"
     >
@@ -163,7 +167,7 @@ export default defineComponent({
       @change="handleMetatranscriptomeChange"
     />
     <div
-      v-if="multiOmicsForm.omicsProcessingTypes.includes('mt')"
+      v-if="showDataCompatibilityQuestions && multiOmicsForm.omicsProcessingTypes.includes('mt')"
       class="v-label theme--light my-2 mx-8"
       style="font-size: 14px;"
     >
