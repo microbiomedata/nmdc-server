@@ -305,10 +305,12 @@ export default defineComponent({
       <DataTypes
         v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.doe === false"
         legend="Which datatypes may be generated later?"
+        @revalidate="revalidate"
       />
       <DataTypes
         v-if="multiOmicsForm.facilityGenerated === false"
         legend="Which datatypes were generated?"
+        @revalidate="revalidate"
       />
       <div
         v-if="multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')"

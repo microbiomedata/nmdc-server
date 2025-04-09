@@ -11,13 +11,47 @@ export default defineComponent({
       default: 'Data Types',
     },
   },
-  setup() {
+  setup(props, { emit }) {
     const dataCaveat = 'You may proceed with your submission for sample metadata capture. However, there will not be place to provide information about your existing sequencing data as the methods are not supported by NMDC Workflows';
+
+    const handleMetagenomeChange = (value: string[]) => {
+      if (!value.includes('mg')) {
+        multiOmicsForm.mgCompatible = undefined;
+        multiOmicsForm.mgInterleaved = undefined;
+      }
+      emit('revalidate');
+    };
+
+    const handleMgCompatibleChange = (value: boolean) => {
+      if (!value) {
+        multiOmicsForm.mgInterleaved = undefined;
+      }
+      emit('revalidate');
+    };
+
+    const handleMetatranscriptomeChange = (value: string[]) => {
+      if (!value.includes('mt')) {
+        multiOmicsForm.mtCompatible = undefined;
+        multiOmicsForm.mtInterleaved = undefined;
+      }
+      emit('revalidate');
+    };
+
+    const handleMtCompatibleChange = (value: boolean) => {
+      if (!value) {
+        multiOmicsForm.mtInterleaved = undefined;
+      }
+      emit('revalidate');
+    };
 
     return {
       dataCaveat,
       multiOmicsForm,
       templateChoiceDisabled,
+      handleMetagenomeChange,
+      handleMgCompatibleChange,
+      handleMetatranscriptomeChange,
+      handleMtCompatibleChange,
     };
   },
 
@@ -42,6 +76,7 @@ export default defineComponent({
       value="mg"
       :disabled="templateChoiceDisabled"
       hide-details
+      @change="handleMetagenomeChange"
     />
     <div
       v-if="multiOmicsForm.omicsProcessingTypes.includes('mg')"
@@ -68,6 +103,8 @@ export default defineComponent({
       <v-radio-group
         v-model="multiOmicsForm.mgCompatible"
         label="Is the generated data compatible? *"
+        :rules="[v => v !== undefined || 'This field is required']"
+        @change="handleMgCompatibleChange"
       >
         <v-radio
           :value="false"
@@ -79,6 +116,7 @@ export default defineComponent({
             <v-tooltip
               right
               class="x-2"
+              max-width="500"
             >
               <template #activator="{ on }">
                 <v-icon
@@ -104,6 +142,7 @@ export default defineComponent({
         v-if="multiOmicsForm.mgCompatible"
         v-model="multiOmicsForm.mgInterleaved"
         label="Is the data in interleaved format? *"
+        :rules="[v => v !== undefined || 'This field is required']"
       >
         <v-radio
           label="No"
@@ -121,6 +160,7 @@ export default defineComponent({
       value="mt"
       :disabled="templateChoiceDisabled"
       hide-details
+      @change="handleMetatranscriptomeChange"
     />
     <div
       v-if="multiOmicsForm.omicsProcessingTypes.includes('mt')"
@@ -152,6 +192,8 @@ export default defineComponent({
       <v-radio-group
         v-model="multiOmicsForm.mtCompatible"
         label="Is the generated data compatible? *"
+        :rules="[v => v !== undefined || 'This field is required']"
+        @change="handleMtCompatibleChange"
       >
         <v-radio
           :value="false"
@@ -163,6 +205,7 @@ export default defineComponent({
             <v-tooltip
               right
               class="x-2"
+              max-width="500"
             >
               <template #activator="{ on }">
                 <v-icon
@@ -187,7 +230,8 @@ export default defineComponent({
       <v-radio-group
         v-if="multiOmicsForm.mtCompatible"
         v-model="multiOmicsForm.mtInterleaved"
-        label="Is the dasta in interleaved format? *"
+        label="Is the data in interleaved format? *"
+        :rules="[v => v !== undefined || 'This field is required']"
       >
         <v-radio
           label="No"
