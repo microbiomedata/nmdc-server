@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, 
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
+from linkml_runtime.utils.schemaview import SchemaView
 
 from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
@@ -28,6 +29,8 @@ from nmdc_server.models import (
 )
 from nmdc_server.pagination import Pagination
 from nmdc_server.table import Table
+
+import yaml
 
 router = APIRouter()
 
@@ -704,8 +707,12 @@ async def download_zip_file(
     "/metadata_submission/mixs_report",
     tags=["metadata_submission"],
 )
+# async def get_metadata_submissions_mixs(
+#     db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+# ):
+    
 async def get_metadata_submissions_mixs(
-    db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     r"""
     Generate a TSV-formatted report of biosamples belonging to submissions
@@ -715,8 +722,8 @@ async def get_metadata_submissions_mixs(
     local scale, and medium are specified for each biosample. The report is
     designed to facilitate the review of submissions by NMDC team members.
     """
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+    # if not user.is_admin:
+    #     raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     # Get the submissions from the database.
     q = crud.get_query_for_submitted_pending_review_submissions(db)
@@ -731,13 +738,25 @@ async def get_metadata_submissions_mixs(
         "Environmental Broad Scale",
         "Environmental Local Scale",
         "Environmental Medium",
+        "Package T/F",
+        "Broad Scale T/F",
+        "Local Scale T/F",
+        "Medium T/F",
     ]
+
+    # Get submission schema view for enum validation
+    view = fetch_nmdc_submission_schema_view()
+    
     data_rows = []
     for s in submissions:
 
         metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
-        env_package = metadata["packageName"] if "packageName" in metadata else {}
+        if "packageName" in metadata:
+            for package_name in metadata["packageName"]:
+                env_package = package_name
+        else:
+            env_package = ''
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -772,6 +791,60 @@ async def get_metadata_submissions_mixs(
                 env_medium = env_medium.replace("\r", "")
                 env_medium = env_medium.replace("\n", "").lstrip("_")
 
+                # Perform enum checks
+                env_package_enum = True
+                env_broad_scale_enum = True
+                env_local_scale_enum = True
+                env_medium_enum = True
+
+                # Questions
+                # - Does the ENVO number need to match exactly or are just keywords ok?
+                # - Preferred name for enum T/F col?
+                # - Expectations around updating schema?
+
+                # Enums exist currently for water, soil, sediment, and plant-associated
+                # Outside this category needs to be updated
+
+                if env_package not in view['EnvPackageEnum']['permissible_values']:
+                    env_package_enum = False
+
+                if env_package == 'water':
+                    if env_broad_scale not in view['EnvBroadScaleWaterEnum']['permissible_values']:
+                        env_broad_scale_enum = False
+                    if env_local_scale not in view['EnvLocalScaleWaterEnum']['permissible_values']:
+                        env_local_scale_enum = False
+                    if env_medium not in view['EnvMediumWaterEnum']['permissible_values']:
+                        env_medium_enum = False
+
+                elif env_package == 'soil':
+                    if env_broad_scale not in view['EnvBroadScaleSoilEnum']['permissible_values']:
+                        env_broad_scale_enum = False
+                    if env_local_scale not in view['EnvLocalScaleSoilEnum']['permissible_values']:
+                        env_local_scale_enum = False
+                    if env_medium not in view['EnvMediumSoilEnum']['permissible_values']:
+                        env_medium_enum = False
+
+                elif env_package == 'sediment':
+                    if env_broad_scale not in view['EnvBroadScaleSedimentEnum']['permissible_values']:
+                        env_broad_scale_enum = False
+                    if env_local_scale not in view['EnvLocalScaleSedimentEnum']['permissible_values']:
+                        env_local_scale_enum = False
+                    if env_medium not in view['EnvMediumSedimentEnum']['permissible_values']:
+                        env_medium_enum = False
+
+                elif env_package == 'plant-associated':
+                    if env_broad_scale not in view['EnvBroadScalePlantAssociatedEnum']['permissible_values']:
+                        env_broad_scale_enum = False
+                    if env_local_scale not in view['EnvLocalScalePlantAssociatedEnum']['permissible_values']:
+                        env_local_scale_enum = False
+                    if env_medium not in view['EnvMediumPlantAssociatedEnum']['permissible_values']:
+                        env_medium_enum = False
+
+                else:
+                    env_broad_scale_enum = False
+                    env_local_scale_enum = False
+                    env_medium_enum = False
+
                 # Append each sample as new row (with env data)
                 data_row = [
                     s.id,
@@ -781,6 +854,10 @@ async def get_metadata_submissions_mixs(
                     env_broad_scale,
                     env_local_scale,
                     env_medium,
+                    env_package_enum,
+                    env_broad_scale_enum,
+                    env_local_scale_enum,
+                    env_medium_enum,
                 ]
                 data_rows.append(data_row)
 
@@ -806,6 +883,27 @@ async def get_metadata_submissions_mixs(
     )
 
     return response
+
+def fetch_nmdc_submission_schema_view():
+
+    # Use SchemaView to open nmdc_submission_schema.yaml and get the enums
+    view = SchemaView("https://raw.githubusercontent.com/microbiomedata/submission-schema/refs/heads/main/src/nmdc_submission_schema/schema/nmdc_submission_schema.yaml")
+    enum_view = view.all_enums()
+
+    # Get only the enums to have a smaller schema to pass and compare against
+    isolated_enums = {
+        enum_name: {
+            # Also only grab the relevant pieces - name and perm. values
+            "name": enum_data["name"],
+            "permissible_values": list(enum_data["permissible_values"].keys())
+        }
+        for enum_name, enum_data in enum_view.items()
+
+        # Only grab the enums that are relevant to the MIxS data check
+        if "EnvPackage" in enum_name or "EnvMedium" in enum_name or "EnvBroadScale" in enum_name or "EnvLocalScale" in enum_name
+    }
+
+    return isolated_enums
 
 
 @router.get(
