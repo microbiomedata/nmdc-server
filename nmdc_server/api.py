@@ -839,6 +839,7 @@ async def get_metadata_submissions_report(
         "Status",
         "Is Test Submission",
         "Date Last Modified",
+        "Date Created",
     ]
     data_rows = []
     for s in submissions:
@@ -859,6 +860,7 @@ async def get_metadata_submissions_report(
             s.status,
             s.is_test_submission,
             s.date_last_modified,
+            s.created,
         ]
         data_rows.append(data_row)
 
