@@ -92,6 +92,10 @@ _envo_keys: Dict[str, Tuple[Table, str]] = {
 
 _association_proxy_keys: Dict[str, Tuple[Any, Any]] = {
     "principal_investigator_name": (models.Study, models.PrincipalInvestigator.name),
+    "metaproteomics_analysis_category": (
+        models.OmicsProcessing,
+        models.MetaproteomicAnalysis.metaproteomics_analysis_category,
+    ),
 }
 
 _special_keys: Dict[str, Tuple[Table, str]] = {
