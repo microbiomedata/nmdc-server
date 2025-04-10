@@ -115,6 +115,11 @@ const FunctionSearchFacets: SearchFacet[] = [
     table: 'omics_processing',
     group: 'Data Generation',
   },
+  {
+    field: 'metaproteomics_analysis_category',
+    table: 'omics_processing',
+    group: 'Workflow Activity',
+  },
 ];
 
 export default defineComponent({
