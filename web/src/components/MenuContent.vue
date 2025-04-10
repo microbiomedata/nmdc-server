@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  defineComponent, PropType, onBeforeUnmount, computed,
+  defineComponent, PropType, onBeforeUnmount, onMounted, computed,
 } from '@vue/composition-api';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
@@ -57,6 +57,8 @@ export default defineComponent({
 
   setup(props, { emit }) {
     onBeforeUnmount(() => emit('close'));
+
+    onMounted(() => console.log(props));
 
     const description = computed(() => {
       const fieldSchemaName = getField(props.field, props.table);
