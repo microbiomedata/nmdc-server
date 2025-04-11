@@ -84,14 +84,17 @@ def upgrade():
             # Remove the obsoleted contextForm
             metadata_submission.pop("contextForm", None)
 
-            # Infer the value of the new `doe` field on the multiOmicsForm. This field captures whether samples will be
-            # submitted to a DOE user facility, if data has not already been generated for them.
+            # Infer the value of the new `doe` field on the multiOmicsForm. This field captures
+            # whether samples will be submitted to a DOE user facility, if data has not already
+            # been generated for them.
             data_generated = multiomics_form.get("dataGenerated")
             facilities = multiomics_form.get("facilities", [])
             omics_processing_types = multiomics_form.get("omicsProcessingTypes", [])
-            if data_generated == False and len(facilities) > 0:
+            if data_generated is False and len(facilities) > 0:
                 multiomics_form["doe"] = True
-            elif data_generated == False and any(t in omics_processing_types for t in ["mg", "mt", "mp", "mb", "nom"]):
+            elif data_generated is False and any(
+                t in omics_processing_types for t in ["mg", "mt", "mp", "mb", "nom"]
+            ):
                 multiomics_form["doe"] = False
 
         if metadata_submission.get("multiOmicsForm", None):
