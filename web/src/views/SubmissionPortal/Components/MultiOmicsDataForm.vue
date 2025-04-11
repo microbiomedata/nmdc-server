@@ -177,7 +177,7 @@ export default defineComponent({
         />
       </v-radio-group>
       <div
-        v-if="multiOmicsForm.facilityGenerated"
+        v-if="multiOmicsForm.dataGenerated === true && multiOmicsForm.facilityGenerated"
       >
         <DoeFacility />
       </div>
@@ -293,7 +293,7 @@ export default defineComponent({
         </v-radio>
       </v-radio-group>
       <div
-        v-if="multiOmicsForm.doe"
+        v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.doe"
         class="pb-4"
       >
         <DoeFacility
