@@ -431,6 +431,12 @@ class OmicsProcessing(Base, AnnotatedModel):
     outputs = output_relationship(omics_processing_output_association)
     has_outputs = association_proxy("outputs", "id")
 
+    # This will either be the ID of a manifest_set document of type
+    # poolable_replicates, or the ID of the data_generation_set document.
+    # Used to inform the "true" counts of data_generation (omics_processing)
+    # records.
+    poolable_replicates_manifest_id = Column(String, nullable=True)
+
     @property
     def open_in_gold(self) -> Optional[str]:
         return gold_url("https://gold.jgi.doe.gov/project?id=", self.id)
