@@ -1,8 +1,7 @@
 <script lang="ts">
 import {
-  computed, defineComponent, reactive, toRef, watch,
+  computed, defineComponent, reactive, toRef,
 } from '@vue/composition-api';
-import { incrementalSaveRecord } from '../store';
 
 const StepperMap: Record<string | number, number | string> = {
   'Submission Home': 1,
@@ -28,14 +27,6 @@ export default defineComponent({
   setup(props, { root }) {
     const currentRoute = toRef(reactive(root.$router), 'currentRoute');
     const step = computed(() => StepperMap[currentRoute.value.name || ''] || 0);
-
-    const currentRouteName = computed(() => root.$route.name);
-
-    watch(currentRouteName, () => {
-      if (root.$route.params.id) {
-        incrementalSaveRecord(root.$route.params.id);
-      }
-    });
 
     function gotoStep(newstep: number) {
       const routeName = StepperMap[newstep];

@@ -80,7 +80,16 @@ export default defineComponent({
       <p class="text-h5">
         DataHarmonizer Template Choice
       </p>
-      Your DataHarmonizer template is "{{ templateListDisplayNames }}".
+      <template
+        v-if="packageName.length!=0"
+      >
+        Your DataHarmonizer template is "{{ templateListDisplayNames }}".
+      </template>
+      <template
+        v-else
+      >
+        Please Select One or More Options for Your Template.
+      </template>
     </v-alert>
     <v-alert
       v-else
