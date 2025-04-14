@@ -79,6 +79,16 @@ export default defineComponent({
       if (field === 'study_id') {
         return `/details/study/${props.item.study_id}`;
       }
+      if (
+        field === 'env_broad_scale'
+          || field === 'env_local_scale'
+          || field === 'env_medium'
+      ) {
+        const item = props.item as BiosampleSearchResult;
+        const env = item[field];
+        const request = `http://purl.obolibrary.org/obo/${env.id.replace(':', '_')}`;
+        return env.id ? `https://www.ebi.ac.uk/ols4/ontologies/envo/classes/${encodeURIComponent(request)}` : undefined;
+      }
       return undefined;
     }
 
