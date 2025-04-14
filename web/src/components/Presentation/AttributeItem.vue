@@ -86,8 +86,19 @@ export default defineComponent({
       ) {
         const item = props.item as BiosampleSearchResult;
         const env = item[field];
+        if (!env.id) {
+          return undefined;
+        }
         const request = `http://purl.obolibrary.org/obo/${env.id.replace(':', '_')}`;
-        return env.id ? `https://www.ebi.ac.uk/ols4/ontologies/envo/classes/${encodeURIComponent(request)}` : undefined;
+        let apiUrl = '';
+        if (env.id.startsWith('ENVO')) {
+          apiUrl = 'https://www.ebi.ac.uk/ols4/ontologies/envo/classes/';
+        } else if (env.id.startsWith('PO')) {
+          apiUrl = 'https://www.ebi.ac.uk/ols4/ontologies/po/classes/';
+        } else if (env.id.startsWith('UBERON')) {
+          apiUrl = 'https://www.ebi.ac.uk/ols4/ontologies/uberon/classes/';
+        }
+        return apiUrl ? `${apiUrl}${encodeURIComponent(request)}` : undefined;
       }
       return undefined;
     }
