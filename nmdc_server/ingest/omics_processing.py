@@ -107,7 +107,9 @@ def get_configuration_name(mongodb: Database, configuration_id: str, config_map)
 
 
 def get_poolable_replicate_manifest(
-    omics_processing_id: str, data_object_id: str, mongodb: Database
+    omics_processing_id: str,
+    data_object_id: str,
+    mongodb: Database,
 ) -> str:
     """
     Determine which poolable replicate manifest, if any, this data_generation is associated with.
@@ -121,10 +123,7 @@ def get_poolable_replicate_manifest(
 
     manifest_id = data_object_document.get("in_manifest")[0]
     manifest_document = mongodb["manifest_set"].find_one({"id": manifest_id})
-    if manifest_document:
-        print(manifest_id, manifest_document["manifest_category"])
     if manifest_document and manifest_document["manifest_category"] == "poolable_replicates":
-        print(manifest_document)
         return manifest_id
     return omics_processing_id
 
