@@ -154,6 +154,7 @@ export default defineComponent({
       }
       harmonizerApi.loadData(activeTemplateData.value);
       harmonizerApi.setInvalidCells(invalidCells.value[activeTemplateKey.value] || {});
+      harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
     const validationErrors = computed(() => {
@@ -532,7 +533,6 @@ export default defineComponent({
       // When changing templates we may need to populate the common columns
       // from the environment tabs
       synchronizeTabData(nextTemplateKey);
-
       activeTemplateKey.value = nextTemplateKey;
       activeTemplate.value = nextTemplate;
       harmonizerApi.useTemplate(nextTemplate.schemaClass);
