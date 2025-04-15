@@ -343,7 +343,8 @@ export default defineComponent({
         return false;
       }
       if (templateKey === EMSL) {
-        return row_types.includes('metaproteomics')
+        return row_types.includes('lipidomics')
+          || row_types.includes('metaproteomics')
           || row_types.includes('metabolomics')
           || row_types.includes('natural organic matter');
       }
