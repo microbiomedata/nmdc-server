@@ -106,6 +106,28 @@ def get_configuration_name(mongodb: Database, configuration_id: str, config_map)
     return config_record["name"] if config_record else None
 
 
+def get_poolable_replicate_manifest(
+    omics_processing_id: str,
+    data_object_id: str,
+    mongodb: Database,
+) -> str:
+    """
+    Determine which poolable replicate manifest, if any, this data_generation is associated with.
+
+    Returns either the ID of a manifest of type poolable_replicates, or the ID of the
+    data_generation itself. Used for the purposes of counting data_generations for the Data Portal.
+    """
+    data_object_document = mongodb["data_object_set"].find_one({"id": data_object_id})
+    if not data_object_document or not data_object_document.get("in_manifest", None):
+        return omics_processing_id
+
+    manifest_id = data_object_document.get("in_manifest")[0]
+    manifest_document = mongodb["manifest_set"].find_one({"id": manifest_id})
+    if manifest_document and manifest_document["manifest_category"] == "poolable_replicates":
+        return manifest_id
+    return omics_processing_id
+
+
 def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, logger, config_map):
     logger = get_logger(__name__)
     input_ids: list[str] = obj.pop("has_input", [""])
@@ -155,6 +177,7 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
         # mypy thinks that omics_processing.biosample_inputs is of type Biosample
         omics_processing.biosample_inputs.append(biosample_object)  # type: ignore
 
+    manifest_id: str = omics_processing.id
     for data_object_id in data_objects:
         data_object = db.query(models.DataObject).get(data_object_id)
         if data_object is None:
@@ -170,6 +193,9 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
         db.add(data_object)
         omics_processing.outputs.append(data_object)  # type: ignore
 
+        manifest_id = get_poolable_replicate_manifest(omics_processing.id, data_object_id, mongodb)
+
+    omics_processing.poolable_replicates_manifest_id = manifest_id
     db.add(omics_processing)
 
 
