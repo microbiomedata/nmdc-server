@@ -86,9 +86,6 @@ export default defineComponent({
       ) {
         const item = props.item as BiosampleSearchResult;
         const env = item[field];
-        if (!env.id) {
-          return undefined;
-        }
         const request = `http://purl.obolibrary.org/obo/${env.id.replace(':', '_')}`;
         let apiUrl = '';
         if (env.id.startsWith('ENVO')) {
@@ -98,7 +95,7 @@ export default defineComponent({
         } else if (env.id.startsWith('UBERON')) {
           apiUrl = 'https://www.ebi.ac.uk/ols4/ontologies/uberon/classes/';
         }
-        return apiUrl ? `${apiUrl}${encodeURIComponent(request)}` : undefined;
+        return `${apiUrl}${encodeURIComponent(request)}`;
       }
       return undefined;
     }

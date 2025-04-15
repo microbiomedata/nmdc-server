@@ -501,22 +501,22 @@ const fields: Record<string, FieldsData> = {
   /* END GOLD ecosystem type */
   /* MIxS Environmental Triad terms */
   env_broad_scale: {
+    icon: 'mdi-link',
     name: 'Broad-scale Environmental Context',
     group: 'MIxS Environmental Triad',
     sortKey: 1,
-    icon: 'mdi-link',
   },
   env_local_scale: {
+    icon: 'mdi-link',
     name: 'Local Environmental Context',
     group: 'MIxS Environmental Triad',
     sortKey: 2,
-    icon: 'mdi-link',
   },
   env_medium: {
+    icon: 'mdi-link',
     name: 'Environmental Medium',
     group: 'MIxS Environmental Triad',
     sortKey: 3,
-    icon: 'mdi-link',
   },
   open_in_gold: {
     icon: 'mdi-link',
