@@ -504,16 +504,19 @@ const fields: Record<string, FieldsData> = {
     name: 'Broad-scale Environmental Context',
     group: 'MIxS Environmental Triad',
     sortKey: 1,
+    icon: 'mdi-link',
   },
   env_local_scale: {
     name: 'Local Environmental Context',
     group: 'MIxS Environmental Triad',
     sortKey: 2,
+    icon: 'mdi-link',
   },
   env_medium: {
     name: 'Environmental Medium',
     group: 'MIxS Environmental Triad',
     sortKey: 3,
+    icon: 'mdi-link',
   },
   open_in_gold: {
     icon: 'mdi-link',
