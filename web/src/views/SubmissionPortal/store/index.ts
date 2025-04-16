@@ -232,6 +232,10 @@ const templateList = computed(() => {
       // Are you submitting samples to a DOE user facility? Yes
       if (multiOmicsForm.facilities.includes('EMSL')) {
         // Which facility? EMSL
+        if (multiOmicsForm.omicsProcessingTypes.includes('lipidome-emsl')) {
+          // Data types? Lipidome
+          templates.add(EMSL);
+        }
         if (multiOmicsForm.omicsProcessingTypes.includes('mp-emsl')) {
           // Data types? Metaproteome
           templates.add(EMSL);

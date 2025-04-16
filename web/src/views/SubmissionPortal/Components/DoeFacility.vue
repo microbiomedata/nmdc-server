@@ -109,6 +109,13 @@ export default defineComponent({
 
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Lipidome"
+        value="lipidome-emsl"
+        :disabled="templateChoiceDisabled"
+        hide-details
+      />
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metaproteome"
         value="mp-emsl"
         :disabled="templateChoiceDisabled"
