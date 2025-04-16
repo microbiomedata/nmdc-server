@@ -4,6 +4,7 @@ import logging
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
+from importlib import resources
 
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
@@ -710,6 +711,7 @@ async def download_zip_file(
 # async def get_metadata_submissions_mixs(
 #     db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
 # ):
+
     
 async def get_metadata_submissions_mixs(
     db: Session = Depends(get_db)
@@ -745,7 +747,7 @@ async def get_metadata_submissions_mixs(
     ]
 
     # Get submission schema view for enum validation
-    view = fetch_nmdc_submission_schema_view()
+    schema = fetch_nmdc_submission_schema()
     
     data_rows = []
     for s in submissions:
@@ -805,40 +807,40 @@ async def get_metadata_submissions_mixs(
                 # Enums exist currently for water, soil, sediment, and plant-associated
                 # Outside this category needs to be updated
 
-                if env_package not in view['EnvPackageEnum']['permissible_values']:
+                if env_package not in schema['EnvPackageEnum']['permissible_values']:
                     env_package_enum = False
 
-                if env_package == 'water':
-                    if env_broad_scale not in view['EnvBroadScaleWaterEnum']['permissible_values']:
-                        env_broad_scale_enum = False
-                    if env_local_scale not in view['EnvLocalScaleWaterEnum']['permissible_values']:
-                        env_local_scale_enum = False
-                    if env_medium not in view['EnvMediumWaterEnum']['permissible_values']:
-                        env_medium_enum = False
+                # if env_package == 'water':
+                #     if env_broad_scale not in schema['EnvBroadScaleWaterEnum']['permissible_values']:
+                #         env_broad_scale_enum = False
+                #     if env_local_scale not in schema['EnvLocalScaleWaterEnum']['permissible_values']:
+                #         env_local_scale_enum = False
+                #     if env_medium not in schema['EnvMediumWaterEnum']['permissible_values']:
+                #         env_medium_enum = False
 
                 elif env_package == 'soil':
-                    if env_broad_scale not in view['EnvBroadScaleSoilEnum']['permissible_values']:
+                    if env_broad_scale not in schema['EnvBroadScaleSoilEnum']['permissible_values']:
                         env_broad_scale_enum = False
-                    if env_local_scale not in view['EnvLocalScaleSoilEnum']['permissible_values']:
+                    if env_local_scale not in schema['EnvLocalScaleSoilEnum']['permissible_values']:
                         env_local_scale_enum = False
-                    if env_medium not in view['EnvMediumSoilEnum']['permissible_values']:
+                    if env_medium not in schema['EnvMediumSoilEnum']['permissible_values']:
                         env_medium_enum = False
 
-                elif env_package == 'sediment':
-                    if env_broad_scale not in view['EnvBroadScaleSedimentEnum']['permissible_values']:
-                        env_broad_scale_enum = False
-                    if env_local_scale not in view['EnvLocalScaleSedimentEnum']['permissible_values']:
-                        env_local_scale_enum = False
-                    if env_medium not in view['EnvMediumSedimentEnum']['permissible_values']:
-                        env_medium_enum = False
+                # elif env_package == 'sediment':
+                #     if env_broad_scale not in schema['EnvBroadScaleSedimentEnum']['permissible_values']:
+                #         env_broad_scale_enum = False
+                #     if env_local_scale not in schema['EnvLocalScaleSedimentEnum']['permissible_values']:
+                #         env_local_scale_enum = False
+                #     if env_medium not in schema['EnvMediumSedimentEnum']['permissible_values']:
+                #         env_medium_enum = False
 
-                elif env_package == 'plant-associated':
-                    if env_broad_scale not in view['EnvBroadScalePlantAssociatedEnum']['permissible_values']:
-                        env_broad_scale_enum = False
-                    if env_local_scale not in view['EnvLocalScalePlantAssociatedEnum']['permissible_values']:
-                        env_local_scale_enum = False
-                    if env_medium not in view['EnvMediumPlantAssociatedEnum']['permissible_values']:
-                        env_medium_enum = False
+                # elif env_package == 'plant-associated':
+                #     if env_broad_scale not in schema['EnvBroadScalePlantAssociatedEnum']['permissible_values']:
+                #         env_broad_scale_enum = False
+                #     if env_local_scale not in schema['EnvLocalScalePlantAssociatedEnum']['permissible_values']:
+                #         env_local_scale_enum = False
+                #     if env_medium not in schema['EnvMediumPlantAssociatedEnum']['permissible_values']:
+                #         env_medium_enum = False
 
                 else:
                     env_broad_scale_enum = False
@@ -884,11 +886,18 @@ async def get_metadata_submissions_mixs(
 
     return response
 
-def fetch_nmdc_submission_schema_view():
+def fetch_nmdc_submission_schema():
+    submission_schema_files = resources.files("nmdc_submission_schema")
 
-    # Use SchemaView to open nmdc_submission_schema.yaml and get the enums
-    view = SchemaView("https://raw.githubusercontent.com/microbiomedata/submission-schema/refs/heads/main/src/nmdc_submission_schema/schema/nmdc_submission_schema.yaml")
-    enum_view = view.all_enums()
+    # Load each class in the submission schema, ensure that each slot of the class
+    # is fully materialized into attributes, and then drop the slot usage definitions
+    # to save some bytes.
+    schema_path = submission_schema_files / "schema/nmdc_submission_schema.yaml"
+    sv = SchemaView(str(schema_path))
+
+    # # Use SchemaView to open nmdc_submission_schema.yaml and get the enums
+    # view = SchemaView("https://raw.githubusercontent.com/microbiomedata/submission-schema/refs/heads/main/src/nmdc_submission_schema/schema/nmdc_submission_schema.yaml")
+    enum_view = sv.all_enums()
 
     # Get only the enums to have a smaller schema to pass and compare against
     isolated_enums = {
