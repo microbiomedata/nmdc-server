@@ -502,6 +502,12 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
             continue
 
+        if data_object.file_size_bytes is None:
+            logger.warning(
+                "Data object file_size_bytes for {file.path} was {data_object.file_size_bytes}"
+            )
+            continue
+
         # TODO: add crc checksums to support retries
         # TODO: add directory structure and metadata
         content.append(f"- {data_object.file_size_bytes} {url} {file.path}")
