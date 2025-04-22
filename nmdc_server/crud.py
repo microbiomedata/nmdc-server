@@ -486,14 +486,28 @@ def create_bulk_download(
         raise
 
 
-def get_zip_download(db: Session, id: UUID) -> Optional[str]:
+def __restore_file_host(path: str):
+    map = [
+        (re.compile("^/data"), "https://data.microbiomedata.org/data"),
+        (re.compile("^/nmdcdemo"), "https://nmdcdemo.emsl.pnnl.gov"),
+        (re.compile("^/nerscportal"), "https://portal.nersc.gov"),
+        (re.compile("^/neonscience"), "https://storage.neonscience.org"),
+    ]
+    for exp, host in map:
+        if exp.match(path):
+            return exp.sub(host, path)
+    return None
+
+
+def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     """Return a download table compatible with mod_zip."""
     bulk_download = db.query(models.BulkDownload).get(id)
     if bulk_download is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bulk download not found")
     if bulk_download.expired:
         raise HTTPException(status_code=status.HTTP_410_GONE, detail="Bulk download expired")
-    content = []
+    zip_file_descriptor: Dict[str, Any] = {"suggestedFilename": "archive.zip"}
+    files = []
 
     for file in bulk_download.files:  # type: ignore
         data_object = file.data_object
@@ -507,15 +521,16 @@ def get_zip_download(db: Session, id: UUID) -> Optional[str]:
                 "Data object file_size_bytes for {file.path} was {data_object.file_size_bytes}"
             )
             continue
+        true_path = __restore_file_host(url)
+        if true_path:
+            files.append({"url": true_path, "zipPath": file.path})
 
-        # TODO: add crc checksums to support retries
-        # TODO: add directory structure and metadata
-        content.append(f"- {data_object.file_size_bytes} {url} {file.path}")
+    zip_file_descriptor["files"] = files
 
     bulk_download.expired = True
     db.commit()
 
-    return "\n".join(content) + "\n"
+    return zip_file_descriptor
 
 
 def get_user(db: Session, user_id: str) -> Optional[models.User]:
