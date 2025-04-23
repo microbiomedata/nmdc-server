@@ -706,12 +706,9 @@ async def download_zip_file(
     "/metadata_submission/mixs_report",
     tags=["metadata_submission"],
 )
-# async def get_metadata_submissions_mixs(
-#     db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
-# ):
-
-
-async def get_metadata_submissions_mixs(db: Session = Depends(get_db)):
+async def get_metadata_submissions_mixs(
+    db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+):
     r"""
     Generate a TSV-formatted report of biosamples belonging to submissions
     that have a status of "Submitted- Pending Review".
@@ -720,8 +717,8 @@ async def get_metadata_submissions_mixs(db: Session = Depends(get_db)):
     local scale, and medium are specified for each biosample. The report is
     designed to facilitate the review of submissions by NMDC team members.
     """
-    # if not user.is_admin:
-    #     raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     # Get the submissions from the database.
     q = crud.get_query_for_submitted_pending_review_submissions(db)
@@ -795,13 +792,8 @@ async def get_metadata_submissions_mixs(db: Session = Depends(get_db)):
                 env_local_scale_enum = False
                 env_medium_enum = False
 
-                # Questions
-                # - Does the ENVO number need to match exactly or are just keywords ok?
-                # - Preferred name for enum T/F col?
-                # - Expectations around updating schema?
-
                 # Enums exist currently for water, soil, sediment, and plant-associated
-                # Outside this category needs to be updated
+                # Outside of those categories, checks will need to be updated
 
                 if env_package in schema["EnvPackageEnum"]["permissible_values"]:
                     env_package_enum = True
@@ -843,11 +835,6 @@ async def get_metadata_submissions_mixs(db: Session = Depends(get_db)):
                         env_local_scale_enum = True
                     if env_medium in schema["EnvMediumPlantAssociatedEnum"]["permissible_values"]:
                         env_medium_enum = True
-
-                # else:
-                #     env_broad_scale_enum = False
-                #     env_local_scale_enum = False
-                #     env_medium_enum = False
 
                 # Append each sample as new row (with env data)
                 data_row = [
