@@ -31,8 +31,6 @@ from nmdc_server.models import (
 from nmdc_server.pagination import Pagination
 from nmdc_server.table import Table
 
-import yaml
-
 router = APIRouter()
 
 
@@ -712,10 +710,8 @@ async def download_zip_file(
 #     db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
 # ):
 
-    
-async def get_metadata_submissions_mixs(
-    db: Session = Depends(get_db)
-):
+
+async def get_metadata_submissions_mixs(db: Session = Depends(get_db)):
     r"""
     Generate a TSV-formatted report of biosamples belonging to submissions
     that have a status of "Submitted- Pending Review".
@@ -748,8 +744,7 @@ async def get_metadata_submissions_mixs(
 
     # Get submission schema view for enum validation
     schema = fetch_nmdc_submission_schema()
-    print(schema)
-    
+
     data_rows = []
     for s in submissions:
 
@@ -759,7 +754,7 @@ async def get_metadata_submissions_mixs(
             for package_name in metadata["packageName"]:
                 env_package = package_name
         else:
-            env_package = ''
+            env_package = ""
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -808,39 +803,45 @@ async def get_metadata_submissions_mixs(
                 # Enums exist currently for water, soil, sediment, and plant-associated
                 # Outside this category needs to be updated
 
-                if env_package in schema['EnvPackageEnum']['permissible_values']:
+                if env_package in schema["EnvPackageEnum"]["permissible_values"]:
                     env_package_enum = True
 
-                if env_package == 'water':
-                    if env_broad_scale in schema['EnvBroadScaleWaterEnum']['permissible_values']:
+                if env_package == "water":
+                    if env_broad_scale in schema["EnvBroadScaleWaterEnum"]["permissible_values"]:
                         env_broad_scale_enum = True
-                    if env_local_scale in schema['EnvLocalScaleWaterEnum']['permissible_values']:
+                    if env_local_scale in schema["EnvLocalScaleWaterEnum"]["permissible_values"]:
                         env_local_scale_enum = True
-                    if env_medium in schema['EnvMediumWaterEnum']['permissible_values']:
+                    if env_medium in schema["EnvMediumWaterEnum"]["permissible_values"]:
                         env_medium_enum = True
 
-                elif env_package == 'soil':
-                    if env_broad_scale in schema['EnvBroadScaleSoilEnum']['permissible_values']:
+                elif env_package == "soil":
+                    if env_broad_scale in schema["EnvBroadScaleSoilEnum"]["permissible_values"]:
                         env_broad_scale_enum = True
-                    if env_local_scale in schema['EnvLocalScaleSoilEnum']['permissible_values']:
+                    if env_local_scale in schema["EnvLocalScaleSoilEnum"]["permissible_values"]:
                         env_local_scale_enum = True
-                    if env_medium in schema['EnvMediumSoilEnum']['permissible_values']:
+                    if env_medium in schema["EnvMediumSoilEnum"]["permissible_values"]:
                         env_medium_enum = True
 
-                elif env_package == 'sediment':
-                    if env_broad_scale in schema['EnvBroadScaleSedimentEnum']['permissible_values']:
+                elif env_package == "sediment":
+                    if env_broad_scale in schema["EnvBroadScaleSedimentEnum"]["permissible_values"]:
                         env_broad_scale_enum = True
-                    if env_local_scale in schema['EnvLocalScaleSedimentEnum']['permissible_values']:
+                    if env_local_scale in schema["EnvLocalScaleSedimentEnum"]["permissible_values"]:
                         env_local_scale_enum = True
-                    if env_medium in schema['EnvMediumSedimentEnum']['permissible_values']:
+                    if env_medium in schema["EnvMediumSedimentEnum"]["permissible_values"]:
                         env_medium_enum = True
 
-                elif env_package == 'plant-associated':
-                    if env_broad_scale in schema['EnvBroadScalePlantAssociatedEnum']['permissible_values']:
+                elif env_package == "plant-associated":
+                    if (
+                        env_broad_scale
+                        in schema["EnvBroadScalePlantAssociatedEnum"]["permissible_values"]
+                    ):
                         env_broad_scale_enum = True
-                    if env_local_scale in schema['EnvLocalScalePlantAssociatedEnum']['permissible_values']:
+                    if (
+                        env_local_scale
+                        in schema["EnvLocalScalePlantAssociatedEnum"]["permissible_values"]
+                    ):
                         env_local_scale_enum = True
-                    if env_medium in schema['EnvMediumPlantAssociatedEnum']['permissible_values']:
+                    if env_medium in schema["EnvMediumPlantAssociatedEnum"]["permissible_values"]:
                         env_medium_enum = True
 
                 # else:
@@ -887,6 +888,7 @@ async def get_metadata_submissions_mixs(
 
     return response
 
+
 def fetch_nmdc_submission_schema():
     submission_schema_files = resources.files("nmdc_submission_schema")
 
@@ -897,18 +899,19 @@ def fetch_nmdc_submission_schema():
     sv = SchemaView(str(schema_path))
     enum_view = sv.all_enums()
 
-
     # Get only the enums to have a smaller schema to pass and compare against
     isolated_enums = {
         enum_name: {
             # Also only grab the relevant pieces - name and perm. values
             "name": enum_data["name"],
-            "permissible_values": list(enum_data["permissible_values"].keys())
+            "permissible_values": list(enum_data["permissible_values"].keys()),
         }
         for enum_name, enum_data in enum_view.items()
-
         # Only grab the enums that are relevant to the MIxS data check
-        if ("EnvPackage" in enum_name) or ("EnvMedium" in enum_name) or ("EnvBroadScale" in enum_name) or ("EnvLocalScale" in enum_name)
+        if ("EnvPackage" in enum_name)
+        or ("EnvMedium" in enum_name)
+        or ("EnvBroadScale" in enum_name)
+        or ("EnvLocalScale" in enum_name)
     }
 
     return isolated_enums
