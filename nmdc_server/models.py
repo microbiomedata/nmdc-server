@@ -292,6 +292,7 @@ class Study(Base, AnnotatedModel):
     relevant_protocols = Column(JSONB, nullable=True)
     funding_sources = Column(JSONB, nullable=True)
     gold_study_identifiers = Column(JSONB, nullable=True)
+    insdc_bioproject_identifiers = Column(JSONB, nullable=True)
 
     study_category = Column(String, nullable=True)
     homepage_website = Column(JSONB, nullable=True)
