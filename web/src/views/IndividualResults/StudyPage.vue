@@ -359,7 +359,7 @@ export default defineComponent({
                   v-bind="{
                     item,
                     link: {
-                      name: 'Bioproject',
+                      name: 'BioProject',
                       target: link
                     }
                   }"
