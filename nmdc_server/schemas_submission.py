@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
@@ -16,7 +16,7 @@ class Contributor(BaseModel):
     permissionLevel: Optional[str] = None
 
 
-class StudyForm(BaseModel):
+class StudyFormCreate(BaseModel):
     studyName: str
     piName: str
     piEmail: str
@@ -27,6 +27,13 @@ class StudyForm(BaseModel):
     description: str
     notes: str
     contributors: List[Contributor]
+    # These are optional here to allow temporary Field Notes compatibility
+    alternativeNames: Optional[List[str]] = None
+    GOLDStudyId: Optional[str] = None
+    NCBIBioProjectId: Optional[str] = None
+
+
+class StudyForm(StudyFormCreate):
     alternativeNames: List[str]
     GOLDStudyId: str
     NCBIBioProjectId: str
@@ -49,6 +56,10 @@ class MultiOmicsForm(BaseModel):
     ship: Optional[bool] = None
     studyNumber: str
     unknownDoi: Optional[bool] = None
+
+    # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and NCBIBioProjectId in this form
+    # until it catches up with the new data model in its next release
+    model_config = ConfigDict(extra="allow")
 
 
 class NmcdAddress(BaseModel):
@@ -79,16 +90,16 @@ class AddressForm(BaseModel):
 
 
 class MetadataSubmissionRecordCreate(BaseModel):
-    packageName: Union[str, List[str]]
+    packageName: List[str]
     addressForm: AddressForm
     templates: List[str]
-    studyForm: StudyForm
+    studyForm: StudyFormCreate
     multiOmicsForm: MultiOmicsForm
     sampleData: Dict[str, List[Any]]
 
 
 class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
-    packageName: List[str]
+    studyForm: StudyForm
 
 
 class PartialMetadataSubmissionRecord(BaseModel):
@@ -125,6 +136,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     study_name: Optional[str] = None
     field_notes_metadata: Optional[Dict[str, Any]] = None
     date_last_modified: datetime
+    metadata_submission: MetadataSubmissionRecord
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None
