@@ -57,8 +57,8 @@ class MultiOmicsForm(BaseModel):
     studyNumber: str
     unknownDoi: Optional[bool] = None
 
-    # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and NCBIBioProjectId in this form
-    # until it catches up with the new data model in its next release
+    # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
+    # NCBIBioProjectId in this form until it catches up with the new data model in its next release
     model_config = ConfigDict(extra="allow")
 
 
