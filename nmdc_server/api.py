@@ -1022,7 +1022,8 @@ async def update_submission(
         and body_dict.get("status", None) == "Submitted- Pending Review"
         and submission.is_test_submission is False
     ):
-        create_github_issue(submission, user)
+        submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
+        create_github_issue(submission_model, user)
 
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
@@ -1054,36 +1055,36 @@ async def update_submission(
     return submission
 
 
-def create_github_issue(submission, user):
+def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
     settings = Settings()
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     assignee = settings.github_issue_assignee
     # If the settings for issue creation weren't supplied return, no need to do anything further
-    if gh_url == None or token == None:
-        return
+    if gh_url is None or token is None:
+        return None
 
     # Gathering the fields we want to display in the issue
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
-    studyform = submission.metadata_submission["studyForm"]
-    multiomicsform = submission.metadata_submission["multiOmicsForm"]
-    pi = studyform["piName"]
-    piorcid = studyform["piOrcid"]
-    datagenerated = "Yes" if multiomicsform["dataGenerated"] else "No"
-    omicsprocessingtypes = ", ".join(multiomicsform["omicsProcessingTypes"])
-    sampletype = ", ".join(submission.metadata_submission["templates"])
-    sampledata = submission.metadata_submission["sampleData"]
-    numsamples = 0
-    for key in sampledata:
-        numsamples = max(numsamples, len(sampledata[key]))
+    study_form = submission.metadata_submission.studyForm
+    multiomics_form = submission.metadata_submission.multiOmicsForm
+    pi_name = study_form.piName
+    pi_orcid = study_form.piOrcid
+    data_generated = "Yes" if multiomics_form.dataGenerated else "No"
+    omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
+    sample_types = ", ".join(submission.metadata_submission.templates)
+    sample_data = submission.metadata_submission.sampleData
+    num_samples = 0
+    for key in sample_data:
+        num_samples = max(num_samples, len(sample_data[key]))
 
     # some variable data to supply depending on if data has been generated or not
     id_dict = {
-        "NCBI ID: ": multiomicsform["NCBIBioProjectId"],
-        "GOLD ID: ": multiomicsform["GOLDStudyId"],
-        "JGI ID: ": multiomicsform["JGIStudyId"],
-        "EMSL ID: ": multiomicsform["studyNumber"],
-        "Alternative IDs: ": ", ".join(multiomicsform["alternativeNames"]),
+        "NCBI ID: ": study_form.NCBIBioProjectId,
+        "GOLD ID: ": study_form.GOLDStudyId,
+        "JGI ID: ": multiomics_form.JGIStudyId,
+        "EMSL ID: ": multiomics_form.studyNumber,
+        "Alternative IDs: ": ", ".join(study_form.alternativeNames),
     }
     valid_ids = []
     for key, value in id_dict.items():
@@ -1095,13 +1096,13 @@ def create_github_issue(submission, user):
         f"Issue created from host: {settings.host}",
         f"Submitter: {user.name}, {user.orcid}",
         f"Submission ID: {submission.id}",
-        f"Has data been generated: {datagenerated}",
-        f"PI name: {pi}",
-        f"PI orcid: {piorcid}",
-        "Status: Submitted -Pending Review",
-        f"Data types: {omicsprocessingtypes}",
-        f"Sample type:{sampletype}",
-        f"Number of samples:{numsamples}",
+        f"Has data been generated: {data_generated}",
+        f"PI name: {pi_name}",
+        f"PI orcid: {pi_orcid}",
+        "Status: Submitted- Pending Review",
+        f"Data types: {omics_processing_types}",
+        f"Sample type: {sample_types}",
+        f"Number of samples: {num_samples}",
     ] + valid_ids
     body_string = " \n ".join(body_lis)
     payload_dict = {
