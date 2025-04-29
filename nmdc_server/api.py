@@ -1227,13 +1227,24 @@ async def submit_metadata(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # Old versions of the Field Notes app will continue to send a string for packageName
-    # for a little while. This code is to ease that transition and can be removed in the future.
-    if isinstance(body.metadata_submission.packageName, str):
-        if body.metadata_submission.packageName:
-            body.metadata_submission.packageName = [body.metadata_submission.packageName]
-        else:
-            body.metadata_submission.packageName = []
+    # Old versions of the Field Notes app will continue to use the pre-v1.6.0 submission format
+    # (before certain fields were moved from the multi-omics form to the study form) until its
+    # next release. This is a temporary shim layer that can be removed later.
+    multi_omics_form_extras = body.metadata_submission.multiOmicsForm.__pydantic_extra__ or {}
+    if body.metadata_submission.studyForm.GOLDStudyId is None:
+        body.metadata_submission.studyForm.GOLDStudyId = multi_omics_form_extras.get(
+            "GOLDStudyId", ""
+        )
+    if body.metadata_submission.studyForm.NCBIBioProjectId is None:
+        body.metadata_submission.studyForm.NCBIBioProjectId = multi_omics_form_extras.get(
+            "NCBIBioProjectId", ""
+        )
+    if body.metadata_submission.studyForm.alternativeNames is None:
+        body.metadata_submission.studyForm.alternativeNames = multi_omics_form_extras.get(
+            "alternativeNames", []
+        )
+    if body.metadata_submission.multiOmicsForm.facilities is None:
+        body.metadata_submission.multiOmicsForm.facilities = []
 
     submission = SubmissionMetadata(
         **body.dict(),
