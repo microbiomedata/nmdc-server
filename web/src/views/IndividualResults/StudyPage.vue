@@ -28,7 +28,7 @@ const CitationOverrides: CitationOverridesType = {
   '10.46936/10.25585/60000017': 'Doktycz, M. (2020) BioScales - Defining plant gene function and its connection to ecosystem nitrogen and carbon cycling [Data set]. DOE Joint Genome Institute. https://doi.org/10.46936/10.25585/60000017',
 };
 const GoldStudyLinkBase = 'https://gold.jgi.doe.gov/study?id=';
-const BioprojectLinkBase = 'https://bioregistry.io/bioproject:';
+const BioprojectLinkBase = 'https://bioregistry.io/';
 
 export default defineComponent({
 
@@ -113,18 +113,12 @@ export default defineComponent({
     });
 
     const bioprojectLinks = computed(() => {
-      if (!item.value?.annotations?.insdc_bioproject_identifiers) {
-        return new Set();
+      if (item.value?.annotations?.insdc_bioproject_identifiers) {
+        return item.value.annotations.insdc_bioproject_identifiers.map((id) => (
+          BioprojectLinkBase + id
+        ));
       }
-      const links = new Set();
-      if (item.value.annotations.insdc_bioproject_identifiers) {
-        item.value.annotations.insdc_bioproject_identifiers.forEach((identifier: string) => {
-          if (identifier.toLowerCase().startsWith('bioproject:')) {
-            links.add(BioprojectLinkBase + identifier.substring(11));
-          }
-        });
-      }
-      return links;
+      return [];
     });
 
     function relatedTypeDescription(relatedType: string) {
@@ -296,7 +290,7 @@ export default defineComponent({
             </v-list>
             <template
               v-if="
-                goldLinks.size > 0 || bioprojectLinks.size > 0 ||
+                goldLinks.size > 0 || bioprojectLinks.length > 0 ||
                   (item.relevant_protocols && item.relevant_protocols.length > 0) ||
                   item.principal_investigator_websites.length > 0"
             >
@@ -305,9 +299,9 @@ export default defineComponent({
               </div>
               <v-list
                 v-if="
-                goldLinks.size > 0 || bioprojectLinks.size > 0 ||
-                  (item.relevant_protocols && item.relevant_protocols.length > 0) ||
-                  item.principal_investigator_websites.length > 0"
+                  goldLinks.size > 0 || bioprojectLinks.length > 0 ||
+                    (item.relevant_protocols && item.relevant_protocols.length > 0) ||
+                    item.principal_investigator_websites.length > 0"
               >
                 <v-list-item v-if="item.relevant_protocols">
                   <v-list-item-avatar>
@@ -329,7 +323,7 @@ export default defineComponent({
                     field: 'relevant_protocols' }
                   "
                 />
-                <v-list-item v-if="goldLinks.size > 0 || bioprojectLinks.size > 0 || item.principal_investigator_websites.length > 0">
+                <v-list-item v-if="goldLinks.size > 0 || bioprojectLinks.length > 0 || item.principal_investigator_websites.length > 0">
                   <v-list-item-avatar>
                     <v-icon>mdi-file-document</v-icon>
                   </v-list-item-avatar>
