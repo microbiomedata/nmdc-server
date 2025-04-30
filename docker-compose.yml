@@ -56,6 +56,8 @@ services:
       - "8000:8000"
     volumes:
       - ./data/ingest:/data/ingest
+      - ./nmdc_server:/app/nmdc_server
+    command: uvicorn nmdc_server.asgi:app --host 0.0.0.0 --port 8000 --reload
     # Use a TTY so colors are preserved in the log output
     tty: true
 
