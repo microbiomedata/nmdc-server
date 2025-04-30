@@ -241,7 +241,6 @@ class StudyBase(AnnotatedBase):
     relevant_protocols: Optional[List[str]] = None
     funding_sources: Optional[List[str]] = None
     gold_study_identifiers: Optional[List[str]] = None
-    insdc_bioproject_identifiers: Optional[List[str]] = None
     homepage_website: Optional[List[str]] = None
     part_of: Optional[List[str]] = None
     study_category: Optional[str] = None

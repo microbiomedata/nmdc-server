@@ -113,12 +113,12 @@ export default defineComponent({
     });
 
     const bioprojectLinks = computed(() => {
-      if (!item.value?.insdc_bioproject_identifiers) {
+      if (!item.value?.annotations?.insdc_bioproject_identifiers) {
         return new Set();
       }
       const links = new Set();
-      if (item.value.insdc_bioproject_identifiers) {
-        item.value.insdc_bioproject_identifiers.forEach((identifier: string) => {
+      if (item.value.annotations.insdc_bioproject_identifiers) {
+        item.value.annotations.insdc_bioproject_identifiers.forEach((identifier: string) => {
           if (identifier.toLowerCase().startsWith('bioproject:')) {
             links.add(BioprojectLinkBase + identifier.substring(11));
           }
