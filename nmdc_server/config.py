@@ -111,7 +111,11 @@ class Settings(BaseSettings):
             return self.testing_database_uri
         return self.database_uri
 
-    model_config = SettingsConfigDict(env_prefix="nmdc_", env_file=os.getenv("DOTENV_PATH", ".env"))
+    model_config = SettingsConfigDict(
+        env_prefix="nmdc_",
+        env_file=os.getenv("DOTENV_PATH", ".env"),
+        extra="allow",
+    )
 
 
 settings = Settings()
