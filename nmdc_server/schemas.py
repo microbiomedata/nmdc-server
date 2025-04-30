@@ -417,7 +417,7 @@ class PipelineStepBase(BaseModel):
     type: str
     git_url: str
     started_at_time: DateType
-    ended_at_time: DateType
+    ended_at_time: Optional[DateType] = None
     execution_resource: str
     omics_processing_id: str
 
