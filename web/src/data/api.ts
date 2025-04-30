@@ -187,7 +187,6 @@ export interface StudySearchResults extends BaseSearchResult {
   annotations: {
     insdc_bioproject_identifiers?: string[];
     title: string;
-    pricipal_investigator_image_url: string;
   };
   sample_count: number;
   study_category: string;
