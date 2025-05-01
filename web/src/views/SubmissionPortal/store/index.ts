@@ -2,7 +2,9 @@ import Vue from 'vue';
 import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
-import { chunk, clone, forEach } from 'lodash';
+import {
+  chunk, clone, forEach, isString,
+} from 'lodash';
 import axios from 'axios';
 import * as api from './api';
 import { User } from '@/types';
@@ -325,6 +327,19 @@ function templateHasData(templateName: string): boolean {
   return false;
 }
 
+function checkFacilityTemplates() {
+  //checks to see if there is data present in any of the templates that are produced by facility selections
+  const fields = ['emsl', 'jgi_mg', 'jgi_mg_lr', 'jgi_mt', 'data_mg', 'data_mg_interleaved', 'data_mt', 'data_mt_interleaved'];
+  let data_present: Boolean = false;
+  fields.forEach((val) => {
+    const sampleSlot = HARMONIZER_TEMPLATES[val].sampleDataSlot;
+    if (isString(sampleSlot) && templateHasData(sampleSlot)) {
+      data_present = true;
+    }
+  });
+  return data_present;
+}
+
 function getPermissions(): Record<string, PermissionLevelValues> {
   const permissions: Record<string, PermissionLevelValues> = {};
   studyForm.contributors.forEach((contributor) => {
@@ -531,4 +546,5 @@ export {
   addMetadataSuggestions,
   removeMetadataSuggestions,
   templateHasData,
+  checkFacilityTemplates,
 };

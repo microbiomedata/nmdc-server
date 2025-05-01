@@ -9,7 +9,7 @@ import {
 
 import Definitions from '@/definitions';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateHasData, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
+  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateHasData, checkFacilityTemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
 } from '../store';
 import { AwardTypes } from '@/views/SubmissionPortal/types';
 
@@ -117,6 +117,7 @@ export default defineComponent({
       /* functions */
       reValidate,
       canEditSubmissionMetadata,
+      checkFacilityTemplates,
     };
   },
 });
@@ -145,6 +146,7 @@ export default defineComponent({
         v-model="multiOmicsForm.dataGenerated"
         label="Have data already been generated for your study? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
+        :disabled="checkFacilityTemplates()"
         @change="resetFields('dataGenerated')"
       >
         <v-radio
@@ -161,6 +163,7 @@ export default defineComponent({
         v-model="multiOmicsForm.facilityGenerated"
         label="Was data generated at a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
+        :disabled="checkFacilityTemplates()"
         @change="resetFields('facilityGenerated')"
       >
         <v-radio
@@ -185,6 +188,7 @@ export default defineComponent({
         v-if="multiOmicsForm.dataGenerated === false"
         v-model="multiOmicsForm.doe"
         label="Are you submitting samples to a DOE user facility (JGI, EMSL)? *"
+        :disabled="checkFacilityTemplates()"
         @change="resetFields('doe')"
       >
         <v-radio
