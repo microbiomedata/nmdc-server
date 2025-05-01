@@ -1,8 +1,9 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
 import {
-  multiOmicsForm, templateChoiceDisabled,
+  multiOmicsForm, templateHasData,
 } from '../store';
+import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 
 export default defineComponent({
   props: {
@@ -51,7 +52,8 @@ export default defineComponent({
     return {
       dataCaveat,
       multiOmicsForm,
-      templateChoiceDisabled,
+      HARMONIZER_TEMPLATES,
+      templateHasData,
       handleMetagenomeChange,
       handleMgCompatibleChange,
       handleMetatranscriptomeChange,
@@ -78,7 +80,7 @@ export default defineComponent({
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metagenome"
       value="mg"
-      :disabled="templateChoiceDisabled"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved.sampleDataSlot)"
       hide-details
       @change="handleMetagenomeChange"
     />
@@ -162,7 +164,7 @@ export default defineComponent({
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metatranscriptome"
       value="mt"
-      :disabled="templateChoiceDisabled"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved.sampleDataSlot)"
       hide-details
       @change="handleMetatranscriptomeChange"
     />
@@ -252,21 +254,18 @@ export default defineComponent({
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metaproteome"
       value="mp"
-      :disabled="templateChoiceDisabled"
       hide-details
     />
     <v-checkbox
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metabolome"
       value="mb"
-      :disabled="templateChoiceDisabled"
       hide-details
     />
     <v-checkbox
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Natural Organic Matter (FT-ICR MS)"
       value="nom"
-      :disabled="templateChoiceDisabled"
       hide-details
     />
   </div>

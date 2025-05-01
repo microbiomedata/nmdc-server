@@ -272,21 +272,6 @@ const templateList = computed(() => {
  * DataHarmonizer Step
  */
 const sampleData = shallowRef({} as Record<string, any[]>);
-const templateChoiceDisabled = computed(() => {
-  // If there are no keys in sampleData, the DH view hasn't been touched
-  // yet, so it's still okay to change the template.
-  if (Object.keys(sampleData.value).length === 0) {
-    return false;
-  }
-  // If the DH has been touched, see if any of the values (templates) actually
-  // contain data. If at least one does, then do not allow changing the template.
-  // Otherwise, allow template changes.
-  const templateWithDataIndex = Object.values(sampleData.value).findIndex((value) => value.length > 0);
-  if (templateWithDataIndex >= 0) {
-    return true;
-  }
-  return false;
-});
 const metadataSuggestions = ref([] as MetadataSuggestion[]);
 const suggestionMode = ref(SuggestionsMode.LIVE);
 const suggestionType = ref(SuggestionType.ALL);
@@ -309,6 +294,36 @@ const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   multiOmicsForm,
   sampleData: sampleData.value,
 }));
+
+function templateHasData(templateName: string): boolean {
+  //if DH hasn't been touched at all then there's no data nd it's ok edit
+  if (Object.keys(sampleData.value).length === 0) {
+    return false;
+  }
+
+  //case where we want behavior the same as 'templateChoiceDisabled'
+  if (templateName === 'all') {
+    const templateWithDataIndex = Object.values(sampleData.value).findIndex((value) => value.length > 0);
+    if (templateWithDataIndex >= 0) {
+      return true;
+    }
+    return false;
+  }
+
+  // If there are no keys in sampleData, the DH view hasn't been touched
+  // yet, so it's still okay to change the template.
+  // Or if the template is not present/hasn't been selected
+  if (!Object.keys(sampleData.value).includes(templateName)) {
+    return false;
+  }
+  // If the DH has been touched, see if the given template actually
+  // contain data. If it does, then do not allow changing that template.
+  // Otherwise, allow it to be changed.
+  if (Object.values(sampleData.value[templateName]).length > 0) {
+    return true;
+  }
+  return false;
+}
 
 function getPermissions(): Record<string, PermissionLevelValues> {
   const permissions: Record<string, PermissionLevelValues> = {};
@@ -495,7 +510,6 @@ export {
   submitPayload,
   packageName,
   templateList,
-  templateChoiceDisabled,
   hasChanged,
   tabsValidated,
   status,
@@ -516,4 +530,5 @@ export {
   canEditSubmissionMetadata,
   addMetadataSuggestions,
   removeMetadataSuggestions,
+  templateHasData,
 };

@@ -9,7 +9,7 @@ import {
 
 import Definitions from '@/definitions';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
+  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateHasData, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
 } from '../store';
 import { AwardTypes } from '@/views/SubmissionPortal/types';
 
@@ -113,7 +113,7 @@ export default defineComponent({
       multiOmicsAssociations,
       multiOmicsFormValid,
       Definitions,
-      templateChoiceDisabled,
+      templateHasData,
       /* functions */
       reValidate,
       canEditSubmissionMetadata,
@@ -302,13 +302,14 @@ export default defineComponent({
       </div>
 
       <v-alert
-        v-if="templateChoiceDisabled"
+        v-if="templateHasData('all')"
         type="warning"
       >
         <p class="text-h5">
-          Data type choice disabled
+          Some choices may be disabled
         </p>
-        Data types cannot be changed when there are already metadata rows in step 6.  To change the template, return to step 6 and remove all data.
+        Data types with data present in step 5 cannot be disabled. To change these templates, return to step 5 and remove data from the tabs you wish to disable.
+        You may add unselected data types at any time.
       </v-alert>
 
       <DataTypes
