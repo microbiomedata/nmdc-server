@@ -43,7 +43,7 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
         listen(Engine, "after_cursor_execute", after_cursor_execute)
 
     def generate_and_mount_static_files():
-        static_path = initialize_static_directory()
+        static_path = initialize_static_directory(remove_existing=True)
         generate_submission_schema_files(directory=static_path)
         app.mount("/static", StaticFiles(directory=static_path), name="static")
 
