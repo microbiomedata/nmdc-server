@@ -11,5 +11,6 @@ COPY . /app/
 RUN pip install -e /app
 
 COPY .env.production /app/.env
+RUN chmod +x /app/start.sh
 WORKDIR /app/
-CMD ["uvicorn", "nmdc_server.asgi:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "5"]
+CMD ["/app/start.sh"]
