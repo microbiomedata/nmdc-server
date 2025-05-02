@@ -184,6 +184,10 @@ export interface StudySearchResults extends BaseSearchResult {
   funding_sources?: string[];
   relevant_protocols: string[];
   gold_study_identifiers: string[];
+  annotations: {
+    insdc_bioproject_identifiers?: string[];
+    title: string;
+  };
   sample_count: number;
   study_category: string;
   homepage_website: string[] | null;
