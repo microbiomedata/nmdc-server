@@ -683,6 +683,17 @@ async def get_data_object_aggregation(
     return query.aggregate(db)
 
 
+async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
+    zip_streamer_url = "http://zipstreamer:4008/download"
+    chunk_size = 100
+    async with httpx.AsyncClient() as client:
+        async with client.stream(
+            "POST", zip_streamer_url, json=zip_file_descriptor
+        ) as response:
+            async for chunk in response.aiter_bytes(chunk_size=chunk_size):
+                yield chunk
+
+
 @router.get(
     "/bulk_download/{bulk_download_id}",
     tags=["download"],
@@ -694,18 +705,9 @@ async def download_zip_file(
     zip_file_descriptor = crud.get_zip_download(db, bulk_download_id)
     if not zip_file_descriptor:
         return
-    zip_streamer_url = "http://zipstreamer:4008/download"
-
-    async def stream_results():
-        async with httpx.AsyncClient() as client:
-            async with client.stream(
-                "POST", zip_streamer_url, json=zip_file_descriptor
-            ) as response:
-                async for chunk in response.aiter_bytes(chunk_size=100):
-                    yield chunk
 
     return StreamingResponse(
-        stream_results(),
+        stream_zip_archive(zip_file_descriptor),
         media_type="application/zip",
         headers={
             "Content-Disposition": f"attachment; filename={zip_file_descriptor['suggestedFilename']}"  # noqa: E501
