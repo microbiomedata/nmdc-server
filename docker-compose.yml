@@ -49,6 +49,7 @@ services:
       dockerfile: Dockerfile
     environment:
       - PGHOST=db
+      - UVICORN_RELOAD=True
     networks:
       - public
       - default
@@ -56,6 +57,7 @@ services:
       - "8000:8000"
     volumes:
       - ./data/ingest:/data/ingest
+      - ./nmdc_server:/app/nmdc_server
     # Use a TTY so colors are preserved in the log output
     tty: true
 
