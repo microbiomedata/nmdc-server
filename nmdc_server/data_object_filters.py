@@ -1,32 +1,9 @@
-import re
 from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel
 
 from nmdc_server import models
-
-# Nginx's mod_zip can only server local files.  To get arround this limitation,
-# we set up local proxies to all remote hosts.
-#   https://www.nginx.com/resources/wiki/modules/zip/#remote-upstreams
-# This means that we can only handle known prefixes.  This must be checked
-# on ingest and any additional hosts added to the nginx config.
-# TODO: There is probably a way to automate this using nginx pattern matching.
-data_url_hosts = [
-    (re.compile("^https://data.microbiomedata.org(/data)?"), "/data"),
-    (re.compile("^https://nmdcdemo.emsl.pnnl.gov"), "/nmdcdemo"),
-    (re.compile("^https://portal.nersc.gov"), "/nerscportal"),
-    (re.compile("^https://storage.neonscience.org"), "/neonscience"),
-]
-
-
-def get_local_data_url(url: Optional[str]) -> Optional[str]:
-    if not url:
-        return None
-    for r, v in data_url_hosts:
-        if r.match(url):
-            return r.sub(v, url)
-    return None
 
 
 class WorkflowActivityTypeEnum(Enum):
