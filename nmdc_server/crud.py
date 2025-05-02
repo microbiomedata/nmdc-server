@@ -10,7 +10,6 @@ from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
-from nmdc_server.data_object_filters import get_local_data_url
 from nmdc_server.logger import get_logger
 
 logger = get_logger(__name__)
@@ -486,19 +485,6 @@ def create_bulk_download(
         raise
 
 
-def __restore_file_host(path: str):
-    map = [
-        (re.compile("^/data"), "https://data.microbiomedata.org/data"),
-        (re.compile("^/nmdcdemo"), "https://nmdcdemo.emsl.pnnl.gov"),
-        (re.compile("^/nerscportal"), "https://portal.nersc.gov"),
-        (re.compile("^/neonscience"), "https://storage.neonscience.org"),
-    ]
-    for exp, host in map:
-        if exp.match(path):
-            return exp.sub(host, path)
-    return None
-
-
 def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     """Return a download table compatible with mod_zip."""
     bulk_download = db.query(models.BulkDownload).get(id)
@@ -511,19 +497,11 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
 
     for file in bulk_download.files:  # type: ignore
         data_object = file.data_object
-        url = get_local_data_url(data_object.url)
-        if url is None:
+        if data_object.url is None:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
             continue
 
-        if data_object.file_size_bytes is None:
-            logger.warning(
-                "Data object file_size_bytes for {file.path} was {data_object.file_size_bytes}"
-            )
-            continue
-        true_path = __restore_file_host(url)
-        if true_path:
-            files.append({"url": true_path, "zipPath": file.path})
+        files.append({"url": data_object.url, "zipPath": file.path})
 
     zip_file_descriptor["files"] = files
 
