@@ -684,13 +684,12 @@ async def get_data_object_aggregation(
 
 
 async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
-    zip_streamer_url = "http://zipstreamer:4008/download"
-    chunk_size = 100
+    settings = Settings()
     async with httpx.AsyncClient() as client:
         async with client.stream(
-            "POST", zip_streamer_url, json=zip_file_descriptor
+            "POST", settings.zip_streamer_url, json=zip_file_descriptor
         ) as response:
-            async for chunk in response.aiter_bytes(chunk_size=chunk_size):
+            async for chunk in response.aiter_bytes(chunk_size=settings.zip_streamer_chunk_size):
                 yield chunk
 
 
