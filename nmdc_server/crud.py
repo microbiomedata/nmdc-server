@@ -486,7 +486,7 @@ def create_bulk_download(
 
 
 def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
-    """Return a download table compatible with mod_zip."""
+    """Return a zip file descriptor compatible with zipstreamer."""
     bulk_download = db.query(models.BulkDownload).get(id)
     if bulk_download is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bulk download not found")
