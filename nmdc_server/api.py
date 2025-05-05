@@ -684,6 +684,10 @@ async def get_data_object_aggregation(
 
 
 async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
+    r"""
+    Sends the specified `zip_file_descriptor` to ZipStreamer and receives
+    a ZIP archive in response, which this function yields in chunks.
+    """
     settings = Settings()
     async with httpx.AsyncClient() as client:
         async with client.stream(
