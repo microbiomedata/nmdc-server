@@ -493,7 +493,7 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     if bulk_download.expired:
         raise HTTPException(status_code=status.HTTP_410_GONE, detail="Bulk download expired")
     zip_file_descriptor: Dict[str, Any] = {"suggestedFilename": "archive.zip"}
-    files = []
+    file_descriptions: List[Dict[str, str]] = []
 
     for file in bulk_download.files:  # type: ignore
         data_object = file.data_object
@@ -501,9 +501,9 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
             continue
 
-        files.append({"url": data_object.url, "zipPath": file.path})
+        file_descriptions.append({"url": data_object.url, "zipPath": file.path})
 
-    zip_file_descriptor["files"] = files
+    zip_file_descriptor["files"] = file_descriptions
 
     bulk_download.expired = True
     db.commit()
