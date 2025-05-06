@@ -689,14 +689,12 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
     a ZIP archive in response, which this function yields in chunks.
     """
     settings = Settings()
-    async with httpx.AsyncClient() as client:
-        async with client.stream(
-            "POST", settings.zip_streamer_url, json=zip_file_descriptor
-        ) as response:
-            async for chunk in response.aiter_bytes(
-                chunk_size=settings.zip_streamer_chunk_size_bytes
-            ):
-                yield chunk
+    async with (
+        httpx.AsyncClient() as client,
+        client.stream("POST", settings.zip_streamer_url, json=zip_file_descriptor) as response,
+    ):
+        async for chunk in response.aiter_bytes(chunk_size=settings.zip_streamer_chunk_size_bytes):
+            yield chunk
 
 
 @router.get(
