@@ -7,6 +7,7 @@ services:
     image: nginx
 
   db:
+    # This version is duplicated in the GitHub Actions workflow
     image: postgres:13
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
