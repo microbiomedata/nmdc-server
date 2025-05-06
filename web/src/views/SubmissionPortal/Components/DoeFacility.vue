@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent } from '@vue/composition-api';
 import {
-  multiOmicsForm, addAwardDoi, templateHasData,
+  multiOmicsForm, addAwardDoi, templateHasData, checkJGITemplates,
 } from '../store';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import Definitions from '@/definitions';
@@ -39,6 +39,7 @@ export default defineComponent({
       doiRequiredRules,
       multiOmicsForm,
       templateHasData,
+      checkJGITemplates,
       HARMONIZER_TEMPLATES,
     };
   },
@@ -60,6 +61,7 @@ export default defineComponent({
       value="EMSL"
       hide-details
       class="mb-2 mt-0"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
       @change="facilityChange"
     />
     <div
@@ -144,6 +146,7 @@ export default defineComponent({
       value="JGI"
       hide-details
       class="mb-2 mt-0"
+      :disabled="checkJGITemplates()"
       @change="facilityChange"
     />
     <div

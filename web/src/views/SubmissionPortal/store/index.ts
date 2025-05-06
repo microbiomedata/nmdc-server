@@ -327,9 +327,9 @@ function templateHasData(templateName: string): boolean {
   return false;
 }
 
-function checkFacilityTemplates() {
-  //checks to see if there is data present in any of the templates that are produced by facility selections
-  const fields = ['emsl', 'jgi_mg', 'jgi_mg_lr', 'jgi_mt', 'data_mg', 'data_mg_interleaved', 'data_mt', 'data_mt_interleaved'];
+function checkJGITemplates() {
+  //checks to see if there is data present in any of the templates that are associated with JGI
+  const fields = ['jgi_mg', 'jgi_mg_lr', 'jgi_mt', 'data_mg', 'data_mg_interleaved', 'data_mt', 'data_mt_interleaved'];
   let data_present: Boolean = false;
   fields.forEach((val) => {
     const sampleSlot = HARMONIZER_TEMPLATES[val].sampleDataSlot;
@@ -546,5 +546,5 @@ export {
   addMetadataSuggestions,
   removeMetadataSuggestions,
   templateHasData,
-  checkFacilityTemplates,
+  checkJGITemplates,
 };
