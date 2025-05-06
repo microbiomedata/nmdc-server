@@ -4,12 +4,14 @@ import logging
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
+from importlib import resources
 
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
+from linkml_runtime.utils.schemaview import SchemaView
 
 from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
@@ -731,13 +733,25 @@ async def get_metadata_submissions_mixs(
         "Environmental Broad Scale",
         "Environmental Local Scale",
         "Environmental Medium",
+        "Package T/F",
+        "Broad Scale T/F",
+        "Local Scale T/F",
+        "Medium T/F",
     ]
+
+    # Get submission schema view for enum validation
+    schema = fetch_nmdc_submission_schema()
+
     data_rows = []
     for s in submissions:
 
         metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
-        env_package = metadata["packageName"] if "packageName" in metadata else {}
+        if "packageName" in metadata:
+            for package_name in metadata["packageName"]:
+                env_package = package_name
+        else:
+            env_package = ""
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -772,6 +786,56 @@ async def get_metadata_submissions_mixs(
                 env_medium = env_medium.replace("\r", "")
                 env_medium = env_medium.replace("\n", "").lstrip("_")
 
+                # Perform enum checks
+                env_package_enum = False
+                env_broad_scale_enum = False
+                env_local_scale_enum = False
+                env_medium_enum = False
+
+                # Enums exist currently for water, soil, sediment, and plant-associated
+                # Outside of those categories, checks will need to be updated
+
+                if env_package in schema["EnvPackageEnum"]["permissible_values"]:
+                    env_package_enum = True
+
+                if env_package == "water":
+                    if env_broad_scale in schema["EnvBroadScaleWaterEnum"]["permissible_values"]:
+                        env_broad_scale_enum = True
+                    if env_local_scale in schema["EnvLocalScaleWaterEnum"]["permissible_values"]:
+                        env_local_scale_enum = True
+                    if env_medium in schema["EnvMediumWaterEnum"]["permissible_values"]:
+                        env_medium_enum = True
+
+                elif env_package == "soil":
+                    if env_broad_scale in schema["EnvBroadScaleSoilEnum"]["permissible_values"]:
+                        env_broad_scale_enum = True
+                    if env_local_scale in schema["EnvLocalScaleSoilEnum"]["permissible_values"]:
+                        env_local_scale_enum = True
+                    if env_medium in schema["EnvMediumSoilEnum"]["permissible_values"]:
+                        env_medium_enum = True
+
+                elif env_package == "sediment":
+                    if env_broad_scale in schema["EnvBroadScaleSedimentEnum"]["permissible_values"]:
+                        env_broad_scale_enum = True
+                    if env_local_scale in schema["EnvLocalScaleSedimentEnum"]["permissible_values"]:
+                        env_local_scale_enum = True
+                    if env_medium in schema["EnvMediumSedimentEnum"]["permissible_values"]:
+                        env_medium_enum = True
+
+                elif env_package == "plant-associated":
+                    if (
+                        env_broad_scale
+                        in schema["EnvBroadScalePlantAssociatedEnum"]["permissible_values"]
+                    ):
+                        env_broad_scale_enum = True
+                    if (
+                        env_local_scale
+                        in schema["EnvLocalScalePlantAssociatedEnum"]["permissible_values"]
+                    ):
+                        env_local_scale_enum = True
+                    if env_medium in schema["EnvMediumPlantAssociatedEnum"]["permissible_values"]:
+                        env_medium_enum = True
+
                 # Append each sample as new row (with env data)
                 data_row = [
                     s.id,
@@ -781,6 +845,10 @@ async def get_metadata_submissions_mixs(
                     env_broad_scale,
                     env_local_scale,
                     env_medium,
+                    env_package_enum,
+                    env_broad_scale_enum,
+                    env_local_scale_enum,
+                    env_medium_enum,
                 ]
                 data_rows.append(data_row)
 
@@ -806,6 +874,34 @@ async def get_metadata_submissions_mixs(
     )
 
     return response
+
+
+def fetch_nmdc_submission_schema():
+    submission_schema_files = resources.files("nmdc_submission_schema")
+
+    # Load each class in the submission schema, ensure that each slot of the class
+    # is fully materialized into attributes, and then drop the slot usage definitions
+    # to save some bytes.
+    schema_path = submission_schema_files / "schema/nmdc_submission_schema.yaml"
+    sv = SchemaView(str(schema_path))
+    enum_view = sv.all_enums()
+
+    # Get only the enums to have a smaller schema to pass and compare against
+    isolated_enums = {
+        enum_name: {
+            # Also only grab the relevant pieces - name and perm. values
+            "name": enum_data["name"],
+            "permissible_values": list(enum_data["permissible_values"].keys()),
+        }
+        for enum_name, enum_data in enum_view.items()
+        # Only grab the enums that are relevant to the MIxS data check
+        if ("EnvPackage" in enum_name)
+        or ("EnvMedium" in enum_name)
+        or ("EnvBroadScale" in enum_name)
+        or ("EnvLocalScale" in enum_name)
+    }
+
+    return isolated_enums
 
 
 @router.get(
