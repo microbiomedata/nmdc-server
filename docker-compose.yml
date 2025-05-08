@@ -81,6 +81,11 @@ services:
     ports:
       - "8080:80"
 
+  zipstreamer:
+    image: ghcr.io/scosman/packages/zipstreamer:stable
+    ports:
+      - "4008:4008"
+
 volumes:
   app-db-data:
   app-db-ingest:

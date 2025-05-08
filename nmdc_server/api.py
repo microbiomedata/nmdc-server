@@ -5,6 +5,7 @@ from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
+import httpx
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
@@ -682,6 +683,20 @@ async def get_data_object_aggregation(
     return query.aggregate(db)
 
 
+async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
+    r"""
+    Sends the specified `zip_file_descriptor` to ZipStreamer and receives
+    a ZIP archive in response, which this function yields in chunks.
+    """
+    settings = Settings()
+    async with (
+        httpx.AsyncClient() as client,
+        client.stream("POST", settings.zip_streamer_url, json=zip_file_descriptor) as response,
+    ):
+        async for chunk in response.aiter_bytes(chunk_size=settings.zip_streamer_chunk_size_bytes):
+            yield chunk
+
+
 @router.get(
     "/bulk_download/{bulk_download_id}",
     tags=["download"],
@@ -690,12 +705,15 @@ async def download_zip_file(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
 ):
-    table = crud.get_zip_download(db, bulk_download_id)
-    return Response(
-        content=table,
+    zip_file_descriptor = crud.get_zip_download(db, bulk_download_id)
+    if not zip_file_descriptor:
+        return
+
+    return StreamingResponse(
+        stream_zip_archive(zip_file_descriptor),
+        media_type="application/zip",
         headers={
-            "X-Archive-Files": "zip",
-            "Content-Disposition": "attachment; filename=archive.zip",
+            "Content-Disposition": f"attachment; filename={zip_file_descriptor['suggestedFilename']}"  # noqa: E501
         },
     )
 

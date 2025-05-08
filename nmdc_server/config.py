@@ -41,6 +41,10 @@ class Settings(BaseSettings):
     orcid_client_secret: str = "oauth secret key"
     orcid_authorize_scope: str = "/authenticate"
 
+    # for zipstreamer
+    zip_streamer_url: str = "http://zipstreamer:4008/download"
+    zip_streamer_chunk_size_bytes: int = 2 * 1024 * 1024
+
     @property
     def orcid_openid_config_url(self) -> str:
         r"""

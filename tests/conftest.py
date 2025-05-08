@@ -5,6 +5,7 @@ import pytest
 from factory import random
 from starlette.testclient import TestClient
 
+import nmdc_server.api
 from nmdc_server import database, schemas
 from nmdc_server.app import create_app
 from nmdc_server.auth import create_token_response
@@ -37,6 +38,14 @@ def patch_geo_engine(monkeypatch):
     monkeypatch.setattr(nmdc_geoloc_tools, "fao_soil_type", mock_not_implemented)
     monkeypatch.setattr(nmdc_geoloc_tools, "landuse", mock_not_implemented)
     monkeypatch.setattr(nmdc_geoloc_tools, "landuse_dates", mock_not_implemented)
+
+
+@pytest.fixture()
+def patch_zip_stream_service(monkeypatch):
+    def mock_zip_streamer(*args, **kwargs):
+        yield b"foo"
+
+    monkeypatch.setattr(nmdc_server.api, "stream_zip_archive", mock_zip_streamer)
 
 
 @pytest.fixture(scope="session")
