@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "nmdc-server"
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.12"
 dynamic = ["version"]
 dependencies = [
     "alembic==1.13.3",
@@ -44,7 +44,7 @@ dependencies = [
     "executing==2.1.0",
     "factory-boy==3.3.1",
     "faker==30.3.0",
-    "fastapi==0.115.0",
+    "fastapi[standard]==0.115.0",
     "flexcache==0.3",
     "flexparser==0.3.1",
     "fqdn==1.5.1",

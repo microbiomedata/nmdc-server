@@ -1,4 +1,3 @@
-load_module modules/ngx_http_zip_module.so;
 worker_processes 1;
 
 events {
@@ -32,23 +31,6 @@ http {
             proxy_set_header Host ${DOLLAR}host;
             proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
             proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
-        }
-
-        location /data/ {
-            proxy_pass http://data:8080/;
-            proxy_buffering off;
-        }
-
-        location /nmdcdemo/ {
-            proxy_pass https://nmdcdemo.emsl.pnnl.gov/;
-        }
-
-        location /nerscportal {
-            proxy_pass https://portal.nersc.gov/;
-        }
-
-        location /neonscience {
-            proxy_pass https://storage.neonscience.org/;
         }
     }
 }

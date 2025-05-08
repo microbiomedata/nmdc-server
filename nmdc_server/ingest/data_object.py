@@ -4,7 +4,6 @@ from nmdc_schema.nmdc_data import get_nmdc_file_type_enums
 from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
-from nmdc_server.data_object_filters import get_local_data_url
 from nmdc_server.logger import get_logger
 from nmdc_server.models import DataObject
 from nmdc_server.schemas import DataObjectCreate
@@ -30,18 +29,6 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
     for obj_ in cursor:
         obj = {key: obj_[key] for key in obj_.keys() & fields}
 
-        # TODO: Remove once the source data is fixed.
-        url = obj.get("url", "")
-        if url and not get_local_data_url(url):
-            logger.warning(
-                f"Unknown url host '{url}', it need to be added to nginx config for bulk download"
-            )
-        if url.startswith("https://data.microbiomedata.org") and not url.startswith(
-            "https://data.microbiomedata.org/data"
-        ):
-            obj["url"] = url.replace(
-                "https://data.microbiomedata.org", "https://data.microbiomedata.org/data"
-            )
         if "data_object_type" in obj:
             enum_type = obj.pop("data_object_type")
             type_tuple = file_type_map.get(enum_type, None)
@@ -51,12 +38,6 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
                 logger.warning(f"Unknown data_object_type {enum_type} for data_object {obj['id']}")
         else:
             objects_without_type += 1
-
-        if obj.get("file_size_bytes", None) is None:
-            logger.warning(
-                f"data_object {obj['id']} has file_size_bytes {obj.get('file_size_bytes')} "
-                "and cannot be included in bulk downloads"
-            )
 
         db.add(DataObject(**obj))
 

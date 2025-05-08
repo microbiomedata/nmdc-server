@@ -1,7 +1,7 @@
-FROM python:3.9
+FROM python:3.12-slim
 LABEL org.opencontainers.image.source=https://github.com/microbiomedata/nmdc-server
 
-RUN apt-get update && apt-get install -y postgresql-client
+RUN apt-get update && apt-get install -y postgresql-client git libpq-dev libc6-dev gcc
 
 RUN pip install -U pip setuptools wheel
 COPY pyproject.toml /app/
