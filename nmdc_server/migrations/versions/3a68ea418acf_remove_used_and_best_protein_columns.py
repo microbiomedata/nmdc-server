@@ -8,8 +8,8 @@ Create Date: 2025-05-13 00:43:32.174705
 
 from typing import Optional
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "3a68ea418acf"
