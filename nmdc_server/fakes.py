@@ -299,8 +299,6 @@ class NOMAnalysisFactory(PipelineStepBase):
         model = models.NOMAnalysis
         sqlalchemy_session = db
 
-    used: str = Faker("word")
-
 
 class ReadBasedAnalysisFactory(PipelineStepBase):
     class Meta:
@@ -312,8 +310,6 @@ class MetabolomicsAnalysisFactory(PipelineStepBase):
     class Meta:
         model = models.MetabolomicsAnalysis
         sqlalchemy_session = db
-
-    used: str = Faker("word")
 
 
 class GeneFunction(SQLAlchemyModelFactory):
