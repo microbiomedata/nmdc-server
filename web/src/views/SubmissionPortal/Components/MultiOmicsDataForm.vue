@@ -395,7 +395,7 @@ export default defineComponent({
         color="primary"
         depressed
         :disabled="(!multiOmicsFormValid)"
-        :to="{ name: 'Environment Package' }"
+        :to="{ name: 'Sample Environment' }"
       >
         Go to next step
         <v-icon class="pl-1">
