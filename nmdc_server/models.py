@@ -876,7 +876,7 @@ class BulkDownloadDataObject(Base):
         BulkDownload, backref=backref("files", lazy="joined", cascade="all")
     )
     data_object = relationship(
-        DataObject, lazy="joined", cascade="all", backref="bulk_download_entities"
+        DataObject, lazy="joined", cascade="save-update,delete", backref="bulk_download_entities"
     )
 
 
