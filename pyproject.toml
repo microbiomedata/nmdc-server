@@ -97,7 +97,7 @@ dependencies = [
     "mypy==1.11.2",
     "mypy-extensions==1.0.0",
     "nmdc-schema==11.7.0",
-    "nmdc-submission-schema==11.7.0",
+    "nmdc-submission-schema==11.7.1",
     "nmdc-geoloc-tools==0.2.0",
     "openpyxl==3.1.5",
     "packaging==24.1",
