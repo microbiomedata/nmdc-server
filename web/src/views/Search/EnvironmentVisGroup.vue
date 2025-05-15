@@ -30,11 +30,20 @@ export default defineComponent({
 <template>
   <v-row>
     <v-col :cols="12">
-      <EcosystemSankey
-        :conditions="conditions"
-        style="width: 100%"
-        @selected="toggleConditions($event.conditions)"
-      />
+      <div
+        class="pr-2 overflow-y-auto overflow-x-hidden"
+        style="
+            height: 700px;
+            width: 100%;
+            max-width: 100%;
+          "
+      >
+        <EcosystemSankey
+          :conditions="conditions"
+          style="width: 100%"
+          @selected="toggleConditions($event.conditions)"
+        />
+      </div>
     </v-col>
   </v-row>
 </template>
