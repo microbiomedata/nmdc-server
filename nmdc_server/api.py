@@ -699,7 +699,7 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
     logger.warning("Using ZipStreamer service to stream ZIP archive...")
     num_chunks_received = 0
     async with (
-        httpx.AsyncClient() as client,
+        httpx.AsyncClient(timeout=None) as client,
         client.stream("POST", settings.zip_streamer_url, json=zip_file_descriptor) as response,
     ):
         async for chunk in response.aiter_bytes(chunk_size=settings.zip_streamer_chunk_size_bytes):
