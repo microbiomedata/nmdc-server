@@ -694,7 +694,7 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
     settings = Settings()
 
     # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
-    # Note: We added these statements to help with debugging in the Spin-hosted development environment.
+    # Note: We added these statements to help with debugging when this functionality was new.
     logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
     logger.warning("Using ZipStreamer service to stream ZIP archive...")
     num_chunks_received = 0
