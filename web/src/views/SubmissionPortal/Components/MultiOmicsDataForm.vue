@@ -9,9 +9,10 @@ import {
 
 import Definitions from '@/definitions';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, templateChoiceDisabled, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
+  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
+  templateHasData,
 } from '../store';
-import { AwardTypes } from '@/views/SubmissionPortal/types';
+import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
@@ -113,10 +114,12 @@ export default defineComponent({
       multiOmicsAssociations,
       multiOmicsFormValid,
       Definitions,
-      templateChoiceDisabled,
+      HARMONIZER_TEMPLATES,
       /* functions */
       reValidate,
       canEditSubmissionMetadata,
+      checkJGITemplates,
+      templateHasData,
     };
   },
 });
@@ -145,6 +148,7 @@ export default defineComponent({
         v-model="multiOmicsForm.dataGenerated"
         label="Have data already been generated for your study? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
         @change="resetFields('dataGenerated')"
       >
         <v-radio
@@ -161,6 +165,7 @@ export default defineComponent({
         v-model="multiOmicsForm.facilityGenerated"
         label="Was data generated at a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
         @change="resetFields('facilityGenerated')"
       >
         <v-radio
@@ -185,6 +190,7 @@ export default defineComponent({
         v-if="multiOmicsForm.dataGenerated === false"
         v-model="multiOmicsForm.doe"
         label="Are you submitting samples to a DOE user facility (JGI, EMSL)? *"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
         @change="resetFields('doe')"
       >
         <v-radio
@@ -301,16 +307,6 @@ export default defineComponent({
         />
       </div>
 
-      <v-alert
-        v-if="templateChoiceDisabled"
-        type="warning"
-      >
-        <p class="text-h5">
-          Data type choice disabled
-        </p>
-        Data types cannot be changed when there are already metadata rows in step 6.  To change the template, return to step 6 and remove all data.
-      </v-alert>
-
       <DataTypes
         v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.doe === false"
         legend="Which datatypes may be generated later?"
@@ -323,6 +319,18 @@ export default defineComponent({
         :show-data-compatibility-questions="true"
         @revalidate="revalidate"
       />
+
+      <v-alert
+        v-if="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        type="warning"
+      >
+        <p class="text-h5">
+          Some choices may be disabled
+        </p>
+        Data types with data present in step 5 cannot be disabled. To change these templates, return to step 5 and remove data from the tabs you wish to disable.
+        You may add unselected data types at any time.
+      </v-alert>
+
       <div
         v-if="multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')"
         class="d-flex flex-column grow my-4"
