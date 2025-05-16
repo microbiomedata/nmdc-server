@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+import time
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
@@ -692,20 +693,26 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
     a ZIP archive in response, which this function yields in chunks.
     """
     settings = Settings()
+    last_chunk_time = time.time()
 
     # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
     # Note: We added these statements to help with debugging when this functionality was new.
     logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
     logger.warning("Using ZipStreamer service to stream ZIP archive...")
-    num_chunks_received = 0
     async with (
         httpx.AsyncClient() as client,
         client.stream("POST", settings.zip_streamer_url, json=zip_file_descriptor) as response,
     ):
         async for chunk in response.aiter_bytes(chunk_size=settings.zip_streamer_chunk_size_bytes):
-            num_chunks_received += 1
-            message = f"Received chunk {num_chunks_received} from ZipStreamer. Size: {len(chunk)}"
-            logger.warning(message)
+            this_chunk_time = time.time()
+            time_elapsed = this_chunk_time - last_chunk_time
+            # TODO: either clean up this logging depending on how useful it is, or make the
+            # hardcoded value a setting to be read from the environment.
+            # The number 5 was chosen because it is the default timeout length for HTTPX.
+            if time_elapsed > 5:
+                message = f"This chunk took a while to arrive. It arrived in {int(time_elapsed)}s"
+                logger.warning(message)
+            last_chunk_time = this_chunk_time
             yield chunk
 
 
