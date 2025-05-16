@@ -692,13 +692,19 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
     a ZIP archive in response, which this function yields in chunks.
     """
     settings = Settings()
-    logger.warning("Using zip streamer service to stream zip archive...")
+
+    # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
+    # Note: We added these statements to help with debugging in the Spin-hosted development environment.
+    logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
+    logger.warning("Using ZipStreamer service to stream ZIP archive...")
+    num_chunks_received = 0
     async with (
         httpx.AsyncClient() as client,
         client.stream("POST", settings.zip_streamer_url, json=zip_file_descriptor) as response,
     ):
         async for chunk in response.aiter_bytes(chunk_size=settings.zip_streamer_chunk_size_bytes):
-            message = f"Recieved a chunk of size {len(chunk)} from zipstreamer"
+            num_chunks_received += 1
+            message = f"Received chunk {num_chunks_received} from ZipStreamer. Size: {len(chunk)}"
             logger.warning(message)
             yield chunk
 
