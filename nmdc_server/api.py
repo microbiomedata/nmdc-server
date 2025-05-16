@@ -19,6 +19,7 @@ from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
+from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester
 from nmdc_server.models import (
     IngestLock,
@@ -31,6 +32,8 @@ from nmdc_server.pagination import Pagination
 from nmdc_server.table import Table
 
 router = APIRouter()
+
+logger = get_logger(__name__)
 
 
 # get application settings
@@ -689,11 +692,14 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
     a ZIP archive in response, which this function yields in chunks.
     """
     settings = Settings()
+    logger.warning("Using zip streamer service to stream zip archive...")
     async with (
         httpx.AsyncClient() as client,
         client.stream("POST", settings.zip_streamer_url, json=zip_file_descriptor) as response,
     ):
         async for chunk in response.aiter_bytes(chunk_size=settings.zip_streamer_chunk_size_bytes):
+            message = f"Recieved a chunk of size {len(chunk)} from zipstreamer"
+            logger.warning(message)
             yield chunk
 
 
