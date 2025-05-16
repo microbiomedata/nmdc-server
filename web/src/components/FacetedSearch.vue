@@ -16,6 +16,7 @@ const groupOrders = [
   'gold ecosystems',
   'mixs environmental triad',
   'data generation',
+  'workflow execution',
 ];
 
 export interface SearchFacet {
