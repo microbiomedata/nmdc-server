@@ -77,7 +77,7 @@ const router = new VueRouter({
               component: MultiOmicsDataForm,
             },
             {
-              name: 'Environment Package',
+              name: 'Sample Environment',
               component: TemplateChooser,
               path: ':id/templates',
             },

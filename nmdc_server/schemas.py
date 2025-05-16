@@ -417,7 +417,7 @@ class PipelineStepBase(BaseModel):
     type: str
     git_url: str
     started_at_time: DateType
-    ended_at_time: DateType
+    ended_at_time: Optional[DateType] = None
     execution_resource: str
     omics_processing_id: str
 
@@ -553,7 +553,6 @@ class MAGsAnalysis(PipelineStep):
 
 class NOMAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.nom_analysis.value
-    used: str = ""
 
 
 class NOMAnalysis(PipelineStep):
@@ -578,7 +577,6 @@ class Metatranscriptome(PipelineStep):
 
 class MetabolomicsAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.metabolomics_analysis.value
-    used: str = ""
 
 
 class MetabolomicsAnalysis(PipelineStep):

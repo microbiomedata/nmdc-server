@@ -13,8 +13,8 @@ const StepperMap: Record<string | number, number | string> = {
   'Multiomics Form': 3,
   3: 'Multiomics Form',
 
-  'Environment Package': 4,
-  4: 'Environment Package',
+  'Sample Environment': 4,
+  4: 'Sample Environment',
 
   'Submission Sample Editor': 5,
   5: 'Submission Sample Editor',
@@ -85,8 +85,8 @@ export default defineComponent({
         :complete="4 < step"
         @click="gotoStep(4)"
       >
-        Environment Package
-        <small>Choose package type</small>
+        Sample Environment
+        <small>Choose MIxS Extension</small>
       </v-stepper-step>
       <v-divider />
       <v-stepper-step

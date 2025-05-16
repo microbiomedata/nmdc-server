@@ -25,18 +25,24 @@ jobs:
 
   server:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # This version is duplicated in the root docker-compose.yml
+        image: postgres:13
+        env:
+          POSTGRES_USER: nmdc
+          POSTGRES_PASSWORD: nmdc
+          POSTGRES_DB: nmdc
+        ports:
+          - 5432:5432
+
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.9]
+        python-version: [3.12]
 
     steps:
-    - uses: harmon758/postgresql-action@v1
-      with:
-        postgresql version: '12'
-        postgresql db: 'nmdc'
-        postgresql user: 'nmdc'
-        postgresql password: 'nmdc'
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5

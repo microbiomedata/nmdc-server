@@ -928,7 +928,7 @@ export default defineComponent({
       <v-btn
         color="gray"
         depressed
-        :to="{ name: 'Environment Package' }"
+        :to="{ name: 'Sample Environment' }"
       >
         <v-icon class="pr-1">
           mdi-arrow-left-circle

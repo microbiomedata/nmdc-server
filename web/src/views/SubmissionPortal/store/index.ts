@@ -191,7 +191,7 @@ function removeAwardDoi(i: number) {
 }
 
 /**
- * Environment Package Step
+ * Environmental Package Step
  */
 const packageName = ref([] as (keyof typeof HARMONIZER_TEMPLATES)[]);
 const templateList = computed(() => {

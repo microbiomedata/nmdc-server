@@ -496,7 +496,7 @@ class PipelineStep:
     type = Column(String, nullable=False)
     git_url = Column(String, nullable=False)
     started_at_time = Column(DateTime, nullable=False)
-    ended_at_time = Column(DateTime, nullable=False)
+    ended_at_time = Column(DateTime)
     execution_resource = Column(String, nullable=False)
 
     @declared_attr
@@ -685,8 +685,6 @@ nom_analysis_output_association = output_association("nom_analysis")
 class NOMAnalysis(Base, PipelineStep):
     __tablename__ = "nom_analysis"
 
-    used = Column(String, nullable=False)
-
     inputs = input_relationship(nom_analysis_input_association)
     outputs = output_relationship(nom_analysis_output_association)
 
@@ -721,8 +719,6 @@ metabolomics_analysis_output_association = output_association("metabolomics_anal
 
 class MetabolomicsAnalysis(Base, PipelineStep):
     __tablename__ = "metabolomics_analysis"
-
-    used = Column(String, nullable=False)
 
     inputs = input_relationship(metabolomics_analysis_input_association)
     outputs = output_relationship(metabolomics_analysis_output_association)
@@ -830,7 +826,6 @@ class MetaPGeneFunctionAggregation(Base):
     )
     gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
     count = Column(BigInteger, nullable=False)
-    best_protein = Column(Boolean, nullable=False)
 
 
 class MetaTGeneFunctionAggregation(Base):
@@ -881,7 +876,7 @@ class BulkDownloadDataObject(Base):
         BulkDownload, backref=backref("files", lazy="joined", cascade="all")
     )
     data_object = relationship(
-        DataObject, lazy="joined", cascade="all", backref="bulk_download_entities"
+        DataObject, lazy="joined", cascade="save-update,delete", backref="bulk_download_entities"
     )
 
 
