@@ -493,7 +493,7 @@ def replace_nersc_data_host(url: str) -> str:
     for HTTP clients that have direct access to the NERSC network.
     """
     host_to_replace = r"^https://data.microbiomedata.org/data"
-    replacement_host = Settings().zip_streamer_nersc_data_host
+    replacement_host = Settings().zip_streamer_nersc_data_base_url
     if re.match(host_to_replace, url):
         return re.sub(host_to_replace, replacement_host, url)
     return url
