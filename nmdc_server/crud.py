@@ -10,6 +10,7 @@ from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
+from nmdc_server.config import Settings
 from nmdc_server.logger import get_logger
 
 logger = get_logger(__name__)
@@ -485,6 +486,14 @@ def create_bulk_download(
         raise
 
 
+def replace_nersc_data_host(url: str):
+    host_to_replace = r"^https://data.microbiomedata.org/data"
+    replacement_host = Settings().zip_streamer_nersc_data_host
+    if re.match(host_to_replace, url):
+        return re.sub(host_to_replace, replacement_host, url)
+    return url
+
+
 def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     """Return a zip file descriptor compatible with zipstreamer."""
     bulk_download = db.query(models.BulkDownload).get(id)
@@ -501,7 +510,8 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
             continue
 
-        file_descriptions.append({"url": data_object.url, "zipPath": file.path})
+        url = replace_nersc_data_host(data_object.url)
+        file_descriptions.append({"url": url, "zipPath": file.path})
 
     zip_file_descriptor["files"] = file_descriptions
 
