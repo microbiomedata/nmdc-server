@@ -486,7 +486,12 @@ def create_bulk_download(
         raise
 
 
-def replace_nersc_data_host(url: str):
+def replace_nersc_data_host(url: str) -> str:
+    """
+    Updates NERSC URLs so they have the custom prefix defined in
+    an environment variable. This can be used to optimize the URLs
+    for HTTP clients that have direct access to the NERSC network.
+    """
     host_to_replace = r"^https://data.microbiomedata.org/data"
     replacement_host = Settings().zip_streamer_nersc_data_host
     if re.match(host_to_replace, url):
