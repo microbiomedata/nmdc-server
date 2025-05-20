@@ -1,17 +1,17 @@
 import csv
 import json
 import logging
+from importlib import resources
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
-from importlib import resources
 
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
+from linkml_runtime.utils.schemaview import SchemaView
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
-from linkml_runtime.utils.schemaview import SchemaView
 
 from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
@@ -792,49 +792,8 @@ async def get_metadata_submissions_mixs(
                 env_local_scale_enum = False
                 env_medium_enum = False
 
-                # Enums exist currently for water, soil, sediment, and plant-associated
-                # Outside of those categories, checks will need to be updated
-
-                if env_package in schema["EnvPackageEnum"]["permissible_values"]:
-                    env_package_enum = True
-
-                if env_package == "water":
-                    if env_broad_scale in schema["EnvBroadScaleWaterEnum"]["permissible_values"]:
-                        env_broad_scale_enum = True
-                    if env_local_scale in schema["EnvLocalScaleWaterEnum"]["permissible_values"]:
-                        env_local_scale_enum = True
-                    if env_medium in schema["EnvMediumWaterEnum"]["permissible_values"]:
-                        env_medium_enum = True
-
-                elif env_package == "soil":
-                    if env_broad_scale in schema["EnvBroadScaleSoilEnum"]["permissible_values"]:
-                        env_broad_scale_enum = True
-                    if env_local_scale in schema["EnvLocalScaleSoilEnum"]["permissible_values"]:
-                        env_local_scale_enum = True
-                    if env_medium in schema["EnvMediumSoilEnum"]["permissible_values"]:
-                        env_medium_enum = True
-
-                elif env_package == "sediment":
-                    if env_broad_scale in schema["EnvBroadScaleSedimentEnum"]["permissible_values"]:
-                        env_broad_scale_enum = True
-                    if env_local_scale in schema["EnvLocalScaleSedimentEnum"]["permissible_values"]:
-                        env_local_scale_enum = True
-                    if env_medium in schema["EnvMediumSedimentEnum"]["permissible_values"]:
-                        env_medium_enum = True
-
-                elif env_package == "plant-associated":
-                    if (
-                        env_broad_scale
-                        in schema["EnvBroadScalePlantAssociatedEnum"]["permissible_values"]
-                    ):
-                        env_broad_scale_enum = True
-                    if (
-                        env_local_scale
-                        in schema["EnvLocalScalePlantAssociatedEnum"]["permissible_values"]
-                    ):
-                        env_local_scale_enum = True
-                    if env_medium in schema["EnvMediumPlantAssociatedEnum"]["permissible_values"]:
-                        env_medium_enum = True
+                # Check against permissible values
+                env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum = check_permissible_values(schema, env_package, env_broad_scale, env_local_scale, env_medium)
 
                 # Append each sample as new row (with env data)
                 data_row = [
@@ -902,6 +861,61 @@ def fetch_nmdc_submission_schema():
     }
 
     return isolated_enums
+
+def check_permissible_values(
+    schema: dict, 
+    env_package: str, 
+    env_broad_scale: str, 
+    env_local_scale: str,
+    env_medium: str
+):
+    # Enums exist currently for water, soil, sediment, and plant-associated
+    # Outside of those categories, checks will need to be updated
+
+    if env_package in schema["EnvPackageEnum"]["permissible_values"]:
+        env_package_enum = True
+
+    if env_package == "water":
+        if env_broad_scale in schema["EnvBroadScaleWaterEnum"]["permissible_values"]:
+            env_broad_scale_enum = True
+        if env_local_scale in schema["EnvLocalScaleWaterEnum"]["permissible_values"]:
+            env_local_scale_enum = True
+        if env_medium in schema["EnvMediumWaterEnum"]["permissible_values"]:
+            env_medium_enum = True
+
+    elif env_package == "soil":
+        if env_broad_scale in schema["EnvBroadScaleSoilEnum"]["permissible_values"]:
+            env_broad_scale_enum = True
+        if env_local_scale in schema["EnvLocalScaleSoilEnum"]["permissible_values"]:
+            env_local_scale_enum = True
+        if env_medium in schema["EnvMediumSoilEnum"]["permissible_values"]:
+            env_medium_enum = True
+
+    elif env_package == "sediment":
+        if env_broad_scale in schema["EnvBroadScaleSedimentEnum"]["permissible_values"]:
+            env_broad_scale_enum = True
+        if env_local_scale in schema["EnvLocalScaleSedimentEnum"]["permissible_values"]:
+            env_local_scale_enum = True
+        if env_medium in schema["EnvMediumSedimentEnum"]["permissible_values"]:
+            env_medium_enum = True
+
+    elif env_package == "plant-associated":
+        if (
+            env_broad_scale
+            in schema["EnvBroadScalePlantAssociatedEnum"]["permissible_values"]
+        ):
+            env_broad_scale_enum = True
+        if (
+            env_local_scale
+            in schema["EnvLocalScalePlantAssociatedEnum"]["permissible_values"]
+        ):
+            env_local_scale_enum = True
+        if env_medium in schema["EnvMediumPlantAssociatedEnum"]["permissible_values"]:
+            env_medium_enum = True
+
+        # Return tuple
+        return env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
+
 
 
 @router.get(
