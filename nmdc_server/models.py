@@ -289,7 +289,7 @@ class Study(Base, AnnotatedModel):
 
     # TODO migrate these into relations or something
     has_credit_associations = Column(JSONB, nullable=True)
-    relevant_protocols = Column(JSONB, nullable=True)
+    protocol_link = Column(JSONB, nullable=True)
     funding_sources = Column(JSONB, nullable=True)
     gold_study_identifiers = Column(JSONB, nullable=True)
 

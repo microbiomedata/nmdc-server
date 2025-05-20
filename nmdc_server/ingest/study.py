@@ -89,7 +89,7 @@ def load(db: Session, cursor: Cursor):
 
         protocol_links = obj.pop("protocol_link", None)
         if protocol_links:
-            obj["relevant_protocols"] = [p["url"] for p in protocol_links if "url" in p]
+            obj["protocol_link"] = [p["url"] for p in protocol_links if "url" in p]
 
         new_study = create_study(db, Study(**obj))
         if dois:

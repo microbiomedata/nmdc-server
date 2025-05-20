@@ -238,7 +238,7 @@ class StudyBase(AnnotatedBase):
     add_date: Optional[DateType] = None
     mod_date: Optional[DateType] = None
     has_credit_associations: Optional[List[CreditAssociation]] = None
-    relevant_protocols: Optional[List[str]] = None
+    protocol_link: Optional[List[str]] = None
     funding_sources: Optional[List[str]] = None
     gold_study_identifiers: Optional[List[str]] = None
     homepage_website: Optional[List[str]] = None

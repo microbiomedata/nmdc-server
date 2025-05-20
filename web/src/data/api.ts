@@ -182,7 +182,7 @@ export interface StudySearchResults extends BaseSearchResult {
   mod_date: string;
   open_in_gold: string;
   funding_sources?: string[];
-  relevant_protocols: string[];
+  protocol_link: string[];
   gold_study_identifiers: string[];
   annotations: {
     insdc_bioproject_identifiers?: string[];
