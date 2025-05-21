@@ -18,6 +18,7 @@ import AppBanner from '@/components/AppBanner.vue';
 import AttributeItem from '@/components/Presentation/AttributeItem.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
 import TeamInfo from '@/components/TeamInfo.vue';
+import gold from '@/assets/GOLD.png';
 /**
  * Override citations for certain DOIs
  */
@@ -230,14 +231,7 @@ export default defineComponent({
       fieldDisplayName,
       seeStudyInContext,
       parentStudies,
-      images: {
-        // eslint-disable-next-line global-require
-        gold: require('@/assets/GOLD.png'),
-        // eslint-disable-next-line global-require
-        ess: require('@/assets/ESS.png'),
-        // eslint-disable-next-line global-require
-        massive: require('@/assets/massive.png'),
-      },
+      gold,
     };
   },
 });
@@ -344,7 +338,7 @@ export default defineComponent({
                       target: link
                     }
                   }"
-                  :image="images.gold"
+                  :image="gold"
                 />
                 <AttributeItem
                   v-for="link in bioprojectLinks"
