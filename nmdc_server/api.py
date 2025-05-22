@@ -748,8 +748,6 @@ async def get_metadata_submissions_mixs(
         metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
         if "packageName" in metadata:
-            # for package_name in metadata["packageName"]:
-            #     env_package = package_name
             env_package = metadata["packageName"]
         else:
             env_package = ""
@@ -869,13 +867,13 @@ def check_permissible_values(
 ):
 
     # Perform enum checks
-    env_package_enum = False
-    env_broad_scale_enum = False
-    env_local_scale_enum = False
-    env_medium_enum = False
+    env_package_enum = "False"
+    env_broad_scale_enum = "False"
+    env_local_scale_enum = "False"
+    env_medium_enum = "False"
 
     if env_package in schema["EnvPackageEnum"]["permissible_values"]:
-        env_package_enum = True
+        env_package_enum = "True"
 
     # Enums exist currently for water, soil, sediment, and plant-associated
     # confirmed_enums will need to be updated as more enum types are added
@@ -892,11 +890,11 @@ def check_permissible_values(
 
         # Validate the rest of the enums
         if env_broad_scale in schema[f"EnvBroadScale{temp_env_package}Enum"]["permissible_values"]:
-            env_broad_scale_enum = True
+            env_broad_scale_enum = "True"
         if env_local_scale in schema[f"EnvLocalScale{temp_env_package}Enum"]["permissible_values"]:
-            env_local_scale_enum = True
+            env_local_scale_enum = "True"
         if env_medium in schema[f"EnvMedium{temp_env_package}Enum"]["permissible_values"]:
-            env_medium_enum = True
+            env_medium_enum = "True"
 
     return env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
 

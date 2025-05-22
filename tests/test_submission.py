@@ -117,10 +117,10 @@ def test_get_metadata_submissions_mixs_as_admin(
     assert data_row["Environmental Broad Scale"] == "Broad Scale A"
     assert data_row["Environmental Local Scale"] == "Local Scale A"
     assert data_row["Environmental Medium"] == "Medium A"
-    assert not data_row["Package T/F"]
-    assert not data_row["Broad Scale T/F"]
-    assert not data_row["Local Scale T/F"]
-    assert not data_row["Medium T/F"]
+    assert data_row["Package T/F"] == "False"
+    assert data_row["Broad Scale T/F"] == "False"
+    assert data_row["Local Scale T/F"] == "False"
+    assert data_row["Medium T/F"] == "False"
 
     data_row = rows[2]  # second data row (data about Sample B in submission1)
     assert data_row["Submission ID"] == str(submission1.id)
@@ -130,10 +130,10 @@ def test_get_metadata_submissions_mixs_as_admin(
     assert data_row["Environmental Broad Scale"] == "Broad Scale B"
     assert data_row["Environmental Local Scale"] == "Local Scale B"
     assert data_row["Environmental Medium"] == "Medium B"
-    assert not data_row["Package T/F"]
-    assert not data_row["Broad Scale T/F"]
-    assert not data_row["Local Scale T/F"]
-    assert not data_row["Medium T/F"]
+    assert data_row["Package T/F"] == "False"
+    assert data_row["Broad Scale T/F"] == "False"
+    assert data_row["Local Scale T/F"] == "False"
+    assert data_row["Medium T/F"] == "False"
 
 
 def test_get_metadata_submissions_report_as_non_admin(
