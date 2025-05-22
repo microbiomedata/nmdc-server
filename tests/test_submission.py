@@ -100,7 +100,7 @@ def test_get_metadata_submissions_mixs_as_admin(
         "Package T/F",
         "Broad Scale T/F",
         "Local Scale T/F",
-        "Medium T/F"
+        "Medium T/F",
     ]
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
     rows = [row for row in reader]

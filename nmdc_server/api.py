@@ -709,9 +709,7 @@ async def download_zip_file(
 # async def get_metadata_submissions_mixs(
 #     db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
 # ):
-async def get_metadata_submissions_mixs(
-    db: Session = Depends(get_db)
-):
+async def get_metadata_submissions_mixs(db: Session = Depends(get_db)):
     r"""
     Generate a TSV-formatted report of biosamples belonging to submissions
     that have a status of "Submitted- Pending Review".
@@ -790,9 +788,13 @@ async def get_metadata_submissions_mixs(
                 env_medium = env_medium.replace("\n", "").lstrip("_")
 
                 # Check against permissible values
-                environmental_enums = check_permissible_values(schema, env_package, env_broad_scale, env_local_scale, env_medium)
+                environmental_enums = check_permissible_values(
+                    schema, env_package, env_broad_scale, env_local_scale, env_medium
+                )
                 # Split the answers up
-                env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum = environmental_enums
+                env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum = (
+                    environmental_enums
+                )
 
                 # Append each sample as new row (with env data)
                 data_row = [
@@ -863,13 +865,9 @@ def fetch_nmdc_submission_schema():
 
 
 def check_permissible_values(
-    schema: dict,
-    env_package: str,
-    env_broad_scale: str,
-    env_local_scale: str,
-    env_medium: str
+    schema: dict, env_package: str, env_broad_scale: str, env_local_scale: str, env_medium: str
 ):
-    
+
     # Perform enum checks
     env_package_enum = False
     env_broad_scale_enum = False
@@ -892,13 +890,13 @@ def check_permissible_values(
         env_package = env_package.replace(" ", "")
 
         # Validate the rest of the enums
-        if env_broad_scale in schema[f'EnvBroadScale{env_package}Enum']["permissible_values"]:
+        if env_broad_scale in schema[f"EnvBroadScale{env_package}Enum"]["permissible_values"]:
             env_broad_scale_enum = True
-        if env_local_scale in schema[f'EnvLocalScale{env_package}Enum']["permissible_values"]:
+        if env_local_scale in schema[f"EnvLocalScale{env_package}Enum"]["permissible_values"]:
             env_local_scale_enum = True
-        if env_medium in schema[f'EnvMedium{env_package}Enum']["permissible_values"]:
+        if env_medium in schema[f"EnvMedium{env_package}Enum"]["permissible_values"]:
             env_medium_enum = True
-        
+
     return env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
 
 
