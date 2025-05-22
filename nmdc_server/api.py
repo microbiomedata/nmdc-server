@@ -706,10 +706,9 @@ async def download_zip_file(
     "/metadata_submission/mixs_report",
     tags=["metadata_submission"],
 )
-# async def get_metadata_submissions_mixs(
-#     db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
-# ):
-async def get_metadata_submissions_mixs(db: Session = Depends(get_db)):
+async def get_metadata_submissions_mixs(
+    db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+):
     r"""
     Generate a TSV-formatted report of biosamples belonging to submissions
     that have a status of "Submitted- Pending Review".
@@ -718,8 +717,8 @@ async def get_metadata_submissions_mixs(db: Session = Depends(get_db)):
     local scale, and medium are specified for each biosample. The report is
     designed to facilitate the review of submissions by NMDC team members.
     """
-    # if not user.is_admin:
-    #     raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     # Get the submissions from the database.
     q = crud.get_query_for_submitted_pending_review_submissions(db)
