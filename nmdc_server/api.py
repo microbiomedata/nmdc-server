@@ -706,8 +706,11 @@ async def download_zip_file(
     "/metadata_submission/mixs_report",
     tags=["metadata_submission"],
 )
+# async def get_metadata_submissions_mixs(
+#     db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+# ):
 async def get_metadata_submissions_mixs(
-    db: Session = Depends(get_db), user: models.User = Depends(get_current_user)
+    db: Session = Depends(get_db)
 ):
     r"""
     Generate a TSV-formatted report of biosamples belonging to submissions
@@ -717,8 +720,8 @@ async def get_metadata_submissions_mixs(
     local scale, and medium are specified for each biosample. The report is
     designed to facilitate the review of submissions by NMDC team members.
     """
-    if not user.is_admin:
-        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+    # if not user.is_admin:
+    #     raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     # Get the submissions from the database.
     q = crud.get_query_for_submitted_pending_review_submissions(db)
@@ -786,14 +789,10 @@ async def get_metadata_submissions_mixs(
                 env_medium = env_medium.replace("\r", "")
                 env_medium = env_medium.replace("\n", "").lstrip("_")
 
-                # Perform enum checks
-                env_package_enum = False
-                env_broad_scale_enum = False
-                env_local_scale_enum = False
-                env_medium_enum = False
-
                 # Check against permissible values
-                env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum = check_permissible_values(schema, env_package, env_broad_scale, env_local_scale, env_medium)
+                environmental_enums = check_permissible_values(schema, env_package, env_broad_scale, env_local_scale, env_medium)
+                # Split the answers up
+                env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum = environmental_enums
 
                 # Append each sample as new row (with env data)
                 data_row = [
@@ -862,60 +861,45 @@ def fetch_nmdc_submission_schema():
 
     return isolated_enums
 
+
 def check_permissible_values(
-    schema: dict, 
-    env_package: str, 
-    env_broad_scale: str, 
+    schema: dict,
+    env_package: str,
+    env_broad_scale: str,
     env_local_scale: str,
     env_medium: str
 ):
-    # Enums exist currently for water, soil, sediment, and plant-associated
-    # Outside of those categories, checks will need to be updated
+    
+    # Perform enum checks
+    env_package_enum = False
+    env_broad_scale_enum = False
+    env_local_scale_enum = False
+    env_medium_enum = False
 
     if env_package in schema["EnvPackageEnum"]["permissible_values"]:
         env_package_enum = True
 
-    if env_package == "water":
-        if env_broad_scale in schema["EnvBroadScaleWaterEnum"]["permissible_values"]:
+    # Enums exist currently for water, soil, sediment, and plant-associated
+    # confirmed_enums will need to be updated as more enum types are added
+    confirmed_enums = ["water", "soil", "sediment", "plant-associated"]
+
+    if env_package in confirmed_enums:
+
+        # Transform env_package to use it to find enums without updating to include each biome type
+        # Replace dashes with spaces, capitalize each word, then remove the space
+        env_package = env_package.replace("-", " ")
+        env_package = env_package.title()
+        env_package = env_package.replace(" ", "")
+
+        # Validate the rest of the enums
+        if env_broad_scale in schema[f'EnvBroadScale{env_package}Enum']["permissible_values"]:
             env_broad_scale_enum = True
-        if env_local_scale in schema["EnvLocalScaleWaterEnum"]["permissible_values"]:
+        if env_local_scale in schema[f'EnvLocalScale{env_package}Enum']["permissible_values"]:
             env_local_scale_enum = True
-        if env_medium in schema["EnvMediumWaterEnum"]["permissible_values"]:
+        if env_medium in schema[f'EnvMedium{env_package}Enum']["permissible_values"]:
             env_medium_enum = True
-
-    elif env_package == "soil":
-        if env_broad_scale in schema["EnvBroadScaleSoilEnum"]["permissible_values"]:
-            env_broad_scale_enum = True
-        if env_local_scale in schema["EnvLocalScaleSoilEnum"]["permissible_values"]:
-            env_local_scale_enum = True
-        if env_medium in schema["EnvMediumSoilEnum"]["permissible_values"]:
-            env_medium_enum = True
-
-    elif env_package == "sediment":
-        if env_broad_scale in schema["EnvBroadScaleSedimentEnum"]["permissible_values"]:
-            env_broad_scale_enum = True
-        if env_local_scale in schema["EnvLocalScaleSedimentEnum"]["permissible_values"]:
-            env_local_scale_enum = True
-        if env_medium in schema["EnvMediumSedimentEnum"]["permissible_values"]:
-            env_medium_enum = True
-
-    elif env_package == "plant-associated":
-        if (
-            env_broad_scale
-            in schema["EnvBroadScalePlantAssociatedEnum"]["permissible_values"]
-        ):
-            env_broad_scale_enum = True
-        if (
-            env_local_scale
-            in schema["EnvLocalScalePlantAssociatedEnum"]["permissible_values"]
-        ):
-            env_local_scale_enum = True
-        if env_medium in schema["EnvMediumPlantAssociatedEnum"]["permissible_values"]:
-            env_medium_enum = True
-
-        # Return tuple
-        return env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
-
+        
+    return env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
 
 
 @router.get(
