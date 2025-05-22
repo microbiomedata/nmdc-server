@@ -885,16 +885,17 @@ def check_permissible_values(
 
         # Transform env_package to use it to find enums without updating to include each biome type
         # Replace dashes with spaces, capitalize each word, then remove the space
-        env_package = env_package.replace("-", " ")
-        env_package = env_package.title()
-        env_package = env_package.replace(" ", "")
+        temp_env_package = env_package
+        temp_env_package = temp_env_package.replace("-", " ")
+        temp_env_package = temp_env_package.title()
+        temp_env_package = temp_env_package.replace(" ", "")
 
         # Validate the rest of the enums
-        if env_broad_scale in schema[f"EnvBroadScale{env_package}Enum"]["permissible_values"]:
+        if env_broad_scale in schema[f"EnvBroadScale{temp_env_package}Enum"]["permissible_values"]:
             env_broad_scale_enum = True
-        if env_local_scale in schema[f"EnvLocalScale{env_package}Enum"]["permissible_values"]:
+        if env_local_scale in schema[f"EnvLocalScale{temp_env_package}Enum"]["permissible_values"]:
             env_local_scale_enum = True
-        if env_medium in schema[f"EnvMedium{env_package}Enum"]["permissible_values"]:
+        if env_medium in schema[f"EnvMedium{temp_env_package}Enum"]["permissible_values"]:
             env_medium_enum = True
 
     return env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
