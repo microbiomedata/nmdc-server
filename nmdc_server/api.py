@@ -1,6 +1,7 @@
 import csv
 import json
 import logging
+from importlib import resources
 import time
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
@@ -10,6 +11,7 @@ import httpx
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
+from linkml_runtime.utils.schemaview import SchemaView
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -768,13 +770,24 @@ async def get_metadata_submissions_mixs(
         "Environmental Broad Scale",
         "Environmental Local Scale",
         "Environmental Medium",
+        "Package T/F",
+        "Broad Scale T/F",
+        "Local Scale T/F",
+        "Medium T/F",
     ]
+
+    # Get submission schema view for enum validation
+    schema = fetch_nmdc_submission_schema()
+
     data_rows = []
     for s in submissions:
 
         metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
-        env_package = metadata["packageName"] if "packageName" in metadata else {}
+        if "packageName" in metadata:
+            env_package = metadata["packageName"]
+        else:
+            env_package = ""
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -809,6 +822,15 @@ async def get_metadata_submissions_mixs(
                 env_medium = env_medium.replace("\r", "")
                 env_medium = env_medium.replace("\n", "").lstrip("_")
 
+                # Check against permissible values
+                environmental_enums = check_permissible_values(
+                    schema, env_package, env_broad_scale, env_local_scale, env_medium
+                )
+                # Split the answers up
+                env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum = (
+                    environmental_enums
+                )
+
                 # Append each sample as new row (with env data)
                 data_row = [
                     s.id,
@@ -818,6 +840,10 @@ async def get_metadata_submissions_mixs(
                     env_broad_scale,
                     env_local_scale,
                     env_medium,
+                    env_package_enum,
+                    env_broad_scale_enum,
+                    env_local_scale_enum,
+                    env_medium_enum,
                 ]
                 data_rows.append(data_row)
 
@@ -843,6 +869,71 @@ async def get_metadata_submissions_mixs(
     )
 
     return response
+
+
+def fetch_nmdc_submission_schema():
+    submission_schema_files = resources.files("nmdc_submission_schema")
+
+    # Load each class in the submission schema, ensure that each slot of the class
+    # is fully materialized into attributes, and then drop the slot usage definitions
+    # to save some bytes.
+    schema_path = submission_schema_files / "schema/nmdc_submission_schema.yaml"
+    sv = SchemaView(str(schema_path))
+    enum_view = sv.all_enums()
+
+    # Get only the enums to have a smaller schema to pass and compare against
+    isolated_enums = {
+        enum_name: {
+            # Also only grab the relevant pieces - name and perm. values
+            "name": enum_data["name"],
+            "permissible_values": list(enum_data["permissible_values"].keys()),
+        }
+        for enum_name, enum_data in enum_view.items()
+        # Only grab the enums that are relevant to the MIxS data check
+        if ("EnvPackage" in enum_name)
+        or ("EnvMedium" in enum_name)
+        or ("EnvBroadScale" in enum_name)
+        or ("EnvLocalScale" in enum_name)
+    }
+
+    return isolated_enums
+
+
+def check_permissible_values(
+    schema: dict, env_package: str, env_broad_scale: str, env_local_scale: str, env_medium: str
+):
+
+    # Perform enum checks
+    env_package_enum = "False"
+    env_broad_scale_enum = "False"
+    env_local_scale_enum = "False"
+    env_medium_enum = "False"
+
+    if env_package in schema["EnvPackageEnum"]["permissible_values"]:
+        env_package_enum = "True"
+
+    # Enums exist currently for water, soil, sediment, and plant-associated
+    # confirmed_enums will need to be updated as more enum types are added
+    confirmed_enums = ["water", "soil", "sediment", "plant-associated"]
+
+    if env_package in confirmed_enums:
+
+        # Transform env_package to use it to find enums without updating to include each biome type
+        # Replace dashes with spaces, capitalize each word, then remove the space
+        temp_env_package = env_package
+        temp_env_package = temp_env_package.replace("-", " ")
+        temp_env_package = temp_env_package.title()
+        temp_env_package = temp_env_package.replace(" ", "")
+
+        # Validate the rest of the enums
+        if env_broad_scale in schema[f"EnvBroadScale{temp_env_package}Enum"]["permissible_values"]:
+            env_broad_scale_enum = "True"
+        if env_local_scale in schema[f"EnvLocalScale{temp_env_package}Enum"]["permissible_values"]:
+            env_local_scale_enum = "True"
+        if env_medium in schema[f"EnvMedium{temp_env_package}Enum"]["permissible_values"]:
+            env_medium_enum = "True"
+
+    return env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
 
 
 @router.get(
