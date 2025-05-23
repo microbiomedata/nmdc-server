@@ -501,16 +501,19 @@ const fields: Record<string, FieldsData> = {
   /* END GOLD ecosystem type */
   /* MIxS Environmental Triad terms */
   env_broad_scale: {
+    icon: 'mdi-link',
     name: 'Broad-scale Environmental Context',
     group: 'MIxS Environmental Triad',
     sortKey: 1,
   },
   env_local_scale: {
+    icon: 'mdi-link',
     name: 'Local Environmental Context',
     group: 'MIxS Environmental Triad',
     sortKey: 2,
   },
   env_medium: {
+    icon: 'mdi-link',
     name: 'Environmental Medium',
     group: 'MIxS Environmental Triad',
     sortKey: 3,
@@ -661,6 +664,11 @@ const MultiomicsValue = {
   LIP: 0b000001,
 };
 
+const metaproteomicCategoryEnumToDisplay = {
+  matched_metagenome: 'NMDC metagenome matched',
+  in_silico_metagenome: 'Uniprot reference genome matched',
+};
+
 export {
   types,
   geneFunctionType,
@@ -672,4 +680,5 @@ export {
   pfamEncode,
   stringIsKegg,
   makeSetsFromBitmask,
+  metaproteomicCategoryEnumToDisplay,
 };

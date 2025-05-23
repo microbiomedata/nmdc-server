@@ -2,10 +2,12 @@ import csv
 import json
 import logging
 from importlib import resources
+import time
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
 
+import httpx
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
@@ -20,6 +22,7 @@ from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
+from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester
 from nmdc_server.models import (
     IngestLock,
@@ -32,6 +35,8 @@ from nmdc_server.pagination import Pagination
 from nmdc_server.table import Table
 
 router = APIRouter()
+
+logger = get_logger(__name__)
 
 
 # get application settings
@@ -684,6 +689,35 @@ async def get_data_object_aggregation(
     return query.aggregate(db)
 
 
+async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
+    r"""
+    Sends the specified `zip_file_descriptor` to ZipStreamer and receives
+    a ZIP archive in response, which this function yields in chunks.
+    """
+    settings = Settings()
+    last_chunk_time = time.time()
+
+    # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
+    # Note: We added these statements to help with debugging when this functionality was new.
+    logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
+    logger.warning("Using ZipStreamer service to stream ZIP archive...")
+    async with (
+        httpx.AsyncClient(timeout=None) as client,
+        client.stream("POST", settings.zip_streamer_url, json=zip_file_descriptor) as response,
+    ):
+        async for chunk in response.aiter_bytes(chunk_size=settings.zip_streamer_chunk_size_bytes):
+            this_chunk_time = time.time()
+            time_elapsed = this_chunk_time - last_chunk_time
+            # TODO: either clean up this logging depending on how useful it is, or make the
+            # hardcoded value a setting to be read from the environment.
+            # The number 5 was chosen because it is the default timeout length for HTTPX.
+            if time_elapsed > 5:
+                message = f"This chunk took a while to arrive. It arrived in {int(time_elapsed)}s"
+                logger.warning(message)
+            last_chunk_time = this_chunk_time
+            yield chunk
+
+
 @router.get(
     "/bulk_download/{bulk_download_id}",
     tags=["download"],
@@ -692,12 +726,15 @@ async def download_zip_file(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
 ):
-    table = crud.get_zip_download(db, bulk_download_id)
-    return Response(
-        content=table,
+    zip_file_descriptor = crud.get_zip_download(db, bulk_download_id)
+    if not zip_file_descriptor:
+        return
+
+    return StreamingResponse(
+        stream_zip_archive(zip_file_descriptor),
+        media_type="application/zip",
         headers={
-            "X-Archive-Files": "zip",
-            "Content-Disposition": "attachment; filename=archive.zip",
+            "Content-Disposition": f"attachment; filename={zip_file_descriptor['suggestedFilename']}"  # noqa: E501
         },
     )
 
@@ -930,6 +967,7 @@ async def get_metadata_submissions_report(
         "Status",
         "Is Test Submission",
         "Date Last Modified",
+        "Date Created",
     ]
     data_rows = []
     for s in submissions:
@@ -950,6 +988,7 @@ async def get_metadata_submissions_report(
             s.status,
             s.is_test_submission,
             s.date_last_modified,
+            s.created,
         ]
         data_rows.append(data_row)
 
@@ -989,8 +1028,11 @@ async def list_submissions(
     pagination: Pagination = Depends(),
     column_sort: str = "created",
     sort_order: str = "desc",
+    is_test_submission_filter: Optional[bool] = None,
 ):
-    query = crud.get_submissions_for_user(db, user, column_sort, sort_order)
+    query = crud.get_submissions_for_user(
+        db, user, column_sort, sort_order, is_test_submission_filter
+    )
     return pagination.response(query)
 
 
@@ -1108,7 +1150,8 @@ async def update_submission(
         and body_dict.get("status", None) == "Submitted- Pending Review"
         and submission.is_test_submission is False
     ):
-        create_github_issue(submission, user)
+        submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
+        create_github_issue(submission_model, user)
 
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
@@ -1140,37 +1183,36 @@ async def update_submission(
     return submission
 
 
-def create_github_issue(submission, user):
+def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
     settings = Settings()
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     assignee = settings.github_issue_assignee
     # If the settings for issue creation weren't supplied return, no need to do anything further
-    if gh_url == None or token == None:
-        return
+    if gh_url is None or token is None:
+        return None
 
     # Gathering the fields we want to display in the issue
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
-    studyform = submission.metadata_submission["studyForm"]
-    contextform = submission.metadata_submission["contextForm"]
-    multiomicsform = submission.metadata_submission["multiOmicsForm"]
-    pi = studyform["piName"]
-    piorcid = studyform["piOrcid"]
-    datagenerated = "Yes" if contextform["dataGenerated"] else "No"
-    omicsprocessingtypes = ", ".join(multiomicsform["omicsProcessingTypes"])
-    sampletype = ", ".join(submission.metadata_submission["templates"])
-    sampledata = submission.metadata_submission["sampleData"]
-    numsamples = 0
-    for key in sampledata:
-        numsamples = max(numsamples, len(sampledata[key]))
+    study_form = submission.metadata_submission.studyForm
+    multiomics_form = submission.metadata_submission.multiOmicsForm
+    pi_name = study_form.piName
+    pi_orcid = study_form.piOrcid
+    data_generated = "Yes" if multiomics_form.dataGenerated else "No"
+    omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
+    sample_types = ", ".join(submission.metadata_submission.templates)
+    sample_data = submission.metadata_submission.sampleData
+    num_samples = 0
+    for key in sample_data:
+        num_samples = max(num_samples, len(sample_data[key]))
 
     # some variable data to supply depending on if data has been generated or not
     id_dict = {
-        "NCBI ID: ": multiomicsform["NCBIBioProjectId"],
-        "GOLD ID: ": multiomicsform["GOLDStudyId"],
-        "JGI ID: ": multiomicsform["JGIStudyId"],
-        "EMSL ID: ": multiomicsform["studyNumber"],
-        "Alternative IDs: ": ", ".join(multiomicsform["alternativeNames"]),
+        "NCBI ID: ": study_form.NCBIBioProjectId,
+        "GOLD ID: ": study_form.GOLDStudyId,
+        "JGI ID: ": multiomics_form.JGIStudyId,
+        "EMSL ID: ": multiomics_form.studyNumber,
+        "Alternative IDs: ": ", ".join(study_form.alternativeNames),
     }
     valid_ids = []
     for key, value in id_dict.items():
@@ -1182,13 +1224,13 @@ def create_github_issue(submission, user):
         f"Issue created from host: {settings.host}",
         f"Submitter: {user.name}, {user.orcid}",
         f"Submission ID: {submission.id}",
-        f"Has data been generated: {datagenerated}",
-        f"PI name: {pi}",
-        f"PI orcid: {piorcid}",
-        "Status: Submitted -Pending Review",
-        f"Data types: {omicsprocessingtypes}",
-        f"Sample type:{sampletype}",
-        f"Number of samples:{numsamples}",
+        f"Has data been generated: {data_generated}",
+        f"PI name: {pi_name}",
+        f"PI orcid: {pi_orcid}",
+        "Status: Submitted- Pending Review",
+        f"Data types: {omics_processing_types}",
+        f"Sample type: {sample_types}",
+        f"Number of samples: {num_samples}",
     ] + valid_ids
     body_string = " \n ".join(body_lis)
     payload_dict = {
@@ -1313,13 +1355,24 @@ async def submit_metadata(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # Old versions of the Field Notes app will continue to send a string for packageName
-    # for a little while. This code is to ease that transition and can be removed in the future.
-    if isinstance(body.metadata_submission.packageName, str):
-        if body.metadata_submission.packageName:
-            body.metadata_submission.packageName = [body.metadata_submission.packageName]
-        else:
-            body.metadata_submission.packageName = []
+    # Old versions of the Field Notes app will continue to use the pre-v1.6.0 submission format
+    # (before certain fields were moved from the multi-omics form to the study form) until its
+    # next release. This is a temporary shim layer that can be removed later.
+    multi_omics_form_extras = body.metadata_submission.multiOmicsForm.__pydantic_extra__ or {}
+    if body.metadata_submission.studyForm.GOLDStudyId is None:
+        body.metadata_submission.studyForm.GOLDStudyId = multi_omics_form_extras.get(
+            "GOLDStudyId", ""
+        )
+    if body.metadata_submission.studyForm.NCBIBioProjectId is None:
+        body.metadata_submission.studyForm.NCBIBioProjectId = multi_omics_form_extras.get(
+            "NCBIBioProjectId", ""
+        )
+    if body.metadata_submission.studyForm.alternativeNames is None:
+        body.metadata_submission.studyForm.alternativeNames = multi_omics_form_extras.get(
+            "alternativeNames", []
+        )
+    if body.metadata_submission.multiOmicsForm.facilities is None:
+        body.metadata_submission.multiOmicsForm.facilities = []
 
     submission = SubmissionMetadata(
         **body.dict(),

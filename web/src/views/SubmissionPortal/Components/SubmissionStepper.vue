@@ -1,27 +1,23 @@
 <script lang="ts">
 import {
-  computed, defineComponent, reactive, toRef, watch,
+  computed, defineComponent, reactive, toRef,
 } from '@vue/composition-api';
-import { incrementalSaveRecord } from '../store';
 
 const StepperMap: Record<string | number, number | string> = {
   'Submission Home': 1,
   1: 'Submission Home',
 
-  'Submission Context': 2,
-  2: 'Submission Context',
+  'Study Form': 2,
+  2: 'Study Form',
 
-  'Study Form': 3,
-  3: 'Study Form',
+  'Multiomics Form': 3,
+  3: 'Multiomics Form',
 
-  'Multiomics Form': 4,
-  4: 'Multiomics Form',
+  'Sample Environment': 4,
+  4: 'Sample Environment',
 
-  'Environment Package': 5,
-  5: 'Environment Package',
-
-  'Submission Sample Editor': 6,
-  6: 'Submission Sample Editor',
+  'Submission Sample Editor': 5,
+  5: 'Submission Sample Editor',
 
   // 'Validate And Submit': 5,
   // 5: 'Validate And Submit',
@@ -31,14 +27,6 @@ export default defineComponent({
   setup(props, { root }) {
     const currentRoute = toRef(reactive(root.$router), 'currentRoute');
     const step = computed(() => StepperMap[currentRoute.value.name || ''] || 0);
-
-    const currentRouteName = computed(() => root.$route.name);
-
-    watch(currentRouteName, () => {
-      if (root.$route.params.id) {
-        incrementalSaveRecord(root.$route.params.id);
-      }
-    });
 
     function gotoStep(newstep: number) {
       const routeName = StepperMap[newstep];
@@ -77,8 +65,8 @@ export default defineComponent({
         :complete="2 < step"
         @click="gotoStep(2)"
       >
-        Submission Context
-        <small>Input form</small>
+        Study Information
+        <small>Input Form</small>
       </v-stepper-step>
       <v-divider />
       <v-stepper-step
@@ -87,7 +75,7 @@ export default defineComponent({
         :complete="3 < step"
         @click="gotoStep(3)"
       >
-        Study Information
+        Multi-omics Data
         <small>Input Form</small>
       </v-stepper-step>
       <v-divider />
@@ -97,8 +85,8 @@ export default defineComponent({
         :complete="4 < step"
         @click="gotoStep(4)"
       >
-        Multi-omics Data
-        <small>Input Form</small>
+        Sample Environment
+        <small>Choose MIxS Extension</small>
       </v-stepper-step>
       <v-divider />
       <v-stepper-step
@@ -106,16 +94,6 @@ export default defineComponent({
         :editable="5 < step"
         :complete="5 < step"
         @click="gotoStep(5)"
-      >
-        Environment Package
-        <small>Choose package type</small>
-      </v-stepper-step>
-      <v-divider />
-      <v-stepper-step
-        step="6"
-        :editable="6 < step"
-        :complete="6 < step"
-        @click="gotoStep(6)"
       >
         Customize Metadata Export
         <small>DataHarmonizer sample validation</small>

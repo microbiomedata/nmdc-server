@@ -9,7 +9,7 @@ import { read, writeFile, utils } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
 
-import { HarmonizerApi } from './harmonizerApi';
+import HarmonizerApi from './harmonizerApi';
 import {
   packageName,
   sampleData,
@@ -29,10 +29,14 @@ import {
   isTestSubmission,
 } from './store';
 import {
+  DATA_MG_INTERLEAVED,
+  DATA_MG,
+  DATA_MT,
+  DATA_MT_INTERLEAVED,
   HARMONIZER_TEMPLATES,
   EMSL,
   JGI_MG,
-  JGT_MT,
+  JGI_MT,
   JGI_MG_LR,
   SuggestionsMode,
 } from '@/views/SubmissionPortal/types';
@@ -150,6 +154,7 @@ export default defineComponent({
       }
       harmonizerApi.loadData(activeTemplateData.value);
       harmonizerApi.setInvalidCells(invalidCells.value[activeTemplateKey.value] || {});
+      harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
     const validationErrors = computed(() => {
@@ -339,7 +344,8 @@ export default defineComponent({
         return false;
       }
       if (templateKey === EMSL) {
-        return row_types.includes('metaproteomics')
+        return row_types.includes('lipidomics')
+          || row_types.includes('metaproteomics')
           || row_types.includes('metabolomics')
           || row_types.includes('natural organic matter');
       }
@@ -349,7 +355,19 @@ export default defineComponent({
       if (templateKey === JGI_MG_LR) {
         return row_types.includes('metagenomics_long_read');
       }
-      if (templateKey === JGT_MT) {
+      if (templateKey === JGI_MT) {
+        return row_types.includes('metatranscriptomics');
+      }
+      if (templateKey === DATA_MG) {
+        return row_types.includes('metagenomics');
+      }
+      if (templateKey === DATA_MG_INTERLEAVED) {
+        return row_types.includes('metagenomics');
+      }
+      if (templateKey === DATA_MT) {
+        return row_types.includes('metatranscriptomics');
+      }
+      if (templateKey === DATA_MT_INTERLEAVED) {
         return row_types.includes('metatranscriptomics');
       }
       return false;
@@ -516,7 +534,6 @@ export default defineComponent({
       // When changing templates we may need to populate the common columns
       // from the environment tabs
       synchronizeTabData(nextTemplateKey);
-
       activeTemplateKey.value = nextTemplateKey;
       activeTemplate.value = nextTemplate;
       harmonizerApi.useTemplate(nextTemplate.schemaClass);
@@ -911,7 +928,7 @@ export default defineComponent({
       <v-btn
         color="gray"
         depressed
-        :to="{ name: 'Environment Package' }"
+        :to="{ name: 'Sample Environment' }"
       >
         <v-icon class="pr-1">
           mdi-arrow-left-circle

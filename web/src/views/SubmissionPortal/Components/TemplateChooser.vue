@@ -1,10 +1,10 @@
 <script lang="ts">
 import { defineComponent, computed } from '@vue/composition-api';
 import {
-  templateChoiceDisabled,
   templateList,
   packageName,
   canEditSubmissionMetadata,
+  templateHasData,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
@@ -22,8 +22,8 @@ export default defineComponent({
       HARMONIZER_TEMPLATES,
       templates: Object.entries(HARMONIZER_TEMPLATES),
       templateListDisplayNames,
-      templateChoiceDisabled,
       canEditSubmissionMetadata,
+      templateHasData,
     };
   },
 });
@@ -54,8 +54,8 @@ export default defineComponent({
       v-model="packageName"
       dense
       hide-details
-      class="my-6"
-      :disabled="templateChoiceDisabled || !canEditSubmissionMetadata()"
+      class="my-2"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]].sampleDataSlot) || !canEditSubmissionMetadata()"
       :label="HARMONIZER_TEMPLATES[option[0]].displayName"
       :value="option[0]"
     />
@@ -67,18 +67,29 @@ export default defineComponent({
       :key="option[0]"
       v-model="packageName"
       hide-details
+      class="my-2"
       :disabled="true"
       :label="HARMONIZER_TEMPLATES[option[0]].displayName"
       :value="option[0]"
     />
     <v-alert
-      v-if="!templateChoiceDisabled"
+      v-if="!templateHasData('all')"
       color="grey lighten-2"
+      class="mt-3"
     >
       <p class="text-h5">
         DataHarmonizer Template Choice
       </p>
-      Your DataHarmonizer template is "{{ templateListDisplayNames }}".
+      <template
+        v-if="packageName.length!=0"
+      >
+        Your DataHarmonizer template is "{{ templateListDisplayNames }}".
+      </template>
+      <template
+        v-else
+      >
+        Please Select One or More Options for Your Template.
+      </template>
     </v-alert>
     <v-alert
       v-else
@@ -88,8 +99,8 @@ export default defineComponent({
         Template choice disabled
       </p>
       Your DataHarmonizer template is "{{ templateListDisplayNames }}".
-      Template cannot be changed when there are already metadata rows in step 6.
-      To change the template, return to step 6 and remove all data.
+      Template choices cannot be disabled while the matching tab in step 5 has data present.
+      To disable the template, return to step 5 and remove all data from that tab. You may add new templates at any time.
     </v-alert>
     <div class="d-flex">
       <v-btn

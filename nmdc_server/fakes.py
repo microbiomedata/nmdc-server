@@ -299,8 +299,6 @@ class NOMAnalysisFactory(PipelineStepBase):
         model = models.NOMAnalysis
         sqlalchemy_session = db
 
-    used: str = Faker("word")
-
 
 class ReadBasedAnalysisFactory(PipelineStepBase):
     class Meta:
@@ -312,8 +310,6 @@ class MetabolomicsAnalysisFactory(PipelineStepBase):
     class Meta:
         model = models.MetabolomicsAnalysis
         sqlalchemy_session = db
-
-    used: str = Faker("word")
 
 
 class GeneFunction(SQLAlchemyModelFactory):
@@ -351,12 +347,17 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     metadata_submission = {
         "sampleData": {},
         "multiOmicsForm": {
-            "alternativeNames": [],
             "studyNumber": "",
-            "GOLDStudyId": "",
             "JGIStudyId": "",
-            "NCBIBioProjectId": "",
             "omicsProcessingTypes": [],
+            "facilities": [],
+            "otherAward": "",
+            "doe": None,
+            "dataGenerated": None,
+            "facilityGenerated": None,
+            "award": None,
+            "awardDois": [],
+            "mgCompatible": None,
         },
         "studyForm": {
             "studyName": "",
@@ -368,6 +369,9 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "description": "",
             "notes": "",
             "contributors": [],
+            "alternativeNames": [],
+            "GOLDStudyId": "",
+            "NCBIBioProjectId": "",
         },
         "templates": [],
         "addressForm": {
@@ -390,11 +394,6 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "permitNumber": "",
             "biosafetyLevel": "",
             "comments": "",
-        },
-        "contextForm": {
-            "datasetDoi": "",
-            "facilities": [],
-            "otherAward": "",
         },
         "packageName": [],
     }

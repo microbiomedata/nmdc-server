@@ -85,7 +85,8 @@ export default Vue.extend({
   computed: {
     sankeyOptions() {
       return {
-        height: 400,
+        // Make the chart height dependent on the number of nodes with a minimum of 500px
+        height: Math.max(this.sankeyData.length * 4, 500),
         sankey: {
           link: {
             colorMode: 'source',
@@ -93,7 +94,9 @@ export default Vue.extend({
           },
           node: {
             interactivity: true,
-            colors: colors.primary,
+            // Array needs to be of substantial length so the lines do not become too pale to see
+            // Uses 'primary' and primary.darken2 alternatingly
+            colors: Array.from({ length: this.sankeyData.length / 2 }, (_, i) => (i % 2 === 0 ? colors.primary : '#1c104e')),
           },
         },
       };

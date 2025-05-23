@@ -431,6 +431,12 @@ class OmicsProcessing(Base, AnnotatedModel):
     outputs = output_relationship(omics_processing_output_association)
     has_outputs = association_proxy("outputs", "id")
 
+    # This will either be the ID of a manifest_set document of type
+    # poolable_replicates, or the ID of the data_generation_set document.
+    # Used to inform the "true" counts of data_generation (omics_processing)
+    # records.
+    poolable_replicates_manifest_id = Column(String, nullable=True)
+
     @property
     def open_in_gold(self) -> Optional[str]:
         return gold_url("https://gold.jgi.doe.gov/project?id=", self.id)
@@ -490,7 +496,7 @@ class PipelineStep:
     type = Column(String, nullable=False)
     git_url = Column(String, nullable=False)
     started_at_time = Column(DateTime, nullable=False)
-    ended_at_time = Column(DateTime, nullable=False)
+    ended_at_time = Column(DateTime)
     execution_resource = Column(String, nullable=False)
 
     @declared_attr
@@ -630,6 +636,8 @@ metaproteomic_analysis_output_association = output_association("metaproteomic_an
 class MetaproteomicAnalysis(Base, PipelineStep):
     __tablename__ = "metaproteomic_analysis"
 
+    metaproteomics_analysis_category = Column(String, nullable=False, default="")
+
     inputs = input_relationship(metaproteomic_analysis_input_association)
     outputs = output_relationship(metaproteomic_analysis_output_association)
 
@@ -677,8 +685,6 @@ nom_analysis_output_association = output_association("nom_analysis")
 class NOMAnalysis(Base, PipelineStep):
     __tablename__ = "nom_analysis"
 
-    used = Column(String, nullable=False)
-
     inputs = input_relationship(nom_analysis_input_association)
     outputs = output_relationship(nom_analysis_output_association)
 
@@ -713,8 +719,6 @@ metabolomics_analysis_output_association = output_association("metabolomics_anal
 
 class MetabolomicsAnalysis(Base, PipelineStep):
     __tablename__ = "metabolomics_analysis"
-
-    used = Column(String, nullable=False)
 
     inputs = input_relationship(metabolomics_analysis_input_association)
     outputs = output_relationship(metabolomics_analysis_output_association)
@@ -822,7 +826,6 @@ class MetaPGeneFunctionAggregation(Base):
     )
     gene_function_id = Column(String, ForeignKey(GeneFunction.id), primary_key=True)
     count = Column(BigInteger, nullable=False)
-    best_protein = Column(Boolean, nullable=False)
 
 
 class MetaTGeneFunctionAggregation(Base):
@@ -873,7 +876,7 @@ class BulkDownloadDataObject(Base):
         BulkDownload, backref=backref("files", lazy="joined", cascade="all")
     )
     data_object = relationship(
-        DataObject, lazy="joined", cascade="all", backref="bulk_download_entities"
+        DataObject, lazy="joined", cascade="save-update,delete", backref="bulk_download_entities"
     )
 
 

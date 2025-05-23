@@ -114,7 +114,6 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
                 metaproteomic_analysis_id=pipeline.id,
                 gene_function_id=function_id,
                 count=annotation["count"],
-                best_protein=True,
             )
         )
     if metap_gene_function_aggregations:

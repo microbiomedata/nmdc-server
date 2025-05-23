@@ -11,7 +11,6 @@ import LoginPage from '@/views/Login/LoginPage.vue';
 /* Submission portal */
 import MultiOmicsDataForm from '@/views/SubmissionPortal/Components/MultiOmicsDataForm.vue';
 import StepperView from '@/views/SubmissionPortal/StepperView.vue';
-import SubmissionContextForm from '@/views/SubmissionPortal/Components/SubmissionContextForm.vue';
 import StudyForm from '@/views/SubmissionPortal/Components/StudyForm.vue';
 import SubmissionView from '@/views/SubmissionPortal/SubmissionView.vue';
 import TemplateChooser from '@/views/SubmissionPortal/Components/TemplateChooser.vue';
@@ -20,6 +19,7 @@ import ValidateSubmit from '@/views/SubmissionPortal/Components/ValidateSubmit.v
 import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
 
 import { unlockSubmission } from '@/views/SubmissionPortal/store/api';
+import { incrementalSaveRecord } from '@/views/SubmissionPortal/store';
 
 import { parseQuery, stringifyQuery } from './utils';
 
@@ -67,11 +67,6 @@ const router = new VueRouter({
               component: SubmissionList,
             },
             {
-              name: 'Submission Context',
-              path: ':id/context',
-              component: SubmissionContextForm,
-            },
-            {
               name: 'Study Form',
               path: ':id/study',
               component: StudyForm,
@@ -82,7 +77,7 @@ const router = new VueRouter({
               component: MultiOmicsDataForm,
             },
             {
-              name: 'Environment Package',
+              name: 'Sample Environment',
               component: TemplateChooser,
               path: ':id/templates',
             },
@@ -122,7 +117,8 @@ const router = new VueRouter({
 });
 router.beforeEach((to: Route, from: Route, next: Function) => {
   if (from.fullPath.includes('submission') && !!from.params.id) {
-    // We are navigating away from a submission edit screen
+    // We are navigating away from a submission edit screen, so save the progress
+    incrementalSaveRecord(from.params.id);
     if (to.fullPath.includes('submission') && !!to.params.id && to.params.id === from.params.id) {
       // We are navigating to a submission edit screen for the same submission, no need to  unlock
       next();

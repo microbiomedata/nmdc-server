@@ -3,6 +3,7 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+from sqlalchemy.orm import lazyload
 
 from nmdc_server import database, models
 from nmdc_server.celery_config import celery_app
@@ -92,7 +93,12 @@ def do_ingest(function_limit, skip_annotation):
             logger.info("Merging bulk_download")
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
             logger.info("Merging bulk_download_data_object")
-            maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownloadDataObject))
+            maybe_merge_download_artifact(
+                ingest_db,
+                prod_db.query(models.BulkDownloadDataObject).options(
+                    lazyload(models.BulkDownloadDataObject.data_object)
+                ),
+            )
 
     logger.info("Ingest finished successfully")
 

@@ -14,8 +14,9 @@ import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
+import { SearchParams } from '@/data/api';
 import { deleteSubmission } from '../store/api';
-import { HARMONIZER_TEMPLATES, MetadataSubmissionRecord } from '@/views/SubmissionPortal/types';
+import { HARMONIZER_TEMPLATES, MetadataSubmissionRecord, PaginatedResponse } from '@/views/SubmissionPortal/types';
 
 const headers: DataTableHeader[] = [
   {
@@ -65,6 +66,15 @@ export default defineComponent({
     });
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecord | null>(null);
+    const isTestFilter = ref(null);
+    const testFilterValues = [
+      { text: 'Show all submissions', val: null },
+      { text: 'Show only test submissions', val: true },
+      { text: 'Hide test submissions', val: false }];
+
+    async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecord>> {
+      return api.listRecords(params, isTestFilter.value);
+    }
 
     function getStatus(item: MetadataSubmissionRecord) {
       const color = item.status === submissionStatus.Complete ? 'success' : 'default';
@@ -75,16 +85,22 @@ export default defineComponent({
     }
 
     async function resume(item: MetadataSubmissionRecord) {
-      router?.push({ name: 'Submission Context', params: { id: item.id } });
+      router?.push({ name: 'Study Form', params: { id: item.id } });
     }
 
     async function createNewSubmission(isTestSubmission: boolean) {
       const item = await generateRecord(isTestSubmission);
-      router?.push({ name: 'Submission Context', params: { id: item.id } });
+      router?.push({ name: 'Study Form', params: { id: item.id } });
     }
 
-    const submission = usePaginatedResults(ref([]), api.listRecords, ref([]), itemsPerPage);
+    const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
     watch(options, () => {
+      submission.setPage(options.value.page);
+      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
+      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+    }, { deep: true });
+    watch(isTestFilter, () => {
+      options.value.page = 1;
       submission.setPage(options.value.page);
       const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
       submission.setSortOptions(options.value.sortBy[0], sortOrder);
@@ -110,6 +126,7 @@ export default defineComponent({
     return {
       HARMONIZER_TEMPLATES,
       isDeleteDialogOpen,
+      isTestFilter,
       deleteDialogSubmission,
       IconBar,
       IntroBlurb,
@@ -122,6 +139,7 @@ export default defineComponent({
       headers,
       options,
       submission,
+      testFilterValues,
     };
   },
 });
@@ -202,9 +220,31 @@ export default defineComponent({
       <v-card-title class="text-h4">
         Past submissions
       </v-card-title>
-      <v-card-text>
-        Pick up where you left off or review a previous submission.
-      </v-card-text>
+      <v-row
+        justify="space-between"
+        class="pb-2"
+        no-gutters
+      >
+        <v-col
+          cols="5"
+        >
+          <v-card-text>
+            Pick up where you left off or review a previous submission.
+          </v-card-text>
+        </v-col>
+        <v-col
+          cols="3"
+        >
+          <v-select
+            v-model="isTestFilter"
+            :items="testFilterValues"
+            item-text="text"
+            item-value="val"
+            label="Test Submissions"
+            hide-details
+          />
+        </v-col>
+      </v-row>
       <v-card outlined>
         <v-data-table
           :headers="headers"
@@ -215,6 +255,17 @@ export default defineComponent({
           :items-per-page.sync="submission.data.limit"
           :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
         >
+          <template #[`item.study_name`]="{ item }">
+            {{ item.study_name }}
+            <v-chip
+              v-if="item.is_test_submission"
+              color="orange"
+              text-color="white"
+              small
+            >
+              TEST
+            </v-chip>
+          </template>
           <template #[`item.author.name`]="{ item }">
             <orcid-id
               :orcid-id="item.author.orcid"

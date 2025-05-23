@@ -6,7 +6,12 @@ import { User } from '@/types';
 export const EMSL = 'emsl';
 export const JGI_MG = 'jgi_mg';
 export const JGI_MG_LR = 'jgi_mg_lr';
-export const JGT_MT = 'jgi_mt';
+export const JGI_MT = 'jgi_mt';
+export const DATA_MG = 'data_mg';
+export const DATA_MG_INTERLEAVED = 'data_mg_interleaved';
+export const DATA_MT = 'data_mt';
+export const DATA_MT_INTERLEAVED = 'data_mt_interleaved';
+
 export interface HarmonizerTemplateInfo {
   displayName: string,
   schemaClass?: string,
@@ -120,10 +125,34 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     sampleDataSlot: 'jgi_mg_lr_data',
     status: 'mixin',
   },
-  [JGT_MT]: {
+  [JGI_MT]: {
     displayName: 'JGI MT',
     schemaClass: 'JgiMtInterface',
     sampleDataSlot: 'jgi_mt_data',
+    status: 'mixin',
+  },
+  [DATA_MG]: {
+    displayName: 'Metagenomics Data',
+    schemaClass: 'MetagenomeSequencingNonInterleavedDataInterface',
+    sampleDataSlot: 'metagenome_sequencing_non_interleaved_data',
+    status: 'mixin',
+  },
+  [DATA_MG_INTERLEAVED]: {
+    displayName: 'Metagenomics Data (Interleaved)',
+    schemaClass: 'MetagenomeSequencingInterleavedDataInterface',
+    sampleDataSlot: 'metagenome_sequencing_interleaved_data',
+    status: 'mixin',
+  },
+  [DATA_MT]: {
+    displayName: 'Metatranscriptomics Data',
+    schemaClass: 'MetatranscriptomeSequencingNonInterleavedDataInterface',
+    sampleDataSlot: 'metatranscriptome_sequencing_non_interleaved_data',
+    status: 'mixin',
+  },
+  [DATA_MT_INTERLEAVED]: {
+    displayName: 'Metatranscriptomics Data (Interleaved)',
+    schemaClass: 'MetatranscriptomeSequencingInterleavedDataInterface',
+    sampleDataSlot: 'metatranscriptome_sequencing_interleaved_data',
     status: 'mixin',
   },
 };
@@ -195,7 +224,6 @@ export interface NmdcAddress {
 
 export interface MetadataSubmission {
   packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
-  contextForm: any;
   addressForm: any;
   templates: string[];
   studyForm: any;
