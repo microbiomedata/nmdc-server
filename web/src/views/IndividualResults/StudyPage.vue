@@ -291,7 +291,7 @@ export default defineComponent({
             <template
               v-if="
                 goldLinks.size > 0 || bioprojectLinks.length > 0 ||
-                  (item.relevant_protocols && item.relevant_protocols.length > 0) ||
+                  (item.protocol_link && item.protocol_link.length > 0) ||
                   item.principal_investigator_websites.length > 0"
             >
               <div class="display-1">
@@ -300,10 +300,10 @@ export default defineComponent({
               <v-list
                 v-if="
                   goldLinks.size > 0 || bioprojectLinks.length > 0 ||
-                    (item.relevant_protocols && item.relevant_protocols.length > 0) ||
+                    (item.protocol_link && item.protocol_link.length > 0) ||
                     item.principal_investigator_websites.length > 0"
               >
-                <v-list-item v-if="item.relevant_protocols">
+                <v-list-item v-if="item.protocol_link">
                   <v-list-item-avatar>
                     <v-icon>mdi-file-document</v-icon>
                   </v-list-item-avatar>
@@ -314,13 +314,13 @@ export default defineComponent({
                   </v-list-item-content>
                 </v-list-item>
                 <AttributeItem
-                  v-for="proto in (item.relevant_protocols || [])"
+                  v-for="proto in (item.protocol_link || [])"
                   :key="proto"
                   style="padding-left: 60px;"
                   v-bind="{
                     item,
                     link: { name: proto, target: proto},
-                    field: 'relevant_protocols' }
+                    field: 'protocol_link' }
                   "
                 />
                 <v-list-item v-if="goldLinks.size > 0 || bioprojectLinks.length > 0 || item.principal_investigator_websites.length > 0">
