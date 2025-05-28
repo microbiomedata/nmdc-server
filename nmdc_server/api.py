@@ -784,7 +784,7 @@ async def get_metadata_submissions_mixs(
 
         metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
-        env_package = metadata.get("packageName", "")
+        env_pkg = metadata.get("packageName", "")
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -820,8 +820,8 @@ async def get_metadata_submissions_mixs(
                 env_medium = env_medium.replace("\n", "").lstrip("_")
 
                 # Check against permissible values
-                env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum = check_permissible_values(
-                    schema, env_package, env_broad_scale, env_local_scale, env_medium
+                env_pkg_enum, env_broad_enum, env_local_enum, env_med_enum = check_permissible_val(
+                    schema, env_pkg, env_broad_scale, env_local_scale, env_medium
                 )
 
                 # Append each sample as new row (with env data)
@@ -829,14 +829,14 @@ async def get_metadata_submissions_mixs(
                     s.id,
                     s.status,
                     sample_name,
-                    env_package,
+                    env_pkg,
                     env_broad_scale,
                     env_local_scale,
                     env_medium,
-                    env_package_enum,
-                    env_broad_scale_enum,
-                    env_local_scale_enum,
-                    env_medium_enum,
+                    env_pkg_enum,
+                    env_broad_enum,
+                    env_local_enum,
+                    env_med_enum,
                 ]
                 data_rows.append(data_row)
 
@@ -893,40 +893,40 @@ def fetch_nmdc_submission_schema():
 
 
 def check_permissible_values(
-    schema: dict, env_package: str, env_broad_scale: str, env_local_scale: str, env_medium: str
+    schema: dict, env_pkg: str, env_broad_scale: str, env_local_scale: str, env_medium: str
 ):
 
     # Perform enum checks
-    env_package_enum = "False"
+    env_pkg_enum = "False"
     env_broad_scale_enum = "False"
     env_local_scale_enum = "False"
     env_medium_enum = "False"
 
-    if env_package in schema["EnvPackageEnum"]["permissible_values"]:
-        env_package_enum = "True"
+    if env_pkg in schema["EnvPackageEnum"]["permissible_values"]:
+        env_pkg_enum = "True"
 
     # Enums exist currently for water, soil, sediment, and plant-associated
     # confirmed_enums will need to be updated as more enum types are added
     confirmed_enums = ["water", "soil", "sediment", "plant-associated"]
 
-    if env_package in confirmed_enums:
+    if env_pkg in confirmed_enums:
 
         # Transform env_package to use it to find enums without updating to include each biome type
         # Replace dashes with spaces, capitalize each word, then remove the space
-        temp_env_package = env_package
-        temp_env_package = temp_env_package.replace("-", " ")
-        temp_env_package = temp_env_package.title()
-        temp_env_package = temp_env_package.replace(" ", "")
+        temp_env_pkg = env_pkg
+        temp_env_pkg = temp_env_pkg.replace("-", " ")
+        temp_env_pkg = temp_env_pkg.title()
+        temp_env_pkg = temp_env_pkg.replace(" ", "")
 
         # Validate the rest of the enums
-        if env_broad_scale in schema[f"EnvBroadScale{temp_env_package}Enum"]["permissible_values"]:
+        if env_broad_scale in schema[f"EnvBroadScale{temp_env_pkg}Enum"]["permissible_values"]:
             env_broad_scale_enum = "True"
-        if env_local_scale in schema[f"EnvLocalScale{temp_env_package}Enum"]["permissible_values"]:
+        if env_local_scale in schema[f"EnvLocalScale{temp_env_pkg}Enum"]["permissible_values"]:
             env_local_scale_enum = "True"
-        if env_medium in schema[f"EnvMedium{temp_env_package}Enum"]["permissible_values"]:
+        if env_medium in schema[f"EnvMedium{temp_env_pkg}Enum"]["permissible_values"]:
             env_medium_enum = "True"
 
-    return env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
+    return env_pkg_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
 
 
 @router.get(
