@@ -865,6 +865,14 @@ async def get_metadata_submissions_mixs(
 
 
 def fetch_nmdc_submission_schema():
+    r"""
+    Helper function to get a copy of the current NMDC
+    Submission Schema.
+
+    This function specifically returns the enums from
+    the NMDC Submission Schema.
+    """
+        
     submission_schema_files = resources.files("nmdc_submission_schema")
 
     # Load each class in the submission schema, ensure that each slot of the class
@@ -892,9 +900,14 @@ def fetch_nmdc_submission_schema():
     return isolated_enums
 
 
-def check_permissible_values(
+def check_permissible_val(
     schema: dict, env_pkg: str, env_broad_scale: str, env_local_scale: str, env_medium: str
 ):
+    r"""
+    Helper function to check the value passed in against the
+    permissible values provided for pertaining enums in the
+    NMDC Submission Schema copy (returned from fetch_nmdc_submission_schema).
+    """
 
     # Perform enum checks
     env_pkg_enum = "False"
