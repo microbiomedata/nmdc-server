@@ -820,12 +820,8 @@ async def get_metadata_submissions_mixs(
                 env_medium = env_medium.replace("\n", "").lstrip("_")
 
                 # Check against permissible values
-                environmental_enums = check_permissible_values(
+                env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum = check_permissible_values(
                     schema, env_package, env_broad_scale, env_local_scale, env_medium
-                )
-                # Split the answers up
-                env_package_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum = (
-                    environmental_enums
                 )
 
                 # Append each sample as new row (with env data)
