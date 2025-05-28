@@ -872,7 +872,7 @@ def fetch_nmdc_submission_schema():
     This function specifically returns the enums from
     the NMDC Submission Schema.
     """
-        
+
     submission_schema_files = resources.files("nmdc_submission_schema")
 
     # Load each class in the submission schema, ensure that each slot of the class
