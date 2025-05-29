@@ -620,7 +620,12 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
   reads_qc: {},
   metagenome_annotation: {},
   metagenome_assembly: {},
-  metaproteomic_analysis: {},
+  metaproteomic_analysis: {
+    metaproteomics_analysis_category: {
+      name: 'Metaproteomics Analysis Category',
+      schemaName: 'metaproteomics_analysis_category',
+    },
+  },
   data_object: {},
 };
 
