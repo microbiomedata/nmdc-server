@@ -54,8 +54,6 @@ const submissionStatus: Record<SubmissionStatusKey, SubmissionStatusTitle> = Obj
   Object.entries(NmdcSchema.enums.SubmissionStatusEnum.permissible_values).map(([key, item]: [SubmissionStatusKey, SubmissionStatusTitle]) => [key, item.title]),
 );
 
-console.log(submissionStatus);
-
 const isSubmissionStatus = (str: any): str is SubmissionStatusTitle => Object.values(submissionStatus).includes(str);
 
 const status = ref(submissionStatus.InProgress);
