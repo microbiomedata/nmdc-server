@@ -1,3 +1,6 @@
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+
 import { User } from '@/types';
 
 /**
@@ -263,4 +266,6 @@ export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
 export type PermissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor' | 'owner';
 
-export type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
+export type SubmissionStatusKey = keyof typeof NmdcSchema.enums.submissionStatus.permissible_values;
+
+export type SubmissionStatusTitle = typeof NmdcSchema.enums.submissionStatus.permissible_values[SubmissionStatusKey]['title'];
