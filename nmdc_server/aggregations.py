@@ -109,12 +109,12 @@ def get_aggregation_summary(db: Session):
             .filter(func.lower(models.OmicsProcessing.annotations["omics_type"].astext) == c)
             .count()
         )
-    
+
     def count_non_parent_studies() -> int:
         r"""Returns the number of studies that are not parent studies."""
 
         # Make a subquery that (a) finds all the studies whose `part_of` value is an array,
-        # and (b) selects the distinct `id`s that appear among those arrays. The result is
+        # and (b) selects the distinct `id`s that are in any of those arrays. The result is
         # a list of parent study `id`s.
         parent_ids_subquery = (
             q(
@@ -126,8 +126,8 @@ def get_aggregation_summary(db: Session):
             .subquery()
         )
 
-        # Count the number of studies whose `id`s do _not_ appear in that list of parent study `id`s.
-        # The result is a single number indicating the number of studies that are not parent studies.
+        # Count the number of studies whose `id`s aren't in that list of parent study `id`s.
+        # The result is the number of studies that are not parent studies.
         num_non_parent_studies = (
             q(func.count())
             .filter(
@@ -139,7 +139,6 @@ def get_aggregation_summary(db: Session):
         )
 
         return num_non_parent_studies
-
 
     return schemas.AggregationSummary(
         studies=q(models.Study).count(),
