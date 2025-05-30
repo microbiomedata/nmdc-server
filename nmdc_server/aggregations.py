@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Type, cast
 
-from sqlalchemy import Column, func, or_, select
+from sqlalchemy import Column, func, or_
 from sqlalchemy.orm import Session
 
 from nmdc_server import models, query, schemas
