@@ -236,12 +236,15 @@ async def search_biosample(
         ),
         insert_selected,
     )
-    if any(
-        [
-            condition.table == Table.omics_processing or condition.table == Table.gene_function
-            for condition in query.conditions
-        ]
-    ):
+    # Filter out irrelevant workflow types based on the initial search conditions.
+    # This might be possible with SQLAlchemy options, but we need to figure out how
+    # to apply filters to the select related options.
+    filter_data_object_tables = [
+        Table.omics_processing,
+        Table.gene_function,
+        Table.metaproteomic_analysis,
+    ]
+    if any([condition.table in filter_data_object_tables for condition in query.conditions]):
         biosample_ids = [b.id for b in results["results"]]  # type: ignore
         omics_results = crud.search_omics_processing_for_biosamples(
             db, query.conditions, biosample_ids

@@ -86,6 +86,7 @@ class BaseFilter:
         query: Query,
         target_table: Table,
     ) -> Query:
+
         filters = [c.compare() for c in self.conditions]
         return self.join(target_table, query).filter(or_(*filters))
 
@@ -376,6 +377,20 @@ class MetaTGeneFunctionFilter(OmicsProcessingFilter):
 
     def join_self(self, query: Query, parent: Table) -> Query:
         return query
+
+
+class MetaproteomicAnalysisFilter(OmicsProcessingFilter):
+    table = Table.metaproteomic_analysis
+
+    def join_omics_processing(self, query: Query) -> Query:
+        return query.join(self.table.model)
+
+    def join_biosample(self, query: Query) -> Query:
+        return (
+            query.join(models.biosample_input_association)
+            .join(models.OmicsProcessing)
+            .join(self.table.model)
+        )
 
 
 def _get_all_subclasses(cls: Type[BaseFilter]) -> List[Type[BaseFilter]]:
