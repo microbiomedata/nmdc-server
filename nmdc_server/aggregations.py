@@ -126,8 +126,8 @@ def get_aggregation_summary(db: Session):
             .subquery()
         )
 
-        # Count the number of studies whose `id`s aren't in that list of parent study `id`s.
-        # The result is the number of studies that are not parent studies.
+        # Count the number of studies whose `id`s are _not_ in that list of parent study `id`s.
+        # Notice the `~` ("not"). The result is the number of studies that are not parent studies.
         num_non_parent_studies = (
             q(func.count())
             .filter(

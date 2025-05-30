@@ -88,9 +88,9 @@ def test_api_summary(db: Session, client: TestClient):
         fakes.MetagenomeAssemblyFactory()
         fakes.MetaproteomicAnalysisFactory()
         fakes.DataObjectFactory()
-        fakes.StudyFactory()
 
     # Create some additional, interrelated studies.
+    # Note: The database already contains 10 studies at this point, created elsewhere.
     study_a = fakes.StudyFactory()
     study_b = fakes.StudyFactory()
     study_c = fakes.StudyFactory()
