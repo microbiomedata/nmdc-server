@@ -88,9 +88,23 @@ def test_api_summary(db: Session, client: TestClient):
         fakes.MetagenomeAssemblyFactory()
         fakes.MetaproteomicAnalysisFactory()
         fakes.DataObjectFactory()
+        fakes.StudyFactory()
+
+    # Create some additional, interrelated studies.
+    study_a = fakes.StudyFactory()
+    study_b = fakes.StudyFactory()
+    study_c = fakes.StudyFactory()
+    study_b.part_of = [study_a.id]
+    study_c.part_of = [study_a.id, study_b.id]
+
     db.commit()
     assert_status(client.get("/api/summary"))
-    assert_status(client.get("/api/stats"))
+    
+    resp = client.get("/api/stats")
+    assert_status(resp)
+    data = resp.json()
+    assert data["studies"] == 13
+    assert data["non_parent_studies"] == 11  # excludes studies A and B
 
 
 def test_get_pi_image(db: Session, client: TestClient):
