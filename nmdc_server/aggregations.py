@@ -109,9 +109,32 @@ def get_aggregation_summary(db: Session):
             .filter(func.lower(models.OmicsProcessing.annotations["omics_type"].astext) == c)
             .count()
         )
+    
+    def count_non_parent_studies() -> int:
+        r"""Returns the number of studies that are not parent studies."""
+
+        # Make a subquery that (a) finds all the studies whose `part_of` value is an array,
+        # and (b) selects the distinct `id`s that appear among those arrays. The result is
+        # a list of parent study `id`s.
+        parent_ids_subquery = (
+            q(func.distinct(func.jsonb_array_elements_text(models.Study.part_of)).label("parent_study_id"))
+            .filter(func.jsonb_typeof(models.Study.part_of) == "array")
+            .subquery()
+        )
+
+        # Count the number of studies whose `id`s do _not_ appear in that list of parent study `id`s.
+        # The result is a single number indicating the number of studies that are not parent studies.
+        num_non_parent_studies = (
+            q(func.count())
+            .filter(models.Study.id.in_(parent_ids_subquery.c.parent_study_id).not_())
+            .scalar()
+        )
+
+        return num_non_parent_studies
 
     return schemas.AggregationSummary(
         studies=q(models.Study).count(),
+        non_parent_studies=count_non_parent_studies(),
         locations=distinct(models.Biosample.annotations["location"]),
         habitats=distinct(models.Biosample.annotations["habitat"]),
         data_size=q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0))).scalar(),

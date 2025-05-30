@@ -154,6 +154,7 @@ class DatabaseSummary(BaseModel):
 
 class AggregationSummary(BaseModel):
     studies: int
+    non_parent_studies: int
     locations: int
     habitats: int
     data_size: int
