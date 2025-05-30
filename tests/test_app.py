@@ -99,7 +99,7 @@ def test_api_summary(db: Session, client: TestClient):
 
     db.commit()
     assert_status(client.get("/api/summary"))
-    
+
     resp = client.get("/api/stats")
     assert_status(resp)
     data = resp.json()
