@@ -117,11 +117,7 @@ def get_aggregation_summary(db: Session):
         # and (b) selects the distinct `id`s that are in any of those arrays. The result is
         # a list of parent study `id`s.
         parent_ids_subquery = (
-            q(
-                func.distinct(func.jsonb_array_elements_text(models.Study.part_of)).label(
-                    "parent_study_id"
-                )
-            )
+            q(func.distinct(func.jsonb_array_elements_text(models.Study.part_of)))
             .filter(func.jsonb_typeof(models.Study.part_of) == "array")
             .subquery()
         )
