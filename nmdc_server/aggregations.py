@@ -131,9 +131,9 @@ def get_aggregation_summary(db: Session):
         num_non_parent_studies = (
             q(func.count())
             .filter(
-                models.Study.id.in_(
+                ~models.Study.id.in_(
                     select([parent_ids_subquery.c.parent_study_id])
-                ).not_()
+                )
             )
             .scalar()
         )
