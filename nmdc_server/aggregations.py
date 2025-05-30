@@ -118,9 +118,9 @@ def get_aggregation_summary(db: Session):
         # a list of parent study `id`s.
         parent_ids_subquery = (
             q(
-                func.distinct(
-                    func.jsonb_array_elements_text(models.Study.part_of)
-                ).label("parent_study_id")
+                func.distinct(func.jsonb_array_elements_text(models.Study.part_of)).label(
+                    "parent_study_id"
+                )
             )
             .filter(func.jsonb_typeof(models.Study.part_of) == "array")
             .subquery()
@@ -131,9 +131,7 @@ def get_aggregation_summary(db: Session):
         # studies that are not parent studies.
         num_non_parent_studies = (
             q(func.count())
-            .filter(
-                ~models.Study.id.in_(select([parent_ids_subquery.c.parent_study_id]))
-            )
+            .filter(~models.Study.id.in_(select([parent_ids_subquery.c.parent_study_id])))
             .scalar()
         )
 
