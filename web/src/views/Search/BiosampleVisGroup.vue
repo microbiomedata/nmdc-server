@@ -21,7 +21,15 @@ import { api, Condition, FacetSummaryResponse } from '@/data/api';
 import { makeSetsFromBitmask } from '@/encoding';
 
 const helpBarchart = 'Displays the number of omics processing runs for each data type available. Click on a bar to filter by data type.';
-const helpMap = 'Displays geographical location (latitude, longitude) of sample collection sites. Click on a cluster to zoom in.  Click "Search this regon" to limit search to the current map bounds.';
+const helpMap = `
+  Shows the geographic locations (latitude and longitude) where samples were collected.
+  <ul>
+    <li>Click on a cluster to zoom in.</li>
+    <li>Click "Search this region" to filter results to the current map view.</li>
+  </ul>
+  <strong>Note:</strong> Samples collected at the poles may not appear on the map due to projection limits,
+  but they are included in other visualizations and the biosample table.
+`;
 const helpTimeline = 'Displays sample collections grouped by collection date. Click and drag on the timeline to filter by collection date. The selected region can be moved by dragging it from the center. The region can be resized by clicking and dragging at the edges. Click outside the region to clear it.';
 const helpUpset = 'This UpSet plot shows the number of samples with corresponding omic data associated. For example: a sample could have metagenomics, metatranscriptomics, and natural organic matter characterizations. You can select samples by clicking on the bar chart or counts to the right of the bar chart';
 
