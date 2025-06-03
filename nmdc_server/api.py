@@ -153,6 +153,22 @@ async def get_aggregated_stats(db: Session = Depends(get_db)):
     return crud.get_aggregated_stats(db)
 
 
+@router.get(
+    "/admin/stats",
+    response_model=schemas.AdminStats,
+    tags=["administration"],
+)
+async def get_admin_stats(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+):
+    r"""
+    Get statistics designed to be consumed by Data Portal/Submission Portal administrators.
+    """
+
+    return crud.get_admin_stats(db)
+
+
 @router.post(
     "/environment/sankey",
     response_model=List[schemas.EnvironmentSankeyAggregation],

@@ -166,6 +166,14 @@ class AggregationSummary(BaseModel):
     organic_matter_characterization: int
 
 
+class AdminStats(BaseModel):
+    """Statistics designed for consumption by Data Portal/Submission Portal administrators."""
+
+    num_user_accounts: int = Field(
+        description="Number of distinct ORCIDs that have been used to sign in."
+    )
+
+
 class EnvironmentSankeyAggregation(BaseModel):
     count: int
     ecosystem: Optional[str] = None
