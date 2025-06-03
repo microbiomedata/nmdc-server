@@ -71,7 +71,16 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
 
 
 def get_admin_stats(db: Session) -> schemas.AdminStats:
-    return aggregations.get_admin_stats(db)
+    r"""
+    Compiles statistics designed to be consumed by Data Portal/Submission Portal administrators.
+    """
+
+    distinct_orcids_subquery = db.query(func.distinct(models.User.orcid)).subquery()
+    num_distinct_orcids = db.query(func.count()).select_from(distinct_orcids_subquery).scalar()
+
+    return schemas.AdminStats(
+        num_user_accounts=num_distinct_orcids,
+    )
 
 
 def get_aggregated_stats(db: Session) -> schemas.AggregationSummary:

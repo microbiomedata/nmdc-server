@@ -145,21 +145,6 @@ def get_aggregation_summary(db: Session):
     )
 
 
-def get_admin_stats(
-    db: Session,
-) -> schemas.AdminStats:
-    r"""
-    Compiles statistics designed to be consumed by Data Portal/Submission Portal administrators.
-    """
-
-    distinct_orcids_subquery = db.query(func.distinct(models.User.orcid)).subquery()
-    num_distinct_orcids = db.query(func.count()).select_from(distinct_orcids_subquery).scalar()
-
-    return schemas.AdminStats(
-        num_user_accounts=num_distinct_orcids,
-    )
-
-
 def get_sankey_aggregation(
     db: Session,
     biosample_query: query.BiosampleQuerySchema,
