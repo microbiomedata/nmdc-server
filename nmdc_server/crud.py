@@ -70,6 +70,10 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
     )
 
 
+def get_admin_stats(db: Session) -> schemas.AdminStats:
+    return aggregations.get_admin_stats(db)
+
+
 def get_aggregated_stats(db: Session) -> schemas.AggregationSummary:
     return aggregations.get_aggregation_summary(db)
 

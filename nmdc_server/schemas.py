@@ -166,6 +166,12 @@ class AggregationSummary(BaseModel):
     organic_matter_characterization: int
 
 
+class AdminStats(BaseModel):
+    """Statistics designed for consumption by Data Portal/Submission Portal administrators."""
+
+    num_user_accounts: int
+
+
 class EnvironmentSankeyAggregation(BaseModel):
     count: int
     ecosystem: Optional[str] = None
