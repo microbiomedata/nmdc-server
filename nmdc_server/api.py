@@ -156,7 +156,7 @@ async def get_aggregated_stats(db: Session = Depends(get_db)):
 @router.get(
     "/admin/stats",
     response_model=schemas.AdminStats,
-    tags=["aggregation"],
+    tags=["administration"],
 )
 async def get_admin_stats(
     db: Session = Depends(get_db),
