@@ -473,7 +473,14 @@ export default defineComponent({
           const template = Object.values(HARMONIZER_TEMPLATES).find((template) => (
             template.excelWorksheetName === name || template.displayName === name
           ));
-          if (!template || !template.sampleDataSlot || !template.schemaClass) {
+          const templateSelected = templateList.value.find((selectedTemplate) => {
+            const templateName = HARMONIZER_TEMPLATES[selectedTemplate].displayName || '';
+            return (
+              template?.displayName === templateName
+              || template?.excelWorksheetName === templateName
+            );
+          });
+          if (!template || !template.sampleDataSlot || !template.schemaClass || !templateSelected) {
             notImported.push(name);
             return;
           }
