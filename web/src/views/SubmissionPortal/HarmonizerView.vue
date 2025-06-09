@@ -227,23 +227,6 @@ export default defineComponent({
     };
 
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
-    onMounted(async () => {
-      const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
-        api.getSubmissionSchema(),
-        api.getGoldEcosystemTree(),
-      ]));
-      const r = document.getElementById('harmonizer-root');
-      if (r && schema) {
-        await harmonizerApi.init(r, schema, activeTemplate.value.schemaClass, goldEcosystemTree);
-        await nextTick();
-        harmonizerApi.loadData(activeTemplateData.value);
-        harmonizerApi.addChangeHook(onDataChange);
-        metadataSuggestions.value = getPendingSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!);
-        if (!canEditSampleMetadata()) {
-          harmonizerApi.setTableReadOnly();
-        }
-      }
-    });
 
     async function jumpTo({ row, column }: { row: number; column: number }) {
       harmonizerApi.jumpToRowCol(row, column);
@@ -525,6 +508,33 @@ export default defineComponent({
       reader.readAsArrayBuffer(file);
     }
 
+    function addHooks() {
+      harmonizerApi.addChangeHook(onDataChange);
+      harmonizerApi.addRowRemovedHook(async () => {
+        // If there are any sampleDataSlots populated that somehow are missing from
+        // the template list, make sure those data are deleted as well.
+        Object.keys(sampleData.value).forEach((key) => {
+          // Loop through keys in the sampleData for the submission. Each
+          // key maps to a template. We have to find that template.
+          const [templateKey, template] = Object.entries(HARMONIZER_TEMPLATES).find(([, template]) => (
+            template?.sampleDataSlot === key
+          )) || [undefined, undefined];
+          if (template && templateKey) {
+            // If we found the template, synchronize the data
+            synchronizeTabData(templateKey);
+          }
+        });
+        // Make sure we carry the deletion through to the sampleData
+        mergeSampleData(
+          activeTemplate.value.sampleDataSlot,
+          harmonizerApi.exportJson(),
+        );
+        // Save the changes
+        hasChanged.value += 1;
+        saveRecord();
+      });
+    }
+
     async function changeTemplate(index: number) {
       if (!harmonizerApi.ready.value) {
         return;
@@ -544,8 +554,29 @@ export default defineComponent({
       activeTemplateKey.value = nextTemplateKey;
       activeTemplate.value = nextTemplate;
       harmonizerApi.useTemplate(nextTemplate.schemaClass);
-      harmonizerApi.addChangeHook(onDataChange);
+      addHooks();
     }
+
+    onMounted(async () => {
+      const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
+        api.getSubmissionSchema(),
+        api.getGoldEcosystemTree(),
+      ]));
+      const r = document.getElementById('harmonizer-root');
+      if (r && schema) {
+        await harmonizerApi.init(r, schema, activeTemplate.value.schemaClass, goldEcosystemTree);
+        await nextTick();
+        harmonizerApi.loadData(activeTemplateData.value);
+        addHooks();
+        metadataSuggestions.value = getPendingSuggestions(
+          root.$route.params.id,
+          activeTemplate.value.schemaClass!,
+        );
+        if (!canEditSampleMetadata()) {
+          harmonizerApi.setTableReadOnly();
+        }
+      }
+    });
 
     return {
       user,
