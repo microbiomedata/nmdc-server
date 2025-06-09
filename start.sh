@@ -18,5 +18,8 @@ PGDATABASE=postgres psql -c "create database nmdc_b;" || true
 # Apply pending alembic migrations
 nmdc-server migrate
 
+# Generate static content
+nmdc-server generate-static-files --remove-existing
+
 ## Start the server
 uvicorn nmdc_server.asgi:app --host 0.0.0.0 --port 8000
