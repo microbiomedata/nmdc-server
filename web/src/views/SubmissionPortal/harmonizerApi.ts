@@ -370,6 +370,15 @@ export default class HarmonizerApi {
     });
   }
 
+  addRowRemovedHook(callback: Function) {
+    if (!this.ready.value) {
+      return;
+    }
+    this.dh.hot.addHook('afterRemoveRow', (changes: any[], source: string | null) => {
+      callback(changes, source);
+    });
+  }
+
   useTemplate(template: string | undefined) {
     if (!this.dh || !template) {
       return;
