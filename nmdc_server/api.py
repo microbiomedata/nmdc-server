@@ -990,10 +990,20 @@ async def get_metadata_submissions_report(
         "Is Test Submission",
         "Date Last Modified",
         "Date Created",
+        "Number of Samples",
     ]
     data_rows = []
     for s in submissions:
+        sample_count = 0
         metadata = s.metadata_submission  # creates a concise alias
+        
+        # find the number of samples in the submission
+        # Note: `metadata["sampleData"]` is a dictionary where keys are sample types
+        # and values are lists of samples.
+        samples = metadata["sampleData"]
+        for samp in samples:
+            sample_count += len(samples[samp])
+
         author_user = s.author  # note: `s.author` is a `models.User` instance
         study_form = metadata["studyForm"] if "studyForm" in metadata else {}
         study_name = study_form["studyName"] if "studyName" in study_form else ""
@@ -1011,6 +1021,7 @@ async def get_metadata_submissions_report(
             s.is_test_submission,
             s.date_last_modified,
             s.created,
+            sample_count,
         ]
         data_rows.append(data_row)
 
