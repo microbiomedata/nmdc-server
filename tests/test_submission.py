@@ -169,6 +169,9 @@ def test_get_metadata_submissions_report_as_admin(
         author_orcid=other_user.orcid,
         created=now + timedelta(seconds=1),
         date_last_modified=datetime.utcnow(),
+        # TODO: Omit some optional fields in order to simplify the test data.
+        # See: `class MetadataSubmissionRecordCreate` in `schema_submission.py`
+        # See: https://microbiomedata.github.io/submission-schema/SampleData/
         metadata_submission={
             "sampleData": {
                 "soil_data": [
