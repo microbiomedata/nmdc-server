@@ -1000,9 +1000,9 @@ async def get_metadata_submissions_report(
         # Note: `metadata["sampleData"]` is a dictionary where keys are sample types
         #       and values are lists of samples of that type.
         # Reference: https://microbiomedata.github.io/submission-schema/SampleData/
-        samples = metadata["sampleData"]
-        for samp in samples:
-            sample_count += len(samples[samp])
+        sample_data = metadata["sampleData"]
+        for sample_type in sample_data:
+            sample_count += len(sample_data[sample_type])
 
         author_user = s.author  # note: `s.author` is a `models.User` instance
         study_form = metadata["studyForm"] if "studyForm" in metadata else {}
