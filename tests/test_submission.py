@@ -175,7 +175,12 @@ def test_get_metadata_submissions_report_as_admin(
                     {
                         "ph": "\n4\n",
                         "depth": ".10-.20 meters",
-                        "ph_meth": "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, Water and Forage Analytical Laboratory. Oklahoma Cooperative Extension Service, 2016.",
+                        "ph_meth": (
+                            "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
+                            "Water and Forage Analytical Laboratory. "
+                            "Oklahoma Cooperative Extension "
+                            "Service, 2016."
+                        ),
                         "ecosystem": "Environmental",
                         "fao_class": "Histosols",
                         "samp_name": "June2016WEW_Plot6_D2",
@@ -199,13 +204,21 @@ def test_get_metadata_submissions_report_as_admin(
                         "samp_collec_device": "russian corer",
                         "specific_ecosystem": "Bog",
                         "gaseous_environment": "ambient",
-                        "water_cont_soil_meth": 'Gardner, Walter H. "Water content." Methods of Soil Analysis: Part 1 Physical and Mineralogical Methods 5 (1986): 493-544.',
+                        "water_cont_soil_meth": (
+                            'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
+                            'Part 1 Physical and Mineralogical Methods 5 (1986): 493-544.'
+                        ),
                     },
                     {
                         "ph": "\n4\n",
                         "depth": "\n.40-.50\n",
                         "lat_lon": "47.506961 -93.455715",
-                        "ph_meth": "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, Water and Forage Analytical Laboratory. Oklahoma Cooperative Extension Service, 2016.",
+                        "ph_meth": (
+                            "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
+                            "Water and Forage Analytical Laboratory. "
+                            "Oklahoma Cooperative Extension "
+                            "Service, 2016."
+                        ),
                         "ecosystem": "Environmental",
                         "fao_class": "Histosols",
                         "samp_name": "Aug2016WEW_Plot6_D5",
@@ -227,7 +240,10 @@ def test_get_metadata_submissions_report_as_admin(
                         "samp_collec_device": "russian corer",
                         "specific_ecosystem": "Bog",
                         "gaseous_environment": "ambient",
-                        "water_cont_soil_meth": 'Gardner, Walter H. "Water content." Methods of Soil Analysis: Part 1 Physical and Mineralogical Methods 5 (1986): 493-544.',
+                        "water_cont_soil_meth": (
+                            'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
+                            'Part 1 Physical and Mineralogical Methods 5 (1986): 493-544.'
+                        ),
                     },
                 ],
                 "jgi_mg_data": [
