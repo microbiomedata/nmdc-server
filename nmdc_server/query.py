@@ -437,8 +437,7 @@ class BaseQuerySchema(BaseModel):
         """Search for entities in the target table."""
         model = self.table.model
         subquery = self.query(db).subquery().alias("id_filter")
-        to_return = db.query(model).join(subquery, model.id == subquery.c.id)  # type: ignore
-        return to_return
+        return db.query(model).join(subquery, model.id == subquery.c.id)  # type: ignore
 
     def count(self, db: Session) -> int:
         """Return the number of matched entities for the query."""
