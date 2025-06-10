@@ -92,6 +92,10 @@ _envo_keys: Dict[str, Tuple[Table, str]] = {
 
 _association_proxy_keys: Dict[str, Tuple[Any, Any]] = {
     "principal_investigator_name": (models.Study, models.PrincipalInvestigator.name),
+    "metaproteomics_analysis_category": (
+        models.OmicsProcessing,
+        models.MetaproteomicAnalysis.metaproteomics_analysis_category,
+    ),
 }
 
 _special_keys: Dict[str, Tuple[Table, str]] = {
@@ -696,7 +700,8 @@ class StudyQuerySchema(BaseQuerySchema):
         op_filter_conditions = [
             c
             for c in self.conditions
-            if c.table.value in {"omics_processing", "biosample", "gene_function"}
+            if c.table.value
+            in {"omics_processing", "biosample", "gene_function", "metaproteomic_analysis"}
         ]
         op_summary_subquery = self._count_omics_processing_summary(
             db, op_filter_conditions
