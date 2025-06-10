@@ -206,7 +206,7 @@ def test_get_metadata_submissions_report_as_admin(
                         "gaseous_environment": "ambient",
                         "water_cont_soil_meth": (
                             'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
-                            'Part 1 Physical and Mineralogical Methods 5 (1986): 493-544.'
+                            "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
                         ),
                     },
                     {
@@ -242,7 +242,7 @@ def test_get_metadata_submissions_report_as_admin(
                         "gaseous_environment": "ambient",
                         "water_cont_soil_meth": (
                             'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
-                            'Part 1 Physical and Mineralogical Methods 5 (1986): 493-544.'
+                            "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
                         ),
                     },
                 ],
