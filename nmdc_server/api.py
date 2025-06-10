@@ -998,7 +998,8 @@ async def get_metadata_submissions_report(
         metadata = s.metadata_submission  # creates a concise alias
         # find the number of samples in the submission
         # Note: `metadata["sampleData"]` is a dictionary where keys are sample types
-        # and values are lists of samples.
+        #       and values are lists of samples of that type.
+        # Reference: https://microbiomedata.github.io/submission-schema/SampleData/
         samples = metadata["sampleData"]
         for samp in samples:
             sample_count += len(samples[samp])
