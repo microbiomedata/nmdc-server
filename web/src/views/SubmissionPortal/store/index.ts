@@ -127,6 +127,10 @@ const studyFormDefault = {
   piOrcid: '',
   linkOutWebpage: [],
   studyDate: null,
+  dataDois: [] as {
+    value: string;
+    provider: string;
+  }[] | null,
   fundingSources: [] as string[] | null,
   description: '',
   notes: '',
