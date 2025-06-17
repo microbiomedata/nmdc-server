@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Type, cast
 from sqlalchemy import Column, func, or_
 from sqlalchemy.orm import Session
 
-from nmdc_server import models, query, schemas
+from nmdc_server import models, query, schemas, table
 from nmdc_server.attribute_units import get_attribute_units
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 
@@ -129,6 +129,19 @@ def get_aggregation_summary(db: Session):
         )
 
         return num_non_parent_studies
+    
+    def count_wfe_output_data_size_bytes() -> int:
+        r"""Returns the total size of WFE output data objects in bytes."""
+        doj_outputs = set()
+        for t in table.workflow_execution_tables:
+            t.model()  # Ensure the model is loaded
+            doj_outputs.update(t.model.has_outputs)
+        sum = (
+            q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)))
+            .filter(models.DataObject.id.in_(doj_outputs))
+            .scalar() or 0
+            )
+        return sum
 
     return schemas.AggregationSummary(
         studies=q(models.Study).count(),
@@ -136,6 +149,7 @@ def get_aggregation_summary(db: Session):
         locations=distinct(models.Biosample.annotations["location"]),
         habitats=distinct(models.Biosample.annotations["habitat"]),
         data_size=q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0))).scalar(),
+        wfe_output_data_size_bytes=count_wfe_output_data_size_bytes(),
         metagenomes=omics_category("metagenome"),
         metatranscriptomes=omics_category("metatranscriptome"),
         proteomics=omics_category("proteomics"),
