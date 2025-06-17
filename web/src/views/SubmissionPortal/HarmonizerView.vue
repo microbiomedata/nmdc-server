@@ -205,8 +205,139 @@ export default defineComponent({
       }
     });
 
+    function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
+      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
+      if (environmentKeys.includes(templateKey)) {
+        return true;
+      }
+      const row_types = row[TYPE_FIELD];
+      if (!row_types) {
+        return false;
+      }
+      if (templateKey === EMSL) {
+        return row_types.includes('lipidomics')
+          || row_types.includes('metaproteomics')
+          || row_types.includes('metabolomics')
+          || row_types.includes('natural organic matter');
+      }
+      if (templateKey === JGI_MG) {
+        return row_types.includes('metagenomics');
+      }
+      if (templateKey === JGI_MG_LR) {
+        return row_types.includes('metagenomics_long_read');
+      }
+      if (templateKey === JGI_MT) {
+        return row_types.includes('metatranscriptomics');
+      }
+      if (templateKey === DATA_MG) {
+        return row_types.includes('metagenomics');
+      }
+      if (templateKey === DATA_MG_INTERLEAVED) {
+        return row_types.includes('metagenomics');
+      }
+      if (templateKey === DATA_MT) {
+        return row_types.includes('metatranscriptomics');
+      }
+      if (templateKey === DATA_MT_INTERLEAVED) {
+        return row_types.includes('metatranscriptomics');
+      }
+      return false;
+    }
+
     // DataHarmonizer is a bit loose in its definition of empty cells. They can be null or and empty string.
     const isNonEmpty = (val: any) => val !== null && val !== '';
+
+    function synchronizeTabData(templateKey: string) {
+      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
+      if (environmentKeys.includes(templateKey)) {
+        return;
+      }
+      const nextData = { ...sampleData.value };
+      const templateSlot = HARMONIZER_TEMPLATES[templateKey].sampleDataSlot;
+
+      const environmentSlots = templateList.value
+        .filter((t) => HARMONIZER_TEMPLATES[t].status === 'published')
+        .map((t) => HARMONIZER_TEMPLATES[t].sampleDataSlot);
+
+      if (!templateSlot || !environmentSlots) {
+        return;
+      }
+
+      // ensure the necessary keys exist in the data object
+      environmentSlots.forEach((slot) => {
+        if (!nextData[slot as string]) {
+          nextData[slot as string] = [];
+        }
+      });
+
+      if (!nextData[templateSlot]) {
+        nextData[templateSlot] = [];
+      }
+
+      // add/update any rows from the environment tabs to the active tab if they apply and if
+      // they aren't there already.
+      environmentSlots.forEach((environmentSlot) => {
+        nextData[environmentSlot as string].forEach((row) => {
+          const rowId = row[SCHEMA_ID];
+
+          const existing = nextData[templateSlot] && nextData[templateSlot].find((r) => r[SCHEMA_ID] === rowId);
+          if (!existing && rowIsVisibleForTemplate(row, templateKey)) {
+            const newRow = {} as Record<string, any>;
+            COMMON_COLUMNS.forEach((col) => {
+              newRow[col] = row[col];
+            });
+            nextData[templateSlot].push(newRow);
+          }
+          if (existing) {
+            COMMON_COLUMNS.forEach((col) => {
+              existing[col] = row[col];
+            });
+          }
+        });
+      });
+      // remove any rows from the active tab if they were removed from the environment tabs
+      // or no longer apply to the active tab
+      if (nextData[templateSlot].length > 0) {
+        nextData[templateSlot] = nextData[templateSlot].filter((row) => {
+          if (!rowIsVisibleForTemplate(row, templateKey)) {
+            return false;
+          }
+          const rowId = row[SCHEMA_ID];
+          return environmentSlots.some((environmentSlot) => {
+            const environmentRow = nextData[environmentSlot as string].findIndex((r) => r[SCHEMA_ID] === rowId);
+            return environmentRow >= 0;
+          });
+        });
+      }
+      sampleData.value = nextData;
+    }
+
+    /**
+     * This should be called whenever rows are removed from the data harmonizer.
+     * It ensures that row deletion is cascaded to facility templates from the main
+     * environment templates
+     */
+    const syncAndMergeTabsForRemovedRows = async () => {
+      mergeSampleData(
+        activeTemplate.value.sampleDataSlot,
+        harmonizerApi.exportJson(),
+      );
+      // If there are any sampleDataSlots populated that somehow are missing from
+      // the template list, make sure those data are updated as well.
+      Object.keys(sampleData.value).forEach((key) => {
+        // Loop through keys in the sampleData for the submission. Each
+        // key maps to a template. We have to find that template.
+        const [templateKey, template] = Object.entries(HARMONIZER_TEMPLATES).find(([, template]) => (
+          template?.sampleDataSlot === key
+        )) || [undefined, undefined];
+        if (template && templateKey) {
+          // If we found the template, synchronize the data
+          // Make sure we carry the deletion through to the sampleData
+          // The current tab's data needs to be updated first, then synchronized
+          synchronizeTabData(templateKey);
+        }
+      });
+    };
 
     const onDataChange = async (changes: any[]) => {
       // If we're in live suggestion mode and the user can edit the metadata, add the changes to a batch. Once the user
@@ -218,10 +349,22 @@ export default defineComponent({
         changeBatch.push(...nonEmptyChanges);
         debouncedSuggestionRequest();
       }
+      // If any changes touched the sample name or analysis/data type columns on an environment
+      // tab, we need to synch those changes to non-active tabs
+      const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value.schemaClass || '');
+      const shouldSynchronizeTabs = !!changes.find((change) => {
+        const isRelevantColumn = templateOrderedAttrNames[change[1]] === SAMP_NAME || templateOrderedAttrNames[change[1]] === ANALYSIS_TYPE;
+        const isNonemptyChange = isNonEmpty(change[2]) || isNonEmpty(change[3]);
+        return isNonemptyChange && isRelevantColumn;
+      });
 
       hasChanged.value += 1;
-      const data = harmonizerApi.exportJson();
-      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
+      if (shouldSynchronizeTabs) {
+        syncAndMergeTabsForRemovedRows();
+      } else {
+        const data = harmonizerApi.exportJson();
+        mergeSampleData(activeTemplate.value.sampleDataSlot, data);
+      }
       saveRecord(); // This is a background save that we intentionally don't wait for
       tabsValidated.value[activeTemplateKey.value] = false;
     };
@@ -317,110 +460,6 @@ export default defineComponent({
       submitDialog.value = false;
     });
 
-    function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
-      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
-      if (environmentKeys.includes(templateKey)) {
-        return true;
-      }
-      const row_types = row[TYPE_FIELD];
-      if (!row_types) {
-        return false;
-      }
-      if (templateKey === EMSL) {
-        return row_types.includes('lipidomics')
-          || row_types.includes('metaproteomics')
-          || row_types.includes('metabolomics')
-          || row_types.includes('natural organic matter');
-      }
-      if (templateKey === JGI_MG) {
-        return row_types.includes('metagenomics');
-      }
-      if (templateKey === JGI_MG_LR) {
-        return row_types.includes('metagenomics_long_read');
-      }
-      if (templateKey === JGI_MT) {
-        return row_types.includes('metatranscriptomics');
-      }
-      if (templateKey === DATA_MG) {
-        return row_types.includes('metagenomics');
-      }
-      if (templateKey === DATA_MG_INTERLEAVED) {
-        return row_types.includes('metagenomics');
-      }
-      if (templateKey === DATA_MT) {
-        return row_types.includes('metatranscriptomics');
-      }
-      if (templateKey === DATA_MT_INTERLEAVED) {
-        return row_types.includes('metatranscriptomics');
-      }
-      return false;
-    }
-
-    function synchronizeTabData(templateKey: string) {
-      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
-      if (environmentKeys.includes(templateKey)) {
-        return;
-      }
-      const nextData = { ...sampleData.value };
-      const templateSlot = HARMONIZER_TEMPLATES[templateKey].sampleDataSlot;
-
-      const environmentSlots = templateList.value
-        .filter((t) => HARMONIZER_TEMPLATES[t].status === 'published')
-        .map((t) => HARMONIZER_TEMPLATES[t].sampleDataSlot);
-
-      if (!templateSlot || !environmentSlots) {
-        return;
-      }
-
-      // ensure the necessary keys exist in the data object
-      environmentSlots.forEach((slot) => {
-        if (!nextData[slot as string]) {
-          nextData[slot as string] = [];
-        }
-      });
-
-      if (!nextData[templateSlot]) {
-        nextData[templateSlot] = [];
-      }
-
-      // add/update any rows from the environment tabs to the active tab if they apply and if
-      // they aren't there already.
-      environmentSlots.forEach((environmentSlot) => {
-        nextData[environmentSlot as string].forEach((row) => {
-          const rowId = row[SCHEMA_ID];
-
-          const existing = nextData[templateSlot] && nextData[templateSlot].find((r) => r[SCHEMA_ID] === rowId);
-          if (!existing && rowIsVisibleForTemplate(row, templateKey)) {
-            const newRow = {} as Record<string, any>;
-            COMMON_COLUMNS.forEach((col) => {
-              newRow[col] = row[col];
-            });
-            nextData[templateSlot].push(newRow);
-          }
-          if (existing) {
-            COMMON_COLUMNS.forEach((col) => {
-              existing[col] = row[col];
-            });
-          }
-        });
-      });
-      // remove any rows from the active tab if they were removed from the environment tabs
-      // or no longer apply to the active tab
-      if (nextData[templateSlot].length > 0) {
-        nextData[templateSlot] = nextData[templateSlot].filter((row) => {
-          if (!rowIsVisibleForTemplate(row, templateKey)) {
-            return false;
-          }
-          const rowId = row[SCHEMA_ID];
-          return environmentSlots.some((environmentSlot) => {
-            const environmentRow = nextData[environmentSlot as string].findIndex((r) => r[SCHEMA_ID] === rowId);
-            return environmentRow >= 0;
-          });
-        });
-      }
-      sampleData.value = nextData;
-    }
-
     async function downloadSamples() {
       templateList.value.forEach((templateKey) => {
         synchronizeTabData(templateKey);
@@ -508,29 +547,14 @@ export default defineComponent({
       reader.readAsArrayBuffer(file);
     }
 
+    /**
+     * Set up the hands on table with appropriate event handlers
+     * for interactions with the Data Harmonizer.
+     */
     function addHooks() {
       harmonizerApi.addChangeHook(onDataChange);
       harmonizerApi.addRowRemovedHook(async () => {
-        // If there are any sampleDataSlots populated that somehow are missing from
-        // the template list, make sure those data are deleted as well.
-        Object.keys(sampleData.value).forEach((key) => {
-          // Loop through keys in the sampleData for the submission. Each
-          // key maps to a template. We have to find that template.
-          const [templateKey, template] = Object.entries(HARMONIZER_TEMPLATES).find(([, template]) => (
-            template?.sampleDataSlot === key
-          )) || [undefined, undefined];
-          if (template && templateKey) {
-            // If we found the template, synchronize the data
-            // Make sure we carry the deletion through to the sampleData
-            // The current tab's data needs to be updated first, then synchronized
-            mergeSampleData(
-              activeTemplate.value.sampleDataSlot,
-              harmonizerApi.exportJson(),
-            );
-            synchronizeTabData(templateKey);
-          }
-        });
-        // Save the changes
+        syncAndMergeTabsForRemovedRows();
         hasChanged.value += 1;
         saveRecord();
       });
