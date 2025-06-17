@@ -521,14 +521,15 @@ export default defineComponent({
           )) || [undefined, undefined];
           if (template && templateKey) {
             // If we found the template, synchronize the data
+            // Make sure we carry the deletion through to the sampleData
+            // The current tab's data needs to be updated first, then synchronized
+            mergeSampleData(
+              activeTemplate.value.sampleDataSlot,
+              harmonizerApi.exportJson(),
+            );
             synchronizeTabData(templateKey);
           }
         });
-        // Make sure we carry the deletion through to the sampleData
-        mergeSampleData(
-          activeTemplate.value.sampleDataSlot,
-          harmonizerApi.exportJson(),
-        );
         // Save the changes
         hasChanged.value += 1;
         saveRecord();
