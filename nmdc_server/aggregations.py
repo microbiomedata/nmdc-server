@@ -134,8 +134,15 @@ def get_aggregation_summary(db: Session):
         r"""Returns the total size of WFE output data objects in bytes."""
         doj_outputs = set()
         for t in table.workflow_execution_tables:
-            t.model()  # Ensure the model is loaded
-            doj_outputs.update(t.model.has_outputs)
+            associated_table = models.output_association(t)
+            # Query output associations
+            print(associated_table.c[f"{t}_id"])
+            output_query = db.query(
+                associated_table.c["data_object_id"],
+            )
+            print(output_query)
+            doj_outputs.update(output_query)
+            print(doj_outputs)
         sum = (
             q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)))
             .filter(models.DataObject.id.in_(doj_outputs))

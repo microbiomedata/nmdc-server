@@ -10,6 +10,7 @@ from starlette import status as http_status
 
 import nmdc_server
 from nmdc_server import fakes
+from nmdc_server import table
 
 
 def assert_status(response: Response, status: int = 200):
@@ -88,8 +89,18 @@ def test_api_summary(db: Session, client: TestClient):
         fakes.MetagenomeAnnotationFactory()
         fakes.MetagenomeAssemblyFactory()
         fakes.MetaproteomicAnalysisFactory()
-        fakes.DataObjectFactory()
+    
+    # Create a data object with a specific file size
+    data_object = fakes.DataObjectFactory(file_size_bytes=5)
+    # Create a NOM analysis object
+    nom_analysis = fakes.NOMAnalysisFactory()
 
+    # Commit the objects to the database first to ensure they exist
+    db.commit()
+    
+    # Now use the ORM relationship to associate them
+    nom_analysis.outputs = [data_object]
+    
     # Create some additional, interrelated studies.
     # Note: The database already contains 10 studies at this point, created elsewhere.
     study_a = fakes.StudyFactory()
@@ -106,6 +117,7 @@ def test_api_summary(db: Session, client: TestClient):
     data = resp.json()
     assert data["studies"] == 13
     assert data["non_parent_studies"] == 11  # excludes studies A and B
+    assert data["wfe_output_data_size_bytes"] == 5
 
 
 def test_get_admin_stats_authorization(db: Session, client: TestClient, logged_in_user):
