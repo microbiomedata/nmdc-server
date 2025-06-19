@@ -12,7 +12,7 @@ class WorkflowActivityTypeEnum(Enum):
     metagenome_assembly = "nmdc:MetagenomeAssembly"
     metagenome_annotation = "nmdc:MetagenomeAnnotation"
     metaproteomic_analysis = "nmdc:MetaproteomicsAnalysis"
-    metatranscriptome = "nmdc:MetatranscriptomeAnalysis"
+    metatranscriptome_expression = "nmdc:MetatranscriptomeExpressionAnalysis"
     metatranscriptome_assembly = "nmdc:MetatranscriptomeAssembly"
     metatranscriptome_annotation = "nmdc:MetatranscriptomeAnnotation"
     nom_analysis = "nmdc:NomAnalysis"
@@ -41,7 +41,7 @@ _workflow_enum_to_model = {
     WorkflowActivityTypeEnum.nom_analysis: models.NOMAnalysis,
     WorkflowActivityTypeEnum.metabolomics_analysis: models.MetabolomicsAnalysis,
     WorkflowActivityTypeEnum.raw_data: models.OmicsProcessing,
-    WorkflowActivityTypeEnum.metatranscriptome: models.Metatranscriptome,
+    WorkflowActivityTypeEnum.metatranscriptome_expression: models.Metatranscriptome,
 }
 
 _mpa = WorkflowActivityTypeEnum.metaproteomic_analysis
@@ -58,7 +58,7 @@ _workflow_enum_to_output_association = {
     WorkflowActivityTypeEnum.nom_analysis: models.nom_analysis_output_association,
     WorkflowActivityTypeEnum.metabolomics_analysis: models.metabolomics_analysis_output_association,
     WorkflowActivityTypeEnum.raw_data: models.omics_processing_output_association,
-    WorkflowActivityTypeEnum.metatranscriptome: models.metabolomics_analysis_output_association,
+    WorkflowActivityTypeEnum.metatranscriptome_expression: models.metabolomics_analysis_output_association,  # noqa: E501
 }
 
 

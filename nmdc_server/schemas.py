@@ -568,7 +568,7 @@ class ReadBasedAnalysis(PipelineStep):
 
 
 class MetatranscriptomeBase(PipelineStepBase):
-    type: str = WorkflowActivityTypeEnum.metatranscriptome.value
+    type: str = WorkflowActivityTypeEnum.metatranscriptome_expression.value
 
 
 class Metatranscriptome(PipelineStep):
