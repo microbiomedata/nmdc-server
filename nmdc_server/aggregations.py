@@ -133,21 +133,72 @@ def get_aggregation_summary(db: Session):
     def count_wfe_output_data_size_bytes() -> int:
         r"""Returns the total size of WFE output data objects in bytes."""
         doj_outputs = set()
-        for t in table.workflow_execution_tables:
-            associated_table = models.output_association(t)
-            # Query output associations
-            print(associated_table.c[f"{t}_id"])
-            output_query = db.query(
-                associated_table.c["data_object_id"],
-            )
-            print(output_query)
-            doj_outputs.update(output_query)
-            print(doj_outputs)
+        
+        # Use the existing model relationships to get data objects
+        # Each workflow model has an 'outputs' relationship that links to DataObject
+        
+        # ReadsQC outputs
+        for reads_qc in db.query(models.ReadsQC).all():
+            for data_obj in reads_qc.outputs:
+                doj_outputs.add(data_obj.id)
+        
+        # MetagenomeAssembly outputs
+        for mg_assembly in db.query(models.MetagenomeAssembly).all():
+            for data_obj in mg_assembly.outputs:
+                doj_outputs.add(data_obj.id)
+        
+        # MetagenomeAnnotation outputs
+        for mg_annotation in db.query(models.MetagenomeAnnotation).all():
+            for data_obj in mg_annotation.outputs:
+                doj_outputs.add(data_obj.id)
+        
+        # MetatranscriptomeAssembly outputs
+        for mt_assembly in db.query(models.MetatranscriptomeAssembly).all():
+            for data_obj in mt_assembly.outputs:
+                doj_outputs.add(data_obj.id)
+        
+        # MetatranscriptomeAnnotation outputs
+        for mt_annotation in db.query(models.MetatranscriptomeAnnotation).all():
+            for data_obj in mt_annotation.outputs:
+                doj_outputs.add(data_obj.id)
+        
+        # MetaproteomicAnalysis outputs
+        for mp_analysis in db.query(models.MetaproteomicAnalysis).all():
+            for data_obj in mp_analysis.outputs:
+                doj_outputs.add(data_obj.id)
+        
+        # MAGsAnalysis outputs
+        for mags_analysis in db.query(models.MAGsAnalysis).all():
+            for data_obj in mags_analysis.outputs:
+                doj_outputs.add(data_obj.id)
+        
+        # NOMAnalysis outputs
+        for nom_analysis in db.query(models.NOMAnalysis).all():
+            for data_obj in nom_analysis.outputs:
+                doj_outputs.add(data_obj.id)
+        
+        # ReadBasedAnalysis outputs
+        for rb_analysis in db.query(models.ReadBasedAnalysis).all():
+            for data_obj in rb_analysis.outputs:
+                doj_outputs.add(data_obj.id)
+        
+        # MetabolomicsAnalysis outputs
+        for metabolomics in db.query(models.MetabolomicsAnalysis).all():
+            for data_obj in metabolomics.outputs:
+                doj_outputs.add(data_obj.id)
+        
+        # Metatranscriptome outputs
+        for metatranscriptome in db.query(models.Metatranscriptome).all():
+            for data_obj in metatranscriptome.outputs:
+                doj_outputs.add(data_obj.id)
+                
+        # Calculate the total size of all data objects
         sum = (
             q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)))
             .filter(models.DataObject.id.in_(doj_outputs))
             .scalar() or 0
-            )
+        )
+        
         return sum
 
     return schemas.AggregationSummary(
