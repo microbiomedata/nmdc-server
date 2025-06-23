@@ -83,7 +83,7 @@ def test_api_faceting(db: Session, client: TestClient):
 
 def test_api_summary(db: Session, client: TestClient):
     """
-    This test checks the /api/summary endpoint to ensure it returns the expected
+    This test checks the `/api/stats` endpoint to ensure it returns the expected
     summary statistics about the database, including the number of studies,
 
     wfe data size bytes test case:
