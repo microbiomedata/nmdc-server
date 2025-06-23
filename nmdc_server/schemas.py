@@ -166,6 +166,7 @@ class AggregationSummary(BaseModel):
     organic_matter_characterization: int
     wfe_output_data_size_bytes: int
 
+
 class AdminStats(BaseModel):
     """Statistics designed for consumption by Data Portal/Submission Portal administrators."""
 

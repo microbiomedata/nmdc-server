@@ -1016,8 +1016,3 @@ class InvalidatedToken(Base):
     __tablename__ = "invalidated_token"
 
     token = Column(String, primary_key=True)
-    
-    
-
-    
-

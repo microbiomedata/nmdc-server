@@ -10,7 +10,6 @@ from starlette import status as http_status
 
 import nmdc_server
 from nmdc_server import fakes
-from nmdc_server import table
 
 
 def assert_status(response: Response, status: int = 200):
@@ -90,9 +89,12 @@ def test_api_summary(db: Session, client: TestClient):
     wfe data size bytes test case:
     - here we test that the WFE data size is calculated correctly
     - we create 10 data objects with increasing file sizes (1 byte to 10 bytes)
-    - we associate these data objects with various workflow execution processes - this tests that data object from different processes are accounted for.
-    - we check that data object are not double counted through connecting the same data object to multiple processes
-    - we then check that the total size of the WFE output data is 55 bytes. this is the sum of the first 10 natural numbers (1 + 2 + ... + 10 = 55).
+    - we associate these data objects with various workflow execution processes
+        this tests that data object from different processes are accounted for.
+    - we check that data object are not double counted through connecting the
+        same data object to multiple processes
+    - we then check that the total size of the WFE output data is 55 bytes.
+        this is the sum of the first 10 natural numbers (1 + 2 + ... + 10 = 55).
     """
     # TODO: This would be better queried against the real data
     for i in range(10):
@@ -106,7 +108,7 @@ def test_api_summary(db: Session, client: TestClient):
         fake_meta_annotation.outputs = [data_object]
         fake_meta_assembly.outputs = [data_object]
         fake_meta_pro.outputs = [data_object]
-    
+
     # Create some additional, interrelated studies.
     # Note: The database already contains 10 studies at this point, created elsewhere.
     study_a = fakes.StudyFactory()
