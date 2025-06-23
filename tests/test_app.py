@@ -83,23 +83,29 @@ def test_api_faceting(db: Session, client: TestClient):
 
 
 def test_api_summary(db: Session, client: TestClient):
-    # TODO: This would be better queried against the real data
-    for _ in range(10):
-        fakes.BiosampleFactory()
-        fakes.MetagenomeAnnotationFactory()
-        fakes.MetagenomeAssemblyFactory()
-        fakes.MetaproteomicAnalysisFactory()
-    
-    # Create a data object with a specific file size
-    data_object = fakes.DataObjectFactory(file_size_bytes=5)
-    # Create a NOM analysis object
-    nom_analysis = fakes.NOMAnalysisFactory()
+    """
+    This test checks the /api/summary endpoint to ensure it returns the expected
+    summary statistics about the database, including the number of studies,
 
-    # Commit the objects to the database first to ensure they exist
-    db.commit()
-    
-    # Now use the ORM relationship to associate them
-    nom_analysis.outputs = [data_object]
+    wfe data size bytes test case:
+    - here we test that the WFE data size is calculated correctly
+    - we create 10 data objects with increasing file sizes (1 byte to 10 bytes)
+    - we associate these data objects with various workflow execution processes - this tests that data object from different processes are accounted for.
+    - we check that data object are not double counted through connecting the same data object to multiple processes
+    - we then check that the total size of the WFE output data is 55 bytes. this is the sum of the first 10 natural numbers (1 + 2 + ... + 10 = 55).
+    """
+    # TODO: This would be better queried against the real data
+    for i in range(10):
+        data_object = fakes.DataObjectFactory(file_size_bytes=i + 1)
+        fakes.BiosampleFactory()
+        fake_meta_annotation = fakes.MetagenomeAnnotationFactory()
+        fake_meta_assembly = fakes.MetagenomeAssemblyFactory()
+        fake_meta_pro = fakes.MetaproteomicAnalysisFactory()
+        # Commit the objects to the database first to ensure they exist
+        db.commit()
+        fake_meta_annotation.outputs = [data_object]
+        fake_meta_assembly.outputs = [data_object]
+        fake_meta_pro.outputs = [data_object]
     
     # Create some additional, interrelated studies.
     # Note: The database already contains 10 studies at this point, created elsewhere.
@@ -117,7 +123,7 @@ def test_api_summary(db: Session, client: TestClient):
     data = resp.json()
     assert data["studies"] == 13
     assert data["non_parent_studies"] == 11  # excludes studies A and B
-    assert data["wfe_output_data_size_bytes"] == 5
+    assert data["wfe_output_data_size_bytes"] == 55
 
 
 def test_get_admin_stats_authorization(db: Session, client: TestClient, logged_in_user):
