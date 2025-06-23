@@ -89,7 +89,7 @@ def test_api_summary(db: Session, client: TestClient):
     WFE data size bytes test case:
     - here we test that the WFE data size is calculated correctly
     - we create 10 data objects with increasing file sizes (1 byte to 10 bytes)
-    - we associate these data objects with various workflow execution processes
+    - we associate these data objects with various workflow execution processes.
         this tests that data object from different processes are accounted for.
     - we check that data object are not double counted through connecting the
         same data object to multiple processes
