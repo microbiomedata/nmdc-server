@@ -86,7 +86,7 @@ def test_api_summary(db: Session, client: TestClient):
     This test checks the `/api/stats` endpoint to ensure it returns the expected
     summary statistics about the database, including the number of studies,
 
-    wfe data size bytes test case:
+    WFE data size bytes test case:
     - here we test that the WFE data size is calculated correctly
     - we create 10 data objects with increasing file sizes (1 byte to 10 bytes)
     - we associate these data objects with various workflow execution processes
