@@ -23,7 +23,7 @@ services:
       # Our MGA ingest makes some *very* large transactions
       - "max_wal_size=2GB"
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
 
   worker:
     image: ghcr.io/microbiomedata/nmdc-server/worker:main
