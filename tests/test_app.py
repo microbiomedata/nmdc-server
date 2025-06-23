@@ -99,15 +99,12 @@ def test_api_summary(db: Session, client: TestClient):
     # TODO: This would be better queried against the real data
     for i in range(10):
         data_object = fakes.DataObjectFactory(file_size_bytes=i + 1)
+        # Create some data objects that are not associated with any processes
+        fakes.DataObjectFactory(file_size_bytes=i + 1)
         fakes.BiosampleFactory()
-        fake_meta_annotation = fakes.MetagenomeAnnotationFactory()
-        fake_meta_assembly = fakes.MetagenomeAssemblyFactory()
-        fake_meta_pro = fakes.MetaproteomicAnalysisFactory()
-        # Commit the objects to the database first to ensure they exist
-        db.commit()
-        fake_meta_annotation.outputs = [data_object]
-        fake_meta_assembly.outputs = [data_object]
-        fake_meta_pro.outputs = [data_object]
+        fakes.MetagenomeAnnotationFactory(outputs=[data_object])
+        fakes.MetagenomeAssemblyFactory(outputs=[data_object])
+        fakes.MetaproteomicAnalysisFactory(outputs=[data_object])
 
     # Create some additional, interrelated studies.
     # Note: The database already contains 10 studies at this point, created elsewhere.
