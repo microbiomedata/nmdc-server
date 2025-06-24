@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Type, cast
 from sqlalchemy import Column, func, or_, union_all
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import Alias
-from sqlalchemy.sql import Selectable as Subquery  # fallback if Subquery import fails
+from sqlalchemy.sql import Selectable
 
 from nmdc_server import models, query, schemas
 from nmdc_server.attribute_units import get_attribute_units
@@ -124,7 +124,7 @@ def make_all_wfe_outputs_subquery(db: Session) -> Alias:
             .join(getattr(wfe_model, "outputs"))
         )
         wfe_outputs_queries.append(wfe_outputs_query.statement)
-    all_wfe_outputs_subquery: Subquery = union_all(*wfe_outputs_queries).alias()
+    all_wfe_outputs_subquery: Selectable = union_all(*wfe_outputs_queries).alias()
     return db.query(all_wfe_outputs_subquery).distinct().subquery()
 
 

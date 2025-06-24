@@ -123,6 +123,8 @@ def test_api_summary(db: Session, client: TestClient):
     assert data["studies"] == 13
     assert data["non_parent_studies"] == 11  # excludes studies A and B
     assert data["wfe_output_data_size_bytes"] == 55
+    assert data["data_size"] == 110
+
 
 
 def test_get_admin_stats_authorization(db: Session, client: TestClient, logged_in_user):
