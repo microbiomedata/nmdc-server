@@ -126,7 +126,6 @@ def test_api_summary(db: Session, client: TestClient):
     assert data["data_size"] == 110
 
 
-
 def test_get_admin_stats_authorization(db: Session, client: TestClient, logged_in_user):
     """This test demonstrates that non-admin users cannot access the endpoint."""
 

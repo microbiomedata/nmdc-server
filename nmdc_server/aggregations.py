@@ -2,8 +2,7 @@ from typing import Any, Dict, List, Type, cast
 
 from sqlalchemy import Column, func, or_, union_all
 from sqlalchemy.orm import Query, Session
-from sqlalchemy.sql import Alias
-from sqlalchemy.sql import Selectable
+from sqlalchemy.sql import Alias, Selectable
 
 from nmdc_server import models, query, schemas
 from nmdc_server.attribute_units import get_attribute_units
