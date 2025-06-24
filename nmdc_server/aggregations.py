@@ -1,7 +1,9 @@
 from typing import Any, Dict, List, Type, cast
 
-from sqlalchemy import Column, func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy import Column, func, or_, union_all
+from sqlalchemy.orm import Query, Session
+from sqlalchemy.sql import Alias
+from sqlalchemy.sql import Selectable as Subquery  # fallback if Subquery import fails
 
 from nmdc_server import models, query, schemas
 from nmdc_server.attribute_units import get_attribute_units
@@ -97,18 +99,33 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
     return schemas.TableSummary(total=count, attributes=attributes)
 
 
-def get_all_workflow_data_object_ids(db: Session) -> set:
-    r"""Returns a set of all DataObject IDs that are outputs of any workflow execution model."""
-    doj_outputs = set()
+def make_all_wfe_outputs_subquery(db: Session) -> Alias:
+    r"""
+    Returns a subquery that gets all of the distinct `DataObject` `id` values
+    that are referenced by any `WorkflowExecution` via the latter's `outputs`
+    relationship.
+    """
 
-    # Use workflow_activity_types to iterate through all workflow types
-    for workflow_model in models.workflow_activity_types:
-        # For each workflow instance, get its output data objects
-        for instance in db.query(workflow_model).all():
-            # Add each output data object ID to the set using the has_outputs relationship
-            doj_outputs.update(instance.has_outputs)
-
-    return doj_outputs
+    # For each `WorkflowExecution` model, make a query that `SELECT`s all
+    # of the `DataObject.id` values that are referenced by that model via
+    # its `outputs` relationship. Then, `UNION ALL` those individual queries
+    # into a single subquery. Finally, return a subquery that preserves only
+    # the `DISTINCT` `DataObject.id` values.
+    #
+    # Note: All this time, we're still building up a query. SQLAlchemy won't
+    #       actually query the database until we call something like `.all()`,
+    #       `.first()`, `scalar()`, etc.
+    #
+    wfe_outputs_queries = []
+    for wfe_model in models.workflow_activity_types:
+        wfe_outputs_query: Query = (
+            db.query(models.DataObject.id)
+            .select_from(wfe_model)
+            .join(getattr(wfe_model, "outputs"))
+        )
+        wfe_outputs_queries.append(wfe_outputs_query.statement)
+    all_wfe_outputs_subquery: Subquery = union_all(*wfe_outputs_queries).alias()
+    return db.query(all_wfe_outputs_subquery).distinct().subquery()
 
 
 def get_aggregation_summary(db: Session):
@@ -152,7 +169,7 @@ def get_aggregation_summary(db: Session):
         data_size=q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0))).scalar(),
         wfe_output_data_size_bytes=(
             q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)))
-            .filter(models.DataObject.id.in_(get_all_workflow_data_object_ids(db)))
+            .filter(models.DataObject.id.in_(make_all_wfe_outputs_subquery(db)))
             .scalar()
             or 0
         ),
