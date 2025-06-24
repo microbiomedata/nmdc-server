@@ -47,7 +47,7 @@ class StudyForm(StudyFormCreate):
 
 class MultiOmicsForm(BaseModel):
     award: Optional[str] = None
-    awardDois: Optional[List[str]] = None
+    awardDois: Optional[List[Doi]] = None
     dataGenerated: Optional[bool] = None
     doe: Optional[bool] = None
     facilities: Optional[List[str]] = None

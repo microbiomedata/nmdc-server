@@ -48,7 +48,12 @@ export default defineComponent({
       },
     ]);
 
-    const doiProviderValues = Object.keys(NmdcSchema.enums.DoiProviderEnum.permissible_values);
+    const doiProviderValues = Object.values(NmdcSchema.enums.DoiProviderEnum.permissible_values)
+      .map((pv: any) => ({
+        value: pv.text,
+        text: pv.title || pv.text, // The permissible value definition should have a title, but in case it doesn't fallback to text (which it will always have)
+      }))
+      .sort((a, b) => a.text.localeCompare(b.text));
 
     function addContributor() {
       studyForm.contributors.push({
@@ -68,17 +73,13 @@ export default defineComponent({
     }
 
     function addDataDoi() {
-      if (studyForm.dataDois === null || studyForm.dataDois.length === 0) {
-        studyForm.dataDois = [{
-          value: '',
-          provider: '',
-        }];
-      } else {
-        studyForm.dataDois.push({
-          value: '',
-          provider: '',
-        });
+      if (!Array.isArray(studyForm.dataDois)) {
+        studyForm.dataDois = [];
       }
+      studyForm.dataDois.push({
+        value: '',
+        provider: '',
+      });
     }
 
     function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
@@ -439,6 +440,9 @@ export default defineComponent({
               dense
               class="mb-2 mr-3"
               :error-messages="studyForm.dataDois[i].value ? undefined : ['Field cannot be empty.']"
+              :rules="requiredRules('Field cannot be empty',[
+                v => /^doi:10.\d{2,9}.*$/.test(v) || 'Doi must be valid',
+              ])"
             >
               <template #message="{ message }">
                 <span v-html="message" />
