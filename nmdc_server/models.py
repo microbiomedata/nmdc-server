@@ -488,6 +488,7 @@ class DataObject(Base):
 
 # This is a base class for all workflow processing activities.
 # https://microbiomedata.github.io/nmdc-schema/WorkflowExecutionActivity.html
+# TODO : does this exist anymore?
 class PipelineStep:
     __tablename__ = "base_pipeline_step"
 
