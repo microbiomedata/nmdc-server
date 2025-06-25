@@ -23,7 +23,11 @@ services:
       # Our MGA ingest makes some *very* large transactions
       - "max_wal_size=2GB"
     ports:
-      - "5432:5432"
+      # We specify `127.0.0.1` here so that other computers on the same LAN cannot
+      # access the container, even when the host's firewall is configured to allow
+      # incoming connections to Docker.
+      # Reference: https://github.com/compose-spec/compose-spec/blob/main/spec.md#short-syntax-3
+      - "127.0.0.1:5432:5432"
 
   worker:
     image: ghcr.io/microbiomedata/nmdc-server/worker:main
