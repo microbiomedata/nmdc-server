@@ -48,6 +48,13 @@ export default defineComponent({
       },
     ]);
 
+    const doiProviderValues = Object.values(NmdcSchema.enums.DoiProviderEnum.permissible_values)
+      .map((pv: any) => ({
+        value: pv.text,
+        text: pv.title || pv.text, // The permissible value definition should have a title, but in case it doesn't fallback to text (which it will always have)
+      }))
+      .sort((a, b) => a.text.localeCompare(b.text));
+
     function addContributor() {
       studyForm.contributors.push({
         name: '',
@@ -63,6 +70,16 @@ export default defineComponent({
       } else {
         studyForm.fundingSources.push('');
       }
+    }
+
+    function addDataDoi() {
+      if (!Array.isArray(studyForm.dataDois)) {
+        studyForm.dataDois = [];
+      }
+      studyForm.dataDois.push({
+        value: '',
+        provider: '',
+      });
     }
 
     function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
@@ -106,6 +123,8 @@ export default defineComponent({
       Definitions,
       addContributor,
       addFundingSource,
+      addDataDoi,
+      doiProviderValues,
       requiredRules,
       permissionLevelChoices,
       isOwner,
@@ -397,6 +416,78 @@ export default defineComponent({
         </v-icon>
         Add Contributor
       </v-btn>
+
+      <div class="text-h4">
+        Data DOIs
+      </div>
+      <div class="text-body-1 mb-2">
+        {{ "Data DOIs for this study" }}
+      </div>
+      <div
+        v-for="_, i in studyForm.dataDois"
+        :key="`dataDois${i}`"
+        class="d-flex"
+      >
+        <v-card class="d-flex flex-column grow pa-4 mb-4">
+          <div class="d-flex">
+            <v-text-field
+              v-if="studyForm.dataDois !== null"
+              v-model="studyForm.dataDois[i].value"
+              label="Data DOI value *"
+              :hint="Definitions.dataDoiValue"
+              persistent-hint
+              outlined
+              dense
+              class="mb-2 mr-3"
+              :error-messages="studyForm.dataDois[i].value ? undefined : ['Field cannot be empty.']"
+              :rules="requiredRules('Field cannot be empty',[
+                v => /^doi:10.\d{2,9}.*$/.test(v) || 'Doi must be valid',
+              ])"
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-text-field>
+            <v-select
+              v-if="studyForm.dataDois !== null"
+              v-model="studyForm.dataDois[i].provider"
+              label="Data DOI Provider *"
+              :hint="Definitions.dataDoiProvider"
+              :items="doiProviderValues"
+              persistent-hint
+              outlined
+              dense
+              clearable
+              class="mb-2 mr-3"
+              :error-messages="studyForm.dataDois[i].provider ? undefined : ['A provider must be selected.']"
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-select>
+          </div>
+        </v-card>
+        <v-btn
+          v-if="studyForm.dataDois !== null"
+          icon
+          :disabled="!isOwner()"
+          @click="studyForm.dataDois.splice(i, 1)"
+        >
+          <v-icon>mdi-minus-circle</v-icon>
+        </v-btn>
+      </div>
+      <v-btn
+        class="mb-4"
+        depressed
+        :disabled="!canEditSubmissionMetadata()"
+        @click="addDataDoi"
+      >
+        <v-icon class="pr-1">
+          mdi-plus-circle
+        </v-icon>
+        Add Data DOI
+      </v-btn>
+
       <div class="text-h4">
         External Identifiers
         <v-text-field
