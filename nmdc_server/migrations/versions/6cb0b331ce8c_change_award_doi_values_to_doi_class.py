@@ -41,7 +41,6 @@ def upgrade():
 
         if multi_omics_form.get("awardDois", None):
             values = multi_omics_form["awardDois"]
-            values = values.split(",")
             new_dois = []
             for val in values:
                 new_dois.append({"value": val, "provider": ""})
