@@ -196,9 +196,3 @@ exclude='\.eggs|\.git|\.mypy_cache|\.tox|\.venv|_build|buck-out|build|dist'
 [tool.isort]
 line_length = 100
 profile = "black"
-
-[tool.hatch.metadata]
-allow-direct-references = true
-
-[tool.uv.sources]
-nmdc-schema= { path = "/Users/ober845/Library/CloudStorage/OneDrive-PNNL/Desktop/nmdc-schema" }
