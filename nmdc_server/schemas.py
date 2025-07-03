@@ -154,6 +154,7 @@ class DatabaseSummary(BaseModel):
 
 class AggregationSummary(BaseModel):
     studies: int
+    non_parent_studies: int
     locations: int
     habitats: int
     data_size: int
@@ -163,6 +164,14 @@ class AggregationSummary(BaseModel):
     metabolomics: int
     lipodomics: int
     organic_matter_characterization: int
+
+
+class AdminStats(BaseModel):
+    """Statistics designed for consumption by Data Portal/Submission Portal administrators."""
+
+    num_user_accounts: int = Field(
+        description="Number of distinct ORCIDs that have been used to sign in."
+    )
 
 
 class EnvironmentSankeyAggregation(BaseModel):
@@ -568,7 +577,7 @@ class ReadBasedAnalysis(PipelineStep):
 
 
 class MetatranscriptomeBase(PipelineStepBase):
-    type: str = WorkflowActivityTypeEnum.metatranscriptome.value
+    type: str = WorkflowActivityTypeEnum.metatranscriptome_expression.value
 
 
 class Metatranscriptome(PipelineStep):

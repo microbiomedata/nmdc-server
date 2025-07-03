@@ -174,6 +174,7 @@ export default defineComponent({
     </v-btn>
     <l-map
       ref="mapRef"
+      :max-bounds="[[[-85, -180], [85, 180]]]"
       :style="{
         height: `${height}px`,
         width: '100%',

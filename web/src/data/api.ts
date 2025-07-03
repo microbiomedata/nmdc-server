@@ -479,12 +479,17 @@ async function getStudy(id: string): Promise<StudySearchResults> {
   return _getById<StudySearchResults>('study', id);
 }
 
+function _useDataGenerationRouteForField(field: string) {
+  const fields = new Set(['metaproteomics_analysis_category']);
+  return fields.has(field);
+}
+
 async function getFacetSummary(
   type: string,
   field: string,
   conditions: Condition[],
 ): Promise<FacetSummaryResponse[]> {
-  const path = type === 'omics_processing' ? 'data_generation' : type;
+  const path = (type === 'omics_processing' || _useDataGenerationRouteForField(field)) ? 'data_generation' : type;
   const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/facet`, {
     conditions, attribute: field,
   });

@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from httpx import Response
 from sqlalchemy.orm.session import Session
+from starlette import status as http_status
 
 import nmdc_server
 from nmdc_server import fakes
@@ -88,9 +89,45 @@ def test_api_summary(db: Session, client: TestClient):
         fakes.MetagenomeAssemblyFactory()
         fakes.MetaproteomicAnalysisFactory()
         fakes.DataObjectFactory()
+
+    # Create some additional, interrelated studies.
+    # Note: The database already contains 10 studies at this point, created elsewhere.
+    study_a = fakes.StudyFactory()
+    study_b = fakes.StudyFactory()
+    study_c = fakes.StudyFactory()
+    study_b.part_of = [study_a.id]
+    study_c.part_of = [study_a.id, study_b.id]
+
     db.commit()
     assert_status(client.get("/api/summary"))
-    assert_status(client.get("/api/stats"))
+
+    resp = client.get("/api/stats")
+    assert_status(resp)
+    data = resp.json()
+    assert data["studies"] == 13
+    assert data["non_parent_studies"] == 11  # excludes studies A and B
+
+
+def test_get_admin_stats_authorization(db: Session, client: TestClient, logged_in_user):
+    """This test demonstrates that non-admin users cannot access the endpoint."""
+
+    resp = client.get("/api/admin/stats")
+    assert_status(resp, http_status.HTTP_403_FORBIDDEN)
+
+
+def test_get_admin_stats(db: Session, client: TestClient, logged_in_admin_user):
+    # Seed the database.
+    for _ in range(10):
+        fakes.UserFactory()
+    db.commit()
+
+    # Submit the HTTP request.
+    resp = client.get("/api/admin/stats")
+
+    # Assert that the response meets our expectations.
+    # Note: The `logged_in_admin_user` fixture also created 1 User in the database.
+    assert_status(resp, http_status.HTTP_200_OK)
+    assert resp.json()["num_user_accounts"] == 11
 
 
 def test_get_pi_image(db: Session, client: TestClient):

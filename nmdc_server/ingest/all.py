@@ -124,9 +124,11 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading metatranscriptome expression analyses...")
     pipeline.load(
         db,
-        mongodb[workflow_set].find({"type": WorkflowActivityTypeEnum.metatranscriptome.value}),
+        mongodb[workflow_set].find(
+            {"type": WorkflowActivityTypeEnum.metatranscriptome_expression.value}
+        ),
         pipeline.load_metatranscriptome,
-        WorkflowActivityTypeEnum.metatranscriptome.value,
+        WorkflowActivityTypeEnum.metatranscriptome_expression.value,
     )
 
     logger.info("Loading metatranscriptome assemblies...")

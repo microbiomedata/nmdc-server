@@ -1,6 +1,5 @@
 import logging
 import typing
-from contextlib import asynccontextmanager
 
 import sentry_sdk
 from debug_toolbar.middleware import DebugToolbarMiddleware
@@ -15,7 +14,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from nmdc_server import __version__, api, auth, errors
 from nmdc_server.config import settings
 from nmdc_server.database import after_cursor_execute, before_cursor_execute, listen
-from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
+from nmdc_server.static_files import static_path
 
 
 def attach_sentry(app: FastAPI):
@@ -42,16 +41,6 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
         listen(Engine, "before_cursor_execute", before_cursor_execute)
         listen(Engine, "after_cursor_execute", after_cursor_execute)
 
-    def generate_and_mount_static_files():
-        static_path = initialize_static_directory(remove_existing=True)
-        generate_submission_schema_files(directory=static_path)
-        app.mount("/static", StaticFiles(directory=static_path), name="static")
-
-    @asynccontextmanager
-    async def lifespan(app: FastAPI):
-        generate_and_mount_static_files()
-        yield
-
     app = FastAPI(
         title="NMDC Data and Submission Portal API",
         description="""
@@ -64,8 +53,10 @@ field and click "Authorize".
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
         debug=settings.debug,
-        lifespan=lifespan,
     )
+    if not static_path.is_dir():
+        raise Exception("Static files not found")
+    app.mount("/static", StaticFiles(directory=static_path), name="static")
     if settings.environment == "development":
         app.add_middleware(
             DebugToolbarMiddleware,

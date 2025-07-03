@@ -97,6 +97,10 @@ def test_get_metadata_submissions_mixs_as_admin(
         "Environmental Broad Scale",
         "Environmental Local Scale",
         "Environmental Medium",
+        "Package T/F",
+        "Broad Scale T/F",
+        "Local Scale T/F",
+        "Medium T/F",
     ]
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
     rows = [row for row in reader]
@@ -113,6 +117,10 @@ def test_get_metadata_submissions_mixs_as_admin(
     assert data_row["Environmental Broad Scale"] == "Broad Scale A"
     assert data_row["Environmental Local Scale"] == "Local Scale A"
     assert data_row["Environmental Medium"] == "Medium A"
+    assert data_row["Package T/F"] == "False"
+    assert data_row["Broad Scale T/F"] == "False"
+    assert data_row["Local Scale T/F"] == "False"
+    assert data_row["Medium T/F"] == "False"
 
     data_row = rows[2]  # second data row (data about Sample B in submission1)
     assert data_row["Submission ID"] == str(submission1.id)
@@ -122,6 +130,10 @@ def test_get_metadata_submissions_mixs_as_admin(
     assert data_row["Environmental Broad Scale"] == "Broad Scale B"
     assert data_row["Environmental Local Scale"] == "Local Scale B"
     assert data_row["Environmental Medium"] == "Medium B"
+    assert data_row["Package T/F"] == "False"
+    assert data_row["Broad Scale T/F"] == "False"
+    assert data_row["Local Scale T/F"] == "False"
+    assert data_row["Medium T/F"] == "False"
 
 
 def test_get_metadata_submissions_report_as_non_admin(
@@ -157,14 +169,143 @@ def test_get_metadata_submissions_report_as_admin(
         author_orcid=other_user.orcid,
         created=now + timedelta(seconds=1),
         date_last_modified=datetime.utcnow(),
-        is_test_submission=True,
+        # TODO: Omit some optional fields in order to simplify the test data.
+        # See: `class MetadataSubmissionRecordCreate` in `schema_submission.py`
+        # See: https://microbiomedata.github.io/submission-schema/SampleData/
         metadata_submission={
+            "sampleData": {
+                "soil_data": [
+                    {
+                        "ph": "\n4\n",
+                        "depth": ".10-.20 meters",
+                        "ph_meth": (
+                            "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
+                            "Water and Forage Analytical Laboratory. "
+                            "Oklahoma Cooperative Extension "
+                            "Service, 2016."
+                        ),
+                        "ecosystem": "Environmental",
+                        "fao_class": "Histosols",
+                        "samp_name": "June2016WEW_Plot6_D2",
+                        "samp_size": "+10 grams",
+                        "env_medium": "peat soil [ENVO:00005774]",
+                        "store_cond": "frozen",
+                        "annual_temp": "5.0 C",
+                        "cur_land_use": "conifers",
+                        "geo_loc_name": "USA: Minnesota, Marcel Experimental Forest",
+                        "growth_facil": "field",
+                        "analysis_type": ["metagenomics"],
+                        "annual_precpt": "804 mm/year",
+                        "water_content": "84 %",
+                        "ecosystem_type": "Soil",
+                        "collection_date": "08/23/2016",
+                        "env_broad_scale": "__temperate woodland biome [ENVO:01000221]",
+                        "env_local_scale": "peatland [ENVO:00000044]",
+                        "samp_store_temp": "-80",
+                        "ecosystem_subtype": "Peat",
+                        "ecosystem_category": "Terrestrial",
+                        "samp_collec_device": "russian corer",
+                        "specific_ecosystem": "Bog",
+                        "gaseous_environment": "ambient",
+                        "water_cont_soil_meth": (
+                            'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
+                            "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
+                        ),
+                    },
+                    {
+                        "ph": "\n4\n",
+                        "depth": "\n.40-.50\n",
+                        "lat_lon": "47.506961 -93.455715",
+                        "ph_meth": (
+                            "Zhang, Hailin, and Kendal Henderson. Procedures used by OSU Soil, "
+                            "Water and Forage Analytical Laboratory. "
+                            "Oklahoma Cooperative Extension "
+                            "Service, 2016."
+                        ),
+                        "ecosystem": "Environmental",
+                        "fao_class": "Histosols",
+                        "samp_name": "Aug2016WEW_Plot6_D5",
+                        "samp_size": "+10 grams",
+                        "env_medium": "peat soil [ENVO:00005774]",
+                        "annual_temp": "5.0 C",
+                        "cur_land_use": "conifers (e.g. pine,spruce,fir,cypress)",
+                        "geo_loc_name": "USA: Minnesota, Marcel Experimental Forest",
+                        "analysis_type": ["metagenomics"],
+                        "annual_precpt": "804 mm/year",
+                        "water_content": "\n84%\n",
+                        "ecosystem_type": "Soil",
+                        "collection_date": "08/23/2016",
+                        "env_broad_scale": "__temperate woodland biome [ENVO:01000221]",
+                        "env_local_scale": "peatland [ENVO:00000044]",
+                        "samp_store_temp": "-80",
+                        "ecosystem_subtype": "Peat",
+                        "ecosystem_category": "Terrestrial",
+                        "samp_collec_device": "russian corer",
+                        "specific_ecosystem": "Bog",
+                        "gaseous_environment": "ambient",
+                        "water_cont_soil_meth": (
+                            'Gardner, Walter H. "Water content." Methods of Soil Analysis: '
+                            "Part 1 Physical and Mineralogical Methods 5 (1986): 493-544."
+                        ),
+                    },
+                ],
+                "jgi_mg_data": [
+                    {"samp_name": "June2016WEW_Plot6_D2", "analysis_type": ["metagenomics"]},
+                    {"samp_name": "Aug2016WEW_Plot6_D5", "analysis_type": ["metagenomics"]},
+                ],
+            },
+            "multiOmicsForm": {
+                "studyNumber": "",
+                "JGIStudyId": "",
+                "omicsProcessingTypes": [],
+                "facilities": [],
+                "otherAward": "",
+                "doe": None,
+                "dataGenerated": None,
+                "facilityGenerated": None,
+                "award": None,
+                "awardDois": [],
+                "mgCompatible": None,
+            },
             "studyForm": {
                 "studyName": "My study name",
                 "piName": "My PI name",
                 "piEmail": "My PI email",
+                "piOrcid": "",
+                "linkOutWebpage": [],
+                "fundingSources": [],
+                "description": "",
+                "notes": "",
+                "contributors": [],
+                "alternativeNames": [],
+                "GOLDStudyId": "",
+                "NCBIBioProjectId": "",
             },
+            "templates": [],
+            "addressForm": {
+                "shipper": {
+                    "name": "",
+                    "email": "",
+                    "phone": "",
+                    "line1": "",
+                    "line2": "",
+                    "city": "",
+                    "state": "",
+                    "postalCode": "",
+                    "country": "",
+                },
+                "shippingConditions": "",
+                "sample": "",
+                "description": "",
+                "experimentalGoals": "",
+                "randomization": "",
+                "permitNumber": "",
+                "biosafetyLevel": "",
+                "comments": "",
+            },
+            "packageName": [],
         },
+        is_test_submission=True,
         status="in-progress",
         source_client="field_notes",
     )
@@ -189,6 +330,7 @@ def test_get_metadata_submissions_report_as_admin(
         "Is Test Submission",
         "Date Last Modified",
         "Date Created",
+        "Number of Samples",
     ]
     reader = DictReader(response.text.splitlines(), fieldnames=fieldnames, delimiter="\t")
     rows = [row for row in reader]
@@ -207,6 +349,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["Source Client"] == "field_notes"
     assert data_row["Status"] == "in-progress"
     assert data_row["Is Test Submission"] == "True"
+    assert data_row["Number of Samples"] == "4"
     assert isinstance(data_row["Date Last Modified"], str)
     assert isinstance(data_row["Date Created"], str)
 
@@ -220,6 +363,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["Source Client"] == ""  # upstream faker lacks `source_client` attribute
     assert data_row["Status"] == "In Progress"  # matches value in upstream faker
     assert data_row["Is Test Submission"] == "False"
+    assert data_row["Number of Samples"] == "0"
     assert isinstance(data_row["Date Last Modified"], str)
     assert isinstance(data_row["Date Created"], str)
 

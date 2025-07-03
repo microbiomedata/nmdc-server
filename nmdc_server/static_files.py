@@ -5,12 +5,20 @@ from pathlib import Path
 from linkml_runtime import SchemaView
 from linkml_runtime.dumpers import json_dumper
 
+static_path = Path("static")
+
 
 def initialize_static_directory(*, remove_existing=False) -> Path:
-    static_path = Path("static")
     if remove_existing:
+        # Delete existing contents of the static directory,
+        # but keep the directory itself, since it may already
+        # be mounted by the FastAPI app.
         try:
-            shutil.rmtree(static_path)
+            for child in static_path.iterdir():
+                if child.is_dir():
+                    shutil.rmtree(child)
+                else:
+                    child.unlink()
         except FileNotFoundError:
             pass
     static_path.mkdir(parents=True, exist_ok=True)

@@ -2,6 +2,7 @@ import csv
 import json
 import logging
 import time
+from importlib import resources
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID
@@ -10,6 +11,7 @@ import httpx
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
+from linkml_runtime.utils.schemaview import SchemaView
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -151,6 +153,22 @@ async def get_aggregated_stats(db: Session = Depends(get_db)):
     return crud.get_aggregated_stats(db)
 
 
+@router.get(
+    "/admin/stats",
+    response_model=schemas.AdminStats,
+    tags=["administration"],
+)
+async def get_admin_stats(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+):
+    r"""
+    Get statistics designed to be consumed by Data Portal/Submission Portal administrators.
+    """
+
+    return crud.get_admin_stats(db)
+
+
 @router.post(
     "/environment/sankey",
     response_model=List[schemas.EnvironmentSankeyAggregation],
@@ -236,12 +254,15 @@ async def search_biosample(
         ),
         insert_selected,
     )
-    if any(
-        [
-            condition.table == Table.omics_processing or condition.table == Table.gene_function
-            for condition in query.conditions
-        ]
-    ):
+    # Filter out irrelevant workflow types based on the initial search conditions.
+    # This might be possible with SQLAlchemy options, but we need to figure out how
+    # to apply filters to the select related options.
+    filter_data_object_tables = [
+        Table.omics_processing,
+        Table.gene_function,
+        Table.metaproteomic_analysis,
+    ]
+    if any([condition.table in filter_data_object_tables for condition in query.conditions]):
         biosample_ids = [b.id for b in results["results"]]  # type: ignore
         omics_results = crud.search_omics_processing_for_biosamples(
             db, query.conditions, biosample_ids
@@ -768,13 +789,21 @@ async def get_metadata_submissions_mixs(
         "Environmental Broad Scale",
         "Environmental Local Scale",
         "Environmental Medium",
+        "Package T/F",
+        "Broad Scale T/F",
+        "Local Scale T/F",
+        "Medium T/F",
     ]
+
+    # Get submission schema view for enum validation
+    schema = fetch_nmdc_submission_schema()
+
     data_rows = []
     for s in submissions:
 
         metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
-        env_package = metadata["packageName"] if "packageName" in metadata else {}
+        env_pkg = metadata.get("packageName", "")
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -809,15 +838,24 @@ async def get_metadata_submissions_mixs(
                 env_medium = env_medium.replace("\r", "")
                 env_medium = env_medium.replace("\n", "").lstrip("_")
 
+                # Check against permissible values
+                env_pkg_enum, env_broad_enum, env_local_enum, env_med_enum = check_permissible_val(
+                    schema, env_pkg, env_broad_scale, env_local_scale, env_medium
+                )
+
                 # Append each sample as new row (with env data)
                 data_row = [
                     s.id,
                     s.status,
                     sample_name,
-                    env_package,
+                    env_pkg,
                     env_broad_scale,
                     env_local_scale,
                     env_medium,
+                    env_pkg_enum,
+                    env_broad_enum,
+                    env_local_enum,
+                    env_med_enum,
                 ]
                 data_rows.append(data_row)
 
@@ -843,6 +881,84 @@ async def get_metadata_submissions_mixs(
     )
 
     return response
+
+
+def fetch_nmdc_submission_schema():
+    r"""
+    Helper function to get a copy of the current NMDC
+    Submission Schema.
+
+    This function specifically returns the enums from
+    the NMDC Submission Schema.
+    """
+
+    submission_schema_files = resources.files("nmdc_submission_schema")
+
+    # Load each class in the submission schema, ensure that each slot of the class
+    # is fully materialized into attributes, and then drop the slot usage definitions
+    # to save some bytes.
+    schema_path = submission_schema_files / "schema/nmdc_submission_schema.yaml"
+    sv = SchemaView(str(schema_path))
+    enum_view = sv.all_enums()
+
+    # Get only the enums to have a smaller schema to pass and compare against
+    isolated_enums = {
+        enum_name: {
+            # Also only grab the relevant pieces - name and perm. values
+            "name": enum_data["name"],
+            "permissible_values": list(enum_data["permissible_values"].keys()),
+        }
+        for enum_name, enum_data in enum_view.items()
+        # Only grab the enums that are relevant to the MIxS data check
+        if ("EnvPackage" in enum_name)
+        or ("EnvMedium" in enum_name)
+        or ("EnvBroadScale" in enum_name)
+        or ("EnvLocalScale" in enum_name)
+    }
+
+    return isolated_enums
+
+
+def check_permissible_val(
+    schema: dict, env_pkg: str, env_broad_scale: str, env_local_scale: str, env_medium: str
+):
+    r"""
+    Helper function to check the value passed in against the
+    permissible values provided for pertaining enums in the
+    NMDC Submission Schema copy (returned from fetch_nmdc_submission_schema).
+    """
+
+    # Perform enum checks
+    env_pkg_enum = "False"
+    env_broad_scale_enum = "False"
+    env_local_scale_enum = "False"
+    env_medium_enum = "False"
+
+    if env_pkg in schema["EnvPackageEnum"]["permissible_values"]:
+        env_pkg_enum = "True"
+
+    # Enums exist currently for water, soil, sediment, and plant-associated
+    # confirmed_enums will need to be updated as more enum types are added
+    confirmed_enums = ["water", "soil", "sediment", "plant-associated"]
+
+    if env_pkg in confirmed_enums:
+
+        # Transform env_package to use it to find enums without updating to include each biome type
+        # Replace dashes with spaces, capitalize each word, then remove the space
+        temp_env_pkg = env_pkg
+        temp_env_pkg = temp_env_pkg.replace("-", " ")
+        temp_env_pkg = temp_env_pkg.title()
+        temp_env_pkg = temp_env_pkg.replace(" ", "")
+
+        # Validate the rest of the enums
+        if env_broad_scale in schema[f"EnvBroadScale{temp_env_pkg}Enum"]["permissible_values"]:
+            env_broad_scale_enum = "True"
+        if env_local_scale in schema[f"EnvLocalScale{temp_env_pkg}Enum"]["permissible_values"]:
+            env_local_scale_enum = "True"
+        if env_medium in schema[f"EnvMedium{temp_env_pkg}Enum"]["permissible_values"]:
+            env_medium_enum = "True"
+
+    return env_pkg_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
 
 
 @router.get(
@@ -877,10 +993,20 @@ async def get_metadata_submissions_report(
         "Is Test Submission",
         "Date Last Modified",
         "Date Created",
+        "Number of Samples",
     ]
     data_rows = []
     for s in submissions:
+        sample_count = 0
         metadata = s.metadata_submission  # creates a concise alias
+        # find the number of samples in the submission
+        # Note: `metadata["sampleData"]` is a dictionary where keys are sample types
+        #       and values are lists of samples of that type.
+        # Reference: https://microbiomedata.github.io/submission-schema/SampleData/
+        sample_data = metadata["sampleData"]
+        for sample_type in sample_data:
+            sample_count += len(sample_data[sample_type])
+
         author_user = s.author  # note: `s.author` is a `models.User` instance
         study_form = metadata["studyForm"] if "studyForm" in metadata else {}
         study_name = study_form["studyName"] if "studyName" in study_form else ""
@@ -898,6 +1024,7 @@ async def get_metadata_submissions_report(
             s.is_test_submission,
             s.date_last_modified,
             s.created,
+            sample_count,
         ]
         data_rows.append(data_row)
 
