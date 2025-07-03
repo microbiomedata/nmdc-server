@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     zip_streamer_chunk_size_bytes: int = 2 * 1024 * 1024
     zip_streamer_nersc_data_base_url: str = "https://data.microbiomedata.org/data"
 
+    # for cloud storage
+    use_fake_gcs_server: bool = True
+    gcs_project_id: str = "test"
+
     @property
     def orcid_openid_config_url(self) -> str:
         r"""
