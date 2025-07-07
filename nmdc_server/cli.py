@@ -10,7 +10,7 @@ from typing import Optional
 import click
 import requests
 
-from nmdc_server import jobs
+from nmdc_server import jobs, storage
 from nmdc_server.config import settings
 from nmdc_server.database import SessionLocalIngest
 from nmdc_server.ingest import errors
@@ -350,19 +350,17 @@ def generate_static_files(remove_existing):
 @cli.command()
 def ensure_storage_buckets():
     """Ensure that the storage buckets exist."""
-    from nmdc_server.storage import client
-
-    bucket_name = "nmdc-images-private"
-    click.echo(f"Ensuring bucket '{bucket_name}' exists...")
-    try:
-        client.get_bucket(bucket_name)
-        click.echo(f"Bucket '{bucket_name}' already exists.")
-    except Exception as e:
-        if settings.use_fake_gcs_server:
-            click.echo(f"Creating bucket '{bucket_name}'")
-            client.create_bucket(bucket_name)
-        else:
-            raise RuntimeError(f"Failed to ensure bucket '{bucket_name}' exists: {e}")
+    for bucket_name in storage.Bucket:
+        click.echo(f"Ensuring bucket '{bucket_name}' exists")
+        try:
+            storage.client.get_bucket(bucket_name)
+            click.echo(f"Bucket '{bucket_name}' already exists")
+        except Exception as e:
+            if settings.use_fake_gcs_server:
+                click.echo(f"Creating bucket '{bucket_name}'")
+                storage.client.create_bucket(bucket_name)
+            else:
+                raise RuntimeError(f"Failed to ensure bucket '{bucket_name}' exists: {e}")
 
 
 if __name__ == "__main__":

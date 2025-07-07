@@ -914,6 +914,36 @@ class SubmissionSourceClient(str, enum.Enum):
     nmdc_edge = "nmdc_edge"
 
 
+class SubmissionImagesObject(Base):
+    """References to objects stored in the Google Cloud Storage `nmdc-submission-images` bucket.
+
+    The primary key of this table is called `name` because it corresponds to the object name in
+    the bucket.
+
+    See also:
+        - https://cloud.google.com/storage/docs/objects
+    """
+
+    __tablename__ = "submission_images_object"
+
+    name = Column(String, primary_key=True)
+    size = Column(BigInteger, nullable=False)
+    content_type = Column(String, nullable=False)
+
+
+"""Association table to link submissions and study-level images"""
+submission_study_image_association = Table(
+    "submission_study_image_association",
+    Base.metadata,
+    Column("submission_metadata_id", ForeignKey("submission_metadata.id"), primary_key=True),
+    Column(
+        "submission_images_object_name",
+        ForeignKey("submission_images_object.name"),
+        primary_key=True,
+    ),
+)
+
+
 class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
 
@@ -950,6 +980,25 @@ class SubmissionMetadata(Base):
 
     # Roles
     roles = relationship("SubmissionRole", back_populates="submission")
+
+    # Images
+    pi_image_name = Column(String, ForeignKey(SubmissionImagesObject.name), nullable=True)
+    pi_image = relationship(
+        "SubmissionImagesObject",
+        foreign_keys=[pi_image_name],
+        primaryjoin="SubmissionMetadata.pi_image_name == SubmissionImagesObject.name",
+    )
+    primary_study_image_name = Column(
+        String, ForeignKey(SubmissionImagesObject.name), nullable=True
+    )
+    primary_study_image = relationship(
+        "SubmissionImagesObject",
+        foreign_keys=[primary_study_image_name],
+        primaryjoin="SubmissionMetadata.primary_study_image_name == SubmissionImagesObject.name",
+    )
+    study_images = relationship(
+        SubmissionImagesObject, secondary=submission_study_image_association
+    )
 
     @property
     def editors(self) -> list[str]:
