@@ -194,6 +194,11 @@ function removeAwardDoi(i: number) {
   }
 }
 
+function checkDoiFormat(v: string) {
+  const valid = /^(?:doi:)?10.\d{2,9}.*$/.test(v);
+  return valid;
+}
+
 /**
  * Environmental Package Step
  */
@@ -551,4 +556,5 @@ export {
   removeMetadataSuggestions,
   templateHasData,
   checkJGITemplates,
+  checkDoiFormat,
 };

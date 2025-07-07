@@ -9,6 +9,7 @@ import {
   Ref,
 } from '@vue/composition-api';
 import Definitions from '@/definitions';
+import doiProviderValues from '@/schema';
 import {
   multiOmicsForm,
   studyForm,
@@ -16,6 +17,7 @@ import {
   permissionTitleToDbValueMap,
   isOwner,
   canEditSubmissionMetadata,
+  checkDoiFormat,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -47,13 +49,6 @@ export default defineComponent({
         description: 'This level of permission is automatically assigned to the submission author and Principal Investigator. These users can edit every aspect of the submission.',
       },
     ]);
-
-    const doiProviderValues = Object.values(NmdcSchema.enums.DoiProviderEnum.permissible_values)
-      .map((pv: any) => ({
-        value: pv.text,
-        text: pv.title || pv.text, // The permissible value definition should have a title, but in case it doesn't fallback to text (which it will always have)
-      }))
-      .sort((a, b) => a.text.localeCompare(b.text));
 
     function addContributor() {
       studyForm.contributors.push({
@@ -133,6 +128,7 @@ export default defineComponent({
       uniqueOrcidRule,
       currentUserOrcid,
       permissionHelpText,
+      checkDoiFormat,
     };
   },
 });
@@ -438,10 +434,10 @@ export default defineComponent({
               persistent-hint
               outlined
               dense
+              required
               class="mb-2 mr-3"
-              :error-messages="studyForm.dataDois[i].value ? undefined : ['Field cannot be empty.']"
-              :rules="requiredRules('Field cannot be empty',[
-                v => /^doi:10.\d{2,9}.*$/.test(v) || 'Doi must be valid',
+              :rules="requiredRules('DOI value must be provided',[
+                v => checkDoiFormat(v) || 'DOI must be valid',
               ])"
             >
               <template #message="{ message }">
@@ -459,7 +455,7 @@ export default defineComponent({
               dense
               clearable
               class="mb-2 mr-3"
-              :error-messages="studyForm.dataDois[i].provider ? undefined : ['A provider must be selected.']"
+              :rules="studyForm.dataDois[i].provider ? undefined : ['A provider must be selected.']"
             >
               <template #message="{ message }">
                 <span v-html="message" />
