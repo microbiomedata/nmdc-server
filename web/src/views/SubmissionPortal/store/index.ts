@@ -19,6 +19,7 @@ import {
   SuggestionType,
   SuggestionsMode,
   MetadataSuggestionRequest,
+  Doi,
   DATA_MG_INTERLEAVED,
   DATA_MG,
   DATA_MT_INTERLEAVED,
@@ -127,6 +128,7 @@ const studyFormDefault = {
   piOrcid: '',
   linkOutWebpage: [],
   studyDate: null,
+  dataDois: [] as Doi[] | null,
   fundingSources: [] as string[] | null,
   description: '',
   notes: '',
@@ -148,7 +150,7 @@ const studyForm = reactive(clone(studyFormDefault));
  */
 const multiOmicsFormDefault = {
   award: undefined as undefined | string,
-  awardDois: [] as string[] | null,
+  awardDois: [] as Doi[] | null,
   dataGenerated: undefined as undefined | boolean,
   doe: undefined as undefined | boolean,
   facilities: [] as string[],
@@ -174,20 +176,27 @@ const multiOmicsAssociationsDefault = {
 const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 
 function addAwardDoi() {
-  if (multiOmicsForm.awardDois === null || multiOmicsForm.awardDois.length === 0) {
-    multiOmicsForm.awardDois = [''];
-  } else {
-    multiOmicsForm.awardDois.push('');
+  if (!Array.isArray(multiOmicsForm.awardDois)) {
+    multiOmicsForm.awardDois = [];
   }
+  multiOmicsForm.awardDois.push({
+    value: '',
+    provider: '',
+  });
 }
 
 function removeAwardDoi(i: number) {
   if (multiOmicsForm.awardDois === null) {
-    multiOmicsForm.awardDois = [''];
+    multiOmicsForm.awardDois = [];
   }
   if ((multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
     multiOmicsForm.awardDois.splice(i, 1);
   }
+}
+
+function checkDoiFormat(v: string) {
+  const valid = /^(?:doi:)?10.\d{2,9}.*$/.test(v);
+  return valid;
 }
 
 /**
@@ -547,4 +556,5 @@ export {
   removeMetadataSuggestions,
   templateHasData,
   checkJGITemplates,
+  checkDoiFormat,
 };
