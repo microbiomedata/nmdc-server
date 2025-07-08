@@ -155,11 +155,20 @@ export default defineComponent({
 </script>
 
 <template>
-  <GChart
-    ref="chartRef"
-    type="BarChart"
-    :data="chartData"
-    :options="barChartOptions"
-    :events="chartEvents"
-  />
+  <div class="bar-chart">
+    <GChart
+      ref="chartRef"
+      type="BarChart"
+      :data="chartData"
+      :options="barChartOptions"
+      :events="chartEvents"
+    />
+  </div>
 </template>
+
+<style lang="scss" scoped>
+.bar-chart {
+  border-radius: 4px;
+  overflow: hidden;
+}
+</style>
