@@ -287,11 +287,15 @@ export default defineComponent({
               newRow[col] = row[col];
             });
             nextData[templateSlot].push(newRow);
+            //update validation status for the tab, if data changed it needs to be revalidated
+            tabsValidated.value[templateKey] = false;
           }
           if (existing) {
             COMMON_COLUMNS.forEach((col) => {
               existing[col] = row[col];
             });
+            //update validation status for the tab, if data changed it needs to be revalidated
+            tabsValidated.value[templateKey] = false;
           }
         });
       });
@@ -302,6 +306,8 @@ export default defineComponent({
           if (!rowIsVisibleForTemplate(row, templateKey)) {
             return false;
           }
+          //update validation status for the tab, if data changed it needs to be revalidated
+          tabsValidated.value[templateKey] = false;
           const rowId = row[SCHEMA_ID];
           return environmentSlots.some((environmentSlot) => {
             const environmentRow = nextData[environmentSlot as string].findIndex((r) => r[SCHEMA_ID] === rowId);
@@ -334,6 +340,7 @@ export default defineComponent({
           // If we found the template, synchronize the data
           // Make sure we carry the deletion through to the sampleData
           // The current tab's data needs to be updated first, then synchronized
+          //POSSIBLE CHANGE HERE
           synchronizeTabData(templateKey);
         }
       });
