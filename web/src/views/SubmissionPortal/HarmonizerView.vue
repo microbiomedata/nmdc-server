@@ -340,7 +340,6 @@ export default defineComponent({
           // If we found the template, synchronize the data
           // Make sure we carry the deletion through to the sampleData
           // The current tab's data needs to be updated first, then synchronized
-          //POSSIBLE CHANGE HERE
           synchronizeTabData(templateKey);
         }
       });
