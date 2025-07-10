@@ -34,6 +34,8 @@ from nmdc_server.models import (
 from nmdc_server.pagination import Pagination
 from nmdc_server.table import Table
 
+from nmdc_schema.enums import SubmissionStatusEnum
+
 router = APIRouter()
 
 logger = get_logger(__name__)
@@ -1071,7 +1073,7 @@ async def list_submissions(
     )
     return pagination.response(query)
 
-
+#TODO: review whether status should be enforced to enum
 @router.get(
     "/metadata_submission/{id}",
     tags=["metadata_submission"],
@@ -1182,8 +1184,8 @@ async def update_submission(
 
     # Create GitHub issue when metadata is being submitted and not a test submission
     if (
-        submission.status == "in-progress"
-        and body_dict.get("status", None) == "Submitted- Pending Review"
+        submission.status == SubmissionStatusEnum.InProgress
+        and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview
         and submission.is_test_submission is False
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
@@ -1210,7 +1212,7 @@ async def update_submission(
 
         if body_dict.get("status", None):
             if (
-                body_dict.get("status", None) == "Submitted- Pending Review"
+                body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview
                 and submission.is_test_submission is False
             ):
                 submission.status = body_dict["status"]
@@ -1263,7 +1265,7 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         f"Has data been generated: {data_generated}",
         f"PI name: {pi_name}",
         f"PI orcid: {pi_orcid}",
-        "Status: Submitted- Pending Review",
+        f"Status: {SubmissionStatusEnum.SubmittedPendingReview}",
         f"Data types: {omics_processing_types}",
         f"Sample type: {sample_types}",
         f"Number of samples: {num_samples}",

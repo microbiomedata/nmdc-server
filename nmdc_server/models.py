@@ -30,6 +30,8 @@ from sqlalchemy.orm.relationships import RelationshipProperty
 
 from nmdc_server.database import Base, update_multiomics_sql
 
+from nmdc_schema.enums import SubmissionStatusEnum
+
 # The models in the file are a specialized representation of the domain objects
 # described by https://microbiomedata.github.io/nmdc-schema/.
 
@@ -920,7 +922,7 @@ class SubmissionMetadata(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     author_orcid = Column(String, nullable=False)
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
-    status = Column(String, nullable=False, default="in-progress")
+    status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress)
     metadata_submission = Column(JSONB, nullable=False)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
     study_name = Column(String, nullable=True)

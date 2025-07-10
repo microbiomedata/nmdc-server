@@ -12,6 +12,8 @@ from nmdc_server import models
 from nmdc_server.database import SessionLocal
 from nmdc_server.schemas import AnnotationValue
 
+from nmdc_schema.enums import SubmissionStatusEnum
+
 
 class DoiProvider(BaseProvider):
     def doi(self):
@@ -339,7 +341,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     id: UUID = Faker("uuid")
     author = SubFactory(UserFactory)
     author_orcid = Faker("pystr")
-    status = "In Progress"
+    status = SubmissionStatusEnum.InProgress
     study_name = Faker("word")
     templates = Faker("pylist", nb_elements=2, value_types=[str])
     created = datetime.utcnow()
