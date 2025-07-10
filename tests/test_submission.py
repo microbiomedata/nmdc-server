@@ -10,8 +10,6 @@ from nmdc_server import fakes
 from nmdc_server.models import SubmissionEditorRole, SubmissionRole
 from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
 
-from nmdc_schema.enums import SubmissionStatusEnum
-
 @pytest.fixture
 def suggest_payload():
     return [
@@ -45,6 +43,12 @@ def test_get_metadata_submissions_mixs_as_non_admin(
     response = client.request(method="GET", url="/api/metadata_submission/mixs_report")
     assert response.status_code == 403
 
+def test_submission_enum(db: Session, client: TestClient, logged_in_user):
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    print(submission.__dict__)
+    assert not submission
 
 def test_get_metadata_submissions_mixs_as_admin(
     db: Session, client: TestClient, logged_in_admin_user
