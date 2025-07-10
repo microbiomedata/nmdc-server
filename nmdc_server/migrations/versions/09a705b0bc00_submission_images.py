@@ -13,7 +13,7 @@ table (pi_image_name and primary_study_image_name) and by a new association tabl
 additional study images (submission_study_image_association).
 
 Revision ID: 09a705b0bc00
-Revises: 997064dd504d
+Revises: 6cb0b331ce8c
 Create Date: 2025-07-07 18:40:50.493009
 
 """
@@ -26,7 +26,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "09a705b0bc00"
-down_revision: Optional[str] = "997064dd504d"
+down_revision: Optional[str] = "6cb0b331ce8c"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
