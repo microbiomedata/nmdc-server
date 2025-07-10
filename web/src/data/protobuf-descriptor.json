@@ -40,7 +40,8 @@
                 ">": 4,
                 ">=": 5,
                 "!=": 6,
-                "has": 7
+                "has": 7,
+                "like": 8
               }
             },
             "Table": {
@@ -79,7 +80,10 @@
                 "env_broad_scale": 18,
                 "env_local_scale": 19,
                 "env_medium": 20,
-                "multiomics": 21
+                "multiomics": 21,
+                "name": 22,
+                "description": 23,
+                "title": 24
               }
             }
           }

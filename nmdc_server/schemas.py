@@ -157,13 +157,14 @@ class AggregationSummary(BaseModel):
     non_parent_studies: int
     locations: int
     habitats: int
-    data_size: int
     metagenomes: int
     metatranscriptomes: int
     proteomics: int
     metabolomics: int
     lipodomics: int
     organic_matter_characterization: int
+    wfe_output_data_size_bytes: int
+    data_size: int
 
 
 class AdminStats(BaseModel):
