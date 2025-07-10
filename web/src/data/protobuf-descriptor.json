@@ -81,7 +81,9 @@
                 "env_local_scale": 19,
                 "env_medium": 20,
                 "multiomics": 21,
-                "name": 22
+                "name": 22,
+                "description": 23,
+                "title": 24
               }
             }
           }
