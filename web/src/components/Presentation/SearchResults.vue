@@ -78,7 +78,10 @@ export default defineComponent({
         @input="$emit('set-items-per-page', $event)"
       />
     </div>
-    <v-list dense>
+    <v-list
+      dense
+      class="rounded-b"
+    >
       <template
         v-for="(result, resultIndex) in results"
       >
@@ -144,10 +147,3 @@ export default defineComponent({
     </v-list>
   </div>
 </template>
-
-<style lang="scss" scoped>
-.v-sheet.v-list {
-  border-bottom-left-radius: 4px;
-  border-bottom-right-radius: 4px;
-}
-</style>
