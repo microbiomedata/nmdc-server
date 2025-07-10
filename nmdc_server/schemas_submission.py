@@ -16,12 +16,18 @@ class Contributor(BaseModel):
     permissionLevel: Optional[str] = None
 
 
+class Doi(BaseModel):
+    value: str
+    provider: str
+
+
 class StudyFormCreate(BaseModel):
     studyName: str
     piName: str
     piEmail: str
     piOrcid: str
     fundingSources: Optional[List[str]] = None
+    dataDois: Optional[List[Doi]] = None
     linkOutWebpage: List[str]
     studyDate: Optional[str] = None
     description: str
@@ -41,7 +47,7 @@ class StudyForm(StudyFormCreate):
 
 class MultiOmicsForm(BaseModel):
     award: Optional[str] = None
-    awardDois: Optional[List[str]] = None
+    awardDois: Optional[List[Doi]] = None
     dataGenerated: Optional[bool] = None
     doe: Optional[bool] = None
     facilities: Optional[List[str]] = None

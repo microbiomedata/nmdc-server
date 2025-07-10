@@ -82,13 +82,29 @@ def test_api_faceting(db: Session, client: TestClient):
 
 
 def test_api_summary(db: Session, client: TestClient):
+    """
+    This test checks the `/api/stats` endpoint to ensure it returns the expected
+    summary statistics about the database, including the number of studies,
+
+    WFE data size bytes test case:
+    - here we test that the WFE data size is calculated correctly
+    - we create 10 data objects with increasing file sizes (1 byte to 10 bytes)
+    - we associate these data objects with various workflow execution processes.
+        this tests that data object from different processes are accounted for.
+    - we check that data object are not double counted through connecting the
+        same data object to multiple processes
+    - we then check that the total size of the WFE output data is 55 bytes.
+        this is the sum of the first 10 natural numbers (1 + 2 + ... + 10 = 55).
+    """
     # TODO: This would be better queried against the real data
-    for _ in range(10):
+    for i in range(10):
+        data_object = fakes.DataObjectFactory(file_size_bytes=i + 1)
+        # Create some data objects that are not associated with any processes
+        fakes.DataObjectFactory(file_size_bytes=i + 1)
         fakes.BiosampleFactory()
-        fakes.MetagenomeAnnotationFactory()
-        fakes.MetagenomeAssemblyFactory()
-        fakes.MetaproteomicAnalysisFactory()
-        fakes.DataObjectFactory()
+        fakes.MetagenomeAnnotationFactory(outputs=[data_object])
+        fakes.MetagenomeAssemblyFactory(outputs=[data_object])
+        fakes.MetaproteomicAnalysisFactory(outputs=[data_object])
 
     # Create some additional, interrelated studies.
     # Note: The database already contains 10 studies at this point, created elsewhere.
@@ -106,6 +122,8 @@ def test_api_summary(db: Session, client: TestClient):
     data = resp.json()
     assert data["studies"] == 13
     assert data["non_parent_studies"] == 11  # excludes studies A and B
+    assert data["wfe_output_data_size_bytes"] == 55
+    assert data["data_size"] == 110
 
 
 def test_get_admin_stats_authorization(db: Session, client: TestClient, logged_in_user):

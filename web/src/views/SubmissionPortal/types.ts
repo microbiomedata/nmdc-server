@@ -262,6 +262,11 @@ export interface LockOperationResult {
   lock_updated?: string | null;
 }
 
+export interface Doi {
+  value: string;
+  provider: string;
+}
+
 export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
 export type PermissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor' | 'owner';
