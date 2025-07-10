@@ -34,6 +34,8 @@ from nmdc_server.models import (
 from nmdc_server.pagination import Pagination
 from nmdc_server.table import Table
 
+from nmdc_schema.nmdc import SubmissionStatusEnum
+
 router = APIRouter()
 
 logger = get_logger(__name__)
@@ -1182,8 +1184,8 @@ async def update_submission(
 
     # Create GitHub issue when metadata is being submitted and not a test submission
     if (
-        submission.status == "in-progress"
-        and body_dict.get("status", None) == "Submitted- Pending Review"
+        submission.status == SubmissionStatusEnum.InProgress.text
+        and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
         and submission.is_test_submission is False
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
