@@ -179,6 +179,7 @@ export default defineComponent({
         height: `${height}px`,
         width: '100%',
         zIndex: 1,
+        overflowWrap: 'normal',
       }"
       @update:bounds="mapProps.bounds = $event"
     >
