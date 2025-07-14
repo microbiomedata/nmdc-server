@@ -81,6 +81,24 @@ def output_relationship(association: Table) -> "RelationshipProperty[DataObject]
     )
 
 
+def informed_by_association(table: str) -> Table:
+    """Generate a many-to-many relationship with omics_processing (DataGeneration)."""
+    return Table(
+        f"{table}_data_generation_association",
+        Base.metadata,
+        Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
+        Column("data_generation_id", String, ForeignKey("omics_processing.id")),
+        UniqueConstraint(f"{table}_id", "data_generation_id")
+    )
+
+
+def informed_by_relationship(association: Table) -> "RelationshipProperty[DataObject]":
+    return relationship(
+        "OmicsProcessing",
+        secondary=association,
+    )
+
+
 # Store ENVO related data loaded from http://www.obofoundry.org/ontology/envo.html
 class EnvoTerm(Base):
     __tablename__ = "envo_term"
@@ -512,12 +530,14 @@ class PipelineStep:
     has_outputs = association_proxy("outputs", "id")
 
 
-reads_qc_input_association = input_association("reads_qc")
-reads_qc_output_association = output_association("reads_qc")
+READS_QC = "reads_qc"
+reads_qc_input_association = input_association(READS_QC)
+reads_qc_output_association = output_association(READS_QC)
+reads_qc_data_generation_association = informed_by_association(READS_QC)
 
 
 class ReadsQC(Base, PipelineStep):
-    __tablename__ = "reads_qc"
+    __tablename__ = READS_QC
 
     input_read_count = Column(BigInteger, nullable=True)
     input_read_bases = Column(BigInteger, nullable=True)
@@ -526,14 +546,17 @@ class ReadsQC(Base, PipelineStep):
 
     inputs = input_relationship(reads_qc_input_association)
     outputs = output_relationship(reads_qc_output_association)
+    was_informed_by = informed_by_relationship(reads_qc_data_generation_association)
 
 
-metagenome_assembly_input_association = input_association("metagenome_assembly")
-metagenome_assembly_output_association = output_association("metagenome_assembly")
+METAG_ASSEMBLY = "metagenome_assembly"
+metagenome_assembly_input_association = input_association(METAG_ASSEMBLY)
+metagenome_assembly_output_association = output_association(METAG_ASSEMBLY)
+metagenome_assembly_data_generation_association = informed_by_association(METAG_ASSEMBLY)
 
 
 class MetagenomeAssembly(Base, PipelineStep):
-    __tablename__ = "metagenome_assembly"
+    __tablename__ = METAG_ASSEMBLY
 
     scaffolds = Column(Float, nullable=True)
     contigs = Column(Float, nullable=True)
@@ -566,14 +589,17 @@ class MetagenomeAssembly(Base, PipelineStep):
 
     inputs = input_relationship(metagenome_assembly_input_association)
     outputs = output_relationship(metagenome_assembly_output_association)
+    was_informed_by = informed_by_relationship(metagenome_assembly_data_generation_association)
 
 
-metatranscriptome_assembly_input_association = input_association("metatranscriptome_assembly")
-metatranscriptome_assembly_output_association = output_association("metatranscriptome_assembly")
+METAT_ASSEMBLY = "metatranscriptome_assembly"
+metatranscriptome_assembly_input_association = input_association(METAT_ASSEMBLY)
+metatranscriptome_assembly_output_association = output_association(METAT_ASSEMBLY)
+metatranscriptome_assembly_data_generation_association = informed_by_association(METAT_ASSEMBLY)
 
 
 class MetatranscriptomeAssembly(Base, PipelineStep):
-    __tablename__ = "metatranscriptome_assembly"
+    __tablename__ = METAT_ASSEMBLY
 
     scaffolds = Column(Float, nullable=True)
     contigs = Column(Float, nullable=True)
@@ -606,49 +632,65 @@ class MetatranscriptomeAssembly(Base, PipelineStep):
 
     inputs = input_relationship(metatranscriptome_assembly_input_association)
     outputs = output_relationship(metatranscriptome_assembly_output_association)
+    was_informed_by = informed_by_relationship(
+        metatranscriptome_assembly_data_generation_association
+    )
 
 
-metagenome_annotation_input_association = input_association("metagenome_annotation")
-metagenome_annotation_output_association = output_association("metagenome_annotation")
+METAG_ANNOTATION = "metagenome_annotation"
+metagenome_annotation_input_association = input_association(METAG_ANNOTATION)
+metagenome_annotation_output_association = output_association(METAG_ANNOTATION)
+metagenome_annotation_data_generation_association = informed_by_association(METAG_ANNOTATION)
 
 
 class MetagenomeAnnotation(Base, PipelineStep):
-    __tablename__ = "metagenome_annotation"
+    __tablename__ = METAG_ANNOTATION
 
     inputs = input_relationship(metagenome_annotation_input_association)
     outputs = output_relationship(metagenome_annotation_output_association)
+    was_informed_by = informed_by_relationship(metagenome_annotation_data_generation_association)
 
 
-metatranscriptome_annotation_input_association = input_association("metatranscriptome_annotation")
-metatranscriptome_annotation_output_association = output_association("metatranscriptome_annotation")
+METAT_ANNOTATION = "metatranscriptome_annotation"
+metatranscriptome_annotation_input_association = input_association(METAT_ANNOTATION)
+metatranscriptome_annotation_output_association = output_association(METAT_ANNOTATION)
+metatranscriptome_annotation_data_generation_association = informed_by_association(METAT_ANNOTATION)
 
 
 class MetatranscriptomeAnnotation(Base, PipelineStep):
-    __tablename__ = "metatranscriptome_annotation"
+    __tablename__ = METAT_ANNOTATION
 
     inputs = input_relationship(metatranscriptome_annotation_input_association)
     outputs = output_relationship(metatranscriptome_annotation_output_association)
+    was_informed_by = informed_by_relationship(
+        metatranscriptome_annotation_data_generation_association
+    )
 
 
-metaproteomic_analysis_input_association = input_association("metaproteomic_analysis")
-metaproteomic_analysis_output_association = output_association("metaproteomic_analysis")
+METAP_ANALYSIS = "metaproteomic_analysis"
+metaproteomic_analysis_input_association = input_association(METAP_ANALYSIS)
+metaproteomic_analysis_output_association = output_association(METAP_ANALYSIS)
+metaproteomic_analysis_data_generation_association = informed_by_association(METAP_ANALYSIS)
 
 
 class MetaproteomicAnalysis(Base, PipelineStep):
-    __tablename__ = "metaproteomic_analysis"
+    __tablename__ = METAP_ANALYSIS
 
     metaproteomics_analysis_category = Column(String, nullable=False, default="")
 
     inputs = input_relationship(metaproteomic_analysis_input_association)
     outputs = output_relationship(metaproteomic_analysis_output_association)
+    was_informed_by = informed_by_relationship(metaproteomic_analysis_data_generation_association)
 
 
-mags_analysis_input_association = input_association("mags_analysis")
-mags_analysis_output_association = output_association("mags_analysis")
+MAGS_ANALYSIS = "mags_analysis"
+mags_analysis_input_association = input_association(MAGS_ANALYSIS)
+mags_analysis_output_association = output_association(MAGS_ANALYSIS)
+mags_analysis_data_generation_association = informed_by_association(MAGS_ANALYSIS)
 
 
 class MAGsAnalysis(Base, PipelineStep):
-    __tablename__ = "mags_analysis"
+    __tablename__ = MAGS_ANALYSIS
 
     input_contig_num = Column(BigInteger)
     too_short_contig_num = Column(BigInteger)
@@ -658,6 +700,7 @@ class MAGsAnalysis(Base, PipelineStep):
 
     inputs = input_relationship(mags_analysis_input_association)
     outputs = output_relationship(mags_analysis_output_association)
+    was_informed_by = informed_by_relationship(mags_analysis_data_generation_association)
 
 
 class MAG(Base):
@@ -679,50 +722,62 @@ class MAG(Base):
     mags_analysis = relationship(MAGsAnalysis, backref="mags_list")
 
 
-nom_analysis_input_association = input_association("nom_analysis")
-nom_analysis_output_association = output_association("nom_analysis")
+NOM_ANALYSIS = "nom_analysis"
+nom_analysis_input_association = input_association(NOM_ANALYSIS)
+nom_analysis_output_association = output_association(NOM_ANALYSIS)
+nom_analysis_data_generation_association = informed_by_association(NOM_ANALYSIS)
 
 
 class NOMAnalysis(Base, PipelineStep):
-    __tablename__ = "nom_analysis"
+    __tablename__ = NOM_ANALYSIS
 
     inputs = input_relationship(nom_analysis_input_association)
     outputs = output_relationship(nom_analysis_output_association)
+    was_informed_by = informed_by_relationship(nom_analysis_data_generation_association)
 
 
-read_based_analysis_input_association = input_association("read_based_analysis")
-read_based_analysis_output_association = output_association("read_based_analysis")
+READ_BASED_ANALYSIS = "read_based_analysis"
+read_based_analysis_input_association = input_association(READ_BASED_ANALYSIS)
+read_based_analysis_output_association = output_association(READ_BASED_ANALYSIS)
+read_based_analysis_data_generation_association = informed_by_association(READ_BASED_ANALYSIS)
 
 
 class ReadBasedAnalysis(Base, PipelineStep):
-    __tablename__ = "read_based_analysis"
+    __tablename__ = READ_BASED_ANALYSIS
 
     inputs = input_relationship(read_based_analysis_input_association)
     outputs = output_relationship(read_based_analysis_output_association)
+    was_informed_by = informed_by_relationship(read_based_analysis_data_generation_association)
 
 
-metatranscriptome_input_association = input_association("metatranscriptome")
-metatranscriptome_output_association = output_association("metatranscriptome")
+METAT = "metatranscriptome"
+metatranscriptome_input_association = input_association(METAT)
+metatranscriptome_output_association = output_association(METAT)
+metatranscriptome_data_generation_association = informed_by_association(METAT)
 
 
 class Metatranscriptome(Base, PipelineStep):
     """Corresponds to the metatranscriptome_expression_analysis_set"""
 
-    __tablename__ = "metatranscriptome"
+    __tablename__ = METAT
 
     inputs = input_relationship(metatranscriptome_input_association)
     outputs = output_relationship(metatranscriptome_output_association)
+    was_informed_by = informed_by_relationship(metatranscriptome_data_generation_association)
 
 
-metabolomics_analysis_input_association = input_association("metabolomics_analysis")
-metabolomics_analysis_output_association = output_association("metabolomics_analysis")
+METAB_ANALYSIS = "metabolomics_analysis"
+metabolomics_analysis_input_association = input_association(METAB_ANALYSIS)
+metabolomics_analysis_output_association = output_association(METAB_ANALYSIS)
+metabolomics_analysis_data_generation_association = informed_by_association(METAB_ANALYSIS)
 
 
 class MetabolomicsAnalysis(Base, PipelineStep):
-    __tablename__ = "metabolomics_analysis"
+    __tablename__ = METAB_ANALYSIS
 
     inputs = input_relationship(metabolomics_analysis_input_association)
     outputs = output_relationship(metabolomics_analysis_output_association)
+    was_informed_by = informed_by_relationship(metabolomics_analysis_data_generation_association)
 
 
 class Website(Base):
