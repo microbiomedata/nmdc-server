@@ -10,6 +10,7 @@ from starlette import status as http_status
 
 import nmdc_server
 from nmdc_server import fakes
+from nmdc_server.schemas import DatabaseSummary
 
 
 def assert_status(response: Response, status: int = 200):
@@ -81,7 +82,20 @@ def test_api_faceting(db: Session, client: TestClient):
     assert resp.json()["facets"] == {"value2": 2, "value3": 1}
 
 
-def test_api_summary(db: Session, client: TestClient):
+def test_api_summary(client: TestClient):
+    """
+    Check the `/api/summary` endpoint to ensure it returns a complete
+    object of summary data by checking that the response contains
+    all the fields that are defined in `DatabaseSummary`.
+    """
+    resp = client.get("/api/summary")
+    assert_status(resp)
+    data = resp.json()
+    for field in DatabaseSummary.model_fields:
+        assert field in data
+
+
+def test_api_stats(db: Session, client: TestClient):
     """
     This test checks the `/api/stats` endpoint to ensure it returns the expected
     summary statistics about the database, including the number of studies,
@@ -96,7 +110,6 @@ def test_api_summary(db: Session, client: TestClient):
     - we then check that the total size of the WFE output data is 55 bytes.
         this is the sum of the first 10 natural numbers (1 + 2 + ... + 10 = 55).
     """
-    # TODO: This would be better queried against the real data
     for i in range(10):
         data_object = fakes.DataObjectFactory(file_size_bytes=i + 1)
         # Create some data objects that are not associated with any processes
@@ -115,8 +128,6 @@ def test_api_summary(db: Session, client: TestClient):
     study_c.part_of = [study_a.id, study_b.id]
 
     db.commit()
-    assert_status(client.get("/api/summary"))
-
     resp = client.get("/api/stats")
     assert_status(resp)
     data = resp.json()
