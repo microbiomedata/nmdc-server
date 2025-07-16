@@ -82,10 +82,10 @@ def test_api_faceting(db: Session, client: TestClient):
     assert resp.json()["facets"] == {"value2": 2, "value3": 1}
 
 
-def test_api_summary(db: Session, client: TestClient):
+def test_api_summary(client: TestClient):
     """
-    Check the `/api/summary` endpoint to ensure it returns a complete 
-    object of summary data by checking that the response contains 
+    Check the `/api/summary` endpoint to ensure it returns a complete
+    object of summary data by checking that the response contains
     all the fields that are defined in `DatabaseSummary`.
     """
     resp = client.get("/api/summary")
