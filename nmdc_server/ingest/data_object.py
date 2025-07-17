@@ -5,7 +5,7 @@ from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server.logger import get_logger
-from nmdc_server.models import DataObject
+from nmdc_server.models import DataObject, OmicsProcessing
 from nmdc_server.schemas import DataObjectCreate
 
 file_type_map: Dict[str, Tuple[str, str]] = {}
@@ -43,3 +43,23 @@ def load(db: Session, cursor: Cursor, file_types: List[Dict[str, Any]]):
 
     if objects_without_type:
         logger.error(f"Encountered {objects_without_type} objects without data_object_type")
+
+
+def update_data_generation_relation(db: Session, cursor: Cursor):
+    """
+    Update DataObject's omics_processing_id FK.
+
+    This should run after ingesting all data objects and data generations (omics processing).
+    """
+    for data_object in cursor:
+        id = data_object["id"]
+        was_generated_by = data_object.pop("was_generated_by", None)
+        if not was_generated_by:
+            continue
+        # Mypy does not like db.get, and reports that "Session" has no attribute "get."
+        # See https://docs.sqlalchemy.org/en/14/orm/session_basics.html#get-by-primary-key
+        data_generation = db.get(OmicsProcessing, was_generated_by)  # type: ignore
+        row = db.get(DataObject, id)  # type: ignore
+        if row and data_generation:
+            row.omics_processing_id = was_generated_by
+            db.add(row)
