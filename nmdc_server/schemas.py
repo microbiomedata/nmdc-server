@@ -436,6 +436,7 @@ class PipelineStep(PipelineStepBase):
     # has_inputs: List[str]
     # has_outputs: List[str]
     outputs: List[DataObject]
+    was_informed_by: List[OmicsProcessingBase]
     model_config = ConfigDict(from_attributes=True)
 
 
