@@ -195,7 +195,7 @@ function removeAwardDoi(i: number) {
 }
 
 function checkDoiFormat(v: string) {
-  const valid = /^(?:doi:)?10.\d{2,9}.*$/.test(v);
+  const valid = /^(?:doi:)?10.\d{2,9}\/.*$/.test(v);
   return valid;
 }
 
