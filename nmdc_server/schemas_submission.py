@@ -145,6 +145,8 @@ class SubmissionMetadataSchemaListItem(BaseModel):
 
 
 class SubmissionMetadataSchema(SubmissionMetadataSchemaListItem, SubmissionMetadataSchemaCreate):
+    model_config = ConfigDict(from_attributes=True)
+
     author_orcid: str
     field_notes_metadata: Optional[Dict[str, Any]] = None
     metadata_submission: MetadataSubmissionRecord
@@ -153,9 +155,9 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaListItem, SubmissionMetad
     locked_by: Optional[schemas.User] = None
 
     permission_level: Optional[str] = None
-    model_config = ConfigDict(from_attributes=True)
 
     pi_image_name: Optional[str] = Field(exclude=True, default=None)
+    primary_study_image_name: Optional[str] = Field(exclude=True, default=None)
 
     @field_validator("metadata_submission", mode="before")
     def populate_roles(cls, metadata_submission, info: ValidationInfo):
@@ -181,11 +183,21 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaListItem, SubmissionMetad
     # https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.computed_field
     @computed_field  # type: ignore
     @property
-    def pi_image_url(self) -> Optional[str]:
+    def pi_image(self) -> Optional[str]:
         """Returns the signed URL for the PI's image if available."""
         if self.pi_image_name:
             return storage.get_signed_download_url(
                 BucketName.SUBMISSION_IMAGES, self.pi_image_name
+            ).url
+        return None
+
+    @computed_field  # type: ignore
+    @property
+    def primary_study_image(self) -> Optional[str]:
+        """Returns the signed URL for the primary study image if available."""
+        if self.primary_study_image_name:
+            return storage.get_signed_download_url(
+                BucketName.SUBMISSION_IMAGES, self.primary_study_image_name
             ).url
         return None
 

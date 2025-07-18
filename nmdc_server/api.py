@@ -2,6 +2,7 @@ import csv
 import json
 import logging
 import time
+from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
@@ -1484,51 +1485,66 @@ async def generate_signed_upload_url(
     )
 
 
+class ImageType(StrEnum):
+    pi_image = "pi_image"
+    primary_study_image = "primary_study_image"
+
+
 @router.post(
-    "/metadata_submission/{id}/pi_image",
-    tags=["files"],
+    "/metadata_submission/{id}/image/{image_type}",
     response_model=schemas_submission.SubmissionMetadataSchema,
 )
-async def set_submission_pi_image(
+async def set_submission_image(
     id: str,
+    image_type: ImageType,
     body: schemas.UploadCompleteRequest,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> schemas_submission.SubmissionMetadataSchema:
     submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
 
-    if submission.pi_image_name:
-        # If the submission already has a PI image, delete it from the storage bucket
-        storage.delete_object(BucketName.SUBMISSION_IMAGES, submission.pi_image_name)
+    # Get the current image attribute
+    current_image = getattr(submission, image_type)
+
+    if current_image:
+        # If the submission already has this type of image, delete it from the storage bucket
+        storage.delete_object(BucketName.SUBMISSION_IMAGES, current_image.name)
 
     # Create a new SubmissionImagesObject and associate it with the submission
-    # Because of the delete-orphan cascade and single_parent setting on the pi_image relationship,
-    # any existing image will be deleted when we set a new one.
-    submission.pi_image = SubmissionImagesObject(
+    new_image = SubmissionImagesObject(
         name=body.object_name,
         size=body.file_size,
         content_type=body.content_type,
     )
+
+    # Set the image attribute and commit the changes
+    setattr(submission, image_type, new_image)
     db.commit()
 
-    return schemas_submission.SubmissionMetadataSchema.model_validate(submission)
+    return submission
 
 
 @router.delete(
-    "/metadata_submission/{id}/pi_image",
+    "/metadata_submission/{id}/image/{image_type}",
 )
-async def delete_submission_pi_image(
+async def delete_submission_image(
     id: str,
+    image_type: ImageType,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
-    if submission.pi_image:
+
+    # Get the current image attribute
+    current_image = getattr(submission, image_type)
+
+    if current_image:
         # Delete the image from the storage bucket
-        storage.delete_object(BucketName.SUBMISSION_IMAGES, submission.pi_image.name)
-        # Remove the image from the submission
-        submission.pi_image = None  # type: ignore
+        storage.delete_object(BucketName.SUBMISSION_IMAGES, current_image.name)
+        # Remove the image from the submission and commit the changes
+        setattr(submission, image_type, None)
         db.commit()
+
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
