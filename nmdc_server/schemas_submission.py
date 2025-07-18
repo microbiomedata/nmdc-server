@@ -3,10 +3,11 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, computed_field, field_validator
 
 from nmdc_server import schemas
 from nmdc_server.models import SubmissionEditorRole
+from nmdc_server.storage import BucketName, storage
 
 
 class Contributor(BaseModel):
@@ -150,6 +151,8 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
     permission_level: Optional[str] = None
     model_config = ConfigDict(from_attributes=True)
 
+    pi_image_name: Optional[str] = Field(exclude=True, default=None)
+
     @field_validator("metadata_submission", mode="before")
     def populate_roles(cls, metadata_submission, info: ValidationInfo):
         owners = set(info.data.get("owners", []))
@@ -169,6 +172,18 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
                 elif orcid in viewers:
                     contributor["role"] = SubmissionEditorRole.viewer.value
         return metadata_submission
+
+    # Mypy doesn't understand the combined use of `@computed_field` and `@property`
+    # https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.computed_field
+    @computed_field  # type: ignore
+    @property
+    def pi_image_url(self) -> Optional[str]:
+        """Returns the signed URL for the PI's image if available."""
+        if self.pi_image_name:
+            return storage.get_signed_download_url(
+                BucketName.SUBMISSION_IMAGES, self.pi_image_name
+            ).url
+        return None
 
 
 SubmissionMetadataSchema.model_rebuild()

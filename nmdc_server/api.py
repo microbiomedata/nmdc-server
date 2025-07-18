@@ -5,7 +5,7 @@ import time
 from importlib import resources
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import httpx
 import requests
@@ -18,7 +18,8 @@ from starlette.responses import StreamingResponse
 from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
-from nmdc_server.config import Settings
+from nmdc_server.config import settings
+from nmdc_server.crud import context_edit_roles, get_submission_for_user
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
@@ -27,11 +28,13 @@ from nmdc_server.metadata import SampleMetadataSuggester
 from nmdc_server.models import (
     IngestLock,
     SubmissionEditorRole,
+    SubmissionImagesObject,
     SubmissionMetadata,
     SubmissionRole,
     User,
 )
 from nmdc_server.pagination import Pagination
+from nmdc_server.storage import BucketName, storage
 from nmdc_server.table import Table
 
 router = APIRouter()
@@ -42,7 +45,6 @@ logger = get_logger(__name__)
 # get application settings
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
-    settings = Settings()
     return {
         "disable_bulk_download": settings.disable_bulk_download.upper() == "YES",
         "portal_banner_message": settings.portal_banner_message,
@@ -713,7 +715,6 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
     Sends the specified `zip_file_descriptor` to ZipStreamer and receives
     a ZIP archive in response, which this function yields in chunks.
     """
-    settings = Settings()
     last_chunk_time = time.time()
 
     # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
@@ -1097,22 +1098,11 @@ async def get_submission(
             permission_level = models.SubmissionEditorRole.metadata_contributor.value
         elif user.orcid in submission.viewers:
             permission_level = models.SubmissionEditorRole.viewer.value
-        submission_metadata_schema = schemas_submission.SubmissionMetadataSchema(
-            status=submission.status,
-            id=submission.id,
-            metadata_submission=submission.metadata_submission,
-            author_orcid=submission.author_orcid,
-            created=submission.created,
-            author=schemas.User(**submission.author.__dict__),
-            permission_level=permission_level,
-            templates=submission.templates,
-            study_name=submission.study_name,
-            field_notes_metadata=submission.field_notes_metadata,
-            is_test_submission=submission.is_test_submission,
-            date_last_modified=submission.date_last_modified,
+        submission_metadata_schema = schemas_submission.SubmissionMetadataSchema.model_validate(
+            submission
         )
-        if submission.locked_by is not None:
-            submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
+        submission_metadata_schema.permission_level = permission_level
+
         return submission_metadata_schema
 
     raise HTTPException(status_code=403, detail="Must have access.")
@@ -1220,7 +1210,6 @@ async def update_submission(
 
 
 def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
-    settings = Settings()
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     assignee = settings.github_issue_assignee
@@ -1462,6 +1451,85 @@ async def suggest_metadata(
                 )
             )
     return response
+
+
+@router.post("/metadata_submission/{id}/signed_upload_url", response_model=schemas.SignedUrl)
+async def generate_signed_upload_url(
+    id: str,
+    body: schemas.SignedUploadUrlRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Don't accept files larger than 20MB
+    if body.file_size > settings.max_submission_image_file_size:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File size exceeds limit"
+        )
+
+    # Ensure the requested submission exists and the user has permission to edit it
+    submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
+
+    # Ensure that the incoming image will not push the submission over its quota
+    potential_max_size = submission.study_images_total_size + body.file_size
+    if potential_max_size > settings.max_submission_image_total_size:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Submission quota exceeded",
+        )
+
+    return storage.get_signed_upload_url(
+        BucketName.SUBMISSION_IMAGES,
+        settings.storage_key_prefix + "/" + id + "/" + uuid4().hex + "-" + body.file_name,
+        content_type=body.content_type,
+    )
+
+
+@router.post(
+    "/metadata_submission/{id}/pi_image",
+    tags=["files"],
+    response_model=schemas_submission.SubmissionMetadataSchema,
+)
+async def set_submission_pi_image(
+    id: str,
+    body: schemas.UploadCompleteRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> schemas_submission.SubmissionMetadataSchema:
+    submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
+
+    if submission.pi_image_name:
+        # If the submission already has a PI image, delete it from the storage bucket
+        storage.delete_object(BucketName.SUBMISSION_IMAGES, submission.pi_image_name)
+
+    # Create a new SubmissionImagesObject and associate it with the submission
+    # Because of the delete-orphan cascade and single_parent setting on the pi_image relationship,
+    # any existing image will be deleted when we set a new one.
+    submission.pi_image = SubmissionImagesObject(
+        name=body.object_name,
+        size=body.file_size,
+        content_type=body.content_type,
+    )
+    db.commit()
+
+    return schemas_submission.SubmissionMetadataSchema.model_validate(submission)
+
+
+@router.delete(
+    "/metadata_submission/{id}/pi_image",
+)
+async def delete_submission_pi_image(
+    id: str,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
+    if submission.pi_image:
+        # Delete the image from the storage bucket
+        storage.delete_object(BucketName.SUBMISSION_IMAGES, submission.pi_image.name)
+        # Remove the image from the submission
+        submission.pi_image = None  # type: ignore
+        db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get(

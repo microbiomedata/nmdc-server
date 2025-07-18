@@ -988,6 +988,8 @@ class SubmissionMetadata(Base):
         "SubmissionImagesObject",
         foreign_keys=[pi_image_name],
         primaryjoin="SubmissionMetadata.pi_image_name == SubmissionImagesObject.name",
+        cascade="all, delete-orphan",
+        single_parent=True,
     )
     primary_study_image_name = Column(
         String, ForeignKey(SubmissionImagesObject.name), nullable=True
@@ -996,6 +998,8 @@ class SubmissionMetadata(Base):
         "SubmissionImagesObject",
         foreign_keys=[primary_study_image_name],
         primaryjoin="SubmissionMetadata.primary_study_image_name == SubmissionImagesObject.name",
+        cascade="all, delete-orphan",
+        single_parent=True,
     )
     study_images = relationship(
         SubmissionImagesObject, secondary=submission_study_image_association
@@ -1032,6 +1036,15 @@ class SubmissionMetadata(Base):
             for role in self.roles  # type: ignore
             if role.role == SubmissionEditorRole.owner
         ]
+
+    @property
+    def study_images_total_size(self):
+        """Calculate the total size of all study images associated with this submission."""
+        return (
+            sum(image.size for image in self.study_images)  # type: ignore
+            if self.study_images
+            else 0
+        )
 
 
 class SubmissionRole(Base):

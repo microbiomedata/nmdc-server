@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     # for cloud storage
     use_fake_gcs_server: bool = True
     gcs_project_id: str = "test"
+    max_submission_image_file_size: int = 25 * 1000 * 1000  # 25 MB
+    max_submission_image_total_size: int = 1 * 1000 * 1000 * 1000  # 1 GB
+    storage_key_prefix: str  # no default, must be set in .env file
 
     @property
     def orcid_openid_config_url(self) -> str:

@@ -3,7 +3,8 @@ from enum import StrEnum
 from functools import cached_property
 from typing import Any
 
-from google.cloud import storage as gcs, exceptions as gce
+from google.cloud.exceptions import NotFound
+from google.cloud.storage import Blob, Bucket, Client
 
 from nmdc_server.config import settings
 from nmdc_server.schemas import SignedUrl
@@ -32,16 +33,16 @@ class Storage:
         if self.use_fake_gcs_server:
             client_args["client_options"] = {"api_endpoint": "http://storage:4443"}
 
-        return gcs.Client(**client_args)
+        return Client(**client_args)
 
-    def get_bucket(self, bucket_name: BucketName) -> gcs.Bucket:
+    def get_bucket(self, bucket_name: BucketName) -> Bucket:
         """Get a GCS bucket by name.
 
         :param bucket_name: The name of the bucket to retrieve.
         """
         return self._client.bucket(bucket_name)
 
-    def get_object(self, bucket_name: BucketName, object_name: str) -> gcs.Blob:
+    def get_object(self, bucket_name: BucketName, object_name: str) -> Blob:
         """Get an object from a GCS bucket.
 
         :param bucket_name: The name of the bucket containing the object.
@@ -63,7 +64,7 @@ class Storage:
         bucket = self.get_bucket(bucket_name)
         try:
             bucket.delete_blob(object_name)
-        except gce.NotFound as e:
+        except NotFound as e:
             if raise_if_not_found:
                 raise e
 
