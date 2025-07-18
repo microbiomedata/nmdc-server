@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
-from nmdc_schema.nmdc_data import get_nmdc_schema_definition
 from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func

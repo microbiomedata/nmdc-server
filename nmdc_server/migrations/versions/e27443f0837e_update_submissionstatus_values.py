@@ -5,6 +5,7 @@ Revises: 6cb0b331ce8c
 Create Date: 2025-07-18 19:36:11.484730
 
 """
+
 from typing import Optional
 
 import sqlalchemy as sa
@@ -13,12 +14,11 @@ from sqlalchemy.sql import column, table
 
 from nmdc_server.models import get_submission_status_enum
 
-
 SubmissionStatusEnum = get_submission_status_enum()
 
 # revision identifiers, used by Alembic.
-revision: str = 'e27443f0837e'
-down_revision: Optional[str] = '6cb0b331ce8c'
+revision: str = "e27443f0837e"
+down_revision: Optional[str] = "6cb0b331ce8c"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 

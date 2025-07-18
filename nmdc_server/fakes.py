@@ -12,7 +12,6 @@ from nmdc_server import models
 from nmdc_server.database import SessionLocal
 from nmdc_server.schemas import AnnotationValue
 
-
 SubmissionStatusEnum = models.get_submission_status_enum()
 
 
