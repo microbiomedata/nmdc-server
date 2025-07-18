@@ -158,6 +158,7 @@ export default defineComponent({
   <GChart
     ref="chartRef"
     type="BarChart"
+    class="rounded overflow-hidden"
     :data="chartData"
     :options="barChartOptions"
     :events="chartEvents"

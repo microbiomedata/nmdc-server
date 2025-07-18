@@ -78,7 +78,10 @@ export default defineComponent({
         @input="$emit('set-items-per-page', $event)"
       />
     </div>
-    <v-list dense>
+    <v-list
+      dense
+      class="rounded-b"
+    >
       <template
         v-for="(result, resultIndex) in results"
       >

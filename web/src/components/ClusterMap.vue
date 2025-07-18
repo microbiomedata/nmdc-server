@@ -210,3 +210,13 @@ export default defineComponent({
     </l-map>
   </div>
 </template>
+
+<style>
+/* If the map is rendered in a <v-card>, long numbers within the cluster markers will wrap across
+ * multiple lines. This forces the text to overflow and not wrap.
+ */
+.marker-cluster {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+</style>
