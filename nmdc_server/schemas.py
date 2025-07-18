@@ -429,7 +429,6 @@ class PipelineStepBase(BaseModel):
     started_at_time: DateType
     ended_at_time: Optional[DateType] = None
     execution_resource: str
-    omics_processing_id: str
 
 
 class PipelineStep(PipelineStepBase):

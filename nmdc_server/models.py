@@ -1,5 +1,6 @@
 import enum
 from datetime import datetime
+from itertools import chain
 from typing import Any, Dict, Iterator, List, Optional, Type, Union
 from uuid import uuid4
 
@@ -88,7 +89,7 @@ def informed_by_association(table: str) -> Table:
         Base.metadata,
         Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
         Column("data_generation_id", String, ForeignKey("omics_processing.id")),
-        UniqueConstraint(f"{table}_id", "data_generation_id")
+        UniqueConstraint(f"{table}_id", "data_generation_id"),
     )
 
 
@@ -435,75 +436,6 @@ class Biosample(Base, AnnotatedModel):
 omics_processing_output_association = output_association("omics_processing")
 
 
-class OmicsProcessing(Base, AnnotatedModel):
-    __tablename__ = "omics_processing"
-
-    add_date = Column(DateTime, nullable=True)
-    mod_date = Column(DateTime, nullable=True)
-    biosample_inputs = relationship(
-        "Biosample", secondary=biosample_input_association, back_populates="omics_processing"
-    )
-    study_id = Column(String, ForeignKey("study.id"), nullable=True)
-    study = relationship("Study", backref="omics_processing")
-
-    outputs = output_relationship(omics_processing_output_association)
-    has_outputs = association_proxy("outputs", "id")
-
-    # This will either be the ID of a manifest_set document of type
-    # poolable_replicates, or the ID of the data_generation_set document.
-    # Used to inform the "true" counts of data_generation (omics_processing)
-    # records.
-    poolable_replicates_manifest_id = Column(String, nullable=True)
-
-    @property
-    def open_in_gold(self) -> Optional[str]:
-        return gold_url("https://gold.jgi.doe.gov/project?id=", self.id)
-
-    # This property injects information in the omics_processing result
-    # regarding output data from workflow processing runs.  Because there
-    # are no filters that filter out individual processing runs, this
-    # can be done outside of the main query.  For this reason, it does
-    # not have to be added as a `query_expression`.
-    @property
-    def omics_data(self) -> Iterator["PipelineStep"]:
-        for model in workflow_activity_types:
-            name = model.__tablename__  # type: ignore
-            for pipeline in getattr(self, name):
-                yield pipeline
-
-
-class DataObject(Base):
-    __tablename__ = "data_object"
-
-    id = Column(String, primary_key=True)
-    name = Column(String, nullable=False)
-    description = Column(String, nullable=False, default="")
-    file_size_bytes = Column(BigInteger, nullable=True)
-    md5_checksum = Column(String, nullable=True)
-    url = Column(String, nullable=True)
-    file_type = Column(String, nullable=True)
-    file_type_description = Column(String, nullable=True)
-
-    # denormalized relationship with a workflow activity output
-    workflow_type = Column(String, nullable=True)
-
-    # denormalized relationship representing the source omics_processing
-    omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
-    omics_processing = relationship(OmicsProcessing)
-
-    # Define a property that can be used to shortcut calculating counts.
-    # Useful when downstream code can more efficiently determine download
-    # counts for a batch of DataObjects and inject those counts.
-    _download_count: Optional[int] = None
-
-    @hybrid_property
-    def downloads(self) -> int:
-        # TODO: This can probably be done with a more efficient aggregation
-        if self._download_count is None:
-            return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
-        return self._download_count
-
-
 # This is a base class for all workflow processing activities.
 # https://microbiomedata.github.io/nmdc-schema/WorkflowExecutionActivity.html
 # TODO : does this exist anymore?
@@ -517,14 +449,6 @@ class PipelineStep:
     started_at_time = Column(DateTime, nullable=False)
     ended_at_time = Column(DateTime)
     execution_resource = Column(String, nullable=False)
-
-    @declared_attr
-    def omics_processing_id(cls):
-        return Column(String, ForeignKey("omics_processing.id"), nullable=False)
-
-    @declared_attr
-    def omics_processing(cls):
-        return relationship("OmicsProcessing", backref=backref(cls.__tablename__, lazy="joined"))
 
     has_inputs = association_proxy("inputs", "id")
     has_outputs = association_proxy("outputs", "id")
@@ -780,6 +704,120 @@ class MetabolomicsAnalysis(Base, PipelineStep):
     was_informed_by = informed_by_relationship(metabolomics_analysis_data_generation_association)
 
 
+class OmicsProcessing(Base, AnnotatedModel):
+    __tablename__ = "omics_processing"
+
+    add_date = Column(DateTime, nullable=True)
+    mod_date = Column(DateTime, nullable=True)
+    biosample_inputs = relationship(
+        "Biosample", secondary=biosample_input_association, back_populates="omics_processing"
+    )
+    study_id = Column(String, ForeignKey("study.id"), nullable=True)
+    study = relationship("Study", backref="omics_processing")
+
+    outputs = output_relationship(omics_processing_output_association)
+    has_outputs = association_proxy("outputs", "id")
+
+    # This will either be the ID of a manifest_set document of type
+    # poolable_replicates, or the ID of the data_generation_set document.
+    # Used to inform the "true" counts of data_generation (omics_processing)
+    # records.
+    poolable_replicates_manifest_id = Column(String, nullable=True)
+
+    @property
+    def open_in_gold(self) -> Optional[str]:
+        return gold_url("https://gold.jgi.doe.gov/project?id=", self.id)
+
+    reads_qc = relationship(
+        "ReadsQC", secondary=reads_qc_data_generation_association, back_populates="was_informed_by"
+    )
+    metatranscriptome_annotation = relationship(
+        "MetatranscriptomeAnnotation",
+        secondary=metatranscriptome_annotation_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metaproteomic_analysis = relationship(
+        "MetaproteomicAnalysis",
+        secondary=metaproteomic_analysis_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    mags_analysis = relationship(
+        "MAGsAnalysis",
+        secondary=mags_analysis_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    read_based_analysis = relationship(
+        "ReadBasedAnalysis",
+        secondary=read_based_analysis_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    nom_analysis = relationship(
+        "NOMAnalysis",
+        secondary=nom_analysis_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metabolomics_analysis = relationship(
+        "MetabolomicsAnalysis",
+        secondary=metabolomics_analysis_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metatranscriptome = relationship(
+        "Metatranscriptome",
+        secondary=metatranscriptome_data_generation_association,
+        back_populates="was_informed_by",
+    )
+
+    # This property injects information in the omics_processing result
+    # regarding output data from workflow processing runs.  Because there
+    # are no filters that filter out individual processing runs, this
+    # can be done outside of the main query.  For this reason, it does
+    # not have to be added as a `query_expression`.
+    @property
+    def omics_data(self) -> Iterator["PipelineStep"]:
+        return chain(
+            self.reads_qc,
+            self.metatranscriptome_annotation,
+            self.metaproteomic_analysis,
+            self.mags_analysis,
+            self.read_based_analysis,
+            self.nom_analysis,
+            self.metabolomics_analysis,
+            self.metatranscriptome,
+        )
+
+
+class DataObject(Base):
+    __tablename__ = "data_object"
+
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=False, default="")
+    file_size_bytes = Column(BigInteger, nullable=True)
+    md5_checksum = Column(String, nullable=True)
+    url = Column(String, nullable=True)
+    file_type = Column(String, nullable=True)
+    file_type_description = Column(String, nullable=True)
+
+    # denormalized relationship with a workflow activity output
+    workflow_type = Column(String, nullable=True)
+
+    # denormalized relationship representing the source omics_processing
+    omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
+    omics_processing = relationship(OmicsProcessing)
+
+    # Define a property that can be used to shortcut calculating counts.
+    # Useful when downstream code can more efficiently determine download
+    # counts for a batch of DataObjects and inject those counts.
+    _download_count: Optional[int] = None
+
+    @hybrid_property
+    def downloads(self) -> int:
+        # TODO: This can probably be done with a more efficient aggregation
+        if self._download_count is None:
+            return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
+        return self._download_count
+
+
 class Website(Base):
     __tablename__ = "website"
 
@@ -860,6 +898,19 @@ workflow_activity_types = [
     MetabolomicsAnalysis,
     Metatranscriptome,
 ]
+workflow_activity_to_data_generation_map = {
+    ReadsQC.__tablename__: reads_qc_data_generation_association,
+    MetagenomeAssembly.__tablename__: metagenome_assembly_data_generation_association,
+    MetatranscriptomeAssembly.__tablename__: metatranscriptome_assembly_data_generation_association,
+    MetagenomeAnnotation.__tablename__: metagenome_assembly_data_generation_association,
+    MetatranscriptomeAnnotation.__tablename__: metatranscriptome_annotation_data_generation_association,  # noqa
+    MetaproteomicAnalysis.__tablename__: metaproteomic_analysis_data_generation_association,
+    MAGsAnalysis.__tablename__: mags_analysis_data_generation_association,
+    ReadBasedAnalysis.__tablename__: read_based_analysis_data_generation_association,
+    NOMAnalysis.__tablename__: nom_analysis_data_generation_association,
+    MetabolomicsAnalysis.__tablename__: metabolomics_analysis_data_generation_association,
+    Metatranscriptome.__tablename__: metatranscriptome_data_generation_association,
+}
 
 
 # denormalized tables
