@@ -1500,7 +1500,7 @@ async def set_submission_image(
     body: schemas.UploadCompleteRequest,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> schemas_submission.SubmissionMetadataSchema:
+) -> models.SubmissionMetadata:
     submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
 
     # Get the current image attribute
