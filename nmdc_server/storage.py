@@ -68,6 +68,37 @@ class Storage:
             if raise_if_not_found:
                 raise e
 
+    def _get_signed_url(
+        self,
+        bucket_name: BucketName,
+        object_name: str,
+        method: str,
+        *,
+        expiration: int = 15,
+        content_type: str | None = None,
+    ) -> SignedUrl:
+        """Get a signed URL for an object in a GCS bucket.
+
+        :param bucket_name: The name of the bucket containing the object.
+        :param object_name: The name of the object.
+        :param method: The HTTP method for the signed URL (e.g., 'GET', 'PUT').
+        :param expiration: The expiration time for the signed URL in minutes. Default is 15 minutes.
+        :param content_type: The content type of the object being uploaded (for PUT requests).
+        """
+        blob = self.get_object(bucket_name, object_name)
+        expiration_delta = timedelta(minutes=expiration)
+        expiration_time = datetime.now(timezone.utc) + expiration_delta
+
+        url = blob.generate_signed_url(
+            version="v4",
+            expiration=expiration_delta,
+            method=method,
+            content_type=content_type,
+            api_access_endpoint="http://localhost:4443" if self.use_fake_gcs_server else None,
+        )
+
+        return SignedUrl(url=url, expiration=expiration_time, object_name=blob.name)
+
     def get_signed_upload_url(
         self,
         bucket_name: BucketName,
@@ -83,23 +114,13 @@ class Storage:
         :param expiration: The expiration time for the signed URL in minutes. Default is 15 minutes.
         :param content_type: The content type of the object being uploaded.
         """
-        blob = self.get_object(bucket_name, object_name)
-        expiration_delta = timedelta(minutes=expiration)
-        expiration_time = datetime.now(timezone.utc) + expiration_delta
-
-        url = blob.generate_signed_url(
-            version="v4",
-            expiration=expiration_delta,
+        return self._get_signed_url(
+            bucket_name=bucket_name,
+            object_name=object_name,
             method="PUT",
+            expiration=expiration,
             content_type=content_type,
         )
-
-        if self.use_fake_gcs_server:
-            # If using a fake GCS server, we need to adjust the URL to point localhost instead of
-            # the docker-compose service name.
-            url = url.replace("//storage:", "//localhost:")
-
-        return SignedUrl(url=url, expiration=expiration_time, object_name=blob.name)
 
     def get_signed_download_url(
         self, bucket_name: BucketName, object_name: str, *, expiration: int = 15
@@ -110,24 +131,11 @@ class Storage:
         :param object_name: The name of the object to download.
         :param expiration: The expiration time for the signed URL in minutes. Default is 15 minutes.
         """
-        expiration_delta = timedelta(minutes=expiration)
-        expiration_time = datetime.now(timezone.utc) + expiration_delta
-        blob = self.get_object(bucket_name, object_name)
-        url = blob.generate_signed_url(
-            version="v4",
-            expiration=expiration_delta,
+        return self._get_signed_url(
+            bucket_name=bucket_name,
+            object_name=object_name,
             method="GET",
-        )
-
-        if self.use_fake_gcs_server:
-            # If using a fake GCS server, we need to adjust the URL to point localhost instead of
-            # the docker-compose service name.
-            url = url.replace("//storage:", "//localhost:")
-
-        return SignedUrl(
-            url=url,
-            object_name=blob.name,
-            expiration=expiration_time,
+            expiration=expiration,
         )
 
 

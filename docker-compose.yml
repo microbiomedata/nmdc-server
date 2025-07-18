@@ -96,11 +96,14 @@ services:
     image: fsouza/fake-gcs-server
     ports:
       - "4443:4443"
-    command: "-scheme http -public-host localhost"
+    volumes:
+      - storage-data:/storage
+    command: "-scheme http -public-host localhost:4443 -filesystem-root /storage"
 
 volumes:
   app-db-data:
   app-db-ingest:
+  storage-data:
 
 networks:
   public:
