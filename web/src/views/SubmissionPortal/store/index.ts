@@ -60,9 +60,6 @@ const isSubmissionStatus = (str: any): str is SubmissionStatusTitle => Object.va
 const status = ref(submissionStatus.InProgress);
 const isTestSubmission = ref(false);
 
-// Helper function to check if current status is valid for saving
-const isValidStatusForSaving = (): boolean => isSubmissionStatus(status.value);
-
 /**
  * Submission record locking information
  */
@@ -400,11 +397,6 @@ function reset() {
 async function incrementalSaveRecord(id: string): Promise<number | void> {
   if (!canEditSampleMetadata()) {
     return Promise.resolve();
-  }
-
-  // Check if current status is valid before saving
-  if (!isValidStatusForSaving()) {
-    throw new Error(`Cannot save record: current status "${status.value}" is not a valid status`);
   }
 
   let payload: Partial<MetadataSubmission> = {};

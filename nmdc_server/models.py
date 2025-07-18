@@ -931,7 +931,7 @@ class SubmissionMetadata(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     author_orcid = Column(String, nullable=False)
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
-    status = Column(String, nullable=False, default="In Progress")
+    status = Column(String, nullable=False, default=SubmissionStatusEnum["InProgress"].title)
     metadata_submission = Column(JSONB, nullable=False)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
     study_name = Column(String, nullable=True)

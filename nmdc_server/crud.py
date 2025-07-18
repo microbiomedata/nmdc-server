@@ -19,13 +19,7 @@ NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)
 
 
-def get_submission_status_enum():
-    """Get SubmissionStatusEnum from the NMDC schema definition."""
-    schema = get_nmdc_schema_definition()
-    return schema.enums["SubmissionStatusEnum"].permissible_values
-
-
-SubmissionStatusEnum = get_submission_status_enum()
+SubmissionStatusEnum = models.get_submission_status_enum()
 
 
 # See: https://docs.djangoomics_processing.com/en/3.0/ref/models/querysets/#get-or-create

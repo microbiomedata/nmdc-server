@@ -12,7 +12,6 @@ import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
-from nmdc_schema.nmdc_data import get_nmdc_schema_definition
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -40,13 +39,7 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
-def get_submission_status_enum():
-    """Get SubmissionStatusEnum from the NMDC schema definition."""
-    schema = get_nmdc_schema_definition()
-    return schema.enums["SubmissionStatusEnum"].permissible_values
-
-
-SubmissionStatusEnum = get_submission_status_enum()
+SubmissionStatusEnum = models.get_submission_status_enum()
 
 
 # get application settings
@@ -1192,7 +1185,7 @@ async def update_submission(
 
     # Create GitHub issue when metadata is being submitted and not a test submission
     if (
-        submission.status == "In Progress"
+        submission.status == SubmissionStatusEnum["InProgress"].title
         and body_dict.get("status", None) == SubmissionStatusEnum["SubmittedPendingReview"].title
         and submission.is_test_submission is False
     ):

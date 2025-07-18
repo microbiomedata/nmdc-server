@@ -6,7 +6,6 @@ from uuid import UUID, uuid4
 from factory import Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
-from nmdc_schema.nmdc_data import get_nmdc_schema_definition
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
@@ -14,13 +13,7 @@ from nmdc_server.database import SessionLocal
 from nmdc_server.schemas import AnnotationValue
 
 
-def get_submission_status_enum():
-    """Get SubmissionStatusEnum from the NMDC schema definition."""
-    schema = get_nmdc_schema_definition()
-    return schema.enums["SubmissionStatusEnum"].permissible_values
-
-
-SubmissionStatusEnum = get_submission_status_enum()
+SubmissionStatusEnum = models.get_submission_status_enum()
 
 
 class DoiProvider(BaseProvider):
