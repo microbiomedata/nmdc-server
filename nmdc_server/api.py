@@ -216,7 +216,7 @@ def inject_download_counts(db: Session, results, data_object_ids: set[str]):
 # biosample
 @router.post(
     "/biosample/search",
-    response_model=query.BiosampleSearchResponse,
+    response_model=query.Paginated[schemas.Biosample],
     tags=["biosample"],
     name="Search for biosamples",
     description="Faceted search of biosample data.",
@@ -511,7 +511,7 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
 # Future work should go in to a more thorough conversion of omics process to data generation.
 @router.post(
     "/data_generation/search",
-    response_model=query.OmicsProcessingSearchResponse,
+    response_model=query.Paginated[schemas.OmicsProcessing],
     tags=["data_generation"],
     name="Search for data generations",
     description="Faceted search of data_generation data.",
@@ -1057,7 +1057,7 @@ async def get_metadata_submissions_report(
     "/metadata_submission",
     tags=["metadata_submission"],
     responses=login_required_responses,
-    response_model=query.MetadataSubmissionResponse,
+    response_model=query.Paginated[schemas_submission.SubmissionMetadataSchemaListItem],
 )
 async def list_submissions(
     db: Session = Depends(get_db),
@@ -1533,7 +1533,10 @@ async def delete_submission_pi_image(
 
 
 @router.get(
-    "/users", responses=login_required_responses, response_model=query.UserResponse, tags=["user"]
+    "/users",
+    responses=login_required_responses,
+    response_model=query.Paginated[schemas.User],
+    tags=["user"],
 )
 async def get_users(
     db: Session = Depends(get_db),

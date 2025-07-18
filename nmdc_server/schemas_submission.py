@@ -133,16 +133,20 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     field_notes_metadata: Optional[Dict[str, Any]] = None
 
 
-class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
+class SubmissionMetadataSchemaListItem(BaseModel):
     id: UUID
-    author_orcid: str
-    created: datetime
-    status: str
     author: schemas.User
-    templates: List[str]
     study_name: Optional[str] = None
-    field_notes_metadata: Optional[Dict[str, Any]] = None
+    templates: List[str]
+    status: str
     date_last_modified: datetime
+    created: datetime
+    is_test_submission: bool = False
+
+
+class SubmissionMetadataSchema(SubmissionMetadataSchemaListItem, SubmissionMetadataSchemaCreate):
+    author_orcid: str
+    field_notes_metadata: Optional[Dict[str, Any]] = None
     metadata_submission: MetadataSubmissionRecord
 
     lock_updated: Optional[datetime] = None
