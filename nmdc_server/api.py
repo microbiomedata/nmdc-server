@@ -12,6 +12,7 @@ import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
+from nmdc_schema.nmdc_data import get_nmdc_schema_definition
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -37,6 +38,15 @@ from nmdc_server.table import Table
 router = APIRouter()
 
 logger = get_logger(__name__)
+
+
+def get_submission_status_enum():
+    """Get SubmissionStatusEnum from the NMDC schema definition."""
+    schema = get_nmdc_schema_definition()
+    return schema.enums["SubmissionStatusEnum"].permissible_values
+
+
+SubmissionStatusEnum = get_submission_status_enum()
 
 
 # get application settings
@@ -1183,7 +1193,7 @@ async def update_submission(
     # Create GitHub issue when metadata is being submitted and not a test submission
     if (
         submission.status == "In Progress"
-        and body_dict.get("status", None) == "Submitted - Pending Review"
+        and body_dict.get("status", None) == SubmissionStatusEnum["SubmittedPendingReview"].title
         and submission.is_test_submission is False
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
@@ -1210,7 +1220,8 @@ async def update_submission(
 
         if body_dict.get("status", None):
             if (
-                body_dict.get("status", None) == "Submitted - Pending Review"
+                body_dict.get("status", None)
+                == SubmissionStatusEnum["SubmittedPendingReview"].title
                 and submission.is_test_submission is False
             ):
                 submission.status = body_dict["status"]
@@ -1263,7 +1274,7 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         f"Has data been generated: {data_generated}",
         f"PI name: {pi_name}",
         f"PI orcid: {pi_orcid}",
-        "Status: Submitted - Pending Review",
+        f"{SubmissionStatusEnum["SubmittedPendingReview"].title}",
         f"Data types: {omics_processing_types}",
         f"Sample type: {sample_types}",
         f"Number of samples: {num_samples}",

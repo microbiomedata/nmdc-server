@@ -3,6 +3,7 @@ from csv import DictReader
 from datetime import datetime, timedelta
 
 import pytest
+from nmdc_schema.nmdc_data import get_nmdc_schema_definition
 from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
 
@@ -10,7 +11,15 @@ from nmdc_server import fakes
 from nmdc_server.models import SubmissionEditorRole, SubmissionRole
 from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
 
-from nmdc_schema.nmdc import SubmissionStatusEnum
+
+def get_submission_status_enum():
+    """Get SubmissionStatusEnum from the NMDC schema definition."""
+    schema = get_nmdc_schema_definition()
+    return schema.enums["SubmissionStatusEnum"].permissible_values
+
+
+SubmissionStatusEnum = get_submission_status_enum()
+
 
 @pytest.fixture
 def suggest_payload():
@@ -45,20 +54,18 @@ def test_get_metadata_submissions_mixs_as_non_admin(
     response = client.request(method="GET", url="/api/metadata_submission/mixs_report")
     assert response.status_code == 403
 
+
 def test_print_submission_enum(db: Session, client: TestClient, logged_in_user):
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
     )
     print("Available submission status enum values:")
-    for attr_name in dir(SubmissionStatusEnum):
-        attr_value = getattr(SubmissionStatusEnum, attr_name)
-        if hasattr(attr_value, 'text'):
-            print(attr_value.text)
-    
-    print('\nSpecific enum value string')
-    print(SubmissionStatusEnum.InProgress.text)
+    print(SubmissionStatusEnum)
+    print("\nSpecific enum value string")
+    print(SubmissionStatusEnum["InProgress"].title)
 
-    assert not submission
+    assert submission
+
 
 def test_get_metadata_submissions_mixs_as_admin(
     db: Session, client: TestClient, logged_in_admin_user
@@ -74,7 +81,7 @@ def test_get_metadata_submissions_mixs_as_admin(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         created=now,
-        status=SubmissionStatusEnum.SubmittedPendingReview.text,
+        status=SubmissionStatusEnum["SubmittedPendingReview"].title,
         metadata_submission={
             "sampleData": {
                 "built_env_data": [
@@ -126,7 +133,7 @@ def test_get_metadata_submissions_mixs_as_admin(
 
     data_row = rows[1]  # first data row (data about Sample A in submission1)
     assert data_row["Submission ID"] == str(submission1.id)
-    assert data_row["Status"] == SubmissionStatusEnum.SubmittedPendingReview.text
+    assert data_row["Status"] == SubmissionStatusEnum["SubmittedPendingReview"].title
     assert data_row["Sample Name"] == "Sample A"
     assert data_row["Environmental Package/Extension"] == "Env Pkg 1"
     assert data_row["Environmental Broad Scale"] == "Broad Scale A"
@@ -139,7 +146,7 @@ def test_get_metadata_submissions_mixs_as_admin(
 
     data_row = rows[2]  # second data row (data about Sample B in submission1)
     assert data_row["Submission ID"] == str(submission1.id)
-    assert data_row["Status"] == SubmissionStatusEnum.SubmittedPendingReview.text
+    assert data_row["Status"] == SubmissionStatusEnum["SubmittedPendingReview"].title
     assert data_row["Sample Name"] == "Sample B"
     assert data_row["Environmental Package/Extension"] == "Env Pkg 1"
     assert data_row["Environmental Broad Scale"] == "Broad Scale B"
@@ -321,7 +328,7 @@ def test_get_metadata_submissions_report_as_admin(
             "packageName": [],
         },
         is_test_submission=True,
-        status=SubmissionStatusEnum.InProgress.text,
+        status=SubmissionStatusEnum["InProgress"].title,
         source_client="field_notes",
     )
     db.commit()
@@ -362,7 +369,7 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["PI Name"] == "My PI name"
     assert data_row["PI Email"] == "My PI email"
     assert data_row["Source Client"] == "field_notes"
-    assert data_row["Status"] == SubmissionStatusEnum.InProgress.text
+    assert data_row["Status"] == SubmissionStatusEnum["InProgress"].title
     assert data_row["Is Test Submission"] == "True"
     assert data_row["Number of Samples"] == "4"
     assert isinstance(data_row["Date Last Modified"], str)
@@ -376,7 +383,9 @@ def test_get_metadata_submissions_report_as_admin(
     assert data_row["PI Name"] == ""
     assert data_row["PI Email"] == ""
     assert data_row["Source Client"] == ""  # upstream faker lacks `source_client` attribute
-    assert data_row["Status"] == SubmissionStatusEnum.InProgress.text  # matches value in upstream faker
+    assert (
+        data_row["Status"] == SubmissionStatusEnum["InProgress"].title
+    )  # matches value in upstream faker
     assert data_row["Is Test Submission"] == "False"
     assert data_row["Number of Samples"] == "0"
     assert isinstance(data_row["Date Last Modified"], str)

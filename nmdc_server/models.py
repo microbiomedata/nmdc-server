@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Any, Dict, Iterator, List, Optional, Type, Union
 from uuid import uuid4
 
+from nmdc_schema.nmdc_data import get_nmdc_schema_definition
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -32,6 +33,15 @@ from nmdc_server.database import Base, update_multiomics_sql
 
 # The models in the file are a specialized representation of the domain objects
 # described by https://microbiomedata.github.io/nmdc-schema/.
+
+
+def get_submission_status_enum():
+    """Get SubmissionStatusEnum from the NMDC schema definition."""
+    schema = get_nmdc_schema_definition()
+    return schema.enums["SubmissionStatusEnum"].permissible_values
+
+
+SubmissionStatusEnum = get_submission_status_enum()
 
 
 def gold_url(base: str, id: str, gold_identifiers: Optional[list[str]] = None) -> Optional[str]:
