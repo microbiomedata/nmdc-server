@@ -22,7 +22,6 @@ down_revision: Optional[str] = "6cb0b331ce8c"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
-
 STATUS_MAP = [
     {
         "old": "in-progress",
