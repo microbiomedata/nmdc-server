@@ -18,6 +18,9 @@ NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)
 
 
+SubmissionStatusEnum = models.get_submission_status_enum()
+
+
 # See: https://docs.djangoomics_processing.com/en/3.0/ref/models/querysets/#get-or-create
 def get_or_create(
     db: Session, model: Type[T], defaults: Optional[Dict[str, Any]] = None, **kwargs
@@ -797,7 +800,7 @@ def get_query_for_submitted_pending_review_submissions(db: Session):
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
     submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == "Submitted- Pending Review"
+        models.SubmissionMetadata.status == SubmissionStatusEnum["SubmittedPendingReview"].title
     )
     return submitted_pending_review
 

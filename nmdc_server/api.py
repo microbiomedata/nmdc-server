@@ -39,6 +39,9 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
+SubmissionStatusEnum = models.get_submission_status_enum()
+
+
 # get application settings
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
@@ -767,7 +770,7 @@ async def get_metadata_submissions_mixs(
 ):
     r"""
     Generate a TSV-formatted report of biosamples belonging to submissions
-    that have a status of "Submitted- Pending Review".
+    that have a status of "Submitted - Pending Review".
 
     The report indicates which environmental package/extension, broad scale,
     local scale, and medium are specified for each biosample. The report is
@@ -1182,8 +1185,8 @@ async def update_submission(
 
     # Create GitHub issue when metadata is being submitted and not a test submission
     if (
-        submission.status == "in-progress"
-        and body_dict.get("status", None) == "Submitted- Pending Review"
+        submission.status == SubmissionStatusEnum["InProgress"].title
+        and body_dict.get("status", None) == SubmissionStatusEnum["SubmittedPendingReview"].title
         and submission.is_test_submission is False
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
@@ -1210,7 +1213,8 @@ async def update_submission(
 
         if body_dict.get("status", None):
             if (
-                body_dict.get("status", None) == "Submitted- Pending Review"
+                body_dict.get("status", None)
+                == SubmissionStatusEnum["SubmittedPendingReview"].title
                 and submission.is_test_submission is False
             ):
                 submission.status = body_dict["status"]
@@ -1263,7 +1267,7 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         f"Has data been generated: {data_generated}",
         f"PI name: {pi_name}",
         f"PI orcid: {pi_orcid}",
-        "Status: Submitted- Pending Review",
+        f"{SubmissionStatusEnum["SubmittedPendingReview"].title}",
         f"Data types: {omics_processing_types}",
         f"Sample type: {sample_types}",
         f"Number of samples: {num_samples}",
