@@ -1486,8 +1486,9 @@ async def generate_signed_upload_url(
 
 
 class ImageType(StrEnum):
-    pi_image = "pi_image"
-    primary_study_image = "primary_study_image"
+    PI_IMAGE = "pi_image"
+    PRIMARY_STUDY_IMAGE = "primary_study_image"
+    STUDY_IMAGES = "study_images"
 
 
 @router.post(
@@ -1503,24 +1504,27 @@ async def set_submission_image(
 ) -> models.SubmissionMetadata:
     submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
 
-    # Get the current image attribute
-    current_image = getattr(submission, image_type)
-
-    if current_image:
-        # If the submission already has this type of image, delete it from the storage bucket
-        storage.delete_object(BucketName.SUBMISSION_IMAGES, current_image.name)
-
-    # Create a new SubmissionImagesObject and associate it with the submission
+    # Create a new SubmissionImagesObject
     new_image = SubmissionImagesObject(
         name=body.object_name,
         size=body.file_size,
         content_type=body.content_type,
     )
 
-    # Set the image attribute and commit the changes
-    setattr(submission, image_type, new_image)
-    db.commit()
+    if image_type == ImageType.STUDY_IMAGES:
+        # For study_images, add to the collection
+        submission.study_images.append(new_image)  # type: ignore
+    else:
+        # For single image fields (pi_image, primary_study_image), replace existing
+        current_image = getattr(submission, image_type)
+        if current_image:
+            # If the submission already has this type of image, delete it from the storage bucket
+            storage.delete_object(BucketName.SUBMISSION_IMAGES, current_image.name)
 
+        # Set the image attribute
+        setattr(submission, image_type, new_image)
+
+    db.commit()
     return submission
 
 
@@ -1532,19 +1536,45 @@ async def delete_submission_image(
     image_type: ImageType,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
+    image_name: Optional[str] = Query(
+        None, description="Image name for study_images, not needed for single image fields"
+    ),
 ):
     submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
 
-    # Get the current image attribute
-    current_image = getattr(submission, image_type)
+    if image_type == ImageType.STUDY_IMAGES:
+        if image_name is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="image_name query parameter is required when deleting from study_images",
+            )
 
-    if current_image:
+        # Find the specific image in the study_images collection
+        image_to_delete = next(
+            (image for image in submission.study_images if image.name == image_name),  # type: ignore
+            None,
+        )
+
+        if image_to_delete is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in study_images"
+            )
+
         # Delete the image from the storage bucket
-        storage.delete_object(BucketName.SUBMISSION_IMAGES, current_image.name)
-        # Remove the image from the submission and commit the changes
-        setattr(submission, image_type, None)
-        db.commit()
+        storage.delete_object(BucketName.SUBMISSION_IMAGES, image_to_delete.name)
+        # Remove the image from the collection
+        submission.study_images.remove(image_to_delete)  # type: ignore
+        db.delete(image_to_delete)
+    else:
+        # For single image fields (pi_image, primary_study_image)
+        current_image = getattr(submission, image_type)
+        if current_image:
+            # Delete the image from the storage bucket
+            storage.delete_object(BucketName.SUBMISSION_IMAGES, current_image.name)
+            # Remove the image from the submission
+            setattr(submission, image_type, None)
 
+    db.commit()
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

@@ -144,6 +144,14 @@ class SubmissionMetadataSchemaListItem(BaseModel):
     is_test_submission: bool = False
 
 
+class SubmissionImagesObject(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    size: int
+    content_type: str
+
+
 class SubmissionMetadataSchema(SubmissionMetadataSchemaListItem, SubmissionMetadataSchemaCreate):
     model_config = ConfigDict(from_attributes=True)
 
@@ -156,8 +164,14 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaListItem, SubmissionMetad
 
     permission_level: Optional[str] = None
 
+    # These fields are excluded from the model's JSON representation because they need to be
+    # translated into signed URLs before being returned to the client. This is done via the
+    # @computed_field-decorated properties below.
     pi_image_name: Optional[str] = Field(exclude=True, default=None)
     primary_study_image_name: Optional[str] = Field(exclude=True, default=None)
+    study_images_objects: list[SubmissionImagesObject] | None = Field(
+        exclude=True, default_factory=None, alias="study_images"
+    )
 
     @field_validator("metadata_submission", mode="before")
     def populate_roles(cls, metadata_submission, info: ValidationInfo):
@@ -200,6 +214,17 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaListItem, SubmissionMetad
                 BucketName.SUBMISSION_IMAGES, self.primary_study_image_name
             ).url
         return None
+
+    @computed_field  # type: ignore
+    @property
+    def study_images(self) -> List[str]:
+        """Returns a list of signed URLs for all study images."""
+        if not self.study_images_objects:
+            return []
+        return [
+            storage.get_signed_download_url(BucketName.SUBMISSION_IMAGES, img.name).url
+            for img in self.study_images_objects
+        ]
 
 
 SubmissionMetadataSchema.model_rebuild()
