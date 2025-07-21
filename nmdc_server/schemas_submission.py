@@ -126,6 +126,8 @@ class SubmissionMetadataSchemaCreate(BaseModel):
 
 
 class SubmissionMetadataSchemaPatch(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     metadata_submission: PartialMetadataSubmissionRecord
     status: Optional[str] = None
     # Map of ORCID iD to permission level
