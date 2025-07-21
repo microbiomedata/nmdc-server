@@ -274,10 +274,19 @@ class GeneFunctionFilter(OmicsProcessingFilter):
             )
 
         query = super().join(target_table, query)
+        # Use the association table to join from OmicsProcessing/DataGeneration to
+        # MetagenomeAnnotation. Due to how the association table(s) are generated
+        # dynamically, mypy does not know what the columns are.
+        association_table = models.metagenome_annotation_data_generation_association
         return (
             query.join(
+                association_table,
+                association_table.data_generation_id == models.OmicsProcessing.id,  # type: ignore
+            )
+            .join(
                 models.MetagenomeAnnotation,
-                models.MetagenomeAnnotation.omics_processing_id == models.OmicsProcessing.id,
+                models.MetagenomeAnnotation.id
+                == association_table.metagenome_annotation_id,  # type: ignore
             )
             .join(
                 models.MGAGeneFunctionAggregation,
@@ -325,10 +334,16 @@ class MetaPGeneFunctionFilter(OmicsProcessingFilter):
             )
 
         query = super().join(target_table, query)
+        association_table = models.metaproteomic_analysis_data_generation_association
         return (
             query.join(
+                association_table,
+                association_table.data_generation_id == models.OmicsProcessing.id,  # type: ignore
+            )
+            .join(
                 models.MetaproteomicAnalysis,
-                models.MetaproteomicAnalysis.omics_processing_id == models.OmicsProcessing.id,
+                models.MetaproteomicAnalysis.id
+                == association_table.metaproteomic_analysis_id,  # type: ignore
             )
             .join(
                 models.MetaPGeneFunctionAggregation,
@@ -359,10 +374,16 @@ class MetaTGeneFunctionFilter(OmicsProcessingFilter):
                 MetaTGeneFunction.id == models.MetaTGeneFunctionAggregation.gene_function_id,
             )
         query = super().join(target_table, query)
+        association_table = models.metatranscriptome_annotation_data_generation_association
         return (
             query.join(
+                association_table,
+                association_table.data_generation_id == models.OmicsProcessing.id,  # type: ignore
+            )
+            .join(
                 models.MetatranscriptomeAnnotation,
-                models.MetatranscriptomeAnnotation.omics_processing_id == models.OmicsProcessing.id,
+                models.MetatranscriptomeAnnotation.id
+                == association_table.metatranscriptome_annotation_id,  # type: ignore
             )
             .join(
                 models.MetaTGeneFunctionAggregation,
