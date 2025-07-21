@@ -611,9 +611,10 @@ class StudyQuerySchema(BaseQuerySchema):
     # The following private methods inject subqueries into Study `query_expressions`.
     def _count_omics_data_query(self, db: Session, query_schema: BaseQuerySchema) -> Query:
         """Generate a query counting matching omics_processing types."""
-        model = query_schema.table.model
-        aliased_model = aliased(model)
-        table_name = model.__tablename__  # type: ignore
+        workflow_model = query_schema.table.model
+        aliased_workflow_model = aliased(workflow_model)
+        table_name = workflow_model.__tablename__  # type: ignore
+        was_informed_by_table = models.workflow_activity_to_data_generation_map[table_name]
 
         op_alias = aliased(models.OmicsProcessing)
         biosample_alias = aliased(models.Biosample)
@@ -623,12 +624,16 @@ class StudyQuerySchema(BaseQuerySchema):
         q = (
             db.query(
                 op_alias.study_id.label(f"{table_name}_study_id"),
-                func.count(func.distinct(model.id)).label(f"{table_name}_count"),  # type: ignore
+                func.count(func.distinct(aliased_workflow_model.id)).label(f"{table_name}_count"),  # type: ignore
             )
-            .join(op_alias)
+            .select_from(op_alias)
             .join(biosample_alias, op_alias.biosample_inputs)
-            .join(aliased_model)
-            .join(subquery, subquery.c.id == model.id)  # type: ignore
+            .join(was_informed_by_table, was_informed_by_table.c.data_generation_id == op_alias.id)
+            .join(
+                aliased_workflow_model,
+                aliased_workflow_model.id == was_informed_by_table.c[f"{table_name}_id"]
+            )
+            .join(subquery, subquery.c.id == aliased_workflow_model.id)  # type: ignore
             .group_by(op_alias.study_id)
         )
         return q

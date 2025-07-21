@@ -766,6 +766,21 @@ class OmicsProcessing(Base, AnnotatedModel):
         secondary=metatranscriptome_data_generation_association,
         back_populates="was_informed_by",
     )
+    metagenome_assembly = relationship(
+        "MetagenomeAssembly",
+        secondary=metagenome_assembly_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metatranscriptome_assembly = relationship(
+        "MetatranscriptomeAssembly",
+        secondary=metatranscriptome_assembly_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metagenome_annotation = relationship(
+        "MetagenomeAnnotation",
+        secondary=metagenome_annotation_data_generation_association,
+        back_populates="was_informed_by",
+    )
 
     # This property injects information in the omics_processing result
     # regarding output data from workflow processing runs.  Because there
@@ -783,6 +798,9 @@ class OmicsProcessing(Base, AnnotatedModel):
             self.nom_analysis,
             self.metabolomics_analysis,
             self.metatranscriptome,
+            self.metagenome_assembly,
+            self.metatranscriptome_assembly,
+            self.metagenome_annotation,
         )
 
 
@@ -902,7 +920,7 @@ workflow_activity_to_data_generation_map = {
     ReadsQC.__tablename__: reads_qc_data_generation_association,
     MetagenomeAssembly.__tablename__: metagenome_assembly_data_generation_association,
     MetatranscriptomeAssembly.__tablename__: metatranscriptome_assembly_data_generation_association,
-    MetagenomeAnnotation.__tablename__: metagenome_assembly_data_generation_association,
+    MetagenomeAnnotation.__tablename__: metagenome_annotation_data_generation_association,
     MetatranscriptomeAnnotation.__tablename__: metatranscriptome_annotation_data_generation_association,  # noqa
     MetaproteomicAnalysis.__tablename__: metaproteomic_analysis_data_generation_association,
     MAGsAnalysis.__tablename__: mags_analysis_data_generation_association,
