@@ -7,8 +7,9 @@ from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
 
 from nmdc_server import fakes
-from nmdc_server.models import SubmissionEditorRole, SubmissionRole
+from nmdc_server.models import SubmissionEditorRole, SubmissionImagesObject, SubmissionRole
 from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
+from nmdc_server.storage import BucketName
 
 
 @pytest.fixture
@@ -926,4 +927,332 @@ def test_metadata_suggest_invalid_type(client: TestClient, suggest_payload, logg
         url="/api/metadata_submission/suggest?types=whatever",
         json=suggest_payload,
     )
+    assert response.status_code == 422
+
+
+def test_set_submission_pi_image_success(db: Session, client: TestClient, logged_in_user):
+    """Test successfully setting a PI image for a submission."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "test-pi-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 200
+
+    # Verify the image was set in the database
+    db.refresh(submission)
+    assert submission.pi_image is not None
+    assert submission.pi_image.name == "test-pi-image.jpg"
+    assert submission.pi_image.size == 1000000
+    assert submission.pi_image.content_type == "image/jpeg"
+
+
+def test_set_submission_primary_study_image_success(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test successfully setting a primary study image for a submission."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "test-primary-study-image.png",
+        "file_size": 2000000,
+        "content_type": "image/png",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/primary_study_image", json=upload_data
+    )
+
+    assert response.status_code == 200
+
+    # Verify the image was set in the database
+    db.refresh(submission)
+    assert submission.primary_study_image is not None
+    assert submission.primary_study_image.name == "test-primary-study-image.png"
+    assert submission.primary_study_image.size == 2000000
+    assert submission.primary_study_image.content_type == "image/png"
+
+
+def test_set_submission_study_images_success(db: Session, client: TestClient, logged_in_user):
+    """Test successfully adding images to the study_images collection."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Add first image to study_images
+    upload_data_1 = {
+        "object_name": "study-image-1.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/study_images", json=upload_data_1
+    )
+
+    assert response.status_code == 200
+    db.refresh(submission)
+    assert len(submission.study_images) == 1
+    assert submission.study_images[0].name == "study-image-1.jpg"
+
+    # Add second image to study_images
+    upload_data_2 = {
+        "object_name": "study-image-2.png",
+        "file_size": 2048000,
+        "content_type": "image/png",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/study_images", json=upload_data_2
+    )
+
+    assert response.status_code == 200
+    db.refresh(submission)
+    assert len(submission.study_images) == 2
+
+    # Verify both images are in the collection
+    image_names = [img.name for img in submission.study_images]
+    assert "study-image-1.jpg" in image_names
+    assert "study-image-2.png" in image_names
+
+
+def test_set_submission_image_replaces_existing_single_image(
+    db: Session, client: TestClient, logged_in_user, temp_storage_object
+):
+    """Test that setting a single image type replaces the existing image."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+
+    # Add initial PI image
+    original_image = SubmissionImagesObject(
+        name="original-pi-image.jpg", size=500000, content_type="image/jpeg"
+    )
+    submission.pi_image = original_image
+    db.commit()
+    original_blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, original_image.name)
+    assert original_blob.exists() is True
+
+    # Set new PI image - should replace the original
+    upload_data = {
+        "object_name": "new-pi-image.png",
+        "file_size": 1000000,
+        "content_type": "image/png",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 200
+    db.refresh(submission)
+
+    # Verify the new image replaced the old one in the database
+    assert submission.pi_image.name == "new-pi-image.png"
+    assert submission.pi_image.size == 1000000
+    assert submission.pi_image.content_type == "image/png"
+
+    # Verify the original image was deleted from storage
+    assert original_blob.exists() is False
+
+
+def test_set_submission_image_unauthorized_user(db: Session, client: TestClient, logged_in_user):
+    """Test that unauthorized users cannot set submission images."""
+    # Create submission owned by a different user
+    other_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=other_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "unauthorized-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 403
+
+
+def test_set_submission_image_viewer_role_unauthorized(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test that users with viewer role cannot set submission images."""
+    other_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=other_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    # Give logged in user viewer access
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.viewer,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "viewer-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 403
+
+
+def test_set_submission_image_editor_role_authorized(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test that users with editor role can set submission images."""
+    other_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=other_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    # Give logged in user editor access
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.editor,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "editor-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 200
+
+
+def test_set_submission_image_nonexistent_submission(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test setting image for a nonexistent submission returns 404."""
+    upload_data = {
+        "object_name": "test-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    # This is a random UUID that does not correspond to any submission
+    response = client.post(
+        "/api/metadata_submission/cdfc2184-d389-433e-b1ac-f709f8364557/image/pi_image",
+        json=upload_data,
+    )
+
+    assert response.status_code == 404
+
+
+def test_set_submission_image_invalid_image_type(db: Session, client: TestClient, logged_in_user):
+    """Test setting image with invalid image type returns 422."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "test-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/invalid_type", json=upload_data
+    )
+
+    assert response.status_code == 422
+
+
+def test_set_submission_image_missing_required_fields(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test setting image with missing required fields returns 422."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Missing object_name field
+    incomplete_data = {"file_size": 1000000, "content_type": "image/jpeg"}
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=incomplete_data
+    )
+
     assert response.status_code == 422

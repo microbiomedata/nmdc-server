@@ -3,6 +3,7 @@ from enum import StrEnum
 from functools import cached_property
 from typing import Any, Iterable
 
+from google.auth.credentials import AnonymousCredentials
 from google.cloud.exceptions import NotFound
 from google.cloud.storage import Blob, Bucket, Client
 
@@ -23,6 +24,8 @@ class Storage:
         self.project_id = project_id
         self.use_fake_gcs_server = use_fake_gcs_server
 
+        self._is_testing = settings.environment == "testing"
+
     @cached_property
     def _client(self):
         """Google Cloud Storage client."""
@@ -30,7 +33,10 @@ class Storage:
             "project": self.project_id,
         }
 
-        if self.use_fake_gcs_server:
+        if self._is_testing:
+            client_args["credentials"] = AnonymousCredentials()
+            client_args["client_options"] = {"api_endpoint": "http://localhost:4443"}
+        elif self.use_fake_gcs_server:
             client_args["client_options"] = {"api_endpoint": "http://storage:4443"}
 
         return Client(**client_args)
@@ -94,6 +100,14 @@ class Storage:
         :param expiration: The expiration time for the signed URL in minutes. Default is 15 minutes.
         :param content_type: The content type of the object being uploaded (for PUT requests).
         """
+        if self._is_testing:
+            # In testing mode, we use AnonymousCredentials which do not support signed URLs.
+            return SignedUrl(
+                url=f"http://localhost:4443/{bucket_name}/{object_name}",
+                expiration=datetime.now(timezone.utc),
+                object_name=object_name,
+            )
+
         blob = self.get_object(bucket_name, object_name)
         expiration_delta = timedelta(minutes=expiration)
         expiration_time = datetime.now(timezone.utc) + expiration_delta

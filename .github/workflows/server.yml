@@ -37,6 +37,11 @@ jobs:
         ports:
           - 5432:5432
 
+      storage:
+        image: fsouza/fake-gcs-server
+        ports:
+          - 4443:4443
+
     strategy:
       max-parallel: 4
       matrix:
@@ -54,6 +59,7 @@ jobs:
         echo 'export NMDC_TESTING_DATABASE_URI="postgresql://nmdc:nmdc@localhost:5432/nmdc"' >> .env
         echo 'export NMDC_MONGO_USER="${{ secrets.NMDC_MONGO_USER }}"' >> .env
         echo 'export NMDC_MONGO_PASSWORD="${{ secrets.NMDC_MONGO_PASSWORD }}"' >> .env
+        echo 'export NMDC_USE_FAKE_GCS_SERVER="true"' >> .env
         echo 'export NMDC_STORAGE_KEY_PREFIX="testing"' >> .env
     - name: Install dependencies
       run: |

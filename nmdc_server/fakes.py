@@ -402,6 +402,9 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     locked_by = None
     lock_updated = None
     is_test_submission = False
+    pi_image: models.SubmissionImagesObject | None = None
+    primary_study_image: models.SubmissionImagesObject | None = None
+    study_images: list[models.SubmissionImagesObject] = []
 
 
 class SubmissionRoleFactory(SQLAlchemyModelFactory):
