@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from enum import StrEnum
 from functools import cached_property
-from typing import Any
+from typing import Any, Iterable
 
 from google.cloud.exceptions import NotFound
 from google.cloud.storage import Blob, Bucket, Client
@@ -50,6 +50,15 @@ class Storage:
         """
         bucket = self.get_bucket(bucket_name)
         return bucket.blob(object_name)
+
+    def iter_objects(self, bucket_name: BucketName, prefix: str | None = None) -> Iterable[Blob]:
+        """Iterate over objects in a GCS bucket.
+
+        :param bucket_name: The name of the bucket to iterate over.
+        :param prefix: Optional prefix to filter objects by.
+        """
+        bucket = self.get_bucket(bucket_name)
+        return bucket.list_blobs(prefix=prefix)
 
     def delete_object(
         self, bucket_name: BucketName, object_name: str, *, raise_if_not_found: bool = False

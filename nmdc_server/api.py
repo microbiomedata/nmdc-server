@@ -1551,7 +1551,9 @@ async def delete_submission_image(
 
         # Find the specific image in the study_images collection
         image_to_delete = next(
-            (image for image in submission.study_images if image.name == image_name),  # type: ignore
+            (
+                image for image in submission.study_images if image.name == image_name
+            ),  # type: ignore
             None,
         )
 

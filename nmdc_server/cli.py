@@ -12,8 +12,9 @@ import requests
 
 from nmdc_server import jobs
 from nmdc_server.config import settings
-from nmdc_server.database import SessionLocalIngest
+from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
+from nmdc_server.models import SubmissionImagesObject
 from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
 from nmdc_server.storage import BucketName, storage
 
@@ -364,6 +365,23 @@ def ensure_storage_buckets():
                 f"Failed to ensure bucket '{bucket_name}' exists. "
                 f"This bucket may need to be created manually in the cloud storage provider."
             )
+
+
+@cli.command()
+@click.option("--dry-run", is_flag=True, default=False)
+def vacuum_storage_buckets(dry_run: bool):
+    """Vacuum the storage buckets to remove objects not referenced in the database."""
+    for bucket_name in BucketName:
+        click.echo(f"Vacuuming bucket '{bucket_name}'")
+        if bucket_name == BucketName.SUBMISSION_IMAGES:
+            with SessionLocal() as db:
+                bucket = storage.get_bucket(bucket_name)
+                for blob in bucket.list_blobs(prefix=settings.storage_key_prefix):
+                    db_image = db.get(SubmissionImagesObject, blob.name)
+                    if not db_image:
+                        click.echo(f"Deleting blob '{blob.name}' from bucket '{bucket_name}'")
+                        if not dry_run:
+                            blob.delete()
 
 
 if __name__ == "__main__":
