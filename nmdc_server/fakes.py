@@ -203,7 +203,7 @@ class PipelineStepBase(SQLAlchemyModelFactory):
     started_at_time: datetime = Faker("date_time")
     ended_at_time: datetime = Faker("date_time")
     execution_resource: str = Faker("word")
-    omics_processing: models.OmicsProcessing = SubFactory(OmicsProcessingFactory)
+    was_informed_by: List[models.OmicsProcessing] = []
 
 
 class ReadsQCFactory(PipelineStepBase):

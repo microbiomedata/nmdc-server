@@ -35,6 +35,7 @@ from nmdc_server.table import (
     MetaPGeneFunction,
     MetaTGeneFunction,
     Table,
+    _table_model_map,
     workflow_execution_tables,
 )
 
@@ -107,7 +108,15 @@ class BaseFilter:
         raise NotImplementedError()
 
     def _join_omics_processing_related_tables(self, target_table: Table, query: Query) -> Query:
-        if target_table != Table.omics_processing:
+        if target_table in workflow_execution_tables:
+            association_table = models.workflow_activity_to_data_generation_map[target_table.value]
+            query = query.join(
+                association_table
+            ).join(
+                models.OmicsProcessing,
+                models.OmicsProcessing.id == association_table.c.data_generation_id,
+            )
+        elif target_table != Table.omics_processing:
             query = query.join(models.OmicsProcessing)
 
         return self.join_omics_processing(query)
@@ -252,10 +261,27 @@ class OmicsProcessingFilter(BaseFilter):
         )
 
 
-workflow_filter_classes: List[Type[OmicsProcessingFilter]] = []
+class WorkflowExecutionFilter(OmicsProcessingFilter):
+    table = Table.reads_qc
+
+    def join_omics_processing(self, query: Query) -> Query:
+        association_table = models.workflow_activity_to_data_generation_map[self.table.value]
+        model = _table_model_map[self.table]
+        q = query.join(
+            association_table,
+            association_table.c.data_generation_id == models.OmicsProcessing.id,
+        ).join(
+            model,
+            model.id == association_table.c[f"{self.table.value}_id"]  # type: ignore
+        )
+        print(q)
+        return q
+
+
+workflow_filter_classes: List[Type[WorkflowExecutionFilter]] = []
 for table in workflow_execution_tables:
     workflow_filter_classes.append(
-        type(f"{table.value}_filter", (OmicsProcessingFilter,), {"table": table})
+        type(f"{table.value}_filter", (WorkflowExecutionFilter,), {"table": table})
     )
 
 
@@ -404,7 +430,14 @@ class MetaproteomicAnalysisFilter(OmicsProcessingFilter):
     table = Table.metaproteomic_analysis
 
     def join_omics_processing(self, query: Query) -> Query:
-        return query.join(self.table.model)
+        association_table = models.metaproteomic_analysis_data_generation_association
+        return query.join(
+            association_table,
+            association_table.c.data_generation_id == models.OmicsProcessing.id,
+        ).join(
+            models.MetaproteomicAnalysis,
+            models.MetaproteomicAnalysis.id == association_table.c.metaproteomic_analysis_id,
+        )
 
     def join_biosample(self, query: Query) -> Query:
         return (
