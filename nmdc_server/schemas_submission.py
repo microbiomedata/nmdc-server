@@ -169,8 +169,8 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaListItem, SubmissionMetad
     # @computed_field-decorated properties below.
     pi_image_name: Optional[str] = Field(exclude=True, default=None)
     primary_study_image_name: Optional[str] = Field(exclude=True, default=None)
-    study_images_objects: list[SubmissionImagesObject] | None = Field(
-        exclude=True, default_factory=None, alias="study_images"
+    study_images_objects: list[SubmissionImagesObject] = Field(
+        exclude=True, default_factory=list, alias="study_images"
     )
 
     @field_validator("metadata_submission", mode="before")
