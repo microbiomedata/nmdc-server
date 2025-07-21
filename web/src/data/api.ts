@@ -96,7 +96,7 @@ export interface DerivedDataResult extends BaseSearchResult {
   started_at_time: string;
   ended_at_time: string;
   execution_resource: string;
-  omics_processing_id: string;
+  was_informed_by: any[];
   outputs: DataObjectSearchResult[];
 }
 
