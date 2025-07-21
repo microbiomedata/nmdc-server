@@ -1,6 +1,6 @@
 import json
 from csv import DictReader
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from sqlalchemy.orm.session import Session
@@ -48,7 +48,7 @@ def test_get_metadata_submissions_mixs_as_non_admin(
 def test_get_metadata_submissions_mixs_as_admin(
     db: Session, client: TestClient, logged_in_admin_user
 ):
-    now = datetime.utcnow()
+    now = datetime.now(tz=UTC)
 
     # Create logged in user
     logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
@@ -146,7 +146,7 @@ def test_get_metadata_submissions_report_as_non_admin(
 def test_get_metadata_submissions_report_as_admin(
     db: Session, client: TestClient, logged_in_admin_user
 ):
-    now = datetime.utcnow()
+    now = datetime.now(tz=UTC)
 
     # Create two submissions, only one of which is owned by the logged-in user.
     logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
@@ -154,7 +154,7 @@ def test_get_metadata_submissions_report_as_admin(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         created=now,
-        date_last_modified=datetime.utcnow(),
+        date_last_modified=datetime.now(tz=UTC),
         is_test_submission=False,
     )
     fakes.SubmissionRoleFactory(
@@ -168,7 +168,7 @@ def test_get_metadata_submissions_report_as_admin(
         author=other_user,
         author_orcid=other_user.orcid,
         created=now + timedelta(seconds=1),
-        date_last_modified=datetime.utcnow(),
+        date_last_modified=datetime.now(tz=UTC),
         # TODO: Omit some optional fields in order to simplify the test data.
         # See: `class MetadataSubmissionRecordCreate` in `schema_submission.py`
         # See: https://microbiomedata.github.io/submission-schema/SampleData/
@@ -406,7 +406,7 @@ def test_cannot_acquire_lock_on_locked_submission(db: Session, client: TestClien
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=locking_user,
-        lock_updated=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -429,7 +429,7 @@ def test_release_submission_lock(db: Session, client: TestClient, logged_in_user
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
-        lock_updated=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -466,8 +466,8 @@ def test_cannot_release_other_users_submission_lock(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=locking_user,
-        lock_updated=datetime.utcnow(),
-        date_last_modified=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
+        date_last_modified=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -491,8 +491,8 @@ def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_u
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=fakes.UserFactory(),
-        lock_updated=datetime.utcnow(),
-        date_last_modified=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
+        date_last_modified=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -517,8 +517,8 @@ def test_try_edit_expired_locked_submission(db: Session, client: TestClient, log
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=fakes.UserFactory(),
-        lock_updated=datetime.utcnow() - timedelta(hours=1),
-        date_last_modified=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC) - timedelta(hours=1),
+        date_last_modified=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -542,8 +542,8 @@ def test_try_edit_locked_by_current_user_submission(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
-        lock_updated=datetime.utcnow(),
-        date_last_modified=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
+        date_last_modified=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -563,15 +563,15 @@ def test_try_edit_locked_by_current_user_submission(
 def test_submission_list_with_roles(db: Session, client: TestClient, logged_in_user):
     user_a = fakes.UserFactory()
     submission_a = fakes.MetadataSubmissionFactory(
-        author=user_a, author_orcid=user_a.orcid, date_last_modified=datetime.utcnow()
+        author=user_a, author_orcid=user_a.orcid, date_last_modified=datetime.now(tz=UTC)
     )
     fakes.MetadataSubmissionFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
-        date_last_modified=datetime.utcnow(),
+        date_last_modified=datetime.now(tz=UTC),
     )
     fakes.MetadataSubmissionFactory(
-        author=user_a, author_orcid=user_a.orcid, date_last_modified=datetime.utcnow()
+        author=user_a, author_orcid=user_a.orcid, date_last_modified=datetime.now(tz=UTC)
     )
     db.commit()
     fakes.SubmissionRoleFactory(
@@ -593,13 +593,13 @@ def test_submission_list_with_roles(db: Session, client: TestClient, logged_in_u
 @pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
 def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
     if role == SubmissionEditorRole.owner:
-        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
+        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.now(tz=UTC))
         db.commit()
         role = fakes.SubmissionRoleFactory(
             submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid
         )
     else:
-        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
+        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.now(tz=UTC))
     db.commit()
     response = client.request(method="get", url=f"/api/metadata_submission/{submission.id}")
     assert response.status_code == code
@@ -608,7 +608,7 @@ def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_us
 @pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
 def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
     if role == SubmissionEditorRole.owner:
-        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
+        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.now(tz=UTC))
         payload = SubmissionMetadataSchema(**submission.__dict__).json()
         db.commit()
         role = fakes.SubmissionRoleFactory(
@@ -617,7 +617,7 @@ def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_u
             user_orcid=logged_in_user.orcid,
         )
     else:
-        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
+        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.now(tz=UTC))
         payload = SubmissionMetadataSchema(**submission.__dict__).json()
     db.commit()
     response = client.request(
@@ -805,7 +805,7 @@ def test_delete_submission_while_locked(db: Session, client: TestClient, logged_
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=user,
-        lock_updated=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -836,7 +836,7 @@ def test_sync_submission_templates(db: Session, client: TestClient, logged_in_us
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
-        lock_updated=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -865,7 +865,7 @@ def test_sync_submission_study_name(db: Session, client: TestClient, logged_in_u
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
-        lock_updated=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
