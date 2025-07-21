@@ -624,9 +624,7 @@ class StudyQuerySchema(BaseQuerySchema):
         q = (
             db.query(
                 op_alias.study_id.label(f"{table_name}_study_id"),
-                func.count(
-                    func.distinct(aliased_workflow_model.id)
-                ).label(f"{table_name}_count"),  # type: ignore
+                func.count(func.distinct(aliased_workflow_model.id)).label(f"{table_name}_count"),
             )
             .select_from(op_alias)
             .join(biosample_alias, op_alias.biosample_inputs)
@@ -635,7 +633,7 @@ class StudyQuerySchema(BaseQuerySchema):
                 aliased_workflow_model,
                 aliased_workflow_model.id == was_informed_by_table.c[f"{table_name}_id"],
             )
-            .join(subquery, subquery.c.id == aliased_workflow_model.id)  # type: ignore
+            .join(subquery, subquery.c.id == aliased_workflow_model.id)
             .group_by(op_alias.study_id)
         )
         return q

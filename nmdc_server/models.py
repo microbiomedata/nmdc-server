@@ -789,17 +789,17 @@ class OmicsProcessing(Base, AnnotatedModel):
     @property
     def omics_data(self) -> Iterator["PipelineStep"]:
         return chain(
-            self.reads_qc,
-            self.metatranscriptome_annotation,
-            self.metaproteomic_analysis,
-            self.mags_analysis,
-            self.read_based_analysis,
-            self.nom_analysis,
-            self.metabolomics_analysis,
-            self.metatranscriptome,
-            self.metagenome_assembly,
-            self.metatranscriptome_assembly,
-            self.metagenome_annotation,
+            self.reads_qc,  # type: ignore
+            self.metatranscriptome_annotation,  # type: ignore
+            self.metaproteomic_analysis,  # type: ignore
+            self.mags_analysis,  # type: ignore
+            self.read_based_analysis,  # type: ignore
+            self.nom_analysis,  # type: ignore
+            self.metabolomics_analysis,  # type: ignore
+            self.metatranscriptome,  # type: ignore
+            self.metagenome_assembly,  # type: ignore
+            self.metatranscriptome_assembly,  # type: ignore
+            self.metagenome_annotation,  # type: ignore
         )
 
 
