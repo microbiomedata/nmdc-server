@@ -22,7 +22,7 @@ nmdc-server migrate
 nmdc-server generate-static-files --remove-existing
 
 # Ensure cloud storage is set up
-nmdc-server ensure-storage-buckets
+nmdc-server storage init
 
 ## Start the server
 uvicorn nmdc_server.asgi:app --host 0.0.0.0 --port 8000

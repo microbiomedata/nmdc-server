@@ -349,8 +349,14 @@ def generate_static_files(remove_existing):
     click.echo("Done generating static files.")
 
 
-@cli.command()
-def ensure_storage_buckets():
+@cli.group(name="storage")
+def storage_group():
+    """Commands for managing storage buckets and objects."""
+    pass
+
+
+@storage_group.command()
+def init():
     """Ensure that the storage buckets exist."""
     for bucket_name in BucketName:
         click.echo(f"Ensuring bucket '{bucket_name}' exists")
@@ -367,9 +373,9 @@ def ensure_storage_buckets():
             )
 
 
-@cli.command()
+@storage_group.command()
 @click.option("--dry-run", is_flag=True, default=False)
-def vacuum_storage_buckets(dry_run: bool):
+def vacuum(dry_run: bool):
     """Vacuum the storage buckets to remove objects not referenced in the database."""
     for bucket_name in BucketName:
         click.echo(f"Vacuuming bucket '{bucket_name}'")
