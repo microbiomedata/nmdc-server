@@ -473,7 +473,6 @@ export default defineComponent({
       templateList.value.forEach((templateKey) => {
         synchronizeTabData(templateKey);
       });
-
       const workbook = utils.book_new();
       templateList.value.forEach((templateKey) => {
         const template = HARMONIZER_TEMPLATES[templateKey];

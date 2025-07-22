@@ -1210,11 +1210,9 @@ async def update_submission(
         new_permissions = body_dict.get("permissions", None)
         if new_permissions is not None:
             crud.update_submission_contributor_roles(db, submission, new_permissions)
-
         if body_dict.get("status", None):
             if (
-                body_dict.get("status", None)
-                == SubmissionStatusEnum["SubmittedPendingReview"].title
+                body_dict["status"] in [SubmissionStatusEnum["SubmittedPendingReview"].title, SubmissionStatusEnum["ResubmittedPendingReview"].title]
                 and submission.is_test_submission is False
             ):
                 submission.status = body_dict["status"]
