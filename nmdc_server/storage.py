@@ -20,9 +20,9 @@ class BucketName(StrEnum):
 class Storage:
     """A class to manage Google Cloud Storage interactions."""
 
-    def __init__(self, project_id: str, use_fake_gcs_server: bool):
+    def __init__(self, project_id: str, use_fake_server: bool):
         self.project_id = project_id
-        self.use_fake_gcs_server = use_fake_gcs_server
+        self.use_fake_server = use_fake_server
 
         self._is_testing = settings.environment == "testing"
 
@@ -36,7 +36,7 @@ class Storage:
         if self._is_testing:
             client_args["credentials"] = AnonymousCredentials()
             client_args["client_options"] = {"api_endpoint": "http://localhost:4443"}
-        elif self.use_fake_gcs_server:
+        elif self.use_fake_server:
             client_args["client_options"] = {"api_endpoint": "http://storage:4443"}
 
         return Client(**client_args)
@@ -117,7 +117,7 @@ class Storage:
             expiration=expiration_delta,
             method=method,
             content_type=content_type,
-            api_access_endpoint="http://localhost:4443" if self.use_fake_gcs_server else None,
+            api_access_endpoint="http://localhost:4443" if self.use_fake_server else None,
         )
 
         return SignedUrl(url=url, expiration=expiration_time, object_name=blob.name)
@@ -164,5 +164,5 @@ class Storage:
 
 storage = Storage(
     project_id=settings.gcs_project_id,
-    use_fake_gcs_server=settings.use_fake_gcs_server,
+    use_fake_server=settings.gcs_use_fake,
 )

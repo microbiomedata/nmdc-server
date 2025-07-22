@@ -1480,7 +1480,7 @@ async def generate_signed_upload_url(
 
     return storage.get_signed_upload_url(
         BucketName.SUBMISSION_IMAGES,
-        settings.storage_key_prefix + "/" + id + "/" + uuid4().hex + "-" + body.file_name,
+        settings.gcs_object_name_prefix + "/" + id + "/" + uuid4().hex + "-" + body.file_name,
         content_type=body.content_type,
     )
 

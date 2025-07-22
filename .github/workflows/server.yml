@@ -65,8 +65,8 @@ jobs:
         echo 'export NMDC_TESTING_DATABASE_URI="postgresql://nmdc:nmdc@localhost:5432/nmdc"' >> .env
         echo 'export NMDC_MONGO_USER="${{ secrets.NMDC_MONGO_USER }}"' >> .env
         echo 'export NMDC_MONGO_PASSWORD="${{ secrets.NMDC_MONGO_PASSWORD }}"' >> .env
-        echo 'export NMDC_USE_FAKE_GCS_SERVER="true"' >> .env
-        echo 'export NMDC_STORAGE_KEY_PREFIX="testing"' >> .env
+        echo 'export NMDC_GCS_USE_FAKE="true"' >> .env
+        echo 'export NMDC_GCS_OBJECT_NAME_PREFIX="testing"' >> .env
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip

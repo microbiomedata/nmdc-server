@@ -47,11 +47,12 @@ class Settings(BaseSettings):
     zip_streamer_nersc_data_base_url: str = "https://data.microbiomedata.org/data"
 
     # for cloud storage
-    use_fake_gcs_server: bool = True
-    gcs_project_id: str = "test"
+    gcs_use_fake: bool = True
+    gcs_project_id: str | None = None
+    gcs_object_name_prefix: str  # no default, must be set in .env file
+
     max_submission_image_file_size: int = 25 * 1000 * 1000  # 25 MB
     max_submission_image_total_size: int = 1 * 1000 * 1000 * 1000  # 1 GB
-    storage_key_prefix: str  # no default, must be set in .env file
 
     @property
     def orcid_openid_config_url(self) -> str:

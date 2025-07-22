@@ -357,7 +357,7 @@ def ensure_storage_buckets():
         bucket = storage.get_bucket(bucket_name)
         if bucket.exists():
             click.echo(f"Bucket '{bucket_name}' already exists")
-        elif settings.use_fake_gcs_server:
+        elif settings.gcs_use_fake:
             click.echo(f"Creating bucket '{bucket_name}'")
             bucket.create()
         else:
@@ -376,7 +376,7 @@ def vacuum_storage_buckets(dry_run: bool):
         if bucket_name == BucketName.SUBMISSION_IMAGES:
             with SessionLocal() as db:
                 bucket = storage.get_bucket(bucket_name)
-                for blob in bucket.list_blobs(prefix=settings.storage_key_prefix):
+                for blob in bucket.list_blobs(prefix=settings.gcs_object_name_prefix):
                     db_image = db.get(SubmissionImagesObject, blob.name)
                     if not db_image:
                         click.echo(f"Deleting blob '{blob.name}' from bucket '{bucket_name}'")
