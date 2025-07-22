@@ -5,7 +5,6 @@ from typing import Any, Dict, Iterator, List, Optional, Type, Union
 from uuid import uuid4
 
 from linkml_runtime.utils.schemaview import SchemaView
-from nmdc_schema.nmdc_data import get_nmdc_schema_definition
 from sqlalchemy import (
     BigInteger,
     Boolean,

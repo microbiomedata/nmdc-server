@@ -3,14 +3,12 @@ from csv import DictReader
 from datetime import datetime, timedelta
 
 import pytest
-from nmdc_schema.nmdc_data import get_nmdc_schema_definition
 from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
 
 from nmdc_server import fakes
 from nmdc_server.models import SubmissionEditorRole, SubmissionRole, get_submission_status_enum
 from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
-
 
 SubmissionStatusEnum = get_submission_status_enum()
 
