@@ -100,17 +100,19 @@ class Storage:
         :param expiration: The expiration time for the signed URL in minutes. Default is 15 minutes.
         :param content_type: The content type of the object being uploaded (for PUT requests).
         """
+        expiration_delta = timedelta(minutes=expiration)
+        expiration_time = datetime.now(timezone.utc) + expiration_delta
+
         if self._is_testing:
-            # In testing mode, we use AnonymousCredentials which do not support signed URLs.
+            # In testing mode, we use AnonymousCredentials which do not support signed URLs. There
+            # is also no need to generate real signed URLs during tests, so we return a mock URL.
             return SignedUrl(
                 url=f"http://localhost:4443/{bucket_name}/{object_name}",
-                expiration=datetime.now(timezone.utc),
+                expiration=expiration_time,
                 object_name=object_name,
             )
 
         blob = self.get_object(bucket_name, object_name)
-        expiration_delta = timedelta(minutes=expiration)
-        expiration_time = datetime.now(timezone.utc) + expiration_delta
 
         url = blob.generate_signed_url(
             version="v4",
