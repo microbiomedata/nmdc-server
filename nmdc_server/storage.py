@@ -20,7 +20,7 @@ class BucketName(StrEnum):
 class Storage:
     """A class to manage Google Cloud Storage interactions."""
 
-    def __init__(self, project_id: str, use_fake_server: bool):
+    def __init__(self, project_id: str | None, use_fake_server: bool):
         self.project_id = project_id
         self.use_fake_server = use_fake_server
 
