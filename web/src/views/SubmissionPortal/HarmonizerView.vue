@@ -1033,13 +1033,13 @@ export default defineComponent({
               :loading="submitLoading"
               @click="submitDialog = true"
             >
-              <span v-if="status === submissionStatus.SubmittedPendingReview || submitCount">
-                <v-icon>mdi-check-circle</v-icon>
-                Submitted
-              </span>
-              <span v-else-if="status === submissionStatus.ResubmittedPendingReview || submitCount">
+              <span v-if="status === submissionStatus.ResubmittedPendingReview || (submitCount > 0 && status === submissionStatus.InProgressUpdate)">
                 <v-icon>mdi-check-circle</v-icon>
                 Resubmitted
+              </span>
+              <span v-else-if="status === submissionStatus.SubmittedPendingReview || (submitCount > 0 && status === submissionStatus.InProgress)">
+                <v-icon>mdi-check-circle</v-icon>
+                Submitted
               </span>
               <span v-else>
                 Submit

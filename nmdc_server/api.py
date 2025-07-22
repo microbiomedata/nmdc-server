@@ -1184,11 +1184,16 @@ async def update_submission(
         )
 
     # Create GitHub issue when metadata is being submitted and not a test submission
-    if (
+    if ((
         submission.status == SubmissionStatusEnum["InProgress"].title
         and body_dict.get("status", None) == SubmissionStatusEnum["SubmittedPendingReview"].title
         and submission.is_test_submission is False
-    ):
+    ) or
+    (
+        submission.status == SubmissionStatusEnum["InProgressUpdate"].title
+        and body_dict.get("status", None) == SubmissionStatusEnum["ResubmittedPendingReview"].title
+        and submission.is_test_submission is False
+    )):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
         create_github_issue(submission_model, user)
 
@@ -1265,7 +1270,7 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         f"Has data been generated: {data_generated}",
         f"PI name: {pi_name}",
         f"PI orcid: {pi_orcid}",
-        f"{SubmissionStatusEnum["SubmittedPendingReview"].title}",
+        f"Status: {submission.status}",
         f"Data types: {omics_processing_types}",
         f"Sample type: {sample_types}",
         f"Number of samples: {num_samples}",
