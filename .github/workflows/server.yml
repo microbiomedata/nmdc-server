@@ -41,7 +41,8 @@ jobs:
         image: fsouza/fake-gcs-server
         ports:
           - 4443:4443
-        options: '-scheme http'
+        options: >-
+          --entrypoint '/bin/fake-gcs-server -scheme http -port 4443'
 
     strategy:
       max-parallel: 4
