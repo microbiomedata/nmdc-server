@@ -8,14 +8,8 @@ from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
 
 from nmdc_server import fakes
-from nmdc_server.models import SubmissionEditorRole, SubmissionRole
+from nmdc_server.models import SubmissionEditorRole, SubmissionRole, get_submission_status_enum
 from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
-
-
-def get_submission_status_enum():
-    """Get SubmissionStatusEnum from the NMDC schema definition."""
-    schema = get_nmdc_schema_definition()
-    return schema.enums["SubmissionStatusEnum"].permissible_values
 
 
 SubmissionStatusEnum = get_submission_status_enum()
@@ -53,18 +47,6 @@ def test_get_metadata_submissions_mixs_as_non_admin(
 ):
     response = client.request(method="GET", url="/api/metadata_submission/mixs_report")
     assert response.status_code == 403
-
-
-def test_print_submission_enum(db: Session, client: TestClient, logged_in_user):
-    submission = fakes.MetadataSubmissionFactory(
-        author=logged_in_user, author_orcid=logged_in_user.orcid
-    )
-    print("Available submission status enum values:")
-    print(SubmissionStatusEnum)
-    print("\nSpecific enum value string")
-    print(SubmissionStatusEnum["InProgress"].title)
-
-    assert submission
 
 
 def test_get_metadata_submissions_mixs_as_admin(
