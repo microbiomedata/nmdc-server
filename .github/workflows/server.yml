@@ -37,19 +37,23 @@ jobs:
         ports:
           - 5432:5432
 
-      storage:
-        image: fsouza/fake-gcs-server
-        ports:
-          - 4443:4443
-        options: >-
-          --entrypoint '/bin/fake-gcs-server -scheme http -port 4443'
-
     strategy:
       max-parallel: 4
       matrix:
         python-version: [3.12]
 
     steps:
+    # Use docker run directly instead of the `services` key because otherwise it's not possible
+    # to pass the `-scheme` flag.
+    # See:
+    #   - https://github.com/fsouza/fake-gcs-server/issues/561
+    #   - https://github.com/orgs/community/discussions/26688
+    - name: Start Fake GCS Server
+      run: |
+        docker run -d --name fake-gcs-server \
+          -p 4443:4443 \
+          - fsouza/fake-gcs-server \
+          -scheme http
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
