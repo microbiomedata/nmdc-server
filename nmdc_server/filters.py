@@ -110,9 +110,7 @@ class BaseFilter:
     def _join_omics_processing_related_tables(self, target_table: Table, query: Query) -> Query:
         if target_table in workflow_execution_tables:
             association_table = models.workflow_activity_to_data_generation_map[target_table.value]
-            query = query.join(
-                association_table
-            ).join(
+            query = query.join(association_table).join(
                 models.OmicsProcessing,
                 models.OmicsProcessing.id == association_table.c.data_generation_id,
             )
@@ -271,10 +269,8 @@ class WorkflowExecutionFilter(OmicsProcessingFilter):
             association_table,
             association_table.c.data_generation_id == models.OmicsProcessing.id,
         ).join(
-            model,
-            model.id == association_table.c[f"{self.table.value}_id"]  # type: ignore
+            model, model.id == association_table.c[f"{self.table.value}_id"]  # type: ignore
         )
-        print(q)
         return q
 
 
