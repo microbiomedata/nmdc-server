@@ -1256,3 +1256,127 @@ def test_set_submission_image_missing_required_fields(
     )
 
     assert response.status_code == 422
+
+
+def test_delete_submission_pi_image_success(
+    db: Session, client: TestClient, logged_in_user, temp_storage_object
+):
+    """Test successfully deleting a PI image from a submission."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Add a PI image to delete
+    pi_image = SubmissionImagesObject(
+        name="pi-image-to-delete.jpg", size=500000, content_type="image/jpeg"
+    )
+    submission.pi_image = pi_image
+    db.commit()
+
+    # Verify the image exists in storage
+    blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, pi_image.name)
+    assert blob.exists() is True
+
+    # Delete the PI image
+    response = client.delete(f"/api/metadata_submission/{submission.id}/image/pi_image")
+    assert response.status_code == 204
+
+    # Verify the image was deleted from the database
+    db.refresh(submission)
+    assert submission.pi_image is None
+
+    # Verify the image was deleted from storage
+    assert blob.exists() is False  # type: ignore
+
+
+def test_delete_submission_primary_study_image_success(
+    db: Session, client: TestClient, logged_in_user, temp_storage_object
+):
+    """Test successfully deleting a primary study image from a submission."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Add a primary study image to delete
+    primary_study_image = SubmissionImagesObject(
+        name="primary-study-image-to-delete.png", size=600000, content_type="image/png"
+    )
+    submission.primary_study_image = primary_study_image
+    db.commit()
+
+    # Verify the image exists in storage
+    blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, primary_study_image.name)
+    assert blob.exists() is True
+
+    # Delete the primary study image
+    response = client.delete(f"/api/metadata_submission/{submission.id}/image/primary_study_image")
+    assert response.status_code == 204
+
+    # Verify the image was deleted from the database
+    db.refresh(submission)
+    assert submission.primary_study_image is None
+
+    # Verify the image was deleted from storage
+    assert blob.exists() is False  # type: ignore
+
+
+def test_delete_submission_study_images_success(
+    db: Session, client: TestClient, logged_in_user, temp_storage_object
+):
+    """Test successfully deleting a study image from a submission."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Add a study image to delete
+    image_to_delete = SubmissionImagesObject(
+        name="study-image-to-delete.jpg", size=700000, content_type="image/jpeg"
+    )
+    submission.study_images.append(image_to_delete)
+    other_image = SubmissionImagesObject(
+        name="other-study-image.jpg", size=800000, content_type="image/jpeg"
+    )
+    submission.study_images.append(other_image)
+    db.commit()
+
+    # Verify the image exists in storage
+    blob_to_delete = temp_storage_object(BucketName.SUBMISSION_IMAGES, image_to_delete.name)
+    other_blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, other_image.name)
+    assert blob_to_delete.exists() is True
+    assert other_blob.exists() is True
+
+    # Delete the study image
+    response = client.delete(
+        f"/api/metadata_submission/{submission.id}/image/study_images"
+        f"?image_name={image_to_delete.name}"
+    )
+    assert response.status_code == 204
+
+    # Verify the image was deleted from the database
+    db.refresh(submission)
+    assert len(submission.study_images) == 1
+
+    # Verify the image was deleted from storage
+    assert blob_to_delete.exists() is False
+    assert other_blob.exists() is True
