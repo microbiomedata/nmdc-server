@@ -1,9 +1,10 @@
 import enum
 from datetime import datetime
+from importlib import resources
 from typing import Any, Dict, Iterator, List, Optional, Type, Union
 from uuid import uuid4
 
-from nmdc_schema.nmdc_data import get_nmdc_schema_definition
+from linkml_runtime.utils.schemaview import SchemaView
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -37,8 +38,15 @@ from nmdc_server.database import Base, update_multiomics_sql
 
 def get_submission_status_enum():
     """Get SubmissionStatusEnum from the NMDC schema definition."""
-    schema = get_nmdc_schema_definition()
-    return schema.enums["SubmissionStatusEnum"].permissible_values
+    permissible_values = {}
+    submission_schema_files = resources.files("nmdc_schema")
+    schema_path = submission_schema_files / "nmdc_materialized_patterns.yaml"
+    sv = SchemaView(str(schema_path))
+    for enum_name, enum_definition in sv.all_enums().items():
+        if enum_name == "SubmissionStatusEnum":
+            permissible_values = enum_definition.permissible_values
+            break
+    return permissible_values
 
 
 SubmissionStatusEnum = get_submission_status_enum()
