@@ -90,20 +90,23 @@ export interface DataObjectSearchResult extends BaseSearchResult {
   selected: boolean;
 }
 
+export interface OmicsProcessingBaseResult extends BaseSearchResult {
+  study_id: string;
+  add_date: string;
+  mod_date: string;
+}
+
 export interface DerivedDataResult extends BaseSearchResult {
   type: string;
   git_url: string;
   started_at_time: string;
   ended_at_time: string;
   execution_resource: string;
-  was_informed_by: any[];
+  was_informed_by: OmicsProcessingBaseResult[];
   outputs: DataObjectSearchResult[];
 }
 
-export interface OmicsProcessingResult extends BaseSearchResult {
-  study_id: string;
-  add_date: string;
-  mod_date: string;
+export interface OmicsProcessingResult extends OmicsProcessingBaseResult {
   open_in_gold: string;
   omics_data: DerivedDataResult[];
   outputs: DataObjectSearchResult[]; // RAW outputs
