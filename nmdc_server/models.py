@@ -1,5 +1,6 @@
 import enum
 from datetime import datetime
+from itertools import chain
 from typing import Any, Dict, Iterator, List, Optional, Type, Union
 from uuid import uuid4
 
@@ -23,7 +24,6 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
-from sqlalchemy.ext.declarative import declared_attr
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, backref, query_expression, relationship
 from sqlalchemy.orm.relationships import RelationshipProperty
@@ -77,6 +77,24 @@ def output_association(table: str) -> Table:
 def output_relationship(association: Table) -> "RelationshipProperty[DataObject]":
     return relationship(
         "DataObject",
+        secondary=association,
+    )
+
+
+def informed_by_association(table: str) -> Table:
+    """Generate a many-to-many relationship with omics_processing (DataGeneration)."""
+    return Table(
+        f"{table}_data_generation_association",
+        Base.metadata,
+        Column(f"{table}_id", String, ForeignKey(f"{table}.id")),
+        Column("data_generation_id", String, ForeignKey("omics_processing.id")),
+        UniqueConstraint(f"{table}_id", "data_generation_id"),
+    )
+
+
+def informed_by_relationship(association: Table) -> "RelationshipProperty[DataObject]":
+    return relationship(
+        "OmicsProcessing",
         secondary=association,
     )
 
@@ -417,75 +435,6 @@ class Biosample(Base, AnnotatedModel):
 omics_processing_output_association = output_association("omics_processing")
 
 
-class OmicsProcessing(Base, AnnotatedModel):
-    __tablename__ = "omics_processing"
-
-    add_date = Column(DateTime, nullable=True)
-    mod_date = Column(DateTime, nullable=True)
-    biosample_inputs = relationship(
-        "Biosample", secondary=biosample_input_association, back_populates="omics_processing"
-    )
-    study_id = Column(String, ForeignKey("study.id"), nullable=True)
-    study = relationship("Study", backref="omics_processing")
-
-    outputs = output_relationship(omics_processing_output_association)
-    has_outputs = association_proxy("outputs", "id")
-
-    # This will either be the ID of a manifest_set document of type
-    # poolable_replicates, or the ID of the data_generation_set document.
-    # Used to inform the "true" counts of data_generation (omics_processing)
-    # records.
-    poolable_replicates_manifest_id = Column(String, nullable=True)
-
-    @property
-    def open_in_gold(self) -> Optional[str]:
-        return gold_url("https://gold.jgi.doe.gov/project?id=", self.id)
-
-    # This property injects information in the omics_processing result
-    # regarding output data from workflow processing runs.  Because there
-    # are no filters that filter out individual processing runs, this
-    # can be done outside of the main query.  For this reason, it does
-    # not have to be added as a `query_expression`.
-    @property
-    def omics_data(self) -> Iterator["PipelineStep"]:
-        for model in workflow_activity_types:
-            name = model.__tablename__  # type: ignore
-            for pipeline in getattr(self, name):
-                yield pipeline
-
-
-class DataObject(Base):
-    __tablename__ = "data_object"
-
-    id = Column(String, primary_key=True)
-    name = Column(String, nullable=False)
-    description = Column(String, nullable=False, default="")
-    file_size_bytes = Column(BigInteger, nullable=True)
-    md5_checksum = Column(String, nullable=True)
-    url = Column(String, nullable=True)
-    file_type = Column(String, nullable=True)
-    file_type_description = Column(String, nullable=True)
-
-    # denormalized relationship with a workflow activity output
-    workflow_type = Column(String, nullable=True)
-
-    # denormalized relationship representing the source omics_processing
-    omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
-    omics_processing = relationship(OmicsProcessing)
-
-    # Define a property that can be used to shortcut calculating counts.
-    # Useful when downstream code can more efficiently determine download
-    # counts for a batch of DataObjects and inject those counts.
-    _download_count: Optional[int] = None
-
-    @hybrid_property
-    def downloads(self) -> int:
-        # TODO: This can probably be done with a more efficient aggregation
-        if self._download_count is None:
-            return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
-        return self._download_count
-
-
 # This is a base class for all workflow processing activities.
 # https://microbiomedata.github.io/nmdc-schema/WorkflowExecutionActivity.html
 # TODO : does this exist anymore?
@@ -500,24 +449,18 @@ class PipelineStep:
     ended_at_time = Column(DateTime)
     execution_resource = Column(String, nullable=False)
 
-    @declared_attr
-    def omics_processing_id(cls):
-        return Column(String, ForeignKey("omics_processing.id"), nullable=False)
-
-    @declared_attr
-    def omics_processing(cls):
-        return relationship("OmicsProcessing", backref=backref(cls.__tablename__, lazy="joined"))
-
     has_inputs = association_proxy("inputs", "id")
     has_outputs = association_proxy("outputs", "id")
 
 
-reads_qc_input_association = input_association("reads_qc")
-reads_qc_output_association = output_association("reads_qc")
+READS_QC = "reads_qc"
+reads_qc_input_association = input_association(READS_QC)
+reads_qc_output_association = output_association(READS_QC)
+reads_qc_data_generation_association = informed_by_association(READS_QC)
 
 
 class ReadsQC(Base, PipelineStep):
-    __tablename__ = "reads_qc"
+    __tablename__ = READS_QC
 
     input_read_count = Column(BigInteger, nullable=True)
     input_read_bases = Column(BigInteger, nullable=True)
@@ -526,14 +469,17 @@ class ReadsQC(Base, PipelineStep):
 
     inputs = input_relationship(reads_qc_input_association)
     outputs = output_relationship(reads_qc_output_association)
+    was_informed_by = informed_by_relationship(reads_qc_data_generation_association)
 
 
-metagenome_assembly_input_association = input_association("metagenome_assembly")
-metagenome_assembly_output_association = output_association("metagenome_assembly")
+METAG_ASSEMBLY = "metagenome_assembly"
+metagenome_assembly_input_association = input_association(METAG_ASSEMBLY)
+metagenome_assembly_output_association = output_association(METAG_ASSEMBLY)
+metagenome_assembly_data_generation_association = informed_by_association(METAG_ASSEMBLY)
 
 
 class MetagenomeAssembly(Base, PipelineStep):
-    __tablename__ = "metagenome_assembly"
+    __tablename__ = METAG_ASSEMBLY
 
     scaffolds = Column(Float, nullable=True)
     contigs = Column(Float, nullable=True)
@@ -566,14 +512,17 @@ class MetagenomeAssembly(Base, PipelineStep):
 
     inputs = input_relationship(metagenome_assembly_input_association)
     outputs = output_relationship(metagenome_assembly_output_association)
+    was_informed_by = informed_by_relationship(metagenome_assembly_data_generation_association)
 
 
-metatranscriptome_assembly_input_association = input_association("metatranscriptome_assembly")
-metatranscriptome_assembly_output_association = output_association("metatranscriptome_assembly")
+METAT_ASSEMBLY = "metatranscriptome_assembly"
+metatranscriptome_assembly_input_association = input_association(METAT_ASSEMBLY)
+metatranscriptome_assembly_output_association = output_association(METAT_ASSEMBLY)
+metatranscriptome_assembly_data_generation_association = informed_by_association(METAT_ASSEMBLY)
 
 
 class MetatranscriptomeAssembly(Base, PipelineStep):
-    __tablename__ = "metatranscriptome_assembly"
+    __tablename__ = METAT_ASSEMBLY
 
     scaffolds = Column(Float, nullable=True)
     contigs = Column(Float, nullable=True)
@@ -606,49 +555,65 @@ class MetatranscriptomeAssembly(Base, PipelineStep):
 
     inputs = input_relationship(metatranscriptome_assembly_input_association)
     outputs = output_relationship(metatranscriptome_assembly_output_association)
+    was_informed_by = informed_by_relationship(
+        metatranscriptome_assembly_data_generation_association
+    )
 
 
-metagenome_annotation_input_association = input_association("metagenome_annotation")
-metagenome_annotation_output_association = output_association("metagenome_annotation")
+METAG_ANNOTATION = "metagenome_annotation"
+metagenome_annotation_input_association = input_association(METAG_ANNOTATION)
+metagenome_annotation_output_association = output_association(METAG_ANNOTATION)
+metagenome_annotation_data_generation_association = informed_by_association(METAG_ANNOTATION)
 
 
 class MetagenomeAnnotation(Base, PipelineStep):
-    __tablename__ = "metagenome_annotation"
+    __tablename__ = METAG_ANNOTATION
 
     inputs = input_relationship(metagenome_annotation_input_association)
     outputs = output_relationship(metagenome_annotation_output_association)
+    was_informed_by = informed_by_relationship(metagenome_annotation_data_generation_association)
 
 
-metatranscriptome_annotation_input_association = input_association("metatranscriptome_annotation")
-metatranscriptome_annotation_output_association = output_association("metatranscriptome_annotation")
+METAT_ANNOTATION = "metatranscriptome_annotation"
+metatranscriptome_annotation_input_association = input_association(METAT_ANNOTATION)
+metatranscriptome_annotation_output_association = output_association(METAT_ANNOTATION)
+metatranscriptome_annotation_data_generation_association = informed_by_association(METAT_ANNOTATION)
 
 
 class MetatranscriptomeAnnotation(Base, PipelineStep):
-    __tablename__ = "metatranscriptome_annotation"
+    __tablename__ = METAT_ANNOTATION
 
     inputs = input_relationship(metatranscriptome_annotation_input_association)
     outputs = output_relationship(metatranscriptome_annotation_output_association)
+    was_informed_by = informed_by_relationship(
+        metatranscriptome_annotation_data_generation_association
+    )
 
 
-metaproteomic_analysis_input_association = input_association("metaproteomic_analysis")
-metaproteomic_analysis_output_association = output_association("metaproteomic_analysis")
+METAP_ANALYSIS = "metaproteomic_analysis"
+metaproteomic_analysis_input_association = input_association(METAP_ANALYSIS)
+metaproteomic_analysis_output_association = output_association(METAP_ANALYSIS)
+metaproteomic_analysis_data_generation_association = informed_by_association(METAP_ANALYSIS)
 
 
 class MetaproteomicAnalysis(Base, PipelineStep):
-    __tablename__ = "metaproteomic_analysis"
+    __tablename__ = METAP_ANALYSIS
 
     metaproteomics_analysis_category = Column(String, nullable=False, default="")
 
     inputs = input_relationship(metaproteomic_analysis_input_association)
     outputs = output_relationship(metaproteomic_analysis_output_association)
+    was_informed_by = informed_by_relationship(metaproteomic_analysis_data_generation_association)
 
 
-mags_analysis_input_association = input_association("mags_analysis")
-mags_analysis_output_association = output_association("mags_analysis")
+MAGS_ANALYSIS = "mags_analysis"
+mags_analysis_input_association = input_association(MAGS_ANALYSIS)
+mags_analysis_output_association = output_association(MAGS_ANALYSIS)
+mags_analysis_data_generation_association = informed_by_association(MAGS_ANALYSIS)
 
 
 class MAGsAnalysis(Base, PipelineStep):
-    __tablename__ = "mags_analysis"
+    __tablename__ = MAGS_ANALYSIS
 
     input_contig_num = Column(BigInteger)
     too_short_contig_num = Column(BigInteger)
@@ -658,6 +623,7 @@ class MAGsAnalysis(Base, PipelineStep):
 
     inputs = input_relationship(mags_analysis_input_association)
     outputs = output_relationship(mags_analysis_output_association)
+    was_informed_by = informed_by_relationship(mags_analysis_data_generation_association)
 
 
 class MAG(Base):
@@ -679,50 +645,194 @@ class MAG(Base):
     mags_analysis = relationship(MAGsAnalysis, backref="mags_list")
 
 
-nom_analysis_input_association = input_association("nom_analysis")
-nom_analysis_output_association = output_association("nom_analysis")
+NOM_ANALYSIS = "nom_analysis"
+nom_analysis_input_association = input_association(NOM_ANALYSIS)
+nom_analysis_output_association = output_association(NOM_ANALYSIS)
+nom_analysis_data_generation_association = informed_by_association(NOM_ANALYSIS)
 
 
 class NOMAnalysis(Base, PipelineStep):
-    __tablename__ = "nom_analysis"
+    __tablename__ = NOM_ANALYSIS
 
     inputs = input_relationship(nom_analysis_input_association)
     outputs = output_relationship(nom_analysis_output_association)
+    was_informed_by = informed_by_relationship(nom_analysis_data_generation_association)
 
 
-read_based_analysis_input_association = input_association("read_based_analysis")
-read_based_analysis_output_association = output_association("read_based_analysis")
+READ_BASED_ANALYSIS = "read_based_analysis"
+read_based_analysis_input_association = input_association(READ_BASED_ANALYSIS)
+read_based_analysis_output_association = output_association(READ_BASED_ANALYSIS)
+read_based_analysis_data_generation_association = informed_by_association(READ_BASED_ANALYSIS)
 
 
 class ReadBasedAnalysis(Base, PipelineStep):
-    __tablename__ = "read_based_analysis"
+    __tablename__ = READ_BASED_ANALYSIS
 
     inputs = input_relationship(read_based_analysis_input_association)
     outputs = output_relationship(read_based_analysis_output_association)
+    was_informed_by = informed_by_relationship(read_based_analysis_data_generation_association)
 
 
-metatranscriptome_input_association = input_association("metatranscriptome")
-metatranscriptome_output_association = output_association("metatranscriptome")
+METAT = "metatranscriptome"
+metatranscriptome_input_association = input_association(METAT)
+metatranscriptome_output_association = output_association(METAT)
+metatranscriptome_data_generation_association = informed_by_association(METAT)
 
 
 class Metatranscriptome(Base, PipelineStep):
     """Corresponds to the metatranscriptome_expression_analysis_set"""
 
-    __tablename__ = "metatranscriptome"
+    __tablename__ = METAT
 
     inputs = input_relationship(metatranscriptome_input_association)
     outputs = output_relationship(metatranscriptome_output_association)
+    was_informed_by = informed_by_relationship(metatranscriptome_data_generation_association)
 
 
-metabolomics_analysis_input_association = input_association("metabolomics_analysis")
-metabolomics_analysis_output_association = output_association("metabolomics_analysis")
+METAB_ANALYSIS = "metabolomics_analysis"
+metabolomics_analysis_input_association = input_association(METAB_ANALYSIS)
+metabolomics_analysis_output_association = output_association(METAB_ANALYSIS)
+metabolomics_analysis_data_generation_association = informed_by_association(METAB_ANALYSIS)
 
 
 class MetabolomicsAnalysis(Base, PipelineStep):
-    __tablename__ = "metabolomics_analysis"
+    __tablename__ = METAB_ANALYSIS
 
     inputs = input_relationship(metabolomics_analysis_input_association)
     outputs = output_relationship(metabolomics_analysis_output_association)
+    was_informed_by = informed_by_relationship(metabolomics_analysis_data_generation_association)
+
+
+class OmicsProcessing(Base, AnnotatedModel):
+    __tablename__ = "omics_processing"
+
+    add_date = Column(DateTime, nullable=True)
+    mod_date = Column(DateTime, nullable=True)
+    biosample_inputs = relationship(
+        "Biosample", secondary=biosample_input_association, back_populates="omics_processing"
+    )
+    study_id = Column(String, ForeignKey("study.id"), nullable=True)
+    study = relationship("Study", backref="omics_processing")
+
+    outputs = output_relationship(omics_processing_output_association)
+    has_outputs = association_proxy("outputs", "id")
+
+    # This will either be the ID of a manifest_set document of type
+    # poolable_replicates, or the ID of the data_generation_set document.
+    # Used to inform the "true" counts of data_generation (omics_processing)
+    # records.
+    poolable_replicates_manifest_id = Column(String, nullable=True)
+
+    @property
+    def open_in_gold(self) -> Optional[str]:
+        return gold_url("https://gold.jgi.doe.gov/project?id=", self.id)
+
+    reads_qc = relationship(
+        "ReadsQC", secondary=reads_qc_data_generation_association, back_populates="was_informed_by"
+    )
+    metatranscriptome_annotation = relationship(
+        "MetatranscriptomeAnnotation",
+        secondary=metatranscriptome_annotation_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metaproteomic_analysis = relationship(
+        "MetaproteomicAnalysis",
+        secondary=metaproteomic_analysis_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    mags_analysis = relationship(
+        "MAGsAnalysis",
+        secondary=mags_analysis_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    read_based_analysis = relationship(
+        "ReadBasedAnalysis",
+        secondary=read_based_analysis_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    nom_analysis = relationship(
+        "NOMAnalysis",
+        secondary=nom_analysis_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metabolomics_analysis = relationship(
+        "MetabolomicsAnalysis",
+        secondary=metabolomics_analysis_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metatranscriptome = relationship(
+        "Metatranscriptome",
+        secondary=metatranscriptome_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metagenome_assembly = relationship(
+        "MetagenomeAssembly",
+        secondary=metagenome_assembly_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metatranscriptome_assembly = relationship(
+        "MetatranscriptomeAssembly",
+        secondary=metatranscriptome_assembly_data_generation_association,
+        back_populates="was_informed_by",
+    )
+    metagenome_annotation = relationship(
+        "MetagenomeAnnotation",
+        secondary=metagenome_annotation_data_generation_association,
+        back_populates="was_informed_by",
+    )
+
+    # This property injects information in the omics_processing result
+    # regarding output data from workflow processing runs.  Because there
+    # are no filters that filter out individual processing runs, this
+    # can be done outside of the main query.  For this reason, it does
+    # not have to be added as a `query_expression`.
+    @property
+    def omics_data(self) -> Iterator["PipelineStep"]:
+        return chain(
+            self.reads_qc,  # type: ignore
+            self.metatranscriptome_annotation,  # type: ignore
+            self.metaproteomic_analysis,  # type: ignore
+            self.mags_analysis,  # type: ignore
+            self.read_based_analysis,  # type: ignore
+            self.nom_analysis,  # type: ignore
+            self.metabolomics_analysis,  # type: ignore
+            self.metatranscriptome,  # type: ignore
+            self.metagenome_assembly,  # type: ignore
+            self.metatranscriptome_assembly,  # type: ignore
+            self.metagenome_annotation,  # type: ignore
+        )
+
+
+class DataObject(Base):
+    __tablename__ = "data_object"
+
+    id = Column(String, primary_key=True)
+    name = Column(String, nullable=False)
+    description = Column(String, nullable=False, default="")
+    file_size_bytes = Column(BigInteger, nullable=True)
+    md5_checksum = Column(String, nullable=True)
+    url = Column(String, nullable=True)
+    file_type = Column(String, nullable=True)
+    file_type_description = Column(String, nullable=True)
+
+    # denormalized relationship with a workflow activity output
+    workflow_type = Column(String, nullable=True)
+
+    # denormalized relationship representing the source omics_processing
+    omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
+    omics_processing = relationship(OmicsProcessing)
+
+    # Define a property that can be used to shortcut calculating counts.
+    # Useful when downstream code can more efficiently determine download
+    # counts for a batch of DataObjects and inject those counts.
+    _download_count: Optional[int] = None
+
+    @hybrid_property
+    def downloads(self) -> int:
+        # TODO: This can probably be done with a more efficient aggregation
+        if self._download_count is None:
+            return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
+        return self._download_count
 
 
 class Website(Base):
@@ -805,6 +915,19 @@ workflow_activity_types = [
     MetabolomicsAnalysis,
     Metatranscriptome,
 ]
+workflow_activity_to_data_generation_map = {
+    ReadsQC.__tablename__: reads_qc_data_generation_association,
+    MetagenomeAssembly.__tablename__: metagenome_assembly_data_generation_association,
+    MetatranscriptomeAssembly.__tablename__: metatranscriptome_assembly_data_generation_association,
+    MetagenomeAnnotation.__tablename__: metagenome_annotation_data_generation_association,
+    MetatranscriptomeAnnotation.__tablename__: metatranscriptome_annotation_data_generation_association,  # noqa
+    MetaproteomicAnalysis.__tablename__: metaproteomic_analysis_data_generation_association,
+    MAGsAnalysis.__tablename__: mags_analysis_data_generation_association,
+    ReadBasedAnalysis.__tablename__: read_based_analysis_data_generation_association,
+    NOMAnalysis.__tablename__: nom_analysis_data_generation_association,
+    MetabolomicsAnalysis.__tablename__: metabolomics_analysis_data_generation_association,
+    Metatranscriptome.__tablename__: metatranscriptome_data_generation_association,
+}
 
 
 # denormalized tables
