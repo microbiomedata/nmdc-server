@@ -238,7 +238,7 @@ def load(
             if reported_type != workflow_type:
                 logger.warning(f"Unexpected type {reported_type} (expected {workflow_type})")
 
-        was_informed_by = obj.pop("was_informed_by")
+        was_informed_by: str | list[str] = obj.pop("was_informed_by")
         if isinstance(was_informed_by, str):
             was_informed_by = [was_informed_by]
         obj["omics_processing_id"] = was_informed_by[0]
