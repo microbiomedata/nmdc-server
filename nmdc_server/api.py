@@ -1462,7 +1462,7 @@ async def generate_signed_upload_url(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    # Don't accept files larger than 20MB
+    # Don't accept files larger than the configured limit (default is 25 MB)
     if body.file_size > settings.max_submission_image_file_size:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File size exceeds limit"
