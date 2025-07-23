@@ -37,6 +37,7 @@ from nmdc_server.models import (
 from nmdc_server.pagination import Pagination
 from nmdc_server.storage import BucketName, storage
 from nmdc_server.table import Table
+from nmdc_server.utils import sanitize_filename
 
 router = APIRouter()
 
@@ -1478,9 +1479,10 @@ async def generate_signed_upload_url(
             detail="Submission quota exceeded",
         )
 
+    sanitized_filename = sanitize_filename(body.file_name)
     return storage.get_signed_upload_url(
         BucketName.SUBMISSION_IMAGES,
-        settings.gcs_object_name_prefix + "/" + id + "/" + uuid4().hex + "-" + body.file_name,
+        f"{settings.gcs_object_name_prefix}/{id}/{uuid4().hex}-{sanitized_filename}",
         content_type=body.content_type,
     )
 
