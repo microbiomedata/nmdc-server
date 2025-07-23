@@ -1455,7 +1455,7 @@ async def suggest_metadata(
     return response
 
 
-@router.post("/metadata_submission/{id}/signed_upload_url", response_model=schemas.SignedUrl)
+@router.post("/metadata_submission/{id}/image/signed_upload_url", response_model=schemas.SignedUrl)
 async def generate_signed_upload_url(
     id: str,
     body: schemas.SignedUploadUrlRequest,
