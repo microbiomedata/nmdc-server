@@ -789,6 +789,22 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
                 annotations_column["omics_type"].astext,
             ).group_by(annotations_column["omics_type"].astext)
             return {value: count for count, value in aggregated_query if value is not None}
+        if attribute == "metaproteomics_analysis_category":
+            association_table = models.metaproteomic_analysis_data_generation_association
+            query = self.query(db)
+            query = query.join(
+                association_table,
+                models.OmicsProcessing.id == association_table.c.data_generation_id,
+            )
+            query = query.join(
+                models.MetaproteomicAnalysis,
+                models.MetaproteomicAnalysis.id == association_table.c.metaproteomic_analysis_id,
+            )
+            aggregated_query = query.with_entities(
+                func.count(func.distinct(models.OmicsProcessing.id)).label("id_count"),
+                models.MetaproteomicAnalysis.metaproteomics_analysis_category,
+            ).group_by(models.MetaproteomicAnalysis.metaproteomics_analysis_category)
+            return {value: count for count, value in aggregated_query if value is not None}
         return super().facet(db, attribute)
 
     def omics_processing_for_biosample_ids(self, db: Session, biosample_ids):
