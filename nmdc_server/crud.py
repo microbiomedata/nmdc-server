@@ -439,7 +439,7 @@ def construct_zip_file_path(data_object: models.DataObject) -> str:
     #   - We probably want to reference the workflow activity but that
     #     involves a complicated query... need a way to join that information
     #     in the original query (possibly in the sqlalchemy relationship)
-    omics_processing = data_object.omics_processing
+    omics_processing = data_object.omics_processings[0]
     biosamples = cast(Optional[list[models.Biosample]], omics_processing.biosample_inputs)
 
     def safe_name(name: str) -> str:
