@@ -966,7 +966,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
             db.query(models.DataObject.id.label("id"))
             .join(
                 models.omics_processing_output_association,
-                models.omics_processing_output_association.c.id == models.DataObject.id,
+                models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
             )
             .join(
                 op_cte,
