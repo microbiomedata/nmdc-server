@@ -1055,13 +1055,7 @@ async def get_metadata_submissions_report(
     return response
 
 
-@router.get(
-    "/metadata_submission",
-    tags=["metadata_submission"],
-    responses=login_required_responses,
-    response_model=query.Paginated[schemas_submission.SubmissionMetadataSchemaListItem],
-)
-async def list_submissions(
+async def get_paginated_submission_list(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
     pagination: Pagination = Depends(),
@@ -1069,10 +1063,38 @@ async def list_submissions(
     sort_order: str = "desc",
     is_test_submission_filter: Optional[bool] = None,
 ):
+    """
+    Dependency function for getting a list of submissions with pagination, sorting, and filtering
+    applied.
+    """
     query = crud.get_submissions_for_user(
         db, user, column_sort, sort_order, is_test_submission_filter
     )
     return pagination.response(query)
+
+
+# The following two endpoints perform the same underlying query, but only differ in the
+# response model they return.
+@router.get(
+    "/metadata_submission",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=query.Paginated[schemas_submission.SubmissionMetadataSchema],
+)
+async def list_submissions(submissions=Depends(get_paginated_submission_list)):
+    """Return a paginated list of submissions in full detail."""
+    return submissions
+
+
+@router.get(
+    "/metadata_submission/slim",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=query.Paginated[schemas_submission.SubmissionMetadataSchemaSlim],
+)
+async def list_submissions_slim(submissions=Depends(get_paginated_submission_list)):
+    """Return a paginated list of submissions in slim format."""
+    return submissions
 
 
 @router.get(
@@ -1228,10 +1250,7 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
     data_generated = "Yes" if multiomics_form.dataGenerated else "No"
     omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
     sample_types = ", ".join(submission.metadata_submission.templates)
-    sample_data = submission.metadata_submission.sampleData
-    num_samples = 0
-    for key in sample_data:
-        num_samples = max(num_samples, len(sample_data[key]))
+    num_samples = submission.sample_count
 
     # some variable data to supply depending on if data has been generated or not
     id_dict = {

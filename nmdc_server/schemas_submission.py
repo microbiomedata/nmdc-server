@@ -135,7 +135,7 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     field_notes_metadata: Optional[Dict[str, Any]] = None
 
 
-class SubmissionMetadataSchemaListItem(BaseModel):
+class SubmissionMetadataSchemaSlim(BaseModel):
     id: UUID
     author: schemas.User
     study_name: Optional[str] = None
@@ -144,6 +144,7 @@ class SubmissionMetadataSchemaListItem(BaseModel):
     date_last_modified: datetime
     created: datetime
     is_test_submission: bool = False
+    sample_count: int = 0
 
 
 class SubmissionImagesObject(BaseModel):
@@ -154,7 +155,7 @@ class SubmissionImagesObject(BaseModel):
     content_type: str
 
 
-class SubmissionMetadataSchema(SubmissionMetadataSchemaListItem, SubmissionMetadataSchemaCreate):
+class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataSchemaCreate):
     model_config = ConfigDict(from_attributes=True)
 
     author_orcid: str

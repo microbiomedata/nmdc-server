@@ -944,6 +944,21 @@ submission_study_image_association = Table(
     ),
 )
 
+# TODO: It would be nice if this could be derived from the schema
+ENVIRONMENTAL_DATA_SLOTS = [
+    "air_data",
+    "built_env_data",
+    "host_associated_data",
+    "hcr_cores_data",
+    "hcr_fluids_swabs_data",
+    "biofilm_data",
+    "misc_envs_data",
+    "plant_associated_data",
+    "sediment_data",
+    "soil_data",
+    "water_data",
+]
+
 
 class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
@@ -1038,13 +1053,27 @@ class SubmissionMetadata(Base):
         ]
 
     @property
-    def study_images_total_size(self):
+    def study_images_total_size(self) -> int:
         """Calculate the total size of all study images associated with this submission."""
         return (
             sum(image.size for image in self.study_images)  # type: ignore
             if self.study_images
             else 0
         )
+
+    @property
+    def sample_count(self) -> int:
+        if not self.metadata_submission or not isinstance(self.metadata_submission, dict):
+            return 0
+        sample_data = self.metadata_submission.get("sampleData", {})
+        if not sample_data:
+            return 0
+        count = 0
+        for slot in sample_data:
+            if slot in ENVIRONMENTAL_DATA_SLOTS:
+                samples = sample_data.get(slot, [])
+                count += len(samples)
+        return count
 
 
 class SubmissionRole(Base):
