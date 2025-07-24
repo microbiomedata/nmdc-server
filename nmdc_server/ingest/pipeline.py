@@ -308,6 +308,14 @@ def load(
                 .on_conflict_do_nothing()
             )
 
+            for data_generation in was_informed_by:
+                data_objects = inputs + outputs
+                db.execute(
+                    insert(models.omics_processing_output_association)
+                    .values([(data_generation, data_object) for data_object in data_objects])
+                    .on_conflict_do_nothing()
+                )
+
         for id_ in outputs:
             output = db.query(models.DataObject).get(id_)
             assert output
