@@ -18,7 +18,7 @@ SubmissionStatusEnum = get_submission_status_enum()
 
 # revision identifiers, used by Alembic.
 revision: str = "e27443f0837e"
-down_revision: Optional[str] = "6cb0b331ce8c"
+down_revision: Optional[str] = "ffa58e5f59fe"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 

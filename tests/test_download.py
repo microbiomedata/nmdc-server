@@ -18,7 +18,7 @@ def test_bulk_download_query(db: Session):
     )
     op1.outputs.append(raw1)
 
-    metag = fakes.MetagenomeAnnotationFactory(omics_processing=op1)
+    metag = fakes.MetagenomeAnnotationFactory(was_informed_by=[op1])
     metag_output = fakes.DataObjectFactory(
         url="https://data.microbiomedata.org/data/metag",
         omics_processing=op1,
@@ -64,7 +64,7 @@ def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user)
     )
     op1.outputs.append(raw1)
 
-    metag = fakes.MetagenomeAnnotationFactory(omics_processing=op1)
+    metag = fakes.MetagenomeAnnotationFactory(was_informed_by=[op1])
     metag_output = fakes.DataObjectFactory(
         url="https://data.microbiomedata.org/data/metag",
         omics_processing=op1,
@@ -97,7 +97,7 @@ def test_generate_bulk_download_filtered(
     )
     op1.outputs.append(raw1)
 
-    metag = fakes.MetagenomeAnnotationFactory(omics_processing=op1)
+    metag = fakes.MetagenomeAnnotationFactory(was_informed_by=[op1])
     metag_output = fakes.DataObjectFactory(
         url="https://data.microbiomedata.org/data/metag",
         omics_processing=op1,
