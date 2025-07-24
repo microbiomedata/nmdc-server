@@ -101,14 +101,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     )
     db.commit()
 
-    # Update the FK relationship from the data_object table to the
-    # omics_processing table.
-    logger.info("Updating foreign key relationship from Data Object to Data Generation")
-    data_object.update_data_generation_relation(
-        db,
-        mongodb["data_object_set"].find(),
-    )
-
     workflow_set = "workflow_execution_set"
 
     logger.info("Loading metabolomics analysis...")

@@ -962,9 +962,16 @@ class DataObjectQuerySchema(BaseQuerySchema):
         self, db: Session, filter: DataObjectFilter, op_cte: CTE
     ) -> Query:
         """Create a subquery that selects from a data object filter condition."""
-        query = db.query(models.DataObject.id.label("id")).join(
-            op_cte,
-            models.DataObject.omics_processing_id == op_cte.c.id,
+        query = (
+            db.query(models.DataObject.id.label("id"))
+            .join(
+                models.omics_processing_output_association,
+                models.omics_processing_output_association.c.id == models.DataObject.id,
+            )
+            .join(
+                op_cte,
+                models.omics_processing_output_association.c.omics_processing_id == op_cte.c.id,
+            )
         )
         if filter.workflow:
             query = query.filter(models.DataObject.workflow_type == filter.workflow.value)

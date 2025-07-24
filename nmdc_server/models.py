@@ -819,6 +819,8 @@ class DataObject(Base):
     workflow_type = Column(String, nullable=True)
 
     # denormalized relationship representing the source omics_processing
+    # TODO: investigate whether or not these can be removed completely in
+    # favor of the association table omics_processing_output_association
     omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
     omics_processing = relationship(OmicsProcessing)
 
