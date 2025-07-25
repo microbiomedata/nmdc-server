@@ -77,9 +77,9 @@ export default defineComponent({
     }
 
     function getStatus(item: MetadataSubmissionRecord) {
-      const color = item.status === submissionStatus.Complete ? 'success' : 'default';
+      const color = item.status === submissionStatus.Released ? 'success' : 'default';
       return {
-        text: item.status,
+        text: submissionStatus[item.status as keyof typeof submissionStatus] || item.status,
         color,
       };
     }

@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
@@ -802,7 +803,7 @@ def get_query_for_submitted_pending_review_submissions(db: Session):
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
     submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == "Submitted- Pending Review"
+        models.SubmissionMetadata.status == SubmissionStatusEnum.SubmittedPendingReview.text
     )
     return submitted_pending_review
 
