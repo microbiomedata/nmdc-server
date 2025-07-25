@@ -6,13 +6,12 @@ from uuid import UUID, uuid4
 from factory import Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
 from nmdc_server.database import SessionLocal
 from nmdc_server.schemas import AnnotationValue
-
-SubmissionStatusEnum = models.get_submission_status_enum()
 
 
 class DoiProvider(BaseProvider):
@@ -341,7 +340,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     id: UUID = Faker("uuid")
     author = SubFactory(UserFactory)
     author_orcid = Faker("pystr")
-    status = SubmissionStatusEnum["InProgress"].title
+    status = SubmissionStatusEnum.InProgress.text
     study_name = Faker("word")
     templates = Faker("pylist", nb_elements=2, value_types=[str])
     created = datetime.utcnow()

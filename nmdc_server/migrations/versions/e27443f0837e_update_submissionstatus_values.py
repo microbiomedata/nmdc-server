@@ -1,7 +1,7 @@
 """empty message
 
 Revision ID: e27443f0837e
-Revises: 6cb0b331ce8c
+Revises: ffa58e5f59fe
 Create Date: 2025-07-18 19:36:11.484730
 
 """
@@ -10,11 +10,8 @@ from typing import Optional
 
 import sqlalchemy as sa
 from alembic import op
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.sql import column, table
-
-from nmdc_server.models import get_submission_status_enum
-
-SubmissionStatusEnum = get_submission_status_enum()
 
 # revision identifiers, used by Alembic.
 revision: str = "e27443f0837e"
@@ -25,15 +22,15 @@ depends_on: Optional[str] = None
 STATUS_MAP = [
     {
         "old": "in-progress",
-        "new": SubmissionStatusEnum["InProgress"].title,
+        "new": SubmissionStatusEnum.InProgress.text,
     },
     {
         "old": "Submitted- Pending Review",
-        "new": SubmissionStatusEnum["SubmittedPendingReview"].title,
+        "new": SubmissionStatusEnum.SubmittedPendingReview.text,
     },
     {
         "old": "Complete",
-        "new": SubmissionStatusEnum["Released"].title,
+        "new": SubmissionStatusEnum.Released.text,
     },
 ]
 

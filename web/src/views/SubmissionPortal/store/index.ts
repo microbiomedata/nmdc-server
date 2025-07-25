@@ -55,9 +55,9 @@ const submissionStatus: Record<SubmissionStatusKey, SubmissionStatusTitle> = Obj
   Object.entries(NmdcSchema.enums.SubmissionStatusEnum.permissible_values).map(([key, item]: [SubmissionStatusKey, SubmissionStatusTitle]) => [key, item.title]),
 );
 
-const isSubmissionStatus = (str: any): str is SubmissionStatusTitle => Object.values(submissionStatus).includes(str);
+const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(submissionStatus).includes(str);
 
-const status = ref(submissionStatus.InProgress);
+const status = ref('InProgress');
 const isTestSubmission = ref(false);
 
 /**
@@ -371,7 +371,7 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string, status: SubmissionStatusTitle = submissionStatus.InProgress) {
+function submit(id: string, status: SubmissionStatusKey = 'InProgress') {
   if (canEditSubmissionMetadata()) {
     return api.updateRecord(id, payloadObject.value, status);
   }
@@ -390,7 +390,7 @@ function reset() {
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
   sampleData.value = {};
-  status.value = submissionStatus.InProgress;
+  status.value = 'InProgress';
   isTestSubmission.value = false;
 }
 
@@ -438,7 +438,7 @@ async function loadRecord(id: string) {
   Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
-  status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
+  status.value = isSubmissionStatus(val.status) ? val.status : 'InProgress';
   _permissionLevel = (val.permission_level as PermissionLevelValues);
   isTestSubmission.value = val.is_test_submission;
 

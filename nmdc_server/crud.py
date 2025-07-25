@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
@@ -16,9 +17,6 @@ from nmdc_server.logger import get_logger
 logger = get_logger(__name__)
 NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)
-
-
-SubmissionStatusEnum = models.get_submission_status_enum()
 
 
 # See: https://docs.djangoomics_processing.com/en/3.0/ref/models/querysets/#get-or-create
@@ -800,7 +798,7 @@ def get_query_for_submitted_pending_review_submissions(db: Session):
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
     submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == SubmissionStatusEnum["SubmittedPendingReview"].title
+        models.SubmissionMetadata.status == SubmissionStatusEnum.SubmittedPendingReview.text
     )
     return submitted_pending_review
 

@@ -12,6 +12,7 @@ import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -37,9 +38,6 @@ from nmdc_server.table import Table
 router = APIRouter()
 
 logger = get_logger(__name__)
-
-
-SubmissionStatusEnum = models.get_submission_status_enum()
 
 
 # get application settings
@@ -1185,8 +1183,8 @@ async def update_submission(
 
     # Create GitHub issue when metadata is being submitted and not a test submission
     if (
-        submission.status == SubmissionStatusEnum["InProgress"].title
-        and body_dict.get("status", None) == SubmissionStatusEnum["SubmittedPendingReview"].title
+        submission.status == SubmissionStatusEnum.InProgress.text
+        and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
         and submission.is_test_submission is False
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
@@ -1213,8 +1211,7 @@ async def update_submission(
 
         if body_dict.get("status", None):
             if (
-                body_dict.get("status", None)
-                == SubmissionStatusEnum["SubmittedPendingReview"].title
+                body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
                 and submission.is_test_submission is False
             ):
                 submission.status = body_dict["status"]
@@ -1267,7 +1264,7 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         f"Has data been generated: {data_generated}",
         f"PI name: {pi_name}",
         f"PI orcid: {pi_orcid}",
-        f"Status: {SubmissionStatusEnum['SubmittedPendingReview'].title}",
+        f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
         f"Data types: {omics_processing_types}",
         f"Sample type: {sample_types}",
         f"Number of samples: {num_samples}",
