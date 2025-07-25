@@ -104,6 +104,7 @@ def test_generate_bulk_download_filtered(
         workflow_type=WorkflowActivityTypeEnum.metagenome_annotation.value,
     )
     metag.outputs.append(metag_output)
+    op1.outputs.append(metag_output)
 
     db.commit()
 

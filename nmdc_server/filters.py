@@ -303,12 +303,11 @@ class GeneFunctionFilter(OmicsProcessingFilter):
         return (
             query.join(
                 association_table,
-                association_table.data_generation_id == models.OmicsProcessing.id,  # type: ignore
+                association_table.c.data_generation_id == models.OmicsProcessing.id,
             )
             .join(
                 models.MetagenomeAnnotation,
-                models.MetagenomeAnnotation.id
-                == association_table.metagenome_annotation_id,  # type: ignore
+                models.MetagenomeAnnotation.id == association_table.c.metagenome_annotation_id,
             )
             .join(
                 models.MGAGeneFunctionAggregation,
@@ -360,12 +359,11 @@ class MetaPGeneFunctionFilter(OmicsProcessingFilter):
         return (
             query.join(
                 association_table,
-                association_table.data_generation_id == models.OmicsProcessing.id,  # type: ignore
+                association_table.c.data_generation_id == models.OmicsProcessing.id,
             )
             .join(
                 models.MetaproteomicAnalysis,
-                models.MetaproteomicAnalysis.id
-                == association_table.metaproteomic_analysis_id,  # type: ignore
+                models.MetaproteomicAnalysis.id == association_table.c.metaproteomic_analysis_id,
             )
             .join(
                 models.MetaPGeneFunctionAggregation,
@@ -400,12 +398,12 @@ class MetaTGeneFunctionFilter(OmicsProcessingFilter):
         return (
             query.join(
                 association_table,
-                association_table.data_generation_id == models.OmicsProcessing.id,  # type: ignore
+                association_table.c.data_generation_id == models.OmicsProcessing.id,
             )
             .join(
                 models.MetatranscriptomeAnnotation,
                 models.MetatranscriptomeAnnotation.id
-                == association_table.metatranscriptome_annotation_id,  # type: ignore
+                == association_table.c.metatranscriptome_annotation_id,
             )
             .join(
                 models.MetaTGeneFunctionAggregation,

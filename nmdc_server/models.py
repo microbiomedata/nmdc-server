@@ -820,8 +820,20 @@ class DataObject(Base):
     workflow_type = Column(String, nullable=True)
 
     # denormalized relationship representing the source omics_processing
+    # TODO: investigate whether or not these can be removed completely in
+    # favor of the association table omics_processing_output_association
     omics_processing_id = Column(String, ForeignKey("omics_processing.id"), nullable=True)
     omics_processing = relationship(OmicsProcessing)
+
+    # Note that we're telling mypy to ignore this weird typing.
+    # We are declaring this as a list of OmicsProcessing (which it is),
+    # but mypy expects a RelationshipValue. This might be avoidable in
+    # SQLAlchemy 2.0 using Mapped[...]
+    omics_processings: List[OmicsProcessing] = relationship(
+        OmicsProcessing,
+        secondary=omics_processing_output_association,
+        back_populates="outputs",
+    )  # type: ignore
 
     # Define a property that can be used to shortcut calculating counts.
     # Useful when downstream code can more efficiently determine download
