@@ -16,7 +16,12 @@ import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
 import { deleteSubmission } from '../store/api';
-import { HARMONIZER_TEMPLATES, MetadataSubmissionRecord, PaginatedResponse } from '@/views/SubmissionPortal/types';
+import {
+  HARMONIZER_TEMPLATES,
+  MetadataSubmissionRecord,
+  MetadataSubmissionRecordSlim,
+  PaginatedResponse,
+} from '@/views/SubmissionPortal/types';
 
 const headers: DataTableHeader[] = [
   {
@@ -65,14 +70,14 @@ export default defineComponent({
       mustSort: false,
     });
     const isDeleteDialogOpen = ref(false);
-    const deleteDialogSubmission = ref<MetadataSubmissionRecord | null>(null);
+    const deleteDialogSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
     const isTestFilter = ref(null);
     const testFilterValues = [
       { text: 'Show all submissions', val: null },
       { text: 'Show only test submissions', val: true },
       { text: 'Hide test submissions', val: false }];
 
-    async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecord>> {
+    async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
       return api.listRecords(params, isTestFilter.value);
     }
 
@@ -106,14 +111,14 @@ export default defineComponent({
       submission.setSortOptions(options.value.sortBy[0], sortOrder);
     }, { deep: true });
 
-    function handleOpenDeleteDialog(item: MetadataSubmissionRecord | null) {
+    function handleOpenDeleteDialog(item: MetadataSubmissionRecordSlim | null) {
       deleteDialogSubmission.value = item;
       if (deleteDialogSubmission) {
         isDeleteDialogOpen.value = true;
       }
     }
 
-    async function handleDelete(item: MetadataSubmissionRecord | null) {
+    async function handleDelete(item: MetadataSubmissionRecordSlim | null) {
       if (!item) {
         return;
       }
@@ -275,7 +280,7 @@ export default defineComponent({
             />
           </template>
           <template #[`item.templates`]="{ item }">
-            {{ item.metadata_submission.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
+            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
           </template>
           <template #[`item.date_last_modified`]="{ item }">
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
