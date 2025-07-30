@@ -64,6 +64,10 @@ export default defineComponent({
       type: Number,
       default: 360,
     },
+    vistab: {
+      type: Number,
+      default: null,
+    },
   },
 
   setup(props, { emit }) {
@@ -86,6 +90,10 @@ export default defineComponent({
     });
 
     async function getMapData() {
+      if (props.vistab === 1) {
+        // Don't update map data if ENVIRONMENT tab is clicked
+        return;
+      }
       await new Promise<void>((res) => {
         window.setTimeout(res, 300);
       });

@@ -62,6 +62,10 @@ export default defineComponent({
       type: Array as PropType<Condition[]>,
       required: true,
     },
+    vistab: {
+      type: Number,
+      default: null,
+    },
   },
 
   setup(props) {
@@ -167,6 +171,7 @@ export default defineComponent({
           <ClusterMap
             :conditions="conditions"
             :height="360"
+            :vistab="vistab"
             @selected="setBoundsFromMap($event)"
           />
         </TooltipCard>
