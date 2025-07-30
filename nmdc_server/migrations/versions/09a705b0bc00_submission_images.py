@@ -1,6 +1,6 @@
 """Add submission_images_object table.
 
-The name of the table indicates that stores references to objects in the nmdc-submission-images
+The name of the table indicates that it stores references to objects in the nmdc-submission-images
 Google Cloud Storage bucket.
 
 Each submission can have:
@@ -35,7 +35,7 @@ def upgrade():
     op.create_table(
         "submission_images_object",
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("size", sa.BigInteger(), nullable=False),
+        sa.Column("size", sa.BigInteger(), nullable=False, comment="Number of bytes"),
         sa.Column("content_type", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("name", name=op.f("pk_submission_images_object")),
     )
