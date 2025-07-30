@@ -51,8 +51,8 @@ class Settings(BaseSettings):
     gcs_project_id: str | None = None
     gcs_object_name_prefix: str  # no default, must be set in .env file
 
-    max_submission_image_file_size: int = 25 * 1000 * 1000  # 25 MB
-    max_submission_image_total_size: int = 1 * 1000 * 1000 * 1000  # 1 GB
+    max_submission_image_file_size_bytes: int = 25 * 1000 * 1000  # 25 MB
+    max_submission_image_total_size_bytes: int = 1 * 1000 * 1000 * 1000  # 1 GB
 
     @property
     def orcid_openid_config_url(self) -> str:

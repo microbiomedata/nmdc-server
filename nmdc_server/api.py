@@ -1482,7 +1482,7 @@ async def generate_signed_upload_url(
     db: Session = Depends(get_db),
 ):
     # Don't accept files larger than the configured limit (default is 25 MB)
-    if body.file_size > settings.max_submission_image_file_size:
+    if body.file_size > settings.max_submission_image_file_size_bytes:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File size exceeds limit"
         )
@@ -1492,7 +1492,7 @@ async def generate_signed_upload_url(
 
     # Ensure that the incoming image will not push the submission over its quota
     potential_max_size = submission.study_images_total_size + body.file_size
-    if potential_max_size > settings.max_submission_image_total_size:
+    if potential_max_size > settings.max_submission_image_total_size_bytes:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Submission quota exceeded",
