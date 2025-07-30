@@ -40,6 +40,7 @@ const staticUpsetTooltips = {
   MT: 'Metatranscriptomics',
   NOM: 'Natural Organic Matter',
   LIP: 'Lipidomics',
+  AMP: 'Amplicon',
 };
 
 export default defineComponent({

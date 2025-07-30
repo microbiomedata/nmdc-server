@@ -32,6 +32,8 @@ omics_types = {
     "nom": "Organic Matter Characterization",
     "lipidome": "Lipidomics",
     "lipidomics": "Lipidomics",
+    "amplicon_sequencing_assay": "Amplicon",
+    "amplicon": "Amplicon",
 }
 
 
