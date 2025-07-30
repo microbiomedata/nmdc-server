@@ -1054,7 +1054,8 @@ class SubmissionMetadata(Base):
 
     @property
     def study_images_total_size(self) -> int:
-        """Calculate the total size (in bytes) of all study images associated with this submission."""
+        """Calculate the total size (in bytes) of all study images associated with this
+        submission."""
         return (
             sum(image.size for image in self.study_images)  # type: ignore
             if self.study_images
