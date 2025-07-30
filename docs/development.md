@@ -72,6 +72,32 @@ NMDC_MONGO_USER=changeme
 NMDC_MONGO_PASSWORD=changeme
 ```
 
+### Google Cloud Storage
+
+Google Cloud Storage (GCS) is used to store images associated with Submission Portal submissions. By default, local development uses a local mock GCS server. This is controlled by the `NMDC_GCS_USE_FAKE` variable in `.env`. If you want to use the real GCS server, set this variable to `false`.
+
+Whether you use the real or fake GCS server, you will need to set up authentication. The recommended way to do this is to use Application Default Credentials (ADC) with service account impersonation. Service account impersonation is required for generating signed URLs for uploading/downloading images directly to/from GCS.
+
+1. Ask a team member with the necessary GCS permissions to associate your Google Cloud account with the NMDC Google Cloud project and service account. 
+2. Install the Google Cloud Command Line Interface (CLI) by following the instructions at https://cloud.google.com/sdk/docs/install.
+3. Run the following command to set up Application Default Credentials (ADC):
+    ```bash
+    gcloud auth application-default login --impersonate-service-account <service account email will be provided by team member>
+    ```
+   
+You also must generate a local object name prefix. This prefix is used to differentiate which system uploaded to the shared GCS bucket. Local development systems should use the prefix `local_<random_suffix>`.
+
+1. Generate a random suffix using the following command:
+    ```bash
+    openssl rand -hex 4
+    ```
+2. Set the `NMDC_GCS_OBJECT_NAME_PREFIX` variable in `.env` to `local_<random_suffix>`.
+
+    ```bash
+   NMDC_GCS_OBJECT_NAME_PREFIX=local_1234abcd  # replace 1234abcd with your random suffix
+   ```
+
+
 ## Load production data
 
 The `nmdc-server` CLI has a `load-db` subcommand which populates your local database using a nightly production backup. These backups are stored on NERSC. You must have NERSC credentials to use this subcommand.
