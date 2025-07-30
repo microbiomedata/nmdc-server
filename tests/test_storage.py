@@ -1,4 +1,4 @@
-from nmdc_server.utils import sanitize_filename
+from nmdc_server.storage import sanitize_filename
 
 
 def test_sanitize_filename_should_remove_newline_characters():

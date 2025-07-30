@@ -35,9 +35,8 @@ from nmdc_server.models import (
     User,
 )
 from nmdc_server.pagination import Pagination
-from nmdc_server.storage import BucketName, storage
+from nmdc_server.storage import BucketName, sanitize_filename, storage
 from nmdc_server.table import Table
-from nmdc_server.utils import sanitize_filename
 
 router = APIRouter()
 
