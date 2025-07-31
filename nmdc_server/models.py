@@ -4,6 +4,7 @@ from itertools import chain
 from typing import Any, Dict, Iterator, List, Optional, Type, Union
 from uuid import uuid4
 
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -1056,7 +1057,7 @@ class SubmissionMetadata(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     author_orcid = Column(String, nullable=False)
     created = Column(DateTime, nullable=False, default=datetime.utcnow)
-    status = Column(String, nullable=False, default="in-progress")
+    status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
     metadata_submission = Column(JSONB, nullable=False)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
     study_name = Column(String, nullable=True)

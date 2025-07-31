@@ -462,7 +462,7 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id, submissionStatus.SubmittedPendingReview);
+      await submit(root.$route.params.id, 'SubmittedPendingReview');
       submitDialog.value = false;
     });
 
@@ -1027,11 +1027,11 @@ export default defineComponent({
             <v-btn
               color="success"
               depressed
-              :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
+              :disabled="!canSubmit || status !== 'InProgress' || submitCount > 0"
               :loading="submitLoading"
               @click="submitDialog = true"
             >
-              <span v-if="status === submissionStatus.SubmittedPendingReview || submitCount">
+              <span v-if="status === 'SubmittedPendingReview' || submitCount">
                 <v-icon>mdi-check-circle</v-icon>
                 Submitted
               </span>
