@@ -43,11 +43,15 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
         listen(Engine, "after_cursor_execute", after_cursor_execute)
 
     # Load the description template and replace the placeholder(s) within it.
-    description = load_template("description.template.md") \
-        .replace(r"{{ developer_tools_url }}", r"/user") \
-        .replace(r"{{ runtime_api_url }}", r"https://api.microbiomedata.org") \
-        .replace(r"{{ nmdc_data_portal_url }}", r"https://data.microbiomedata.org") \
-        .replace(r"{{ nmdc_submission_portal_url }}", r"https://data.microbiomedata.org/submission/home")
+    description = (
+        load_template("description.template.md")
+        .replace(r"{{ developer_tools_url }}", r"/user")
+        .replace(r"{{ runtime_api_url }}", r"https://api.microbiomedata.org")
+        .replace(r"{{ nmdc_data_portal_url }}", r"https://data.microbiomedata.org")
+        .replace(
+            r"{{ nmdc_submission_portal_url }}", r"https://data.microbiomedata.org/submission/home"
+        )
+    )
 
     app = FastAPI(
         title="NMDC Data and Submission Portal API",
