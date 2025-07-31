@@ -45,11 +45,11 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
     # Load the description template and replace the placeholder(s) within it.
     description = (
         load_template("description.template.md")
-        .replace(r"{{ developer_tools_url }}", r"/user")
-        .replace(r"{{ runtime_api_url }}", r"https://api.microbiomedata.org")
-        .replace(r"{{ nmdc_data_portal_url }}", r"https://data.microbiomedata.org")
+        .replace("{{ developer_tools_url }}", "/user")
+        .replace("{{ runtime_api_url }}", "https://api.microbiomedata.org")
+        .replace("{{ nmdc_data_portal_url }}", "https://data.microbiomedata.org")
         .replace(
-            r"{{ nmdc_submission_portal_url }}", r"https://data.microbiomedata.org/submission/home"
+            "{{ nmdc_submission_portal_url }}", "https://data.microbiomedata.org/submission/home"
         )
     )
 
