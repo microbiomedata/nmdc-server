@@ -86,6 +86,11 @@ export default Vue.extend({
       const schema = NmdcSchema.slots.gold_path_field;
       return schema.annotations?.tooltip?.value || '';
     },
+    mixsDescription() {
+      // @ts-ignore
+      const schema = NmdcSchema.slots.mixs_env_triad_field;
+      return schema.annotations?.tooltip?.value || '';
+    },
   },
   methods: {
     fieldDisplayName,
@@ -157,6 +162,24 @@ export default Vue.extend({
               </v-btn>
             </template>
             <span> {{ goldDescription }}</span>
+          </v-tooltip>
+          <v-tooltip
+            v-if="groupname === 'MIxS Environmental Triad'"
+            right
+            open-delay="600"
+          >
+            <template #activator="{ on, attrs }">
+              <v-btn
+                icon
+                x-small
+                v-bind="attrs"
+                class="ml-2"
+                v-on="on"
+              >
+                <v-icon>mdi-help-circle</v-icon>
+              </v-btn>
+            </template>
+            <span> {{ mixsDescription }}</span>
           </v-tooltip>
         </v-subheader>
         <template v-for="sf in filteredFields">
