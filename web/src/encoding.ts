@@ -619,6 +619,16 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
       name: 'Chromatography Method',
       schemaName: 'ChromatographyConfiguration',
     },
+    instrument_name: {
+      name: 'Instrument Name',
+      group: 'Data Generation',
+      schemaName: 'Instrument',
+    },
+    omics_type: {
+      name: 'Data Type',
+      group: 'Data Generation',
+      schemaName: 'analyte_category',
+    },
   },
   reads_qc: {},
   metagenome_annotation: {},
