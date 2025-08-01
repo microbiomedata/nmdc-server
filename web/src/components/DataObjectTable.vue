@@ -2,13 +2,18 @@
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
-  computed, defineComponent, PropType, reactive,
+  computed, defineComponent, PropType, reactive, ref, Ref,
 } from '@vue/composition-api';
 import { flattenDeep } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
 import { humanFileSize } from '@/data/utils';
-import { client, BiosampleSearchResult, OmicsProcessingResult } from '@/data/api';
+import {
+  client,
+  BiosampleSearchResult,
+  OmicsProcessingResult,
+  api,
+} from '@/data/api';
 import { stateRefs, acceptTerms } from '@/store';
 import { metaproteomicCategoryEnumToDisplay } from '@/encoding';
 
@@ -86,6 +91,25 @@ export default defineComponent({
         sortable: false,
       },
     ];
+
+    const selectedHtmlDataObject: Ref<any | null> = ref(null);
+    const dataModal = ref(false);
+    const iframeDataSource = ref('');
+    function hasHtmlData(fileType: string) {
+      return [
+        'Kraken2 Krona Plot',
+        'GOTTCHA2 Krona Plot',
+        'Centrifuge Krona Plot',
+      ].includes(fileType);
+    }
+    async function openHtmlDataModal(item: any) {
+      iframeDataSource.value = await api.getDataObjectUrl(item.id);
+      selectedHtmlDataObject.value = item;
+      dataModal.value = true;
+    }
+    function handleIframeScroll(e) {
+      console.log(e);
+    }
 
     const termsDialog = reactive({
       item: null as null | OmicsProcessingResult,
@@ -186,6 +210,12 @@ export default defineComponent({
     }
 
     return {
+      dataModal,
+      hasHtmlData,
+      openHtmlDataModal,
+      selectedHtmlDataObject,
+      iframeDataSource,
+      handleIframeScroll,
       onAcceptTerms,
       handleDownload,
       descriptionMap,
@@ -211,6 +241,38 @@ export default defineComponent({
       <DownloadDialog
         @clicked="onAcceptTerms"
       />
+    </v-dialog>
+    <v-dialog
+      v-if="selectedHtmlDataObject !== null"
+      v-model="dataModal"
+      scroll-strategy="block"
+      width="80vw"
+    >
+      <v-card
+        class="d-flex flex-column"
+        width="100%"
+        height="80vh"
+      >
+        <v-card-text class="d-flex flex-grow-1">
+          <span v-if="!iframeDataSource">Loading data</span>
+          <iframe
+            v-else
+            title="iframe title"
+            :src="iframeDataSource"
+            :style="{border: 'none'}"
+            width="100%"
+          />
+        </v-card-text>
+        <v-card-actions class="flex-row">
+          <v-spacer />
+          <v-btn
+            text
+            @click="dataModal = false"
+          >
+            Close
+          </v-btn>
+        </v-card-actions>
+      </v-card>
     </v-dialog>
     <v-data-table
       :headers="headers"
@@ -282,7 +344,17 @@ export default defineComponent({
               <span>This file is included in the currently selected bulk download</span>
             </v-tooltip>
           </td>
-          <td>{{ item.file_type }}</td>
+          <td>
+            {{ item.file_type }}
+            <v-btn
+              v-if="hasHtmlData(item.file_type)"
+              color="primary"
+              icon
+              @click="openHtmlDataModal(item)"
+            >
+              <v-icon>mdi-magnify</v-icon>
+            </v-btn>
+          </td>
           <td>{{ item.file_type_description }}</td>
           <td>{{ humanFileSize(item.file_size_bytes) }}</td>
           <td>{{ item.downloads }}</td>
