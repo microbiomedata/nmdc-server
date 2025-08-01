@@ -66,7 +66,9 @@ def find_parent_process(output_id: str, mongodb: Database) -> Optional[dict[str,
     return None
 
 
-def get_biosample_input_ids(input_id: str, mongodb: Database, results: set) -> set[Any]:
+def get_biosample_input_ids(
+    input_id: str, mongodb: Database, results: set[str], sampled_portions: set[str]
+) -> set[Any]:
     """
     Given an input ID return all biosample objects that are included in the input resource.
 
@@ -87,14 +89,18 @@ def get_biosample_input_ids(input_id: str, mongodb: Database, results: set) -> s
     if not query:
         return results
 
-    processed_sample_id = query[0]["id"]
+    processed_sample = query[0]
+    processed_sample_id = processed_sample["id"]
+    sampled_portion = set(processed_sample.get("sampled_portion", []))
+    if sampled_portion:
+        sampled_portions.update(sampled_portion)
 
     # Recursive case. For processed samples find the process that created it,
     # and check the inputs of that process.
     parent_process = find_parent_process(processed_sample_id, mongodb)
     if parent_process:
         for parent_input_id in parent_process["has_input"]:
-            get_biosample_input_ids(parent_input_id, mongodb, results)
+            get_biosample_input_ids(parent_input_id, mongodb, results, sampled_portions)
     return results
 
 
@@ -134,8 +140,13 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
     logger = get_logger(__name__)
     input_ids: list[str] = obj.pop("has_input", [""])
     biosample_input_ids: set[str] = set()
+    sampled_portions: set[str] = set()
     for input_id in input_ids:
-        biosample_input_ids.union(get_biosample_input_ids(input_id, mongodb, biosample_input_ids))
+        biosample_input_ids.union(
+            get_biosample_input_ids(input_id, mongodb, biosample_input_ids, sampled_portions)
+        )
+    if sampled_portions:
+        obj["sampled_portions"] = list(sampled_portions)
 
     obj["biosample_inputs"] = []
     biosample_input_objects = []
