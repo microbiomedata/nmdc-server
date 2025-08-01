@@ -246,7 +246,10 @@ export default defineComponent({
               class="my-3"
             >
               <v-tab-item key="omics">
-                <BiosampleVisGroup :conditions="gatedOmicsVisConditions" :vistab="vistab" />
+                <BiosampleVisGroup
+                  :conditions="gatedOmicsVisConditions"
+                  :vistab="vistab"
+                />
               </v-tab-item>
               <v-tab-item key="environments">
                 <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
