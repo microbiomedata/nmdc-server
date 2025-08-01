@@ -104,14 +104,16 @@ def get_biosample_input_ids(
     return results
 
 
-def get_configuration_name(mongodb: Database, configuration_id: str, config_map) -> Optional[str]:
+def get_configuration_property(
+    mongodb: Database, configuration_id: str, key: str, config_map
+) -> Optional[str]:
     config_set = "configuration_set"
     if configuration_id in config_map:
         config_record = config_map[configuration_id]
     else:
         config_record = mongodb[config_set].find_one({"id": configuration_id})
         config_map[configuration_id] = config_record
-    return config_record["name"] if config_record else None
+    return config_record[key] if config_record else None
 
 
 def get_poolable_replicate_manifest(
@@ -172,14 +174,20 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
 
     # Get configuration info
     mass_spec_config_id = obj.pop("has_mass_spectrometry_configuration", None)
-    mass_spec_config_name = get_configuration_name(mongodb, mass_spec_config_id, config_map)
+    mass_spec_config_name = get_configuration_property(
+        mongodb, mass_spec_config_id, "name", config_map
+    )
+    mass_spec_polarity_mode = get_configuration_property(
+        mongodb, mass_spec_config_id, "polarity_mode", config_map
+    )
     if mass_spec_config_name:
         obj["mass_spectrometry_configuration_name"] = mass_spec_config_name
         obj["mass_spectrometry_configuration_id"] = mass_spec_config_id
+        obj["mass_spectrometry_config_polarity_mode"] = mass_spec_polarity_mode
 
     chromatography_config_id = obj.pop("has_chromatography_configuration", None)
-    chromatography_config_name = get_configuration_name(
-        mongodb, chromatography_config_id, config_map
+    chromatography_config_name = get_configuration_property(
+        mongodb, chromatography_config_id, "name", config_map
     )
     if chromatography_config_name:
         obj["chromatography_configuration_name"] = chromatography_config_name
