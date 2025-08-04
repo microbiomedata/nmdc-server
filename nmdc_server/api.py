@@ -1,7 +1,6 @@
 import csv
 import json
 import logging
-import re
 import time
 from importlib import resources
 from io import BytesIO, StringIO
@@ -1477,12 +1476,12 @@ async def get_users(
 ):
     users = db.query(User)
     if type(search_filter) is str:
-        if re.match(
-            r"^\d{4}-\d{4}-\d{4}-\d{3}[\dX]$", search_filter
-        ):  # if search_filter is patterned like an ORCID then filter on that
-            users = users.filter(models.User.orcid == search_filter)
-        else:  # otherwise filter by name
-            users = users.filter(models.User.name.ilike(f"%{search_filter}%"))
+        users = users.filter(
+            (
+                models.User.name.ilike(f"%{search_filter}%")
+                | models.User.orcid.ilike(f"%{search_filter}%")
+            )
+        )
 
     return pagination.response(users)
 

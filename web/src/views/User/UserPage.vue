@@ -18,7 +18,7 @@ export default defineComponent({
       page: 1,
       itemsPerPage,
     });
-    const search_filter = ref(null);
+    const searchFilter = ref('');
     const headers : DataTableHeader[] = [
       {
         text: 'ORCID',
@@ -31,12 +31,12 @@ export default defineComponent({
     ];
 
     async function getUsers(params: SearchParams): Promise<SearchResponse<User>> {
-      return api.getAllUsers(params, search_filter.value);
+      return api.getAllUsers(params, searchFilter.value);
     }
 
     const users = usePaginatedResults(ref([]), getUsers, ref([]), itemsPerPage);
     watch(options, () => users.setPage(options.value.page), { deep: true });
-    watch(search_filter, () => users.setPage(options.value.page), { deep: true });
+    watch(searchFilter, () => users.setPage(options.value.page), { deep: true });
 
     async function updateAdminStatus(item: User) {
       await api.updateUser(item.id, item);
@@ -48,7 +48,7 @@ export default defineComponent({
       updateAdminStatus,
       options,
       currentUser,
-      search_filter,
+      searchFilter,
     };
   },
 });
@@ -63,7 +63,7 @@ export default defineComponent({
           Users
         </v-card-title>
         <v-text-field
-          v-model="search_filter"
+          v-model="searchFilter"
           label="Search Users"
           class="mb-2"
           outlined
