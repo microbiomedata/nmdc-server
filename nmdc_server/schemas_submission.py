@@ -172,9 +172,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
     # @computed_field-decorated properties below.
     pi_image_name: Optional[str] = Field(exclude=True, default=None)
     primary_study_image_name: Optional[str] = Field(exclude=True, default=None)
-    study_images_objects: list[SubmissionImagesObject] = Field(
-        exclude=True, default_factory=list, alias="study_images"
-    )
+    study_images: list[SubmissionImagesObject] = Field(exclude=True, default_factory=list)
 
     @field_validator("metadata_submission", mode="before")
     def populate_roles(cls, metadata_submission, info: ValidationInfo):
@@ -200,7 +198,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
     # https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.computed_field
     @computed_field  # type: ignore
     @property
-    def pi_image(self) -> Optional[str]:
+    def pi_image_url(self) -> Optional[str]:
         """Returns the signed URL for the PI's image if available."""
         if self.pi_image_name:
             return storage.get_signed_download_url(
@@ -210,7 +208,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
 
     @computed_field  # type: ignore
     @property
-    def primary_study_image(self) -> Optional[str]:
+    def primary_study_image_url(self) -> Optional[str]:
         """Returns the signed URL for the primary study image if available."""
         if self.primary_study_image_name:
             return storage.get_signed_download_url(
@@ -220,13 +218,13 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
 
     @computed_field  # type: ignore
     @property
-    def study_images(self) -> List[str]:
+    def study_image_urls(self) -> List[str]:
         """Returns a list of signed URLs for all study images."""
-        if not self.study_images_objects:
+        if not self.study_images:
             return []
         return [
             storage.get_signed_download_url(BucketName.SUBMISSION_IMAGES, img.name).url
-            for img in self.study_images_objects
+            for img in self.study_images
         ]
 
 

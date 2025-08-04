@@ -954,6 +954,8 @@ def test_set_submission_pi_image_success(db: Session, client: TestClient, logged
     )
 
     assert response.status_code == 200
+    body = response.json()
+    assert body.get("pi_image_url") is not None
 
     # Verify the image was set in the database
     db.refresh(submission)
@@ -989,6 +991,8 @@ def test_set_submission_primary_study_image_success(
     )
 
     assert response.status_code == 200
+    body = response.json()
+    assert body.get("primary_study_image_url") is not None
 
     # Verify the image was set in the database
     db.refresh(submission)
@@ -1023,6 +1027,11 @@ def test_set_submission_study_images_success(db: Session, client: TestClient, lo
     )
 
     assert response.status_code == 200
+    body = response.json()
+    study_image_urls = body.get("study_image_urls")
+    assert study_image_urls is not None
+    assert len(study_image_urls) == 1
+
     db.refresh(submission)
     assert len(submission.study_images) == 1
     assert submission.study_images[0].name == "study-image-1.jpg"
@@ -1039,6 +1048,11 @@ def test_set_submission_study_images_success(db: Session, client: TestClient, lo
     )
 
     assert response.status_code == 200
+    body = response.json()
+    study_image_urls = body.get("study_image_urls")
+    assert study_image_urls is not None
+    assert len(study_image_urls) == 2
+
     db.refresh(submission)
     assert len(submission.study_images) == 2
 
@@ -1083,9 +1097,11 @@ def test_set_submission_image_replaces_existing_single_image(
     )
 
     assert response.status_code == 200
-    db.refresh(submission)
+    body = response.json()
+    assert body.get("pi_image_url") is not None
 
     # Verify the new image replaced the old one in the database
+    db.refresh(submission)
     assert submission.pi_image.name == "new-pi-image.png"
     assert submission.pi_image.size == 1000000
     assert submission.pi_image.content_type == "image/png"
