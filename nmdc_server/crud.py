@@ -696,7 +696,7 @@ contributors_edit_roles = [
 def get_submission_for_user(
     db: Session,
     submission_id: str,
-    requester_orcid: str,
+    requester: models.User,
     *,
     allowed_roles: list[models.SubmissionEditorRole] | None = None,
 ) -> models.SubmissionMetadata:
@@ -708,7 +708,7 @@ def get_submission_for_user(
 
     :param db: The database session.
     :param submission_id: The ID of the submission to retrieve.
-    :param requester_orcid: The ORCID iD of the user requesting the submission.
+    :param requester: The user requesting the submission.
     :param allowed_roles: A list of allowed roles that the user must have on the submission. If
         None, no role check is performed.
     """
@@ -717,8 +717,10 @@ def get_submission_for_user(
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    if allowed_roles:
-        role = get_submission_role(db, submission_id, requester_orcid)
+    if allowed_roles and not requester.is_admin:
+        # If the user is not an admin, check if they have one of the allowed roles
+        # on the submission.
+        role = get_submission_role(db, submission_id, requester.orcid)
         if not role or models.SubmissionEditorRole(role.role) not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,

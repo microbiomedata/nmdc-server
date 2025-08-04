@@ -2,8 +2,8 @@ from csv import DictReader
 from datetime import UTC, datetime, timedelta
 
 import pytest
-from nmdc_schema.nmdc import SubmissionStatusEnum
 from fastapi.encoders import jsonable_encoder
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
 
@@ -1196,6 +1196,33 @@ def test_set_submission_image_editor_role_authorized(
 
     upload_data = {
         "object_name": "editor-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 200
+
+
+def test_set_submission_image_admin_role_authorized(
+    db: Session, client: TestClient, logged_in_admin_user
+):
+    """Test that users with admin role can set submission images."""
+    other_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=other_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "admin-image.jpg",
         "file_size": 1000000,
         "content_type": "image/jpeg",
     }

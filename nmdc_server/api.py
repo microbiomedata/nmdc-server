@@ -1488,7 +1488,7 @@ async def generate_signed_upload_url(
         )
 
     # Ensure the requested submission exists and the user has permission to edit it
-    submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
 
     # Ensure that the incoming image will not push the submission over its quota
     potential_max_size = submission.study_images_total_size + body.file_size
@@ -1523,7 +1523,7 @@ async def set_submission_image(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> models.SubmissionMetadata:
-    submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
 
     # Create a new SubmissionImagesObject
     new_image = SubmissionImagesObject(
@@ -1561,7 +1561,7 @@ async def delete_submission_image(
         None, description="Image name for study_images, not needed for single image fields"
     ),
 ):
-    submission = get_submission_for_user(db, id, user.orcid, allowed_roles=context_edit_roles)
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
 
     if image_type == ImageType.STUDY_IMAGES:
         if image_name is None:
