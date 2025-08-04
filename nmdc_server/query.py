@@ -611,9 +611,10 @@ class StudyQuerySchema(BaseQuerySchema):
     # The following private methods inject subqueries into Study `query_expressions`.
     def _count_omics_data_query(self, db: Session, query_schema: BaseQuerySchema) -> Query:
         """Generate a query counting matching omics_processing types."""
-        model = query_schema.table.model
-        aliased_model = aliased(model)
-        table_name = model.__tablename__  # type: ignore
+        workflow_model = query_schema.table.model
+        aliased_workflow_model = aliased(workflow_model)
+        table_name = workflow_model.__tablename__  # type: ignore
+        was_informed_by_table = models.workflow_activity_to_data_generation_map[table_name]
 
         op_alias = aliased(models.OmicsProcessing)
         biosample_alias = aliased(models.Biosample)
@@ -623,12 +624,16 @@ class StudyQuerySchema(BaseQuerySchema):
         q = (
             db.query(
                 op_alias.study_id.label(f"{table_name}_study_id"),
-                func.count(func.distinct(model.id)).label(f"{table_name}_count"),  # type: ignore
+                func.count(func.distinct(aliased_workflow_model.id)).label(f"{table_name}_count"),
             )
-            .join(op_alias)
+            .select_from(op_alias)
             .join(biosample_alias, op_alias.biosample_inputs)
-            .join(aliased_model)
-            .join(subquery, subquery.c.id == model.id)  # type: ignore
+            .join(was_informed_by_table, was_informed_by_table.c.data_generation_id == op_alias.id)
+            .join(
+                aliased_workflow_model,
+                aliased_workflow_model.id == was_informed_by_table.c[f"{table_name}_id"],
+            )
+            .join(subquery, subquery.c.id == aliased_workflow_model.id)
             .group_by(op_alias.study_id)
         )
         return q
@@ -783,6 +788,22 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
                 func.count(func.distinct(id_column)).label("id_count"),
                 annotations_column["omics_type"].astext,
             ).group_by(annotations_column["omics_type"].astext)
+            return {value: count for count, value in aggregated_query if value is not None}
+        if attribute == "metaproteomics_analysis_category":
+            association_table = models.metaproteomic_analysis_data_generation_association
+            query = self.query(db)
+            query = query.join(
+                association_table,
+                models.OmicsProcessing.id == association_table.c.data_generation_id,
+            )
+            query = query.join(
+                models.MetaproteomicAnalysis,
+                models.MetaproteomicAnalysis.id == association_table.c.metaproteomic_analysis_id,
+            )
+            aggregated_query = query.with_entities(
+                func.count(func.distinct(models.OmicsProcessing.id)).label("id_count"),
+                models.MetaproteomicAnalysis.metaproteomics_analysis_category,
+            ).group_by(models.MetaproteomicAnalysis.metaproteomics_analysis_category)
             return {value: count for count, value in aggregated_query if value is not None}
         return super().facet(db, attribute)
 
@@ -957,9 +978,16 @@ class DataObjectQuerySchema(BaseQuerySchema):
         self, db: Session, filter: DataObjectFilter, op_cte: CTE
     ) -> Query:
         """Create a subquery that selects from a data object filter condition."""
-        query = db.query(models.DataObject.id.label("id")).join(
-            op_cte,
-            models.DataObject.omics_processing_id == op_cte.c.id,
+        query = (
+            db.query(models.DataObject.id.label("id"))
+            .join(
+                models.omics_processing_output_association,
+                models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
+            )
+            .join(
+                op_cte,
+                models.omics_processing_output_association.c.omics_processing_id == op_cte.c.id,
+            )
         )
         if filter.workflow:
             query = query.filter(models.DataObject.workflow_type == filter.workflow.value)

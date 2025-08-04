@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 from factory import Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
@@ -203,7 +204,7 @@ class PipelineStepBase(SQLAlchemyModelFactory):
     started_at_time: datetime = Faker("date_time")
     ended_at_time: datetime = Faker("date_time")
     execution_resource: str = Faker("word")
-    omics_processing: models.OmicsProcessing = SubFactory(OmicsProcessingFactory)
+    was_informed_by: List[models.OmicsProcessing] = []
 
 
 class ReadsQCFactory(PipelineStepBase):
@@ -339,7 +340,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     id: UUID = Faker("uuid")
     author = SubFactory(UserFactory)
     author_orcid = Faker("pystr")
-    status = "In Progress"
+    status = SubmissionStatusEnum.InProgress.text
     study_name = Faker("word")
     templates = Faker("pylist", nb_elements=2, value_types=[str])
     created = datetime.now(tz=UTC)

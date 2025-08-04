@@ -64,6 +64,10 @@ export default defineComponent({
       type: Number,
       default: 360,
     },
+    vistab: {
+      type: Number,
+      default: null,
+    },
   },
 
   setup(props, { emit }) {
@@ -86,6 +90,10 @@ export default defineComponent({
     });
 
     async function getMapData() {
+      if (props.vistab === 1) {
+        // Don't update map data if ENVIRONMENT tab is clicked
+        return;
+      }
       await new Promise<void>((res) => {
         window.setTimeout(res, 300);
       });
@@ -210,3 +218,13 @@ export default defineComponent({
     </l-map>
   </div>
 </template>
+
+<style>
+/* If the map is rendered in a <v-card>, long numbers within the cluster markers will wrap across
+ * multiple lines. This forces the text to overflow and not wrap.
+ */
+.marker-cluster {
+  overflow-wrap: normal;
+  white-space: nowrap;
+}
+</style>

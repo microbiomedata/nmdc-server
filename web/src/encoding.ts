@@ -232,20 +232,23 @@ function makeSetsFromBitmask(mask_str: string) {
   if ((1 << 1) & mask) {
     sets.push('NOM');
   }
-  if ((1 << 5) & mask) {
+  if ((1 << 6) & mask) {
     sets.push('MB');
   }
-  if ((1 << 3) & mask) {
+  if ((1 << 4) & mask) {
     sets.push('MP');
   }
-  if ((1 << 2) & mask) {
+  if ((1 << 3) & mask) {
     sets.push('MT');
   }
-  if ((1 << 4) & mask) {
+  if ((1 << 5) & mask) {
     sets.push('MG');
   }
-  if (1 & mask) {
+  if ((1 << 2) & mask) {
     sets.push('LIP');
+  }
+  if (1 & mask) {
+    sets.push('AMP');
   }
   return sets;
 }
@@ -615,6 +618,16 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
     chromatography_configuration_name: {
       name: 'Chromatography Method',
       schemaName: 'ChromatographyConfiguration',
+    },
+    instrument_name: {
+      name: 'Instrument Name',
+      group: 'Data Generation',
+      schemaName: 'Instrument',
+    },
+    omics_type: {
+      name: 'Data Type',
+      group: 'Data Generation',
+      schemaName: 'analyte_category',
     },
   },
   reads_qc: {},

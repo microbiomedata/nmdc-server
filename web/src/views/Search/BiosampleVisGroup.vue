@@ -40,6 +40,7 @@ const staticUpsetTooltips = {
   MT: 'Metatranscriptomics',
   NOM: 'Natural Organic Matter',
   LIP: 'Lipidomics',
+  AMP: 'Amplicon',
 };
 
 export default defineComponent({
@@ -61,6 +62,10 @@ export default defineComponent({
     conditions: {
       type: Array as PropType<Condition[]>,
       required: true,
+    },
+    vistab: {
+      type: Number,
+      default: null,
     },
   },
 
@@ -167,6 +172,7 @@ export default defineComponent({
           <ClusterMap
             :conditions="conditions"
             :height="360"
+            :vistab="vistab"
             @selected="setBoundsFromMap($event)"
           />
         </TooltipCard>

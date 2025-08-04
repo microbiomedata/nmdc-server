@@ -5,6 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
@@ -439,7 +440,12 @@ def construct_zip_file_path(data_object: models.DataObject) -> str:
     #   - We probably want to reference the workflow activity but that
     #     involves a complicated query... need a way to join that information
     #     in the original query (possibly in the sqlalchemy relationship)
-    omics_processing = data_object.omics_processing
+    if not data_object.omics_processings:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Data object has no associated omics processings.",
+        )
+    omics_processing = data_object.omics_processings[0]
     biosamples = cast(Optional[list[models.Biosample]], omics_processing.biosample_inputs)
 
     def safe_name(name: str) -> str:
@@ -831,7 +837,7 @@ def get_query_for_submitted_pending_review_submissions(db: Session):
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
     submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == "Submitted- Pending Review"
+        models.SubmissionMetadata.status == SubmissionStatusEnum.SubmittedPendingReview.text
     )
     return submitted_pending_review
 
