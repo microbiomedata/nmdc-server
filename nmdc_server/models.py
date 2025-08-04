@@ -928,7 +928,7 @@ class SubmissionImagesObject(Base):
     __tablename__ = "submission_images_object"
 
     name = Column(String, primary_key=True)
-    size = Column(BigInteger, nullable=False)
+    size = Column(BigInteger, nullable=False, comment="Size of the file in bytes")
     content_type = Column(String, nullable=False)
 
 

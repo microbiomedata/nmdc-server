@@ -35,7 +35,7 @@ def upgrade():
     op.create_table(
         "submission_images_object",
         sa.Column("name", sa.String(), nullable=False),
-        sa.Column("size", sa.BigInteger(), nullable=False, comment="Number of bytes"),
+        sa.Column("size", sa.BigInteger(), nullable=False, comment="Size of the file in bytes"),
         sa.Column("content_type", sa.String(), nullable=False),
         sa.PrimaryKeyConstraint("name", name=op.f("pk_submission_images_object")),
     )

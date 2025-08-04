@@ -151,7 +151,7 @@ class SubmissionImagesObject(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     name: str
-    size: int
+    size: int = Field(description="Size of the file in bytes")
     content_type: str
 
 

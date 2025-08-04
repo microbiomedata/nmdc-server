@@ -701,7 +701,7 @@ class SignedUploadUrlRequest(BaseModel):
     """
 
     file_name: str
-    file_size: int
+    file_size: int = Field(description="Size of the file in bytes")
     content_type: str
 
 
@@ -721,5 +721,5 @@ class UploadCompleteRequest(BaseModel):
     """
 
     object_name: str
-    file_size: int
+    file_size: int = Field(description="Size of the file in bytes")
     content_type: str
