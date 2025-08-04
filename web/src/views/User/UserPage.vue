@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, ref, watch } from '@vue/composition-api';
 import { DataTableHeader } from 'vuetify';
-import { api } from '@/data/api';
+import { api, SearchParams, SearchResponse } from '@/data/api';
 import { stateRefs } from '@/store';
 import { User } from '@/types';
 import usePaginatedResults from '@/use/usePaginatedResults';
@@ -18,6 +18,7 @@ export default defineComponent({
       page: 1,
       itemsPerPage,
     });
+    const search_filter = ref(null);
     const headers : DataTableHeader[] = [
       {
         text: 'ORCID',
@@ -29,8 +30,13 @@ export default defineComponent({
       { text: 'Admin', value: 'is_admin', sortable: false },
     ];
 
-    const users = usePaginatedResults(ref([]), api.getAllUsers, ref([]), itemsPerPage);
+    async function getUsers(params: SearchParams): Promise<SearchResponse<User>> {
+      return api.getAllUsers(params, search_filter.value);
+    }
+
+    const users = usePaginatedResults(ref([]), getUsers, ref([]), itemsPerPage);
     watch(options, () => users.setPage(options.value.page), { deep: true });
+    watch(search_filter, () => users.setPage(options.value.page), { deep: true });
 
     async function updateAdminStatus(item: User) {
       await api.updateUser(item.id, item);
@@ -42,6 +48,7 @@ export default defineComponent({
       updateAdminStatus,
       options,
       currentUser,
+      search_filter,
     };
   },
 });
@@ -55,6 +62,13 @@ export default defineComponent({
         <v-card-title class="text-h4">
           Users
         </v-card-title>
+        <v-text-field
+          v-model="search_filter"
+          label="Search Users"
+          class="mb-2"
+          outlined
+          hide-details
+        />
         <v-card outlined>
           <v-data-table
             dense

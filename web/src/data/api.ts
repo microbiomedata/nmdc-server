@@ -685,11 +685,12 @@ async function me(): Promise<User | null> {
   }
 }
 
-async function getAllUsers(params: SearchParams) {
+async function getAllUsers(params: SearchParams, input_search_filter: String | null) {
   const { data } = await client.get<SearchResponse<User>>('users', {
     params: {
       limit: params.limit,
       offset: params.offset,
+      search_filter: input_search_filter,
     },
   });
   return data;
