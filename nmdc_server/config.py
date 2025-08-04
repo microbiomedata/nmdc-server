@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     gcs_use_fake: bool = True
     gcs_project_id: str | None = None
     gcs_object_name_prefix: str  # no default, must be set in .env file
+    gcs_submission_images_bucket_name: str = "nmdc-submission-images"
 
     max_submission_image_file_size_bytes: int = 25 * 1000 * 1000  # 25 MB
     max_submission_image_total_size_bytes: int = 1 * 1000 * 1000 * 1000  # 1 GB

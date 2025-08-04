@@ -16,7 +16,7 @@ from nmdc_server.schemas import SignedUrl
 class BucketName(StrEnum):
     """Enum for GCS bucket names"""
 
-    SUBMISSION_IMAGES = "nmdc-submission-images"
+    SUBMISSION_IMAGES = settings.gcs_submission_images_bucket_name
 
 
 class Storage:
