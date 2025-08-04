@@ -26,6 +26,13 @@ const descriptionMap: Record<string, string> = {
   'Protein FAA': 'FASTA amino acid file for annotated proteins.',
 };
 
+const eluentIntroductionMap: Record<string, string> = {
+  liquid_chromatography: 'Liquid Chromatography',
+  gas_chromatography: 'Gas Chromatography',
+  direct_infusion_syringe: 'Direct Infusion Syringe',
+  direct_infusion_autosampler: 'Direct Infusion Autosampler',
+};
+
 export default defineComponent({
   components: { DownloadDialog },
 
@@ -90,6 +97,24 @@ export default defineComponent({
       value: false,
     });
 
+    function nomMetadataString(item: {
+      massSpecPolarityMode: string,
+      eluentIntroductionCategory: string,
+      sampledPortions: string,
+    }): string {
+      let nomInfoString = '';
+      if (item.eluentIntroductionCategory) {
+        nomInfoString += `${eluentIntroductionMap[item.eluentIntroductionCategory]}, `;
+      }
+      if (item.sampledPortions) {
+        nomInfoString += `${item.sampledPortions}, `;
+      }
+      if (item.massSpecPolarityMode) {
+        nomInfoString += `${item.massSpecPolarityMode} mode`;
+      }
+      return nomInfoString;
+    }
+
     function getOmicsDataWithInputIds(omicsProcessing: OmicsProcessingResult) {
       const biosampleInputIds = (omicsProcessing.biosample_inputs as BiosampleSearchResult[]).map((input) => input.id);
       const annotations = omicsProcessing.annotations as Record<string, string | string[]>;
@@ -99,11 +124,14 @@ export default defineComponent({
         if (annotations.mass_spectrometry_configuration_id) {
           omicsCopy.massSpecConfigId = annotations.mass_spectrometry_configuration_id || '';
           omicsCopy.massSpecConfigName = annotations.mass_spectrometry_configuration_name || '';
+          omicsCopy.massSpecPolarityMode = annotations.mass_spectrometry_config_polarity_mode || '';
         }
         if (annotations.chromatography_configuration_id) {
           omicsCopy.chromConfigId = annotations.chromatography_configuration_id || '';
           omicsCopy.chromConfigName = annotations.chromatography_configuration_name || '';
         }
+        omicsCopy.eluentIntroductionCategory = annotations.eluent_introduction_category || '';
+        omicsCopy.sampledPortions = annotations.sampled_portions ? (annotations.sampled_portions as string[]).join(', ') : '';
         return omicsCopy;
       });
     }
@@ -170,6 +198,7 @@ export default defineComponent({
       termsDialog,
       getRelatedBiosampleIds,
       metaproteomicCategoryEnumToDisplay,
+      nomMetadataString,
     };
   },
 });
@@ -218,6 +247,11 @@ export default defineComponent({
             <span v-if="omicsType === 'Proteomics'">
               <br>
               <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category] }}</b>
+            </span>
+            <span v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data)">
+              <br>
+              <b>Data Generation: </b> NOM via
+              {{ nomMetadataString(item.omics_data) }}
             </span>
             <br>
             <div v-if="getRelatedBiosampleIds(item.omics_data).length">
