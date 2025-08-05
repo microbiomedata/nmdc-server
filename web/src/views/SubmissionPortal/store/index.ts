@@ -395,6 +395,9 @@ function reset() {
 }
 
 async function incrementalSaveRecord(id: string): Promise<number | void> {
+  if (!['InProgress', 'UpdatesRequired'].includes(status.value)) {
+    throw new Error(`Cannot edit while status is ${submissionStatus[status.value]}`);
+  }
   if (!canEditSampleMetadata()) {
     return Promise.resolve();
   }
@@ -413,7 +416,8 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   if (hasChanged.value) {
-    const response = await api.updateRecord(id, payload, undefined, permissions);
+    status.value = 'InProgress';
+    const response = await api.updateRecord(id, payload, status.value, permissions);
     hasChanged.value = 0;
     return response.httpStatus;
   }
