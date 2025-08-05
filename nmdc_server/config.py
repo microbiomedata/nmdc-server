@@ -51,14 +51,14 @@ class Settings(BaseSettings):
     """If true, use the fake GCS server for local development."""
 
     gcs_fake_api_endpoint: str = "http://storage:4443"
-    """The fake GCS server API endpoint. 
-    
+    """The fake GCS server API endpoint.
+
     This is only used if gcs_use_fake is True. This is used by the backend to communicate with the
     fake GCS server, so it should typically refer to the docker compose service name."""
 
     gcs_fake_access_endpoint: str = "http://localhost:4443"
-    """The fake GCS server access endpoint. 
-    
+    """The fake GCS server access endpoint.
+
     This is only used if gcs_use_fake is True. This is used when producing signed URLs that the
     frontend will use, so it should typically refer to the localhost address."""
 
@@ -66,8 +66,8 @@ class Settings(BaseSettings):
     """The GCS project ID. This is only required if gcs_use_fake is False."""
 
     gcs_object_name_prefix: str
-    """Prefix for GCS object names. 
-    
+    """Prefix for GCS object names.
+
     This is used to organize objects in the bucket. This must be set in the .env file or as an
     environment variable."""
 
