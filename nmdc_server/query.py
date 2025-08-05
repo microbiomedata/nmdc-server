@@ -846,7 +846,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
         biosample_query = (
             db.query(model)
             .join(subquery, model.id == subquery.c.id)  # type: ignore
-            .order_by(desc(self.table.model.multiomics))  # type: ignore
+            .order_by(self.table.model.name, self.table.model.id)  # type: ignore
         )
 
         if prefetch_omics_processing_data:
