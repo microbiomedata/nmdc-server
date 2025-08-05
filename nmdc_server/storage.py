@@ -22,24 +22,21 @@ class BucketName(StrEnum):
 class Storage:
     """A class to manage Google Cloud Storage interactions."""
 
-    def __init__(self, project_id: str | None, use_fake_server: bool):
-        self.project_id = project_id
-        self.use_fake_server = use_fake_server
-
+    def __init__(self):
         self._is_testing = settings.environment == "testing"
 
     @cached_property
     def _client(self):
         """Google Cloud Storage client."""
         client_args: dict[str, Any] = {
-            "project": self.project_id,
+            "project": settings.gcs_project_id,
         }
 
         if self._is_testing:
             client_args["credentials"] = AnonymousCredentials()
-            client_args["client_options"] = {"api_endpoint": "http://localhost:4443"}
-        elif self.use_fake_server:
-            client_args["client_options"] = {"api_endpoint": "http://storage:4443"}
+
+        if settings.gcs_use_fake:
+            client_args["client_options"] = {"api_endpoint": settings.gcs_fake_api_endpoint}
 
         return Client(**client_args)
 
@@ -109,7 +106,7 @@ class Storage:
             # In testing mode, we use AnonymousCredentials which do not support signed URLs. There
             # is also no need to generate real signed URLs during tests, so we return a mock URL.
             return SignedUrl(
-                url=f"http://localhost:4443/{bucket_name}/{object_name}",
+                url=f"{settings.gcs_fake_access_endpoint}/{bucket_name}/{object_name}",
                 expiration=expiration_time,
                 object_name=object_name,
             )
@@ -121,7 +118,9 @@ class Storage:
             expiration=expiration_delta,
             method=method,
             content_type=content_type,
-            api_access_endpoint="http://localhost:4443" if self.use_fake_server else None,
+            api_access_endpoint=(
+                settings.gcs_fake_access_endpoint if settings.gcs_use_fake else None
+            ),
         )
 
         return SignedUrl(url=url, expiration=expiration_time, object_name=blob.name)
@@ -166,10 +165,7 @@ class Storage:
         )
 
 
-storage = Storage(
-    project_id=settings.gcs_project_id,
-    use_fake_server=settings.gcs_use_fake,
-)
+storage = Storage()
 
 
 def sanitize_filename(filename: str) -> str:
