@@ -1472,8 +1472,17 @@ async def get_users(
     db: Session = Depends(get_db),
     user: models.User = Depends(admin_required),
     pagination: Pagination = Depends(),
+    search_filter: Optional[str] = None,
 ):
     users = db.query(User)
+    if search_filter:
+        users = users.filter(
+            (
+                models.User.name.ilike(f"%{search_filter}%")
+                | models.User.orcid.ilike(f"%{search_filter}%")
+            )
+        )
+
     return pagination.response(users)
 
 
