@@ -67,7 +67,11 @@ def find_parent_process(output_id: str, mongodb: Database) -> Optional[dict[str,
 
 
 def get_biosample_input_ids(
-    input_id: str, mongodb: Database, results: set[str], sampled_portions: set[str]
+    input_id: str,
+    mongodb: Database,
+    results: set[str],
+    sampled_portions: set[str],
+    direct_input: bool,
 ) -> set[Any]:
     """
     Given an input ID return all biosample objects that are included in the input resource.
@@ -75,6 +79,11 @@ def get_biosample_input_ids(
     OmicsProcessing objects can take Biosamples or ProcessedSamples as inputs. Work needs to be done
     to determine which biosamples make up a given ProcessedSample. This function recursively tries
     to determine those Biosamples.
+
+    As a side effect, a set of `sampled_portion` values gets populated. Whether or not a processed
+    samples' `sampled_portion`s get added to the set is driven by the `direct_input` parameter. Only
+    processed samples who are inputs directly to a data generation will have their
+    `sampled_portion`s added.
     """
     # Base case, the input is already a biosample
     biosample_collection: Collection = mongodb["biosample_set"]
@@ -92,7 +101,8 @@ def get_biosample_input_ids(
     processed_sample = query[0]
     processed_sample_id = processed_sample["id"]
     sampled_portion = set(processed_sample.get("sampled_portion", []))
-    if sampled_portion:
+    # only store sampled portion values for immediate input to a data generation
+    if direct_input and sampled_portion:
         sampled_portions.update(sampled_portion)
 
     # Recursive case. For processed samples find the process that created it,
@@ -100,7 +110,7 @@ def get_biosample_input_ids(
     parent_process = find_parent_process(processed_sample_id, mongodb)
     if parent_process:
         for parent_input_id in parent_process["has_input"]:
-            get_biosample_input_ids(parent_input_id, mongodb, results, sampled_portions)
+            get_biosample_input_ids(parent_input_id, mongodb, results, sampled_portions, False)
     return results
 
 
@@ -145,7 +155,7 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
     sampled_portions: set[str] = set()
     for input_id in input_ids:
         biosample_input_ids.union(
-            get_biosample_input_ids(input_id, mongodb, biosample_input_ids, sampled_portions)
+            get_biosample_input_ids(input_id, mongodb, biosample_input_ids, sampled_portions, True)
         )
     if sampled_portions:
         obj["sampled_portions"] = list(sampled_portions)
