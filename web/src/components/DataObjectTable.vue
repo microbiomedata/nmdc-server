@@ -2,7 +2,7 @@
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
-  computed, defineComponent, PropType, reactive, ref, Ref,
+  computed, defineComponent, PropType, reactive, ref, Ref, watch,
 } from '@vue/composition-api';
 import { flattenDeep } from 'lodash';
 
@@ -95,6 +95,7 @@ export default defineComponent({
     const selectedHtmlDataObject: Ref<any | null> = ref(null);
     const dataModal = ref(false);
     const iframeDataSource = ref('');
+    const iframeLoading = ref(false);
     function hasHtmlData(fileType: string) {
       return [
         'Kraken2 Krona Plot',
@@ -103,12 +104,19 @@ export default defineComponent({
       ].includes(fileType);
     }
     async function openHtmlDataModal(item: any) {
+      iframeLoading.value = true;
+      dataModal.value = true;
       iframeDataSource.value = await api.getDataObjectUrl(item.id);
       selectedHtmlDataObject.value = item;
-      dataModal.value = true;
     }
-    function handleIframeScroll(e) {
-      console.log(e);
+    watch(dataModal, () => {
+      if (!dataModal.value) {
+        selectedHtmlDataObject.value = null;
+        iframeDataSource.value = '';
+      }
+    });
+    function onIframeLoaded() {
+      iframeLoading.value = false;
     }
 
     const termsDialog = reactive({
@@ -211,11 +219,12 @@ export default defineComponent({
 
     return {
       dataModal,
+      iframeLoading,
       hasHtmlData,
       openHtmlDataModal,
       selectedHtmlDataObject,
       iframeDataSource,
-      handleIframeScroll,
+      onIframeLoaded,
       onAcceptTerms,
       handleDownload,
       descriptionMap,
@@ -247,6 +256,7 @@ export default defineComponent({
       v-model="dataModal"
       scroll-strategy="block"
       width="80vw"
+      scrollable
     >
       <v-card
         class="d-flex flex-column"
@@ -254,13 +264,28 @@ export default defineComponent({
         height="80vh"
       >
         <v-card-text class="d-flex flex-grow-1">
-          <span v-if="!iframeDataSource">Loading data</span>
+          <span
+            v-if="iframeLoading"
+            class="d-flex align-center justify-center flex-grow-1"
+          >
+            <v-progress-circular
+              color="primary"
+              indeterminate
+            />
+            Loading...
+          </span>
           <iframe
-            v-else
-            title="iframe title"
+            :title="selectedHtmlDataObject.description || 'Data object HTML content'"
             :src="iframeDataSource"
-            :style="{border: 'none'}"
-            width="100%"
+            :style="{border: 'none' }"
+            :width="iframeLoading ? '0%' : '100%'"
+            class="pa-4"
+            loading="lazy"
+            @load="onIframeLoaded"
+          />
+          <div
+            class="iframe-blocker"
+            :style="{ position: 'absolute', height: '100%', width: '100%'}"
           />
         </v-card-text>
         <v-card-actions class="flex-row">
