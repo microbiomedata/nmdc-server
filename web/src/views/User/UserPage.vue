@@ -36,7 +36,10 @@ export default defineComponent({
 
     const users = usePaginatedResults(ref([]), getUsers, ref([]), itemsPerPage);
     watch(options, () => users.setPage(options.value.page), { deep: true });
-    watch(searchFilter, () => { options.value.page = 1; users.setPage(options.value.page); }, { deep: true });
+    watch(searchFilter, () => {
+      options.value.page = 1;
+      users.setPage(options.value.page);
+    }, { deep: true });
 
     async function updateAdminStatus(item: User) {
       await api.updateUser(item.id, item);

@@ -1475,7 +1475,7 @@ async def get_users(
     search_filter: Optional[str] = None,
 ):
     users = db.query(User)
-    if type(search_filter) is str:
+    if search_filter:
         users = users.filter(
             (
                 models.User.name.ilike(f"%{search_filter}%")
