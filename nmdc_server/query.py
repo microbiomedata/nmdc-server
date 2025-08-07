@@ -10,7 +10,7 @@ from itertools import groupby
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
-from sqlalchemy import ARRAY, Column, and_, cast, desc, func, inspect, or_
+from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
 from sqlalchemy.orm import Query, Session, aliased, selectinload, with_expression
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement, intersect, union
