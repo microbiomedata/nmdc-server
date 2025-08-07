@@ -106,7 +106,7 @@ export default defineComponent({
     async function openHtmlDataModal(item: any) {
       iframeLoading.value = true;
       dataModal.value = true;
-      iframeDataSource.value = await api.getDataObjectUrl(item.id);
+      iframeDataSource.value = await api.getDataObjectHtmlContentUrl(item.id);
       selectedHtmlDataObject.value = item;
     }
     watch(dataModal, () => {
@@ -269,7 +269,9 @@ export default defineComponent({
             class="d-flex align-center justify-center flex-grow-1"
           >
             <v-progress-circular
+              class="mr-2"
               color="primary"
+              size="24"
               indeterminate
             />
             Loading...
@@ -282,10 +284,6 @@ export default defineComponent({
             class="pa-4"
             loading="lazy"
             @load="onIframeLoaded"
-          />
-          <div
-            class="iframe-blocker"
-            :style="{ position: 'absolute', height: '100%', width: '100%'}"
           />
         </v-card-text>
         <v-card-actions class="flex-row">

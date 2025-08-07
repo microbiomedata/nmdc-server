@@ -616,6 +616,25 @@ async def download_data_object(
     }
 
 
+@router.get("/data_object/{data_object_id}/get_html_content_url")
+async def get_data_object_html_content(data_object_id: str, db: Session = Depends(get_db)):
+    data_object = crud.get_data_object(db, data_object_id)
+    if data_object is None:
+        raise HTTPException(status_code=404, detail="DataObject not found")
+    url = data_object.url
+    if url is None:
+        raise HTTPException(status_code=404, detail="DataObject has no url reference")
+    if data_object.file_type in [
+        "Kraken2 Krona Plot",
+        "GOTTCHA2 Krona Plot",
+        "Centrifuge Krona Plot",
+    ]:
+        return {
+            "url": url,
+        }
+    return HTTPException(status_code=400, detail="DataObject has no relevant HTML content")
+
+
 @router.post(
     "/data_object/workflow_summary",
     response_model=schemas.DataObjectAggregation,
