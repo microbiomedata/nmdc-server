@@ -1051,6 +1051,51 @@ class SubmissionSourceClient(str, enum.Enum):
     nmdc_edge = "nmdc_edge"
 
 
+class SubmissionImagesObject(Base):
+    """References to objects stored in the Google Cloud Storage `nmdc-submission-images` bucket.
+
+    The primary key of this table is called `name` because it corresponds to the object name in
+    the bucket.
+
+    See also:
+        - https://cloud.google.com/storage/docs/objects
+    """
+
+    __tablename__ = "submission_images_object"
+
+    name = Column(String, primary_key=True)
+    size = Column(BigInteger, nullable=False, comment="Size of the file in bytes")
+    content_type = Column(String, nullable=False)
+
+
+"""Association table to link submissions and study-level images"""
+submission_study_image_association = Table(
+    "submission_study_image_association",
+    Base.metadata,
+    Column("submission_metadata_id", ForeignKey("submission_metadata.id"), primary_key=True),
+    Column(
+        "submission_images_object_name",
+        ForeignKey("submission_images_object.name"),
+        primary_key=True,
+    ),
+)
+
+# TODO: It would be nice if this could be derived from the schema
+ENVIRONMENTAL_DATA_SLOTS = [
+    "air_data",
+    "built_env_data",
+    "host_associated_data",
+    "hcr_cores_data",
+    "hcr_fluids_swabs_data",
+    "biofilm_data",
+    "misc_envs_data",
+    "plant_associated_data",
+    "sediment_data",
+    "soil_data",
+    "water_data",
+]
+
+
 class SubmissionMetadata(Base):
     __tablename__ = "submission_metadata"
 
@@ -1088,6 +1133,29 @@ class SubmissionMetadata(Base):
     # Roles
     roles = relationship("SubmissionRole", back_populates="submission")
 
+    # Images
+    pi_image_name = Column(String, ForeignKey(SubmissionImagesObject.name), nullable=True)
+    pi_image = relationship(
+        "SubmissionImagesObject",
+        foreign_keys=[pi_image_name],
+        primaryjoin="SubmissionMetadata.pi_image_name == SubmissionImagesObject.name",
+        cascade="all, delete-orphan",
+        single_parent=True,
+    )
+    primary_study_image_name = Column(
+        String, ForeignKey(SubmissionImagesObject.name), nullable=True
+    )
+    primary_study_image = relationship(
+        "SubmissionImagesObject",
+        foreign_keys=[primary_study_image_name],
+        primaryjoin="SubmissionMetadata.primary_study_image_name == SubmissionImagesObject.name",
+        cascade="all, delete-orphan",
+        single_parent=True,
+    )
+    study_images = relationship(
+        SubmissionImagesObject, secondary=submission_study_image_association
+    )
+
     @property
     def editors(self) -> list[str]:
         return [
@@ -1119,6 +1187,30 @@ class SubmissionMetadata(Base):
             for role in self.roles  # type: ignore
             if role.role == SubmissionEditorRole.owner
         ]
+
+    @property
+    def study_images_total_size(self) -> int:
+        """Calculate the total size (in bytes) of all study images associated with this
+        submission."""
+        return (
+            sum(image.size for image in self.study_images)  # type: ignore
+            if self.study_images
+            else 0
+        )
+
+    @property
+    def sample_count(self) -> int:
+        if not self.metadata_submission or not isinstance(self.metadata_submission, dict):
+            return 0
+        sample_data = self.metadata_submission.get("sampleData", {})
+        if not sample_data:
+            return 0
+        count = 0
+        for slot in sample_data:
+            if slot in ENVIRONMENTAL_DATA_SLOTS:
+                samples = sample_data.get(slot, [])
+                count += len(samples)
+        return count
 
 
 class SubmissionRole(Base):

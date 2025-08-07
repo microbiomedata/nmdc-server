@@ -1,5 +1,5 @@
 from collections import OrderedDict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
@@ -343,7 +343,8 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     status = SubmissionStatusEnum.InProgress.text
     study_name = Faker("word")
     templates = Faker("pylist", nb_elements=2, value_types=[str])
-    created = datetime.utcnow()
+    created = datetime.now(tz=UTC)
+    date_last_modified = created
     # TODO specify all fields!
     metadata_submission = {
         "sampleData": {},
@@ -401,6 +402,10 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     }
     locked_by = None
     lock_updated = None
+    is_test_submission: bool = False
+    pi_image: models.SubmissionImagesObject | None = None
+    primary_study_image: models.SubmissionImagesObject | None = None
+    study_images: list[models.SubmissionImagesObject] = []
 
 
 class SubmissionRoleFactory(SQLAlchemyModelFactory):

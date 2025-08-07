@@ -46,6 +46,40 @@ class Settings(BaseSettings):
     zip_streamer_chunk_size_bytes: int = 2 * 1024 * 1024
     zip_streamer_nersc_data_base_url: str = "https://data.microbiomedata.org/data"
 
+    # for cloud storage
+    gcs_use_fake: bool = True
+    """If true, use the fake GCS server for local development."""
+
+    gcs_fake_api_endpoint: str = "http://storage:4443"
+    """The fake GCS server API endpoint.
+
+    This is only used if gcs_use_fake is True. This is used by the backend to communicate with the
+    fake GCS server, so it should typically refer to the docker compose service name."""
+
+    gcs_fake_access_endpoint: str = "http://localhost:4443"
+    """The fake GCS server access endpoint.
+
+    This is only used if gcs_use_fake is True. This is used when producing signed URLs that the
+    frontend will use, so it should typically refer to the localhost address."""
+
+    gcs_project_id: str | None = None
+    """The GCS project ID. This is only required if gcs_use_fake is False."""
+
+    gcs_object_name_prefix: str
+    """Prefix for GCS object names.
+
+    This is used to organize objects in the bucket. This must be set in the .env file or as an
+    environment variable."""
+
+    gcs_submission_images_bucket_name: str = "nmdc-submission-images"
+    """The name of the GCS bucket used for submission images."""
+
+    max_submission_image_file_size_bytes: int = 25 * 1000 * 1000  # 25 MB
+    """The maximum size of a single submission image file in bytes."""
+
+    max_submission_image_total_size_bytes: int = 1 * 1000 * 1000 * 1000  # 1 GB
+    """The maximum total size of all submission image files for a single submission in bytes."""
+
     @property
     def orcid_openid_config_url(self) -> str:
         r"""
