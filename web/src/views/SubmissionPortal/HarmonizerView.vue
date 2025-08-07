@@ -92,18 +92,9 @@ const TYPE_FIELD = ANALYSIS_TYPE;
 const COMMON_COLUMNS = [SAMP_NAME, SOURCE_MAT_ID, ANALYSIS_TYPE];
 
 const ALWAYS_READ_ONLY_COLUMNS = [
-  'dna_seq_project',
-  'rna_seq_project',
-  'dna_samp_id',
-  'rna_samp_id',
-  'rna_seq_project_pi',
-  'dna_seq_project_pi',
-  'dna_project_contact',
-  'rna_project_contact',
-  'proposal_rna',
-  'proposal_dna',
-  'rna_seq_project_name',
-  'dna_seq_project_name',
+  'jgi_seq_project',
+  'jgi_samp_id',
+  'jgi_seq_project_name',
 ];
 
 export default defineComponent({
