@@ -641,8 +641,8 @@ async function createBulkDownload(conditions: Condition[], dataObjectFilter: Dat
   };
 }
 
-async function getDataObjectUrl(dataObjectId: string): Promise<string> {
-  const { data } = await client.get<{ url: string }>(`data_object/${dataObjectId}/download`);
+async function getDataObjectHtmlContentUrl(dataObjectId: string): Promise<string> {
+  const { data } = await client.get<{ url: string }>(`data_object/${dataObjectId}/get_html_content_url`);
   return data.url;
 }
 
@@ -851,7 +851,7 @@ client.interceptors.response.use(undefined, async (error: AxiosError) => {
 
 const api = {
   createBulkDownload,
-  getDataObjectUrl,
+  getDataObjectHtmlContentUrl,
   getBinnedFacet,
   getBulkDownloadSummary,
   getBulkDownloadAggregateSummary,
