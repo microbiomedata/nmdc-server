@@ -632,7 +632,7 @@ async def get_data_object_html_content(data_object_id: str, db: Session = Depend
         return {
             "url": url,
         }
-    return HTTPException(status_code=400, detail="DataObject has no relevant HTML content")
+    raise HTTPException(status_code=400, detail="DataObject has no relevant HTML content")
 
 
 @router.post(
