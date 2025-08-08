@@ -1,4 +1,6 @@
 <script lang="ts">
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
   computed, defineComponent, PropType, reactive,
 } from '@vue/composition-api';
@@ -90,19 +92,42 @@ export default defineComponent({
       value: false,
     });
 
+    function nomMetadataString(item: {
+      massSpecPolarityMode: string,
+      eluentIntroductionCategory: string,
+      sampledPortions: string,
+    }): string {
+      return [item.eluentIntroductionCategory, item.sampledPortions, item.massSpecPolarityMode].filter((value) => !!value).join(', ');
+    }
+
     function getOmicsDataWithInputIds(omicsProcessing: OmicsProcessingResult) {
       const biosampleInputIds = (omicsProcessing.biosample_inputs as BiosampleSearchResult[]).map((input) => input.id);
       const annotations = omicsProcessing.annotations as Record<string, string | string[]>;
       return omicsProcessing.omics_data.map((omics) => {
+        const { EluentIntroductionCategoryEnum, PolarityModeEnum, SamplePortionEnum } = NmdcSchema.enums;
         const omicsCopy = { ...omics };
         omicsCopy.inputIds = biosampleInputIds;
         if (annotations.mass_spectrometry_configuration_id) {
           omicsCopy.massSpecConfigId = annotations.mass_spectrometry_configuration_id || '';
           omicsCopy.massSpecConfigName = annotations.mass_spectrometry_configuration_name || '';
+          const polarityMode = annotations.mass_spectrometry_config_polarity_mode
+            ? `${PolarityModeEnum.permissible_values[annotations.mass_spectrometry_config_polarity_mode].text} mode`
+            : '';
+          omicsCopy.massSpecPolarityMode = polarityMode;
         }
         if (annotations.chromatography_configuration_id) {
           omicsCopy.chromConfigId = annotations.chromatography_configuration_id || '';
           omicsCopy.chromConfigName = annotations.chromatography_configuration_name || '';
+        }
+        if (annotations.eluent_introduction_category) {
+          omicsCopy.eluentIntroductionCategory = EluentIntroductionCategoryEnum.permissible_values[annotations.eluent_introduction_category].title;
+        }
+        if (annotations.sampled_portions.length) {
+          const displaySampledPortions = (annotations.sampled_portions as string[]).map((sampledPortion: string) => (
+            SamplePortionEnum.permissible_values[sampledPortion].title
+            || SamplePortionEnum.permissible_values[sampledPortion].text
+          ));
+          omicsCopy.sampledPortions = displaySampledPortions.join(', ');
         }
         return omicsCopy;
       });
@@ -170,6 +195,7 @@ export default defineComponent({
       termsDialog,
       getRelatedBiosampleIds,
       metaproteomicCategoryEnumToDisplay,
+      nomMetadataString,
     };
   },
 });
@@ -218,6 +244,11 @@ export default defineComponent({
             <span v-if="omicsType === 'Proteomics'">
               <br>
               <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category] }}</b>
+            </span>
+            <span v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data)">
+              <br>
+              <b>Data Generation: </b> NOM via
+              {{ nomMetadataString(item.omics_data) }}
             </span>
             <br>
             <div v-if="getRelatedBiosampleIds(item.omics_data).length">
