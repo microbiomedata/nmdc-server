@@ -11,9 +11,12 @@ import click
 import requests
 
 from nmdc_server import jobs
-from nmdc_server.config import Settings
-from nmdc_server.database import SessionLocalIngest
+from nmdc_server.config import settings
+from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
+from nmdc_server.models import SubmissionImagesObject
+from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
+from nmdc_server.storage import BucketName, storage
 
 
 def send_slack_message(text: str) -> bool:
@@ -29,7 +32,6 @@ def send_slack_message(text: str) -> bool:
     is_sent = False
 
     # Check whether a Slack Incoming Webhook URL is defined.
-    settings = Settings()
     if isinstance(settings.slack_webhook_url_for_ingester, str):
         click.echo(f"Sending Slack message having text: {text}")
         response = requests.post(
@@ -53,7 +55,6 @@ def send_slack_message(text: str) -> bool:
 @click.group()
 @click.pass_context
 def cli(ctx):
-    settings = Settings()
     if settings.environment == "testing":
         settings.database_uri = settings.testing_database_uri
     ctx.obj = {"settings": settings}
@@ -103,8 +104,6 @@ def truncate():
 @click.option("--swap-rancher-secrets", is_flag=True, default=False)
 def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
     """Ingest the latest data from mongo into the ingest database."""
-    settings = Settings()
-
     level = logging.WARN
     if verbose == 1:
         level = logging.INFO
@@ -317,7 +316,6 @@ def load_db(key_file, user, host, list_backups, backup_file):
         )
 
     click.echo(f"Restoring from {backup_file}...")
-    settings = Settings()
     # Use `Popen.communicate()` instead of `run()` to avoid buffering output
     open_proc = subprocess.Popen(
         [
@@ -339,6 +337,57 @@ def load_db(key_file, user, host, list_backups, backup_file):
         sys.exit(1)
 
     click.secho(f"\nSuccessfully loaded {settings.current_db_uri}", fg="green")
+
+
+@cli.command()
+@click.option("--remove-existing", is_flag=True, default=False)
+def generate_static_files(remove_existing):
+    click.echo("Generating static files...")
+    static_path = initialize_static_directory(remove_existing=remove_existing)
+    click.echo("Generating submission schema files...")
+    generate_submission_schema_files(directory=static_path)
+    click.echo("Done generating static files.")
+
+
+@cli.group(name="storage")
+def storage_group():
+    """Commands for managing storage buckets and objects."""
+    pass
+
+
+@storage_group.command()
+def init():
+    """Ensure that the storage buckets exist."""
+    for bucket_name in BucketName:
+        click.echo(f"Ensuring bucket '{bucket_name}' exists")
+        bucket = storage.get_bucket(bucket_name)
+        if bucket.exists():
+            click.echo(f"Bucket '{bucket_name}' already exists")
+        elif settings.gcs_use_fake:
+            click.echo(f"Creating bucket '{bucket_name}'")
+            bucket.create()
+        else:
+            raise RuntimeError(
+                f"Failed to ensure bucket '{bucket_name}' exists. "
+                f"This bucket may need to be created manually in the cloud storage provider."
+            )
+
+
+@storage_group.command()
+@click.option("--dry-run", is_flag=True, default=False)
+def vacuum(dry_run: bool):
+    """Vacuum the storage buckets to remove objects not referenced in the database."""
+    for bucket_name in BucketName:
+        click.echo(f"Vacuuming bucket '{bucket_name}'")
+        if bucket_name == BucketName.SUBMISSION_IMAGES:
+            with SessionLocal() as db:
+                bucket = storage.get_bucket(bucket_name)
+                for blob in bucket.list_blobs(prefix=settings.gcs_object_name_prefix):
+                    db_image = db.get(SubmissionImagesObject, blob.name)
+                    if not db_image:
+                        click.echo(f"Deleting blob '{blob.name}' from bucket '{bucket_name}'")
+                        if not dry_run:
+                            blob.delete()
 
 
 if __name__ == "__main__":

@@ -18,7 +18,7 @@ def test_bulk_download_query(db: Session):
     )
     op1.outputs.append(raw1)
 
-    metag = fakes.MetagenomeAnnotationFactory(omics_processing=op1)
+    metag = fakes.MetagenomeAnnotationFactory(was_informed_by=[op1])
     metag_output = fakes.DataObjectFactory(
         url="https://data.microbiomedata.org/data/metag",
         omics_processing=op1,
@@ -64,7 +64,7 @@ def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user)
     )
     op1.outputs.append(raw1)
 
-    metag = fakes.MetagenomeAnnotationFactory(omics_processing=op1)
+    metag = fakes.MetagenomeAnnotationFactory(was_informed_by=[op1])
     metag_output = fakes.DataObjectFactory(
         url="https://data.microbiomedata.org/data/metag",
         omics_processing=op1,
@@ -83,7 +83,9 @@ def test_generate_bulk_download(db: Session, client: TestClient, logged_in_user)
     assert resp.json()["count"] == 0
 
 
-def test_generate_bulk_download_filtered(db: Session, client: TestClient, logged_in_user):
+def test_generate_bulk_download_filtered(
+    db: Session, client: TestClient, logged_in_user, patch_zip_stream_service
+):
     sample = fakes.BiosampleFactory()
     op1 = fakes.OmicsProcessingFactory(biosample_inputs=[sample])
     fakes.OmicsProcessingFactory(biosample_inputs=[sample])
@@ -95,13 +97,14 @@ def test_generate_bulk_download_filtered(db: Session, client: TestClient, logged
     )
     op1.outputs.append(raw1)
 
-    metag = fakes.MetagenomeAnnotationFactory(omics_processing=op1)
+    metag = fakes.MetagenomeAnnotationFactory(was_informed_by=[op1])
     metag_output = fakes.DataObjectFactory(
         url="https://data.microbiomedata.org/data/metag",
         omics_processing=op1,
         workflow_type=WorkflowActivityTypeEnum.metagenome_annotation.value,
     )
     metag.outputs.append(metag_output)
+    op1.outputs.append(metag_output)
 
     db.commit()
 
@@ -123,7 +126,6 @@ def test_generate_bulk_download_filtered(db: Session, client: TestClient, logged
     resp = client.get(f"/api/bulk_download/{id_}")
     del client.headers["Authorization"]
     assert resp.status_code == 200
-    assert b"/raw" not in resp.content and b"/metag" in resp.content
 
     # Verify that the bulk download cannot be accessed a second time
     resp = client.get(f"/api/bulk_download/{id_}")

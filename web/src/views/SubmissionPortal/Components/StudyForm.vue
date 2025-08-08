@@ -9,12 +9,15 @@ import {
   Ref,
 } from '@vue/composition-api';
 import Definitions from '@/definitions';
+import doiProviderValues from '@/schema';
 import {
+  multiOmicsForm,
   studyForm,
   studyFormValid,
   permissionTitleToDbValueMap,
   isOwner,
   canEditSubmissionMetadata,
+  checkDoiFormat,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -64,6 +67,16 @@ export default defineComponent({
       }
     }
 
+    function addDataDoi() {
+      if (!Array.isArray(studyForm.dataDois)) {
+        studyForm.dataDois = [];
+      }
+      studyForm.dataDois.push({
+        value: '',
+        provider: '',
+      });
+    }
+
     function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
       return [
         (v: string) => !!v || msg,
@@ -99,11 +112,14 @@ export default defineComponent({
     return {
       formRef,
       studyForm,
+      multiOmicsForm,
       studyFormValid,
       NmdcSchema,
       Definitions,
       addContributor,
       addFundingSource,
+      addDataDoi,
+      doiProviderValues,
       requiredRules,
       permissionLevelChoices,
       isOwner,
@@ -112,6 +128,7 @@ export default defineComponent({
       uniqueOrcidRule,
       currentUserOrcid,
       permissionHelpText,
+      checkDoiFormat,
     };
   },
 });
@@ -387,6 +404,7 @@ export default defineComponent({
       <v-btn
         depressed
         :disabled="!canEditSubmissionMetadata()"
+        class="mb-4"
         @click="addContributor"
       >
         <v-icon class="pr-1">
@@ -394,13 +412,117 @@ export default defineComponent({
         </v-icon>
         Add Contributor
       </v-btn>
+
+      <div class="text-h4">
+        Data DOIs
+      </div>
+      <div class="text-body-1 mb-2">
+        {{ "Data DOIs for this study" }}
+      </div>
+      <div
+        v-for="_, i in studyForm.dataDois"
+        :key="`dataDois${i}`"
+        class="d-flex"
+      >
+        <v-card class="d-flex flex-column grow pa-4 mb-4">
+          <div class="d-flex">
+            <v-text-field
+              v-if="studyForm.dataDois !== null"
+              v-model="studyForm.dataDois[i].value"
+              label="Data DOI value *"
+              :hint="Definitions.dataDoiValue"
+              persistent-hint
+              outlined
+              dense
+              required
+              class="mb-2 mr-3"
+              :rules="requiredRules('DOI value must be provided',[
+                v => checkDoiFormat(v) || 'DOI must be valid',
+              ])"
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-text-field>
+            <v-select
+              v-if="studyForm.dataDois !== null"
+              v-model="studyForm.dataDois[i].provider"
+              label="Data DOI Provider *"
+              :hint="Definitions.dataDoiProvider"
+              :items="doiProviderValues"
+              persistent-hint
+              outlined
+              dense
+              clearable
+              class="mb-2 mr-3"
+              :rules="studyForm.dataDois[i].provider ? undefined : ['A provider must be selected.']"
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-select>
+          </div>
+        </v-card>
+        <v-btn
+          v-if="studyForm.dataDois !== null"
+          icon
+          :disabled="!isOwner()"
+          @click="studyForm.dataDois.splice(i, 1)"
+        >
+          <v-icon>mdi-minus-circle</v-icon>
+        </v-btn>
+      </div>
+      <v-btn
+        class="mb-4"
+        depressed
+        :disabled="!canEditSubmissionMetadata()"
+        @click="addDataDoi"
+      >
+        <v-icon class="pr-1">
+          mdi-plus-circle
+        </v-icon>
+        Add Data DOI
+      </v-btn>
+
+      <div class="text-h4">
+        External Identifiers
+        <v-text-field
+          v-model="studyForm.GOLDStudyId"
+          label="GOLD Study ID"
+          :hint="Definitions.studyGoldID"
+          persistent-hint
+          outlined
+          dense
+        />
+        <v-text-field
+          v-model="studyForm.NCBIBioProjectId"
+          label="NCBI BioProject Accession"
+          :hint="Definitions.studyNCBIBioProjectAccession"
+          persistent-hint
+          outlined
+          dense
+        />
+        <v-combobox
+          v-model="studyForm.alternativeNames"
+          label="Alternative Names / IDs"
+          :hint="Definitions.studyAlternativeNames"
+          persistent-hint
+          deletable-chips
+          multiple
+          outlined
+          chips
+          small-chips
+          dense
+          append-icon=""
+        />
+      </div>
     </v-form>
     <strong>* indicates required field</strong>
     <div class="d-flex mt-5">
       <v-btn
         color="gray"
         depressed
-        :to="{ name: 'Submission Context' }"
+        :to="{ name: 'Submission Home' }"
       >
         <v-icon class="pl-1">
           mdi-arrow-left-circle

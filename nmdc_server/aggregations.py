@@ -1,7 +1,8 @@
 from typing import Any, Dict, List, Type, cast
 
-from sqlalchemy import Column, func, or_
-from sqlalchemy.orm import Session
+from sqlalchemy import Column, func, or_, union_all
+from sqlalchemy.orm import Query, Session
+from sqlalchemy.sql import Alias, Selectable
 
 from nmdc_server import models, query, schemas
 from nmdc_server.attribute_units import get_attribute_units
@@ -97,6 +98,35 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
     return schemas.TableSummary(total=count, attributes=attributes)
 
 
+def make_all_wfe_outputs_subquery(db: Session) -> Alias:
+    r"""
+    Returns a subquery that gets all of the distinct `DataObject` `id` values
+    that are referenced by any `WorkflowExecution` via the latter's `outputs`
+    relationship.
+    """
+
+    # For each `WorkflowExecution` model, make a query that `SELECT`s all
+    # of the `DataObject.id` values that are referenced by that model via
+    # its `outputs` relationship. Then, `UNION ALL` those individual queries
+    # into a single subquery. Finally, return a subquery that preserves only
+    # the `DISTINCT` `DataObject.id` values.
+    #
+    # Note: All this time, we're still building up a query. SQLAlchemy won't
+    #       actually query the database until we call something like `.all()`,
+    #       `.first()`, `scalar()`, etc.
+    #
+    wfe_outputs_queries = []
+    for wfe_model in models.workflow_activity_types:
+        wfe_outputs_query: Query = (
+            db.query(models.DataObject.id)
+            .select_from(wfe_model)
+            .join(getattr(wfe_model, "outputs"))
+        )
+        wfe_outputs_queries.append(wfe_outputs_query.statement)
+    all_wfe_outputs_subquery: Selectable = union_all(*wfe_outputs_queries).alias()
+    return db.query(all_wfe_outputs_subquery).distinct().subquery()
+
+
 def get_aggregation_summary(db: Session):
     q = db.query
 
@@ -110,11 +140,38 @@ def get_aggregation_summary(db: Session):
             .count()
         )
 
+    def count_non_parent_studies() -> int:
+        r"""Returns the number of studies that are not parent studies."""
+
+        # Make a subquery that (a) finds all the studies whose `part_of` value is an array,
+        # and (b) selects the distinct `id`s that are in any of those arrays. The result is
+        # a list of parent study `id`s.
+        parent_ids_subquery = (
+            q(func.distinct(func.jsonb_array_elements_text(models.Study.part_of)))
+            .filter(func.jsonb_typeof(models.Study.part_of) == "array")
+            .subquery()
+        )
+
+        # Count the number of studies whose `id`s are _not_ in that list of parent study
+        # `id`s. The result is the number of studies that are not parent studies.
+        num_non_parent_studies = (
+            q(models.Study).filter(models.Study.id.notin_(parent_ids_subquery)).count()
+        )
+
+        return num_non_parent_studies
+
     return schemas.AggregationSummary(
         studies=q(models.Study).count(),
+        non_parent_studies=count_non_parent_studies(),
         locations=distinct(models.Biosample.annotations["location"]),
         habitats=distinct(models.Biosample.annotations["habitat"]),
         data_size=q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0))).scalar(),
+        wfe_output_data_size_bytes=(
+            q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)))
+            .filter(models.DataObject.id.in_(make_all_wfe_outputs_subquery(db)))
+            .scalar()
+            or 0
+        ),
         metagenomes=omics_category("metagenome"),
         metatranscriptomes=omics_category("metatranscriptome"),
         proteomics=omics_category("proteomics"),
@@ -177,10 +234,14 @@ def get_data_object_aggregation(
             func.count(models.DataObject.id),
             func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)),
         )
+        .join(
+            models.omics_processing_output_association,
+            models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
+        )
         .filter(
             models.DataObject.workflow_type != None,
             models.DataObject.file_type != None,
-            subquery.c.id == models.DataObject.omics_processing_id,
+            subquery.c.id == models.omics_processing_output_association.c.omics_processing_id,
             models.DataObject.url != None,
         )
         .group_by(models.DataObject.workflow_type, models.DataObject.file_type)
@@ -198,9 +259,13 @@ def get_data_object_aggregation(
             func.count(models.DataObject.id),
             func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)),
         )
+        .join(
+            models.omics_processing_output_association,
+            models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
+        )
         .filter(
             models.DataObject.workflow_type != None,
-            subquery.c.id == models.DataObject.omics_processing_id,
+            subquery.c.id == models.omics_processing_output_association.c.omics_processing_id,
             models.DataObject.url != None,
         )
         .group_by(models.DataObject.workflow_type)
@@ -217,10 +282,14 @@ def get_data_object_aggregation(
             func.count(models.DataObject.id),
             func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)),
         )
+        .join(
+            models.omics_processing_output_association,
+            models.omics_processing_output_association.c.data_object_id == models.DataObject.id,
+        )
         .filter(
             models.DataObject.workflow_type != None,
             models.DataObject.file_type != None,
-            subquery.c.id == models.DataObject.omics_processing_id,
+            subquery.c.id == models.omics_processing_output_association.c.omics_processing_id,
             models.DataObject.url != None,
         )
         .group_by(models.DataObject.workflow_type, models.DataObject.file_type)

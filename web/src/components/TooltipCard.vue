@@ -35,7 +35,7 @@ export default defineComponent({
           mdi-help-circle
         </v-icon>
       </template>
-      <span>{{ text }}</span>
+      <span v-html="text" />
     </v-tooltip>
     <slot />
   </v-card>

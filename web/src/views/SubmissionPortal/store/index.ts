@@ -1,11 +1,14 @@
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import Vue from 'vue';
 import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from '@vue/composition-api';
-import { chunk, clone, forEach } from 'lodash';
+import {
+  chunk, clone, forEach, isString,
+} from 'lodash';
 import axios from 'axios';
 import * as api from './api';
-import { getVariants } from '../harmonizerApi';
 import { User } from '@/types';
 import {
   HARMONIZER_TEMPLATES,
@@ -14,10 +17,20 @@ import {
   NmdcAddress,
   PermissionLevelValues,
   PermissionTitle,
-  SubmissionStatus,
+  SubmissionStatusKey,
+  SubmissionStatusTitle,
   SuggestionType,
   SuggestionsMode,
   MetadataSuggestionRequest,
+  Doi,
+  DATA_MG_INTERLEAVED,
+  DATA_MG,
+  DATA_MT_INTERLEAVED,
+  DATA_MT,
+  EMSL,
+  JGI_MG,
+  JGI_MG_LR,
+  JGI_MT,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 
@@ -37,15 +50,14 @@ const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
   viewer: 1,
 };
 
-const submissionStatus: Record<string, SubmissionStatus> = {
-  InProgress: 'In Progress',
-  SubmittedPendingReview: 'Submitted- Pending Review',
-  Complete: 'Complete',
-};
+//use schema enum to define submission status
+const submissionStatus: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
+  Object.entries(NmdcSchema.enums.SubmissionStatusEnum.permissible_values).map(([key, item]: [SubmissionStatusKey, SubmissionStatusTitle]) => [key, item.title]),
+);
 
-const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(submissionStatus).includes(str);
+const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(submissionStatus).includes(str);
 
-const status = ref(submissionStatus.InProgress);
+const status = ref('InProgress');
 const isTestSubmission = ref(false);
 
 /**
@@ -77,9 +89,7 @@ function canEditSampleMetadata(): boolean {
 }
 
 const hasChanged = ref(0);
-/**
- * Submission Context Step
- */
+
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -106,18 +116,7 @@ const addressFormDefault = {
   irbOrHipaa: undefined as undefined | boolean,
   comments: '',
 };
-const contextFormDefault = {
-  dataGenerated: undefined as undefined | boolean,
-  awardDois: [] as string[] | null,
-  ship: undefined as undefined | boolean,
-  facilityGenerated: undefined as undefined | boolean,
-  facilities: [] as string[],
-  award: undefined as undefined | string,
-  otherAward: '',
-  unknownDoi: undefined as undefined | boolean,
-};
-const contextForm = reactive(clone(contextFormDefault));
-const contextFormValid = ref(false);
+
 const addressForm = reactive(clone(addressFormDefault));
 const addressFormValid = ref(false);
 
@@ -131,6 +130,7 @@ const studyFormDefault = {
   piOrcid: '',
   linkOutWebpage: [],
   studyDate: null,
+  dataDois: [] as Doi[] | null,
   fundingSources: [] as string[] | null,
   description: '',
   notes: '',
@@ -140,6 +140,9 @@ const studyFormDefault = {
     roles: string[];
     permissionLevel: PermissionLevelValues | null;
   }[],
+  alternativeNames: [] as string[],
+  GOLDStudyId: '',
+  NCBIBioProjectId: '',
 };
 const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
@@ -148,12 +151,22 @@ const studyForm = reactive(clone(studyFormDefault));
  * Multi-Omics Form Step
  */
 const multiOmicsFormDefault = {
-  alternativeNames: [] as string[],
-  studyNumber: '',
-  GOLDStudyId: '',
+  award: undefined as undefined | string,
+  awardDois: [] as Doi[] | null,
+  dataGenerated: undefined as undefined | boolean,
+  doe: undefined as undefined | boolean,
+  facilities: [] as string[],
+  facilityGenerated: undefined as undefined | boolean,
   JGIStudyId: '',
-  NCBIBioProjectId: '',
+  mgCompatible: undefined as undefined | boolean,
+  mgInterleaved: undefined as undefined | boolean,
+  mtCompatible: undefined as undefined | boolean,
+  mtInterleaved: undefined as undefined | boolean,
   omicsProcessingTypes: [] as string[],
+  otherAward: undefined as undefined | string,
+  ship: undefined as undefined | boolean,
+  studyNumber: '',
+  unknownDoi: undefined as undefined | boolean,
 };
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
@@ -164,34 +177,114 @@ const multiOmicsAssociationsDefault = {
 };
 const multiOmicsAssociations = reactive(clone(multiOmicsAssociationsDefault));
 
+function addAwardDoi() {
+  if (!Array.isArray(multiOmicsForm.awardDois)) {
+    multiOmicsForm.awardDois = [];
+  }
+  multiOmicsForm.awardDois.push({
+    value: '',
+    provider: '',
+  });
+}
+
+function removeAwardDoi(i: number) {
+  if (multiOmicsForm.awardDois === null) {
+    multiOmicsForm.awardDois = [];
+  }
+  if ((multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
+    multiOmicsForm.awardDois.splice(i, 1);
+  }
+}
+
+function checkDoiFormat(v: string) {
+  const valid = /^(?:doi:)?10.\d{2,9}\/.*$/.test(v);
+  return valid;
+}
+
 /**
- * Environment Package Step
+ * Environmental Package Step
  */
-const packageName = ref(['soil'] as (keyof typeof HARMONIZER_TEMPLATES)[]);
+const packageName = ref([] as (keyof typeof HARMONIZER_TEMPLATES)[]);
 const templateList = computed(() => {
-  const checkBoxes = multiOmicsForm.omicsProcessingTypes;
-  const list = getVariants(checkBoxes, contextForm.dataGenerated, packageName.value);
-  return list;
+  const templates = new Set(packageName.value);
+  if (multiOmicsForm.dataGenerated) {
+    // Have data already been generated? Yes
+    if (!multiOmicsForm.doe) {
+      // Were the data generated at a DOE facility? No
+      if (multiOmicsForm.omicsProcessingTypes.includes('mg')) {
+        // Which datatypes were generated? Metagenome
+        if (multiOmicsForm.mgCompatible) {
+          // Is the generated data compatible? Yes
+          if (multiOmicsForm.mgInterleaved) {
+            // Is the generated data interleaved? Yes
+            templates.add(DATA_MG_INTERLEAVED);
+          } else {
+            // Is the generated data interleaved? No
+            templates.add(DATA_MG);
+          }
+        }
+      }
+      if (multiOmicsForm.omicsProcessingTypes.includes('mt')) {
+        // Which datatypes were generated? Metatranscriptome
+        if (multiOmicsForm.mtCompatible) {
+          // Is the generated data compatible? Yes
+          if (multiOmicsForm.mtInterleaved) {
+            // Is the generated data interleaved? Yes
+            templates.add(DATA_MT_INTERLEAVED);
+          } else {
+            // Is the generated data interleaved? No
+            templates.add(DATA_MT);
+          }
+        }
+      }
+    }
+  } else {
+    // Have data already been generated? No
+    // eslint-disable-next-line no-lonely-if
+    if (multiOmicsForm.doe) {
+      // Are you submitting samples to a DOE user facility? Yes
+      if (multiOmicsForm.facilities.includes('EMSL')) {
+        // Which facility? EMSL
+        if (multiOmicsForm.omicsProcessingTypes.includes('lipidome-emsl')) {
+          // Data types? Lipidome
+          templates.add(EMSL);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('mp-emsl')) {
+          // Data types? Metaproteome
+          templates.add(EMSL);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('mb-emsl')) {
+          // Data types? Metabolome
+          templates.add(EMSL);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('nom-emsl')) {
+          // Data types? Natural Organic Matter
+          templates.add(EMSL);
+        }
+      }
+      if (multiOmicsForm.facilities.includes('JGI')) {
+        // Which facility? JGI
+        if (multiOmicsForm.omicsProcessingTypes.includes('mg-jgi')) {
+          // Data types? Metagenome
+          templates.add(JGI_MG);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('mg-lr-jgi')) {
+          // Data types? Metagenome Long Read
+          templates.add(JGI_MG_LR);
+        }
+        if (multiOmicsForm.omicsProcessingTypes.includes('mt-jgi')) {
+          // Data types? Metatranscriptome
+          templates.add(JGI_MT);
+        }
+      }
+    }
+  }
+  return Array.from(templates);
 });
 /**
  * DataHarmonizer Step
  */
 const sampleData = shallowRef({} as Record<string, any[]>);
-const templateChoiceDisabled = computed(() => {
-  // If there are no keys in sampleData, the DH view hasn't been touched
-  // yet, so it's still okay to change the template.
-  if (Object.keys(sampleData.value).length === 0) {
-    return false;
-  }
-  // If the DH has been touched, see if any of the values (templates) actually
-  // contain data. If at least one does, then do not allow changing the template.
-  // Otherwise, allow template changes.
-  const templateWithDataIndex = Object.values(sampleData.value).findIndex((value) => value.length > 0);
-  if (templateWithDataIndex >= 0) {
-    return true;
-  }
-  return false;
-});
 const metadataSuggestions = ref([] as MetadataSuggestion[]);
 const suggestionMode = ref(SuggestionsMode.LIVE);
 const suggestionType = ref(SuggestionType.ALL);
@@ -208,13 +301,55 @@ watch(templateList, () => {
 /** Submit page */
 const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   packageName: packageName.value,
-  contextForm,
   addressForm,
   templates: templateList.value,
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
 }));
+
+function templateHasData(templateName: string): boolean {
+  //if DH hasn't been touched at all then there's no data nd it's ok edit
+  if (Object.keys(sampleData.value).length === 0) {
+    return false;
+  }
+
+  //case where we want behavior the same as 'templateChoiceDisabled'
+  if (templateName === 'all') {
+    const templateWithDataIndex = Object.values(sampleData.value).findIndex((value) => value.length > 0);
+    if (templateWithDataIndex >= 0) {
+      return true;
+    }
+    return false;
+  }
+
+  // If there are no keys in sampleData, the DH view hasn't been touched
+  // yet, so it's still okay to change the template.
+  // Or if the template is not present/hasn't been selected
+  if (!Object.keys(sampleData.value).includes(templateName)) {
+    return false;
+  }
+  // If the DH has been touched, see if the given template actually
+  // contain data. If it does, then do not allow changing that template.
+  // Otherwise, allow it to be changed.
+  if (Object.values(sampleData.value[templateName]).length > 0) {
+    return true;
+  }
+  return false;
+}
+
+function checkJGITemplates() {
+  //checks to see if there is data present in any of the templates that are associated with JGI
+  const fields = ['jgi_mg', 'jgi_mg_lr', 'jgi_mt', 'data_mg', 'data_mg_interleaved', 'data_mt', 'data_mt_interleaved'];
+  let data_present: Boolean = false;
+  fields.forEach((val) => {
+    const sampleSlot = HARMONIZER_TEMPLATES[val].sampleDataSlot;
+    if (isString(sampleSlot) && templateHasData(sampleSlot)) {
+      data_present = true;
+    }
+  });
+  return data_present;
+}
 
 function getPermissions(): Record<string, PermissionLevelValues> {
   const permissions: Record<string, PermissionLevelValues> = {};
@@ -236,7 +371,7 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string, status: SubmissionStatus = submissionStatus.InProgress) {
+function submit(id: string, status: SubmissionStatusKey = 'InProgress') {
   if (canEditSubmissionMetadata()) {
     return api.updateRecord(id, payloadObject.value, status);
   }
@@ -244,21 +379,18 @@ function submit(id: string, status: SubmissionStatus = submissionStatus.InProgre
 }
 
 function reset() {
-  Object.assign(contextForm, contextFormDefault);
-  contextFormValid.value = false;
   Object.assign(addressForm, addressFormDefault);
   addressFormValid.value = false;
   studyFormValid.value = false;
   addressFormValid.value = false;
-  Object.assign(contextForm, contextFormDefault);
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
   multiOmicsFormValid.value = false;
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
-  packageName.value = ['soil'];
+  packageName.value = [];
   sampleData.value = {};
-  status.value = submissionStatus.InProgress;
+  status.value = 'InProgress';
   isTestSubmission.value = false;
 }
 
@@ -303,11 +435,10 @@ async function loadRecord(id: string) {
   packageName.value = val.metadata_submission.packageName;
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
-  Object.assign(contextForm, val.metadata_submission.contextForm);
   Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
-  status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
+  status.value = isSubmissionStatus(val.status) ? val.status : 'InProgress';
   _permissionLevel = (val.permission_level as PermissionLevelValues);
   isTestSubmission.value = val.is_test_submission;
 
@@ -394,9 +525,9 @@ export {
   multiOmicsForm,
   multiOmicsAssociations,
   multiOmicsFormValid,
+  addAwardDoi,
+  removeAwardDoi,
   sampleData,
-  contextForm,
-  contextFormValid,
   addressForm,
   addressFormDefault,
   addressFormValid,
@@ -405,7 +536,6 @@ export {
   submitPayload,
   packageName,
   templateList,
-  templateChoiceDisabled,
   hasChanged,
   tabsValidated,
   status,
@@ -426,4 +556,7 @@ export {
   canEditSubmissionMetadata,
   addMetadataSuggestions,
   removeMetadataSuggestions,
+  templateHasData,
+  checkJGITemplates,
+  checkDoiFormat,
 };

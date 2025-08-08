@@ -1,3 +1,6 @@
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+
 import { User } from '@/types';
 
 /**
@@ -6,7 +9,12 @@ import { User } from '@/types';
 export const EMSL = 'emsl';
 export const JGI_MG = 'jgi_mg';
 export const JGI_MG_LR = 'jgi_mg_lr';
-export const JGT_MT = 'jgi_mt';
+export const JGI_MT = 'jgi_mt';
+export const DATA_MG = 'data_mg';
+export const DATA_MG_INTERLEAVED = 'data_mg_interleaved';
+export const DATA_MT = 'data_mt';
+export const DATA_MT_INTERLEAVED = 'data_mt_interleaved';
+
 export interface HarmonizerTemplateInfo {
   displayName: string,
   schemaClass?: string,
@@ -120,10 +128,34 @@ export const HARMONIZER_TEMPLATES: Record<string, HarmonizerTemplateInfo> = {
     sampleDataSlot: 'jgi_mg_lr_data',
     status: 'mixin',
   },
-  [JGT_MT]: {
+  [JGI_MT]: {
     displayName: 'JGI MT',
     schemaClass: 'JgiMtInterface',
     sampleDataSlot: 'jgi_mt_data',
+    status: 'mixin',
+  },
+  [DATA_MG]: {
+    displayName: 'Metagenomics Data',
+    schemaClass: 'MetagenomeSequencingNonInterleavedDataInterface',
+    sampleDataSlot: 'metagenome_sequencing_non_interleaved_data',
+    status: 'mixin',
+  },
+  [DATA_MG_INTERLEAVED]: {
+    displayName: 'Metagenomics Data (Interleaved)',
+    schemaClass: 'MetagenomeSequencingInterleavedDataInterface',
+    sampleDataSlot: 'metagenome_sequencing_interleaved_data',
+    status: 'mixin',
+  },
+  [DATA_MT]: {
+    displayName: 'Metatranscriptomics Data',
+    schemaClass: 'MetatranscriptomeSequencingNonInterleavedDataInterface',
+    sampleDataSlot: 'metatranscriptome_sequencing_non_interleaved_data',
+    status: 'mixin',
+  },
+  [DATA_MT_INTERLEAVED]: {
+    displayName: 'Metatranscriptomics Data (Interleaved)',
+    schemaClass: 'MetatranscriptomeSequencingInterleavedDataInterface',
+    sampleDataSlot: 'metatranscriptome_sequencing_interleaved_data',
     status: 'mixin',
   },
 };
@@ -195,7 +227,6 @@ export interface NmdcAddress {
 
 export interface MetadataSubmission {
   packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
-  contextForm: any;
   addressForm: any;
   templates: string[];
   studyForm: any;
@@ -203,20 +234,25 @@ export interface MetadataSubmission {
   sampleData: Record<string, any[]>;
 }
 
-export interface MetadataSubmissionRecord {
+export interface MetadataSubmissionRecordSlim {
   id: string;
-  author_orcid: string;
-  created: string;
-  metadata_submission: MetadataSubmission;
+  author: User;
+  study_name: string;
+  templates: string[];
   status: string;
+  date_last_modified: string;
+  created: string;
+  is_test_submission: boolean;
+  sample_count: number;
+}
+
+export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
+  author_orcid: string;
+  metadata_submission: MetadataSubmission;
   locked_by: User;
   lock_updated: string;
   permission_level: string | null;
   source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
-  study_name: string;
-  templates: string[];
-  is_test_submission: boolean;
-  date_last_modified: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -231,8 +267,15 @@ export interface LockOperationResult {
   lock_updated?: string | null;
 }
 
+export interface Doi {
+  value: string;
+  provider: string;
+}
+
 export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
 export type PermissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor' | 'owner';
 
-export type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
+export type SubmissionStatusKey = Extract<keyof typeof NmdcSchema.enums.submissionStatus.permissible_values, string>;
+
+export type SubmissionStatusTitle = typeof NmdcSchema.enums.submissionStatus.permissible_values[SubmissionStatusKey]['title'];

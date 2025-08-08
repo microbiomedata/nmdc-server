@@ -1,12 +1,13 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, computed_field, field_validator
 
 from nmdc_server import schemas
 from nmdc_server.models import SubmissionEditorRole
+from nmdc_server.storage import BucketName, storage
 
 
 class Contributor(BaseModel):
@@ -16,26 +17,56 @@ class Contributor(BaseModel):
     permissionLevel: Optional[str] = None
 
 
-class StudyForm(BaseModel):
+class Doi(BaseModel):
+    value: str
+    provider: str
+
+
+class StudyFormCreate(BaseModel):
     studyName: str
     piName: str
     piEmail: str
     piOrcid: str
     fundingSources: Optional[List[str]] = None
+    dataDois: Optional[List[Doi]] = None
     linkOutWebpage: List[str]
     studyDate: Optional[str] = None
     description: str
     notes: str
     contributors: List[Contributor]
+    # These are optional here to allow temporary Field Notes compatibility
+    alternativeNames: Optional[List[str]] = None
+    GOLDStudyId: Optional[str] = None
+    NCBIBioProjectId: Optional[str] = None
+
+
+class StudyForm(StudyFormCreate):
+    alternativeNames: List[str]
+    GOLDStudyId: str
+    NCBIBioProjectId: str
 
 
 class MultiOmicsForm(BaseModel):
-    alternativeNames: List[str]
-    studyNumber: str
-    GOLDStudyId: str
+    award: Optional[str] = None
+    awardDois: Optional[List[Doi]] = None
+    dataGenerated: Optional[bool] = None
+    doe: Optional[bool] = None
+    facilities: Optional[List[str]] = None
+    facilityGenerated: Optional[bool] = None
     JGIStudyId: str
-    NCBIBioProjectId: str
+    mgCompatible: Optional[bool] = None
+    mgInterleaved: Optional[bool] = None
+    mtCompatible: Optional[bool] = None
+    mtInterleaved: Optional[bool] = None
     omicsProcessingTypes: List[str]
+    otherAward: Optional[str] = None
+    ship: Optional[bool] = None
+    studyNumber: str
+    unknownDoi: Optional[bool] = None
+
+    # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
+    # NCBIBioProjectId in this form until it catches up with the new data model in its next release
+    model_config = ConfigDict(extra="allow")
 
 
 class NmcdAddress(BaseModel):
@@ -65,34 +96,21 @@ class AddressForm(BaseModel):
     comments: str
 
 
-class ContextForm(BaseModel):
-    awardDois: Optional[List[str]] = None
-    dataGenerated: Optional[bool] = None
-    facilityGenerated: Optional[bool] = None
-    facilities: List[str]
-    award: Optional[str] = None
-    otherAward: str
-    unknownDoi: Optional[bool] = None
-    ship: Optional[bool] = None
-
-
 class MetadataSubmissionRecordCreate(BaseModel):
-    packageName: Union[str, List[str]]
-    contextForm: ContextForm
+    packageName: List[str]
     addressForm: AddressForm
     templates: List[str]
-    studyForm: StudyForm
+    studyForm: StudyFormCreate
     multiOmicsForm: MultiOmicsForm
     sampleData: Dict[str, List[Any]]
 
 
 class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
-    packageName: List[str]
+    studyForm: StudyForm
 
 
 class PartialMetadataSubmissionRecord(BaseModel):
     packageName: Optional[List[str]] = None
-    contextForm: Optional[ContextForm] = None
     addressForm: Optional[AddressForm] = None
     templates: Optional[List[str]] = None
     studyForm: Optional[StudyForm] = None
@@ -108,6 +126,8 @@ class SubmissionMetadataSchemaCreate(BaseModel):
 
 
 class SubmissionMetadataSchemaPatch(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     metadata_submission: PartialMetadataSubmissionRecord
     status: Optional[str] = None
     # Map of ORCID iD to permission level
@@ -115,22 +135,44 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     field_notes_metadata: Optional[Dict[str, Any]] = None
 
 
-class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
+class SubmissionMetadataSchemaSlim(BaseModel):
     id: UUID
-    author_orcid: str
-    created: datetime
-    status: str
     author: schemas.User
-    templates: List[str]
     study_name: Optional[str] = None
-    field_notes_metadata: Optional[Dict[str, Any]] = None
+    templates: List[str]
+    status: str
     date_last_modified: datetime
+    created: datetime
+    is_test_submission: bool = False
+    sample_count: int = 0
+
+
+class SubmissionImagesObject(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    size: int = Field(description="Size of the file in bytes")
+    content_type: str
+
+
+class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataSchemaCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    author_orcid: str
+    field_notes_metadata: Optional[Dict[str, Any]] = None
+    metadata_submission: MetadataSubmissionRecord
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None
 
     permission_level: Optional[str] = None
-    model_config = ConfigDict(from_attributes=True)
+
+    # These fields are excluded from the model's JSON representation because they need to be
+    # translated into signed URLs before being returned to the client. This is done via the
+    # @computed_field-decorated properties below.
+    pi_image_name: Optional[str] = Field(exclude=True, default=None)
+    primary_study_image_name: Optional[str] = Field(exclude=True, default=None)
+    study_images: list[SubmissionImagesObject] = Field(exclude=True, default_factory=list)
 
     @field_validator("metadata_submission", mode="before")
     def populate_roles(cls, metadata_submission, info: ValidationInfo):
@@ -151,6 +193,39 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
                 elif orcid in viewers:
                     contributor["role"] = SubmissionEditorRole.viewer.value
         return metadata_submission
+
+    # Mypy doesn't understand the combined use of `@computed_field` and `@property`
+    # https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.computed_field
+    @computed_field  # type: ignore
+    @property
+    def pi_image_url(self) -> Optional[str]:
+        """Returns the signed URL for the PI's image if available."""
+        if self.pi_image_name:
+            return storage.get_signed_download_url(
+                BucketName.SUBMISSION_IMAGES, self.pi_image_name
+            ).url
+        return None
+
+    @computed_field  # type: ignore
+    @property
+    def primary_study_image_url(self) -> Optional[str]:
+        """Returns the signed URL for the primary study image if available."""
+        if self.primary_study_image_name:
+            return storage.get_signed_download_url(
+                BucketName.SUBMISSION_IMAGES, self.primary_study_image_name
+            ).url
+        return None
+
+    @computed_field  # type: ignore
+    @property
+    def study_image_urls(self) -> List[str]:
+        """Returns a list of signed URLs for all study images."""
+        if not self.study_images:
+            return []
+        return [
+            storage.get_signed_download_url(BucketName.SUBMISSION_IMAGES, img.name).url
+            for img in self.study_images
+        ]
 
 
 SubmissionMetadataSchema.model_rebuild()

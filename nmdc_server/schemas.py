@@ -154,15 +154,25 @@ class DatabaseSummary(BaseModel):
 
 class AggregationSummary(BaseModel):
     studies: int
+    non_parent_studies: int
     locations: int
     habitats: int
-    data_size: int
     metagenomes: int
     metatranscriptomes: int
     proteomics: int
     metabolomics: int
     lipodomics: int
     organic_matter_characterization: int
+    wfe_output_data_size_bytes: int
+    data_size: int
+
+
+class AdminStats(BaseModel):
+    """Statistics designed for consumption by Data Portal/Submission Portal administrators."""
+
+    num_user_accounts: int = Field(
+        description="Number of distinct ORCIDs that have been used to sign in."
+    )
 
 
 class EnvironmentSankeyAggregation(BaseModel):
@@ -238,7 +248,7 @@ class StudyBase(AnnotatedBase):
     add_date: Optional[DateType] = None
     mod_date: Optional[DateType] = None
     has_credit_associations: Optional[List[CreditAssociation]] = None
-    relevant_protocols: Optional[List[str]] = None
+    protocol_link: Optional[List[str]] = None
     funding_sources: Optional[List[str]] = None
     gold_study_identifiers: Optional[List[str]] = None
     homepage_website: Optional[List[str]] = None
@@ -417,15 +427,15 @@ class PipelineStepBase(BaseModel):
     type: str
     git_url: str
     started_at_time: DateType
-    ended_at_time: DateType
+    ended_at_time: Optional[DateType] = None
     execution_resource: str
-    omics_processing_id: str
 
 
 class PipelineStep(PipelineStepBase):
     # has_inputs: List[str]
     # has_outputs: List[str]
     outputs: List[DataObject]
+    was_informed_by: List[OmicsProcessingBase]
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -507,10 +517,11 @@ class MetatranscriptomeAnnotation(PipelineStep):
 
 class MetaproteomicAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.metaproteomic_analysis.value
+    metaproteomics_analysis_category: str
 
 
 class MetaproteomicAnalysis(PipelineStep):
-    pass
+    metaproteomics_analysis_category: str
 
 
 class MAG(BaseModel):
@@ -552,7 +563,6 @@ class MAGsAnalysis(PipelineStep):
 
 class NOMAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.nom_analysis.value
-    used: str = ""
 
 
 class NOMAnalysis(PipelineStep):
@@ -568,7 +578,7 @@ class ReadBasedAnalysis(PipelineStep):
 
 
 class MetatranscriptomeBase(PipelineStepBase):
-    type: str = WorkflowActivityTypeEnum.metatranscriptome.value
+    type: str = WorkflowActivityTypeEnum.metatranscriptome_expression.value
 
 
 class Metatranscriptome(PipelineStep):
@@ -577,7 +587,6 @@ class Metatranscriptome(PipelineStep):
 
 class MetabolomicsAnalysisBase(PipelineStepBase):
     type: str = WorkflowActivityTypeEnum.metabolomics_analysis.value
-    used: str = ""
 
 
 class MetabolomicsAnalysis(PipelineStep):
@@ -683,3 +692,34 @@ class VersionInfo(BaseModel):
     nmdc_schema: str = version("nmdc-schema")
     nmdc_submission_schema: str = version("nmdc-submission-schema")
     model_config = ConfigDict(frozen=False)
+
+
+class SignedUploadUrlRequest(BaseModel):
+    """Request to generate a signed upload URL for a file.
+
+    This model is used to generate a signed URL for uploading files to the object store.
+    """
+
+    file_name: str
+    file_size: int = Field(description="Size of the file in bytes")
+    content_type: str
+
+
+class SignedUrl(BaseModel):
+    """Response containing the signed URL and other metadata."""
+
+    url: str
+    object_name: str
+    expiration: datetime
+
+
+class UploadCompleteRequest(BaseModel):
+    """Request to mark an upload as complete.
+
+    This model is used to mark an upload as complete after the file has been uploaded
+    to the object store.
+    """
+
+    object_name: str
+    file_size: int = Field(description="Size of the file in bytes")
+    content_type: str

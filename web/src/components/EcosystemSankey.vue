@@ -13,6 +13,7 @@
 
 <script>
 import Vue from 'vue';
+import { ref } from '@vue/composition-api';
 import { GChart } from 'vue-google-charts';
 
 import colors from '@/colors';
@@ -46,14 +47,20 @@ export default Vue.extend({
           const chart = this.$refs.chart.chartObject;
           const selection = chart.getSelection();
           if (selection.length === 0) return;
-          const [, val] = this.sankeyData[selection[0].row + 1];
+          const val = ref('');
+          // Handle case where the selection is a node (not a link)
+          if (selection[0].row === undefined) {
+            val.value = selection[0].name;
+          } else {
+            [, val.value] = this.sankeyData[selection[0].row + 1];
+          }
           // use prefixed number of spaces to indicate index in the heirarchy
-          const prefix = val.match(/^([\s]+)/g)[0].length - 1;
+          const prefix = val.value.match(/^([\s]+)/g)[0].length - 1;
           this.$emit('selected', {
             conditions: [{
               field: this.heirarchy[prefix],
               op: '==',
-              value: val.trim(),
+              value: val.value.trim(),
               table: 'biosample',
             }],
           });
@@ -85,7 +92,8 @@ export default Vue.extend({
   computed: {
     sankeyOptions() {
       return {
-        height: 400,
+        // Make the chart height dependent on the number of nodes with a minimum of 500px
+        height: Math.max(this.sankeyData.length * 4, 500),
         sankey: {
           link: {
             colorMode: 'source',
@@ -93,7 +101,10 @@ export default Vue.extend({
           },
           node: {
             interactivity: true,
-            colors: colors.primary,
+            width: 12,
+            // Array needs to be of substantial length so the lines do not become too pale to see
+            // Uses 'primary' and primary.darken2 alternatingly
+            colors: Array.from({ length: this.sankeyData.length / 2 }, (_, i) => (i % 2 === 0 ? colors.primary : '#1c104e')),
           },
         },
       };

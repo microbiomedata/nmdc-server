@@ -1,16 +1,20 @@
 import os
+from typing import Callable, Generator
 
 import nmdc_geoloc_tools
 import pytest
 from factory import random
+from google.cloud.storage import Blob
 from starlette.testclient import TestClient
 
+import nmdc_server.api
 from nmdc_server import database, schemas
 from nmdc_server.app import create_app
 from nmdc_server.auth import create_token_response
 from nmdc_server.config import settings
 from nmdc_server.fakes import UserFactory
 from nmdc_server.fakes import db as _db
+from nmdc_server.storage import BucketName, storage
 
 
 @pytest.fixture(autouse=True)
@@ -37,6 +41,14 @@ def patch_geo_engine(monkeypatch):
     monkeypatch.setattr(nmdc_geoloc_tools, "fao_soil_type", mock_not_implemented)
     monkeypatch.setattr(nmdc_geoloc_tools, "landuse", mock_not_implemented)
     monkeypatch.setattr(nmdc_geoloc_tools, "landuse_dates", mock_not_implemented)
+
+
+@pytest.fixture()
+def patch_zip_stream_service(monkeypatch):
+    def mock_zip_streamer(*args, **kwargs):
+        yield b"foo"
+
+    monkeypatch.setattr(nmdc_server.api, "stream_zip_archive", mock_zip_streamer)
 
 
 @pytest.fixture(scope="session")
@@ -98,3 +110,23 @@ def logged_in_admin_user(db, client) -> schemas.User:
     client.headers["Authorization"] = f"Bearer {token_response.access_token.decode()}"
 
     return user
+
+
+@pytest.fixture
+def temp_storage_object() -> Generator[Callable[[BucketName, str], Blob], None, None]:
+    """Get a function to create temporary storage objects for testing."""
+    blobs: list[tuple[BucketName, str]] = []
+
+    def _temp_storage_object(bucket_name: BucketName, object_name: str) -> Blob:
+        bucket = storage.get_bucket(bucket_name)
+        tmp_blob = bucket.blob(object_name)
+        tmp_blob.upload_from_string("Temporary content for testing")
+        blobs.append((bucket_name, object_name))
+        return tmp_blob
+
+    yield _temp_storage_object
+
+    # Cleanup temporary storage objects
+    for bucket_name, object_name in blobs:
+        # Use raise_if_not_found=False because the test may have already deleted the object
+        storage.delete_object(bucket_name, object_name, raise_if_not_found=False)

@@ -5,12 +5,13 @@ from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
-from nmdc_server.data_object_filters import get_local_data_url
+from nmdc_server.config import Settings
 from nmdc_server.logger import get_logger
 
 logger = get_logger(__name__)
@@ -67,6 +68,19 @@ def get_database_summary(db: Session) -> schemas.DatabaseSummary:
         metabolomics_analysis=aggregations.get_table_summary(db, models.MetabolomicsAnalysis),
         metatranscriptome=aggregations.get_table_summary(db, models.Metatranscriptome),
         gene_function=gene_function,
+    )
+
+
+def get_admin_stats(db: Session) -> schemas.AdminStats:
+    r"""
+    Compiles statistics designed to be consumed by Data Portal/Submission Portal administrators.
+    """
+
+    distinct_orcids_subquery = db.query(func.distinct(models.User.orcid)).subquery()
+    num_distinct_orcids = db.query(func.count()).select_from(distinct_orcids_subquery).scalar()
+
+    return schemas.AdminStats(
+        num_user_accounts=num_distinct_orcids,
     )
 
 
@@ -426,7 +440,12 @@ def construct_zip_file_path(data_object: models.DataObject) -> str:
     #   - We probably want to reference the workflow activity but that
     #     involves a complicated query... need a way to join that information
     #     in the original query (possibly in the sqlalchemy relationship)
-    omics_processing = data_object.omics_processing
+    if not data_object.omics_processings:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Data object has no associated omics processings.",
+        )
+    omics_processing = data_object.omics_processings[0]
     biosamples = cast(Optional[list[models.Biosample]], omics_processing.biosample_inputs)
 
     def safe_name(name: str) -> str:
@@ -486,30 +505,44 @@ def create_bulk_download(
         raise
 
 
-def get_zip_download(db: Session, id: UUID) -> Optional[str]:
-    """Return a download table compatible with mod_zip."""
+def replace_nersc_data_host(url: str) -> str:
+    """
+    Updates NERSC URLs so they have the custom prefix defined in
+    an environment variable. This can be used to optimize the URLs
+    for HTTP clients that have direct access to the NERSC network.
+    """
+    host_to_replace = r"^https://data.microbiomedata.org/data"
+    replacement_host = Settings().zip_streamer_nersc_data_base_url
+    if re.match(host_to_replace, url):
+        return re.sub(host_to_replace, replacement_host, url)
+    return url
+
+
+def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
+    """Return a zip file descriptor compatible with zipstreamer."""
     bulk_download = db.query(models.BulkDownload).get(id)
     if bulk_download is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bulk download not found")
     if bulk_download.expired:
         raise HTTPException(status_code=status.HTTP_410_GONE, detail="Bulk download expired")
-    content = []
+    zip_file_descriptor: Dict[str, Any] = {"suggestedFilename": "archive.zip"}
+    file_descriptions: List[Dict[str, str]] = []
 
     for file in bulk_download.files:  # type: ignore
         data_object = file.data_object
-        url = get_local_data_url(data_object.url)
-        if url is None:
+        if data_object.url is None:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
             continue
 
-        # TODO: add crc checksums to support retries
-        # TODO: add directory structure and metadata
-        content.append(f"- {data_object.file_size_bytes} {url} {file.path}")
+        url = replace_nersc_data_host(data_object.url)
+        file_descriptions.append({"url": url, "zipPath": file.path})
+
+    zip_file_descriptor["files"] = file_descriptions
 
     bulk_download.expired = True
     db.commit()
 
-    return "\n".join(content) + "\n"
+    return zip_file_descriptor
 
 
 def get_user(db: Session, user_id: str) -> Optional[models.User]:
@@ -660,6 +693,42 @@ contributors_edit_roles = [
 ]
 
 
+def get_submission_for_user(
+    db: Session,
+    submission_id: str,
+    requester: models.User,
+    *,
+    allowed_roles: list[models.SubmissionEditorRole] | None = None,
+) -> models.SubmissionMetadata:
+    """Get a submission by ID and additionally check if the requesting user has one of the allowed
+    roles on the submission.
+
+    :raise HTTPException: If the submission does not exist or if the user does not have one of the
+        allowed roles on the submission.
+
+    :param db: The database session.
+    :param submission_id: The ID of the submission to retrieve.
+    :param requester: The user requesting the submission.
+    :param allowed_roles: A list of allowed roles that the user must have on the submission. If
+        None, no role check is performed.
+    """
+    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
+        submission_id
+    )
+    if submission is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    if allowed_roles and not requester.is_admin:
+        # If the user is not an admin, check if they have one of the allowed roles
+        # on the submission.
+        role = get_submission_role(db, submission_id, requester.orcid)
+        if not role or models.SubmissionEditorRole(role.role) not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permission to complete this action",
+            )
+    return submission
+
+
 def get_submission_role(
     db: Session, submission_id: str, user_orcid: str
 ) -> Optional[models.SubmissionRole]:
@@ -714,7 +783,13 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
     return (role and models.SubmissionEditorRole(role.role) in contributors_edit_roles) is True
 
 
-def get_submissions_for_user(db: Session, user: models.User, column_sort: str, order: str):
+def get_submissions_for_user(
+    db: Session,
+    user: models.User,
+    column_sort: str,
+    order: str,
+    is_test_submission_filter: Optional[bool] = None,
+):
     """Return all submissions that a user has permission to view."""
     column = (
         models.User.name
@@ -727,6 +802,11 @@ def get_submissions_for_user(db: Session, user: models.User, column_sort: str, o
         .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
         .order_by(column.asc() if order == "asc" else column.desc())
     )
+
+    if is_test_submission_filter != None:
+        all_submissions = all_submissions.filter(
+            models.SubmissionMetadata.is_test_submission == is_test_submission_filter
+        )
 
     if user.is_admin:
         return all_submissions
@@ -759,7 +839,7 @@ def get_query_for_submitted_pending_review_submissions(db: Session):
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
     submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == "Submitted- Pending Review"
+        models.SubmissionMetadata.status == SubmissionStatusEnum.SubmittedPendingReview.text
     )
     return submitted_pending_review
 

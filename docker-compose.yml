@@ -7,6 +7,7 @@ services:
     image: nginx
 
   db:
+    # This version is duplicated in the GitHub Actions workflow
     image: postgres:13
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
@@ -22,7 +23,11 @@ services:
       # Our MGA ingest makes some *very* large transactions
       - "max_wal_size=2GB"
     ports:
-      - "5432:5432"
+      # We specify `127.0.0.1` here so that other computers on the same LAN cannot
+      # access the container, even when the host's firewall is configured to allow
+      # incoming connections to Docker.
+      # Reference: https://github.com/compose-spec/compose-spec/blob/main/spec.md#short-syntax-3
+      - "127.0.0.1:5432:5432"
 
   worker:
     image: ghcr.io/microbiomedata/nmdc-server/worker:main
@@ -49,6 +54,8 @@ services:
       dockerfile: Dockerfile
     environment:
       - PGHOST=db
+      - UVICORN_RELOAD=True
+      - GOOGLE_APPLICATION_CREDENTIALS=/gcp/credentials.json
     networks:
       - public
       - default
@@ -56,6 +63,8 @@ services:
       - "8000:8000"
     volumes:
       - ./data/ingest:/data/ingest
+      - ./nmdc_server:/app/nmdc_server
+      - $HOME/.config/gcloud/application_default_credentials.json:/gcp/credentials.json
     # Use a TTY so colors are preserved in the log output
     tty: true
 
@@ -78,9 +87,23 @@ services:
     ports:
       - "8080:80"
 
+  zipstreamer:
+    image: ghcr.io/scosman/packages/zipstreamer:stable
+    ports:
+      - "4008:4008"
+
+  storage:
+    image: fsouza/fake-gcs-server
+    ports:
+      - "4443:4443"
+    volumes:
+      - storage-data:/storage
+    command: "-scheme http -public-host localhost:4443 -filesystem-root /storage"
+
 volumes:
   app-db-data:
   app-db-ingest:
+  storage-data:
 
 networks:
   public:

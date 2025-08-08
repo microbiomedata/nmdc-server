@@ -1,41 +1,52 @@
 import csv
 import json
 import logging
+import time
+from enum import StrEnum
+from importlib import resources
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
-from uuid import UUID
+from uuid import UUID, uuid4
 
+import httpx
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
+from linkml_runtime.utils.schemaview import SchemaView
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
 from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
-from nmdc_server.config import Settings
+from nmdc_server.config import settings
+from nmdc_server.crud import context_edit_roles, get_submission_for_user
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
+from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester
 from nmdc_server.models import (
     IngestLock,
     SubmissionEditorRole,
+    SubmissionImagesObject,
     SubmissionMetadata,
     SubmissionRole,
     User,
 )
 from nmdc_server.pagination import Pagination
+from nmdc_server.storage import BucketName, sanitize_filename, storage
 from nmdc_server.table import Table
 
 router = APIRouter()
+
+logger = get_logger(__name__)
 
 
 # get application settings
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
-    settings = Settings()
     return {
         "disable_bulk_download": settings.disable_bulk_download.upper() == "YES",
         "portal_banner_message": settings.portal_banner_message,
@@ -146,6 +157,22 @@ async def get_aggregated_stats(db: Session = Depends(get_db)):
     return crud.get_aggregated_stats(db)
 
 
+@router.get(
+    "/admin/stats",
+    response_model=schemas.AdminStats,
+    tags=["administration"],
+)
+async def get_admin_stats(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+):
+    r"""
+    Get statistics designed to be consumed by Data Portal/Submission Portal administrators.
+    """
+
+    return crud.get_admin_stats(db)
+
+
 @router.post(
     "/environment/sankey",
     response_model=List[schemas.EnvironmentSankeyAggregation],
@@ -191,7 +218,7 @@ def inject_download_counts(db: Session, results, data_object_ids: set[str]):
 # biosample
 @router.post(
     "/biosample/search",
-    response_model=query.BiosampleSearchResponse,
+    response_model=query.Paginated[schemas.Biosample],
     tags=["biosample"],
     name="Search for biosamples",
     description="Faceted search of biosample data.",
@@ -231,12 +258,15 @@ async def search_biosample(
         ),
         insert_selected,
     )
-    if any(
-        [
-            condition.table == Table.omics_processing or condition.table == Table.gene_function
-            for condition in query.conditions
-        ]
-    ):
+    # Filter out irrelevant workflow types based on the initial search conditions.
+    # This might be possible with SQLAlchemy options, but we need to figure out how
+    # to apply filters to the select related options.
+    filter_data_object_tables = [
+        Table.omics_processing,
+        Table.gene_function,
+        Table.metaproteomic_analysis,
+    ]
+    if any([condition.table in filter_data_object_tables for condition in query.conditions]):
         biosample_ids = [b.id for b in results["results"]]  # type: ignore
         omics_results = crud.search_omics_processing_for_biosamples(
             db, query.conditions, biosample_ids
@@ -483,7 +513,7 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
 # Future work should go in to a more thorough conversion of omics process to data generation.
 @router.post(
     "/data_generation/search",
-    response_model=query.OmicsProcessingSearchResponse,
+    response_model=query.Paginated[schemas.OmicsProcessing],
     tags=["data_generation"],
     name="Search for data generations",
     description="Faceted search of data_generation data.",
@@ -682,6 +712,34 @@ async def get_data_object_aggregation(
     return query.aggregate(db)
 
 
+async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
+    r"""
+    Sends the specified `zip_file_descriptor` to ZipStreamer and receives
+    a ZIP archive in response, which this function yields in chunks.
+    """
+    last_chunk_time = time.time()
+
+    # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
+    # Note: We added these statements to help with debugging when this functionality was new.
+    logger.warning(f"Processing ZIP file descriptor: {zip_file_descriptor=}")
+    logger.warning("Using ZipStreamer service to stream ZIP archive...")
+    async with (
+        httpx.AsyncClient(timeout=None) as client,
+        client.stream("POST", settings.zip_streamer_url, json=zip_file_descriptor) as response,
+    ):
+        async for chunk in response.aiter_bytes(chunk_size=settings.zip_streamer_chunk_size_bytes):
+            this_chunk_time = time.time()
+            time_elapsed = this_chunk_time - last_chunk_time
+            # TODO: either clean up this logging depending on how useful it is, or make the
+            # hardcoded value a setting to be read from the environment.
+            # The number 5 was chosen because it is the default timeout length for HTTPX.
+            if time_elapsed > 5:
+                message = f"This chunk took a while to arrive. It arrived in {int(time_elapsed)}s"
+                logger.warning(message)
+            last_chunk_time = this_chunk_time
+            yield chunk
+
+
 @router.get(
     "/bulk_download/{bulk_download_id}",
     tags=["download"],
@@ -690,12 +748,15 @@ async def download_zip_file(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
 ):
-    table = crud.get_zip_download(db, bulk_download_id)
-    return Response(
-        content=table,
+    zip_file_descriptor = crud.get_zip_download(db, bulk_download_id)
+    if not zip_file_descriptor:
+        return
+
+    return StreamingResponse(
+        stream_zip_archive(zip_file_descriptor),
+        media_type="application/zip",
         headers={
-            "X-Archive-Files": "zip",
-            "Content-Disposition": "attachment; filename=archive.zip",
+            "Content-Disposition": f"attachment; filename={zip_file_descriptor['suggestedFilename']}"  # noqa: E501
         },
     )
 
@@ -709,7 +770,7 @@ async def get_metadata_submissions_mixs(
 ):
     r"""
     Generate a TSV-formatted report of biosamples belonging to submissions
-    that have a status of "Submitted- Pending Review".
+    that have a status of "Submitted - Pending Review".
 
     The report indicates which environmental package/extension, broad scale,
     local scale, and medium are specified for each biosample. The report is
@@ -731,13 +792,21 @@ async def get_metadata_submissions_mixs(
         "Environmental Broad Scale",
         "Environmental Local Scale",
         "Environmental Medium",
+        "Package T/F",
+        "Broad Scale T/F",
+        "Local Scale T/F",
+        "Medium T/F",
     ]
+
+    # Get submission schema view for enum validation
+    schema = fetch_nmdc_submission_schema()
+
     data_rows = []
     for s in submissions:
 
         metadata = s.metadata_submission  # creates a concise alias
         sample_data = metadata["sampleData"] if "sampleData" in metadata else {}
-        env_package = metadata["packageName"] if "packageName" in metadata else {}
+        env_pkg = metadata.get("packageName", "")
 
         # Get sample names from each sample type
         for sample_type in sample_data:
@@ -772,15 +841,24 @@ async def get_metadata_submissions_mixs(
                 env_medium = env_medium.replace("\r", "")
                 env_medium = env_medium.replace("\n", "").lstrip("_")
 
+                # Check against permissible values
+                env_pkg_enum, env_broad_enum, env_local_enum, env_med_enum = check_permissible_val(
+                    schema, env_pkg, env_broad_scale, env_local_scale, env_medium
+                )
+
                 # Append each sample as new row (with env data)
                 data_row = [
                     s.id,
                     s.status,
                     sample_name,
-                    env_package,
+                    env_pkg,
                     env_broad_scale,
                     env_local_scale,
                     env_medium,
+                    env_pkg_enum,
+                    env_broad_enum,
+                    env_local_enum,
+                    env_med_enum,
                 ]
                 data_rows.append(data_row)
 
@@ -806,6 +884,84 @@ async def get_metadata_submissions_mixs(
     )
 
     return response
+
+
+def fetch_nmdc_submission_schema():
+    r"""
+    Helper function to get a copy of the current NMDC
+    Submission Schema.
+
+    This function specifically returns the enums from
+    the NMDC Submission Schema.
+    """
+
+    submission_schema_files = resources.files("nmdc_submission_schema")
+
+    # Load each class in the submission schema, ensure that each slot of the class
+    # is fully materialized into attributes, and then drop the slot usage definitions
+    # to save some bytes.
+    schema_path = submission_schema_files / "schema/nmdc_submission_schema.yaml"
+    sv = SchemaView(str(schema_path))
+    enum_view = sv.all_enums()
+
+    # Get only the enums to have a smaller schema to pass and compare against
+    isolated_enums = {
+        enum_name: {
+            # Also only grab the relevant pieces - name and perm. values
+            "name": enum_data["name"],
+            "permissible_values": list(enum_data["permissible_values"].keys()),
+        }
+        for enum_name, enum_data in enum_view.items()
+        # Only grab the enums that are relevant to the MIxS data check
+        if ("EnvPackage" in enum_name)
+        or ("EnvMedium" in enum_name)
+        or ("EnvBroadScale" in enum_name)
+        or ("EnvLocalScale" in enum_name)
+    }
+
+    return isolated_enums
+
+
+def check_permissible_val(
+    schema: dict, env_pkg: str, env_broad_scale: str, env_local_scale: str, env_medium: str
+):
+    r"""
+    Helper function to check the value passed in against the
+    permissible values provided for pertaining enums in the
+    NMDC Submission Schema copy (returned from fetch_nmdc_submission_schema).
+    """
+
+    # Perform enum checks
+    env_pkg_enum = "False"
+    env_broad_scale_enum = "False"
+    env_local_scale_enum = "False"
+    env_medium_enum = "False"
+
+    if env_pkg in schema["EnvPackageEnum"]["permissible_values"]:
+        env_pkg_enum = "True"
+
+    # Enums exist currently for water, soil, sediment, and plant-associated
+    # confirmed_enums will need to be updated as more enum types are added
+    confirmed_enums = ["water", "soil", "sediment", "plant-associated"]
+
+    if env_pkg in confirmed_enums:
+
+        # Transform env_package to use it to find enums without updating to include each biome type
+        # Replace dashes with spaces, capitalize each word, then remove the space
+        temp_env_pkg = env_pkg
+        temp_env_pkg = temp_env_pkg.replace("-", " ")
+        temp_env_pkg = temp_env_pkg.title()
+        temp_env_pkg = temp_env_pkg.replace(" ", "")
+
+        # Validate the rest of the enums
+        if env_broad_scale in schema[f"EnvBroadScale{temp_env_pkg}Enum"]["permissible_values"]:
+            env_broad_scale_enum = "True"
+        if env_local_scale in schema[f"EnvLocalScale{temp_env_pkg}Enum"]["permissible_values"]:
+            env_local_scale_enum = "True"
+        if env_medium in schema[f"EnvMedium{temp_env_pkg}Enum"]["permissible_values"]:
+            env_medium_enum = "True"
+
+    return env_pkg_enum, env_broad_scale_enum, env_local_scale_enum, env_medium_enum
 
 
 @router.get(
@@ -839,10 +995,21 @@ async def get_metadata_submissions_report(
         "Status",
         "Is Test Submission",
         "Date Last Modified",
+        "Date Created",
+        "Number of Samples",
     ]
     data_rows = []
     for s in submissions:
+        sample_count = 0
         metadata = s.metadata_submission  # creates a concise alias
+        # find the number of samples in the submission
+        # Note: `metadata["sampleData"]` is a dictionary where keys are sample types
+        #       and values are lists of samples of that type.
+        # Reference: https://microbiomedata.github.io/submission-schema/SampleData/
+        sample_data = metadata["sampleData"]
+        for sample_type in sample_data:
+            sample_count += len(sample_data[sample_type])
+
         author_user = s.author  # note: `s.author` is a `models.User` instance
         study_form = metadata["studyForm"] if "studyForm" in metadata else {}
         study_name = study_form["studyName"] if "studyName" in study_form else ""
@@ -859,6 +1026,8 @@ async def get_metadata_submissions_report(
             s.status,
             s.is_test_submission,
             s.date_last_modified,
+            s.created,
+            sample_count,
         ]
         data_rows.append(data_row)
 
@@ -886,21 +1055,46 @@ async def get_metadata_submissions_report(
     return response
 
 
-@router.get(
-    "/metadata_submission",
-    tags=["metadata_submission"],
-    responses=login_required_responses,
-    response_model=query.MetadataSubmissionResponse,
-)
-async def list_submissions(
+async def get_paginated_submission_list(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
     pagination: Pagination = Depends(),
     column_sort: str = "created",
     sort_order: str = "desc",
+    is_test_submission_filter: Optional[bool] = None,
 ):
-    query = crud.get_submissions_for_user(db, user, column_sort, sort_order)
+    """
+    Dependency function for getting a list of submissions with pagination, sorting, and filtering
+    applied.
+    """
+    query = crud.get_submissions_for_user(
+        db, user, column_sort, sort_order, is_test_submission_filter
+    )
     return pagination.response(query)
+
+
+# The following two endpoints perform the same underlying query, but only differ in the
+# response model they return.
+@router.get(
+    "/metadata_submission",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=query.Paginated[schemas_submission.SubmissionMetadataSchema],
+)
+async def list_submissions(submissions=Depends(get_paginated_submission_list)):
+    """Return a paginated list of submissions in full detail."""
+    return submissions
+
+
+@router.get(
+    "/metadata_submission/slim",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=query.Paginated[schemas_submission.SubmissionMetadataSchemaSlim],
+)
+async def list_submissions_slim(submissions=Depends(get_paginated_submission_list)):
+    """Return a paginated list of submissions in slim format."""
+    return submissions
 
 
 @router.get(
@@ -928,22 +1122,11 @@ async def get_submission(
             permission_level = models.SubmissionEditorRole.metadata_contributor.value
         elif user.orcid in submission.viewers:
             permission_level = models.SubmissionEditorRole.viewer.value
-        submission_metadata_schema = schemas_submission.SubmissionMetadataSchema(
-            status=submission.status,
-            id=submission.id,
-            metadata_submission=submission.metadata_submission,
-            author_orcid=submission.author_orcid,
-            created=submission.created,
-            author=schemas.User(**submission.author.__dict__),
-            permission_level=permission_level,
-            templates=submission.templates,
-            study_name=submission.study_name,
-            field_notes_metadata=submission.field_notes_metadata,
-            is_test_submission=submission.is_test_submission,
-            date_last_modified=submission.date_last_modified,
+        submission_metadata_schema = schemas_submission.SubmissionMetadataSchema.model_validate(
+            submission
         )
-        if submission.locked_by is not None:
-            submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
+        submission_metadata_schema.permission_level = permission_level
+
         return submission_metadata_schema
 
     raise HTTPException(status_code=403, detail="Must have access.")
@@ -1013,11 +1196,12 @@ async def update_submission(
 
     # Create GitHub issue when metadata is being submitted and not a test submission
     if (
-        submission.status == "in-progress"
-        and body_dict.get("status", None) == "Submitted- Pending Review"
+        submission.status == SubmissionStatusEnum.InProgress.text
+        and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
         and submission.is_test_submission is False
     ):
-        create_github_issue(submission, user)
+        submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
+        create_github_issue(submission_model, user)
 
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
@@ -1040,7 +1224,7 @@ async def update_submission(
 
         if body_dict.get("status", None):
             if (
-                body_dict.get("status", None) == "Submitted- Pending Review"
+                body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
                 and submission.is_test_submission is False
             ):
                 submission.status = body_dict["status"]
@@ -1049,37 +1233,32 @@ async def update_submission(
     return submission
 
 
-def create_github_issue(submission, user):
-    settings = Settings()
+def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     assignee = settings.github_issue_assignee
     # If the settings for issue creation weren't supplied return, no need to do anything further
-    if gh_url == None or token == None:
-        return
+    if gh_url is None or token is None:
+        return None
 
     # Gathering the fields we want to display in the issue
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
-    studyform = submission.metadata_submission["studyForm"]
-    contextform = submission.metadata_submission["contextForm"]
-    multiomicsform = submission.metadata_submission["multiOmicsForm"]
-    pi = studyform["piName"]
-    piorcid = studyform["piOrcid"]
-    datagenerated = "Yes" if contextform["dataGenerated"] else "No"
-    omicsprocessingtypes = ", ".join(multiomicsform["omicsProcessingTypes"])
-    sampletype = ", ".join(submission.metadata_submission["templates"])
-    sampledata = submission.metadata_submission["sampleData"]
-    numsamples = 0
-    for key in sampledata:
-        numsamples = max(numsamples, len(sampledata[key]))
+    study_form = submission.metadata_submission.studyForm
+    multiomics_form = submission.metadata_submission.multiOmicsForm
+    pi_name = study_form.piName
+    pi_orcid = study_form.piOrcid
+    data_generated = "Yes" if multiomics_form.dataGenerated else "No"
+    omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
+    sample_types = ", ".join(submission.metadata_submission.templates)
+    num_samples = submission.sample_count
 
     # some variable data to supply depending on if data has been generated or not
     id_dict = {
-        "NCBI ID: ": multiomicsform["NCBIBioProjectId"],
-        "GOLD ID: ": multiomicsform["GOLDStudyId"],
-        "JGI ID: ": multiomicsform["JGIStudyId"],
-        "EMSL ID: ": multiomicsform["studyNumber"],
-        "Alternative IDs: ": ", ".join(multiomicsform["alternativeNames"]),
+        "NCBI ID: ": study_form.NCBIBioProjectId,
+        "GOLD ID: ": study_form.GOLDStudyId,
+        "JGI ID: ": multiomics_form.JGIStudyId,
+        "EMSL ID: ": multiomics_form.studyNumber,
+        "Alternative IDs: ": ", ".join(study_form.alternativeNames),
     }
     valid_ids = []
     for key, value in id_dict.items():
@@ -1091,13 +1270,13 @@ def create_github_issue(submission, user):
         f"Issue created from host: {settings.host}",
         f"Submitter: {user.name}, {user.orcid}",
         f"Submission ID: {submission.id}",
-        f"Has data been generated: {datagenerated}",
-        f"PI name: {pi}",
-        f"PI orcid: {piorcid}",
-        "Status: Submitted -Pending Review",
-        f"Data types: {omicsprocessingtypes}",
-        f"Sample type:{sampletype}",
-        f"Number of samples:{numsamples}",
+        f"Has data been generated: {data_generated}",
+        f"PI name: {pi_name}",
+        f"PI orcid: {pi_orcid}",
+        f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
+        f"Data types: {omics_processing_types}",
+        f"Sample type: {sample_types}",
+        f"Number of samples: {num_samples}",
     ] + valid_ids
     body_string = " \n ".join(body_lis)
     payload_dict = {
@@ -1222,13 +1401,24 @@ async def submit_metadata(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    # Old versions of the Field Notes app will continue to send a string for packageName
-    # for a little while. This code is to ease that transition and can be removed in the future.
-    if isinstance(body.metadata_submission.packageName, str):
-        if body.metadata_submission.packageName:
-            body.metadata_submission.packageName = [body.metadata_submission.packageName]
-        else:
-            body.metadata_submission.packageName = []
+    # Old versions of the Field Notes app will continue to use the pre-v1.6.0 submission format
+    # (before certain fields were moved from the multi-omics form to the study form) until its
+    # next release. This is a temporary shim layer that can be removed later.
+    multi_omics_form_extras = body.metadata_submission.multiOmicsForm.__pydantic_extra__ or {}
+    if body.metadata_submission.studyForm.GOLDStudyId is None:
+        body.metadata_submission.studyForm.GOLDStudyId = multi_omics_form_extras.get(
+            "GOLDStudyId", ""
+        )
+    if body.metadata_submission.studyForm.NCBIBioProjectId is None:
+        body.metadata_submission.studyForm.NCBIBioProjectId = multi_omics_form_extras.get(
+            "NCBIBioProjectId", ""
+        )
+    if body.metadata_submission.studyForm.alternativeNames is None:
+        body.metadata_submission.studyForm.alternativeNames = multi_omics_form_extras.get(
+            "alternativeNames", []
+        )
+    if body.metadata_submission.multiOmicsForm.facilities is None:
+        body.metadata_submission.multiOmicsForm.facilities = []
 
     submission = SubmissionMetadata(
         **body.dict(),
@@ -1284,15 +1474,156 @@ async def suggest_metadata(
     return response
 
 
+@router.post("/metadata_submission/{id}/image/signed_upload_url", response_model=schemas.SignedUrl)
+async def generate_signed_upload_url(
+    id: str,
+    body: schemas.SignedUploadUrlRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Don't accept files larger than the configured limit (default is 25 MB)
+    if body.file_size > settings.max_submission_image_file_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File size exceeds limit"
+        )
+
+    # Ensure the requested submission exists and the user has permission to edit it
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
+
+    # Ensure that the incoming image will not push the submission over its quota
+    potential_max_size = submission.study_images_total_size + body.file_size
+    if potential_max_size > settings.max_submission_image_total_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Submission quota exceeded",
+        )
+
+    sanitized_filename = sanitize_filename(body.file_name)
+    return storage.get_signed_upload_url(
+        BucketName.SUBMISSION_IMAGES,
+        f"{settings.gcs_object_name_prefix}/{id}/{uuid4().hex}-{sanitized_filename}",
+        content_type=body.content_type,
+    )
+
+
+class ImageType(StrEnum):
+    PI_IMAGE = "pi_image"
+    PRIMARY_STUDY_IMAGE = "primary_study_image"
+    STUDY_IMAGES = "study_images"
+
+
+@router.post(
+    "/metadata_submission/{id}/image/{image_type}",
+    response_model=schemas_submission.SubmissionMetadataSchema,
+)
+async def set_submission_image(
+    id: str,
+    image_type: ImageType,
+    body: schemas.UploadCompleteRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> models.SubmissionMetadata:
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
+
+    # Create a new SubmissionImagesObject
+    new_image = SubmissionImagesObject(
+        name=body.object_name,
+        size=body.file_size,
+        content_type=body.content_type,
+    )
+
+    if image_type == ImageType.STUDY_IMAGES:
+        # For study_images, add to the collection
+        submission.study_images.append(new_image)  # type: ignore
+    else:
+        # For single image fields (pi_image, primary_study_image), replace existing
+        current_image = getattr(submission, image_type)
+        if current_image:
+            # If the submission already has this type of image, delete it from the storage bucket
+            storage.delete_object(BucketName.SUBMISSION_IMAGES, current_image.name)
+
+        # Set the image attribute
+        setattr(submission, image_type, new_image)
+
+    db.commit()
+    return submission
+
+
+@router.delete(
+    "/metadata_submission/{id}/image/{image_type}",
+)
+async def delete_submission_image(
+    id: str,
+    image_type: ImageType,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    image_name: Optional[str] = Query(
+        None, description="Image name for study_images, not needed for single image fields"
+    ),
+):
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
+
+    if image_type == ImageType.STUDY_IMAGES:
+        if image_name is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="image_name query parameter is required when deleting from study_images",
+            )
+
+        # Find the specific image in the study_images collection
+        image_to_delete = next(
+            (
+                image
+                for image in submission.study_images  # type: ignore
+                if image.name == image_name
+            ),
+            None,
+        )
+
+        if image_to_delete is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in study_images"
+            )
+
+        # Delete the image from the storage bucket
+        storage.delete_object(BucketName.SUBMISSION_IMAGES, image_to_delete.name)
+        # Remove the image from the collection
+        submission.study_images.remove(image_to_delete)  # type: ignore
+        db.delete(image_to_delete)
+    else:
+        # For single image fields (pi_image, primary_study_image)
+        current_image = getattr(submission, image_type)
+        if current_image:
+            # Delete the image from the storage bucket
+            storage.delete_object(BucketName.SUBMISSION_IMAGES, current_image.name)
+            # Remove the image from the submission
+            setattr(submission, image_type, None)
+
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get(
-    "/users", responses=login_required_responses, response_model=query.UserResponse, tags=["user"]
+    "/users",
+    responses=login_required_responses,
+    response_model=query.Paginated[schemas.User],
+    tags=["user"],
 )
 async def get_users(
     db: Session = Depends(get_db),
     user: models.User = Depends(admin_required),
     pagination: Pagination = Depends(),
+    search_filter: Optional[str] = None,
 ):
     users = db.query(User)
+    if search_filter:
+        users = users.filter(
+            (
+                models.User.name.ilike(f"%{search_filter}%")
+                | models.User.orcid.ilike(f"%{search_filter}%")
+            )
+        )
+
     return pagination.response(users)
 
 

@@ -232,20 +232,23 @@ function makeSetsFromBitmask(mask_str: string) {
   if ((1 << 1) & mask) {
     sets.push('NOM');
   }
-  if ((1 << 5) & mask) {
+  if ((1 << 6) & mask) {
     sets.push('MB');
   }
-  if ((1 << 3) & mask) {
+  if ((1 << 4) & mask) {
     sets.push('MP');
   }
-  if ((1 << 2) & mask) {
+  if ((1 << 3) & mask) {
     sets.push('MT');
   }
-  if ((1 << 4) & mask) {
+  if ((1 << 5) & mask) {
     sets.push('MG');
   }
-  if (1 & mask) {
+  if ((1 << 2) & mask) {
     sets.push('LIP');
+  }
+  if (1 & mask) {
+    sets.push('AMP');
   }
   return sets;
 }
@@ -501,16 +504,19 @@ const fields: Record<string, FieldsData> = {
   /* END GOLD ecosystem type */
   /* MIxS Environmental Triad terms */
   env_broad_scale: {
+    icon: 'mdi-link',
     name: 'Broad-scale Environmental Context',
     group: 'MIxS Environmental Triad',
     sortKey: 1,
   },
   env_local_scale: {
+    icon: 'mdi-link',
     name: 'Local Environmental Context',
     group: 'MIxS Environmental Triad',
     sortKey: 2,
   },
   env_medium: {
+    icon: 'mdi-link',
     name: 'Environmental Medium',
     group: 'MIxS Environmental Triad',
     sortKey: 3,
@@ -613,11 +619,26 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
       name: 'Chromatography Method',
       schemaName: 'ChromatographyConfiguration',
     },
+    instrument_name: {
+      name: 'Instrument Name',
+      group: 'Data Generation',
+      schemaName: 'Instrument',
+    },
+    omics_type: {
+      name: 'Data Type',
+      group: 'Data Generation',
+      schemaName: 'analyte_category',
+    },
   },
   reads_qc: {},
   metagenome_annotation: {},
   metagenome_assembly: {},
-  metaproteomic_analysis: {},
+  metaproteomic_analysis: {
+    metaproteomics_analysis_category: {
+      name: 'Metaproteomics Analysis Category',
+      schemaName: 'metaproteomics_analysis_category',
+    },
+  },
   data_object: {},
 };
 
@@ -661,6 +682,11 @@ const MultiomicsValue = {
   LIP: 0b000001,
 };
 
+const metaproteomicCategoryEnumToDisplay = {
+  matched_metagenome: 'NMDC metagenome matched',
+  in_silico_metagenome: 'Uniprot reference genome matched',
+};
+
 export {
   types,
   geneFunctionType,
@@ -672,4 +698,5 @@ export {
   pfamEncode,
   stringIsKegg,
   makeSetsFromBitmask,
+  metaproteomicCategoryEnumToDisplay,
 };

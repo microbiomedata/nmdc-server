@@ -6,9 +6,11 @@ import pytest
 from fastapi.testclient import TestClient
 from httpx import Response
 from sqlalchemy.orm.session import Session
+from starlette import status as http_status
 
 import nmdc_server
 from nmdc_server import fakes
+from nmdc_server.schemas import DatabaseSummary
 
 
 def assert_status(response: Response, status: int = 200):
@@ -80,17 +82,81 @@ def test_api_faceting(db: Session, client: TestClient):
     assert resp.json()["facets"] == {"value2": 2, "value3": 1}
 
 
-def test_api_summary(db: Session, client: TestClient):
-    # TODO: This would be better queried against the real data
-    for _ in range(10):
+def test_api_summary(client: TestClient):
+    """
+    Check the `/api/summary` endpoint to ensure it returns a complete
+    object of summary data by checking that the response contains
+    all the fields that are defined in `DatabaseSummary`.
+    """
+    resp = client.get("/api/summary")
+    assert_status(resp)
+    data = resp.json()
+    for field in DatabaseSummary.model_fields:
+        assert field in data
+
+
+def test_api_stats(db: Session, client: TestClient):
+    """
+    This test checks the `/api/stats` endpoint to ensure it returns the expected
+    summary statistics about the database, including the number of studies,
+
+    WFE data size bytes test case:
+    - here we test that the WFE data size is calculated correctly
+    - we create 10 data objects with increasing file sizes (1 byte to 10 bytes)
+    - we associate these data objects with various workflow execution processes.
+        this tests that data object from different processes are accounted for.
+    - we check that data object are not double counted through connecting the
+        same data object to multiple processes
+    - we then check that the total size of the WFE output data is 55 bytes.
+        this is the sum of the first 10 natural numbers (1 + 2 + ... + 10 = 55).
+    """
+    for i in range(10):
+        data_object = fakes.DataObjectFactory(file_size_bytes=i + 1)
+        # Create some data objects that are not associated with any processes
+        fakes.DataObjectFactory(file_size_bytes=i + 1)
         fakes.BiosampleFactory()
-        fakes.MetagenomeAnnotationFactory()
-        fakes.MetagenomeAssemblyFactory()
-        fakes.MetaproteomicAnalysisFactory()
-        fakes.DataObjectFactory()
+        fakes.MetagenomeAnnotationFactory(outputs=[data_object])
+        fakes.MetagenomeAssemblyFactory(outputs=[data_object])
+        fakes.MetaproteomicAnalysisFactory(outputs=[data_object])
+
+    # Create some additional, interrelated studies.
+    # Note: The database already contains 10 studies at this point, created elsewhere.
+    study_a = fakes.StudyFactory()
+    study_b = fakes.StudyFactory()
+    study_c = fakes.StudyFactory()
+    study_b.part_of = [study_a.id]
+    study_c.part_of = [study_a.id, study_b.id]
+
     db.commit()
-    assert_status(client.get("/api/summary"))
-    assert_status(client.get("/api/stats"))
+    resp = client.get("/api/stats")
+    assert_status(resp)
+    data = resp.json()
+    assert data["studies"] == 13
+    assert data["non_parent_studies"] == 11  # excludes studies A and B
+    assert data["wfe_output_data_size_bytes"] == 55
+    assert data["data_size"] == 110
+
+
+def test_get_admin_stats_authorization(db: Session, client: TestClient, logged_in_user):
+    """This test demonstrates that non-admin users cannot access the endpoint."""
+
+    resp = client.get("/api/admin/stats")
+    assert_status(resp, http_status.HTTP_403_FORBIDDEN)
+
+
+def test_get_admin_stats(db: Session, client: TestClient, logged_in_admin_user):
+    # Seed the database.
+    for _ in range(10):
+        fakes.UserFactory()
+    db.commit()
+
+    # Submit the HTTP request.
+    resp = client.get("/api/admin/stats")
+
+    # Assert that the response meets our expectations.
+    # Note: The `logged_in_admin_user` fixture also created 1 User in the database.
+    assert_status(resp, http_status.HTTP_200_OK)
+    assert resp.json()["num_user_accounts"] == 11
 
 
 def test_get_pi_image(db: Session, client: TestClient):

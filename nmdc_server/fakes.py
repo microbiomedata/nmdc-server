@@ -1,11 +1,12 @@
 from collections import OrderedDict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
 from factory import Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
@@ -203,7 +204,7 @@ class PipelineStepBase(SQLAlchemyModelFactory):
     started_at_time: datetime = Faker("date_time")
     ended_at_time: datetime = Faker("date_time")
     execution_resource: str = Faker("word")
-    omics_processing: models.OmicsProcessing = SubFactory(OmicsProcessingFactory)
+    was_informed_by: List[models.OmicsProcessing] = []
 
 
 class ReadsQCFactory(PipelineStepBase):
@@ -299,8 +300,6 @@ class NOMAnalysisFactory(PipelineStepBase):
         model = models.NOMAnalysis
         sqlalchemy_session = db
 
-    used: str = Faker("word")
-
 
 class ReadBasedAnalysisFactory(PipelineStepBase):
     class Meta:
@@ -312,8 +311,6 @@ class MetabolomicsAnalysisFactory(PipelineStepBase):
     class Meta:
         model = models.MetabolomicsAnalysis
         sqlalchemy_session = db
-
-    used: str = Faker("word")
 
 
 class GeneFunction(SQLAlchemyModelFactory):
@@ -343,20 +340,26 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     id: UUID = Faker("uuid")
     author = SubFactory(UserFactory)
     author_orcid = Faker("pystr")
-    status = "In Progress"
+    status = SubmissionStatusEnum.InProgress.text
     study_name = Faker("word")
     templates = Faker("pylist", nb_elements=2, value_types=[str])
-    created = datetime.utcnow()
+    created = datetime.now(tz=UTC)
+    date_last_modified = created
     # TODO specify all fields!
     metadata_submission = {
         "sampleData": {},
         "multiOmicsForm": {
-            "alternativeNames": [],
             "studyNumber": "",
-            "GOLDStudyId": "",
             "JGIStudyId": "",
-            "NCBIBioProjectId": "",
             "omicsProcessingTypes": [],
+            "facilities": [],
+            "otherAward": "",
+            "doe": None,
+            "dataGenerated": None,
+            "facilityGenerated": None,
+            "award": None,
+            "awardDois": [],
+            "mgCompatible": None,
         },
         "studyForm": {
             "studyName": "",
@@ -365,9 +368,13 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "piOrcid": "",
             "linkOutWebpage": [],
             "fundingSources": [],
+            "dataDois": [],
             "description": "",
             "notes": "",
             "contributors": [],
+            "alternativeNames": [],
+            "GOLDStudyId": "",
+            "NCBIBioProjectId": "",
         },
         "templates": [],
         "addressForm": {
@@ -391,15 +398,14 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "biosafetyLevel": "",
             "comments": "",
         },
-        "contextForm": {
-            "datasetDoi": "",
-            "facilities": [],
-            "otherAward": "",
-        },
         "packageName": [],
     }
     locked_by = None
     lock_updated = None
+    is_test_submission: bool = False
+    pi_image: models.SubmissionImagesObject | None = None
+    primary_study_image: models.SubmissionImagesObject | None = None
+    study_images: list[models.SubmissionImagesObject] = []
 
 
 class SubmissionRoleFactory(SQLAlchemyModelFactory):

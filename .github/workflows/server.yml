@@ -25,18 +25,35 @@ jobs:
 
   server:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        # This version is duplicated in the root docker-compose.yml
+        image: postgres:13
+        env:
+          POSTGRES_USER: nmdc
+          POSTGRES_PASSWORD: nmdc
+          POSTGRES_DB: nmdc
+        ports:
+          - 5432:5432
+
     strategy:
       max-parallel: 4
       matrix:
-        python-version: [3.9]
+        python-version: [3.12]
 
     steps:
-    - uses: harmon758/postgresql-action@v1
-      with:
-        postgresql version: '12'
-        postgresql db: 'nmdc'
-        postgresql user: 'nmdc'
-        postgresql password: 'nmdc'
+    # Use docker run directly instead of the `services` key because otherwise it's not possible
+    # to pass the `-scheme` flag.
+    # See:
+    #   - https://github.com/fsouza/fake-gcs-server/issues/561
+    #   - https://github.com/orgs/community/discussions/26688
+    - name: Start Fake GCS Server
+      run: |
+        docker run -d --name fake-gcs-server \
+          -p 4443:4443 \
+          fsouza/fake-gcs-server \
+          -scheme http
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v5
@@ -48,6 +65,9 @@ jobs:
         echo 'export NMDC_TESTING_DATABASE_URI="postgresql://nmdc:nmdc@localhost:5432/nmdc"' >> .env
         echo 'export NMDC_MONGO_USER="${{ secrets.NMDC_MONGO_USER }}"' >> .env
         echo 'export NMDC_MONGO_PASSWORD="${{ secrets.NMDC_MONGO_PASSWORD }}"' >> .env
+        echo 'export NMDC_GCS_USE_FAKE="true"' >> .env
+        echo 'export NMDC_GCS_OBJECT_NAME_PREFIX="testing"' >> .env
+        echo 'export NMDC_GCS_FAKE_API_ENDPOINT="http://localhost:4443"' >> .env
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip

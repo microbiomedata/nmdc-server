@@ -6,10 +6,6 @@ import { DataHarmonizer, Footer } from 'data-harmonizer';
 import {
   CellData,
   HARMONIZER_TEMPLATES,
-  EMSL,
-  JGI_MG,
-  JGI_MG_LR,
-  JGT_MT,
   MetadataSuggestionRequest,
   ColumnHelpInfo,
 } from '@/views/SubmissionPortal/types';
@@ -38,27 +34,7 @@ const GOLD_FIELDS = {
   },
 };
 
-export function getVariants(checkBoxes: string[], dataGenerated: boolean | undefined, base: string[]): string[] {
-  const templates = new Set(base);
-  if (dataGenerated) {
-    return Array.from(templates);
-  }
-  if (checkBoxes.includes('mp-emsl') || checkBoxes.includes('mb-emsl') || checkBoxes.includes('nom-emsl')) {
-    templates.add(EMSL);
-  }
-  if (checkBoxes.includes('mg-jgi')) {
-    templates.add(JGI_MG);
-  }
-  if (checkBoxes.includes('mg-lr-jgi')) {
-    templates.add(JGI_MG_LR);
-  }
-  if (checkBoxes.includes('mt-jgi')) {
-    templates.add(JGT_MT);
-  }
-  return Array.from(templates);
-}
-
-export class HarmonizerApi {
+export default class HarmonizerApi {
   schemaSectionNames: Ref<Record<string, string>>;
 
   schemaSectionColumns: Ref<Record<string, Record<string, number>>>;
@@ -390,6 +366,15 @@ export class HarmonizerApi {
       if (source === 'loadData') {
         return;
       }
+      callback(changes, source);
+    });
+  }
+
+  addRowRemovedHook(callback: Function) {
+    if (!this.ready.value) {
+      return;
+    }
+    this.dh.hot.addHook('afterRemoveRow', (changes: any[], source: string | null) => {
       callback(changes, source);
     });
   }

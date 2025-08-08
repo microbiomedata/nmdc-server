@@ -6,6 +6,9 @@ import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
 import AttributeItem from './AttributeItem.vue';
 import { formatBiosampleDepth } from '@/util';
+import gold from '@/assets/GOLD.png';
+import img from '@/assets/IMG.png';
+import emsl from '@/assets/EMSL.png';
 
 export default defineComponent({
   components: { AttributeItem },
@@ -98,6 +101,9 @@ export default defineComponent({
       alternateIdentifiers,
       displayFields,
       relatedBiosamples,
+      gold,
+      img,
+      emsl,
     };
   },
 });
@@ -128,11 +134,13 @@ export default defineComponent({
         v-for="({ name, target }) in alternateIdentifiers"
         :key="name"
         v-bind="{ item, field, link: { name, target } }"
+        :image="name.startsWith('gold') ? gold : name.startsWith('img') ? img : ''"
       />
       <AttributeItem
         v-for="emslId, index in item.emsl_biosample_identifiers"
         :key="emslId"
         v-bind="{ item, field: 'emsl_biosample_identifiers', index, displayName: 'EMSL Identifier' }"
+        :image="emsl"
       />
     </v-list>
     <v-list v-if="type === 'biosample' && relatedBiosamples.length">

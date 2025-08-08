@@ -90,20 +90,23 @@ export interface DataObjectSearchResult extends BaseSearchResult {
   selected: boolean;
 }
 
+export interface OmicsProcessingBaseResult extends BaseSearchResult {
+  study_id: string;
+  add_date: string;
+  mod_date: string;
+}
+
 export interface DerivedDataResult extends BaseSearchResult {
   type: string;
   git_url: string;
   started_at_time: string;
   ended_at_time: string;
   execution_resource: string;
-  omics_processing_id: string;
+  was_informed_by: OmicsProcessingBaseResult[];
   outputs: DataObjectSearchResult[];
 }
 
-export interface OmicsProcessingResult extends BaseSearchResult {
-  study_id: string;
-  add_date: string;
-  mod_date: string;
+export interface OmicsProcessingResult extends OmicsProcessingBaseResult {
   open_in_gold: string;
   omics_data: DerivedDataResult[];
   outputs: DataObjectSearchResult[]; // RAW outputs
@@ -182,8 +185,12 @@ export interface StudySearchResults extends BaseSearchResult {
   mod_date: string;
   open_in_gold: string;
   funding_sources?: string[];
-  relevant_protocols: string[];
+  protocol_link: string[];
   gold_study_identifiers: string[];
+  annotations: {
+    insdc_bioproject_identifiers?: string[];
+    title: string;
+  };
   sample_count: number;
   study_category: string;
   homepage_website: string[] | null;
@@ -475,12 +482,17 @@ async function getStudy(id: string): Promise<StudySearchResults> {
   return _getById<StudySearchResults>('study', id);
 }
 
+function _useDataGenerationRouteForField(field: string) {
+  const fields = new Set(['metaproteomics_analysis_category']);
+  return fields.has(field);
+}
+
 async function getFacetSummary(
   type: string,
   field: string,
   conditions: Condition[],
 ): Promise<FacetSummaryResponse[]> {
-  const path = type === 'omics_processing' ? 'data_generation' : type;
+  const path = (type === 'omics_processing' || _useDataGenerationRouteForField(field)) ? 'data_generation' : type;
   const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/facet`, {
     conditions, attribute: field,
   });
@@ -673,11 +685,12 @@ async function me(): Promise<User | null> {
   }
 }
 
-async function getAllUsers(params: SearchParams) {
+async function getAllUsers(params: SearchParams, searchFilter: string) {
   const { data } = await client.get<SearchResponse<User>>('users', {
     params: {
       limit: params.limit,
       offset: params.offset,
+      search_filter: searchFilter,
     },
   });
   return data;

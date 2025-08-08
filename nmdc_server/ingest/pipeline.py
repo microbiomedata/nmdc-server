@@ -114,7 +114,6 @@ def load_mp_analysis(db: Session, obj: Dict[str, Any], **kwargs) -> LoadObjectRe
                 metaproteomic_analysis_id=pipeline.id,
                 gene_function_id=function_id,
                 count=annotation["count"],
-                best_protein=True,
             )
         )
     if metap_gene_function_aggregations:
@@ -239,7 +238,11 @@ def load(
             if reported_type != workflow_type:
                 logger.warning(f"Unexpected type {reported_type} (expected {workflow_type})")
 
-        obj["omics_processing_id"] = obj.pop("was_informed_by")
+        was_informed_by: str | list[str] = obj.pop("was_informed_by")
+        if isinstance(was_informed_by, str):
+            was_informed_by = [was_informed_by]
+        obj["omics_processing_id"] = was_informed_by[0]
+        obj["was_informed_by"] = was_informed_by
 
         # TODO: pydantic should parse datetime like this... need to look into it
         #   2021-01-26T21:36:26.759770Z+0000
@@ -268,6 +271,7 @@ def load(
 
         input_association = getattr(models, f"{table_name}_input_association")
         output_association = getattr(models, f"{table_name}_output_association")
+        was_informed_by_association = getattr(models, f"{table_name}_data_generation_association")
 
         # TODO: Find a different way to validate ref. integrity
         valid_inputs = [d for d in inputs if db.query(models.DataObject).get(d)]
@@ -297,12 +301,20 @@ def load(
                 .values([(id_, f) for f in outputs])
                 .on_conflict_do_nothing()
             )
+        if was_informed_by:
+            db.execute(
+                insert(was_informed_by_association)
+                .values([(id_, data_generation) for data_generation in was_informed_by])
+                .on_conflict_do_nothing()
+            )
 
-        db.execute(
-            models.DataObject.__table__.update()
-            .where(models.DataObject.id.in_(inputs + outputs))
-            .values({"omics_processing_id": pipeline.omics_processing_id})
-        )
+            for data_generation in was_informed_by:
+                data_objects = inputs + outputs
+                db.execute(
+                    insert(models.omics_processing_output_association)
+                    .values([(data_generation, data_object) for data_object in data_objects])
+                    .on_conflict_do_nothing()
+                )
 
         for id_ in outputs:
             output = db.query(models.DataObject).get(id_)

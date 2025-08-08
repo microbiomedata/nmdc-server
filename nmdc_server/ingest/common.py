@@ -14,7 +14,7 @@ EXCLUDED_FIELDS = {
     # Renamed and duplicated to "alternate_identifiers"
     "alternative_identifiers",
     # Unexpected Study fields
-    "relevant_protocols",
+    "protocol_link",
     # Unexpected Biosample fields
     "gold_biosample_identifiers",
     "insdc_biosample_identifiers",
