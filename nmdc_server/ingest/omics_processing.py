@@ -82,7 +82,7 @@ def get_biosample_input_ids(
 
     As a side effect, a set of `sampled_portion` values gets populated. Whether or not a processed
     samples' `sampled_portion`s get added to the set is driven by the `direct_input` parameter. Only
-    processed samples who are inputs directly to a data generation will have their
+    processed samples which are inputs directly to a data generation will have their
     `sampled_portion`s added.
     """
     # Base case, the input is already a biosample
