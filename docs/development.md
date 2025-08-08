@@ -78,13 +78,43 @@ Google Cloud Storage (GCS) is used to store images associated with Submission Po
 
 Whether you use the real or fake GCS server, you will need to set up authentication. The recommended way to do this is to use Application Default Credentials (ADC) with service account impersonation. Service account impersonation is required for generating signed URLs for uploading/downloading images directly to/from GCS.
 
-1. Ask a team member with the necessary GCS permissions to associate your Google Cloud account with the NMDC Google Cloud project and service account. 
+1. Ask a team member with the necessary GCS permissions to associate your Google Cloud account with the NMDC Google Cloud project and service account.
+   <details>
+   <summary>Show/hide instructions for team member</summary>
+
+   These instructions are **for the team member** that has necessary GCS permissions to associate your (i.e. the "developer's") Google Cloud account with the NMDC Google Cloud project and service account.
+
+   1. In a web browser, sign into the [Google Cloud console](https://console.cloud.google.com) and go to the "`NMDC`" project (if not already there) in the "`lbl.gov`" organization.
+   2. Go to the "IAM & Admin" > "IAM" section of the Google Cloud console.
+   3. On the "Allow" tab, go to the "View by principals" sub-tab.
+   4. **If the developer is already listed as a principal**, perform the following sub-steps to confirm they have sufficient roles; then **skip step 5 below**.
+      1. Click the pencil icon next to their name.
+      2. In the "Assign roles" section of the form, select the following two roles:
+         - `Service Account Token Creator`
+         - `View Service Accounts`
+      3. Click the "Save" button.
+   5. **If the developer is _not_ already listed as a principal**, perform the following sub-steps to add the developer as a principal having sufficient roles.
+      1. Click the "Grant access" button.
+      2. In the "New principals" field, enter the email address of the developer's Google account.
+      3. In the "Assign roles" section of the form, select the following two roles:
+         - `Service Account Token Creator`
+         - `View Service Accounts`
+      4. Click the "Save" button.
+   6. Send the service account email address to the developer.
+      1. Back on the "View by principals" sub-tab, locate the row whose "Name" value says "`Mister Bucket`".
+      2. On that row, copy the email address in the "Principal" column. It's the same email address every time—we have just opted not to include it in these public docs.
+      3. Send that email address to the developer. You can include the following introduction for context if you want (optional):
+         ```
+         Here is the service account email address you can use when setting up Application Default Credentials (ADC):
+         ```
+   </details>
+
 2. Install the Google Cloud Command Line Interface (CLI) by following the instructions at https://cloud.google.com/sdk/docs/install.
 3. Run the following command to set up Application Default Credentials (ADC):
     ```bash
     gcloud auth application-default login --impersonate-service-account <service account email will be provided by team member>
     ```
-   
+
 You also must generate a local object name prefix. This prefix is used to differentiate which system uploaded to the shared GCS bucket. Local development systems should use the prefix `local_<random_suffix>`.
 
 1. Generate a random suffix using the following command:
