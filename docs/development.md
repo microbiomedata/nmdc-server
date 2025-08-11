@@ -51,7 +51,7 @@ Follow the steps below to configure the necessary settings.
    NMDC_SESSION_SECRET_KEY=changeme
    NMDC_API_JWT_SECRET=changeme
    ```
-   
+
 ### NERSC Credentials
 
 To load production data or to run an ingest locally, you will need NERSC credentials.
@@ -196,7 +196,7 @@ Although the project is designed to be run in Docker, having the dependencies in
     source .venv/bin/activate
     pip install -e .
     ```
-   
+
 ### Frontend dependencies
 
 1. Install the frontend dependencies.
@@ -212,7 +212,7 @@ Run the full stack via Docker Compose:
 <!-- TODO: Consider adding `--build` to this command so that Docker Compose builds
            the containers, rather than pulling from from GHCR (unless you
            want to use the versions that happen to currently be on GHCR).
-           This has to do with the fact that the `docker-compose.yml` file 
+           This has to do with the fact that the `docker-compose.yml` file
            contains service specs having both an `image` and `build` section. -->
 
 ```bash
@@ -250,16 +250,16 @@ yarn serve
 <details>
 <summary>Running yarn via npx?</summary>
 
-When you run `$ npx yarn serve` while using a Node.js version newer than 17, the frontend development server may fail to start and may, instead, display the error code "`ERR_OSSL_EVP_UNSUPPORTED`". 
+When you run `$ npx yarn serve` while using a Node.js version newer than 17, the frontend development server may fail to start and may, instead, display the error code "`ERR_OSSL_EVP_UNSUPPORTED`".
 
-You can work around that error by prefixing the command with "`NODE_OPTIONS=--openssl-legacy-provider`", as explained [here](https://stackoverflow.com/a/70582385) and shown below: 
+You can work around that error by prefixing the command with "`NODE_OPTIONS=--openssl-legacy-provider`", as explained [here](https://stackoverflow.com/a/70582385) and shown below:
 
 ```bash
 NODE_OPTIONS=--openssl-legacy-provider npx yarn serve
 ```
 </details>
 
-View the main application at `http://127.0.0.1:8081/`. Changes to files in the `web` directory will automatically trigger a reload in your browser. 
+View the main application at `http://127.0.0.1:8081/`. Changes to files in the `web` directory will automatically trigger a reload in your browser.
 
 > **Note**: An instance of the frontend application will continue to be served via Docker Compose on port `8080`, but that instance will not pick up changes to the `web` directory automatically. Be aware of which port you are accessing when doing frontend development.
 
@@ -271,7 +271,7 @@ It is recommended to use `127.0.0.1` instead of `localhost` for local developmen
 
 > **Note**: This is not generally required unless you are specifically working on the ingest code. If you are working on the web application, simply [loading from a recent production backup](#load-production-data) is sufficient.
 
-1. Ensure that you have completed the sections above about configuring your [NERSC credentials](#nersc-credentials) and [MongoDB credentials](#mongodb-credentials). 
+1. Ensure that you have completed the sections above about configuring your [NERSC credentials](#nersc-credentials) and [MongoDB credentials](#mongodb-credentials).
 2. Obtain a new SSH key from NERSC if you haven't done so in the last 24 hours.
     ```bash
     sshproxy.sh -u $NERSC_USER
@@ -288,8 +288,8 @@ It is recommended to use `127.0.0.1` instead of `localhost` for local developmen
       -i ~/.ssh/nersc \
       dtn01.nersc.gov
     ```
-    > That command will set up SSH port forwarding such that your computer can access the dev MongoDB server at `localhost:37018` and the prod MongoDB server at `localhost:37019`. 
-  
+    > That command will set up SSH port forwarding such that your computer can access the dev MongoDB server at `localhost:37018` and the prod MongoDB server at `localhost:37019`.
+
     > From within a Docker container `host.docker.internal` can be used to access the `localhost` of your computer. When ingesting from the dev or prod MongoDB instances, be sure to set `NMDC_MONGO_HOST=host.docker.internal` in your `.env` file.
 
     > See https://github.com/microbiomedata/infra-admin/blob/main/mongodb/connection-guide.md (internal) for more information on connecting to the MongoDB instances.
@@ -305,13 +305,26 @@ It is recommended to use `127.0.0.1` instead of `localhost` for local developmen
     ```bash
     docker-compose run backend nmdc-server ingest -vv --function-limit 100
     ```
-   
+
     > **Note**: The `--function-limit` flag is optional. It is used to reduce the time that the ingest takes by limiting the number of certain types of objects loaded. This can be useful for testing purposes. For more information on options run `nmdc-server ingest --help`.
 
 ## Testing
 
 ```bash
 tox
+```
+
+In order for the `py312` test suite to run properly, it needs to be able to communicate with a running `postgres` server and the fake GCS service. You can use the docker configuration to get these services up and running:
+
+```bash
+docker compose up db storage
+```
+
+You'll also need to set environment variables so the tests know where these resources can be found. If you're running the services via `docker compose`, then you can use the following values:
+
+```bash
+export NMDC_TESTING_DATABASE_URI=postgresql://postgres:postgres@localhost:5432/nmdc_testing
+export NMDC_GCS_FAKE_API_ENDPOINT=http://localhost:4443
 ```
 
 ## Generating new migrations
