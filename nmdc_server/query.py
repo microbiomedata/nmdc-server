@@ -10,7 +10,7 @@ from itertools import groupby
 from typing import Any, Dict, Generic, Iterator, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
-from sqlalchemy import ARRAY, Column, and_, cast, desc, func, inspect, or_
+from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
 from sqlalchemy.orm import Query, Session, aliased, selectinload, with_expression
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement, intersect, union
@@ -846,7 +846,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
         biosample_query = (
             db.query(model)
             .join(subquery, model.id == subquery.c.id)  # type: ignore
-            .order_by(desc(self.table.model.multiomics))  # type: ignore
+            .order_by(self.table.model.multiomics.desc(), self.table.model.id)  # type: ignore
         )
 
         if prefetch_omics_processing_data:
