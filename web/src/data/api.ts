@@ -101,7 +101,7 @@ export interface DerivedDataResult extends BaseSearchResult {
   git_url: string;
   started_at_time: string;
   ended_at_time: string;
-  execution_resource: string;
+  execution_resource: string | null;
   was_informed_by: OmicsProcessingBaseResult[];
   outputs: DataObjectSearchResult[];
 }
