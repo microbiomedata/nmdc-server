@@ -122,7 +122,7 @@ export default defineComponent({
         if (annotations.eluent_introduction_category) {
           omicsCopy.eluentIntroductionCategory = EluentIntroductionCategoryEnum.permissible_values[annotations.eluent_introduction_category].title;
         }
-        if (annotations.sampled_portions.length) {
+        if (annotations.sampled_portions?.length) {
           const displaySampledPortions = (annotations.sampled_portions as string[]).map((sampledPortion: string) => (
             SamplePortionEnum.permissible_values[sampledPortion].title
             || SamplePortionEnum.permissible_values[sampledPortion].text
