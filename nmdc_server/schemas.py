@@ -428,7 +428,7 @@ class PipelineStepBase(BaseModel):
     git_url: str
     started_at_time: DateType
     ended_at_time: Optional[DateType] = None
-    execution_resource: str
+    execution_resource: Optional[str] = None
 
 
 class PipelineStep(PipelineStepBase):

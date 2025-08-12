@@ -448,7 +448,7 @@ class PipelineStep:
     git_url = Column(String, nullable=False)
     started_at_time = Column(DateTime, nullable=False)
     ended_at_time = Column(DateTime)
-    execution_resource = Column(String, nullable=False)
+    execution_resource = Column(String, nullable=True)
 
     has_inputs = association_proxy("inputs", "id")
     has_outputs = association_proxy("outputs", "id")
