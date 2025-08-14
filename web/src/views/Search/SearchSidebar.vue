@@ -18,6 +18,7 @@ import FacetedSearch, { SearchFacet } from '@/components/FacetedSearch.vue';
 import {
   stateRefs, removeConditions, setConditions, toggleConditions,
 } from '@/store';
+import useGtag from '@/use/useGtag';
 
 /**
  * Sidebar has a fixed list of facets, possibly from different tables.
@@ -144,6 +145,7 @@ export default defineComponent({
     const filterText = ref('');
     const textSearchResults = ref([] as Condition[]);
     const dbSummary = ref({} as DatabaseSummaryResponse);
+    const gtag = useGtag();
     const biosampleDescription = computed(() => {
       const { schemaName } = types.biosample;
       if (schemaName !== undefined) {
@@ -182,6 +184,30 @@ export default defineComponent({
       }
     }
     watch(filterText, updateSearch);
+
+    function trackFilterConditions(val: Condition[], oldVal: Condition[]) {
+      if (!gtag) {
+        console.warn('Google Analytics is not available. This is expected in development mode.');
+        return;
+      }
+      // On initial load, track each filter condition that exists
+      // Otherwise, track the last filter condition added or updated
+      if (oldVal.length === 0 && val.length > 0) {
+        val.forEach((condition) => {
+          gtag.event('Add filter', {
+            event_label: condition.field,
+            value: condition.value,
+          });
+        });
+      } else if (val.length > oldVal.length || val.length === oldVal.length) {
+        gtag.event('Add filter', {
+          event_label: val[val.length - 1].field,
+          value: val[val.length - 1].value,
+        });
+      }
+    }
+
+    watch(stateRefs.conditions, trackFilterConditions);
 
     return {
       /* data */
