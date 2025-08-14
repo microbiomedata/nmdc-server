@@ -641,6 +641,11 @@ async function createBulkDownload(conditions: Condition[], dataObjectFilter: Dat
   };
 }
 
+async function getDataObjectHtmlContentUrl(dataObjectId: string): Promise<string> {
+  const { data } = await client.get<{ url: string }>(`data_object/${dataObjectId}/get_html_content_url`);
+  return data.url;
+}
+
 export interface KeggTermSearchResponse {
   term: string;
   text: string;
@@ -846,6 +851,7 @@ client.interceptors.response.use(undefined, async (error: AxiosError) => {
 
 const api = {
   createBulkDownload,
+  getDataObjectHtmlContentUrl,
   getBinnedFacet,
   getBulkDownloadSummary,
   getBulkDownloadAggregateSummary,
