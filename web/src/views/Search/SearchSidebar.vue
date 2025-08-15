@@ -186,8 +186,8 @@ export default defineComponent({
     watch(filterText, updateSearch);
 
     function trackFilterConditions(val: Condition[], oldVal: Condition[]) {
+      // Do nothing if Google Analytics is not available. This is expected in development mode.
       if (!gtag) {
-        console.warn('Google Analytics is not available. This is expected in development mode.');
         return;
       }
       // On initial load, track each filter condition that exists
@@ -195,12 +195,14 @@ export default defineComponent({
       if (oldVal.length === 0 && val.length > 0) {
         val.forEach((condition) => {
           gtag.event('Add filter', {
+            event_category: 'Search',
             event_label: condition.field,
             value: condition.value,
           });
         });
       } else if (val.length > oldVal.length || val.length === oldVal.length) {
         gtag.event('Add filter', {
+          event_category: 'Search',
           event_label: val[val.length - 1].field,
           value: val[val.length - 1].value,
         });
