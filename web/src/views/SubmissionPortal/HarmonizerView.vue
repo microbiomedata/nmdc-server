@@ -128,7 +128,7 @@ export default defineComponent({
 
     const submitDialog = ref(false);
 
-    const snackbar = ref(false);
+    const validationSuccessSnackbar = ref(false);
     const importErrorSnackbar = ref(false);
     const notImportedWorksheetNames = ref([] as string[]);
     const emptySheetSnackbar = ref(false);
@@ -401,7 +401,6 @@ export default defineComponent({
           ...tabsValidated.value,
           [activeTemplateKey.value]: false,
         };
-        snackbar.value = Object.values(tabsValidated.value).every((value) => value);
         emptySheetSnackbar.value = true;
 
         return;
@@ -427,7 +426,7 @@ export default defineComponent({
         [activeTemplateKey.value]: valid,
       };
 
-      snackbar.value = Object.values(tabsValidated.value).every((value) => value);
+      validationSuccessSnackbar.value = Object.values(tabsValidated.value).every((value) => value);
     }
 
     const canSubmit = computed(() => {
@@ -653,7 +652,7 @@ export default defineComponent({
       submissionStatus,
       status,
       submitDialog,
-      snackbar,
+      validationSuccessSnackbar,
       schemaLoading,
       importErrorSnackbar,
       notImportedWorksheetNames,
@@ -698,7 +697,7 @@ export default defineComponent({
           </v-icon>
         </v-btn>
         <v-snackbar
-          v-model="snackbar"
+          v-model="validationSuccessSnackbar"
           color="success"
           timeout="3000"
         >
