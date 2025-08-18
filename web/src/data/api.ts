@@ -101,7 +101,7 @@ export interface DerivedDataResult extends BaseSearchResult {
   git_url: string;
   started_at_time: string;
   ended_at_time: string;
-  execution_resource: string;
+  execution_resource: string | null;
   was_informed_by: OmicsProcessingBaseResult[];
   outputs: DataObjectSearchResult[];
 }
@@ -641,6 +641,11 @@ async function createBulkDownload(conditions: Condition[], dataObjectFilter: Dat
   };
 }
 
+async function getDataObjectHtmlContentUrl(dataObjectId: string): Promise<string> {
+  const { data } = await client.get<{ url: string }>(`data_object/${dataObjectId}/get_html_content_url`);
+  return data.url;
+}
+
 export interface KeggTermSearchResponse {
   term: string;
   text: string;
@@ -685,11 +690,12 @@ async function me(): Promise<User | null> {
   }
 }
 
-async function getAllUsers(params: SearchParams) {
+async function getAllUsers(params: SearchParams, searchFilter: string) {
   const { data } = await client.get<SearchResponse<User>>('users', {
     params: {
       limit: params.limit,
       offset: params.offset,
+      search_filter: searchFilter,
     },
   });
   return data;
@@ -845,6 +851,7 @@ client.interceptors.response.use(undefined, async (error: AxiosError) => {
 
 const api = {
   createBulkDownload,
+  getDataObjectHtmlContentUrl,
   getBinnedFacet,
   getBulkDownloadSummary,
   getBulkDownloadAggregateSummary,

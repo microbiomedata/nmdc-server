@@ -4,6 +4,7 @@ import {
   LockOperationResult,
   MetadataSubmission,
   MetadataSubmissionRecord,
+  MetadataSubmissionRecordSlim,
   MetadataSuggestion,
   MetadataSuggestionRequest,
   NmdcAddress,
@@ -47,27 +48,20 @@ async function updateRecord(id: string, record: Partial<MetadataSubmission>, sta
   return { data: resp.data, httpStatus: resp.status };
 }
 
-async function listRecords(params: SearchParams, isTestFilter: boolean | null) {
+async function listRecords(searchParams: SearchParams, isTestFilter: boolean | null) {
+  const params: Record<string, any> = {
+    limit: searchParams.limit,
+    offset: searchParams.offset,
+    column_sort: searchParams.sortColumn,
+    sort_order: searchParams.sortOrder,
+  };
   if (isTestFilter !== null) {
-    const resp = await client.get<PaginatedResponse<MetadataSubmissionRecord>>('metadata_submission', {
-      params: {
-        limit: params.limit,
-        offset: params.offset,
-        column_sort: params.sortColumn,
-        sort_order: params.sortOrder,
-        is_test_submission_filter: isTestFilter,
-      },
-    });
-    return resp.data;
+    params.is_test_submission_filter = isTestFilter;
   }
-  const resp = await client.get<PaginatedResponse<MetadataSubmissionRecord>>('metadata_submission', {
-    params: {
-      limit: params.limit,
-      offset: params.offset,
-      column_sort: params.sortColumn,
-      sort_order: params.sortOrder,
-    },
-  });
+  const resp = await client.get<PaginatedResponse<MetadataSubmissionRecordSlim>>(
+    'metadata_submission/slim',
+    { params },
+  );
   return resp.data;
 }
 

@@ -1,15 +1,16 @@
-import json
 from csv import DictReader
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
+from fastapi.encoders import jsonable_encoder
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.session import Session
 from starlette.testclient import TestClient
 
 from nmdc_server import fakes
-from nmdc_server.models import SubmissionEditorRole, SubmissionRole
+from nmdc_server.models import SubmissionEditorRole, SubmissionImagesObject, SubmissionRole
 from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
+from nmdc_server.storage import BucketName
 
 
 @pytest.fixture
@@ -49,7 +50,7 @@ def test_get_metadata_submissions_mixs_as_non_admin(
 def test_get_metadata_submissions_mixs_as_admin(
     db: Session, client: TestClient, logged_in_admin_user
 ):
-    now = datetime.utcnow()
+    now = datetime.now(tz=UTC)
 
     # Create logged in user
     logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
@@ -147,7 +148,7 @@ def test_get_metadata_submissions_report_as_non_admin(
 def test_get_metadata_submissions_report_as_admin(
     db: Session, client: TestClient, logged_in_admin_user
 ):
-    now = datetime.utcnow()
+    now = datetime.now(tz=UTC)
 
     # Create two submissions, only one of which is owned by the logged-in user.
     logged_in_user = logged_in_admin_user  # allows us to reuse some code snippets
@@ -155,7 +156,6 @@ def test_get_metadata_submissions_report_as_admin(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         created=now,
-        date_last_modified=datetime.utcnow(),
         is_test_submission=False,
     )
     fakes.SubmissionRoleFactory(
@@ -169,7 +169,6 @@ def test_get_metadata_submissions_report_as_admin(
         author=other_user,
         author_orcid=other_user.orcid,
         created=now + timedelta(seconds=1),
-        date_last_modified=datetime.utcnow(),
         # TODO: Omit some optional fields in order to simplify the test data.
         # See: `class MetadataSubmissionRecordCreate` in `schema_submission.py`
         # See: https://microbiomedata.github.io/submission-schema/SampleData/
@@ -409,7 +408,7 @@ def test_cannot_acquire_lock_on_locked_submission(db: Session, client: TestClien
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=locking_user,
-        lock_updated=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -432,7 +431,7 @@ def test_release_submission_lock(db: Session, client: TestClient, logged_in_user
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
-        lock_updated=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -469,8 +468,7 @@ def test_cannot_release_other_users_submission_lock(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=locking_user,
-        lock_updated=datetime.utcnow(),
-        date_last_modified=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -494,8 +492,7 @@ def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_u
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=fakes.UserFactory(),
-        lock_updated=datetime.utcnow(),
-        date_last_modified=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -503,13 +500,13 @@ def test_try_edit_locked_submission(db: Session, client: TestClient, logged_in_u
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-    payload = SubmissionMetadataSchema(**submission.__dict__).json(exclude_unset=True)
+    payload = SubmissionMetadataSchema.model_validate(submission)
     db.commit()
 
     response = client.request(
         method="patch",
         url=f"/api/metadata_submission/{submission.id}",
-        json=json.loads(payload),
+        json=jsonable_encoder(payload, exclude_unset=True),
     )
     assert response.status_code == 400
 
@@ -520,8 +517,7 @@ def test_try_edit_expired_locked_submission(db: Session, client: TestClient, log
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=fakes.UserFactory(),
-        lock_updated=datetime.utcnow() - timedelta(hours=1),
-        date_last_modified=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC) - timedelta(hours=1),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -529,11 +525,13 @@ def test_try_edit_expired_locked_submission(db: Session, client: TestClient, log
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-    payload = SubmissionMetadataSchema(**submission.__dict__).json(exclude_unset=True)
+    payload = SubmissionMetadataSchema.model_validate(submission)
     db.commit()
 
     response = client.request(
-        method="patch", url=f"/api/metadata_submission/{submission.id}", json=json.loads(payload)
+        method="patch",
+        url=f"/api/metadata_submission/{submission.id}",
+        json=jsonable_encoder(payload, exclude_unset=True),
     )
     assert response.status_code == 200
 
@@ -545,8 +543,7 @@ def test_try_edit_locked_by_current_user_submission(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
-        lock_updated=datetime.utcnow(),
-        date_last_modified=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -554,28 +551,25 @@ def test_try_edit_locked_by_current_user_submission(
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-    payload = SubmissionMetadataSchema(**submission.__dict__).json(exclude_unset=True)
+    payload = SubmissionMetadataSchema.model_validate(submission)
     db.commit()
 
     response = client.request(
-        method="patch", url=f"/api/metadata_submission/{submission.id}", json=json.loads(payload)
+        method="patch",
+        url=f"/api/metadata_submission/{submission.id}",
+        json=jsonable_encoder(payload, exclude_unset=True),
     )
     assert response.status_code == 200
 
 
 def test_submission_list_with_roles(db: Session, client: TestClient, logged_in_user):
     user_a = fakes.UserFactory()
-    submission_a = fakes.MetadataSubmissionFactory(
-        author=user_a, author_orcid=user_a.orcid, date_last_modified=datetime.utcnow()
-    )
+    submission_a = fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
     fakes.MetadataSubmissionFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
-        date_last_modified=datetime.utcnow(),
     )
-    fakes.MetadataSubmissionFactory(
-        author=user_a, author_orcid=user_a.orcid, date_last_modified=datetime.utcnow()
-    )
+    fakes.MetadataSubmissionFactory(author=user_a, author_orcid=user_a.orcid)
     db.commit()
     fakes.SubmissionRoleFactory(
         submission=submission_a,
@@ -596,13 +590,13 @@ def test_submission_list_with_roles(db: Session, client: TestClient, logged_in_u
 @pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
 def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
     if role == SubmissionEditorRole.owner:
-        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
+        submission = fakes.MetadataSubmissionFactory()
         db.commit()
         role = fakes.SubmissionRoleFactory(
             submission=submission, submission_id=submission.id, user_orcid=logged_in_user.orcid
         )
     else:
-        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
+        submission = fakes.MetadataSubmissionFactory()
     db.commit()
     response = client.request(method="get", url=f"/api/metadata_submission/{submission.id}")
     assert response.status_code == code
@@ -611,8 +605,8 @@ def test_get_submission_with_roles(db: Session, client: TestClient, logged_in_us
 @pytest.mark.parametrize("role,code", [(SubmissionEditorRole.owner, 200), (None, 403)])
 def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_user, role, code):
     if role == SubmissionEditorRole.owner:
-        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
-        payload = SubmissionMetadataSchema(**submission.__dict__).json()
+        submission = fakes.MetadataSubmissionFactory()
+        payload = SubmissionMetadataSchema.model_validate(submission)
         db.commit()
         role = fakes.SubmissionRoleFactory(
             submission=submission,
@@ -620,11 +614,13 @@ def test_edit_submission_with_roles(db: Session, client: TestClient, logged_in_u
             user_orcid=logged_in_user.orcid,
         )
     else:
-        submission = fakes.MetadataSubmissionFactory(date_last_modified=datetime.utcnow())
-        payload = SubmissionMetadataSchema(**submission.__dict__).json()
+        submission = fakes.MetadataSubmissionFactory()
+        payload = SubmissionMetadataSchema.model_validate(submission)
     db.commit()
     response = client.request(
-        method="patch", url=f"/api/metadata_submission/{submission.id}", json=json.loads(payload)
+        method="patch",
+        url=f"/api/metadata_submission/{submission.id}",
+        json=jsonable_encoder(payload),
     )
     assert response.status_code == code
 
@@ -644,7 +640,7 @@ def test_create_role_on_patch(db: Session, client: TestClient, logged_in_user):
     response = client.request(
         method="patch",
         url=f"/api/metadata_submission/{submission.id}",
-        json=json.loads(payload.json()),
+        json=jsonable_encoder(payload),
     )
     assert response.status_code == 200
 
@@ -670,22 +666,24 @@ def test_piecewise_patch_metadata_contributor(
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.metadata_contributor,
     )
-    full_payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
+    full_payload = SubmissionMetadataSchemaPatch.model_validate(submission)
     db.commit()
 
     if samples_only:
         request_dict = {
             "metadata_submission": {"sampleData": full_payload.metadata_submission.sampleData}
         }
-        request_payload = SubmissionMetadataSchemaPatch(**request_dict).json(exclude_unset=True)
+        request_payload = jsonable_encoder(
+            SubmissionMetadataSchemaPatch.model_validate(request_dict), exclude_unset=True
+        )
     else:
-        request_payload = full_payload.json()
+        request_payload = jsonable_encoder(full_payload)
 
     # Logged in user should not be able to submit full payload because it contains non-sample data
     response = client.request(
         method="patch",
         url=f"/api/metadata_submission/{submission.id}",
-        json=json.loads(request_payload),
+        json=request_payload,
     )
     assert response.status_code == code
 
@@ -712,7 +710,7 @@ def test_delete_role_on_patch(db: Session, client: TestClient, logged_in_user):
         user_orcid=user_orcid,
         role=SubmissionEditorRole.viewer,
     )
-    payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
+    payload = SubmissionMetadataSchemaPatch.model_validate(submission)
     db.commit()
 
     payload.permissions = {}
@@ -720,7 +718,7 @@ def test_delete_role_on_patch(db: Session, client: TestClient, logged_in_user):
     response = client.request(
         method="patch",
         url=f"/api/metadata_submission/{submission.id}",
-        json=json.loads(payload.json()),
+        json=jsonable_encoder(payload),
     )
     assert response.status_code == 200
     roles = db.query(SubmissionRole)
@@ -745,14 +743,14 @@ def test_update_role_on_patch(db: Session, client: TestClient, logged_in_user):
         user_orcid=user_orcid,
         role=SubmissionEditorRole.viewer,
     )
-    payload = SubmissionMetadataSchemaPatch(**submission.__dict__)
+    payload = SubmissionMetadataSchemaPatch.model_validate(submission)
     db.commit()
 
     payload.permissions = {str(user_orcid): SubmissionEditorRole.editor.value}
     response = client.request(
         method="patch",
         url=f"/api/metadata_submission/{submission.id}",
-        json=json.loads(payload.json()),
+        json=jsonable_encoder(payload),
     )
     assert response.status_code == 200
     roles = db.query(SubmissionRole).filter(SubmissionRole.user_orcid == str(user_orcid))
@@ -808,7 +806,7 @@ def test_delete_submission_while_locked(db: Session, client: TestClient, logged_
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=user,
-        lock_updated=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -839,7 +837,7 @@ def test_sync_submission_templates(db: Session, client: TestClient, logged_in_us
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
-        lock_updated=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -847,8 +845,8 @@ def test_sync_submission_templates(db: Session, client: TestClient, logged_in_us
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-    payload = json.loads(
-        SubmissionMetadataSchemaPatch(**submission.__dict__).json(exclude_unset=True)
+    payload = jsonable_encoder(
+        SubmissionMetadataSchemaPatch.model_validate(submission), exclude_unset=True
     )
     payload["metadata_submission"]["templates"] = [template]
     db.commit()
@@ -868,7 +866,7 @@ def test_sync_submission_study_name(db: Session, client: TestClient, logged_in_u
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         locked_by=logged_in_user,
-        lock_updated=datetime.utcnow(),
+        lock_updated=datetime.now(tz=UTC),
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -876,8 +874,8 @@ def test_sync_submission_study_name(db: Session, client: TestClient, logged_in_u
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-    payload = json.loads(
-        SubmissionMetadataSchemaPatch(**submission.__dict__).json(exclude_unset=True)
+    payload = jsonable_encoder(
+        SubmissionMetadataSchemaPatch.model_validate(submission), exclude_unset=True
     )
     payload["metadata_submission"]["studyForm"]["studyName"] = expected_val
     db.commit()
@@ -933,3 +931,498 @@ def test_metadata_suggest_invalid_type(client: TestClient, suggest_payload, logg
         json=suggest_payload,
     )
     assert response.status_code == 422
+
+
+def test_set_submission_pi_image_success(db: Session, client: TestClient, logged_in_user):
+    """Test successfully setting a PI image for a submission."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "test-pi-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body.get("pi_image_url") is not None
+
+    # Verify the image was set in the database
+    db.refresh(submission)
+    assert submission.pi_image is not None
+    assert submission.pi_image.name == "test-pi-image.jpg"
+    assert submission.pi_image.size == 1000000
+    assert submission.pi_image.content_type == "image/jpeg"
+
+
+def test_set_submission_primary_study_image_success(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test successfully setting a primary study image for a submission."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "test-primary-study-image.png",
+        "file_size": 2000000,
+        "content_type": "image/png",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/primary_study_image", json=upload_data
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body.get("primary_study_image_url") is not None
+
+    # Verify the image was set in the database
+    db.refresh(submission)
+    assert submission.primary_study_image is not None
+    assert submission.primary_study_image.name == "test-primary-study-image.png"
+    assert submission.primary_study_image.size == 2000000
+    assert submission.primary_study_image.content_type == "image/png"
+
+
+def test_set_submission_study_images_success(db: Session, client: TestClient, logged_in_user):
+    """Test successfully adding images to the study_images collection."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Add first image to study_images
+    upload_data_1 = {
+        "object_name": "study-image-1.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/study_images", json=upload_data_1
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    study_image_urls = body.get("study_image_urls")
+    assert study_image_urls is not None
+    assert len(study_image_urls) == 1
+
+    db.refresh(submission)
+    assert len(submission.study_images) == 1
+    assert submission.study_images[0].name == "study-image-1.jpg"
+
+    # Add second image to study_images
+    upload_data_2 = {
+        "object_name": "study-image-2.png",
+        "file_size": 2048000,
+        "content_type": "image/png",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/study_images", json=upload_data_2
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    study_image_urls = body.get("study_image_urls")
+    assert study_image_urls is not None
+    assert len(study_image_urls) == 2
+
+    db.refresh(submission)
+    assert len(submission.study_images) == 2
+
+    # Verify both images are in the collection
+    image_names = [img.name for img in submission.study_images]
+    assert "study-image-1.jpg" in image_names
+    assert "study-image-2.png" in image_names
+
+
+def test_set_submission_image_replaces_existing_single_image(
+    db: Session, client: TestClient, logged_in_user, temp_storage_object
+):
+    """Test that setting a single image type replaces the existing image."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+
+    # Add initial PI image
+    original_image = SubmissionImagesObject(
+        name="original-pi-image.jpg", size=500000, content_type="image/jpeg"
+    )
+    submission.pi_image = original_image
+    db.commit()
+    original_blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, original_image.name)
+    assert original_blob.exists() is True
+
+    # Set new PI image - should replace the original
+    upload_data = {
+        "object_name": "new-pi-image.png",
+        "file_size": 1000000,
+        "content_type": "image/png",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body.get("pi_image_url") is not None
+
+    # Verify the new image replaced the old one in the database
+    db.refresh(submission)
+    assert submission.pi_image.name == "new-pi-image.png"
+    assert submission.pi_image.size == 1000000
+    assert submission.pi_image.content_type == "image/png"
+
+    # Verify the original image was deleted from storage
+    assert original_blob.exists() is False
+
+
+def test_set_submission_image_unauthorized_user(db: Session, client: TestClient, logged_in_user):
+    """Test that unauthorized users cannot set submission images."""
+    # Create submission owned by a different user
+    other_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=other_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "unauthorized-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 403
+
+
+def test_set_submission_image_viewer_role_unauthorized(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test that users with viewer role cannot set submission images."""
+    other_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=other_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    # Give logged in user viewer access
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.viewer,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "viewer-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 403
+
+
+def test_set_submission_image_editor_role_authorized(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test that users with editor role can set submission images."""
+    other_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=other_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    # Give logged in user editor access
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.editor,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "editor-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 200
+
+
+def test_set_submission_image_admin_role_authorized(
+    db: Session, client: TestClient, logged_in_admin_user
+):
+    """Test that users with admin role can set submission images."""
+    other_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=other_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "admin-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=upload_data
+    )
+
+    assert response.status_code == 200
+
+
+def test_set_submission_image_nonexistent_submission(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test setting image for a nonexistent submission returns 404."""
+    upload_data = {
+        "object_name": "test-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    # This is a random UUID that does not correspond to any submission
+    response = client.post(
+        "/api/metadata_submission/cdfc2184-d389-433e-b1ac-f709f8364557/image/pi_image",
+        json=upload_data,
+    )
+
+    assert response.status_code == 404
+
+
+def test_set_submission_image_invalid_image_type(db: Session, client: TestClient, logged_in_user):
+    """Test setting image with invalid image type returns 422."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    upload_data = {
+        "object_name": "test-image.jpg",
+        "file_size": 1000000,
+        "content_type": "image/jpeg",
+    }
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/invalid_type", json=upload_data
+    )
+
+    assert response.status_code == 422
+
+
+def test_set_submission_image_missing_required_fields(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test setting image with missing required fields returns 422."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Missing object_name field
+    incomplete_data = {"file_size": 1000000, "content_type": "image/jpeg"}
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/pi_image", json=incomplete_data
+    )
+
+    assert response.status_code == 422
+
+
+def test_delete_submission_pi_image_success(
+    db: Session, client: TestClient, logged_in_user, temp_storage_object
+):
+    """Test successfully deleting a PI image from a submission."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Add a PI image to delete
+    pi_image = SubmissionImagesObject(
+        name="pi-image-to-delete.jpg", size=500000, content_type="image/jpeg"
+    )
+    submission.pi_image = pi_image
+    db.commit()
+
+    # Verify the image exists in storage
+    blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, pi_image.name)
+    assert blob.exists() is True
+
+    # Delete the PI image
+    response = client.delete(f"/api/metadata_submission/{submission.id}/image/pi_image")
+    assert response.status_code == 204
+
+    # Verify the image was deleted from the database
+    db.refresh(submission)
+    assert submission.pi_image is None
+
+    # Verify the image was deleted from storage
+    assert blob.exists() is False  # type: ignore
+
+
+def test_delete_submission_primary_study_image_success(
+    db: Session, client: TestClient, logged_in_user, temp_storage_object
+):
+    """Test successfully deleting a primary study image from a submission."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Add a primary study image to delete
+    primary_study_image = SubmissionImagesObject(
+        name="primary-study-image-to-delete.png", size=600000, content_type="image/png"
+    )
+    submission.primary_study_image = primary_study_image
+    db.commit()
+
+    # Verify the image exists in storage
+    blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, primary_study_image.name)
+    assert blob.exists() is True
+
+    # Delete the primary study image
+    response = client.delete(f"/api/metadata_submission/{submission.id}/image/primary_study_image")
+    assert response.status_code == 204
+
+    # Verify the image was deleted from the database
+    db.refresh(submission)
+    assert submission.primary_study_image is None
+
+    # Verify the image was deleted from storage
+    assert blob.exists() is False  # type: ignore
+
+
+def test_delete_submission_study_images_success(
+    db: Session, client: TestClient, logged_in_user, temp_storage_object
+):
+    """Test successfully deleting a study image from a submission."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Add a study image to delete
+    image_to_delete = SubmissionImagesObject(
+        name="study-image-to-delete.jpg", size=700000, content_type="image/jpeg"
+    )
+    submission.study_images.append(image_to_delete)
+    other_image = SubmissionImagesObject(
+        name="other-study-image.jpg", size=800000, content_type="image/jpeg"
+    )
+    submission.study_images.append(other_image)
+    db.commit()
+
+    # Verify the image exists in storage
+    blob_to_delete = temp_storage_object(BucketName.SUBMISSION_IMAGES, image_to_delete.name)
+    other_blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, other_image.name)
+    assert blob_to_delete.exists() is True
+    assert other_blob.exists() is True
+
+    # Delete the study image
+    response = client.delete(
+        f"/api/metadata_submission/{submission.id}/image/study_images"
+        f"?image_name={image_to_delete.name}"
+    )
+    assert response.status_code == 204
+
+    # Verify the image was deleted from the database
+    db.refresh(submission)
+    assert len(submission.study_images) == 1
+
+    # Verify the image was deleted from storage
+    assert blob_to_delete.exists() is False
+    assert other_blob.exists() is True
