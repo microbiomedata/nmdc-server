@@ -27,6 +27,7 @@ import {
   suggestionMode,
   metadataSuggestions,
   isTestSubmission,
+  canEditSubmissionByStatus,
 } from './store';
 import {
   DATA_MG_INTERLEAVED,
@@ -648,6 +649,7 @@ export default defineComponent({
       validate,
       changeTemplate,
       canEditSampleMetadata,
+      canEditSubmissionByStatus,
     };
   },
 });
@@ -660,8 +662,14 @@ export default defineComponent({
   >
     <SubmissionStepper />
     <submission-permission-banner
-      v-if="!canEditSampleMetadata()"
+      v-if="!canEditSampleMetadata() && canEditSubmissionByStatus()"
     />
+    <v-alert
+      v-if="!canEditSubmissionByStatus()"
+      type="info"
+    >
+      This submission has status "{{ submissionStatus[status] }}" and cannot be edited.
+    </v-alert>
     <div class="d-flex flex-column px-2 pb-2">
       <div class="d-flex align-center">
         <v-btn

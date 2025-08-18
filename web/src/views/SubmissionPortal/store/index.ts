@@ -78,13 +78,20 @@ function isOwner(): boolean {
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
 
+function canEditSubmissionByStatus(): boolean {
+  const editableStatuses = ['InProgress', 'UpdatesRequired'];
+  return editableStatuses.includes(status.value);
+}
+
 function canEditSubmissionMetadata(): boolean {
   if (!_permissionLevel) return false;
+  if (!canEditSubmissionByStatus()) return false;
   return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
 }
 
 function canEditSampleMetadata(): boolean {
   if (!_permissionLevel) return false;
+  if (!canEditSubmissionByStatus()) return false;
   return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
 }
 
@@ -372,10 +379,13 @@ const submitPayload = computed(() => {
 });
 
 function submit(id: string, status: SubmissionStatusKey = 'InProgress') {
-  if (canEditSubmissionMetadata()) {
-    return api.updateRecord(id, payloadObject.value, status);
+  if (!canEditSubmissionMetadata()) {
+    throw new Error('Unable to submit due to inadequate permission level for this submission.');
   }
-  throw new Error('Unable to submit due to inadequate permission level for this submission.');
+  if (!canEditSubmissionByStatus()) {
+    throw new Error('Unable to submit with current submission status.');
+  }
+  return api.updateRecord(id, payloadObject.value, status);
 }
 
 function reset() {
@@ -401,7 +411,9 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   if (!canEditSampleMetadata()) {
     return Promise.resolve();
   }
-
+  if (!canEditSubmissionByStatus()) {
+    return Promise.resolve();
+  }
   let payload: Partial<MetadataSubmission> = {};
   let permissions: Record<string, PermissionLevelValues> | undefined;
   if (isOwner()) {
@@ -558,6 +570,7 @@ export {
   isOwner,
   canEditSampleMetadata,
   canEditSubmissionMetadata,
+  canEditSubmissionByStatus,
   addMetadataSuggestions,
   removeMetadataSuggestions,
   templateHasData,
