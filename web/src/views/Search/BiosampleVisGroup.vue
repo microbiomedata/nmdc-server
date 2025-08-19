@@ -179,7 +179,7 @@ export default defineComponent({
       </v-col>
     </v-row>
     <v-row>
-      <v-col cols="8">
+      <v-col cols="6">
         <TooltipCard
           :text="helpTimeline"
           class="py-2"
@@ -193,18 +193,19 @@ export default defineComponent({
             <template #default="props">
               <DateHistogram
                 v-bind="props"
+                :height="240"
                 @select="setUniqueCondition(['collection_date'], ['biosample'], $event.conditions)"
               />
             </template>
           </BinnedSummaryWrapper>
         </TooltipCard>
       </v-col>
-      <v-col cols="4">
+      <v-col cols="6">
         <TooltipCard
           :text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"
         >
-          <ChartContainer :height="160">
+          <ChartContainer :height="240">
             <template #default="{ width, height }">
               <UpSet
                 v-bind="{
