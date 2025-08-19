@@ -36,6 +36,10 @@ export default Vue.extend({
       type: String,
       required: true,
     },
+    height: {
+      type: Number,
+      default: 160,
+    },
   },
 
   data() {
@@ -133,8 +137,8 @@ export default Vue.extend({
 
 <template>
   <div class="histogram">
-    <ChartContainer>
-      <template #default="{ width, height }">
+    <ChartContainer :height="height">
+      <template #default="{ width }">
         <TimeHistogram
           ref="histogram"
           v-bind="{ width, height, selectedData: facetSummary, totalData: facetSummaryUnconditional, range: range || [] }"
