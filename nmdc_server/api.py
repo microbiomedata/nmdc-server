@@ -1242,8 +1242,15 @@ async def update_submission(
             crud.update_submission_contributor_roles(db, submission, new_permissions)
 
         if body_dict.get("status", None):
+            new_status = body_dict["status"]
+            allowed_transitions = {
+                SubmissionStatusEnum.UpdatesRequired.text: SubmissionStatusEnum.InProgress.text,
+                SubmissionStatusEnum.InProgress.text: SubmissionStatusEnum.SubmittedPendingReview.text
+            }
+            current_status = submission.status
             if (
-                body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
+                current_status in allowed_transitions
+                and new_status in allowed_transitions[current_status]
                 and submission.is_test_submission is False
             ):
                 submission.status = body_dict["status"]

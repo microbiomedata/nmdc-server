@@ -89,6 +89,11 @@ export default defineComponent({
       };
     }
 
+    function editablebyStatus(item: MetadataSubmissionRecord) {
+      const editableStatuses = ['InProgress', 'UpdatesRequired'];
+      return editableStatuses.includes(item.status);
+    }
+
     async function resume(item: MetadataSubmissionRecord) {
       router?.push({ name: 'Study Form', params: { id: item.id } });
     }
@@ -145,6 +150,7 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
+      editablebyStatus,
     };
   },
 });
@@ -300,10 +306,14 @@ export default defineComponent({
                 color="primary"
                 @click="() => resume(item)"
               >
-                Resume
-                <v-icon class="pl-1">
-                  mdi-arrow-right-circle
-                </v-icon>
+                <span v-if="editablebyStatus(item)">
+                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
+                  Resume
+                </span>
+                <span v-else>
+                  <v-icon class="pl-1">mdi-eye</v-icon>
+                  View
+                </span>
               </v-btn>
               <v-menu
                 offset-x

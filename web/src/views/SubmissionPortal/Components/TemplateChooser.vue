@@ -5,6 +5,9 @@ import {
   packageName,
   canEditSubmissionMetadata,
   templateHasData,
+  canEditSubmissionByStatus,
+  submissionStatus,
+  status,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
@@ -24,6 +27,9 @@ export default defineComponent({
       templateListDisplayNames,
       canEditSubmissionMetadata,
       templateHasData,
+      canEditSubmissionByStatus,
+      submissionStatus,
+      status,
     };
   },
 });
@@ -45,9 +51,15 @@ export default defineComponent({
       for your samples.
     </div>
     <submission-permission-banner
-      v-if="!canEditSubmissionMetadata()"
+      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
-
+    <v-alert
+      v-if="!canEditSubmissionByStatus()"
+      type="info"
+      class="ma-2"
+    >
+      This submission has status "{{ submissionStatus[status] }}" and cannot be edited.
+    </v-alert>
     <v-checkbox
       v-for="option in templates.filter((v) => v[1].status === 'published')"
       :key="option[0]"
@@ -72,35 +84,47 @@ export default defineComponent({
       :label="HARMONIZER_TEMPLATES[option[0]].displayName"
       :value="option[0]"
     />
+    <template v-if="canEditSubmissionByStatus()">
+      <v-alert
+        v-if="!templateHasData('all')"
+        color="grey lighten-2"
+        class="mt-3"
+      >
+        <p class="text-h5">
+          DataHarmonizer Template Choice
+        </p>
+        <template
+          v-if="packageName.length!=0"
+        >
+          Your DataHarmonizer template is "{{ templateListDisplayNames }}".
+        </template>
+        <template
+          v-else
+        >
+          Please Select One or More Options for Your Template.
+        </template>
+      </v-alert>
+      <v-alert
+        v-else
+        type="warning"
+      >
+        <p class="text-h5">
+          Template choice disabled
+        </p>
+        Your DataHarmonizer template is "{{ templateListDisplayNames }}".
+        Template choices cannot be disabled while the matching tab in step 5 has data present.
+        To disable the template, return to step 5 and remove all data from that tab. You may add new templates at any time.
+      </v-alert>
+    </template>
     <v-alert
-      v-if="!templateHasData('all')"
+      v-if="!canEditSubmissionByStatus() && packageName.length > 0"
       color="grey lighten-2"
       class="mt-3"
     >
       <p class="text-h5">
-        DataHarmonizer Template Choice
+        DataHarmonizer Template
       </p>
-      <template
-        v-if="packageName.length!=0"
-      >
-        Your DataHarmonizer template is "{{ templateListDisplayNames }}".
-      </template>
-      <template
-        v-else
-      >
-        Please Select One or More Options for Your Template.
-      </template>
-    </v-alert>
-    <v-alert
-      v-else
-      type="warning"
-    >
-      <p class="text-h5">
-        Template choice disabled
-      </p>
-      Your DataHarmonizer template is "{{ templateListDisplayNames }}".
-      Template choices cannot be disabled while the matching tab in step 5 has data present.
-      To disable the template, return to step 5 and remove all data from that tab. You may add new templates at any time.
+      This submission uses the "{{ templateListDisplayNames }}" template.
     </v-alert>
     <div class="d-flex">
       <v-btn

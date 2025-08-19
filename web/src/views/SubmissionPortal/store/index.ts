@@ -405,15 +405,13 @@ function reset() {
 }
 
 async function incrementalSaveRecord(id: string): Promise<number | void> {
-  if (!['InProgress', 'UpdatesRequired'].includes(status.value)) {
-    throw new Error(`Cannot edit while status is ${submissionStatus[status.value]}`);
-  }
   if (!canEditSampleMetadata()) {
     return Promise.resolve();
   }
   if (!canEditSubmissionByStatus()) {
     return Promise.resolve();
   }
+
   let payload: Partial<MetadataSubmission> = {};
   let permissions: Record<string, PermissionLevelValues> | undefined;
   if (isOwner()) {
@@ -428,8 +426,8 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   if (hasChanged.value) {
-    status.value = 'InProgress';
-    const response = await api.updateRecord(id, payload, status.value, permissions);
+    const updatedStatus = 'InProgress';
+    const response = await api.updateRecord(id, payload, updatedStatus, permissions);
     hasChanged.value = 0;
     return response.httpStatus;
   }

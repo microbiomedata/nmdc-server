@@ -455,6 +455,7 @@ export default defineComponent({
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       await submit(root.$route.params.id, 'SubmittedPendingReview');
+      status.value = 'SubmittedPendingReview';
       submitDialog.value = false;
     });
 
@@ -580,6 +581,14 @@ export default defineComponent({
       addHooks();
     }
 
+    watch(() => canEditSampleMetadata(), (canEdit) => {
+      if (harmonizerApi.ready.value) {
+        if (!canEdit) {
+          harmonizerApi.setTableReadOnly();
+        }
+      }
+    });
+
     onMounted(async () => {
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
         api.getSubmissionSchema(),
@@ -662,11 +671,12 @@ export default defineComponent({
   >
     <SubmissionStepper />
     <submission-permission-banner
-      v-if="!canEditSampleMetadata() && canEditSubmissionByStatus()"
+      v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
     />
     <v-alert
       v-if="!canEditSubmissionByStatus()"
       type="info"
+      class="ma-2"
     >
       This submission has status "{{ submissionStatus[status] }}" and cannot be edited.
     </v-alert>
@@ -1017,7 +1027,9 @@ export default defineComponent({
         </v-chip>
       </div>
       <v-spacer />
-      <v-tooltip top>
+      <v-tooltip
+        top
+      >
         <template #activator="{ on, attrs }">
           <div
             v-bind="attrs"
@@ -1028,7 +1040,7 @@ export default defineComponent({
               depressed
               :disabled="!canSubmit || status !== 'InProgress' || submitCount > 0"
               :loading="submitLoading"
-              @click="submitDialog = true"
+              @click="canEditSubmissionByStatus() ? submitDialog = true: null"
             >
               <span v-if="status === 'SubmittedPendingReview' || submitCount">
                 <v-icon>mdi-check-circle</v-icon>
@@ -1082,10 +1094,10 @@ export default defineComponent({
             </v-btn>
           </div>
         </template>
-        <span v-if="!canSubmit">
+        <span v-if="!canSubmit && canEditSubmissionByStatus()">
           You must validate all tabs before submitting your study and metadata.
         </span>
-        <span v-else>
+        <span v-if="canSubmit && canEditSubmissionByStatus()">
           Submit for NMDC review.
         </span>
       </v-tooltip>
