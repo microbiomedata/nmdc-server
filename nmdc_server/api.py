@@ -5,7 +5,7 @@ import time
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
 import httpx
@@ -1244,10 +1244,8 @@ async def update_submission(
         if body_dict.get("status", None):
             new_status = body_dict["status"]
             allowed_transitions = {
-                SubmissionStatusEnum.UpdatesRequired.text:
-                    SubmissionStatusEnum.InProgress.text,
-                SubmissionStatusEnum.InProgress.text:
-                    SubmissionStatusEnum.SubmittedPendingReview.text,
+                SubmissionStatusEnum.UpdatesRequired.text: SubmissionStatusEnum.InProgress.text,
+                SubmissionStatusEnum.InProgress.text: SubmissionStatusEnum.SubmittedPendingReview.text,
             }
             current_status = submission.status
             if (
@@ -1400,7 +1398,7 @@ The submission has been updated and resubmitted for review.
         return existing_issue
 
 
-def check_existing_github_issue(submission_id: str, headers: dict, gh_base_url: str, user):
+def check_existing_github_issue(submission_id: UUID, headers: dict, gh_base_url: str, user):
     """
     Check if a GitHub issue already exists for the given submission ID using GitHub's search API.
     """
@@ -1412,7 +1410,7 @@ def check_existing_github_issue(submission_id: str, headers: dict, gh_base_url: 
             "state": "all",
             "per_page": 100,
         }
-        response = requests.get(search_url, headers=headers, params=params)
+        response = requests.get(search_url, headers=headers, params=cast(Any, params))
 
         if response.status_code == 200:
             issues = response.json()
