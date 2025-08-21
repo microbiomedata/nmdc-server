@@ -194,15 +194,15 @@ export default defineComponent({
       // Otherwise, track the last filter condition added or updated
       if (oldVal.length === 0 && val.length > 0) {
         val.forEach((condition) => {
-          gtag.event('Add filter', {
-            event_category: 'Search',
+          gtag.event('filter_added', {
+            event_category: 'search',
             event_label: condition.field,
             value: condition.value,
           });
         });
       } else if (val.length > oldVal.length || val.length === oldVal.length) {
-        gtag.event('Add filter', {
-          event_category: 'Search',
+        gtag.event('filter_added', {
+          event_category: 'search',
           event_label: val[val.length - 1].field,
           value: val[val.length - 1].value,
         });
