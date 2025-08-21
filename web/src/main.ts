@@ -17,7 +17,7 @@ Vue.use(CompositionPlugin);
  * Enable instrumentation in production
  */
 if (process.env.NODE_ENV === 'production') {
-  const gaId = 'UA-68089198-4';
+  const gaId = process.env.VUE_APP_NMDC_GOOGLE_ANALYTICS_ID;
   Vue.use(VueGtag, {
     config: { id: gaId },
     includes: [{ id: gaId }],
