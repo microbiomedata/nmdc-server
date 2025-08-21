@@ -361,5 +361,5 @@ You can also pass `--print-sql` to output all SQL queries.
 
 ## Google Analytics
 
-The frontend Vue app is configured to work with Google Analytics. There are two Google Anlytics "properties" for the NMDC Data Portal. One is for the production site. One is for the dev site as well as local development. Each GA property has its own GA ID associated with it. This ID gets pulled into the view app from an environment variable called `VUE_APP_NMDC_GOOGLE_ANALYTICS_ID`. You can set this inside a `.env` file inside the `web` directory (note this is separate from the `.env` file at the root of the project).
+The frontend Vue app is configured to work with Google Analytics. There are two Google Analytics "properties" for the NMDC Data Portal. One is for the production site. One is for the dev site as well as local development. Each GA property has its own GA ID associated with it. This ID gets pulled into the view app from an environment variable called `VUE_APP_NMDC_GOOGLE_ANALYTICS_ID`. You can set this inside a `.env` file inside the `web` directory (note this is separate from the `.env` file at the root of the project).
 
