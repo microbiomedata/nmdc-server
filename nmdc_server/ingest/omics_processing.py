@@ -148,7 +148,13 @@ def get_poolable_replicate_manifest(
     return omics_processing_id
 
 
-def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, logger, config_map):
+def load_omics_processing(  # noqa: C901
+    db: Session,
+    obj: Dict[str, Any],
+    mongodb: Database,
+    logger,
+    config_map,
+):
     logger = get_logger(__name__)
     input_ids: list[str] = obj.pop("has_input", [""])
     biosample_input_ids: set[str] = set()
