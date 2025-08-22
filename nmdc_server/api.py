@@ -1151,7 +1151,7 @@ async def get_submission(
     raise HTTPException(status_code=403, detail="Must have access.")
 
 
-def can_save_submission(role: models.SubmissionRole, data: dict):
+def can_save_submission(role: models.SubmissionRole, data: dict, status: str):
     """Compare a patch payload with what the user can actually save."""
     metadata_contributor_fields = set(["sampleData", "metadata_submission"])
     editor_fields = set(
@@ -1174,13 +1174,16 @@ def can_save_submission(role: models.SubmissionRole, data: dict):
         models.SubmissionEditorRole.metadata_contributor: metadata_contributor_fields,
     }
     permission_level = models.SubmissionEditorRole(role.role)
-    if permission_level == models.SubmissionEditorRole.owner:
-        return True
-    elif permission_level == models.SubmissionEditorRole.viewer:
-        return False
+    if status in [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.UpdatesRequired.text]:
+        if permission_level == models.SubmissionEditorRole.owner:
+            return True
+        elif permission_level == models.SubmissionEditorRole.viewer:
+            return False
+        else:
+            allowed_fields = fields_for_permission[permission_level]
+            return all([field in allowed_fields for field in attempted_patch_fields])
     else:
-        allowed_fields = fields_for_permission[permission_level]
-        return all([field in allowed_fields for field in attempted_patch_fields])
+        return False
 
 
 @router.patch(
@@ -1202,7 +1205,11 @@ async def update_submission(
 
     current_user_role = crud.get_submission_role(db, id, user.orcid)
     if not (
-        user.is_admin or (current_user_role and can_save_submission(current_user_role, body_dict))
+        user.is_admin
+        or (
+            current_user_role
+            and can_save_submission(current_user_role, body_dict, submission.status)
+        )
     ):
         raise HTTPException(403, detail="Must have access.")
 
@@ -1270,15 +1277,9 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
 
     # Check for existing issues first
-    existing_issue = check_existing_github_issue(submission.id, headers, gh_url, user)
-    if existing_issue:
-        logging.info(
-            f"GitHub issue already exists for submission {submission.id}: \
-                {existing_issue['html_url']}"
-        )
-        return existing_issue
+    existing_issue = check_existing_github_issues(submission.id, headers, gh_url, user)
 
-    else:
+    if existing_issue is None:
 
         # Gathering the fields we want to display in the issue
         study_form = submission.metadata_submission.studyForm
@@ -1337,25 +1338,46 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         return res
 
 
+def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str, user):
+    """
+    Check if a GitHub issue already exists for the given submission ID using GitHub's search API.
+    """
+    expected_title = f"NMDC Submission: {submission_id}"
+    params = {
+        "state": "all",
+        "per_page": 100,
+    }
+    response = requests.get(gh_url, headers=headers, params=cast(Any, params))
+
+    if response.status_code == 200:
+        issues = response.json()
+
+        # Look for an issue with matching title
+        for issue in issues:
+            if issue.get("title") == expected_title:
+                updated_issue = update_github_issue_for_resubmission(issue, user, headers)
+                return updated_issue
+        else:
+            return None  # No matching gihub issues
+    else:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Search for existing Github issues failed: {response.reason}",
+        )
+
+
 def update_github_issue_for_resubmission(existing_issue, user, headers):
     """
     Update an existing GitHub issue to note that the submission was resubmitted.
-    Adds a comment and optionally reopens the issue if it was closed.
+    Adds a comment and reopens the issue if it was closed.
     """
-    try:
-        issue_number = existing_issue.get("number")
-        issue_url = existing_issue.get("url")  # API URL for the issue
+    issue_url = existing_issue.get("url")  # API URL for the issue
 
-        if not issue_number or not issue_url:
-            logging.error("Could not find issue number or URL for existing GitHub issue")
-            return existing_issue
+    # Create a comment noting the resubmission
+    from datetime import datetime
 
-        # Create a comment noting the resubmission
-        from datetime import datetime
-
-        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
-
-        comment_body = f"""
+    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    comment_body = f"""
 ## 🔄 Submission Resubmitted
 
 **Resubmitted by:** {user.name} ({user.orcid})
@@ -1363,74 +1385,35 @@ def update_github_issue_for_resubmission(existing_issue, user, headers):
 **Status:** {SubmissionStatusEnum.SubmittedPendingReview.text}
 
 The submission has been updated and resubmitted for review.
-        """.strip()
+    """.strip()
 
-        # Add comment to the issue
-        comment_url = f"{issue_url}/comments"
-        comment_payload = {"body": comment_body}
+    # Add comment to the issue
+    comment_url = f"{issue_url}/comments"
+    comment_payload = {"body": comment_body}
 
-        comment_response = requests.post(
-            comment_url, headers=headers, data=json.dumps(comment_payload)
+    comment_response = requests.post(comment_url, headers=headers, data=json.dumps(comment_payload))
+
+    if comment_response.status_code != 201:
+        raise HTTPException(
+            status_code=comment_response.status_code,
+            detail=f"Failed to add comment to GitHub issue: {comment_response.reason}",
         )
 
-        if comment_response.status_code == 201:
-            logging.info(f"Successfully added resubmission comment to GitHub issue #{issue_number}")
-        else:
-            logging.error(f"Failed to add comment to GitHub issue: {comment_response.status_code}")
+    # If the issue is closed, reopen it
+    if existing_issue.get("state") == "closed":
+        reopen_payload = {"state": "open", "state_reason": "reopened"}
 
-        # If the issue is closed, reopen it
-        if existing_issue.get("state") == "closed":
-            reopen_payload = {"state": "open", "state_reason": "reopened"}
+        reopen_response = requests.patch(
+            issue_url, headers=headers, data=json.dumps(reopen_payload)
+        )
 
-            reopen_response = requests.patch(
-                issue_url, headers=headers, data=json.dumps(reopen_payload)
+        if reopen_response.status_code != 200:
+            raise HTTPException(
+                status_code=reopen_response.status_code,
+                detail=f"Failed to reopen GitHub issue: {reopen_response.reason}",
             )
 
-            if reopen_response.status_code == 200:
-                logging.info(f"Successfully reopened GitHub issue #{issue_number}")
-            else:
-                logging.error(f"Failed to reopen GitHub issue: {reopen_response.status_code}")
-
-        return existing_issue
-
-    except Exception as e:
-        logging.error(f"Error updating GitHub issue for resubmission: {str(e)}")
-        return existing_issue
-
-
-def check_existing_github_issue(submission_id: UUID, headers: dict, gh_base_url: str, user):
-    """
-    Check if a GitHub issue already exists for the given submission ID using GitHub's search API.
-    """
-    try:
-        repo_url = gh_base_url.replace("/issues", "")
-        search_url = f"{repo_url}/issues"
-        expected_title = f"NMDC Submission: {submission_id}"
-        params = {
-            "state": "all",
-            "per_page": 100,
-        }
-        response = requests.get(search_url, headers=headers, params=cast(Any, params))
-
-        if response.status_code == 200:
-            issues = response.json()
-
-            # Look for an issue with matching title
-            for issue in issues:
-                if issue.get("title") == expected_title:
-                    logging.info(f"Found existing GitHub issue for submission {submission_id}")
-                    updated_issue = update_github_issue_for_resubmission(issue, user, headers)
-                    return updated_issue
-            else:
-                logging.info(f"No existing GitHub issue found for submission {submission_id}")
-                return None
-        else:
-            logging.warning(f"Failed to search GitHub issues: {response.status_code}")
-            return None
-
-    except Exception as e:
-        logging.error(f"Error searching GitHub issues: {str(e)}")
-        return None
+    return existing_issue
 
 
 @router.delete(
