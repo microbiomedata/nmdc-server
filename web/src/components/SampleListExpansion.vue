@@ -4,6 +4,7 @@ import { computed, defineComponent, PropType } from '@vue/composition-api';
 import { fieldDisplayName } from '@/util';
 import { BiosampleSearchResult } from '@/data/api';
 import DataObjectTable from './DataObjectTable.vue';
+import AmpliconObjectDataTable from './AmpliconObjectDataTable.vue';
 
 const buttonOrder = [
   'metagenome',
@@ -11,11 +12,13 @@ const buttonOrder = [
   'proteomics',
   'metabolomics',
   'organic matter characterization',
+  'amplicon',
 ];
 
 export default defineComponent({
   components: {
     DataObjectTable,
+    AmpliconObjectDataTable,
   },
 
   props: {
@@ -38,6 +41,11 @@ export default defineComponent({
       return props.expanded.resultId === props.result.id
         && props.expanded.omicsProcessingId === omicsProcessingId;
     }
+    function isDisabled(omicsType: string, projects: any[]) {
+      // TODO this is a temporary fix for the amplicon button
+      // until we have a proper way to handle amplicon data.
+      return projects[0].omics_data.length === 0 && omicsType !== 'Amplicon';
+    }
 
     const filteredOmicsProcessing = computed(() => Object.entries(groupBy(
       props.result.omics_processing,
@@ -47,9 +55,9 @@ export default defineComponent({
       const bi = buttonOrder.indexOf(bgroup.toLowerCase());
       return ai - bi;
     }));
-
     return {
       isOpen,
+      isDisabled,
       filteredOmicsProcessing,
       fieldDisplayName,
     };
@@ -69,7 +77,7 @@ export default defineComponent({
         x-small
         :outlined="!isOpen(projects[0].id)"
         :color="isOpen(projects[0].id) ? 'primary' : 'default'"
-        :disabled="projects[0].omics_data.length == 0 ? true : false"
+        :disabled="isDisabled(omicsType, projects)"
         class="mr-2 mt-2"
 
         @click="() => $emit('open-details', projects[0].id)"
@@ -80,7 +88,16 @@ export default defineComponent({
     </div>
     <template v-for="[omicsType, projects] in filteredOmicsProcessing">
       <DataObjectTable
-        v-if="isOpen(projects[0].id)"
+        v-if="isOpen(projects[0].id) && omicsType !== 'Amplicon'"
+        :key="projects[0].id"
+        class="flex-row mt-2"
+        :omics-processing="projects"
+        :omics-type="omicsType"
+        :logged-in-user="loggedInUser"
+        :biosample="result"
+      />
+      <AmpliconObjectDataTable
+        v-if="isOpen(projects[0].id) && omicsType === 'Amplicon'"
         :key="projects[0].id"
         class="flex-row mt-2"
         :omics-processing="projects"
