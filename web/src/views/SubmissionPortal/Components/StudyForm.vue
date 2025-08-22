@@ -18,6 +18,9 @@ import {
   isOwner,
   canEditSubmissionMetadata,
   checkDoiFormat,
+  canEditSubmissionByStatus,
+  submissionStatus,
+  status,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -129,6 +132,9 @@ export default defineComponent({
       currentUserOrcid,
       permissionHelpText,
       checkDoiFormat,
+      canEditSubmissionByStatus,
+      submissionStatus,
+      status,
     };
   },
 });
@@ -144,8 +150,15 @@ export default defineComponent({
       {{ NmdcSchema.classes.Study.description }}
     </div>
     <submission-permission-banner
-      v-if="!canEditSubmissionMetadata()"
+      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
+    <v-alert
+      v-if="!canEditSubmissionByStatus()"
+      type="info"
+      class="ma-2"
+    >
+      This submission has status "{{ submissionStatus[status] }}" and cannot be edited.
+    </v-alert>
     <v-form
       ref="formRef"
       v-model="studyFormValid"

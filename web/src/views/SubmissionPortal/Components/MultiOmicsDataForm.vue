@@ -12,7 +12,7 @@ import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
-  templateHasData, checkDoiFormat,
+  templateHasData, checkDoiFormat, canEditSubmissionByStatus, submissionStatus, status,
 } from '../store';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 
@@ -160,6 +160,9 @@ export default defineComponent({
       canEditSubmissionMetadata,
       checkJGITemplates,
       templateHasData,
+      canEditSubmissionByStatus,
+      submissionStatus,
+      status,
     };
   },
 });
@@ -175,8 +178,15 @@ export default defineComponent({
       Information about the type of samples being submitted.
     </div>
     <submission-permission-banner
-      v-if="!canEditSubmissionMetadata()"
+      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
+    <v-alert
+      v-if="!canEditSubmissionByStatus()"
+      type="info"
+      class="ma-2"
+    >
+      This submission has status "{{ submissionStatus[status] }}" and cannot be edited.
+    </v-alert>
     <v-form
       ref="formRef"
       v-model="multiOmicsFormValid"
