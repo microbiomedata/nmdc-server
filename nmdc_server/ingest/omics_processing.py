@@ -172,8 +172,18 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
 
     data_objects = obj.pop("has_output", [])
     obj["study_id"] = obj.pop("associated_studies", [None])[0]
-    obj["analyte_category"] = omics_types[obj["analyte_category"].lower()]
-    obj["omics_type"] = omics_types[obj["analyte_category"].lower()]
+    original_analyte_category = obj["analyte_category"].lower()
+    obj["analyte_category"] = omics_types[original_analyte_category]
+    obj["omics_type"] = omics_types[original_analyte_category]
+
+    # Get amplicon specific fields
+    if obj["omics_type"] == "Amplicon":
+        obj["target_gene"] = obj.pop("target_gene", None)
+        target_subfragment = obj.pop("target_subfragment", None)
+        if isinstance(target_subfragment, dict) and "has_raw_value" in target_subfragment:
+            obj["target_subfragment"] = target_subfragment["has_raw_value"]
+        else:
+            obj["target_subfragment"] = target_subfragment
 
     # Get instrument name
     instrument_id = obj.pop("instrument_used", [])
