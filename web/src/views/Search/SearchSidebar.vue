@@ -209,7 +209,7 @@ export default defineComponent({
         // Special case for map usage: if lat/lon were the last two filters added
         // then track both filters because they are added together from the map interface
         if (val[val.length - 1].field === 'longitude' && val[val.length - 2].field === 'latitude') {
-          gtag.event('map_used', {
+          gtag.event('filter_added', {
             event_category: 'search',
             event_label: val[val.length - 2].field,
             value: val[val.length - 2].value,
