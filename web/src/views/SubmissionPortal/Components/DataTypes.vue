@@ -266,6 +266,7 @@ export default defineComponent({
     />
     <MSProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('mp')"
+      :metaproteome="true"
     />
     <v-checkbox
       v-model="multiOmicsForm.omicsProcessingTypes"
