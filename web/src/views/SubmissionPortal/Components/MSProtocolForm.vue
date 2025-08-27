@@ -3,7 +3,12 @@ import { defineComponent } from '@vue/composition-api';
 
 export default defineComponent({
   name: 'MSProtocolForm',
-
+  props: {
+    metaproteome: {
+      type: Boolean,
+      default: false,
+    },
+  },
 });
 </script>
 
@@ -49,6 +54,7 @@ export default defineComponent({
           no-gutters
         >
           <v-checkbox
+            v-if="!metaproteome"
             label="Protocol shared across data types"
             class="mx-2"
             color="primary"
@@ -69,7 +75,7 @@ export default defineComponent({
                   </v-icon>
                 </template>
                 <span>
-                  If a previously described protocol was also followed for these analyses, provide the shared protocol name provided in the previous step.
+                  If a previously described protocol was also followed for these analyses, include the shared protocol name provided in the previous step.
                 </span>
               </v-tooltip>
             </template>
@@ -270,6 +276,41 @@ export default defineComponent({
             dense
             rows="3"
           />
+        </v-row>
+        <v-row
+          class="mx-8"
+          no-gutters
+        >
+          <v-col
+            cols="2"
+          >
+            <v-text-field
+              label="Data Files"
+              outlined
+              dense
+            >
+              <template #append-outer>
+                <v-tooltip
+                  right
+                  max-width="500"
+                >
+                  <template #activator="{ on, attrs }">
+                    <v-icon
+                      v-bind="attrs"
+                      dense
+                      v-on="on"
+                    >
+                      mdi-help-circle
+                    </v-icon>
+                  </template>
+                  <span>
+                    Indicate the maximum number of metabolomics data files to be associated with each physical sample.
+                    For example, each soil sample or plant samples
+                  </span>
+                </v-tooltip>
+              </template>
+            </v-text-field>
+          </v-col>
         </v-row>
       </v-expansion-panel-content>
     </v-expansion-panel>
