@@ -10,8 +10,7 @@ from pygments.formatters import TerminalFormatter
 from pygments.lexers import SqlLexer
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker
 from sqlalchemy.schema import DDL, MetaData
 
 from nmdc_server.config import settings
