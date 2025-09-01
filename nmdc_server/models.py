@@ -393,7 +393,10 @@ class Biosample(Base, AnnotatedModel):
     multiomics = Column(Integer, nullable=False, default=0)
     emsl_biosample_identifiers = Column(JSONB, nullable=True)
     omics_processing = relationship(
-        "OmicsProcessing", secondary=biosample_input_association, back_populates="biosample_inputs"
+        "OmicsProcessing",
+        secondary=biosample_input_association,
+        back_populates="biosample_inputs",
+        cascade_backrefs=False,
     )
 
     # gold terms
@@ -403,7 +406,7 @@ class Biosample(Base, AnnotatedModel):
     ecosystem_subtype = Column(String, nullable=True)
     specific_ecosystem = Column(String, nullable=True)
 
-    study = relationship(Study, backref="biosamples")
+    study = relationship(Study, backref=backref("biosamples", cascade_backrefs=False))
     env_broad_scale = relationship(EnvoTerm, foreign_keys=[env_broad_scale_id], lazy="joined")
     env_local_scale = relationship(EnvoTerm, foreign_keys=[env_local_scale_id], lazy="joined")
     env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
@@ -710,10 +713,13 @@ class OmicsProcessing(Base, AnnotatedModel):
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
     biosample_inputs = relationship(
-        "Biosample", secondary=biosample_input_association, back_populates="omics_processing"
+        "Biosample",
+        secondary=biosample_input_association,
+        back_populates="omics_processing",
+        cascade_backrefs=False,
     )
     study_id = Column(String, ForeignKey("study.id"), nullable=True)
-    study = relationship("Study", backref="omics_processing")
+    study = relationship("Study", backref=backref("omics_processing", cascade_backrefs=False))
 
     outputs = output_relationship(omics_processing_output_association)
     has_outputs = association_proxy("outputs", "id")
@@ -1010,10 +1016,13 @@ class BulkDownloadDataObject(Base):
     path = Column(String, nullable=False)
 
     bulk_download = relationship(
-        BulkDownload, backref=backref("files", lazy="joined", cascade="all")
+        BulkDownload, backref=backref("files", lazy="joined", cascade="all", cascade_backrefs=False)
     )
     data_object = relationship(
-        DataObject, lazy="joined", cascade="save-update,delete", backref="bulk_download_entities"
+        DataObject,
+        lazy="joined",
+        cascade="save-update,delete",
+        backref=backref("bulk_download_entities", cascade_backrefs=False),
     )
 
 
@@ -1131,7 +1140,7 @@ class SubmissionMetadata(Base):
     lock_updated = Column(DateTime, nullable=True, default=lambda: datetime.now(UTC))
 
     # Roles
-    roles = relationship("SubmissionRole", back_populates="submission")
+    roles = relationship("SubmissionRole", back_populates="submission", cascade_backrefs=False)
 
     # Images
     pi_image_name = Column(String, ForeignKey(SubmissionImagesObject.name), nullable=True)
@@ -1223,7 +1232,7 @@ class SubmissionRole(Base):
     user_orcid = Column(String, primary_key=True)
     role = Column(Enum(SubmissionEditorRole))
 
-    submission = relationship("SubmissionMetadata", back_populates="roles")
+    submission = relationship("SubmissionMetadata", back_populates="roles", cascade_backrefs=False)
 
 
 class AuthorizationCode(Base):
