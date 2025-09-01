@@ -91,7 +91,6 @@ class SQLAlchemyPanel(BasePanel):
 # This is to avoid having to manually name all constraints
 # See: http://alembic.zzzcomputing.com/en/latest/naming.html
 metadata = MetaData(
-    bind=engine,
     naming_convention={
         "pk": "pk_%(table_name)s",
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
