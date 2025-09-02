@@ -185,34 +185,34 @@ export default defineComponent({
     }
     watch(filterText, updateSearch);
 
-    function trackFilterConditions(val: Condition[], oldVal: Condition[]) {
+    function trackFilterConditions(newConditionList: Condition[], oldConditionList: Condition[]) {
       // Do nothing if Google Analytics is not available. This is expected in development mode.
       if (!gtag) {
         return;
       }
       // On initial load, track each filter condition that exists
       // Otherwise, track the last filter condition added or updated
-      if (oldVal.length === 0 && val.length > 0) {
-        val.forEach((condition) => {
+      if (oldConditionList.length === 0 && newConditionList.length > 0) {
+        newConditionList.forEach((condition) => {
           gtag.event('filter_added', {
             event_category: 'search',
             event_label: condition.field,
             value: condition.value,
           });
         });
-      } else if (val.length > oldVal.length || val.length === oldVal.length) {
+      } else if (newConditionList.length > oldConditionList.length || newConditionList.length === oldConditionList.length) {
         gtag.event('filter_added', {
           event_category: 'search',
-          event_label: val[val.length - 1].field,
-          value: val[val.length - 1].value,
+          event_label: newConditionList[newConditionList.length - 1].field,
+          value: newConditionList[newConditionList.length - 1].value,
         });
         // Special case for map usage: if lat/lon were the last two filters added
         // then track both filters because they are added together from the map interface
-        if (val[val.length - 1].field === 'longitude' && val[val.length - 2].field === 'latitude') {
+        if (newConditionList[newConditionList.length - 1].field === 'longitude' && newConditionList[newConditionList.length - 2].field === 'latitude') {
           gtag.event('filter_added', {
             event_category: 'search',
-            event_label: val[val.length - 2].field,
-            value: val[val.length - 2].value,
+            event_label: newConditionList[newConditionList.length - 2].field,
+            value: newConditionList[newConditionList.length - 2].value,
           });
         }
       }
