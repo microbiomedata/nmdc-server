@@ -658,38 +658,6 @@ async def get_pi_image(principal_investigator_id: UUID, db: Session = Depends(ge
 
 
 @router.post(
-    "/jobs/ping",
-    tags=["jobs"],
-    responses=login_required_responses,
-)
-async def ping_celery(user: models.User = Depends(admin_required)) -> bool:
-    try:
-        return jobs.ping.delay().wait(timeout=0.5)
-    except TimeoutError:
-        return False
-
-
-@router.post(
-    "/jobs/ingest",
-    tags=["jobs"],
-    responses=login_required_responses,
-)
-async def run_ingest(
-    user: models.User = Depends(admin_required),
-    params: schemas.IngestArgumentSchema = schemas.IngestArgumentSchema(),
-    db: Session = Depends(get_db),
-):
-    lock = db.query(IngestLock).first()
-    if lock:
-        raise HTTPException(
-            status_code=409,
-            detail=f"An ingest started at {lock.started} is already in progress",
-        )
-    jobs.ingest.delay(function_limit=params.function_limit, skip_annotation=params.skip_annotation)
-    return ""
-
-
-@router.post(
     "/bulk_download",
     tags=["download"],
     response_model=BulkDownload,

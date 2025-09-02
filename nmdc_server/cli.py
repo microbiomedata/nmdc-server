@@ -156,7 +156,6 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         require_setting("rancher_project_id")
         require_setting("rancher_postgres_secret_id")
         require_setting("rancher_backend_workload_id")
-        require_setting("rancher_worker_workload_id")
 
         headers = {"Authorization": f"Bearer {settings.rancher_api_auth_token}"}
 
@@ -190,13 +189,6 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         )
         response.raise_for_status()
 
-        click.echo(f"Redeploying workload {settings.rancher_worker_workload_id}")
-        response = requests.post(
-            f"{settings.rancher_api_base_url}"
-            f"/project/{settings.rancher_project_id}"
-            f"/workloads/{settings.rancher_worker_workload_id}?action=redeploy",
-            headers=headers,
-        )
         response.raise_for_status()
         click.echo("Done")
 

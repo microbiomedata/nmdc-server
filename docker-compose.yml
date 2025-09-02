@@ -1,7 +1,5 @@
 version: "3.3"
 services:
-  redis:
-    image: redis
 
   data:
     image: nginx
@@ -29,23 +27,10 @@ services:
       # Reference: https://github.com/compose-spec/compose-spec/blob/main/spec.md#short-syntax-3
       - "127.0.0.1:5432:5432"
 
-  worker:
-    image: ghcr.io/microbiomedata/nmdc-server/worker:main
-    depends_on:
-      - redis
-      - db
-    env_file:
-      - .docker-env
-      - .env
-    build:
-      context: .
-      dockerfile: Dockerfile.worker
-
   backend:
     image: ghcr.io/microbiomedata/nmdc-server/server:main
     depends_on:
       - db
-      - redis
     env_file:
       - .docker-env
       - .env
