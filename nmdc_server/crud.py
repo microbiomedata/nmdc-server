@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
@@ -604,7 +604,7 @@ def update_submission_lock(db: Session, submission_id: str):
     if not submission_record:
         # Throw a different error, or accept different params
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    submission_record.lock_updated = datetime.utcnow()
+    submission_record.lock_updated = datetime.now(UTC)
     db.commit()
 
 
@@ -636,26 +636,31 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
     if not current_lock_holder or current_lock_holder.id == user_id:
         # Either the given user already has the lock, or no one does
         submission_record.locked_by = user_record
-        submission_record.lock_updated = datetime.utcnow()
+        submission_record.lock_updated = datetime.now(UTC)
         db.commit()
         return True
     else:
         # Someone else is holding the lock
         if submission_record.lock_updated:
             # Compare current time to last edit
-            seconds_since_last_lock_update = (
-                datetime.utcnow() - submission_record.lock_updated
-            ).total_seconds()
+            # Note that currently this application always uses datetime.now(UTC)
+            # to update this field. Currently the corresponding column in postgres
+            # is not actually timezone aware, so the value we get back out must have
+            # the timezone information added back.
+            # TODO: create a migration to make the Postgres column timezone-aware, and
+            # remove this call to `replace`
+            lock_updated_utc = submission_record.lock_updated.replace(tzinfo=UTC)
+            seconds_since_last_lock_update = (datetime.now(UTC) - lock_updated_utc).total_seconds()
             # A user can hold the lock for 30 minutes without making edits
             if seconds_since_last_lock_update > (60 * 30):
                 submission_record.locked_by = user_record
-                submission_record.lock_updated = datetime.utcnow()
+                submission_record.lock_updated = datetime.now(UTC)
                 db.commit()
                 return True
         else:
             # Someone else holds the lock, but there's no timestamp
             # Ensure that there's a timestamp on the lock.
-            submission_record.lock_updated = datetime.utcnow()
+            submission_record.lock_updated = datetime.now(UTC)
     return False
 
 

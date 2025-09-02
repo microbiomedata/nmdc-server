@@ -1,5 +1,5 @@
 import xml.etree.ElementTree as ElementTree
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from functools import lru_cache
 from typing import Any, Dict, Optional
@@ -96,7 +96,7 @@ def encode_token(*, data: dict, expires_delta: timedelta) -> bytes:
     header = {"alg": API_JWT_ALGORITHM, "typ": "JWT"}
 
     payload = data.copy()
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     expire = now + expires_delta
     payload.update(
         {
@@ -309,7 +309,7 @@ async def token(
         authorization_code is None
         or authorization_code.exchanged
         or authorization_code.redirect_uri != body.redirect_uri
-        or authorization_code.created < datetime.utcnow() - timedelta(seconds=45)
+        or authorization_code.created < datetime.now(UTC) - timedelta(seconds=45)
     ):
         raise AUTHORIZATION_CODE_INVALID_EXCEPTION
     user = authorization_code.user

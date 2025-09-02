@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import UTC, datetime
 from itertools import chain
 from typing import Any, Dict, Iterator, List, Optional, Type, Union
 from uuid import uuid4
@@ -877,7 +877,7 @@ class FileDownload(Base):
     __tablename__ = "file_download"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     data_object_id = Column(String, ForeignKey("data_object.id"), nullable=False, index=True)
     ip = Column(String, nullable=False)
     user_agent = Column(String, nullable=True)
@@ -892,7 +892,7 @@ class IngestLock(Base):
     __table_args__ = (CheckConstraint("id", name="singleton"),)
 
     id = Column(Boolean, primary_key=True, default=True)
-    started = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
 
 ModelType = Union[
@@ -984,7 +984,7 @@ class BulkDownload(Base):
     __tablename__ = "bulk_download"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # information about the requestor (as in the FileDownload table)
     orcid = Column(String, nullable=False)
@@ -1101,7 +1101,7 @@ class SubmissionMetadata(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     author_orcid = Column(String, nullable=False)
-    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
     metadata_submission = Column(JSONB, nullable=False)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
@@ -1110,7 +1110,7 @@ class SubmissionMetadata(Base):
     field_notes_metadata = Column(JSONB, nullable=True)
     is_test_submission = Column(Boolean, nullable=False, default=False)
     date_last_modified = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=func.now()
+        DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=func.now()
     )
 
     # The client which initially created the submission. A null value indicates it was created by
@@ -1128,7 +1128,7 @@ class SubmissionMetadata(Base):
         foreign_keys=[locked_by_id],
         primaryjoin="SubmissionMetadata.locked_by_id == User.id",
     )
-    lock_updated = Column(DateTime, nullable=True, default=datetime.utcnow)
+    lock_updated = Column(DateTime, nullable=True, default=lambda: datetime.now(UTC))
 
     # Roles
     roles = relationship("SubmissionRole", back_populates="submission")
@@ -1231,7 +1231,7 @@ class AuthorizationCode(Base):
 
     code = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey(User.id), nullable=False)
-    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     redirect_uri = Column(String, nullable=False)
     exchanged = Column(Boolean, nullable=False, default=False)
 
