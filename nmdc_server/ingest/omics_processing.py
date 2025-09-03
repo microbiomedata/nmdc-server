@@ -184,12 +184,7 @@ def load_omics_processing(  # noqa: C901
 
     # Get amplicon specific fields
     if obj["omics_type"] == "Amplicon":
-        obj["target_gene"] = obj.pop("target_gene", None)
-        target_subfragment = obj.pop("target_subfragment", None)
-        if isinstance(target_subfragment, dict) and "has_raw_value" in target_subfragment:
-            obj["target_subfragment"] = target_subfragment["has_raw_value"]
-        else:
-            obj["target_subfragment"] = target_subfragment
+        load_amplicon_data(obj, input_ids, mongodb)
 
     # Get instrument name
     instrument_id = obj.pop("instrument_used", [])
@@ -244,6 +239,29 @@ def load_omics_processing(  # noqa: C901
 
     omics_processing.poolable_replicates_manifest_id = manifest_id
     db.add(omics_processing)
+
+
+def load_amplicon_data(obj, input_ids, mongodb):
+    """
+    Load amplicon-specific fields for omics processing records.
+
+    Args:
+        obj: The omics processing object to populate with amplicon data
+        input_ids: List of input IDs to search for material processing data
+        mongodb: MongoDB database connection
+    """
+    for input_id in input_ids:
+        material_processing_set = mongodb["material_processing_set"].find_one({"has_output": {"$in": [input_id]}})  # noqa: E501
+        if material_processing_set and "target_gene" in material_processing_set:
+            obj["target_gene"] = material_processing_set["target_gene"]
+            target_subfragment = material_processing_set["target_subfragment"]
+            if isinstance(target_subfragment, dict) and "has_raw_value" in target_subfragment:
+                obj["target_subfragment"] = target_subfragment["has_raw_value"]
+            else:
+                obj["target_subfragment"] = target_subfragment
+        else:
+            obj["target_gene"] = None
+            obj["target_subfragment"] = None
 
 
 def load(db: Session, cursor: Cursor, mongodb: Database):
