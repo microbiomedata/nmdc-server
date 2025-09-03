@@ -160,14 +160,14 @@ def get_aggregation_summary(db: Session):
         # `id`s. The result is the number of studies that are not parent studies.
         num_non_parent_studies = (
             q(models.Study)
-            .filter(models.Study.id.notin_(select(parent_ids_subquery.c.parent_id)))
+            .filter(models.Study.id.notin_(select(parent_ids_subquery.c.parent_id)))  # type: ignore
             .count()
         )
 
         return num_non_parent_studies
 
     wfe_outputs_subquery = make_all_wfe_outputs_subquery(db)
-    wfe_outputs_inner_query = select(wfe_outputs_subquery.c.id)
+    wfe_outputs_inner_query = select(wfe_outputs_subquery.c.id)  # type: ignore
     return schemas.AggregationSummary(
         studies=q(models.Study).count(),
         non_parent_studies=count_non_parent_studies(),
