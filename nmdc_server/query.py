@@ -864,7 +864,9 @@ class BiosampleQuerySchema(BaseQuerySchema):
             for model in workflow_activity_types:
                 biosample_query = biosample_query.options(
                     selectinload(models.Biosample.omics_processing)
-                    .selectinload(getattr(models.OmicsProcessing, model.__tablename__))  # noqa: E501
+                    .selectinload(
+                        getattr(models.OmicsProcessing, model.__tablename__)
+                    )  # noqa: E501
                     .selectinload(model.outputs)
                 )
 
@@ -872,7 +874,9 @@ class BiosampleQuerySchema(BaseQuerySchema):
                 if model == models.MAGsAnalysis:
                     biosample_query = biosample_query.options(
                         selectinload(models.Biosample.omics_processing)
-                        .selectinload(getattr(models.OmicsProcessing, model.__tablename__))  # noqa: E501
+                        .selectinload(
+                            getattr(models.OmicsProcessing, model.__tablename__)
+                        )  # noqa: E501
                         .selectinload(model.mags_list)
                     )
 

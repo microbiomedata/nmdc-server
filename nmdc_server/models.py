@@ -1167,19 +1167,11 @@ class SubmissionMetadata(Base):
 
     @property
     def editors(self) -> list[str]:
-        return [
-            role.user_orcid
-            for role in self.roles
-            if role.role == SubmissionEditorRole.editor
-        ]
+        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.editor]
 
     @property
     def viewers(self) -> list[str]:
-        return [
-            role.user_orcid
-            for role in self.roles
-            if role.role == SubmissionEditorRole.viewer
-        ]
+        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.viewer]
 
     @property
     def metadata_contributors(self) -> list[str]:
@@ -1191,21 +1183,13 @@ class SubmissionMetadata(Base):
 
     @property
     def owners(self) -> list[str]:
-        return [
-            role.user_orcid
-            for role in self.roles
-            if role.role == SubmissionEditorRole.owner
-        ]
+        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.owner]
 
     @property
     def study_images_total_size(self) -> int:
         """Calculate the total size (in bytes) of all study images associated with this
         submission."""
-        return (
-            sum(image.size for image in self.study_images)
-            if self.study_images
-            else 0
-        )
+        return sum(image.size for image in self.study_images) if self.study_images else 0
 
     @property
     def sample_count(self) -> int:

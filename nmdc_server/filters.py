@@ -268,9 +268,7 @@ class WorkflowExecutionFilter(OmicsProcessingFilter):
         q = query.join(
             association_table,
             association_table.c.data_generation_id == models.OmicsProcessing.id,
-        ).join(
-            model, model.id == association_table.c[f"{self.table.value}_id"]
-        )
+        ).join(model, model.id == association_table.c[f"{self.table.value}_id"])
         return q
 
 
