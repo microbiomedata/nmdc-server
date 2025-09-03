@@ -17,7 +17,7 @@ from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
+from nmdc_server import crud, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
@@ -28,7 +28,6 @@ from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester
 from nmdc_server.models import (
-    IngestLock,
     SubmissionEditorRole,
     SubmissionImagesObject,
     SubmissionMetadata,
@@ -655,38 +654,6 @@ async def get_pi_image(principal_investigator_id: UUID, db: Session = Depends(ge
         raise HTTPException(status_code=404, detail="Principal investigator  not found")
 
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
-
-
-@router.post(
-    "/jobs/ping",
-    tags=["jobs"],
-    responses=login_required_responses,
-)
-async def ping_celery(user: models.User = Depends(admin_required)) -> bool:
-    try:
-        return jobs.ping.delay().wait(timeout=0.5)
-    except TimeoutError:
-        return False
-
-
-@router.post(
-    "/jobs/ingest",
-    tags=["jobs"],
-    responses=login_required_responses,
-)
-async def run_ingest(
-    user: models.User = Depends(admin_required),
-    params: schemas.IngestArgumentSchema = schemas.IngestArgumentSchema(),
-    db: Session = Depends(get_db),
-):
-    lock = db.query(IngestLock).first()
-    if lock:
-        raise HTTPException(
-            status_code=409,
-            detail=f"An ingest started at {lock.started} is already in progress",
-        )
-    jobs.ingest.delay(function_limit=params.function_limit, skip_annotation=params.skip_annotation)
-    return ""
 
 
 @router.post(

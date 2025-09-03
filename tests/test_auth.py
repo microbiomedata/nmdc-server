@@ -32,7 +32,8 @@ def test_logout(client: TestClient, logged_in_user):
 
 
 def test_admin_required(client: TestClient):
-    resp = client.post("/api/jobs/ping")
+    """Confirm the server returns an HTTP 401 when a non-admin accesses an admin-only endpoint."""
+    resp = client.get("/api/admin/stats")
     assert resp.status_code == 401
 
 

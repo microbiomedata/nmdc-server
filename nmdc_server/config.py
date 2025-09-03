@@ -103,10 +103,6 @@ class Settings(BaseSettings):
     mongo_user: str = ""
     mongo_password: str = ""
 
-    # celery broker for ingest/migration jobs
-    celery_backend: str = "redis://redis:6379/0"
-    celery_broker: str = "redis://redis:6379/0"
-
     sentry_dsn: Optional[str] = None
 
     # Enable/disable and configure tracing through environment
@@ -128,7 +124,6 @@ class Settings(BaseSettings):
     rancher_project_id: Optional[str] = None
     rancher_postgres_secret_id: Optional[str] = None
     rancher_backend_workload_id: Optional[str] = None
-    rancher_worker_workload_id: Optional[str] = None
 
     # Parameters related to posting messages to Slack.
     # Reference: https://api.slack.com/messaging/webhooks
