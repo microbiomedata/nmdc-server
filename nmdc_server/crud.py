@@ -717,7 +717,9 @@ def get_submission_for_user(
     :param allowed_roles: A list of allowed roles that the user must have on the submission. If
         None, no role check is performed.
     """
-    submission: Optional[models.SubmissionMetadata] = db.get(models.SubmissionMetadata, submission_id)
+    submission: Optional[models.SubmissionMetadata] = db.get(
+        models.SubmissionMetadata, submission_id
+    )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     if allowed_roles and not requester.is_admin:
@@ -759,7 +761,9 @@ def can_read_submission(db: Session, submission_id: str, user_orcid: str) -> Opt
         )
         .first()
     )
-    submission: Optional[models.SubmissionMetadata] = db.get(models.SubmissionMetadata, submission_id)
+    submission: Optional[models.SubmissionMetadata] = db.get(
+        models.SubmissionMetadata, submission_id
+    )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     return (role and models.SubmissionEditorRole(role.role) in read_roles) is True
@@ -776,7 +780,9 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
         )
         .first()
     )
-    submission: Optional[models.SubmissionMetadata] = db.get(models.SubmissionMetadata, submission_id)
+    submission: Optional[models.SubmissionMetadata] = db.get(
+        models.SubmissionMetadata, submission_id
+    )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
     return (role and models.SubmissionEditorRole(role.role) in contributors_edit_roles) is True
