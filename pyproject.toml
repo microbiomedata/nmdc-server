@@ -154,7 +154,7 @@ dependencies = [
     "soupsieve==2.6",
     "sparqlslurper==0.5.1",
     "sparqlwrapper==2.0.0",
-    "sqlalchemy<2",
+    "sqlalchemy>=2",
     "sqlparse==0.5.3",
     "stack-data==0.6.3",
     "starlette==0.38.6",
