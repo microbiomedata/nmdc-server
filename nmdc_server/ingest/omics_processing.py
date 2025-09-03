@@ -251,7 +251,9 @@ def load_amplicon_data(obj, input_ids, mongodb):
         mongodb: MongoDB database connection
     """
     for input_id in input_ids:
-        material_processing_set = mongodb["material_processing_set"].find_one({"has_output": {"$in": [input_id]}})  # noqa: E501
+        material_processing_set = mongodb["material_processing_set"].find_one(
+            {"has_output": {"$in": [input_id]}}
+        )
         if material_processing_set and "target_gene" in material_processing_set:
             obj["target_gene"] = material_processing_set["target_gene"]
             target_subfragment = material_processing_set["target_subfragment"]
