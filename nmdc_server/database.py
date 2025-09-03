@@ -76,6 +76,7 @@ _engine_kwargs = {
     "json_serializer": json_serializer,
     "pool_size": settings.db_pool_size,
     "max_overflow": settings.db_pool_max_overflow,
+    "future": True,
 }
 engine = create_engine(settings.current_db_uri, **_engine_kwargs)
 engine_ingest = create_engine(settings.ingest_database_uri, **_engine_kwargs)
