@@ -142,7 +142,7 @@ def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
     for url in websites:
         website, _ = get_or_create(db, models.Website, url=url)
         study_website = models.StudyWebsite(website=website)
-        db_study.principal_investigator_websites.append(study_website)  # type: ignore
+        db_study.principal_investigator_websites.append(study_website)
 
     db.add(db_study)
     db.commit()
@@ -528,7 +528,7 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     zip_file_descriptor: Dict[str, Any] = {"suggestedFilename": "archive.zip"}
     file_descriptions: List[Dict[str, str]] = []
 
-    for file in bulk_download.files:  # type: ignore
+    for file in bulk_download.files:
         data_object = file.data_object
         if data_object.url is None:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
@@ -668,7 +668,7 @@ def release_submission_lock(db: Session, submission_id: str):
     submission = db.get(models.SubmissionMetadata, submission_id)
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    submission.locked_by = None  # type: ignore
+    submission.locked_by = None
     db.commit()
 
 

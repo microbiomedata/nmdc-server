@@ -357,7 +357,7 @@ class Study(Base, AnnotatedModel):
     @property
     def doi_map(self) -> Dict[str, Any]:
         doi_info = dict()
-        for doi in self.dois:  # type: ignore
+        for doi in self.dois:
             doi_info[doi.id] = {
                 "info": doi.info,
                 "category": doi.doi_type,
@@ -796,17 +796,17 @@ class OmicsProcessing(Base, AnnotatedModel):
     @property
     def omics_data(self) -> Iterator["PipelineStep"]:
         return chain(
-            self.reads_qc,  # type: ignore
-            self.metatranscriptome_annotation,  # type: ignore
-            self.metaproteomic_analysis,  # type: ignore
-            self.mags_analysis,  # type: ignore
-            self.read_based_analysis,  # type: ignore
-            self.nom_analysis,  # type: ignore
-            self.metabolomics_analysis,  # type: ignore
-            self.metatranscriptome,  # type: ignore
-            self.metagenome_assembly,  # type: ignore
-            self.metatranscriptome_assembly,  # type: ignore
-            self.metagenome_annotation,  # type: ignore
+            self.reads_qc,
+            self.metatranscriptome_annotation,
+            self.metaproteomic_analysis,
+            self.mags_analysis,
+            self.read_based_analysis,
+            self.nom_analysis,
+            self.metabolomics_analysis,
+            self.metatranscriptome,
+            self.metagenome_assembly,
+            self.metatranscriptome_assembly,
+            self.metagenome_annotation,
         )
 
 
@@ -850,7 +850,7 @@ class DataObject(Base):
     def downloads(self) -> int:
         # TODO: This can probably be done with a more efficient aggregation
         if self._download_count is None:
-            return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
+            return len(self.download_entities) + len(self.bulk_download_entities)
         return self._download_count
 
 
@@ -1169,7 +1169,7 @@ class SubmissionMetadata(Base):
     def editors(self) -> list[str]:
         return [
             role.user_orcid
-            for role in self.roles  # type: ignore
+            for role in self.roles
             if role.role == SubmissionEditorRole.editor
         ]
 
@@ -1177,7 +1177,7 @@ class SubmissionMetadata(Base):
     def viewers(self) -> list[str]:
         return [
             role.user_orcid
-            for role in self.roles  # type: ignore
+            for role in self.roles
             if role.role == SubmissionEditorRole.viewer
         ]
 
@@ -1185,7 +1185,7 @@ class SubmissionMetadata(Base):
     def metadata_contributors(self) -> list[str]:
         return [
             role.user_orcid
-            for role in self.roles  # type: ignore
+            for role in self.roles
             if role.role == SubmissionEditorRole.metadata_contributor
         ]
 
@@ -1193,7 +1193,7 @@ class SubmissionMetadata(Base):
     def owners(self) -> list[str]:
         return [
             role.user_orcid
-            for role in self.roles  # type: ignore
+            for role in self.roles
             if role.role == SubmissionEditorRole.owner
         ]
 
@@ -1202,7 +1202,7 @@ class SubmissionMetadata(Base):
         """Calculate the total size (in bytes) of all study images associated with this
         submission."""
         return (
-            sum(image.size for image in self.study_images)  # type: ignore
+            sum(image.size for image in self.study_images)
             if self.study_images
             else 0
         )
