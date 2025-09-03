@@ -867,7 +867,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
                     .selectinload(
                         getattr(models.OmicsProcessing, model.__tablename__)
                     )  # noqa: E501
-                    .selectinload(model.outputs)
+                    .selectinload(model.outputs)  # type: ignore
                 )
 
                 # The MAGsAnalysis specifically needs to also prefetch the mags_list
@@ -877,7 +877,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
                         .selectinload(
                             getattr(models.OmicsProcessing, model.__tablename__)
                         )  # noqa: E501
-                        .selectinload(model.mags_list)
+                        .selectinload(model.mags_list)  # type: ignore
                     )
 
         return biosample_query

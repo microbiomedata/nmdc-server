@@ -1127,7 +1127,7 @@ async def get_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission: Optional[models.SubmissionMetadata] = db.get(SubmissionMetadata, id)
+    submission: Optional[models.SubmissionMetadata] = db.get(SubmissionMetadata, id)  # type: ignore
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -1195,7 +1195,7 @@ async def update_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = db.get(SubmissionMetadata, id)
+    submission = db.get(SubmissionMetadata, id)  # type: ignore
     body_dict = body.dict(exclude_unset=True)
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
@@ -1328,7 +1328,7 @@ async def delete_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = db.get(SubmissionMetadata, id)
+    submission = db.get(SubmissionMetadata, id)  # type: ignore
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -1356,7 +1356,7 @@ async def lock_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ) -> schemas.LockOperationResult:
-    submission: Optional[SubmissionMetadata] = db.get(SubmissionMetadata, id)
+    submission: Optional[SubmissionMetadata] = db.get(SubmissionMetadata, id)  # type: ignore
     if not submission:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
 
@@ -1386,7 +1386,7 @@ async def unlock_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ) -> schemas.LockOperationResult:
-    submission = db.get(SubmissionMetadata, id)
+    submission = db.get(SubmissionMetadata, id)  # type: ignore
     if not submission:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
 
