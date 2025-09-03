@@ -1309,7 +1309,7 @@ async def delete_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    for role in submission.roles:  # type: ignore
+    for role in submission.roles:
         db.delete(role)
     db.delete(submission)
     db.commit()
@@ -1520,7 +1520,7 @@ async def set_submission_image(
 
     if image_type == ImageType.STUDY_IMAGES:
         # For study_images, add to the collection
-        submission.study_images.append(new_image)  # type: ignore
+        submission.study_images.append(new_image)
     else:
         # For single image fields (pi_image, primary_study_image), replace existing
         current_image = getattr(submission, image_type)
@@ -1560,7 +1560,7 @@ async def delete_submission_image(
         image_to_delete = next(
             (
                 image
-                for image in submission.study_images  # type: ignore
+                for image in submission.study_images
                 if image.name == image_name
             ),
             None,
@@ -1574,7 +1574,7 @@ async def delete_submission_image(
         # Delete the image from the storage bucket
         storage.delete_object(BucketName.SUBMISSION_IMAGES, image_to_delete.name)
         # Remove the image from the collection
-        submission.study_images.remove(image_to_delete)  # type: ignore
+        submission.study_images.remove(image_to_delete)
         db.delete(image_to_delete)
     else:
         # For single image fields (pi_image, primary_study_image)

@@ -41,7 +41,7 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
     if isinstance(model(), models.AnnotatedModel):
         attributes.update(get_annotation_summary(db, cast(Type[models.AnnotatedModel], model)))
 
-    for column in model.__table__.columns:  # type: ignore
+    for column in model.__table__.columns:
         if (
             column.name not in ["id", "annotations", "alternate_identifiers"]
             and "_id" not in column.name
