@@ -101,7 +101,13 @@ metadata = MetaData(
     },
 )
 
-Base = declarative_base(metadata=metadata)
+
+class UnmappedBase:
+    __allow_unmapped__ = True
+
+
+Base = declarative_base(cls=UnmappedBase, metadata=metadata)
+
 
 update_nmdc_functions_sql = DDL(
     """
