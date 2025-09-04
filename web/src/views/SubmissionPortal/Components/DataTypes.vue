@@ -266,7 +266,7 @@ export default defineComponent({
     />
     <MSProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('mp')"
-      :metaproteome="true"
+      :data-type="'mp'"
     />
     <v-checkbox
       v-model="multiOmicsForm.omicsProcessingTypes"
@@ -276,6 +276,7 @@ export default defineComponent({
     />
     <MSProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('mb')"
+      :data-type="'mb'"
     />
     <v-checkbox
       v-model="multiOmicsForm.omicsProcessingTypes"
@@ -285,6 +286,7 @@ export default defineComponent({
     />
     <MSProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('nom')"
+      :data-type="'nom'"
     />
   </div>
 </template>
