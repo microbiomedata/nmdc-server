@@ -1,6 +1,6 @@
 <script lang="ts">
 import { defineComponent, computed, ref } from '@vue/composition-api';
-import { multiOmicsForm } from '../store';
+import { multiOmicsForm, checkDoiFormat } from '../store';
 
 export default defineComponent({
   name: 'MSProtocolForm',
@@ -27,7 +27,17 @@ export default defineComponent({
 
     const sharedData = ref(false);
 
+    const doiValueRules = () => (
+      [
+        (value: string) => {
+          const valid = !value || checkDoiFormat(value);
+          return valid || 'DOI must be in the correct format.';
+        },
+      ]
+    );
+
     return {
+      doiValueRules,
       multiOmicsForm,
       protocolNames,
       sharedData,
@@ -142,6 +152,7 @@ export default defineComponent({
                 label="URL/DOI"
                 outlined
                 dense
+                :rules="doiValueRules()"
               >
                 <template #append-outer>
                   <v-tooltip
