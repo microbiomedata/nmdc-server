@@ -4,8 +4,12 @@ import {
   multiOmicsForm, templateHasData,
 } from '../store';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
+import MSProtocolForm from './MSProtocolForm.vue';
 
 export default defineComponent({
+  components: {
+    MSProtocolForm,
+  },
   props: {
     legend: {
       type: String,
@@ -260,17 +264,29 @@ export default defineComponent({
       value="mp"
       hide-details
     />
+    <MSProtocolForm
+      v-if="multiOmicsForm.omicsProcessingTypes.includes('mp')"
+      :data-type="'mp'"
+    />
     <v-checkbox
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metabolome"
       value="mb"
       hide-details
     />
+    <MSProtocolForm
+      v-if="multiOmicsForm.omicsProcessingTypes.includes('mb')"
+      :data-type="'mb'"
+    />
     <v-checkbox
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Natural Organic Matter (FT-ICR MS)"
       value="nom"
       hide-details
+    />
+    <MSProtocolForm
+      v-if="multiOmicsForm.omicsProcessingTypes.includes('nom')"
+      :data-type="'nom'"
     />
   </div>
 </template>
