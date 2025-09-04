@@ -46,6 +46,19 @@ class StudyForm(StudyFormCreate):
     NCBIBioProjectId: str
 
 
+class ExternalProtocol(BaseModel):
+    url: Optional[str] = None
+    doi: Optional[Doi] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class Protocols(BaseModel):
+    sampleProtocol: ExternalProtocol
+    acquisitionProtocol: ExternalProtocol
+    dataProtocol: ExternalProtocol
+
+
 class MultiOmicsForm(BaseModel):
     award: Optional[str] = None
     awardDois: Optional[List[Doi]] = None
@@ -63,6 +76,10 @@ class MultiOmicsForm(BaseModel):
     ship: Optional[bool] = None
     studyNumber: str
     unknownDoi: Optional[bool] = None
+    mpProtocols: Optional[Protocols] = None
+    mbProtocols: Optional[Protocols] = None
+    lipProtocols: Optional[Protocols] = None
+    nomProtocols: Optional[Protocols] = None
 
     # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
     # NCBIBioProjectId in this form until it catches up with the new data model in its next release
