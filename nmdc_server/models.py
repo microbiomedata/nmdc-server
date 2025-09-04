@@ -1231,7 +1231,7 @@ class AuthorizationCode(Base):
 
     code = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey(User.id), nullable=False)
-    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
+    created = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
     redirect_uri = Column(String, nullable=False)
     exchanged = Column(Boolean, nullable=False, default=False)
 
