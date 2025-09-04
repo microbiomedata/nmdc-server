@@ -31,6 +31,9 @@ import {
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
+  AcquisitionProtocol,
+  DataProtocol,
+  SampleProtocol,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 
@@ -147,6 +150,12 @@ const studyFormDefault = {
 const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
 
+const protocols = {
+  sampleProtocol: {} as SampleProtocol,
+  acquisitionProtocol: {} as AcquisitionProtocol,
+  dataProtocol: {} as DataProtocol,
+};
+
 /**
  * Multi-Omics Form Step
  */
@@ -167,6 +176,10 @@ const multiOmicsFormDefault = {
   ship: undefined as undefined | boolean,
   studyNumber: '',
   unknownDoi: undefined as undefined | boolean,
+  mpProtocols: protocols,
+  mbProtocols: protocols,
+  lipProtocols: protocols,
+  nomProtocols: protocols,
 };
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
