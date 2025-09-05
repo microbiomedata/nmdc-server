@@ -96,4 +96,4 @@ def load(db: Session, cursor: Cursor):
             for doi in dois:
                 doi_object = get_doi(db, doi["doi_value"])
                 if doi_object:
-                    new_study.dois.append(doi_object)  # type: ignore
+                    new_study.dois.append(doi_object)
