@@ -9,6 +9,7 @@ from typing import Optional
 
 import click
 import requests
+from sqlalchemy import text
 
 from nmdc_server import jobs
 from nmdc_server.config import settings
@@ -78,12 +79,13 @@ def truncate():
     """Remove all existing data from the ingest database."""
     with SessionLocalIngest() as db:
         try:
-            db.execute("select truncate_tables()").all()
+            db.execute(text("select truncate_tables()")).all()
             db.commit()
         except Exception:
             db.rollback()
             db.execute(
-                """
+                text(
+                    """
                 DO $$ DECLARE
                      r RECORD;
                  BEGIN
@@ -93,6 +95,7 @@ def truncate():
                      END LOOP;
                  END $$;
             """
+                )
             )
             db.commit()
 
