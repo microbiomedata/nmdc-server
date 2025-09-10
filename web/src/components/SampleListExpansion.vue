@@ -44,6 +44,9 @@ export default defineComponent({
     function isDisabled(omicsType: string, projects: any[]) {
       // TODO this is a temporary fix for the amplicon button
       // until we have a proper way to handle amplicon data.
+      if (projects[0].omics_data.length === 0) {
+        console.log('Disabling button for', omicsType, projects);
+      }
       return projects[0].omics_data.length === 0 && omicsType !== 'Amplicon';
     }
 
@@ -71,20 +74,43 @@ export default defineComponent({
     class="d-flex flex-column mb-2"
   >
     <div class="d-flex flex-row flex-wrap">
-      <v-btn
+      <v-tooltip
         v-for="[omicsType, projects] in filteredOmicsProcessing"
         :key="projects[0].id"
-        x-small
-        :outlined="!isOpen(projects[0].id)"
-        :color="isOpen(projects[0].id) ? 'primary' : 'default'"
-        :disabled="isDisabled(omicsType, projects)"
-        class="mr-2 mt-2"
-
-        @click="() => $emit('open-details', projects[0].id)"
+        max-width="350"
+        bottom
+        content-class="clickable-tooltip"
+        close-delay="1000"
       >
-        {{ fieldDisplayName(omicsType) }}
-        <v-icon>mdi-chevron-down</v-icon>
-      </v-btn>
+        <template #activator="{ on, attrs }">
+          <span
+            v-bind="attrs"
+            v-on="isDisabled(omicsType, projects) ? on : ''"
+          >
+            <v-btn
+              x-small
+              :outlined="!isOpen(projects[0].id)"
+              :color="isOpen(projects[0].id) ? 'primary' : 'default'"
+              :disabled="isDisabled(omicsType, projects)"
+              class="mr-2 mt-2"
+              @click="() => $emit('open-details', projects[0].id)"
+            >
+              {{ fieldDisplayName(omicsType) }}
+              <v-icon>mdi-chevron-down</v-icon>
+            </v-btn>
+          </span>
+        </template>
+        <span>
+          Workflows have not been processed yet. Please contact
+          <a
+            class="blue--text text--lighten-2"
+            href="mailto:support@microbiomedata.org"
+          >
+            support@microbiomedata.org
+          </a>
+          if you have questions.
+        </span>
+      </v-tooltip>
     </div>
     <template v-for="[omicsType, projects] in filteredOmicsProcessing">
       <DataObjectTable
@@ -108,3 +134,9 @@ export default defineComponent({
     </template>
   </div>
 </template>
+
+<style scoped>
+.clickable-tooltip {
+  pointer-events: all;
+}
+</style>
