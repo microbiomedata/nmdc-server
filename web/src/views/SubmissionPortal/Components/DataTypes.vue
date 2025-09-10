@@ -4,11 +4,11 @@ import {
   multiOmicsForm, templateHasData,
 } from '../store';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
-import MSProtocolForm from './MSProtocolForm.vue';
+import ExternalProtocolForm from './ExternalProtocolForm.vue';
 
 export default defineComponent({
   components: {
-    MSProtocolForm,
+    ExternalProtocolForm,
   },
   props: {
     legend: {
@@ -264,7 +264,7 @@ export default defineComponent({
       value="mp"
       hide-details
     />
-    <MSProtocolForm
+    <ExternalProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('mp')"
       :data-type="'mp'"
     />
@@ -274,7 +274,7 @@ export default defineComponent({
       value="mb"
       hide-details
     />
-    <MSProtocolForm
+    <ExternalProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('mb')"
       :data-type="'mb'"
     />
@@ -284,7 +284,7 @@ export default defineComponent({
       value="nom"
       hide-details
     />
-    <MSProtocolForm
+    <ExternalProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('nom')"
       :data-type="'nom'"
     />

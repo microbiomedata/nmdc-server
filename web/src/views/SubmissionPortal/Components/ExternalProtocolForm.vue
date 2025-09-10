@@ -3,7 +3,7 @@ import { defineComponent, computed, ref } from '@vue/composition-api';
 import { multiOmicsForm, checkDoiFormat } from '../store';
 
 export default defineComponent({
-  name: 'MSProtocolForm',
+  name: 'ExternalProtocolForm',
   props: {
     dataType: {
       type: String,
@@ -47,7 +47,6 @@ export default defineComponent({
 </script>
 
 <template>
-  <!-- <div> -->
   <v-expansion-panels
     class="mx-8"
     flat
