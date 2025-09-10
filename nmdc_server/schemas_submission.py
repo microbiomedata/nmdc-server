@@ -54,9 +54,9 @@ class ExternalProtocol(BaseModel):
 
 
 class Protocols(BaseModel):
-    sampleProtocol: ExternalProtocol
-    acquisitionProtocol: ExternalProtocol
-    dataProtocol: ExternalProtocol
+    sampleProtocol: Optional[ExternalProtocol] = None
+    acquisitionProtocol: Optional[ExternalProtocol] = None
+    dataProtocol: Optional[ExternalProtocol] = None
 
 
 class MultiOmicsForm(BaseModel):
