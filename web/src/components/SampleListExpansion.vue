@@ -44,9 +44,6 @@ export default defineComponent({
     function isDisabled(omicsType: string, projects: any[]) {
       // TODO this is a temporary fix for the amplicon button
       // until we have a proper way to handle amplicon data.
-      if (projects[0].omics_data.length === 0) {
-        console.log('Disabling button for', omicsType, projects);
-      }
       return projects[0].omics_data.length === 0 && omicsType !== 'Amplicon';
     }
 
