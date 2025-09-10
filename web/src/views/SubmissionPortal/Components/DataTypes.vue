@@ -288,5 +288,15 @@ export default defineComponent({
       v-if="multiOmicsForm.omicsProcessingTypes.includes('nom')"
       :data-type="'nom'"
     />
+    <v-checkbox
+      v-model="multiOmicsForm.omicsProcessingTypes"
+      label="Lipidome"
+      value="lipidome-emsl"
+      hide-details
+    />
+    <ExternalProtocolForm
+      v-if="multiOmicsForm.omicsProcessingTypes.includes('lipidome-emsl')"
+      :data-type="'lip'"
+    />
   </div>
 </template>
