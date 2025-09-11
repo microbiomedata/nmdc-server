@@ -71,6 +71,7 @@ export default defineComponent({
     });
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
+    const reviewerAssignmentDialog = ref(false);
     const isTestFilter = ref(null);
     const testFilterValues = [
       { text: 'Show all submissions', val: null },
@@ -133,6 +134,7 @@ export default defineComponent({
       isDeleteDialogOpen,
       isTestFilter,
       deleteDialogSubmission,
+      reviewerAssignmentDialog,
       IconBar,
       IntroBlurb,
       TitleBanner,
@@ -326,6 +328,11 @@ export default defineComponent({
                   >
                     <v-list-item-title>Delete</v-list-item-title>
                   </v-list-item>
+                  <v-list-item
+                    @click="() => reviewerAssignmentDialog = true"
+                  >
+                    <v-list-item-title>Assign Reviewer</v-list-item-title>
+                  </v-list-item>
                 </v-list>
               </v-menu>
             </div>
@@ -365,6 +372,46 @@ export default defineComponent({
             @click="handleDelete(deleteDialogSubmission)"
           >
             Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog
+      v-model="reviewerAssignmentDialog"
+      max-width="600px"
+    >
+      <v-card>
+        <v-card-title class="text-h5">
+          Assign Reviewer
+        </v-card-title>
+        <v-card-text
+          class="pb-0"
+        >
+          <v-row
+            no-gutters
+          >
+            <v-legend class="pl-3">
+              Please enter the reviewer's ORCiD below. This will give the reviewer the ability to view, approve and run scripts on this submission.
+            </v-legend>
+            <v-col cols="4">
+              <v-text-field
+                class="mt-4"
+                label="ORCiD"
+                outlined
+                dense
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions
+          class="pt-0"
+        >
+          <v-spacer />
+          <v-btn
+            class="ma-3"
+            @click="reviewerAssignmentDialog = false"
+          >
+            Close
           </v-btn>
         </v-card-actions>
       </v-card>
