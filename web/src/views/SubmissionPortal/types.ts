@@ -272,6 +272,20 @@ export interface Doi {
   provider: string;
 }
 
+export interface DataProtocol {
+  url?: string;
+  doi?: Doi;
+}
+export interface AcquisitionProtocol extends DataProtocol {
+  name?: string;
+  description?: string;
+}
+
+export interface SampleProtocol extends AcquisitionProtocol {
+  sharedData: boolean;
+  sharedDataName?: string;
+}
+
 export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
 export type PermissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor' | 'owner';
