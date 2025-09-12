@@ -48,7 +48,7 @@ class StudyForm(StudyFormCreate):
 
 class ExternalProtocol(BaseModel):
     url: Optional[str] = None
-    doi: Optional[Doi] = None
+    doi: Optional[str] = None
     name: Optional[str] = None
     description: Optional[str] = None
 
