@@ -26,8 +26,6 @@ def extract_quantity(obj: dict, table: str, attribute: str, value_field: str = "
     value = obj.get(value_field, None)
     units = obj.get("has_unit", None)
     if value is None:
-        value = obj.get("has_numeric_value", None)
-    if value is None:
         return None
     if units is None:
         return value
