@@ -369,7 +369,7 @@ class BaseQuerySchema(BaseModel):
     def query(self, db) -> Query:
         """Generate a query selecting all matching id's from the target table."""
         table_re = re.compile(r"Table.(.*):.*")
-        matches = [db.query(self.table.model.id.label("id"))]  # type: ignore
+        matches = [db.query(self.table.model.id.label("id"))]
         has_filters = False
 
         for key, _conditions in self.groups:
@@ -424,12 +424,12 @@ class BaseQuerySchema(BaseModel):
             else:
                 matches.append(filter.matches(db, self.table))
 
-        query = db.query(self.table.model.id.label("id"))  # type: ignore
+        query = db.query(self.table.model.id.label("id"))
         if has_filters:
             matches_query = intersect(*matches).alias("intersect")
             query = query.join(
                 matches_query,
-                matches_query.c.id == self.table.model.id,  # type: ignore
+                matches_query.c.id == self.table.model.id,
             )
         return query
 
@@ -437,7 +437,7 @@ class BaseQuerySchema(BaseModel):
         """Search for entities in the target table."""
         model = self.table.model
         subquery = self.query(db).subquery().alias("id_filter")
-        return db.query(model).join(subquery, model.id == subquery.c.id)  # type: ignore
+        return db.query(model).join(subquery, model.id == subquery.c.id)
 
     def count(self, db: Session) -> int:
         """Return the number of matched entities for the query."""
@@ -459,7 +459,7 @@ class BaseQuerySchema(BaseModel):
         if None in [minimum, maximum]:
             row = (
                 db.query(func.min(column), func.max(column))
-                .join(subquery, self.table.model.id == subquery.c.id)  # type: ignore
+                .join(subquery, self.table.model.id == subquery.c.id)
                 .first()
             )
             if row is None:
@@ -613,7 +613,7 @@ class StudyQuerySchema(BaseQuerySchema):
         """Generate a query counting matching omics_processing types."""
         workflow_model = query_schema.table.model
         aliased_workflow_model = aliased(workflow_model)
-        table_name = workflow_model.__tablename__  # type: ignore
+        table_name = workflow_model.__tablename__
         was_informed_by_table = models.workflow_activity_to_data_generation_map[table_name]
 
         op_alias = aliased(models.OmicsProcessing)
@@ -678,7 +678,7 @@ class StudyQuerySchema(BaseQuerySchema):
         aggs = []
         for omics_class in workflow_search_classes:
             pipeline_model = omics_class().table.model
-            table_name = pipeline_model.__tablename__  # type: ignore
+            table_name = pipeline_model.__tablename__
             filter_conditions = [
                 c
                 for c in self.conditions
@@ -691,7 +691,7 @@ class StudyQuerySchema(BaseQuerySchema):
             study_id = getattr(omics_subquery.c, f"{table_name}_study_id")
             query = query.join(
                 omics_subquery,
-                self.table.model.id == study_id,  # type: ignore
+                self.table.model.id == study_id,
                 isouter=True,
             )
             aggs.append(
@@ -740,7 +740,7 @@ class StudyQuerySchema(BaseQuerySchema):
                 models.Biosample.study_id
             ).distinct()
             study_query = study_query.where(  # type: ignore
-                self.table.model.id.in_(studies_from_sample_query)  # type: ignore
+                self.table.model.id.in_(studies_from_sample_query)
             )
         elif omics_condition_exists:
             omics_query = OmicsProcessingQuerySchema(conditions=self.conditions).query(db)
@@ -748,7 +748,7 @@ class StudyQuerySchema(BaseQuerySchema):
                 models.OmicsProcessing.study_id
             ).distinct()
             study_query = study_query.where(  # type: ignore
-                self.table.model.id.in_(studies_from_omics_query)  # type: ignore
+                self.table.model.id.in_(studies_from_omics_query)
             )
         return study_query
 
@@ -767,8 +767,8 @@ class StudyQuerySchema(BaseQuerySchema):
         return self._inject_omics_data_summary(
             db,
             db.query(model)
-            .join(subquery, model.id == subquery.c.id)  # type: ignore
-            .join(sample_count, model.id == sample_count.c.study_id, isouter=True)  # type: ignore
+            .join(subquery, model.id == subquery.c.id)
+            .join(sample_count, model.id == sample_count.c.study_id, isouter=True)
             .order_by(models.Study.annotations["title"].astext)
             .options(with_expression(models.Study.sample_count, sample_count.c.sample_count)),
         )
@@ -836,7 +836,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
                 .distinct()
             )
             sample_query = sample_query.where(  # type: ignore
-                self.table.model.id.in_(samples_from_omics_query)  # type: ignore
+                self.table.model.id.in_(samples_from_omics_query)
             )
         return sample_query
 
@@ -845,8 +845,8 @@ class BiosampleQuerySchema(BaseQuerySchema):
         subquery = self.query(db).subquery()
         biosample_query = (
             db.query(model)
-            .join(subquery, model.id == subquery.c.id)  # type: ignore
-            .order_by(self.table.model.multiomics.desc(), self.table.model.id)  # type: ignore
+            .join(subquery, model.id == subquery.c.id)
+            .order_by(self.table.model.multiomics.desc(), self.table.model.id)
         )
 
         if prefetch_omics_processing_data:
@@ -864,16 +864,20 @@ class BiosampleQuerySchema(BaseQuerySchema):
             for model in workflow_activity_types:
                 biosample_query = biosample_query.options(
                     selectinload(models.Biosample.omics_processing)
-                    .selectinload(getattr(models.OmicsProcessing, model.__tablename__))  # type: ignore[attr-defined] # noqa: E501
-                    .selectinload(model.outputs)  # type: ignore[attr-defined]
+                    .selectinload(
+                        getattr(models.OmicsProcessing, model.__tablename__)
+                    )  # noqa: E501
+                    .selectinload(model.outputs)  # type: ignore
                 )
 
                 # The MAGsAnalysis specifically needs to also prefetch the mags_list
                 if model == models.MAGsAnalysis:
                     biosample_query = biosample_query.options(
                         selectinload(models.Biosample.omics_processing)
-                        .selectinload(getattr(models.OmicsProcessing, model.__tablename__))  # type: ignore[attr-defined] # noqa: E501
-                        .selectinload(model.mags_list)  # type: ignore[attr-defined]
+                        .selectinload(
+                            getattr(models.OmicsProcessing, model.__tablename__)
+                        )  # noqa: E501
+                        .selectinload(model.mags_list)  # type: ignore
                     )
 
         return biosample_query

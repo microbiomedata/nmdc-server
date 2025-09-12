@@ -12,6 +12,7 @@ from nmdc_server import database, schemas
 from nmdc_server.app import create_app
 from nmdc_server.auth import create_token_response
 from nmdc_server.config import settings
+from nmdc_server.database import engine
 from nmdc_server.fakes import UserFactory
 from nmdc_server.fakes import db as _db
 from nmdc_server.storage import BucketName, storage
@@ -55,12 +56,12 @@ def patch_zip_stream_service(monkeypatch):
 def connection():
     assert settings.environment == "testing"
     try:
-        database.metadata.drop_all()
-        database.metadata.create_all()
+        database.metadata.drop_all(bind=engine)
+        database.metadata.create_all(bind=engine)
         yield _db
     finally:
         _db.rollback()
-        database.metadata.drop_all()
+        database.metadata.drop_all(bind=engine)
         _db.remove()
 
 

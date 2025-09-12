@@ -1,5 +1,6 @@
 from typing import Optional
 
+from sqlalchemy import text
 from sqlalchemy.orm.session import Session
 
 from nmdc_server import crud, models
@@ -26,7 +27,7 @@ search_fields = [
 
 
 def load(db: Session):
-    db.execute(f"TRUNCATE TABLE {models.SearchIndex.__tablename__}")
+    db.execute(text(f"TRUNCATE TABLE {models.SearchIndex.__tablename__}"))
 
     for table, field in search_fields:
         values: Optional[FacetResponse] = None

@@ -2,6 +2,7 @@ from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import text
 from sqlalchemy.orm import lazyload
 
 from nmdc_server import database, models
@@ -56,7 +57,7 @@ def do_ingest(function_limit, skip_annotation):
 
     with database.SessionLocalIngest() as ingest_db:
         try:
-            ingest_db.execute("select truncate_tables()").all()
+            ingest_db.execute(text("select truncate_tables()")).all()
         except Exception:
             # eat the exception, we'll truncate after migration
             ingest_db.rollback()
@@ -65,7 +66,7 @@ def do_ingest(function_limit, skip_annotation):
 
     with database.SessionLocalIngest() as ingest_db, database.SessionLocal() as prod_db:
         with ingest_lock(prod_db):
-            ingest_db.execute("select truncate_tables()").all()
+            ingest_db.execute(text("select truncate_tables()")).all()
 
             # Copy persistent data that does not depend on ingest FK
             merge_download_artifact(ingest_db, prod_db.query(models.User))
