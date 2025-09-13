@@ -1,10 +1,11 @@
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
@@ -603,7 +604,7 @@ def update_submission_lock(db: Session, submission_id: str):
     if not submission_record:
         # Throw a different error, or accept different params
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    submission_record.lock_updated = datetime.utcnow()
+    submission_record.lock_updated = datetime.now(UTC)
     db.commit()
 
 
@@ -635,26 +636,31 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
     if not current_lock_holder or current_lock_holder.id == user_id:
         # Either the given user already has the lock, or no one does
         submission_record.locked_by = user_record
-        submission_record.lock_updated = datetime.utcnow()
+        submission_record.lock_updated = datetime.now(UTC)
         db.commit()
         return True
     else:
         # Someone else is holding the lock
         if submission_record.lock_updated:
             # Compare current time to last edit
-            seconds_since_last_lock_update = (
-                datetime.utcnow() - submission_record.lock_updated
-            ).total_seconds()
+            # Note that currently this application always uses datetime.now(UTC)
+            # to update this field. Currently the corresponding column in postgres
+            # is not actually timezone aware, so the value we get back out must have
+            # the timezone information added back.
+            # TODO: create a migration to make the Postgres column timezone-aware, and
+            # remove this call to `replace`
+            lock_updated_utc = submission_record.lock_updated.replace(tzinfo=UTC)
+            seconds_since_last_lock_update = (datetime.now(UTC) - lock_updated_utc).total_seconds()
             # A user can hold the lock for 30 minutes without making edits
             if seconds_since_last_lock_update > (60 * 30):
                 submission_record.locked_by = user_record
-                submission_record.lock_updated = datetime.utcnow()
+                submission_record.lock_updated = datetime.now(UTC)
                 db.commit()
                 return True
         else:
             # Someone else holds the lock, but there's no timestamp
             # Ensure that there's a timestamp on the lock.
-            submission_record.lock_updated = datetime.utcnow()
+            submission_record.lock_updated = datetime.now(UTC)
     return False
 
 
@@ -690,6 +696,42 @@ context_edit_roles = [
 contributors_edit_roles = [
     models.SubmissionEditorRole.owner,
 ]
+
+
+def get_submission_for_user(
+    db: Session,
+    submission_id: str,
+    requester: models.User,
+    *,
+    allowed_roles: list[models.SubmissionEditorRole] | None = None,
+) -> models.SubmissionMetadata:
+    """Get a submission by ID and additionally check if the requesting user has one of the allowed
+    roles on the submission.
+
+    :raise HTTPException: If the submission does not exist or if the user does not have one of the
+        allowed roles on the submission.
+
+    :param db: The database session.
+    :param submission_id: The ID of the submission to retrieve.
+    :param requester: The user requesting the submission.
+    :param allowed_roles: A list of allowed roles that the user must have on the submission. If
+        None, no role check is performed.
+    """
+    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
+        submission_id
+    )
+    if submission is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
+    if allowed_roles and not requester.is_admin:
+        # If the user is not an admin, check if they have one of the allowed roles
+        # on the submission.
+        role = get_submission_role(db, submission_id, requester.orcid)
+        if not role or models.SubmissionEditorRole(role.role) not in allowed_roles:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Insufficient permission to complete this action",
+            )
+    return submission
 
 
 def get_submission_role(
@@ -802,7 +844,7 @@ def get_query_for_submitted_pending_review_submissions(db: Session):
     Reference: https://docs.sqlalchemy.org/en/14/orm/session_basics.html
     """
     submitted_pending_review = db.query(models.SubmissionMetadata).filter(
-        models.SubmissionMetadata.status == "Submitted- Pending Review"
+        models.SubmissionMetadata.status == SubmissionStatusEnum.SubmittedPendingReview.text
     )
     return submitted_pending_review
 

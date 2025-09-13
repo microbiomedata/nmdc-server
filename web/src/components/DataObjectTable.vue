@@ -1,12 +1,19 @@
 <script lang="ts">
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
-  computed, defineComponent, PropType, reactive,
+  computed, defineComponent, PropType, reactive, ref, Ref, watch,
 } from '@vue/composition-api';
 import { flattenDeep } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
 import { humanFileSize } from '@/data/utils';
-import { client, BiosampleSearchResult, OmicsProcessingResult } from '@/data/api';
+import {
+  client,
+  BiosampleSearchResult,
+  OmicsProcessingResult,
+  api,
+} from '@/data/api';
 import { stateRefs, acceptTerms } from '@/store';
 import { metaproteomicCategoryEnumToDisplay } from '@/encoding';
 
@@ -85,24 +92,74 @@ export default defineComponent({
       },
     ];
 
+    const selectedHtmlDataObject: Ref<any | null> = ref(null);
+    const dataModal = ref(false);
+    const iframeDataSource = ref('');
+    const iframeLoading = ref(false);
+    function hasHtmlData(fileType: string) {
+      return [
+        'Kraken2 Krona Plot',
+        'GOTTCHA2 Krona Plot',
+        'Centrifuge Krona Plot',
+      ].includes(fileType);
+    }
+    async function openHtmlDataModal(item: any) {
+      iframeLoading.value = true;
+      dataModal.value = true;
+      iframeDataSource.value = await api.getDataObjectHtmlContentUrl(item.id);
+      selectedHtmlDataObject.value = item;
+    }
+    watch(dataModal, () => {
+      if (!dataModal.value) {
+        selectedHtmlDataObject.value = null;
+        iframeDataSource.value = '';
+      }
+    });
+    function onIframeLoaded() {
+      iframeLoading.value = false;
+    }
+
     const termsDialog = reactive({
       item: null as null | OmicsProcessingResult,
       value: false,
     });
 
+    function nomMetadataString(item: {
+      massSpecPolarityMode: string,
+      eluentIntroductionCategory: string,
+      sampledPortions: string,
+    }): string {
+      return [item.eluentIntroductionCategory, item.sampledPortions, item.massSpecPolarityMode].filter((value) => !!value).join(', ');
+    }
+
     function getOmicsDataWithInputIds(omicsProcessing: OmicsProcessingResult) {
       const biosampleInputIds = (omicsProcessing.biosample_inputs as BiosampleSearchResult[]).map((input) => input.id);
       const annotations = omicsProcessing.annotations as Record<string, string | string[]>;
       return omicsProcessing.omics_data.map((omics) => {
+        const { EluentIntroductionCategoryEnum, PolarityModeEnum, SamplePortionEnum } = NmdcSchema.enums;
         const omicsCopy = { ...omics };
         omicsCopy.inputIds = biosampleInputIds;
         if (annotations.mass_spectrometry_configuration_id) {
           omicsCopy.massSpecConfigId = annotations.mass_spectrometry_configuration_id || '';
           omicsCopy.massSpecConfigName = annotations.mass_spectrometry_configuration_name || '';
+          const polarityMode = annotations.mass_spectrometry_config_polarity_mode
+            ? `${PolarityModeEnum.permissible_values[annotations.mass_spectrometry_config_polarity_mode].text} mode`
+            : '';
+          omicsCopy.massSpecPolarityMode = polarityMode;
         }
         if (annotations.chromatography_configuration_id) {
           omicsCopy.chromConfigId = annotations.chromatography_configuration_id || '';
           omicsCopy.chromConfigName = annotations.chromatography_configuration_name || '';
+        }
+        if (annotations.eluent_introduction_category) {
+          omicsCopy.eluentIntroductionCategory = EluentIntroductionCategoryEnum.permissible_values[annotations.eluent_introduction_category].title;
+        }
+        if (annotations.sampled_portions?.length) {
+          const displaySampledPortions = (annotations.sampled_portions as string[]).map((sampledPortion: string) => (
+            SamplePortionEnum.permissible_values[sampledPortion].title
+            || SamplePortionEnum.permissible_values[sampledPortion].text
+          ));
+          omicsCopy.sampledPortions = displaySampledPortions.join(', ');
         }
         return omicsCopy;
       });
@@ -161,6 +218,13 @@ export default defineComponent({
     }
 
     return {
+      dataModal,
+      iframeLoading,
+      hasHtmlData,
+      openHtmlDataModal,
+      selectedHtmlDataObject,
+      iframeDataSource,
+      onIframeLoaded,
       onAcceptTerms,
       handleDownload,
       descriptionMap,
@@ -170,6 +234,7 @@ export default defineComponent({
       termsDialog,
       getRelatedBiosampleIds,
       metaproteomicCategoryEnumToDisplay,
+      nomMetadataString,
     };
   },
 });
@@ -185,6 +250,52 @@ export default defineComponent({
       <DownloadDialog
         @clicked="onAcceptTerms"
       />
+    </v-dialog>
+    <v-dialog
+      v-if="selectedHtmlDataObject !== null"
+      v-model="dataModal"
+      scroll-strategy="block"
+      width="80vw"
+      scrollable
+    >
+      <v-card
+        class="d-flex flex-column"
+        width="100%"
+        height="80vh"
+      >
+        <v-card-text class="d-flex flex-grow-1">
+          <span
+            v-if="iframeLoading"
+            class="d-flex align-center justify-center flex-grow-1"
+          >
+            <v-progress-circular
+              class="mr-2"
+              color="primary"
+              size="24"
+              indeterminate
+            />
+            Loading...
+          </span>
+          <iframe
+            :title="selectedHtmlDataObject.description || 'Data object HTML content'"
+            :src="iframeDataSource"
+            :style="{border: 'none' }"
+            :width="iframeLoading ? '0%' : '100%'"
+            class="pa-4"
+            loading="lazy"
+            @load="onIframeLoaded"
+          />
+        </v-card-text>
+        <v-card-actions class="flex-row">
+          <v-spacer />
+          <v-btn
+            text
+            @click="dataModal = false"
+          >
+            Close
+          </v-btn>
+        </v-card-actions>
+      </v-card>
     </v-dialog>
     <v-data-table
       :headers="headers"
@@ -219,6 +330,11 @@ export default defineComponent({
               <br>
               <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category] }}</b>
             </span>
+            <span v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data)">
+              <br>
+              <b>Data Generation: </b> NOM via
+              {{ nomMetadataString(item.omics_data) }}
+            </span>
             <br>
             <div v-if="getRelatedBiosampleIds(item.omics_data).length">
               <v-icon>
@@ -251,7 +367,17 @@ export default defineComponent({
               <span>This file is included in the currently selected bulk download</span>
             </v-tooltip>
           </td>
-          <td>{{ item.file_type }}</td>
+          <td>
+            {{ item.file_type }}
+            <v-btn
+              v-if="hasHtmlData(item.file_type)"
+              color="primary"
+              icon
+              @click="openHtmlDataModal(item)"
+            >
+              <v-icon>mdi-magnify</v-icon>
+            </v-btn>
+          </td>
           <td>{{ item.file_type_description }}</td>
           <td>{{ humanFileSize(item.file_size_bytes) }}</td>
           <td>{{ item.downloads }}</td>

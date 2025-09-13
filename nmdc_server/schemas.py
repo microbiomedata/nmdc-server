@@ -428,7 +428,7 @@ class PipelineStepBase(BaseModel):
     git_url: str
     started_at_time: DateType
     ended_at_time: Optional[DateType] = None
-    execution_resource: str
+    execution_resource: Optional[str] = None
 
 
 class PipelineStep(PipelineStepBase):
@@ -692,3 +692,34 @@ class VersionInfo(BaseModel):
     nmdc_schema: str = version("nmdc-schema")
     nmdc_submission_schema: str = version("nmdc-submission-schema")
     model_config = ConfigDict(frozen=False)
+
+
+class SignedUploadUrlRequest(BaseModel):
+    """Request to generate a signed upload URL for a file.
+
+    This model is used to generate a signed URL for uploading files to the object store.
+    """
+
+    file_name: str
+    file_size: int = Field(description="Size of the file in bytes")
+    content_type: str
+
+
+class SignedUrl(BaseModel):
+    """Response containing the signed URL and other metadata."""
+
+    url: str
+    object_name: str
+    expiration: datetime
+
+
+class UploadCompleteRequest(BaseModel):
+    """Request to mark an upload as complete.
+
+    This model is used to mark an upload as complete after the file has been uploaded
+    to the object store.
+    """
+
+    object_name: str
+    file_size: int = Field(description="Size of the file in bytes")
+    content_type: str

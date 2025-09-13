@@ -1,3 +1,4 @@
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy.orm.session import Session
 
@@ -130,3 +131,42 @@ def test_generate_bulk_download_filtered(
     # Verify that the bulk download cannot be accessed a second time
     resp = client.get(f"/api/bulk_download/{id_}")
     assert resp.status_code == 410
+
+
+@pytest.mark.parametrize(
+    ("data_object_type", "expected_status_code"), [("Kraken2 Krona Plot", 200), ("foo", 400)]
+)
+def test_get_url_for_html_content_unauthenticated(
+    db: Session,
+    client: TestClient,
+    data_object_type: str,
+    expected_status_code: int,
+):
+    data_object = fakes.DataObjectFactory(
+        url="https://data.microbiomedata.org/data/dob",
+        workflow_type=WorkflowActivityTypeEnum.metagenome_assembly.value,
+        file_type=data_object_type,
+    )
+    db.commit()
+    resp = client.get(f"/api/data_object/{data_object.id}/get_html_content_url")
+    assert resp.status_code == expected_status_code
+
+
+@pytest.mark.parametrize(
+    ("data_object_type", "expected_status_code"), [("Kraken2 Krona Plot", 200), ("foo", 400)]
+)
+def test_get_url_for_html_content_authenticated(
+    db: Session,
+    client: TestClient,
+    logged_in_user,
+    data_object_type: str,
+    expected_status_code: int,
+):
+    data_object = fakes.DataObjectFactory(
+        url="https://data.microbiomedata.org/data/dob",
+        workflow_type=WorkflowActivityTypeEnum.metagenome_assembly.value,
+        file_type=data_object_type,
+    )
+    db.commit()
+    resp = client.get(f"/api/data_object/{data_object.id}/get_html_content_url")
+    assert resp.status_code == expected_status_code

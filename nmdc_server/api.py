@@ -2,36 +2,40 @@ import csv
 import json
 import logging
 import time
+from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import httpx
 import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
+from nmdc_server import crud, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
-from nmdc_server.config import Settings
+from nmdc_server.config import settings
+from nmdc_server.crud import context_edit_roles, get_submission_for_user
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester
 from nmdc_server.models import (
-    IngestLock,
     SubmissionEditorRole,
+    SubmissionImagesObject,
     SubmissionMetadata,
     SubmissionRole,
     User,
 )
 from nmdc_server.pagination import Pagination
+from nmdc_server.storage import BucketName, sanitize_filename, storage
 from nmdc_server.table import Table
 
 router = APIRouter()
@@ -42,7 +46,6 @@ logger = get_logger(__name__)
 # get application settings
 @router.get("/settings", name="Get application settings")
 async def get_settings() -> Dict[str, Any]:
-    settings = Settings()
     return {
         "disable_bulk_download": settings.disable_bulk_download.upper() == "YES",
         "portal_banner_message": settings.portal_banner_message,
@@ -214,7 +217,7 @@ def inject_download_counts(db: Session, results, data_object_ids: set[str]):
 # biosample
 @router.post(
     "/biosample/search",
-    response_model=query.BiosampleSearchResponse,
+    response_model=query.Paginated[schemas.Biosample],
     tags=["biosample"],
     name="Search for biosamples",
     description="Faceted search of biosample data.",
@@ -509,7 +512,7 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
 # Future work should go in to a more thorough conversion of omics process to data generation.
 @router.post(
     "/data_generation/search",
-    response_model=query.OmicsProcessingSearchResponse,
+    response_model=query.Paginated[schemas.OmicsProcessing],
     tags=["data_generation"],
     name="Search for data generations",
     description="Faceted search of data_generation data.",
@@ -612,6 +615,25 @@ async def download_data_object(
     }
 
 
+@router.get("/data_object/{data_object_id}/get_html_content_url")
+async def get_data_object_html_content(data_object_id: str, db: Session = Depends(get_db)):
+    data_object = crud.get_data_object(db, data_object_id)
+    if data_object is None:
+        raise HTTPException(status_code=404, detail="DataObject not found")
+    url = data_object.url
+    if url is None:
+        raise HTTPException(status_code=404, detail="DataObject has no url reference")
+    if data_object.file_type in [
+        "Kraken2 Krona Plot",
+        "GOTTCHA2 Krona Plot",
+        "Centrifuge Krona Plot",
+    ]:
+        return {
+            "url": url,
+        }
+    raise HTTPException(status_code=400, detail="DataObject has no relevant HTML content")
+
+
 @router.post(
     "/data_object/workflow_summary",
     response_model=schemas.DataObjectAggregation,
@@ -632,38 +654,6 @@ async def get_pi_image(principal_investigator_id: UUID, db: Session = Depends(ge
         raise HTTPException(status_code=404, detail="Principal investigator  not found")
 
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
-
-
-@router.post(
-    "/jobs/ping",
-    tags=["jobs"],
-    responses=login_required_responses,
-)
-async def ping_celery(user: models.User = Depends(admin_required)) -> bool:
-    try:
-        return jobs.ping.delay().wait(timeout=0.5)
-    except TimeoutError:
-        return False
-
-
-@router.post(
-    "/jobs/ingest",
-    tags=["jobs"],
-    responses=login_required_responses,
-)
-async def run_ingest(
-    user: models.User = Depends(admin_required),
-    params: schemas.IngestArgumentSchema = schemas.IngestArgumentSchema(),
-    db: Session = Depends(get_db),
-):
-    lock = db.query(IngestLock).first()
-    if lock:
-        raise HTTPException(
-            status_code=409,
-            detail=f"An ingest started at {lock.started} is already in progress",
-        )
-    jobs.ingest.delay(function_limit=params.function_limit, skip_annotation=params.skip_annotation)
-    return ""
 
 
 @router.post(
@@ -713,7 +703,6 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
     Sends the specified `zip_file_descriptor` to ZipStreamer and receives
     a ZIP archive in response, which this function yields in chunks.
     """
-    settings = Settings()
     last_chunk_time = time.time()
 
     # TODO: Consider lowering the "severity" of these `logger.warning` statements to `logger.debug`.
@@ -767,7 +756,7 @@ async def get_metadata_submissions_mixs(
 ):
     r"""
     Generate a TSV-formatted report of biosamples belonging to submissions
-    that have a status of "Submitted- Pending Review".
+    that have a status of "Submitted - Pending Review".
 
     The report indicates which environmental package/extension, broad scale,
     local scale, and medium are specified for each biosample. The report is
@@ -1052,13 +1041,7 @@ async def get_metadata_submissions_report(
     return response
 
 
-@router.get(
-    "/metadata_submission",
-    tags=["metadata_submission"],
-    responses=login_required_responses,
-    response_model=query.MetadataSubmissionResponse,
-)
-async def list_submissions(
+async def get_paginated_submission_list(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
     pagination: Pagination = Depends(),
@@ -1066,10 +1049,38 @@ async def list_submissions(
     sort_order: str = "desc",
     is_test_submission_filter: Optional[bool] = None,
 ):
+    """
+    Dependency function for getting a list of submissions with pagination, sorting, and filtering
+    applied.
+    """
     query = crud.get_submissions_for_user(
         db, user, column_sort, sort_order, is_test_submission_filter
     )
     return pagination.response(query)
+
+
+# The following two endpoints perform the same underlying query, but only differ in the
+# response model they return.
+@router.get(
+    "/metadata_submission",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=query.Paginated[schemas_submission.SubmissionMetadataSchema],
+)
+async def list_submissions(submissions=Depends(get_paginated_submission_list)):
+    """Return a paginated list of submissions in full detail."""
+    return submissions
+
+
+@router.get(
+    "/metadata_submission/slim",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=query.Paginated[schemas_submission.SubmissionMetadataSchemaSlim],
+)
+async def list_submissions_slim(submissions=Depends(get_paginated_submission_list)):
+    """Return a paginated list of submissions in slim format."""
+    return submissions
 
 
 @router.get(
@@ -1097,22 +1108,11 @@ async def get_submission(
             permission_level = models.SubmissionEditorRole.metadata_contributor.value
         elif user.orcid in submission.viewers:
             permission_level = models.SubmissionEditorRole.viewer.value
-        submission_metadata_schema = schemas_submission.SubmissionMetadataSchema(
-            status=submission.status,
-            id=submission.id,
-            metadata_submission=submission.metadata_submission,
-            author_orcid=submission.author_orcid,
-            created=submission.created,
-            author=schemas.User(**submission.author.__dict__),
-            permission_level=permission_level,
-            templates=submission.templates,
-            study_name=submission.study_name,
-            field_notes_metadata=submission.field_notes_metadata,
-            is_test_submission=submission.is_test_submission,
-            date_last_modified=submission.date_last_modified,
+        submission_metadata_schema = schemas_submission.SubmissionMetadataSchema.model_validate(
+            submission
         )
-        if submission.locked_by is not None:
-            submission_metadata_schema.locked_by = schemas.User(**submission.locked_by.__dict__)
+        submission_metadata_schema.permission_level = permission_level
+
         return submission_metadata_schema
 
     raise HTTPException(status_code=403, detail="Must have access.")
@@ -1182,8 +1182,8 @@ async def update_submission(
 
     # Create GitHub issue when metadata is being submitted and not a test submission
     if (
-        submission.status == "in-progress"
-        and body_dict.get("status", None) == "Submitted- Pending Review"
+        submission.status == SubmissionStatusEnum.InProgress.text
+        and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
         and submission.is_test_submission is False
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
@@ -1210,7 +1210,7 @@ async def update_submission(
 
         if body_dict.get("status", None):
             if (
-                body_dict.get("status", None) == "Submitted- Pending Review"
+                body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
                 and submission.is_test_submission is False
             ):
                 submission.status = body_dict["status"]
@@ -1220,7 +1220,6 @@ async def update_submission(
 
 
 def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
-    settings = Settings()
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     assignee = settings.github_issue_assignee
@@ -1237,10 +1236,7 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
     data_generated = "Yes" if multiomics_form.dataGenerated else "No"
     omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
     sample_types = ", ".join(submission.metadata_submission.templates)
-    sample_data = submission.metadata_submission.sampleData
-    num_samples = 0
-    for key in sample_data:
-        num_samples = max(num_samples, len(sample_data[key]))
+    num_samples = submission.sample_count
 
     # some variable data to supply depending on if data has been generated or not
     id_dict = {
@@ -1263,7 +1259,7 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         f"Has data been generated: {data_generated}",
         f"PI name: {pi_name}",
         f"PI orcid: {pi_orcid}",
-        "Status: Submitted- Pending Review",
+        f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
         f"Data types: {omics_processing_types}",
         f"Sample type: {sample_types}",
         f"Number of samples: {num_samples}",
@@ -1464,15 +1460,156 @@ async def suggest_metadata(
     return response
 
 
+@router.post("/metadata_submission/{id}/image/signed_upload_url", response_model=schemas.SignedUrl)
+async def generate_signed_upload_url(
+    id: str,
+    body: schemas.SignedUploadUrlRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    # Don't accept files larger than the configured limit (default is 25 MB)
+    if body.file_size > settings.max_submission_image_file_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="File size exceeds limit"
+        )
+
+    # Ensure the requested submission exists and the user has permission to edit it
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
+
+    # Ensure that the incoming image will not push the submission over its quota
+    potential_max_size = submission.study_images_total_size + body.file_size
+    if potential_max_size > settings.max_submission_image_total_size_bytes:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Submission quota exceeded",
+        )
+
+    sanitized_filename = sanitize_filename(body.file_name)
+    return storage.get_signed_upload_url(
+        BucketName.SUBMISSION_IMAGES,
+        f"{settings.gcs_object_name_prefix}/{id}/{uuid4().hex}-{sanitized_filename}",
+        content_type=body.content_type,
+    )
+
+
+class ImageType(StrEnum):
+    PI_IMAGE = "pi_image"
+    PRIMARY_STUDY_IMAGE = "primary_study_image"
+    STUDY_IMAGES = "study_images"
+
+
+@router.post(
+    "/metadata_submission/{id}/image/{image_type}",
+    response_model=schemas_submission.SubmissionMetadataSchema,
+)
+async def set_submission_image(
+    id: str,
+    image_type: ImageType,
+    body: schemas.UploadCompleteRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> models.SubmissionMetadata:
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
+
+    # Create a new SubmissionImagesObject
+    new_image = SubmissionImagesObject(
+        name=body.object_name,
+        size=body.file_size,
+        content_type=body.content_type,
+    )
+
+    if image_type == ImageType.STUDY_IMAGES:
+        # For study_images, add to the collection
+        submission.study_images.append(new_image)  # type: ignore
+    else:
+        # For single image fields (pi_image, primary_study_image), replace existing
+        current_image = getattr(submission, image_type)
+        if current_image:
+            # If the submission already has this type of image, delete it from the storage bucket
+            storage.delete_object(BucketName.SUBMISSION_IMAGES, current_image.name)
+
+        # Set the image attribute
+        setattr(submission, image_type, new_image)
+
+    db.commit()
+    return submission
+
+
+@router.delete(
+    "/metadata_submission/{id}/image/{image_type}",
+)
+async def delete_submission_image(
+    id: str,
+    image_type: ImageType,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+    image_name: Optional[str] = Query(
+        None, description="Image name for study_images, not needed for single image fields"
+    ),
+):
+    submission = get_submission_for_user(db, id, user, allowed_roles=context_edit_roles)
+
+    if image_type == ImageType.STUDY_IMAGES:
+        if image_name is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="image_name query parameter is required when deleting from study_images",
+            )
+
+        # Find the specific image in the study_images collection
+        image_to_delete = next(
+            (
+                image
+                for image in submission.study_images  # type: ignore
+                if image.name == image_name
+            ),
+            None,
+        )
+
+        if image_to_delete is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Image not found in study_images"
+            )
+
+        # Delete the image from the storage bucket
+        storage.delete_object(BucketName.SUBMISSION_IMAGES, image_to_delete.name)
+        # Remove the image from the collection
+        submission.study_images.remove(image_to_delete)  # type: ignore
+        db.delete(image_to_delete)
+    else:
+        # For single image fields (pi_image, primary_study_image)
+        current_image = getattr(submission, image_type)
+        if current_image:
+            # Delete the image from the storage bucket
+            storage.delete_object(BucketName.SUBMISSION_IMAGES, current_image.name)
+            # Remove the image from the submission
+            setattr(submission, image_type, None)
+
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.get(
-    "/users", responses=login_required_responses, response_model=query.UserResponse, tags=["user"]
+    "/users",
+    responses=login_required_responses,
+    response_model=query.Paginated[schemas.User],
+    tags=["user"],
 )
 async def get_users(
     db: Session = Depends(get_db),
     user: models.User = Depends(admin_required),
     pagination: Pagination = Depends(),
+    search_filter: Optional[str] = None,
 ):
     users = db.query(User)
+    if search_filter:
+        users = users.filter(
+            (
+                models.User.name.ilike(f"%{search_filter}%")
+                | models.User.orcid.ilike(f"%{search_filter}%")
+            )
+        )
+
     return pagination.response(users)
 
 

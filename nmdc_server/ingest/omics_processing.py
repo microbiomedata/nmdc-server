@@ -66,13 +66,24 @@ def find_parent_process(output_id: str, mongodb: Database) -> Optional[dict[str,
     return None
 
 
-def get_biosample_input_ids(input_id: str, mongodb: Database, results: set) -> set[Any]:
+def get_biosample_input_ids(
+    input_id: str,
+    mongodb: Database,
+    results: set[str],
+    sampled_portions: set[str],
+    direct_input: bool,
+) -> set[Any]:
     """
     Given an input ID return all biosample objects that are included in the input resource.
 
     OmicsProcessing objects can take Biosamples or ProcessedSamples as inputs. Work needs to be done
     to determine which biosamples make up a given ProcessedSample. This function recursively tries
     to determine those Biosamples.
+
+    As a side effect, a set of `sampled_portion` values gets populated. Whether or not a processed
+    samples' `sampled_portion`s get added to the set is driven by the `direct_input` parameter. Only
+    processed samples which are inputs directly to a data generation will have their
+    `sampled_portion`s added.
     """
     # Base case, the input is already a biosample
     biosample_collection: Collection = mongodb["biosample_set"]
@@ -87,25 +98,32 @@ def get_biosample_input_ids(input_id: str, mongodb: Database, results: set) -> s
     if not query:
         return results
 
-    processed_sample_id = query[0]["id"]
+    processed_sample = query[0]
+    processed_sample_id = processed_sample["id"]
+    sampled_portion = set(processed_sample.get("sampled_portion", []))
+    # only store sampled portion values for immediate input to a data generation
+    if direct_input and sampled_portion:
+        sampled_portions.update(sampled_portion)
 
     # Recursive case. For processed samples find the process that created it,
     # and check the inputs of that process.
     parent_process = find_parent_process(processed_sample_id, mongodb)
     if parent_process:
         for parent_input_id in parent_process["has_input"]:
-            get_biosample_input_ids(parent_input_id, mongodb, results)
+            get_biosample_input_ids(parent_input_id, mongodb, results, sampled_portions, False)
     return results
 
 
-def get_configuration_name(mongodb: Database, configuration_id: str, config_map) -> Optional[str]:
+def get_configuration_property(
+    mongodb: Database, configuration_id: str, key: str, config_map
+) -> Optional[str]:
     config_set = "configuration_set"
     if configuration_id in config_map:
         config_record = config_map[configuration_id]
     else:
         config_record = mongodb[config_set].find_one({"id": configuration_id})
         config_map[configuration_id] = config_record
-    return config_record["name"] if config_record else None
+    return config_record[key] if config_record else None
 
 
 def get_poolable_replicate_manifest(
@@ -130,12 +148,23 @@ def get_poolable_replicate_manifest(
     return omics_processing_id
 
 
-def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, logger, config_map):
+def load_omics_processing(  # noqa: C901
+    db: Session,
+    obj: Dict[str, Any],
+    mongodb: Database,
+    logger,
+    config_map,
+):
     logger = get_logger(__name__)
     input_ids: list[str] = obj.pop("has_input", [""])
     biosample_input_ids: set[str] = set()
+    sampled_portions: set[str] = set()
     for input_id in input_ids:
-        biosample_input_ids.union(get_biosample_input_ids(input_id, mongodb, biosample_input_ids))
+        biosample_input_ids.union(
+            get_biosample_input_ids(input_id, mongodb, biosample_input_ids, sampled_portions, True)
+        )
+    if sampled_portions:
+        obj["sampled_portions"] = list(sampled_portions)
 
     obj["biosample_inputs"] = []
     biosample_input_objects = []
@@ -149,8 +178,18 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
 
     data_objects = obj.pop("has_output", [])
     obj["study_id"] = obj.pop("associated_studies", [None])[0]
-    obj["analyte_category"] = omics_types[obj["analyte_category"].lower()]
-    obj["omics_type"] = omics_types[obj["analyte_category"].lower()]
+    original_analyte_category = obj["analyte_category"].lower()
+    obj["analyte_category"] = omics_types[original_analyte_category]
+    obj["omics_type"] = omics_types[original_analyte_category]
+
+    # Get amplicon specific fields
+    if obj["omics_type"] == "Amplicon":
+        obj["target_gene"] = obj.pop("target_gene", None)
+        target_subfragment = obj.pop("target_subfragment", None)
+        if isinstance(target_subfragment, dict) and "has_raw_value" in target_subfragment:
+            obj["target_subfragment"] = target_subfragment["has_raw_value"]
+        else:
+            obj["target_subfragment"] = target_subfragment
 
     # Get instrument name
     instrument_id = obj.pop("instrument_used", [])
@@ -161,14 +200,20 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
 
     # Get configuration info
     mass_spec_config_id = obj.pop("has_mass_spectrometry_configuration", None)
-    mass_spec_config_name = get_configuration_name(mongodb, mass_spec_config_id, config_map)
+    mass_spec_config_name = get_configuration_property(
+        mongodb, mass_spec_config_id, "name", config_map
+    )
+    mass_spec_polarity_mode = get_configuration_property(
+        mongodb, mass_spec_config_id, "polarity_mode", config_map
+    )
     if mass_spec_config_name:
         obj["mass_spectrometry_configuration_name"] = mass_spec_config_name
         obj["mass_spectrometry_configuration_id"] = mass_spec_config_id
+        obj["mass_spectrometry_config_polarity_mode"] = mass_spec_polarity_mode
 
     chromatography_config_id = obj.pop("has_chromatography_configuration", None)
-    chromatography_config_name = get_configuration_name(
-        mongodb, chromatography_config_id, config_map
+    chromatography_config_name = get_configuration_property(
+        mongodb, chromatography_config_id, "name", config_map
     )
     if chromatography_config_name:
         obj["chromatography_configuration_name"] = chromatography_config_name

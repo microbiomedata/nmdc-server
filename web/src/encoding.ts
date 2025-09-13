@@ -619,6 +619,16 @@ const tableFields: Record<entityType, Record<string, FieldsData>> = {
       name: 'Chromatography Method',
       schemaName: 'ChromatographyConfiguration',
     },
+    instrument_name: {
+      name: 'Instrument Name',
+      group: 'Data Generation',
+      schemaName: 'Instrument',
+    },
+    omics_type: {
+      name: 'Data Type',
+      group: 'Data Generation',
+      schemaName: 'analyte_category',
+    },
   },
   reads_qc: {},
   metagenome_annotation: {},
@@ -664,12 +674,13 @@ function getField(name: string, table?: entityType): FieldsData {
 }
 
 const MultiomicsValue = {
-  MB: 0b100000,
-  MG: 0b010000,
-  MP: 0b001000,
-  MT: 0b000100,
-  NOM: 0b000010,
-  LIP: 0b000001,
+  MB: 0b1000000,
+  MG: 0b0100000,
+  MP: 0b0010000,
+  MT: 0b0001000,
+  LIP: 0b0000100,
+  NOM: 0b0000010,
+  AMP: 0b0000001,
 };
 
 const metaproteomicCategoryEnumToDisplay = {

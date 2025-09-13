@@ -1,3 +1,5 @@
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import Vue from 'vue';
 import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
@@ -15,7 +17,8 @@ import {
   NmdcAddress,
   PermissionLevelValues,
   PermissionTitle,
-  SubmissionStatus,
+  SubmissionStatusKey,
+  SubmissionStatusTitle,
   SuggestionType,
   SuggestionsMode,
   MetadataSuggestionRequest,
@@ -28,6 +31,9 @@ import {
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
+  AcquisitionProtocol,
+  DataProtocol,
+  SampleProtocol,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 
@@ -47,15 +53,14 @@ const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
   viewer: 1,
 };
 
-const submissionStatus: Record<string, SubmissionStatus> = {
-  InProgress: 'In Progress',
-  SubmittedPendingReview: 'Submitted- Pending Review',
-  Complete: 'Complete',
-};
+//use schema enum to define submission status
+const submissionStatus: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
+  Object.entries(NmdcSchema.enums.SubmissionStatusEnum.permissible_values).map(([key, item]: [SubmissionStatusKey, SubmissionStatusTitle]) => [key, item.title]),
+);
 
-const isSubmissionStatus = (str: any): str is SubmissionStatus => Object.values(submissionStatus).includes(str);
+const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(submissionStatus).includes(str);
 
-const status = ref(submissionStatus.InProgress);
+const status = ref('InProgress');
 const isTestSubmission = ref(false);
 
 /**
@@ -145,6 +150,12 @@ const studyFormDefault = {
 const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
 
+const protocols = {
+  sampleProtocol: {} as SampleProtocol,
+  acquisitionProtocol: {} as AcquisitionProtocol,
+  dataProtocol: {} as DataProtocol,
+};
+
 /**
  * Multi-Omics Form Step
  */
@@ -165,6 +176,10 @@ const multiOmicsFormDefault = {
   ship: undefined as undefined | boolean,
   studyNumber: '',
   unknownDoi: undefined as undefined | boolean,
+  mpProtocols: protocols,
+  mbProtocols: protocols,
+  lipProtocols: protocols,
+  nomProtocols: protocols,
 };
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
@@ -369,7 +384,7 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string, status: SubmissionStatus = submissionStatus.InProgress) {
+function submit(id: string, status: SubmissionStatusKey = 'InProgress') {
   if (canEditSubmissionMetadata()) {
     return api.updateRecord(id, payloadObject.value, status);
   }
@@ -388,7 +403,7 @@ function reset() {
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
   sampleData.value = {};
-  status.value = submissionStatus.InProgress;
+  status.value = 'InProgress';
   isTestSubmission.value = false;
 }
 
@@ -436,7 +451,7 @@ async function loadRecord(id: string) {
   Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
-  status.value = isSubmissionStatus(val.status) ? val.status : submissionStatus.InProgress;
+  status.value = isSubmissionStatus(val.status) ? val.status : 'InProgress';
   _permissionLevel = (val.permission_level as PermissionLevelValues);
   isTestSubmission.value = val.is_test_submission;
 

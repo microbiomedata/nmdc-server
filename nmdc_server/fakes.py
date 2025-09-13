@@ -1,11 +1,12 @@
 from collections import OrderedDict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Dict, List, Optional
 from uuid import UUID, uuid4
 
 from factory import Faker, SubFactory, lazy_attribute, post_generation
 from factory.alchemy import SQLAlchemyModelFactory
 from faker.providers import BaseProvider, date_time, geo, internet, lorem, misc, person, python
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm.scoping import scoped_session
 
 from nmdc_server import models
@@ -339,10 +340,11 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     id: UUID = Faker("uuid")
     author = SubFactory(UserFactory)
     author_orcid = Faker("pystr")
-    status = "In Progress"
+    status = SubmissionStatusEnum.InProgress.text
     study_name = Faker("word")
     templates = Faker("pylist", nb_elements=2, value_types=[str])
-    created = datetime.utcnow()
+    created = datetime.now(tz=UTC)
+    date_last_modified = created
     # TODO specify all fields!
     metadata_submission = {
         "sampleData": {},
@@ -400,6 +402,10 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     }
     locked_by = None
     lock_updated = None
+    is_test_submission: bool = False
+    pi_image: models.SubmissionImagesObject | None = None
+    primary_study_image: models.SubmissionImagesObject | None = None
+    study_images: list[models.SubmissionImagesObject] = []
 
 
 class SubmissionRoleFactory(SQLAlchemyModelFactory):

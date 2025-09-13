@@ -1,3 +1,6 @@
+// @ts-ignore
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+
 import { User } from '@/types';
 
 /**
@@ -231,20 +234,25 @@ export interface MetadataSubmission {
   sampleData: Record<string, any[]>;
 }
 
-export interface MetadataSubmissionRecord {
+export interface MetadataSubmissionRecordSlim {
   id: string;
-  author_orcid: string;
-  created: string;
-  metadata_submission: MetadataSubmission;
+  author: User;
+  study_name: string;
+  templates: string[];
   status: string;
+  date_last_modified: string;
+  created: string;
+  is_test_submission: boolean;
+  sample_count: number;
+}
+
+export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
+  author_orcid: string;
+  metadata_submission: MetadataSubmission;
   locked_by: User;
   lock_updated: string;
   permission_level: string | null;
   source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
-  study_name: string;
-  templates: string[];
-  is_test_submission: boolean;
-  date_last_modified: string;
 }
 
 export interface PaginatedResponse<T> {
@@ -264,8 +272,24 @@ export interface Doi {
   provider: string;
 }
 
+export interface DataProtocol {
+  url?: string;
+  doi?: Doi;
+}
+export interface AcquisitionProtocol extends DataProtocol {
+  name?: string;
+  description?: string;
+}
+
+export interface SampleProtocol extends AcquisitionProtocol {
+  sharedData: boolean;
+  sharedDataName?: string;
+}
+
 export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
 export type PermissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor' | 'owner';
 
-export type SubmissionStatus = 'In Progress' | 'Submitted- Pending Review' | 'Complete';
+export type SubmissionStatusKey = Extract<keyof typeof NmdcSchema.enums.submissionStatus.permissible_values, string>;
+
+export type SubmissionStatusTitle = typeof NmdcSchema.enums.submissionStatus.permissible_values[SubmissionStatusKey]['title'];

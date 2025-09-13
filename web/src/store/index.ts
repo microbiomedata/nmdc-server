@@ -69,8 +69,8 @@ function setUniqueCondition(
     !field.includes(c.field)) || (!table.includes(c.table)
   ));
   setConditions([
-    ...conditions,
     ...others,
+    ...conditions,
   ]);
 }
 
@@ -184,8 +184,8 @@ function toggleConditions(conditions: Condition[]) {
   if (newConditions.length > 0 || duplicates.length > 0) {
     const withoutDuplicates = utilsRemoveCond(state.conditions, duplicates);
     setConditions([
-      ...newConditions,
       ...withoutDuplicates,
+      ...newConditions,
     ]);
   }
 }

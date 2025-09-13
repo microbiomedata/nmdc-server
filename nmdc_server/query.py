@@ -7,17 +7,17 @@ import re
 from datetime import datetime
 from enum import Enum
 from itertools import groupby
-from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
+from typing import Any, Dict, Generic, Iterator, List, Optional, Tuple, TypeVar, Union
 
 from pydantic import BaseModel, ConfigDict, Field, PositiveInt
-from sqlalchemy import ARRAY, Column, and_, cast, desc, func, inspect, or_
+from sqlalchemy import ARRAY, Column, and_, cast, func, inspect, or_
 from sqlalchemy.orm import Query, Session, aliased, selectinload, with_expression
 from sqlalchemy.orm.util import AliasedClass
 from sqlalchemy.sql.expression import ClauseElement, intersect, union
 from sqlalchemy.sql.selectable import CTE
 from typing_extensions import Annotated, Literal
 
-from nmdc_server import binning, models, schemas, schemas_submission
+from nmdc_server import binning, models, schemas
 from nmdc_server.binning import DateBinResolution
 from nmdc_server.data_object_filters import DataObjectFilter
 from nmdc_server.filters import create_filter_class
@@ -846,7 +846,7 @@ class BiosampleQuerySchema(BaseQuerySchema):
         biosample_query = (
             db.query(model)
             .join(subquery, model.id == subquery.c.id)  # type: ignore
-            .order_by(desc(self.table.model.multiomics))  # type: ignore
+            .order_by(self.table.model.multiomics.desc(), self.table.model.id)  # type: ignore
         )
 
         if prefetch_omics_processing_data:
@@ -1023,8 +1023,12 @@ class BaseSearchResponse(BaseModel):
     count: int
 
 
-class BiosampleSearchResponse(BaseSearchResponse):
-    results: List[schemas.Biosample]
+T = TypeVar("T")
+
+
+class Paginated(BaseModel, Generic[T]):
+    count: int
+    results: List[T]
 
 
 class SearchQuery(BaseModel):
@@ -1058,17 +1062,8 @@ class BinnedDateFacetQuery(FacetQuery):
 BinnedFacetQuery = Union[BinnedRangeFacetQuery, BinnedDateFacetQuery]
 
 
-class StudySearchResponse(BaseSearchResponse):
-    results: List[schemas.Study]
+class StudySearchResponse(Paginated[schemas.Study]):
     total: Optional[int] = None
-
-
-class OmicsProcessingSearchResponse(BaseSearchResponse):
-    results: List[schemas.OmicsProcessing]
-
-
-class DataObjectSearchResponse(BaseSearchResponse):
-    results: List[schemas.DataObject]
 
 
 class FacetResponse(BaseModel):
@@ -1078,10 +1073,6 @@ class FacetResponse(BaseModel):
 class BinnedFacetResponse(BaseModel):
     facets: List[int]
     bins: List[NumericValue]
-
-
-class MetadataSubmissionResponse(BaseSearchResponse):
-    results: List[schemas_submission.SubmissionMetadataSchema]
 
 
 class UserResponse(BaseSearchResponse):

@@ -3,10 +3,11 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, ValidationInfo, field_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, computed_field, field_validator
 
 from nmdc_server import schemas
 from nmdc_server.models import SubmissionEditorRole
+from nmdc_server.storage import BucketName, storage
 
 
 class Contributor(BaseModel):
@@ -45,6 +46,19 @@ class StudyForm(StudyFormCreate):
     NCBIBioProjectId: str
 
 
+class ExternalProtocol(BaseModel):
+    url: Optional[str] = None
+    doi: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class Protocols(BaseModel):
+    sampleProtocol: Optional[ExternalProtocol] = None
+    acquisitionProtocol: Optional[ExternalProtocol] = None
+    dataProtocol: Optional[ExternalProtocol] = None
+
+
 class MultiOmicsForm(BaseModel):
     award: Optional[str] = None
     awardDois: Optional[List[Doi]] = None
@@ -62,6 +76,10 @@ class MultiOmicsForm(BaseModel):
     ship: Optional[bool] = None
     studyNumber: str
     unknownDoi: Optional[bool] = None
+    mpProtocols: Optional[Protocols] = None
+    mbProtocols: Optional[Protocols] = None
+    lipProtocols: Optional[Protocols] = None
+    nomProtocols: Optional[Protocols] = None
 
     # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
     # NCBIBioProjectId in this form until it catches up with the new data model in its next release
@@ -125,6 +143,8 @@ class SubmissionMetadataSchemaCreate(BaseModel):
 
 
 class SubmissionMetadataSchemaPatch(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     metadata_submission: PartialMetadataSubmissionRecord
     status: Optional[str] = None
     # Map of ORCID iD to permission level
@@ -132,23 +152,44 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     field_notes_metadata: Optional[Dict[str, Any]] = None
 
 
-class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
+class SubmissionMetadataSchemaSlim(BaseModel):
     id: UUID
-    author_orcid: str
-    created: datetime
-    status: str
     author: schemas.User
-    templates: List[str]
     study_name: Optional[str] = None
-    field_notes_metadata: Optional[Dict[str, Any]] = None
+    templates: List[str]
+    status: str
     date_last_modified: datetime
+    created: datetime
+    is_test_submission: bool = False
+    sample_count: int = 0
+
+
+class SubmissionImagesObject(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    name: str
+    size: int = Field(description="Size of the file in bytes")
+    content_type: str
+
+
+class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataSchemaCreate):
+    model_config = ConfigDict(from_attributes=True)
+
+    author_orcid: str
+    field_notes_metadata: Optional[Dict[str, Any]] = None
     metadata_submission: MetadataSubmissionRecord
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None
 
     permission_level: Optional[str] = None
-    model_config = ConfigDict(from_attributes=True)
+
+    # These fields are excluded from the model's JSON representation because they need to be
+    # translated into signed URLs before being returned to the client. This is done via the
+    # @computed_field-decorated properties below.
+    pi_image_name: Optional[str] = Field(exclude=True, default=None)
+    primary_study_image_name: Optional[str] = Field(exclude=True, default=None)
+    study_images: list[SubmissionImagesObject] = Field(exclude=True, default_factory=list)
 
     @field_validator("metadata_submission", mode="before")
     def populate_roles(cls, metadata_submission, info: ValidationInfo):
@@ -169,6 +210,39 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaCreate):
                 elif orcid in viewers:
                     contributor["role"] = SubmissionEditorRole.viewer.value
         return metadata_submission
+
+    # Mypy doesn't understand the combined use of `@computed_field` and `@property`
+    # https://docs.pydantic.dev/latest/api/fields/#pydantic.fields.computed_field
+    @computed_field  # type: ignore
+    @property
+    def pi_image_url(self) -> Optional[str]:
+        """Returns the signed URL for the PI's image if available."""
+        if self.pi_image_name:
+            return storage.get_signed_download_url(
+                BucketName.SUBMISSION_IMAGES, self.pi_image_name
+            ).url
+        return None
+
+    @computed_field  # type: ignore
+    @property
+    def primary_study_image_url(self) -> Optional[str]:
+        """Returns the signed URL for the primary study image if available."""
+        if self.primary_study_image_name:
+            return storage.get_signed_download_url(
+                BucketName.SUBMISSION_IMAGES, self.primary_study_image_name
+            ).url
+        return None
+
+    @computed_field  # type: ignore
+    @property
+    def study_image_urls(self) -> List[str]:
+        """Returns a list of signed URLs for all study images."""
+        if not self.study_images:
+            return []
+        return [
+            storage.get_signed_download_url(BucketName.SUBMISSION_IMAGES, img.name).url
+            for img in self.study_images
+        ]
 
 
 SubmissionMetadataSchema.model_rebuild()

@@ -92,18 +92,9 @@ const TYPE_FIELD = ANALYSIS_TYPE;
 const COMMON_COLUMNS = [SAMP_NAME, SOURCE_MAT_ID, ANALYSIS_TYPE];
 
 const ALWAYS_READ_ONLY_COLUMNS = [
-  'dna_seq_project',
-  'rna_seq_project',
-  'dna_samp_id',
-  'rna_samp_id',
-  'rna_seq_project_pi',
-  'dna_seq_project_pi',
-  'dna_project_contact',
-  'rna_project_contact',
-  'proposal_rna',
-  'proposal_dna',
-  'rna_seq_project_name',
-  'dna_seq_project_name',
+  'jgi_seq_project',
+  'jgi_samp_id',
+  'jgi_seq_project_name',
 ];
 
 export default defineComponent({
@@ -137,9 +128,10 @@ export default defineComponent({
 
     const submitDialog = ref(false);
 
-    const snackbar = ref(false);
+    const validationSuccessSnackbar = ref(false);
     const importErrorSnackbar = ref(false);
     const notImportedWorksheetNames = ref([] as string[]);
+    const emptySheetSnackbar = ref(false);
 
     watch(activeTemplate, () => {
       // WARNING: It's important to do the column settings update /before/ data. Otherwise,
@@ -395,7 +387,25 @@ export default defineComponent({
     }
 
     async function validate() {
-      const data = harmonizerApi.exportJson();
+      const data = harmonizerApi.exportJson(); // Gets data from harmonizer API
+
+      // Check if the spreadsheet is empty
+      const isEmpty = Object.keys(data).length === 0;
+      // Update invalid cells if empty
+      if (isEmpty) {
+        invalidCells.value = {
+          ...invalidCells.value,
+          [activeTemplateKey.value]: data,
+        };
+        tabsValidated.value = {
+          ...tabsValidated.value,
+          [activeTemplateKey.value]: false,
+        };
+        emptySheetSnackbar.value = true;
+
+        return;
+      }
+
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       const result = await harmonizerApi.validate();
       const valid = Object.keys(result).length === 0;
@@ -416,7 +426,7 @@ export default defineComponent({
         [activeTemplateKey.value]: valid,
       };
 
-      snackbar.value = Object.values(tabsValidated.value).every((value) => value);
+      validationSuccessSnackbar.value = Object.values(tabsValidated.value).every((value) => value);
     }
 
     const canSubmit = computed(() => {
@@ -462,7 +472,7 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id, submissionStatus.SubmittedPendingReview);
+      await submit(root.$route.params.id, 'SubmittedPendingReview');
       submitDialog.value = false;
     });
 
@@ -642,10 +652,11 @@ export default defineComponent({
       submissionStatus,
       status,
       submitDialog,
-      snackbar,
+      validationSuccessSnackbar,
       schemaLoading,
       importErrorSnackbar,
       notImportedWorksheetNames,
+      emptySheetSnackbar,
       isTestSubmission,
       /* methods */
       doSubmit,
@@ -686,7 +697,7 @@ export default defineComponent({
           </v-icon>
         </v-btn>
         <v-snackbar
-          v-model="snackbar"
+          v-model="validationSuccessSnackbar"
           color="success"
           timeout="3000"
         >
@@ -698,6 +709,13 @@ export default defineComponent({
           timeout="5000"
         >
           The following worksheet names were not recognized: {{ notImportedWorksheetNames.join(', ') }}
+        </v-snackbar>
+        <v-snackbar
+          v-model="emptySheetSnackbar"
+          color="error"
+          timeout="5000"
+        >
+          The spreadsheet is empty. Please add data.
         </v-snackbar>
         <v-card
           v-if="validationErrorGroups.length"
@@ -1027,11 +1045,11 @@ export default defineComponent({
             <v-btn
               color="success"
               depressed
-              :disabled="!canSubmit || status !== submissionStatus.InProgress || submitCount > 0"
+              :disabled="!canSubmit || status !== 'InProgress' || submitCount > 0"
               :loading="submitLoading"
               @click="submitDialog = true"
             >
-              <span v-if="status === submissionStatus.SubmittedPendingReview || submitCount">
+              <span v-if="status === 'SubmittedPendingReview' || submitCount">
                 <v-icon>mdi-check-circle</v-icon>
                 Submitted
               </span>

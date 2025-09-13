@@ -20,7 +20,7 @@ jobs:
 
     strategy:
       matrix:
-        image: [server, client, worker]
+        image: [server, client]
 
     steps:
       - name: Checkout code
@@ -54,7 +54,7 @@ jobs:
         with:
           context: ${{ matrix.image == 'client' && 'web' || '.' }}
           push: ${{ env.IS_ORIGINAL_REPO }}
-          file: ${{ matrix.image == 'worker' && 'Dockerfile.worker' || (matrix.image == 'client' && 'web/Dockerfile' || 'Dockerfile') }}
+          file: ${{ matrix.image == 'client' && 'web/Dockerfile' || 'Dockerfile' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
@@ -68,7 +68,7 @@ jobs:
 
     strategy:
       matrix:
-        deployment: [ backend, frontend, worker ]
+        deployment: [ backend, frontend ]
 
     steps:
       - name: Redeploy nmdc-dev:portal-${{ matrix.deployment }}
