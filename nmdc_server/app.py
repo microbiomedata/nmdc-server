@@ -46,11 +46,9 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
     description = (
         load_template("description.template.md")
         .replace("{{ developer_tools_url }}", "/user")
-        .replace("{{ runtime_api_url }}", "https://api.microbiomedata.org")
-        .replace("{{ nmdc_data_portal_url }}", "https://data.microbiomedata.org")
-        .replace(
-            "{{ nmdc_submission_portal_url }}", "https://data.microbiomedata.org/submission/home"
-        )
+        .replace("{{ runtime_api_url }}", settings.runtime_api_url)
+        .replace("{{ nmdc_data_portal_url }}", "/")
+        .replace("{{ nmdc_submission_portal_url }}", "/submission/home")
     )
 
     app = FastAPI(
