@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Set
 from urllib import request
 
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -120,7 +121,7 @@ def build_envo_trees(db: Session) -> None:
 
     This should only be called after biosamples have been ingested.
     """
-    db.execute(f"truncate table {EnvoTree.__tablename__}")
+    db.execute(text(f"truncate table {EnvoTree.__tablename__}"))
 
     roots = get_biosample_roots(db)
     root_set = set(itertools.chain(*roots.values()))
@@ -257,7 +258,7 @@ def nested_envo_trees() -> Dict[str, List[EnvoTreeNode]]:
 
 
 def load(db: Session):
-    db.execute(f"truncate table {EnvoAncestor.__tablename__}")
+    db.execute(text(f"truncate table {EnvoAncestor.__tablename__}"))
 
     with request.urlopen(envo_url) as r:
         envo_data = json.load(r)

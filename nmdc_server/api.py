@@ -1094,7 +1094,7 @@ async def get_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission: Optional[models.SubmissionMetadata] = db.query(SubmissionMetadata).get(id)
+    submission: Optional[models.SubmissionMetadata] = db.get(SubmissionMetadata, id)  # type: ignore
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -1162,7 +1162,7 @@ async def update_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = db.query(SubmissionMetadata).get(id)
+    submission = db.get(SubmissionMetadata, id)  # type: ignore
     body_dict = body.dict(exclude_unset=True)
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
@@ -1295,7 +1295,7 @@ async def delete_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = db.query(SubmissionMetadata).get(id)
+    submission = db.get(SubmissionMetadata, id)  # type: ignore
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -1309,7 +1309,7 @@ async def delete_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    for role in submission.roles:  # type: ignore
+    for role in submission.roles:
         db.delete(role)
     db.delete(submission)
     db.commit()
@@ -1323,7 +1323,7 @@ async def lock_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ) -> schemas.LockOperationResult:
-    submission: Optional[SubmissionMetadata] = db.query(SubmissionMetadata).get(id)
+    submission: Optional[SubmissionMetadata] = db.get(SubmissionMetadata, id)  # type: ignore
     if not submission:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
 
@@ -1353,7 +1353,7 @@ async def unlock_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ) -> schemas.LockOperationResult:
-    submission = db.query(SubmissionMetadata).get(id)
+    submission = db.get(SubmissionMetadata, id)  # type: ignore
     if not submission:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
 
@@ -1520,7 +1520,7 @@ async def set_submission_image(
 
     if image_type == ImageType.STUDY_IMAGES:
         # For study_images, add to the collection
-        submission.study_images.append(new_image)  # type: ignore
+        submission.study_images.append(new_image)
     else:
         # For single image fields (pi_image, primary_study_image), replace existing
         current_image = getattr(submission, image_type)
@@ -1558,11 +1558,7 @@ async def delete_submission_image(
 
         # Find the specific image in the study_images collection
         image_to_delete = next(
-            (
-                image
-                for image in submission.study_images  # type: ignore
-                if image.name == image_name
-            ),
+            (image for image in submission.study_images if image.name == image_name),
             None,
         )
 
@@ -1574,7 +1570,7 @@ async def delete_submission_image(
         # Delete the image from the storage bucket
         storage.delete_object(BucketName.SUBMISSION_IMAGES, image_to_delete.name)
         # Remove the image from the collection
-        submission.study_images.remove(image_to_delete)  # type: ignore
+        submission.study_images.remove(image_to_delete)
         db.delete(image_to_delete)
     else:
         # For single image fields (pi_image, primary_study_image)

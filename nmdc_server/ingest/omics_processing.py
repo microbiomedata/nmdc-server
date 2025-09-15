@@ -222,7 +222,7 @@ def load_omics_processing(  # noqa: C901
     omics_processing = models.OmicsProcessing(**OmicsProcessing(**obj).dict())
     for biosample_object in biosample_input_objects:
         # mypy thinks that omics_processing.biosample_inputs is of type Biosample
-        omics_processing.biosample_inputs.append(biosample_object)  # type: ignore
+        omics_processing.biosample_inputs.append(biosample_object)
 
     manifest_id: str = omics_processing.id
     for data_object_id in data_objects:
@@ -238,7 +238,7 @@ def load_omics_processing(  # noqa: C901
         # output of an omics_processing)
         data_object.workflow_type = WorkflowActivityTypeEnum.raw_data.value
         db.add(data_object)
-        omics_processing.outputs.append(data_object)  # type: ignore
+        omics_processing.outputs.append(data_object)
 
         manifest_id = get_poolable_replicate_manifest(omics_processing.id, data_object_id, mongodb)
 
