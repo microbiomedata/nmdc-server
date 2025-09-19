@@ -225,6 +225,7 @@ export default defineComponent({
             </v-col>
             <v-col
               cols="5"
+              class="ml-4"
             >
               <v-text-field
                 v-model="currentProtocol.sampleProtocol.url"
@@ -379,6 +380,7 @@ export default defineComponent({
           </v-col>
           <v-col
             cols="5"
+            class="ml-4"
           >
             <v-text-field
               v-model="currentProtocol.acquisitionProtocol.url"
@@ -532,6 +534,7 @@ export default defineComponent({
             </v-col>
             <v-col
               cols="5"
+              class="ml-4"
             >
               <v-text-field
                 v-model="currentProtocol.dataProtocol.url"
