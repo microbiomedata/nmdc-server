@@ -166,6 +166,19 @@ export default defineComponent({
         dense
         class="my-2"
       />
+
+      <v-text-field
+      v-model="studyForm.submitterEmail"
+      :rules="requiredRules('E-mail is required',[
+        v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+      ])"
+      :hint="Definitions.submitterEmail"
+      persistent-hint
+      outlined
+      dense
+      class="my-2"
+      />
+
       <div class="d-flex">
         <v-text-field
           v-model="studyForm.piName"
