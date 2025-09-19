@@ -44,8 +44,24 @@ export default defineComponent({
     const doiValueRules = () => (
       [
         (value: string) => {
-          const valid = !value || checkDoiFormat(value);
-          return valid || 'DOI must be in the correct format.';
+          if (!value) return true;
+
+          const isValidDoi = checkDoiFormat(value);
+
+          return isValidDoi || 'Must be a valid DOI';
+        },
+      ]
+    );
+
+    const urlValueRules = () => (
+      [
+        (value: string) => {
+          if (!value) return true;
+
+          const urlRegex = /^https?:\/\//i;
+          const isValidUrl = urlRegex.test(value);
+
+          return isValidUrl || 'Must be a valid URL';
         },
       ]
     );
@@ -55,6 +71,7 @@ export default defineComponent({
       multiOmicsForm,
       protocolNames,
       doiValueRules,
+      urlValueRules,
       updateMultiOmicsForm,
     };
   },
@@ -165,7 +182,7 @@ export default defineComponent({
             >
               <v-text-field
                 v-model="currentProtocol.doi"
-                label="URL/DOI"
+                label="DOI"
                 outlined
                 dense
                 :rules="doiValueRules()"
@@ -187,7 +204,40 @@ export default defineComponent({
                       </v-icon>
                     </template>
                     <span>
-                      Provide a URL or DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple URLs or DOIs can be provided.              </span>
+                      Provide a DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple DOIs can be provided.              </span>
+                  </v-tooltip>
+                </template>
+              </v-text-field>
+            </v-col>
+            <v-col
+              cols="5"
+            >
+              <v-text-field
+                v-model="currentProtocol.url"
+                label="URL"
+                outlined
+                dense
+                :rules="urlValueRules()"
+                @blur="updateMultiOmicsForm('sampleProtocol')"
+              >
+                <template #append-outer>
+                  <v-tooltip
+                    right
+                    class="x-2"
+                    max-width="500"
+                  >
+                    <template #activator="{ on, attrs }">
+                      <v-icon
+                        v-bind="attrs"
+                        dense
+                        v-on="on"
+                      >
+                        mdi-help-circle
+                      </v-icon>
+                    </template>
+                    <span>
+                      Provide a URL for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple URLs can be provided.
+                    </span>
                   </v-tooltip>
                 </template>
               </v-text-field>
@@ -285,7 +335,7 @@ export default defineComponent({
           >
             <v-text-field
               v-model="currentProtocol.doi"
-              label="URL/DOI"
+              label="DOI"
               outlined
               dense
               :rules="doiValueRules()"
@@ -307,7 +357,41 @@ export default defineComponent({
                     </v-icon>
                   </template>
                   <span>
-                    Provide a URL or DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple URLs or DOIs can be provided.              </span>
+                    Provide a DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple DOIs can be provided.
+                  </span>
+                </v-tooltip>
+              </template>
+            </v-text-field>
+          </v-col>
+          <v-col
+            cols="5"
+          >
+            <v-text-field
+              v-model="currentProtocol.url"
+              label="URL"
+              outlined
+              dense
+              :rules="urlValueRules()"
+              @blur="updateMultiOmicsForm('acquisitionProtocol')"
+            >
+              <template #append-outer>
+                <v-tooltip
+                  right
+                  class="x-2"
+                  max-width="500"
+                >
+                  <template #activator="{ on, attrs }">
+                    <v-icon
+                      v-bind="attrs"
+                      dense
+                      v-on="on"
+                    >
+                      mdi-help-circle
+                    </v-icon>
+                  </template>
+                  <span>
+                    Provide a URL for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple URLs can be provided.
+                  </span>
                 </v-tooltip>
               </template>
             </v-text-field>
@@ -405,9 +489,10 @@ export default defineComponent({
             >
               <v-text-field
                 v-model="currentProtocol.doi"
-                label="URL/DOI"
+                label="DOI"
                 outlined
                 dense
+                :rules="doiValueRules()"
                 @blur="updateMultiOmicsForm('dataProtocol')"
               >
                 <template #append-outer>
@@ -426,7 +511,40 @@ export default defineComponent({
                       </v-icon>
                     </template>
                     <span>
-                      Provide a URL or DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple URLs or DOIs can be provided.              </span>
+                      Provide a DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple DOIs can be provided.              </span>
+                  </v-tooltip>
+                </template>
+              </v-text-field>
+            </v-col>
+            <v-col
+              cols="5"
+            >
+              <v-text-field
+                v-model="currentProtocol.url"
+                label="URL"
+                outlined
+                dense
+                :rules="urlValueRules()"
+                @blur="updateMultiOmicsForm('dataProtocol')"
+              >
+                <template #append-outer>
+                  <v-tooltip
+                    right
+                    class="x-2"
+                    max-width="500"
+                  >
+                    <template #activator="{ on, attrs }">
+                      <v-icon
+                        v-bind="attrs"
+                        dense
+                        v-on="on"
+                      >
+                        mdi-help-circle
+                      </v-icon>
+                    </template>
+                    <span>
+                      Provide a URL for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple URLs can be provided.
+                    </span>
                   </v-tooltip>
                 </template>
               </v-text-field>
