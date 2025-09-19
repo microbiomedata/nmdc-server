@@ -120,6 +120,10 @@ export default defineComponent({
       multiOmicsForm.mtCompatible = undefined;
       multiOmicsForm.mtInterleaved = undefined;
       multiOmicsForm.facilities = [];
+      multiOmicsForm.lipProtocols = undefined;
+      multiOmicsForm.mbProtocols = undefined;
+      multiOmicsForm.nomProtocols = undefined;
+      multiOmicsForm.mpProtocols = undefined;
       revalidate();
     }
 
@@ -133,39 +137,6 @@ export default defineComponent({
         revalidate();
       },
     );
-
-    const emptyProtocols = {
-      sampleProtocol: {
-        doi: undefined,
-        name: '',
-        url: '',
-        description: '',
-        sharedData: false,
-        sharedDataName: undefined,
-      },
-      dataProtocol: {
-        doi: undefined,
-        url: '',
-      },
-      acquisitionProtocol: {
-        doi: undefined,
-        name: '',
-        url: '',
-        description: '',
-      },
-    };
-    // Hydrate protocols if facilityGenerated is false
-    watch(() => multiOmicsForm.facilityGenerated, () => {
-      if (multiOmicsForm.facilityGenerated === false) {
-        Object.assign(multiOmicsForm, {
-          mpProtocols: { ...emptyProtocols },
-          lipProtocols: { ...emptyProtocols },
-          nomProtocols: { ...emptyProtocols },
-          mbProtocols: { ...emptyProtocols },
-        });
-      }
-      revalidate();
-    });
 
     onMounted(() => {
       formRef.value.validate();

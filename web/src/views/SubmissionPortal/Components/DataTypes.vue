@@ -266,7 +266,7 @@ export default defineComponent({
     />
     <ExternalProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('mp')"
-      :data-type="'mp'"
+      :data-type="'mpProtocols'"
     />
     <v-checkbox
       v-model="multiOmicsForm.omicsProcessingTypes"
@@ -276,7 +276,7 @@ export default defineComponent({
     />
     <ExternalProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('mb')"
-      :data-type="'mb'"
+      :data-type="'mbProtocols'"
     />
     <v-checkbox
       v-model="multiOmicsForm.omicsProcessingTypes"
@@ -286,7 +286,7 @@ export default defineComponent({
     />
     <ExternalProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('nom')"
-      :data-type="'nom'"
+      :data-type="'nomProtocols'"
     />
     <v-checkbox
       v-model="multiOmicsForm.omicsProcessingTypes"
@@ -296,7 +296,7 @@ export default defineComponent({
     />
     <ExternalProtocolForm
       v-if="multiOmicsForm.omicsProcessingTypes.includes('lipidome-emsl')"
-      :data-type="'lip'"
+      :data-type="'lipProtocols'"
     />
   </div>
 </template>
