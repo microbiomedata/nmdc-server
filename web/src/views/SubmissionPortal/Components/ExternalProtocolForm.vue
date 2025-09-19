@@ -1,32 +1,45 @@
 <script lang="ts">
-import { defineComponent, computed } from '@vue/composition-api';
+import { defineComponent, computed, ref } from '@vue/composition-api';
 import { multiOmicsForm, checkDoiFormat } from '../store';
 
 export default defineComponent({
   name: 'ExternalProtocolForm',
   props: {
     dataType: {
-      type: String,
+      type: String as () => 'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols',
       required: true,
     },
   },
-  setup() {
+  setup(props) {
     const protocolNames = computed(() => {
       const names = new Set<string>();
-      if (multiOmicsForm.mpProtocols.sampleProtocol.name) {
+      if (multiOmicsForm.mpProtocols?.sampleProtocol.name) {
         names.add(multiOmicsForm.mpProtocols.sampleProtocol.name);
       }
-      if (multiOmicsForm.mbProtocols.sampleProtocol.name) {
+      if (multiOmicsForm.mbProtocols?.sampleProtocol.name) {
         names.add(multiOmicsForm.mbProtocols.sampleProtocol.name);
       }
-      if (multiOmicsForm.nomProtocols.sampleProtocol.name) {
+      if (multiOmicsForm.nomProtocols?.sampleProtocol.name) {
         names.add(multiOmicsForm.nomProtocols.sampleProtocol.name);
       }
-      if (multiOmicsForm.lipProtocols.sampleProtocol.name) {
+      if (multiOmicsForm.lipProtocols?.sampleProtocol.name) {
         names.add(multiOmicsForm.lipProtocols.sampleProtocol.name);
       }
       return Array.from(names);
     });
+
+    const currentProtocol = ref({
+      name: '',
+      description: '',
+      doi: '',
+      url: '',
+      sharedData: false,
+      sharedDataName: '',
+    });
+
+    function updateMultiOmicsForm(protocolType: string) {
+      (multiOmicsForm as Record<'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols', any>)[props.dataType][protocolType] = currentProtocol.value;
+    }
 
     const doiValueRules = () => (
       [
@@ -38,9 +51,11 @@ export default defineComponent({
     );
 
     return {
-      doiValueRules,
+      currentProtocol,
       multiOmicsForm,
       protocolNames,
+      doiValueRules,
+      updateMultiOmicsForm,
     };
   },
 });
@@ -87,10 +102,10 @@ export default defineComponent({
           no-gutters
         >
           <template
-            v-if="protocolNames.length > 0 && multiOmicsForm[`${dataType}Protocols`].sampleProtocol.name === ''"
+            v-if="protocolNames.length > 0 && multiOmicsForm[`${dataType}`].sampleProtocol.name === ''"
           >
             <v-checkbox
-              v-model="multiOmicsForm[`${dataType}Protocols`].sampleProtocol.sharedData"
+              v-model="multiOmicsForm[`${dataType}`].sampleProtocol.sharedData"
               label="Protocol shared across data types"
               class="mx-2"
               color="primary"
@@ -118,7 +133,7 @@ export default defineComponent({
             </v-checkbox>
           </template>
           <template
-            v-if="multiOmicsForm[`${dataType}Protocols`].sampleProtocol.sharedData && protocolNames.length > 0"
+            v-if="multiOmicsForm[`${dataType}`].sampleProtocol.sharedData && protocolNames.length > 0"
           >
             <v-col
               cols="1"
@@ -127,18 +142,19 @@ export default defineComponent({
               cols="4"
             >
               <v-select
-                v-model="multiOmicsForm[`${dataType}Protocols`].sampleProtocol.sharedDataName"
+                v-model="currentProtocol.sharedDataName"
                 :items="protocolNames"
                 label="Select Protocol Name"
                 outlined
                 dense
                 class="mx-2"
+                @change="updateMultiOmicsForm('sampleProtocol')"
               />
             </v-col>
           </template>
         </v-row>
         <template
-          v-if="!multiOmicsForm[`${dataType}Protocols`].sampleProtocol.sharedData"
+          v-if="!multiOmicsForm[`${dataType}`].sampleProtocol.sharedData"
         >
           <v-row
             class="mx-8 "
@@ -148,11 +164,12 @@ export default defineComponent({
               cols="5"
             >
               <v-text-field
-                v-model="multiOmicsForm[`${dataType}Protocols`].sampleProtocol.doi"
+                v-model="currentProtocol.doi"
                 label="URL/DOI"
                 outlined
                 dense
                 :rules="doiValueRules()"
+                @blur="updateMultiOmicsForm('sampleProtocol')"
               >
                 <template #append-outer>
                   <v-tooltip
@@ -189,10 +206,11 @@ export default defineComponent({
               cols="5"
             >
               <v-text-field
-                v-model="multiOmicsForm[`${dataType}Protocols`].sampleProtocol.name"
+                v-model="currentProtocol.name"
                 label="Protocol Name"
                 outlined
                 dense
+                @blur="updateMultiOmicsForm('sampleProtocol')"
               >
                 <template #append-outer>
                   <v-tooltip
@@ -221,11 +239,12 @@ export default defineComponent({
             no-gutters
           >
             <v-textarea
-              v-model="multiOmicsForm[`${dataType}Protocols`].sampleProtocol.description"
+              v-model="currentProtocol.description"
               label="Protocol Description"
               outlined
               dense
               rows="3"
+              @blur="updateMultiOmicsForm('sampleProtocol')"
             />
           </v-row>
         </template>
@@ -265,11 +284,12 @@ export default defineComponent({
             cols="5"
           >
             <v-text-field
-              v-model="multiOmicsForm[`${dataType}Protocols`].acquisitionProtocol.doi"
+              v-model="currentProtocol.doi"
               label="URL/DOI"
               outlined
               dense
               :rules="doiValueRules()"
+              @blur="updateMultiOmicsForm('acquisitionProtocol')"
             >
               <template #append-outer>
                 <v-tooltip
@@ -306,10 +326,11 @@ export default defineComponent({
             cols="5"
           >
             <v-text-field
-              v-model="multiOmicsForm[`${dataType}Protocols`].acquisitionProtocol.name"
+              v-model="currentProtocol.name"
               label="Protocol Name"
               outlined
               dense
+              @blur="updateMultiOmicsForm('acquisitionProtocol')"
             >
               <template #append-outer>
                 <v-tooltip
@@ -338,11 +359,12 @@ export default defineComponent({
           no-gutters
         >
           <v-textarea
-            v-model="multiOmicsForm[`${dataType}Protocols`].acquisitionProtocol.description"
+            v-model="currentProtocol.description"
             label="Protocol Description"
             outlined
             dense
             rows="3"
+            @blur="updateMultiOmicsForm('acquisitionProtocol')"
           />
         </v-row>
       </v-expansion-panel-content>
@@ -382,10 +404,11 @@ export default defineComponent({
               cols="5"
             >
               <v-text-field
-                v-model="multiOmicsForm[`${dataType}Protocols`].dataProtocol.doi"
+                v-model="currentProtocol.doi"
                 label="URL/DOI"
                 outlined
                 dense
+                @blur="updateMultiOmicsForm('dataProtocol')"
               >
                 <template #append-outer>
                   <v-tooltip
