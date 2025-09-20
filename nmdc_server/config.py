@@ -7,6 +7,19 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
+    """
+    Application settings.
+
+    Note: When managing a deployment of this application, prefix the environment variables that
+          corresponding with the attributes below, with "NMDC_" (or "nmdc_"). That prefix is
+          defined via `model_config` below. For example, for the `debug` attribute below,
+          name the corresponding environment variable "NMDC_DEBUG" (or "nmdc_debug").
+
+    Note: We put attribute descriptions _below_ the attribute definitions because that's
+          where code editors look for them (e.g., for Intellisense). This is documented
+          in https://peps.python.org/pep-0257/ (see "Attribute docstring").
+    """
+
     environment: str = "production"
     debug: bool = False
 
@@ -16,6 +29,12 @@ class Settings(BaseSettings):
     database_uri: str = "postgresql:///nmdc"
     ingest_database_uri: str = "postgresql:///nmdc_testing"
     testing_database_uri: str = "postgresql:///nmdc_testing"
+
+    runtime_api_url: str = "https://api.microbiomedata.org"
+    """NMDC Runtime API URL used for a hyperlink displayed on the Swagger UI page.
+    Note: We made this configurable so we could link to the Runtime API instance
+          that's in the _same environment_ as this app (e.g. dev versus prod).
+    """
 
     nmdc_ontology_version: str = "2024-03-15"
 
