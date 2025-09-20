@@ -3,6 +3,7 @@
           according to the constructor's docstring.
 -->
 
+**About this API:**
 This API provides NMDC applications access to publicly-available NMDC data
 as well as the logged-in user's own submissions.
 It was designed to be accessed exclusively by
