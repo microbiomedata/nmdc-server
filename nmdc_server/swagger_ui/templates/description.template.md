@@ -3,9 +3,11 @@
           according to the constructor's docstring.
 -->
 
-This API was designed to be accessed by
+This API provides NMDC applications access to publicly-available NMDC data
+as well as the logged-in user's own submissions.
+It was designed to be accessed exclusively by
 the [NMDC Data Portal]({{ nmdc_data_portal_url }}) and
-the [NMDC Submission Portal]({{ nmdc_submission_portal_url }}) only.
+the [NMDC Submission Portal]({{ nmdc_submission_portal_url }}).
 
 **Want to access NMDC data from your own scripts and programs?**
 Check out the [NMDC Runtime API]({{ runtime_api_url }}), which was
