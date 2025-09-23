@@ -15,7 +15,7 @@ import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
-import { deleteSubmission } from '../store/api';
+import { deleteSubmission, updateRecord } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
   MetadataSubmissionRecord,
@@ -72,6 +72,7 @@ export default defineComponent({
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
     const reviewerAssignmentDialog = ref(false);
+    const selectedSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
     const isTestFilter = ref(null);
     const testFilterValues = [
       { text: 'Show all submissions', val: null },
@@ -129,20 +130,37 @@ export default defineComponent({
       isDeleteDialogOpen.value = false;
     }
 
+    const reviewerOrcid = ref('');
+    function openReviewerDialog(item: MetadataSubmissionRecordSlim | null) {
+      reviewerAssignmentDialog.value = true;
+      selectedSubmission.value = item;
+    }
+
+    function addReviewer() {
+      if (!selectedSubmission.value) {
+        return;
+      }
+      updateRecord(selectedSubmission.value.id, selectedSubmission.value, selectedSubmission.value.status, { [reviewerOrcid.value]: 'reviewer' });
+      reviewerAssignmentDialog.value = false;
+    }
+
     return {
       HARMONIZER_TEMPLATES,
       isDeleteDialogOpen,
       isTestFilter,
       deleteDialogSubmission,
       reviewerAssignmentDialog,
+      reviewerOrcid,
       IconBar,
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
       getStatus,
       resume,
+      addReviewer,
       handleDelete,
       handleOpenDeleteDialog,
+      openReviewerDialog,
       headers,
       options,
       submission,
@@ -329,7 +347,7 @@ export default defineComponent({
                     <v-list-item-title>Delete</v-list-item-title>
                   </v-list-item>
                   <v-list-item
-                    @click="() => reviewerAssignmentDialog = true"
+                    @click="() => openReviewerDialog(item)"
                   >
                     <v-list-item-title>Assign Reviewer</v-list-item-title>
                   </v-list-item>
@@ -390,11 +408,12 @@ export default defineComponent({
           <v-row
             no-gutters
           >
-            <v-legend class="pl-3">
+            <v-legend>
               Please enter the reviewer's ORCiD below. This will give the reviewer the ability to view, approve and run scripts on this submission.
             </v-legend>
             <v-col cols="4">
               <v-text-field
+                v-model="reviewerOrcid"
                 class="mt-4"
                 label="ORCiD"
                 outlined
@@ -406,12 +425,20 @@ export default defineComponent({
         <v-card-actions
           class="pt-0"
         >
-          <v-spacer />
           <v-btn
             class="ma-3"
             @click="reviewerAssignmentDialog = false"
           >
-            Close
+            Cancel
+          </v-btn>
+          <v-spacer />
+
+          <v-btn
+            color="primary"
+            class="mt-2"
+            @click="() => addReviewer()"
+          >
+            Assign Reviewer
           </v-btn>
         </v-card-actions>
       </v-card>
