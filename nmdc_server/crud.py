@@ -680,6 +680,7 @@ read_roles = [
     models.SubmissionEditorRole.metadata_contributor,
     models.SubmissionEditorRole.owner,
     models.SubmissionEditorRole.viewer,
+    models.SubmissionEditorRole.reviewer,
 ]
 
 metadata_edit_roles = [
