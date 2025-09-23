@@ -22,6 +22,7 @@ import {
   MetadataSubmissionRecordSlim,
   PaginatedResponse,
 } from '@/views/SubmissionPortal/types';
+import { stateRefs } from '@/store';
 
 const headers: DataTableHeader[] = [
   {
@@ -73,6 +74,7 @@ export default defineComponent({
     const deleteDialogSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
     const reviewerAssignmentDialog = ref(false);
     const selectedSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
+    const currentUser = stateRefs.user;
     const isTestFilter = ref(null);
     const testFilterValues = [
       { text: 'Show all submissions', val: null },
@@ -149,6 +151,7 @@ export default defineComponent({
       isDeleteDialogOpen,
       isTestFilter,
       deleteDialogSubmission,
+      currentUser,
       reviewerAssignmentDialog,
       reviewerOrcid,
       IconBar,
@@ -347,6 +350,7 @@ export default defineComponent({
                     <v-list-item-title>Delete</v-list-item-title>
                   </v-list-item>
                   <v-list-item
+                    v-if="currentUser.is_admin"
                     @click="() => openReviewerDialog(item)"
                   >
                     <v-list-item-title>Assign Reviewer</v-list-item-title>
