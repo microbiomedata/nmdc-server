@@ -159,7 +159,7 @@ export default defineComponent({
           v => v.length > 6 || 'Study name too short',
         ])"
         validate-on-blur
-        label="Study Name *"
+        label="Study NAME *"
         :hint="Definitions.studyName"
         persistent-hint
         outlined
