@@ -15,6 +15,7 @@ from nmdc_server import __version__, api, auth, errors
 from nmdc_server.config import settings
 from nmdc_server.database import after_cursor_execute, before_cursor_execute, listen
 from nmdc_server.static_files import static_path
+from nmdc_server.swagger_ui.helpers import load_template
 
 
 def attach_sentry(app: FastAPI):
@@ -41,14 +42,18 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
         listen(Engine, "before_cursor_execute", before_cursor_execute)
         listen(Engine, "after_cursor_execute", after_cursor_execute)
 
+    # Load the description template and replace the placeholder(s) within it.
+    description = (
+        load_template("description.template.md")
+        .replace("{{ developer_tools_url }}", "/user")
+        .replace("{{ runtime_api_url }}", settings.runtime_api_url)
+        .replace("{{ nmdc_data_portal_url }}", "/")
+        .replace("{{ nmdc_submission_portal_url }}", "/submission/home")
+    )
+
     app = FastAPI(
         title="NMDC Data and Submission Portal API",
-        description="""
-To use authenticated endpoints, you must first obtain an Access Token by following the
-instructions in the Developer Tools section <a href="/user">here</a>. Once you have an Access
-Token, click the "Authorize" button on this page. In the popup, paste the token in the "Value"
-field and click "Authorize".
-""",
+        description=description,
         version=__version__,
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
