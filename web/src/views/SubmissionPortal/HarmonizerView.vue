@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
+  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, getCurrentInstance,
 } from 'vue';
 import {
   clamp, debounce, flattenDeep, has, sum,
@@ -105,8 +105,9 @@ export default defineComponent({
     SubmissionPermissionBanner,
   },
 
-  setup(_, { root }) {
+  setup() {
     const { user } = stateRefs;
+    const root = getCurrentInstance();
 
     const harmonizerElement = ref();
     const harmonizerApi = new HarmonizerApi();
@@ -180,12 +181,12 @@ export default defineComponent({
     ));
 
     const saveRecordRequest = useRequest();
-    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
+    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root?.proxy.$route.params.id as string));
 
     let changeBatch: any[] = [];
     const debouncedSuggestionRequest = debounce(async () => {
       const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-      await addMetadataSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!, changedRowData);
+      await addMetadataSuggestions(root?.proxy.$route.params.id as string, activeTemplate.value.schemaClass!, changedRowData);
       changeBatch = [];
     }, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
 
@@ -472,7 +473,7 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id, 'SubmittedPendingReview');
+      await submit(root?.proxy.$route.params.id as string, 'SubmittedPendingReview');
       submitDialog.value = false;
     });
 
@@ -587,7 +588,7 @@ export default defineComponent({
       const nextTemplate = HARMONIZER_TEMPLATES[nextTemplateKey];
 
       // Get the stashed suggestions (if any) for the next template and present them.
-      metadataSuggestions.value = getPendingSuggestions(root.$route.params.id, nextTemplate.schemaClass!);
+      metadataSuggestions.value = getPendingSuggestions(root?.proxy.$route.params.id as string, nextTemplate.schemaClass!);
 
       // When changing templates we may need to populate the common columns
       // from the environment tabs
@@ -610,7 +611,7 @@ export default defineComponent({
         harmonizerApi.loadData(activeTemplateData.value);
         addHooks();
         metadataSuggestions.value = getPendingSuggestions(
-          root.$route.params.id,
+          root?.proxy.$route.params.id as string,
           activeTemplate.value.schemaClass!,
         );
         if (!canEditSampleMetadata()) {
@@ -1115,7 +1116,9 @@ export default defineComponent({
 <style lang="scss">
 // Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
 // cannot be nested inside .harmonizer-style-container or else the measurements will be off.
-@import '~data-harmonizer/lib/dist/es/index';
+
+// TODO: Fix data-harmonizer CSS import path
+// @import '~data-harmonizer/lib/dist/es/index';
 
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples

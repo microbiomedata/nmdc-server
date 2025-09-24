@@ -5,6 +5,7 @@ import {
   PropType,
   toRef,
   watch,
+  getCurrentInstance,
 } from 'vue';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';
@@ -30,7 +31,8 @@ export default defineComponent({
       default: null,
     },
   },
-  setup(props, { root }) {
+  setup(props) {
+    const instance = getCurrentInstance();
     const req = useRequest();
 
     function load() {
@@ -42,7 +44,7 @@ export default defineComponent({
     watch(toRef(props, 'id'), load);
     load();
 
-    const showBanner = computed(() => root.$route.path === '/submission/home');
+    const showBanner = computed(() => instance?.proxy.$route.path === '/submission/home');
 
     return {
       stateRefs,

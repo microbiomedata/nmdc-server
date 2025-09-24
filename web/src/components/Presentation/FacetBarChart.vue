@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  computed, defineComponent, PropType, ref,
+  computed, defineComponent, PropType, ref, getCurrentInstance,
 } from 'vue';
 // @ts-ignore
 import { GChart } from 'vue-google-charts';
@@ -60,7 +60,8 @@ export default defineComponent({
     },
   },
 
-  setup(props, { emit, root }) {
+  setup(props, { emit }) {
+    const root = getCurrentInstance();
     const chartRef = ref();
     const chartEvents = {
       select: () => {
@@ -102,11 +103,11 @@ export default defineComponent({
             true,
             count > 0 ? (
               ecosystems.find((e) => e.name === facet.facet)
-              || { color: root.$vuetify.theme.currentTheme.primary }
+              || { color: root?.proxy.$vuetify.theme.currentTheme.primary }
             ).color : 'lightgray',
             excludedCount,
             false,
-            excludedCount > 0 ? 'lightgray' : root.$vuetify.theme.currentTheme.primary,
+            excludedCount > 0 ? 'lightgray' : root?.proxy.$vuetify.theme.currentTheme.primary,
             count > 0 ? `${count}` : 'No match',
           ];
         },
