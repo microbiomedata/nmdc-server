@@ -13,7 +13,7 @@
 
 <script>
 import Vue from 'vue';
-import { ref } from '@vue/composition-api';
+import { ref } from 'vue';
 import { GChart } from 'vue-google-charts';
 
 import colors from '@/colors';

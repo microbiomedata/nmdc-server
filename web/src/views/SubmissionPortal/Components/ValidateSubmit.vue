@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
 import { writeFile, utils } from 'xlsx';
 import { submit, submitPayload } from '../store';
 import { saveAs } from '@/util';

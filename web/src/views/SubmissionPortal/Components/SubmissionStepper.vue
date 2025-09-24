@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   computed, defineComponent, reactive, toRef,
-} from '@vue/composition-api';
+} from 'vue';
 
 const StepperMap: Record<string | number, number | string> = {
   'Submission Home': 1,

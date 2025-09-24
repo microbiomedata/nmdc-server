@@ -4,7 +4,7 @@ import {
   ref,
   computed,
   PropType,
-} from '@vue/composition-api';
+} from 'vue';
 import { Condition, opType } from '@/data/api';
 
 import DateInput from './DateInput.vue';

@@ -1,5 +1,5 @@
 <script>
-import { defineComponent, computed, ref } from '@vue/composition-api';
+import { defineComponent, computed, ref } from 'vue';
 import FacetSummary from '@/mixins/FacetSummary';
 import { fieldDisplayName } from '@/util';
 

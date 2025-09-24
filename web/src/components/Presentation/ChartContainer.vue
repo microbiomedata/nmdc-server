@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   computed, defineComponent, onBeforeUnmount, onMounted, ref,
-} from '@vue/composition-api';
+} from 'vue';
 
 interface ResizeObserverEntry {
   contentRect: Readonly<{

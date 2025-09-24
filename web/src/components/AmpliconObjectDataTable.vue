@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, PropType } from '@vue/composition-api';
+import { defineComponent, PropType } from 'vue';
 import { DataTableHeader } from 'vuetify';
 import { OmicsProcessingResult } from '@/data/api';
 

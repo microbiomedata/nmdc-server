@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
-} from '@vue/composition-api';
+} from 'vue';
 import {
   clamp, debounce, flattenDeep, has, sum,
 } from 'lodash';

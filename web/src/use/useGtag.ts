@@ -1,4 +1,4 @@
-import { getCurrentInstance } from '@vue/composition-api';
+import { getCurrentInstance } from 'vue';
 
 /**
  * Custom hook to access Google Analytics gtag instance.

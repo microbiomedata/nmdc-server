@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   computed, defineComponent, PropType, ref,
-} from '@vue/composition-api';
+} from 'vue';
 // @ts-ignore
 import { GChart } from 'vue-google-charts';
 import { fieldDisplayName } from '@/util';

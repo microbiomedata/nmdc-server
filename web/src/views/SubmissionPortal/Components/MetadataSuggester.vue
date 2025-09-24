@@ -5,7 +5,7 @@ import {
   PropType,
   ref,
   watchEffect,
-} from '@vue/composition-api';
+} from 'vue';
 import { groupBy } from 'lodash';
 import {
   addMetadataSuggestions,

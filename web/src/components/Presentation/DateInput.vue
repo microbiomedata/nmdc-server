@@ -1,5 +1,5 @@
 <script>
-import { defineComponent, ref, computed } from '@vue/composition-api';
+import { defineComponent, ref, computed } from 'vue';
 import moment from 'moment';
 import * as chrono from 'chrono-node';
 

@@ -4,7 +4,7 @@ import {
   computed,
   PropType,
   ref,
-} from '@vue/composition-api';
+} from 'vue';
 import { groupBy } from 'lodash';
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';

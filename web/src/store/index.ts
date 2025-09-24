@@ -1,7 +1,7 @@
 import Vue from 'vue';
 import CompositionApi, {
   computed, ComputedRef, reactive, toRefs, watchEffect,
-} from '@vue/composition-api';
+} from 'vue';
 import { noop, uniqWith } from 'lodash';
 import VueRouter from 'vue-router';
 import { removeCondition as utilsRemoveCond } from '@/data/utils';

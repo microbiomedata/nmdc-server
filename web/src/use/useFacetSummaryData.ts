@@ -1,4 +1,4 @@
-import { computed, Ref } from '@vue/composition-api';
+import { computed, Ref } from 'vue';
 import { Condition, entityType } from '@/data/api';
 
 export default function useFacetSummaryData({

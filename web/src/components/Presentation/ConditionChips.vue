@@ -1,6 +1,6 @@
 <script>
 import moment from 'moment';
-import { defineComponent, ref, computed } from '@vue/composition-api';
+import { defineComponent, ref, computed } from 'vue';
 import { groupBy } from 'lodash';
 import { opMap } from '@/data/api';
 import { fieldDisplayName } from '@/util';

@@ -5,7 +5,7 @@ import {
   ref,
   watch,
   nextTick,
-} from '@vue/composition-api';
+} from 'vue';
 
 import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 import TimeHistogram from '@/components/Presentation/TimeHistogram.vue';

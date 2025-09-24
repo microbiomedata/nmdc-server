@@ -6,7 +6,7 @@ import {
   watch,
   nextTick,
   computed,
-} from '@vue/composition-api';
+} from 'vue';
 
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';

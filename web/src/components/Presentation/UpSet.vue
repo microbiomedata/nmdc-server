@@ -1,5 +1,5 @@
 <script>
-import { defineComponent, watchEffect, ref } from '@vue/composition-api';
+import { defineComponent, watchEffect, ref } from 'vue';
 import { select } from 'd3-selection';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { MultiomicsValue } from '@/encoding';

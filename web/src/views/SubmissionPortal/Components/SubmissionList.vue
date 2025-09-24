@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   defineComponent, ref, watch, Ref,
-} from '@vue/composition-api';
+} from 'vue';
 import { DataOptions, DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';

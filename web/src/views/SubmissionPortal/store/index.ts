@@ -3,7 +3,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml'
 import Vue from 'vue';
 import CompositionApi, {
   computed, reactive, Ref, ref, shallowRef, watch,
-} from '@vue/composition-api';
+} from 'vue';
 import {
   chunk, clone, forEach, isString,
 } from 'lodash';

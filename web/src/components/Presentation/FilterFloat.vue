@@ -4,7 +4,7 @@ import {
   PropType,
   ref,
   computed,
-} from '@vue/composition-api';
+} from 'vue';
 import { Condition, opType } from '@/data/api';
 
 export default defineComponent({
