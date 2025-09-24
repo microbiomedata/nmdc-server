@@ -1,9 +1,9 @@
 <script>
-import Vue from 'vue';
+import { defineComponent, ref, computed } from '@vue/composition-api';
 import moment from 'moment';
 import * as chrono from 'chrono-node';
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     value: {
       type: String,
@@ -11,40 +11,55 @@ export default Vue.extend({
     },
   },
 
-  data() {
-    return {
-      menu: false,
-      textFieldRules: [(v) => chrono.parse(v).length === 1 || 'Invalid date'],
-      textFieldDate: moment(this.value).format('MMM D, YYYY'),
-    };
-  },
+  setup(props, { emit }) {
+    const menu = ref(false);
+    const menuRef = ref(null);
+    const textFieldDate = ref(moment(props.value).format('MMM D, YYYY'));
 
-  computed: {
-    isoDate() {
-      return moment(this.value).format('YYYY-MM-DD');
-    },
-  },
+    const textFieldRules = [
+      (v) => chrono.parse(v).length === 1 || 'Invalid date',
+    ];
 
-  methods: {
-    updateFromTextField(event) {
+    const isoDate = computed(() => moment(props.value).format('YYYY-MM-DD'));
+
+    function updateFromTextField(event) {
       const parsed = chrono.parse(event);
       if (parsed.length === 1) {
         const parse = parsed[0];
-        this.$emit('input', parse.date().toISOString());
+        emit('input', parse.date().toISOString());
       }
-    },
-    updateFromDatePicker(event) {
+    }
+
+    function updateFromDatePicker(event) {
       const date = moment(event);
-      this.textFieldDate = date.format('MMM D, YYYY');
-      this.$emit('input', date.format('YYYY-MM-DDT00:00:00.000'));
-    },
+      textFieldDate.value = date.format('MMM D, YYYY');
+      emit('input', date.format('YYYY-MM-DDT00:00:00.000'));
+    }
+
+    function closeMenu() {
+      if (menuRef.value) {
+        menuRef.value.save(props.value);
+      }
+      menu.value = false;
+    }
+
+    return {
+      menu,
+      textFieldDate,
+      textFieldRules,
+      isoDate,
+      menuRef,
+      closeMenu,
+      updateFromTextField,
+      updateFromDatePicker,
+    };
   },
 });
 </script>
 
 <template>
   <v-menu
-    ref="menu"
+    ref="menuRef"
     v-model="menu"
     :close-on-content-click="false"
     :return-value="value"
@@ -74,7 +89,7 @@ export default Vue.extend({
       <v-btn
         text
         color="primary"
-        @click="$refs.menu.save(value)"
+        @click="closeMenu"
       >
         OK
       </v-btn>

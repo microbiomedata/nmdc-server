@@ -1,13 +1,16 @@
 <script lang="ts">
-import Vue, { PropType } from 'vue';
+import {
+  defineComponent,
+  computed,
+  PropType,
+  ref,
+} from '@vue/composition-api';
 import { groupBy } from 'lodash';
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
 import { Condition } from '@/data/api';
 
-type KeyedFieldData = encoding.FieldsData & { key: string; };
-
-export default Vue.extend({
+export default defineComponent({
   props: {
     conditions: {
       type: Array as PropType<Condition[]>,
@@ -18,39 +21,47 @@ export default Vue.extend({
       required: true,
     },
   },
-  data() {
-    return {
-      filterText: '',
-      menuState: {} as Record<string, boolean>,
-    };
-  },
-  computed: {
-    privatefilteredFields(): string[] {
-      if (this.filterText) {
-        return this.fields.filter((f) => {
-          const lower = this.filterText.toLowerCase();
+
+  setup(props) {
+    const filterText = ref('');
+    const menuState = ref({} as Record<string, boolean>);
+
+    const privatefilteredFields = computed(() => {
+      if (filterText.value) {
+        return props.fields.filter((f) => {
+          const lower = filterText.value.toLowerCase();
           return f.toLowerCase().indexOf(lower) >= 0;
         });
       }
-      return this.fields;
-    },
-    groupedFields(): [string, KeyedFieldData[]][] {
-      const fieldsWithMeta = this.privatefilteredFields
+      return props.fields;
+    });
+
+    const groupedFields = computed(() => {
+      const fieldsWithMeta = privatefilteredFields.value
         .map((f) => ({ key: f, ...encoding.getField(f) }))
         .filter((f) => !f.hideFacet)
         .sort(((a, b) => (a.sortKey || 0) - (b.sortKey || 0)));
       return Object.entries(groupBy(fieldsWithMeta, 'group'))
         .sort((a) => ((a[0] === 'undefined') ? 0 : -1));
-    },
-  },
-  methods: {
-    fieldDisplayName,
-    toggleMenu(category: string, value: boolean): void {
-      Vue.set(this.menuState, category, value);
-    },
-    hasActiveConditions(category: string): boolean {
-      return this.conditions.some((cond) => cond.field === category);
-    },
+    });
+
+    function toggleMenu(category: string, value: boolean): void {
+      menuState.value[category] = value;
+    }
+
+    function hasActiveConditions(category: string): boolean {
+      return props.conditions.some((cond) => cond.field === category);
+    }
+
+    return {
+      filterText,
+      menuState,
+      privatefilteredFields,
+      groupedFields,
+      toggleMenu,
+      hasActiveConditions,
+      fieldDisplayName,
+    };
   },
 });
 </script>

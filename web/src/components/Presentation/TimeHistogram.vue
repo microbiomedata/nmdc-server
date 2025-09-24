@@ -3,6 +3,7 @@ import {
   defineComponent,
   watchEffect,
   ref,
+  getCurrentInstance,
 } from '@vue/composition-api';
 import { select } from 'd3-selection';
 import { max } from 'd3-array';
@@ -42,7 +43,8 @@ export default defineComponent({
     },
   },
 
-  setup(props, { root, emit }) {
+  setup(props, { emit }) {
+    const { proxy: root } = getCurrentInstance();
     const svgRoot = ref(undefined);
     // set the dimensions and margins of the graph
     const margin = {
@@ -62,7 +64,7 @@ export default defineComponent({
        */
       const selectedBins = [];
 
-      selectedData.facets.forEach((count, i) => {
+      selectedData.facets?.forEach((count, i) => {
         selectedBins.push({
           length: count,
           x0: Date.parse(selectedData.bins[i]),
@@ -76,7 +78,7 @@ export default defineComponent({
 
       const totalBins = [];
 
-      totalData.facets.forEach((count, i) => {
+      totalData.facets?.forEach((count, i) => {
         totalBins.push({
           length: count,
           x0: Date.parse(totalData.bins[i]),

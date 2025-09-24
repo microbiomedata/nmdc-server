@@ -1,15 +1,15 @@
 <script>
-import Vue from 'vue';
+import { defineComponent, computed, ref } from '@vue/composition-api';
 import FacetSummary from '@/mixins/FacetSummary';
 import { fieldDisplayName } from '@/util';
 
-export default Vue.extend({
+export default defineComponent({
   mixins: [FacetSummary],
 
-  data: () => ({
-    createdDelay: false,
-    filterText: '',
-    tableHeaders: [
+  setup({ emit }) {
+    const filterText = ref('');
+    const createdDelay = ref(false);
+    const tableHeaders = ref([
       {
         text: 'Facet',
         value: 'name',
@@ -23,27 +23,18 @@ export default Vue.extend({
         width: 90,
         filterable: false,
       },
-    ],
-  }),
+    ]);
 
-  computed: {
-    selected() {
-      return this.myConditions.map(
-        // In order for selection to work, each object must match for all key/value pairs
-        // so we have to get the right item from the item list where value matches
-        (c) => this.facetSummary.find((item) => item.facet.toLowerCase() === c.value.toLowerCase()),
-      );
-    },
-  },
+    const selected = computed(() => this.myConditions.map(
+      // In order for selection to work, each object must match for all key/value pairs
+      // so we have to get the right item from the item list where value matches
+      (c) => this.facetSummary.find((item) => item.facet.toLowerCase() === c.value.toLowerCase()),
+    ));
 
-  created() {
     /* Enable loading bar after 2 seconds of no load, to avoid overly noisy facet dialogs */
     window.setTimeout(() => { this.createdDelay = true; }, 2000);
-  },
 
-  methods: {
-    fieldDisplayName,
-    setSelected({ item, value }) {
+    function setSelected({ item, value }) {
       let conditions;
       if (value) {
         conditions = [...this.conditions, {
@@ -60,12 +51,12 @@ export default Vue.extend({
             && c.table === this.table
           ));
       }
-      this.$emit('select', { conditions });
-    },
+      emit('select', { conditions });
+    }
 
-    toggleSelectAll({ items, value }) {
+    function toggleSelectAll({ items, value }) {
       if (value) {
-        this.$emit('select', {
+        emit('select', {
           conditions: [
             ...this.otherConditions,
             ...items
@@ -79,9 +70,19 @@ export default Vue.extend({
           ],
         });
       } else {
-        this.$emit('select', { conditions: this.otherConditions });
+        emit('select', { conditions: this.otherConditions });
       }
-    },
+    }
+
+    return {
+      filterText,
+      createdDelay,
+      selected,
+      tableHeaders,
+      fieldDisplayName,
+      setSelected,
+      toggleSelectAll,
+    };
   },
 });
 </script>

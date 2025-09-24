@@ -1,12 +1,12 @@
 <script>
 import moment from 'moment';
-import Vue from 'vue';
+import { defineComponent, ref, computed } from '@vue/composition-api';
 import { groupBy } from 'lodash';
 import { opMap } from '@/data/api';
 import { fieldDisplayName } from '@/util';
 import { makeSetsFromBitmask } from '@/encoding';
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     conditions: {
       type: Array,
@@ -18,41 +18,36 @@ export default Vue.extend({
     },
   },
 
-  data: () => ({ menuState: {} }),
+  setup(props) {
+    const menuState = ref({});
 
-  computed: {
-    conditionGroups() {
-      return Object.entries(groupBy(
-        this.conditions,
-        (c) => JSON.stringify(({ field: c.field, table: c.table })),
-      )).map(([group, conditions]) => {
-        const parsed = JSON.parse(group);
-        return {
-          key: parsed.field + parsed.table,
-          field: parsed.field,
-          table: parsed.table,
-          conditions,
-        };
-      }).sort((a, b) => a.key.localeCompare(b));
-    },
-  },
+    const conditionGroups = computed(() => Object.entries(groupBy(
+      props.conditions,
+      (c) => JSON.stringify(({ field: c.field, table: c.table })),
+    )).map(([group, conditions]) => {
+      const parsed = JSON.parse(group);
+      return {
+        key: parsed.field + parsed.table,
+        field: parsed.field,
+        table: parsed.table,
+        conditions,
+      };
+    }).sort((a, b) => a.key.localeCompare(b.key)));
 
-  methods: {
-    fieldDisplayName,
-    verb(op) {
+    function verb(op) {
       return opMap[op];
-    },
-    valueTransform(val, field, type) {
+    }
+    function valueTransform(val, field, type) {
       // Special handling for multiomics
       if (field === 'multiomics' && type === 'biosample') {
         return Array.from(makeSetsFromBitmask(val)).join(', ');
       }
       // If it's not primitive
       if (val && typeof val === 'object') {
-        const inner = val.map((v) => this.valueTransform(v, field, type)).join(', ');
+        const inner = val.map((v) => valueTransform(v, field, type)).join(', ');
         return `(${inner})`;
       }
-      const summary = ((this.dbSummary[type] || {}).attributes || {})[field];
+      const summary = ((props.dbSummary[type] || {}).attributes || {})[field];
       if (summary) {
         if (['float', 'integer', 'string', 'gene_search'].includes(summary.type)) {
           return fieldDisplayName(val);
@@ -66,11 +61,22 @@ export default Vue.extend({
         throw new Error(`Unknown entity type for ${type}: ${field}: ${summary.type}`);
       }
       return val;
-    },
-    toggleMenu(category, value) {
-      Vue.set(this.menuState, category, value);
-    },
+    }
+
+    function toggleMenu(category, value) {
+      menuState.value[category] = value;
+    }
+
+    return {
+      conditionGroups,
+      menuState,
+      fieldDisplayName,
+      toggleMenu,
+      verb,
+      valueTransform,
+    };
   },
+
 });
 </script>
 
