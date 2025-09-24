@@ -72,7 +72,7 @@ export default defineComponent({
     });
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
-    const reviewerAssignmentDialog = ref(false);
+    const isReviewerAssignmentDialogOpen = ref(false);
     const selectedSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
     const currentUser = stateRefs.user;
     const isTestFilter = ref(null);
@@ -134,7 +134,7 @@ export default defineComponent({
 
     const reviewerOrcid = ref('');
     function openReviewerDialog(item: MetadataSubmissionRecordSlim | null) {
-      reviewerAssignmentDialog.value = true;
+      isReviewerAssignmentDialogOpen.value = true;
       selectedSubmission.value = item;
     }
 
@@ -143,7 +143,7 @@ export default defineComponent({
         return;
       }
       updateRecord(selectedSubmission.value.id, selectedSubmission.value, selectedSubmission.value.status, { [reviewerOrcid.value]: 'reviewer' });
-      reviewerAssignmentDialog.value = false;
+      isReviewerAssignmentDialogOpen.value = false;
     }
 
     return {
@@ -152,7 +152,7 @@ export default defineComponent({
       isTestFilter,
       deleteDialogSubmission,
       currentUser,
-      reviewerAssignmentDialog,
+      isReviewerAssignmentDialogOpen,
       reviewerOrcid,
       IconBar,
       IntroBlurb,
@@ -399,7 +399,7 @@ export default defineComponent({
       </v-card>
     </v-dialog>
     <v-dialog
-      v-model="reviewerAssignmentDialog"
+      v-model="isReviewerAssignmentDialogOpen"
       max-width="600px"
     >
       <v-card>
@@ -412,9 +412,9 @@ export default defineComponent({
           <v-row
             no-gutters
           >
-            <v-legend>
+            <legend>
               Please enter the reviewer's ORCiD below. This will give the reviewer the ability to view, approve and run scripts on this submission.
-            </v-legend>
+            </legend>
             <v-col cols="4">
               <v-text-field
                 v-model="reviewerOrcid"
@@ -431,7 +431,7 @@ export default defineComponent({
         >
           <v-btn
             class="ma-3"
-            @click="reviewerAssignmentDialog = false"
+            @click="isReviewerAssignmentDialogOpen = false"
           >
             Cancel
           </v-btn>
