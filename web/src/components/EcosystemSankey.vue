@@ -12,8 +12,7 @@
 </template>
 
 <script>
-import Vue from 'vue';
-import { ref } from 'vue';
+import Vue, { ref } from 'vue';
 import { GChart } from 'vue-google-charts';
 
 import colors from '@/colors';

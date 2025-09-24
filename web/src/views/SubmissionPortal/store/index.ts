@@ -1,7 +1,6 @@
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
-import Vue from 'vue';
-import CompositionApi, {
+import {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from 'vue';
 import {
@@ -36,9 +35,6 @@ import {
   SampleProtocol,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
-
-// TODO: Remove in version 3;
-Vue.use(CompositionApi);
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, PermissionLevelValues> = {
   Viewer: 'viewer',
