@@ -1,5 +1,7 @@
 FROM node:lts as build-stage
+ARG VUE_APP_NMDC_GOOGLE_ANALYTICS_ID
 ENV NODE_OPTIONS=--openssl-legacy-provider
+ENV VUE_APP_NMDC_GOOGLE_ANALYTICS_ID=${VUE_APP_NMDC_GOOGLE_ANALYTICS_ID}
 WORKDIR /app
 COPY package*.json yarn.lock ./
 RUN yarn install

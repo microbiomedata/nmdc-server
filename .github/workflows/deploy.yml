@@ -57,6 +57,7 @@ jobs:
           file: ${{ matrix.image == 'client' && 'web/Dockerfile' || 'Dockerfile' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: ${{ matrix.image == 'client' && format('VUE_APP_NMDC_GOOGLE_ANALYTICS_ID={0}', env.IS_PROD_RELEASE == 'true' && vars.GOOGLE_ANALYTICS_ID_PROD || vars.GOOGLE_ANALYTICS_ID_DEV) || '' }}
 
   redeploy:
     needs: build
