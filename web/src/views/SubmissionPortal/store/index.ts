@@ -50,6 +50,7 @@ const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
   owner: 4,
   editor: 3,
   metadata_contributor: 2,
+  reviewer: 1,
   viewer: 1,
 };
 

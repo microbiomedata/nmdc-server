@@ -1202,8 +1202,10 @@ async def update_submission(
         submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
     if "templates" in body_dict["metadata_submission"]:
         submission.templates = body_dict["metadata_submission"]["templates"]
-    # Update permissions and status iff the user is an "owner"
-    if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner:
+    # Update permissions and status if the user is an "owner" or "admin"
+    if (
+        current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
+    ) or user.is_admin:
         new_permissions = body_dict.get("permissions", None)
         if new_permissions is not None:
             crud.update_submission_contributor_roles(db, submission, new_permissions)

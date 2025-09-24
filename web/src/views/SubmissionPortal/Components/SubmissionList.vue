@@ -15,13 +15,14 @@ import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
-import { deleteSubmission } from '../store/api';
+import { deleteSubmission, updateRecord } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
   MetadataSubmissionRecord,
   MetadataSubmissionRecordSlim,
   PaginatedResponse,
 } from '@/views/SubmissionPortal/types';
+import { stateRefs } from '@/store';
 
 const headers: DataTableHeader[] = [
   {
@@ -71,6 +72,9 @@ export default defineComponent({
     });
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
+    const isReviewerAssignmentDialogOpen = ref(false);
+    const selectedSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
+    const currentUser = stateRefs.user;
     const isTestFilter = ref(null);
     const testFilterValues = [
       { text: 'Show all submissions', val: null },
@@ -128,19 +132,38 @@ export default defineComponent({
       isDeleteDialogOpen.value = false;
     }
 
+    const reviewerOrcid = ref('');
+    function openReviewerDialog(item: MetadataSubmissionRecordSlim | null) {
+      isReviewerAssignmentDialogOpen.value = true;
+      selectedSubmission.value = item;
+    }
+
+    function addReviewer() {
+      if (!selectedSubmission.value) {
+        return;
+      }
+      updateRecord(selectedSubmission.value.id, selectedSubmission.value, selectedSubmission.value.status, { [reviewerOrcid.value]: 'reviewer' });
+      isReviewerAssignmentDialogOpen.value = false;
+    }
+
     return {
       HARMONIZER_TEMPLATES,
       isDeleteDialogOpen,
       isTestFilter,
       deleteDialogSubmission,
+      currentUser,
+      isReviewerAssignmentDialogOpen,
+      reviewerOrcid,
       IconBar,
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
       getStatus,
       resume,
+      addReviewer,
       handleDelete,
       handleOpenDeleteDialog,
+      openReviewerDialog,
       headers,
       options,
       submission,
@@ -326,6 +349,12 @@ export default defineComponent({
                   >
                     <v-list-item-title>Delete</v-list-item-title>
                   </v-list-item>
+                  <v-list-item
+                    v-if="currentUser.is_admin"
+                    @click="() => openReviewerDialog(item)"
+                  >
+                    <v-list-item-title>Assign Reviewer</v-list-item-title>
+                  </v-list-item>
                 </v-list>
               </v-menu>
             </div>
@@ -365,6 +394,55 @@ export default defineComponent({
             @click="handleDelete(deleteDialogSubmission)"
           >
             Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog
+      v-model="isReviewerAssignmentDialogOpen"
+      max-width="600px"
+    >
+      <v-card>
+        <v-card-title class="text-h5">
+          Assign Reviewer
+        </v-card-title>
+        <v-card-text
+          class="pb-0"
+        >
+          <v-row
+            no-gutters
+          >
+            <legend>
+              Please enter the reviewer's ORCiD below. This will give the reviewer the ability to view, approve and run scripts on this submission.
+            </legend>
+            <v-col cols="4">
+              <v-text-field
+                v-model="reviewerOrcid"
+                class="mt-4"
+                label="ORCiD"
+                outlined
+                dense
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions
+          class="pt-0"
+        >
+          <v-btn
+            class="ma-3"
+            @click="isReviewerAssignmentDialogOpen = false"
+          >
+            Cancel
+          </v-btn>
+          <v-spacer />
+
+          <v-btn
+            color="primary"
+            class="mt-2"
+            @click="() => addReviewer()"
+          >
+            Assign Reviewer
           </v-btn>
         </v-card-actions>
       </v-card>
