@@ -123,7 +123,7 @@ export default defineComponent({
               </v-icon>
             </template>
             <span>
-              For samples with metaproteomics data, this protocol should describe how those samples were extracted, digested (including which proteolytic enzyme was used), and/or cleaned prior to analysis on an instrument.
+              This protocol should describe how samples were extracted, digested (including which proteolytic enzyme was used), and/or cleaned prior to analysis on an instrument.
             </span>
           </v-tooltip>
         </div>
@@ -489,7 +489,7 @@ export default defineComponent({
               </v-icon>
             </template>
             <span>
-              Provide the location of the publically available proteomics data. This can be a direct URL or a DOI or an identifier.
+              Provide the location of the publically available data. This can be a direct URL or a DOI or an identifier.
             </span>
           </v-tooltip>
         </div>
@@ -527,7 +527,8 @@ export default defineComponent({
                       </v-icon>
                     </template>
                     <span>
-                      Provide a DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple DOIs can be provided.              </span>
+                      Provide a DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple DOIs can be provided.
+                    </span>
                   </v-tooltip>
                 </template>
               </v-text-field>
