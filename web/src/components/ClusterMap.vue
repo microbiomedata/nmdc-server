@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   computed,
-  defineComponent, PropType, reactive, ref, toRef, watch, watchEffect,
+  defineComponent, PropType, reactive, ref, toRef, watch, watchEffect, onMounted, nextTick,
 } from 'vue';
 
 /**
@@ -13,11 +13,11 @@ import {
   LMap, LTileLayer, LMarker, LPopup,
 } from 'vue2-leaflet';
 // @ts-ignore
-import * as markerurl from 'leaflet/dist/images/marker-icon.png';
+import markerurl from 'leaflet/dist/images/marker-icon.png';
 // @ts-ignore
-import * as retinaurl from 'leaflet/dist/images/marker-icon-2x.png';
+import retinaurl from 'leaflet/dist/images/marker-icon-2x.png';
 // @ts-ignore
-import * as shadowurl from 'leaflet/dist/images/marker-shadow.png';
+import shadowurl from 'leaflet/dist/images/marker-shadow.png';
 // @ts-ignore
 import LMarkerCluster from 'vue2-leaflet-markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
@@ -72,6 +72,7 @@ export default defineComponent({
 
   setup(props, { emit }) {
     const mapRef = ref();
+    const mapReady = ref(false);
     const mapProps = reactive({
       bounds: null as L.LatLngBoundsExpression | null,
       zoom: 3,
@@ -139,25 +140,53 @@ export default defineComponent({
       }
     }
 
-    getMapData();
+    function onMapReady() {
+      // Add a small delay to ensure the map is fully initialized
+      setTimeout(() => {
+        mapReady.value = true;
+      }, 100);
+    }
+
+    onMounted(async () => {
+      await nextTick();
+      // Wait for map to be ready before loading data
+      if (!mapReady.value) {
+        setTimeout(() => {
+          if (mapReady.value) {
+            getMapData();
+          }
+        }, 200);
+      } else {
+        getMapData();
+      }
+    });
 
     watchEffect(() => {
-      if (mapRef.value && mapCenter.value) {
+      if (mapRef.value && mapCenter.value && mapReady.value) {
         const fitBoundsOptions = {
           padding: [20, 20],
           maxZoom: 5,
         };
-        mapRef.value.fitBounds(mapCenter.value, fitBoundsOptions);
-        mapRef.value.mapObject.invalidateSize(false);
+        nextTick(() => {
+          mapRef.value.fitBounds(mapCenter.value, fitBoundsOptions);
+          mapRef.value.mapObject.invalidateSize(false);
+        });
       }
     });
-    watch([toRef(props, 'conditions')], getMapData);
+
+    watch([toRef(props, 'conditions')], () => {
+      if (mapReady.value) {
+        getMapData();
+      }
+    });
 
     return {
       mapCenter,
       mapData,
       mapProps,
       mapRef,
+      mapReady,
+      onMapReady,
       /* methods */
       updateBounds,
     };
@@ -188,6 +217,7 @@ export default defineComponent({
         width: '100%',
         zIndex: 1,
       }"
+      @ready="onMapReady"
       @update:bounds="mapProps.bounds = $event"
     >
       <l-tile-layer
@@ -198,23 +228,26 @@ export default defineComponent({
           maxNativeZoom: 18,
         }"
       />
-      <l-marker-cluster>
-        <l-marker
-          v-for="(m, i) in mapData"
-          :key="i"
-          :lat-lng="m.latLng"
-        >
-          <l-popup>
-            <h3>Sample Collection</h3>
-            <ul>
-              <li>Ecosystem: {{ m.ecosystem }}</li>
-              <li>Ecosystem Category: {{ m.ecosystem_category }}</li>
-              <li>Latitude: {{ m.latitude }}</li>
-              <li>Longitude: {{ m.longitude }}</li>
-            </ul>
-          </l-popup>
-        </l-marker>
-      </l-marker-cluster>
+      <!-- Add a delay to prevent timing issues -->
+      <template v-if="mapReady">
+        <l-marker-cluster v-if="mapData.length > 0">
+          <l-marker
+            v-for="m in mapData"
+            :key="m.key"
+            :lat-lng="m.latLng"
+          >
+            <l-popup>
+              <h3>Sample Collection</h3>
+              <ul>
+                <li>Ecosystem: {{ m.ecosystem }}</li>
+                <li>Ecosystem Category: {{ m.ecosystem_category }}</li>
+                <li>Latitude: {{ m.latitude }}</li>
+                <li>Longitude: {{ m.longitude }}</li>
+              </ul>
+            </l-popup>
+          </l-marker>
+        </l-marker-cluster>
+      </template>
     </l-map>
   </div>
 </template>
