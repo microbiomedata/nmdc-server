@@ -4,9 +4,11 @@ module.exports = {
     'vuetify',
   ],
   devServer: {
-    overlay: {
-      warnings: true,
-      errors: true,
+    client: {
+      overlay: {
+        warnings: false,
+        errors: true
+      }
     },
     proxy: {
       '/api': {
