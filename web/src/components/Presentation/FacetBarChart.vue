@@ -103,11 +103,11 @@ export default defineComponent({
             true,
             count > 0 ? (
               ecosystems.find((e) => e.name === facet.facet)
-              || { color: root?.proxy.$vuetify.theme.currentTheme.primary }
+              || { color: root?.proxy.$vuetify?.theme.currentTheme.primary }
             ).color : 'lightgray',
             excludedCount,
             false,
-            excludedCount > 0 ? 'lightgray' : root?.proxy.$vuetify.theme.currentTheme.primary,
+            excludedCount > 0 ? 'lightgray' : root?.proxy.$vuetify?.theme.currentTheme.primary,
             count > 0 ? `${count}` : 'No match',
           ];
         },
