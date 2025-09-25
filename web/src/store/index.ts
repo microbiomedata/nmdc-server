@@ -1,7 +1,6 @@
-import Vue from 'vue';
-import CompositionApi, {
+import Vue, {
   computed, ComputedRef, reactive, toRefs, watchEffect,
-} from '@vue/composition-api';
+} from 'vue';
 import { noop, uniqWith } from 'lodash';
 import VueRouter from 'vue-router';
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
@@ -10,9 +9,6 @@ import {
 } from '@/data/api';
 import { User } from '@/types';
 import { clearQueryState, getQueryState, setQueryState } from '@/store/localStorage';
-
-// TODO: Remove in version 3;
-Vue.use(CompositionApi);
 
 let router: VueRouter | null = null;
 const state = reactive({

@@ -7,9 +7,11 @@ import {
   onMounted,
   ref,
   Ref,
-} from '@vue/composition-api';
+} from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
+import { PermissionTitle } from '@/views/SubmissionPortal/types';
+import { stateRefs } from '@/store';
 import {
   multiOmicsForm,
   studyForm,
@@ -19,8 +21,6 @@ import {
   canEditSubmissionMetadata,
   checkDoiFormat,
 } from '../store';
-import { PermissionTitle } from '@/views/SubmissionPortal/types';
-import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 

@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
-} from '@vue/composition-api';
+  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, getCurrentInstance,
+} from 'vue';
 import {
   clamp, debounce, flattenDeep, has, sum,
 } from 'lodash';
@@ -9,6 +9,22 @@ import { read, writeFile, utils } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
 
+import {
+  DATA_MG_INTERLEAVED,
+  DATA_MG,
+  DATA_MT,
+  DATA_MT_INTERLEAVED,
+  HARMONIZER_TEMPLATES,
+  EMSL,
+  JGI_MG,
+  JGI_MT,
+  JGI_MG_LR,
+  SuggestionsMode,
+} from '@/views/SubmissionPortal/types';
+import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
+import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
+import { stateRefs } from '@/store';
+import { getPendingSuggestions } from '@/store/localStorage';
 import HarmonizerApi from './harmonizerApi';
 import {
   packageName,
@@ -28,25 +44,9 @@ import {
   metadataSuggestions,
   isTestSubmission,
 } from './store';
-import {
-  DATA_MG_INTERLEAVED,
-  DATA_MG,
-  DATA_MT,
-  DATA_MT_INTERLEAVED,
-  HARMONIZER_TEMPLATES,
-  EMSL,
-  JGI_MG,
-  JGI_MT,
-  JGI_MG_LR,
-  SuggestionsMode,
-} from '@/views/SubmissionPortal/types';
-import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
-import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
-import { stateRefs } from '@/store';
-import { getPendingSuggestions } from '@/store/localStorage';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -105,8 +105,9 @@ export default defineComponent({
     SubmissionPermissionBanner,
   },
 
-  setup(_, { root }) {
+  setup() {
     const { user } = stateRefs;
+    const root = getCurrentInstance();
 
     const harmonizerElement = ref();
     const harmonizerApi = new HarmonizerApi();
@@ -180,12 +181,12 @@ export default defineComponent({
     ));
 
     const saveRecordRequest = useRequest();
-    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
+    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root?.proxy.$route.params.id as string));
 
     let changeBatch: any[] = [];
     const debouncedSuggestionRequest = debounce(async () => {
       const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-      await addMetadataSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!, changedRowData);
+      await addMetadataSuggestions(root?.proxy.$route.params.id as string, activeTemplate.value.schemaClass!, changedRowData);
       changeBatch = [];
     }, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
 
@@ -472,7 +473,7 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id, 'SubmittedPendingReview');
+      await submit(root?.proxy.$route.params.id as string, 'SubmittedPendingReview');
       submitDialog.value = false;
     });
 
@@ -587,7 +588,7 @@ export default defineComponent({
       const nextTemplate = HARMONIZER_TEMPLATES[nextTemplateKey];
 
       // Get the stashed suggestions (if any) for the next template and present them.
-      metadataSuggestions.value = getPendingSuggestions(root.$route.params.id, nextTemplate.schemaClass!);
+      metadataSuggestions.value = getPendingSuggestions(root?.proxy.$route.params.id as string, nextTemplate.schemaClass!);
 
       // When changing templates we may need to populate the common columns
       // from the environment tabs
@@ -610,7 +611,7 @@ export default defineComponent({
         harmonizerApi.loadData(activeTemplateData.value);
         addHooks();
         metadataSuggestions.value = getPendingSuggestions(
-          root.$route.params.id,
+          root?.proxy.$route.params.id as string,
           activeTemplate.value.schemaClass!,
         );
         if (!canEditSampleMetadata()) {
@@ -1115,7 +1116,8 @@ export default defineComponent({
 <style lang="scss">
 // Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
 // cannot be nested inside .harmonizer-style-container or else the measurements will be off.
-@import '~data-harmonizer/lib/dist/es/index';
+
+@import 'node_modules/data-harmonizer/lib/dist/es/index';
 
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples

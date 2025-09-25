@@ -1,14 +1,12 @@
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
-import Vue from 'vue';
-import CompositionApi, {
+import {
   computed, reactive, Ref, ref, shallowRef, watch,
-} from '@vue/composition-api';
+} from 'vue';
 import {
   chunk, clone, forEach, isString,
 } from 'lodash';
 import axios from 'axios';
-import * as api from './api';
 import { User } from '@/types';
 import {
   HARMONIZER_TEMPLATES,
@@ -36,9 +34,7 @@ import {
   SampleProtocol,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
-
-// TODO: Remove in version 3;
-Vue.use(CompositionApi);
+import * as api from './api';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, PermissionLevelValues> = {
   Viewer: 'viewer',

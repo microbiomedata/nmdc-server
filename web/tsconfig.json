@@ -13,6 +13,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "baseUrl": ".",
+    "skipLibCheck": true,
     "paths": {
       "@/*": [
         "src/*"
@@ -30,7 +31,7 @@
     "src/**/*.tsx",
     "src/**/*.vue",
     "tests/**/*.ts",
-    "tests/**/*.tsx",
+    "tests/**/*.tsx"
   ],
   "exclude": [
     "node_modules"
