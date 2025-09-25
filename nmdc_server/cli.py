@@ -216,10 +216,13 @@ def shell(print_sql: bool, script: Optional[Path]):
     from traitlets.config import Config
 
     imports = [
+        "from sqlalchmy import select",
         "from nmdc_server.config import settings",
         "from nmdc_server.database import SessionLocal, SessionLocalIngest",
         "from nmdc_server.models import "
         "Biosample, EnvoAncestor, EnvoTerm, EnvoTree, OmicsProcessing, Study",
+        "from nmdc_server.query import "
+        "SimpleConditionSchema, Operation, BiosampleQuerySchema, StudyQuerySchema",
     ]
 
     print("The following are auto-imported:")

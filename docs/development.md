@@ -357,9 +357,98 @@ imported, and `autoreload 2` enabled. To run it:
 docker-compose run --rm backend nmdc-server shell
 ```
 
-You can also pass `--print-sql` to output all SQL queries.
+You can also pass `--print-sql` to output all SQL queries. Note that if you have SQL logging enabled via the `NMDC_PRINT_SQL` environment variable, you will not need to pass `--print-sql` to the command.
+
+The shell can be very helpful for gaining an understanding of how the data model and query/filter classes work. Here are some prompts you can start with to explore the system.
+
+### Creating a `Session`
+
+You'll need a SQLAlchemy `session` object to perform queries. The functions needed to create a session (either for the "active" database or the "ingest" database) are included in the auto-import statements. To create a session that can talk to the "active" database, you can run:
+
+```python
+db = SessionLocal()
+```
+
+
+### Querying `Biosample`
+
+To create a basic SQLAlchemy `select` object (which can be executed against the session), run:
+
+```python
+select_statement = select(Biosample)
+```
+
+To actually execute the statement, you'll need to run:
+
+```python
+result = db.execute(select_statement)
+one_biosample = result.scalars().first()
+```
+
+Note that `result.scalars()` returns an instance of [ScalarResult](https://docs.sqlalchemy.org/en/14/core/connections.html#sqlalchemy.engine.ScalarResult). This can be used to get ORM objects. The above snippet uses the `first` method to retrieve a single biosample, which is an instace of `nmdc_server.models.Biosample`. For more details on using SQLAlchemy to explore results, see the official documentation.
+
+To see an example of how relationships work in SQLAlchemy, use the Biosample retrieved abolve and run:
+
+```python
+one_biosample.omics_processing
+```
+
+You can analyze the SQL output to better understand how this relationship works in SQLAlchemy, and what the engine needs to do to get from one entity (in this case, Biosample) to another (OmicsProcssing). This query in particular also reveals the association table between those two.
+
+### Use of `selectinload`
+
+Using the shell like this is a great way to explore SQLAlchemy ideas and concepts. Having this tool is important for analyzing performance and optimizing queries during search. Here is an example that illustrates how SQLAlchemy's `selectinload` can reduce the number of queries the system needs to run.
+
+```python
+from sqlalchem.orm import selectinload
+
+db = SessionLocal()
+biosample_query = db.query(Biosample).options(selectinload(Biosample.omics_processing))
+one_biosample = biosample_query[0]
+one_biosample.omics_processing
+```
+
+Executing the above line by line with SQL logging turned on will reveal that `selectinload` will query for the biosample's omics processing data before the property is accessed. The final line, `one_biosample.omics_processing` does not emit a SQL statement. That related information has already been retrieved, thanks to `selectinload`.
+
+### Simple Exploration of QuerySchema classes
+
+The following example illustrates how the `QuerySchema` and `ConditionSchema` classes are used to generate queries for searches from the data portal. `QuerySchema` classes contain important methods like `execute`, `query`, and `facet`. `ConditionSchema` classes model individual conditions (usually chosen by the user in the Data Portal's search sidebar). This example uses the `SimpleConditionSchema` class, which has the following properties:
+
+1. `op`: The operation (equals, greater than, etc.) to use. Expects a value from the `Operation` enum in `query.py`
+2. `table`: The table that contains the value we're searching on
+3. `field`: The column (or JSONb property within the `annotations` column) to search on
+4. `value`: The value used to search against.
+
+This structure mirrors the individual `conditions` sent to the API's `search/` endpoints.
+
+You can use these classes to run searches just like the API does, follow these steps in your shell to walk through a simple example.
+
+```python
+filter_conditions = [SimpleConditionSchema(table='biosample', field='latitude', value='45', op=Operation.greater)]
+```
+
+The `QuerySchema` classes expect an list of conditions, which is why we're wrapping our `SimpleConditionSchema` object in a list here.
+
+```python
+study_query_schema = StudyQuerySchema(conditions=conditions)
+```
+
+Instantiate the `StudyQuerySchema` class with our condition. We're going to use this class to query the database for all studies that have related biosamples in the latitude range specified by the condition above.
+
+```python
+db = SessionLocal()
+result = study_query_schema.execute(db)
+one_study = result[0]
+```
+
+The `execute` method will construct the query based on the conditions and execute it against the given SQLAlchemy `session` (in this case, the "active" database). Evaluating the result (in this case, retrieving the study at index `0`) will cause the SQL to run and be logged.
+
+As an exercise, try running the same search with an instance of the `BiosampleQuerySchema` class. Compare the SQL generated in both cases. It is quite different.
+
+Child classes of the `BaseQuerySchema` can override the default behavior. For example, study results need to inject counts of data types into the results.
+
+For more on how `Conditions` are tranformed into `Filters`, see the `BaseQuerySchema` class, and the `filters.py` module.
 
 ## Google Analytics
 
 The frontend Vue app is configured to work with Google Analytics. There are two Google Analytics "properties" for the NMDC Data Portal. One is for the production site. One is for the dev site as well as local development. Each GA property has its own GA ID associated with it. This ID gets pulled into the view app from an environment variable called `VUE_APP_NMDC_GOOGLE_ANALYTICS_ID`. You can set this inside a `.env` file inside the `web` directory (note this is separate from the `.env` file at the root of the project).
-
