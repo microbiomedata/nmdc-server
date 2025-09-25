@@ -7,7 +7,7 @@ declare module '*.vue' {
 declare module 'data-harmonizer';
 declare function $(...args: any[]): any;
 
-declare module '*.png' {
+declare module "*.png" {
   const value: string;
   export default value;
 }
