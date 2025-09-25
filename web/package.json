@@ -86,7 +86,8 @@
     "vue-cli-plugin-vuetify": "^2.4.5",
     "vue-cli-plugin-yaml": "^1.0.2",
     "vue-template-compiler": "^2.7.0",
-    "vuetify-loader": "^1.7.3"
+    "vuetify-loader": "^1.7.3",
+    "webpack": "^5.101.3"
   },
   "browserslist": [
     "> 1%",

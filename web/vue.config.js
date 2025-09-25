@@ -1,5 +1,6 @@
 const { defineConfig } = require('@vue/cli-service');
 const webpack = require('webpack');
+
 module.exports = defineConfig({
   publicPath: '/',
   transpileDependencies: [
@@ -8,9 +9,9 @@ module.exports = defineConfig({
   configureWebpack: {
     resolve: {
       fallback: {
-        "process": require.resolve("process/browser"),
-        "buffer": require.resolve("buffer"),
-      }
+        process: require.resolve('process/browser'),
+        buffer: require.resolve('buffer'),
+      },
     },
     plugins: [
       new webpack.ProvidePlugin({
@@ -18,9 +19,9 @@ module.exports = defineConfig({
         Buffer: ['buffer', 'Buffer'],
       }),
       new webpack.DefinePlugin({
-        'process.env': JSON.stringify(process.env)
-      })
-    ]
+        'process.env': JSON.stringify(process.env),
+      }),
+    ],
   },
   devServer: {
     client: {
