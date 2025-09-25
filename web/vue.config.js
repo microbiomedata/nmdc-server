@@ -11,6 +11,7 @@ module.exports = defineConfig({
       fallback: {
         process: require.resolve('process/browser'),
         buffer: require.resolve('buffer'),
+        querystring: require.resolve('querystring-es3'),
       },
     },
     plugins: [
