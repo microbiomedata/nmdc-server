@@ -57,6 +57,28 @@ jobs:
           file: ${{ matrix.image == 'client' && 'web/Dockerfile' || 'Dockerfile' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Specify `--build-args` for the underlying `$ docker build` command.
+          #
+          # If the image being built is the one named "client", then set the "build argument"
+          # named `VUE_APP_NMDC_GOOGLE_ANALYTICS_ID` to either the production or development
+          # Google Analytics "Measurement ID" value, depending upon the `IS_PROD_RELEASE`
+          # environment variable. Those GA "Measurement ID" values are stored in
+          # repository-level variables, which are accessible via `vars.*`.
+          #
+          # References:
+          # - https://github.com/docker/build-push-action/blob/master/README.md#inputs (RE: "build-args")
+          # - https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#format (RE: "format")
+          # - https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables#using-contexts-to-access-variable-values (RE: "vars")
+          #
+          build-args: |
+            ${{ 
+              matrix.image == 'client' &&
+              format(
+                'VUE_APP_NMDC_GOOGLE_ANALYTICS_ID={0}',
+                env.IS_PROD_RELEASE == 'true' && vars.GOOGLE_ANALYTICS_ID_PROD ||
+                vars.GOOGLE_ANALYTICS_ID_DEV
+              )
+            }}
 
   redeploy:
     needs: build
