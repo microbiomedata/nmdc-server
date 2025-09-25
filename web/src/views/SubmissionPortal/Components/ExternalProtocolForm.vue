@@ -60,9 +60,11 @@ export default defineComponent({
         (value: string) => {
           if (!value) return true;
 
-          const isValidDoi = checkDoiFormat(value);
+          // Split by comma and validate each DOI
+          const dois = value.split(',').map((doi) => doi.trim());
+          const allValid = dois.every((doi) => checkDoiFormat(doi));
 
-          return isValidDoi || 'Must be a valid DOI';
+          return allValid || 'All DOIs must be valid (comma-separated if multiple)';
         },
       ]
     );
@@ -72,10 +74,12 @@ export default defineComponent({
         (value: string) => {
           if (!value) return true;
 
+          // Split by comma and validate each URL
+          const urls = value.split(',').map((url) => url.trim());
           const urlRegex = /^https?:\/\//i;
-          const isValidUrl = urlRegex.test(value);
+          const allValid = urls.every((url) => urlRegex.test(url));
 
-          return isValidUrl || 'Must be a valid URL';
+          return allValid || 'All URLs must be valid (comma-separated if multiple)';
         },
       ]
     );
@@ -218,7 +222,7 @@ export default defineComponent({
                       </v-icon>
                     </template>
                     <span>
-                      Provide a DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple DOIs can be provided.              </span>
+                      Provide a DOI for the protocol. This is a DOI for publicly available documentation that describes the experimental protocol in detail, not for the research study publication. Multiple DOIs can be provided.              </span>
                   </v-tooltip>
                 </template>
               </v-text-field>
@@ -251,7 +255,7 @@ export default defineComponent({
                       </v-icon>
                     </template>
                     <span>
-                      Provide a URL for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple URLs can be provided.
+                      Provide a URL for the protocol. This is a URL for publicly available documentation that describes the experimental protocol in detail, not for the research study publication. Multiple URLs can be provided.
                     </span>
                   </v-tooltip>
                 </template>
@@ -372,7 +376,7 @@ export default defineComponent({
                     </v-icon>
                   </template>
                   <span>
-                    Provide a DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple DOIs can be provided.
+                    Provide a DOI for the protocol. This is a DOI for publicly available documentation that describes the experimental protocol in detail, not for the research study publication. Multiple DOIs can be provided.
                   </span>
                 </v-tooltip>
               </template>
@@ -406,7 +410,7 @@ export default defineComponent({
                     </v-icon>
                   </template>
                   <span>
-                    Provide a URL for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple URLs can be provided.
+                    Provide a URL for the protocol. This is a URL for publicly available documentation that describes the experimental protocol in detail, not for the research study publication. Multiple URLs can be provided.
                   </span>
                 </v-tooltip>
               </template>
@@ -527,7 +531,7 @@ export default defineComponent({
                       </v-icon>
                     </template>
                     <span>
-                      Provide a DOI for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple DOIs can be provided.
+                      Provide a DOI for the protocol. This is a DOI for publicly available documentation that describes the experimental protocol in detail, not for the research study publication. Multiple DOIs can be provided.
                     </span>
                   </v-tooltip>
                 </template>
@@ -561,7 +565,7 @@ export default defineComponent({
                       </v-icon>
                     </template>
                     <span>
-                      Provide a URL for the protocol. This is not for the study publication, but a public protocol that explains the protocol in detail. Multiple URLs can be provided.
+                      Provide a URL for the protocol. This is a URL for publicly available documentation that describes the experimental protocol in detail, not for the research study publication. Multiple URLs can be provided.
                     </span>
                   </v-tooltip>
                 </template>
