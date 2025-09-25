@@ -177,10 +177,10 @@ const multiOmicsFormDefault = {
   ship: undefined as undefined | boolean,
   studyNumber: '',
   unknownDoi: undefined as undefined | boolean,
-  mpProtocols: protocols,
-  mbProtocols: protocols,
-  lipProtocols: protocols,
-  nomProtocols: protocols,
+  mpProtocols: undefined as undefined | typeof protocols,
+  mbProtocols: undefined as undefined | typeof protocols,
+  lipProtocols: undefined as undefined | typeof protocols,
+  nomProtocols: undefined as undefined | typeof protocols,
 };
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
