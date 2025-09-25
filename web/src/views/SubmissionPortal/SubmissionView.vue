@@ -9,12 +9,12 @@ import {
 } from 'vue';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';
-import { loadRecord } from './store';
 import AppBanner from '@/components/AppBanner.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import LoginPrompt from '@/views/SubmissionPortal/Components/LoginPrompt.vue';
+import { loadRecord } from './store';
 
 export default defineComponent({
   components: {

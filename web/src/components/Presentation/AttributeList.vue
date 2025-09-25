@@ -4,11 +4,11 @@ import { isObject } from 'lodash';
 
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
-import AttributeItem from './AttributeItem.vue';
 import { formatBiosampleDepth } from '@/util';
 import gold from '@/assets/GOLD.png';
 import img from '@/assets/IMG.png';
 import emsl from '@/assets/EMSL.png';
+import AttributeItem from './AttributeItem.vue';
 
 export default defineComponent({
   components: { AttributeItem },

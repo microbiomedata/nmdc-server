@@ -9,6 +9,22 @@ import { read, writeFile, utils } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
 
+import {
+  DATA_MG_INTERLEAVED,
+  DATA_MG,
+  DATA_MT,
+  DATA_MT_INTERLEAVED,
+  HARMONIZER_TEMPLATES,
+  EMSL,
+  JGI_MG,
+  JGI_MT,
+  JGI_MG_LR,
+  SuggestionsMode,
+} from '@/views/SubmissionPortal/types';
+import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
+import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
+import { stateRefs } from '@/store';
+import { getPendingSuggestions } from '@/store/localStorage';
 import HarmonizerApi from './harmonizerApi';
 import {
   packageName,
@@ -28,25 +44,9 @@ import {
   metadataSuggestions,
   isTestSubmission,
 } from './store';
-import {
-  DATA_MG_INTERLEAVED,
-  DATA_MG,
-  DATA_MT,
-  DATA_MT_INTERLEAVED,
-  HARMONIZER_TEMPLATES,
-  EMSL,
-  JGI_MG,
-  JGI_MT,
-  JGI_MG_LR,
-  SuggestionsMode,
-} from '@/views/SubmissionPortal/types';
-import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
-import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
-import { stateRefs } from '@/store';
-import { getPendingSuggestions } from '@/store/localStorage';
 
 interface ValidationErrors {
   [error: string]: [number, number][],

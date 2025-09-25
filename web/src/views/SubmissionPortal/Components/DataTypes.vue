@@ -1,9 +1,9 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   multiOmicsForm, templateHasData,
 } from '../store';
-import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import ExternalProtocolForm from './ExternalProtocolForm.vue';
 
 export default defineComponent({

@@ -10,11 +10,11 @@ import {
 
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
+import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
   templateHasData, checkDoiFormat,
 } from '../store';
-import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';

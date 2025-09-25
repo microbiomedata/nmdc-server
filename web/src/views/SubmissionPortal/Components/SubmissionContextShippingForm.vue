@@ -9,12 +9,12 @@ import {
 } from 'vue';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
 import {
   addressForm,
   addressFormValid,
   canEditSubmissionMetadata,
 } from '../store';
-import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 

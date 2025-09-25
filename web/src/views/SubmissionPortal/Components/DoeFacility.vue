@@ -1,10 +1,10 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
+import Definitions from '@/definitions';
 import {
   multiOmicsForm, addAwardDoi, templateHasData, checkJGITemplates,
 } from '../store';
-import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
-import Definitions from '@/definitions';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 
 export default defineComponent({

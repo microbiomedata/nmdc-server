@@ -7,7 +7,6 @@ import {
   chunk, clone, forEach, isString,
 } from 'lodash';
 import axios from 'axios';
-import * as api from './api';
 import { User } from '@/types';
 import {
   HARMONIZER_TEMPLATES,
@@ -35,6 +34,7 @@ import {
   SampleProtocol,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
+import * as api from './api';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, PermissionLevelValues> = {
   Viewer: 'viewer',

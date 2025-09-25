@@ -5,17 +5,11 @@ import {
 import { DataOptions, DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
-import {
-  generateRecord, submissionStatus,
-} from '../store';
-import * as api from '../store/api';
-import OrcidId from '../../../components/Presentation/OrcidId.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
-import { deleteSubmission, updateRecord } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
   MetadataSubmissionRecord,
@@ -23,6 +17,12 @@ import {
   PaginatedResponse,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
+import { deleteSubmission, updateRecord } from '../store/api';
+import OrcidId from '../../../components/Presentation/OrcidId.vue';
+import * as api from '../store/api';
+import {
+  generateRecord, submissionStatus,
+} from '../store';
 
 const headers: DataTableHeader[] = [
   {
