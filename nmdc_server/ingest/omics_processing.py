@@ -148,7 +148,13 @@ def get_poolable_replicate_manifest(
     return omics_processing_id
 
 
-def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, logger, config_map):
+def load_omics_processing(  # noqa: C901
+    db: Session,
+    obj: Dict[str, Any],
+    mongodb: Database,
+    logger,
+    config_map,
+):
     logger = get_logger(__name__)
     input_ids: list[str] = obj.pop("has_input", [""])
     biosample_input_ids: set[str] = set()
@@ -172,8 +178,13 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
 
     data_objects = obj.pop("has_output", [])
     obj["study_id"] = obj.pop("associated_studies", [None])[0]
-    obj["analyte_category"] = omics_types[obj["analyte_category"].lower()]
-    obj["omics_type"] = omics_types[obj["analyte_category"].lower()]
+    original_analyte_category = obj["analyte_category"].lower()
+    obj["analyte_category"] = omics_types[original_analyte_category]
+    obj["omics_type"] = omics_types[original_analyte_category]
+
+    # Get amplicon specific fields
+    if obj["omics_type"] == "Amplicon":
+        load_amplicon_data(obj, input_ids, mongodb)
 
     # Get instrument name
     instrument_id = obj.pop("instrument_used", [])
@@ -206,7 +217,7 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
     omics_processing = models.OmicsProcessing(**OmicsProcessing(**obj).dict())
     for biosample_object in biosample_input_objects:
         # mypy thinks that omics_processing.biosample_inputs is of type Biosample
-        omics_processing.biosample_inputs.append(biosample_object)  # type: ignore
+        omics_processing.biosample_inputs.append(biosample_object)
 
     manifest_id: str = omics_processing.id
     for data_object_id in data_objects:
@@ -222,12 +233,37 @@ def load_omics_processing(db: Session, obj: Dict[str, Any], mongodb: Database, l
         # output of an omics_processing)
         data_object.workflow_type = WorkflowActivityTypeEnum.raw_data.value
         db.add(data_object)
-        omics_processing.outputs.append(data_object)  # type: ignore
+        omics_processing.outputs.append(data_object)
 
         manifest_id = get_poolable_replicate_manifest(omics_processing.id, data_object_id, mongodb)
 
     omics_processing.poolable_replicates_manifest_id = manifest_id
     db.add(omics_processing)
+
+
+def load_amplicon_data(obj, input_ids, mongodb):
+    """
+    Load amplicon-specific fields for omics processing records.
+
+    Args:
+        obj: The omics processing object to populate with amplicon data
+        input_ids: List of input IDs to search for material processing data
+        mongodb: MongoDB database connection
+    """
+    for input_id in input_ids:
+        material_processing_set = mongodb["material_processing_set"].find_one(
+            {"has_output": {"$in": [input_id]}}
+        )
+        if material_processing_set and "target_gene" in material_processing_set:
+            obj["target_gene"] = material_processing_set["target_gene"]
+            target_subfragment = material_processing_set["target_subfragment"]
+            if isinstance(target_subfragment, dict) and "has_raw_value" in target_subfragment:
+                obj["target_subfragment"] = target_subfragment["has_raw_value"]
+            else:
+                obj["target_subfragment"] = target_subfragment
+        else:
+            obj["target_gene"] = None
+            obj["target_subfragment"] = None
 
 
 def load(db: Session, cursor: Cursor, mongodb: Database):

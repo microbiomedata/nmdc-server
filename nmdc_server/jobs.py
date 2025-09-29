@@ -1,12 +1,11 @@
-import logging
 from pathlib import Path
 
 from alembic import command
 from alembic.config import Config
+from sqlalchemy import text
 from sqlalchemy.orm import lazyload
 
 from nmdc_server import database, models
-from nmdc_server.celery_config import celery_app
 from nmdc_server.config import settings
 from nmdc_server.ingest.all import load
 from nmdc_server.ingest.common import maybe_merge_download_artifact, merge_download_artifact
@@ -16,11 +15,6 @@ from nmdc_server.logger import get_logger
 HERE = Path(__file__).parent
 
 logger = get_logger(__name__)
-
-
-@celery_app.task
-def ping():
-    return True
 
 
 def update_nmdc_functions():
@@ -63,7 +57,7 @@ def do_ingest(function_limit, skip_annotation):
 
     with database.SessionLocalIngest() as ingest_db:
         try:
-            ingest_db.execute("select truncate_tables()").all()
+            ingest_db.execute(text("select truncate_tables()")).all()
         except Exception:
             # eat the exception, we'll truncate after migration
             ingest_db.rollback()
@@ -72,7 +66,7 @@ def do_ingest(function_limit, skip_annotation):
 
     with database.SessionLocalIngest() as ingest_db, database.SessionLocal() as prod_db:
         with ingest_lock(prod_db):
-            ingest_db.execute("select truncate_tables()").all()
+            ingest_db.execute(text("select truncate_tables()")).all()
 
             # Copy persistent data that does not depend on ingest FK
             merge_download_artifact(ingest_db, prod_db.query(models.User))
@@ -101,12 +95,3 @@ def do_ingest(function_limit, skip_annotation):
             )
 
     logger.info("Ingest finished successfully")
-
-
-@celery_app.task
-def ingest(function_limit=None, skip_annotation=False):
-    """Truncate database and ingest all data from the mongo source."""
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
-    logger.setLevel(logging.INFO)
-
-    do_ingest(function_limit, skip_annotation)

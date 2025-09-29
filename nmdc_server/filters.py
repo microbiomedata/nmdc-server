@@ -79,7 +79,7 @@ class BaseFilter:
         target_table: Table,
     ) -> Query:
         """Get a query representing unique id's of the target table matching the conditions."""
-        query = db.query(func.distinct(target_table.model.id).label("id"))  # type: ignore
+        query = db.query(func.distinct(target_table.model.id).label("id"))
         return self._apply_conditions(query, target_table)
 
     def _apply_conditions(
@@ -268,9 +268,7 @@ class WorkflowExecutionFilter(OmicsProcessingFilter):
         q = query.join(
             association_table,
             association_table.c.data_generation_id == models.OmicsProcessing.id,
-        ).join(
-            model, model.id == association_table.c[f"{self.table.value}_id"]  # type: ignore
-        )
+        ).join(model, model.id == association_table.c[f"{self.table.value}_id"])
         return q
 
 

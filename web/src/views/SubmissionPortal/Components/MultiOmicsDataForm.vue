@@ -120,6 +120,10 @@ export default defineComponent({
       multiOmicsForm.mtCompatible = undefined;
       multiOmicsForm.mtInterleaved = undefined;
       multiOmicsForm.facilities = [];
+      multiOmicsForm.lipProtocols = undefined;
+      multiOmicsForm.mbProtocols = undefined;
+      multiOmicsForm.nomProtocols = undefined;
+      multiOmicsForm.mpProtocols = undefined;
       revalidate();
     }
 

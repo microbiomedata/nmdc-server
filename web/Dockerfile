@@ -1,4 +1,15 @@
 FROM node:lts as build-stage
+
+# Define a "build argument" (i.e. a build-time parameter), which can be set via
+# the `--build-arg KEY=VALUE` argument to the `$ docker build` command.
+# Docs: https://docs.docker.com/build/building/variables/#arg-usage-example
+ARG VUE_APP_NMDC_GOOGLE_ANALYTICS_ID=""
+
+# Define an environment variable within the container image, whose value is
+# the one passed in via the "build argument" defined above.
+# Docs: https://docs.docker.com/build/building/variables/#env-usage-example
+ENV VUE_APP_NMDC_GOOGLE_ANALYTICS_ID=${VUE_APP_NMDC_GOOGLE_ANALYTICS_ID}
+
 ENV NODE_OPTIONS=--openssl-legacy-provider
 WORKDIR /app
 COPY package*.json yarn.lock ./

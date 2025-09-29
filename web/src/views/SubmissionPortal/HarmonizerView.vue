@@ -129,9 +129,10 @@ export default defineComponent({
 
     const submitDialog = ref(false);
 
-    const snackbar = ref(false);
+    const validationSuccessSnackbar = ref(false);
     const importErrorSnackbar = ref(false);
     const notImportedWorksheetNames = ref([] as string[]);
+    const emptySheetSnackbar = ref(false);
 
     watch(activeTemplate, () => {
       // WARNING: It's important to do the column settings update /before/ data. Otherwise,
@@ -387,7 +388,25 @@ export default defineComponent({
     }
 
     async function validate() {
-      const data = harmonizerApi.exportJson();
+      const data = harmonizerApi.exportJson(); // Gets data from harmonizer API
+
+      // Check if the spreadsheet is empty
+      const isEmpty = Object.keys(data).length === 0;
+      // Update invalid cells if empty
+      if (isEmpty) {
+        invalidCells.value = {
+          ...invalidCells.value,
+          [activeTemplateKey.value]: data,
+        };
+        tabsValidated.value = {
+          ...tabsValidated.value,
+          [activeTemplateKey.value]: false,
+        };
+        emptySheetSnackbar.value = true;
+
+        return;
+      }
+
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
       const result = await harmonizerApi.validate();
       const valid = Object.keys(result).length === 0;
@@ -408,7 +427,7 @@ export default defineComponent({
         [activeTemplateKey.value]: valid,
       };
 
-      snackbar.value = Object.values(tabsValidated.value).every((value) => value);
+      validationSuccessSnackbar.value = Object.values(tabsValidated.value).every((value) => value);
     }
 
     const canSubmit = computed(() => {
@@ -643,10 +662,11 @@ export default defineComponent({
       submissionStatus,
       status,
       submitDialog,
-      snackbar,
+      validationSuccessSnackbar,
       schemaLoading,
       importErrorSnackbar,
       notImportedWorksheetNames,
+      emptySheetSnackbar,
       isTestSubmission,
       /* methods */
       doSubmit,
@@ -695,7 +715,7 @@ export default defineComponent({
           </v-icon>
         </v-btn>
         <v-snackbar
-          v-model="snackbar"
+          v-model="validationSuccessSnackbar"
           color="success"
           timeout="3000"
         >
@@ -707,6 +727,13 @@ export default defineComponent({
           timeout="5000"
         >
           The following worksheet names were not recognized: {{ notImportedWorksheetNames.join(', ') }}
+        </v-snackbar>
+        <v-snackbar
+          v-model="emptySheetSnackbar"
+          color="error"
+          timeout="5000"
+        >
+          The spreadsheet is empty. Please add data.
         </v-snackbar>
         <v-card
           v-if="validationErrorGroups.length"

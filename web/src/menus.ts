@@ -84,10 +84,14 @@ const Menus = [
         label: 'Data Integration',
         href: 'https://microbiomedata.org/data-integration/',
       },
+      {
+        label: 'Learning Resources',
+        href: 'https://microbiomedata.org/certificate-program/',
+      },
     ],
   },
   {
-    label: 'Partner with Us',
+    label: 'Get Involved',
     href: 'https://microbiomedata.org/community/',
     items: [
       {

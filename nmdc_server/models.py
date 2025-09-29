@@ -1,5 +1,5 @@
 import enum
-from datetime import datetime
+from datetime import UTC, datetime
 from itertools import chain
 from typing import Any, Dict, Iterator, List, Optional, Type, Union
 from uuid import uuid4
@@ -357,7 +357,7 @@ class Study(Base, AnnotatedModel):
     @property
     def doi_map(self) -> Dict[str, Any]:
         doi_info = dict()
-        for doi in self.dois:  # type: ignore
+        for doi in self.dois:
             doi_info[doi.id] = {
                 "info": doi.info,
                 "category": doi.doi_type,
@@ -393,7 +393,10 @@ class Biosample(Base, AnnotatedModel):
     multiomics = Column(Integer, nullable=False, default=0)
     emsl_biosample_identifiers = Column(JSONB, nullable=True)
     omics_processing = relationship(
-        "OmicsProcessing", secondary=biosample_input_association, back_populates="biosample_inputs"
+        "OmicsProcessing",
+        secondary=biosample_input_association,
+        back_populates="biosample_inputs",
+        cascade_backrefs=False,
     )
 
     # gold terms
@@ -403,7 +406,7 @@ class Biosample(Base, AnnotatedModel):
     ecosystem_subtype = Column(String, nullable=True)
     specific_ecosystem = Column(String, nullable=True)
 
-    study = relationship(Study, backref="biosamples")
+    study = relationship(Study, backref=backref("biosamples", cascade_backrefs=False))
     env_broad_scale = relationship(EnvoTerm, foreign_keys=[env_broad_scale_id], lazy="joined")
     env_local_scale = relationship(EnvoTerm, foreign_keys=[env_local_scale_id], lazy="joined")
     env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
@@ -710,10 +713,13 @@ class OmicsProcessing(Base, AnnotatedModel):
     add_date = Column(DateTime, nullable=True)
     mod_date = Column(DateTime, nullable=True)
     biosample_inputs = relationship(
-        "Biosample", secondary=biosample_input_association, back_populates="omics_processing"
+        "Biosample",
+        secondary=biosample_input_association,
+        back_populates="omics_processing",
+        cascade_backrefs=False,
     )
     study_id = Column(String, ForeignKey("study.id"), nullable=True)
-    study = relationship("Study", backref="omics_processing")
+    study = relationship("Study", backref=backref("omics_processing", cascade_backrefs=False))
 
     outputs = output_relationship(omics_processing_output_association)
     has_outputs = association_proxy("outputs", "id")
@@ -790,17 +796,17 @@ class OmicsProcessing(Base, AnnotatedModel):
     @property
     def omics_data(self) -> Iterator["PipelineStep"]:
         return chain(
-            self.reads_qc,  # type: ignore
-            self.metatranscriptome_annotation,  # type: ignore
-            self.metaproteomic_analysis,  # type: ignore
-            self.mags_analysis,  # type: ignore
-            self.read_based_analysis,  # type: ignore
-            self.nom_analysis,  # type: ignore
-            self.metabolomics_analysis,  # type: ignore
-            self.metatranscriptome,  # type: ignore
-            self.metagenome_assembly,  # type: ignore
-            self.metatranscriptome_assembly,  # type: ignore
-            self.metagenome_annotation,  # type: ignore
+            self.reads_qc,
+            self.metatranscriptome_annotation,
+            self.metaproteomic_analysis,
+            self.mags_analysis,
+            self.read_based_analysis,
+            self.nom_analysis,
+            self.metabolomics_analysis,
+            self.metatranscriptome,
+            self.metagenome_assembly,
+            self.metatranscriptome_assembly,
+            self.metagenome_annotation,
         )
 
 
@@ -844,7 +850,7 @@ class DataObject(Base):
     def downloads(self) -> int:
         # TODO: This can probably be done with a more efficient aggregation
         if self._download_count is None:
-            return len(self.download_entities) + len(self.bulk_download_entities)  # type: ignore
+            return len(self.download_entities) + len(self.bulk_download_entities)
         return self._download_count
 
 
@@ -877,7 +883,7 @@ class FileDownload(Base):
     __tablename__ = "file_download"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     data_object_id = Column(String, ForeignKey("data_object.id"), nullable=False, index=True)
     ip = Column(String, nullable=False)
     user_agent = Column(String, nullable=True)
@@ -892,7 +898,7 @@ class IngestLock(Base):
     __table_args__ = (CheckConstraint("id", name="singleton"),)
 
     id = Column(Boolean, primary_key=True, default=True)
-    started = Column(DateTime, nullable=False, default=datetime.utcnow)
+    started = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
 
 ModelType = Union[
@@ -984,7 +990,7 @@ class BulkDownload(Base):
     __tablename__ = "bulk_download"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
 
     # information about the requestor (as in the FileDownload table)
     orcid = Column(String, nullable=False)
@@ -1010,10 +1016,13 @@ class BulkDownloadDataObject(Base):
     path = Column(String, nullable=False)
 
     bulk_download = relationship(
-        BulkDownload, backref=backref("files", lazy="joined", cascade="all")
+        BulkDownload, backref=backref("files", lazy="joined", cascade="all", cascade_backrefs=False)
     )
     data_object = relationship(
-        DataObject, lazy="joined", cascade="save-update,delete", backref="bulk_download_entities"
+        DataObject,
+        lazy="joined",
+        cascade="save-update,delete",
+        backref=backref("bulk_download_entities", cascade_backrefs=False),
     )
 
 
@@ -1101,7 +1110,7 @@ class SubmissionMetadata(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     author_orcid = Column(String, nullable=False)
-    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created = Column(DateTime, nullable=False, default=lambda: datetime.now(UTC))
     status = Column(String, nullable=False, default=SubmissionStatusEnum.InProgress.text)
     metadata_submission = Column(JSONB, nullable=False)
     author_id = Column(UUID(as_uuid=True), ForeignKey(User.id))
@@ -1110,7 +1119,7 @@ class SubmissionMetadata(Base):
     field_notes_metadata = Column(JSONB, nullable=True)
     is_test_submission = Column(Boolean, nullable=False, default=False)
     date_last_modified = Column(
-        DateTime, nullable=False, default=datetime.utcnow, onupdate=func.now()
+        DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=func.now()
     )
 
     # The client which initially created the submission. A null value indicates it was created by
@@ -1128,10 +1137,10 @@ class SubmissionMetadata(Base):
         foreign_keys=[locked_by_id],
         primaryjoin="SubmissionMetadata.locked_by_id == User.id",
     )
-    lock_updated = Column(DateTime, nullable=True, default=datetime.utcnow)
+    lock_updated = Column(DateTime, nullable=True, default=lambda: datetime.now(UTC))
 
     # Roles
-    roles = relationship("SubmissionRole", back_populates="submission")
+    roles = relationship("SubmissionRole", back_populates="submission", cascade_backrefs=False)
 
     # Images
     pi_image_name = Column(String, ForeignKey(SubmissionImagesObject.name), nullable=True)
@@ -1158,45 +1167,29 @@ class SubmissionMetadata(Base):
 
     @property
     def editors(self) -> list[str]:
-        return [
-            role.user_orcid
-            for role in self.roles  # type: ignore
-            if role.role == SubmissionEditorRole.editor
-        ]
+        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.editor]
 
     @property
     def viewers(self) -> list[str]:
-        return [
-            role.user_orcid
-            for role in self.roles  # type: ignore
-            if role.role == SubmissionEditorRole.viewer
-        ]
+        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.viewer]
 
     @property
     def metadata_contributors(self) -> list[str]:
         return [
             role.user_orcid
-            for role in self.roles  # type: ignore
+            for role in self.roles
             if role.role == SubmissionEditorRole.metadata_contributor
         ]
 
     @property
     def owners(self) -> list[str]:
-        return [
-            role.user_orcid
-            for role in self.roles  # type: ignore
-            if role.role == SubmissionEditorRole.owner
-        ]
+        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.owner]
 
     @property
     def study_images_total_size(self) -> int:
         """Calculate the total size (in bytes) of all study images associated with this
         submission."""
-        return (
-            sum(image.size for image in self.study_images)  # type: ignore
-            if self.study_images
-            else 0
-        )
+        return sum(image.size for image in self.study_images) if self.study_images else 0
 
     @property
     def sample_count(self) -> int:
@@ -1223,7 +1216,7 @@ class SubmissionRole(Base):
     user_orcid = Column(String, primary_key=True)
     role = Column(Enum(SubmissionEditorRole))
 
-    submission = relationship("SubmissionMetadata", back_populates="roles")
+    submission = relationship("SubmissionMetadata", back_populates="roles", cascade_backrefs=False)
 
 
 class AuthorizationCode(Base):
@@ -1231,7 +1224,7 @@ class AuthorizationCode(Base):
 
     code = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     user_id = Column(UUID(as_uuid=True), ForeignKey(User.id), nullable=False)
-    created = Column(DateTime, nullable=False, default=datetime.utcnow)
+    created = Column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
     redirect_uri = Column(String, nullable=False)
     exchanged = Column(Boolean, nullable=False, default=False)
 

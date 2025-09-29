@@ -44,8 +44,8 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     to allow for a faster ingest for testing.  The full result set takes several
     hours to process.
 
-    This function is called both from the CLI (for development) and from the ingest
-    celery function (in production).  Watch for warnings during ingest for ignored
+    This function is called from the `nmdc-server` CLI.
+    Watch for warnings during ingest for ignored
     entities due to invalid foreign key references.
     """
     logger = get_logger(__name__)

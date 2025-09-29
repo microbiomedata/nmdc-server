@@ -17,7 +17,7 @@ from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
-from nmdc_server import crud, jobs, models, query, schemas, schemas_submission
+from nmdc_server import crud, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
@@ -28,7 +28,6 @@ from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
 from nmdc_server.metadata import SampleMetadataSuggester
 from nmdc_server.models import (
-    IngestLock,
     SubmissionEditorRole,
     SubmissionImagesObject,
     SubmissionMetadata,
@@ -658,38 +657,6 @@ async def get_pi_image(principal_investigator_id: UUID, db: Session = Depends(ge
 
 
 @router.post(
-    "/jobs/ping",
-    tags=["jobs"],
-    responses=login_required_responses,
-)
-async def ping_celery(user: models.User = Depends(admin_required)) -> bool:
-    try:
-        return jobs.ping.delay().wait(timeout=0.5)
-    except TimeoutError:
-        return False
-
-
-@router.post(
-    "/jobs/ingest",
-    tags=["jobs"],
-    responses=login_required_responses,
-)
-async def run_ingest(
-    user: models.User = Depends(admin_required),
-    params: schemas.IngestArgumentSchema = schemas.IngestArgumentSchema(),
-    db: Session = Depends(get_db),
-):
-    lock = db.query(IngestLock).first()
-    if lock:
-        raise HTTPException(
-            status_code=409,
-            detail=f"An ingest started at {lock.started} is already in progress",
-        )
-    jobs.ingest.delay(function_limit=params.function_limit, skip_annotation=params.skip_annotation)
-    return ""
-
-
-@router.post(
     "/bulk_download",
     tags=["download"],
     response_model=BulkDownload,
@@ -1127,7 +1094,7 @@ async def get_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission: Optional[models.SubmissionMetadata] = db.query(SubmissionMetadata).get(id)
+    submission: Optional[models.SubmissionMetadata] = db.get(SubmissionMetadata, id)  # type: ignore
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -1198,7 +1165,7 @@ async def update_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = db.query(SubmissionMetadata).get(id)
+    submission = db.get(SubmissionMetadata, id)  # type: ignore
     body_dict = body.dict(exclude_unset=True)
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
@@ -1242,8 +1209,10 @@ async def update_submission(
         submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
     if "templates" in body_dict["metadata_submission"]:
         submission.templates = body_dict["metadata_submission"]["templates"]
-    # Update permissions and status iff the user is an "owner"
-    if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner:
+    # Update permissions and status if the user is an "owner" or "admin"
+    if (
+        current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
+    ) or user.is_admin:
         new_permissions = body_dict.get("permissions", None)
         if new_permissions is not None:
             crud.update_submission_contributor_roles(db, submission, new_permissions)
@@ -1426,7 +1395,7 @@ async def delete_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ):
-    submission = db.query(SubmissionMetadata).get(id)
+    submission = db.get(SubmissionMetadata, id)  # type: ignore
     if submission is None:
         raise HTTPException(status_code=404, detail="Submission not found")
 
@@ -1440,7 +1409,7 @@ async def delete_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    for role in submission.roles:  # type: ignore
+    for role in submission.roles:
         db.delete(role)
     db.delete(submission)
     db.commit()
@@ -1454,7 +1423,7 @@ async def lock_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ) -> schemas.LockOperationResult:
-    submission: Optional[SubmissionMetadata] = db.query(SubmissionMetadata).get(id)
+    submission: Optional[SubmissionMetadata] = db.get(SubmissionMetadata, id)  # type: ignore
     if not submission:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
 
@@ -1484,7 +1453,7 @@ async def unlock_submission(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ) -> schemas.LockOperationResult:
-    submission = db.query(SubmissionMetadata).get(id)
+    submission = db.get(SubmissionMetadata, id)  # type: ignore
     if not submission:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
 
@@ -1651,7 +1620,7 @@ async def set_submission_image(
 
     if image_type == ImageType.STUDY_IMAGES:
         # For study_images, add to the collection
-        submission.study_images.append(new_image)  # type: ignore
+        submission.study_images.append(new_image)
     else:
         # For single image fields (pi_image, primary_study_image), replace existing
         current_image = getattr(submission, image_type)
@@ -1689,11 +1658,7 @@ async def delete_submission_image(
 
         # Find the specific image in the study_images collection
         image_to_delete = next(
-            (
-                image
-                for image in submission.study_images  # type: ignore
-                if image.name == image_name
-            ),
+            (image for image in submission.study_images if image.name == image_name),
             None,
         )
 
@@ -1705,7 +1670,7 @@ async def delete_submission_image(
         # Delete the image from the storage bucket
         storage.delete_object(BucketName.SUBMISSION_IMAGES, image_to_delete.name)
         # Remove the image from the collection
-        submission.study_images.remove(image_to_delete)  # type: ignore
+        submission.study_images.remove(image_to_delete)
         db.delete(image_to_delete)
     else:
         # For single image fields (pi_image, primary_study_image)

@@ -1,6 +1,6 @@
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
@@ -121,14 +121,14 @@ def get_study(db: Session, study_id: str) -> Optional[models.Study]:
 
 
 def get_study_image(db: Session, study_id: str) -> Optional[bytes]:
-    study = db.query(models.Study).get(study_id)
+    study = db.get(models.Study, study_id)  # type: ignore  # type: ignore
     if study is not None:
         return study.image
     return None
 
 
 def get_doi(db: Session, doi_id: str) -> Optional[models.DOIInfo]:
-    doi = db.query(models.DOIInfo).get(doi_id)
+    doi = db.get(models.DOIInfo, doi_id)  # type: ignore
     return doi
 
 
@@ -142,7 +142,7 @@ def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
     for url in websites:
         website, _ = get_or_create(db, models.Website, url=url)
         study_website = models.StudyWebsite(website=website)
-        db_study.principal_investigator_websites.append(study_website)  # type: ignore
+        db_study.principal_investigator_websites.append(study_website)
 
     db.add(db_study)
     db.commit()
@@ -416,7 +416,7 @@ def aggregate_data_object_by_workflow(
 
 # principal investigator
 def get_pi_image(db: Session, principal_investigator_id: UUID) -> Optional[bytes]:
-    pi = db.query(models.PrincipalInvestigator).get(principal_investigator_id)
+    pi = db.get(models.PrincipalInvestigator, principal_investigator_id)  # type: ignore
     if pi is not None:
         return pi.image
     return None
@@ -520,7 +520,7 @@ def replace_nersc_data_host(url: str) -> str:
 
 def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     """Return a zip file descriptor compatible with zipstreamer."""
-    bulk_download = db.query(models.BulkDownload).get(id)
+    bulk_download = db.get(models.BulkDownload, id)  # type: ignore
     if bulk_download is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bulk download not found")
     if bulk_download.expired:
@@ -528,7 +528,7 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     zip_file_descriptor: Dict[str, Any] = {"suggestedFilename": "archive.zip"}
     file_descriptions: List[Dict[str, str]] = []
 
-    for file in bulk_download.files:  # type: ignore
+    for file in bulk_download.files:
         data_object = file.data_object
         if data_object.url is None:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
@@ -547,7 +547,7 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
 
 def get_user(db: Session, user_id: str) -> Optional[models.User]:
     """Get a user by ID."""
-    return db.query(models.User).get(user_id)
+    return db.get(models.User, user_id)  # type: ignore
 
 
 def get_or_create_user(db: Session, user: schemas.User) -> models.User:
@@ -559,7 +559,7 @@ def get_or_create_user(db: Session, user: schemas.User) -> models.User:
 
 
 def update_user(db: Session, user: schemas.User) -> Optional[models.User]:
-    db_user = db.query(models.User).get(user.id)
+    db_user = db.get(models.User, user.id)  # type: ignore
     if db_user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -580,7 +580,7 @@ def add_invalidated_token(db: Session, token: str) -> None:
 
 def get_invalidated_token(db: Session, token: str) -> Optional[models.InvalidatedToken]:
     """Get an invalidated token by token."""
-    return db.query(models.InvalidatedToken).get(token)
+    return db.get(models.InvalidatedToken, token)  # type: ignore
 
 
 def create_authorization_code(
@@ -595,16 +595,16 @@ def create_authorization_code(
 
 def get_authorization_code(db: Session, code: str) -> Optional[models.AuthorizationCode]:
     """Get an authorization code by code."""
-    return db.query(models.AuthorizationCode).get(code)
+    return db.get(models.AuthorizationCode, code)  # type: ignore
 
 
 def update_submission_lock(db: Session, submission_id: str):
     """Update the timestamp for a locked submission."""
-    submission_record = db.query(models.SubmissionMetadata).get(submission_id)
+    submission_record = db.get(models.SubmissionMetadata, submission_id)  # type: ignore
     if not submission_record:
         # Throw a different error, or accept different params
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    submission_record.lock_updated = datetime.utcnow()
+    submission_record.lock_updated = datetime.now(UTC)
     db.commit()
 
 
@@ -618,10 +618,10 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
     """
 
     # Ensure the requested records exist
-    submission_record = db.query(models.SubmissionMetadata).get(submission_id)
+    submission_record = db.get(models.SubmissionMetadata, submission_id)  # type: ignore
     if not submission_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    user_record: Optional[models.User] = db.query(models.User).get(user_id)
+    user_record: Optional[models.User] = db.get(models.User, user_id)  # type: ignore
     if not user_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -636,34 +636,39 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
     if not current_lock_holder or current_lock_holder.id == user_id:
         # Either the given user already has the lock, or no one does
         submission_record.locked_by = user_record
-        submission_record.lock_updated = datetime.utcnow()
+        submission_record.lock_updated = datetime.now(UTC)
         db.commit()
         return True
     else:
         # Someone else is holding the lock
         if submission_record.lock_updated:
             # Compare current time to last edit
-            seconds_since_last_lock_update = (
-                datetime.utcnow() - submission_record.lock_updated
-            ).total_seconds()
+            # Note that currently this application always uses datetime.now(UTC)
+            # to update this field. Currently the corresponding column in postgres
+            # is not actually timezone aware, so the value we get back out must have
+            # the timezone information added back.
+            # TODO: create a migration to make the Postgres column timezone-aware, and
+            # remove this call to `replace`
+            lock_updated_utc = submission_record.lock_updated.replace(tzinfo=UTC)
+            seconds_since_last_lock_update = (datetime.now(UTC) - lock_updated_utc).total_seconds()
             # A user can hold the lock for 30 minutes without making edits
             if seconds_since_last_lock_update > (60 * 30):
                 submission_record.locked_by = user_record
-                submission_record.lock_updated = datetime.utcnow()
+                submission_record.lock_updated = datetime.now(UTC)
                 db.commit()
                 return True
         else:
             # Someone else holds the lock, but there's no timestamp
             # Ensure that there's a timestamp on the lock.
-            submission_record.lock_updated = datetime.utcnow()
+            submission_record.lock_updated = datetime.now(UTC)
     return False
 
 
 def release_submission_lock(db: Session, submission_id: str):
-    submission = db.query(models.SubmissionMetadata).get(submission_id)
+    submission = db.get(models.SubmissionMetadata, submission_id)  # type: ignore
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    submission.locked_by = None  # type: ignore
+    submission.locked_by = None
     db.commit()
 
 
@@ -675,6 +680,7 @@ read_roles = [
     models.SubmissionEditorRole.metadata_contributor,
     models.SubmissionEditorRole.owner,
     models.SubmissionEditorRole.viewer,
+    models.SubmissionEditorRole.reviewer,
 ]
 
 metadata_edit_roles = [
@@ -712,8 +718,8 @@ def get_submission_for_user(
     :param allowed_roles: A list of allowed roles that the user must have on the submission. If
         None, no role check is performed.
     """
-    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
-        submission_id
+    submission: Optional[models.SubmissionMetadata] = db.get(  # type: ignore
+        models.SubmissionMetadata, submission_id
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
@@ -756,8 +762,8 @@ def can_read_submission(db: Session, submission_id: str, user_orcid: str) -> Opt
         )
         .first()
     )
-    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
-        submission_id
+    submission: Optional[models.SubmissionMetadata] = db.get(  # type: ignore
+        models.SubmissionMetadata, submission_id
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
@@ -775,8 +781,8 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
         )
         .first()
     )
-    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
-        submission_id
+    submission: Optional[models.SubmissionMetadata] = db.get(  # type: ignore
+        models.SubmissionMetadata, submission_id
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
