@@ -7,6 +7,7 @@ import {
   onMounted,
   ref,
   Ref,
+  watch,
 } from '@vue/composition-api';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
@@ -143,6 +144,15 @@ export default defineComponent({
     };
 
     const submitterEmail = ref(user.value?.email || '');
+
+    studyForm.submitterEmail = submitterEmail.value;
+
+    watch(submitterEmail, async (newEmail) => {
+      if (newEmail && /.+@.+\..+/.test(newEmail)) {
+        await updateUser(newEmail);
+        studyForm.submitterEmail = newEmail;
+      }
+    });
 
     return {
       formRef,
