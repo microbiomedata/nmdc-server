@@ -1,5 +1,5 @@
 // @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json'; //typescript needs json import
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
 import { User } from '@/types';
 
@@ -290,10 +290,6 @@ export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
 export type PermissionLevelValues = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
 
-export type SubmissionStatusKey = keyof typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
+export type SubmissionStatusKey = Extract<keyof typeof NmdcSchema.enums.submissionStatus.permissible_values, string>;
 
-export type SubmissionStatusTitle = typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values[SubmissionStatusKey]['title'];
-
-//console.log(Object.keys(NmdcSchema.enums.SubmissionStatusEnum.permissible_values));
-
-//console.log(Object.values(NmdcSchema.enums.SubmissionStatusEnum.permissible_values).map((v:any) => v.title));
+export type SubmissionStatusTitle = typeof NmdcSchema.enums.submissionStatus.permissible_values[SubmissionStatusKey]['title'];
