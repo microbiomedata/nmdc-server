@@ -11,7 +11,7 @@
     "@riophae/vue-treeselect": "^0.4.0",
     "@sentry/vue": "^6.16.1",
     "@vue/composition-api": "^1.4.1",
-    "axios": "^0.28.0",
+    "axios": "^0.30.2",
     "axios-cache-adapter": "^2.7.3",
     "bootstrap": "4.3.1",
     "chrono-node": "^2.4.1",
