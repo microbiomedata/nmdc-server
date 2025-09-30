@@ -1440,7 +1440,7 @@ def test_delete_submission_study_images_success(
 def test_edit_submission_status_uneditable(
     db: Session, client: TestClient, logged_in_user, test_status, code
 ):
-    """Test that a submission with an uneditable status (anything other than InProgress or UpdatesRequired)"""
+    """Test that a submission with an uneditable status (anything other than InProgress or UpdatesRequired) errors"""
     submission = fakes.MetadataSubmissionFactory(status=test_status)
     fakes.SubmissionRoleFactory(
         submission=submission,

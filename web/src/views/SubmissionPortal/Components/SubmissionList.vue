@@ -6,7 +6,7 @@ import { DataOptions, DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  generateRecord, submissionStatus,
+  generateRecord, submissionStatus, editablebyStatus,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -93,11 +93,6 @@ export default defineComponent({
       };
     }
 
-    function editablebyStatus(item: MetadataSubmissionRecord) {
-      const editableStatuses = ['InProgress', 'UpdatesRequired'];
-      return editableStatuses.includes(item.status);
-    }
-
     async function resume(item: MetadataSubmissionRecord) {
       router?.push({ name: 'Study Form', params: { id: item.id } });
     }
@@ -163,6 +158,7 @@ export default defineComponent({
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
+      editablebyStatus,
       getStatus,
       resume,
       addReviewer,
@@ -173,7 +169,6 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
-      editablebyStatus,
     };
   },
 });
@@ -329,7 +324,7 @@ export default defineComponent({
                 color="primary"
                 @click="() => resume(item)"
               >
-                <span v-if="editablebyStatus(item)">
+                <span v-if="editablebyStatus(item.status)">
                   <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
                   Resume
                 </span>
