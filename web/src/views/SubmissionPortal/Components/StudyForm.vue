@@ -23,6 +23,8 @@ import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
+import { api } from '@/data/api';
+import { User } from '@/types';
 
 export default defineComponent({
   components: { SubmissionDocsLink, SubmissionPermissionBanner },
@@ -109,6 +111,39 @@ export default defineComponent({
       formRef.value.validate();
     });
 
+    const { user } = stateRefs;
+
+    const updateUser = async (value:string) => {
+      const update: User = {
+        id: user.value?.id as string,
+        orcid: user.value?.orcid as string,
+        name: user.value?.name as string,
+        email: value,
+        is_admin: user.value?.is_admin as boolean,
+      };
+      await api.updateUser(user.value?.id as string, update);
+    };
+
+    const editEmail = ref(false);
+    const isEmailValid = ref(false);
+
+    const updateEmail = (email: string | undefined) => {
+      if (editEmail.value) {
+        if (email == null) {
+          return;
+        }
+        isEmailValid.value = /.+@.+\..+/.test(email);
+        if (isEmailValid.value) {
+          updateUser(email);
+          editEmail.value = !editEmail.value;
+        }
+      } else {
+        editEmail.value = !editEmail.value;
+      }
+    };
+
+    const submitterEmail = ref(user.value?.email || '');
+
     return {
       formRef,
       studyForm,
@@ -129,6 +164,12 @@ export default defineComponent({
       currentUserOrcid,
       permissionHelpText,
       checkDoiFormat,
+      editEmail,
+      updateEmail,
+      isEmailValid,
+      submitterEmail,
+      user,
+      updateUser,
     };
   },
 });
@@ -161,6 +202,19 @@ export default defineComponent({
         validate-on-blur
         label="Study Name *"
         :hint="Definitions.studyName"
+        persistent-hint
+        outlined
+        dense
+        class="my-2"
+      />
+      <v-text-field
+        v-model="studyForm.submitterEmail"
+        :rules="requiredRules('E-mail is required',[
+          v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+        ])"
+        validate-on-blur
+        label="Submitter E-mail *"
+        :hint="Definitions.submitterEmail"
         persistent-hint
         outlined
         dense
