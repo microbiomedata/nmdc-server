@@ -12,7 +12,7 @@ import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
-  templateHasData, checkDoiFormat, canEditSubmissionByStatus, submissionStatus, status,
+  templateHasData, checkDoiFormat, canEditSubmissionByStatus, SubmissionStatusTitleMapping, status,
 } from '../store';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 
@@ -165,7 +165,7 @@ export default defineComponent({
       checkJGITemplates,
       templateHasData,
       canEditSubmissionByStatus,
-      submissionStatus,
+      SubmissionStatusTitleMapping,
       status,
     };
   },
@@ -189,7 +189,7 @@ export default defineComponent({
       type="info"
       class="ma-2"
     >
-      This submission has status "{{ submissionStatus[status] }}" and cannot be edited.
+      This submission has status "{{ SubmissionStatusTitleMapping[status] }}" and cannot be edited.
     </v-alert>
     <v-form
       ref="formRef"

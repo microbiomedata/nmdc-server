@@ -20,7 +20,7 @@ import {
   mergeSampleData,
   hasChanged,
   tabsValidated,
-  submissionStatus,
+  SubmissionStatusTitleMapping,
   canEditSampleMetadata,
   isOwner,
   addMetadataSuggestions,
@@ -28,6 +28,7 @@ import {
   metadataSuggestions,
   isTestSubmission,
   canEditSubmissionByStatus,
+  SubmissionStatusEnum,
 } from './store';
 import {
   DATA_MG_INTERLEAVED,
@@ -473,8 +474,8 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id, 'SubmittedPendingReview');
-      status.value = 'SubmittedPendingReview';
+      await submit(root.$route.params.id, SubmissionStatusEnum.SubmittedPendingReview.text);
+      status.value = SubmissionStatusEnum.SubmittedPendingReview.text;
       submitDialog.value = false;
     });
 
@@ -659,7 +660,8 @@ export default defineComponent({
       validationErrors,
       validationErrorGroups,
       validationTotalCounts,
-      submissionStatus,
+      SubmissionStatusTitleMapping,
+      SubmissionStatusEnum,
       status,
       submitDialog,
       validationSuccessSnackbar,
@@ -698,7 +700,7 @@ export default defineComponent({
       type="info"
       class="ma-2"
     >
-      This submission has status "{{ submissionStatus[status] }}" and cannot be edited.
+      This submission has status "{{ SubmissionStatusTitleMapping[status] }}" and cannot be edited.
     </v-alert>
     <div class="d-flex flex-column px-2 pb-2">
       <div class="d-flex align-center">
@@ -1065,11 +1067,11 @@ export default defineComponent({
             <v-btn
               color="success"
               depressed
-              :disabled="!canSubmit || status !== 'InProgress' || submitCount > 0"
+              :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
               :loading="submitLoading"
               @click="canEditSubmissionByStatus() ? submitDialog = true: null"
             >
-              <span v-if="status === 'SubmittedPendingReview' || submitCount">
+              <span v-if="status === SubmissionStatusEnum.SubmittedPendingReview.text || submitCount">
                 <v-icon>mdi-check-circle</v-icon>
                 Submitted
               </span>

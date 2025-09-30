@@ -1,5 +1,5 @@
 // @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json'; //typescript needs json import
 
 import { User } from '@/types';
 

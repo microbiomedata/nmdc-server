@@ -55,14 +55,13 @@ const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
 };
 
 //use schema enum to define submission status
-const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
-const submissionStatus: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
+const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
+const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
   Object.entries(SubmissionStatusEnum).map(([key, item]: [string, any]) => [key, item.title]),
-) as Record<SubmissionStatusKey, SubmissionStatusTitle>;
+) as Record<SubmissionStatusKey, SubmissionStatusTitle>; //key to title mapping for vue scripts where status saved to variable
+const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
+const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
 
-const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(submissionStatus).includes(str);
-
-const status = ref(SubmissionStatusEnum.InProgress.text);
 const isTestSubmission = ref(false);
 
 /**
@@ -551,7 +550,7 @@ function removeMetadataSuggestions(submissionId: string, schemaClassName: string
 }
 
 export {
-  submissionStatus,
+  SubmissionStatusTitleMapping,
   permissionTitleToDbValueMap,
   permissionLevelHierarchy,
   /* state */
@@ -576,6 +575,7 @@ export {
   metadataSuggestions,
   suggestionMode,
   suggestionType,
+  SubmissionStatusEnum,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,

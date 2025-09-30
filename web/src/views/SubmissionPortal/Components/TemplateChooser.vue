@@ -6,7 +6,7 @@ import {
   canEditSubmissionMetadata,
   templateHasData,
   canEditSubmissionByStatus,
-  submissionStatus,
+  SubmissionStatusTitleMapping,
   status,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -28,7 +28,7 @@ export default defineComponent({
       canEditSubmissionMetadata,
       templateHasData,
       canEditSubmissionByStatus,
-      submissionStatus,
+      SubmissionStatusTitleMapping,
       status,
     };
   },
@@ -58,7 +58,7 @@ export default defineComponent({
       type="info"
       class="ma-2"
     >
-      This submission has status "{{ submissionStatus[status] }}" and cannot be edited.
+      This submission has status "{{ SubmissionStatusTitleMapping[status] }}" and cannot be edited.
     </v-alert>
     <v-checkbox
       v-for="option in templates.filter((v) => v[1].status === 'published')"

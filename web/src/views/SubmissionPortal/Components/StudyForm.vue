@@ -19,7 +19,7 @@ import {
   canEditSubmissionMetadata,
   checkDoiFormat,
   canEditSubmissionByStatus,
-  submissionStatus,
+  SubmissionStatusTitleMapping,
   status,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
@@ -133,7 +133,7 @@ export default defineComponent({
       permissionHelpText,
       checkDoiFormat,
       canEditSubmissionByStatus,
-      submissionStatus,
+      SubmissionStatusTitleMapping,
       status,
     };
   },
@@ -157,7 +157,7 @@ export default defineComponent({
       type="info"
       class="ma-2"
     >
-      This submission has status "{{ submissionStatus[status] }}" and cannot be edited.
+      This submission has status "{{ SubmissionStatusTitleMapping[status] }}" and cannot be edited.
     </v-alert>
     <v-form
       ref="formRef"
