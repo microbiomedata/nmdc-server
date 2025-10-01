@@ -1326,7 +1326,7 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
         for issue in issues:
             title = issue.get("title", "")
             body = issue.get("body", "")
-            
+
             if submission_id_string in title or submission_id_string in body:
                 updated_issue = update_github_issue_for_resubmission(issue, user, headers)
                 return updated_issue
