@@ -6,9 +6,9 @@ Steps for performing an ingest in a local development environment are documented
 
 ## Why do this?
 
-The biggest reason to do this is speed. Some developers experience incredible slowness when ingesting over the `ssh` tunnel as documented elsewhere. Bring the data closer to the destination cuts down on network traffic, and no longer risks being disconnected from NERSC or otherwise running into network issues during ingest.
+The biggest reason to do this is speed. Some developers experience incredible slowness when ingesting over the `ssh` tunnel as documented elsewhere. Bringing the data closer to the destination cuts down on network traffic, and no longer risks being disconnected from NERSC or otherwise running into network issues during ingest.
 
-Another reason in control of the source data. Keeping a copy of the mongo database (even if its a subset of what exists in the cloud) allows you as a developer to change source data and test how it interacts with the ingest process. This way you don't have to touch data in production, and you don't have to worry about the development mongo database being wiped every so often.
+Another reason is control of the source data. Keeping a copy of the mongo database (even if its a subset of what exists in the cloud) allows you as a developer to change source data and test how it interacts with the ingest process. This way you don't have to touch data in production, and you don't have to worry about the development mongo database being wiped every so often.
 
 If you expect that a change to `nmdc-schema` will affect (break) ingest, you have freedom over your local mongo data to actually test how those changes will interact with ingest.
 
