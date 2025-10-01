@@ -261,7 +261,7 @@ export default defineComponent({
       </v-text-field>
       <ImageUpload
         is-avatar
-        input-label="PI Headshot"
+        input-label="Image"
         :input-hint="Definitions.piHeadshotImage"
         input-icon="mdi-account-box"
         :image-url="piImageUrl"

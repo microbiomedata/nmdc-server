@@ -70,6 +70,7 @@ export default defineComponent({
     'on-delete-success',
   ],
   setup(props, { root, emit }) {
+    const fileInputRef = ref();
     const fileRef = ref<File | null>(null);
     const filePreview = computed(() => {
       if (fileRef.value) {
@@ -114,7 +115,14 @@ export default defineComponent({
       emit('on-delete-success');
     });
 
+    const handleChangeClick = () => {
+      if (fileInputRef.value) {
+        fileInputRef.value.$el.querySelector('input')?.click();
+      }
+    };
+
     return {
+      fileInputRef,
       fileRef,
       filePreview,
       uploading,
@@ -123,6 +131,7 @@ export default defineComponent({
       deleting,
       deleteError,
       handleDelete,
+      handleChangeClick,
     };
   },
 });
@@ -131,6 +140,7 @@ export default defineComponent({
 <template>
   <div>
     <v-file-input
+      ref="fileInputRef"
       v-model="fileRef"
       accept="image/*"
       :label="inputLabel"
@@ -143,58 +153,82 @@ export default defineComponent({
       truncate-length="100"
       class="my-2"
     />
+
     <div class="ml-8">
-      <div
-        v-if="filePreview"
-        class="my-2"
-      >
-        <v-avatar
-          v-if="isAvatar"
-          :size="100"
-          class="my-2 elevation-2"
+      <div class="d-inline-flex flex-column align-center">
+        <div
+          v-if="filePreview"
+          class="my-2"
         >
+          <v-avatar
+            v-if="isAvatar"
+            :size="100"
+            class="my-2 elevation-2"
+          >
+            <img
+              :src="filePreview"
+              :alt="inputLabel + ' preview'"
+            >
+          </v-avatar>
           <img
+            v-else
             :src="filePreview"
             :alt="inputLabel + ' preview'"
+            :style="{ maxHeight: '250px', maxWidth: '100%', display: 'block' }"
+            class="my-2 elevation-2"
           >
-        </v-avatar>
-        <img
-          v-else
-          :src="filePreview"
-          :alt="inputLabel + ' preview'"
-          :style="{ maxHeight: '250px', maxWidth: '100%', display: 'block' }"
-          class="my-2 elevation-2"
-        >
+        </div>
+        <div v-if="imageUrl && !fileRef">
+          <v-btn
+            class="mr-2"
+            depressed
+            small
+            @click="handleChangeClick"
+          >
+            <v-icon left>
+              mdi-pencil-outline
+            </v-icon>
+            Change
+          </v-btn>
+          <v-btn
+            :loading="deleting"
+            :disabled="deleting"
+            depressed
+            small
+            @click="handleDelete"
+          >
+            <v-icon left>
+              mdi-trash-can-outline
+            </v-icon>
+            Remove
+          </v-btn>
+        </div>
+        <div v-else-if="fileRef">
+          <v-btn
+            class="mr-2"
+            color="primary"
+            depressed
+            small
+            :loading="uploading"
+            :disabled="uploading"
+            @click="handleUpload"
+          >
+            <v-icon left>
+              mdi-cloud-upload-outline
+            </v-icon>
+            Upload
+          </v-btn>
+          <v-btn
+            depressed
+            small
+            :disabled="uploading"
+            @click="fileRef = null"
+          >
+            Cancel
+          </v-btn>
+        </div>
       </div>
-      <v-btn
-        v-if="imageUrl && !fileRef"
-        :loading="deleting"
-        :disabled="deleting"
-        text
-        small
-        elevation="0"
-        @click="handleDelete"
-      >
-        Remove current image
-      </v-btn>
-      <v-btn
-        v-if="fileRef"
-        class="mr-2"
-        color="primary"
-        :loading="uploading"
-        :disabled="uploading"
-        @click="handleUpload"
-      >
-        Upload
-      </v-btn>
-      <v-btn
-        v-if="fileRef"
-        color="white"
-        :disabled="uploading"
-        @click="fileRef = null"
-      >
-        Cancel
-      </v-btn>
+
       <v-alert
         v-if="uploadError"
         type="error"
