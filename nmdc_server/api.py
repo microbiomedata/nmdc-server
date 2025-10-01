@@ -1725,3 +1725,80 @@ async def update_user(
     if body.id != id:
         raise HTTPException(status_code=400, detail="Invalid id")
     return crud.update_user(db, body)
+
+
+@router.post(
+    "/metadata_submission/{id}/request_reopen",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionMetadataSchema,
+)
+async def request_reopen_submission(
+    id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    submission = db.get(SubmissionMetadata, id)  # type: ignore
+    if not submission:
+        raise HTTPException(status_code=404, detail="Submission not found")
+
+    if submission.status == SubmissionStatusEnum.InProgress.text:
+        raise HTTPException(
+            status_code=400, detail="Cannot request reopen for submissions that are in progress"
+        )
+
+    submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
+    request_github_issue_reopen(submission_model, user)
+
+    return submission_model
+
+
+def request_github_issue_reopen(submission: schemas_submission.SubmissionMetadataSchema, user):
+    """
+    Find the existing GitHub issue for a submission and add a comment
+    indicating the user has requested their submission be reopened on the portal.
+    """
+    gh_url = str(settings.github_issue_url)
+    token = settings.github_authentication_token
+
+    if gh_url is None or token is None:
+        return None
+
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
+
+    # Reuse existing function to find the issue
+    existing_issue = check_existing_github_issues(submission.id, headers, gh_url, user)
+
+    if existing_issue is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No GitHub issue found for this submission. Cannot request reopen.",
+        )
+
+    # Add a comment requesting the submission be reopened
+    issue_url = existing_issue.get("url")
+
+    from datetime import datetime
+
+    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    comment_body = f"""
+## 🔄 Submission Reopen Requested
+
+**Requested by:** {user.name} ({user.orcid})
+**Timestamp:** {timestamp}
+
+The submitter has requested that their submission be reopened on the portal for further editing.
+    """.strip()
+
+    comment_url = f"{issue_url}/comments"
+    comment_payload = {"body": comment_body}
+
+    comment_response = requests.post(comment_url, headers=headers, data=json.dumps(comment_payload))
+
+    if comment_response.status_code != 201:
+        raise HTTPException(
+            status_code=comment_response.status_code,
+            detail=f"Failed to add comment to GitHub issue: {comment_response.reason}",
+        )
+
+    return comment_response

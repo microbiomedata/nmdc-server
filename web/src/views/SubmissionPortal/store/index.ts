@@ -549,6 +549,10 @@ function removeMetadataSuggestions(submissionId: string, schemaClassName: string
   setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
 }
 
+function requestReopen(id: string) {
+  return api.requestRecordReopened(id);
+}
+
 export {
   SubmissionStatusTitleMapping,
   permissionTitleToDbValueMap,
@@ -594,4 +598,5 @@ export {
   templateHasData,
   checkJGITemplates,
   checkDoiFormat,
+  requestReopen,
 };

@@ -6,7 +6,7 @@ import { DataOptions, DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping,
+  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, requestReopen,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -40,6 +40,11 @@ const headers: DataTableHeader[] = [
   {
     text: 'Status',
     value: 'status',
+  },
+  {
+    text: 'Re-Open Submission',
+    value: 'request_reopen',
+    sortable: false,
   },
   {
     text: 'Last Modified',
@@ -146,6 +151,16 @@ export default defineComponent({
       isReviewerAssignmentDialogOpen.value = false;
     }
 
+    const reopenDialog = ref(false);
+    const pendingItem = ref<MetadataSubmissionRecord | null>(null);
+    const requestedReopens = ref(new Set<string>());
+
+    async function doRequestReopen() {
+      await requestReopen(pendingItem.value!.id);
+      requestedReopens.value.add(pendingItem.value!.id);
+      reopenDialog.value = false;
+    }
+
     return {
       HARMONIZER_TEMPLATES,
       isDeleteDialogOpen,
@@ -165,6 +180,11 @@ export default defineComponent({
       handleDelete,
       handleOpenDeleteDialog,
       openReviewerDialog,
+      doRequestReopen,
+      reopenDialog,
+      pendingItem,
+      requestedReopens,
+      SubmissionStatusEnum,
       headers,
       options,
       submission,
@@ -303,6 +323,23 @@ export default defineComponent({
               :authenticated="true"
             />
           </template>
+          <template #[`item.request_reopen`]="{ item }">
+            <v-btn
+              v-if="item.status !== SubmissionStatusEnum.InProgress.text"
+              color="primary"
+              small
+              :disabled="requestedReopens.has(item.id)"
+              @click="() => { reopenDialog = true; pendingItem = item }"
+            >
+              <span v-if="requestedReopens.has(item.id)">
+                <v-icon small>mdi-check</v-icon>
+                Requested
+              </span>
+              <span v-else>
+                Request
+              </span>
+            </v-btn>
+          </template>
           <template #[`item.templates`]="{ item }">
             {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
           </template>
@@ -367,6 +404,31 @@ export default defineComponent({
         </v-data-table>
       </v-card>
     </v-card>
+    <v-dialog
+      v-model="reopenDialog"
+      width="auto"
+    >
+      <v-card>
+        <v-card-title>
+          Request Reopen
+        </v-card-title>
+        <v-card-text>
+          You are about to request that this submission be reopened. Would you like to continue?
+        </v-card-text>
+        <v-card-actions>
+          <v-btn
+            color="primary"
+            class="mr-2"
+            @click="doRequestReopen"
+          >
+            Yes- Request Reopen
+          </v-btn>
+          <v-btn @click="reopenDialog = false">
+            Cancel
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
     <v-dialog
       v-model="isDeleteDialogOpen"
       :width="550"
