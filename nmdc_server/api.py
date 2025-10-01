@@ -1310,8 +1310,9 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
 def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str, user):
     """
     Check if a GitHub issue already exists for the given submission ID using GitHub's search API.
+    Searches for submission id anywhere on issue, ignoring format for longevity.
     """
-    expected_title = f"NMDC Submission: {submission_id}"
+    submission_id_string = str(submission_id)
     params = {
         "state": "all",
         "per_page": 100,
@@ -1321,13 +1322,16 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
     if response.status_code == 200:
         issues = response.json()
 
-        # Look for an issue with matching title
+        # Look for an issue with matching submission id anywhere in github
         for issue in issues:
-            if issue.get("title") == expected_title:
+            title = issue.get("title", "")
+            body = issue.get("body", "")
+            
+            if submission_id_string in title or submission_id_string in body:
                 updated_issue = update_github_issue_for_resubmission(issue, user, headers)
                 return updated_issue
         else:
-            return None  # No matching gihub issues
+            return None  # No matching github issues
     else:
         raise HTTPException(
             status_code=response.status_code,
