@@ -1246,7 +1246,7 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
 
     # Check for existing issues first
-    existing_issue = check_existing_github_issues(submission.id, headers, gh_url, user)
+    existing_issue = find_existing_github_issue_for_submission(submission.id)
 
     if existing_issue is None:
 
@@ -1307,11 +1307,31 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         return res
 
 
-def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str, user):
+def get_github_headers():
     """
-    Check if a GitHub issue already exists for the given submission ID using GitHub's search API.
-    Searches for submission id anywhere on issue, ignoring format for longevity.
+    Get the common headers for GitHub API requests.
+    Returns None if GitHub settings are not configured.
     """
+    gh_url = str(settings.github_issue_url)
+    token = settings.github_authentication_token
+
+    if gh_url is None or token is None:
+        return None, None
+
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
+    return headers, gh_url
+
+
+def find_existing_github_issue_for_submission(submission_id: UUID):
+    """
+    Search for an existing GitHub issue for the given submission ID.
+    Returns the issue if found, None otherwise.
+    Does not modify the issue - just searches and returns.
+    """
+    headers, gh_url = get_github_headers()
+    if headers is None:
+        return None
+
     submission_id_string = str(submission_id)
     params = {
         "state": "all",
@@ -1322,16 +1342,15 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
     if response.status_code == 200:
         issues = response.json()
 
-        # Look for an issue with matching submission id anywhere in github
+        # Look for an issue with matching submission id
         for issue in issues:
             title = issue.get("title", "")
             body = issue.get("body", "")
 
             if submission_id_string in title or submission_id_string in body:
-                updated_issue = update_github_issue_for_resubmission(issue, user, headers)
-                return updated_issue
-        else:
-            return None  # No matching github issues
+                return issue
+
+        return None  # No matching github issues
     else:
         raise HTTPException(
             status_code=response.status_code,
@@ -1339,11 +1358,24 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
         )
 
 
-def update_github_issue_for_resubmission(existing_issue, user, headers):
+def add_resubmission_comment(submission_id: UUID, user):
     """
     Update an existing GitHub issue to note that the submission was resubmitted.
     Adds a comment and reopens the issue if it was closed.
     """
+    headers, gh_url = get_github_headers()
+    if headers is None:
+        return None
+
+    # Use the common function to find the issue
+    existing_issue = find_existing_github_issue_for_submission(submission_id)
+
+    if existing_issue is None:
+        raise HTTPException(
+            status_code=404,
+            detail="No GitHub issue found for this submission.",
+        )
+
     issue_url = existing_issue.get("url")  # API URL for the issue
 
     # Create a comment noting the resubmission
@@ -1748,26 +1780,22 @@ async def request_reopen_submission(
         )
 
     submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
-    request_github_issue_reopen(submission_model, user)
+    add_reopen_submission_request_comment(submission_model.id, user)
 
     return submission_model
 
 
-def request_github_issue_reopen(submission: schemas_submission.SubmissionMetadataSchema, user):
+def add_reopen_submission_request_comment(submission_id: UUID, user):
     """
     Find the existing GitHub issue for a submission and add a comment
     indicating the user has requested their submission be reopened on the portal.
     """
-    gh_url = str(settings.github_issue_url)
-    token = settings.github_authentication_token
-
-    if gh_url is None or token is None:
+    headers, gh_url = get_github_headers()
+    if headers is None:
         return None
 
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
-
-    # Reuse existing function to find the issue
-    existing_issue = check_existing_github_issues(submission.id, headers, gh_url, user)
+    # Use the common function to find the issue
+    existing_issue = find_existing_github_issue_for_submission(submission_id)
 
     if existing_issue is None:
         raise HTTPException(
