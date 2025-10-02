@@ -93,8 +93,13 @@ class AddressForm(BaseModel):
     permitNumber: str
     biosafetyLevel: str
     irbOrHipaa: Optional[bool] = None
-    comments: str
+    comments: str   
 
+class ValidForms(BaseModel):
+    studyFormValid: bool = False
+    multiOmicsFormValid: bool = False
+    templatesValid: bool = False
+    harmonizerValid: bool = False
 
 class MetadataSubmissionRecordCreate(BaseModel):
     packageName: List[str]
@@ -103,6 +108,7 @@ class MetadataSubmissionRecordCreate(BaseModel):
     studyForm: StudyFormCreate
     multiOmicsForm: MultiOmicsForm
     sampleData: Dict[str, List[Any]]
+    validForms: ValidForms
 
 
 class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
@@ -116,6 +122,7 @@ class PartialMetadataSubmissionRecord(BaseModel):
     studyForm: Optional[StudyForm] = None
     multiOmicsForm: Optional[MultiOmicsForm] = None
     sampleData: Optional[Dict[str, List[Any]]] = None
+    validForms: Optional[ValidForms] = None
 
 
 class SubmissionMetadataSchemaCreate(BaseModel):

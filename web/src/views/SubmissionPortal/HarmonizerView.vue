@@ -27,6 +27,7 @@ import {
   suggestionMode,
   metadataSuggestions,
   isTestSubmission,
+  validForms,
 } from './store';
 import {
   DATA_MG_INTERLEAVED,
@@ -434,6 +435,7 @@ export default defineComponent({
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
+      validForms.harmonizerValid = allTabsValid && isOwner();
       return allTabsValid && isOwner();
     });
 

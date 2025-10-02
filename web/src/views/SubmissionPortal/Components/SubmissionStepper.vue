@@ -1,103 +1,86 @@
 <script lang="ts">
 import {
-  computed, defineComponent, reactive, toRef,
+  defineComponent, ref,
 } from '@vue/composition-api';
+import { validForms } from '../store';
 
-const StepperMap: Record<string | number, number | string> = {
-  'Submission Home': 1,
-  1: 'Submission Home',
-
-  'Study Form': 2,
-  2: 'Study Form',
-
-  'Multiomics Form': 3,
-  3: 'Multiomics Form',
-
-  'Sample Environment': 4,
-  4: 'Sample Environment',
-
-  'Submission Sample Editor': 5,
-  5: 'Submission Sample Editor',
-
-  // 'Validate And Submit': 5,
-  // 5: 'Validate And Submit',
-};
+const pages = ref([
+  {
+    title: 'Study Form',
+    pageName: 'Study Form',
+    icon: validForms.studyFormValid ? 'mdi-check' : 'mdi-close-circle',
+  },
+  {
+    title: 'Multiomics Form',
+    pageName: 'Multiomics Form',
+    icon: validForms.multiOmicsFormValid ? 'mdi-check' : 'mdi-close-circle',
+  },
+  {
+    title: 'Sample Environment',
+    pageName: 'Sample Environment',
+    icon: validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle',
+  },
+  {
+    title: 'Data Harmonizer',
+    pageName: 'Submission Sample Editor',
+    icon: validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle',
+  },
+  {
+    title: 'Submission Summary',
+    pageName: 'Submission Summary',
+    icon: 'mdi-home',
+  },
+]);
 
 export default defineComponent({
   setup(props, { root }) {
-    const currentRoute = toRef(reactive(root.$router), 'currentRoute');
-    const step = computed(() => StepperMap[currentRoute.value.name || ''] || 0);
-
-    function gotoStep(newstep: number) {
-      const routeName = StepperMap[newstep];
-      if (newstep < step.value && typeof routeName === 'string') {
-        root.$router.push({ name: routeName });
-      }
+    function gotoPage(newPage: string) {
+      root.$router.push({ name: newPage });
     }
 
-    return { step, gotoStep, StepperMap };
+    return {
+      gotoPage,
+      pages,
+    };
   },
 });
 </script>
 
 <template>
-  <v-stepper
-    :value="step"
-    class="mb-3 flex-shrink-0"
-    outlined
-    tile
-    dark
-  >
-    <v-stepper-header>
-      <v-stepper-step
-        step="1"
-        :editable="1 < step"
-        :complete="1 < step"
-        @click="gotoStep(1)"
-      >
-        Home
-        <small>Begin or resume a submission.</small>
-      </v-stepper-step>
+  <v-card>
+    <v-navigation-drawer>
+      <v-list-item>
+        <v-list-item-content>
+          <v-list-item-title class="text-h6">
+            Pages
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            Click to go to
+          </v-list-item-subtitle>
+        </v-list-item-content>
+      </v-list-item>
+
       <v-divider />
-      <v-stepper-step
-        step="2"
-        :editable="2 < step"
-        :complete="2 < step"
-        @click="gotoStep(2)"
+
+      <v-list
+        dense
+        nav
       >
-        Study Information
-        <small>Input Form</small>
-      </v-stepper-step>
-      <v-divider />
-      <v-stepper-step
-        step="3"
-        :editable="3 < step"
-        :complete="3 < step"
-        @click="gotoStep(3)"
-      >
-        Multi-omics Data
-        <small>Input Form</small>
-      </v-stepper-step>
-      <v-divider />
-      <v-stepper-step
-        step="4"
-        :editable="4 < step"
-        :complete="4 < step"
-        @click="gotoStep(4)"
-      >
-        Sample Environment
-        <small>Choose MIxS Extension</small>
-      </v-stepper-step>
-      <v-divider />
-      <v-stepper-step
-        step="5"
-        :editable="5 < step"
-        :complete="5 < step"
-        @click="gotoStep(5)"
-      >
-        Customize Metadata Export
-        <small>DataHarmonizer sample validation</small>
-      </v-stepper-step>
-    </v-stepper-header>
-  </v-stepper>
+        <v-list-item
+          v-for="item in pages"
+          :key="item.title"
+          link
+          @click="gotoPage(item.pageName)"
+        >
+          <v-list-item-icon>
+            <v-icon>{{ item.icon }}</v-icon>
+          </v-list-item-icon>
+
+          <v-list-item-content>
+            <v-list-item-title>{{ item.title }}</v-list-item-title>
+          </v-list-item-content>
+        </v-list-item>
+      </v-list>
+    </v-navigation-drawer>
+  </v-card>
 </template>

@@ -90,6 +90,19 @@ function canEditSampleMetadata(): boolean {
 
 const hasChanged = ref(0);
 
+/**
+ * Validating forms
+*/
+
+const validFormsDefault = {
+  studyFormValid: false,
+  multiOmicsFormValid: false,
+  templatesValid: false,
+  harmonizerValid: false,
+};
+
+const validForms = reactive(clone(validFormsDefault));
+
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -144,7 +157,6 @@ const studyFormDefault = {
   GOLDStudyId: '',
   NCBIBioProjectId: '',
 };
-const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
 
 /**
@@ -168,7 +180,6 @@ const multiOmicsFormDefault = {
   studyNumber: '',
   unknownDoi: undefined as undefined | boolean,
 };
-const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
   emsl: false,
@@ -306,6 +317,7 @@ const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
+  validForms,
 }));
 
 function templateHasData(templateName: string): boolean {
@@ -381,11 +393,9 @@ function submit(id: string, status: SubmissionStatusKey = 'InProgress') {
 function reset() {
   Object.assign(addressForm, addressFormDefault);
   addressFormValid.value = false;
-  studyFormValid.value = false;
-  addressFormValid.value = false;
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
-  multiOmicsFormValid.value = false;
+  Object.assign(validForms, validFormsDefault);
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
@@ -436,6 +446,7 @@ async function loadRecord(id: string) {
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
   Object.assign(addressForm, val.metadata_submission.addressForm);
+  Object.assign(validForms, val.metadata_submission.validForms);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : 'InProgress';
@@ -524,7 +535,6 @@ export {
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
-  multiOmicsFormValid,
   addAwardDoi,
   removeAwardDoi,
   sampleData,
@@ -532,7 +542,7 @@ export {
   addressFormDefault,
   addressFormValid,
   studyForm,
-  studyFormValid,
+  validForms,
   submitPayload,
   packageName,
   templateList,

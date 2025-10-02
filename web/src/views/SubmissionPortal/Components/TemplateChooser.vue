@@ -1,10 +1,11 @@
 <script lang="ts">
-import { defineComponent, computed } from '@vue/composition-api';
+import { defineComponent, computed, watch } from '@vue/composition-api';
 import {
   templateList,
   packageName,
   canEditSubmissionMetadata,
   templateHasData,
+  validForms,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
@@ -16,6 +17,14 @@ export default defineComponent({
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
       .join(' + '));
+
+    watch(packageName, () => {
+      if (packageName.value.length === 0) {
+        validForms.templatesValid = false;
+      } else {
+        validForms.templatesValid = true;
+      }
+    });
 
     return {
       packageName,

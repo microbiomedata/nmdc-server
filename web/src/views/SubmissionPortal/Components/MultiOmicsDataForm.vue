@@ -11,7 +11,7 @@ import {
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
+  multiOmicsForm, validForms, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
   templateHasData, checkDoiFormat,
 } from '../store';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
@@ -151,7 +151,7 @@ export default defineComponent({
       formRef,
       multiOmicsForm,
       multiOmicsAssociations,
-      multiOmicsFormValid,
+      validForms,
       Definitions,
       HARMONIZER_TEMPLATES,
       doiProviderValues,
@@ -179,7 +179,7 @@ export default defineComponent({
     />
     <v-form
       ref="formRef"
-      v-model="multiOmicsFormValid"
+      v-model="validForms.multiOmicsFormValid"
       class="my-6 mb-10"
       style="max-width: 1000px;"
       :disabled="!canEditSubmissionMetadata()"
@@ -478,7 +478,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         depressed
-        :disabled="(!multiOmicsFormValid)"
+        :disabled="(!validForms.multiOmicsFormValid)"
         :to="{ name: 'Sample Environment' }"
       >
         Go to next step
