@@ -55,13 +55,13 @@ const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
 };
 
 //use schema enum to define submission status
-const submissionStatus: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
-  Object.entries(NmdcSchema.enums.SubmissionStatusEnum.permissible_values).map(([key, item]: [SubmissionStatusKey, SubmissionStatusTitle]) => [key, item.title]),
-);
+const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
+const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
+  Object.entries(SubmissionStatusEnum).map(([key, item]: [string, any]) => [key, item.title]),
+) as Record<SubmissionStatusKey, SubmissionStatusTitle>; //key to title mapping for vue scripts where status saved to variable
+const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
+const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
 
-const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(submissionStatus).includes(str);
-
-const status = ref('InProgress');
 const isTestSubmission = ref(false);
 
 /**
@@ -82,13 +82,24 @@ function isOwner(): boolean {
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
 
+function editablebyStatus(status: string): boolean {
+  const editableStatuses = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.UpdatesRequired.text];
+  return editableStatuses.includes(status);
+}
+
+function canEditSubmissionByStatus(): boolean {
+  return editablebyStatus(status.value);
+}
+
 function canEditSubmissionMetadata(): boolean {
   if (!_permissionLevel) return false;
+  if (!canEditSubmissionByStatus()) return false;
   return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
 }
 
 function canEditSampleMetadata(): boolean {
   if (!_permissionLevel) return false;
+  if (!canEditSubmissionByStatus()) return false;
   return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
 }
 
@@ -385,11 +396,14 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string, status: SubmissionStatusKey = 'InProgress') {
-  if (canEditSubmissionMetadata()) {
-    return api.updateRecord(id, payloadObject.value, status);
+function submit(id: string, status: SubmissionStatusKey = SubmissionStatusEnum.InProgress.text) {
+  if (!canEditSubmissionMetadata()) {
+    throw new Error('Unable to submit due to inadequate permission level for this submission.');
   }
-  throw new Error('Unable to submit due to inadequate permission level for this submission.');
+  if (!canEditSubmissionByStatus()) {
+    throw new Error('Unable to submit with current submission status.');
+  }
+  return api.updateRecord(id, payloadObject.value, status);
 }
 
 function reset() {
@@ -404,12 +418,15 @@ function reset() {
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
   sampleData.value = {};
-  status.value = 'InProgress';
+  status.value = SubmissionStatusEnum.InProgress.text;
   isTestSubmission.value = false;
 }
 
 async function incrementalSaveRecord(id: string): Promise<number | void> {
   if (!canEditSampleMetadata()) {
+    return Promise.resolve();
+  }
+  if (!canEditSubmissionByStatus()) {
     return Promise.resolve();
   }
 
@@ -427,7 +444,8 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   if (hasChanged.value) {
-    const response = await api.updateRecord(id, payload, undefined, permissions);
+    const updatedStatus = SubmissionStatusEnum.InProgress.text;
+    const response = await api.updateRecord(id, payload, updatedStatus, permissions);
     hasChanged.value = 0;
     return response.httpStatus;
   }
@@ -452,7 +470,7 @@ async function loadRecord(id: string) {
   Object.assign(addressForm, val.metadata_submission.addressForm);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
-  status.value = isSubmissionStatus(val.status) ? val.status : 'InProgress';
+  status.value = isSubmissionStatus(val.status) ? val.status : SubmissionStatusEnum.InProgress.text;
   _permissionLevel = (val.permission_level as PermissionLevelValues);
   isTestSubmission.value = val.is_test_submission;
 
@@ -532,7 +550,7 @@ function removeMetadataSuggestions(submissionId: string, schemaClassName: string
 }
 
 export {
-  submissionStatus,
+  SubmissionStatusTitleMapping,
   permissionTitleToDbValueMap,
   permissionLevelHierarchy,
   /* state */
@@ -557,6 +575,7 @@ export {
   metadataSuggestions,
   suggestionMode,
   suggestionType,
+  SubmissionStatusEnum,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,
@@ -568,6 +587,8 @@ export {
   isOwner,
   canEditSampleMetadata,
   canEditSubmissionMetadata,
+  canEditSubmissionByStatus,
+  editablebyStatus,
   addMetadataSuggestions,
   removeMetadataSuggestions,
   templateHasData,

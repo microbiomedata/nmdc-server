@@ -6,7 +6,7 @@ import { DataOptions, DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  generateRecord, submissionStatus,
+  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -86,9 +86,9 @@ export default defineComponent({
     }
 
     function getStatus(item: MetadataSubmissionRecord) {
-      const color = item.status === submissionStatus.Released ? 'success' : 'default';
+      const color = item.status === SubmissionStatusEnum.Released.text ? 'success' : 'default';
       return {
-        text: submissionStatus[item.status as keyof typeof submissionStatus] || item.status,
+        text: SubmissionStatusTitleMapping[item.status as keyof typeof SubmissionStatusTitleMapping] || item.status,
         color,
       };
     }
@@ -158,6 +158,7 @@ export default defineComponent({
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
+      editablebyStatus,
       getStatus,
       resume,
       addReviewer,
@@ -323,10 +324,14 @@ export default defineComponent({
                 color="primary"
                 @click="() => resume(item)"
               >
-                Resume
-                <v-icon class="pl-1">
-                  mdi-arrow-right-circle
-                </v-icon>
+                <span v-if="editablebyStatus(item.status)">
+                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
+                  Resume
+                </span>
+                <span v-else>
+                  <v-icon class="pl-1">mdi-eye</v-icon>
+                  View
+                </span>
               </v-btn>
               <v-menu
                 offset-x

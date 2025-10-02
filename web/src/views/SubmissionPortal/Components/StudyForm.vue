@@ -18,6 +18,9 @@ import {
   isOwner,
   canEditSubmissionMetadata,
   checkDoiFormat,
+  canEditSubmissionByStatus,
+  SubmissionStatusTitleMapping,
+  status,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -129,6 +132,9 @@ export default defineComponent({
       currentUserOrcid,
       permissionHelpText,
       checkDoiFormat,
+      canEditSubmissionByStatus,
+      SubmissionStatusTitleMapping,
+      status,
     };
   },
 });
@@ -144,8 +150,39 @@ export default defineComponent({
       {{ NmdcSchema.classes.Study.description }}
     </div>
     <submission-permission-banner
-      v-if="!canEditSubmissionMetadata()"
+      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
+    <v-alert
+      v-if="!canEditSubmissionByStatus()"
+      type="info"
+      class="ma-2"
+    >
+      <template #prepend>
+        <v-menu
+          bottom
+          offset-y
+          :close-on-content-click="false"
+          max-width="300"
+        >
+          <template #activator="{ on, attrs }">
+            <v-icon
+              v-bind="attrs"
+              style="cursor: pointer;"
+              v-on="on"
+            >
+              mdi-information
+            </v-icon>
+          </template>
+          <v-card>
+            <v-card-text>
+              If you need to edit this submission, please contact:
+              <span style="user-select: all; cursor: text; font-weight: bold;">support@microbiomedata.org</span>
+            </v-card-text>
+          </v-card>
+        </v-menu>
+      </template>
+      This submission has status "{{ SubmissionStatusTitleMapping[status] }}" and cannot be edited.
+    </v-alert>
     <v-form
       ref="formRef"
       v-model="studyFormValid"
