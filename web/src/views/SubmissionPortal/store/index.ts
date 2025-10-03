@@ -63,6 +63,8 @@ const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys
 
 const status = ref('InProgress');
 const isTestSubmission = ref(false);
+const primaryStudyImageUrl = ref<string | null>(null);
+const piImageUrl = ref<string | null>(null);
 
 /**
  * Submission record locking information
@@ -406,6 +408,8 @@ function reset() {
   sampleData.value = {};
   status.value = 'InProgress';
   isTestSubmission.value = false;
+  primaryStudyImageUrl.value = null;
+  piImageUrl.value = null;
 }
 
 async function incrementalSaveRecord(id: string): Promise<number | void> {
@@ -455,6 +459,8 @@ async function loadRecord(id: string) {
   status.value = isSubmissionStatus(val.status) ? val.status : 'InProgress';
   _permissionLevel = (val.permission_level as PermissionLevelValues);
   isTestSubmission.value = val.is_test_submission;
+  primaryStudyImageUrl.value = val.primary_study_image_url;
+  piImageUrl.value = val.pi_image_url;
 
   try {
     const lockResponse = await api.lockSubmission(id);
@@ -554,6 +560,8 @@ export {
   tabsValidated,
   status,
   isTestSubmission,
+  primaryStudyImageUrl,
+  piImageUrl,
   metadataSuggestions,
   suggestionMode,
   suggestionType,

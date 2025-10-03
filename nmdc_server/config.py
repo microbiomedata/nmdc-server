@@ -93,6 +93,9 @@ class Settings(BaseSettings):
     gcs_submission_images_bucket_name: str = "nmdc-submission-images"
     """The name of the GCS bucket used for submission images."""
 
+    gcs_public_images_bucket_name: str = "nmdc-public-images"
+    """The name of the GCS bucket used for public images."""
+
     max_submission_image_file_size_bytes: int = 25 * 1000 * 1000  # 25 MB
     """The maximum size of a single submission image file in bytes."""
 

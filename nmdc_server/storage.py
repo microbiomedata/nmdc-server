@@ -17,6 +17,7 @@ class BucketName(StrEnum):
     """Enum for GCS bucket names"""
 
     SUBMISSION_IMAGES = settings.gcs_submission_images_bucket_name
+    PUBLIC_IMAGES = settings.gcs_public_images_bucket_name
 
 
 class Storage:
@@ -55,6 +56,28 @@ class Storage:
         """
         bucket = self.get_bucket(bucket_name)
         return bucket.blob(object_name)
+
+    def copy_object(
+        self,
+        object_name: str,
+        *,
+        from_bucket: BucketName,
+        to_bucket: BucketName,
+        new_name: str | None = None,
+    ) -> Blob:
+        """Copy an object from one GCS bucket to another.
+
+        :param object_name: The name of the object to copy.
+        :param from_bucket: The name of the source bucket.
+        :param to_bucket: The name of the destination bucket.
+        :param new_name: Optional new name for the copied object. If not provided, the original
+            object name will be used.
+        """
+        source_bucket = self.get_bucket(from_bucket)
+        source_blob = source_bucket.blob(object_name)
+        destination_bucket = self.get_bucket(to_bucket)
+        new_blob = source_bucket.copy_blob(source_blob, destination_bucket, new_name=new_name)
+        return new_blob
 
     def iter_objects(self, bucket_name: BucketName, prefix: str | None = None) -> Iterable[Blob]:
         """Iterate over objects in a GCS bucket.
