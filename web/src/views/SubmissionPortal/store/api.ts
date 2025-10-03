@@ -100,6 +100,14 @@ async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: S
   return resp.data;
 }
 
+async function requestRecordReopened(id: string) {
+  const resp = await client.post<MetadataSubmissionRecord>(
+    `metadata_submission/${id}/request_reopen`,
+    {},
+  );
+  return { data: resp.data, httpStatus: resp.status };
+}
+
 export {
   addressToString,
   createRecord,
@@ -110,4 +118,5 @@ export {
   unlockSubmission,
   deleteSubmission,
   getMetadataSuggestions,
+  requestRecordReopened,
 };
