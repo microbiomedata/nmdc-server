@@ -10,7 +10,7 @@ from starlette.testclient import TestClient
 from nmdc_server import fakes
 from nmdc_server.models import SubmissionEditorRole, SubmissionImagesObject, SubmissionRole
 from nmdc_server.schemas_submission import SubmissionMetadataSchema, SubmissionMetadataSchemaPatch
-from nmdc_server.storage import BucketName
+from nmdc_server.storage import BucketName, storage
 
 
 @pytest.fixture
@@ -1426,3 +1426,109 @@ def test_delete_submission_study_images_success(
     # Verify the image was deleted from storage
     assert blob_to_delete.exists() is False
     assert other_blob.exists() is True
+
+
+def test_make_submission_images_public(
+    db: Session, client: TestClient, logged_in_admin_user, temp_storage_object
+):
+    """Tests that an admin can successfully make submission images public."""
+    other_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(author=other_user, author_orcid=other_user.orcid)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=other_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    # Add a PI image to delete
+    pi_image = SubmissionImagesObject(name="pi-image.jpg", size=500000, content_type="image/jpeg")
+    submission.pi_image = pi_image
+    # Add a primary study image
+    primary_study_image = SubmissionImagesObject(
+        name="primary-study-image.png", size=600000, content_type="image/png"
+    )
+    submission.primary_study_image = primary_study_image
+    # Add a study images
+    study_image_1 = SubmissionImagesObject(
+        name="study-image-1.jpg", size=700000, content_type="image/jpeg"
+    )
+    submission.study_images.append(study_image_1)
+    study_image_2 = SubmissionImagesObject(
+        name="study-image_2.jpg", size=800000, content_type="image/jpeg"
+    )
+    submission.study_images.append(study_image_2)
+    db.commit()
+
+    pi_image_blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, pi_image.name)
+    primary_study_image_blob = temp_storage_object(
+        BucketName.SUBMISSION_IMAGES, primary_study_image.name
+    )
+    study_image_1_blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, study_image_1.name)
+    study_image_2_blob = temp_storage_object(BucketName.SUBMISSION_IMAGES, study_image_2.name)
+
+    # Call the endpoint to make the submission images public
+    study_id = "nmdc:sty-11-012345"
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/make_public", json={"study_id": study_id}
+    )
+
+    # Assert that the response is successful and contains the expected URLs
+    assert response.status_code == 200
+    body = response.json()
+    assert body.get("pi_image_url") is not None
+    assert body.get("primary_study_image_url") is not None
+    assert len(body.get("study_image_urls", [])) == 2
+
+    # The expected public image object names should be the same as the submission image names,
+    # but with the submission ID replaced by the study ID
+    submission_id = str(submission.id)
+    expected_pi_image_name = pi_image_blob.name.replace(submission_id, study_id)
+    expected_primary_study_image_name = primary_study_image_blob.name.replace(
+        submission_id, study_id
+    )
+    expected_study_image_1_name = study_image_1_blob.name.replace(submission_id, study_id)
+    expected_study_image_2_name = study_image_2_blob.name.replace(submission_id, study_id)
+
+    # Verify the images were copied to the public bucket
+    public_pi_image = storage.get_object(BucketName.PUBLIC_IMAGES, expected_pi_image_name)
+    public_primary_study_image = storage.get_object(
+        BucketName.PUBLIC_IMAGES, expected_primary_study_image_name
+    )
+    public_study_image_1 = storage.get_object(BucketName.PUBLIC_IMAGES, expected_study_image_1_name)
+    public_study_image_2 = storage.get_object(BucketName.PUBLIC_IMAGES, expected_study_image_2_name)
+    assert public_pi_image.exists()
+    assert public_primary_study_image.exists()
+    assert public_study_image_1.exists()
+    assert public_study_image_2.exists()
+
+    # Cleanup
+    public_pi_image.delete()
+    public_primary_study_image.delete()
+    public_study_image_1.delete()
+    public_study_image_2.delete()
+
+
+def test_make_submission_images_public_unauthorized(
+    db: Session, client: TestClient, logged_in_user, temp_storage_object
+):
+    """Tests that a non-admin user (even the submission owner) cannot make submission images
+    public."""
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    response = client.post(
+        f"/api/metadata_submission/{submission.id}/image/make_public",
+        json={"study_id": "nmdc:sty-11-012345"},
+    )
+
+    assert response.status_code == 403
