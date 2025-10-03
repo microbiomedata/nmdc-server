@@ -1187,19 +1187,8 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # When metadata is being submitted and not a test submission, either create a GH issue or add a comment if its 
-    # being resubmitted
-    if (
-        submission.status == SubmissionStatusEnum.InProgress.text
-        and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
-        and submission.is_test_submission is False
-    ):
-        submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
-        existing_issue = find_existing_github_issue_for_submission(submission_model.id)
-        if existing_issue: # if its a new submission
-            add_resubmission_comment(existing_issue, user)
-        if existing_issue is None: # if it was resubmitted
-            create_github_issue(submission_model, user)
+    # When metadata is being submitted and not a test submission, either create a GH issue or add a comment if its being resubmitted
+    _handle_github_submission(submission, body_dict, user)
 
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
@@ -1214,7 +1203,41 @@ async def update_submission(
         submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
     if "templates" in body_dict["metadata_submission"]:
         submission.templates = body_dict["metadata_submission"]["templates"]
+
     # Update permissions and status if the user is an "owner" or "admin"
+    _update_permissions_and_status(db, submission, body_dict, current_user_role, user)
+
+    crud.update_submission_lock(db, submission.id)
+    return submission
+
+
+def _handle_github_submission(submission: SubmissionMetadata, body_dict: dict, user: models.User):
+    """Handle GitHub issue creation or comment for submissions"""
+    stored_status = submission.status
+    new_status = body_dict.get("status", None)
+    is_test = submission.is_test_submission
+
+    if not submitted(stored_status, new_status, is_test):
+        return
+
+    existing_issue = find_existing_github_issue_for_submission(submission.id)
+
+    if existing_issue is None:
+        submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
+        create_github_issue(submission_model, user)
+    else:
+        add_resubmission_comment(existing_issue, user)
+
+
+def _update_permissions_and_status(
+    db: Session,
+    submission: SubmissionMetadata,
+    body_dict: dict,
+    current_user_role,
+    user: models.User,
+):
+    """Update permissions and status if user is owner or admin"""
+
     if (
         current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
     ) or user.is_admin:
@@ -1236,8 +1259,21 @@ async def update_submission(
             ):
                 submission.status = body_dict["status"]
         db.commit()
-    crud.update_submission_lock(db, submission.id)
-    return submission
+
+
+def submitted(stored_status: str, new_status: str, is_test: bool):
+    """
+    Determine if submission was submitted based on status change
+    """
+
+    if (
+        stored_status == SubmissionStatusEnum.InProgress.text
+        and new_status == SubmissionStatusEnum.SubmittedPendingReview.text
+        and is_test is False
+    ):
+        return True
+    else:
+        return False
 
 
 def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
@@ -1321,7 +1357,7 @@ def get_github_headers():
     return headers, gh_url, assignee
 
 
-def find_existing_github_issue_for_submission(submission_id: UUID):
+def find_existing_github_issue_for_submission(submission_id: str):
     """
     Search for an existing GitHub issue for the given submission ID.
     Returns the issue if found, None otherwise.
@@ -1770,12 +1806,12 @@ async def request_reopen_submission(
         )
 
     submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
-    add_comment_request_reopen_submission(submission_model.id, user)
+    add_comment_request_reopen_submission(submission.id, user)
 
     return submission_model
 
 
-def add_comment_request_reopen_submission(submission_id: UUID, user):
+def add_comment_request_reopen_submission(submission_id: str, user):
     """
     Find the existing GitHub issue for a submission and add a comment
     indicating the user has requested their submission be reopened on the portal.
