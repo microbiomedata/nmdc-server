@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   computed, defineComponent, watchEffect, ref, watch,
-} from '@vue/composition-api';
+} from 'vue';
 
 import { isObject } from 'lodash';
 // @ts-ignore

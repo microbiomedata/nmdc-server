@@ -1,6 +1,6 @@
 import {
   watch, Ref, computed, shallowReactive,
-} from '@vue/composition-api';
+} from 'vue';
 import { debounce } from 'lodash';
 import {
   SearchParams, Condition, DataObjectFilter, SearchResponse,

@@ -1,6 +1,6 @@
 <script lang="ts">
 import { groupBy } from 'lodash';
-import { computed, defineComponent, PropType } from '@vue/composition-api';
+import { computed, defineComponent, PropType } from 'vue';
 import { fieldDisplayName } from '@/util';
 import { BiosampleSearchResult } from '@/data/api';
 import DataObjectTable from './DataObjectTable.vue';

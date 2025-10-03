@@ -3,7 +3,7 @@
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
   computed, defineComponent, PropType, reactive, ref, Ref, watch,
-} from '@vue/composition-api';
+} from 'vue';
 import { flattenDeep } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';

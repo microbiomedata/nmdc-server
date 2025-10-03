@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref, watchEffect } from '@vue/composition-api';
+import { defineComponent, ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
 import AttributeList from '@/components/Presentation/AttributeList.vue';

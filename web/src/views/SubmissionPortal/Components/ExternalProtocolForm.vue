@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, computed, ref } from '@vue/composition-api';
+import { defineComponent, computed, ref } from 'vue';
 import { multiOmicsForm, checkDoiFormat } from '../store';
 
 export default defineComponent({

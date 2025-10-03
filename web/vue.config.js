@@ -1,12 +1,35 @@
-module.exports = {
+const { defineConfig } = require('@vue/cli-service');
+const webpack = require('webpack');
+
+module.exports = defineConfig({
   publicPath: '/',
   transpileDependencies: [
     'vuetify',
   ],
+  configureWebpack: {
+    resolve: {
+      fallback: {
+        process: require.resolve('process/browser'),
+        buffer: require.resolve('buffer'),
+        querystring: require.resolve('querystring-es3'),
+      },
+    },
+    plugins: [
+      new webpack.ProvidePlugin({
+        process: 'process/browser',
+        Buffer: ['buffer', 'Buffer'],
+      }),
+      new webpack.DefinePlugin({
+        'process.env': JSON.stringify(process.env),
+      }),
+    ],
+  },
   devServer: {
-    overlay: {
-      warnings: true,
-      errors: true,
+    client: {
+      overlay: {
+        warnings: false,
+        errors: true,
+      },
     },
     proxy: {
       '/api': {
@@ -26,4 +49,4 @@ module.exports = {
     // Required for https://classic.yarnpkg.com/en/docs/cli/link/
     // config.resolve.symlinks(false);
   },
-};
+});

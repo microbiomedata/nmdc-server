@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent, PropType } from '@vue/composition-api';
+import { computed, defineComponent, PropType } from 'vue';
 import { StudySearchResults } from '@/data/api';
 import OrcidId from './Presentation/OrcidId.vue';
 

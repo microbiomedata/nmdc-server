@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
 import { init, stateRefs } from '@/store';
 import { api } from '@/data/api';
 import { useRouter } from '@/use/useRouter';
