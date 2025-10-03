@@ -1,39 +1,40 @@
 <script lang="ts">
 import {
-  defineComponent, ref,
+  computed,
+  defineComponent,
 } from '@vue/composition-api';
 import { validForms } from '../store';
 
-const pages = ref([
-  {
-    title: 'Study Form',
-    pageName: 'Study Form',
-    icon: validForms.studyFormValid ? 'mdi-check' : 'mdi-close-circle',
-  },
-  {
-    title: 'Multiomics Form',
-    pageName: 'Multiomics Form',
-    icon: validForms.multiOmicsFormValid ? 'mdi-check' : 'mdi-close-circle',
-  },
-  {
-    title: 'Sample Environment',
-    pageName: 'Sample Environment',
-    icon: validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle',
-  },
-  {
-    title: 'Data Harmonizer',
-    pageName: 'Submission Sample Editor',
-    icon: validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle',
-  },
-  {
-    title: 'Submission Summary',
-    pageName: 'Submission Summary',
-    icon: 'mdi-home',
-  },
-]);
-
 export default defineComponent({
   setup(props, { root }) {
+    const pages = computed(() => [
+      {
+        title: 'Study Form',
+        pageName: 'Study Form',
+        icon: validForms.studyFormValid ? 'mdi-check' : 'mdi-close-circle',
+      },
+      {
+        title: 'Multiomics Form',
+        pageName: 'Multiomics Form',
+        icon: validForms.multiOmicsFormValid ? 'mdi-check' : 'mdi-close-circle',
+      },
+      {
+        title: 'Sample Environment',
+        pageName: 'Sample Environment',
+        icon: validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle',
+      },
+      {
+        title: 'Data Harmonizer',
+        pageName: 'Submission Sample Editor',
+        icon: validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle',
+      },
+      {
+        title: 'Submission Summary',
+        pageName: 'Submission Summary',
+        icon: 'mdi-text-box-outline',
+      },
+    ]);
+
     function gotoPage(newPage: string) {
       root.$router.push({ name: newPage });
     }

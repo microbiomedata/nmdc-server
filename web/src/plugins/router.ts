@@ -53,25 +53,25 @@ const router = new VueRouter({
       props: true,
       children: [
         {
+          name: 'Submission root',
+          path: '',
+          redirect: () => ({ name: 'Submission Home' }),
+        },
+        {
+          name: 'Submission Home',
+          path: 'home',
+          component: SubmissionList,
+        },
+        {
+          name: 'Submission Summary',
+          path: ':id/summary',
+          component: SubmissionSummary,
+        },
+        {
           component: StepperView,
           path: '',
           props: true,
           children: [
-            {
-              name: 'Submission root',
-              path: '',
-              redirect: () => ({ name: 'Submission Home' }),
-            },
-            {
-              name: 'Submission Home',
-              path: 'home',
-              component: SubmissionList,
-            },
-            {
-              name: 'Submission Summary',
-              path: ':id/summary',
-              component: SubmissionSummary,
-            },
             {
               name: 'Study Form',
               path: ':id/study',

@@ -176,163 +176,165 @@ export default defineComponent({
       </template>
       <ContactCard />
     </v-menu>
-    <v-card flat>
-      <v-card-text class="pt-0 px-0">
-        <v-container>
-          <v-row>
-            <v-col class="pb-0">
-              <TitleBanner />
-              <IconBar />
-            </v-col>
-          </v-row>
-          <v-row v-if="submission.data.results.count === 0">
-            <v-col>
-              <IntroBlurb />
-            </v-col>
-          </v-row>
-        </v-container>
-      </v-card-text>
-      <v-card-text>
-        <v-btn
-          color="primary"
-          @click="createNewSubmission(false)"
-        >
-          <v-icon>mdi-plus</v-icon>
-          Create Submission
-        </v-btn>
-        <v-btn
-          color="primary"
-          class="ml-3"
-          outlined
-          @click="createNewSubmission(true)"
-        >
-          <v-icon>mdi-plus</v-icon>
-          Create Test Submission
-        </v-btn>
-        <v-tooltip right>
-          <template #activator="{ on }">
-            <v-icon
-              class="pl-2"
-              color="primary"
-              v-on="on"
-            >
-              mdi-information
-            </v-icon>
-          </template>
-          <span>Test submissions should be used when at a workshop or doing a test, example, or training. These cannot be submitted.</span>
-        </v-tooltip>
-      </v-card-text>
-      <v-card-title class="text-h4">
-        Past submissions
-      </v-card-title>
-      <v-row
-        justify="space-between"
-        class="pb-2"
-        no-gutters
-      >
-        <v-col
-          cols="5"
-        >
-          <v-card-text>
-            Pick up where you left off or review a previous submission.
-          </v-card-text>
-        </v-col>
-        <v-col
-          cols="3"
-        >
-          <v-select
-            v-model="isTestFilter"
-            :items="testFilterValues"
-            item-text="text"
-            item-value="val"
-            label="Test Submissions"
-            hide-details
-          />
-        </v-col>
-      </v-row>
-      <v-card outlined>
-        <v-data-table
-          :headers="headers"
-          :items="submission.data.results.results"
-          :server-items-length="submission.data.results.count"
-          :options.sync="options"
-          :loading="submission.loading.value"
-          :items-per-page.sync="submission.data.limit"
-          :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
-        >
-          <template #[`item.study_name`]="{ item }">
-            {{ item.study_name }}
-            <v-chip
-              v-if="item.is_test_submission"
-              color="orange"
-              text-color="white"
-              small
-            >
-              TEST
-            </v-chip>
-          </template>
-          <template #[`item.author.name`]="{ item }">
-            <orcid-id
-              :orcid-id="item.author.orcid"
-              :name="item.author.name"
-              :width="14"
-              :authenticated="true"
-            />
-          </template>
-          <template #[`item.templates`]="{ item }">
-            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
-          </template>
-          <template #[`item.date_last_modified`]="{ item }">
-            {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
-          </template>
-          <template #[`item.status`]="{ item }">
-            <v-chip
-              :color="getStatus(item).color"
-            >
-              {{ getStatus(item).text }}
-            </v-chip>
-          </template>
-          <template #[`item.action`]="{ item }">
-            <div class="d-flex align-center">
-              <v-spacer />
-              <v-btn
-                small
+    <v-container>
+      <v-card flat>
+        <v-card-text class="pt-0 px-0">
+          <v-container>
+            <v-row>
+              <v-col class="pb-0">
+                <TitleBanner />
+                <IconBar />
+              </v-col>
+            </v-row>
+            <v-row v-if="submission.data.results.count === 0">
+              <v-col>
+                <IntroBlurb />
+              </v-col>
+            </v-row>
+          </v-container>
+        </v-card-text>
+        <v-card-text>
+          <v-btn
+            color="primary"
+            @click="createNewSubmission(false)"
+          >
+            <v-icon>mdi-plus</v-icon>
+            Create Submission
+          </v-btn>
+          <v-btn
+            color="primary"
+            class="ml-3"
+            outlined
+            @click="createNewSubmission(true)"
+          >
+            <v-icon>mdi-plus</v-icon>
+            Create Test Submission
+          </v-btn>
+          <v-tooltip right>
+            <template #activator="{ on }">
+              <v-icon
+                class="pl-2"
                 color="primary"
-                @click="() => resume(item)"
+                v-on="on"
               >
-                Resume
-                <v-icon class="pl-1">
-                  mdi-arrow-right-circle
-                </v-icon>
-              </v-btn>
-              <v-menu
-                offset-x
+                mdi-information
+              </v-icon>
+            </template>
+            <span>Test submissions should be used when at a workshop or doing a test, example, or training. These cannot be submitted.</span>
+          </v-tooltip>
+        </v-card-text>
+        <v-card-title class="text-h4">
+          Past submissions
+        </v-card-title>
+        <v-row
+          justify="space-between"
+          class="pb-2"
+          no-gutters
+        >
+          <v-col
+            cols="5"
+          >
+            <v-card-text>
+              Pick up where you left off or review a previous submission.
+            </v-card-text>
+          </v-col>
+          <v-col
+            cols="3"
+          >
+            <v-select
+              v-model="isTestFilter"
+              :items="testFilterValues"
+              item-text="text"
+              item-value="val"
+              label="Test Submissions"
+              hide-details
+            />
+          </v-col>
+        </v-row>
+        <v-card outlined>
+          <v-data-table
+            :headers="headers"
+            :items="submission.data.results.results"
+            :server-items-length="submission.data.results.count"
+            :options.sync="options"
+            :loading="submission.loading.value"
+            :items-per-page.sync="submission.data.limit"
+            :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
+          >
+            <template #[`item.study_name`]="{ item }">
+              {{ item.study_name }}
+              <v-chip
+                v-if="item.is_test_submission"
+                color="orange"
+                text-color="white"
+                small
               >
-                <template #activator="{ on }">
-                  <v-btn
-                    text
-                    icon
-                    class="ml-1"
-                    v-on="on"
-                  >
-                    <v-icon>
-                      mdi-dots-vertical
-                    </v-icon>
-                  </v-btn>
-                </template>
-                <v-list>
-                  <v-list-item
-                    @click="() => handleOpenDeleteDialog(item)"
-                  >
-                    <v-list-item-title>Delete</v-list-item-title>
-                  </v-list-item>
-                </v-list>
-              </v-menu>
-            </div>
-          </template>
-        </v-data-table>
+                TEST
+              </v-chip>
+            </template>
+            <template #[`item.author.name`]="{ item }">
+              <orcid-id
+                :orcid-id="item.author.orcid"
+                :name="item.author.name"
+                :width="14"
+                :authenticated="true"
+              />
+            </template>
+            <template #[`item.templates`]="{ item }">
+              {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
+            </template>
+            <template #[`item.date_last_modified`]="{ item }">
+              {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
+            </template>
+            <template #[`item.status`]="{ item }">
+              <v-chip
+                :color="getStatus(item).color"
+              >
+                {{ getStatus(item).text }}
+              </v-chip>
+            </template>
+            <template #[`item.action`]="{ item }">
+              <div class="d-flex align-center">
+                <v-spacer />
+                <v-btn
+                  small
+                  color="primary"
+                  @click="() => resume(item)"
+                >
+                  Resume
+                  <v-icon class="pl-1">
+                    mdi-arrow-right-circle
+                  </v-icon>
+                </v-btn>
+                <v-menu
+                  offset-x
+                >
+                  <template #activator="{ on }">
+                    <v-btn
+                      text
+                      icon
+                      class="ml-1"
+                      v-on="on"
+                    >
+                      <v-icon>
+                        mdi-dots-vertical
+                      </v-icon>
+                    </v-btn>
+                  </template>
+                  <v-list>
+                    <v-list-item
+                      @click="() => handleOpenDeleteDialog(item)"
+                    >
+                      <v-list-item-title>Delete</v-list-item-title>
+                    </v-list-item>
+                  </v-list>
+                </v-menu>
+              </div>
+            </template>
+          </v-data-table>
+        </v-card>
       </v-card>
-    </v-card>
+    </v-container>
     <v-dialog
       v-model="isDeleteDialogOpen"
       :width="550"
