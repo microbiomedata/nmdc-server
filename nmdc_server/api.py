@@ -1187,14 +1187,19 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # Create GitHub issue when metadata is being submitted and not a test submission
+    # When metadata is being submitted and not a test submission, either create a GH issue or add a comment if its 
+    # being resubmitted
     if (
         submission.status == SubmissionStatusEnum.InProgress.text
         and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
         and submission.is_test_submission is False
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
-        create_github_issue(submission_model, user)
+        existing_issue = find_existing_github_issue_for_submission(submission_model.id)
+        if existing_issue: # if its a new submission
+            add_resubmission_comment(existing_issue, user)
+        if existing_issue is None: # if it was resubmitted
+            create_github_issue(submission_model, user)
 
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
@@ -1236,75 +1241,68 @@ async def update_submission(
 
 
 def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
-    gh_url = str(settings.github_issue_url)
-    token = settings.github_authentication_token
-    assignee = settings.github_issue_assignee
-    # If the settings for issue creation weren't supplied return, no need to do anything further
-    if gh_url is None or token is None:
+    """
+    Create a new github issue for a submission
+    """
+    headers, gh_url, assignee = get_github_headers()
+    if headers is None:
         return None
 
-    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
+    # Gathering the fields we want to display in the issue
+    study_form = submission.metadata_submission.studyForm
+    multiomics_form = submission.metadata_submission.multiOmicsForm
+    pi_name = study_form.piName
+    pi_orcid = study_form.piOrcid
+    data_generated = "Yes" if multiomics_form.dataGenerated else "No"
+    omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
+    sample_types = ", ".join(submission.metadata_submission.templates)
+    num_samples = submission.sample_count
 
-    # Check for existing issues first
-    existing_issue = find_existing_github_issue_for_submission(submission.id)
+    # some variable data to supply depending on if data has been generated or not
+    id_dict = {
+        "NCBI ID: ": study_form.NCBIBioProjectId,
+        "GOLD ID: ": study_form.GOLDStudyId,
+        "JGI ID: ": multiomics_form.JGIStudyId,
+        "EMSL ID: ": multiomics_form.studyNumber,
+        "Alternative IDs: ": ", ".join(study_form.alternativeNames),
+    }
+    valid_ids = []
+    for key, value in id_dict.items():
+        if str(value) != "":
+            valid_ids.append(key + value)
 
-    if existing_issue is None:
+    # assemble the body of the API request
+    body_lis = [
+        f"Issue created from host: {settings.host}",
+        f"Submitter: {user.name}, {user.orcid}",
+        f"Submission ID: {submission.id}",
+        f"Has data been generated: {data_generated}",
+        f"PI name: {pi_name}",
+        f"PI orcid: {pi_orcid}",
+        f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
+        f"Data types: {omics_processing_types}",
+        f"Sample type: {sample_types}",
+        f"Number of samples: {num_samples}",
+    ] + valid_ids
+    body_string = " \n ".join(body_lis)
+    payload_dict = {
+        "title": f"NMDC Submission: {submission.id}",
+        "body": body_string,
+        "assignees": [assignee],
+    }
 
-        # Gathering the fields we want to display in the issue
-        study_form = submission.metadata_submission.studyForm
-        multiomics_form = submission.metadata_submission.multiOmicsForm
-        pi_name = study_form.piName
-        pi_orcid = study_form.piOrcid
-        data_generated = "Yes" if multiomics_form.dataGenerated else "No"
-        omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
-        sample_types = ", ".join(submission.metadata_submission.templates)
-        num_samples = submission.sample_count
+    payload = json.dumps(payload_dict)
 
-        # some variable data to supply depending on if data has been generated or not
-        id_dict = {
-            "NCBI ID: ": study_form.NCBIBioProjectId,
-            "GOLD ID: ": study_form.GOLDStudyId,
-            "JGI ID: ": multiomics_form.JGIStudyId,
-            "EMSL ID: ": multiomics_form.studyNumber,
-            "Alternative IDs: ": ", ".join(study_form.alternativeNames),
-        }
-        valid_ids = []
-        for key, value in id_dict.items():
-            if str(value) != "":
-                valid_ids.append(key + value)
+    # make request and log an error or success depending on reply
+    res = requests.post(url=gh_url, data=payload, headers=headers)
+    if res.status_code != 201:
+        logging.error(f"Github issue creation failed with code {res.status_code}")
+        logging.error(res.reason)
+    else:
+        logging.info(f"Github issue creation successful with code {res.status_code}")
+        logging.info(res.reason)
 
-        # assemble the body of the API request
-        body_lis = [
-            f"Issue created from host: {settings.host}",
-            f"Submitter: {user.name}, {user.orcid}",
-            f"Submission ID: {submission.id}",
-            f"Has data been generated: {data_generated}",
-            f"PI name: {pi_name}",
-            f"PI orcid: {pi_orcid}",
-            f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
-            f"Data types: {omics_processing_types}",
-            f"Sample type: {sample_types}",
-            f"Number of samples: {num_samples}",
-        ] + valid_ids
-        body_string = " \n ".join(body_lis)
-        payload_dict = {
-            "title": f"NMDC Submission: {submission.id}",
-            "body": body_string,
-            "assignees": [assignee],
-        }
-
-        payload = json.dumps(payload_dict)
-
-        # make request and log an error or success depending on reply
-        res = requests.post(url=gh_url, data=payload, headers=headers)
-        if res.status_code != 201:
-            logging.error(f"Github issue creation failed with code {res.status_code}")
-            logging.error(res.reason)
-        else:
-            logging.info(f"Github issue creation successful with code {res.status_code}")
-            logging.info(res.reason)
-
-        return res
+    return res
 
 
 def get_github_headers():
@@ -1314,12 +1312,13 @@ def get_github_headers():
     """
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
+    assignee = settings.github_issue_assignee
 
     if gh_url is None or token is None:
         return None, None
 
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
-    return headers, gh_url
+    return headers, gh_url, assignee
 
 
 def find_existing_github_issue_for_submission(submission_id: UUID):
@@ -1328,7 +1327,7 @@ def find_existing_github_issue_for_submission(submission_id: UUID):
     Returns the issue if found, None otherwise.
     Does not modify the issue - just searches and returns.
     """
-    headers, gh_url = get_github_headers()
+    headers, gh_url, assignee = get_github_headers()
     if headers is None:
         return None
 
@@ -1358,23 +1357,14 @@ def find_existing_github_issue_for_submission(submission_id: UUID):
         )
 
 
-def add_resubmission_comment(submission_id: UUID, user):
+def add_resubmission_comment(existing_issue, user):
     """
     Update an existing GitHub issue to note that the submission was resubmitted.
     Adds a comment and reopens the issue if it was closed.
     """
-    headers, gh_url = get_github_headers()
+    headers, gh_url, assignee = get_github_headers()
     if headers is None:
         return None
-
-    # Use the common function to find the issue
-    existing_issue = find_existing_github_issue_for_submission(submission_id)
-
-    if existing_issue is None:
-        raise HTTPException(
-            status_code=404,
-            detail="No GitHub issue found for this submission.",
-        )
 
     issue_url = existing_issue.get("url")  # API URL for the issue
 
@@ -1776,21 +1766,21 @@ async def request_reopen_submission(
 
     if submission.status == SubmissionStatusEnum.InProgress.text:
         raise HTTPException(
-            status_code=400, detail="Cannot request reopen for submissions that are in progress"
+            status_code=400, detail="Cannot request submissions that are in progress be reopened"
         )
 
     submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
-    add_reopen_submission_request_comment(submission_model.id, user)
+    add_comment_request_reopen_submission(submission_model.id, user)
 
     return submission_model
 
 
-def add_reopen_submission_request_comment(submission_id: UUID, user):
+def add_comment_request_reopen_submission(submission_id: UUID, user):
     """
     Find the existing GitHub issue for a submission and add a comment
     indicating the user has requested their submission be reopened on the portal.
     """
-    headers, gh_url = get_github_headers()
+    headers, gh_url, assignee = get_github_headers()
     if headers is None:
         return None
 
@@ -1800,7 +1790,7 @@ def add_reopen_submission_request_comment(submission_id: UUID, user):
     if existing_issue is None:
         raise HTTPException(
             status_code=404,
-            detail="No GitHub issue found for this submission. Cannot request reopen.",
+            detail="No GitHub issue found for this submission",
         )
 
     # Add a comment requesting the submission be reopened
