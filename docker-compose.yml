@@ -40,14 +40,14 @@ services:
     environment:
       - PGHOST=db
       - UVICORN_RELOAD=True
-      # Set the `STORAGE_EMULATOR_HOST` environment variable so that the Google Cloud SDK will _not_ try to validate
-      # the developer's Application Default Credentials (ADC) file (i.e. `application_default_credentials.json`).
+      # Set the `STORAGE_EMULATOR_HOST` environment variable so that the Google Cloud SDK for PYthon will _not_ try to
+      # validate the developer's Application Default Credentials (ADC) file (i.e. `application_default_credentials.json`).
       #
       # Note: This technique is shown at https://github.com/oittaa/gcp-storage-emulator/blob/main/README.md#cli-usage,
       #       which is the documentation of a different GCS emulator tool than the `fake-gcs-server` tool we're using.
       #
-      #       The closest thing to Google-official documentation I've found about this environment variable
-      #       is this entry in the changelog of the Google Cloud SDK for Python, which contains a link to the
+      #       The closest thing to Google-official documentation I've found about this environment variable is an entry
+      #       in the changelog of the Google Cloud SDK for Python version 1.20.0, which contains a link to the
       #       following merged Pull Request: https://github.com/googleapis/google-cloud-python/pull/9219
       #
       - STORAGE_EMULATOR_HOST='http://storage:4443'
