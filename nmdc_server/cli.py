@@ -117,7 +117,9 @@ def truncate():
     default=False,
     help="Swap secrets on Google Secret Manager via its API",
 )
-def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets, swap_google_secrets: bool):
+def ingest(
+    verbose, function_limit, skip_annotation, swap_rancher_secrets, swap_google_secrets: bool
+):
     """Ingest the latest data from mongo into the ingest database."""
     level = logging.WARN
     if verbose == 1:
@@ -133,9 +135,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets, swap_
     # Validate interdependent inputs.
     if swap_google_secrets:
         if settings.gcp_project_id is None:
-            raise ValueError(
-                "gcp_project_id must be set in order to use --swap-google-secrets"
-            )
+            raise ValueError("gcp_project_id must be set in order to use --swap-google-secrets")
         if settings.gcp_primary_postgres_uri_secret_id is None:
             raise ValueError(
                 "gcp_primary_postgres_uri_secret_id must be set in order to use --swap-google-secrets"
@@ -266,15 +266,11 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets, swap_
 
         # Swap the values of the secrets.
         _ = client.add_secret_version(
-            request=dict(
-                parent=primary_uri_secret_path, payload=dict(data=secondary_uri_bytes)
-            )
+            request=dict(parent=primary_uri_secret_path, payload=dict(data=secondary_uri_bytes))
         )
         click.echo(f"Updated secret: {primary_uri_secret_path}")
         _ = client.add_secret_version(
-            request=dict(
-                parent=secondary_uri_secret_path, payload=dict(data=primary_uri_bytes)
-            )
+            request=dict(parent=secondary_uri_secret_path, payload=dict(data=primary_uri_bytes))
         )
         click.echo(f"Updated secret: {secondary_uri_secret_path}")
 
