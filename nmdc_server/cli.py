@@ -21,6 +21,40 @@ from nmdc_server.static_files import generate_submission_schema_files, initializ
 from nmdc_server.storage import BucketName, storage
 
 
+def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: str) -> None:
+    """Swaps the values of two secrets in Google Secret Manager."""
+
+    client = secretmanager.SecretManagerServiceClient()
+
+    # Get the initial value of the first secret.
+    secret_a_path = client.secret_path(gcp_project_id, secret_a_id)
+    response = client.access_secret_version(
+        request=dict(name=f"{secret_a_path}/versions/latest")
+    )
+    secret_a_value: bytes = response.payload.data
+    click.echo(f"Read secret: {secret_a_path}")
+
+    # Get the initial value of the second secret.
+    secret_b_path = client.secret_path(gcp_project_id, secret_b_id)
+    response = client.access_secret_version(
+        request=dict(name=f"{secret_b_path}/versions/latest")
+    )
+    secret_b_value: bytes = response.payload.data
+    click.echo(f"Read secret: {secret_b_path}")
+
+    # Put the second secret's initial value into the first secret.
+    _ = client.add_secret_version(
+        request=dict(parent=secret_a_path, payload=dict(data=secret_b_value))
+    )
+    click.echo(f"Updated secret: {secret_a_path}")
+    
+    # Put the first secret's initial value into the second secret.
+    _ = client.add_secret_version(
+        request=dict(parent=secret_b_path, payload=dict(data=secret_a_value))
+    )
+    click.echo(f"Updated secret: {secret_b_path}")
+
+
 def send_slack_message(text: str) -> bool:
     r"""
     Sends a Slack message having the specified text if the application has
@@ -241,35 +275,11 @@ def ingest(
         assert settings.gcp_primary_postgres_uri_secret_id is not None
         assert settings.gcp_secondary_postgres_uri_secret_id is not None
 
-        # Read the values of the secrets.
-        client = secretmanager.SecretManagerServiceClient()
-        primary_uri_secret_path = client.secret_path(
-            settings.gcp_project_id, settings.gcp_primary_postgres_uri_secret_id
+        swap_gcp_secret_values(
+            gcp_project_id=settings.gcp_project_id,
+            secret_a_id=settings.gcp_primary_postgres_uri_secret_id,
+            secret_b_id=settings.gcp_secondary_postgres_uri_secret_id,
         )
-        click.echo(f"Reading secret: {primary_uri_secret_path}")
-        response = client.access_secret_version(
-            request=dict(name=f"{primary_uri_secret_path}/versions/latest")
-        )
-        primary_uri_bytes = response.payload.data
-
-        secondary_uri_secret_path = client.secret_path(
-            settings.gcp_project_id, settings.gcp_secondary_postgres_uri_secret_id
-        )
-        click.echo(f"Reading secret: {secondary_uri_secret_path}")
-        response = client.access_secret_version(
-            request=dict(name=f"{secondary_uri_secret_path}/versions/latest")
-        )
-        secondary_uri_bytes = response.payload.data
-
-        # Swap the values of the secrets.
-        _ = client.add_secret_version(
-            request=dict(parent=primary_uri_secret_path, payload=dict(data=secondary_uri_bytes))
-        )
-        click.echo(f"Updated secret: {primary_uri_secret_path}")
-        _ = client.add_secret_version(
-            request=dict(parent=secondary_uri_secret_path, payload=dict(data=primary_uri_bytes))
-        )
-        click.echo(f"Updated secret: {secondary_uri_secret_path}")
 
         click.echo("Done")
 
