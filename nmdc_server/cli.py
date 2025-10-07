@@ -25,11 +25,11 @@ def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: s
     """Swaps the values of two secrets in Google Secret Manager.
 
     Note: To update a secret's content, we "add a version" of that secret.
-    
+
     TODO: Consider having both versions of the secret pre-created on GCP,
           and then—here—just activate one version or the other. That could
           make it so we aren't storing so many versions of each secret.
-    
+
     References (note: the `noqa` comment prevents the linter from flagging the line length):
     - Importing the Python library: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-install-python  # noqa: E501
     - Add secret version: https://cloud.google.com/secret-manager/docs/samples/secretmanager-add-secret-version  # noqa: E501
