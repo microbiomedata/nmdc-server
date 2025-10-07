@@ -134,16 +134,13 @@ def ingest(
 
     # Validate interdependent inputs.
     if swap_google_secrets:
-        if settings.gcp_project_id is None:
-            raise ValueError("gcp_project_id must be set in order to use --swap-google-secrets")
-        if settings.gcp_primary_postgres_uri_secret_id is None:
-            raise ValueError(
-                "gcp_primary_postgres_uri_secret_id must be set in order to use --swap-google-secrets"
-            )
-        if settings.gcp_secondary_postgres_uri_secret_id is None:
-            raise ValueError(
-                "gcp_secondary_postgres_uri_secret_id must be set in order to use --swap-google-secrets"
-            )
+        for name in [
+            "gcp_project_id",
+            "gcp_primary_postgres_uri_secret_id",
+            "gcp_secondary_postgres_uri_secret_id",
+        ]:
+            if getattr(settings, name, None) is None:
+                raise ValueError(f"{name} must be set in order to use --swap-google-secrets")
 
     # Send a Slack message announcing that this ingest is starting.
     send_slack_message(
@@ -230,9 +227,9 @@ def ingest(
     #       and then—here—just activate one version or the other. That could
     #       make it so we aren't storing so many versions of each secret.
     #
-    # References:
-    # - Importing the Python library: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-install-python
-    # - Add secret version: https://cloud.google.com/secret-manager/docs/samples/secretmanager-add-secret-version
+    # References (note: the `noqa` comment prevents the linter from flagging the line length):
+    # - Importing the Python library: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-install-python  # noqa: E501
+    # - Add secret version: https://cloud.google.com/secret-manager/docs/samples/secretmanager-add-secret-version  # noqa: E501
     #
     if swap_google_secrets:
         click.echo("Swapping secrets on Google Secret Manager")

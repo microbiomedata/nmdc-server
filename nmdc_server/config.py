@@ -84,7 +84,7 @@ class Settings(BaseSettings):
     gcs_project_id: str | None = None
     """The GCS project ID. This is only required if gcs_use_fake is False.
 
-    TODO: Consider consolidating with `gcp_project_id` ("GCP" accounts for non-Storage GCP products).
+    TODO: Consider consolidating with `gcp_project_id` ("GCP" accounts for non-Storage products).
     """
 
     gcs_object_name_prefix: str
