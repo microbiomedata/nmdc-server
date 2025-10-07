@@ -22,7 +22,18 @@ from nmdc_server.storage import BucketName, storage
 
 
 def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: str) -> None:
-    """Swaps the values of two secrets in Google Secret Manager."""
+    """Swaps the values of two secrets in Google Secret Manager.
+
+    Note: To update a secret's content, we "add a version" of that secret.
+    
+    TODO: Consider having both versions of the secret pre-created on GCP,
+          and then—here—just activate one version or the other. That could
+          make it so we aren't storing so many versions of each secret.
+    
+    References (note: the `noqa` comment prevents the linter from flagging the line length):
+    - Importing the Python library: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-install-python  # noqa: E501
+    - Add secret version: https://cloud.google.com/secret-manager/docs/samples/secretmanager-add-secret-version  # noqa: E501
+    """
 
     client = secretmanager.SecretManagerServiceClient()
 
@@ -162,16 +173,6 @@ def ingest(
     ingest_start_datetime = datetime.datetime.now(datetime.timezone.utc)
     ingest_start_datetime_str = ingest_start_datetime.isoformat(timespec="seconds")
 
-    # Validate interdependent inputs.
-    if swap_google_secrets:
-        for name in [
-            "gcp_project_id",
-            "gcp_primary_postgres_uri_secret_id",
-            "gcp_secondary_postgres_uri_secret_id",
-        ]:
-            if getattr(settings, name, None) is None:
-                raise ValueError(f"{name} must be set in order to use --swap-google-secrets")
-
     # Send a Slack message announcing that this ingest is starting.
     send_slack_message(
         f"Ingest is starting.\n"
@@ -204,7 +205,7 @@ def ingest(
 
     if swap_rancher_secrets:
 
-        # TODO: Move this validation to the top of the function so we fail early.
+        # TODO: Move this validation to the top of the ingest function so we fail early.
         def require_setting(name: str):
             if not getattr(settings, name, None):
                 raise ValueError(f"{name} must be set to use --swap-rancher-secrets")
@@ -251,26 +252,26 @@ def ingest(
         click.echo("Done")
 
     # If the user wants to swap secrets on Google Secret Manager, do it now.
-    # Note: To update a secret's content, we "add a version" of that secret.
-    #
-    # TODO: Consider having both versions of the secret pre-created on GCP,
-    #       and then—here—just activate one version or the other. That could
-    #       make it so we aren't storing so many versions of each secret.
-    #
-    # References (note: the `noqa` comment prevents the linter from flagging the line length):
-    # - Importing the Python library: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-install-python  # noqa: E501
-    # - Add secret version: https://cloud.google.com/secret-manager/docs/samples/secretmanager-add-secret-version  # noqa: E501
-    #
     if swap_google_secrets:
         click.echo("Swapping secrets on Google Secret Manager")
 
-        # Note: We already validated these things above, but Pylance can't tell because
-        #       that validation happened within a different `if` block (although it
-        #       happens to have the same condition as this one), so we do it again here.
+        # TODO: Move this validation to the top of the ingest function so we fail early.
+        def require_setting(name: str):
+            if not getattr(settings, name, None):
+                raise ValueError(f"{name} must be set to use --swap-google-secrets")
+
+        require_setting("gcp_project_id")
+        require_setting("gcp_primary_postgres_uri_secret_id")
+        require_setting("gcp_secondary_postgres_uri_secret_id")
+
+        # Note: We already validated these things above, but Pylance can't tell...
+        #       ...which I think is the case because that validation happened within
+        #       a different `if` block. So, we assert here to appease Pylance.
         assert settings.gcp_project_id is not None
         assert settings.gcp_primary_postgres_uri_secret_id is not None
         assert settings.gcp_secondary_postgres_uri_secret_id is not None
 
+        # Swap the secret values.
         swap_gcp_secret_values(
             gcp_project_id=settings.gcp_project_id,
             secret_a_id=settings.gcp_primary_postgres_uri_secret_id,
