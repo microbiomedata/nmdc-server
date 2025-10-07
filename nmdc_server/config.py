@@ -82,7 +82,10 @@ class Settings(BaseSettings):
     frontend will use, so it should typically refer to the localhost address."""
 
     gcs_project_id: str | None = None
-    """The GCS project ID. This is only required if gcs_use_fake is False."""
+    """The GCS project ID. This is only required if gcs_use_fake is False.
+
+    TODO: Consider consolidating with `gcp_project_id` ("GCP" accounts for non-Storage GCP products).
+    """
 
     gcs_object_name_prefix: str
     """Prefix for GCS object names.
@@ -146,6 +149,16 @@ class Settings(BaseSettings):
     rancher_project_id: Optional[str] = None
     rancher_postgres_secret_id: Optional[str] = None
     rancher_backend_workload_id: Optional[str] = None
+
+    # Google Secret Manager information for swapping database roles after ingest
+    gcp_project_id: Optional[str] = None
+    """The GCP (Google Cloud Platform) project ID. Used by the Mongo-to-Postgres ingest script."""
+
+    gcp_primary_postgres_uri_secret_id: Optional[str] = None
+    """The ID of the Google Secret Manager secret containing the primary Postgres URI."""
+
+    gcp_secondary_postgres_uri_secret_id: Optional[str] = None
+    """The ID of the Google Secret Manager secret containing the secondary Postgres URI."""
 
     # Parameters related to posting messages to Slack.
     # Reference: https://api.slack.com/messaging/webhooks

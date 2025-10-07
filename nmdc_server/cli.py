@@ -9,6 +9,7 @@ from typing import Optional
 
 import click
 import requests
+from google.cloud import secretmanager
 from sqlalchemy import text
 
 from nmdc_server import jobs
@@ -104,8 +105,19 @@ def truncate():
 @click.option("-v", "--verbose", count=True)
 @click.option("--function-limit", type=click.INT, default=100)
 @click.option("--skip-annotation", is_flag=True, default=False)
-@click.option("--swap-rancher-secrets", is_flag=True, default=False)
-def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
+@click.option(
+    "--swap-rancher-secrets",
+    is_flag=True,
+    default=False,
+    help="Swap secrets on Spin via the Rancher API",
+)
+@click.option(
+    "--swap-google-secrets",
+    is_flag=True,
+    default=False,
+    help="Swap secrets on Google Secret Manager via its API",
+)
+def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets, swap_google_secrets: bool):
     """Ingest the latest data from mongo into the ingest database."""
     level = logging.WARN
     if verbose == 1:
@@ -117,6 +129,21 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
     # Get the current time as a human-readable string that indicates the timezone.
     ingest_start_datetime = datetime.datetime.now(datetime.timezone.utc)
     ingest_start_datetime_str = ingest_start_datetime.isoformat(timespec="seconds")
+
+    # Validate interdependent inputs.
+    if swap_google_secrets:
+        if settings.gcp_project_id is None:
+            raise ValueError(
+                "gcp_project_id must be set in order to use --swap-google-secrets"
+            )
+        if settings.gcp_primary_postgres_uri_secret_id is None:
+            raise ValueError(
+                "gcp_primary_postgres_uri_secret_id must be set in order to use --swap-google-secrets"
+            )
+        if settings.gcp_secondary_postgres_uri_secret_id is None:
+            raise ValueError(
+                "gcp_secondary_postgres_uri_secret_id must be set in order to use --swap-google-secrets"
+            )
 
     # Send a Slack message announcing that this ingest is starting.
     send_slack_message(
@@ -150,6 +177,7 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
 
     if swap_rancher_secrets:
 
+        # TODO: Move this validation to the top of the function so we fail early.
         def require_setting(name: str):
             if not getattr(settings, name, None):
                 raise ValueError(f"{name} must be set to use --swap-rancher-secrets")
@@ -193,6 +221,63 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         response.raise_for_status()
 
         response.raise_for_status()
+        click.echo("Done")
+
+    # If the user wants to swap secrets on Google Secret Manager, do it now.
+    # Note: To update a secret's content, we "add a version" of that secret.
+    #
+    # TODO: Consider having both versions of the secret pre-created on GCP,
+    #       and then—here—just activate one version or the other. That could
+    #       make it so we aren't storing so many versions of each secret.
+    #
+    # References:
+    # - Importing the Python library: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-install-python
+    # - Add secret version: https://cloud.google.com/secret-manager/docs/samples/secretmanager-add-secret-version
+    #
+    if swap_google_secrets:
+        click.echo("Swapping secrets on Google Secret Manager")
+
+        # Note: We already validated these things above, but Pylance can't tell because
+        #       that validation happened within a different `if` block (although it
+        #       happens to have the same condition as this one), so we do it again here.
+        assert settings.gcp_project_id is not None
+        assert settings.gcp_primary_postgres_uri_secret_id is not None
+        assert settings.gcp_secondary_postgres_uri_secret_id is not None
+
+        # Read the values of the secrets.
+        client = secretmanager.SecretManagerServiceClient()
+        primary_uri_secret_path = client.secret_path(
+            settings.gcp_project_id, settings.gcp_primary_postgres_uri_secret_id
+        )
+        click.echo(f"Reading secret: {primary_uri_secret_path}")
+        response = client.access_secret_version(
+            request=dict(name=f"{primary_uri_secret_path}/versions/latest")
+        )
+        primary_uri_bytes = response.payload.data
+
+        secondary_uri_secret_path = client.secret_path(
+            settings.gcp_project_id, settings.gcp_secondary_postgres_uri_secret_id
+        )
+        click.echo(f"Reading secret: {secondary_uri_secret_path}")
+        response = client.access_secret_version(
+            request=dict(name=f"{secondary_uri_secret_path}/versions/latest")
+        )
+        secondary_uri_bytes = response.payload.data
+
+        # Swap the values of the secrets.
+        _ = client.add_secret_version(
+            request=dict(
+                parent=primary_uri_secret_path, payload=dict(data=secondary_uri_bytes)
+            )
+        )
+        click.echo(f"Updated secret: {primary_uri_secret_path}")
+        _ = client.add_secret_version(
+            request=dict(
+                parent=secondary_uri_secret_path, payload=dict(data=primary_uri_bytes)
+            )
+        )
+        click.echo(f"Updated secret: {secondary_uri_secret_path}")
+
         click.echo("Done")
 
     # Calculate the total duration of this ingest (in minutes).
