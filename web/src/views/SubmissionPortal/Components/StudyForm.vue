@@ -32,7 +32,12 @@ import ImageUpload from './ImageUpload.vue';
 import StatusAlert from './StatusAlert.vue';
 
 export default defineComponent({
-  components: { ImageUpload, SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert },
+  components: {
+    ImageUpload,
+    SubmissionDocsLink,
+    SubmissionPermissionBanner,
+    StatusAlert,
+  },
   setup() {
     const formRef = ref();
 
