@@ -140,6 +140,14 @@ async function deleteSubmissionImage(submissionId: string, imageType: Submission
   await client.delete<MetadataSubmissionRecord>(endpoint);
 }
 
+async function requestRecordReopened(id: string) {
+  const resp = await client.post<MetadataSubmissionRecord>(
+    `metadata_submission/${id}/request_reopen`,
+    {},
+  );
+  return { data: resp.data, httpStatus: resp.status };
+}
+
 export {
   addressToString,
   createRecord,
@@ -153,4 +161,5 @@ export {
   generateSignedUploadUrl,
   setSubmissionImage,
   deleteSubmissionImage,
+  requestRecordReopened,
 };
