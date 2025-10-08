@@ -13,7 +13,7 @@ from google.cloud import secretmanager
 from sqlalchemy import text
 
 from nmdc_server import jobs
-from nmdc_server.config import settings, Settings
+from nmdc_server.config import Settings, settings
 from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
 from nmdc_server.models import SubmissionImagesObject
