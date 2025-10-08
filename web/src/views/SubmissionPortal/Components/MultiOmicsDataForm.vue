@@ -20,6 +20,7 @@ import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
 import DoeFacility from './DoeFacility.vue';
+import StatusAlert from './StatusAlert.vue';
 
 const OTHER = 'OTHER';
 
@@ -29,6 +30,7 @@ export default defineComponent({
     DoeFacility,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
+    StatusAlert,
   },
   setup() {
     const formRef = ref();
@@ -167,6 +169,7 @@ export default defineComponent({
       canEditSubmissionByStatus,
       SubmissionStatusTitleMapping,
       status,
+      StatusAlert,
     };
   },
 });
@@ -184,37 +187,7 @@ export default defineComponent({
     <submission-permission-banner
       v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
-    <v-alert
-      v-if="!canEditSubmissionByStatus()"
-      type="info"
-      class="ma-2"
-    >
-      <template #prepend>
-        <v-menu
-          bottom
-          offset-y
-          :close-on-content-click="false"
-          max-width="300"
-        >
-          <template #activator="{ on, attrs }">
-            <v-icon
-              v-bind="attrs"
-              style="cursor: pointer;"
-              v-on="on"
-            >
-              mdi-information
-            </v-icon>
-          </template>
-          <v-card>
-            <v-card-text>
-              If you need to edit this submission, please contact:
-              <span style="user-select: all; cursor: text; font-weight: bold;">support@microbiomedata.org</span>
-            </v-card-text>
-          </v-card>
-        </v-menu>
-      </template>
-      This submission has status "{{ SubmissionStatusTitleMapping[status] }}" and cannot be edited.
-    </v-alert>
+    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-form
       ref="formRef"
       v-model="multiOmicsFormValid"
