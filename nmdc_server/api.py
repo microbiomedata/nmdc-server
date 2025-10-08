@@ -1633,8 +1633,7 @@ async def make_submission_images_public(
 
     public_pi_image = make_public(submission.pi_image)
     public_primary_study_image = make_public(submission.primary_study_image)
-    public_study_image_urls = [make_public(img) for img in submission.study_images]  # type: ignore
-
+    public_study_image_urls = [make_public(img) for img in submission.study_images]
     return schemas.SubmissionImagesMakePublicResponse(
         pi_image_url=public_pi_image,
         primary_study_image_url=public_primary_study_image,
