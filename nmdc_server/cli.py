@@ -13,7 +13,7 @@ from google.cloud import secretmanager
 from sqlalchemy import text
 
 from nmdc_server import jobs
-from nmdc_server.config import settings
+from nmdc_server.config import settings, Settings
 from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
 from nmdc_server.models import SubmissionImagesObject
@@ -72,6 +72,50 @@ def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: s
     click.echo(f"Updated secret: {secret_b_path}")
 
 
+def swap_rancher_secret_values(
+    rancher_api_base_url: str,
+    rancher_api_auth_token: str,
+    rancher_project_id: str,
+    rancher_postgres_secret_id: str,
+    rancher_backend_workload_id: str,
+) -> None:
+    """Swaps the values of two items in a secret, then redeploys a workload, all on Rancher."""
+
+    headers = {"Authorization": f"Bearer {rancher_api_auth_token}"}
+
+    click.echo(f"Getting current secret {rancher_postgres_secret_id}")
+    secret_url = (
+        f"{rancher_api_base_url}"
+        f"/project/{rancher_project_id}"
+        f"/namespacedSecrets/{rancher_postgres_secret_id}"
+    )
+    response = requests.get(secret_url, headers=headers)
+    response.raise_for_status()
+
+    # Derive new secret's content based upon current secret's content.
+    secret = response.json()
+    next_secret = {
+        "data": {
+            "INGEST_URI": secret["data"]["POSTGRES_URI"],
+            "POSTGRES_PASSWORD": secret["data"]["POSTGRES_PASSWORD"],
+            "POSTGRES_URI": secret["data"]["INGEST_URI"],
+        }
+    }
+
+    click.echo(f"Updating secret {rancher_postgres_secret_id}")
+    response = requests.put(secret_url, headers=headers, json=next_secret)
+    response.raise_for_status()
+
+    click.echo(f"Redeploying workload {rancher_backend_workload_id}")
+    response = requests.post(
+        f"{rancher_api_base_url}"
+        f"/project/{rancher_project_id}"
+        f"/workloads/{rancher_backend_workload_id}?action=redeploy",
+        headers=headers,
+    )
+    response.raise_for_status()
+
+
 def send_slack_message(text: str) -> bool:
     r"""
     Sends a Slack message having the specified text if the application has
@@ -103,6 +147,13 @@ def send_slack_message(text: str) -> bool:
         click.echo("No Slack Incoming Webhook URL is defined.", err=True)
 
     return is_sent
+
+
+def require_setting(name: str, flag: str = "that flag", settings: Settings = settings):
+    """Raises an error mentioning a flag, if the specified setting is `None`."""
+
+    if not getattr(settings, name, None):
+        raise ValueError(f"{name} must be set in order to use {flag}")
 
 
 @click.group()
@@ -216,49 +267,28 @@ def ingest(
     if swap_rancher_secrets:
 
         # TODO: Move this validation to the top of the ingest function so we fail early.
-        def require_setting(name: str):
-            if not getattr(settings, name, None):
-                raise ValueError(f"{name} must be set to use --swap-rancher-secrets")
+        require_setting("rancher_api_base_url", "--swap-rancher-secrets")
+        require_setting("rancher_api_auth_token", "--swap-rancher-secrets")
+        require_setting("rancher_project_id", "--swap-rancher-secrets")
+        require_setting("rancher_postgres_secret_id", "--swap-rancher-secrets")
+        require_setting("rancher_backend_workload_id", "--swap-rancher-secrets")
 
-        require_setting("rancher_api_base_url")
-        require_setting("rancher_api_auth_token")
-        require_setting("rancher_project_id")
-        require_setting("rancher_postgres_secret_id")
-        require_setting("rancher_backend_workload_id")
+        # Note: We already validated these things above, but Pylance can't tell.
+        #       So, we include these redundant assertions to appease Pylance.
+        assert settings.rancher_api_base_url is not None
+        assert settings.rancher_api_auth_token is not None
+        assert settings.rancher_project_id is not None
+        assert settings.rancher_postgres_secret_id is not None
+        assert settings.rancher_backend_workload_id is not None
 
-        headers = {"Authorization": f"Bearer {settings.rancher_api_auth_token}"}
-
-        click.echo(f"Getting current secret {settings.rancher_postgres_secret_id}")
-        secret_url = (
-            f"{settings.rancher_api_base_url}"
-            f"/project/{settings.rancher_project_id}"
-            f"/namespacedSecrets/{settings.rancher_postgres_secret_id}"
+        swap_rancher_secret_values(
+            rancher_api_base_url=settings.rancher_api_base_url,
+            rancher_api_auth_token=settings.rancher_api_auth_token,
+            rancher_project_id=settings.rancher_project_id,
+            rancher_postgres_secret_id=settings.rancher_postgres_secret_id,
+            rancher_backend_workload_id=settings.rancher_backend_workload_id,
         )
-        response = requests.get(secret_url, headers=headers)
-        response.raise_for_status()
-        current = response.json()
-        update = {
-            "data": {
-                "INGEST_URI": current["data"]["POSTGRES_URI"],
-                "POSTGRES_PASSWORD": current["data"]["POSTGRES_PASSWORD"],
-                "POSTGRES_URI": current["data"]["INGEST_URI"],
-            }
-        }
 
-        click.echo(f"Updating secret {settings.rancher_postgres_secret_id}")
-        response = requests.put(secret_url, headers=headers, json=update)
-        response.raise_for_status()
-
-        click.echo(f"Redeploying workload {settings.rancher_backend_workload_id}")
-        response = requests.post(
-            f"{settings.rancher_api_base_url}"
-            f"/project/{settings.rancher_project_id}"
-            f"/workloads/{settings.rancher_backend_workload_id}?action=redeploy",
-            headers=headers,
-        )
-        response.raise_for_status()
-
-        response.raise_for_status()
         click.echo("Done")
 
     # If the user wants to swap secrets on Google Secret Manager, do it now.
@@ -266,17 +296,12 @@ def ingest(
         click.echo("Swapping secrets on Google Secret Manager")
 
         # TODO: Move this validation to the top of the ingest function so we fail early.
-        def require_setting(name: str):
-            if not getattr(settings, name, None):
-                raise ValueError(f"{name} must be set to use --swap-google-secrets")
+        require_setting("gcp_project_id", "--swap-google-secrets")
+        require_setting("gcp_primary_postgres_uri_secret_id", "--swap-google-secrets")
+        require_setting("gcp_secondary_postgres_uri_secret_id", "--swap-google-secrets")
 
-        require_setting("gcp_project_id")
-        require_setting("gcp_primary_postgres_uri_secret_id")
-        require_setting("gcp_secondary_postgres_uri_secret_id")
-
-        # Note: We already validated these things above, but Pylance can't tell...
-        #       ...which I think is the case because that validation happened within
-        #       a different `if` block. So, we assert here to appease Pylance.
+        # Note: We already validated these things above, but Pylance can't tell.
+        #       So, we include these redundant assertions to appease Pylance.
         assert settings.gcp_project_id is not None
         assert settings.gcp_primary_postgres_uri_secret_id is not None
         assert settings.gcp_secondary_postgres_uri_secret_id is not None
