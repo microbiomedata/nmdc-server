@@ -288,19 +288,19 @@ def ingest(
         click.echo("Swapping secrets on Google Secret Manager")
 
         # TODO: Move this validation to the top of the ingest function so we fail early.
-        require_setting("gcp_project_id", "--swap-google-secrets")
+        require_setting("gcs_project_id", "--swap-google-secrets")
         require_setting("gcp_primary_postgres_uri_secret_id", "--swap-google-secrets")
         require_setting("gcp_secondary_postgres_uri_secret_id", "--swap-google-secrets")
 
         # Note: We already validated these things above, but mypy can't tell.
         #       So, we include these redundant assertions to appease mypy.
-        assert settings.gcp_project_id is not None
+        assert settings.gcs_project_id is not None
         assert settings.gcp_primary_postgres_uri_secret_id is not None
         assert settings.gcp_secondary_postgres_uri_secret_id is not None
 
         # Swap the secret values.
         swap_gcp_secret_values(
-            gcp_project_id=settings.gcp_project_id,
+            gcp_project_id=settings.gcs_project_id,
             secret_a_id=settings.gcp_primary_postgres_uri_secret_id,
             secret_b_id=settings.gcp_secondary_postgres_uri_secret_id,
         )
