@@ -1654,6 +1654,52 @@ async def generate_signed_upload_url(
     )
 
 
+@router.post(
+    "/metadata_submission/{id}/image/make_public",
+    response_model=schemas.SubmissionImagesMakePublicResponse,
+)
+async def make_submission_images_public(
+    id: str,
+    body: schemas.SubmissionImagesMakePublicRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> schemas.SubmissionImagesMakePublicResponse:
+    """Copy the submission's images into the public images bucket and return their public URLs.
+
+    This operation is only allowed for admin users. It is intended to be called as part of the
+    process of translating submission data into nmdc-schema compatible data. We make a public copy
+    instead of changing the permissions of the original image because the submission images
+    bucket uses uniform bucket-level access, which means we can't change the permissions of
+    individual objects.
+    """
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+
+    submission = get_submission_for_user(db, id, user)
+
+    def make_public(image: Optional[SubmissionImagesObject]) -> Optional[str]:
+        """Make a copy of the given image in the public images bucket and return its public URL."""
+        if image is None:
+            return None
+        public_object = storage.copy_object(
+            image.name,
+            from_bucket=BucketName.SUBMISSION_IMAGES,
+            to_bucket=BucketName.PUBLIC_IMAGES,
+            new_name=image.name.replace(id, body.study_id),
+        )
+        return public_object.public_url
+
+    public_pi_image = make_public(submission.pi_image)
+    public_primary_study_image = make_public(submission.primary_study_image)
+    public_study_image_urls = [make_public(img) for img in submission.study_images]  # type: ignore
+
+    return schemas.SubmissionImagesMakePublicResponse(
+        pi_image_url=public_pi_image,
+        primary_study_image_url=public_primary_study_image,
+        study_image_urls=public_study_image_urls,
+    )
+
+
 class ImageType(StrEnum):
     PI_IMAGE = "pi_image"
     PRIMARY_STUDY_IMAGE = "primary_study_image"

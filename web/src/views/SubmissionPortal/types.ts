@@ -253,6 +253,8 @@ export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
   lock_updated: string;
   permission_level: string | null;
   source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
+  primary_study_image_url: string | null;
+  pi_image_url: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -293,3 +295,23 @@ export type PermissionLevelValues = 'viewer' | 'reviewer' | 'metadata_contributo
 export type SubmissionStatusKey = Extract<keyof typeof NmdcSchema.enums.submissionStatus.permissible_values, string>;
 
 export type SubmissionStatusTitle = typeof NmdcSchema.enums.submissionStatus.permissible_values[SubmissionStatusKey]['title'];
+
+export interface SignedUploadUrlRequest {
+  file_name: string;
+  file_size: number;
+  content_type: string;
+}
+
+export interface SignedUrl {
+  url: string;
+  object_name: string;
+  expiration: string;
+}
+
+export interface UploadCompleteRequest {
+  object_name: string;
+  file_size: number;
+  content_type: string;
+}
+
+export type SubmissionImageType = 'pi_image' | 'primary_study_image' | 'study_images';
