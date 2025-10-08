@@ -39,35 +39,27 @@ def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: s
 
     # Get the initial value of the first secret.
     secret_a_path = client.secret_path(gcp_project_id, secret_a_id)
-    request = secretmanager.AccessSecretVersionRequest(
-        name=f"{secret_a_path}/versions/latest"
-    )
+    request = secretmanager.AccessSecretVersionRequest(name=f"{secret_a_path}/versions/latest")
     response = client.access_secret_version(request=request)
     secret_a_value: bytes = response.payload.data
     click.echo(f"Read secret: {secret_a_path}")
 
     # Get the initial value of the second secret.
     secret_b_path = client.secret_path(gcp_project_id, secret_b_id)
-    request = secretmanager.AccessSecretVersionRequest(
-        name=f"{secret_b_path}/versions/latest"
-    )
+    request = secretmanager.AccessSecretVersionRequest(name=f"{secret_b_path}/versions/latest")
     response = client.access_secret_version(request=request)
     secret_b_value: bytes = response.payload.data
     click.echo(f"Read secret: {secret_b_path}")
 
     # Put the second secret's initial value into the first secret.
     payload = secretmanager.SecretPayload(data=secret_b_value)
-    request = secretmanager.AddSecretVersionRequest(
-        parent=secret_a_path, payload=payload
-    )
+    request = secretmanager.AddSecretVersionRequest(parent=secret_a_path, payload=payload)
     _ = client.add_secret_version(request=request)
     click.echo(f"Updated secret: {secret_a_path}")
 
     # Put the first secret's initial value into the second secret.
     payload = secretmanager.SecretPayload(data=secret_a_value)
-    request = secretmanager.AddSecretVersionRequest(
-        parent=secret_b_path, payload=payload
-    )
+    request = secretmanager.AddSecretVersionRequest(parent=secret_b_path, payload=payload)
     _ = client.add_secret_version(request=request)
     click.echo(f"Updated secret: {secret_b_path}")
 
