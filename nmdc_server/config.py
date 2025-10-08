@@ -160,7 +160,7 @@ class Settings(BaseSettings):
     """The ID of the Google Secret Manager secret containing the primary Postgres URI.
 
     This is only required when running the ingest script with its `--swap-google-secrets` flag.
-    
+
     Note: Google's own documentation sometimes refers to this as the "name" of the secret
           (e.g., `my-secret`). It is _not_ the full resource path of the secret
           (e.g., `projects/12345678/secrets/my-secret/versions/123`).
@@ -168,7 +168,7 @@ class Settings(BaseSettings):
 
     gcp_secondary_postgres_uri_secret_id: Optional[str] = None
     """The ID of the Google Secret Manager secret containing the secondary Postgres URI.
-    
+
     This is only required when running the ingest script with its `--swap-google-secrets` flag.
     """
 
