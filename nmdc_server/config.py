@@ -84,8 +84,8 @@ class Settings(BaseSettings):
     gcs_project_id: str | None = None
     """The GCS project ID.
 
-    This is only required when `gcs_use_fake` is `False` or when running the ingest script
-    with its `--swap-google-secrets` flag.
+    This is only required when either (a) `gcs_use_fake` is `False` or (b) you will be running
+    the ingest script with its `--swap-google-secrets` flag.
 
     TODO: Consider renaming to `gcp_project_id` so as to not imply it is only used for GCS,
           since the ingest script uses it to access Google Secret Manager (i.e. a non-GCS
