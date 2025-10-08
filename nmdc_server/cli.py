@@ -141,7 +141,7 @@ def send_slack_message(text: str) -> bool:
     return is_sent
 
 
-def require_setting(name: str, flag: str = "that flag", settings: Settings = settings):
+def require_setting(name: str, flag: str = "that flag"):
     """Raises an error mentioning a flag, if the specified setting is `None`."""
 
     if not getattr(settings, name, None):
