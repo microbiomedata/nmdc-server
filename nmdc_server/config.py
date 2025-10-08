@@ -150,7 +150,7 @@ class Settings(BaseSettings):
     rancher_postgres_secret_id: Optional[str] = None
     rancher_backend_workload_id: Optional[str] = None
 
-    # Google Secret Manager information for swapping database roles after ingest
+    # Google Secret Manager information to swap databases after ingest
     gcp_project_id: Optional[str] = None
     """The GCP (Google Cloud Platform) project ID. Used by the Mongo-to-Postgres ingest script."""
 
