@@ -142,7 +142,7 @@ def send_slack_message(text: str) -> bool:
 
 
 def require_setting(name: str, flag: str = "that flag"):
-    """Raises an error mentioning a flag, if the specified setting is `None`."""
+    """Raises an error mentioning a flag, if the specified setting is absent or false-y."""
 
     if not getattr(settings, name, None):
         raise ValueError(f"{name} must be set in order to use {flag}")
@@ -265,8 +265,8 @@ def ingest(
         require_setting("rancher_postgres_secret_id", "--swap-rancher-secrets")
         require_setting("rancher_backend_workload_id", "--swap-rancher-secrets")
 
-        # Note: We already validated these things above, but Pylance can't tell.
-        #       So, we include these redundant assertions to appease Pylance.
+        # Note: We already validated these things above, but mypy can't tell.
+        #       So, we include these redundant assertions to appease mypy.
         assert settings.rancher_api_base_url is not None
         assert settings.rancher_api_auth_token is not None
         assert settings.rancher_project_id is not None
@@ -292,8 +292,8 @@ def ingest(
         require_setting("gcp_primary_postgres_uri_secret_id", "--swap-google-secrets")
         require_setting("gcp_secondary_postgres_uri_secret_id", "--swap-google-secrets")
 
-        # Note: We already validated these things above, but Pylance can't tell.
-        #       So, we include these redundant assertions to appease Pylance.
+        # Note: We already validated these things above, but mypy can't tell.
+        #       So, we include these redundant assertions to appease mypy.
         assert settings.gcp_project_id is not None
         assert settings.gcp_primary_postgres_uri_secret_id is not None
         assert settings.gcp_secondary_postgres_uri_secret_id is not None
