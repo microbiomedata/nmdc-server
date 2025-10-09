@@ -1,12 +1,4 @@
-<template>
-  <v-app>
-    <v-main>
-      <router-view />
-    </v-main>
-  </v-app>
-</template>
-
-<script lang="ts" setup>
+<script lang="ts">
 import { defineComponent, onMounted, onUnmounted } from 'vue';
 import AppHeader from '@/components/Presentation/AppHeader.vue';
 import { stateRefs, init } from '@/store/';
@@ -63,3 +55,12 @@ export default defineComponent({
   },
 });
 </script>
+
+<template>
+  <v-app>
+    <app-header />
+    <keep-alive>
+      <router-view />
+    </keep-alive>
+  </v-app>
+</template>
