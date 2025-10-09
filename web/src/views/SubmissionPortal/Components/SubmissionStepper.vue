@@ -48,40 +48,42 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-card>
-    <v-navigation-drawer>
-      <v-list-item>
+  <v-navigation-drawer
+    app
+    permanent
+    clipped
+  >
+    <v-list-item>
+      <v-list-item-content>
+        <v-list-item-title class="text-h6">
+          Pages
+        </v-list-item-title>
+        <v-list-item-subtitle>
+          Click to go to
+        </v-list-item-subtitle>
+      </v-list-item-content>
+    </v-list-item>
+
+    <v-divider />
+
+    <v-list
+      dense
+      nav
+    >
+      <v-list-item
+        v-for="item in pages"
+        :key="item.title"
+        link
+        @click="gotoPage(item.pageName)"
+      >
+        <v-list-item-icon>
+          <v-icon>{{ item.icon }}</v-icon>
+        </v-list-item-icon>
+
         <v-list-item-content>
-          <v-list-item-title class="text-h6">
-            Pages
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            Click to go to
-          </v-list-item-subtitle>
+          <v-list-item-title>{{ item.title }}</v-list-item-title>
         </v-list-item-content>
       </v-list-item>
-
-      <v-divider />
-
-      <v-list
-        dense
-        nav
-      >
-        <v-list-item
-          v-for="item in pages"
-          :key="item.title"
-          link
-          @click="gotoPage(item.pageName)"
-        >
-          <v-list-item-icon>
-            <v-icon>{{ item.icon }}</v-icon>
-          </v-list-item-icon>
-
-          <v-list-item-content>
-            <v-list-item-title>{{ item.title }}</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
-  </v-card>
+    </v-list>
+  </v-navigation-drawer>
 </template>
