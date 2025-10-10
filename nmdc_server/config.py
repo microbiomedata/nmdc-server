@@ -65,6 +65,9 @@ class Settings(BaseSettings):
     zip_streamer_chunk_size_bytes: int = 2 * 1024 * 1024
     zip_streamer_nersc_data_base_url: str = "https://data.microbiomedata.org/data"
 
+    # for single file downloads (not bulk downloads)
+    nersc_data_url_external_replacement_prefix: str = "https://data.microbiomedata.org/data"
+
     # for cloud storage
     gcs_use_fake: bool = True
     """If true, use the fake GCS server for local development."""
