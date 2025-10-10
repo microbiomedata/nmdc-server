@@ -508,7 +508,7 @@ def create_bulk_download(
 def replace_nersc_data_url_prefix(url: str, replacement_url_prefix: str) -> str:
     """Conditionally replace the beginning portion of the specified URL.
 
-    If the URL refers to a data file hosted by NERSC, this function will return
+    If the URL refers to a data file hosted at NERSC, this function will return
     a URL in which the beginning portion of the URL has been replaced with the
     specified replacement string.
 
@@ -556,6 +556,7 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
             continue
 
+        # Overwrite the prefix of the URL if it refers to a data file hosted at NERSC.
         url = replace_nersc_data_url_prefix(
             url=data_object.url,
             replacement_url_prefix=settings.zip_streamer_nersc_data_base_url
