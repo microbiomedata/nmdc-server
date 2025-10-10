@@ -518,6 +518,21 @@ def replace_nersc_data_host(url: str) -> str:
     return url
 
 
+def replace_nersc_single_data_host(url: str) -> str:
+    """
+    Updates NERSC URLs for single data file downloads so they have the custom prefix
+    defined in an environment variable. This can be used to optimize the URLs for
+    web browsers that have direct access to the NERSC network.
+    """
+    settings = Settings()
+    if settings.nersc_single_data_url_replacement_prefix is None:
+        return url
+    host_to_replace = r"^https://data.microbiomedata.org/data"
+    if re.match(host_to_replace, url):
+        return re.sub(host_to_replace, settings.nersc_single_data_url_replacement_prefix, url)
+    return url
+
+
 def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     """Return a zip file descriptor compatible with zipstreamer."""
     bulk_download = db.get(models.BulkDownload, id)  # type: ignore

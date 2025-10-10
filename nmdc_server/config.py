@@ -64,6 +64,7 @@ class Settings(BaseSettings):
     zip_streamer_url: str = "http://zipstreamer:4008/download"
     zip_streamer_chunk_size_bytes: int = 2 * 1024 * 1024
     zip_streamer_nersc_data_base_url: str = "https://data.microbiomedata.org/data"
+    nersc_single_data_url_replacement_prefix: Optional[str] = None
 
     # for cloud storage
     gcs_use_fake: bool = True

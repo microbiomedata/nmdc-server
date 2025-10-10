@@ -4,6 +4,7 @@ from sqlalchemy.orm.session import Session
 
 from nmdc_server import fakes, query
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
+from nmdc_server.config import Settings
 
 
 def test_bulk_download_query(db: Session):
@@ -170,3 +171,73 @@ def test_get_url_for_html_content_authenticated(
     db.commit()
     resp = client.get(f"/api/data_object/{data_object.id}/get_html_content_url")
     assert resp.status_code == expected_status_code
+
+
+def test_download_data_object_without_url_replacement(
+    db: Session, client: TestClient, logged_in_user
+):
+    """Test single data object download without URL replacement."""
+    data_object = fakes.DataObjectFactory(
+        url="https://data.microbiomedata.org/data/test_file.txt",
+    )
+    db.commit()
+
+    resp = client.get(f"/api/data_object/{data_object.id}/download")
+    assert resp.status_code == 200
+    assert resp.json()["url"] == "https://data.microbiomedata.org/data/test_file.txt"
+
+
+def test_download_data_object_with_url_replacement(
+    db: Session, client: TestClient, logged_in_user, monkeypatch
+):
+    """Test single data object download with URL replacement."""
+    # Set the environment variable for URL replacement
+    monkeypatch.setenv(
+        "NMDC_NERSC_SINGLE_DATA_URL_REPLACEMENT_PREFIX", "https://foo.example.com/bar"
+    )
+
+    # Need to reload settings to pick up the new environment variable
+    from nmdc_server import crud
+
+    original_settings = crud.Settings
+    crud.Settings = lambda: Settings()
+
+    try:
+        data_object = fakes.DataObjectFactory(
+            url="https://data.microbiomedata.org/data/test_file.txt",
+        )
+        db.commit()
+
+        resp = client.get(f"/api/data_object/{data_object.id}/download")
+        assert resp.status_code == 200
+        assert resp.json()["url"] == "https://foo.example.com/bar/test_file.txt"
+    finally:
+        crud.Settings = original_settings
+
+
+def test_download_data_object_non_nersc_url(
+    db: Session, client: TestClient, logged_in_user, monkeypatch
+):
+    """Test single data object download with non-NERSC URL (should not be replaced)."""
+    monkeypatch.setenv(
+        "NMDC_NERSC_SINGLE_DATA_URL_REPLACEMENT_PREFIX", "https://foo.example.com/bar"
+    )
+
+    from nmdc_server import crud
+
+    original_settings = crud.Settings
+    crud.Settings = lambda: Settings()
+
+    try:
+        data_object = fakes.DataObjectFactory(
+            url="https://other.example.com/data/test_file.txt",
+        )
+        db.commit()
+
+        resp = client.get(f"/api/data_object/{data_object.id}/download")
+        assert resp.status_code == 200
+        # URL should not be replaced since it doesn't start with
+        # https://data.microbiomedata.org/data
+        assert resp.json()["url"] == "https://other.example.com/data/test_file.txt"
+    finally:
+        crud.Settings = original_settings

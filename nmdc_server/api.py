@@ -610,6 +610,7 @@ async def download_data_object(
         data_object_id=data_object_id,
     )
     crud.create_file_download(db, file_download)
+    url = crud.replace_nersc_single_data_host(url)
     return {
         "url": url,
     }
