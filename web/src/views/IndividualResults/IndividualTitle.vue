@@ -1,8 +1,9 @@
 <script lang="ts">
-import { defineComponent, PropType } from 'vue';
+import { defineComponent, type PropType } from 'vue';
 
-import { BaseSearchResult } from '@/data/api';
+import type { BaseSearchResult } from '@/data/api';
 import { urlify } from '@/data/utils';
+// @ts-ignore
 import { fieldDisplayName } from '@/util';
 
 export default defineComponent({
@@ -43,7 +44,7 @@ export default defineComponent({
           class="subtitle-1"
         >
           <span class="font-weight-bold pr-1">{{ fieldDisplayName(subtitleKey) }}</span>
-          <span v-html="urlify(item[subtitleKey])" />
+          <span v-html="urlify(item[subtitleKey] as string)" />
         </div>
         <slot />
       </v-col>

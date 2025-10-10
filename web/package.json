@@ -16,6 +16,7 @@
     "@mdi/font": "7.4.47",
     "@riophae/vue-treeselect": "^0.4.0",
     "@sentry/vue": "^6.16.1",
+    "@types/lodash": "^4.17.20",
     "axios": "^0.28.0",
     "axios-cache-adapter": "^2.7.3",
     "bootstrap": "4.3.1",
