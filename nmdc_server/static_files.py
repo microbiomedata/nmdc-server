@@ -2,9 +2,6 @@ import importlib.resources
 import shutil
 from pathlib import Path
 
-from linkml_runtime import SchemaView
-from linkml_runtime.dumpers import json_dumper
-
 static_path = Path("static")
 
 
