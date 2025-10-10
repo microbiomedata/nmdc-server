@@ -1,7 +1,0 @@
-.tox
-.coverage
-.cache
-.git
-env
-*.egg-info
-node_modules
