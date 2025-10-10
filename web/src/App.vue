@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, onMounted, onUnmounted } from '@vue/composition-api';
+import { defineComponent, onMounted, onUnmounted } from 'vue';
 import AppHeader from '@/components/Presentation/AppHeader.vue';
 import { stateRefs, init } from '@/store/';
 import { useRouter } from '@/use/useRouter';

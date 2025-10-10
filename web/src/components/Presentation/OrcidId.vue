@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
 import { ORCID_BASE_URL } from '@/util';
 
 export default defineComponent({

@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   computed, defineComponent, ref, watchEffect, PropType,
-} from '@vue/composition-api';
+} from 'vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
 

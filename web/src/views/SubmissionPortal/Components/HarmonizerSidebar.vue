@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   defineComponent, PropType, ref,
-} from '@vue/composition-api';
+} from 'vue';
 import FindReplace from '@/views/SubmissionPortal/Components/FindReplace.vue';
 import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
