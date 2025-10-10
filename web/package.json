@@ -8,6 +8,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@microbiomedata/data-harmonizer": "^1.7.0",
     "@riophae/vue-treeselect": "^0.4.0",
     "@sentry/vue": "^6.16.1",
     "@vue/composition-api": "^1.4.1",
@@ -25,7 +26,6 @@
     "d3-selection": "^3.0.0",
     "d3-time": "^3.0.0",
     "d3-time-format": "^4.1.0",
-    "data-harmonizer": "1.6.5",
     "filesize": "^8.0.6",
     "jquery": "3.5.1",
     "jwt-decode": "^4.0.0",
