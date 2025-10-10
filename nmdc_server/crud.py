@@ -558,8 +558,7 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
 
         # Overwrite the prefix of the URL if it refers to a data file hosted at NERSC.
         url = replace_nersc_data_url_prefix(
-            url=data_object.url,
-            replacement_url_prefix=settings.zip_streamer_nersc_data_base_url
+            url=data_object.url, replacement_url_prefix=settings.zip_streamer_nersc_data_base_url
         )
         file_descriptions.append({"url": url, "zipPath": file.path})
 

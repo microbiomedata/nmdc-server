@@ -609,8 +609,7 @@ async def download_data_object(
 
     # Overwrite the prefix of the URL if it refers to a data file hosted at NERSC.
     url = replace_nersc_data_url_prefix(
-        url=url,
-        replacement_url_prefix=settings.nersc_data_url_external_replacement_prefix
+        url=url, replacement_url_prefix=settings.nersc_data_url_external_replacement_prefix
     )
 
     file_download = schemas.FileDownloadCreate(
@@ -636,8 +635,7 @@ async def get_data_object_html_content(data_object_id: str, db: Session = Depend
 
     # Overwrite the prefix of the URL if it refers to a data file hosted at NERSC.
     url = replace_nersc_data_url_prefix(
-        url=url,
-        replacement_url_prefix=settings.nersc_data_url_external_replacement_prefix
+        url=url, replacement_url_prefix=settings.nersc_data_url_external_replacement_prefix
     )
 
     if data_object.file_type in [
