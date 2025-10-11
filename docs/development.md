@@ -76,7 +76,7 @@ NMDC_MONGO_PASSWORD=changeme
 
 Google Cloud Storage (GCS) is used to store images associated with Submission Portal submissions. By default, local development uses a local mock GCS server. This is controlled by the `NMDC_GCS_USE_FAKE` variable in `.env`. If you want to use the real GCS server, set this variable to `false`.
 
-Whether you use the real or fake GCS server, you will need to set up authentication. The recommended way to do this is to use Application Default Credentials (ADC) with service account impersonation. Service account impersonation is required for generating signed URLs for uploading/downloading images directly to/from GCS.
+Before you can use the real GCS server (optional), you will need to set up authentication. The recommended way to do this is to use Application Default Credentials (ADC) with service account impersonation. Service account impersonation is required for generating signed URLs for uploading/downloading images directly to/from GCS.
 
 1. Ask a team member with the necessary GCS permissions to associate your Google Cloud account with the NMDC Google Cloud project and service account.
    <details>
