@@ -1,4 +1,3 @@
-// @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
   computed, reactive, Ref, ref, shallowRef, watch,

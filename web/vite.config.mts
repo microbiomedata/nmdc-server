@@ -1,5 +1,6 @@
 // Plugins
 import Components from 'unplugin-vue-components/vite'
+import ViteYaml from '@modyfi/vite-plugin-yaml';
 import Vue from '@vitejs/plugin-vue'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import Fonts from 'unplugin-fonts/vite'
@@ -39,6 +40,7 @@ export default defineConfig({
         ],
       },
     }),
+    ViteYaml(),
   ],
   optimizeDeps: {
     exclude: [
@@ -53,6 +55,7 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('src', import.meta.url)),
+      'nmdc-schema': fileURLToPath(new URL('node_modules/nmdc-schema', import.meta.url)),
     },
     extensions: [
       '.js',
@@ -62,6 +65,8 @@ export default defineConfig({
       '.ts',
       '.tsx',
       '.vue',
+      '.yaml',
+      '.yml',
     ],
   },
   server: {
