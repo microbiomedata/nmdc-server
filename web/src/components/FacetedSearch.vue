@@ -182,9 +182,8 @@ export default Vue.extend({
             <span> {{ mixsDescription }}</span>
           </v-tooltip>
         </v-subheader>
-        <template v-for="sf in filteredFields">
+        <template v-for="sf in filteredFields" :key="sf.key">
           <v-menu
-            :key="sf.key"
             :value="menuState[sf.key]"
             offset-x
             :close-on-content-click="false"

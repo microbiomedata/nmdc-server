@@ -84,14 +84,13 @@ export default defineComponent({
     >
       <template
         v-for="(result, resultIndex) in results"
+        :key="result.id"
       >
         <v-divider
           v-if="resultIndex > 0"
-          :key="`${result.id}-divider`"
         />
 
         <v-list-item
-          :key="result.id"
           :ripple="!disableNavigateOnClick"
           :inactive="disableNavigateOnClick"
           v-on="{

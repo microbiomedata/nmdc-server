@@ -331,6 +331,7 @@ export interface EnvoNode {
   id: string;
   label: string;
   children?: EnvoNode[];
+  isExpanded?: boolean;
 }
 
 export interface EnvoTree {

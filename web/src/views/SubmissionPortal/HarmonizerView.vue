@@ -1117,7 +1117,7 @@ export default defineComponent({
 // Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
 // cannot be nested inside .harmonizer-style-container or else the measurements will be off.
 
-@import 'data-harmonizer/lib/dist/es/index.css';
+@import 'node_modules/data-harmonizer/lib/dist/es/index.css';
 
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples
@@ -1143,16 +1143,16 @@ html {
     There's also some kind of performance bottleneck with "Force Reflow" when you include the whole
     stylesheet, so I brought in the minimum modules for things not to break.
   */
-  @import '~bootstrap/scss/functions';
-  @import '~bootstrap/scss/variables';
-  @import '~bootstrap/scss/mixins';
-  @import "~bootstrap/scss/reboot";
-  @import '~bootstrap/scss/type';
-  @import '~bootstrap/scss/modal';
-  @import '~bootstrap/scss/buttons';
-  @import '~bootstrap/scss/forms';
-  @import '~bootstrap/scss/input-group';
-  @import '~bootstrap/scss/utilities';
+  @import 'bootstrap/scss/functions';
+  @import 'bootstrap/scss/variables';
+  @import 'bootstrap/scss/mixins';
+  @import "bootstrap/scss/reboot";
+  @import 'bootstrap/scss/type';
+  @import 'bootstrap/scss/modal';
+  @import 'bootstrap/scss/buttons';
+  @import 'bootstrap/scss/forms';
+  @import 'bootstrap/scss/input-group';
+  @import 'bootstrap/scss/utilities';
 }
 
 .handsontable.listbox td {

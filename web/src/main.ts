@@ -8,7 +8,7 @@ import { registerPlugins } from '@/plugins'
 import App from './App.vue'
 import 'unfonts.css'
 
-const app = createApp(App)
+export const app = createApp(App)
 
 registerPlugins(app)
 

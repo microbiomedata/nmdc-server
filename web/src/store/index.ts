@@ -1,16 +1,16 @@
-import Vue, {
+import {
   computed, ComputedRef, reactive, toRefs, watchEffect,
 } from 'vue';
 import { noop, uniqWith } from 'lodash';
-import VueRouter from 'vue-router';
 import { removeCondition as utilsRemoveCond } from '@/data/utils';
 import {
   api, Condition, DataObjectFilter, EnvoNode, EnvoTree,
 } from '@/data/api';
 import { User } from '@/types';
 import { clearQueryState, getQueryState, setQueryState } from '@/store/localStorage';
+import { Router } from 'vue-router';
 
-let router: VueRouter | null = null;
+let router: Router | null = null;
 const state = reactive({
   conditions: [] as Condition[],
   bulkDownloadSelected: [] as string[],
@@ -99,7 +99,7 @@ const dataObjectFilter: ComputedRef<DataObjectFilter[]> = computed(() => state
 /**
  * load the current user on app start
  */
-async function init(_router: VueRouter, loadUser = true, loginState = '' as string | (string | null)[]) {
+async function init(_router: Router, loadUser = true, loginState = '' as string | (string | null)[]) {
   if (loadUser) {
     state.userLoading = true;
     try {
@@ -143,11 +143,11 @@ function makeNodeMap(node: EnvoNode) {
   unreactive.nodeMapId[node.id] = node;
   unreactive.nodeMapLabel[node.label] = node;
   if (node.children?.length === 0) {
-    Vue.delete(node, 'children');
+    delete node.children;
   } else {
     node.children?.forEach(makeNodeMap);
     if (node.children?.length === 1) {
-      Vue.set(node, 'isExpanded', true);
+      node.isExpanded = true;
     }
   }
 }
