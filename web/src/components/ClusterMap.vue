@@ -19,9 +19,9 @@ import retinaurl from 'leaflet/dist/images/marker-icon-2x.png';
 // @ts-ignore
 import shadowurl from 'leaflet/dist/images/marker-shadow.png';
 // @ts-ignore
-import LMarkerCluster from 'vue2-leaflet-markercluster';
-import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
-import 'leaflet.markercluster/dist/MarkerCluster.css';
+// import LMarkerCluster from 'vue2-leaflet-markercluster';
+// import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
+// import 'leaflet.markercluster/dist/MarkerCluster.css';
 /**
  * END LEAFLET
  */
@@ -52,7 +52,7 @@ export default defineComponent({
     LTileLayer,
     LMarker,
     LPopup,
-    LMarkerCluster,
+    // LMarkerCluster,
   },
 
   props: {
@@ -230,7 +230,7 @@ export default defineComponent({
       />
       <!-- Add a delay to prevent timing issues -->
       <template v-if="mapReady">
-        <l-marker-cluster v-if="mapData.length > 0">
+        <!-- <l-marker-cluster v-if="mapData.length > 0">
           <l-marker
             v-for="m in mapData"
             :key="m.key"
@@ -246,7 +246,7 @@ export default defineComponent({
               </ul>
             </l-popup>
           </l-marker>
-        </l-marker-cluster>
+        </l-marker-cluster> -->
       </template>
     </l-map>
   </div>

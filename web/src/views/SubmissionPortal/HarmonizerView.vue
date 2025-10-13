@@ -1117,7 +1117,7 @@ export default defineComponent({
 // Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
 // cannot be nested inside .harmonizer-style-container or else the measurements will be off.
 
-@import 'data-harmonizer/lib/dist/es/index';
+@import 'data-harmonizer/lib/dist/es/index.css';
 
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples
