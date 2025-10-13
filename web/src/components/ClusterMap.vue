@@ -11,7 +11,7 @@ import L, { Icon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   LMap, LTileLayer, LMarker, LPopup,
-} from 'vue2-leaflet';
+} from '@vue-leaflet/vue-leaflet';
 // @ts-ignore
 import markerurl from 'leaflet/dist/images/marker-icon.png';
 // @ts-ignore
