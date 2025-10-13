@@ -70,6 +70,18 @@ export default defineConfig({
     ],
   },
   server: {
-    port: 3000,
+    host: '127.0.0.1',
+    port: 8081,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000/',
+      },
+      '/static': {
+        target: 'http://localhost:8000/',
+      },
+      '/auth': {
+        target: 'http://localhost:8000',
+      },
+    },
   },
 })

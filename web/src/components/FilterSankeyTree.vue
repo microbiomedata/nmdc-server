@@ -1,12 +1,12 @@
 <script>
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import Treeselect from '@riophae/vue-treeselect';
 import '@riophae/vue-treeselect/dist/vue-treeselect.css';
 import { uniqWith } from 'lodash';
 import { api } from '@/data/api';
 import { makeTree } from '@/util';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'FilterSankeyTree',
   components: { Treeselect },
   props: {

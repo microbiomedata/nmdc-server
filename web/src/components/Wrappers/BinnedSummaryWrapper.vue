@@ -1,8 +1,8 @@
 <script>
-import Vue from 'vue';
+import { defineComponent } from 'vue';
 import BinnedSummary from '@/mixins/BinnedFacetSummary';
 
-export default Vue.extend({
+export default defineComponent({
   mixins: [BinnedSummary],
 });
 </script>

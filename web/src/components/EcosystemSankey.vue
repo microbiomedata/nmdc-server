@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import Vue, { ref } from 'vue';
+import { ref, defineComponent } from 'vue';
 import { GChart } from 'vue-google-charts';
 
 import colors from '@/colors';
@@ -20,7 +20,7 @@ import { api } from '@/data/api';
 import { ecosystems } from '@/encoding';
 import { makeTree } from '@/util';
 
-export default Vue.extend({
+export default defineComponent({
   components: {
     GChart,
   },
@@ -70,6 +70,7 @@ export default Vue.extend({
   asyncComputed: {
     async sankeyData() {
       const data = await api.getEnvironmentSankeyAggregation(this.conditions);
+      console.log(data);
       const tree = makeTree(data, this.heirarchy);
       return [
         ['From', 'To', 'Samples'],
@@ -90,9 +91,11 @@ export default Vue.extend({
   },
   computed: {
     sankeyOptions() {
+      // Guard against undefined sankeyData (async computed property)
+      const dataLength = this.sankeyData?.length || 0;
       return {
         // Make the chart height dependent on the number of nodes with a minimum of 500px
-        height: Math.max(this.sankeyData.length * 4, 500),
+        height: Math.max(dataLength * 4, 500),
         sankey: {
           link: {
             colorMode: 'source',
@@ -103,7 +106,7 @@ export default Vue.extend({
             width: 12,
             // Array needs to be of substantial length so the lines do not become too pale to see
             // Uses 'primary' and primary.darken2 alternatingly
-            colors: Array.from({ length: this.sankeyData.length / 2 }, (_, i) => (i % 2 === 0 ? colors.primary : '#1c104e')),
+            colors: Array.from({ length: dataLength / 2 }, (_, i) => (i % 2 === 0 ? colors.primary : '#1c104e')),
           },
         },
       };

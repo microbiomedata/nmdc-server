@@ -1,10 +1,10 @@
 <script lang="ts">
-import Vue, { PropType } from 'vue';
+import { defineComponent, PropType } from 'vue';
 import { groupBy } from 'lodash';
 
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
-
+// @ts-ignore
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
 import { Condition, entityType } from '@/data/api';
@@ -27,7 +27,7 @@ export interface SearchFacet {
 
 type KeyedFieldData = encoding.FieldsData & SearchFacet & { key: string; };
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     conditions: {
       type: Array as PropType<Condition[]>,
@@ -95,7 +95,7 @@ export default Vue.extend({
   methods: {
     fieldDisplayName,
     toggleMenu(category: string, value: boolean): void {
-      Vue.set(this.menuState, category, value);
+      this.menuState[category] = value;
     },
     hasActiveConditions(category: string): boolean {
       return this.conditions.some((cond) => `${cond.table}_${cond.field}` === category);

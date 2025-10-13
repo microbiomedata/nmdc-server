@@ -34,7 +34,7 @@ const cache = setupCache({
 });
 
 const client = axios.create({
-  baseURL: import.meta.env.VUE_APP_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_BASE_URL || '/api',
   adapter: cache.adapter,
 });
 
