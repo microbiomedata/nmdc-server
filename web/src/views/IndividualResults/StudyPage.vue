@@ -8,6 +8,7 @@ import { isObject } from 'lodash';
 import Cite from 'citation-js';
 import {
   typeWithCardinality, valueCardinality, fieldDisplayName,
+  // @ts-ignore
 } from '@/util';
 import {
   api, StudySearchResults, DOI, Condition,
@@ -354,9 +355,9 @@ export default defineComponent({
                 />
                 <template
                   v-for="site in (item.principal_investigator_websites || [])"
+                  :key="site"
                 >
                   <AttributeItem
-                    :key="site"
                     style="padding-left: 60px;"
                     v-bind="{
                       item,
@@ -428,8 +429,8 @@ export default defineComponent({
                 class="
               transparent"
               >
-                <template v-for="(pub, pubIndex) in data.publicationDois">
-                  <v-list-item :key="pubIndex">
+                <template v-for="(pub, pubIndex) in data.publicationDois" :key="pubIndex">
+                  <v-list-item>
                     <v-list-item-content>
                       {{ pub.cite }}
                       <div
