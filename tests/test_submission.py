@@ -1564,63 +1564,105 @@ def test_edit_submission_status_uneditable(
     assert response.status_code == code
 
 
-def test_github_issue_resubmission_creates_comment_only(
-    db: Session, client: TestClient, logged_in_user
+# Github issue testing
+
+
+@pytest.fixture
+def mock_github_settings():
+    """Fixture for common GitHub settings mock"""
+    with patch("nmdc_server.api.settings") as mock_settings:
+        mock_settings.github_issue_url = "https://api.github.com/repos/owner/repo/issues"
+        mock_settings.github_authentication_token = "fake_token"
+        mock_settings.github_issue_assignee = "assignee"
+        mock_settings.host = "test-host"
+        yield mock_settings
+
+
+@pytest.fixture
+def create_submission_with_role(db, logged_in_user):
+    """Fixture factory for creating submissions with roles"""
+
+    def _create(status=SubmissionStatusEnum.SubmittedPendingReview.text):
+        submission = fakes.MetadataSubmissionFactory(
+            author=logged_in_user,
+            author_orcid=logged_in_user.orcid,
+            status=status,
+            is_test_submission=False,
+        )
+        fakes.SubmissionRoleFactory(
+            submission=submission,
+            submission_id=submission.id,
+            user_orcid=logged_in_user.orcid,
+            role=SubmissionEditorRole.owner,
+        )
+        db.commit()
+        return submission
+
+    return _create
+
+
+@pytest.fixture
+def mock_existing_github_issue():
+    """Fixture factory for creating mock GitHub issues"""
+
+    def _create(submission_id, state="open"):
+        return {
+            "number": 123,
+            "url": "https://api.github.com/repos/owner/repo/issues/123",
+            "html_url": "https://github.com/owner/repo/issues/123",
+            "title": f"NMDC Submission: {submission_id}",
+            "state": state,
+            "body": f"Submission ID: {submission_id}",
+        }
+
+    return _create
+
+
+@pytest.fixture
+def mock_github_api_responses():
+    """Fixture for mocking GitHub API GET and POST requests"""
+
+    def _setup(existing_issues=None):
+        search_response = Mock()
+        search_response.status_code = 200
+        search_response.json.return_value = existing_issues or []
+
+        comment_response = Mock()
+        comment_response.status_code = 201
+        comment_response.json.return_value = {"id": 456, "body": "comment content"}
+
+        return search_response, comment_response
+
+    return _setup
+
+
+def test_github_resubmission_creates_comment_only(
+    db: Session,
+    client: TestClient,
+    logged_in_user,
+    mock_github_settings,
+    create_submission_with_role,
+    mock_existing_github_issue,
+    mock_github_api_responses,
 ):
     """
     Confirm that when a submission status becomes 'SubmittedPendingReview',
     the Github API searches for an existing issue with the same ID and either
     creates one if it doesn't exist or adds a comment if it does
     """
+    # Create submission with InProgress status
+    submission = create_submission_with_role(SubmissionStatusEnum.InProgress.text)
 
-    # Create a submission
-    submission = fakes.MetadataSubmissionFactory(
-        author=logged_in_user,
-        author_orcid=logged_in_user.orcid,
-        status=SubmissionStatusEnum.InProgress.text,
-        is_test_submission=False,
-    )
-    fakes.SubmissionRoleFactory(
-        submission=submission,
-        submission_id=submission.id,
-        user_orcid=logged_in_user.orcid,
-        role=SubmissionEditorRole.owner,
-    )
-    db.commit()
+    # Create mock issue
+    existing_issue = mock_existing_github_issue(submission.id)
 
-    # Mock the existing GitHub issue that would be found
-    existing_issue = {
-        "number": 123,
-        "url": "https://api.github.com/repos/owner/repo/issues/123",
-        "html_url": "https://github.com/owner/repo/issues/123",
-        "title": f"NMDC Submission: {submission.id}",
-        "state": "open",
-    }
+    # Setup mock responses
+    search_response, comment_response = mock_github_api_responses([existing_issue])
 
-    # Fake response from github API call searching for the existing issue
-    search_response = Mock()
-    search_response.status_code = 200
-    search_response.json.return_value = [existing_issue]
-
-    # Fake response from github API call making a comment on existing issue
-    comment_response = Mock()
-    comment_response.status_code = 201
-    comment_response.json.return_value = {"id": 456, "body": "comment content"}
-
-    # Patch the normal API settings as well as
-    # search(requests.get) and comment (requests.post) API calls
-    # with their mock versions defined below
     with patch("nmdc_server.api.requests.get") as mock_get, patch(
         "nmdc_server.api.requests.post"
-    ) as mock_post, patch("nmdc_server.api.settings") as mock_settings:
+    ) as mock_post:
 
-        # Configure fake github settings
-        mock_settings.github_issue_url = "https://api.github.com/repos/owner/repo/issues"
-        mock_settings.github_authentication_token = "fake_token"
-        mock_settings.github_issue_assignee = "assignee"
-        mock_settings.host = "test-host"
-
-        # Set fake responses for search and comment API calls
         mock_get.return_value = search_response
         mock_post.return_value = comment_response
 
@@ -1636,17 +1678,17 @@ def test_github_issue_resubmission_creates_comment_only(
         )
         assert response.status_code == 200
 
-        # Verify that the mock version of requests.get was used to search existing issues once
+        # Verify search was called once
         assert mock_get.call_count == 1
         get_call = mock_get.call_args
         assert "https://api.github.com/repos/owner/repo/issues" in get_call[0][0]
 
-        # Verify that the mock version of request.post was used to create a comment once (not a new issue)
+        # Verify comment was posted once (not a new issue)
         assert mock_post.call_count == 1
         post_call = mock_post.call_args
         assert post_call[0][0] == "https://api.github.com/repos/owner/repo/issues/123/comments"
 
-        # Verify the mocked comment includes resubmission information
+        # Verify comment content
         comment_data = json.loads(post_call[1]["data"])
         assert "Submission Resubmitted" in comment_data["body"]
         assert logged_in_user.name in comment_data["body"]
