@@ -81,6 +81,11 @@ export default defineComponent({
       { text: 'Show only test submissions', val: true },
       { text: 'Hide test submissions', val: false }];
 
+    const availableStatuses = Object.keys(SubmissionStatusTitleMapping).map((key) => ({
+      value: key,
+      text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+    }));
+
     async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
       return api.listRecords(params, isTestFilter.value);
     }
@@ -103,6 +108,29 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
+
+    async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
+      console.log('Changing status:', item.id, 'from', item.status, 'to', newStatus);
+
+      try {
+        const fullRecord = await api.getRecord(item.id);
+        console.log('Full record fetched:', fullRecord);
+        console.log('Metadata submission:', fullRecord.metadata_submission);
+        console.log('Calling updateRecord with:', {
+          id: item.id,
+          metadata_submission: fullRecord.metadata_submission,
+          status: newStatus,
+          permissions: {},
+        });
+        const result = await updateRecord(item.id, fullRecord.metadata_submission, newStatus, {});
+        console.log('Update result:', result);
+        console.log('Returned status:', result.data.status);
+        await submission.refetch();
+      } catch (error) {
+        console.error('Error updating status:', error);
+      }
+    }
+
     watch(options, () => {
       submission.setPage(options.value.page);
       const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
@@ -169,6 +197,9 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
+      availableStatuses,
+      handleStatusChange,
+      SubmissionStatusEnum,
     };
   },
 });
@@ -310,7 +341,20 @@ export default defineComponent({
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
           <template #[`item.status`]="{ item }">
+            <v-select
+              v-if="currentUser.is_admin"
+              :value="item.status"
+              :items="availableStatuses"
+              dense
+              hide-details
+              @change="(newStatus) => handleStatusChange(item, newStatus)"
+            >
+              <template #selection="{ item: statusItem }">
+                {{ statusItem.text }}
+              </template>
+            </v-select>
             <v-chip
+              v-else
               :color="getStatus(item).color"
             >
               {{ getStatus(item).text }}
