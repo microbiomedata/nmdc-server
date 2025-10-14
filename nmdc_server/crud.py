@@ -11,7 +11,7 @@ from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
-from nmdc_server.config import Settings
+from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
 
 logger = get_logger(__name__)
@@ -505,16 +505,38 @@ def create_bulk_download(
         raise
 
 
-def replace_nersc_data_host(url: str) -> str:
+def replace_nersc_data_url_prefix(url: str, replacement_url_prefix: str) -> str:
+    """Conditionally replace the beginning portion of the specified URL.
+
+    If the URL refers to a data file hosted at NERSC, this function will return
+    a URL in which the beginning portion of the URL has been replaced with the
+    specified replacement string.
+
+    This can be used to optimize the URL for different use cases. For example,
+    the ZipStreamer instance in this application's stack could take advantage of
+    a URL that points directly to a data proxy that is not exposed to the Internet,
+    whereas a web browser might require a URL pointing to a Kubernetes ingress that
+    _is_ exposed directly to the Internet (which might lead to that same private
+    data proxy, but not as directly).
+
+    # Test: NERSC data URL (prefix gets replaced).
+    >>> replace_nersc_data_url_prefix(
+    ...     "https://data.microbiomedata.org/data/some/file.txt",
+    ...     "https://www.example.com/path/to"
+    ... )
+    'https://www.example.com/path/to/some/file.txt'
+
+    # Test: Not a NERSC data URL (prefix does not get replaced).
+    >>> replace_nersc_data_url_prefix(
+    ...     "https://other.microbiomedata.org/data/some/file.txt",
+    ...     "https://www.example.com/path/to"
+    ... )
+    'https://other.microbiomedata.org/data/some/file.txt'
     """
-    Updates NERSC URLs so they have the custom prefix defined in
-    an environment variable. This can be used to optimize the URLs
-    for HTTP clients that have direct access to the NERSC network.
-    """
-    host_to_replace = r"^https://data.microbiomedata.org/data"
-    replacement_host = Settings().zip_streamer_nersc_data_base_url
-    if re.match(host_to_replace, url):
-        return re.sub(host_to_replace, replacement_host, url)
+
+    nersc_data_url_prefix = r"https://data.microbiomedata.org/data"
+    if url.startswith(nersc_data_url_prefix):
+        return url.replace(nersc_data_url_prefix, replacement_url_prefix, 1)
     return url
 
 
@@ -534,7 +556,10 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
             continue
 
-        url = replace_nersc_data_host(data_object.url)
+        # Overwrite the prefix of the URL if it refers to a data file hosted at NERSC.
+        url = replace_nersc_data_url_prefix(
+            url=data_object.url, replacement_url_prefix=settings.zip_streamer_nersc_data_base_url
+        )
         file_descriptions.append({"url": url, "zipPath": file.path})
 
     zip_file_descriptor["files"] = file_descriptions
