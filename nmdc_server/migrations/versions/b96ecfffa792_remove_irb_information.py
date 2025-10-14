@@ -32,7 +32,7 @@ class SubmissionMetadata(Base):
     metadata_submission = Column(JSONB, nullable=False)
 
 
-class NmcdAddress(BaseModel):
+class NmdcAddress(BaseModel):
     name: str = ""
     email: str = ""
     phone: str = ""
@@ -85,7 +85,7 @@ def downgrade():
             continue
 
         address_form["irbNumber"] = ""
-        address_form["irbAddress"] = NmcdAddress().dict()
+        address_form["irbAddress"] = NmdcAddress().dict()
         if "irbOrHipaa" in list(address_form):
             address_form["irpOrHipaa"] = address_form["irbOrHipaa"]
             del address_form["irbOrHipaa"]
