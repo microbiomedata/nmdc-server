@@ -1,5 +1,6 @@
 import moment from 'moment';
 import filesize from 'filesize';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import { types, getField } from './encoding';
 
 export function valueCardinality(value) {
@@ -42,6 +43,9 @@ export function fieldDisplayName(field, table) {
 }
 
 export function valueDisplayName(field, value) {
+  if (field === 'processing_institution') {
+    return NmdcSchema.enums.ProcessingInstitutionEnum.permissible_values[value].title;
+  }
   if (field.includes('date')) {
     return moment.utc(value).format('YYYY-MM-DD, hh:mm:ss');
   }
