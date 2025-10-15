@@ -1,5 +1,6 @@
 import { valueDisplayName } from '@/util';
 import { api } from '@/data/api';
+import { computedAsync } from '@vueuse/core';
 
 import SegmentConditions from './SegmentConditions';
 
@@ -32,6 +33,33 @@ export default {
     };
   },
 
+  created() {
+    // Initialize computedAsync properties
+    this.facetSummary = computedAsync(
+      async () => {
+        return await api.getFacetSummary(
+          this.table,
+          this.field,
+          this.otherConditions
+            .concat(this.useAllConditions ? this.myConditions : []),
+        );
+      },
+      [], // default value
+    );
+
+    this.facetSummaryUnconditional = computedAsync(
+      async () => {
+        console.log('FETCHING UNCONDITIONAL FACET SUMMARY');
+        return await api.getFacetSummary(
+          this.table,
+          this.field,
+          [],
+        );
+      },
+      [], // default value
+    );
+  },
+
   computed: {
     facetSummaryAggregate() {
       return this.facetSummary
@@ -48,30 +76,6 @@ export default {
             isSelectable: false,
             name: valueDisplayName(this.field, item.facet),
           })));
-    },
-  },
-
-  asyncComputed: {
-    facetSummary: {
-      get() {
-        return api.getFacetSummary(
-          this.table,
-          this.field,
-          this.otherConditions
-            .concat(this.useAllConditions ? this.myConditions : []),
-        );
-      },
-      default: [],
-    },
-    facetSummaryUnconditional: {
-      get() {
-        return api.getFacetSummary(
-          this.table,
-          this.field,
-          [],
-        );
-      },
-      default: [],
     },
   },
 };

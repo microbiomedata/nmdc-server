@@ -1,12 +1,14 @@
 <script lang="ts">
 import {
-  computed, defineComponent, PropType, ref, getCurrentInstance,
+  computed, defineComponent, PropType, ref,
 } from 'vue';
 // @ts-ignore
 import { GChart } from 'vue-google-charts';
+// @ts-ignore
 import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
 import { FacetSummaryResponse } from '@/data/api';
+import { useTheme } from 'vuetify';
 
 export default defineComponent({
   name: 'FacetBarChart',
@@ -61,7 +63,7 @@ export default defineComponent({
   },
 
   setup(props, { emit }) {
-    const root = getCurrentInstance();
+    const theme = useTheme();
     const chartRef = ref();
     const chartEvents = {
       select: () => {
@@ -103,16 +105,19 @@ export default defineComponent({
             true,
             count > 0 ? (
               ecosystems.find((e) => e.name === facet.facet)
-              || { color: root?.proxy.$vuetify?.theme.currentTheme.primary }
+              || { color: theme.current.value.colors.primary }
             ).color : 'lightgray',
             excludedCount,
             false,
-            excludedCount > 0 ? 'lightgray' : root?.proxy.$vuetify?.theme.currentTheme.primary,
+            excludedCount > 0 ? 'lightgray' : theme.current.value.colors.primary,
             count > 0 ? `${count}` : 'No match',
           ];
         },
       ),
     ]));
+    console.log('BLOB!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
+    console.log(chartData.value);
+    console.log(props.facetSummaryUnconditional);
     const barChartOptions = computed(() => ({
       height: props.height,
       chartArea: {

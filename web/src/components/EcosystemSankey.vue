@@ -70,7 +70,6 @@ export default defineComponent({
   asyncComputed: {
     async sankeyData() {
       const data = await api.getEnvironmentSankeyAggregation(this.conditions);
-      console.log(data);
       const tree = makeTree(data, this.heirarchy);
       return [
         ['From', 'To', 'Samples'],
