@@ -176,6 +176,43 @@ async def get_admin_stats(
     return crud.get_admin_stats(db)
 
 
+@router.get(
+    "/admin/wfe_output_report",
+    name="Get Workflow Execution output report"
+)
+async def get_wfe_output_report(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+):
+    r"""
+    Returns a TSV-formatted report of all `DataObject`s that are the output
+    of any `WorkflowExecution`.
+    """
+
+    (header_row, data_rows) = crud.get_workflow_execution_output_report(db)
+
+    # Build the report as an in-memory TSV "file" (buffer).
+    # Reference: https://docs.python.org/3/library/csv.html#csv.writer
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter="\t")
+    writer.writerow(header_row)
+    writer.writerows(data_rows)
+
+    # Reset the buffer's internal file pointer to the beginning of the buffer, so that,
+    # when we stream the buffer's contents later, all of its contents are included.
+    buffer.seek(0)
+
+    # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
+    filename = "workflow-execution-output-report.tsv"
+    response = StreamingResponse(
+        buffer,
+        media_type="text/tab-separated-values",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+    return response
+
+
 @router.post(
     "/environment/sankey",
     response_model=List[schemas.EnvironmentSankeyAggregation],

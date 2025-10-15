@@ -100,6 +100,21 @@ def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]
     return facets
 
 
+def get_workflow_execution_output_report(db: Session) -> Tuple[list, list]:
+    r"""
+    Returns the header and data (i.e. body) of a report that lists all `DataObjects`
+    that are the output of any `WorkflowExecution`.
+    """
+
+    # Get the `DataObject`s that are outputs of any `WorkflowExecution`s.
+    data_objects = aggregations.get_wfe_output_data_objects(db)
+
+    # Return the report elements as a tuple.
+    header_row = ["data_object.id", "data_object.url"]
+    data_rows = [[data_object.id, data_object.url] for data_object in data_objects]
+    return (header_row, data_rows)
+
+
 def get_environmental_sankey(
     db: Session, query: query.BiosampleQuerySchema
 ) -> List[schemas.EnvironmentSankeyAggregation]:
