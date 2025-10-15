@@ -2,13 +2,13 @@
 import {
   computed, defineComponent, PropType, ref,
 } from 'vue';
-// @ts-ignore
 import { GChart } from 'vue-google-charts';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
 import { FacetSummaryResponse } from '@/data/api';
 import { useTheme } from 'vuetify';
+import { GoogleVizEvents } from 'vue-google-charts/dist/types';
 
 export default defineComponent({
   name: 'FacetBarChart',
@@ -65,11 +65,18 @@ export default defineComponent({
   setup(props, { emit }) {
     const theme = useTheme();
     const chartRef = ref();
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const onChartReady = (chart: any) => {
+      console.log('Chart ready');
+      console.log(chart);
+      chartRef.value = chart;
+    };
     const chartEvents = {
       select: () => {
-        const chart = chartRef.value.chartObject;
-        const selection = chart.getSelection();
-        const value = props.facetSummaryUnconditional[selection[0].row].facet;
+        console.log(chartRef.value);
+        const selection = chartRef.value.getSelection();
+        const value = props.facetSummaryUnconditional[selection[0].row]?.facet;
         if (selection.length === 1) {
           emit('selected', {
             conditions: [{
@@ -152,6 +159,7 @@ export default defineComponent({
 
     return {
       chartRef,
+      onChartReady,
       chartEvents,
       chartData,
       barChartOptions,
@@ -162,11 +170,11 @@ export default defineComponent({
 
 <template>
   <GChart
-    ref="chartRef"
     type="BarChart"
     class="rounded overflow-hidden"
     :data="chartData"
     :options="barChartOptions"
-    :events="chartEvents"
+    :events="chartEvents as any"
+    @ready="onChartReady"
   />
 </template>
