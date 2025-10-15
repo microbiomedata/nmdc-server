@@ -100,7 +100,7 @@ def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]
     return facets
 
 
-def get_workflow_execution_output_report(db: Session) -> Tuple[list, list]:
+def get_workflow_execution_output_report(db: Session) -> Tuple[List[str], List[str]]:
     r"""
     Returns the header and data (i.e. body) of a report that lists all `DataObjects`
     that are the output of any `WorkflowExecution`.
@@ -111,7 +111,13 @@ def get_workflow_execution_output_report(db: Session) -> Tuple[list, list]:
 
     # Return the report elements as a tuple.
     header_row = ["data_object.id", "data_object.url"]
-    data_rows = [[data_object.id, data_object.url] for data_object in data_objects]
+    data_rows = []
+    for data_object in data_objects:
+        row_tuple = (
+            data_object.id,
+            data_object.url if data_object.url is not None else "",
+        )
+        data_rows.append(row_tuple)
     return (header_row, data_rows)
 
 
