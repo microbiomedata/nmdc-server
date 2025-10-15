@@ -1,7 +1,7 @@
 import re
 from collections import defaultdict
 from datetime import UTC, datetime
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -100,7 +100,9 @@ def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]
     return facets
 
 
-def get_workflow_execution_output_report(db: Session) -> Tuple[List[str], List[str]]:
+def get_workflow_execution_output_report(
+    db: Session,
+) -> Tuple[Tuple[Literal["data_object.id"], Literal["data_object.url"]], List[Tuple[str, str]]]:
     r"""
     Returns the header and data (i.e. body) of a report that lists all `DataObjects`
     that are the output of any `WorkflowExecution`.
@@ -109,8 +111,8 @@ def get_workflow_execution_output_report(db: Session) -> Tuple[List[str], List[s
     # Get the `DataObject`s that are outputs of any `WorkflowExecution`s.
     data_objects = aggregations.get_wfe_output_data_objects(db)
 
-    # Return the report elements as a tuple.
-    header_row = ["data_object.id", "data_object.url"]
+    # Return the report elements as tuples.
+    header_row = ("data_object.id", "data_object.url")
     data_rows = []
     for data_object in data_objects:
         row_tuple = (
