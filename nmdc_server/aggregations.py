@@ -196,10 +196,7 @@ def get_wfe_output_data_objects(db: Session) -> List[schemas.DataObject]:
 
     wfe_outputs_subquery = make_all_wfe_outputs_subquery(db)
     wfe_outputs_inner_query = select(wfe_outputs_subquery.c.id)
-    q = (
-        db.query(models.DataObject)
-        .filter(models.DataObject.id.in_(wfe_outputs_inner_query))
-    )
+    q = db.query(models.DataObject).filter(models.DataObject.id.in_(wfe_outputs_inner_query))
     data_objects = []
     for data_object in q.all():
         data_objects.append(data_object)

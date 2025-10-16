@@ -131,9 +131,7 @@ def get_data_object_report(
     data_rows = []
     for data_object in data_objects:
         if variant == DataObjectReportVariant.urls_only:
-            row_tuple = (
-                data_object.url if data_object.url is not None else "",
-            )
+            row_tuple = (data_object.url if data_object.url is not None else "",)
         else:
             row_tuple = (
                 data_object.id,

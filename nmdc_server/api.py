@@ -177,10 +177,7 @@ async def get_admin_stats(
     return crud.get_admin_stats(db)
 
 
-@router.get(
-    "/admin/data_object_report",
-    name="Get a data object report"
-)
+@router.get("/admin/data_object_report", name="Get a data object report")
 async def get_data_object_report(
     db: Session = Depends(get_db),
     user: models.User = Depends(admin_required),
