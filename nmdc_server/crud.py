@@ -108,7 +108,7 @@ def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]
     return facets
 
 
-def get_workflow_execution_output_report(
+def get_data_object_report(
     db: Session,
     variant: DataObjectReportVariant = DataObjectReportVariant.normal,
 ) -> Tuple[Tuple[str], List[Tuple[str, str]]]:

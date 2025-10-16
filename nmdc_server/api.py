@@ -178,10 +178,10 @@ async def get_admin_stats(
 
 
 @router.get(
-    "/admin/wfe_output_report",
-    name="Get Workflow Execution output report"
+    "/admin/data_object_report",
+    name="Get a data object report"
 )
-async def get_wfe_output_report(
+async def get_data_object_report(
     db: Session = Depends(get_db),
     user: models.User = Depends(admin_required),
     variant: DataObjectReportVariant = Query(
@@ -194,7 +194,7 @@ async def get_wfe_output_report(
     of any `WorkflowExecution`.
     """
 
-    (header_row, data_rows) = crud.get_workflow_execution_output_report(db, variant=variant)
+    (header_row, data_rows) = crud.get_data_object_report(db, variant=variant)
 
     # Build the report as an in-memory TSV "file" (buffer).
     # Reference: https://docs.python.org/3/library/csv.html#csv.writer
@@ -208,7 +208,7 @@ async def get_wfe_output_report(
     buffer.seek(0)
 
     # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
-    filename = "workflow-execution-output-report.tsv"
+    filename = "data-object-report.tsv"
     response = StreamingResponse(
         buffer,
         media_type="text/tab-separated-values",
