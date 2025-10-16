@@ -124,7 +124,7 @@ def get_workflow_execution_output_report(
     if variant == DataObjectReportVariant.urls_only:
         header_row = ("data_object.url",)
     else:
-        header_row = ("data_object.id", "data_object.url")
+        header_row = ("data_object.id", "data_object.url", "data_object.file_size_bytes")
 
     # Populate the data rows based upon the specified variant.
     data_rows = []
@@ -137,6 +137,7 @@ def get_workflow_execution_output_report(
             row_tuple = (
                 data_object.id,
                 data_object.url if data_object.url is not None else "",
+                data_object.file_size_bytes,
             )
         data_rows.append(row_tuple)
 
