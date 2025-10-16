@@ -113,8 +113,9 @@ def get_workflow_execution_output_report(
     variant: DataObjectReportVariant = DataObjectReportVariant.normal,
 ) -> Tuple[Tuple[str], List[Tuple[str, str]]]:
     r"""
-    Returns the header and data (i.e. body) of a report that lists all `DataObjects`
-    that are the output of any `WorkflowExecution`.
+    Returns the header and data rows of a report that lists all `DataObjects`
+    that are the output of any `WorkflowExecution`. The `variant` parameter
+    can be used to specify which columns are included in the report.
     """
 
     # Get the `DataObject`s that are outputs of any `WorkflowExecution`s.
