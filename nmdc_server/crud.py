@@ -1,6 +1,7 @@
 import re
 from collections import defaultdict
 from datetime import UTC, datetime
+from enum import Enum
 from typing import Any, Dict, List, Literal, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
@@ -17,6 +18,13 @@ from nmdc_server.logger import get_logger
 logger = get_logger(__name__)
 NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)
+
+
+class DataObjectReportVariant(str, Enum):
+    """The kind of report to generate."""
+
+    urls_only = "urls_only"
+    normal = "normal"
 
 
 # See: https://docs.djangoomics_processing.com/en/3.0/ref/models/querysets/#get-or-create
@@ -102,7 +110,8 @@ def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]
 
 def get_workflow_execution_output_report(
     db: Session,
-) -> Tuple[Tuple[Literal["data_object.id"], Literal["data_object.url"]], List[Tuple[str, str]]]:
+    variant: DataObjectReportVariant = DataObjectReportVariant.normal,
+) -> Tuple[Tuple[str], List[Tuple[str, str]]]:
     r"""
     Returns the header and data (i.e. body) of a report that lists all `DataObjects`
     that are the output of any `WorkflowExecution`.
@@ -111,15 +120,27 @@ def get_workflow_execution_output_report(
     # Get the `DataObject`s that are outputs of any `WorkflowExecution`s.
     data_objects = aggregations.get_wfe_output_data_objects(db)
 
-    # Return the report elements as tuples.
-    header_row = ("data_object.id", "data_object.url")
+    # Populate the header row based upon the specified variant.
+    if variant == DataObjectReportVariant.urls_only:
+        header_row = ("data_object.url",)
+    else:
+        header_row = ("data_object.id", "data_object.url")
+
+    # Populate the data rows based upon the specified variant.
     data_rows = []
     for data_object in data_objects:
-        row_tuple = (
-            data_object.id,
-            data_object.url if data_object.url is not None else "",
-        )
+        if variant == DataObjectReportVariant.urls_only:
+            row_tuple = (
+                data_object.url if data_object.url is not None else "",
+            )
+        else:
+            row_tuple = (
+                data_object.id,
+                data_object.url if data_object.url is not None else "",
+            )
         data_rows.append(row_tuple)
+
+    # Return the header row and data rows.
     return (header_row, data_rows)
 
 

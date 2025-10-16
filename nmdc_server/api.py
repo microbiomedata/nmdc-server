@@ -22,6 +22,7 @@ from nmdc_server.auth import admin_required, get_current_user, login_required_re
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
 from nmdc_server.crud import (
+    DataObjectReportVariant,
     context_edit_roles,
     get_submission_for_user,
     replace_nersc_data_url_prefix,
@@ -183,13 +184,17 @@ async def get_admin_stats(
 async def get_wfe_output_report(
     db: Session = Depends(get_db),
     user: models.User = Depends(admin_required),
+    variant: DataObjectReportVariant = Query(
+        DataObjectReportVariant.normal,
+        description="Whether you want the report to include only URLs.",
+    ),
 ):
     r"""
-    Returns a TSV-formatted report of all `DataObject`s that are the output
+    Returns a TSV-formatted report about all `DataObject`s that are the output
     of any `WorkflowExecution`.
     """
 
-    (header_row, data_rows) = crud.get_workflow_execution_output_report(db)
+    (header_row, data_rows) = crud.get_workflow_execution_output_report(db, variant=variant)
 
     # Build the report as an in-memory TSV "file" (buffer).
     # Reference: https://docs.python.org/3/library/csv.html#csv.writer
