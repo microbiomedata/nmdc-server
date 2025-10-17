@@ -369,16 +369,12 @@ def test_gold_tree_complex_query(gold_tree_biosamples, client: TestClient):
     }
 
 
-def test_get_data_object_report_as_non_admin(
-    db: Session, client: TestClient, logged_in_user
-):
+def test_get_data_object_report_as_non_admin(db: Session, client: TestClient, logged_in_user):
     response = client.request(method="GET", url="/api/admin/data_object_report")
     assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
-def test_get_data_object_report_normal(
-    db: Session, client: TestClient, logged_in_admin_user
-):
+def test_get_data_object_report_normal(db: Session, client: TestClient, logged_in_admin_user):
     # Load some example data objects.
     dobj_a = fakes.DataObjectFactory(file_size_bytes=10, url="http://example.com/a")
     dobj_b = fakes.DataObjectFactory(file_size_bytes=20, url="http://example.com/b")
@@ -407,9 +403,7 @@ def test_get_data_object_report_normal(
     assert all(row["data_object.url"].startswith("http://example.com") for row in data_rows)
 
 
-def test_get_data_object_report_urls_only(
-    db: Session, client: TestClient, logged_in_admin_user
-):
+def test_get_data_object_report_urls_only(db: Session, client: TestClient, logged_in_admin_user):
     # Load some example data objects.
     dobj_a = fakes.DataObjectFactory(file_size_bytes=10, url="http://example.com/a")
     dobj_b = fakes.DataObjectFactory(file_size_bytes=20, url="http://example.com/b")
@@ -418,14 +412,10 @@ def test_get_data_object_report_urls_only(
     fakes.MetagenomeAnnotationFactory(outputs=[dobj_a, dobj_b, dobj_c])
     db.commit()
 
-    response = client.request(
-        method="GET", url="/api/admin/data_object_report?variant=urls_only"
-    )
+    response = client.request(method="GET", url="/api/admin/data_object_report?variant=urls_only")
     assert response.status_code == status.HTTP_200_OK
     column_names = ["data_object.url"]
-    reader = DictReader(
-        response.text.splitlines(), fieldnames=column_names, delimiter="\t"
-    )
+    reader = DictReader(response.text.splitlines(), fieldnames=column_names, delimiter="\t")
     rows = [row for row in reader]
 
     # Check the header row.
