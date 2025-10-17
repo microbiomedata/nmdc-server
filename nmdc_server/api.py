@@ -191,7 +191,7 @@ async def get_data_object_report(
     of any `WorkflowExecution`.
     """
 
-    [header_row, data_rows] = crud.get_data_object_report(db, variant=variant)
+    header_row, data_rows = crud.get_data_object_report(db, variant=variant)
 
     # Build the report as an in-memory TSV "file" (buffer).
     # Reference: https://docs.python.org/3/library/csv.html#csv.writer
