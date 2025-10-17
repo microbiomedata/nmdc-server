@@ -1,5 +1,5 @@
-from csv import DictReader
 import json
+from csv import DictReader
 from importlib.metadata import version
 from itertools import product
 
@@ -398,7 +398,7 @@ def test_get_data_object_report_normal(
     # Check the header row.
     header_row = rows[0]
     assert [str(k) for k in header_row.keys()] == column_names
-    
+
     # Check the data rows.
     data_rows = rows[1:]  # get the data rows
     assert len(data_rows) == 3
@@ -431,7 +431,7 @@ def test_get_data_object_report_urls_only(
     # Check the header row.
     header_row = rows[0]
     assert [str(k) for k in header_row.keys()] == column_names
-    
+
     # Check the data rows.
     data_rows = rows[1:]  # get the data rows
     assert len(data_rows) == 3
