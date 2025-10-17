@@ -22,6 +22,7 @@ from nmdc_server.auth import admin_required, get_current_user, login_required_re
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
 from nmdc_server.crud import (
+    DataObjectReportVariant,
     context_edit_roles,
     get_submission_for_user,
     replace_nersc_data_url_prefix,
@@ -174,6 +175,44 @@ async def get_admin_stats(
     """
 
     return crud.get_admin_stats(db)
+
+
+@router.get("/admin/data_object_report", name="Get a data object report")
+async def get_data_object_report(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+    variant: DataObjectReportVariant = Query(
+        DataObjectReportVariant.normal,
+        description="Whether you want the report to include only URLs.",
+    ),
+):
+    r"""
+    Returns a TSV-formatted report about all `DataObject`s that are the output
+    of any `WorkflowExecution`.
+    """
+
+    header_row, data_rows = crud.get_data_object_report(db, variant=variant)
+
+    # Build the report as an in-memory TSV "file" (buffer).
+    # Reference: https://docs.python.org/3/library/csv.html#csv.writer
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter="\t")
+    writer.writerow(header_row)
+    writer.writerows(data_rows)
+
+    # Reset the buffer's internal file pointer to the beginning of the buffer, so that,
+    # when we stream the buffer's contents later, all of its contents are included.
+    buffer.seek(0)
+
+    # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
+    filename = "data-object-report.tsv"
+    response = StreamingResponse(
+        buffer,
+        media_type="text/tab-separated-values",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+    return response
 
 
 @router.post(
