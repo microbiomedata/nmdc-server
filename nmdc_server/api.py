@@ -1242,11 +1242,12 @@ async def update_submission(
         )
 
     # Create GitHub issue when metadata is being submitted and not a test submission
-    if (
-        submission.status == SubmissionStatusEnum.InProgress.text
-        and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
-        and submission.is_test_submission is False
+    if not submitted(
+        submission.status, body_dict.get("status", None), submission.is_test_submission
     ):
+        return
+
+    else:
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
         try:
             create_github_issue(submission_model, user)
@@ -1267,6 +1268,20 @@ async def update_submission(
     if "templates" in body_dict["metadata_submission"]:
         submission.templates = body_dict["metadata_submission"]["templates"]
     # Update permissions and status if the user is an "owner" or "admin"
+    _update_permissions_and_status(db, submission, body_dict, current_user_role, user)
+    crud.update_submission_lock(db, submission.id)
+    return submission
+
+
+def _update_permissions_and_status(
+    db: Session,
+    submission: SubmissionMetadata,
+    body_dict: dict,
+    current_user_role,
+    user: models.User,
+):
+    """Update permissions and status if user is owner or admin"""
+
     if (
         current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
     ) or user.is_admin:
@@ -1288,8 +1303,21 @@ async def update_submission(
             ):
                 submission.status = body_dict["status"]
         db.commit()
-    crud.update_submission_lock(db, submission.id)
-    return submission
+
+
+def submitted(stored_status: str, new_status: str, is_test: bool):
+    """
+    Determine if submission was submitted based on status change
+    """
+
+    if (
+        stored_status == SubmissionStatusEnum.InProgress.text
+        and new_status == SubmissionStatusEnum.SubmittedPendingReview.text
+        and is_test is False
+    ):
+        return True
+    else:
+        return False
 
 
 def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
@@ -1361,10 +1389,11 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         if res.status_code != 201:
             logging.error(f"Github issue creation failed with code {res.status_code}")
             logging.error(res.reason)
+
         else:
             logging.info(f"Github issue creation successful with code {res.status_code}")
             logging.info(res.reason)
-    
+
     else:
         for issue in existing_issues:
             try:
@@ -1389,7 +1418,9 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
         response = requests.get(gh_url, headers=headers, params=cast(Any, params))
 
         if response.status_code != 200:
-            logging.error(f"Request to search Github issues succeeded but API returned error {response.status_code} - {response.text}")
+            logging.error(
+                f"Request to search Github issues succeeded but API returned error {response.status_code} - {response.text}"
+            )
             return None
 
     except requests.RequestException as e:
@@ -1408,11 +1439,9 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
             matching_issues.append(issue)
 
     if len(matching_issues) > 0:
-        return matching_issues # list of matching github issues
-
-    else:    
+        return matching_issues  # list of matching github issues
+    else:
         return None  # No matching github issues
-
 
 
 def update_github_issue_for_resubmission(existing_issue, user, headers):
