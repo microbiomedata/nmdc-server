@@ -4,7 +4,7 @@ declare module '*.vue' {
   export default Vue;
 }
 
-declare module 'data-harmonizer';
+declare module '@microbiomedata/data-harmonizer';
 declare function $(...args: any[]): any;
 
 declare module "*.png" {

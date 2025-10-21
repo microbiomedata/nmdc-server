@@ -21,7 +21,12 @@ from nmdc_server import crud, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
-from nmdc_server.crud import context_edit_roles, get_submission_for_user
+from nmdc_server.crud import (
+    DataObjectReportVariant,
+    context_edit_roles,
+    get_submission_for_user,
+    replace_nersc_data_url_prefix,
+)
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
@@ -170,6 +175,44 @@ async def get_admin_stats(
     """
 
     return crud.get_admin_stats(db)
+
+
+@router.get("/admin/data_object_report", name="Get a data object report")
+async def get_data_object_report(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+    variant: DataObjectReportVariant = Query(
+        DataObjectReportVariant.normal,
+        description="Whether you want the report to include only URLs.",
+    ),
+):
+    r"""
+    Returns a TSV-formatted report about all `DataObject`s that are the output
+    of any `WorkflowExecution`.
+    """
+
+    header_row, data_rows = crud.get_data_object_report(db, variant=variant)
+
+    # Build the report as an in-memory TSV "file" (buffer).
+    # Reference: https://docs.python.org/3/library/csv.html#csv.writer
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter="\t")
+    writer.writerow(header_row)
+    writer.writerows(data_rows)
+
+    # Reset the buffer's internal file pointer to the beginning of the buffer, so that,
+    # when we stream the buffer's contents later, all of its contents are included.
+    buffer.seek(0)
+
+    # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
+    filename = "data-object-report.tsv"
+    response = StreamingResponse(
+        buffer,
+        media_type="text/tab-separated-values",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+    return response
 
 
 @router.post(
@@ -603,6 +646,11 @@ async def download_data_object(
     if url is None:
         raise HTTPException(status_code=404, detail="DataObject has no url reference")
 
+    # Overwrite the prefix of the URL if it refers to a data file hosted at NERSC.
+    url = replace_nersc_data_url_prefix(
+        url=url, replacement_url_prefix=settings.nersc_data_url_external_replacement_prefix
+    )
+
     file_download = schemas.FileDownloadCreate(
         ip=ip,
         user_agent=user_agent,
@@ -623,6 +671,12 @@ async def get_data_object_html_content(data_object_id: str, db: Session = Depend
     url = data_object.url
     if url is None:
         raise HTTPException(status_code=404, detail="DataObject has no url reference")
+
+    # Overwrite the prefix of the URL if it refers to a data file hosted at NERSC.
+    url = replace_nersc_data_url_prefix(
+        url=url, replacement_url_prefix=settings.nersc_data_url_external_replacement_prefix
+    )
+
     if data_object.file_type in [
         "Kraken2 Krona Plot",
         "GOTTCHA2 Krona Plot",
@@ -1634,6 +1688,7 @@ async def make_submission_images_public(
     public_pi_image = make_public(submission.pi_image)
     public_primary_study_image = make_public(submission.primary_study_image)
     public_study_image_urls = [make_public(img) for img in submission.study_images]
+
     return schemas.SubmissionImagesMakePublicResponse(
         pi_image_url=public_pi_image,
         primary_study_image_url=public_primary_study_image,
