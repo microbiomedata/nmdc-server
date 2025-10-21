@@ -1,6 +1,7 @@
 import re
 from collections import defaultdict
 from datetime import UTC, datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
@@ -17,6 +18,13 @@ from nmdc_server.logger import get_logger
 logger = get_logger(__name__)
 NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)
+
+
+class DataObjectReportVariant(str, Enum):
+    """The kind of report to generate."""
+
+    urls_only = "urls_only"
+    normal = "normal"
 
 
 # See: https://docs.djangoomics_processing.com/en/3.0/ref/models/querysets/#get-or-create
@@ -98,6 +106,42 @@ def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]
         .all()
     )
     return facets
+
+
+def get_data_object_report(
+    db: Session,
+    variant: DataObjectReportVariant = DataObjectReportVariant.normal,
+) -> tuple[list[str], list[list[str]]]:
+    r"""
+    Returns the header and data rows of a report that lists all `DataObjects`
+    that are the output of any `WorkflowExecution`. The `variant` parameter
+    can be used to specify which columns are included in the report.
+    """
+
+    # Get the `DataObject`s that are outputs of any `WorkflowExecution`s.
+    data_objects = aggregations.get_wfe_output_data_objects(db)
+
+    # Populate the header row based upon the specified variant.
+    if variant == DataObjectReportVariant.urls_only:
+        header_row = ["data_object.url"]
+    else:
+        header_row = ["data_object.id", "data_object.url", "data_object.file_size_bytes"]
+
+    # Populate the data rows based upon the specified variant.
+    data_rows = []
+    for data_object in data_objects:
+        url = data_object.url if data_object.url is not None else ""
+        if variant == DataObjectReportVariant.urls_only:
+            data_row = [url]
+        else:
+            file_size_bytes = (
+                str(data_object.file_size_bytes) if data_object.file_size_bytes is not None else ""
+            )
+            data_row = [data_object.id, url, file_size_bytes]
+        data_rows.append(data_row)
+
+    # Return the header row and data rows.
+    return (header_row, data_rows)
 
 
 def get_environmental_sankey(

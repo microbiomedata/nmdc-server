@@ -22,6 +22,7 @@ from nmdc_server.auth import admin_required, get_current_user, login_required_re
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
 from nmdc_server.crud import (
+    DataObjectReportVariant,
     context_edit_roles,
     get_submission_for_user,
     replace_nersc_data_url_prefix,
@@ -174,6 +175,44 @@ async def get_admin_stats(
     """
 
     return crud.get_admin_stats(db)
+
+
+@router.get("/admin/data_object_report", name="Get a data object report")
+async def get_data_object_report(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+    variant: DataObjectReportVariant = Query(
+        DataObjectReportVariant.normal,
+        description="Whether you want the report to include only URLs.",
+    ),
+):
+    r"""
+    Returns a TSV-formatted report about all `DataObject`s that are the output
+    of any `WorkflowExecution`.
+    """
+
+    header_row, data_rows = crud.get_data_object_report(db, variant=variant)
+
+    # Build the report as an in-memory TSV "file" (buffer).
+    # Reference: https://docs.python.org/3/library/csv.html#csv.writer
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter="\t")
+    writer.writerow(header_row)
+    writer.writerows(data_rows)
+
+    # Reset the buffer's internal file pointer to the beginning of the buffer, so that,
+    # when we stream the buffer's contents later, all of its contents are included.
+    buffer.seek(0)
+
+    # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
+    filename = "data-object-report.tsv"
+    response = StreamingResponse(
+        buffer,
+        media_type="text/tab-separated-values",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+    return response
 
 
 @router.post(
@@ -1394,10 +1433,21 @@ def find_existing_github_issue_for_submission(submission_id: str):
         "state": "all",
         "per_page": 100,
     }
-    response = requests.get(gh_url, headers=headers, params=cast(Any, params))
 
-    if response.status_code == 200:
-        issues = response.json()
+    try:
+        response = requests.get(gh_url, headers=headers, params=cast(Any, params))
+
+        if response.status_code != 200:
+            logging.error(
+                f"Request to search Github issues succeeded but API returned error {response.status_code} - {response.text}"
+            )
+            return None
+
+    except requests.RequestException as e:
+        logging.error(f"Request failed to check existing GitHub issues: {str(e)}")
+        return None
+
+    issues = response.json()
 
         # Look for an issue with matching submission id
         for issue in issues:
@@ -1419,6 +1469,7 @@ def add_resubmission_comment(existing_issue, user):
     """
     Update an existing GitHub issue to note that the submission was resubmitted.
     Adds a comment and reopens the issue if it was closed.
+    Returns nothing if update succesfully made.
     """
     headers, gh_url, assignee = get_github_headers()
     if headers is None:
@@ -1465,8 +1516,6 @@ The submission has been updated and resubmitted for review.
                 status_code=reopen_response.status_code,
                 detail=f"Failed to reopen GitHub issue: {reopen_response.reason}",
             )
-
-    return existing_issue
 
 
 @router.delete(
