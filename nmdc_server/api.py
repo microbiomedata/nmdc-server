@@ -1271,20 +1271,21 @@ def _handle_github_submission(submission: SubmissionMetadata, body_dict: dict, u
     new_status = body_dict.get("status", None)
     is_test = submission.is_test_submission
 
-    if not submitted(stored_status, new_status, is_test):
-        return
+    if submitted(stored_status, new_status, is_test):
 
-    existing_issues = find_existing_github_issue_for_submission(submission.id)
+        existing_issues = find_existing_github_issue_for_submission(submission.id)
 
-    if existing_issues is None:
-        submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
-        create_github_issue(submission_model, user)
-    else:
-        for issue in existing_issues:
-            try:
-                add_resubmission_comment(issue, user)
-            except Exception as e:
-                logging.error(f"Failed to update existing GitHub issue: {str(e)}")
+        if existing_issues is None:
+            submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(
+                submission
+            )
+            create_github_issue(submission_model, user)
+        else:
+            for issue in existing_issues:
+                try:
+                    add_resubmission_comment(issue, user)
+                except Exception as e:
+                    logging.error(f"Failed to update existing GitHub issue: {str(e)}")
 
 
 def _update_permissions_and_status(
