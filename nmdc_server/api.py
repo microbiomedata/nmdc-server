@@ -1274,13 +1274,17 @@ def _handle_github_submission(submission: SubmissionMetadata, body_dict: dict, u
     if not submitted(stored_status, new_status, is_test):
         return
 
-    existing_issue = find_existing_github_issue_for_submission(submission.id)
+    existing_issues = find_existing_github_issue_for_submission(submission.id)
 
-    if existing_issue is None:
+    if existing_issues is None:
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
         create_github_issue(submission_model, user)
     else:
-        add_resubmission_comment(existing_issue, user)
+        for issue in existing_issues:
+            try:
+                add_resubmission_comment(issue, user)
+            except Exception as e:
+                logging.error(f"Failed to update existing GitHub issue: {str(e)}")
 
 
 def _update_permissions_and_status(
@@ -1399,8 +1403,6 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         logging.info(f"Github issue creation successful with code {res.status_code}")
         logging.info(res.reason)
 
-    return res
-
 
 def get_github_headers():
     """
@@ -1449,20 +1451,19 @@ def find_existing_github_issue_for_submission(submission_id: str):
 
     issues = response.json()
 
-        # Look for an issue with matching submission id
-        for issue in issues:
-            title = issue.get("title", "")
-            body = issue.get("body", "")
+    # Look for an issue with matching submission id anywhere in github
+    matching_issues = []
+    for issue in issues:
+        title = issue.get("title", "") or ""
+        body = issue.get("body", "") or ""
 
-            if submission_id_string in title or submission_id_string in body:
-                return issue
+        if submission_id_string in title or submission_id_string in body:
+            matching_issues.append(issue)
 
-        return None  # No matching github issues
+    if len(matching_issues) > 0:
+        return matching_issues  # list of matching github issues
     else:
-        raise HTTPException(
-            status_code=response.status_code,
-            detail=f"Search for existing Github issues failed: {response.reason}",
-        )
+        return None  # no matching github issues
 
 
 def add_resubmission_comment(existing_issue, user):
