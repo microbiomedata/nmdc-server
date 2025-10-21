@@ -1242,9 +1242,7 @@ async def update_submission(
         )
 
     # Create GitHub issue when metadata is being submitted and not a test submission
-    if submitted(
-        submission.status, body_dict.get("status", None), submission.is_test_submission
-    ):
+    if submitted(submission.status, body_dict.get("status", None), submission.is_test_submission):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
         try:
             create_github_issue(submission_model, user)
