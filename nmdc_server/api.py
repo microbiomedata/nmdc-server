@@ -1248,7 +1248,10 @@ async def update_submission(
         and submission.is_test_submission is False
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
-        create_github_issue(submission_model, user)
+        try:
+            create_github_issue(submission_model, user)
+        except Exception as e:
+            logging.error(f"Failed to create/update Github issue: {str(e)}")
 
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
@@ -1290,6 +1293,10 @@ async def update_submission(
 
 
 def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
+    """
+    Create or update a Github issue depending on if an issue exists for the submission id.
+    Updates all matching issues if there's more than one, but should typically be one.
+    """
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     assignee = settings.github_issue_assignee
@@ -1300,9 +1307,9 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
 
     # Check for existing issues first
-    existing_issue = check_existing_github_issues(submission.id, headers, gh_url, user)
+    existing_issues = check_existing_github_issues(submission.id, headers, gh_url, user)
 
-    if existing_issue is None:
+    if existing_issues is None:
 
         # Gathering the fields we want to display in the issue
         study_form = submission.metadata_submission.studyForm
@@ -1357,46 +1364,62 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
         else:
             logging.info(f"Github issue creation successful with code {res.status_code}")
             logging.info(res.reason)
-
-        return res
+    
+    else:
+        for issue in existing_issues:
+            try:
+                update_github_issue_for_resubmission(issue, user, headers)
+            except Exception as e:
+                logging.error(f"Failed to update existing GitHub issue: {str(e)}")
 
 
 def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str, user):
     """
-    Check if a GitHub issue already exists for the given submission ID using GitHub's search API.
+    Check if GitHub issues already exist for the given submission ID using GitHub's search API.
     Searches for submission id anywhere on issue, ignoring format for longevity.
+    Returns list of matching issues.
     """
     submission_id_string = str(submission_id)
     params = {
         "state": "all",
         "per_page": 100,
     }
-    response = requests.get(gh_url, headers=headers, params=cast(Any, params))
 
-    if response.status_code == 200:
-        issues = response.json()
+    try:
+        response = requests.get(gh_url, headers=headers, params=cast(Any, params))
 
-        # Look for an issue with matching submission id anywhere in github
-        for issue in issues:
-            title = issue.get("title", "")
-            body = issue.get("body", "")
+        if response.status_code != 200:
+            logging.error(f"Request to search Github issues succeeded but API returned error {response.status_code} - {response.text}")
+            return None
 
-            if submission_id_string in title or submission_id_string in body:
-                updated_issue = update_github_issue_for_resubmission(issue, user, headers)
-                return updated_issue
-        else:
-            return None  # No matching github issues
-    else:
-        raise HTTPException(
-            status_code=response.status_code,
-            detail=f"Search for existing Github issues failed: {response.reason}",
-        )
+    except requests.RequestException as e:
+        logging.error(f"Request failed to check existing GitHub issues: {str(e)}")
+        return None
+
+    issues = response.json()
+
+    # Look for an issue with matching submission id anywhere in github
+    matching_issues = []
+    for issue in issues:
+        title = issue.get("title", "") or ""
+        body = issue.get("body", "") or ""
+
+        if submission_id_string in title or submission_id_string in body:
+            matching_issues.append(issue)
+
+    if len(matching_issues) > 0:
+        return matching_issues # list of matching github issues
+
+    else:    
+        return None  # No matching github issues
+
 
 
 def update_github_issue_for_resubmission(existing_issue, user, headers):
     """
     Update an existing GitHub issue to note that the submission was resubmitted.
     Adds a comment and reopens the issue if it was closed.
+    Returns nothing if update succesfully made.
     """
     issue_url = existing_issue.get("url")  # API URL for the issue
 
@@ -1439,8 +1462,6 @@ The submission has been updated and resubmitted for review.
                 status_code=reopen_response.status_code,
                 detail=f"Failed to reopen GitHub issue: {reopen_response.reason}",
             )
-
-    return existing_issue
 
 
 @router.delete(
