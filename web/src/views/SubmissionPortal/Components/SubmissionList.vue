@@ -81,9 +81,11 @@ export default defineComponent({
       { text: 'Show only test submissions', val: true },
       { text: 'Hide test submissions', val: false }];
 
+    const exclude = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.SubmittedPendingReview.text];
     const availableStatuses = Object.keys(SubmissionStatusTitleMapping).map((key) => ({
       value: key,
       text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      disabled: exclude.includes(key),
     }));
 
     async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
@@ -345,6 +347,7 @@ export default defineComponent({
               v-if="currentUser.is_admin"
               :value="item.status"
               :items="availableStatuses"
+              item-disabled="disabled"
               dense
               hide-details
               @change="(newStatus) => handleStatusChange(item, newStatus)"
