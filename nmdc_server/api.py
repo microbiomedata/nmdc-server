@@ -1234,7 +1234,8 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # Create GitHub issue when metadata is being submitted and not a test submission and user is owner (only they can hit submit button anyway)
+    # Create GitHub issue when metadata is being submitted and not a test submission, and
+    # user is owner (only they can hit submit button anyway)
     if (
         submission.status == SubmissionStatusEnum.InProgress.text
         and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
