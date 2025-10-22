@@ -1240,7 +1240,7 @@ async def update_submission(
         submission.status == SubmissionStatusEnum.InProgress.text
         and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
         and submission.is_test_submission is False
-        and current_user_role == models.SubmissionEditorRole.owner
+        and current_user_role.role == models.SubmissionEditorRole.owner
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
         create_github_issue(submission_model, user)
