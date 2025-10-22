@@ -1235,11 +1235,12 @@ async def update_submission(
         )
 
     # Create GitHub issue when metadata is being submitted and not a test submission, and
-    # user is owner (only they can hit submit button anyway)
+    # user is owner if user role exists (only they can hit submit button anyway)
     if (
         submission.status == SubmissionStatusEnum.InProgress.text
         and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
         and submission.is_test_submission is False
+        and current_user_role
         and current_user_role.role == models.SubmissionEditorRole.owner
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
