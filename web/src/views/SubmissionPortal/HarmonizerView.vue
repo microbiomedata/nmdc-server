@@ -699,9 +699,9 @@ export default defineComponent({
         <v-snackbar
           v-model="validationSuccessSnackbar"
           color="success"
-          timeout="3000"
+          timeout="5000"
         >
-          Validation Passed! You can now submit or continue editing.
+          Validation Passed! You can continue editing or submit if you own this submission.
         </v-snackbar>
         <v-snackbar
           v-model="importErrorSnackbar"

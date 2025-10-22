@@ -1154,9 +1154,9 @@ async def get_submission(
 
     if user.is_admin or crud.can_read_submission(db, id, user.orcid):
         permission_level = None
-        if user.is_admin or user.orcid in submission.owners:
+        if user.orcid in submission.owners:
             permission_level = models.SubmissionEditorRole.owner.value
-        elif user.orcid in submission.editors:
+        elif user.is_admin or user.orcid in submission.editors:
             permission_level = models.SubmissionEditorRole.editor.value
         elif user.orcid in submission.metadata_contributors:
             permission_level = models.SubmissionEditorRole.metadata_contributor.value
@@ -1234,11 +1234,12 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # Create GitHub issue when metadata is being submitted and not a test submission
+    # Create GitHub issue when metadata is being submitted and not a test submission and user is owner (only they can hit submit button anyway)
     if (
         submission.status == SubmissionStatusEnum.InProgress.text
         and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
         and submission.is_test_submission is False
+        and current_user_role == models.SubmissionEditorRole.owner
     ):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
         create_github_issue(submission_model, user)
