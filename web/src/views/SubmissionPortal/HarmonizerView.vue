@@ -435,7 +435,7 @@ export default defineComponent({
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
-      validForms.harmonizerValid = allTabsValid && isOwner();
+      validForms.harmonizerValid = allTabsValid && isOwner() && validForms.templatesValid;
       return allTabsValid && isOwner();
     });
 

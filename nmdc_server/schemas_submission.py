@@ -93,13 +93,16 @@ class AddressForm(BaseModel):
     permitNumber: str
     biosafetyLevel: str
     irbOrHipaa: Optional[bool] = None
-    comments: str   
+    comments: str
+
 
 class ValidForms(BaseModel):
     studyFormValid: bool = False
     multiOmicsFormValid: bool = False
     templatesValid: bool = False
     harmonizerValid: bool = False
+    addressFormValid: bool = False
+
 
 class MetadataSubmissionRecordCreate(BaseModel):
     packageName: List[str]

@@ -99,6 +99,7 @@ const validFormsDefault = {
   multiOmicsFormValid: false,
   templatesValid: false,
   harmonizerValid: false,
+  addressFormValid: false,
 };
 
 const validForms = reactive(clone(validFormsDefault));
@@ -131,7 +132,6 @@ const addressFormDefault = {
 };
 
 const addressForm = reactive(clone(addressFormDefault));
-const addressFormValid = ref(false);
 
 /**
  * Study Form Step
@@ -392,7 +392,6 @@ function submit(id: string, status: SubmissionStatusKey = 'InProgress') {
 
 function reset() {
   Object.assign(addressForm, addressFormDefault);
-  addressFormValid.value = false;
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
   Object.assign(validForms, validFormsDefault);
@@ -540,7 +539,6 @@ export {
   sampleData,
   addressForm,
   addressFormDefault,
-  addressFormValid,
   studyForm,
   validForms,
   submitPayload,
