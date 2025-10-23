@@ -1204,6 +1204,12 @@ async def update_submission(
         submission.templates = body_dict["metadata_submission"]["templates"]
     if "validForms" in body_dict["metadata_submission"]:
         submission.validForms = body_dict["metadata_submission"]["validForms"]
+    update_permissions(current_user_role,body_dict,db,submission)
+    crud.update_submission_lock(db, submission.id)
+    return submission
+
+
+def update_permissions(current_user_role,body_dict,db,submission):
     # Update permissions and status iff the user is an "owner"
     if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner:
         new_permissions = body_dict.get("permissions", None)
@@ -1217,9 +1223,7 @@ async def update_submission(
             ):
                 submission.status = body_dict["status"]
         db.commit()
-    crud.update_submission_lock(db, submission.id)
-    return submission
-
+        
 
 def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
     gh_url = str(settings.github_issue_url)
