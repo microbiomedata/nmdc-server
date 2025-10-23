@@ -1202,14 +1202,12 @@ async def update_submission(
         submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
     if "templates" in body_dict["metadata_submission"]:
         submission.templates = body_dict["metadata_submission"]["templates"]
-    if "validForms" in body_dict["metadata_submission"]:
-        submission.validForms = body_dict["metadata_submission"]["validForms"]
-    update_permissions(current_user_role,body_dict,db,submission)
+    update_permissions(current_user_role, body_dict, db, submission)
     crud.update_submission_lock(db, submission.id)
     return submission
 
 
-def update_permissions(current_user_role,body_dict,db,submission):
+def update_permissions(current_user_role, body_dict, db, submission):
     # Update permissions and status iff the user is an "owner"
     if current_user_role and current_user_role.role == models.SubmissionEditorRole.owner:
         new_permissions = body_dict.get("permissions", None)
