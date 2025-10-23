@@ -1223,7 +1223,7 @@ def update_permissions(current_user_role,body_dict,db,submission):
             ):
                 submission.status = body_dict["status"]
         db.commit()
-        
+
 
 def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
     gh_url = str(settings.github_issue_url)
