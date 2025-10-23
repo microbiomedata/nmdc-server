@@ -112,25 +112,9 @@ export default defineComponent({
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
 
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
-      console.log('Changing status:', item.id, 'from', item.status, 'to', newStatus);
-
-      try {
-        const fullRecord = await api.getRecord(item.id);
-        console.log('Full record fetched:', fullRecord);
-        console.log('Metadata submission:', fullRecord.metadata_submission);
-        console.log('Calling updateRecord with:', {
-          id: item.id,
-          metadata_submission: fullRecord.metadata_submission,
-          status: newStatus,
-          permissions: {},
-        });
-        const result = await updateRecord(item.id, fullRecord.metadata_submission, newStatus, {});
-        console.log('Update result:', result);
-        console.log('Returned status:', result.data.status);
-        await submission.refetch();
-      } catch (error) {
-        console.error('Error updating status:', error);
-      }
+      const fullRecord = await api.getRecord(item.id);
+      await updateRecord(item.id, fullRecord.metadata_submission, newStatus, {});
+      await submission.refetch();
     }
 
     watch(options, () => {
