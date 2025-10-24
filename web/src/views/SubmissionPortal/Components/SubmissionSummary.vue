@@ -21,10 +21,6 @@ export default defineComponent({
   setup() {
     const textVal = ref('');
 
-    function createNewStudyID() {
-      textVal.value = 'New unique ID created';
-    }
-
     const canSubmit = computed(() => (validForms.templatesValid && validForms.harmonizerValid && validForms.studyFormValid && validForms.multiOmicsFormValid && isOwner() && false));
 
     const panels = ref([]);
@@ -143,7 +139,6 @@ export default defineComponent({
       multiOmicsContent,
       harmonizerContent,
       canEditSubmissionMetadata,
-      createNewStudyID,
     };
   },
 });
@@ -308,31 +303,7 @@ export default defineComponent({
           </v-expansion-panel-content>
         </v-expansion-panel>
       </v-expansion-panels>
-      <div class="text-h5 pt-5">
-        Create or Add Existing Study ID
-      </div>
-      <div class="d-flex">
-        <v-text-field
-          v-model="textVal"
-          label="NMDC study ID"
-          persistent-hint
-          outlined
-          dense
-          class="mb-2 mr-3"
-        />
-        <v-btn
-          color="gray"
-          :disabled="textVal.length!=0"
-          depressed
-          @click="createNewStudyID()"
-        >
-          <v-icon class="pl-1">
-            mdi-plus
-          </v-icon>
-          Create New ID
-        </v-btn>
-      </div>
-      <div class="d-flex">
+      <div class="d-flex my-4">
         <v-btn
           color="gray"
           depressed
