@@ -20,15 +20,24 @@ import {
   checkDoiFormat,
   primaryStudyImageUrl,
   piImageUrl,
+  canEditSubmissionByStatus,
+  SubmissionStatusTitleMapping,
+  status,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import ImageUpload from './ImageUpload.vue';
+import StatusAlert from './StatusAlert.vue';
 
 export default defineComponent({
-  components: { ImageUpload, SubmissionDocsLink, SubmissionPermissionBanner },
+  components: {
+    ImageUpload,
+    SubmissionDocsLink,
+    SubmissionPermissionBanner,
+    StatusAlert,
+  },
   setup() {
     const formRef = ref();
 
@@ -134,6 +143,10 @@ export default defineComponent({
       checkDoiFormat,
       primaryStudyImageUrl,
       piImageUrl,
+      canEditSubmissionByStatus,
+      SubmissionStatusTitleMapping,
+      status,
+      StatusAlert,
     };
   },
 });
@@ -149,8 +162,9 @@ export default defineComponent({
       {{ NmdcSchema.classes.Study.description }}
     </div>
     <submission-permission-banner
-      v-if="!canEditSubmissionMetadata()"
+      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
+    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-form
       ref="formRef"
       v-model="studyFormValid"
