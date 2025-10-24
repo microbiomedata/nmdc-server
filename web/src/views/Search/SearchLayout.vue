@@ -6,6 +6,7 @@ import {
 
 import SearchResults from '@/components/Presentation/SearchResults.vue';
 import { types } from '@/encoding';
+// @ts-ignore
 import { fieldDisplayName } from '@/util';
 import { api, Condition, StudySearchResults } from '@/data/api';
 
@@ -241,20 +242,20 @@ export default defineComponent({
                 <search-help-menu />
               </v-col>
             </v-row>
-            <v-tabs-items
+            <v-window
               v-model="vistab"
               class="my-3"
             >
-              <v-tab-item key="omics">
+              <v-window-item key="omics">
                 <BiosampleVisGroup
                   :conditions="gatedOmicsVisConditions"
                   :vistab="vistab"
                 />
-              </v-tab-item>
-              <v-tab-item key="environments">
+              </v-window-item>
+              <v-window-item key="environments">
                 <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
-              </v-tab-item>
-            </v-tabs-items>
+              </v-window-item>
+            </v-window>
             <v-card outlined>
               <v-card
                 flat
@@ -266,12 +267,11 @@ export default defineComponent({
                   <v-tooltip
                     right
                   >
-                    <template #activator="{on, attrs}">
+                    <template #activator="{ props }">
                       <v-btn
                         icon
                         small
-                        v-bind="attrs"
-                        v-on="on"
+                        v-bind="props"
                       >
                         <v-icon>mdi-help-circle</v-icon>
                       </v-btn>
@@ -444,12 +444,11 @@ export default defineComponent({
                   <v-tooltip
                     right
                   >
-                    <template #activator="{on, attrs}">
+                    <template #activator="{ props }">
                       <v-btn
                         icon
                         small
-                        v-bind="attrs"
-                        v-on="on"
+                        v-bind="props"
                       >
                         <v-icon>mdi-help-circle</v-icon>
                       </v-btn>

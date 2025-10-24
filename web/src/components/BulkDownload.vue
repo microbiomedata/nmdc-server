@@ -105,13 +105,12 @@ export default defineComponent({
         min-width="300px"
         max-width="300px"
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-icon
             small
             color="white"
-            v-bind="attrs"
+            v-bind="props"
             class="pr-2"
-            v-on="on"
           >
             mdi-help-circle
           </v-icon>
@@ -135,13 +134,12 @@ export default defineComponent({
         :width="400"
         :disabled="downloadSummary.count === 0"
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-btn
             class="ml-3"
             color="white"
             depressed
-            v-bind="attrs"
-            v-on="on"
+            v-bind="props"
           >
             Download ZIP
             <v-icon class="pl-3">

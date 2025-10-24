@@ -142,7 +142,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
   emsl_biosample_identifiers: string[];
 }
 
-interface PrincipalInvestigator {
+export interface PrincipalInvestigator {
   name?: string;
   email?: string;
   orcid?: string;

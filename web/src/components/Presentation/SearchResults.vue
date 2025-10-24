@@ -92,55 +92,53 @@ export default defineComponent({
 
         <v-list-item
           :ripple="!disableNavigateOnClick"
-          :inactive="disableNavigateOnClick"
+          :active="false"
           v-on="{
             click: disableNavigateOnClick
               ? () => {}
               : () => $emit('selected', result.id),
           }"
         >
-          <slot
-            name="action"
-            v-bind="{ result }"
-          />
-          <v-list-item-avatar>
-            <v-icon
-              v-if="result.children && result.children.length > 0 && result.study_category === 'research_study'"
-            >
-              mdi-book-multiple-outline
-            </v-icon>
-            <v-icon
-              v-else
-            >
-              {{ icon }}
-            </v-icon>
-          </v-list-item-avatar>
-          <v-list-item-content>
-            <v-list-item-title>
-              {{ result[titleKey] }}
-              <slot
-                name="child-list"
-                v-bind="{ result}"
-              />
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              <slot
-                name="subtitle"
-                v-bind="{ result }"
-              >
-                {{ result[subtitleKey] || 'No description' }}
-              </slot>
-            </v-list-item-subtitle>
+          <template #prepend>
             <slot
-              name="item-content"
+              name="action"
               v-bind="{ result }"
             />
-          </v-list-item-content>
+            <v-icon>
+              {{
+                result.children && result.children.length > 0 && result.study_category === 'research_study'
+                  ? 'mdi-book-multiple-outline'
+                  : icon
+              }}
+            </v-icon>
+          </template>
 
+          <v-list-item-title>
+            {{ result[titleKey] }}
+            <slot
+              name="child-list"
+              v-bind="{ result}"
+            />
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            <slot
+              name="subtitle"
+              v-bind="{ result }"
+            >
+              {{ result[subtitleKey] || 'No description' }}
+            </slot>
+          </v-list-item-subtitle>
           <slot
-            name="action-right"
+            name="item-content"
             v-bind="{ result }"
           />
+
+          <template #append>
+            <slot
+              name="action-right"
+              v-bind="{ result }"
+            />
+          </template>
         </v-list-item>
       </template>
     </v-list>

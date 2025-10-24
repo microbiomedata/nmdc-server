@@ -141,7 +141,7 @@ export default defineComponent({
         v-for="[groupname, filteredFields] in groupedFields"
         :key="groupname"
       >
-        <v-subheader
+        <v-list-subheader
           v-show="groupedFields.length > 1 && filteredFields.length > 0"
         >
           {{ groupname !== 'undefined' ? groupname : 'Other' }}
@@ -179,7 +179,7 @@ export default defineComponent({
             </template>
             <span> {{ mixsDescription }}</span>
           </v-tooltip>
-        </v-subheader>
+        </v-list-subheader>
         <template v-for="sf in filteredFields" :key="sf.key">
           <v-menu
             :model-value="menuState[sf.key]"
@@ -192,14 +192,12 @@ export default defineComponent({
                 v-show="!hasActiveConditions(sf.key)"
                 v-bind="props"
               >
-                <v-list-item-content>
-                  <v-list-item-title>
-                    {{ fieldDisplayName(sf.field, sf.table) }}
-                  </v-list-item-title>
-                </v-list-item-content>
-                <v-list-item-icon>
-                  <v-icon> mdi-play </v-icon>
-                </v-list-item-icon>
+                <v-list-item-title>
+                  {{ fieldDisplayName(sf.field, sf.table) }}
+                </v-list-item-title>
+                <template #append>
+                  <v-icon>mdi-play</v-icon>
+                </template>
               </v-list-item>
             </template>
             <v-card
@@ -211,7 +209,7 @@ export default defineComponent({
                   field: sf.field,
                   table: sf.table,
                   isOpen: menuState[sf.key],
-                  toggleMenu: (val) => toggleMenu(sf.key, val),
+                  toggleMenu: (val: boolean) => toggleMenu(sf.key, val),
                 }"
               />
             </v-card>
@@ -222,28 +220,24 @@ export default defineComponent({
         v-if="facetValues.length && groupedFields.length"
         class="my-2"
       />
-      <v-subheader v-if="facetValues.length">
+      <v-list-subheader v-if="facetValues.length">
         Query Options
-      </v-subheader>
+      </v-list-subheader>
       <v-list-item
         v-for="condition in facetValues"
         :key="`${condition.table}:${condition.field}:${condition.value}`"
         @click="$emit('select', condition)"
       >
-        <v-list-item-content>
-          <v-list-item-title>
-            {{ condition.value }}
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            {{ fieldDisplayName(condition.field) }}
-            <span v-if="condition.op === 'like'">({{ tableName(condition.table) }})</span>
-          </v-list-item-subtitle>
-        </v-list-item-content>
-        <v-list-item-icon class="align-self-center">
-          <v-icon>
-            mdi-filter-plus
-          </v-icon>
-        </v-list-item-icon>
+        <v-list-item-title>
+          {{ condition.value }}
+        </v-list-item-title>
+        <v-list-item-subtitle>
+          {{ fieldDisplayName(condition.field) }}
+          <span v-if="condition.op === 'like'">({{ tableName(condition.table) }})</span>
+        </v-list-item-subtitle>
+        <template #append>
+          <v-icon>mdi-filter-plus</v-icon>
+        </template>
       </v-list-item>
       <v-list-item
         v-if="facetValues.length === 0 && groupedFields.length === 0"

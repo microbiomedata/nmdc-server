@@ -20,7 +20,6 @@ export default defineComponent({
     outlined
   >
     <v-tooltip
-      :attach="`#${id}`"
       location="left"
       offset="20"
       min-width="300px"
