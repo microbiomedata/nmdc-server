@@ -1,3 +1,5 @@
+import { computed } from 'vue';
+import { computedAsync } from '@vueuse/core';
 import { api } from '../data/api';
 
 import SegmentConditions from './SegmentConditions';
@@ -24,33 +26,38 @@ export default {
     },
   },
 
-  data() {
-    return {
-      facetSummary: [],
-    };
-  },
+  setup(props) {
+    // Computed properties for conditions (from SegmentConditions mixin logic)
+    const otherConditions = computed(() => 
+      props.conditions.filter((c) => (c.field !== props.field) || (c.table !== props.table))
+    );
+    
+    const myConditions = computed(() => 
+      props.conditions.filter((c) => (c.field === props.field) && (c.table === props.table))
+    );
 
-  asyncComputed: {
-    facetSummary: {
-      get() {
-        return api.getBinnedFacet(
-          this.table,
-          this.field,
-          this.otherConditions
-            .concat(this.useAllConditions ? this.myConditions : []),
+    // Async computed for facetSummary
+    const facetSummary = computedAsync(
+      async () => {
+        const conditions = otherConditions.value.concat(
+          props.useAllConditions ? myConditions.value : []
         );
+        return api.getBinnedFacet(props.table, props.field, conditions);
       },
-      default: {},
-    },
-    facetSummaryUnconditional: {
-      get() {
-        return api.getBinnedFacet(
-          this.table,
-          this.field,
-          [],
-        );
-      },
-      default: {},
-    },
+      { bins: [], facets: [] }
+    );
+
+    // Async computed for facetSummaryUnconditional
+    const facetSummaryUnconditional = computedAsync(
+      async () => api.getBinnedFacet(props.table, props.field, []),
+      { bins: [], facets: [] }
+    );
+
+    return {
+      facetSummary,
+      facetSummaryUnconditional,
+      otherConditions,
+      myConditions,
+    };
   },
 };

@@ -68,13 +68,10 @@ export default defineComponent({
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onChartReady = (chart: any) => {
-      console.log('Chart ready');
-      console.log(chart);
       chartRef.value = chart;
     };
     const chartEvents = {
       select: () => {
-        console.log(chartRef.value);
         const selection = chartRef.value.getSelection();
         const value = props.facetSummaryUnconditional[selection[0].row]?.facet;
         if (selection.length === 1) {
@@ -89,17 +86,23 @@ export default defineComponent({
         }
       },
     };
-    const chartData = computed(() => ([
-      [
-        { label: fieldDisplayName(props.field) },
-        { label: 'Match', role: 'data' },
-        { role: 'scope' },
-        { role: 'style' },
-        { label: 'No Match', role: 'data' },
-        { role: 'scope' },
-        { role: 'style' },
-        { role: 'annotation' },
-      ],
+    const chartData = computed(() => {
+      console.log('FacetBarChart chartData recomputed:', {
+        facetSummaryLength: props.facetSummary.length,
+        facetSummaryUnconditionalLength: props.facetSummaryUnconditional.length,
+        field: props.field
+      });
+      return [
+        [
+          { label: fieldDisplayName(props.field) },
+          { label: 'Match', role: 'data' },
+          { role: 'scope' },
+          { role: 'style' },
+          { label: 'No Match', role: 'data' },
+          { role: 'scope' },
+          { role: 'style' },
+          { role: 'annotation' },
+        ],
       ...props.facetSummaryUnconditional.map(
         (facet) => {
           const count = (props.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0;
@@ -121,10 +124,8 @@ export default defineComponent({
           ];
         },
       ),
-    ]));
-    console.log('BLOB!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!');
-    console.log(chartData.value);
-    console.log(props.facetSummaryUnconditional);
+    ];
+    });
     const barChartOptions = computed(() => ({
       height: props.height,
       chartArea: {

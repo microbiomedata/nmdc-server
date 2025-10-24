@@ -44,6 +44,7 @@ export default defineComponent({
   },
 
   setup(props, { emit }) {
+    console.log('TimeHistogram props:', props.totalData);
     const { proxy: root } = getCurrentInstance();
     const svgRoot = ref(undefined);
     // set the dimensions and margins of the graph
