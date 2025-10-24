@@ -12,7 +12,7 @@ import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
-  templateHasData, checkDoiFormat,
+  templateHasData, checkDoiFormat, canEditSubmissionByStatus, SubmissionStatusTitleMapping, status,
 } from '../store';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 
@@ -20,6 +20,7 @@ import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
 import DoeFacility from './DoeFacility.vue';
+import StatusAlert from './StatusAlert.vue';
 
 const OTHER = 'OTHER';
 
@@ -29,6 +30,7 @@ export default defineComponent({
     DoeFacility,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
+    StatusAlert,
   },
   setup() {
     const formRef = ref();
@@ -164,6 +166,10 @@ export default defineComponent({
       canEditSubmissionMetadata,
       checkJGITemplates,
       templateHasData,
+      canEditSubmissionByStatus,
+      SubmissionStatusTitleMapping,
+      status,
+      StatusAlert,
     };
   },
 });
@@ -179,8 +185,9 @@ export default defineComponent({
       Information about the type of samples being submitted.
     </div>
     <submission-permission-banner
-      v-if="!canEditSubmissionMetadata()"
+      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
+    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-form
       ref="formRef"
       v-model="multiOmicsFormValid"
