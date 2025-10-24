@@ -95,17 +95,16 @@ export default defineComponent({
         >
           {{ groupname !== 'undefined' ? groupname : 'Other' }}
         </v-subheader>
-        <template v-for="field in filteredFields">
+        <template v-for="field in filteredFields" :key="field.key">
           <v-menu
-            :key="field.key"
-            offset-x
+            location="end"
             :close-on-content-click="false"
-            @input="toggleMenu(field.key, $event)"
+            @update:model-value="toggleMenu(field.key, $event)"
           >
-            <template #activator="{ on }">
+            <template #activator="{ props }">
               <v-list-item
                 v-show="!hasActiveConditions(field.key)"
-                v-on="on"
+                v-bind="props"
               >
                 <v-list-item-content>
                   <v-list-item-title> {{ fieldDisplayName(field.key) }} </v-list-item-title>

@@ -21,16 +21,15 @@ export default defineComponent({
   >
     <v-tooltip
       :attach="`#${id}`"
-      left
-      nudge-bottom="20px"
+      location="left"
+      offset="20"
       min-width="300px"
       max-width="300px"
     >
-      <template #activator="{ on, attrs }">
+      <template #activator="{ props }">
         <v-icon
-          v-bind="attrs"
+          v-bind="props"
           style="position: absolute; right: 6px; top: 6px; z-index: 2;"
-          v-on="on"
         >
           mdi-help-circle
         </v-icon>

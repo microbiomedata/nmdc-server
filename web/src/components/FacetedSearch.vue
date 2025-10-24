@@ -147,16 +147,15 @@ export default defineComponent({
           {{ groupname !== 'undefined' ? groupname : 'Other' }}
           <v-tooltip
             v-if="groupname === 'GOLD Ecosystems'"
-            right
+            location="end"
             open-delay="600"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                x-small
-                v-bind="attrs"
+                size="x-small"
+                v-bind="props"
                 class="ml-2"
-                v-on="on"
               >
                 <v-icon>mdi-help-circle</v-icon>
               </v-btn>
@@ -165,16 +164,15 @@ export default defineComponent({
           </v-tooltip>
           <v-tooltip
             v-if="groupname === 'MIxS Environmental Triad'"
-            right
+            location="end"
             open-delay="600"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                x-small
-                v-bind="attrs"
+                size="x-small"
+                v-bind="props"
                 class="ml-2"
-                v-on="on"
               >
                 <v-icon>mdi-help-circle</v-icon>
               </v-btn>
@@ -184,15 +182,15 @@ export default defineComponent({
         </v-subheader>
         <template v-for="sf in filteredFields" :key="sf.key">
           <v-menu
-            :value="menuState[sf.key]"
-            offset-x
+            :model-value="menuState[sf.key]"
+            location="end"
             :close-on-content-click="false"
-            @input="toggleMenu(sf.key, $event)"
+            @update:model-value="toggleMenu(sf.key, $event)"
           >
-            <template #activator="{ on }">
+            <template #activator="{ props }">
               <v-list-item
                 v-show="!hasActiveConditions(sf.key)"
-                v-on="on"
+                v-bind="props"
               >
                 <v-list-item-content>
                   <v-list-item-title>

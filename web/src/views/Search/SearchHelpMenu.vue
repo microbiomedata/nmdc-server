@@ -7,16 +7,13 @@ export default defineComponent({});
 <template>
   <v-menu
     open-on-hover
-    bottom
-    left
-    offset-y
-    close-delay="200"
+    location="bottom start"
+    :close-delay="200"
   >
-    <template #activator="{ on, attrs }">
+    <template #activator="{ props }">
       <v-btn
         icon
-        v-bind="attrs"
-        v-on="on"
+        v-bind="props"
       >
         <v-icon>
           mdi-help-circle

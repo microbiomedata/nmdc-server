@@ -254,15 +254,14 @@ export default defineComponent({
         >
           <span class="grow">Active query terms</span>
           <v-tooltip
-            bottom
+            location="bottom"
             open-delay="600"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                x-small
-                v-bind="attrs"
-                v-on="on"
+                size="x-small"
+                v-bind="props"
                 @click="removeConditions"
               >
                 <v-icon>mdi-filter-off</v-icon>
@@ -302,15 +301,14 @@ export default defineComponent({
         </span>
         <span v-else>Found {{ resultsCount }} samples.
           <v-tooltip
-            bottom
+            location="bottom"
             open-delay="600"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                x-small
-                v-bind="attrs"
-                v-on="on"
+                size="x-small"
+                v-bind="props"
               >
                 <v-icon>mdi-help-circle</v-icon>
               </v-btn>
