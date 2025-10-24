@@ -81,6 +81,13 @@ export default defineComponent({
       { text: 'Show only test submissions', val: true },
       { text: 'Hide test submissions', val: false }];
 
+    const exclude = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.SubmittedPendingReview.text];
+    const availableStatuses = Object.keys(SubmissionStatusTitleMapping).map((key) => ({
+      value: key,
+      text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      disabled: exclude.includes(key),
+    }));
+
     async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
       return api.listRecords(params, isTestFilter.value);
     }
@@ -103,6 +110,13 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
+
+    async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
+      const fullRecord = await api.getRecord(item.id);
+      await updateRecord(item.id, fullRecord.metadata_submission, newStatus, {});
+      await submission.refetch();
+    }
+
     watch(options, () => {
       submission.setPage(options.value.page);
       const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
@@ -169,6 +183,9 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
+      availableStatuses,
+      handleStatusChange,
+      SubmissionStatusEnum,
     };
   },
 });
@@ -310,7 +327,21 @@ export default defineComponent({
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
           <template #[`item.status`]="{ item }">
+            <v-select
+              v-if="currentUser.is_admin"
+              :value="item.status"
+              :items="availableStatuses"
+              item-disabled="disabled"
+              dense
+              hide-details
+              @change="(newStatus) => handleStatusChange(item, newStatus)"
+            >
+              <template #selection="{ item: statusItem }">
+                {{ statusItem.text }}
+              </template>
+            </v-select>
             <v-chip
+              v-else
               :color="getStatus(item).color"
             >
               {{ getStatus(item).text }}
