@@ -320,32 +320,60 @@ export default defineComponent({
               :authenticated="true"
             />
           </template>
-          <template #[`item.templates`]="{ item }">
-            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
-          </template>
-          <template #[`item.date_last_modified`]="{ item }">
-            {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
+          <template #[`header.status`]="{ header }">
+            <v-tooltip
+              v-if="currentUser.is_admin"
+              bottom
+            >
+              <template #activator="{ on, attrs }">
+                <v-icon
+                  class="ml-1"
+                  color="grey"
+                  v-bind="attrs"
+                  v-on="on"
+                >
+                  mdi-information-outline
+                </v-icon>
+              </template>
+              <span>Greyed out options are user-triggered statuses and cannot be changed or selected</span>
+            </v-tooltip>
+            {{ header.text }}
           </template>
           <template #[`item.status`]="{ item }">
-            <v-select
-              v-if="currentUser.is_admin"
-              :value="item.status"
-              :items="availableStatuses"
-              item-disabled="disabled"
-              dense
-              hide-details
-              @change="(newStatus) => handleStatusChange(item, newStatus)"
-            >
-              <template #selection="{ item: statusItem }">
-                {{ statusItem.text }}
-              </template>
-            </v-select>
-            <v-chip
-              v-else
-              :color="getStatus(item).color"
-            >
-              {{ getStatus(item).text }}
-            </v-chip>
+            <div class="d-flex align-center">
+              <v-select
+                v-if="currentUser.is_admin && item.status === SubmissionStatusEnum.InProgress.text"
+                :value="item.status"
+                :items="availableStatuses"
+                item-disabled="disabled"
+                dense
+                hide-details
+                disabled
+              >
+                <template #selection="{ item: statusItem }">
+                  {{ statusItem.text }}
+                </template>
+              </v-select>
+              <v-select
+                v-else-if="currentUser.is_admin"
+                :value="item.status"
+                :items="availableStatuses"
+                item-disabled="disabled"
+                dense
+                hide-details
+                @change="(newStatus) => handleStatusChange(item, newStatus)"
+              >
+                <template #selection="{ item: statusItem }">
+                  {{ statusItem.text }}
+                </template>
+              </v-select>
+              <v-chip
+                v-else
+                :color="getStatus(item).color"
+              >
+                {{ getStatus(item).text }}
+              </v-chip>
+            </div>
           </template>
           <template #[`item.action`]="{ item }">
             <div class="d-flex align-center">
