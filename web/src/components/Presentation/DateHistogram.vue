@@ -48,7 +48,6 @@ export default defineComponent({
   },
 
   setup(props, { emit }) {
-    console.log('DateHistogram props:', props.facetSummaryUnconditional);
     const range = ref(null);
     const min = ref(0);
     const max = ref(100);
