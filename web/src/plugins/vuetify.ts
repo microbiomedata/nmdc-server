@@ -21,10 +21,6 @@ export default createVuetify({
           accent: colors.accent,
           success: colors.success,
         },
-        variables: {
-          'border-color': '#D3D3D3',
-          'border-opacity': 1,
-        },
       },
     },
   },
