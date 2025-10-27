@@ -43,15 +43,20 @@ export default defineComponent({
       return `${labelString})`;
     }
 
-    const options = computed(() => Object.entries(downloadOptions.value)
-      .map(([key, val]) => ({
-        id: key,
-        label: createLabelString(key, val.count, val.size),
-        children: Object.entries(val.file_types).map(([filetype, fileTypeStats]) => ({
-          id: `${key}::${filetype}`,
-          label: createLabelString(filetype, fileTypeStats.count, fileTypeStats.size),
-        })),
-      })));
+    const options = computed(() => {
+      if (!downloadOptions.value || typeof downloadOptions.value !== 'object') {
+        return [];
+      }
+      return Object.entries(downloadOptions.value)
+        .map(([key, val]) => ({
+          id: key,
+          label: createLabelString(key, val.count, val.size),
+          children: Object.entries(val.file_types || {}).map(([filetype, fileTypeStats]) => ({
+            id: `${key}::${filetype}`,
+            label: createLabelString(filetype, fileTypeStats.count, fileTypeStats.size),
+          })),
+        }));
+    });
 
     async function createAndDownload() {
       const val = await download();
