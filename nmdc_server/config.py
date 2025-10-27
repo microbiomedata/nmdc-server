@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 from typing import Optional
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -106,6 +105,9 @@ class Settings(BaseSettings):
 
     gcs_public_images_bucket_name: str = "nmdc-public-images"
     """The name of the GCS bucket used for public images."""
+
+    google_map_elevation_api_key: str = os.getenv("GOOGLE_MAP_ELEVATION_API_KEY", None)
+    """The API key from Google to access the Google Map Elevation API."""
 
     max_submission_image_file_size_bytes: int = 25 * 1000 * 1000  # 25 MB
     """The maximum size of a single submission image file in bytes."""

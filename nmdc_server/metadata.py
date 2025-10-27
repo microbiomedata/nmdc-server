@@ -1,6 +1,6 @@
 import re
 from typing import Callable, Dict, List, Optional
-
+from nmdc_server.config import settings
 import nmdc_geoloc_tools
 
 from nmdc_server.schemas_submission import MetadataSuggestionType
@@ -19,7 +19,8 @@ class SampleMetadataSuggester:
         if len(lat_lon_split) == 2:
             try:
                 lat, lon = map(float, lat_lon_split)
-                elev = nmdc_geoloc_tools.elevation((lat, lon))
+
+                elev = nmdc_geoloc_tools.elevation((lat, lon), settings.google_map_elevation_api_key)
                 return f"{elev:.16g}"
             except ValueError:
                 # This could happen if the lat_lon string is not parseable as a float
