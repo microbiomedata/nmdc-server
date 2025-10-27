@@ -204,7 +204,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <div>
+  <v-layout>
     <SearchSidebar
       :results-count="biosample.data.results.count"
       :is-loading="biosample.loading.value"
@@ -714,5 +714,5 @@ export default defineComponent({
         </v-row>
       </v-container>
     </v-main>
-  </div>
+  </v-layout>
 </template>

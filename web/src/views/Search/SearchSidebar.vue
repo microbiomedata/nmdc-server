@@ -241,8 +241,6 @@ export default defineComponent({
 
 <template>
   <v-navigation-drawer
-    app
-    clipped
     permanent
     width="320"
   >
