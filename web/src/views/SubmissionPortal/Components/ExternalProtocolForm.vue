@@ -180,7 +180,7 @@ export default defineComponent({
                 v-model="currentProtocol.sampleProtocol.sharedDataName"
                 :items="protocolNames"
                 label="Select Protocol Name"
-                outlined
+                variant="outlined"
                 dense
                 class="mx-2"
                 @change="updateMultiOmicsForm()"
@@ -201,7 +201,7 @@ export default defineComponent({
               <v-text-field
                 v-model="currentProtocol.sampleProtocol.doi"
                 label="DOI"
-                outlined
+                variant="outlined"
                 dense
                 :rules="doiValueRules()"
                 @blur="updateMultiOmicsForm()"
@@ -234,7 +234,7 @@ export default defineComponent({
               <v-text-field
                 v-model="currentProtocol.sampleProtocol.url"
                 label="URL"
-                outlined
+                variant="outlined"
                 dense
                 :rules="urlValueRules()"
                 @blur="updateMultiOmicsForm()"
@@ -277,7 +277,7 @@ export default defineComponent({
               <v-text-field
                 v-model="currentProtocol.sampleProtocol.name"
                 label="Protocol Name"
-                outlined
+                variant="outlined"
                 dense
                 @blur="updateMultiOmicsForm()"
               >
@@ -310,7 +310,7 @@ export default defineComponent({
             <v-textarea
               v-model="currentProtocol.sampleProtocol.description"
               label="Protocol Description"
-              outlined
+              variant="outlined"
               dense
               rows="3"
               @blur="updateMultiOmicsForm()"
@@ -355,7 +355,7 @@ export default defineComponent({
             <v-text-field
               v-model="currentProtocol.acquisitionProtocol.doi"
               label="DOI"
-              outlined
+              variant="outlined"
               dense
               :rules="doiValueRules()"
               @blur="updateMultiOmicsForm()"
@@ -389,7 +389,7 @@ export default defineComponent({
             <v-text-field
               v-model="currentProtocol.acquisitionProtocol.url"
               label="URL"
-              outlined
+              variant="outlined"
               dense
               :rules="urlValueRules()"
               @blur="updateMultiOmicsForm()"
@@ -432,7 +432,7 @@ export default defineComponent({
             <v-text-field
               v-model="currentProtocol.acquisitionProtocol.name"
               label="Protocol Name"
-              outlined
+              variant="outlined"
               dense
               @blur="updateMultiOmicsForm()"
             >
@@ -465,7 +465,7 @@ export default defineComponent({
           <v-textarea
             v-model="currentProtocol.acquisitionProtocol.description"
             label="Protocol Description"
-            outlined
+            variant="outlined"
             dense
             rows="3"
             @blur="updateMultiOmicsForm()"
@@ -510,7 +510,7 @@ export default defineComponent({
               <v-text-field
                 v-model="currentProtocol.dataProtocol.doi"
                 label="DOI"
-                outlined
+                variant="outlined"
                 dense
                 :rules="doiValueRules()"
                 @blur="updateMultiOmicsForm()"
@@ -544,7 +544,7 @@ export default defineComponent({
               <v-text-field
                 v-model="currentProtocol.dataProtocol.url"
                 label="URL"
-                outlined
+                variant="outlined"
                 dense
                 :rules="urlValueRules()"
                 @blur="updateMultiOmicsForm()"

@@ -3,13 +3,29 @@
  *
  * Framework documentation: https://vuetifyjs.com`
  */
-import { createVuetify } from 'vuetify'
-import '@mdi/font/css/materialdesignicons.css'
-import 'vuetify/styles'
+import { createVuetify } from 'vuetify';
+import '@mdi/font/css/materialdesignicons.css';
+import 'vuetify/styles';
+// @ts-ignore
+import colors from '@/colors';
 
-// https://vuetifyjs.com/en/introduction/why-vuetify/#feature-guides
 export default createVuetify({
   theme: {
-    defaultTheme: 'system',
+    defaultTheme: 'light',
+    themes: {
+      light: {
+        dark: false,
+        colors: {
+          primary: colors.primary,
+          secondary: colors.secondary,
+          accent: colors.accent,
+          success: colors.success,
+        },
+        variables: {
+          'border-color': '#D3D3D3',
+          'border-opacity': 1,
+        },
+      },
+    },
   },
 })

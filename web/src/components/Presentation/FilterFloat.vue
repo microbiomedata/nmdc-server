@@ -98,7 +98,7 @@ export default defineComponent({
       v-model="selectedOption"
       :items="options"
       hide-details
-      outlined
+      variant="outlined"
       flat
       dense
       class="pb-4"
@@ -111,7 +111,7 @@ export default defineComponent({
         hide-details
         dense
         flat
-        outlined
+        variant="outlined"
       />
       <template v-if="selectedOption === 'between'">
         <span class="px-4">and</span>
@@ -122,7 +122,7 @@ export default defineComponent({
           hide-details
           dense
           flat
-          outlined
+          variant="outlined"
         />
       </template>
     </div>

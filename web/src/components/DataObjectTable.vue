@@ -241,7 +241,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-card outlined>
+  <v-card variant="outlined">
     <v-dialog
       v-if="termsDialog.item"
       v-model="termsDialog.value"

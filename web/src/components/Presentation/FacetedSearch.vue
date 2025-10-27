@@ -76,7 +76,7 @@ export default defineComponent({
       class="mx-3"
       dense
       hide-details
-      outlined
+      variant="outlined"
       flat
       append-icon="mdi-magnify"
     />

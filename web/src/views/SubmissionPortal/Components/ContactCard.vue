@@ -43,7 +43,7 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="primary"
             class="mr-4"
             style="border: solid #4F3B80;"
@@ -70,7 +70,7 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="blue"
             class="mr-4"
             style="border: solid;"
@@ -96,7 +96,7 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="red"
             class="mr-4"
             style="border: solid;"
@@ -122,7 +122,7 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="grey darken-2"
             class="mr-4"
             style="border: solid;"

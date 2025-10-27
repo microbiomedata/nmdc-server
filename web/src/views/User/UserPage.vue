@@ -69,10 +69,10 @@ export default defineComponent({
           v-model="searchFilter"
           label="Search Users"
           class="mb-2"
-          outlined
+          variant="outlined"
           hide-details
         />
-        <v-card outlined>
+        <v-card variant="outlined">
           <v-data-table
             dense
             :headers="headers"

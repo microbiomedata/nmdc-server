@@ -256,7 +256,7 @@ export default defineComponent({
                 <EnvironmentVisGroup :conditions="gatedEnvironmentVisConditions" />
               </v-window-item>
             </v-window>
-            <v-card outlined>
+            <v-card variant="outlined">
               <v-card
                 flat
               >
@@ -615,7 +615,7 @@ export default defineComponent({
               </v-card>
             </v-card>
             <v-card
-              outlined
+              variant="outlined"
               class="my-4"
             >
               <div class="ma-3">

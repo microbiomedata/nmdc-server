@@ -17,7 +17,7 @@ export default defineComponent({
 <template>
   <v-card
     :id="id"
-    outlined
+    variant="outlined"
   >
     <v-tooltip
       location="left"

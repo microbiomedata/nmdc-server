@@ -97,7 +97,7 @@ export default defineComponent({
       class="px-3 my-3"
       dense
       hide-details
-      outlined
+      variant="outlined"
       flat
       append-icon="mdi-magnify"
     />

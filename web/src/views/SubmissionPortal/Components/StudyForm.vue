@@ -162,7 +162,7 @@ export default defineComponent({
         label="Study Name *"
         :hint="Definitions.studyName"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
         class="my-2"
       />
@@ -172,7 +172,7 @@ export default defineComponent({
           label="Principal Investigator Name"
           :hint="Definitions.piName"
           persistent-hint
-          outlined
+          variant="outlined"
           dense
           class="my-2 mr-4"
         />
@@ -186,7 +186,7 @@ export default defineComponent({
           persistent-hint
           type="email"
           required
-          outlined
+          variant="outlined"
           dense
           class="my-2"
         />
@@ -195,7 +195,7 @@ export default defineComponent({
         v-model="studyForm.piOrcid"
         label="Principal Investigator ORCID"
         :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid"
-        outlined
+        variant="outlined"
         :hint="Definitions.piOrcid"
         persistent-hint
         dense
@@ -210,7 +210,7 @@ export default defineComponent({
         label="Webpage Links"
         :hint="Definitions.linkOutWebpage"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
         multiple
         small-chips
@@ -222,7 +222,7 @@ export default defineComponent({
         label="Study Description"
         :hint="Definitions.studyDescription"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
         class="my-2"
       >
@@ -235,7 +235,7 @@ export default defineComponent({
         label="Optional Notes"
         :hint="Definitions.studyOptionalNotes"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
         class="my-2"
       />
@@ -258,7 +258,7 @@ export default defineComponent({
               label="Funding Source *"
               :hint="Definitions.fundingSources"
               persistent-hint
-              outlined
+              variant="outlined"
               dense
               class="mb-2 mr-3"
               :error-messages="studyForm.fundingSources[i] ? undefined : ['Field cannot be empty.']"
@@ -309,7 +309,7 @@ export default defineComponent({
               v-model="contributor.name"
               label="Full name *"
               :hint="Definitions.contributorFullName"
-              outlined
+              variant="outlined"
               dense
               persistent-hint
               :error-messages="contributor.name ? undefined : ['Field cannot be empty.']"
@@ -321,7 +321,7 @@ export default defineComponent({
               :hint="Definitions.contributorOrcid"
               :disabled="currentUserOrcid === contributor.orcid"
               label="ORCID"
-              outlined
+              variant="outlined"
               persistent-hint
               dense
               :style="{ maxWidth: '400px'}"
@@ -339,7 +339,7 @@ export default defineComponent({
               :hint="Definitions.contributorRoles"
               deletable-chips
               multiple
-              outlined
+              variant="outlined"
               chips
               small-chips
               dense
@@ -361,7 +361,7 @@ export default defineComponent({
               :style="{ maxWidth: '400px'}"
               label="Permission Level"
               hint="Level of permissions the contributor has for this submission"
-              outlined
+              variant="outlined"
               dense
               persistent-hint
               @change="() => formRef.validate()"
@@ -432,7 +432,7 @@ export default defineComponent({
               label="Data DOI value *"
               :hint="Definitions.dataDoiValue"
               persistent-hint
-              outlined
+              variant="outlined"
               dense
               required
               class="mb-2 mr-3"
@@ -451,7 +451,7 @@ export default defineComponent({
               :hint="Definitions.dataDoiProvider"
               :items="doiProviderValues"
               persistent-hint
-              outlined
+              variant="outlined"
               dense
               clearable
               class="mb-2 mr-3"
@@ -491,7 +491,7 @@ export default defineComponent({
           label="GOLD Study ID"
           :hint="Definitions.studyGoldID"
           persistent-hint
-          outlined
+          variant="outlined"
           dense
         />
         <v-text-field
@@ -499,7 +499,7 @@ export default defineComponent({
           label="NCBI BioProject Accession"
           :hint="Definitions.studyNCBIBioProjectAccession"
           persistent-hint
-          outlined
+          variant="outlined"
           dense
         />
         <v-combobox
@@ -509,7 +509,7 @@ export default defineComponent({
           persistent-hint
           deletable-chips
           multiple
-          outlined
+          variant="outlined"
           chips
           small-chips
           dense

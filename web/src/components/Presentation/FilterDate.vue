@@ -104,7 +104,7 @@ export default defineComponent({
       v-model="selectedOption"
       :items="options"
       hide-details
-      outlined
+      variant="outlined"
       flat
       dense
       class="pb-4"

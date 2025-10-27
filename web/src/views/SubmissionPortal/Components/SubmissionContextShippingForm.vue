@@ -97,7 +97,7 @@ export default defineComponent({
 <template>
   <v-card
     class="mt-4 pa-0"
-    outlined
+    variant="outlined"
     :style="addressFormValid ? '' : 'border: 2px solid red'"
   >
     <v-card-text
@@ -170,7 +170,7 @@ export default defineComponent({
               v-model="addressForm.shipper.name"
               :rules="requiredRules('Name is required', [])"
               label="Sender Name *"
-              outlined
+              variant="outlined"
               dense
               class="mt-2"
             />
@@ -180,45 +180,45 @@ export default defineComponent({
                 v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
               ])"
               label="E-mail Address *"
-              outlined
+              variant="outlined"
               dense
             />
             <v-text-field
               v-model="addressForm.shipper.phone"
               label="Phone Number"
-              outlined
+              variant="outlined"
               dense
             />
             <v-text-field
               v-model="addressForm.shipper.line1"
               label="Address Line 1"
-              outlined
+              variant="outlined"
               dense
             />
             <v-text-field
               v-model="addressForm.shipper.line2"
               label="Address Line 2"
-              outlined
+              variant="outlined"
               dense
             />
             <v-text-field
               v-model="addressForm.shipper.city"
               label="City"
-              outlined
+              variant="outlined"
               dense
             />
             <div class="d-flex">
               <v-text-field
                 v-model="addressForm.shipper.state"
                 label="State"
-                outlined
+                variant="outlined"
                 dense
                 class="mr-4"
               />
               <v-text-field
                 v-model="addressForm.shipper.postalCode"
                 label="Zip Code"
-                outlined
+                variant="outlined"
                 dense
                 class="mr-4"
               />
@@ -226,7 +226,7 @@ export default defineComponent({
                 v-model="addressForm.shipper.country"
                 :rules="requiredRules('Country is required', [])"
                 label="Country *"
-                outlined
+                variant="outlined"
                 dense
               />
             </div>
@@ -235,7 +235,7 @@ export default defineComponent({
               :rules="requiredRules('Shipping conditions are required', [])"
               label="Shipping Conditions *"
               :items="shippingConditionsItems"
-              outlined
+              variant="outlined"
               dense
             />
             <v-menu
@@ -254,7 +254,7 @@ export default defineComponent({
                   prepend-icon="mdi-calendar"
                   clearable
                   readonly
-                  outlined
+                  variant="outlined"
                   dense
                   v-bind="attrs"
                   v-on="on"
@@ -279,14 +279,14 @@ export default defineComponent({
               :items="sampleEnumValues"
               label="Sample Type/Species *"
               dense
-              outlined
+              variant="outlined"
             />
             <v-textarea
               v-model="addressForm.description"
               label="Sample Description"
               :rules="requiredRules('Sample Description is required', [])"
               hint="Number of samples, sample container type..."
-              outlined
+              variant="outlined"
               dense
               rows="2"
             />
@@ -295,7 +295,7 @@ export default defineComponent({
               :rules="requiredRules('Experiment Goals are required', [])"
               label="Experiment Goals *"
               hint="Briefly describe the goal for your experiment"
-              outlined
+              variant="outlined"
               dense
               rows="2"
             />
@@ -303,7 +303,7 @@ export default defineComponent({
               v-model="addressForm.randomization"
               label="Randomization"
               hint="What experimental conditions will be used for"
-              outlined
+              variant="outlined"
               dense
               rows="1"
             />
@@ -317,7 +317,7 @@ export default defineComponent({
               <v-text-field
                 v-model="addressForm.permitNumber"
                 label="Permit Number"
-                outlined
+                variant="outlined"
                 dense
               />
               <v-spacer />
@@ -329,7 +329,7 @@ export default defineComponent({
                 :items="biosafetyLevelValues"
                 label="Biosafety Level"
                 dense
-                outlined
+                variant="outlined"
               />
               <v-checkbox
                 v-model="addressForm.irbOrHipaa"
@@ -345,7 +345,7 @@ export default defineComponent({
             <v-textarea
               v-model="addressForm.comments"
               label="Comments"
-              outlined
+              variant="outlined"
               dense
               lines="4"
             />

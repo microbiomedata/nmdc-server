@@ -156,7 +156,7 @@ export default defineComponent({
         class="px-3 grow"
         dense
         hide-details
-        outlined
+        variant="outlined"
         flat
         @change="addTerm"
       />

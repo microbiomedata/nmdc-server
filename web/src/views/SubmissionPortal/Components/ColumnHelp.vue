@@ -57,7 +57,7 @@ export default defineComponent({
       </div>
       <v-btn
         color="grey"
-        outlined
+        variant="outlined"
         small
         block
         @click="$emit('full-reference-click')"

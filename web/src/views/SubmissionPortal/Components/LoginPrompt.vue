@@ -17,7 +17,7 @@ export default defineComponent({
 <template>
   <v-alert
     class="mt-6 mb-0"
-    outlined
+    variant="outlined"
     text
     type="warning"
     color="primary"

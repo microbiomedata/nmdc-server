@@ -688,7 +688,7 @@ export default defineComponent({
         <v-btn
           v-if="validationErrorGroups.length === 0"
           color="primary"
-          outlined
+          variant="outlined"
           :disabled="!canEditSampleMetadata()"
           @click="validate"
         >
@@ -761,7 +761,7 @@ export default defineComponent({
             </v-icon>
           </div>
           <v-btn
-            outlined
+            variant="outlined"
             small
             class="mx-2"
             @click="validate"
@@ -809,7 +809,7 @@ export default defineComponent({
           :items="fields"
           label="Jump to column..."
           class="shrink mr-2 z-above-sidebar"
-          outlined
+          variant="outlined"
           dense
           hide-details
           offset-y
@@ -836,7 +836,7 @@ export default defineComponent({
         >
           <template #activator="{on, attrs}">
             <v-btn
-              outlined
+              variant="outlined"
               v-bind="attrs"
               v-on="on"
             >
@@ -851,7 +851,7 @@ export default defineComponent({
           <v-card
             class="py-1 px-2"
             width="280"
-            outlined
+            variant="outlined"
           >
             <v-radio-group
               v-model="columnVisibility"

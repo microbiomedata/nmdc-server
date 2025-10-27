@@ -79,7 +79,7 @@ export default defineComponent({
 
 <template>
   <v-card
-    outlined
+    variant="outlined"
     class="pa-3 d-flex flex-column align-end"
     color="primary"
   >

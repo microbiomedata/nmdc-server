@@ -226,7 +226,7 @@ export default defineComponent({
         <v-btn
           color="primary"
           class="ml-3"
-          outlined
+          variant="outlined"
           @click="createNewSubmission(true)"
         >
           <v-icon>mdi-plus</v-icon>
@@ -273,7 +273,7 @@ export default defineComponent({
           />
         </v-col>
       </v-row>
-      <v-card outlined>
+      <v-card variant="outlined">
         <v-data-table
           :headers="headers"
           :items="submission.data.results.results"
@@ -420,7 +420,7 @@ export default defineComponent({
                 v-model="reviewerOrcid"
                 class="mt-4"
                 label="ORCiD"
-                outlined
+                variant="outlined"
                 dense
               />
             </v-col>

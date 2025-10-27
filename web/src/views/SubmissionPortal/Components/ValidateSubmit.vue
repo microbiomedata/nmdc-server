@@ -46,7 +46,7 @@ export default defineComponent({
     </div>
     <v-card
       class="pa-3"
-      outlined
+      variant="outlined"
       style="max-height: 550px; overflow-y: auto;"
     >
       <pre style="font-size: 14px">{{ submitPayload }}</pre>
@@ -55,7 +55,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         class="mr-2"
-        outlined
+        variant="outlined"
         @click="downloadJson"
       >
         <v-icon class="pr-2">
@@ -65,7 +65,7 @@ export default defineComponent({
       </v-btn>
       <v-btn
         color="primary"
-        outlined
+        variant="outlined"
         @click="downloadSamples"
       >
         <v-icon class="pr-2">

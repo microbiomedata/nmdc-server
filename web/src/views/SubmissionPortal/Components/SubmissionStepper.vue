@@ -46,7 +46,7 @@ export default defineComponent({
   <v-stepper
     :value="step"
     class="mb-3 flex-shrink-0"
-    outlined
+    variant="outlined"
     tile
     dark
   >

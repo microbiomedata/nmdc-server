@@ -261,7 +261,7 @@ export default defineComponent({
             dense
             hide-details
             label="Suggestion Mode"
-            outlined
+            variant="outlined"
           />
         </v-col>
         <v-col cols="6">
@@ -271,7 +271,7 @@ export default defineComponent({
             dense
             hide-details
             label="Suggestion Type"
-            outlined
+            variant="outlined"
           />
         </v-col>
       </v-row>
@@ -362,7 +362,7 @@ export default defineComponent({
               class="mb-4"
               elevation="0"
               rounded
-              outlined
+              variant="outlined"
             >
               <div
                 v-for="s in suggestion"
@@ -460,7 +460,7 @@ export default defineComponent({
         <v-col>
           <v-btn
             color="grey"
-            outlined
+            variant="outlined"
             small
             block
             @click="handleResetRejectedSuggestions"

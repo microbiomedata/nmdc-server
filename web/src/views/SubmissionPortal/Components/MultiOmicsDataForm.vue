@@ -339,7 +339,7 @@ export default defineComponent({
               class="pa-0 ma-0"
               dense
               hide-details="auto"
-              outlined
+              variant="outlined"
               :rules="otherAwardValidationRules()"
             />
           </template>
@@ -401,7 +401,7 @@ export default defineComponent({
                   :rules="doiValueRules(i)"
                   persistent-hint
                   validate-on-blur
-                  outlined
+                  variant="outlined"
                   dense
                   @change="revalidate"
                 >
@@ -421,7 +421,7 @@ export default defineComponent({
                   :hint="Definitions.dataDoiProvider"
                   :items="doiProviderValues"
                   persistent-hint
-                  outlined
+                  variant="outlined"
                   dense
                   clearable
                   :rules="doiProviderRules(i)"

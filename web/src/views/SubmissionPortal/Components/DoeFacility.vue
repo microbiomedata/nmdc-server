@@ -75,7 +75,7 @@ export default defineComponent({
           persistent-hint
           label="EMSL Proposal Number *"
           class="mt-4"
-          outlined
+          variant="outlined"
           validate-on-blur
           dense
         />
@@ -160,7 +160,7 @@ export default defineComponent({
           persistent-hint
           label="JGI Proposal Number *"
           class="mt-4"
-          outlined
+          variant="outlined"
           validate-on-blur
           dense
         />
