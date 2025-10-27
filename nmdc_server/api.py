@@ -1290,7 +1290,7 @@ def _update_permissions_and_status(
             # Admins can change to any status
             if user.is_admin:
                 submission.status = body_dict["status"]
-            
+
             # Owner can only do select transitions
             else:
                 allowed_transitions = {
