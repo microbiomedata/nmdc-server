@@ -64,14 +64,13 @@ export default defineComponent({
         transition="fade-transition"
         z-index="501"
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-btn
             plain
             small
             :ripple="false"
             :href="menu.href"
-            v-bind="attrs"
-            v-on="on"
+            v-bind="props"
           >
             <div class="navigation-button-text">
               {{ menu.label }}
