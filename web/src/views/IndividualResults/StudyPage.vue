@@ -2,6 +2,7 @@
 import {
   computed, defineComponent, watchEffect, ref, watch,
 } from 'vue';
+import { useRouter } from 'vue-router';
 
 import { isObject } from 'lodash';
 // @ts-ignore
@@ -14,7 +15,6 @@ import {
   api, StudySearchResults, DOI, Condition,
 } from '@/data/api';
 import { setUniqueCondition, setConditions } from '@/store';
-import { useRouter } from '@/use/useRouter';
 import AppBanner from '@/components/AppBanner.vue';
 import AttributeItem from '@/components/Presentation/AttributeItem.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';

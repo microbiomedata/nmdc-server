@@ -1,7 +1,7 @@
 <script lang="ts">
 
 import { defineComponent, onMounted, ref } from 'vue';
-import { useRouter } from '@/use/useRouter';
+import { useRouter } from 'vue-router';
 import { api } from '@/data/api';
 import { init } from '@/store';
 
@@ -25,7 +25,7 @@ export default defineComponent({
       }
 
       // If there is no code in the query string, stop here
-      const { query } = router.currentRoute;
+      const { query } = router.currentRoute.value;
       if (!('code' in query)) {
         error.value = true;
         return;
@@ -42,7 +42,7 @@ export default defineComponent({
       // If the exchange was successful, call the init() function to load the user's data and
       // redirect to the home page. The init() function can handle the state URL query param
       // that has been persisted through the login process.
-      await init(router, true, query.state);
+      await init(router, true, query.state as string | undefined);
     });
 
     return {

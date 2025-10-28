@@ -1,8 +1,8 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
+import { useRouter } from 'vue-router';
 import { init, stateRefs } from '@/store';
 import { api } from '@/data/api';
-import { useRouter } from '@/use/useRouter';
 
 export default defineComponent({
   props: {
@@ -23,7 +23,7 @@ export default defineComponent({
       const submissionState = 'submission';
       const submissionRegex = new RegExp(submissionState);
       let state = '';
-      if (submissionRegex.test(router.currentRoute.path)) {
+      if (submissionRegex.test(router.currentRoute.value.path)) {
         state += submissionState;
       }
       api.initiateOrcidLogin(state);

@@ -8,9 +8,9 @@
 
 <script lang="ts" setup>
 import { onMounted, onUnmounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { api, REFRESH_TOKEN_EXPIRED_EVENT, RefreshTokenExchangeError } from '@/data/api';
 import { init, stateRefs } from '@/store/';
-import { useRouter } from '@/use/useRouter';
 
 const router = useRouter();
 
@@ -27,7 +27,7 @@ onMounted(async () => {
   if (!router) {
     return;
   }
-  if (router.currentRoute.path === '/login') {
+  if (router.currentRoute.value.path === '/login') {
     // init() will be called in the LoginPage component in this case
     return;
   }

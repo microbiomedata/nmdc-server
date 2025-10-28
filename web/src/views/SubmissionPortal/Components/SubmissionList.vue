@@ -2,8 +2,8 @@
 import {
   defineComponent, ref, watch, Ref,
 } from 'vue';
+import { useRouter } from 'vue-router';
 import { DataOptions, DataTableHeader } from 'vuetify';
-import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
