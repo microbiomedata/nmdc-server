@@ -6,6 +6,7 @@ import {
   ref,
 } from 'vue';
 import { groupBy } from 'lodash';
+// @ts-ignore
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
 import { Condition } from '@/data/api';

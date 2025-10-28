@@ -121,11 +121,11 @@ export default defineComponent({
           :value="menuState[group.key]"
           @input="toggleMenu(group.key, $event)"
         >
-          <template #activator="{ on }">
+          <template #activator="{ props }">
             <div
               class="expand d-flex flex-column justify-center"
               style="width: 6%"
-              v-on="on"
+              v-bind="props"
             >
               <v-icon small>
                 mdi-play
@@ -140,7 +140,7 @@ export default defineComponent({
               v-bind="{
                 field: group.field,
                 table: group.table,
-                isOpen: menuState[group.key],
+                isOpen: menuState[group.key] || false,
                 toggleMenu: (val) => toggleMenu(group.key, false),
               }"
             />
