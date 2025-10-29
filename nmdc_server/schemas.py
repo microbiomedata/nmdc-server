@@ -740,4 +740,4 @@ class SubmissionImagesMakePublicResponse(BaseModel):
 
     pi_image_url: Optional[str] = None
     primary_study_image_url: Optional[str] = None
-    study_image_urls: List[str] = []
+    study_image_urls: List[Optional[str]] = []
