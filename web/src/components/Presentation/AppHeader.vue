@@ -20,7 +20,6 @@ export default defineComponent({
 
 <template>
   <v-app-bar
-    app
     class="navigation-button-text-animate"
     color="white"
     clipped-left

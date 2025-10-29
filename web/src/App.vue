@@ -1,12 +1,3 @@
-<template>
-  <v-app>
-    <app-header />
-    <v-main>
-      <router-view />
-    </v-main>
-  </v-app>
-</template>
-
 <script lang="ts" setup>
 import { onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -53,3 +44,12 @@ onUnmounted(() => {
   window.removeEventListener(REFRESH_TOKEN_EXPIRED_EVENT, handleRefreshTokenExpired);
 });
 </script>
+
+<template>
+  <v-app>
+    <v-layout>
+      <app-header />
+      <router-view />
+    </v-layout>
+  </v-app>
+</template>
