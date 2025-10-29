@@ -4,7 +4,7 @@ import {
 } from 'vue';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
-
+// @ts-ignore
 import { fieldDisplayName } from '@/util';
 import { getField, geneFunctionTypeInfo, geneFunctionTables } from '@/encoding';
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';

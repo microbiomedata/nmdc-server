@@ -81,7 +81,8 @@ export default defineComponent({
         </template>
 
         <v-list
-          dense
+          density="compact"
+          variant="plain"
           expand
           flat
           nav

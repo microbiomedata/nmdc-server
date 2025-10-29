@@ -133,7 +133,7 @@ export default defineComponent({
     />
     <v-list
       ref="list"
-      dense
+      density="compact"
       shaped
       class="compact"
     >
@@ -153,6 +153,7 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-btn
                 icon
+                variant="plain"
                 size="x-small"
                 v-bind="props"
                 class="ml-2"
@@ -170,6 +171,7 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-btn
                 icon
+                variant="plain"
                 size="x-small"
                 v-bind="props"
                 class="ml-2"
@@ -247,3 +249,17 @@ export default defineComponent({
     </v-list>
   </div>
 </template>
+
+<style scoped>
+.compact .v-list-item-title {
+  font-size: .8125rem;
+  font-weight: 500;
+  line-height: 1rem;
+}
+
+.compact .v-list-subheader {
+  font-size: .75rem;
+  height: 40px;
+  padding-inline-start: 0.5rem !important;
+}
+</style>
