@@ -43,8 +43,8 @@ export default defineComponent({
       <v-btn
         v-if="!menu.items || !menu.items.length"
         :key="`btn-${menu.label}`"
-        plain
-        small
+        variant="plain"
+        size="small"
         :ripple="false"
         :href="menu.href"
       >
@@ -65,8 +65,8 @@ export default defineComponent({
       >
         <template #activator="{ props }">
           <v-btn
-            plain
-            small
+            variant="plain"
+            size="small"
             :ripple="false"
             :href="menu.href"
             v-bind="props"
@@ -123,19 +123,19 @@ export default defineComponent({
     .navigation-button-text {
       display: inline-block;
       padding: 2px 0;
-      background-image: linear-gradient(var(--v-primary-base), var(--v-primary-base));
+      background-image: linear-gradient(rgb(var(--v-theme-primary)), rgb(var(--v-theme-primary)));
       background-position: 0 100%;
       background-repeat: no-repeat;
       background-size: 0 1px;
       transition-property: background-size;
-      transition-duration: 0.15s;
+      transition-duration: 0.25s;
       transition-timing-function: ease;
     }
 
     .v-btn, .v-list-item {
       &.v-btn--active, &:hover, &:focus, &.v-list-item--active {
         .navigation-button-text {
-          color: var(--v-primary-base);
+          color: rgb(var(--v-theme-primary));
           background-size: 100% 1px;
         }
       }
