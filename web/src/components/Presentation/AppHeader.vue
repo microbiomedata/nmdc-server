@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import AuthButton from '@/components/Presentation/AuthButton.vue';
-import Menus from '@/menus';
+import { Menus } from '@/menus';
 
 export const APP_HEADER_HEIGHT = 82;
 
@@ -42,7 +42,7 @@ export default defineComponent({
     <template v-for="(menu) in Menus">
       <v-btn
         v-if="!menu.items || !menu.items.length"
-        :key="menu.label"
+        :key="`btn-${menu.label}`"
         plain
         small
         :ripple="false"
@@ -55,14 +55,13 @@ export default defineComponent({
 
       <v-menu
         v-else
-        :key="menu.label"
+        :key="`menu-${menu.label}`"
         bottom
         right
         offset-y
         content-class="navigation-button-text-animate elevation-4"
         :open-on-hover="true"
         transition="fade-transition"
-        z-index="501"
       >
         <template #activator="{ props }">
           <v-btn
@@ -95,13 +94,11 @@ export default defineComponent({
             :ripple="false"
             class="text-uppercase"
           >
-            <v-list-item-content>
-              <v-list-item-title>
-                <div class="navigation-button-text">
-                  {{ item.label }}
-                </div>
-              </v-list-item-title>
-            </v-list-item-content>
+            <v-list-item-title>
+              <div class="navigation-button-text">
+                {{ item.label }}
+              </div>
+            </v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>

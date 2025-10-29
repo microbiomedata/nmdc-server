@@ -109,13 +109,12 @@ export default defineComponent({
         content-class="login-btn-orcid-help"
         class="login-btn-orcid-help"
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-btn
             :text="!nav"
             :plain="nav"
             :small="nav"
-            v-bind="attrs"
-            v-on="on"
+            v-bind="props"
             @click="handleLogin"
           >
             <img
