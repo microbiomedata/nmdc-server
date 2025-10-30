@@ -3,6 +3,8 @@ from typing import Callable, Dict, List, Optional
 
 import nmdc_geoloc_tools
 
+from nmdc_server.config import settings
+from nmdc_server.logger import get_logger
 from nmdc_server.schemas_submission import MetadataSuggestionType
 
 
@@ -12,6 +14,10 @@ class SampleMetadataSuggester:
     @staticmethod
     def suggest_elevation_from_lat_lon(sample: Dict[str, str]) -> Optional[str]:
         """Suggest an elevation for a sample based on its lat_lon."""
+        logger = get_logger(__name__)
+        if settings.google_map_api_key is None:
+            logger.warning("Google Map API key is not set. Cannot provide an elevation suggestion.")
+            return None
         lat_lon = sample.get("lat_lon", None)
         if lat_lon is None:
             return None
@@ -19,8 +25,9 @@ class SampleMetadataSuggester:
         if len(lat_lon_split) == 2:
             try:
                 lat, lon = map(float, lat_lon_split)
-                elev = nmdc_geoloc_tools.elevation((lat, lon))
-                return f"{elev:.16g}"
+
+                elev = nmdc_geoloc_tools.elevation((lat, lon), settings.google_map_api_key)
+                return f"{elev:.2f}"
             except ValueError:
                 # This could happen if the lat_lon string is not parseable as a float
                 # or nmdc_geoloc_tools determined they are invalid values. In either case,
