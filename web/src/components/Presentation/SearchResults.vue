@@ -60,11 +60,11 @@ export default defineComponent({
       class="d-flex pt-2 pb-0 align-end justify-center"
     >
       <v-pagination
-        :value="page"
+        :model-value="page"
         :length="Math.ceil(count / rows)"
         :total-visible="7"
-        depressed
-        @input="$emit('set-page', $event)"
+        active-color="primary"
+        @update:model-value="$emit('set-page', $event)"
       />
       <!-- flex-basis is based on the "Items per page" label. Since it is absolutely
            positioned it doesn't count towards the `auto` width -->
@@ -75,7 +75,8 @@ export default defineComponent({
         class="ml-4 mb-1 flex-grow-0"
         :style="{ 'flex-basis': '6rem' }"
         hide-details
-        @input="$emit('set-items-per-page', $event)"
+        variant="plain"
+        @update:model-value="$emit('set-items-per-page', $event)"
       />
     </div>
     <v-list
