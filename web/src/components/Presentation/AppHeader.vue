@@ -109,10 +109,11 @@ export default defineComponent({
 </template>
 
 <style lang="scss" scoped>
+
   .header-logo {
     height: 100%;
     img {
-      padding: 9px 0;
+      padding: 0.75rem 1rem;
       height: 100%;
     }
   }
