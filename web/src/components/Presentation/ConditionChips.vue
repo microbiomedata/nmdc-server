@@ -118,8 +118,7 @@ export default defineComponent({
           offset-x
           :nudge-right="10"
           :close-on-content-click="false"
-          :value="menuState[group.key]"
-          @input="toggleMenu(group.key, $event)"
+          v-model="menuState[group.key]"
         >
           <template #activator="{ props }">
             <div
@@ -127,7 +126,7 @@ export default defineComponent({
               style="width: 6%"
               v-bind="props"
             >
-              <v-icon small>
+              <v-icon size="x-small">
                 mdi-play
               </v-icon>
             </div>
@@ -140,7 +139,7 @@ export default defineComponent({
               v-bind="{
                 field: group.field,
                 table: group.table,
-                isOpen: menuState[group.key] || false,
+                isOpen: menuState[group.key],
                 toggleMenu: (val) => toggleMenu(group.key, false),
               }"
             />

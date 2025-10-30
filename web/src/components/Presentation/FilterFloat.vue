@@ -36,6 +36,7 @@ export default defineComponent({
   },
 
   setup(props, { emit }) {
+    console.log('rendering FilterFloat.vue');
     const options = ref([
       { text: 'is between', value: 'between' },
       { text: 'is greater than', value: '>' },

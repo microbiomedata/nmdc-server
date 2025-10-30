@@ -7,7 +7,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml'
 
 import { geneFunctionTables, types } from '@/encoding';
 import {
-  api, Condition, DatabaseSummaryResponse, entityType,
+  api, AttributeSummary, Condition, DatabaseSummaryResponse, entityType,
 } from '@/data/api';
 
 import ConditionChips from '@/components/Presentation/ConditionChips.vue';
@@ -158,9 +158,9 @@ export default defineComponent({
 
     api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
 
-    function dbSummaryForTable(table: entityType, field: string) {
+    function dbSummaryForTable(table: entityType, field: string): AttributeSummary {
       if (table in dbSummary.value) {
-        return dbSummary.value[table].attributes[field];
+        return dbSummary.value[table].attributes[field] as AttributeSummary;
       }
       if (geneFunctionTables.includes(table)) {
         const tableToType: Record<string, string> = {
@@ -171,9 +171,9 @@ export default defineComponent({
         };
         return {
           type: tableToType[table],
-        };
+        } as AttributeSummary;
       }
-      return {};
+      return {} as AttributeSummary;
     }
 
     async function updateSearch() {
