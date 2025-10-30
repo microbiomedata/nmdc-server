@@ -100,8 +100,8 @@ export default defineComponent({
             <v-chip
               v-for="cond in group.conditions"
               :key="JSON.stringify(cond.value)"
-              small
-              close
+              size="small"
+              closable
               label
               class="ma-1 chip"
               style="max-width: 90%;"
