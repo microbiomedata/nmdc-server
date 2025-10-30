@@ -84,7 +84,7 @@ export default defineComponent({
         <template #activator="{ props }">
           <v-btn
             v-bind="props"
-            x-small
+            size="x-small"
             :variant="!isOpen(projects[0]?.id) ? 'outlined' : 'flat'"
             :color="isOpen(projects[0]?.id) ? 'primary' : 'default'"
             :disabled="isDisabled(omicsType, projects)"
@@ -92,7 +92,7 @@ export default defineComponent({
             @click="() => $emit('open-details', projects[0]?.id)"
           >
             {{ fieldDisplayName(omicsType) }}
-            <v-icon>mdi-chevron-down</v-icon>
+            <v-icon size="medium">mdi-chevron-down</v-icon>
           </v-btn>
         </template>
         <span>

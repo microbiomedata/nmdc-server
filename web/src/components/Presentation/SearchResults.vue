@@ -79,7 +79,7 @@ export default defineComponent({
       />
     </div>
     <v-list
-      dense
+      density="compact"
       class="rounded-b"
     >
       <template
@@ -114,11 +114,15 @@ export default defineComponent({
           </template>
 
           <v-list-item-title>
-            {{ result[titleKey] }}
-            <slot
-              name="child-list"
-              v-bind="{ result}"
-            />
+            <div class="d-flex align-center">
+              <div class="text-subtitle-2">
+                {{ result[titleKey] }}
+              </div>
+              <slot
+                name="child-list"
+                v-bind="{ result}"
+              />
+            </div>
           </v-list-item-title>
           <v-list-item-subtitle>
             <slot
@@ -144,3 +148,11 @@ export default defineComponent({
     </v-list>
   </div>
 </template>
+
+<!-- <style scoped>
+.v-list-item-title {
+  font-size: .8125rem;
+  font-weight: 500;
+  line-height: 1rem;
+}
+</style> -->

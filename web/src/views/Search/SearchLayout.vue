@@ -260,7 +260,7 @@ export default defineComponent({
               flat
             >
               <v-card-title
-                class="pb-0"
+                class="pb-0 d-flex align-center"
               >
                 {{ consortium.data.results.count === 1 ? 'Consortium' : 'Consortia' }}
                 <v-tooltip
@@ -269,7 +269,8 @@ export default defineComponent({
                   <template #activator="{ props }">
                     <v-btn
                       icon
-                      small
+                      variant="plain"
+                      size="small"
                       v-bind="props"
                     >
                       <v-icon>mdi-help-circle</v-icon>
@@ -282,6 +283,7 @@ export default defineComponent({
                   <v-btn
                     elevation="0"
                     color="primary"
+                    variant="elevated"
                     :disabled="consortium.data.results.count === 0"
                     @click="showConsortia=!showConsortia"
                   >
@@ -308,7 +310,7 @@ export default defineComponent({
                   >
                     <template #action="{ result }">
                       <v-list-item-action>
-                        <v-checkbox
+                        <v-checkbox-btn
                           :input-value="studyCheckboxState"
                           :value="result.id"
                           @click.stop
@@ -323,6 +325,7 @@ export default defineComponent({
                       >
                         <v-btn
                           icon
+                          variant="plain"
                           @click="toggleChildren(result)"
                         >
                           <v-icon
@@ -343,7 +346,8 @@ export default defineComponent({
                       <v-list-item-action>
                         <v-btn
                           icon
-                          large
+                          variant="plain"
+                          size="large"
                           :to="{ name: 'Study', params: { id: result.id } }"
                         >
                           <v-icon>
@@ -360,7 +364,7 @@ export default defineComponent({
                           <v-chip
                             v-if="item.count"
                             :key="item.type"
-                            small
+                            size="small"
                             class="mr-2 my-1"
                             @click.stop="setChecked(props.result.id, {omicsType:item.type})"
                           >
@@ -387,7 +391,7 @@ export default defineComponent({
                         >
                           <template #action="{ result }">
                             <v-list-item-action>
-                              <v-checkbox
+                              <v-checkbox-btn
                                 :disabled="studyCheckboxState.includes(props.result.id)"
                                 :input-value="studyCheckboxState"
                                 :value="result.id"
@@ -401,7 +405,8 @@ export default defineComponent({
                             <v-list-item-action>
                               <v-btn
                                 icon
-                                large
+                                variant="plain"
+                                size="large"
                                 :to="{ name: 'Study', params: { id: result.id } }"
                               >
                                 <v-icon>
@@ -418,7 +423,7 @@ export default defineComponent({
                                 <v-chip
                                   v-if="item.count"
                                   :key="item.type"
-                                  small
+                                  size="small"
                                   class="mr-2 my-1"
                                   @click.stop="setChecked(props.result.id, {omicsType:item.type})"
                                 >
@@ -438,7 +443,7 @@ export default defineComponent({
             <v-card
               flat
             >
-              <v-card-title class="pb-0">
+              <v-card-title class="pb-0 d-flex align-center">
                 {{ study.data.results.count === 1 ? 'Study' : 'Studies' }}
                 <v-tooltip
                   right
@@ -446,7 +451,8 @@ export default defineComponent({
                   <template #activator="{ props }">
                     <v-btn
                       icon
-                      small
+                      variant="plain"
+                      size="small"
                       v-bind="props"
                     >
                       <v-icon>mdi-help-circle</v-icon>
@@ -459,6 +465,7 @@ export default defineComponent({
                   <v-btn
                     elevation="0"
                     color="primary"
+                    variant="elevated"
                     :disabled="study.data.results.count === 0"
                     @click="showStudies=!showStudies"
                   >
@@ -485,7 +492,7 @@ export default defineComponent({
                   >
                     <template #action="{ result }">
                       <v-list-item-action>
-                        <v-checkbox
+                        <v-checkbox-btn
                           :input-value="studyCheckboxState"
                           :value="result.id"
                           @click.stop
@@ -501,6 +508,7 @@ export default defineComponent({
                       >
                         <v-btn
                           icon
+                          variant="plain"
                           @click="toggleChildren(result)"
                         >
                           <v-icon
@@ -521,7 +529,8 @@ export default defineComponent({
                       <v-list-item-action>
                         <v-btn
                           icon
-                          large
+                          variant="plain"
+                          size="large"
                           :to="{ name: 'Study', params: { id: result.id } }"
                         >
                           <v-icon>
@@ -538,7 +547,7 @@ export default defineComponent({
                           <v-chip
                             v-if="item.count"
                             :key="item.type"
-                            small
+                            size="small"
                             class="mr-2 my-1"
                             @click.stop="setChecked(props.result.id, {omicsType:item.type})"
                           >
@@ -565,7 +574,7 @@ export default defineComponent({
                         >
                           <template #action="{ result }">
                             <v-list-item-action>
-                              <v-checkbox
+                              <v-checkbox-btn
                                 :disabled="studyCheckboxState.includes(props.result.id)"
                                 :input-value="studyCheckboxState"
                                 :value="result.id"
@@ -579,7 +588,8 @@ export default defineComponent({
                             <v-list-item-action>
                               <v-btn
                                 icon
-                                large
+                                variant="plain"
+                                size="large"
                                 :to="{ name: 'Study', params: { id: result.id } }"
                               >
                                 <v-icon>
@@ -596,7 +606,7 @@ export default defineComponent({
                                 <v-chip
                                   v-if="item.count"
                                   :key="item.type"
-                                  small
+                                  size="small"
                                   class="mr-2 my-1"
                                   @click.stop="setChecked(childProps.result.id, {omicsType:item.type})"
                                 >
@@ -657,7 +667,7 @@ export default defineComponent({
                 <span class="pr-2">Study ID:</span>
                 <router-link
                   :to="{name: 'Study', params: { id: props.result.study_id }}"
-                  class="pr-2 grey--text text--darken-2"
+                  class="pr-2 text-grey-darken-4"
                   v-text="props.result.study_id"
                 />
                 <template
@@ -668,7 +678,7 @@ export default defineComponent({
                     v-for="id in props.result.alternate_identifiers"
                     :key="id"
                     :href="`https://identifiers.org/${id}`"
-                    class="pr-2 grey--text text--darken-2"
+                    class="pr-2 text-grey-darken-4"
                     target="_blank"
                     rel="noopener noreferrer"
                   >{{ id }}</a>
@@ -695,7 +705,8 @@ export default defineComponent({
                 <v-list-item-action>
                   <v-btn
                     icon
-                    large
+                    variant="plain"
+                    size="large"
                     :to="{ name: 'Sample', params: { id: result.id } }"
                   >
                     <v-icon>
