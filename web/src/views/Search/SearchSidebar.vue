@@ -248,21 +248,22 @@ export default defineComponent({
       <div class="mx-3 my-2">
         <div
           v-if="conditions.length"
-          class="text-subtitle-2 primary--text d-flex flex-row"
+          class="text-subtitle-2 text-primary d-flex align-center"
         >
-          <span class="grow">Active query terms</span>
+          <span class="flex-fill">Active query terms</span>
           <v-tooltip
             location="bottom"
             open-delay="600"
           >
             <template #activator="{ props }">
               <v-btn
-                icon
+                variant="plain"
                 size="x-small"
                 v-bind="props"
                 @click="removeConditions"
               >
-                <v-icon>mdi-filter-off</v-icon>
+                <v-icon class="mr-2">mdi-filter-off</v-icon>
+                Clear all
               </v-btn>
             </template>
             <span>Clear query terms</span>
@@ -293,11 +294,12 @@ export default defineComponent({
         </template>
       </ConditionChips>
 
-      <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
+      <div class="font-weight-bold text-subtitle-2 text-primary mx-3">
         <span v-if="isLoading">
           Loading results...
         </span>
-        <span v-else>Found {{ resultsCount }} samples.
+        <span v-else class="d-flex align-center">
+          <span>Found {{ resultsCount }} samples.</span>
           <v-tooltip
             location="bottom"
             open-delay="600"
@@ -305,6 +307,7 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-btn
                 icon
+                variant="plain"
                 size="x-small"
                 v-bind="props"
               >
