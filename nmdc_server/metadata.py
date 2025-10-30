@@ -27,7 +27,7 @@ class SampleMetadataSuggester:
                 lat, lon = map(float, lat_lon_split)
 
                 elev = nmdc_geoloc_tools.elevation((lat, lon), settings.google_map_api_key)
-                return f"{elev:.16g}"
+                return f"{elev:.2f}"
             except ValueError:
                 # This could happen if the lat_lon string is not parseable as a float
                 # or nmdc_geoloc_tools determined they are invalid values. In either case,
