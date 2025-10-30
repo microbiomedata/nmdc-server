@@ -97,10 +97,11 @@ export default defineComponent({
     <v-select
       v-model="selectedOption"
       :items="options"
+      item-title="text"
+      item-value="value"
       hide-details
       variant="outlined"
-      flat
-      dense
+      density="compact"
       class="pb-4"
     />
     <div class="d-flex flex-row align-center pb-4">
@@ -109,8 +110,7 @@ export default defineComponent({
         type="number"
         required
         hide-details
-        dense
-        flat
+        density="compact"
         variant="outlined"
       />
       <template v-if="selectedOption === 'between'">
@@ -120,8 +120,7 @@ export default defineComponent({
           type="number"
           required
           hide-details
-          dense
-          flat
+          density="compact"
           variant="outlined"
         />
       </template>

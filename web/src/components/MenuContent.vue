@@ -85,7 +85,7 @@ export default defineComponent({
 
 <template>
   <div>
-    <v-card-title class="pb-0">
+    <v-card-title class="pb-0 d-flex align-center">
       {{ fieldDisplayName(field, table) }}
       <span
         v-if="summary.units"
@@ -96,6 +96,7 @@ export default defineComponent({
       <v-spacer />
       <v-btn
         icon
+        variant="plain"
         @click="$emit('close')"
       >
         <v-icon>mdi-close</v-icon>

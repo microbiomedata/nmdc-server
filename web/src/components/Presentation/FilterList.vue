@@ -206,7 +206,7 @@ export default defineComponent({
       :loading-text="'Data is loading and could take a while.'"
     >
       <template #[`item.name`]="{ item }">
-        <span :class="{ 'grey--text': !item.isSelectable }">
+        <span :class="{ 'text-grey': !item.isSelectable }">
           {{ fieldDisplayName(item.name) }}
         </span>
       </template>
