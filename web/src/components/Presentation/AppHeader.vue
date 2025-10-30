@@ -22,8 +22,6 @@ export default defineComponent({
   <v-app-bar
     class="navigation-button-text-animate"
     color="white"
-    clipped-left
-    elevation="4"
     :height="APP_HEADER_HEIGHT"
   >
     <a

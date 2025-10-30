@@ -46,10 +46,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <v-app>
-    <v-layout>
-      <app-header />
-      <router-view />
-    </v-layout>
-  </v-app>
+  <v-layout>
+    <app-header />
+    <router-view />
+  </v-layout>
 </template>
