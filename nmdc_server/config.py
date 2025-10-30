@@ -107,7 +107,7 @@ class Settings(BaseSettings):
     gcs_public_images_bucket_name: str = "nmdc-public-images"
     """The name of the GCS bucket used for public images."""
 
-    google_map_api_key: str
+    google_map_api_key: Optional[str] = None
     """The API key from Google to access the Google Map API."""
 
     max_submission_image_file_size_bytes: int = 25 * 1000 * 1000  # 25 MB
