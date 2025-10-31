@@ -103,12 +103,11 @@ export default defineComponent({
               max-width="450px"
               nudge-bottom="34"
             >
-              <template #activator="{ on, attrs }">
+              <template #activator="{ props }">
                 <div
                   class="text-subtitle-1 px-1 grey--text text--darken-2"
                   style="display: inline-block; text-decoration: underline;"
-                  v-bind="attrs"
-                  v-on="on"
+                  v-bind="props"
                 >
                   {{ member.applies_to_person.name }}
                 </div>

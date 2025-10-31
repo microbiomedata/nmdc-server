@@ -152,17 +152,15 @@ export default defineComponent({
         :key="biosample.id"
         :href="'/details/sample/' + biosample.id"
       >
-        <v-list-item-avatar>
+        <template v-slot:prepend>
           <v-icon>mdi-link</v-icon>
-        </v-list-item-avatar>
-        <v-list-item-content>
-          <v-list-item-title>
-            {{ biosample.name }}
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            ID: {{ biosample.id }}
-          </v-list-item-subtitle>
-        </v-list-item-content>
+        </template>
+        <v-list-item-title>
+          {{ biosample.name }}
+        </v-list-item-title>
+        <v-list-item-subtitle>
+          ID: {{ biosample.id }}
+        </v-list-item-subtitle>
       </v-list-item>
     </v-list>
   </div>

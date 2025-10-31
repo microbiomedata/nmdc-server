@@ -3,6 +3,7 @@ import {
   computed, defineComponent, watchEffect, ref, watch,
 } from 'vue';
 import { useRouter } from 'vue-router';
+import { useDisplay } from 'vuetify';
 
 import { isObject } from 'lodash';
 // @ts-ignore
@@ -49,6 +50,8 @@ export default defineComponent({
   },
 
   setup(props) {
+    const { xs } = useDisplay();
+    
     const dois = ref({
       awardDois: [] as DOI[],
       publicationDois: [] as DOI[],
@@ -233,6 +236,7 @@ export default defineComponent({
       seeStudyInContext,
       parentStudies,
       gold,
+      xs,
     };
   },
 });
@@ -242,7 +246,7 @@ export default defineComponent({
   <v-container fluid>
     <v-main v-if="item !== null">
       <AppBanner />
-      <v-row :class="{'flex-column': $vuetify.breakpoint.xs}">
+      <v-row :class="{'flex-column': xs}">
         <v-col
           cols="12"
           md="7"
@@ -299,14 +303,14 @@ export default defineComponent({
                     item.principal_investigator_websites.length > 0"
               >
                 <v-list-item v-if="item.protocol_link">
-                  <v-list-item-avatar>
-                    <v-icon>mdi-file-document</v-icon>
-                  </v-list-item-avatar>
-                  <v-list-item-content>
-                    <v-list-item-title class="text-h6">
-                      Protocols
-                    </v-list-item-title>
-                  </v-list-item-content>
+                  <template v-slot:prepend>
+                    <v-avatar>
+                      <v-icon>mdi-file-document</v-icon>
+                    </v-avatar>
+                  </template>
+                  <v-list-item-title class="text-h6">
+                    Protocols
+                  </v-list-item-title>
                 </v-list-item>
                 <AttributeItem
                   v-for="proto in (item.protocol_link || [])"
@@ -319,14 +323,14 @@ export default defineComponent({
                   "
                 />
                 <v-list-item v-if="goldLinks.size > 0 || bioprojectLinks.length > 0 || item.principal_investigator_websites.length > 0">
-                  <v-list-item-avatar>
-                    <v-icon>mdi-file-document</v-icon>
-                  </v-list-item-avatar>
-                  <v-list-item-content>
-                    <v-list-item-title class="text-h6">
-                      Links
-                    </v-list-item-title>
-                  </v-list-item-content>
+                  <template v-slot:prepend>
+                    <v-avatar>
+                      <v-icon>mdi-file-document</v-icon>
+                    </v-avatar>
+                  </template>
+                  <v-list-item-title class="text-h6">
+                    Links
+                  </v-list-item-title>
                 </v-list-item>
                 <AttributeItem
                   v-for="link in goldLinks"
@@ -376,37 +380,38 @@ export default defineComponent({
         >
           <div
             v-if="Object.keys(item.doi_map).length > 0"
-            class="ma-4 pa-2 grey lighten-4"
+            class="ma-4 pa-2 bg-grey-lighten-4"
           >
             <template v-if="data.awardDois.length > 0">
-              <v-subheader>
+              <v-list-subheader>
                 Award DOIs
-              </v-subheader>
+              </v-list-subheader>
               <v-list
-                class="transparent"
+                class="bg-grey-lighten-4"
               >
                 <v-divider />
                 <v-list-item
                   v-for="(award, index) in data.awardDois"
                   :key="index"
                 >
-                  <v-list-item-content>
+                  <v-list-item-title>
                     {{ award.cite }}
-                    <div
-                      v-if="award.provider"
-                      class="pt-2"
-                    >
-                      <span class="font-weight-bold pr-2">Provider:</span>
-                      <span class="text-uppercase">{{ award.provider }}</span>
-                    </div>
-                  </v-list-item-content>
+                  </v-list-item-title>
+                  <v-list-item-subtitle
+                    v-if="award.provider"
+                    class="pt-2"
+                  >
+                    <span class="font-weight-bold pr-2">Provider:</span>
+                    <span class="text-uppercase">{{ award.provider }}</span>
+                  </v-list-item-subtitle>
 
-                  <v-list-item-action>
+                  <template v-slot:append>
                     <v-tooltip top>
-                      <template #activator="{ on }">
+                      <template #activator="{ props }">
                         <v-btn
                           icon
-                          v-on="on"
+                          variant="plain"
+                          v-bind="props"
                           @click="openLink(`https://doi.org/${award.id}`)"
                         >
                           <v-icon>mdi-open-in-new</v-icon>
@@ -414,39 +419,39 @@ export default defineComponent({
                       </template>
                       <span>Visit site</span>
                     </v-tooltip>
-                  </v-list-item-action>
+                  </template>
                 </v-list-item>
               </v-list>
             </template>
             <template
               v-if="data.publicationDois.length > 0"
             >
-              <v-subheader>
+              <v-list-subheader>
                 Publications
-              </v-subheader>
+              </v-list-subheader>
               <v-divider />
               <v-list
-                class="
-              transparent"
+                class="bg-grey-lighten-4"
               >
                 <template v-for="(pub, pubIndex) in data.publicationDois" :key="pubIndex">
                   <v-list-item>
-                    <v-list-item-content>
+                    <v-list-item-title>
                       {{ pub.cite }}
-                      <div
-                        v-if="pub.provider"
-                        class="pt-2"
-                      >
-                        <span class="font-weight-bold pr-2">Provider:</span>
-                        <span class="text-uppercase">{{ pub.provider }}</span>
-                      </div>
-                    </v-list-item-content>
-                    <v-list-item-action>
+                    </v-list-item-title>
+                    <v-list-item-subtitle
+                      v-if="pub.provider"
+                      class="pt-2"
+                    >
+                      <span class="font-weight-bold pr-2">Provider:</span>
+                      <span class="text-uppercase">{{ pub.provider }}</span>
+                    </v-list-item-subtitle>
+                    <template v-slot:append>
                       <v-tooltip top>
-                        <template #activator="{ on }">
+                        <template #activator="{ props }">
                           <v-btn
                             icon
-                            v-on="on"
+                            variant="plain"
+                            v-bind="props"
                             @click="openLink(`https://doi.org/${pub.id}`)"
                           >
                             <v-icon>mdi-open-in-new</v-icon>
@@ -454,39 +459,40 @@ export default defineComponent({
                         </template>
                         <span>Visit site</span>
                       </v-tooltip>
-                    </v-list-item-action>
+                    </template>
                   </v-list-item>
                 </template>
               </v-list>
             </template>
             <template v-if="data.datasetDois.length > 0">
-              <v-subheader>
+              <v-list-subheader>
                 Data DOIs
-              </v-subheader>
+              </v-list-subheader>
               <v-list
-                class="transparent"
+                class="bg-grey-lighten-4"
               >
                 <v-divider />
                 <v-list-item
                   v-for="(dataDOI, index) in data.datasetDois"
                   :key="index"
                 >
-                  <v-list-item-content>
+                  <v-list-item-title>
                     {{ dataDOI.cite }}
-                    <div
-                      v-if="dataDOI.provider"
-                      class="pt-2"
-                    >
-                      <span class="font-weight-bold pr-2">Provider:</span>
-                      <span class="text-uppercase">{{ dataDOI.provider }}</span>
-                    </div>
-                  </v-list-item-content>
-                  <v-list-item-action>
+                  </v-list-item-title>
+                  <v-list-item-subtitle
+                    v-if="dataDOI.provider"
+                    class="pt-2"
+                  >
+                    <span class="font-weight-bold pr-2">Provider:</span>
+                    <span class="text-uppercase">{{ dataDOI.provider }}</span>
+                  </v-list-item-subtitle>
+                  <template v-slot:append>
                     <v-tooltip top>
-                      <template #activator="{ on }">
+                      <template #activator="{ props }">
                         <v-btn
                           icon
-                          v-on="on"
+                          variant="plain"
+                          v-bind="props"
                           @click="openLink(`https://doi.org/${dataDOI.id}`)"
                         >
                           <v-icon>mdi-open-in-new</v-icon>
@@ -494,7 +500,7 @@ export default defineComponent({
                       </template>
                       <span>Visit site</span>
                     </v-tooltip>
-                  </v-list-item-action>
+                  </template>
                 </v-list-item>
               </v-list>
             </template>
@@ -512,14 +518,12 @@ export default defineComponent({
                 :key="study.id"
                 :to="`${study.id}`"
               >
-                <v-list-item-icon>
+                <template v-slot:prepend>
                   <v-icon>mdi-file-document</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title class="px-2">
-                    {{ study.annotations.title }}
-                  </v-list-item-title>
-                </v-list-item-content>
+                </template>
+                <v-list-item-title class="px-2">
+                  {{ study.annotations.title }}
+                </v-list-item-title>
               </v-list-item>
             </v-list>
           </v-card>
@@ -536,14 +540,12 @@ export default defineComponent({
                 :key="study.id"
                 :to="`${study.id}`"
               >
-                <v-list-item-icon>
+                <template v-slot:prepend>
                   <v-icon>mdi-file-document</v-icon>
-                </v-list-item-icon>
-                <v-list-item-content>
-                  <v-list-item-title class="px-2">
-                    {{ study.annotations.title }}
-                  </v-list-item-title>
-                </v-list-item-content>
+                </template>
+                <v-list-item-title class="px-2">
+                  {{ study.annotations.title }}
+                </v-list-item-title>
               </v-list-item>
             </v-list>
           </v-card>
