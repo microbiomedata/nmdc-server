@@ -78,7 +78,7 @@ export default defineComponent({
         :ripple="!nav"
         :to="{ name: 'User' }"
       >
-        <v-icon left>
+        <v-icon class="mr-2" left>
           mdi-account-circle
         </v-icon>
         {{ me.name }}
@@ -101,13 +101,11 @@ export default defineComponent({
     </template>
     <template v-else>
       <v-menu
-        bottom
+        location="bottom"
         max-width="500"
         :open-on-hover="true"
-        transition="fade-transition"
-        offset-y
         content-class="login-btn-orcid-help"
-        class="login-btn-orcid-help"
+        transition="fade-transition"
       >
         <template #activator="{ props }">
           <v-btn
