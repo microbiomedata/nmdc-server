@@ -168,8 +168,11 @@ export default defineComponent({
           maxZoom: 5,
         };
         nextTick(() => {
-          mapRef.value.fitBounds(mapCenter.value, fitBoundsOptions);
-          mapRef.value.mapObject.invalidateSize(false);
+          const leafletMap = mapRef.value.leafletObject;
+          if (leafletMap) {
+            leafletMap.fitBounds(mapCenter.value, fitBoundsOptions);
+            leafletMap.invalidateSize(false);
+          }
         });
       }
     });
