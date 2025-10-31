@@ -87,11 +87,6 @@ export default defineComponent({
       },
     };
     const chartData = computed(() => {
-      console.log('FacetBarChart chartData recomputed:', {
-        facetSummaryLength: props.facetSummary.length,
-        facetSummaryUnconditionalLength: props.facetSummaryUnconditional.length,
-        field: props.field
-      });
       return [
         [
           { label: fieldDisplayName(props.field) },
