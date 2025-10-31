@@ -222,11 +222,11 @@ export default defineComponent({
     >
       <v-row>
         <v-col>
-          <v-row>
+          <v-row class="align-center">
             <v-col>
               <v-tabs
                 v-model="vistab"
-                height="30px"
+                color="primary"
               >
                 <v-tab key="omics">
                   Data Type
@@ -236,7 +236,6 @@ export default defineComponent({
                 </v-tab>
               </v-tabs>
             </v-col>
-            <v-spacer />
             <v-col class="d-flex justify-end flex-grow-0 flex-shrink-0">
               <search-help-menu />
             </v-col>
@@ -625,7 +624,7 @@ export default defineComponent({
           </v-card>
           <v-card
             variant="outlined"
-            class="my-4"
+            class="my-3"
           >
             <div class="ma-3">
               <div class="d-flex align-center">

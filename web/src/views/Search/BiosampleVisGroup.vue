@@ -164,7 +164,7 @@ export default defineComponent({
           </FacetSummaryWrapper>
         </TooltipCard>
       </v-col>
-      <v-col :cols="7">
+      <v-col class="pl-0" :cols="7">
         <TooltipCard
           :text="helpMap"
           class="pa-1"
@@ -178,7 +178,7 @@ export default defineComponent({
         </TooltipCard>
       </v-col>
     </v-row>
-    <v-row>
+    <v-row class="mt-0">
       <v-col cols="6">
         <TooltipCard
           :text="helpTimeline"
@@ -200,7 +200,7 @@ export default defineComponent({
           </BinnedSummaryWrapper>
         </TooltipCard>
       </v-col>
-      <v-col cols="6">
+      <v-col class="pl-0" cols="6">
         <TooltipCard
           :text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"

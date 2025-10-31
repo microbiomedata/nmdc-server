@@ -19,6 +19,7 @@ import {
   stateRefs, removeConditions, setConditions, toggleConditions,
 } from '@/store';
 import useGtag from '@/use/useGtag';
+import { cond } from 'lodash';
 
 /**
  * Sidebar has a fixed list of facets, possibly from different tables.
@@ -272,6 +273,7 @@ export default defineComponent({
       </div>
 
       <ConditionChips
+        v-if="conditions.length"
         :conditions="conditions"
         :db-summary="dbSummary"
         class="ma-3"

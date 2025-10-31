@@ -13,6 +13,7 @@ export default defineComponent({});
     <template #activator="{ props }">
       <v-btn
         icon
+        variant="plain"
         v-bind="props"
       >
         <v-icon>

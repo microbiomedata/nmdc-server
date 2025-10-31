@@ -16,6 +16,7 @@ export default defineComponent({
 
 <template>
   <v-card
+    class="h-100"
     :id="id"
     variant="outlined"
   >
@@ -28,6 +29,7 @@ export default defineComponent({
       <template #activator="{ props }">
         <v-icon
           v-bind="props"
+          color="grey-darken-1"
           style="position: absolute; right: 6px; top: 6px; z-index: 2;"
         >
           mdi-help-circle
