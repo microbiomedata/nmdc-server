@@ -119,17 +119,15 @@ export default defineComponent({
 <template>
   <div>
     <v-text-field
-      :value="filterText"
-      solo
+      :model-value="filterText"
       label="search"
       clearable
-      class="mx-3"
-      dense
+      class="mx-3 pt-1"
       hide-details
       variant="outlined"
-      flat
-      append-icon="mdi-magnify"
-      @input="$emit('update:filterText', $event || '')"
+      density="compact"
+      append-inner-icon="mdi-magnify"
+      @update:model-value="$emit('update:filterText', $event || '')"
     />
     <v-list
       ref="list"

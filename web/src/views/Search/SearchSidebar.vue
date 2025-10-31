@@ -19,7 +19,6 @@ import {
   stateRefs, removeConditions, setConditions, toggleConditions,
 } from '@/store';
 import useGtag from '@/use/useGtag';
-import { cond } from 'lodash';
 
 /**
  * Sidebar has a fixed list of facets, possibly from different tables.
@@ -325,7 +324,7 @@ export default defineComponent({
     </template>
 
     <FacetedSearch
-      :filter-text.sync="filterText"
+      v-model:filter-text="filterText"
       :facet-values="textSearchResults"
       :conditions="conditions"
       :fields="FunctionSearchFacets"
