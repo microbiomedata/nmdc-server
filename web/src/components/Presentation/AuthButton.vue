@@ -73,8 +73,8 @@ export default defineComponent({
     <template v-else-if="me">
       <v-btn
         :text="!nav"
-        :plain="nav"
-        :small="nav"
+        :size="nav ? 'small' : 'default'"
+        :variant="nav ? 'plain' : 'elevated'"
         :ripple="!nav"
         :to="{ name: 'User' }"
       >
@@ -91,8 +91,8 @@ export default defineComponent({
       </v-btn>
       <v-btn
         :icon="!nav"
-        :plain="nav"
-        :small="nav"
+        :size="nav ? 'small' : 'default'"
+        :variant="nav ? 'plain' : 'elevated'"
         :ripple="!nav"
         @click="handleLogout"
       >
@@ -112,8 +112,8 @@ export default defineComponent({
         <template #activator="{ props }">
           <v-btn
             :text="!nav"
-            :plain="nav"
-            :small="nav"
+            :size="nav ? 'small' : 'default'"
+            :variant="nav ? 'plain' : 'elevated'"
             v-bind="props"
             @click="handleLogin"
           >
