@@ -58,34 +58,34 @@ export default defineComponent({
   setup(props) {
     const headers: DataTableHeader[] = [
       {
-        text: '',
+        title: '',
         value: 'group_name',
         sortable: false,
       },
       {
-        text: 'Data Object Type',
+        title: 'Data Object Type',
         value: 'object_type',
         sortable: false,
       },
       {
-        text: 'Data Object Description',
+        title: 'Data Object Description',
         value: 'object_description',
         sortable: false,
       },
       {
-        text: 'File Size',
+        title: 'File Size',
         value: 'file_size_bytes',
         width: 100,
         sortable: false,
       },
       {
-        text: 'Downloads',
+        title: 'Downloads',
         value: 'downloads',
         width: 80,
         sortable: false,
       },
       {
-        text: 'Download',
+        title: 'Download',
         value: 'action',
         width: 80,
         sortable: false,
@@ -300,7 +300,7 @@ export default defineComponent({
     <v-data-table
       :headers="headers"
       :items="items"
-      dense
+      density="compact"
     >
       <template #item="{ item, index }">
         <tr
@@ -354,17 +354,18 @@ export default defineComponent({
         </tr>
         <tr>
           <td>
-            <v-tooltip right>
-              <template #activator="{on, attrs }">
+            <v-tooltip
+              location="right"
+              text="This file is included in the currently selected bulk download"
+            >
+              <template #activator="{ props }">
                 <v-icon
-                  v-bind="attrs"
+                  v-bind="props"
                   :style="{ visibility: item.selected ? 'visible' : 'hidden'}"
-                  v-on="on"
                 >
                   mdi-checkbox-marked-circle-outline
                 </v-icon>
               </template>
-              <span>This file is included in the currently selected bulk download</span>
             </v-tooltip>
           </td>
           <td>
@@ -384,16 +385,16 @@ export default defineComponent({
           <td>
             <v-tooltip
               :disabled="!!(loggedInUser && item.url)"
-              bottom
+              location="bottom"
             >
-              <template #activator="{ on, attrs }">
-                <span v-on="on">
+              <template #activator="{ props }">
+                <span v-bind="props">
                   <v-btn
                     v-if="item.url"
                     icon
                     :disabled="!loggedInUser"
-                    v-bind="attrs"
-                    color="primary"
+                    variant="plain"
+                    color="grey-darken-2"
                     @click="handleDownload(item)"
                   >
                     <v-icon>mdi-download</v-icon>
@@ -401,6 +402,7 @@ export default defineComponent({
                   <v-btn
                     v-else
                     icon
+                    variant="plain"
                     disabled
                   >
                     <v-icon>
@@ -409,12 +411,14 @@ export default defineComponent({
                   </v-btn>
                 </span>
               </template>
-              <span v-if="item.url">
-                You must be logged in
-              </span>
-              <span v-else>
-                File unavailable
-              </span>
+              <template #default>
+                <span v-if="item.url">
+                  You must be logged in
+                </span>
+                <span v-else>
+                  File unavailable
+                </span>
+              </template>
             </v-tooltip>
           </td>
         </tr>
