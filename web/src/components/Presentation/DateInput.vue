@@ -5,7 +5,7 @@ import * as chrono from 'chrono-node';
 
 export default defineComponent({
   props: {
-    value: {
+    modelValue: {
       type: String,
       required: true,
     },
@@ -14,34 +14,41 @@ export default defineComponent({
   setup(props, { emit }) {
     const menu = ref(false);
     const menuRef = ref(null);
-    const textFieldDate = ref(moment(props.value).format('MMM D, YYYY'));
+    const textFieldDate = ref(moment(props.modelValue).format('MMM D, YYYY'));
 
     const textFieldRules = [
       (v) => chrono.parse(v).length === 1 || 'Invalid date',
     ];
 
-    const isoDate = computed(() => moment(props.value).format('YYYY-MM-DD'));
+    const isoDate = computed({
+      get: () => moment(props.modelValue).format('YYYY-MM-DD'),
+      set: (value) => {
+        updateFromDatePicker(value);
+      },
+    });
 
     function updateFromTextField(event) {
       const parsed = chrono.parse(event);
       if (parsed.length === 1) {
         const parse = parsed[0];
-        emit('input', parse.date().toISOString());
+        emit('update:modelValue', parse.date().toISOString());
       }
     }
 
     function updateFromDatePicker(event) {
       const date = moment(event);
       textFieldDate.value = date.format('MMM D, YYYY');
-      emit('input', date.format('YYYY-MM-DDT00:00:00.000'));
+      emit('update:modelValue', date.format('YYYY-MM-DDT00:00:00.000'));
     }
 
     function closeMenu() {
-      if (menuRef.value) {
-        menuRef.value.save(props.value);
-      }
+      // if (menuRef.value) {
+      //   menuRef.value.save(props.modelValue);
+      // }
       menu.value = false;
     }
+
+    console.log(menu.value);
 
     return {
       menu,
@@ -62,37 +69,34 @@ export default defineComponent({
     ref="menuRef"
     v-model="menu"
     :close-on-content-click="false"
-    :return-value="value"
+    :return-value="modelValue"
     transition="scale-transition"
-    offset-x
-    offset-y
+    location="end"
+    open-on-click
     min-width="290px"
   >
-    <template #activator="{ on, attrs }">
+    <template #activator="{ props }">
       <v-text-field
         v-model="textFieldDate"
         :rules="textFieldRules"
         label="Choose"
         prepend-icon="mdi-calendar"
-        v-bind="attrs"
-        v-on="on"
-        @input="updateFromTextField"
+        v-bind="props"
+        @update:modelValue="updateFromTextField"
       />
     </template>
     <v-date-picker
-      :value="isoDate"
+      v-model="isoDate"
       no-title
       scrollable
-      @input="updateFromDatePicker"
+      @update:modelValue="updateFromDatePicker"
+    />
+    <v-btn
+      text
+      color="primary"
+      @click="closeMenu"
     >
-      <v-spacer />
-      <v-btn
-        text
-        color="primary"
-        @click="closeMenu"
-      >
-        OK
-      </v-btn>
-    </v-date-picker>
+      OK
+    </v-btn>
   </v-menu>
 </template>

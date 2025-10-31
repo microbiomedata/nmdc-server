@@ -103,6 +103,8 @@ export default defineComponent({
     <v-select
       v-model="selectedOption"
       :items="options"
+      item-title="text"
+      item-value="value"
       hide-details
       variant="outlined"
       flat
