@@ -11,12 +11,12 @@ import { makeTree } from '@/util';
 interface Props {
   table?: string | null;
   conditions?: Condition[];
-  heirarchy?: string[];
+  hierarchy?: string[];
 }
 
 const { 
   conditions = [], 
-  heirarchy = ['ecosystem', 'ecosystem_category', 'ecosystem_type', 'ecosystem_subtype', 'specific_ecosystem'] 
+  hierarchy = ['ecosystem', 'ecosystem_category', 'ecosystem_type', 'ecosystem_subtype', 'specific_ecosystem'] 
 } = defineProps<Props>();
 
 const emit = defineEmits(['selected']);
@@ -31,7 +31,7 @@ const onChartReady = (chart: any) => {
 const sankeyData = computedAsync(
   async () => {
     const data = await api.getEnvironmentSankeyAggregation(conditions);
-    const tree = makeTree(data, heirarchy);
+    const tree = makeTree(data, hierarchy);
     return [
       ['From', 'To', 'Samples'],
       // generate sankey data from topological sort of sankey tree
@@ -64,13 +64,13 @@ const chartEvents = {
       [, val] = sankeyData.value[selection[0].row + 1];
     }
     
-    // use prefixed number of spaces to indicate index in the heirarchy
+    // use prefixed number of spaces to indicate index in the hierarchy
     const match = val.match(/^([\s]+)/g);
     if (!match) return;
     const prefix = match[0].length - 1;
     emit('selected', {
       conditions: [{
-        field: heirarchy[prefix],
+        field: hierarchy[prefix],
         op: '==',
         value: val.trim(),
         table: 'biosample',

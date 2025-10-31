@@ -22,7 +22,7 @@ export default defineComponent({
       type: Array,
       required: true,
     },
-    heirarchy: {
+    hierarchy: {
       type: Array,
       default: () => [
         'ecosystem',
@@ -46,7 +46,7 @@ export default defineComponent({
 
   computed: {
     treeData() {
-      return makeTree(this.data || [], this.heirarchy);
+      return makeTree(this.data || [], this.hierarchy);
     },
     tree() {
       // freeze is used because tree nodes contain back-references to their parent,
@@ -55,11 +55,11 @@ export default defineComponent({
     },
     otherConditions() {
       return this.conditions
-        .filter((c) => (!this.heirarchy.includes(c.field)) || (c.table !== this.table));
+        .filter((c) => (!this.hierarchy.includes(c.field)) || (c.table !== this.table));
     },
     myConditions() {
       return this.conditions
-        .filter((c) => (this.heirarchy.includes(c.field)) && c.table === this.table);
+        .filter((c) => (this.hierarchy.includes(c.field)) && c.table === this.table);
     },
   },
 
@@ -76,7 +76,7 @@ export default defineComponent({
         do {
           conditions.push({
             op: '==',
-            field: node.heirarchyKey,
+            field: node.hierarchyKey,
             value: node.label,
             table: this.table,
           });
