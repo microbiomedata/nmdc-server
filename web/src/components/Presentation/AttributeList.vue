@@ -111,9 +111,9 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="display-1">
+    <h2>
       Attributes
-    </div>
+    </h2>
     <v-list
       style="column-count: 3;"
       class="d-block py-4"
@@ -121,15 +121,15 @@ export default defineComponent({
       <v-col
         v-for="field in displayFields"
         :key="field"
-        class="pa-0 d-inline-block"
+        class="pa-2 d-inline-block"
       >
         <AttributeItem v-bind="{ item, field }" />
       </v-col>
     </v-list>
     <v-list v-if="alternateIdentifiers.length > 0 || item.emsl_biosample_identifiers.length > 0">
-      <div class="display-1">
+      <h2>
         Alternative Identifiers
-      </div>
+      </h2>
       <AttributeItem
         v-for="({ name, target }) in alternateIdentifiers"
         :key="name"

@@ -25,20 +25,21 @@ export default defineComponent({
 
 <template>
   <v-container fluid>
-    <v-row>
-      <v-col class="shrink">
+    <v-row class="align-center">
+      <v-col cols="auto">
         <v-btn
           icon
-          x-large
+          color="primary"
+          size="x-large"
           :to="{name: 'Search'}"
         >
           <v-icon>mdi-chevron-left-box</v-icon>
         </v-btn>
       </v-col>
-      <v-col class="grow">
-        <div class="headline">
+      <v-col>
+        <h1 class="headline">
           {{ item.annotations.title || item.name }}
-        </div>
+        </h1>
         <div
           v-if="item[subtitleKey]"
           class="subtitle-1"

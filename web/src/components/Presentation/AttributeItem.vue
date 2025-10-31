@@ -116,23 +116,31 @@ export default defineComponent({
     :key="link.name"
     :href="link.target"
   >
-    <img
-      v-if="image"
-      :src="image"
-      width="160px"
-      class="pr-2"
-      alt="Logo"
-    >
-    <v-list-item-avatar v-else>
-      <v-icon>mdi-link</v-icon>
-    </v-list-item-avatar>
     <v-list-item-content>
-      <v-list-item-title>
-        {{ link.name }}
-      </v-list-item-title>
-      <v-list-item-subtitle>
-        {{ link.target }}
-      </v-list-item-subtitle>
+      <div class="d-flex align-center">
+        <img
+          v-if="image"
+          :src="image"
+          width="160px"
+          class="pr-2"
+          alt="Logo"
+        >
+        <v-icon 
+          v-else
+          class="mr-4"
+          color="grey"
+        >
+          mdi-link
+        </v-icon>
+        <div>
+          <v-list-item-title>
+            {{ link.name }}
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            {{ link.target }}
+          </v-list-item-subtitle>
+        </div>
+      </div>
     </v-list-item-content>
   </v-list-item>
   <v-list-item
@@ -145,27 +153,33 @@ export default defineComponent({
       click: bindClick ? () => $emit('click') : undefined
     }"
   >
-    <img
-      v-if="image"
-      :src="image"
-      width="160px"
-      class="pr-2"
-      alt="Logo"
-    >
-    <v-list-item-avatar v-else-if="getField(field)">
-      <v-icon>
-        {{ getField(field).icon || 'mdi-text' }}
-      </v-icon>
-    </v-list-item-avatar>
     <v-list-item-content>
-      <v-list-item-title>
-        {{ displayName.length > 0 ? displayName : fieldDisplayName(field) }}
-      </v-list-item-title>
-      <v-list-item-subtitle
-        style="white-space: initial;"
-      >
-        {{ getValue(field) }}
-      </v-list-item-subtitle>
+      <div class="d-flex align-center">
+        <img
+          v-if="image"
+          :src="image"
+          width="160px"
+          class="pr-2"
+          alt="Logo"
+        >
+        <v-icon 
+          v-else-if="getField(field)"
+          class="mr-4"
+          color="grey"
+        >
+          {{ getField(field).icon || 'mdi-text' }}
+        </v-icon>
+        <div>
+          <v-list-item-title>
+            {{ displayName.length > 0 ? displayName : fieldDisplayName(field) }}
+          </v-list-item-title>
+          <v-list-item-subtitle
+            style="white-space: initial;"
+          >
+            {{ getValue(field) }}
+          </v-list-item-subtitle>
+        </div>
+      </div>
     </v-list-item-content>
   </v-list-item>
 </template>
