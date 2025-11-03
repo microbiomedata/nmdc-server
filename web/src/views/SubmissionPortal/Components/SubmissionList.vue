@@ -320,6 +320,12 @@ export default defineComponent({
               :authenticated="true"
             />
           </template>
+          <template #[`item.templates`]="{ item }">
+            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
+          </template>
+          <template #[`item.date_last_modified`]="{ item }">
+            {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
+          </template>
           <template #[`header.status`]="{ header }">
             <v-tooltip
               v-if="currentUser.is_admin"
