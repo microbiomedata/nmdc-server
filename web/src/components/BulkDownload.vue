@@ -1,7 +1,7 @@
 <script lang="ts">
 import { computed, defineComponent, ref } from 'vue';
 // @ts-ignore
-import Treeselect from '@riophae/vue-treeselect';
+import Treeselect from '@zanmato/vue3-treeselect';
 import { stateRefs, dataObjectFilter } from '@/store';
 import DownloadDialog from '@/components/DownloadDialog.vue';
 import useBulkDownload from '@/use/useBulkDownload';

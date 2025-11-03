@@ -1,10 +1,10 @@
 <script lang="ts">
 import {
-  defineComponent, computed, toRef, PropType,
+  defineComponent, computed, toRef, PropType, ref, watch,
 } from 'vue';
 // @ts-ignore
-import Treeselect from '@riophae/vue-treeselect';
-import '@riophae/vue-treeselect/dist/vue-treeselect.css';
+import Treeselect from '@zanmato/vue3-treeselect';
+import '@zanmato/vue3-treeselect/dist/vue3-treeselect.min.css';
 
 import { cloneDeep } from 'lodash';
 import {
@@ -50,12 +50,6 @@ export default defineComponent({
       }
       return t;
     });
-    const selected = computed(() => {
-      if (stateRefs.treeData.value === null) {
-        return [];
-      }
-      return myConditions.value.map((v) => unreactive.nodeMapLabel[v.value as string].id);
-    });
 
     const facetSummaryMap = computed(() => {
       const resp: Record<string, number> = {};
@@ -66,7 +60,23 @@ export default defineComponent({
     const { loading, request } = useRequest();
     request(getTreeData);
 
-    async function setSelected(values: string[]) {
+    const selected = ref<string[]>([]);
+
+    // Update selected when conditions change
+    watch([myConditions, () => stateRefs.treeData.value], () => {
+      if (stateRefs.treeData.value === null) {
+        selected.value = [];
+      } else {
+        selected.value = myConditions.value.map((v) => unreactive.nodeMapLabel[v.value as string].id);
+      }
+    }, { immediate: true });
+
+    // Update conditions when selected changes
+    watch(selected, (values) => {
+      setSelected(values);
+    }, { deep: true });
+
+    function setSelected(values: string[]) {
       const c = cloneDeep(otherConditions.value);
       values.forEach((value) => {
         c.push({
@@ -76,6 +86,7 @@ export default defineComponent({
           table: table.value,
         });
       });
+      console.log(c);
       emit('select', { conditions: c });
     }
 
@@ -103,13 +114,12 @@ export default defineComponent({
     />
     <treeselect
       v-else-if="tree !== null"
-      :value="selected"
+      v-model="selected"
       :options="tree"
       :normailzer="normalizer"
       multiple
       always-open
       class="ma-2"
-      @input="setSelected"
     >
       <template #option-label="{ node }">
         <span> {{ node.label }} ({{ facetSummaryMap[node.label] || '0' }}) </span>
