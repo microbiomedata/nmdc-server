@@ -84,7 +84,7 @@ export default defineComponent({
 
 <template>
   <v-card
-    variant="outlined"
+    variant="flat"
     class="pa-3 d-flex flex-column align-end"
     color="primary"
   >
@@ -126,6 +126,7 @@ export default defineComponent({
         </span>
       </v-tooltip>
       <Treeselect
+        appendToBody
         v-model="bulkDownloadSelected"
         multiple
         value-consists-of="LEAF_PRIORITY"

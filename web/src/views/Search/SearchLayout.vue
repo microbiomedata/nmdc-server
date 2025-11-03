@@ -638,7 +638,7 @@ export default defineComponent({
                   </span>
                 </v-card-title>
                 <v-spacer />
-                <!-- <div
+                <div
                   v-if="!disableBulkDownload"
                   style="width: 70%"
                 >
@@ -646,7 +646,7 @@ export default defineComponent({
                     :disabled="!loggedInUser"
                     :search-result-count="biosample.data.results.count"
                   />
-                </div> -->
+                </div>
               </div>
             </div>
             <SearchResults
