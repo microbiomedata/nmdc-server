@@ -125,7 +125,7 @@ async function init(_router: Router, loadUser = true, loginState = '' as string 
     default:
       // Login normally
       // @ts-ignore
-      state.conditions = router.currentRoute.query?.conditions || [];
+      state.conditions = router.currentRoute.value.query.conditions || [];
       if (state.user) {
         restoreState();
       }

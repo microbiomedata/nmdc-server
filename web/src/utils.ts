@@ -59,7 +59,7 @@ function stringifyQuery(params: any) {
     delete params.conditions;
   }
   const queryParamsString = new URLSearchParams(params).toString();
-  return queryParamsString ? `?${queryParamsString}` : '';
+  return queryParamsString ? `${queryParamsString}` : '';
 }
 
 /**
