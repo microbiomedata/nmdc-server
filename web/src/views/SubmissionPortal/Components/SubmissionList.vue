@@ -179,14 +179,13 @@ export default defineComponent({
       offset-x
       left
     >
-      <template #activator="{on, attrs}">
+      <template #activator="{ props }">
         <v-btn
           color="primary"
           large
           class="mr-0"
           style="transform:translateY(-50%) rotate(-90deg); right: -50px; top: 50%; position: fixed; z-index: 100;"
-          v-bind="attrs"
-          v-on="on"
+          v-bind="props"
         >
           support
           <v-icon
@@ -233,11 +232,11 @@ export default defineComponent({
           Create Test Submission
         </v-btn>
         <v-tooltip right>
-          <template #activator="{ on }">
+          <template #activator="{ props }">
             <v-icon
               class="pl-2"
               color="primary"
-              v-on="on"
+              v-bind="props"
             >
               mdi-information
             </v-icon>
@@ -331,12 +330,12 @@ export default defineComponent({
               <v-menu
                 offset-x
               >
-                <template #activator="{ on }">
+                <template #activator="{ props }">
                   <v-btn
                     text
                     icon
                     class="ml-1"
-                    v-on="on"
+                    v-bind="props"
                   >
                     <v-icon>
                       mdi-dots-vertical
