@@ -92,7 +92,7 @@ export default defineComponent({
 
 <template>
   <div class="harmonizer-sidebar-content d-flex flex-column fill-height">
-    <div class="flex-grow-0 flex-shrink-0">
+    <div class="flex-0-0">
       <v-tabs
         v-model="tabModel"
         grow

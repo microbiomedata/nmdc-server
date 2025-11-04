@@ -74,8 +74,8 @@ const ColorKey = {
   },
 };
 
-const HELP_SIDEBAR_WIDTH = '320px';
-const TABS_HEIGHT = '48px';
+const HELP_SIDEBAR_WIDTH = 320;
+const TABS_HEIGHT = 48;
 
 const SUGGESTION_REQUEST_DELAY = 3000;
 
@@ -920,7 +920,7 @@ export default defineComponent({
       </div>
     </div>
 
-    <div class="harmonizer-and-sidebar">
+    <v-layout class="harmonizer-and-sidebar">
       <v-tabs @change="changeTemplate">
         <v-tooltip
           v-for="templateKey in templateList"
@@ -963,21 +963,21 @@ export default defineComponent({
         id="harmonizer-root"
         class="harmonizer-style-container"
         :style="{
-          'right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
-          'top': TABS_HEIGHT,
+          'right': sidebarOpen ? `${HELP_SIDEBAR_WIDTH}px` : '0px',
+          'top': `${TABS_HEIGHT}px`,
         }"
       />
 
       <v-btn
         class="sidebar-toggle"
         tile
-        plain
+        variant="plain"
         color="black"
         :ripple="false"
         :height="TABS_HEIGHT"
         :width="TABS_HEIGHT"
         :style="{
-          'right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
+          'right': sidebarOpen ? `${HELP_SIDEBAR_WIDTH}px` : '0px',
         }"
         @click="sidebarOpen = !sidebarOpen"
       >
@@ -993,15 +993,11 @@ export default defineComponent({
       </v-btn>
 
       <v-navigation-drawer
+        v-model="sidebarOpen"
         :width="HELP_SIDEBAR_WIDTH"
-        :value="sidebarOpen"
         absolute
+        location="right"
         class="z-above-data-harmonizer"
-        floating
-        hide-overlay
-        right
-        stateless
-        temporary
       >
         <HarmonizerSidebar
           :column-help="selectedHelpDict"
@@ -1012,7 +1008,7 @@ export default defineComponent({
           @export-xlsx="downloadSamples"
         />
       </v-navigation-drawer>
-    </div>
+    </v-layout>
 
     <div class="harmonizer-style-container">
       <div

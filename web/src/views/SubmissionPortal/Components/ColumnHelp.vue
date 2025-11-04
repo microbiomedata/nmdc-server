@@ -53,12 +53,12 @@ export default defineComponent({
         class="mb-2"
       >
         <span class="font-weight-bold pr-2">Examples:</span>
-        <span v-html="urlify(columnHelp.examples)" />
+        <span class="examples-list" v-html="urlify(columnHelp.examples)" />
       </div>
       <v-btn
         color="grey"
         variant="outlined"
-        small
+        size="small"
         block
         @click="$emit('full-reference-click')"
       >
@@ -77,3 +77,9 @@ export default defineComponent({
     </v-card-text>
   </v-card>
 </template>
+
+<style scoped>
+.examples-list ul {
+  padding: 0 0 0 1.5em;
+}
+</style>
