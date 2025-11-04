@@ -18,3 +18,8 @@
 .v-theme--light a {
   color: rgb(var(--v-theme-primary));
 }
+
+.v-app-bar.v-toolbar a,
+.v-menu a {
+  color: inherit;
+}

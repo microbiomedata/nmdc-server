@@ -10,8 +10,6 @@ import {
 } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
-import { PermissionTitle } from '@/views/SubmissionPortal/types';
-import { stateRefs } from '@/store';
 import {
   multiOmicsForm,
   studyForm,
@@ -26,6 +24,8 @@ import {
   SubmissionStatusTitleMapping,
   status,
 } from '../store';
+import { PermissionTitle } from '@/views/SubmissionPortal/types';
+import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import ImageUpload from './ImageUpload.vue';
@@ -154,10 +154,10 @@ export default defineComponent({
 
 <template>
   <div>
-    <h1 class="text-h2">
+    <div class="text-h2">
       Study Information
       <submission-docs-link anchor="study" />
-    </h1>
+    </div>
     <div class="text-h5">
       {{ NmdcSchema.classes.Study.description }}
     </div>
@@ -290,7 +290,7 @@ export default defineComponent({
 
       <div class="text-h4 mt-8">
         Funding Sources
-      </h2>
+      </div>
       <div class="text-body-1 mb-2">
         Sources of funding for this study.
       </div>
@@ -307,7 +307,7 @@ export default defineComponent({
               label="Funding Source *"
               :hint="Definitions.fundingSources"
               persistent-hint
-              variant="outlined"
+              outlined
               dense
               class="mb-2 mr-3"
               :error-messages="studyForm.fundingSources[i] ? undefined : ['Field cannot be empty.']"
@@ -321,7 +321,6 @@ export default defineComponent({
         <v-btn
           v-if="studyForm.fundingSources !== null"
           icon
-          variant="plain"
           :disabled="!isOwner()"
           @click="studyForm.fundingSources.splice(i, 1)"
         >
@@ -355,12 +354,12 @@ export default defineComponent({
         class="d-flex"
       >
         <v-card class="d-flex flex-column grow pa-4 mb-4">
-          <div class="d-flex mb-4">
+          <div class="d-flex">
             <v-text-field
               v-model="contributor.name"
               label="Full name *"
               :hint="Definitions.contributorFullName"
-              variant="outlined"
+              outlined
               dense
               persistent-hint
               :error-messages="contributor.name ? undefined : ['Field cannot be empty.']"
@@ -372,7 +371,7 @@ export default defineComponent({
               :hint="Definitions.contributorOrcid"
               :disabled="currentUserOrcid === contributor.orcid"
               label="ORCID"
-              variant="outlined"
+              outlined
               persistent-hint
               dense
               :style="{ maxWidth: '400px'}"
@@ -386,13 +385,11 @@ export default defineComponent({
             <v-select
               v-model="contributor.roles"
               :items="Object.keys(NmdcSchema.enums.CreditEnum.permissible_values)"
-              item-title="text"
-              item-value="value"
               label="CRediT Roles *"
               :hint="Definitions.contributorRoles"
               deletable-chips
               multiple
-              variant="outlined"
+              outlined
               chips
               small-chips
               dense
@@ -414,7 +411,7 @@ export default defineComponent({
               :style="{ maxWidth: '400px'}"
               label="Permission Level"
               hint="Level of permissions the contributor has for this submission"
-              variant="outlined"
+              outlined
               dense
               persistent-hint
               @change="() => formRef.validate()"
@@ -424,12 +421,12 @@ export default defineComponent({
                   bottom
                   max-width="500px"
                 >
-                  <template #activator="{ props }">
+                  <template #activator="{on, attrs}">
                     <v-btn
                       icon
-                      size="small"
-                      variant="plain"
-                      v-bind="props"
+                      small
+                      v-bind="attrs"
+                      v-on="on"
                     >
                       <v-icon>mdi-help-circle</v-icon>
                     </v-btn>
@@ -448,7 +445,6 @@ export default defineComponent({
         </v-card>
         <v-btn
           icon
-          variant="plain"
           :disabled="!isOwner() || currentUserOrcid === contributor.orcid"
           @click="studyForm.contributors.splice(i, 1)"
         >
@@ -523,69 +519,8 @@ export default defineComponent({
           :disabled="!isOwner()"
           @click="studyForm.dataDois.splice(i, 1)"
         >
-          <v-card class="d-flex flex-column grow pa-4 mb-4">
-            <div class="d-flex">
-              <v-text-field
-                v-if="studyForm.dataDois !== null"
-                v-model="studyForm.dataDois[i].value"
-                label="Data DOI value *"
-                :hint="Definitions.dataDoiValue"
-                persistent-hint
-                variant="outlined"
-                dense
-                required
-                class="mb-2 mr-3"
-                :rules="requiredRules('DOI value must be provided',[
-                  v => checkDoiFormat(v) || 'DOI must be valid',
-                ])"
-              >
-                <template #message="{ message }">
-                  <span v-html="message" />
-                </template>
-              </v-text-field>
-              <v-select
-                v-if="studyForm.dataDois !== null"
-                v-model="studyForm.dataDois[i].provider"
-                label="Data DOI Provider *"
-                :hint="Definitions.dataDoiProvider"
-                :items="doiProviderValues"
-                item-title="text"
-                item-value="value"
-                persistent-hint
-                variant="outlined"
-                dense
-                clearable
-                class="mb-2 mr-3"
-                :rules="studyForm.dataDois[i].provider ? undefined : ['A provider must be selected.']"
-              >
-                <template #message="{ message }">
-                  <span v-html="message" />
-                </template>
-              </v-select>
-            </div>
-          </v-card>
-          <v-btn
-            v-if="studyForm.dataDois !== null"
-            icon
-            variant="plain"
-            :disabled="!isOwner()"
-            @click="studyForm.dataDois.splice(i, 1)"
-          >
-            <v-icon>mdi-minus-circle</v-icon>
-          </v-btn>
-        </div>
-        <div>
-          <v-btn
-            depressed
-            :disabled="!canEditSubmissionMetadata()"
-            @click="addDataDoi"
-          >
-            <v-icon class="pr-1">
-              mdi-plus-circle
-            </v-icon>
-            Add Data DOI
-          </v-btn>
-        </div>
+          <v-icon>mdi-minus-circle</v-icon>
+        </v-btn>
       </div>
       <v-btn
         class="mb-4"

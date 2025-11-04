@@ -12,7 +12,6 @@ import {
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
-import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import StatusAlert from './StatusAlert.vue';
 
 export default defineComponent({

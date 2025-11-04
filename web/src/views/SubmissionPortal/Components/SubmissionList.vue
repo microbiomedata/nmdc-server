@@ -23,35 +23,30 @@ import {
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import { deleteSubmission, updateRecord } from '../store/api';
-import OrcidId from '../../../components/Presentation/OrcidId.vue';
-import * as api from '../store/api';
-import {
-  generateRecord, submissionStatus,
-} from '../store';
 
 const headers: DataTableHeader[] = [
   {
-    text: 'Study Name',
+    title: 'Study Name',
     value: 'study_name',
   },
   {
-    text: 'Author',
+    title: 'Author',
     value: 'author.name',
   },
   {
-    text: 'Template',
+    title: 'Template',
     value: 'templates',
   },
   {
-    text: 'Status',
+    title: 'Status',
     value: 'status',
   },
   {
-    text: 'Last Modified',
+    title: 'Last Modified',
     value: 'date_last_modified',
   },
   {
-    text: '',
+    title: '',
     value: 'action',
     align: 'end',
     sortable: false,
@@ -288,7 +283,7 @@ export default defineComponent({
           <v-select
             v-model="isTestFilter"
             :items="testFilterValues"
-            item-text="text"
+            item-title="text"
             item-value="val"
             label="Test Submissions"
             hide-details
@@ -330,24 +325,23 @@ export default defineComponent({
           <template #[`item.date_last_modified`]="{ item }">
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
-          <template #[`header.status`]="{ header }">
+          <template #[`header.status`]="{ column }">
             <v-tooltip
               v-if="currentUser.is_admin"
               bottom
             >
-              <template #activator="{ on, attrs }">
+              <template #activator="{ props }">
                 <v-icon
                   class="ml-1"
                   color="grey"
-                  v-bind="attrs"
-                  v-on="on"
+                  v-bind="props"
                 >
                   mdi-information-outline
                 </v-icon>
               </template>
               <span>Greyed out options are user-triggered statuses and cannot be changed or selected</span>
             </v-tooltip>
-            {{ header.text }}
+            {{ column.title }}
           </template>
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
@@ -371,7 +365,7 @@ export default defineComponent({
                 item-disabled="disabled"
                 dense
                 hide-details
-                @change="(newStatus) => handleStatusChange(item, newStatus)"
+                @change="(newStatus: string) => handleStatusChange(item, newStatus)"
               >
                 <template #selection="{ item: statusItem }">
                   {{ statusItem.text }}
@@ -389,13 +383,13 @@ export default defineComponent({
             <div class="d-flex align-center">
               <v-spacer />
               <v-btn
-                small
+                size="small"
                 color="primary"
                 @click="() => resume(item)"
               >
                 <span v-if="editablebyStatus(item.status)">
-                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
                   Resume
+                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
                 </span>
                 <span v-else>
                   <v-icon class="pl-1">mdi-eye</v-icon>
@@ -407,7 +401,7 @@ export default defineComponent({
               >
                 <template #activator="{ props }">
                   <v-btn
-                    text
+                    variant="text"
                     icon
                     class="ml-1"
                     v-bind="props"

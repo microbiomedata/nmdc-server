@@ -49,9 +49,6 @@ import {
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
-import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
-import { stateRefs } from '@/store';
-import { getPendingSuggestions } from '@/store/localStorage';
 import StatusAlert from './Components/StatusAlert.vue';
 
 interface ValidationErrors {
@@ -1138,7 +1135,7 @@ export default defineComponent({
 <style lang="scss">
 // Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
 // cannot be nested inside .harmonizer-style-container or else the measurements will be off.
-@import 'node_modules/@microbiomedata/data-harmonizer/lib/dist/es/index';
+@import 'node_modules/@microbiomedata/data-harmonizer/lib/dist/es/index.css';
 
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples

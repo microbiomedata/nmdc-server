@@ -4,7 +4,7 @@ import {
   defineComponent,
   PropType,
   ref,
-} from '@vue/composition-api';
+} from 'vue';
 import { deleteSubmissionImage, generateSignedUploadUrl, setSubmissionImage } from '@/views/SubmissionPortal/store/api';
 import useRequest from '@/use/useRequest';
 import { SubmissionImageType } from '@/views/SubmissionPortal/types';
