@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, computed_field, field_validator
 
 from nmdc_server import schemas
@@ -146,10 +147,19 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     metadata_submission: PartialMetadataSubmissionRecord
-    status: Optional[str] = None
     # Map of ORCID iD to permission level
     permissions: Optional[Dict[str, str]] = None
     field_notes_metadata: Optional[Dict[str, Any]] = None
+
+
+class SubmissionMetadataStatusPatch(BaseModel):
+    status: str
+
+    @field_validator("status", mode="after")
+    @classmethod
+    def validate_status(cls, status):
+        SubmissionStatusEnum(status)  # will raise ValueError if invalid
+        return status
 
 
 class SubmissionMetadataSchemaSlim(BaseModel):

@@ -1241,14 +1241,6 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # Create GitHub issue when metadata is being submitted and not a test submission
-    if submitted(submission.status, body_dict.get("status", None), submission.is_test_submission):
-        submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
-        try:
-            create_github_issue(submission_model, user)
-        except Exception as e:
-            logging.error(f"Failed to create/update Github issue: {str(e)}")
-
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
 
@@ -1265,6 +1257,60 @@ async def update_submission(
     # Update permissions and status if the user is an "owner" or "admin"
     _update_permissions_and_status(db, submission, body_dict, current_user_role, user)
     crud.update_submission_lock(db, submission.id)
+    return submission
+
+
+@router.patch(
+    "/metadata_submission/{id}/status",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionMetadataSchema,
+)
+async def update_submission_status(
+    id: str,
+    body: schemas_submission.SubmissionMetadataStatusPatch,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> models.SubmissionMetadata:
+    """Update submission status"""
+    submission = get_submission_for_user(db, id, user, allowed_roles=[SubmissionEditorRole.owner])
+    current_status = submission.status
+
+    allowed_transitions = {
+        SubmissionStatusEnum.UpdatesRequired.text: [SubmissionStatusEnum.InProgress.text],
+        SubmissionStatusEnum.InProgress.text: [SubmissionStatusEnum.SubmittedPendingReview.text],
+    }
+
+    # Admins can change to any status
+    if user.is_admin:
+        submission.status = body.status
+
+    # Owner can only do select transitions
+    elif (
+        current_status in allowed_transitions
+        and body.status in allowed_transitions[current_status]
+        and submission.is_test_submission is False
+    ):
+        submission.status = body.status
+
+    # Anything else is not allowed
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid status transition."
+        )
+
+    db.commit()
+
+    # If the new status is "Submitted - Pending Review", create or update the GitHub issue
+    if (
+        body.status == SubmissionStatusEnum.SubmittedPendingReview.text
+        and submission.is_test_submission is False
+    ):
+        try:
+            create_github_issue(submission, user)
+        except Exception as e:
+            logging.error(f"Failed to create/update Github issue: {str(e)}")
+
     return submission
 
 
@@ -1322,11 +1368,12 @@ def submitted(stored_status: str, new_status: str, is_test: bool):
         return False
 
 
-def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
+def create_github_issue(submission_model: SubmissionMetadata, user):
     """
     Create or update a Github issue depending on if an issue exists for the submission id.
     Updates all matching issues if there's more than one, but should typically be one.
     """
+    submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     assignee = settings.github_issue_assignee
