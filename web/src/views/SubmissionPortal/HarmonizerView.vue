@@ -375,6 +375,7 @@ export default defineComponent({
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
 
     async function jumpTo({ row, column }: { row: number; column: number }) {
+      console.log('Jumping to', row, column);
       harmonizerApi.jumpToRowCol(row, column);
       await nextTick();
       jumpToModel.value = null;
@@ -445,6 +446,7 @@ export default defineComponent({
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
         const val = {
+          type: !columnName ? 'subheader' : 'item',
           text: columnName ? `  ${columnName}` : sectionName,
           value: {
             sectionName, columnName, column, row: 0,
@@ -632,7 +634,7 @@ export default defineComponent({
         }
       }
     });
-
+    
     return {
       user,
       APP_HEADER_HEIGHT,
@@ -824,38 +826,28 @@ export default defineComponent({
         <v-autocomplete
           v-model="jumpToModel"
           :items="fields"
+          item-title="text"
+          item-value="value"
           label="Jump to column..."
           class="shrink mr-2 z-above-sidebar"
           variant="outlined"
-          dense
+          density="compact"
           hide-details
           offset-y
           :menu-props="{ maxHeight: 500 }"
           @focus="focus"
-          @change="jumpTo"
-        >
-          <template #item="{ item }">
-            <span
-              :class="{
-                'pl-4': item.value.columnName !== '',
-                'text-h5': item.value.columnName === '',
-              }"
-            >
-              {{ item.value.columnName || item.value.sectionName }}
-            </span>
-          </template>
-        </v-autocomplete>
+          @update:model-value="jumpTo"
+        />
         <v-menu
           class="z-above-sidebar"
           offset-y
           nudge-bottom="4px"
           :close-on-click="true"
         >
-          <template #activator="{on, attrs}">
+          <template #activator="{ props }">
             <v-btn
               variant="outlined"
-              v-bind="attrs"
-              v-on="on"
+              v-bind="props"
             >
               <v-icon class="pr-1">
                 mdi-eye
@@ -935,11 +927,10 @@ export default defineComponent({
           :key="templateKey"
           right
         >
-          <template #activator="{on, attrs}">
+          <template #activator="{ props }">
             <div
               style="display: flex;"
-              v-bind="attrs"
-              v-on="on"
+              v-bind="props"
             >
               <v-tab>
                 <v-badge
@@ -1057,10 +1048,9 @@ export default defineComponent({
       <v-tooltip
         top
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <div
-            v-bind="attrs"
-            v-on="on"
+            v-bind="props"
           >
             <v-btn
               color="success"
