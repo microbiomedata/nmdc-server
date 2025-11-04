@@ -84,7 +84,7 @@ export default defineComponent({
       <v-alert
         v-if="!templateHasData('all')"
         color="grey lighten-2"
-        class="mt-3"
+        class="my-3"
       >
         <p class="text-h5">
           DataHarmonizer Template Choice
@@ -115,7 +115,7 @@ export default defineComponent({
     <v-alert
       v-if="!canEditSubmissionByStatus() && packageName.length > 0"
       color="grey lighten-2"
-      class="mt-3"
+      class="my-3"
     >
       <p class="text-h5">
         DataHarmonizer Template
@@ -128,7 +128,7 @@ export default defineComponent({
         depressed
         :to="{ name: 'Multiomics Form' }"
       >
-        <v-icon class="pr-1">
+        <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
         Go to previous step
@@ -142,10 +142,10 @@ export default defineComponent({
           name: 'Submission Sample Editor',
         }"
       >
-        <v-icon class="pr-1">
+        Go to next step
+        <v-icon class="pl-2">
           mdi-arrow-right-circle
         </v-icon>
-        Go to next step
       </v-btn>
     </div>
   </div>

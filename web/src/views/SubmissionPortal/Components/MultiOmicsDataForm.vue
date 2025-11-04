@@ -482,7 +482,7 @@ export default defineComponent({
         depressed
         :to="{ name: 'Study Form' }"
       >
-        <v-icon class="pr-1">
+        <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
         Go to previous step
@@ -495,7 +495,7 @@ export default defineComponent({
         :to="{ name: 'Sample Environment' }"
       >
         Go to next step
-        <v-icon class="pl-1">
+        <v-icon class="pl-2">
           mdi-arrow-right-circle
         </v-icon>
       </v-btn>

@@ -422,13 +422,12 @@ export default defineComponent({
                   bottom
                   max-width="500px"
                 >
-                  <template #activator="{on, attrs}">
+                  <template #activator="{props}">
                     <v-btn
                       icon
                       size="small"
                       variant="plain"
-                      v-bind="attrs"
-                      v-on="on"
+                      v-bind="props"
                     >
                       <v-icon>mdi-help-circle</v-icon>
                     </v-btn>

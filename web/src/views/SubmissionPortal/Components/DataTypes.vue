@@ -23,8 +23,8 @@ export default defineComponent({
   setup(_, { emit }) {
     const dataCaveat = 'You may proceed with your submission for sample metadata capture. However, there will not be place to provide information about your existing sequencing data as the methods are not supported by NMDC Workflows';
 
-    const handleMetagenomeChange = (value: string[]) => {
-      if (!value.includes('mg')) {
+    const handleMetagenomeChange = () => {
+      if (!multiOmicsForm.omicsProcessingTypes.includes('mg')) {
         multiOmicsForm.mgCompatible = undefined;
         multiOmicsForm.mgInterleaved = undefined;
       }
@@ -38,8 +38,8 @@ export default defineComponent({
       emit('revalidate');
     };
 
-    const handleMetatranscriptomeChange = (value: string[]) => {
-      if (!value.includes('mt')) {
+    const handleMetatranscriptomeChange = () => {
+      if (!multiOmicsForm.omicsProcessingTypes.includes('mt')) {
         multiOmicsForm.mtCompatible = undefined;
         multiOmicsForm.mtInterleaved = undefined;
       }
