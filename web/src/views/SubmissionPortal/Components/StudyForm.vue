@@ -136,10 +136,10 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="text-h2">
+    <h1 class="text-h2">
       Study Information
       <submission-docs-link anchor="study" />
-    </div>
+    </h1>
     <div class="text-h5">
       {{ NmdcSchema.classes.Study.description }}
     </div>
@@ -153,95 +153,90 @@ export default defineComponent({
       style="max-width: 1000px;"
       :disabled="!canEditSubmissionMetadata()"
     >
-      <v-text-field
-        v-model="studyForm.studyName"
-        :rules="requiredRules('Name is required',[
-          v => v.length > 6 || 'Study name too short',
-        ])"
-        validate-on-blur
-        label="Study Name *"
-        :hint="Definitions.studyName"
-        persistent-hint
-        variant="outlined"
-        dense
-        class="my-2"
-      />
-      <div class="d-flex">
+      <div class="d-flex flex-column ga-4 mb-4">
         <v-text-field
-          v-model="studyForm.piName"
-          label="Principal Investigator Name"
-          :hint="Definitions.piName"
-          persistent-hint
-          variant="outlined"
-          dense
-          class="my-2 mr-4"
-        />
-        <v-text-field
-          v-model="studyForm.piEmail"
-          label="Principal Investigator Email *"
-          :rules="requiredRules('E-mail is required',[
-            v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+          v-model="studyForm.studyName"
+          :rules="requiredRules('Name is required',[
+            v => v.length > 6 || 'Study name too short',
           ])"
-          :hint="Definitions.piEmail"
+          validate-on-blur
+          label="Study Name *"
+          :hint="Definitions.studyName"
           persistent-hint
-          type="email"
-          required
           variant="outlined"
           dense
-          class="my-2"
+        />
+        <div class="d-flex ga-2">
+          <v-text-field
+            v-model="studyForm.piName"
+            label="Principal Investigator Name"
+            :hint="Definitions.piName"
+            persistent-hint
+            variant="outlined"
+            dense
+          />
+          <v-text-field
+            v-model="studyForm.piEmail"
+            label="Principal Investigator Email *"
+            :rules="requiredRules('E-mail is required',[
+              v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+            ])"
+            :hint="Definitions.piEmail"
+            persistent-hint
+            type="email"
+            required
+            variant="outlined"
+            dense
+          />
+        </div>
+        <v-text-field
+          v-model="studyForm.piOrcid"
+          label="Principal Investigator ORCID"
+          :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid"
+          variant="outlined"
+          :hint="Definitions.piOrcid"
+          persistent-hint
+          dense
+        >
+          <template #message="{ message }">
+            <span v-html="message" />
+          </template>
+        </v-text-field>
+        <v-combobox
+          v-model="studyForm.linkOutWebpage"
+          label="Webpage Links"
+          :hint="Definitions.linkOutWebpage"
+          persistent-hint
+          variant="outlined"
+          dense
+          multiple
+          small-chips
+          clearable
+        />
+        <v-textarea
+          v-model="studyForm.description"
+          label="Study Description"
+          :hint="Definitions.studyDescription"
+          persistent-hint
+          variant="outlined"
+          dense
+        >
+          <template #message="{ message }">
+            <span v-html="message" />
+          </template>
+        </v-textarea>
+        <v-text-field
+          v-model="studyForm.notes"
+          label="Optional Notes"
+          :hint="Definitions.studyOptionalNotes"
+          persistent-hint
+          variant="outlined"
+          dense
         />
       </div>
-      <v-text-field
-        v-model="studyForm.piOrcid"
-        label="Principal Investigator ORCID"
-        :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid"
-        variant="outlined"
-        :hint="Definitions.piOrcid"
-        persistent-hint
-        dense
-        class="my-2"
-      >
-        <template #message="{ message }">
-          <span v-html="message" />
-        </template>
-      </v-text-field>
-      <v-combobox
-        v-model="studyForm.linkOutWebpage"
-        label="Webpage Links"
-        :hint="Definitions.linkOutWebpage"
-        persistent-hint
-        variant="outlined"
-        dense
-        multiple
-        small-chips
-        clearable
-        class="my-2"
-      />
-      <v-textarea
-        v-model="studyForm.description"
-        label="Study Description"
-        :hint="Definitions.studyDescription"
-        persistent-hint
-        variant="outlined"
-        dense
-        class="my-2"
-      >
-        <template #message="{ message }">
-          <span v-html="message" />
-        </template>
-      </v-textarea>
-      <v-text-field
-        v-model="studyForm.notes"
-        label="Optional Notes"
-        :hint="Definitions.studyOptionalNotes"
-        persistent-hint
-        variant="outlined"
-        dense
-        class="my-2"
-      />
-      <div class="text-h4">
+      <h2 class="text-h4">
         Funding Sources
-      </div>
+      </h2>
       <div class="text-body-1 mb-2">
         {{ "Sources of funding for this study." }}
       </div>
