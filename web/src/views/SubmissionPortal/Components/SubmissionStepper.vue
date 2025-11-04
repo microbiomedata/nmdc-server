@@ -48,8 +48,8 @@ export default defineComponent({
 <template>
   <v-stepper
     :model-value="step"
+    bg-color="grey-darken-4"
     class="mb-3 flex-shrink-0"
-    alt-labels
   >
     <v-stepper-header>
       <v-stepper-item
@@ -58,6 +58,7 @@ export default defineComponent({
         :editable="1 < step"
         title="Home"
         subtitle="Begin or resume a submission."
+        color="primary"
         @click="gotoStep(1)"
       />
       <v-divider />
@@ -67,6 +68,7 @@ export default defineComponent({
         :editable="2 < step"
         title="Study Information"
         subtitle="Input Form"
+        color="primary"
         @click="gotoStep(2)"
       />
       <v-divider />
@@ -76,6 +78,7 @@ export default defineComponent({
         :editable="3 < step"
         title="Multi-omics Data"
         subtitle="Input Form"
+        color="primary"
         @click="gotoStep(3)"
       />
       <v-divider />
@@ -85,6 +88,7 @@ export default defineComponent({
         :editable="4 < step"
         title="Sample Environment"
         subtitle="Choose MIxS Extension"
+        color="primary"
         @click="gotoStep(4)"
       />
       <v-divider />
@@ -94,6 +98,7 @@ export default defineComponent({
         :editable="5 < step"
         title="Customize Metadata Export"
         subtitle="DataHarmonizer sample validation"
+        color="primary"
         @click="gotoStep(5)"
       />
     </v-stepper-header>
