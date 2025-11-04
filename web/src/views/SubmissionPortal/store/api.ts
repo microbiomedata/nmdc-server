@@ -13,6 +13,7 @@ import {
   SignedUrl,
   SubmissionImageType,
   SuggestionType,
+  UpdateRecordOptions,
   UploadCompleteRequest,
 } from '@/views/SubmissionPortal/types';
 
@@ -43,8 +44,17 @@ async function createRecord(record: MetadataSubmission, isTestSubmission: boolea
   return resp.data;
 }
 
-async function updateRecord(id: string, record: Partial<MetadataSubmission>, permissions?: Record<string, string>) {
-  const resp = await client.patch<MetadataSubmissionRecord>(`metadata_submission/${id}`, {
+async function updateRecord(
+  id: string,
+  record: Partial<MetadataSubmission>,
+  permissions?: Record<string, string>,
+  options?: UpdateRecordOptions,
+) {
+  let endpoint = `metadata_submission/${id}`;
+  if (options?.skipLockCheck) {
+    endpoint += '?skip_lock_check=true';
+  }
+  const resp = await client.patch<MetadataSubmissionRecord>(endpoint, {
     metadata_submission: record,
     permissions,
   });

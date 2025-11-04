@@ -23,6 +23,7 @@ import {
   PaginatedResponse,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
+import useRequest from '@/use/useRequest';
 
 const headers: DataTableHeader[] = [
   {
@@ -110,6 +111,7 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
+    const assignReviewerRequest = useRequest();
 
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
       await updateSubmissionStatus(item.id, newStatus);
@@ -151,11 +153,18 @@ export default defineComponent({
       selectedSubmission.value = item;
     }
 
-    function addReviewer() {
-      if (!selectedSubmission.value) {
-        return;
-      }
-      updateRecord(selectedSubmission.value.id, selectedSubmission.value, { [reviewerOrcid.value]: 'reviewer' });
+    async function addReviewer() {
+      await assignReviewerRequest.request(async () => {
+        if (!selectedSubmission.value) {
+          return;
+        }
+        await updateRecord(
+          selectedSubmission.value.id,
+          selectedSubmission.value,
+          { [reviewerOrcid.value]: 'reviewer' },
+          { skipLockCheck: true },
+        );
+      });
       isReviewerAssignmentDialogOpen.value = false;
     }
 
@@ -165,6 +174,7 @@ export default defineComponent({
       isTestFilter,
       deleteDialogSubmission,
       currentUser,
+      assignReviewerRequest,
       isReviewerAssignmentDialogOpen,
       reviewerOrcid,
       IconBar,
@@ -509,6 +519,7 @@ export default defineComponent({
           <v-btn
             color="primary"
             class="mt-2"
+            :loading="assignReviewerRequest.loading.value"
             @click="() => addReviewer()"
           >
             Assign Reviewer

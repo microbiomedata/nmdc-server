@@ -1277,7 +1277,9 @@ async def update_submission(
     if new_permissions is not None and can_update_permissions:
         crud.update_submission_contributor_roles(db, submission, new_permissions)
 
-    crud.update_submission_lock(db, submission.id)
+    if not skip_lock_check:
+        crud.update_submission_lock(db, submission.id)
+
     return submission
 
 

@@ -315,3 +315,7 @@ export interface UploadCompleteRequest {
 }
 
 export type SubmissionImageType = 'pi_image' | 'primary_study_image' | 'study_images';
+
+export interface UpdateRecordOptions {
+  skipLockCheck?: boolean;
+}
