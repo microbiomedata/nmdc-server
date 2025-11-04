@@ -1254,8 +1254,16 @@ async def update_submission(
         submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
     if "templates" in body_dict["metadata_submission"]:
         submission.templates = body_dict["metadata_submission"]["templates"]
-    # Update permissions and status if the user is an "owner" or "admin"
-    _update_permissions_and_status(db, submission, body_dict, current_user_role, user)
+
+    # Update permissions if the user is an "owner" or "admin"
+    # TODO: consider whether this can be refactored into a separate endpoint
+    new_permissions = body_dict.get("permissions", None)
+    can_update_permissions = user.is_admin or (
+        current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
+    )
+    if new_permissions and can_update_permissions:
+        crud.update_submission_contributor_roles(db, submission, new_permissions)
+
     crud.update_submission_lock(db, submission.id)
     return submission
 
@@ -1312,45 +1320,6 @@ async def update_submission_status(
             logging.error(f"Failed to create/update Github issue: {str(e)}")
 
     return submission
-
-
-def _update_permissions_and_status(
-    db: Session,
-    submission: SubmissionMetadata,
-    body_dict: dict,
-    current_user_role,
-    user: models.User,
-):
-    """Update permissions and status if user is owner or admin"""
-
-    if (
-        current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
-    ) or user.is_admin:
-        new_permissions = body_dict.get("permissions", None)
-        if new_permissions is not None:
-            crud.update_submission_contributor_roles(db, submission, new_permissions)
-
-        if body_dict.get("status", None):
-            new_status = body_dict["status"]
-
-            # Admins can change to any status
-            if user.is_admin:
-                submission.status = body_dict["status"]
-
-            # Owner can only do select transitions
-            else:
-                allowed_transitions = {
-                    SubmissionStatusEnum.UpdatesRequired.text: SubmissionStatusEnum.InProgress.text,
-                    SubmissionStatusEnum.InProgress.text: SubmissionStatusEnum.SubmittedPendingReview.text,
-                }
-                current_status = submission.status
-                if (
-                    current_status in allowed_transitions
-                    and new_status in allowed_transitions[current_status]
-                    and submission.is_test_submission is False
-                ):
-                    submission.status = body_dict["status"]
-        db.commit()
 
 
 def submitted(stored_status: str, new_status: str, is_test: bool):
