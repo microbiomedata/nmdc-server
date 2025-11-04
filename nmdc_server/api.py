@@ -1241,6 +1241,11 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
+    # If the user has a role on the submission (i.e. not just a random admin) and the status is
+    # "Updates Required", automatically change it to "In Progress" upon edit
+    if current_user_role and submission.status == SubmissionStatusEnum.UpdatesRequired.text:
+        submission.status = SubmissionStatusEnum.InProgress.text
+
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
 
