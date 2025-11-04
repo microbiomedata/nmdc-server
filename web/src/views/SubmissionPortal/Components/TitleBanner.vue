@@ -18,10 +18,10 @@ export default defineComponent({
   <v-container>
     <v-row :style="{ backgroundImage: `url(${heroImage})`, backgroundSize: 'cover' }">
       <v-col class="text-center py-16">
-        <h1 class="white--text">
+        <h1 class="text-white">
           Submission Portal
         </h1>
-        <span class="d-block white--text mt-4">
+        <span class="d-block text-white mt-4">
           Ready to submit data?
         </span>
       </v-col>

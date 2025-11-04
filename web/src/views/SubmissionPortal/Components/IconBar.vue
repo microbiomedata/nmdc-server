@@ -27,7 +27,7 @@ export default defineComponent({});
                 </v-avatar>
               </v-col>
               <v-col>
-                <span class="blue--text text-left text-h6 font-weight-bold">
+                <span class="text-blue text-left text-h6 font-weight-bold">
                   Quickstart
                 </span>
               </v-col>
@@ -53,7 +53,7 @@ export default defineComponent({});
                 </v-avatar>
               </v-col>
               <v-col>
-                <span class="blue--text text-left text-h6 font-weight-bold">
+                <span class="text-blue text-left text-h6 font-weight-bold">
                   Tutorial
                 </span>
               </v-col>
@@ -79,7 +79,7 @@ export default defineComponent({});
                 </v-avatar>
               </v-col>
               <v-col>
-                <span class="blue--text text-left text-h6 font-weight-bold">
+                <span class="text-blue text-left text-h6 font-weight-bold">
                   Reference
                 </span>
               </v-col>

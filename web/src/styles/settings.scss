@@ -13,3 +13,8 @@
 .v-theme--light.v-card--variant-outlined {
   border: thin solid rgba(0, 0, 0, .12);
 }
+
+// Override outlined card border color
+.v-theme--light a {
+  color: rgb(var(--v-theme-primary));
+}

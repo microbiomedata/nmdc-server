@@ -18,7 +18,6 @@ export default defineComponent({
   <v-alert
     class="mt-6 mb-0"
     variant="outlined"
-    text
     type="warning"
     color="primary"
     prominent
@@ -27,7 +26,7 @@ export default defineComponent({
       Login to submit data
     </span>
     <v-btn
-      plain
+      type="plain"
       depressed
       text
       right
@@ -50,9 +49,7 @@ export default defineComponent({
         target="_blank"
         title="Learn about registering an ORCiD"
       >
-        <v-icon
-          v-on="on"
-        >
+        <v-icon>
           mdi-help-circle
         </v-icon>
       </a>
