@@ -78,8 +78,8 @@ export default defineComponent({
   </v-card>
 </template>
 
-<style scoped>
+<style>
 .examples-list ul {
-  padding: 0 0 0 1.5em;
+  padding-left: 1.5em;
 }
 </style>

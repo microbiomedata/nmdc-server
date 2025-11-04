@@ -375,7 +375,6 @@ export default defineComponent({
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
 
     async function jumpTo({ row, column }: { row: number; column: number }) {
-      console.log('Jumping to', row, column);
       harmonizerApi.jumpToRowCol(row, column);
       await nextTick();
       jumpToModel.value = null;
@@ -829,12 +828,12 @@ export default defineComponent({
           item-title="text"
           item-value="value"
           label="Jump to column..."
-          class="shrink mr-2 z-above-sidebar"
+          class="flex-0-0 mr-2 z-above-sidebar"
           variant="outlined"
           density="compact"
           hide-details
-          offset-y
           :menu-props="{ maxHeight: 500 }"
+          width="233"
           @focus="focus"
           @update:model-value="jumpTo"
         />
@@ -1175,6 +1174,10 @@ html {
   height: 100%;
   flex-grow: 1;
   overflow: hidden;
+}
+
+.v-navigation-drawer__scrim {
+  display: none;
 }
 
 /* Grid */
