@@ -187,7 +187,8 @@ export default defineComponent({
 
     function trackFilterConditions(newConditionList: Condition[], oldConditionList: Condition[]) {
       // Do nothing if Google Analytics is not available. This is expected in development mode.
-      if (!gtag) {
+      // Also do nothing if there are no new conditions or if the conditions have not changed (spurious effect).
+      if (!gtag || newConditionList.length === 0 || JSON.stringify(newConditionList) === JSON.stringify(oldConditionList)) {
         return;
       }
       // On initial load, track each filter condition that exists
@@ -200,6 +201,7 @@ export default defineComponent({
             value: condition.value,
           });
         });
+      // If a condition is added or updated, track that condition
       } else if (newConditionList.length > oldConditionList.length || newConditionList.length === oldConditionList.length) {
         gtag.event('filter_added', {
           event_category: 'search',

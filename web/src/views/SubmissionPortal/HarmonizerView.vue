@@ -36,17 +36,23 @@ import {
   mergeSampleData,
   hasChanged,
   tabsValidated,
-  submissionStatus,
+  SubmissionStatusTitleMapping,
   canEditSampleMetadata,
   isOwner,
   addMetadataSuggestions,
   suggestionMode,
   metadataSuggestions,
   isTestSubmission,
+  canEditSubmissionByStatus,
+  SubmissionStatusEnum,
 } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
+import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
+import { stateRefs } from '@/store';
+import { getPendingSuggestions } from '@/store/localStorage';
+import StatusAlert from './Components/StatusAlert.vue';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -103,6 +109,7 @@ export default defineComponent({
     SubmissionStepper,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
+    StatusAlert,
   },
 
   setup() {
@@ -473,7 +480,8 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root?.proxy.$route.params.id as string, 'SubmittedPendingReview');
+      await submit(root.$route.params.id, SubmissionStatusEnum.SubmittedPendingReview.text);
+      status.value = SubmissionStatusEnum.SubmittedPendingReview.text;
       submitDialog.value = false;
     });
 
@@ -599,6 +607,14 @@ export default defineComponent({
       addHooks();
     }
 
+    watch(() => canEditSampleMetadata(), (canEdit) => {
+      if (harmonizerApi.ready.value) {
+        if (!canEdit) {
+          harmonizerApi.setTableReadOnly();
+        }
+      }
+    });
+
     onMounted(async () => {
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
         api.getSubmissionSchema(),
@@ -650,7 +666,8 @@ export default defineComponent({
       validationErrors,
       validationErrorGroups,
       validationTotalCounts,
-      submissionStatus,
+      SubmissionStatusTitleMapping,
+      SubmissionStatusEnum,
       status,
       submitDialog,
       validationSuccessSnackbar,
@@ -659,6 +676,7 @@ export default defineComponent({
       notImportedWorksheetNames,
       emptySheetSnackbar,
       isTestSubmission,
+      StatusAlert,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -669,6 +687,7 @@ export default defineComponent({
       validate,
       changeTemplate,
       canEditSampleMetadata,
+      canEditSubmissionByStatus,
     };
   },
 });
@@ -681,8 +700,9 @@ export default defineComponent({
   >
     <SubmissionStepper />
     <submission-permission-banner
-      v-if="!canEditSampleMetadata()"
+      v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
     />
+    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <div class="d-flex flex-column px-2 pb-2">
       <div class="d-flex align-center">
         <v-btn
@@ -1037,7 +1057,9 @@ export default defineComponent({
         </v-chip>
       </div>
       <v-spacer />
-      <v-tooltip top>
+      <v-tooltip
+        top
+      >
         <template #activator="{ on, attrs }">
           <div
             v-bind="attrs"
@@ -1046,11 +1068,11 @@ export default defineComponent({
             <v-btn
               color="success"
               depressed
-              :disabled="!canSubmit || status !== 'InProgress' || submitCount > 0"
+              :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
               :loading="submitLoading"
-              @click="submitDialog = true"
+              @click="canEditSubmissionByStatus() ? submitDialog = true: null"
             >
-              <span v-if="status === 'SubmittedPendingReview' || submitCount">
+              <span v-if="status === SubmissionStatusEnum.SubmittedPendingReview.text || submitCount">
                 <v-icon>mdi-check-circle</v-icon>
                 Submitted
               </span>
@@ -1102,10 +1124,10 @@ export default defineComponent({
             </v-btn>
           </div>
         </template>
-        <span v-if="!canSubmit">
+        <span v-if="!canSubmit && canEditSubmissionByStatus()">
           You must validate all tabs before submitting your study and metadata.
         </span>
-        <span v-else>
+        <span v-if="canSubmit && canEditSubmissionByStatus()">
           Submit for NMDC review.
         </span>
       </v-tooltip>
@@ -1116,8 +1138,7 @@ export default defineComponent({
 <style lang="scss">
 // Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
 // cannot be nested inside .harmonizer-style-container or else the measurements will be off.
-
-@import 'node_modules/data-harmonizer/lib/dist/es/index.css';
+@import 'node_modules/@microbiomedata/data-harmonizer/lib/dist/es/index';
 
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples

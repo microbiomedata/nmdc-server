@@ -2,7 +2,7 @@ import {
   Ref, ref, nextTick,
 } from 'vue';
 import { debounce } from 'lodash';
-import { DataHarmonizer, Footer } from 'data-harmonizer';
+import { DataHarmonizer, Footer } from '@microbiomedata/data-harmonizer';
 import {
   CellData,
   HARMONIZER_TEMPLATES,

@@ -5,6 +5,11 @@ import {
 import { useRouter } from 'vue-router';
 import { DataOptions, DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
+import {
+  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping,
+} from '../store';
+import * as api from '../store/api';
+import OrcidId from '../../../components/Presentation/OrcidId.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
@@ -81,14 +86,21 @@ export default defineComponent({
       { text: 'Show only test submissions', val: true },
       { text: 'Hide test submissions', val: false }];
 
+    const exclude = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.SubmittedPendingReview.text];
+    const availableStatuses = Object.keys(SubmissionStatusTitleMapping).map((key) => ({
+      value: key,
+      text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      disabled: exclude.includes(key),
+    }));
+
     async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
       return api.listRecords(params, isTestFilter.value);
     }
 
     function getStatus(item: MetadataSubmissionRecord) {
-      const color = item.status === submissionStatus.Released ? 'success' : 'default';
+      const color = item.status === SubmissionStatusEnum.Released.text ? 'success' : 'default';
       return {
-        text: submissionStatus[item.status as keyof typeof submissionStatus] || item.status,
+        text: SubmissionStatusTitleMapping[item.status as keyof typeof SubmissionStatusTitleMapping] || item.status,
         color,
       };
     }
@@ -103,6 +115,13 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
+
+    async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
+      const fullRecord = await api.getRecord(item.id);
+      await updateRecord(item.id, fullRecord.metadata_submission, newStatus, {});
+      await submission.refetch();
+    }
+
     watch(options, () => {
       submission.setPage(options.value.page);
       const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
@@ -158,6 +177,7 @@ export default defineComponent({
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
+      editablebyStatus,
       getStatus,
       resume,
       addReviewer,
@@ -168,6 +188,9 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
+      availableStatuses,
+      handleStatusChange,
+      SubmissionStatusEnum,
     };
   },
 });
@@ -307,12 +330,60 @@ export default defineComponent({
           <template #[`item.date_last_modified`]="{ item }">
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
-          <template #[`item.status`]="{ item }">
-            <v-chip
-              :color="getStatus(item).color"
+          <template #[`header.status`]="{ header }">
+            <v-tooltip
+              v-if="currentUser.is_admin"
+              bottom
             >
-              {{ getStatus(item).text }}
-            </v-chip>
+              <template #activator="{ on, attrs }">
+                <v-icon
+                  class="ml-1"
+                  color="grey"
+                  v-bind="attrs"
+                  v-on="on"
+                >
+                  mdi-information-outline
+                </v-icon>
+              </template>
+              <span>Greyed out options are user-triggered statuses and cannot be changed or selected</span>
+            </v-tooltip>
+            {{ header.text }}
+          </template>
+          <template #[`item.status`]="{ item }">
+            <div class="d-flex align-center">
+              <v-select
+                v-if="currentUser.is_admin && item.status === SubmissionStatusEnum.InProgress.text"
+                :value="item.status"
+                :items="availableStatuses"
+                item-disabled="disabled"
+                dense
+                hide-details
+                disabled
+              >
+                <template #selection="{ item: statusItem }">
+                  {{ statusItem.text }}
+                </template>
+              </v-select>
+              <v-select
+                v-else-if="currentUser.is_admin"
+                :value="item.status"
+                :items="availableStatuses"
+                item-disabled="disabled"
+                dense
+                hide-details
+                @change="(newStatus) => handleStatusChange(item, newStatus)"
+              >
+                <template #selection="{ item: statusItem }">
+                  {{ statusItem.text }}
+                </template>
+              </v-select>
+              <v-chip
+                v-else
+                :color="getStatus(item).color"
+              >
+                {{ getStatus(item).text }}
+              </v-chip>
+            </div>
           </template>
           <template #[`item.action`]="{ item }">
             <div class="d-flex align-center">
@@ -322,10 +393,14 @@ export default defineComponent({
                 color="primary"
                 @click="() => resume(item)"
               >
-                Resume
-                <v-icon class="pl-1">
-                  mdi-arrow-right-circle
-                </v-icon>
+                <span v-if="editablebyStatus(item.status)">
+                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
+                  Resume
+                </span>
+                <span v-else>
+                  <v-icon class="pl-1">mdi-eye</v-icon>
+                  View
+                </span>
               </v-btn>
               <v-menu
                 offset-x

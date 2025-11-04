@@ -20,12 +20,24 @@ import {
   isOwner,
   canEditSubmissionMetadata,
   checkDoiFormat,
+  primaryStudyImageUrl,
+  piImageUrl,
+  canEditSubmissionByStatus,
+  SubmissionStatusTitleMapping,
+  status,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
+import ImageUpload from './ImageUpload.vue';
+import StatusAlert from './StatusAlert.vue';
 
 export default defineComponent({
-  components: { SubmissionDocsLink, SubmissionPermissionBanner },
+  components: {
+    ImageUpload,
+    SubmissionDocsLink,
+    SubmissionPermissionBanner,
+    StatusAlert,
+  },
   setup() {
     const formRef = ref();
 
@@ -129,6 +141,12 @@ export default defineComponent({
       currentUserOrcid,
       permissionHelpText,
       checkDoiFormat,
+      primaryStudyImageUrl,
+      piImageUrl,
+      canEditSubmissionByStatus,
+      SubmissionStatusTitleMapping,
+      status,
+      StatusAlert,
     };
   },
 });
@@ -144,8 +162,9 @@ export default defineComponent({
       {{ NmdcSchema.classes.Study.description }}
     </div>
     <submission-permission-banner
-      v-if="!canEditSubmissionMetadata()"
+      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
+    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-form
       ref="formRef"
       v-model="studyFormValid"
@@ -153,92 +172,127 @@ export default defineComponent({
       style="max-width: 1000px;"
       :disabled="!canEditSubmissionMetadata()"
     >
-      <div class="d-flex flex-column ga-4 mb-4">
-        <v-text-field
-          v-model="studyForm.studyName"
-          :rules="requiredRules('Name is required',[
-            v => v.length > 6 || 'Study name too short',
-          ])"
-          validate-on-blur
-          label="Study Name *"
-          :hint="Definitions.studyName"
-          persistent-hint
-          variant="outlined"
-          dense
-        />
-        <div class="d-flex ga-2">
-          <v-text-field
-            v-model="studyForm.piName"
-            label="Principal Investigator Name"
-            :hint="Definitions.piName"
-            persistent-hint
-            variant="outlined"
-            dense
-          />
-          <v-text-field
-            v-model="studyForm.piEmail"
-            label="Principal Investigator Email *"
-            :rules="requiredRules('E-mail is required',[
-              v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
-            ])"
-            :hint="Definitions.piEmail"
-            persistent-hint
-            type="email"
-            required
-            variant="outlined"
-            dense
-          />
-        </div>
-        <v-text-field
-          v-model="studyForm.piOrcid"
-          label="Principal Investigator ORCID"
-          :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid"
-          variant="outlined"
-          :hint="Definitions.piOrcid"
-          persistent-hint
-          dense
-        >
-          <template #message="{ message }">
-            <span v-html="message" />
-          </template>
-        </v-text-field>
-        <v-combobox
-          v-model="studyForm.linkOutWebpage"
-          label="Webpage Links"
-          :hint="Definitions.linkOutWebpage"
-          persistent-hint
-          variant="outlined"
-          dense
-          multiple
-          small-chips
-          clearable
-        />
-        <v-textarea
-          v-model="studyForm.description"
-          label="Study Description"
-          :hint="Definitions.studyDescription"
-          persistent-hint
-          variant="outlined"
-          dense
-        >
-          <template #message="{ message }">
-            <span v-html="message" />
-          </template>
-        </v-textarea>
-        <v-text-field
-          v-model="studyForm.notes"
-          label="Optional Notes"
-          :hint="Definitions.studyOptionalNotes"
-          persistent-hint
-          variant="outlined"
-          dense
-        />
+      <v-text-field
+        v-model="studyForm.studyName"
+        :rules="requiredRules('Name is required',[
+          v => v.length > 6 || 'Study name too short',
+        ])"
+        validate-on-blur
+        label="Study Name *"
+        :hint="Definitions.studyName"
+        persistent-hint
+        outlined
+        dense
+        class="my-2"
+      />
+      <v-textarea
+        v-model="studyForm.description"
+        label="Study Description"
+        :hint="Definitions.studyDescription"
+        persistent-hint
+        outlined
+        dense
+        class="my-2"
+      >
+        <template #message="{ message }">
+          <span v-html="message" />
+        </template>
+      </v-textarea>
+      <v-combobox
+        v-model="studyForm.linkOutWebpage"
+        label="Webpage Links"
+        :hint="Definitions.linkOutWebpage"
+        persistent-hint
+        outlined
+        dense
+        multiple
+        small-chips
+        clearable
+        class="my-2"
+      />
+      <v-text-field
+        v-model="studyForm.notes"
+        label="Optional Notes"
+        :hint="Definitions.studyOptionalNotes"
+        persistent-hint
+        outlined
+        dense
+        class="my-2"
+      />
+      <ImageUpload
+        input-label="Study Image"
+        :input-hint="Definitions.studyImage"
+        input-icon="mdi-image"
+        :image-url="primaryStudyImageUrl"
+        image-type="primary_study_image"
+        @on-upload-success="(updated) => {
+          primaryStudyImageUrl = updated.primary_study_image_url;
+        }"
+        @on-delete-success="() => {
+          primaryStudyImageUrl = null
+        }"
+      />
+
+      <div class="text-h4 mt-8">
+        Principal Investigator
       </div>
-      <h2 class="text-h4">
+      <v-text-field
+        v-model="studyForm.piName"
+        label="Name"
+        :hint="Definitions.piName"
+        persistent-hint
+        outlined
+        dense
+        class="my-2"
+      />
+      <v-text-field
+        v-model="studyForm.piEmail"
+        label="Email *"
+        :rules="requiredRules('E-mail is required',[
+          v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+        ])"
+        :hint="Definitions.piEmail"
+        persistent-hint
+        type="email"
+        required
+        outlined
+        dense
+        class="my-2"
+      />
+      <v-text-field
+        v-model="studyForm.piOrcid"
+        label="ORCID iD"
+        :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid"
+        outlined
+        :hint="Definitions.piOrcid"
+        persistent-hint
+        dense
+        class="my-2"
+      >
+        <template #message="{ message }">
+          <span v-html="message" />
+        </template>
+      </v-text-field>
+      <ImageUpload
+        is-avatar
+        input-label="Image"
+        :input-hint="Definitions.piHeadshotImage"
+        input-icon="mdi-account-box"
+        :image-url="piImageUrl"
+        image-type="pi_image"
+        @on-upload-success="(updated) => {
+          piImageUrl = updated.pi_image_url;
+        }"
+        @on-delete-success="() => {
+          piImageUrl = null
+        }"
+      />
+
+      <div class="text-h4 mt-8">
         Funding Sources
       </h2>
       <div class="text-body-1 mb-2">
-        {{ "Sources of funding for this study." }}
+        Sources of funding for this study.
       </div>
       <div
         v-for="_, i in studyForm.fundingSources"
@@ -288,7 +342,8 @@ export default defineComponent({
       <template #message="{ message }">
         <span v-html="message" />
       </template>
-      <div class="text-h4">
+
+      <div class="text-h4 mt-8">
         Contributors
       </div>
       <div class="text-body-1 mb-2">
@@ -412,17 +467,61 @@ export default defineComponent({
         Add Contributor
       </v-btn>
 
-      <div class="d-flex flex-column ga-4">
-        <h3 class="text-h4">
-          Data DOIs
-        </h3>
-        <div class="text-body-1">
-          {{ "Data DOIs for this study" }}
-        </div>
-        <div
-          v-for="_, i in studyForm.dataDois"
-          :key="`dataDois${i}`"
-          class="d-flex"
+      <div class="text-h4 mt-8">
+        Data DOIs
+      </div>
+      <div class="text-body-1 mb-2">
+        Data DOIs for this study
+      </div>
+      <div
+        v-for="_, i in studyForm.dataDois"
+        :key="`dataDois${i}`"
+        class="d-flex"
+      >
+        <v-card class="d-flex flex-column grow pa-4 mb-4">
+          <div class="d-flex">
+            <v-text-field
+              v-if="studyForm.dataDois !== null"
+              v-model="studyForm.dataDois[i].value"
+              label="Data DOI value *"
+              :hint="Definitions.dataDoiValue"
+              persistent-hint
+              outlined
+              dense
+              required
+              class="mb-2 mr-3"
+              :rules="requiredRules('DOI value must be provided',[
+                v => checkDoiFormat(v) || 'DOI must be valid',
+              ])"
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-text-field>
+            <v-select
+              v-if="studyForm.dataDois !== null"
+              v-model="studyForm.dataDois[i].provider"
+              label="Data DOI Provider *"
+              :hint="Definitions.dataDoiProvider"
+              :items="doiProviderValues"
+              persistent-hint
+              outlined
+              dense
+              clearable
+              class="mb-2 mr-3"
+              :rules="studyForm.dataDois[i].provider ? undefined : ['A provider must be selected.']"
+            >
+              <template #message="{ message }">
+                <span v-html="message" />
+              </template>
+            </v-select>
+          </div>
+        </v-card>
+        <v-btn
+          v-if="studyForm.dataDois !== null"
+          icon
+          :disabled="!isOwner()"
+          @click="studyForm.dataDois.splice(i, 1)"
         >
           <v-card class="d-flex flex-column grow pa-4 mb-4">
             <div class="d-flex">
@@ -488,38 +587,50 @@ export default defineComponent({
           </v-btn>
         </div>
       </div>
-      <div class="d-flex flex-column ga-4">
-        <h3 class="text-h4">External Identifiers</h3>
-        <v-text-field
-          v-model="studyForm.GOLDStudyId"
-          label="GOLD Study ID"
-          :hint="Definitions.studyGoldID"
-          persistent-hint
-          variant="outlined"
-          dense
-        />
-        <v-text-field
-          v-model="studyForm.NCBIBioProjectId"
-          label="NCBI BioProject Accession"
-          :hint="Definitions.studyNCBIBioProjectAccession"
-          persistent-hint
-          variant="outlined"
-          dense
-        />
-        <v-combobox
-          v-model="studyForm.alternativeNames"
-          label="Alternative Names / IDs"
-          :hint="Definitions.studyAlternativeNames"
-          persistent-hint
-          deletable-chips
-          multiple
-          variant="outlined"
-          chips
-          small-chips
-          dense
-          append-icon=""
-        />
+      <v-btn
+        class="mb-4"
+        depressed
+        :disabled="!canEditSubmissionMetadata()"
+        @click="addDataDoi"
+      >
+        <v-icon class="pr-1">
+          mdi-plus-circle
+        </v-icon>
+        Add Data DOI
+      </v-btn>
+
+      <div class="text-h4 mt-8">
+        External Identifiers
       </div>
+      <v-text-field
+        v-model="studyForm.GOLDStudyId"
+        label="GOLD Study ID"
+        :hint="Definitions.studyGoldID"
+        persistent-hint
+        outlined
+        dense
+      />
+      <v-text-field
+        v-model="studyForm.NCBIBioProjectId"
+        label="NCBI BioProject Accession"
+        :hint="Definitions.studyNCBIBioProjectAccession"
+        persistent-hint
+        outlined
+        dense
+      />
+      <v-combobox
+        v-model="studyForm.alternativeNames"
+        label="Alternative Names / IDs"
+        :hint="Definitions.studyAlternativeNames"
+        persistent-hint
+        deletable-chips
+        multiple
+        outlined
+        chips
+        small-chips
+        dense
+        append-icon=""
+      />
     </v-form>
     <strong>* indicates required field</strong>
     <div class="d-flex mt-5">

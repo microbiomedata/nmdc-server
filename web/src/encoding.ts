@@ -229,7 +229,7 @@ function makeSetsFromBitmask(mask_str: string) {
   const sets = [];
 
   /* eslint-disable no-bitwise */
-  if ((1 << 1) & mask) {
+  if ((1 << 2) & mask) {
     sets.push('NOM');
   }
   if ((1 << 6) & mask) {
@@ -244,7 +244,7 @@ function makeSetsFromBitmask(mask_str: string) {
   if ((1 << 5) & mask) {
     sets.push('MG');
   }
-  if ((1 << 2) & mask) {
+  if ((1 << 1) & mask) {
     sets.push('LIP');
   }
   if (1 & mask) {
@@ -678,8 +678,8 @@ const MultiomicsValue = {
   MG: 0b0100000,
   MP: 0b0010000,
   MT: 0b0001000,
-  LIP: 0b0000100,
-  NOM: 0b0000010,
+  NOM: 0b0000100,
+  LIP: 0b0000010,
   AMP: 0b0000001,
 };
 

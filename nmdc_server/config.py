@@ -65,6 +65,9 @@ class Settings(BaseSettings):
     zip_streamer_chunk_size_bytes: int = 2 * 1024 * 1024
     zip_streamer_nersc_data_base_url: str = "https://data.microbiomedata.org/data"
 
+    # for single file downloads (not bulk downloads)
+    nersc_data_url_external_replacement_prefix: str = "https://data.microbiomedata.org/data"
+
     # for cloud storage
     gcs_use_fake: bool = True
     """If true, use the fake GCS server for local development."""
@@ -82,7 +85,15 @@ class Settings(BaseSettings):
     frontend will use, so it should typically refer to the localhost address."""
 
     gcs_project_id: str | None = None
-    """The GCS project ID. This is only required if gcs_use_fake is False."""
+    """The GCS project ID.
+
+    This is only required when either (a) `gcs_use_fake` is `False` or (b) you will be running
+    the ingest script with its `--swap-google-secrets` flag.
+
+    TODO: Consider renaming to `gcp_project_id` so as to not imply it is only used for GCS,
+          since the ingest script uses it to access Google Secret Manager (i.e. a non-GCS
+          part of GCP).
+    """
 
     gcs_object_name_prefix: str
     """Prefix for GCS object names.
@@ -92,6 +103,12 @@ class Settings(BaseSettings):
 
     gcs_submission_images_bucket_name: str = "nmdc-submission-images"
     """The name of the GCS bucket used for submission images."""
+
+    gcs_public_images_bucket_name: str = "nmdc-public-images"
+    """The name of the GCS bucket used for public images."""
+
+    google_map_api_key: Optional[str] = None
+    """The API key from Google to access the Google Map API."""
 
     max_submission_image_file_size_bytes: int = 25 * 1000 * 1000  # 25 MB
     """The maximum size of a single submission image file in bytes."""
@@ -143,6 +160,23 @@ class Settings(BaseSettings):
     rancher_project_id: Optional[str] = None
     rancher_postgres_secret_id: Optional[str] = None
     rancher_backend_workload_id: Optional[str] = None
+
+    # Google Secret Manager information used to swap databases after ingest.
+    gcp_primary_postgres_uri_secret_id: Optional[str] = None
+    """The ID of the Google Secret Manager secret containing the primary Postgres URI.
+
+    This is only required when running the ingest script with its `--swap-google-secrets` flag.
+
+    Note: Google's own documentation sometimes refers to this as the "name" of the secret
+          (e.g., `my-secret`). It is _not_ the full resource path of the secret
+          (e.g., `projects/12345678/secrets/my-secret/versions/123`).
+    """
+
+    gcp_secondary_postgres_uri_secret_id: Optional[str] = None
+    """The ID of the Google Secret Manager secret containing the secondary Postgres URI.
+
+    This is only required when running the ingest script with its `--swap-google-secrets` flag.
+    """
 
     # Parameters related to posting messages to Slack.
     # Reference: https://api.slack.com/messaging/webhooks

@@ -86,7 +86,7 @@ class MultiOmicsForm(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-class NmcdAddress(BaseModel):
+class NmdcAddress(BaseModel):
     name: str
     email: str
     phone: str
@@ -99,7 +99,7 @@ class NmcdAddress(BaseModel):
 
 
 class AddressForm(BaseModel):
-    shipper: NmcdAddress
+    shipper: NmdcAddress
     expectedShippingDate: Optional[datetime] = None
     shippingConditions: str
     sample: str

@@ -435,6 +435,28 @@
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/@modyfi/vite-plugin-yaml/-/vite-plugin-yaml-1.1.1.tgz#f3d85a76aebbbe3c143e8f783a59ce1dcf391670"
   integrity sha512-rEbfFNlMGLKpAYs2RsfLAhxCHFa6M4QKHHk0A4EYcCJAUwFtFO6qiEdLjUGUTtnRUxAC7GxxCa+ZbeUILSDvqQ==
+"@microbiomedata/data-harmonizer@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@microbiomedata/data-harmonizer/-/data-harmonizer-1.7.0.tgz#cc523e4ff72532bc6c0c05570b6d09aeb89123f2"
+  integrity sha512-IOj2OfS4jST80cz1Pzx9walrPzIej3YQb2FAFr8slzfkm/ujDyv8Y7il+uODxCZFjR9VJKu6Jv0HlrAAQq4wYw==
+  dependencies:
+    "@selectize/selectize" "^0.13.5"
+    date-fns "^2.28.0"
+    file-saver "^2.0.5"
+    flatpickr "^4.6.13"
+    handsontable "13.1.0"
+    linkify-it "^4.0.1"
+    markdown-it "^13.0.2"
+    punycode "^2.3.1"
+    rollup-plugin-polyfill-node "^0.12.0"
+    sheetclip "^0.3.0"
+    sifter "^0.5.4"
+    xlsx "^0.18.5"
+
+"@mrmlnc/readdir-enhanced@^2.2.1":
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"
+  integrity sha512-bPHp6Ji8b41szTOcaP63VlnbbO5Ny6dwAATtY6JTjh5N2OLrb5Qk/Th5cRkRQhkWCt+EJsYrNB0MiL+Gpn6e3g==
   dependencies:
     "@rollup/pluginutils" "5.1.0"
     js-yaml "4.1.0"

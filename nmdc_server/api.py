@@ -5,7 +5,7 @@ import time
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
 import httpx
@@ -21,7 +21,12 @@ from nmdc_server import crud, models, query, schemas, schemas_submission
 from nmdc_server.auth import admin_required, get_current_user, login_required_responses
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
-from nmdc_server.crud import context_edit_roles, get_submission_for_user
+from nmdc_server.crud import (
+    DataObjectReportVariant,
+    context_edit_roles,
+    get_submission_for_user,
+    replace_nersc_data_url_prefix,
+)
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
@@ -170,6 +175,44 @@ async def get_admin_stats(
     """
 
     return crud.get_admin_stats(db)
+
+
+@router.get("/admin/data_object_report", name="Get a data object report")
+async def get_data_object_report(
+    db: Session = Depends(get_db),
+    user: models.User = Depends(admin_required),
+    variant: DataObjectReportVariant = Query(
+        DataObjectReportVariant.normal,
+        description="Whether you want the report to include only URLs.",
+    ),
+):
+    r"""
+    Returns a TSV-formatted report about all `DataObject`s that are the output
+    of any `WorkflowExecution`.
+    """
+
+    header_row, data_rows = crud.get_data_object_report(db, variant=variant)
+
+    # Build the report as an in-memory TSV "file" (buffer).
+    # Reference: https://docs.python.org/3/library/csv.html#csv.writer
+    buffer = StringIO()
+    writer = csv.writer(buffer, delimiter="\t")
+    writer.writerow(header_row)
+    writer.writerows(data_rows)
+
+    # Reset the buffer's internal file pointer to the beginning of the buffer, so that,
+    # when we stream the buffer's contents later, all of its contents are included.
+    buffer.seek(0)
+
+    # Stream the buffer's contents to the HTTP client as a downloadable TSV file.
+    filename = "data-object-report.tsv"
+    response = StreamingResponse(
+        buffer,
+        media_type="text/tab-separated-values",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
+
+    return response
 
 
 @router.post(
@@ -603,6 +646,11 @@ async def download_data_object(
     if url is None:
         raise HTTPException(status_code=404, detail="DataObject has no url reference")
 
+    # Overwrite the prefix of the URL if it refers to a data file hosted at NERSC.
+    url = replace_nersc_data_url_prefix(
+        url=url, replacement_url_prefix=settings.nersc_data_url_external_replacement_prefix
+    )
+
     file_download = schemas.FileDownloadCreate(
         ip=ip,
         user_agent=user_agent,
@@ -623,6 +671,12 @@ async def get_data_object_html_content(data_object_id: str, db: Session = Depend
     url = data_object.url
     if url is None:
         raise HTTPException(status_code=404, detail="DataObject has no url reference")
+
+    # Overwrite the prefix of the URL if it refers to a data file hosted at NERSC.
+    url = replace_nersc_data_url_prefix(
+        url=url, replacement_url_prefix=settings.nersc_data_url_external_replacement_prefix
+    )
+
     if data_object.file_type in [
         "Kraken2 Krona Plot",
         "GOTTCHA2 Krona Plot",
@@ -1118,7 +1172,7 @@ async def get_submission(
     raise HTTPException(status_code=403, detail="Must have access.")
 
 
-def can_save_submission(role: models.SubmissionRole, data: dict):
+def can_save_submission(role: models.SubmissionRole, data: dict, status: str):
     """Compare a patch payload with what the user can actually save."""
     metadata_contributor_fields = set(["sampleData", "metadata_submission"])
     editor_fields = set(
@@ -1141,13 +1195,16 @@ def can_save_submission(role: models.SubmissionRole, data: dict):
         models.SubmissionEditorRole.metadata_contributor: metadata_contributor_fields,
     }
     permission_level = models.SubmissionEditorRole(role.role)
-    if permission_level == models.SubmissionEditorRole.owner:
-        return True
-    elif permission_level == models.SubmissionEditorRole.viewer:
-        return False
+    if status in [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.UpdatesRequired.text]:
+        if permission_level == models.SubmissionEditorRole.owner:
+            return True
+        elif permission_level == models.SubmissionEditorRole.viewer:
+            return False
+        else:
+            allowed_fields = fields_for_permission[permission_level]
+            return all([field in allowed_fields for field in attempted_patch_fields])
     else:
-        allowed_fields = fields_for_permission[permission_level]
-        return all([field in allowed_fields for field in attempted_patch_fields])
+        return False
 
 
 @router.patch(
@@ -1169,7 +1226,11 @@ async def update_submission(
 
     current_user_role = crud.get_submission_role(db, id, user.orcid)
     if not (
-        user.is_admin or (current_user_role and can_save_submission(current_user_role, body_dict))
+        user.is_admin
+        or (
+            current_user_role
+            and can_save_submission(current_user_role, body_dict, submission.status)
+        )
     ):
         raise HTTPException(403, detail="Must have access.")
 
@@ -1181,13 +1242,12 @@ async def update_submission(
         )
 
     # Create GitHub issue when metadata is being submitted and not a test submission
-    if (
-        submission.status == SubmissionStatusEnum.InProgress.text
-        and body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
-        and submission.is_test_submission is False
-    ):
+    if submitted(submission.status, body_dict.get("status", None), submission.is_test_submission):
         submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
-        create_github_issue(submission_model, user)
+        try:
+            create_github_issue(submission_model, user)
+        except Exception as e:
+            logging.error(f"Failed to create/update Github issue: {str(e)}")
 
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
@@ -1203,6 +1263,20 @@ async def update_submission(
     if "templates" in body_dict["metadata_submission"]:
         submission.templates = body_dict["metadata_submission"]["templates"]
     # Update permissions and status if the user is an "owner" or "admin"
+    _update_permissions_and_status(db, submission, body_dict, current_user_role, user)
+    crud.update_submission_lock(db, submission.id)
+    return submission
+
+
+def _update_permissions_and_status(
+    db: Session,
+    submission: SubmissionMetadata,
+    body_dict: dict,
+    current_user_role,
+    user: models.User,
+):
+    """Update permissions and status if user is owner or admin"""
+
     if (
         current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
     ) or user.is_admin:
@@ -1211,17 +1285,48 @@ async def update_submission(
             crud.update_submission_contributor_roles(db, submission, new_permissions)
 
         if body_dict.get("status", None):
-            if (
-                body_dict.get("status", None) == SubmissionStatusEnum.SubmittedPendingReview.text
-                and submission.is_test_submission is False
-            ):
+            new_status = body_dict["status"]
+
+            # Admins can change to any status
+            if user.is_admin:
                 submission.status = body_dict["status"]
+
+            # Owner can only do select transitions
+            else:
+                allowed_transitions = {
+                    SubmissionStatusEnum.UpdatesRequired.text: SubmissionStatusEnum.InProgress.text,
+                    SubmissionStatusEnum.InProgress.text: SubmissionStatusEnum.SubmittedPendingReview.text,
+                }
+                current_status = submission.status
+                if (
+                    current_status in allowed_transitions
+                    and new_status in allowed_transitions[current_status]
+                    and submission.is_test_submission is False
+                ):
+                    submission.status = body_dict["status"]
         db.commit()
-    crud.update_submission_lock(db, submission.id)
-    return submission
+
+
+def submitted(stored_status: str, new_status: str, is_test: bool):
+    """
+    Determine if submission was submitted based on status change
+    """
+
+    if (
+        stored_status == SubmissionStatusEnum.InProgress.text
+        and new_status == SubmissionStatusEnum.SubmittedPendingReview.text
+        and is_test is False
+    ):
+        return True
+    else:
+        return False
 
 
 def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
+    """
+    Create or update a Github issue depending on if an issue exists for the submission id.
+    Updates all matching issues if there's more than one, but should typically be one.
+    """
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     assignee = settings.github_issue_assignee
@@ -1229,62 +1334,165 @@ def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema,
     if gh_url is None or token is None:
         return None
 
-    # Gathering the fields we want to display in the issue
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
-    study_form = submission.metadata_submission.studyForm
-    multiomics_form = submission.metadata_submission.multiOmicsForm
-    pi_name = study_form.piName
-    pi_orcid = study_form.piOrcid
-    data_generated = "Yes" if multiomics_form.dataGenerated else "No"
-    omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
-    sample_types = ", ".join(submission.metadata_submission.templates)
-    num_samples = submission.sample_count
 
-    # some variable data to supply depending on if data has been generated or not
-    id_dict = {
-        "NCBI ID: ": study_form.NCBIBioProjectId,
-        "GOLD ID: ": study_form.GOLDStudyId,
-        "JGI ID: ": multiomics_form.JGIStudyId,
-        "EMSL ID: ": multiomics_form.studyNumber,
-        "Alternative IDs: ": ", ".join(study_form.alternativeNames),
-    }
-    valid_ids = []
-    for key, value in id_dict.items():
-        if str(value) != "":
-            valid_ids.append(key + value)
+    # Check for existing issues first
+    existing_issues = check_existing_github_issues(submission.id, headers, gh_url, user)
 
-    # assemble the body of the API request
-    body_lis = [
-        f"Issue created from host: {settings.host}",
-        f"Submitter: {user.name}, {user.orcid}",
-        f"Submission ID: {submission.id}",
-        f"Has data been generated: {data_generated}",
-        f"PI name: {pi_name}",
-        f"PI orcid: {pi_orcid}",
-        f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
-        f"Data types: {omics_processing_types}",
-        f"Sample type: {sample_types}",
-        f"Number of samples: {num_samples}",
-    ] + valid_ids
-    body_string = " \n ".join(body_lis)
-    payload_dict = {
-        "title": f"NMDC Submission: {submission.id}",
-        "body": body_string,
-        "assignees": [assignee],
-    }
+    if existing_issues is None:
 
-    payload = json.dumps(payload_dict)
+        # Gathering the fields we want to display in the issue
+        study_form = submission.metadata_submission.studyForm
+        multiomics_form = submission.metadata_submission.multiOmicsForm
+        pi_name = study_form.piName
+        pi_orcid = study_form.piOrcid
+        data_generated = "Yes" if multiomics_form.dataGenerated else "No"
+        omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
+        sample_types = ", ".join(submission.metadata_submission.templates)
+        num_samples = submission.sample_count
 
-    # make request and log an error or success depending on reply
-    res = requests.post(url=gh_url, data=payload, headers=headers)
-    if res.status_code != 201:
-        logging.error(f"Github issue creation failed with code {res.status_code}")
-        logging.error(res.reason)
+        # some variable data to supply depending on if data has been generated or not
+        id_dict = {
+            "NCBI ID: ": study_form.NCBIBioProjectId,
+            "GOLD ID: ": study_form.GOLDStudyId,
+            "JGI ID: ": multiomics_form.JGIStudyId,
+            "EMSL ID: ": multiomics_form.studyNumber,
+            "Alternative IDs: ": ", ".join(study_form.alternativeNames),
+        }
+        valid_ids = []
+        for key, value in id_dict.items():
+            if str(value) != "":
+                valid_ids.append(key + value)
+
+        # assemble the body of the API request
+        body_lis = [
+            f"Issue created from host: {settings.host}",
+            f"Submitter: {user.name}, {user.orcid}",
+            f"Submission ID: {submission.id}",
+            f"Has data been generated: {data_generated}",
+            f"PI name: {pi_name}",
+            f"PI orcid: {pi_orcid}",
+            f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
+            f"Data types: {omics_processing_types}",
+            f"Sample type: {sample_types}",
+            f"Number of samples: {num_samples}",
+        ] + valid_ids
+        body_string = " \n ".join(body_lis)
+        payload_dict = {
+            "title": f"NMDC Submission: {submission.id}",
+            "body": body_string,
+            "assignees": [assignee],
+        }
+
+        payload = json.dumps(payload_dict)
+
+        # make request and log an error or success depending on reply
+        res = requests.post(url=gh_url, data=payload, headers=headers)
+        if res.status_code != 201:
+            logging.error(f"Github issue creation failed with code {res.status_code}")
+            logging.error(res.reason)
+
+        else:
+            logging.info(f"Github issue creation successful with code {res.status_code}")
+            logging.info(res.reason)
+
     else:
-        logging.info(f"Github issue creation successful with code {res.status_code}")
-        logging.info(res.reason)
+        for issue in existing_issues:
+            try:
+                update_github_issue_for_resubmission(issue, user, headers)
+            except Exception as e:
+                logging.error(f"Failed to update existing GitHub issue: {str(e)}")
 
-    return res
+
+def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str, user):
+    """
+    Check if GitHub issues already exist for the given submission ID using GitHub's search API.
+    Searches for submission id anywhere on issue, ignoring format for longevity.
+    Returns list of matching issues.
+    """
+    submission_id_string = str(submission_id)
+    params = {
+        "state": "all",
+        "per_page": 100,
+    }
+
+    try:
+        response = requests.get(gh_url, headers=headers, params=cast(Any, params))
+
+        if response.status_code != 200:
+            logging.error(
+                f"Request to search Github issues succeeded but API returned error {response.status_code} - {response.text}"
+            )
+            return None
+
+    except requests.RequestException as e:
+        logging.error(f"Request failed to check existing GitHub issues: {str(e)}")
+        return None
+
+    issues = response.json()
+
+    # Look for an issue with matching submission id anywhere in github
+    matching_issues = []
+    for issue in issues:
+        title = issue.get("title", "") or ""
+        body = issue.get("body", "") or ""
+
+        if submission_id_string in title or submission_id_string in body:
+            matching_issues.append(issue)
+
+    if len(matching_issues) > 0:
+        return matching_issues  # list of matching github issues
+    else:
+        return None  # No matching github issues
+
+
+def update_github_issue_for_resubmission(existing_issue, user, headers):
+    """
+    Update an existing GitHub issue to note that the submission was resubmitted.
+    Adds a comment and reopens the issue if it was closed.
+    Returns nothing if update succesfully made.
+    """
+    issue_url = existing_issue.get("url")  # API URL for the issue
+
+    # Create a comment noting the resubmission
+    from datetime import datetime
+
+    timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
+    comment_body = f"""
+## 🔄 Submission Resubmitted
+
+**Resubmitted by:** {user.name} ({user.orcid})
+**Timestamp:** {timestamp}
+**Status:** {SubmissionStatusEnum.SubmittedPendingReview.text}
+
+The submission has been updated and resubmitted for review.
+    """.strip()
+
+    # Add comment to the issue
+    comment_url = f"{issue_url}/comments"
+    comment_payload = {"body": comment_body}
+
+    comment_response = requests.post(comment_url, headers=headers, data=json.dumps(comment_payload))
+
+    if comment_response.status_code != 201:
+        raise HTTPException(
+            status_code=comment_response.status_code,
+            detail=f"Failed to add comment to GitHub issue: {comment_response.reason}",
+        )
+
+    # If the issue is closed, reopen it
+    if existing_issue.get("state") == "closed":
+        reopen_payload = {"state": "open", "state_reason": "reopened"}
+
+        reopen_response = requests.patch(
+            issue_url, headers=headers, data=json.dumps(reopen_payload)
+        )
+
+        if reopen_response.status_code != 200:
+            raise HTTPException(
+                status_code=reopen_response.status_code,
+                detail=f"Failed to reopen GitHub issue: {reopen_response.reason}",
+            )
 
 
 @router.delete(
@@ -1491,6 +1699,52 @@ async def generate_signed_upload_url(
         BucketName.SUBMISSION_IMAGES,
         f"{settings.gcs_object_name_prefix}/{id}/{uuid4().hex}-{sanitized_filename}",
         content_type=body.content_type,
+    )
+
+
+@router.post(
+    "/metadata_submission/{id}/image/make_public",
+    response_model=schemas.SubmissionImagesMakePublicResponse,
+)
+async def make_submission_images_public(
+    id: str,
+    body: schemas.SubmissionImagesMakePublicRequest,
+    user: models.User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> schemas.SubmissionImagesMakePublicResponse:
+    """Copy the submission's images into the public images bucket and return their public URLs.
+
+    This operation is only allowed for admin users. It is intended to be called as part of the
+    process of translating submission data into nmdc-schema compatible data. We make a public copy
+    instead of changing the permissions of the original image because the submission images
+    bucket uses uniform bucket-level access, which means we can't change the permissions of
+    individual objects.
+    """
+    if not user.is_admin:
+        raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
+
+    submission = get_submission_for_user(db, id, user)
+
+    def make_public(image: Optional[SubmissionImagesObject]) -> Optional[str]:
+        """Make a copy of the given image in the public images bucket and return its public URL."""
+        if image is None:
+            return None
+        public_object = storage.copy_object(
+            image.name,
+            from_bucket=BucketName.SUBMISSION_IMAGES,
+            to_bucket=BucketName.PUBLIC_IMAGES,
+            new_name=image.name.replace(id, body.study_id),
+        )
+        return public_object.public_url
+
+    public_pi_image = make_public(submission.pi_image)
+    public_primary_study_image = make_public(submission.primary_study_image)
+    public_study_image_urls = [make_public(img) for img in submission.study_images]
+
+    return schemas.SubmissionImagesMakePublicResponse(
+        pi_image_url=public_pi_image,
+        primary_study_image_url=public_primary_study_image,
+        study_image_urls=public_study_image_urls,
     )
 
 
