@@ -15,7 +15,7 @@ import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
-import { deleteSubmission, updateRecord } from '../store/api';
+import { deleteSubmission, updateRecord, updateSubmissionStatus } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
   MetadataSubmissionRecord,
@@ -112,8 +112,7 @@ export default defineComponent({
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
 
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
-      const fullRecord = await api.getRecord(item.id);
-      await updateRecord(item.id, fullRecord.metadata_submission, newStatus, {});
+      await updateSubmissionStatus(item.id, newStatus);
       await submission.refetch();
     }
 
@@ -156,7 +155,7 @@ export default defineComponent({
       if (!selectedSubmission.value) {
         return;
       }
-      updateRecord(selectedSubmission.value.id, selectedSubmission.value, selectedSubmission.value.status, { [reviewerOrcid.value]: 'reviewer' });
+      updateRecord(selectedSubmission.value.id, selectedSubmission.value, { [reviewerOrcid.value]: 'reviewer' });
       isReviewerAssignmentDialogOpen.value = false;
     }
 

@@ -398,14 +398,17 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string, status: SubmissionStatusKey = SubmissionStatusEnum.InProgress.text) {
+async function submit(id: string, status?: SubmissionStatusKey) {
   if (!canEditSubmissionMetadata()) {
     throw new Error('Unable to submit due to inadequate permission level for this submission.');
   }
   if (!canEditSubmissionByStatus()) {
     throw new Error('Unable to submit with current submission status.');
   }
-  return api.updateRecord(id, payloadObject.value, status);
+  await api.updateRecord(id, payloadObject.value);
+  if (status) {
+    await api.updateSubmissionStatus(id, status);
+  }
 }
 
 function reset() {
@@ -448,8 +451,7 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   if (hasChanged.value) {
-    const updatedStatus = SubmissionStatusEnum.InProgress.text;
-    const response = await api.updateRecord(id, payload, updatedStatus, permissions);
+    const response = await api.updateRecord(id, payload, permissions);
     hasChanged.value = 0;
     return response.httpStatus;
   }

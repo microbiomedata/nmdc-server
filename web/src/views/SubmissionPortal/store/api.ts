@@ -43,13 +43,19 @@ async function createRecord(record: MetadataSubmission, isTestSubmission: boolea
   return resp.data;
 }
 
-async function updateRecord(id: string, record: Partial<MetadataSubmission>, status?: string, permissions?: Record<string, string>) {
+async function updateRecord(id: string, record: Partial<MetadataSubmission>, permissions?: Record<string, string>) {
   const resp = await client.patch<MetadataSubmissionRecord>(`metadata_submission/${id}`, {
     metadata_submission: record,
-    status,
     permissions,
   });
   return { data: resp.data, httpStatus: resp.status };
+}
+
+async function updateSubmissionStatus(submission_id: string, newStatus: string) {
+  const resp = await client.patch<MetadataSubmissionRecord>(`metadata_submission/${submission_id}/status`, {
+    status: newStatus,
+  });
+  return resp.data;
 }
 
 async function listRecords(searchParams: SearchParams, isTestFilter: boolean | null) {
@@ -153,4 +159,5 @@ export {
   generateSignedUploadUrl,
   setSubmissionImage,
   deleteSubmissionImage,
+  updateSubmissionStatus,
 };
