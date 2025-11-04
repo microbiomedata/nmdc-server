@@ -286,6 +286,7 @@ export default defineComponent({
             item-title="text"
             item-value="val"
             label="Test Submissions"
+            variant="outlined"
             hide-details
           />
         </v-col>
