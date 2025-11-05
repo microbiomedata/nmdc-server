@@ -1347,6 +1347,12 @@ async def add_submission_role(
     provided permissions object. This endpoint only adds a single role for a single user.
     """
     submission = get_submission_for_user(db, id, user, allowed_roles=[SubmissionEditorRole.owner])
+    existing_role = crud.get_submission_role(db, id, body.orcid)
+    if existing_role is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already has a role on this submission.",
+        )
 
     crud.add_submission_role(db, submission, body.orcid, body.role)
 
