@@ -978,6 +978,7 @@ def add_submission_role(
     new_role = models.SubmissionRole(submission_id=submission.id, user_orcid=orcid, role=role.value)
     db.add(new_role)
     db.commit()
+    db.refresh(submission)
 
 
 def remove_submission_role(db: Session, submission: models.SubmissionMetadata, orcid: str):
@@ -986,3 +987,4 @@ def remove_submission_role(db: Session, submission: models.SubmissionMetadata, o
     if role:
         db.delete(role)
         db.commit()
+        db.refresh(submission)
