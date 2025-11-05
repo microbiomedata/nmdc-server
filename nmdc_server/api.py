@@ -1378,21 +1378,6 @@ async def remove_submission_role(
     return submission
 
 
-def submitted(stored_status: str, new_status: str, is_test: bool):
-    """
-    Determine if submission was submitted based on status change
-    """
-
-    if (
-        stored_status == SubmissionStatusEnum.InProgress.text
-        and new_status == SubmissionStatusEnum.SubmittedPendingReview.text
-        and is_test is False
-    ):
-        return True
-    else:
-        return False
-
-
 def create_github_issue(submission_model: SubmissionMetadata, user):
     """
     Create or update a Github issue depending on if an issue exists for the submission id.
