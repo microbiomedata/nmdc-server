@@ -15,7 +15,7 @@ import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
-import { deleteSubmission, updateRecord, updateSubmissionStatus } from '../store/api';
+import { addSubmissionRole, deleteSubmission, updateSubmissionStatus } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
   MetadataSubmissionRecord,
@@ -158,12 +158,7 @@ export default defineComponent({
         if (!selectedSubmission.value) {
           return;
         }
-        await updateRecord(
-          selectedSubmission.value.id,
-          selectedSubmission.value,
-          { [reviewerOrcid.value]: 'reviewer' },
-          { skipLockCheck: true },
-        );
+        await addSubmissionRole(selectedSubmission.value.id, reviewerOrcid.value, 'reviewer');
       });
       isReviewerAssignmentDialogOpen.value = false;
     }

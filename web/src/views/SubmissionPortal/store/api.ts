@@ -68,6 +68,14 @@ async function updateSubmissionStatus(submission_id: string, newStatus: string) 
   return resp.data;
 }
 
+async function addSubmissionRole(submission_id: string, orcid: string, role: string) {
+  const resp = await client.post<MetadataSubmissionRecord>(`metadata_submission/${submission_id}/role`, {
+    orcid,
+    role,
+  });
+  return resp.data;
+}
+
 async function listRecords(searchParams: SearchParams, isTestFilter: boolean | null) {
   const params: Record<string, any> = {
     limit: searchParams.limit,
@@ -170,4 +178,5 @@ export {
   setSubmissionImage,
   deleteSubmissionImage,
   updateSubmissionStatus,
+  addSubmissionRole,
 };

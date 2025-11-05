@@ -162,6 +162,11 @@ class SubmissionMetadataStatusPatch(BaseModel):
         return status
 
 
+class SubmissionMetadataRoleAdd(BaseModel):
+    orcid: str
+    role: SubmissionEditorRole
+
+
 class SubmissionMetadataSchemaSlim(BaseModel):
     id: UUID
     author: schemas.User

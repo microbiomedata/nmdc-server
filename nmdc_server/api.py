@@ -1337,6 +1337,56 @@ async def update_submission_status(
     return submission
 
 
+@router.post(
+    "/metadata_submission/{id}/role",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionMetadataSchema,
+)
+async def add_submission_role(
+    id: str,
+    body: schemas_submission.SubmissionMetadataRoleAdd,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> models.SubmissionMetadata:
+    """Add a role to a submission
+
+    This is intended as a simpler alternative to passing a permissions object in the full
+    submission PATCH endpoint, which will add, remove, or change roles as needed to match the
+    provided permissions object. This endpoint only adds a single role for a single user.
+    """
+    submission = get_submission_for_user(db, id, user, allowed_roles=[SubmissionEditorRole.owner])
+
+    crud.add_submission_role(db, submission, body.orcid, body.role)
+
+    return submission
+
+
+@router.delete(
+    "/metadata_submission/{id}/role/{orcid}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionMetadataSchema,
+)
+async def remove_submission_role(
+    id: str,
+    orcid: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> models.SubmissionMetadata:
+    """Remove a role from a submission
+
+    This is intended as a simpler alternative to passing a permissions object in the full
+    submission PATCH endpoint, which will add, remove, or change roles as needed to match the
+    provided permissions object. This endpoint only removes a single user.
+    """
+    submission = get_submission_for_user(db, id, user, allowed_roles=[SubmissionEditorRole.owner])
+
+    crud.remove_submission_role(db, submission, orcid)
+
+    return submission
+
+
 def submitted(stored_status: str, new_status: str, is_test: bool):
     """
     Determine if submission was submitted based on status change
