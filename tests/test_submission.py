@@ -783,7 +783,9 @@ def test_add_role_by_dedicated_endpoint(db: Session, client: TestClient, logged_
     db.refresh(submission)
 
     assert len(submission.roles) == 2
-    added_role = next((role for role in submission.roles if role.user_orcid == editor_user.orcid), None)
+    added_role = next(
+        (role for role in submission.roles if role.user_orcid == editor_user.orcid), None
+    )
     assert added_role is not None
     assert added_role.role == SubmissionEditorRole.editor
 
@@ -815,7 +817,9 @@ def test_remove_role_by_dedicated_endpoint(db: Session, client: TestClient, logg
     db.refresh(submission)
 
     assert len(submission.roles) == 1
-    removed_role = next((role for role in submission.roles if role.user_orcid == editor_user.orcid), None)
+    removed_role = next(
+        (role for role in submission.roles if role.user_orcid == editor_user.orcid), None
+    )
     assert removed_role is None
 
 
@@ -1795,65 +1799,3 @@ def test_github_issue_resubmission_creates_comment_only(
         assert logged_in_user.name in comment_data["body"]
         assert logged_in_user.orcid in comment_data["body"]
         assert SubmissionStatusEnum.SubmittedPendingReview.text in comment_data["body"]
-
-
-def test_skip_lock_check_allowed_for_admin(db: Session, client: TestClient, logged_in_admin_user):
-    """Test that an admin user can update a submission with skip_lock_check=true"""
-    author_user = fakes.UserFactory()
-    submission = fakes.MetadataSubmissionFactory(
-        author=author_user,
-        author_orcid=author_user.orcid,
-    )
-    fakes.SubmissionRoleFactory(
-        submission=submission,
-        submission_id=submission.id,
-        user_orcid=author_user.orcid,
-        role=SubmissionEditorRole.owner,
-    )
-    db.commit()
-
-    # Test that admin can update submission with skip_lock_check=true and that the lock remains unset
-    payload = {"metadata_submission": {}, "permissions": {"0000-0000-0000-0000": "reviewer"}}
-    response = client.request(
-        method="PATCH",
-        url=f"/api/metadata_submission/{submission.id}?skip_lock_check=true",
-        json=payload,
-    )
-    assert response.status_code == 200
-    response_body = response.json()
-    assert response_body["locked_by"] is None
-
-    # Test that admin can update submission without skip_lock_check and that the lock is set
-    payload = {"metadata_submission": {}, "permissions": {"0000-0000-0000-0001": "reviewer"}}
-    response = client.request(
-        method="PATCH",
-        url=f"/api/metadata_submission/{submission.id}",
-        json=payload,
-    )
-    assert response.status_code == 200
-    response_body = response.json()
-    assert response_body["locked_by"]["id"] == str(logged_in_admin_user.id)
-
-
-def test_skip_lock_check_forbidden_for_non_admin(db: Session, client: TestClient, logged_in_user):
-    """Test that a non-admin user cannot update a submission with skip_lock_check=true"""
-    submission = fakes.MetadataSubmissionFactory(
-        author=logged_in_user,
-        author_orcid=logged_in_user.orcid,
-    )
-    fakes.SubmissionRoleFactory(
-        submission=submission,
-        submission_id=submission.id,
-        user_orcid=logged_in_user.orcid,
-        role=SubmissionEditorRole.owner,
-    )
-    db.commit()
-
-    # Test that non-admin cannot update submission with skip_lock_check=true
-    payload = {"metadata_submission": {}, "permissions": {"0000-0000-0000-0000": "reviewer"}}
-    response = client.request(
-        method="PATCH",
-        url=f"/api/metadata_submission/{submission.id}?skip_lock_check=true",
-        json=payload,
-    )
-    assert response.status_code == 403

@@ -1218,7 +1218,6 @@ async def update_submission(
     body: schemas_submission.SubmissionMetadataSchemaPatch,
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
-    skip_lock_check: bool = Query(False, description="Skip the lock check for admins."),
 ):
     submission = db.get(SubmissionMetadata, id)  # type: ignore
     body_dict = body.dict(exclude_unset=True)
@@ -1235,19 +1234,12 @@ async def update_submission(
     ):
         raise HTTPException(403, detail="Must have access.")
 
-    if skip_lock_check:
-        if not user.is_admin:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only administrators can skip the submission lock check.",
-            )
-    else:
-        has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
-        if not has_lock:
-            raise HTTPException(
-                status_code=400,
-                detail="This submission is currently being edited by a different user.",
-            )
+    has_lock = crud.try_get_submission_lock(db, submission.id, user.id)
+    if not has_lock:
+        raise HTTPException(
+            status_code=400,
+            detail="This submission is currently being edited by a different user.",
+        )
 
     # If the user has a role on the submission (i.e. not just a random admin) and the status is
     # "Updates Required", automatically change it to "In Progress" upon edit
@@ -1277,8 +1269,7 @@ async def update_submission(
     if new_permissions is not None and can_update_permissions:
         crud.update_submission_contributor_roles(db, submission, new_permissions)
 
-    if not skip_lock_check:
-        crud.update_submission_lock(db, submission.id)
+    crud.update_submission_lock(db, submission.id)
 
     return submission
 
