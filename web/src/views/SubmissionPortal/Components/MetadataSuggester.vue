@@ -173,7 +173,7 @@ export default defineComponent({
       // inner array is [startRow, startCol, endRow, endCol]. Reduce this to a flat array of row numbers contained in
       // the selected ranges.
       const rows = selectedRanges.reduce((acc, range) => {
-        for (let i = range[0]; i <= range[2]; i += 1) {
+        for (let i = range[0]; i && range[2] && i <= range[2]; i += 1) {
           acc.push(i);
         }
         return acc;
@@ -242,10 +242,9 @@ export default defineComponent({
           As you enter sample metadata, the Metadata Suggester will offer suggestions for metadata values based on the
           metadata values you have already entered.
         </span>
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-icon
-            v-bind="attrs"
-            v-on="on"
+            v-bind="props"
           >
             mdi-information-outline
           </v-icon>
@@ -301,12 +300,11 @@ export default defineComponent({
                 bottom
                 :open-delay="TOOLTIP_DELAY"
               >
-                <template #activator="{ on, attrs }">
+                <template #activator="{ props }">
                   <v-btn
                     color="primary"
                     icon
-                    v-bind="attrs"
-                    v-on="on"
+                    v-bind="props"
                     @click="handleRejectAllSuggestions"
                   >
                     <v-icon>
@@ -321,12 +319,11 @@ export default defineComponent({
                 bottom
                 :open-delay="TOOLTIP_DELAY"
               >
-                <template #activator="{ on, attrs }">
+                <template #activator="{ props }">
                   <v-btn
                     color="primary"
                     icon
-                    v-bind="attrs"
-                    v-on="on"
+                    v-bind="props"
                     @click="handleAcceptAllSuggestions"
                   >
                     <v-icon>
@@ -394,12 +391,11 @@ export default defineComponent({
                       bottom
                       :open-delay="TOOLTIP_DELAY"
                     >
-                      <template #activator="{ on, attrs }">
+                      <template #activator="{ props }">
                         <v-btn
                           icon
                           color="primary"
-                          v-bind="attrs"
-                          v-on="on"
+                          v-bind="props"
                           @click="handleJumpToCell(s)"
                         >
                           <v-icon>
@@ -414,12 +410,11 @@ export default defineComponent({
                       bottom
                       :open-delay="TOOLTIP_DELAY"
                     >
-                      <template #activator="{ on, attrs }">
+                      <template #activator="{ props }">
                         <v-btn
                           icon
                           color="primary"
-                          v-bind="attrs"
-                          v-on="on"
+                          v-bind="props"
                           @click="handleRejectSuggestion(s)"
                         >
                           <v-icon>
@@ -434,12 +429,11 @@ export default defineComponent({
                       bottom
                       :open-delay="TOOLTIP_DELAY"
                     >
-                      <template #activator="{ on, attrs }">
+                      <template #activator="{ props }">
                         <v-btn
                           icon
                           color="primary"
-                          v-bind="attrs"
-                          v-on="on"
+                          v-bind="props"
                           @click="handleAcceptSuggestion(s)"
                         >
                           <v-icon>

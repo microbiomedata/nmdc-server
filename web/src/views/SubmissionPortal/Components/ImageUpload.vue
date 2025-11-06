@@ -236,7 +236,7 @@ export default defineComponent({
         outlined
         class="mt-2"
       >
-        Error uploading image: {{ uploadError.message }}
+        Error uploading image: {{ uploadError }}
       </v-alert>
       <v-alert
         v-if="deleteError"
@@ -244,7 +244,7 @@ export default defineComponent({
         outlined
         class="mt-2"
       >
-        Error deleting image: {{ deleteError.message }}
+        Error deleting image: {{ deleteError }}
       </v-alert>
     </div>
   </div>

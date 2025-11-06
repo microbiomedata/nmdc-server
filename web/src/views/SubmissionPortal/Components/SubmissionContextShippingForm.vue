@@ -17,6 +17,7 @@ import {
 } from '../store';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
+import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 
 export default defineComponent({
   components: { SubmissionContextShippingSummary },
@@ -57,7 +58,7 @@ export default defineComponent({
       addressForm.expectedShippingDate = newValue.length ? new Date(newValue) : undefined;
     });
 
-    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[]) {
+    function requiredRules(msg: string, otherRules: ((v: string) => ValidationResult)[]) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,
@@ -119,15 +120,14 @@ export default defineComponent({
       width="1200"
       eager
     >
-      <template #activator="{ on, attrs }">
+      <template #activator="{ props }">
         <v-btn
           :disabled="!canEditSubmissionMetadata()"
           absolute
           top
           right
           color="primary"
-          v-bind="attrs"
-          v-on="on"
+          v-bind="props"
         >
           Enter sender info
         </v-btn>
@@ -137,12 +137,11 @@ export default defineComponent({
           <v-spacer />
           <span class="text-h5">Shipping Information</span>
           <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
                 color="primary"
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
               >
                 <v-icon>
                   mdi-information
@@ -246,7 +245,7 @@ export default defineComponent({
               offset-y
               min-width="auto"
             >
-              <template #activator="{ on, attrs }">
+              <template #activator="{ props }">
                 <v-text-field
                   v-model="expectedShippingDateString"
                   :rules="requiredRules('Expected Shipping Date is required', [])"
@@ -256,8 +255,7 @@ export default defineComponent({
                   readonly
                   variant="outlined"
                   dense
-                  v-bind="attrs"
-                  v-on="on"
+                  v-bind="props"
                   @click.clear="addressForm.expectedShippingDate = undefined"
                 />
               </template>
@@ -324,7 +322,7 @@ export default defineComponent({
             </div>
             <div class="d-flex">
               <v-select
-                v-model="addressForm.biosafetyLevel"
+                v-model="addressForm.biosafetyLevel as BiosafetyLevels"
                 class="mr-4"
                 :items="biosafetyLevelValues"
                 label="Biosafety Level"

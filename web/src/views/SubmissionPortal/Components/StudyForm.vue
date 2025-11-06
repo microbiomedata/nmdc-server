@@ -30,6 +30,7 @@ import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import ImageUpload from './ImageUpload.vue';
 import StatusAlert from './StatusAlert.vue';
+import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 
 export default defineComponent({
   components: {
@@ -89,7 +90,7 @@ export default defineComponent({
       });
     }
 
-    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
+    function requiredRules(msg: string, otherRules: ((v: string) => ValidationResult)[] = []) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,
@@ -100,7 +101,7 @@ export default defineComponent({
       if (idx > studyForm.contributors.length) return true;
       const contributor = studyForm.contributors[idx];
       // show error when: permission level exists, but orcid does not
-      return (contributor.permissionLevel && !!v) || !contributor.permissionLevel || 'ORCID iD is required if a permission level is specified';
+      return (contributor?.permissionLevel && !!v) || !contributor?.permissionLevel || 'ORCID iD is required if a permission level is specified';
     };
 
     const uniqueOrcidRule = (idx: number) => (v: string) => {
@@ -339,10 +340,6 @@ export default defineComponent({
         </v-icon>
         Add Funding Source
       </v-btn>
-      <template #message="{ message }">
-        <span v-html="message" />
-      </template>
-
       <div class="text-h4 mt-8">
         Contributors
       </div>
@@ -480,7 +477,7 @@ export default defineComponent({
           <div class="d-flex">
             <v-text-field
               v-if="studyForm.dataDois !== null"
-              v-model="studyForm.dataDois[i].value"
+              v-model="studyForm.dataDois[i]!.value"
               label="Data DOI value *"
               :hint="Definitions.dataDoiValue"
               persistent-hint
@@ -498,7 +495,7 @@ export default defineComponent({
             </v-text-field>
             <v-select
               v-if="studyForm.dataDois !== null"
-              v-model="studyForm.dataDois[i].provider"
+              v-model="studyForm.dataDois[i]!.provider"
               label="Data DOI Provider *"
               :hint="Definitions.dataDoiProvider"
               :items="doiProviderValues"
@@ -507,7 +504,7 @@ export default defineComponent({
               dense
               clearable
               class="mb-2 mr-3"
-              :rules="studyForm.dataDois[i].provider ? undefined : ['A provider must be selected.']"
+              :rules="studyForm.dataDois[i]?.provider ? undefined : ['A provider must be selected.']"
             >
               <template #message="{ message }">
                 <span v-html="message" />

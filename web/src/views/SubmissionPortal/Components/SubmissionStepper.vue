@@ -30,7 +30,7 @@ export default defineComponent({
     const route = useRoute();
     
     const step = computed(() => {
-      const mappedStep = StepperMap[route.name || ''];
+      const mappedStep = StepperMap[route.name as string || ''];
       return typeof mappedStep === 'number' ? mappedStep : 0;
     });
 

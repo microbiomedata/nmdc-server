@@ -137,7 +137,7 @@ export default defineComponent({
         <MetadataSuggester
           :enabled="metadataEditingAllowed"
           :harmonizer-api="harmonizerApi"
-          :schema-class-name="harmonizerTemplate.schemaClass"
+          :schema-class-name="harmonizerTemplate.schemaClass || ''"
         />
       </v-window-item>
       <v-window-item>

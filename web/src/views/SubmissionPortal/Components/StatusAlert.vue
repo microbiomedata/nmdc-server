@@ -28,11 +28,10 @@ export default defineComponent({
         :close-on-content-click="false"
         max-width="300"
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-icon
-            v-bind="attrs"
+            v-bind="props"
             style="cursor: pointer;"
-            v-on="on"
           >
             mdi-information
           </v-icon>
