@@ -199,7 +199,7 @@ export default defineComponent({
         v-model="multiOmicsForm.dataGenerated"
         label="Have data already been generated for your study? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
         @change="resetFields('dataGenerated')"
       >
         <v-radio
@@ -216,7 +216,7 @@ export default defineComponent({
         v-model="multiOmicsForm.facilityGenerated"
         label="Was data generated at a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
         @change="resetFields('facilityGenerated')"
       >
         <v-radio
@@ -244,7 +244,7 @@ export default defineComponent({
         v-model="multiOmicsForm.doe"
         label="Are you submitting samples to a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
         @change="resetFields('doe')"
       >
         <v-radio
@@ -375,7 +375,7 @@ export default defineComponent({
       />
 
       <v-alert
-        v-if="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        v-if="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
         type="warning"
       >
         <p class="text-h5">
@@ -402,7 +402,7 @@ export default defineComponent({
               >
                 <v-text-field
                   v-if="multiOmicsForm.awardDois !== null"
-                  v-model="multiOmicsForm.awardDois[i].value"
+                  v-model="multiOmicsForm.awardDois[i]?.value"
                   label="Award DOI *"
                   :hint="Definitions.doi"
                   :rules="doiValueRules(i)"
@@ -423,7 +423,7 @@ export default defineComponent({
               >
                 <v-select
                   v-if="multiOmicsForm.awardDois !== null"
-                  v-model="multiOmicsForm.awardDois[i].provider"
+                  v-model="multiOmicsForm.awardDois[i]?.provider"
                   label="Award DOI Provider *"
                   :hint="Definitions.dataDoiProvider"
                   :items="doiProviderValues"

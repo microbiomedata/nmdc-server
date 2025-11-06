@@ -124,9 +124,9 @@ export default defineComponent({
     const invalidCells = shallowRef({} as Record<string, Record<number, Record<number, string>>>);
 
     const activeTemplateKey = ref(templateList.value[0]);
-    const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value]);
+    const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value!]);
     const activeTemplateData = computed(() => {
-      if (!activeTemplate.value.sampleDataSlot) {
+      if (!activeTemplate.value?.sampleDataSlot) {
         return [];
       }
       return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
@@ -145,19 +145,19 @@ export default defineComponent({
       harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
 
       // If the environment tab selected is a mixin it should be readonly
-      const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'mixin');
-      if (environmentList.includes(activeTemplateKey.value)) {
+      const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'mixin');
+      if (environmentList.includes(activeTemplateKey.value!)) {
         harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
       harmonizerApi.loadData(activeTemplateData.value);
-      harmonizerApi.setInvalidCells(invalidCells.value[activeTemplateKey.value] || {});
+      harmonizerApi.setInvalidCells(invalidCells.value[activeTemplateKey.value!] || {});
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
     const validationErrors = computed(() => {
       const remapped: ValidationErrors = {};
-      const invalid: Record<number, Record<number, string>> = invalidCells.value[activeTemplateKey.value] || {};
+      const invalid: Record<number, Record<number, string>> = invalidCells.value[activeTemplateKey.value!] || {};
       if (Object.keys(invalid).length) {
         remapped['All Errors'] = [];
       }
@@ -166,11 +166,11 @@ export default defineComponent({
           const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
           const issue = errorText || 'Other Validation Error';
           if (has(remapped, issue)) {
-            remapped[issue].push(entry);
+            remapped[issue]?.push(entry);
           } else {
             remapped[issue] = [entry];
           }
-          remapped['All Errors'].push(entry);
+          remapped['All Errors']?.push(entry);
         });
       });
       return remapped;
@@ -186,12 +186,12 @@ export default defineComponent({
     ));
 
     const saveRecordRequest = useRequest();
-    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(route));
+    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord((route.params as { id: string }).id));
 
     let changeBatch: any[] = [];
     const debouncedSuggestionRequest = debounce(async () => {
       const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-      await addMetadataSuggestions((route.params as { id: string }).id, activeTemplate.value.schemaClass!, changedRowData);
+      await addMetadataSuggestions((route.params as { id: string }).id, activeTemplate.value?.schemaClass!, changedRowData);
       changeBatch = [];
     }, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
 
@@ -204,7 +204,7 @@ export default defineComponent({
     });
 
     function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
-      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
+      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
       if (environmentKeys.includes(templateKey)) {
         return true;
       }
@@ -246,16 +246,16 @@ export default defineComponent({
     const isNonEmpty = (val: any) => val !== null && val !== '';
 
     function synchronizeTabData(templateKey: string) {
-      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
+      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
       if (environmentKeys.includes(templateKey)) {
         return;
       }
       const nextData = { ...sampleData.value };
-      const templateSlot = HARMONIZER_TEMPLATES[templateKey].sampleDataSlot;
+      const templateSlot = HARMONIZER_TEMPLATES[templateKey]?.sampleDataSlot;
 
       const environmentSlots = templateList.value
-        .filter((t) => HARMONIZER_TEMPLATES[t].status === 'published')
-        .map((t) => HARMONIZER_TEMPLATES[t].sampleDataSlot);
+        .filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published')
+        .map((t) => HARMONIZER_TEMPLATES[t]?.sampleDataSlot);
 
       if (!templateSlot || !environmentSlots) {
         return;
@@ -275,7 +275,7 @@ export default defineComponent({
       // add/update any rows from the environment tabs to the active tab if they apply and if
       // they aren't there already.
       environmentSlots.forEach((environmentSlot) => {
-        nextData[environmentSlot as string].forEach((row) => {
+        nextData[environmentSlot as string]?.forEach((row) => {
           const rowId = row[SCHEMA_ID];
 
           const existing = nextData[templateSlot] && nextData[templateSlot].find((r) => r[SCHEMA_ID] === rowId);
@@ -284,7 +284,7 @@ export default defineComponent({
             COMMON_COLUMNS.forEach((col) => {
               newRow[col] = row[col];
             });
-            nextData[templateSlot].push(newRow);
+            nextData[templateSlot]?.push(newRow);
             //update validation status for the tab, if data changed it needs to be revalidated
             tabsValidated.value[templateKey] = false;
           }
@@ -308,8 +308,8 @@ export default defineComponent({
           tabsValidated.value[templateKey] = false;
           const rowId = row[SCHEMA_ID];
           return environmentSlots.some((environmentSlot) => {
-            const environmentRow = nextData[environmentSlot as string].findIndex((r) => r[SCHEMA_ID] === rowId);
-            return environmentRow >= 0;
+            const environmentRow = nextData[environmentSlot as string]?.findIndex((r) => r[SCHEMA_ID] === rowId);
+            return environmentRow && environmentRow >= 0;
           });
         });
       }
@@ -323,7 +323,7 @@ export default defineComponent({
      */
     const syncAndMergeTabsForRemovedRows = async () => {
       mergeSampleData(
-        activeTemplate.value.sampleDataSlot,
+        activeTemplate.value?.sampleDataSlot,
         harmonizerApi.exportJson(),
       );
       // If there are any sampleDataSlots populated that somehow are missing from
@@ -355,7 +355,7 @@ export default defineComponent({
       }
       // If any changes touched the sample name or analysis/data type columns on an environment
       // tab, we need to synch those changes to non-active tabs
-      const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value.schemaClass || '');
+      const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value?.schemaClass || '');
       const shouldSynchronizeTabs = !!changes.find((change) => {
         const isRelevantColumn = templateOrderedAttrNames[change[1]] === SAMP_NAME || templateOrderedAttrNames[change[1]] === ANALYSIS_TYPE;
         const isNonemptyChange = isNonEmpty(change[2]) || isNonEmpty(change[3]);
@@ -367,10 +367,10 @@ export default defineComponent({
         syncAndMergeTabsForRemovedRows();
       } else {
         const data = harmonizerApi.exportJson();
-        mergeSampleData(activeTemplate.value.sampleDataSlot, data);
+        mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
       }
       saveRecord(); // This is a background save that we intentionally don't wait for
-      tabsValidated.value[activeTemplateKey.value] = false;
+      tabsValidated.value[activeTemplateKey.value!] = false;
     };
 
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
@@ -387,9 +387,11 @@ export default defineComponent({
 
     function errorClick(index: number) {
       const currentSeries = validationErrors.value[validationActiveCategory.value];
-      highlightedValidationError.value = clamp(index, 0, currentSeries.length - 1);
-      const currentError = currentSeries[highlightedValidationError.value];
-      harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
+      highlightedValidationError.value = clamp(index, 0, (currentSeries?.length || 0) - 1);
+      const currentError = currentSeries?[highlightedValidationError.value] : null;
+      if (currentError && currentError[0] !== undefined && currentError[1] !== undefined) {
+        harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
+      }
     }
 
     async function validate() {
@@ -401,18 +403,18 @@ export default defineComponent({
       if (isEmpty) {
         invalidCells.value = {
           ...invalidCells.value,
-          [activeTemplateKey.value]: data,
+          [activeTemplateKey.value!]: data,
         };
         tabsValidated.value = {
           ...tabsValidated.value,
-          [activeTemplateKey.value]: false,
+          [activeTemplateKey.value!]: false,
         };
         emptySheetSnackbar.value = true;
 
         return;
       }
 
-      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
+      mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
       const result = await harmonizerApi.validate();
       const valid = Object.keys(result).length === 0;
       if (!valid && !sidebarOpen.value) {
@@ -421,7 +423,7 @@ export default defineComponent({
 
       invalidCells.value = {
         ...invalidCells.value,
-        [activeTemplateKey.value]: result,
+        [activeTemplateKey.value!]: result,
       };
       saveRecord(); // This is a background save that we intentionally don't wait for
       if (valid === false) {
@@ -429,7 +431,7 @@ export default defineComponent({
       }
       tabsValidated.value = {
         ...tabsValidated.value,
-        [activeTemplateKey.value]: valid,
+        [activeTemplateKey.value!]: valid,
       };
 
       validationSuccessSnackbar.value = Object.values(tabsValidated.value).every((value) => value);
@@ -458,7 +460,7 @@ export default defineComponent({
     const validationItems = computed(() => validationErrorGroups.value.map((errorGroup) => {
       const errors = validationErrors.value[errorGroup];
       return {
-        text: `${errorGroup} (${errors.length})`,
+        text: `${errorGroup} (${errors?.length})`,
         value: errorGroup,
       };
     }));
@@ -478,7 +480,7 @@ export default defineComponent({
     const { request: submitRequest, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
-      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
+      mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
       await submit((route.params as { id: string }).id, SubmissionStatusEnum.SubmittedPendingReview.text);
       status.value = SubmissionStatusEnum.SubmittedPendingReview.text;
       submitDialog.value = false;
@@ -492,12 +494,12 @@ export default defineComponent({
       const workbook = utils.book_new();
       templateList.value.forEach((templateKey) => {
         const template = HARMONIZER_TEMPLATES[templateKey];
-        if (!template.sampleDataSlot || !template.schemaClass) {
+        if (!template?.sampleDataSlot || !template.schemaClass) {
           return;
         }
         const worksheet = utils.json_to_sheet([
           harmonizerApi.getHeaderRow(template.schemaClass),
-          ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot]),
+          ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot] || []),
         ], {
           skipHeader: true,
         });
@@ -520,7 +522,7 @@ export default defineComponent({
             template.excelWorksheetName === name || template.displayName === name
           ));
           const templateSelected = templateList.value.find((selectedTemplate) => {
-            const templateName = HARMONIZER_TEMPLATES[selectedTemplate].displayName || '';
+            const templateName = HARMONIZER_TEMPLATES[selectedTemplate]?.displayName || '';
             return (
               template?.displayName === templateName
               || template?.excelWorksheetName === templateName
@@ -592,18 +594,20 @@ export default defineComponent({
       await validate();
 
       const nextTemplateKey = templateList.value[index];
-      const nextTemplate = HARMONIZER_TEMPLATES[nextTemplateKey];
+      const nextTemplate = nextTemplateKey ? HARMONIZER_TEMPLATES[nextTemplateKey] : null;
 
-      // Get the stashed suggestions (if any) for the next template and present them.
-      metadataSuggestions.value = getPendingSuggestions((route.params as { id: string }).id, nextTemplate.schemaClass!);
+      if (nextTemplate && nextTemplateKey) {
+        // Get the stashed suggestions (if any) for the next template and present them.
+        metadataSuggestions.value = getPendingSuggestions((route.params as { id: string }).id, nextTemplate.schemaClass!);
 
-      // When changing templates we may need to populate the common columns
-      // from the environment tabs
-      synchronizeTabData(nextTemplateKey);
-      activeTemplateKey.value = nextTemplateKey;
-      activeTemplate.value = nextTemplate;
-      harmonizerApi.useTemplate(nextTemplate.schemaClass);
-      addHooks();
+        // When changing templates we may need to populate the common columns
+        // from the environment tabs
+        synchronizeTabData(nextTemplateKey);
+        activeTemplateKey.value = nextTemplateKey;
+        activeTemplate.value = nextTemplate;
+        harmonizerApi.useTemplate(nextTemplate.schemaClass);
+        addHooks();
+      }
     }
 
     watch(() => canEditSampleMetadata(), (canEdit) => {
@@ -621,13 +625,13 @@ export default defineComponent({
       ]));
       const r = document.getElementById('harmonizer-root');
       if (r && schema) {
-        await harmonizerApi.init(r, schema, activeTemplate.value.schemaClass, goldEcosystemTree);
+        await harmonizerApi.init(r, schema, activeTemplate.value?.schemaClass, goldEcosystemTree);
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
         addHooks();
         metadataSuggestions.value = getPendingSuggestions(
           (route.params as { id: string }).id,
-          activeTemplate.value.schemaClass!,
+          activeTemplate.value?.schemaClass!,
         );
         if (!canEditSampleMetadata()) {
           harmonizerApi.setTableReadOnly();
@@ -746,6 +750,7 @@ export default defineComponent({
           <v-select
             v-model="validationActiveCategory"
             :items="validationItems"
+            item-title="text"
             solo
             color="error"
             style="background-color: red;"
@@ -758,7 +763,7 @@ export default defineComponent({
                 style="font-size: 14px"
                 class="my-0"
               >
-                {{ item.text }}
+                {{ item.title }}
               </p>
             </template>
           </v-select>
@@ -770,7 +775,7 @@ export default defineComponent({
             </v-icon>
             <v-spacer />
             <span class="mx-1">
-              ({{ highlightedValidationError + 1 }}/{{ validationErrors[validationActiveCategory].length }})
+              ({{ highlightedValidationError + 1 }}/{{ validationErrors[validationActiveCategory]?.length }})
             </span>
             <v-spacer />
             <v-icon
@@ -936,22 +941,22 @@ export default defineComponent({
                 <v-badge
                   :content="validationTotalCounts[templateKey] || '!'"
                   floating
-                  :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey]"
-                  :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
+                  :value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
+                  :color="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) ? 'error' : 'warning'"
                 >
-                  {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+                  {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
                 </v-badge>
               </v-tab>
             </div>
           </template>
-          <span v-if="validationTotalCounts[templateKey] > 0">
+          <span v-if="validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0">
             {{ validationTotalCounts[templateKey] }} validation errors
           </span>
           <span v-else-if="!tabsValidated[templateKey]">
             This tab must be validated before submission
           </span>
           <span v-else>
-            {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+            {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
           </span>
         </v-tooltip>
       </v-tabs>
@@ -1003,7 +1008,7 @@ export default defineComponent({
         <HarmonizerSidebar
           :column-help="selectedHelpDict"
           :harmonizer-api="harmonizerApi"
-          :harmonizer-template="activeTemplate"
+          :harmonizer-template="activeTemplate!"
           :metadata-editing-allowed="canEditSampleMetadata()"
           @import-xlsx="openFile"
           @export-xlsx="downloadSamples"
