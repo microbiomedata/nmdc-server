@@ -1,8 +1,8 @@
 <script lang="ts">
 import {
-  computed, defineComponent, reactive, toRef, getCurrentInstance,
+  computed, defineComponent,
 } from 'vue';
-import VueRouter from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 
 const StepperMap: Record<string | number, number | string> = {
   'Submission Home': 1,
@@ -26,17 +26,18 @@ const StepperMap: Record<string | number, number | string> = {
 
 export default defineComponent({
   setup() {
-    const root = getCurrentInstance();
-    const currentRoute = toRef(reactive(root?.proxy.$router as VueRouter), 'currentRoute');
+    const router = useRouter();
+    const route = useRoute();
+    
     const step = computed(() => {
-      const mappedStep = StepperMap[currentRoute.value.name || ''];
+      const mappedStep = StepperMap[route.name || ''];
       return typeof mappedStep === 'number' ? mappedStep : 0;
     });
 
     function gotoStep(newstep: number) {
       const routeName = StepperMap[newstep];
-      if (newstep < step.value && typeof routeName === 'string' && root?.proxy) {
-        root.proxy.$router.push({ name: routeName as any });
+      if (newstep < step.value && typeof routeName === 'string') {
+        router.push({ name: routeName as any });
       }
     }
 

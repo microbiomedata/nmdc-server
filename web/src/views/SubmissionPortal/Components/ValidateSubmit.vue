@@ -1,13 +1,14 @@
 <script lang="ts">
-import { defineComponent, getCurrentInstance } from 'vue';
+import { defineComponent } from 'vue';
 import { writeFile, utils } from 'xlsx';
 import { saveAs } from '@/util';
 import useRequest from '@/use/useRequest';
 import { submit, submitPayload } from '../store';
+import { useRoute } from 'vue-router';
 
 export default defineComponent({
   setup() {
-    const root = getCurrentInstance();
+    const route = useRoute();
     // TODO: https://github.com/microbiomedata/nmdc-server/issues/852
     function downloadSamples() {
       const worksheet = utils.aoa_to_sheet([]);
@@ -22,7 +23,7 @@ export default defineComponent({
     }
 
     const { request, loading: submitLoading, count: submitCount } = useRequest();
-    const doSubmit = () => request(() => submit(root?.proxy.$route.params.id as string));
+    const doSubmit = () => request(() => submit((route.params as { id: string }).id));
 
     return {
       submitPayload,

@@ -23,6 +23,7 @@ import {
 } from '@/views/SubmissionPortal/types';
 import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
 import { getRejectedSuggestions, setRejectedSuggestions } from '@/store/localStorage';
+import { useRoute } from 'vue-router';
 
 const suggestionModeOptions = Object.values(SuggestionsMode);
 const suggestionTypeOptions = Object.values(SuggestionType);
@@ -61,14 +62,14 @@ export default defineComponent({
   },
 
   setup(props) {
-    const root = getCurrentInstance();
+    const route = useRoute();
     const rejectedSuggestions = ref([] as string[]);
     const onDemandSuggestionsLoading = ref(false);
 
     // When the route or schema class name changes (because of changing the active template tab), update the rejected
     // suggestions list from local storage.
     watchEffect(() => {
-      rejectedSuggestions.value = getRejectedSuggestions(root?.proxy.$route.params.id as string, props.schemaClassName);
+      rejectedSuggestions.value = getRejectedSuggestions((route.params as { id: string }).id, props.schemaClassName);
     });
 
     // Filter out rejected suggestions and group by row
@@ -101,7 +102,7 @@ export default defineComponent({
       // Do this outside of the forEach so that the DataHarmonizer afterChange hook is only triggered once
       props.harmonizerApi.setCellData(cellData);
 
-      removeMetadataSuggestions(root?.proxy.$route.params.id as string, props.schemaClassName, suggestions);
+      removeMetadataSuggestions((route.params as { id: string }).id, props.schemaClassName, suggestions);
     }
 
     /**
@@ -113,7 +114,7 @@ export default defineComponent({
         const key = getSuggestionKey(suggestion);
         rejectedSuggestions.value.push(key);
       });
-      setRejectedSuggestions(root?.proxy.$route.params.id as string, props.schemaClassName, rejectedSuggestions.value);
+      setRejectedSuggestions((route.params as { id: string }).id, props.schemaClassName, rejectedSuggestions.value);
     }
 
     /**
@@ -179,7 +180,7 @@ export default defineComponent({
       }, [] as number[]);
       const changedRowData = props.harmonizerApi.getDataByRows(rows);
       try {
-        await addMetadataSuggestions(root?.proxy.$route.params.id as string, props.schemaClassName, changedRowData);
+        await addMetadataSuggestions((route.params as { id: string }).id, props.schemaClassName, changedRowData);
       } finally {
         onDemandSuggestionsLoading.value = false;
       }
@@ -190,7 +191,7 @@ export default defineComponent({
      */
     function handleResetRejectedSuggestions() {
       rejectedSuggestions.value = [];
-      setRejectedSuggestions(root?.proxy.$route.params.id as string, props.schemaClassName, rejectedSuggestions.value);
+      setRejectedSuggestions((route.params as { id: string }).id, props.schemaClassName, rejectedSuggestions.value);
     }
 
     /**

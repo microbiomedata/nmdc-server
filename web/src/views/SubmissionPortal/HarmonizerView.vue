@@ -50,6 +50,7 @@ import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import StatusAlert from './Components/StatusAlert.vue';
+import { useRoute } from 'vue-router';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -111,7 +112,7 @@ export default defineComponent({
 
   setup() {
     const { user } = stateRefs;
-    const root = getCurrentInstance();
+    const route = useRoute();
 
     const harmonizerElement = ref();
     const harmonizerApi = new HarmonizerApi();
@@ -185,12 +186,12 @@ export default defineComponent({
     ));
 
     const saveRecordRequest = useRequest();
-    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root?.proxy.$route.params.id as string));
+    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(route));
 
     let changeBatch: any[] = [];
     const debouncedSuggestionRequest = debounce(async () => {
       const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-      await addMetadataSuggestions(root?.proxy.$route.params.id as string, activeTemplate.value.schemaClass!, changedRowData);
+      await addMetadataSuggestions((route.params as { id: string }).id, activeTemplate.value.schemaClass!, changedRowData);
       changeBatch = [];
     }, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
 
@@ -478,7 +479,7 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id, SubmissionStatusEnum.SubmittedPendingReview.text);
+      await submit((route.params as { id: string }).id, SubmissionStatusEnum.SubmittedPendingReview.text);
       status.value = SubmissionStatusEnum.SubmittedPendingReview.text;
       submitDialog.value = false;
     });
@@ -594,7 +595,7 @@ export default defineComponent({
       const nextTemplate = HARMONIZER_TEMPLATES[nextTemplateKey];
 
       // Get the stashed suggestions (if any) for the next template and present them.
-      metadataSuggestions.value = getPendingSuggestions(root?.proxy.$route.params.id as string, nextTemplate.schemaClass!);
+      metadataSuggestions.value = getPendingSuggestions((route.params as { id: string }).id, nextTemplate.schemaClass!);
 
       // When changing templates we may need to populate the common columns
       // from the environment tabs
@@ -625,7 +626,7 @@ export default defineComponent({
         harmonizerApi.loadData(activeTemplateData.value);
         addHooks();
         metadataSuggestions.value = getPendingSuggestions(
-          root?.proxy.$route.params.id as string,
+          (route.params as { id: string }).id,
           activeTemplate.value.schemaClass!,
         );
         if (!canEditSampleMetadata()) {
