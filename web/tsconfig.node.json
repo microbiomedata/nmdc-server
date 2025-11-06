@@ -1,5 +1,5 @@
 {
-  "extends": "@tsconfig/node22/tsconfig.json",
+  "extends": "./node_modules/@vue/tsconfig/tsconfig.dom.json",
   "include": [
     "vite.config.*",
     "vitest.config.*",

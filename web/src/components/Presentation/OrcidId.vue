@@ -1,5 +1,6 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
+// @ts-ignore
 import { ORCID_BASE_URL } from '@/util';
 
 export default defineComponent({

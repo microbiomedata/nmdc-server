@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { writeFile, utils } from 'xlsx';
+// @ts-ignore
 import { saveAs } from '@/util';
 import useRequest from '@/use/useRequest';
 import { submit, submitPayload } from '../store';

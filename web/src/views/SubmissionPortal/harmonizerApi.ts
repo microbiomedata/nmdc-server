@@ -107,7 +107,7 @@ export default class HarmonizerApi {
     this.dh.template.forEach((section: any) => {
       ret[section.title] = { '': column_ptr };
       section.children.forEach((column: any) => {
-        ret[section.title][column.title] = column_ptr;
+        ret[section.title]![column.title] = column_ptr;
         column_ptr += 1;
       });
     });

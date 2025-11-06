@@ -58,11 +58,11 @@ export default defineComponent({
       </p>
       <orcid-id
         v-if="getSubmissionLockedBy()"
-        :orcid-id="getSubmissionLockedBy().orcid"
-        :name="getSubmissionLockedBy().name"
+        :orcid-id="getSubmissionLockedBy()?.orcid || ''"
+        :name="getSubmissionLockedBy()?.name"
         :authenticated="true"
       />
-      <router-link :to="{ name: 'Submission Home'}">
+      <router-link :to="'/submission/home'">
         Return to submission list
       </router-link>
     </v-alert>

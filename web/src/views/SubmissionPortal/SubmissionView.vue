@@ -15,6 +15,7 @@ import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import LoginPrompt from '@/views/SubmissionPortal/Components/LoginPrompt.vue';
 import { loadRecord } from './store';
+import { useRoute } from 'vue-router';
 
 export default defineComponent({
   components: {
@@ -32,7 +33,7 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const instance = getCurrentInstance();
+    const route = useRoute();
     const req = useRequest();
 
     function load() {
@@ -44,7 +45,7 @@ export default defineComponent({
     watch(toRef(props, 'id'), load);
     load();
 
-    const showBanner = computed(() => instance?.proxy.$route.path === '/submission/home');
+    const showBanner = computed(() => route.path === '/submission/home');
 
     return {
       stateRefs,

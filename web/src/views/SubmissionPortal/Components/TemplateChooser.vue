@@ -18,7 +18,7 @@ export default defineComponent({
   components: { SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert },
   setup() {
     const templateListDisplayNames = computed(() => templateList.value
-      .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
+      .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
       .join(' + '));
 
     return {
@@ -63,8 +63,8 @@ export default defineComponent({
       dense
       hide-details
       class="my-2"
-      :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]].sampleDataSlot) || !canEditSubmissionMetadata()"
-      :label="HARMONIZER_TEMPLATES[option[0]].displayName"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
+      :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
       :value="option[0]"
     />
     <p class="grey--text text--darken-1 my-5">
@@ -77,7 +77,7 @@ export default defineComponent({
       hide-details
       class="my-2"
       :disabled="true"
-      :label="HARMONIZER_TEMPLATES[option[0]].displayName"
+      :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
       :value="option[0]"
     />
     <template v-if="canEditSubmissionByStatus()">

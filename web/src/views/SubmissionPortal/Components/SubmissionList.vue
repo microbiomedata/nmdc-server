@@ -3,7 +3,7 @@ import {
   defineComponent, ref, watch, Ref,
 } from 'vue';
 import { useRouter } from 'vue-router';
-import { DataOptions, DataTableHeader } from 'vuetify';
+import { DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
   generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping,
@@ -60,7 +60,7 @@ export default defineComponent({
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
-    const options: Ref<DataOptions> = ref<DataOptions>({
+    const options = ref({
       page: 1,
       itemsPerPage,
       sortBy: ['date_last_modified'],
@@ -114,7 +114,8 @@ export default defineComponent({
     // Helper function to apply current sort options
     function applySortOptions() {
       const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
-      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+      const sortBy = options.value.sortBy[0] || 'date_last_modified';
+      submission.setSortOptions(sortBy, sortOrder);
     }
 
     // Set initial sort options before the first fetch
@@ -329,14 +330,14 @@ export default defineComponent({
             />
           </template>
           <template #[`item.templates`]="{ item }">
-            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
+            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template]?.displayName).join(' + ') }}
           </template>
           <template #[`item.date_last_modified`]="{ item }">
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
           <template #[`header.status`]="{ column }">
             <v-tooltip
-              v-if="currentUser.is_admin"
+              v-if="currentUser?.is_admin"
               bottom
             >
               <template #activator="{ props }">
@@ -355,7 +356,7 @@ export default defineComponent({
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
               <v-select
-                v-if="currentUser.is_admin && item.status === SubmissionStatusEnum.InProgress.text"
+                v-if="currentUser?.is_admin && item.status === SubmissionStatusEnum.InProgress.text"
                 :value="item.status"
                 :items="availableStatuses"
                 item-disabled="disabled"
@@ -364,11 +365,11 @@ export default defineComponent({
                 disabled
               >
                 <template #selection="{ item: statusItem }">
-                  {{ statusItem.text }}
+                  {{ statusItem.title }}
                 </template>
               </v-select>
               <v-select
-                v-else-if="currentUser.is_admin"
+                v-else-if="currentUser?.is_admin"
                 :value="item.status"
                 :items="availableStatuses"
                 item-disabled="disabled"
@@ -377,14 +378,14 @@ export default defineComponent({
                 @change="(newStatus: string) => handleStatusChange(item, newStatus)"
               >
                 <template #selection="{ item: statusItem }">
-                  {{ statusItem.text }}
+                  {{ statusItem.title }}
                 </template>
               </v-select>
               <v-chip
                 v-else
-                :color="getStatus(item).color"
+                :color="getStatus(item as MetadataSubmissionRecord).color"
               >
-                {{ getStatus(item).text }}
+                {{ getStatus(item as MetadataSubmissionRecord).text }}
               </v-chip>
             </div>
           </template>
@@ -394,7 +395,7 @@ export default defineComponent({
               <v-btn
                 size="small"
                 color="primary"
-                @click="() => resume(item)"
+                @click="() => resume(item as MetadataSubmissionRecord)"
               >
                 <span v-if="editablebyStatus(item.status)">
                   Resume
@@ -427,7 +428,7 @@ export default defineComponent({
                     <v-list-item-title>Delete</v-list-item-title>
                   </v-list-item>
                   <v-list-item
-                    v-if="currentUser.is_admin"
+                    v-if="currentUser?.is_admin"
                     @click="() => openReviewerDialog(item)"
                   >
                     <v-list-item-title>Assign Reviewer</v-list-item-title>
@@ -461,7 +462,7 @@ export default defineComponent({
           <v-spacer />
           <v-btn
             class="ma-3"
-            @click="isDeleteDialogOpen=False"
+            @click="isDeleteDialogOpen = false"
           >
             Cancel
           </v-btn>
