@@ -110,6 +110,15 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
+    
+    // Helper function to apply current sort options
+    function applySortOptions() {
+      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
+      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+    }
+
+    // Set initial sort options before the first fetch
+    applySortOptions();
 
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
       const fullRecord = await api.getRecord(item.id);
@@ -119,14 +128,13 @@ export default defineComponent({
 
     watch(options, () => {
       submission.setPage(options.value.page);
-      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
-      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+      applySortOptions();
     }, { deep: true });
+    
     watch(isTestFilter, () => {
       options.value.page = 1;
       submission.setPage(options.value.page);
-      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
-      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+      applySortOptions();
     }, { deep: true });
 
     function handleOpenDeleteDialog(item: MetadataSubmissionRecordSlim | null) {
