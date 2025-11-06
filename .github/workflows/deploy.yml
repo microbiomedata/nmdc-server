@@ -29,6 +29,13 @@ jobs:
           # history for all branches and tags is needed for setuptools-scm
           fetch-depth: 0
 
+      # Generate tags and labels for the Docker container images.
+      #
+      # Note: The `type=sha,format=long` line makes it so every image is tagged with the Git commit hash.
+      #       We do this so people can reference (i.e. pin) a specific image version, even ones not tagged
+      #       with a version number via the `type=semver,pattern={{version}}` line. (The other tags may
+      #       refer to different image versions over time, so they cannot be used for this purpose.)
+      #
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -41,6 +48,7 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=raw,value=prod,enable=${{ env.IS_PROD_RELEASE }}      
+            type=sha,format=long
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -80,36 +88,35 @@ jobs:
               )
             }}
 
-  # TEMPORARILY COMMENTED OUT IN ORDER TO NOT INTERFERE WITH NERSC'S 
-  # DEBUGGING OF SPIN STABILITY ISSUES
+  # Use the Rancher API to redeploy the specified deployments,
+  # causing them to use the newly-pushed container images.
+  redeploy:
+    needs: build
 
-  # redeploy:
-  #   needs: build
+    runs-on: ubuntu-latest
 
-  #   runs-on: ubuntu-latest
+    env:
+      WORKLOAD_API_BASE: https://rancher2.spin.nersc.gov/v3/project/c-tmq7p:p-bkv45/workloads
 
-  #   env:
-  #     WORKLOAD_API_BASE: https://rancher2.spin.nersc.gov/v3/project/c-tmq7p:p-bkv45/workloads
+    strategy:
+      matrix:
+        deployment: [ backend, frontend ]
 
-  #   strategy:
-  #     matrix:
-  #       deployment: [ backend, frontend ]
+    steps:
+      - name: Redeploy nmdc-dev:portal-${{ matrix.deployment }}
+        if: ${{ env.IS_PROD_RELEASE == 'false' && env.IS_ORIGINAL_REPO == 'true' }}
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc-dev:portal-${{ matrix.deployment }}?action=redeploy
+          method: POST
+          username: ${{ secrets.SPIN_USER }}
+          password: ${{ secrets.SPIN_PASSWORD }}
 
-  #   steps:
-  #     - name: Redeploy nmdc-dev:portal-${{ matrix.deployment }}
-  #       if: ${{ env.IS_PROD_RELEASE == 'false' && env.IS_ORIGINAL_REPO == 'true' }}
-  #       uses: fjogeleit/http-request-action@v1
-  #       with:
-  #         url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc-dev:portal-${{ matrix.deployment }}?action=redeploy
-  #         method: POST
-  #         username: ${{ secrets.SPIN_USER }}
-  #         password: ${{ secrets.SPIN_PASSWORD }}
-
-  #     - name: Redeploy nmdc:portal-${{ matrix.deployment }}
-  #       if: ${{ env.IS_PROD_RELEASE == 'true' && env.IS_ORIGINAL_REPO == 'true' }}
-  #       uses: fjogeleit/http-request-action@v1
-  #       with:
-  #         url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc:portal-${{ matrix.deployment }}?action=redeploy
-  #         method: POST
-  #         username: ${{ secrets.SPIN_USER }}
-  #         password: ${{ secrets.SPIN_PASSWORD }}
+      - name: Redeploy nmdc:portal-${{ matrix.deployment }}
+        if: ${{ env.IS_PROD_RELEASE == 'true' && env.IS_ORIGINAL_REPO == 'true' }}
+        uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ env.WORKLOAD_API_BASE }}/deployment:nmdc:portal-${{ matrix.deployment }}?action=redeploy
+          method: POST
+          username: ${{ secrets.SPIN_USER }}
+          password: ${{ secrets.SPIN_PASSWORD }}

@@ -15,7 +15,7 @@ import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
-import { deleteSubmission, updateRecord } from '../store/api';
+import { addSubmissionRole, deleteSubmission, updateSubmissionStatus } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
   MetadataSubmissionRecord,
@@ -23,6 +23,7 @@ import {
   PaginatedResponse,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
+import useRequest from '@/use/useRequest';
 
 const headers: DataTableHeader[] = [
   {
@@ -81,6 +82,13 @@ export default defineComponent({
       { text: 'Show only test submissions', val: true },
       { text: 'Hide test submissions', val: false }];
 
+    const exclude = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.SubmittedPendingReview.text];
+    const availableStatuses = Object.keys(SubmissionStatusTitleMapping).map((key) => ({
+      value: key,
+      text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      disabled: exclude.includes(key),
+    }));
+
     async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
       return api.listRecords(params, isTestFilter.value);
     }
@@ -103,6 +111,13 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
+    const assignReviewerRequest = useRequest();
+
+    async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
+      await updateSubmissionStatus(item.id, newStatus);
+      await submission.refetch();
+    }
+
     watch(options, () => {
       submission.setPage(options.value.page);
       const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
@@ -138,11 +153,13 @@ export default defineComponent({
       selectedSubmission.value = item;
     }
 
-    function addReviewer() {
-      if (!selectedSubmission.value) {
-        return;
-      }
-      updateRecord(selectedSubmission.value.id, selectedSubmission.value, selectedSubmission.value.status, { [reviewerOrcid.value]: 'reviewer' });
+    async function addReviewer() {
+      await assignReviewerRequest.request(async () => {
+        if (!selectedSubmission.value) {
+          return;
+        }
+        await addSubmissionRole(selectedSubmission.value.id, reviewerOrcid.value, 'reviewer');
+      });
       isReviewerAssignmentDialogOpen.value = false;
     }
 
@@ -152,6 +169,7 @@ export default defineComponent({
       isTestFilter,
       deleteDialogSubmission,
       currentUser,
+      assignReviewerRequest,
       isReviewerAssignmentDialogOpen,
       reviewerOrcid,
       IconBar,
@@ -169,6 +187,9 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
+      availableStatuses,
+      handleStatusChange,
+      SubmissionStatusEnum,
     };
   },
 });
@@ -309,12 +330,60 @@ export default defineComponent({
           <template #[`item.date_last_modified`]="{ item }">
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
-          <template #[`item.status`]="{ item }">
-            <v-chip
-              :color="getStatus(item).color"
+          <template #[`header.status`]="{ header }">
+            <v-tooltip
+              v-if="currentUser.is_admin"
+              bottom
             >
-              {{ getStatus(item).text }}
-            </v-chip>
+              <template #activator="{ on, attrs }">
+                <v-icon
+                  class="ml-1"
+                  color="grey"
+                  v-bind="attrs"
+                  v-on="on"
+                >
+                  mdi-information-outline
+                </v-icon>
+              </template>
+              <span>Greyed out options are user-triggered statuses and cannot be changed or selected</span>
+            </v-tooltip>
+            {{ header.text }}
+          </template>
+          <template #[`item.status`]="{ item }">
+            <div class="d-flex align-center">
+              <v-select
+                v-if="currentUser.is_admin && item.status === SubmissionStatusEnum.InProgress.text"
+                :value="item.status"
+                :items="availableStatuses"
+                item-disabled="disabled"
+                dense
+                hide-details
+                disabled
+              >
+                <template #selection="{ item: statusItem }">
+                  {{ statusItem.text }}
+                </template>
+              </v-select>
+              <v-select
+                v-else-if="currentUser.is_admin"
+                :value="item.status"
+                :items="availableStatuses"
+                item-disabled="disabled"
+                dense
+                hide-details
+                @change="(newStatus) => handleStatusChange(item, newStatus)"
+              >
+                <template #selection="{ item: statusItem }">
+                  {{ statusItem.text }}
+                </template>
+              </v-select>
+              <v-chip
+                v-else
+                :color="getStatus(item).color"
+              >
+                {{ getStatus(item).text }}
+              </v-chip>
+            </div>
           </template>
           <template #[`item.action`]="{ item }">
             <div class="d-flex align-center">
@@ -445,6 +514,7 @@ export default defineComponent({
           <v-btn
             color="primary"
             class="mt-2"
+            :loading="assignReviewerRequest.loading.value"
             @click="() => addReviewer()"
           >
             Assign Reviewer

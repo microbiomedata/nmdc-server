@@ -27,7 +27,7 @@ def set_seed(connection):
 def patch_geo_engine(monkeypatch):
     """Patch all the nmdc_geoloc_tools functions that make external network requests."""
 
-    def mock_get_elevation(lat_lon):
+    def mock_get_elevation(lat_lon, google_map_api_key):
         lat, lon = lat_lon
         if not -90 <= lat <= 90:
             raise ValueError(f"Invalid Latitude: {lat}")

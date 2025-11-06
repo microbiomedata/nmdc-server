@@ -127,7 +127,8 @@ export default defineComponent({
               </v-icon>
             </template>
             <span>
-              This protocol should describe how samples were extracted, digested (including which proteolytic enzyme was used), and/or cleaned prior to analysis on an instrument.
+              This protocol should describe how samples were extracted, digested (including which proteolytic enzyme
+              was used), and/or cleaned prior to analysis on an instrument. Provide a DOI, URL, or descriptive text.
             </span>
           </v-tooltip>
         </div>
@@ -296,7 +297,8 @@ export default defineComponent({
                       </v-icon>
                     </template>
                     <span>
-                      Provide a name for this protocol. If multiple protocols are used, this name will be required for later steps.
+                      Provide a name for this protocol. If this protocol is used for other data types, this name will be
+                      used as reference.
                     </span>
                   </v-tooltip>
                 </template>
@@ -340,6 +342,7 @@ export default defineComponent({
             </template>
             <span>
               This protocol should describe the chromatography and mass spectrometry methods used for data acquisition.
+              Provide a DOI, URL, or descriptive text.
             </span>
           </v-tooltip>
         </div>
@@ -451,7 +454,7 @@ export default defineComponent({
                     </v-icon>
                   </template>
                   <span>
-                    Provide a name for this protocol. If multiple protocols are used, this name will be required for later steps.
+                    Provide a name for this protocol.
                   </span>
                 </v-tooltip>
               </template>
@@ -493,7 +496,7 @@ export default defineComponent({
               </v-icon>
             </template>
             <span>
-              Provide the location of the publically available data. This can be a direct URL or a DOI or an identifier.
+              Provide the location of the publicly available data. This can be a direct URL or a DOI.
             </span>
           </v-tooltip>
         </div>
@@ -531,7 +534,7 @@ export default defineComponent({
                       </v-icon>
                     </template>
                     <span>
-                      Provide a DOI for the protocol. This is a DOI for publicly available documentation that describes the experimental protocol in detail, not for the research study publication. Multiple DOIs can be provided.
+                      Provide a DOI to raw instrument data.
                     </span>
                   </v-tooltip>
                 </template>
@@ -565,7 +568,7 @@ export default defineComponent({
                       </v-icon>
                     </template>
                     <span>
-                      Provide a URL for the protocol. This is a URL for publicly available documentation that describes the experimental protocol in detail, not for the research study publication. Multiple URLs can be provided.
+                      Provide a URL to raw instrument data.
                     </span>
                   </v-tooltip>
                 </template>
