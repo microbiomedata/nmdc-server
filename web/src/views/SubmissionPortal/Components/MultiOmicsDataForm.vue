@@ -402,7 +402,7 @@ export default defineComponent({
               >
                 <v-text-field
                   v-if="multiOmicsForm.awardDois !== null"
-                  v-model="multiOmicsForm.awardDois[i]?.value"
+                  v-model="multiOmicsForm.awardDois[i]!.value"
                   label="Award DOI *"
                   :hint="Definitions.doi"
                   :rules="doiValueRules(i)"
@@ -423,7 +423,7 @@ export default defineComponent({
               >
                 <v-select
                   v-if="multiOmicsForm.awardDois !== null"
-                  v-model="multiOmicsForm.awardDois[i]?.provider"
+                  v-model="multiOmicsForm.awardDois[i]!.provider"
                   label="Award DOI Provider *"
                   :hint="Definitions.dataDoiProvider"
                   :items="doiProviderValues"

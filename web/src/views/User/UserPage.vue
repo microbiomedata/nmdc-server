@@ -21,13 +21,13 @@ export default defineComponent({
     const searchFilter = ref('');
     const headers : DataTableHeader[] = [
       {
-        text: 'ORCID',
+        title: 'ORCID',
         align: 'start',
         sortable: false,
         value: 'orcid',
       },
-      { text: 'Name', value: 'name', sortable: false },
-      { text: 'Admin', value: 'is_admin', sortable: false },
+      { title: 'Name', value: 'name', sortable: false },
+      { title: 'Admin', value: 'is_admin', sortable: false },
     ];
 
     async function getUsers(params: SearchParams): Promise<SearchResponse<User>> {
@@ -96,7 +96,7 @@ export default defineComponent({
               <v-switch
                 v-model="item.is_admin"
                 class="mt-2"
-                :disabled="item.name==currentUser"
+                :disabled="item.name==currentUser?.name"
                 @click="updateAdminStatus(item)"
               />
             </template>

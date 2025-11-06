@@ -8,6 +8,7 @@ import { stateRefs } from '@/store';
 import { getRefreshToken } from '@/store/localStorage';
 import { User } from '@/types';
 import { api } from '@/data/api';
+import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 
 export default defineComponent({
   name: 'UserDetailPage',
@@ -44,7 +45,7 @@ export default defineComponent({
         }, 50);
       }
     };
-    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
+    function requiredRules(msg: string, otherRules: ((v: string) => ValidationResult)[] = []) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,
@@ -141,7 +142,7 @@ export default defineComponent({
                 dense
                 :readonly="!editEmail"
                 filled
-                :rules="requiredRules('E-mail is required',[
+                :rules="requiredRules('E-mail is required', [
                   v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
                 ])"
               >
@@ -157,27 +158,21 @@ export default defineComponent({
                     />
                   </v-btn>
                 </template>
-                <template
-                  v-if="!user.email"
-                  #append-outer
-                >
-                  <v-tooltip
-                    right
-                  >
-                    <template #activator="{ on, attrs }">
-                      <v-icon
-                        right
-                        color="red"
-                        v-bind="attrs"
-                        v-on="on"
-                      >
-                        mdi-alert-circle
-                      </v-icon>
-                    </template>
-                    <span>Email is required</span>
-                  </v-tooltip>
-                </template>
               </v-text-field>
+              <v-tooltip
+                v-if="!user.email"
+                location="right"
+              >
+                <template #activator="{ props }">
+                  <v-icon
+                    color="red"
+                    v-bind="props"
+                  >
+                    mdi-alert-circle
+                  </v-icon>
+                </template>
+                <span>Email is required</span>
+              </v-tooltip>
             </v-col>
           </v-row>
         </div>
@@ -211,11 +206,10 @@ export default defineComponent({
                     bottom
                     open-delay="600"
                   >
-                    <template #activator="{ on, attrs }">
+                    <template #activator="{ props }">
                       <v-icon
                         right
-                        v-bind="attrs"
-                        v-on="on"
+                        v-bind="props"
                         @click="handleRefreshTokenVisibilityButtonClick"
                       >
                         {{ isTokenVisible ? 'mdi-eye' : 'mdi-eye-off' }}
@@ -228,11 +222,10 @@ export default defineComponent({
                     bottom
                     open-delay="600"
                   >
-                    <template #activator="{ on, attrs }">
+                    <template #activator="{ props }">
                       <v-icon
                         right
-                        v-bind="attrs"
-                        v-on="on"
+                        v-bind="props"
                         @click="handleRefreshTokenCopyButtonClick"
                       >
                         mdi-content-copy
