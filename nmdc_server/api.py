@@ -1241,8 +1241,8 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # If the user has a role on the submission (i.e. not just a random admin) and the status is
-    # "Updates Required", automatically change it to "In Progress" upon edit
+    # If the user has a role on the submission (being an admin, alone, is insufficient),
+    # and the status is "Updates Required", automatically change it to "In Progress" upon edit
     if current_user_role and submission.status == SubmissionStatusEnum.UpdatesRequired.text:
         submission.status = SubmissionStatusEnum.InProgress.text
 
@@ -1340,7 +1340,7 @@ async def add_submission_role(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ) -> models.SubmissionMetadata:
-    """Add a role to a submission
+    """Grant a role to a user on a submission
 
     This is intended as a simpler alternative to passing a permissions object in the full
     submission PATCH endpoint, which will add, remove, or change roles as needed to match the
