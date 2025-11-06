@@ -128,6 +128,29 @@ export default defineComponent({
     });
 
     const submitDialog = ref(false);
+    const missingTabsText = computed(() => {
+      const text: Array<string> = [];
+      if (validForms.templatesValid === false) {
+        text.push('No tabs will be present until one or more templates are selected in the Sample Envrionment form.');
+      }
+      if (validForms.multiOmicsFormValid === false) {
+        text.push('Facility tabs will not be present until the Multiomics Form is complete.');
+      }
+      return text;
+    });
+    function determineDialog() {
+      if (missingTabsText.value.length > 0) {
+        return true;
+      }
+      return false;
+    }
+    const missingTabsDialog = ref(determineDialog());
+
+    watch(missingTabsText, () => {
+      if (missingTabsText.value.length > 0) {
+        missingTabsDialog.value = true;
+      }
+    });
 
     const validationSuccessSnackbar = ref(false);
     const importErrorSnackbar = ref(false);
@@ -436,7 +459,7 @@ export default defineComponent({
         allTabsValid = allTabsValid && value;
       });
       validForms.harmonizerValid = allTabsValid && isOwner() && validForms.templatesValid;
-      return allTabsValid && isOwner();
+      return allTabsValid && isOwner() && validForms.templatesValid && validForms.studyFormValid && validForms.multiOmicsFormValid;
     });
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
@@ -654,6 +677,8 @@ export default defineComponent({
       submissionStatus,
       status,
       submitDialog,
+      missingTabsDialog,
+      missingTabsText,
       validationSuccessSnackbar,
       schemaLoading,
       importErrorSnackbar,
@@ -684,7 +709,7 @@ export default defineComponent({
     <submission-permission-banner
       v-if="!canEditSampleMetadata()"
     />
-    <div class="d-flex flex-column px-2 pb-2">
+    <div class="d-flex flex-column px-2 pb-2 pt-2">
       <div class="d-flex align-center">
         <v-btn
           v-if="validationErrorGroups.length === 0"
@@ -1101,6 +1126,38 @@ export default defineComponent({
                 </v-card>
               </v-dialog>
             </v-btn>
+          </div>
+          <div>
+            <v-dialog
+              v-model="missingTabsDialog"
+              width="auto"
+            >
+              <v-card>
+                <v-card-title>
+                  Not all tabs may be present!
+                </v-card-title>
+                <v-card-text>
+                  <div
+                    v-for="(item, index) in missingTabsText"
+                    :key="index"
+                    class="mb-2"
+                  >
+                    {{ item }}
+                  </div>
+                </v-card-text>
+                <v-card-actions
+                  class="justify-center"
+                >
+                  <v-btn
+                    color="primary"
+                    class="mr-2"
+                    @click="missingTabsDialog = false"
+                  >
+                    Acknowledge
+                  </v-btn>
+                </v-card-actions>
+              </v-card>
+            </v-dialog>
           </div>
         </template>
         <span v-if="!canSubmit">

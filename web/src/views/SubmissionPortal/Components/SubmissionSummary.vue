@@ -9,7 +9,6 @@ import {
 import {
   validForms,
   canEditSubmissionMetadata,
-  isOwner,
   studyForm,
   multiOmicsForm,
   checkDoiFormat,
@@ -20,8 +19,6 @@ export default defineComponent({
   components: { SubmissionPermissionBanner },
   setup() {
     const textVal = ref('');
-
-    const canSubmit = computed(() => (validForms.templatesValid && validForms.harmonizerValid && validForms.studyFormValid && validForms.multiOmicsFormValid && isOwner() && false));
 
     const panels = ref([]);
 
@@ -108,7 +105,7 @@ export default defineComponent({
       }
 
       let doisInvalid = false;
-      if (multiOmicsForm.awardDois != null && multiOmicsForm.awardDois.length > 0 && multiOmicsForm.unknownDoi === false) {
+      if (multiOmicsForm.awardDois != null && multiOmicsForm.awardDois.length > 0 && (multiOmicsForm.unknownDoi !== true || multiOmicsForm.dataGenerated === true)) {
         multiOmicsForm.awardDois.forEach((doi) => {
           if (doi.provider === null || doi.value === null || checkDoiFormat(doi.value) === false) {
             doisInvalid = true;
@@ -133,7 +130,6 @@ export default defineComponent({
       validForms,
       NmdcSchema,
       textVal,
-      canSubmit,
       panels,
       studyFormContent,
       multiOmicsContent,
@@ -313,15 +309,6 @@ export default defineComponent({
             mdi-arrow-left-circle
           </v-icon>
           Go to Submission List
-        </v-btn>
-        <v-spacer />
-        <v-btn
-          color="success"
-          depressed
-          :disabled="!canSubmit"
-          @click="true"
-        >
-          Submit
         </v-btn>
       </div>
     </v-container>
