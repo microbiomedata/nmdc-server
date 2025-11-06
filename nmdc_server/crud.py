@@ -948,8 +948,11 @@ def update_submission_contributor_roles(
             ):
                 # Don't edit owner roles
                 role.role = models.SubmissionEditorRole(new_permissions[role.user_orcid])
-        elif role.role != models.SubmissionEditorRole.owner:
-            # Don't delete owner roles
+        elif (
+            role.role != models.SubmissionEditorRole.owner
+            and role.role != models.SubmissionEditorRole.reviewer
+        ):
+            # Don't delete owner or reviewer roles
             db.delete(role)
 
     new_user_role_needed = set(new_permissions) - set(
@@ -963,3 +966,25 @@ def update_submission_contributor_roles(
         )
         db.add(new_role)
     db.commit()
+
+
+def add_submission_role(
+    db: Session,
+    submission: models.SubmissionMetadata,
+    orcid: str,
+    role: models.SubmissionEditorRole,
+):
+    """Add a role for a user on a submission."""
+    new_role = models.SubmissionRole(submission_id=submission.id, user_orcid=orcid, role=role.value)
+    db.add(new_role)
+    db.commit()
+    db.refresh(submission)
+
+
+def remove_submission_role(db: Session, submission: models.SubmissionMetadata, orcid: str):
+    """Remove a role for a user on a submission."""
+    role = get_submission_role(db, submission.id, orcid)
+    if role:
+        db.delete(role)
+        db.commit()
+        db.refresh(submission)
