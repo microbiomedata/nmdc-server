@@ -87,7 +87,7 @@ export default defineComponent({
             v-if="item.homepage_website && item.homepage_website[0]"
             class="text-h5 py-2 primary--text"
           >
-            Consortium Homepage: <a :href="item.homepage_website">{{ item.homepage_website[0] }}</a>
+            Consortium Homepage: <a :href="item.homepage_website[0]">{{ item.homepage_website[0] }}</a>
           </div>
           <div
             v-if="team"
@@ -142,10 +142,11 @@ export default defineComponent({
 
 <style>
 .team {
--webkit-line-clamp: 3;
-display: -webkit-box;
--webkit-box-orient: vertical;
-overflow-y: auto;
-width: fit-content;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow-y: auto;
+  width: fit-content;
 }
 </style>

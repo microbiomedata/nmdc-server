@@ -17,7 +17,7 @@ function arrayBufferToBase64Urlencoded(buffer: Iterable<number>) {
   const bytes = new Uint8Array(buffer);
   const len = bytes.byteLength;
   for (let i = 0; i < len; i += 1) {
-    binary += String.fromCharCode(bytes[i]);
+    binary += String.fromCharCode(bytes[i]!);
   }
   const base64 = window.btoa(binary);
   return base64

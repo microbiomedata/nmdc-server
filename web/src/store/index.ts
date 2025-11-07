@@ -93,7 +93,7 @@ const dataObjectFilter: ComputedRef<DataObjectFilter[]> = computed(() => state
   .bulkDownloadSelected.map((val) => {
     /** See BulkDownload.vue for how this value is constructed */
     const [workflow, file_type] = val.split('::');
-    return { workflow, file_type };
+    return { workflow, file_type } as DataObjectFilter;
   }));
 
 /**

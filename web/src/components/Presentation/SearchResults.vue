@@ -107,7 +107,7 @@ export default defineComponent({
             />
             <v-icon>
               {{
-                result.children && result.children.length > 0 && result.study_category === 'research_study'
+                result.children && Array.isArray(result.children) && result.children.length > 0 && result.study_category === 'research_study'
                   ? 'mdi-book-multiple-outline'
                   : icon
               }}
@@ -149,11 +149,3 @@ export default defineComponent({
     </v-list>
   </div>
 </template>
-
-<!-- <style scoped>
-.v-list-item-title {
-  font-size: .8125rem;
-  font-weight: 500;
-  line-height: 1rem;
-}
-</style> -->

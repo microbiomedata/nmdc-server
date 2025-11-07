@@ -1,3 +1,4 @@
+// @ts-ignore
 import colors from './colors';
 import {
   entityType, entitySchemaType, KeggTermSearchResponse, api,
@@ -39,8 +40,8 @@ const pathwayRegex = /^((map:?)|(path:?)|(ko:?)|(ec:?)|(rn:?)|(kegg.pathway:(map
 function pathwayPrefixShort(v: string) {
   const match = v.match(pathwayRegex);
   if (match) {
-    const prefix = match[8] ? match[8] : match[1].replace(/:$/, '');
-    return prefix.toLowerCase();
+    const prefix = match[8] ? match[8] : match[1]?.replace(/:$/, '');
+    return prefix?.toLowerCase();
   }
   return 'map';
 }
@@ -48,8 +49,8 @@ function pathwayPrefixShort(v: string) {
 function pathwayPrefixLong(v: string) {
   const match = v.match(pathwayRegex);
   if (match) {
-    const prefix = match[7] ? match[7] : match[1].replace(match[1], `kegg.pathway:${match[1]}`);
-    return prefix.toUpperCase();
+    const prefix = match[7] ? match[7] : match[1]?.replace(match[1], `kegg.pathway:${match[1]}`);
+    return prefix?.toUpperCase();
   }
   return 'KEGG.PATHWAY.MAP';
 }
@@ -82,9 +83,11 @@ const KeggPrefix: Record<string, PrefixInfo> = {
 function keggEncode(v: string, url = false) {
   const prefixes = Object.values(KeggPrefix);
   for (let i = 0; i < prefixes.length; i += 1) {
+    const prefix = prefixes[i];
+    if (!prefix) continue;
     const {
       pattern, short, long, urlBase,
-    } = prefixes[i];
+    } = prefix;
     const replacement = url ? short(v) : long(v);
     const transformed = v.replace(pattern, replacement);
     if (transformed !== v) {
@@ -664,11 +667,11 @@ const ecosystems = [
 function getField(name: string, table?: entityType): FieldsData {
   if (table && table in tableFields) {
     if (name in tableFields[table]) {
-      return tableFields[table][name];
+      return tableFields[table][name]!;
     }
   }
   if (name in fields) {
-    return fields[name];
+    return fields[name]!;
   }
   return {};
 }

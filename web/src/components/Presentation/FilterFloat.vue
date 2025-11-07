@@ -36,7 +36,6 @@ export default defineComponent({
   },
 
   setup(props, { emit }) {
-    console.log('rendering FilterFloat.vue');
     const options = ref([
       { text: 'is between', value: 'between' },
       { text: 'is greater than', value: '>' },
@@ -59,11 +58,17 @@ export default defineComponent({
     // If we have an existing condition for this field, use it to set our initial state.
     if (myConditions.value.length === 1) {
       const [condition] = myConditions.value;
-      selectedOption.value = condition.op;
-      if (condition.op === 'between' && typeof condition.value === 'object') {
-        [value1.value, value2.value] = condition.value.map((v) => v.toString());
+      selectedOption.value = condition?.op || 'between';
+      if (condition?.op === 'between' && typeof condition.value === 'object') {
+        const conditionValueStrings = condition.value.map((v) => v.toString());
+        if (conditionValueStrings.length === 2 && conditionValueStrings[0] && conditionValueStrings[1]) {
+          [value1.value, value2.value] = conditionValueStrings;
+        } else {
+          value1.value = props.min.toString();
+          value2.value = props.max.toString();
+        }
       } else {
-        value1.value = condition.value.toString();
+        value1.value = condition?.value.toString() || props.min.toString();
       }
     }
 
