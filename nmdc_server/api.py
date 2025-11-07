@@ -1289,7 +1289,6 @@ async def update_submission_status(
     """Update submission status"""
     submission = get_submission_for_user(db, id, user, allowed_roles=[SubmissionEditorRole.owner])
     current_status = submission.status
-    current_user_role = crud.get_submission_role(db, id, user.orcid)
 
     allowed_transitions = {
         SubmissionStatusEnum.UpdatesRequired.text: [SubmissionStatusEnum.InProgress.text],
@@ -1320,8 +1319,6 @@ async def update_submission_status(
     if (
         body.status == SubmissionStatusEnum.SubmittedPendingReview.text
         and submission.is_test_submission is False
-        and current_user_role
-        and current_user_role.role == models.SubmissionEditorRole.owner
     ):
         try:
             create_github_issue(submission, user)
