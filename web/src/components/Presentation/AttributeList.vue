@@ -4,6 +4,7 @@ import { isObject } from 'lodash';
 
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
+// @ts-ignore
 import { formatBiosampleDepth } from '@/util';
 import gold from '@/assets/GOLD.png';
 import img from '@/assets/IMG.png';
@@ -126,14 +127,14 @@ export default defineComponent({
         <AttributeItem v-bind="{ item, field }" />
       </v-col>
     </v-list>
-    <v-list v-if="alternateIdentifiers.length > 0 || item.emsl_biosample_identifiers.length > 0">
+    <v-list v-if="alternateIdentifiers.length > 0 ||  Array.isArray(item.emsl_biosample_identifiers) && item.emsl_biosample_identifiers.length > 0">
       <h2>
         Alternative Identifiers
       </h2>
       <AttributeItem
         v-for="({ name, target }) in alternateIdentifiers"
         :key="name"
-        v-bind="{ item, field, link: { name, target } }"
+        v-bind="{ item, link: { name, target } }"
         :image="name.startsWith('gold') ? gold : name.startsWith('img') ? img : ''"
       />
       <AttributeItem
@@ -143,7 +144,7 @@ export default defineComponent({
         :image="emsl"
       />
     </v-list>
-    <v-list v-if="type === 'biosample' && relatedBiosamples.length">
+    <v-list v-if="type === 'biosample' && Array.isArray(relatedBiosamples) && relatedBiosamples.length > 0">
       <div class="display-1">
         Related Biosamples
       </div>

@@ -1,6 +1,7 @@
 <script lang="ts">
 import { defineComponent, PropType } from 'vue';
 import { getField } from '@/encoding';
+// @ts-ignore
 import { fieldDisplayName, formatBiosampleDepth, valueDisplayName } from '@/util';
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 
@@ -68,13 +69,13 @@ export default defineComponent({
       return valueDisplayName(field, props.item[field]);
     }
 
-    function href(field: string) {
+    function href(field: string): string | undefined {
       if (field.startsWith('open_in_')) {
-        return props.item[field];
+        return props.item[field] as string;
       }
       const value = props.item[field] as string;
       if (typeof value === 'string' && value.startsWith('http')) {
-        return props.item[field];
+        return props.item[field] as string;
       }
       if (field === 'study_id') {
         return `/details/study/${props.item.study_id}`;

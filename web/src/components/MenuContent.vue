@@ -6,13 +6,15 @@ import {
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
-import { getField, geneFunctionTypeInfo, geneFunctionTables } from '@/encoding';
+import {
+  getField, geneFunctionTypeInfo, geneFunctionTables, geneFunctionType,
+} from '@/encoding';
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
 import FilterSankeyTree from '@/components/FilterSankeyTree.vue';
-import FilterGene from '@/components/FilterGene.vue';
+import FilterGene, { GeneType } from '@/components/FilterGene.vue';
 import FilterTree from '@/components/FilterTree.vue';
 import { urlify } from '@/data/utils';
 import { AttributeSummary, Condition, entityType } from '@/data/api';
@@ -120,16 +122,16 @@ export default defineComponent({
         :field="field"
         :table="table"
         :conditions="conditions"
-        :gene-type-params="geneFunctionTypeInfo[summary.type.split('_')[0]]"
-        :gene-type="summary.type.split('_')[0]"
+        :gene-type-params="geneFunctionTypeInfo[summary.type.split('_')[0] as geneFunctionType]"
+        :gene-type="summary.type.split('_')[0] as GeneType"
         @select="$emit('select', $event)"
       />
       <filter-date
         v-if="summary.type === 'date'"
         v-bind="{
           field, type: table, conditions,
-          min: summary.min,
-          max: summary.max,
+          min: summary.min as string,
+          max: summary.max as string,
           update,
         }"
         class="pa-5"
@@ -139,8 +141,8 @@ export default defineComponent({
         v-else-if="['float', 'integer'].includes(summary.type)"
         v-bind="{
           field, type: table, conditions,
-          min: summary.min,
-          max: summary.max,
+          min: summary.min as number,
+          max: summary.max as number,
           update,
         }"
         class="pa-5"

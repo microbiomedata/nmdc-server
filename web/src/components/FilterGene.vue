@@ -7,6 +7,7 @@ import {
   ref,
   watch,
   nextTick,
+  Prop,
 } from 'vue';
 import { DataTableHeader } from 'vuetify';
 import {
@@ -17,6 +18,8 @@ import {
 } from '@/encoding';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import useRequest from '@/use/useRequest';
+
+export type GeneType = 'kegg' | 'cog' | 'pfam' | 'go';
 
 export default defineComponent({
 
@@ -30,7 +33,7 @@ export default defineComponent({
       required: true,
     },
     geneType: {
-      type: String,
+      type: String as PropType<GeneType>,
       default: 'kegg', // can be kegg, cog, or pfam
     },
   },
@@ -40,7 +43,7 @@ export default defineComponent({
     const conditions = toRef(props, 'conditions');
     const field = ref('id');
     const table = computed(() => {
-      const typeToTable: Record<string, entityType> = {
+      const typeToTable: Record<GeneType, entityType> = {
         kegg: 'kegg_function',
         cog: 'cog_function',
         pfam: 'pfam_function',
@@ -77,17 +80,16 @@ export default defineComponent({
 
     const headers: DataTableHeader[] = [
       {
-        text: 'Term',
+        title: 'Term',
         value: 'value',
         width: '300',
         sortable: true,
       },
       {
-        text: 'Remove',
+        title: 'Remove',
         value: 'remove',
         sortable: false,
         width: 90,
-        filterable: false,
       },
     ];
 
@@ -170,7 +172,7 @@ export default defineComponent({
       :headers="headers"
     >
       <template #[`item.value`]="{ item }">
-        <a :href="geneTypeParams.encodeFunction(item.value, true)">
+        <a :href="geneTypeParams.encodeFunction(item.value as string, true)">
           {{ item.value }}
         </a>
       </template>
@@ -179,7 +181,7 @@ export default defineComponent({
           x-small
           depr
           color="error"
-          @click="removeTerm(item.value)"
+          @click="removeTerm(item.value as string)"
         >
           remove
         </v-btn>

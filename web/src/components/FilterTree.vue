@@ -45,7 +45,7 @@ export default defineComponent({
     const tree = computed(() => {
       let t = stateRefs.treeData.value?.trees[`${props.field}_id`];
       /* Eliminate nodes with only one child from the top */
-      while (t && t?.length === 1 && t[0].children?.length) {
+      while (t && t?.length === 1 && t[0]?.children?.length) {
         t = t[0].children;
       }
       return t;
@@ -67,7 +67,7 @@ export default defineComponent({
       if (stateRefs.treeData.value === null) {
         selected.value = [];
       } else {
-        selected.value = myConditions.value.map((v) => unreactive.nodeMapLabel[v.value as string].id);
+        selected.value = myConditions.value.map((v) => unreactive.nodeMapLabel[v.value as string]!.id);
       }
     }, { immediate: true });
 
@@ -82,7 +82,7 @@ export default defineComponent({
         c.push({
           op: '==',
           field: field.value,
-          value: unreactive.nodeMapId[value].label,
+          value: unreactive.nodeMapId[value]!.label,
           table: table.value,
         });
       });

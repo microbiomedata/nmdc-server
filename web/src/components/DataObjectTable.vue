@@ -33,6 +33,12 @@ const descriptionMap: Record<string, string> = {
   'Protein FAA': 'FASTA amino acid file for annotated proteins.',
 };
 
+export interface NomMetadataItem {
+  massSpecPolarityMode?: string,
+  eluentIntroductionCategory?: string,
+  sampledPortions?: string,
+}
+
 export default defineComponent({
   components: { DownloadDialog },
 
@@ -124,11 +130,7 @@ export default defineComponent({
       value: false,
     });
 
-    function nomMetadataString(item: {
-      massSpecPolarityMode: string,
-      eluentIntroductionCategory: string,
-      sampledPortions: string,
-    }): string {
+    function nomMetadataString(item: NomMetadataItem): string {
       return [item.eluentIntroductionCategory, item.sampledPortions, item.massSpecPolarityMode].filter((value) => !!value).join(', ');
     }
 
@@ -143,7 +145,7 @@ export default defineComponent({
           omicsCopy.massSpecConfigId = annotations.mass_spectrometry_configuration_id || '';
           omicsCopy.massSpecConfigName = annotations.mass_spectrometry_configuration_name || '';
           const polarityMode = annotations.mass_spectrometry_config_polarity_mode
-            ? `${PolarityModeEnum.permissible_values[annotations.mass_spectrometry_config_polarity_mode].text} mode`
+            ? `${PolarityModeEnum.permissible_values[annotations.mass_spectrometry_config_polarity_mode as string].text} mode`
             : '';
           omicsCopy.massSpecPolarityMode = polarityMode;
         }
@@ -152,7 +154,7 @@ export default defineComponent({
           omicsCopy.chromConfigName = annotations.chromatography_configuration_name || '';
         }
         if (annotations.eluent_introduction_category) {
-          omicsCopy.eluentIntroductionCategory = EluentIntroductionCategoryEnum.permissible_values[annotations.eluent_introduction_category].title;
+          omicsCopy.eluentIntroductionCategory = EluentIntroductionCategoryEnum.permissible_values[annotations.eluent_introduction_category as string].title;
         }
         if (annotations.sampled_portions?.length) {
           const displaySampledPortions = (annotations.sampled_portions as string[]).map((sampledPortion: string) => (
@@ -328,12 +330,12 @@ export default defineComponent({
             </span>
             <span v-if="omicsType === 'Proteomics'">
               <br>
-              <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category] }}</b>
+              <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category as keyof typeof metaproteomicCategoryEnumToDisplay] }}</b>
             </span>
-            <span v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data)">
+            <span v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data as NomMetadataItem)">
               <br>
               <b>Data Generation: </b> NOM via
-              {{ nomMetadataString(item.omics_data) }}
+              {{ nomMetadataString(item.omics_data as NomMetadataItem) }}
             </span>
             <br>
             <div v-if="getRelatedBiosampleIds(item.omics_data).length">
@@ -395,7 +397,7 @@ export default defineComponent({
                     :disabled="!loggedInUser"
                     variant="plain"
                     color="grey-darken-2"
-                    @click="handleDownload(item)"
+                    @click="handleDownload(item as unknown as OmicsProcessingResult)"
                   >
                     <v-icon>mdi-download</v-icon>
                   </v-btn>
