@@ -8,7 +8,7 @@ import { api, type Condition } from '@/data/api';
 // @ts-ignore
 import { makeTree } from '@/util';
 
-interface Props {
+export interface EcosystemSankeyProps {
   table?: string | null;
   conditions?: Condition[];
   hierarchy?: string[];
@@ -17,7 +17,7 @@ interface Props {
 const { 
   conditions = [], 
   hierarchy = ['ecosystem', 'ecosystem_category', 'ecosystem_type', 'ecosystem_subtype', 'specific_ecosystem'] 
-} = defineProps<Props>();
+} = defineProps<EcosystemSankeyProps>();
 
 const emit = defineEmits(['selected']);
 

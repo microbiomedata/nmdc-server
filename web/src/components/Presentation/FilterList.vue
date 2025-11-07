@@ -7,7 +7,7 @@ import { valueDisplayName, fieldDisplayName } from '@/util';
 import { api, Condition, entityType, FacetSummaryResponse } from '@/data/api';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 
-interface FacetItem extends FacetSummaryResponse {
+export interface FacetItem extends FacetSummaryResponse {
   isSelectable: boolean;
   name: string;
 }

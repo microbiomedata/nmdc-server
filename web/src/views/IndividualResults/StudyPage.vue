@@ -1,6 +1,7 @@
 <script lang="ts">
 import {
   computed, defineComponent, watchEffect, ref, watch,
+  ComputedRef,
 } from 'vue';
 import { useRouter } from 'vue-router';
 import { useDisplay } from 'vuetify';
@@ -99,7 +100,7 @@ export default defineComponent({
       });
     });
 
-    const goldLinks = computed(() => {
+    const goldLinks: ComputedRef<Set<string>> = computed(() => {
       if (!item.value?.gold_study_identifiers && !item.value?.open_in_gold) {
         return new Set();
       }
@@ -114,7 +115,7 @@ export default defineComponent({
           }
         });
       }
-      return links;
+      return links as Set<string>;
     });
 
     const bioprojectLinks = computed(() => {

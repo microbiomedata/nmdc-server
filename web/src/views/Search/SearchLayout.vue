@@ -130,8 +130,8 @@ export default defineComponent({
       table: ref('study'),
       conditions: stateRefs.conditions,
     });
-    const studyCondition = computed(() => studyConditions.value.study.concat(studySummaryData.otherConditions.value));
-    const consortiumCondition = computed(() => studyConditions.value.consortia.concat(studySummaryData.otherConditions.value));
+    const studyCondition = computed(() => studyConditions.value.study?.concat(studySummaryData.otherConditions.value) || []);
+    const consortiumCondition = computed(() => studyConditions.value.consortia?.concat(studySummaryData.otherConditions.value) || []);
 
     const study = usePaginatedResults(ref(studyCondition), api.searchStudy, undefined, 5);
     const consortium = usePaginatedResults(ref(consortiumCondition), api.searchStudy, undefined, 5);

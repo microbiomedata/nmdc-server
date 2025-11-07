@@ -205,16 +205,16 @@ export default defineComponent({
       } else if (newConditionList.length > oldConditionList.length || newConditionList.length === oldConditionList.length) {
         gtag.event('filter_added', {
           event_category: 'search',
-          event_label: newConditionList[newConditionList.length - 1].field,
-          value: newConditionList[newConditionList.length - 1].value,
+          event_label: newConditionList[newConditionList.length - 1]?.field,
+          value: newConditionList[newConditionList.length - 1]?.value,
         });
         // Special case for map usage: if lat/lon were the last two filters added
         // then track both filters because they are added together from the map interface
-        if (newConditionList[newConditionList.length - 1].field === 'longitude' && newConditionList[newConditionList.length - 2].field === 'latitude') {
+        if (newConditionList[newConditionList.length - 1]?.field === 'longitude' && newConditionList[newConditionList.length - 2]?.field === 'latitude') {
           gtag.event('filter_added', {
             event_category: 'search',
-            event_label: newConditionList[newConditionList.length - 2].field,
-            value: newConditionList[newConditionList.length - 2].value,
+            event_label: newConditionList[newConditionList.length - 2]?.field,
+            value: newConditionList[newConditionList.length - 2]?.value,
           });
         }
       }
