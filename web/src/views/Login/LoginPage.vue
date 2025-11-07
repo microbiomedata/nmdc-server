@@ -34,7 +34,7 @@ export default defineComponent({
       // Attempt to exchange the code for an access token
       try {
         await api.exchangeAuthCode(query.code as string);
-      } catch (e) {
+      } catch (_e) {
         error.value = true;
         return;
       }

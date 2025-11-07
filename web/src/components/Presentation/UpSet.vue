@@ -28,7 +28,7 @@ export default defineComponent({
       required: true,
     },
   },
-
+  emits: ['select'],
   setup(props, { emit }) {
     const svgRoot = ref(undefined);
 
@@ -78,9 +78,9 @@ export default defineComponent({
 
       select(el).selectAll('g').remove();
 
-      const selectSamples = (event, values) => {
+      const selectSamples = (_event, values) => {
         const value = values.sets.reduce((prev, cur) => {
-          const next = prev | MultiomicsValue[cur]; //eslint-disable-line no-bitwise
+          const next = prev | MultiomicsValue[cur];  
           return next;
         }, 0);
         const conditions = [{

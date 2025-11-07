@@ -12,7 +12,7 @@ export default defineComponent({
   },
   setup() {
     function emailTemplate(value: EmailSubjects) {
-      const subjects: { [key in EmailSubjects]: string } = {
+      const subjects: { [_key in EmailSubjects]: string } = {
         support: 'Support Request',
         bug: 'Bug Report',
         feature: 'Feature Request',

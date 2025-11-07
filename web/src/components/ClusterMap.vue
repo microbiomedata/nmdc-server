@@ -65,7 +65,7 @@ export default defineComponent({
       default: null,
     },
   },
-
+  emits: ['selected'],
   setup(props, { emit }) {
     const mapRef = ref();
     const mapReady = ref(false);

@@ -74,13 +74,13 @@ export default defineComponent({
         />
         <v-card variant="outlined">
           <v-data-table
+            v-model:options="options"
+            v-model:items-per-page="users.data.limit"
             dense
             :headers="headers"
             :items="users.data.results.results"
             :server-items-length="users.data.results.count"
-            :options.sync="options"
             :loading="users.loading.value"
-            :items-per-page.sync="users.data.limit"
             :footer-props="{itemsPerPageOptions : [10, 20, 50] }"
             item-key="name"
             class="elevation-1"

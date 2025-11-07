@@ -42,6 +42,7 @@ export default defineComponent({
       default: false,
     },
   },
+  emits: ['set-page', 'set-items-per-page', 'selected'],
   setup(props) {
     const rows = ref(props.itemsPerPage);
     return {

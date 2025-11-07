@@ -304,7 +304,7 @@ export default defineComponent({
                     item.principal_investigator_websites.length > 0"
               >
                 <v-list-item v-if="item.protocol_link">
-                  <template v-slot:prepend>
+                  <template #prepend>
                     <v-avatar>
                       <v-icon>mdi-file-document</v-icon>
                     </v-avatar>
@@ -324,7 +324,7 @@ export default defineComponent({
                   "
                 />
                 <v-list-item v-if="goldLinks.size > 0 || bioprojectLinks.length > 0 || item.principal_investigator_websites.length > 0">
-                  <template v-slot:prepend>
+                  <template #prepend>
                     <v-avatar>
                       <v-icon>mdi-file-document</v-icon>
                     </v-avatar>
@@ -406,7 +406,7 @@ export default defineComponent({
                     <span class="text-uppercase">{{ award.provider }}</span>
                   </v-list-item-subtitle>
 
-                  <template v-slot:append>
+                  <template #append>
                     <v-tooltip top>
                       <template #activator="{ props }">
                         <v-btn
@@ -434,7 +434,10 @@ export default defineComponent({
               <v-list
                 class="bg-grey-lighten-4"
               >
-                <template v-for="(pub, pubIndex) in data.publicationDois" :key="pubIndex">
+                <template
+                  v-for="(pub, pubIndex) in data.publicationDois"
+                  :key="pubIndex"
+                >
                   <v-list-item>
                     <v-list-item-title>
                       {{ pub.cite }}
@@ -446,7 +449,7 @@ export default defineComponent({
                       <span class="font-weight-bold pr-2">Provider:</span>
                       <span class="text-uppercase">{{ pub.provider }}</span>
                     </v-list-item-subtitle>
-                    <template v-slot:append>
+                    <template #append>
                       <v-tooltip top>
                         <template #activator="{ props }">
                           <v-btn
@@ -487,7 +490,7 @@ export default defineComponent({
                     <span class="font-weight-bold pr-2">Provider:</span>
                     <span class="text-uppercase">{{ dataDOI.provider }}</span>
                   </v-list-item-subtitle>
-                  <template v-slot:append>
+                  <template #append>
                     <v-tooltip top>
                       <template #activator="{ props }">
                         <v-btn
@@ -519,7 +522,7 @@ export default defineComponent({
                 :key="study.id"
                 :to="`${study.id}`"
               >
-                <template v-slot:prepend>
+                <template #prepend>
                   <v-icon>mdi-file-document</v-icon>
                 </template>
                 <v-list-item-title class="px-2">
@@ -541,7 +544,7 @@ export default defineComponent({
                 :key="study.id"
                 :to="`${study.id}`"
               >
-                <template v-slot:prepend>
+                <template #prepend>
                   <v-icon>mdi-file-document</v-icon>
                 </template>
                 <v-list-item-title class="px-2">

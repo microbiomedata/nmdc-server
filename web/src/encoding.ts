@@ -231,7 +231,7 @@ function makeSetsFromBitmask(mask_str: string) {
   const mask = parseInt(mask_str, 10); // the bitmask comes in as a string
   const sets = [];
 
-  /* eslint-disable no-bitwise */
+   
   if ((1 << 2) & mask) {
     sets.push('NOM');
   }

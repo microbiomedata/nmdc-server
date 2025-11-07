@@ -5,7 +5,6 @@ import {
   PropType,
   toRef,
   watch,
-  getCurrentInstance,
 } from 'vue';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';

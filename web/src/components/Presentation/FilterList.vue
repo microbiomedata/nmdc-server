@@ -31,7 +31,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-
+  emits: ['select'],
   setup(props, { emit }) {
     const filterText = ref('');
     const createdDelay = ref(false);

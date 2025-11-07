@@ -113,7 +113,7 @@ async function init(_router: Router, loadUser = true, loginState = '' as string 
     state.bannerTitle = appSettings.portal_banner_title;
     state.bannerMessage = appSettings.portal_banner_message;
   } catch (exception) {
-    // eslint-disable-next-line no-console
+     
     console.error(exception);
   }
   router = _router;

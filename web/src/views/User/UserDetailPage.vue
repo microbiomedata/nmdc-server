@@ -45,7 +45,7 @@ export default defineComponent({
         }, 50);
       }
     };
-    function requiredRules(msg: string, otherRules: ((v: string) => ValidationResult)[] = []) {
+    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,
@@ -153,9 +153,9 @@ export default defineComponent({
                     icon
                     @click="updateEmail(user.email)"
                   >
-                    <v-icon
-                      v-text="!editEmail ? 'mdi-pencil' : 'mdi-content-save'"
-                    />
+                    <v-icon>
+                      {{ !editEmail ? 'mdi-pencil' : 'mdi-content-save' }}
+                    </v-icon>
                   </v-btn>
                 </template>
               </v-text-field>

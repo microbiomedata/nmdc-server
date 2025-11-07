@@ -127,7 +127,7 @@ export default defineComponent({
         <AttributeItem v-bind="{ item, field }" />
       </v-col>
     </v-list>
-    <v-list v-if="alternateIdentifiers.length > 0 ||  Array.isArray(item.emsl_biosample_identifiers) && item.emsl_biosample_identifiers.length > 0">
+    <v-list v-if="alternateIdentifiers.length > 0 || Array.isArray(item.emsl_biosample_identifiers) && item.emsl_biosample_identifiers.length > 0">
       <h2>
         Alternative Identifiers
       </h2>
@@ -153,7 +153,7 @@ export default defineComponent({
         :key="biosample.id"
         :href="'/details/sample/' + biosample.id"
       >
-        <template v-slot:prepend>
+        <template #prepend>
           <v-icon>mdi-link</v-icon>
         </template>
         <v-list-item-title>

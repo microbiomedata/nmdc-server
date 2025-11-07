@@ -62,6 +62,7 @@
     "@vue/tsconfig": "^0.8.1",
     "eslint": "^9.35.0",
     "eslint-config-vuetify": "^4.2.0",
+    "globals": "^16.5.0",
     "npm-run-all2": "^8.0.4",
     "sass-embedded": "^1.92.1",
     "typescript": "~5.9.2",

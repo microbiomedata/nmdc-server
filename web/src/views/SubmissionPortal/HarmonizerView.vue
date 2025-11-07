@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, getCurrentInstance,
+  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
 } from 'vue';
 import {
   clamp, debounce, flattenDeep, has, sum,

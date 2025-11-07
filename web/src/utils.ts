@@ -46,16 +46,16 @@ function stringifyQuery(params: any) {
     if (params.conditions.length) {
       const clone = cloneDeep(params);
       clone.conditions.forEach((c: Condition) => {
-        // eslint-disable-next-line no-param-reassign
+         
         c.value = JSON.stringify(c.value);
       });
       // https://github.com/protobufjs/protobuf.js/issues/1261#issuecomment-667430623
       const msg = QueryParams.fromObject(clone);
       const u8a = QueryParams.encode(msg).finish();
-      // eslint-disable-next-line no-param-reassign
+       
       params.q = arrayBufferToBase64Urlencoded(u8a);
     }
-    // eslint-disable-next-line no-param-reassign
+     
     delete params.conditions;
   }
   const queryParamsString = new URLSearchParams(params).toString();
@@ -74,7 +74,7 @@ function parseQuery(q: string) {
     const obj = QueryParams.toObject(msg, { enums: String });
     obj.conditions.forEach((c: Condition) => {
       // @ts-ignore
-      // eslint-disable-next-line no-param-reassign
+       
       c.value = JSON.parse(c.value);
     });
     parsed.conditions = obj.conditions;

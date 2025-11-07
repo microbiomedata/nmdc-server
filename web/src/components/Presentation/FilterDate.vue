@@ -38,7 +38,7 @@ export default defineComponent({
       default: false,
     },
   },
-
+  emits: ['select'],
   setup(props, { emit }) {
     const options = [
       { text: 'is between', value: 'between' },

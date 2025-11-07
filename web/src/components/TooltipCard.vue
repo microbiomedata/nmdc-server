@@ -16,8 +16,8 @@ export default defineComponent({
 
 <template>
   <v-card
-    class="h-100"
     :id="id"
+    class="h-100"
     variant="outlined"
   >
     <v-tooltip

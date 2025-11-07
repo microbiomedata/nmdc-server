@@ -35,7 +35,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-
+  emits: ['select'],
   setup(props, { emit }) {
     const conditions = toRef(props, 'conditions');
     const field = toRef(props, 'field');

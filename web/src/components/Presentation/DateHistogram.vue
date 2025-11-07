@@ -46,7 +46,7 @@ export default defineComponent({
       default: 160,
     },
   },
-
+  emits: ['select'],
   setup(props, { emit }) {
     const range = ref(null);
     const min = ref(0);
@@ -151,7 +151,7 @@ export default defineComponent({
         <TimeHistogram
           ref="histogram"
           v-bind="{ width, height, selectedData: facetSummary, totalData: facetSummaryUnconditional, range: range || [] }"
-          @onBrushEnd="onBrushEnd"
+          @on-brush-end="onBrushEnd"
         />
       </template>
       <template #below>

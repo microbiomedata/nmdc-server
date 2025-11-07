@@ -9,7 +9,7 @@ import { api, type Condition } from '@/data/api';
 import { makeTree } from '@/util';
 
 export interface EcosystemSankeyProps {
-  table?: string | null;
+  table: string | null;
   conditions?: Condition[];
   hierarchy?: string[];
 }
@@ -23,7 +23,7 @@ const emit = defineEmits(['selected']);
 
 const chartRef = ref();
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 const onChartReady = (chart: any) => {
   chartRef.value = chart;
 };

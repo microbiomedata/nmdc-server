@@ -10,7 +10,7 @@ export default defineComponent({
       required: true,
     },
   },
-
+  emits: ['update:modelValue'],
   setup(props, { emit }) {
     const menu = ref(false);
     const menuRef = ref(null);
@@ -48,8 +48,6 @@ export default defineComponent({
       menu.value = false;
     }
 
-    console.log(menu.value);
-
     return {
       menu,
       textFieldDate,
@@ -82,14 +80,14 @@ export default defineComponent({
         label="Choose"
         prepend-icon="mdi-calendar"
         v-bind="props"
-        @update:modelValue="updateFromTextField"
+        @update:model-value="updateFromTextField"
       />
     </template>
     <v-date-picker
       v-model="isoDate"
       no-title
       scrollable
-      @update:modelValue="updateFromDatePicker"
+      @update:model-value="updateFromDatePicker"
     />
     <v-btn
       text

@@ -263,7 +263,9 @@ export default defineComponent({
                 v-bind="props"
                 @click="removeConditions"
               >
-                <v-icon class="mr-2">mdi-filter-off</v-icon>
+                <v-icon class="mr-2">
+                  mdi-filter-off
+                </v-icon>
                 Clear all
               </v-btn>
             </template>
@@ -300,7 +302,10 @@ export default defineComponent({
         <span v-if="isLoading">
           Loading results...
         </span>
-        <span v-else class="d-flex align-center">
+        <span
+          v-else
+          class="d-flex align-center"
+        >
           <span>Found {{ resultsCount }} samples.</span>
           <v-tooltip
             location="bottom"

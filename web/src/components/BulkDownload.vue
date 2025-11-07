@@ -126,8 +126,8 @@ export default defineComponent({
         </span>
       </v-tooltip>
       <Treeselect
-        appendToBody
         v-model="bulkDownloadSelected"
+        append-to-body
         multiple
         value-consists-of="LEAF_PRIORITY"
         open-direction="below"

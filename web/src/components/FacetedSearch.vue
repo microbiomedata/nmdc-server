@@ -46,6 +46,7 @@ export default defineComponent({
       required: true,
     },
   },
+  emits: ['update:filterText', 'select'],
   data() {
     return {
       menuState: {} as Record<string, boolean>,
@@ -180,7 +181,10 @@ export default defineComponent({
             <span> {{ mixsDescription }}</span>
           </v-tooltip>
         </v-list-subheader>
-        <template v-for="sf in filteredFields" :key="sf.key">
+        <template
+          v-for="sf in filteredFields"
+          :key="sf.key"
+        >
           <v-menu
             :model-value="menuState[sf.key]"
             location="end"

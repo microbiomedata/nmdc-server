@@ -17,7 +17,7 @@ export default defineComponent({
       required: true,
     },
   },
-
+  emits: ['remove'],
   setup(props) {
     const menuState = ref({});
 
@@ -115,10 +115,10 @@ export default defineComponent({
         </div>
         <v-menu
           v-if="group.key !== 'multiomicsbiosample'"
+          v-model="menuState[group.key]"
           offset-x
           :nudge-right="10"
           :close-on-content-click="false"
-          v-model="menuState[group.key]"
         >
           <template #activator="{ props }">
             <div
@@ -160,6 +160,7 @@ export default defineComponent({
   border: 2px solid;
 }
 .chip-content {
+  max-width: 200px;
   overflow: hidden;
 }
 

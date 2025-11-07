@@ -78,7 +78,7 @@ export default class HarmonizerApi {
       if (!classDefinition) {
         return;
       }
-      // eslint-disable-next-line no-param-reassign
+       
       template.excelWorksheetName = classDefinition.annotations?.excel_worksheet_name?.value;
     });
 
@@ -157,7 +157,7 @@ export default class HarmonizerApi {
           // as the autocomplete options. If the field has an enum range in the schema (i.e.
           // the field object has a `flatVocabulary` field here) then the options are restricted
           // to that set.
-          newCol.source = (_: any, next: (opts: any) => void) => {
+          newCol.source = (_: any, next: (_opts: any) => void) => {
             const dependentRowData = this._getSameRowCellData(GOLD_FIELDS[field].upstream);
             let options = this._getGoldOptions(dependentRowData);
             if (flatVocab) {

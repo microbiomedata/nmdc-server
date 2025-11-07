@@ -159,11 +159,11 @@ const studyFormDefault = {
 const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
 
-const protocols = {
-  sampleProtocol: {} as SampleProtocol,
-  acquisitionProtocol: {} as AcquisitionProtocol,
-  dataProtocol: {} as DataProtocol,
-};
+interface Protocols {
+  sampleProtocol: SampleProtocol,
+  acquisitionProtocol: AcquisitionProtocol,
+  dataProtocol: DataProtocol,
+}
 
 /**
  * Multi-Omics Form Step
@@ -185,10 +185,10 @@ const multiOmicsFormDefault = {
   ship: undefined as undefined | boolean,
   studyNumber: '',
   unknownDoi: undefined as undefined | boolean,
-  mpProtocols: undefined as undefined | typeof protocols,
-  mbProtocols: undefined as undefined | typeof protocols,
-  lipProtocols: undefined as undefined | typeof protocols,
-  nomProtocols: undefined as undefined | typeof protocols,
+  mpProtocols: undefined as undefined | Protocols,
+  mbProtocols: undefined as undefined | Protocols,
+  lipProtocols: undefined as undefined | Protocols,
+  nomProtocols: undefined as undefined | Protocols,
 };
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
@@ -262,7 +262,7 @@ const templateList = computed(() => {
     }
   } else {
     // Have data already been generated? No
-    // eslint-disable-next-line no-lonely-if
+     
     if (multiOmicsForm.doe) {
       // Are you submitting samples to a DOE user facility? Yes
       if (multiOmicsForm.facilities.includes('EMSL')) {
@@ -517,7 +517,7 @@ async function addMetadataSuggestions(submissionId: string, schemaClassName: str
   for (let i = 0; i < batches.length; i += 1) {
     const batch = batches[i] || [];
 
-    // eslint-disable-next-line no-await-in-loop -- we are intentionally throttling requests to the sever
+     
     const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
 
     // Drop all the existing suggestions for the rows in this batch

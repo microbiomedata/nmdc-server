@@ -39,7 +39,7 @@ export default defineComponent({
       default: '',
     },
   },
-
+  emits: ['click'],
   setup(props) {
     function getValue(field: string) {
       // For the "depth" field, format it as a string or `null`.
@@ -117,7 +117,7 @@ export default defineComponent({
     :key="link.name"
     :href="link.target"
   >
-    <template v-slot:prepend>
+    <template #prepend>
       <img
         v-if="image"
         :src="image"
@@ -150,7 +150,7 @@ export default defineComponent({
       click: bindClick ? () => $emit('click') : undefined
     }"
   >
-    <template v-slot:prepend>
+    <template #prepend>
       <img
         v-if="image"
         :src="image"

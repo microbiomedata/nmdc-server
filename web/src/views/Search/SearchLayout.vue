@@ -168,7 +168,7 @@ export default defineComponent({
     );
     const showChildren:Ref<any[]> = ref([]);
     function toggleChildren(value:StudySearchResults) {
-      // eslint-disable-next-line no-unused-expressions
+       
       showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
     }
 
@@ -667,8 +667,9 @@ export default defineComponent({
                 <router-link
                   :to="{name: 'Study', params: { id: props.result.study_id }}"
                   class="pr-2 text-grey-darken-4"
-                  v-text="props.result.study_id"
-                />
+                >
+                  {{ props.result.study_id }}
+                </router-link>
                 <template
                   v-if="props.result.alternate_identifiers.length || props.result.emsl_biosample_identifiers.length"
                 >

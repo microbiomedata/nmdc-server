@@ -8,7 +8,6 @@ import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
 import { FacetSummaryResponse } from '@/data/api';
 import { useTheme } from 'vuetify';
-import { GoogleVizEvents } from 'vue-google-charts/dist/types';
 
 export default defineComponent({
   name: 'FacetBarChart',
@@ -61,12 +60,12 @@ export default defineComponent({
       required: true,
     },
   },
-
+  emits: ['selected'],
   setup(props, { emit }) {
     const theme = useTheme();
     const chartRef = ref();
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const onChartReady = (chart: any) => {
       chartRef.value = chart;
     };

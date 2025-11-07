@@ -5,7 +5,6 @@ import {
   PropType,
   ref,
   watchEffect,
-  getCurrentInstance,
 } from 'vue';
 import { groupBy } from 'lodash';
 import {

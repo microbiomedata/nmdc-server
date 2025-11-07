@@ -32,7 +32,7 @@ export default defineComponent({
     async function handleLogout() {
       try {
         await api.logout();
-      } catch (e) {
+      } catch (_e) {
         // This can happen if the user attempts to log out after their access token has expired
         // and that's okay to silently ignore
       } finally {
@@ -78,7 +78,10 @@ export default defineComponent({
         :ripple="!nav"
         :to="{ name: 'User' }"
       >
-        <v-icon class="mr-2" left>
+        <v-icon
+          class="mr-2"
+          left
+        >
           mdi-account-circle
         </v-icon>
         {{ me.name }}

@@ -53,7 +53,10 @@ export default defineComponent({
         class="mb-2"
       >
         <span class="font-weight-bold pr-2">Examples:</span>
-        <span class="examples-list" v-html="urlify(columnHelp.examples)" />
+        <span
+          class="examples-list"
+          v-html="urlify(columnHelp.examples)"
+        />
       </div>
       <v-btn
         color="grey"

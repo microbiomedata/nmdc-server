@@ -96,7 +96,10 @@ export default defineComponent({
         >
           {{ groupname !== 'undefined' ? groupname : 'Other' }}
         </v-subheader>
-        <template v-for="field in filteredFields" :key="field.key">
+        <template
+          v-for="field in filteredFields"
+          :key="field.key"
+        >
           <v-menu
             location="end"
             :close-on-content-click="false"

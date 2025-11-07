@@ -7,7 +7,6 @@ import {
   ref,
   watch,
   nextTick,
-  Prop,
 } from 'vue';
 import { DataTableHeader } from 'vuetify';
 import {
@@ -37,7 +36,7 @@ export default defineComponent({
       default: 'kegg', // can be kegg, cog, or pfam
     },
   },
-
+  emits: ['select'],
   setup(props, { emit }) {
     const selected = ref(null);
     const conditions = toRef(props, 'conditions');
@@ -150,9 +149,9 @@ export default defineComponent({
       <slot name="subtitle" />
       <v-autocomplete
         v-model="selected"
+        v-model:search-input="search"
         :loading="loading"
         :items="items"
-        :search-input.sync="search"
         :label="geneTypeParams.label"
         clearable
         class="px-3 grow"

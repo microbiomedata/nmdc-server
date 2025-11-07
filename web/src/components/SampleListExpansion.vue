@@ -36,7 +36,7 @@ export default defineComponent({
       default: false,
     },
   },
-
+  emits: ['open-details'],
   setup(props) {
     function isOpen(omicsProcessingId?: string) {
       return props.expanded.resultId === props.result.id
@@ -92,7 +92,9 @@ export default defineComponent({
             @click="() => $emit('open-details', projects[0]?.id)"
           >
             {{ fieldDisplayName(omicsType) }}
-            <v-icon size="medium">mdi-chevron-down</v-icon>
+            <v-icon size="medium">
+              mdi-chevron-down
+            </v-icon>
           </v-btn>
         </template>
         <span>

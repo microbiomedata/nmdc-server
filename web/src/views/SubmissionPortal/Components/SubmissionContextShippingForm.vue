@@ -58,7 +58,7 @@ export default defineComponent({
       addressForm.expectedShippingDate = newValue.length ? new Date(newValue) : undefined;
     });
 
-    function requiredRules(msg: string, otherRules: ((v: string) => ValidationResult)[]) {
+    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[]) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,

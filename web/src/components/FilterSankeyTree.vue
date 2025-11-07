@@ -34,7 +34,7 @@ export default defineComponent({
       ],
     },
   },
-
+  emits: ['select'],
   setup(props, { emit }) {
     const otherConditions = computed(() => props.conditions
       .filter((c) => (!props.hierarchy.includes(c.field)) || (c.table !== props.table)));

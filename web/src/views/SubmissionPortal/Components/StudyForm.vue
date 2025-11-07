@@ -90,7 +90,7 @@ export default defineComponent({
       });
     }
 
-    function requiredRules(msg: string, otherRules: ((v: string) => ValidationResult)[] = []) {
+    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,

@@ -42,6 +42,7 @@ export default defineComponent({
       required: true,
     },
   },
+emits: ['onBrushEnd'],
 
   setup(props, { emit }) {
     const theme = useTheme();

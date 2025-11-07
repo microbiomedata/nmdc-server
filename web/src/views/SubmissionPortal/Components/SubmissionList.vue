@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  defineComponent, ref, watch, Ref,
+  defineComponent, ref, watch,
 } from 'vue';
 import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
@@ -140,7 +140,7 @@ export default defineComponent({
 
     function handleOpenDeleteDialog(item: MetadataSubmissionRecordSlim | null) {
       deleteDialogSubmission.value = item;
-      if (deleteDialogSubmission) {
+      if (deleteDialogSubmission.value) {
         isDeleteDialogOpen.value = true;
       }
     }
@@ -302,12 +302,12 @@ export default defineComponent({
       </v-row>
       <v-card variant="outlined">
         <v-data-table
+          v-model:options="options"
+          v-model:items-per-page="submission.data.limit"
           :headers="headers"
           :items="submission.data.results.results"
           :server-items-length="submission.data.results.count"
-          :options.sync="options"
           :loading="submission.loading.value"
-          :items-per-page.sync="submission.data.limit"
           :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
         >
           <template #[`item.study_name`]="{ item }">
