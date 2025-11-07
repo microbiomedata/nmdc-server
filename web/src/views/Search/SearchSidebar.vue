@@ -18,7 +18,7 @@ import FacetedSearch, { SearchFacet } from '@/components/FacetedSearch.vue';
 import {
   stateRefs, removeConditions, setConditions, toggleConditions,
 } from '@/store';
-import useGtag from '@/use/useGtag';
+import { event } from 'vue-gtag'
 
 /**
  * Sidebar has a fixed list of facets, possibly from different tables.
@@ -145,7 +145,6 @@ export default defineComponent({
     const filterText = ref('');
     const textSearchResults = ref([] as Condition[]);
     const dbSummary = ref({} as DatabaseSummaryResponse);
-    const gtag = useGtag();
     const biosampleDescription = computed(() => {
       const { schemaName } = types.biosample;
       if (schemaName !== undefined) {
@@ -188,33 +187,33 @@ export default defineComponent({
     function trackFilterConditions(newConditionList: Condition[], oldConditionList: Condition[]) {
       // Do nothing if Google Analytics is not available. This is expected in development mode.
       // Also do nothing if there are no new conditions or if the conditions have not changed (spurious effect).
-      if (!gtag || newConditionList.length === 0 || JSON.stringify(newConditionList) === JSON.stringify(oldConditionList)) {
+      if (import.meta.env.DEV || newConditionList.length === 0 || JSON.stringify(newConditionList) === JSON.stringify(oldConditionList)) {
         return;
       }
       // On initial load, track each filter condition that exists
       // Otherwise, track the last filter condition added or updated
       if (oldConditionList.length === 0 && newConditionList.length > 0) {
         newConditionList.forEach((condition) => {
-          gtag.event('filter_added', {
+          event('filter_added', {
             event_category: 'search',
             event_label: condition.field,
-            value: condition.value,
+            event_value: condition.value,
           });
         });
       // If a condition is added or updated, track that condition
       } else if (newConditionList.length > oldConditionList.length || newConditionList.length === oldConditionList.length) {
-        gtag.event('filter_added', {
+        event('filter_added', {
           event_category: 'search',
           event_label: newConditionList[newConditionList.length - 1]?.field,
-          value: newConditionList[newConditionList.length - 1]?.value,
+          event_value: newConditionList[newConditionList.length - 1]?.value,
         });
         // Special case for map usage: if lat/lon were the last two filters added
         // then track both filters because they are added together from the map interface
         if (newConditionList[newConditionList.length - 1]?.field === 'longitude' && newConditionList[newConditionList.length - 2]?.field === 'latitude') {
-          gtag.event('filter_added', {
+          event('filter_added', {
             event_category: 'search',
             event_label: newConditionList[newConditionList.length - 2]?.field,
-            value: newConditionList[newConditionList.length - 2]?.value,
+            event_value: newConditionList[newConditionList.length - 2]?.value,
           });
         }
       }

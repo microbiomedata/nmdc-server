@@ -3964,10 +3964,10 @@ vue-google-charts@^1.1.0:
   resolved "https://registry.yarnpkg.com/vue-google-charts/-/vue-google-charts-1.1.0.tgz#bcd1e113ff5c305f3d3df7e52c4c778b947dc953"
   integrity sha512-wGAgAynIIUKmP5eJUFlx69e8gjIDpyqHlVsvFyrnd2tGZk3a6FI83dRhdssxPyOc9y41+2QEfqUV9SsR+n6s5A==
 
-vue-gtag@^1.16.1:
-  version "1.16.1"
-  resolved "https://registry.yarnpkg.com/vue-gtag/-/vue-gtag-1.16.1.tgz#edb2f20ab4f6c4d4d372dfecf8c1fcc8ab890181"
-  integrity sha512-5vs0pSGxdqrfXqN1Qwt0ZFXG0iTYjRMu/saddc7QIC5yp+DKgjWQRpGYVa7Pq+KbThxwzzMfo0sGi7ISa6NowA==
+vue-gtag@^3.6.3:
+  version "3.6.3"
+  resolved "https://registry.yarnpkg.com/vue-gtag/-/vue-gtag-3.6.3.tgz#e7362d55379f351e9ab92340ad2ddb1fb70cb430"
+  integrity sha512-IuSPUjHG63BVqUEpV1xHeKQd/jVe2tQVdrwyoy8flxEem0wLRoEWmxmD+1I+zjezvxQbt1NsGhf7zCwRrxbOTQ==
 
 vue-router@^4.5.1:
   version "4.5.1"
