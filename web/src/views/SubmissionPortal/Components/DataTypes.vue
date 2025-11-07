@@ -84,7 +84,7 @@ export default defineComponent({
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metagenome"
       value="mg"
-      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved.sampleDataSlot)"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot)"
       hide-details
       @change="handleMetagenomeChange"
     />
@@ -114,7 +114,7 @@ export default defineComponent({
         v-model="multiOmicsForm.mgCompatible"
         label="Is the generated data compatible? *"
         :rules="[v => v !== undefined || 'This field is required']"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot)"
         @change="handleMgCompatibleChange"
       >
         <v-radio
@@ -129,11 +129,11 @@ export default defineComponent({
               class="x-2"
               max-width="500"
             >
-              <template #activator="{ on }">
+              <template #activator="{ props }">
                 <v-icon
                   class="ml-2"
                   dense
-                  v-on="on"
+                  v-bind="props"
                 >
                   mdi-help-circle
                 </v-icon>
@@ -153,7 +153,7 @@ export default defineComponent({
         v-if="multiOmicsForm.mgCompatible"
         v-model="multiOmicsForm.mgInterleaved"
         label="Is the data in interleaved format? *"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot)"
         :rules="[v => v !== undefined || 'This field is required']"
       >
         <v-radio
@@ -170,7 +170,7 @@ export default defineComponent({
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metatranscriptome"
       value="mt"
-      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved.sampleDataSlot)"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot)"
       hide-details
       @change="handleMetatranscriptomeChange"
     />
@@ -205,7 +205,7 @@ export default defineComponent({
         v-model="multiOmicsForm.mtCompatible"
         label="Is the generated data compatible? *"
         :rules="[v => v !== undefined || 'This field is required']"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot)"
         @change="handleMtCompatibleChange"
       >
         <v-radio
@@ -220,11 +220,11 @@ export default defineComponent({
               class="x-2"
               max-width="500"
             >
-              <template #activator="{ on }">
+              <template #activator="{ props }">
                 <v-icon
                   class="ml-2"
                   dense
-                  v-on="on"
+                  v-bind="props"
                 >
                   mdi-help-circle
                 </v-icon>
@@ -244,7 +244,7 @@ export default defineComponent({
         v-if="multiOmicsForm.mtCompatible"
         v-model="multiOmicsForm.mtInterleaved"
         label="Is the data in interleaved format? *"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot)"
         :rules="[v => v !== undefined || 'This field is required']"
       >
         <v-radio

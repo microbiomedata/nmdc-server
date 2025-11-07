@@ -205,7 +205,7 @@ export default defineComponent({
                 :rules="doiValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
-                <template #append-outer>
+                <template #append>
                   <v-tooltip
                     right
                     class="x-2"
@@ -237,7 +237,7 @@ export default defineComponent({
                 :rules="urlValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
-                <template #append-outer>
+                <template #append>
                   <v-tooltip
                     right
                     class="x-2"
@@ -278,7 +278,7 @@ export default defineComponent({
                 dense
                 @blur="updateMultiOmicsForm()"
               >
-                <template #append-outer>
+                <template #append>
                   <v-tooltip
                     right
                     max-width="500"
@@ -357,7 +357,7 @@ export default defineComponent({
               :rules="doiValueRules()"
               @blur="updateMultiOmicsForm()"
             >
-              <template #append-outer>
+              <template #append>
                 <v-tooltip
                   right
                   class="x-2"
@@ -390,7 +390,7 @@ export default defineComponent({
               :rules="urlValueRules()"
               @blur="updateMultiOmicsForm()"
             >
-              <template #append-outer>
+              <template #append>
                 <v-tooltip
                   right
                   class="x-2"
@@ -431,7 +431,7 @@ export default defineComponent({
               dense
               @blur="updateMultiOmicsForm()"
             >
-              <template #append-outer>
+              <template #append>
                 <v-tooltip
                   right
                   max-width="500"
@@ -508,7 +508,7 @@ export default defineComponent({
                 :rules="doiValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
-                <template #append-outer>
+                <template #append>
                   <v-tooltip
                     right
                     class="x-2"
@@ -541,7 +541,7 @@ export default defineComponent({
                 :rules="urlValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
-                <template #append-outer>
+                <template #append>
                   <v-tooltip
                     right
                     class="x-2"

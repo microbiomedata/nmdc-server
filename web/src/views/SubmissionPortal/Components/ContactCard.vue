@@ -1,6 +1,8 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 
+type EmailSubjects = 'support' | 'bug' | 'feature';
+
 export default defineComponent({
   props: {
     elevation: {
@@ -9,8 +11,8 @@ export default defineComponent({
     },
   },
   setup() {
-    function emailTemplate(value: string) {
-      const subjects: { [key: string]: string } = {
+    function emailTemplate(value: EmailSubjects) {
+      const subjects: { [key in EmailSubjects]: string } = {
         support: 'Support Request',
         bug: 'Bug Report',
         feature: 'Feature Request',
