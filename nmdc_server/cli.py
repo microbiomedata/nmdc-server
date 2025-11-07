@@ -218,7 +218,12 @@ def truncate():
     help="Skip the ETL step (i.e. the core of the ingest process)",
 )
 def ingest(
-    verbose, function_limit, skip_annotation, swap_rancher_secrets, swap_google_secrets: bool, skip_etl: bool
+    verbose,
+    function_limit,
+    skip_annotation,
+    swap_rancher_secrets,
+    swap_google_secrets: bool,
+    skip_etl: bool,
 ):
     """Ingest the latest data from mongo into the ingest database."""
     level = logging.WARN
