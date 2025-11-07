@@ -211,8 +211,14 @@ def truncate():
     default=False,
     help="Swap secrets on Google Secret Manager via its API",
 )
+@click.option(
+    "--skip-etl",
+    is_flag=True,
+    default=False,
+    help="Skip the ETL step (i.e. the core of the ingest process)",
+)
 def ingest(
-    verbose, function_limit, skip_annotation, swap_rancher_secrets, swap_google_secrets: bool
+    verbose, function_limit, skip_annotation, swap_rancher_secrets, swap_google_secrets: bool, skip_etl: bool
 ):
     """Ingest the latest data from mongo into the ingest database."""
     level = logging.WARN
@@ -233,18 +239,22 @@ def ingest(
         f"• MongoDB host: `{settings.mongo_host}`"
     )
 
-    try:
-        jobs.do_ingest(function_limit, skip_annotation)
-    except Exception as e:
-        send_slack_message(
-            f"Ingest failed.\n"
-            f"• Start time: `{ingest_start_datetime_str}`\n"
-            f"• MongoDB host: `{settings.mongo_host}`\n"
-            f"• Error message: {e}"
-        )
+    # Unless the user opted to skip the ETL step, perform it now.
+    if not skip_etl:
+        try:
+            jobs.do_ingest(function_limit, skip_annotation)
+        except Exception as e:
+            send_slack_message(
+                f"Ingest failed.\n"
+                f"• Start time: `{ingest_start_datetime_str}`\n"
+                f"• MongoDB host: `{settings.mongo_host}`\n"
+                f"• Error message: {e}"
+            )
 
-        # Now that we've processed the Exception at this level, propagate it.
-        raise e
+            # Now that we've processed the Exception at this level, propagate it.
+            raise e
+    else:
+        click.echo("Skipping ETL step.")
 
     for m, s in errors.missing.items():
         click.echo(f"missing {m}:")
