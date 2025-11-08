@@ -9,7 +9,6 @@ import { api, type Condition } from '@/data/api';
 import { makeTree } from '@/util';
 
 export interface EcosystemSankeyProps {
-  table: string | null;
   conditions?: Condition[];
   hierarchy?: string[];
 }
