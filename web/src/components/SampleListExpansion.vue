@@ -79,34 +79,36 @@ export default defineComponent({
         location="bottom"
         content-class="clickable-tooltip"
         :close-delay="1000"
-        :disabled="!isDisabled(omicsType, projects)"
       >
-        <template #activator="{ props }">
-          <v-btn
-            v-bind="props"
-            size="x-small"
-            :variant="!isOpen(projects[0]?.id) ? 'outlined' : 'flat'"
-            :color="isOpen(projects[0]?.id) ? 'primary' : 'default'"
-            :disabled="isDisabled(omicsType, projects)"
-            class="mr-2 mt-2"
-            @click="() => $emit('open-details', projects[0]?.id)"
-          >
-            {{ fieldDisplayName(omicsType) }}
-            <v-icon size="medium">
-              mdi-chevron-down
-            </v-icon>
-          </v-btn>
+        <template #activator="{ props: tooltipProps }">
+          <span v-bind="isDisabled(omicsType, projects) ? tooltipProps : {}">
+            <v-btn
+              size="x-small"
+              :variant="!isOpen(projects[0]?.id) ? 'outlined' : 'flat'"
+              :color="isOpen(projects[0]?.id) ? 'primary' : 'default'"
+              :disabled="isDisabled(omicsType, projects)"
+              class="mr-2 mt-2"
+              @click="() => $emit('open-details', projects[0]?.id)"
+            >
+              {{ fieldDisplayName(omicsType) }}
+              <v-icon size="medium">
+                mdi-chevron-down
+              </v-icon>
+            </v-btn>
+          </span>
         </template>
-        <span>
-          Workflows have not been processed yet. Please contact
-          <a
-            class="blue--text text--lighten-2"
-            href="mailto:support@microbiomedata.org"
-          >
-            support@microbiomedata.org
-          </a>
-          if you have questions.
-        </span>
+        <template #default>
+          <span v-if="isDisabled(omicsType, projects)">
+            Workflows have not been processed yet. Please contact
+            <a
+              class="text-blue-lighten-2"
+              href="mailto:support@microbiomedata.org"
+            >
+              support@microbiomedata.org
+            </a>
+            if you have questions.
+          </span>
+        </template>
       </v-tooltip>
     </div>
     <template v-for="[omicsType, projects] in filteredOmicsProcessing">
