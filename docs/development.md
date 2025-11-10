@@ -244,8 +244,11 @@ If you are modifying files in the `web` directory, additionally run the frontend
 
 ```bash
 cd web
-yarn serve
+yarn install
+yarn dev
 ```
+
+You will need Node version 22 or greater to install and run the web app locally. You can find installation instructions here: https://nodejs.org/en/download. If you're on a Mac, it is recommended to use nvm to install and manage your node versions.
 
 <details>
 <summary>Running yarn via npx?</summary>
