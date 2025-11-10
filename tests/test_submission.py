@@ -761,6 +761,68 @@ def test_update_role_on_patch(db: Session, client: TestClient, logged_in_user):
     assert role and role.role == SubmissionEditorRole.editor
 
 
+def test_add_role_by_dedicated_endpoint(db: Session, client: TestClient, logged_in_user):
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    editor_user = fakes.UserFactory()
+    db.commit()
+
+    response = client.request(
+        method="post",
+        url=f"/api/metadata_submission/{submission.id}/role",
+        json={"orcid": editor_user.orcid, "role": SubmissionEditorRole.editor.value},
+    )
+    assert response.status_code == 200
+    db.refresh(submission)
+
+    assert len(submission.roles) == 2
+    added_role = next(
+        (role for role in submission.roles if role.user_orcid == editor_user.orcid), None
+    )
+    assert added_role is not None
+    assert added_role.role == SubmissionEditorRole.editor
+
+
+def test_remove_role_by_dedicated_endpoint(db: Session, client: TestClient, logged_in_user):
+    editor_user = fakes.UserFactory()
+    submission = fakes.MetadataSubmissionFactory(
+        author=logged_in_user, author_orcid=logged_in_user.orcid
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=editor_user.orcid,
+        role=SubmissionEditorRole.editor,
+    )
+    db.commit()
+
+    response = client.request(
+        method="delete",
+        url=f"/api/metadata_submission/{submission.id}/role/{editor_user.orcid}",
+    )
+    assert response.status_code == 200
+    db.refresh(submission)
+
+    assert len(submission.roles) == 1
+    removed_role = next(
+        (role for role in submission.roles if role.user_orcid == editor_user.orcid), None
+    )
+    assert removed_role is None
+
+
 def test_delete_submission_by_owner(db: Session, client: TestClient, logged_in_user):
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user, author_orcid=logged_in_user.orcid
@@ -1537,31 +1599,115 @@ def test_make_submission_images_public_unauthorized(
 
 
 @pytest.mark.parametrize(
-    "test_status,code",
+    "original_status,new_status,is_allowed",
     [
-        (SubmissionStatusEnum.InProgress.text, 200),
-        (SubmissionStatusEnum.SubmittedPendingReview.text, 403),
+        (
+            SubmissionStatusEnum.InProgress.text,
+            SubmissionStatusEnum.SubmittedPendingReview.text,
+            True,
+        ),
+        (
+            SubmissionStatusEnum.InProgress.text,
+            SubmissionStatusEnum.PendingUserFacility.text,
+            False,
+        ),
     ],
 )
-def test_edit_submission_status_uneditable(
-    db: Session, client: TestClient, logged_in_user, test_status, code
+def test_owner_allowed_to_make_approved_status_changes(
+    db: Session, client: TestClient, logged_in_user, original_status, new_status, is_allowed
 ):
-    """Test that a submission with an uneditable status (anything other than InProgress or UpdatesRequired) errors"""
-    submission = fakes.MetadataSubmissionFactory(status=test_status)
+    """Test that a submission owner can change submission status to allowed values"""
+    submission = fakes.MetadataSubmissionFactory(status=original_status)
     fakes.SubmissionRoleFactory(
         submission=submission,
         submission_id=submission.id,
         user_orcid=logged_in_user.orcid,
         role=SubmissionEditorRole.owner,
     )
-    payload = SubmissionMetadataSchema.model_validate(submission)
     db.commit()
+
     response = client.request(
         method="patch",
-        url=f"/api/metadata_submission/{submission.id}",
-        json=jsonable_encoder(payload),
+        url=f"/api/metadata_submission/{submission.id}/status",
+        json=jsonable_encoder({"status": new_status}),
     )
-    assert response.status_code == code
+    db.refresh(submission)
+
+    if is_allowed:
+        assert response.status_code == 200
+        response_body = response.json()
+        assert response_body["status"] == new_status
+        assert submission.status == new_status
+    else:
+        assert response.status_code == 422
+
+
+def test_admin_allowed_to_make_any_status_changes(
+    db: Session, client: TestClient, logged_in_admin_user
+):
+    """Test that an admin user can change submission status to any value"""
+    submission = fakes.MetadataSubmissionFactory(status=SubmissionStatusEnum.InProgress.text)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_admin_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    new_status = SubmissionStatusEnum.PendingUserFacility.text
+    response = client.request(
+        method="patch",
+        url=f"/api/metadata_submission/{submission.id}/status",
+        json=jsonable_encoder({"status": new_status}),
+    )
+    db.refresh(submission)
+
+    assert response.status_code == 200
+    response_body = response.json()
+    assert response_body["status"] == new_status
+    assert submission.status == new_status
+
+
+def test_editor_cannot_make_status_changes(db: Session, client: TestClient, logged_in_user):
+    """Test that a user with editor role cannot change submission status"""
+    submission = fakes.MetadataSubmissionFactory(status=SubmissionStatusEnum.InProgress.text)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_user.orcid,
+        role=SubmissionEditorRole.editor,
+    )
+    db.commit()
+
+    new_status = SubmissionStatusEnum.SubmittedPendingReview.text
+    response = client.request(
+        method="patch",
+        url=f"/api/metadata_submission/{submission.id}/status",
+        json=jsonable_encoder({"status": new_status}),
+    )
+
+    assert response.status_code == 403
+
+
+def test_invalid_status_is_rejected(db: Session, client: TestClient, logged_in_admin_user):
+    """Test that an invalid submission status is rejected"""
+    submission = fakes.MetadataSubmissionFactory(status=SubmissionStatusEnum.InProgress.text)
+    fakes.SubmissionRoleFactory(
+        submission=submission,
+        submission_id=submission.id,
+        user_orcid=logged_in_admin_user.orcid,
+        role=SubmissionEditorRole.owner,
+    )
+    db.commit()
+
+    response = client.request(
+        method="patch",
+        url=f"/api/metadata_submission/{submission.id}/status",
+        json=jsonable_encoder({"status": "InvalidStatus"}),
+    )
+
+    assert response.status_code == 422
 
 
 def test_github_issue_resubmission_creates_comment_only(
@@ -1610,9 +1756,11 @@ def test_github_issue_resubmission_creates_comment_only(
     # Patch the normal API settings as well as
     # search(requests.get) and comment (requests.post) API calls
     # with their mock versions defined below
-    with patch("nmdc_server.api.requests.get") as mock_get, patch(
-        "nmdc_server.api.requests.post"
-    ) as mock_post, patch("nmdc_server.api.settings") as mock_settings:
+    with (
+        patch("nmdc_server.api.requests.get") as mock_get,
+        patch("nmdc_server.api.requests.post") as mock_post,
+        patch("nmdc_server.api.settings") as mock_settings,
+    ):
 
         # Configure fake github settings
         mock_settings.github_issue_url = "https://api.github.com/repos/owner/repo/issues"
@@ -1627,11 +1775,10 @@ def test_github_issue_resubmission_creates_comment_only(
         # Update submission status to trigger GitHub issue creation/update
         payload = {
             "status": SubmissionStatusEnum.SubmittedPendingReview.text,
-            "metadata_submission": {},
         }
         response = client.request(
             method="PATCH",
-            url=f"/api/metadata_submission/{submission.id}",
+            url=f"/api/metadata_submission/{submission.id}/status",
             json=payload,
         )
         assert response.status_code == 200

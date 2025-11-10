@@ -1241,13 +1241,10 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # Create GitHub issue when metadata is being submitted and not a test submission
-    if submitted(submission.status, body_dict.get("status", None), submission.is_test_submission):
-        submission_model = schemas_submission.SubmissionMetadataSchema.model_validate(submission)
-        try:
-            create_github_issue(submission_model, user)
-        except Exception as e:
-            logging.error(f"Failed to create/update Github issue: {str(e)}")
+    # If the user has a role on the submission (being an admin, alone, is insufficient),
+    # and the status is "Updates Required", automatically change it to "In Progress" upon edit
+    if current_user_role and submission.status == SubmissionStatusEnum.UpdatesRequired.text:
+        submission.status = SubmissionStatusEnum.InProgress.text
 
     if body.field_notes_metadata is not None:
         submission.field_notes_metadata = body.field_notes_metadata
@@ -1262,71 +1259,137 @@ async def update_submission(
         submission.study_name = body_dict["metadata_submission"]["studyForm"]["studyName"]
     if "templates" in body_dict["metadata_submission"]:
         submission.templates = body_dict["metadata_submission"]["templates"]
-    # Update permissions and status if the user is an "owner" or "admin"
-    _update_permissions_and_status(db, submission, body_dict, current_user_role, user)
+
+    # Update permissions if the user is an "owner" or "admin"
+    # TODO: consider whether this can be refactored into a separate endpoint
+    new_permissions = body_dict.get("permissions", None)
+    can_update_permissions = user.is_admin or (
+        current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
+    )
+    if new_permissions is not None and can_update_permissions:
+        crud.update_submission_contributor_roles(db, submission, new_permissions)
+
     crud.update_submission_lock(db, submission.id)
+
     return submission
 
 
-def _update_permissions_and_status(
-    db: Session,
-    submission: SubmissionMetadata,
-    body_dict: dict,
-    current_user_role,
-    user: models.User,
-):
-    """Update permissions and status if user is owner or admin"""
+@router.patch(
+    "/metadata_submission/{id}/status",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionMetadataSchema,
+)
+async def update_submission_status(
+    id: str,
+    body: schemas_submission.SubmissionMetadataStatusPatch,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> models.SubmissionMetadata:
+    """Update submission status"""
+    submission = get_submission_for_user(db, id, user, allowed_roles=[SubmissionEditorRole.owner])
+    current_status = submission.status
 
-    if (
-        current_user_role and current_user_role.role == models.SubmissionEditorRole.owner
-    ) or user.is_admin:
-        new_permissions = body_dict.get("permissions", None)
-        if new_permissions is not None:
-            crud.update_submission_contributor_roles(db, submission, new_permissions)
+    allowed_transitions = {
+        SubmissionStatusEnum.UpdatesRequired.text: [SubmissionStatusEnum.InProgress.text],
+        SubmissionStatusEnum.InProgress.text: [SubmissionStatusEnum.SubmittedPendingReview.text],
+    }
 
-        if body_dict.get("status", None):
-            new_status = body_dict["status"]
+    # Admins can change to any status
+    if user.is_admin:
+        submission.status = body.status
 
-            # Admins can change to any status
-            if user.is_admin:
-                submission.status = body_dict["status"]
-
-            # Owner can only do select transitions
-            else:
-                allowed_transitions = {
-                    SubmissionStatusEnum.UpdatesRequired.text: SubmissionStatusEnum.InProgress.text,
-                    SubmissionStatusEnum.InProgress.text: SubmissionStatusEnum.SubmittedPendingReview.text,
-                }
-                current_status = submission.status
-                if (
-                    current_status in allowed_transitions
-                    and new_status in allowed_transitions[current_status]
-                    and submission.is_test_submission is False
-                ):
-                    submission.status = body_dict["status"]
-        db.commit()
-
-
-def submitted(stored_status: str, new_status: str, is_test: bool):
-    """
-    Determine if submission was submitted based on status change
-    """
-
-    if (
-        stored_status == SubmissionStatusEnum.InProgress.text
-        and new_status == SubmissionStatusEnum.SubmittedPendingReview.text
-        and is_test is False
+    # Owner can only do select transitions
+    elif (
+        current_status in allowed_transitions
+        and body.status in allowed_transitions[current_status]
+        and submission.is_test_submission is False
     ):
-        return True
+        submission.status = body.status
+
+    # Anything else is not allowed
     else:
-        return False
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid status transition."
+        )
+
+    db.commit()
+
+    # If the new status is "Submitted - Pending Review", create or update the GitHub issue
+    if (
+        body.status == SubmissionStatusEnum.SubmittedPendingReview.text
+        and submission.is_test_submission is False
+    ):
+        try:
+            create_github_issue(submission, user)
+        except Exception as e:
+            logging.error(f"Failed to create/update Github issue: {str(e)}")
+
+    return submission
 
 
-def create_github_issue(submission: schemas_submission.SubmissionMetadataSchema, user):
+@router.post(
+    "/metadata_submission/{id}/role",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionMetadataSchema,
+)
+async def add_submission_role(
+    id: str,
+    body: schemas_submission.SubmissionMetadataRoleAdd,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> models.SubmissionMetadata:
+    """Grant a role to a user on a submission
+
+    This is intended as a simpler alternative to passing a permissions object in the full
+    submission PATCH endpoint, which will add, remove, or change roles as needed to match the
+    provided permissions object. This endpoint only adds a single role for a single user.
+    """
+    submission = get_submission_for_user(db, id, user, allowed_roles=[SubmissionEditorRole.owner])
+    existing_role = crud.get_submission_role(db, id, body.orcid)
+    if existing_role is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="User already has a role on this submission.",
+        )
+
+    crud.add_submission_role(db, submission, body.orcid, body.role)
+
+    return submission
+
+
+@router.delete(
+    "/metadata_submission/{id}/role/{orcid}",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+    response_model=schemas_submission.SubmissionMetadataSchema,
+)
+async def remove_submission_role(
+    id: str,
+    orcid: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+) -> models.SubmissionMetadata:
+    """Remove a role from a submission
+
+    This is intended as a simpler alternative to passing a permissions object in the full
+    submission PATCH endpoint, which will add, remove, or change roles as needed to match the
+    provided permissions object. This endpoint only removes a single user.
+    """
+    submission = get_submission_for_user(db, id, user, allowed_roles=[SubmissionEditorRole.owner])
+
+    crud.remove_submission_role(db, submission, orcid)
+
+    return submission
+
+
+def create_github_issue(submission_model: SubmissionMetadata, user):
     """
     Create or update a Github issue depending on if an issue exists for the submission id.
     Updates all matching issues if there's more than one, but should typically be one.
     """
+    submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     assignee = settings.github_issue_assignee

@@ -15,6 +15,7 @@ import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
+import { addSubmissionRole, deleteSubmission, updateSubmissionStatus } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
   MetadataSubmissionRecord,
@@ -22,7 +23,7 @@ import {
   PaginatedResponse,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
-import { deleteSubmission, updateRecord } from '../store/api';
+import useRequest from '@/use/useRequest';
 
 const headers: DataTableHeader[] = [
   {
@@ -120,10 +121,10 @@ export default defineComponent({
 
     // Set initial sort options before the first fetch
     applySortOptions();
+    const assignReviewerRequest = useRequest();
 
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
-      const fullRecord = await api.getRecord(item.id);
-      await updateRecord(item.id, fullRecord.metadata_submission, newStatus, {});
+      await updateSubmissionStatus(item.id, newStatus);
       await submission.refetch();
     }
 
@@ -161,11 +162,13 @@ export default defineComponent({
       selectedSubmission.value = item;
     }
 
-    function addReviewer() {
-      if (!selectedSubmission.value) {
-        return;
-      }
-      updateRecord(selectedSubmission.value.id, selectedSubmission.value, selectedSubmission.value.status, { [reviewerOrcid.value]: 'reviewer' });
+    async function addReviewer() {
+      await assignReviewerRequest.request(async () => {
+        if (!selectedSubmission.value) {
+          return;
+        }
+        await addSubmissionRole(selectedSubmission.value.id, reviewerOrcid.value, 'reviewer');
+      });
       isReviewerAssignmentDialogOpen.value = false;
     }
 
@@ -175,6 +178,7 @@ export default defineComponent({
       isTestFilter,
       deleteDialogSubmission,
       currentUser,
+      assignReviewerRequest,
       isReviewerAssignmentDialogOpen,
       reviewerOrcid,
       IconBar,
@@ -518,6 +522,7 @@ export default defineComponent({
           <v-btn
             color="primary"
             class="mt-2"
+            :loading="assignReviewerRequest.loading.value"
             @click="() => addReviewer()"
           >
             Assign Reviewer
