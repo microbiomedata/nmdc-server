@@ -392,7 +392,7 @@ export default defineComponent({
                 <v-btn
                   small
                   color="primary"
-                  v-on="on"
+                  @click="() => resume(item)"
                 >
                   <span v-if="editablebyStatus(item.status)">
                     <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
