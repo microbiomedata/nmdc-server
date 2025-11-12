@@ -472,7 +472,7 @@ export default defineComponent({
         <v-icon class="pr-1">
           mdi-arrow-left-circle
         </v-icon>
-        Go to previous step
+        Go to Study Form
       </v-btn>
       <v-spacer />
       <v-btn
@@ -481,7 +481,7 @@ export default defineComponent({
         :disabled="(!validForms.multiOmicsFormValid)"
         :to="{ name: 'Sample Environment' }"
       >
-        Go to next step
+        Go to Sample Environment
         <v-icon class="pl-1">
           mdi-arrow-right-circle
         </v-icon>

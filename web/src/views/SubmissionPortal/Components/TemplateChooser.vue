@@ -120,7 +120,7 @@ export default defineComponent({
         <v-icon class="pr-1">
           mdi-arrow-left-circle
         </v-icon>
-        Go to previous step
+        Go to Multiomics Form
       </v-btn>
       <v-spacer />
       <v-btn
@@ -134,7 +134,7 @@ export default defineComponent({
         <v-icon class="pr-1">
           mdi-arrow-right-circle
         </v-icon>
-        Go to next step
+        Go to Data Harmonizer
       </v-btn>
     </div>
   </div>

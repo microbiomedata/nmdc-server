@@ -79,31 +79,59 @@ export default defineComponent({
         return ['Select whether or not data has been generated to determine requirements.'];
       }
       const missingReqs: Array<string> = [];
-      if (multiOmicsForm.dataGenerated === false && multiOmicsForm.doe && multiOmicsForm.facilities != null && multiOmicsForm.facilities.length > 0 && multiOmicsForm.award === null) {
-        missingReqs.push('You must select the kind of project you have been awarded');
-      }
-      if (multiOmicsForm.doe === null) {
-        missingReqs.push('You must select whether or not you are submitting data to a DOE facility.');
-      }
-
-      if (multiOmicsForm.facilities.includes('EMSL')) {
-        if (/^\d{5}$/.test(multiOmicsForm.studyNumber) === false) {
-          missingReqs.push('You must include a valid EMSL study ID when EMSL is selected.');
+      //data has been generated
+      if (multiOmicsForm.dataGenerated) {
+        if (multiOmicsForm.facilityGenerated === undefined) {
+          missingReqs.push('You must select whether or not data was generated at a DOE facility');
+        //data was NOT generated at a doe facility
+        } else if (multiOmicsForm.facilityGenerated === false) {
+          if (multiOmicsForm.omicsProcessingTypes.includes('mg') && multiOmicsForm.mgCompatible === undefined) {
+            missingReqs.push('You must select if your MG data is compatible, or deselect MG.');
+          }
+          if (multiOmicsForm.omicsProcessingTypes.includes('mt') && multiOmicsForm.mtCompatible === undefined) {
+            missingReqs.push('You must select if your MT data is compatible, or deselect MT.');
+          }
+        //data was generated at a DOE facility
+        } else {
+          if (multiOmicsForm.facilities.includes('EMSL')) {
+            if (/^\d{5}$/.test(multiOmicsForm.studyNumber) === false) {
+              missingReqs.push('You must include a valid EMSL study ID when EMSL is selected.');
+            }
+          }
+          if (multiOmicsForm.facilities.includes('JGI')) {
+            if (/^\d{6}$/.test(multiOmicsForm.JGIStudyId) === false) {
+              missingReqs.push('You must include a valid JGI study ID when JGI is selected.');
+            }
+          }
         }
-
-        if (multiOmicsForm.dataGenerated === false && multiOmicsForm.ship == null) {
-          missingReqs.push('You must select whether or not samples will be shipped.');
-        }
-
-        if (multiOmicsForm.dataGenerated === false && multiOmicsForm.ship === true && validForms.addressFormValid === false) {
-          missingReqs.push('You must fill out the address form for shipping.');
+      //data has not been generated yet
+      } else {
+        console.log(multiOmicsForm.doe);
+        if (multiOmicsForm.doe === undefined) {
+          missingReqs.push('You must select whether or not data will generated at a DOE facility');
+        //data will be generated at a DOE facility
+        } else if (multiOmicsForm.doe === true) {
+          if (multiOmicsForm.facilities.length > 0 && multiOmicsForm.award === undefined) {
+            missingReqs.push('You must select the type of project you have been awarded when submitting to a DOE facility.');
+          }
+          if (multiOmicsForm.facilities.includes('EMSL')) {
+            if (/^\d{5}$/.test(multiOmicsForm.studyNumber) === false) {
+              missingReqs.push('You must include a valid EMSL study ID when EMSL is selected.');
+            }
+            if (multiOmicsForm.ship === null) {
+              missingReqs.push('You must select whether or not samples will be shipped.');
+            }
+            if (multiOmicsForm.ship === true && validForms.addressFormValid === false) {
+              missingReqs.push('You must fill out the address form for shipping.');
+            }
+          }
+          if (multiOmicsForm.facilities.includes('JGI')) {
+            if (/^\d{6}$/.test(multiOmicsForm.JGIStudyId) === false) {
+              missingReqs.push('You must include a valid JGI study ID when JGI is selected.');
+            }
+          }
         }
       }
-
-      if (multiOmicsForm.facilities.includes('JGI') && /^\d{6}$/.test(multiOmicsForm.JGIStudyId) === false) {
-        missingReqs.push('You must include a valid JGI study ID when JGI is selected.');
-      }
-
       let doisInvalid = false;
       if (multiOmicsForm.awardDois != null && multiOmicsForm.awardDois.length > 0 && (multiOmicsForm.unknownDoi !== true || multiOmicsForm.dataGenerated === true)) {
         multiOmicsForm.awardDois.forEach((doi) => {
@@ -115,7 +143,6 @@ export default defineComponent({
       if (doisInvalid) {
         missingReqs.push('One or more award DOIs is incomplete.');
       }
-
       return missingReqs;
     });
 
