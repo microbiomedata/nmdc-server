@@ -107,6 +107,20 @@ function canEditSampleMetadata(): boolean {
 
 const hasChanged = ref(0);
 
+/**
+ * Validating forms
+*/
+
+const validFormsDefault = {
+  studyFormValid: false,
+  multiOmicsFormValid: false,
+  templatesValid: false,
+  harmonizerValid: false,
+  addressFormValid: false,
+};
+
+const validForms = reactive(clone(validFormsDefault));
+
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -135,7 +149,6 @@ const addressFormDefault = {
 };
 
 const addressForm = reactive(clone(addressFormDefault));
-const addressFormValid = ref(false);
 
 /**
  * Study Form Step
@@ -161,7 +174,6 @@ const studyFormDefault = {
   GOLDStudyId: '',
   NCBIBioProjectId: '',
 };
-const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
 
 const protocols = {
@@ -195,7 +207,6 @@ const multiOmicsFormDefault = {
   lipProtocols: undefined as undefined | typeof protocols,
   nomProtocols: undefined as undefined | typeof protocols,
 };
-const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
   emsl: false,
@@ -333,6 +344,7 @@ const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
+  validForms,
 }));
 
 function templateHasData(templateName: string): boolean {
@@ -413,12 +425,9 @@ async function submit(id: string, status?: SubmissionStatusKey) {
 
 function reset() {
   Object.assign(addressForm, addressFormDefault);
-  addressFormValid.value = false;
-  studyFormValid.value = false;
-  addressFormValid.value = false;
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
-  multiOmicsFormValid.value = false;
+  Object.assign(validForms, validFormsDefault);
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
@@ -474,6 +483,7 @@ async function loadRecord(id: string) {
   Object.assign(studyForm, val.metadata_submission.studyForm);
   Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
   Object.assign(addressForm, val.metadata_submission.addressForm);
+  Object.assign(validForms, val.metadata_submission.validForms);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
   status.value = isSubmissionStatus(val.status) ? val.status : SubmissionStatusEnum.InProgress.text;
@@ -564,15 +574,13 @@ export {
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
-  multiOmicsFormValid,
   addAwardDoi,
   removeAwardDoi,
   sampleData,
   addressForm,
   addressFormDefault,
-  addressFormValid,
   studyForm,
-  studyFormValid,
+  validForms,
   submitPayload,
   packageName,
   templateList,

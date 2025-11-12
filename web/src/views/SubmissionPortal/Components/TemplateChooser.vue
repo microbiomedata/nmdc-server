@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, computed } from '@vue/composition-api';
+import { defineComponent, computed, watch } from '@vue/composition-api';
 import {
   templateList,
   packageName,
@@ -8,6 +8,7 @@ import {
   canEditSubmissionByStatus,
   SubmissionStatusTitleMapping,
   status,
+  validForms,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
@@ -20,6 +21,14 @@ export default defineComponent({
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
       .join(' + '));
+
+    watch(packageName, () => {
+      if (packageName.value.length === 0) {
+        validForms.templatesValid = false;
+      } else {
+        validForms.templatesValid = true;
+      }
+    });
 
     return {
       packageName,
@@ -131,7 +140,7 @@ export default defineComponent({
         <v-icon class="pr-1">
           mdi-arrow-left-circle
         </v-icon>
-        Go to previous step
+        Go to Multiomics Form
       </v-btn>
       <v-spacer />
       <v-btn
@@ -145,7 +154,7 @@ export default defineComponent({
         <v-icon class="pr-1">
           mdi-arrow-right-circle
         </v-icon>
-        Go to next step
+        Go to Data Harmonizer
       </v-btn>
     </div>
   </div>

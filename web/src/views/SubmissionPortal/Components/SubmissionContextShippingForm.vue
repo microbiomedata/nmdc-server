@@ -11,7 +11,7 @@ import {
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
   addressForm,
-  addressFormValid,
+  validForms,
   canEditSubmissionMetadata,
 } from '../store';
 import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
@@ -77,7 +77,7 @@ export default defineComponent({
     return {
       addressFormRef,
       addressForm,
-      addressFormValid,
+      validForms,
       showAddressForm,
       datePicker,
       expectedShippingDateString,
@@ -98,15 +98,15 @@ export default defineComponent({
   <v-card
     class="mt-4 pa-0"
     outlined
-    :style="addressFormValid ? '' : 'border: 2px solid red'"
+    :style="validForms.addressFormValid ? '' : 'border: 2px solid red'"
   >
     <v-card-text
       class="pt-2"
       style="min-height: 100px;"
     >
-      <span :class="{'error--text': !addressFormValid}">EMSL Shipping Info *</span>
+      <span :class="{'error--text': !validForms.addressFormValid}">EMSL Shipping Info *</span>
       <p
-        v-if="!addressFormValid"
+        v-if="!validForms.addressFormValid"
         class="error--text"
       >
         Sender's shipping information is required
@@ -156,7 +156,7 @@ export default defineComponent({
         <v-card-text>
           <v-form
             ref="addressFormRef"
-            v-model="addressFormValid"
+            v-model="validForms.addressFormValid"
             class="ml-12"
             style="max-width: 1000px"
             :disabled="!canEditSubmissionMetadata()"
