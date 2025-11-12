@@ -106,7 +106,6 @@ export default defineComponent({
         }
       //data has not been generated yet
       } else {
-        console.log(multiOmicsForm.doe);
         if (multiOmicsForm.doe === undefined) {
           missingReqs.push('You must select whether or not data will generated at a DOE facility');
         //data will be generated at a DOE facility
