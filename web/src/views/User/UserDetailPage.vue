@@ -69,9 +69,17 @@ export default defineComponent({
         if (email == null) {
           return;
         }
-        isEmailValid.value = /.+@.+\..+/.test(email);
+        // isEmailValid.value = /.+@.+\..+/.test(email);
+        // if (isEmailValid.value) {
+        //   updateUser(email);
+        //   editEmail.value = !editEmail.value;
+        // }
+        isEmailValid.value = email === '' || /.+@.+\..+/.test(email);
         if (isEmailValid.value) {
-          updateUser(email);
+          updateUser(email || '');
+          if (user.value) {
+            user.value.email = email || '';
+          }
           editEmail.value = !editEmail.value;
         }
       } else {
@@ -141,9 +149,6 @@ export default defineComponent({
                 dense
                 :readonly="!editEmail"
                 filled
-                :rules="requiredRules('E-mail is required',[
-                  v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
-                ])"
               >
                 <template
                   #append
