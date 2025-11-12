@@ -3,6 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Union
 
 import requests
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from nmdc_server.ingest.errors import errors
@@ -47,9 +48,9 @@ def load(db: Session) -> None:
 
 
 def ingest_ko_search(db: Session) -> None:
-    db.execute(f"truncate table {KoTermText.__tablename__}")
-    db.execute(f"truncate table {CogTermText.__tablename__}")
-    db.execute(f"truncate table {PfamTermText.__tablename__}")
+    db.execute(text(f"truncate table {KoTermText.__tablename__}"))
+    db.execute(text(f"truncate table {CogTermText.__tablename__}"))
+    db.execute(text(f"truncate table {PfamTermText.__tablename__}"))
     records = get_search_records()
     db.bulk_save_objects([KoTermText(term=term, text=text) for term, text in records["ko"].items()])
     db.bulk_save_objects(
@@ -198,7 +199,7 @@ def get_search_records():
 
 def ingest_ko_module_map(db: Session) -> None:
     """Ingest a mapping of KEGG modules to terms and COG functions to terms."""
-    db.execute(f"truncate table {KoTermToModule.__tablename__}")
+    db.execute(text(f"truncate table {KoTermToModule.__tablename__}"))
 
     datafile = Path(__file__).parent / "data" / "kegg_module_ko_terms.tab.txt"
     with open(datafile) as fd:
@@ -227,7 +228,7 @@ def ingest_ko_module_map(db: Session) -> None:
 
 def ingest_ko_pathway_map(db: Session) -> None:
     """Ingest a mapping of KEGG pathways to terms and COG pathways to COG terms."""
-    db.execute(f"truncate table {KoTermToPathway.__tablename__}")
+    db.execute(text(f"truncate table {KoTermToPathway.__tablename__}"))
 
     datafile = Path(__file__).parent / "data" / "ko_term_pathways.tab.txt"
     with open(datafile) as fd:
@@ -248,7 +249,7 @@ def ingest_ko_pathway_map(db: Session) -> None:
 
 def ingest_pfam_clan_map(db: Session) -> None:
     """Ingest a mapping of Pfam entries to clans"""
-    db.execute(f"truncate table {PfamEntryToClan.__tablename__}")
+    db.execute(text(f"truncate table {PfamEntryToClan.__tablename__}"))
     with open(PFAM_CLAN_DEFS) as fd:
         reader = csv.DictReader(fd, fieldnames=pfam_headers, delimiter="\t")
         mappings = set([(row[pfam_headers[0]], row[pfam_headers[1]]) for row in reader])
@@ -266,7 +267,7 @@ def ingest_go_search_records(db: Session) -> None:
     terms, we will only concern ourselves with the "nodes." Building out the
     hierarchy could be done as follow-up work.
     """
-    db.execute(f"truncate table {GoTermText.__tablename__}")
+    db.execute(text(f"truncate table {GoTermText.__tablename__}"))
     resp = requests.get(GO_URL)
     resp.raise_for_status()
     data = resp.json()
@@ -306,7 +307,7 @@ def ingest_go_pfam_map(db: Session) -> None:
     Of the lines we do care about, they are formatted as follows:
         Pfam:PF00001 7tm_1 > GO:G protein-coupled receptor activity ; GO:0004930
     """
-    db.execute(f"truncate table {GoTermToPfamEntry.__tablename__}")
+    db.execute(text(f"truncate table {GoTermToPfamEntry.__tablename__}"))
     pfam_go_mappings = "/data/ingest/go/pfam_go_mappings.txt"
     mappings = []
     with open(pfam_go_mappings) as fd:
@@ -324,7 +325,7 @@ def ingest_go_pfam_map(db: Session) -> None:
 
 
 def ingest_go_kegg_map(db: Session) -> None:
-    db.execute(f"truncate table {GoTermToKegg.__tablename__}")
+    db.execute(text(f"truncate table {GoTermToKegg.__tablename__}"))
     # TSV file with headers '#KO' and 'GO'
     kegg_go_mappings = "/data/ingest/go/ko2go.tsv"
     mappings = []

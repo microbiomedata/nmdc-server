@@ -11,8 +11,8 @@ import {
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
-  multiOmicsForm, validForms, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
-  templateHasData, checkDoiFormat,
+  multiOmicsForm, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
+  templateHasData, checkDoiFormat, canEditSubmissionByStatus, SubmissionStatusTitleMapping, status, validForms,
 } from '../store';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 
@@ -20,6 +20,7 @@ import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
 import DoeFacility from './DoeFacility.vue';
+import StatusAlert from './StatusAlert.vue';
 
 const OTHER = 'OTHER';
 
@@ -29,6 +30,7 @@ export default defineComponent({
     DoeFacility,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
+    StatusAlert,
   },
   setup() {
     const formRef = ref();
@@ -120,6 +122,10 @@ export default defineComponent({
       multiOmicsForm.mtCompatible = undefined;
       multiOmicsForm.mtInterleaved = undefined;
       multiOmicsForm.facilities = [];
+      multiOmicsForm.lipProtocols = undefined;
+      multiOmicsForm.mbProtocols = undefined;
+      multiOmicsForm.nomProtocols = undefined;
+      multiOmicsForm.mpProtocols = undefined;
       revalidate();
     }
 
@@ -160,6 +166,10 @@ export default defineComponent({
       canEditSubmissionMetadata,
       checkJGITemplates,
       templateHasData,
+      canEditSubmissionByStatus,
+      SubmissionStatusTitleMapping,
+      status,
+      StatusAlert,
     };
   },
 });
@@ -175,8 +185,9 @@ export default defineComponent({
       Information about the type of samples being submitted.
     </div>
     <submission-permission-banner
-      v-if="!canEditSubmissionMetadata()"
+      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
+    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-form
       ref="formRef"
       v-model="validForms.multiOmicsFormValid"

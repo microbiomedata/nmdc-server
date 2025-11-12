@@ -29,6 +29,13 @@ jobs:
           # history for all branches and tags is needed for setuptools-scm
           fetch-depth: 0
 
+      # Generate tags and labels for the Docker container images.
+      #
+      # Note: The `type=sha,format=long` line makes it so every image is tagged with the Git commit hash.
+      #       We do this so people can reference (i.e. pin) a specific image version, even ones not tagged
+      #       with a version number via the `type=semver,pattern={{version}}` line. (The other tags may
+      #       refer to different image versions over time, so they cannot be used for this purpose.)
+      #
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v5
@@ -41,6 +48,7 @@ jobs:
             type=ref,event=branch
             type=semver,pattern={{version}}
             type=raw,value=prod,enable=${{ env.IS_PROD_RELEASE }}      
+            type=sha,format=long
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -57,7 +65,31 @@ jobs:
           file: ${{ matrix.image == 'client' && 'web/Dockerfile' || 'Dockerfile' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          # Specify `--build-args` for the underlying `$ docker build` command.
+          #
+          # If the image being built is the one named "client", then set the "build argument"
+          # named `VUE_APP_NMDC_GOOGLE_ANALYTICS_ID` to either the production or development
+          # Google Analytics "Measurement ID" value, depending upon the `IS_PROD_RELEASE`
+          # environment variable. Those GA "Measurement ID" values are stored in
+          # repository-level variables, which are accessible via `vars.*`.
+          #
+          # References:
+          # - https://github.com/docker/build-push-action/blob/master/README.md#inputs (RE: "build-args")
+          # - https://docs.github.com/en/actions/reference/workflows-and-actions/expressions#format (RE: "format")
+          # - https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-variables#using-contexts-to-access-variable-values (RE: "vars")
+          #
+          build-args: |
+            ${{ 
+              matrix.image == 'client' &&
+              format(
+                'VUE_APP_NMDC_GOOGLE_ANALYTICS_ID={0}',
+                env.IS_PROD_RELEASE == 'true' && vars.GOOGLE_ANALYTICS_ID_PROD ||
+                vars.GOOGLE_ANALYTICS_ID_DEV
+              )
+            }}
 
+  # Use the Rancher API to redeploy the specified deployments,
+  # causing them to use the newly-pushed container images.
   redeploy:
     needs: build
 

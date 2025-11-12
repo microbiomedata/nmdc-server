@@ -108,8 +108,9 @@ export default defineComponent({
       } else {
         if (multiOmicsForm.doe === undefined) {
           missingReqs.push('You must select whether or not data will generated at a DOE facility');
+        }
         //data will be generated at a DOE facility
-        } else if (multiOmicsForm.doe === true) {
+        if (multiOmicsForm.doe === true) {
           if (multiOmicsForm.facilities.length > 0 && multiOmicsForm.award === undefined) {
             missingReqs.push('You must select the type of project you have been awarded when submitting to a DOE facility.');
           }

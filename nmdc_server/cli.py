@@ -9,6 +9,8 @@ from typing import Optional
 
 import click
 import requests
+from google.cloud import secretmanager
+from sqlalchemy import text
 
 from nmdc_server import jobs
 from nmdc_server.config import settings
@@ -17,6 +19,93 @@ from nmdc_server.ingest import errors
 from nmdc_server.models import SubmissionImagesObject
 from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
 from nmdc_server.storage import BucketName, storage
+
+
+def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: str) -> None:
+    """Swaps the values of two secrets in Google Secret Manager.
+
+    Note: To update a secret's content, we "add a version" of that secret.
+
+    TODO: Consider having both versions of the secret pre-created on GCP,
+          and then—here—just activate one version or the other. That could
+          make it so we aren't storing so many versions of each secret.
+
+    References (note: the `noqa` comment prevents the linter from flagging the line length):
+    - Importing the Python library: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-install-python  # noqa: E501
+    - Add secret version: https://cloud.google.com/secret-manager/docs/samples/secretmanager-add-secret-version  # noqa: E501
+    """
+
+    client = secretmanager.SecretManagerServiceClient()
+
+    # Get the initial value of the first secret.
+    secret_a_path = client.secret_path(gcp_project_id, secret_a_id)
+    request = secretmanager.AccessSecretVersionRequest(name=f"{secret_a_path}/versions/latest")
+    response = client.access_secret_version(request=request)
+    secret_a_value: bytes = response.payload.data
+    click.echo(f"Read secret: {secret_a_path}")
+
+    # Get the initial value of the second secret.
+    secret_b_path = client.secret_path(gcp_project_id, secret_b_id)
+    request = secretmanager.AccessSecretVersionRequest(name=f"{secret_b_path}/versions/latest")
+    response = client.access_secret_version(request=request)
+    secret_b_value: bytes = response.payload.data
+    click.echo(f"Read secret: {secret_b_path}")
+
+    # Put the second secret's initial value into the first secret.
+    payload = secretmanager.SecretPayload(data=secret_b_value)
+    request = secretmanager.AddSecretVersionRequest(parent=secret_a_path, payload=payload)
+    _ = client.add_secret_version(request=request)
+    click.echo(f"Updated secret: {secret_a_path}")
+
+    # Put the first secret's initial value into the second secret.
+    payload = secretmanager.SecretPayload(data=secret_a_value)
+    request = secretmanager.AddSecretVersionRequest(parent=secret_b_path, payload=payload)
+    _ = client.add_secret_version(request=request)
+    click.echo(f"Updated secret: {secret_b_path}")
+
+
+def swap_rancher_secret_values(
+    rancher_api_base_url: str,
+    rancher_api_auth_token: str,
+    rancher_project_id: str,
+    rancher_postgres_secret_id: str,
+    rancher_backend_workload_id: str,
+) -> None:
+    """Swaps the values of two items in a secret, then redeploys a workload, all on Rancher."""
+
+    headers = {"Authorization": f"Bearer {rancher_api_auth_token}"}
+
+    click.echo(f"Getting current secret {rancher_postgres_secret_id}")
+    secret_url = (
+        f"{rancher_api_base_url}"
+        f"/project/{rancher_project_id}"
+        f"/namespacedSecrets/{rancher_postgres_secret_id}"
+    )
+    response = requests.get(secret_url, headers=headers)
+    response.raise_for_status()
+
+    # Derive new secret's content based upon current secret's content.
+    secret = response.json()
+    next_secret = {
+        "data": {
+            "INGEST_URI": secret["data"]["POSTGRES_URI"],
+            "POSTGRES_PASSWORD": secret["data"]["POSTGRES_PASSWORD"],
+            "POSTGRES_URI": secret["data"]["INGEST_URI"],
+        }
+    }
+
+    click.echo(f"Updating secret {rancher_postgres_secret_id}")
+    response = requests.put(secret_url, headers=headers, json=next_secret)
+    response.raise_for_status()
+
+    click.echo(f"Redeploying workload {rancher_backend_workload_id}")
+    response = requests.post(
+        f"{rancher_api_base_url}"
+        f"/project/{rancher_project_id}"
+        f"/workloads/{rancher_backend_workload_id}?action=redeploy",
+        headers=headers,
+    )
+    response.raise_for_status()
 
 
 def send_slack_message(text: str) -> bool:
@@ -52,6 +141,13 @@ def send_slack_message(text: str) -> bool:
     return is_sent
 
 
+def require_setting(name: str, flag: str = "that flag"):
+    """Raises an error mentioning a flag, if the specified setting is absent or false-y."""
+
+    if not getattr(settings, name, None):
+        raise ValueError(f"{name} must be set in order to use {flag}")
+
+
 @click.group()
 @click.pass_context
 def cli(ctx):
@@ -78,12 +174,13 @@ def truncate():
     """Remove all existing data from the ingest database."""
     with SessionLocalIngest() as db:
         try:
-            db.execute("select truncate_tables()").all()
+            db.execute(text("select truncate_tables()")).all()
             db.commit()
         except Exception:
             db.rollback()
             db.execute(
-                """
+                text(
+                    """
                 DO $$ DECLARE
                      r RECORD;
                  BEGIN
@@ -93,6 +190,7 @@ def truncate():
                      END LOOP;
                  END $$;
             """
+                )
             )
             db.commit()
 
@@ -101,8 +199,32 @@ def truncate():
 @click.option("-v", "--verbose", count=True)
 @click.option("--function-limit", type=click.INT, default=100)
 @click.option("--skip-annotation", is_flag=True, default=False)
-@click.option("--swap-rancher-secrets", is_flag=True, default=False)
-def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
+@click.option(
+    "--swap-rancher-secrets",
+    is_flag=True,
+    default=False,
+    help="Swap secrets on Spin via the Rancher API",
+)
+@click.option(
+    "--swap-google-secrets",
+    is_flag=True,
+    default=False,
+    help="Swap secrets on Google Secret Manager via its API",
+)
+@click.option(
+    "--skip-etl",
+    is_flag=True,
+    default=False,
+    help="Skip the ETL step (i.e. the core of the ingest process)",
+)
+def ingest(
+    verbose,
+    function_limit,
+    skip_annotation,
+    swap_rancher_secrets,
+    swap_google_secrets: bool,
+    skip_etl: bool,
+):
     """Ingest the latest data from mongo into the ingest database."""
     level = logging.WARN
     if verbose == 1:
@@ -122,18 +244,22 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
         f"• MongoDB host: `{settings.mongo_host}`"
     )
 
-    try:
-        jobs.do_ingest(function_limit, skip_annotation)
-    except Exception as e:
-        send_slack_message(
-            f"Ingest failed.\n"
-            f"• Start time: `{ingest_start_datetime_str}`\n"
-            f"• MongoDB host: `{settings.mongo_host}`\n"
-            f"• Error message: {e}"
-        )
+    # Unless the user opted to skip the ETL step, perform it now.
+    if not skip_etl:
+        try:
+            jobs.do_ingest(function_limit, skip_annotation)
+        except Exception as e:
+            send_slack_message(
+                f"Ingest failed.\n"
+                f"• Start time: `{ingest_start_datetime_str}`\n"
+                f"• MongoDB host: `{settings.mongo_host}`\n"
+                f"• Error message: {e}"
+            )
 
-        # Now that we've processed the Exception at this level, propagate it.
-        raise e
+            # Now that we've processed the Exception at this level, propagate it.
+            raise e
+    else:
+        click.echo("Skipping ETL step.")
 
     for m, s in errors.missing.items():
         click.echo(f"missing {m}:")
@@ -147,49 +273,53 @@ def ingest(verbose, function_limit, skip_annotation, swap_rancher_secrets):
 
     if swap_rancher_secrets:
 
-        def require_setting(name: str):
-            if not getattr(settings, name, None):
-                raise ValueError(f"{name} must be set to use --swap-rancher-secrets")
+        # TODO: Move this validation to the top of the ingest function so we fail early.
+        require_setting("rancher_api_base_url", "--swap-rancher-secrets")
+        require_setting("rancher_api_auth_token", "--swap-rancher-secrets")
+        require_setting("rancher_project_id", "--swap-rancher-secrets")
+        require_setting("rancher_postgres_secret_id", "--swap-rancher-secrets")
+        require_setting("rancher_backend_workload_id", "--swap-rancher-secrets")
 
-        require_setting("rancher_api_base_url")
-        require_setting("rancher_api_auth_token")
-        require_setting("rancher_project_id")
-        require_setting("rancher_postgres_secret_id")
-        require_setting("rancher_backend_workload_id")
+        # Note: We already validated these things above, but mypy can't tell.
+        #       So, we include these redundant assertions to appease mypy.
+        assert settings.rancher_api_base_url is not None
+        assert settings.rancher_api_auth_token is not None
+        assert settings.rancher_project_id is not None
+        assert settings.rancher_postgres_secret_id is not None
+        assert settings.rancher_backend_workload_id is not None
 
-        headers = {"Authorization": f"Bearer {settings.rancher_api_auth_token}"}
-
-        click.echo(f"Getting current secret {settings.rancher_postgres_secret_id}")
-        secret_url = (
-            f"{settings.rancher_api_base_url}"
-            f"/project/{settings.rancher_project_id}"
-            f"/namespacedSecrets/{settings.rancher_postgres_secret_id}"
+        swap_rancher_secret_values(
+            rancher_api_base_url=settings.rancher_api_base_url,
+            rancher_api_auth_token=settings.rancher_api_auth_token,
+            rancher_project_id=settings.rancher_project_id,
+            rancher_postgres_secret_id=settings.rancher_postgres_secret_id,
+            rancher_backend_workload_id=settings.rancher_backend_workload_id,
         )
-        response = requests.get(secret_url, headers=headers)
-        response.raise_for_status()
-        current = response.json()
-        update = {
-            "data": {
-                "INGEST_URI": current["data"]["POSTGRES_URI"],
-                "POSTGRES_PASSWORD": current["data"]["POSTGRES_PASSWORD"],
-                "POSTGRES_URI": current["data"]["INGEST_URI"],
-            }
-        }
 
-        click.echo(f"Updating secret {settings.rancher_postgres_secret_id}")
-        response = requests.put(secret_url, headers=headers, json=update)
-        response.raise_for_status()
+        click.echo("Done")
 
-        click.echo(f"Redeploying workload {settings.rancher_backend_workload_id}")
-        response = requests.post(
-            f"{settings.rancher_api_base_url}"
-            f"/project/{settings.rancher_project_id}"
-            f"/workloads/{settings.rancher_backend_workload_id}?action=redeploy",
-            headers=headers,
+    # If the user wants to swap secrets on Google Secret Manager, do it now.
+    if swap_google_secrets:
+        click.echo("Swapping secrets on Google Secret Manager")
+
+        # TODO: Move this validation to the top of the ingest function so we fail early.
+        require_setting("gcs_project_id", "--swap-google-secrets")
+        require_setting("gcp_primary_postgres_uri_secret_id", "--swap-google-secrets")
+        require_setting("gcp_secondary_postgres_uri_secret_id", "--swap-google-secrets")
+
+        # Note: We already validated these things above, but mypy can't tell.
+        #       So, we include these redundant assertions to appease mypy.
+        assert settings.gcs_project_id is not None
+        assert settings.gcp_primary_postgres_uri_secret_id is not None
+        assert settings.gcp_secondary_postgres_uri_secret_id is not None
+
+        # Swap the secret values.
+        swap_gcp_secret_values(
+            gcp_project_id=settings.gcs_project_id,
+            secret_a_id=settings.gcp_primary_postgres_uri_secret_id,
+            secret_b_id=settings.gcp_secondary_postgres_uri_secret_id,
         )
-        response.raise_for_status()
 
-        response.raise_for_status()
         click.echo("Done")
 
     # Calculate the total duration of this ingest (in minutes).
@@ -213,10 +343,13 @@ def shell(print_sql: bool, script: Optional[Path]):
     from traitlets.config import Config
 
     imports = [
+        "from sqlalchmy import select",
         "from nmdc_server.config import settings",
         "from nmdc_server.database import SessionLocal, SessionLocalIngest",
         "from nmdc_server.models import "
         "Biosample, EnvoAncestor, EnvoTerm, EnvoTree, OmicsProcessing, Study",
+        "from nmdc_server.query import "
+        "SimpleConditionSchema, Operation, BiosampleQuerySchema, StudyQuerySchema",
     ]
 
     print("The following are auto-imported:")

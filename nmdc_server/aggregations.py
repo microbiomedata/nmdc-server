@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Type, cast
 
-from sqlalchemy import Column, func, or_, union_all
+from sqlalchemy import Column, func, or_, select, union_all
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import Alias, Selectable
 
@@ -41,7 +41,7 @@ def get_table_summary(db: Session, model: models.ModelType) -> schemas.TableSumm
     if isinstance(model(), models.AnnotatedModel):
         attributes.update(get_annotation_summary(db, cast(Type[models.AnnotatedModel], model)))
 
-    for column in model.__table__.columns:  # type: ignore
+    for column in model.__table__.columns:
         if (
             column.name not in ["id", "annotations", "alternate_identifiers"]
             and "_id" not in column.name
@@ -147,7 +147,11 @@ def get_aggregation_summary(db: Session):
         # and (b) selects the distinct `id`s that are in any of those arrays. The result is
         # a list of parent study `id`s.
         parent_ids_subquery = (
-            q(func.distinct(func.jsonb_array_elements_text(models.Study.part_of)))
+            q(
+                func.distinct(func.jsonb_array_elements_text(models.Study.part_of)).label(
+                    "parent_id"
+                )
+            )
             .filter(func.jsonb_typeof(models.Study.part_of) == "array")
             .subquery()
         )
@@ -155,11 +159,15 @@ def get_aggregation_summary(db: Session):
         # Count the number of studies whose `id`s are _not_ in that list of parent study
         # `id`s. The result is the number of studies that are not parent studies.
         num_non_parent_studies = (
-            q(models.Study).filter(models.Study.id.notin_(parent_ids_subquery)).count()
+            q(models.Study)
+            .filter(models.Study.id.notin_(select(parent_ids_subquery.c.parent_id)))  # type: ignore
+            .count()
         )
 
         return num_non_parent_studies
 
+    wfe_outputs_subquery = make_all_wfe_outputs_subquery(db)
+    wfe_outputs_inner_query = select(wfe_outputs_subquery.c.id)  # type: ignore
     return schemas.AggregationSummary(
         studies=q(models.Study).count(),
         non_parent_studies=count_non_parent_studies(),
@@ -168,7 +176,7 @@ def get_aggregation_summary(db: Session):
         data_size=q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0))).scalar(),
         wfe_output_data_size_bytes=(
             q(func.sum(func.coalesce(models.DataObject.file_size_bytes, 0)))
-            .filter(models.DataObject.id.in_(make_all_wfe_outputs_subquery(db)))
+            .filter(models.DataObject.id.in_(wfe_outputs_inner_query))
             .scalar()
             or 0
         ),
@@ -179,6 +187,17 @@ def get_aggregation_summary(db: Session):
         lipodomics=omics_category("lipidomics"),
         organic_matter_characterization=omics_category("organic matter characterization"),
     )
+
+
+def get_wfe_output_data_objects(db: Session) -> List[models.DataObject]:
+    r"""
+    Returns a list of all `DataObject`s that are the output of any `WorkflowExecution`.
+    """
+
+    wfe_outputs_subquery = make_all_wfe_outputs_subquery(db)
+    wfe_outputs_inner_query = select(wfe_outputs_subquery.c.id)  # type: ignore
+    q = db.query(models.DataObject).filter(models.DataObject.id.in_(wfe_outputs_inner_query))
+    return q.all()
 
 
 def get_sankey_aggregation(

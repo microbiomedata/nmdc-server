@@ -10,8 +10,7 @@ from pygments.formatters import TerminalFormatter
 from pygments.lexers import SqlLexer
 from sqlalchemy import create_engine
 from sqlalchemy.event import listen
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import declarative_base, sessionmaker  # type: ignore
 from sqlalchemy.schema import DDL, MetaData
 
 from nmdc_server.config import settings
@@ -77,6 +76,7 @@ _engine_kwargs = {
     "json_serializer": json_serializer,
     "pool_size": settings.db_pool_size,
     "max_overflow": settings.db_pool_max_overflow,
+    "future": True,
 }
 engine = create_engine(settings.current_db_uri, **_engine_kwargs)
 engine_ingest = create_engine(settings.ingest_database_uri, **_engine_kwargs)
@@ -92,7 +92,6 @@ class SQLAlchemyPanel(BasePanel):
 # This is to avoid having to manually name all constraints
 # See: http://alembic.zzzcomputing.com/en/latest/naming.html
 metadata = MetaData(
-    bind=engine,
     naming_convention={
         "pk": "pk_%(table_name)s",
         "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
@@ -102,7 +101,13 @@ metadata = MetaData(
     },
 )
 
-Base = declarative_base(metadata=metadata)
+
+class UnmappedBase:
+    __allow_unmapped__ = True
+
+
+Base = declarative_base(cls=UnmappedBase, metadata=metadata)
+
 
 update_nmdc_functions_sql = DDL(
     """

@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, computed_field, field_validator
 
 from nmdc_server import schemas
@@ -46,6 +47,19 @@ class StudyForm(StudyFormCreate):
     NCBIBioProjectId: str
 
 
+class ExternalProtocol(BaseModel):
+    url: Optional[str] = None
+    doi: Optional[str] = None
+    name: Optional[str] = None
+    description: Optional[str] = None
+
+
+class Protocols(BaseModel):
+    sampleProtocol: Optional[ExternalProtocol] = None
+    acquisitionProtocol: Optional[ExternalProtocol] = None
+    dataProtocol: Optional[ExternalProtocol] = None
+
+
 class MultiOmicsForm(BaseModel):
     award: Optional[str] = None
     awardDois: Optional[List[Doi]] = None
@@ -63,13 +77,17 @@ class MultiOmicsForm(BaseModel):
     ship: Optional[bool] = None
     studyNumber: str
     unknownDoi: Optional[bool] = None
+    mpProtocols: Optional[Protocols] = None
+    mbProtocols: Optional[Protocols] = None
+    lipProtocols: Optional[Protocols] = None
+    nomProtocols: Optional[Protocols] = None
 
     # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
     # NCBIBioProjectId in this form until it catches up with the new data model in its next release
     model_config = ConfigDict(extra="allow")
 
 
-class NmcdAddress(BaseModel):
+class NmdcAddress(BaseModel):
     name: str
     email: str
     phone: str
@@ -82,7 +100,7 @@ class NmcdAddress(BaseModel):
 
 
 class AddressForm(BaseModel):
-    shipper: NmcdAddress
+    shipper: NmdcAddress
     expectedShippingDate: Optional[datetime] = None
     shippingConditions: str
     sample: str
@@ -139,10 +157,24 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     metadata_submission: PartialMetadataSubmissionRecord
-    status: Optional[str] = None
     # Map of ORCID iD to permission level
     permissions: Optional[Dict[str, str]] = None
     field_notes_metadata: Optional[Dict[str, Any]] = None
+
+
+class SubmissionMetadataStatusPatch(BaseModel):
+    status: str
+
+    @field_validator("status", mode="after")
+    @classmethod
+    def validate_status(cls, status):
+        SubmissionStatusEnum(status)  # will raise ValueError if invalid
+        return status
+
+
+class SubmissionMetadataRoleAdd(BaseModel):
+    orcid: str
+    role: SubmissionEditorRole
 
 
 class SubmissionMetadataSchemaSlim(BaseModel):

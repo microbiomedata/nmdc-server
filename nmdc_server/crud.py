@@ -1,6 +1,7 @@
 import re
 from collections import defaultdict
 from datetime import UTC, datetime
+from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
@@ -11,12 +12,19 @@ from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
-from nmdc_server.config import Settings
+from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
 
 logger = get_logger(__name__)
 NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)
+
+
+class DataObjectReportVariant(str, Enum):
+    """The kind of report to generate."""
+
+    urls_only = "urls_only"
+    normal = "normal"
 
 
 # See: https://docs.djangoomics_processing.com/en/3.0/ref/models/querysets/#get-or-create
@@ -100,6 +108,42 @@ def text_search(db: Session, terms: str, limit: int) -> List[models.SearchIndex]
     return facets
 
 
+def get_data_object_report(
+    db: Session,
+    variant: DataObjectReportVariant = DataObjectReportVariant.normal,
+) -> tuple[list[str], list[list[str]]]:
+    r"""
+    Returns the header and data rows of a report that lists all `DataObjects`
+    that are the output of any `WorkflowExecution`. The `variant` parameter
+    can be used to specify which columns are included in the report.
+    """
+
+    # Get the `DataObject`s that are outputs of any `WorkflowExecution`s.
+    data_objects = aggregations.get_wfe_output_data_objects(db)
+
+    # Populate the header row based upon the specified variant.
+    if variant == DataObjectReportVariant.urls_only:
+        header_row = ["data_object.url"]
+    else:
+        header_row = ["data_object.id", "data_object.url", "data_object.file_size_bytes"]
+
+    # Populate the data rows based upon the specified variant.
+    data_rows = []
+    for data_object in data_objects:
+        url = data_object.url if data_object.url is not None else ""
+        if variant == DataObjectReportVariant.urls_only:
+            data_row = [url]
+        else:
+            file_size_bytes = (
+                str(data_object.file_size_bytes) if data_object.file_size_bytes is not None else ""
+            )
+            data_row = [data_object.id, url, file_size_bytes]
+        data_rows.append(data_row)
+
+    # Return the header row and data rows.
+    return (header_row, data_rows)
+
+
 def get_environmental_sankey(
     db: Session, query: query.BiosampleQuerySchema
 ) -> List[schemas.EnvironmentSankeyAggregation]:
@@ -121,14 +165,14 @@ def get_study(db: Session, study_id: str) -> Optional[models.Study]:
 
 
 def get_study_image(db: Session, study_id: str) -> Optional[bytes]:
-    study = db.query(models.Study).get(study_id)
+    study = db.get(models.Study, study_id)  # type: ignore  # type: ignore
     if study is not None:
         return study.image
     return None
 
 
 def get_doi(db: Session, doi_id: str) -> Optional[models.DOIInfo]:
-    doi = db.query(models.DOIInfo).get(doi_id)
+    doi = db.get(models.DOIInfo, doi_id)  # type: ignore
     return doi
 
 
@@ -142,7 +186,7 @@ def create_study(db: Session, study: schemas.StudyCreate) -> models.Study:
     for url in websites:
         website, _ = get_or_create(db, models.Website, url=url)
         study_website = models.StudyWebsite(website=website)
-        db_study.principal_investigator_websites.append(study_website)  # type: ignore
+        db_study.principal_investigator_websites.append(study_website)
 
     db.add(db_study)
     db.commit()
@@ -416,7 +460,7 @@ def aggregate_data_object_by_workflow(
 
 # principal investigator
 def get_pi_image(db: Session, principal_investigator_id: UUID) -> Optional[bytes]:
-    pi = db.query(models.PrincipalInvestigator).get(principal_investigator_id)
+    pi = db.get(models.PrincipalInvestigator, principal_investigator_id)  # type: ignore
     if pi is not None:
         return pi.image
     return None
@@ -505,22 +549,44 @@ def create_bulk_download(
         raise
 
 
-def replace_nersc_data_host(url: str) -> str:
+def replace_nersc_data_url_prefix(url: str, replacement_url_prefix: str) -> str:
+    """Conditionally replace the beginning portion of the specified URL.
+
+    If the URL refers to a data file hosted at NERSC, this function will return
+    a URL in which the beginning portion of the URL has been replaced with the
+    specified replacement string.
+
+    This can be used to optimize the URL for different use cases. For example,
+    the ZipStreamer instance in this application's stack could take advantage of
+    a URL that points directly to a data proxy that is not exposed to the Internet,
+    whereas a web browser might require a URL pointing to a Kubernetes ingress that
+    _is_ exposed directly to the Internet (which might lead to that same private
+    data proxy, but not as directly).
+
+    # Test: NERSC data URL (prefix gets replaced).
+    >>> replace_nersc_data_url_prefix(
+    ...     "https://data.microbiomedata.org/data/some/file.txt",
+    ...     "https://www.example.com/path/to"
+    ... )
+    'https://www.example.com/path/to/some/file.txt'
+
+    # Test: Not a NERSC data URL (prefix does not get replaced).
+    >>> replace_nersc_data_url_prefix(
+    ...     "https://other.microbiomedata.org/data/some/file.txt",
+    ...     "https://www.example.com/path/to"
+    ... )
+    'https://other.microbiomedata.org/data/some/file.txt'
     """
-    Updates NERSC URLs so they have the custom prefix defined in
-    an environment variable. This can be used to optimize the URLs
-    for HTTP clients that have direct access to the NERSC network.
-    """
-    host_to_replace = r"^https://data.microbiomedata.org/data"
-    replacement_host = Settings().zip_streamer_nersc_data_base_url
-    if re.match(host_to_replace, url):
-        return re.sub(host_to_replace, replacement_host, url)
+
+    nersc_data_url_prefix = r"https://data.microbiomedata.org/data"
+    if url.startswith(nersc_data_url_prefix):
+        return url.replace(nersc_data_url_prefix, replacement_url_prefix, 1)
     return url
 
 
 def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     """Return a zip file descriptor compatible with zipstreamer."""
-    bulk_download = db.query(models.BulkDownload).get(id)
+    bulk_download = db.get(models.BulkDownload, id)  # type: ignore
     if bulk_download is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Bulk download not found")
     if bulk_download.expired:
@@ -528,13 +594,16 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     zip_file_descriptor: Dict[str, Any] = {"suggestedFilename": "archive.zip"}
     file_descriptions: List[Dict[str, str]] = []
 
-    for file in bulk_download.files:  # type: ignore
+    for file in bulk_download.files:
         data_object = file.data_object
         if data_object.url is None:
             logger.warning(f"Data object url for {file.path} was {data_object.url}")
             continue
 
-        url = replace_nersc_data_host(data_object.url)
+        # Overwrite the prefix of the URL if it refers to a data file hosted at NERSC.
+        url = replace_nersc_data_url_prefix(
+            url=data_object.url, replacement_url_prefix=settings.zip_streamer_nersc_data_base_url
+        )
         file_descriptions.append({"url": url, "zipPath": file.path})
 
     zip_file_descriptor["files"] = file_descriptions
@@ -547,7 +616,7 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
 
 def get_user(db: Session, user_id: str) -> Optional[models.User]:
     """Get a user by ID."""
-    return db.query(models.User).get(user_id)
+    return db.get(models.User, user_id)  # type: ignore
 
 
 def get_or_create_user(db: Session, user: schemas.User) -> models.User:
@@ -559,7 +628,7 @@ def get_or_create_user(db: Session, user: schemas.User) -> models.User:
 
 
 def update_user(db: Session, user: schemas.User) -> Optional[models.User]:
-    db_user = db.query(models.User).get(user.id)
+    db_user = db.get(models.User, user.id)  # type: ignore
     if db_user is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -580,7 +649,7 @@ def add_invalidated_token(db: Session, token: str) -> None:
 
 def get_invalidated_token(db: Session, token: str) -> Optional[models.InvalidatedToken]:
     """Get an invalidated token by token."""
-    return db.query(models.InvalidatedToken).get(token)
+    return db.get(models.InvalidatedToken, token)  # type: ignore
 
 
 def create_authorization_code(
@@ -595,12 +664,12 @@ def create_authorization_code(
 
 def get_authorization_code(db: Session, code: str) -> Optional[models.AuthorizationCode]:
     """Get an authorization code by code."""
-    return db.query(models.AuthorizationCode).get(code)
+    return db.get(models.AuthorizationCode, code)  # type: ignore
 
 
 def update_submission_lock(db: Session, submission_id: str):
     """Update the timestamp for a locked submission."""
-    submission_record = db.query(models.SubmissionMetadata).get(submission_id)
+    submission_record = db.get(models.SubmissionMetadata, submission_id)  # type: ignore
     if not submission_record:
         # Throw a different error, or accept different params
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
@@ -618,10 +687,10 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
     """
 
     # Ensure the requested records exist
-    submission_record = db.query(models.SubmissionMetadata).get(submission_id)
+    submission_record = db.get(models.SubmissionMetadata, submission_id)  # type: ignore
     if not submission_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    user_record: Optional[models.User] = db.query(models.User).get(user_id)
+    user_record: Optional[models.User] = db.get(models.User, user_id)  # type: ignore
     if not user_record:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -665,10 +734,10 @@ def try_get_submission_lock(db: Session, submission_id: str, user_id: str) -> bo
 
 
 def release_submission_lock(db: Session, submission_id: str):
-    submission = db.query(models.SubmissionMetadata).get(submission_id)
+    submission = db.get(models.SubmissionMetadata, submission_id)  # type: ignore
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
-    submission.locked_by = None  # type: ignore
+    submission.locked_by = None
     db.commit()
 
 
@@ -680,6 +749,7 @@ read_roles = [
     models.SubmissionEditorRole.metadata_contributor,
     models.SubmissionEditorRole.owner,
     models.SubmissionEditorRole.viewer,
+    models.SubmissionEditorRole.reviewer,
 ]
 
 metadata_edit_roles = [
@@ -717,8 +787,8 @@ def get_submission_for_user(
     :param allowed_roles: A list of allowed roles that the user must have on the submission. If
         None, no role check is performed.
     """
-    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
-        submission_id
+    submission: Optional[models.SubmissionMetadata] = db.get(  # type: ignore
+        models.SubmissionMetadata, submission_id
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
@@ -761,8 +831,8 @@ def can_read_submission(db: Session, submission_id: str, user_orcid: str) -> Opt
         )
         .first()
     )
-    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
-        submission_id
+    submission: Optional[models.SubmissionMetadata] = db.get(  # type: ignore
+        models.SubmissionMetadata, submission_id
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
@@ -780,8 +850,8 @@ def can_edit_entire_submission(db: Session, submission_id: str, user_orcid: str)
         )
         .first()
     )
-    submission: Optional[models.SubmissionMetadata] = db.query(models.SubmissionMetadata).get(
-        submission_id
+    submission: Optional[models.SubmissionMetadata] = db.get(  # type: ignore
+        models.SubmissionMetadata, submission_id
     )
     if submission is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Submission not found")
@@ -878,8 +948,11 @@ def update_submission_contributor_roles(
             ):
                 # Don't edit owner roles
                 role.role = models.SubmissionEditorRole(new_permissions[role.user_orcid])
-        elif role.role != models.SubmissionEditorRole.owner:
-            # Don't delete owner roles
+        elif (
+            role.role != models.SubmissionEditorRole.owner
+            and role.role != models.SubmissionEditorRole.reviewer
+        ):
+            # Don't delete owner or reviewer roles
             db.delete(role)
 
     new_user_role_needed = set(new_permissions) - set(
@@ -893,3 +966,25 @@ def update_submission_contributor_roles(
         )
         db.add(new_role)
     db.commit()
+
+
+def add_submission_role(
+    db: Session,
+    submission: models.SubmissionMetadata,
+    orcid: str,
+    role: models.SubmissionEditorRole,
+):
+    """Add a role for a user on a submission."""
+    new_role = models.SubmissionRole(submission_id=submission.id, user_orcid=orcid, role=role.value)
+    db.add(new_role)
+    db.commit()
+    db.refresh(submission)
+
+
+def remove_submission_role(db: Session, submission: models.SubmissionMetadata, orcid: str):
+    """Remove a role for a user on a submission."""
+    role = get_submission_role(db, submission.id, orcid)
+    if role:
+        db.delete(role)
+        db.commit()
+        db.refresh(submission)

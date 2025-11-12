@@ -1081,6 +1081,24 @@
   resolved "https://registry.yarnpkg.com/@jridgewell/sourcemap-codec/-/sourcemap-codec-1.4.15.tgz#d7c6e6755c78567a951e04ab52ef0fd26de59f32"
   integrity sha512-eF2rxCRulEKXHTRiDrDy6erMYWqNw4LPdQ8UQA4huuxaQsVeRPFl2oM8oDGxMFhJUWZf9McpLtJasDDZb/Bpeg==
 
+"@microbiomedata/data-harmonizer@^1.7.0":
+  version "1.7.0"
+  resolved "https://registry.yarnpkg.com/@microbiomedata/data-harmonizer/-/data-harmonizer-1.7.0.tgz#cc523e4ff72532bc6c0c05570b6d09aeb89123f2"
+  integrity sha512-IOj2OfS4jST80cz1Pzx9walrPzIej3YQb2FAFr8slzfkm/ujDyv8Y7il+uODxCZFjR9VJKu6Jv0HlrAAQq4wYw==
+  dependencies:
+    "@selectize/selectize" "^0.13.5"
+    date-fns "^2.28.0"
+    file-saver "^2.0.5"
+    flatpickr "^4.6.13"
+    handsontable "13.1.0"
+    linkify-it "^4.0.1"
+    markdown-it "^13.0.2"
+    punycode "^2.3.1"
+    rollup-plugin-polyfill-node "^0.12.0"
+    sheetclip "^0.3.0"
+    sifter "^0.5.4"
+    xlsx "^0.18.5"
+
 "@mrmlnc/readdir-enhanced@^2.2.1":
   version "2.2.1"
   resolved "https://registry.yarnpkg.com/@mrmlnc/readdir-enhanced/-/readdir-enhanced-2.2.1.tgz#524af240d1a360527b730475ecfa1344aa540dde"
@@ -4334,24 +4352,6 @@ dashdash@^1.12.0:
   integrity sha1-hTz6D3y+L+1d4gMmuN1YEDX24vA=
   dependencies:
     assert-plus "^1.0.0"
-
-data-harmonizer@1.6.5:
-  version "1.6.5"
-  resolved "https://registry.yarnpkg.com/data-harmonizer/-/data-harmonizer-1.6.5.tgz#6c248cabd435e569bf6c3058a0c9b04ab33bcc7c"
-  integrity sha512-Ftt8S/00R5CknUh5FB+SnT5cm1QCepIAP19EnPOFIRqVa1HKCc7fUr9EC4VY080xpYS6eKIQ9KPXo13dPZmuug==
-  dependencies:
-    "@selectize/selectize" "^0.13.5"
-    date-fns "^2.28.0"
-    file-saver "^2.0.5"
-    flatpickr "^4.6.13"
-    handsontable "13.1.0"
-    linkify-it "^4.0.1"
-    markdown-it "^13.0.2"
-    punycode "^2.3.1"
-    rollup-plugin-polyfill-node "^0.12.0"
-    sheetclip "^0.3.0"
-    sifter "^0.5.4"
-    xlsx "^0.18.5"
 
 date-fns@^2.28.0:
   version "2.29.1"
@@ -7762,9 +7762,9 @@ nice-try@^1.0.4:
   resolved "https://registry.yarnpkg.com/nice-try/-/nice-try-1.0.5.tgz#a3378a7696ce7d223e88fc9b764bd7ef1089e366"
   integrity sha512-1nh45deeb5olNY7eX82BkPO7SSxR5SSYJiPTrTdFUVYwAl8CKMA5N9PjTYkHiRjisVcxcQ1HXdLhx2qxxJzLNQ==
 
-"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v11.10.0":
+"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v11.13.0":
   version "0.0.0"
-  resolved "https://github.com/microbiomedata/nmdc-schema#6119689e49c658e278e058fb1abf92ce07547b0c"
+  resolved "https://github.com/microbiomedata/nmdc-schema#332447f45bf81e6df4a376578783ac93e9b3f671"
 
 no-case@^2.2.0:
   version "2.3.2"

@@ -9,7 +9,11 @@ import {
   MetadataSuggestionRequest,
   NmdcAddress,
   PaginatedResponse,
+  SignedUploadUrlRequest,
+  SignedUrl,
+  SubmissionImageType,
   SuggestionType,
+  UploadCompleteRequest,
 } from '@/views/SubmissionPortal/types';
 
 function addressToString(address: NmdcAddress): string {
@@ -39,13 +43,27 @@ async function createRecord(record: MetadataSubmission, isTestSubmission: boolea
   return resp.data;
 }
 
-async function updateRecord(id: string, record: Partial<MetadataSubmission>, status?: string, permissions?: Record<string, string>) {
+async function updateRecord(id: string, record: Partial<MetadataSubmission>, permissions?: Record<string, string>) {
   const resp = await client.patch<MetadataSubmissionRecord>(`metadata_submission/${id}`, {
     metadata_submission: record,
-    status,
     permissions,
   });
   return { data: resp.data, httpStatus: resp.status };
+}
+
+async function updateSubmissionStatus(submission_id: string, newStatus: string) {
+  const resp = await client.patch<MetadataSubmissionRecord>(`metadata_submission/${submission_id}/status`, {
+    status: newStatus,
+  });
+  return resp.data;
+}
+
+async function addSubmissionRole(submission_id: string, orcid: string, role: string) {
+  const resp = await client.post<MetadataSubmissionRecord>(`metadata_submission/${submission_id}/role`, {
+    orcid,
+    role,
+  });
+  return resp.data;
 }
 
 async function listRecords(searchParams: SearchParams, isTestFilter: boolean | null) {
@@ -100,6 +118,42 @@ async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: S
   return resp.data;
 }
 
+async function generateSignedUploadUrl(submissionId: string, file: File): Promise<SignedUrl> {
+  const endpoint = `metadata_submission/${submissionId}/image/signed_upload_url`;
+  const resp = await client.post<SignedUrl>(endpoint, {
+    file_name: file.name,
+    file_size: file.size,
+    content_type: file.type,
+  } as SignedUploadUrlRequest);
+  return resp.data;
+}
+
+async function setSubmissionImage(
+  submissionId: string,
+  file: File,
+  blobName: string,
+  imageType?: SubmissionImageType,
+): Promise<MetadataSubmissionRecord> {
+  let endpoint = `metadata_submission/${submissionId}/image`;
+  if (imageType) {
+    endpoint += `/${imageType}`;
+  }
+  const resp = await client.post<MetadataSubmissionRecord>(endpoint, {
+    object_name: blobName,
+    file_size: file.size,
+    content_type: file.type,
+  } as UploadCompleteRequest);
+  return resp.data;
+}
+
+async function deleteSubmissionImage(submissionId: string, imageType: SubmissionImageType, imageName?: string): Promise<void> {
+  let endpoint = `metadata_submission/${submissionId}/image/${imageType}`;
+  if (imageName) {
+    endpoint += `?image_name=${imageName}`;
+  }
+  await client.delete<MetadataSubmissionRecord>(endpoint);
+}
+
 export {
   addressToString,
   createRecord,
@@ -110,4 +164,9 @@ export {
   unlockSubmission,
   deleteSubmission,
   getMetadataSuggestions,
+  generateSignedUploadUrl,
+  setSubmissionImage,
+  deleteSubmissionImage,
+  updateSubmissionStatus,
+  addSubmissionRole,
 };

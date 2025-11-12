@@ -36,7 +36,7 @@ class SubmissionMetadata(Base):
 
 
 # Similarly, redefine pydantic models for context_ and address_form
-class NmcdAddress(BaseModel):
+class NmdcAddress(BaseModel):
     name: str = ""
     email: str = ""
     phone: str = ""
@@ -49,7 +49,7 @@ class NmcdAddress(BaseModel):
 
 
 class AddressForm(BaseModel):
-    shipper: NmcdAddress = NmcdAddress()
+    shipper: NmdcAddress = NmdcAddress()
     expectedShippingDate: Optional[datetime] = None
     shippingConditions: str = ""
     sample: str = ""
@@ -61,7 +61,7 @@ class AddressForm(BaseModel):
     biosafetyLevel: str = ""
     irpOrHipaa: Optional[bool] = None
     irbNumber: str = ""
-    irbAddress: NmcdAddress = NmcdAddress()
+    irbAddress: NmdcAddress = NmdcAddress()
     comments: str = ""
 
 

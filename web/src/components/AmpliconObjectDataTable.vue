@@ -45,7 +45,7 @@ export default defineComponent({
         target="_blank"
         rel="noopener noreferrer"
       >
-        {{ BioprojectLinkBase + item.insdc_experiment_identifiers }}
+        {{ item.insdc_experiment_identifiers[0] }}
       </a>
     </template>
   </v-data-table>

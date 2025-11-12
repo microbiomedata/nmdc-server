@@ -31,6 +31,9 @@ import {
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
+  AcquisitionProtocol,
+  DataProtocol,
+  SampleProtocol,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 
@@ -47,18 +50,21 @@ const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
   owner: 4,
   editor: 3,
   metadata_contributor: 2,
+  reviewer: 1,
   viewer: 1,
 };
 
 //use schema enum to define submission status
-const submissionStatus: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
-  Object.entries(NmdcSchema.enums.SubmissionStatusEnum.permissible_values).map(([key, item]: [SubmissionStatusKey, SubmissionStatusTitle]) => [key, item.title]),
-);
+const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
+const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
+  Object.entries(SubmissionStatusEnum).map(([key, item]: [string, any]) => [key, item.title]),
+) as Record<SubmissionStatusKey, SubmissionStatusTitle>; //key to title mapping for vue scripts where status saved to variable
+const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
+const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
 
-const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(submissionStatus).includes(str);
-
-const status = ref('InProgress');
 const isTestSubmission = ref(false);
+const primaryStudyImageUrl = ref<string | null>(null);
+const piImageUrl = ref<string | null>(null);
 
 /**
  * Submission record locking information
@@ -78,13 +84,24 @@ function isOwner(): boolean {
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
 
+function editablebyStatus(status: string): boolean {
+  const editableStatuses = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.UpdatesRequired.text];
+  return editableStatuses.includes(status);
+}
+
+function canEditSubmissionByStatus(): boolean {
+  return editablebyStatus(status.value);
+}
+
 function canEditSubmissionMetadata(): boolean {
   if (!_permissionLevel) return false;
+  if (!canEditSubmissionByStatus()) return false;
   return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
 }
 
 function canEditSampleMetadata(): boolean {
   if (!_permissionLevel) return false;
+  if (!canEditSubmissionByStatus()) return false;
   return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
 }
 
@@ -159,6 +176,12 @@ const studyFormDefault = {
 };
 const studyForm = reactive(clone(studyFormDefault));
 
+const protocols = {
+  sampleProtocol: {} as SampleProtocol,
+  acquisitionProtocol: {} as AcquisitionProtocol,
+  dataProtocol: {} as DataProtocol,
+};
+
 /**
  * Multi-Omics Form Step
  */
@@ -179,6 +202,10 @@ const multiOmicsFormDefault = {
   ship: undefined as undefined | boolean,
   studyNumber: '',
   unknownDoi: undefined as undefined | boolean,
+  mpProtocols: undefined as undefined | typeof protocols,
+  mbProtocols: undefined as undefined | typeof protocols,
+  lipProtocols: undefined as undefined | typeof protocols,
+  nomProtocols: undefined as undefined | typeof protocols,
 };
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
@@ -383,11 +410,17 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string, status: SubmissionStatusKey = 'InProgress') {
-  if (canEditSubmissionMetadata()) {
-    return api.updateRecord(id, payloadObject.value, status);
+async function submit(id: string, status?: SubmissionStatusKey) {
+  if (!canEditSubmissionMetadata()) {
+    throw new Error('Unable to submit due to inadequate permission level for this submission.');
   }
-  throw new Error('Unable to submit due to inadequate permission level for this submission.');
+  if (!canEditSubmissionByStatus()) {
+    throw new Error('Unable to submit with current submission status.');
+  }
+  await api.updateRecord(id, payloadObject.value);
+  if (status) {
+    await api.updateSubmissionStatus(id, status);
+  }
 }
 
 function reset() {
@@ -399,12 +432,17 @@ function reset() {
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
   sampleData.value = {};
-  status.value = 'InProgress';
+  status.value = SubmissionStatusEnum.InProgress.text;
   isTestSubmission.value = false;
+  primaryStudyImageUrl.value = null;
+  piImageUrl.value = null;
 }
 
 async function incrementalSaveRecord(id: string): Promise<number | void> {
   if (!canEditSampleMetadata()) {
+    return Promise.resolve();
+  }
+  if (!canEditSubmissionByStatus()) {
     return Promise.resolve();
   }
 
@@ -422,7 +460,7 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   if (hasChanged.value) {
-    const response = await api.updateRecord(id, payload, undefined, permissions);
+    const response = await api.updateRecord(id, payload, permissions);
     hasChanged.value = 0;
     return response.httpStatus;
   }
@@ -448,9 +486,11 @@ async function loadRecord(id: string) {
   Object.assign(validForms, val.metadata_submission.validForms);
   sampleData.value = val.metadata_submission.sampleData;
   hasChanged.value = 0;
-  status.value = isSubmissionStatus(val.status) ? val.status : 'InProgress';
+  status.value = isSubmissionStatus(val.status) ? val.status : SubmissionStatusEnum.InProgress.text;
   _permissionLevel = (val.permission_level as PermissionLevelValues);
   isTestSubmission.value = val.is_test_submission;
+  primaryStudyImageUrl.value = val.primary_study_image_url;
+  piImageUrl.value = val.pi_image_url;
 
   try {
     const lockResponse = await api.lockSubmission(id);
@@ -528,7 +568,7 @@ function removeMetadataSuggestions(submissionId: string, schemaClassName: string
 }
 
 export {
-  submissionStatus,
+  SubmissionStatusTitleMapping,
   permissionTitleToDbValueMap,
   permissionLevelHierarchy,
   /* state */
@@ -548,9 +588,12 @@ export {
   tabsValidated,
   status,
   isTestSubmission,
+  primaryStudyImageUrl,
+  piImageUrl,
   metadataSuggestions,
   suggestionMode,
   suggestionType,
+  SubmissionStatusEnum,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,
@@ -562,6 +605,8 @@ export {
   isOwner,
   canEditSampleMetadata,
   canEditSubmissionMetadata,
+  canEditSubmissionByStatus,
+  editablebyStatus,
   addMetadataSuggestions,
   removeMetadataSuggestions,
   templateHasData,
