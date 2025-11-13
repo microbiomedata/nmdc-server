@@ -434,16 +434,15 @@ class MetaproteomicAnalysisFilter(OmicsProcessingFilter):
     def join_biosample(self, query: Query) -> Query:
         association_table = models.metaproteomic_analysis_data_generation_association
         return (
-            query
-            .join(models.biosample_input_association)
+            query.join(models.biosample_input_association)
             .join(models.OmicsProcessing)
             .join(
                 association_table,
-                association_table.c.data_generation_id == models.OmicsProcessing.id
+                association_table.c.data_generation_id == models.OmicsProcessing.id,
             )
             .join(
                 models.MetaproteomicAnalysis,
-                models.MetaproteomicAnalysis.id == association_table.c.metaproteomic_analysis_id
+                models.MetaproteomicAnalysis.id == association_table.c.metaproteomic_analysis_id,
             )
         )
 
