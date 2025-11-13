@@ -54,7 +54,8 @@
                 "kegg_function": 5,
                 "cog_function": 6,
                 "pfam_function": 7,
-                "go_function": 8
+                "go_function": 8,
+                "metaproteomic_analysis": 9
               }
             },
             "FieldName": {
@@ -83,7 +84,8 @@
                 "multiomics": 21,
                 "name": 22,
                 "description": 23,
-                "title": 24
+                "title": 24,
+                "metaproteomics_analysis_category": 25
               }
             }
           }
