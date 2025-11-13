@@ -437,8 +437,14 @@ class MetaproteomicAnalysisFilter(OmicsProcessingFilter):
             query
             .join(models.biosample_input_association)
             .join(models.OmicsProcessing)
-            .join(association_table, association_table.c.data_generation_id == models.OmicsProcessing.id)
-            .join(models.MetaproteomicAnalysis, models.MetaproteomicAnalysis.id == association_table.c.metaproteomic_analysis_id)
+            .join(
+                association_table,
+                association_table.c.data_generation_id == models.OmicsProcessing.id
+            )
+            .join(
+                models.MetaproteomicAnalysis,
+                models.MetaproteomicAnalysis.id == association_table.c.metaproteomic_analysis_id
+            )
         )
 
 
