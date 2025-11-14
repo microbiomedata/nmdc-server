@@ -240,6 +240,14 @@ docker compose up --build -d
 
 ### Running with frontend development server
 
+You will need Node version 22 or greater to install and run the web app locally. You can find installation instructions here: https://nodejs.org/en/download. If you're on a Mac, it is recommended to use nvm to install and manage your node versions.
+
+If you have nvm installed, you can run the following command at the root of the `web` directory to use the Node version specified in our `.nvmrc` file:
+
+```bash
+nvm use
+```
+
 If you are modifying files in the `web` directory, additionally run the frontend development server to enable hot reloading in your browser:
 
 ```bash
@@ -247,8 +255,6 @@ cd web
 yarn install
 yarn dev
 ```
-
-You will need Node version 22 or greater to install and run the web app locally. You can find installation instructions here: https://nodejs.org/en/download. If you're on a Mac, it is recommended to use nvm to install and manage your node versions.
 
 <details>
 <summary>Running yarn via npx?</summary>
