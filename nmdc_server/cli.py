@@ -25,7 +25,7 @@ def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: s
     """Swaps the values of two secrets in Google Secret Manager.
 
     Note: To update a secret's content, we disable the latest "version" of that secret, then
-          then add a new "version" of the secret. The new "version" contains the new value.
+          add a new "version" of the secret. The new "version" contains the new value.
 
     Note: The "Add version" form on the Google Secret Manager console (web UI) has
           a checkbox that can be used to disable all previous versions of the secret.
