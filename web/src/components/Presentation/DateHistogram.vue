@@ -1,11 +1,16 @@
 <script>
-import Vue from 'vue';
 import moment from 'moment';
+import {
+  defineComponent,
+  ref,
+  watch,
+  nextTick,
+} from 'vue';
 
 import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 import TimeHistogram from '@/components/Presentation/TimeHistogram.vue';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'DateHistogram',
   components: {
     ChartContainer,
@@ -41,96 +46,100 @@ export default Vue.extend({
       default: 160,
     },
   },
+  emits: ['select'],
+  setup(props, { emit }) {
+    const range = ref(null);
+    const min = ref(0);
+    const max = ref(100);
 
-  data() {
-    return {
-      range: null,
-      min: 0,
-      max: 100,
-      moment,
-    };
-  },
+    function afterDrag() {
+      if (range.value[0] !== min.value || range.value[1] !== max.value) {
+        emit('select', {
+          type: props.table,
+          conditions: [
+            ...props.otherConditions,
+            {
+              field: props.field,
+              op: 'between',
+              value: range.value.map((d) => moment(d).format('YYYY-MM-DDT00:00:00.000')),
+              table: props.table,
+            },
+          ],
+        });
+      } else if (props.myConditions.length) {
+        emit('select', {
+          type: props.table,
+          conditions: props.otherConditions,
+        });
+      }
+    }
+    function onBrushEnd(brushRange) {
+      if (brushRange && (brushRange[0] !== min.value || brushRange[1] !== max.value)) {
+        emit('select', {
+          type: props.table,
+          conditions: [
+            ...props.otherConditions,
+            {
+              field: props.field,
+              op: 'between',
+              value: brushRange.map((d) => moment(d).format('YYYY-MM-DDT00:00:00.000')),
+              table: props.table,
+            },
+          ],
+        });
+      } else if (props.myConditions.length) {
+        emit('select', {
+          type: props.table,
+          conditions: props.otherConditions,
+        });
+      }
+    }
 
-  watch: {
-    facetSummary() {
+    watch(() => props.facetSummary, () => {
       // Derive min/max from full range
       const setMinMax = () => {
-        const min = Date.parse(this.facetSummaryUnconditional.bins[0]);
-        const max = Date.parse(
-          this.facetSummaryUnconditional.bins[this.facetSummaryUnconditional.bins.length - 1],
-        );
-        if (Number.isNaN(min) || Number.isNaN(max)) {
+        if (!props.facetSummaryUnconditional
+        || !props.facetSummaryUnconditional.bins
+        || props.facetSummaryUnconditional.bins.length === 0) {
           return;
         }
-        this.min = min;
-        this.max = max;
-        this.range = [this.min, this.max];
+        const minDate = Date.parse(props.facetSummaryUnconditional.bins[0]);
+        const maxDate = Date.parse(
+          props.facetSummaryUnconditional.bins[props.facetSummaryUnconditional.bins.length - 1],
+        );
+        if (Number.isNaN(minDate) || Number.isNaN(maxDate)) {
+          return;
+        }
+        min.value = minDate;
+        max.value = maxDate;
+        range.value = [min.value, max.value];
       };
-      let nextTick = setMinMax;
-      if (this.myConditions.length === 1) {
-        const [condition] = this.myConditions;
+      let nextTickCallBack = setMinMax;
+      if (props.myConditions.length === 1) {
+        const [condition] = props.myConditions;
         if (condition.op === 'between' && typeof condition.value === 'object') {
           // If range is already set, figure it out from the condition.
-          nextTick = () => {
-            // but get min/max from full range anyway.
+          nextTickCallBack = () => {
+          // but get min/max from full range anyway.
             setMinMax();
-            this.range = condition.value.map((c) => (new Date(c)).valueOf());
+            range.value = condition.value.map((c) => (new Date(c)).valueOf());
           };
         }
       }
-      this.$nextTick(() => nextTick());
-    },
-    myConditions() {
-      if (this.myConditions.length === 0) {
+      nextTick(() => nextTickCallBack());
+    }, { immediate: true });
+    watch(() => props.myConditions, () => {
+      if (props.myConditions.length === 0) {
         // Otherwise, reset to min/max
-        this.range = [this.min, this.max];
+        range.value = [min.value, max.value];
       }
-    },
-  },
+    }, { immediate: true });
 
-  methods: {
-    afterDrag() {
-      if (this.range[0] !== this.min || this.range[1] !== this.max) {
-        this.$emit('select', {
-          type: this.table,
-          conditions: [
-            ...this.otherConditions,
-            {
-              field: this.field,
-              op: 'between',
-              value: this.range.map((d) => moment(d).format('YYYY-MM-DDT00:00:00.000')),
-              table: this.table,
-            },
-          ],
-        });
-      } else if (this.myConditions.length) {
-        this.$emit('select', {
-          type: this.table,
-          conditions: this.otherConditions,
-        });
-      }
-    },
-    onBrushEnd(brushRange) {
-      if (brushRange && (brushRange[0] !== this.min || brushRange[1] !== this.max)) {
-        this.$emit('select', {
-          type: this.table,
-          conditions: [
-            ...this.otherConditions,
-            {
-              field: this.field,
-              op: 'between',
-              value: brushRange.map((d) => moment(d).format('YYYY-MM-DDT00:00:00.000')),
-              table: this.table,
-            },
-          ],
-        });
-      } else if (this.myConditions.length) {
-        this.$emit('select', {
-          type: this.table,
-          conditions: this.otherConditions,
-        });
-      }
-    },
+    return {
+      range,
+      afterDrag,
+      onBrushEnd,
+    };
   },
 });
 </script>
@@ -142,7 +151,7 @@ export default Vue.extend({
         <TimeHistogram
           ref="histogram"
           v-bind="{ width, height, selectedData: facetSummary, totalData: facetSummaryUnconditional, range: range || [] }"
-          @onBrushEnd="onBrushEnd"
+          @on-brush-end="onBrushEnd"
         />
       </template>
       <template #below>

@@ -1,6 +1,6 @@
 # NMDC Data Portal
 
-Follow setup instructions in `../README.md` first.
+Follow setup instructions in the [Development Docs](/docs/development.md).
 
 ## Client architecture
 
@@ -17,4 +17,3 @@ Some components, like `src/views/Search/FilterList` use lazy-load of data that c
 ## Stateless requests
 
 This application serves data from a stateless database, so queries can be cached, and many requests only need to be loaded once.
-

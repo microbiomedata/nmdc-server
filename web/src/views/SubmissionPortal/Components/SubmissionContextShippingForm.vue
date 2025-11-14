@@ -6,17 +6,18 @@ import {
   onMounted,
   ref,
   watch,
-} from '@vue/composition-api';
+} from 'vue';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
 import {
   addressForm,
   addressFormValid,
   canEditSubmissionMetadata,
 } from '../store';
-import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
+import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 
 export default defineComponent({
   components: { SubmissionContextShippingSummary },
@@ -57,7 +58,7 @@ export default defineComponent({
       addressForm.expectedShippingDate = newValue.length ? new Date(newValue) : undefined;
     });
 
-    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[]) {
+    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[]) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,
@@ -97,7 +98,7 @@ export default defineComponent({
 <template>
   <v-card
     class="mt-4 pa-0"
-    outlined
+    variant="outlined"
     :style="addressFormValid ? '' : 'border: 2px solid red'"
   >
     <v-card-text
@@ -119,15 +120,14 @@ export default defineComponent({
       width="1200"
       eager
     >
-      <template #activator="{ on, attrs }">
+      <template #activator="{ props }">
         <v-btn
           :disabled="!canEditSubmissionMetadata()"
           absolute
           top
           right
           color="primary"
-          v-bind="attrs"
-          v-on="on"
+          v-bind="props"
         >
           Enter sender info
         </v-btn>
@@ -137,12 +137,11 @@ export default defineComponent({
           <v-spacer />
           <span class="text-h5">Shipping Information</span>
           <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
                 color="primary"
-                v-bind="attrs"
-                v-on="on"
+                v-bind="props"
               >
                 <v-icon>
                   mdi-information
@@ -170,7 +169,7 @@ export default defineComponent({
               v-model="addressForm.shipper.name"
               :rules="requiredRules('Name is required', [])"
               label="Sender Name *"
-              outlined
+              variant="outlined"
               dense
               class="mt-2"
             />
@@ -180,45 +179,45 @@ export default defineComponent({
                 v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
               ])"
               label="E-mail Address *"
-              outlined
+              variant="outlined"
               dense
             />
             <v-text-field
               v-model="addressForm.shipper.phone"
               label="Phone Number"
-              outlined
+              variant="outlined"
               dense
             />
             <v-text-field
               v-model="addressForm.shipper.line1"
               label="Address Line 1"
-              outlined
+              variant="outlined"
               dense
             />
             <v-text-field
               v-model="addressForm.shipper.line2"
               label="Address Line 2"
-              outlined
+              variant="outlined"
               dense
             />
             <v-text-field
               v-model="addressForm.shipper.city"
               label="City"
-              outlined
+              variant="outlined"
               dense
             />
             <div class="d-flex">
               <v-text-field
                 v-model="addressForm.shipper.state"
                 label="State"
-                outlined
+                variant="outlined"
                 dense
                 class="mr-4"
               />
               <v-text-field
                 v-model="addressForm.shipper.postalCode"
                 label="Zip Code"
-                outlined
+                variant="outlined"
                 dense
                 class="mr-4"
               />
@@ -226,7 +225,7 @@ export default defineComponent({
                 v-model="addressForm.shipper.country"
                 :rules="requiredRules('Country is required', [])"
                 label="Country *"
-                outlined
+                variant="outlined"
                 dense
               />
             </div>
@@ -235,7 +234,7 @@ export default defineComponent({
               :rules="requiredRules('Shipping conditions are required', [])"
               label="Shipping Conditions *"
               :items="shippingConditionsItems"
-              outlined
+              variant="outlined"
               dense
             />
             <v-menu
@@ -246,7 +245,7 @@ export default defineComponent({
               offset-y
               min-width="auto"
             >
-              <template #activator="{ on, attrs }">
+              <template #activator="{ props }">
                 <v-text-field
                   v-model="expectedShippingDateString"
                   :rules="requiredRules('Expected Shipping Date is required', [])"
@@ -254,10 +253,9 @@ export default defineComponent({
                   prepend-icon="mdi-calendar"
                   clearable
                   readonly
-                  outlined
+                  variant="outlined"
                   dense
-                  v-bind="attrs"
-                  v-on="on"
+                  v-bind="props"
                   @click.clear="addressForm.expectedShippingDate = undefined"
                 />
               </template>
@@ -279,14 +277,14 @@ export default defineComponent({
               :items="sampleEnumValues"
               label="Sample Type/Species *"
               dense
-              outlined
+              variant="outlined"
             />
             <v-textarea
               v-model="addressForm.description"
               label="Sample Description"
               :rules="requiredRules('Sample Description is required', [])"
               hint="Number of samples, sample container type..."
-              outlined
+              variant="outlined"
               dense
               rows="2"
             />
@@ -295,7 +293,7 @@ export default defineComponent({
               :rules="requiredRules('Experiment Goals are required', [])"
               label="Experiment Goals *"
               hint="Briefly describe the goal for your experiment"
-              outlined
+              variant="outlined"
               dense
               rows="2"
             />
@@ -303,7 +301,7 @@ export default defineComponent({
               v-model="addressForm.randomization"
               label="Randomization"
               hint="What experimental conditions will be used for"
-              outlined
+              variant="outlined"
               dense
               rows="1"
             />
@@ -317,19 +315,19 @@ export default defineComponent({
               <v-text-field
                 v-model="addressForm.permitNumber"
                 label="Permit Number"
-                outlined
+                variant="outlined"
                 dense
               />
               <v-spacer />
             </div>
             <div class="d-flex">
               <v-select
-                v-model="addressForm.biosafetyLevel"
+                v-model="addressForm.biosafetyLevel as BiosafetyLevels"
                 class="mr-4"
                 :items="biosafetyLevelValues"
                 label="Biosafety Level"
                 dense
-                outlined
+                variant="outlined"
               />
               <v-checkbox
                 v-model="addressForm.irbOrHipaa"
@@ -345,7 +343,7 @@ export default defineComponent({
             <v-textarea
               v-model="addressForm.comments"
               label="Comments"
-              outlined
+              variant="outlined"
               dense
               lines="4"
             />

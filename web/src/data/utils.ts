@@ -1,3 +1,4 @@
+// @ts-ignore
 import LinkifyIt from 'linkify-it';
 import { Condition } from './api';
 
@@ -76,6 +77,8 @@ export function urlify(text: string): string {
 
   let urlified = '';
   let lastIndex = 0;
+
+  // @ts-ignore
   matches.forEach((match) => {
     if (match.index > lastIndex) {
       urlified += text.substring(lastIndex, match.index);

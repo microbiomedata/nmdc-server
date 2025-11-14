@@ -1,9 +1,9 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
+import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   multiOmicsForm, templateHasData,
 } from '../store';
-import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import ExternalProtocolForm from './ExternalProtocolForm.vue';
 
 export default defineComponent({
@@ -20,11 +20,12 @@ export default defineComponent({
       default: true,
     },
   },
+emits: ['revalidate'],
   setup(_, { emit }) {
     const dataCaveat = 'You may proceed with your submission for sample metadata capture. However, there will not be place to provide information about your existing sequencing data as the methods are not supported by NMDC Workflows';
 
-    const handleMetagenomeChange = (value: string[]) => {
-      if (!value.includes('mg')) {
+    const handleMetagenomeChange = () => {
+      if (!multiOmicsForm.omicsProcessingTypes.includes('mg')) {
         multiOmicsForm.mgCompatible = undefined;
         multiOmicsForm.mgInterleaved = undefined;
       }
@@ -38,8 +39,8 @@ export default defineComponent({
       emit('revalidate');
     };
 
-    const handleMetatranscriptomeChange = (value: string[]) => {
-      if (!value.includes('mt')) {
+    const handleMetatranscriptomeChange = () => {
+      if (!multiOmicsForm.omicsProcessingTypes.includes('mt')) {
         multiOmicsForm.mtCompatible = undefined;
         multiOmicsForm.mtInterleaved = undefined;
       }
@@ -84,7 +85,7 @@ export default defineComponent({
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metagenome"
       value="mg"
-      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved.sampleDataSlot)"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot)"
       hide-details
       @change="handleMetagenomeChange"
     />
@@ -114,7 +115,7 @@ export default defineComponent({
         v-model="multiOmicsForm.mgCompatible"
         label="Is the generated data compatible? *"
         :rules="[v => v !== undefined || 'This field is required']"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot)"
         @change="handleMgCompatibleChange"
       >
         <v-radio
@@ -129,11 +130,11 @@ export default defineComponent({
               class="x-2"
               max-width="500"
             >
-              <template #activator="{ on }">
+              <template #activator="{ props }">
                 <v-icon
                   class="ml-2"
                   dense
-                  v-on="on"
+                  v-bind="props"
                 >
                   mdi-help-circle
                 </v-icon>
@@ -153,7 +154,7 @@ export default defineComponent({
         v-if="multiOmicsForm.mgCompatible"
         v-model="multiOmicsForm.mgInterleaved"
         label="Is the data in interleaved format? *"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot)"
         :rules="[v => v !== undefined || 'This field is required']"
       >
         <v-radio
@@ -170,7 +171,7 @@ export default defineComponent({
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metatranscriptome"
       value="mt"
-      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved.sampleDataSlot)"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot)"
       hide-details
       @change="handleMetatranscriptomeChange"
     />
@@ -205,7 +206,7 @@ export default defineComponent({
         v-model="multiOmicsForm.mtCompatible"
         label="Is the generated data compatible? *"
         :rules="[v => v !== undefined || 'This field is required']"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot)"
         @change="handleMtCompatibleChange"
       >
         <v-radio
@@ -220,11 +221,11 @@ export default defineComponent({
               class="x-2"
               max-width="500"
             >
-              <template #activator="{ on }">
+              <template #activator="{ props }">
                 <v-icon
                   class="ml-2"
                   dense
-                  v-on="on"
+                  v-bind="props"
                 >
                   mdi-help-circle
                 </v-icon>
@@ -244,7 +245,7 @@ export default defineComponent({
         v-if="multiOmicsForm.mtCompatible"
         v-model="multiOmicsForm.mtInterleaved"
         label="Is the data in interleaved format? *"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot)"
         :rules="[v => v !== undefined || 'This field is required']"
       >
         <v-radio

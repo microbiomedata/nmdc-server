@@ -5,15 +5,16 @@ import {
   PropType,
   toRef,
   watch,
-} from '@vue/composition-api';
+} from 'vue';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';
-import { loadRecord } from './store';
 import AppBanner from '@/components/AppBanner.vue';
 import TitleBanner from '@/views/SubmissionPortal/Components/TitleBanner.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import LoginPrompt from '@/views/SubmissionPortal/Components/LoginPrompt.vue';
+import { loadRecord } from './store';
+import { useRoute } from 'vue-router';
 
 export default defineComponent({
   components: {
@@ -30,7 +31,8 @@ export default defineComponent({
       default: null,
     },
   },
-  setup(props, { root }) {
+  setup(props) {
+    const route = useRoute();
     const req = useRequest();
 
     function load() {
@@ -42,7 +44,7 @@ export default defineComponent({
     watch(toRef(props, 'id'), load);
     load();
 
-    const showBanner = computed(() => root.$route.path === '/submission/home');
+    const showBanner = computed(() => route.path === '/submission/home');
 
     return {
       stateRefs,

@@ -1,12 +1,13 @@
 <script lang="ts">
 import {
   computed, defineComponent, PropType, ref,
-} from '@vue/composition-api';
-// @ts-ignore
+} from 'vue';
 import { GChart } from 'vue-google-charts';
+// @ts-ignore
 import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
 import { FacetSummaryResponse } from '@/data/api';
+import { useTheme } from 'vuetify';
 
 export default defineComponent({
   name: 'FacetBarChart',
@@ -59,14 +60,19 @@ export default defineComponent({
       required: true,
     },
   },
-
-  setup(props, { emit, root }) {
+  emits: ['selected'],
+  setup(props, { emit }) {
+    const theme = useTheme();
     const chartRef = ref();
+
+     
+    const onChartReady = (chart: any) => {
+      chartRef.value = chart;
+    };
     const chartEvents = {
       select: () => {
-        const chart = chartRef.value.chartObject;
-        const selection = chart.getSelection();
-        const value = props.facetSummaryUnconditional[selection[0].row].facet;
+        const selection = chartRef.value.getSelection();
+        const value = props.facetSummaryUnconditional[selection[0].row]?.facet;
         if (selection.length === 1) {
           emit('selected', {
             conditions: [{
@@ -79,17 +85,18 @@ export default defineComponent({
         }
       },
     };
-    const chartData = computed(() => ([
-      [
-        { label: fieldDisplayName(props.field) },
-        { label: 'Match', role: 'data' },
-        { role: 'scope' },
-        { role: 'style' },
-        { label: 'No Match', role: 'data' },
-        { role: 'scope' },
-        { role: 'style' },
-        { role: 'annotation' },
-      ],
+    const chartData = computed(() => {
+      return [
+        [
+          { label: fieldDisplayName(props.field) },
+          { label: 'Match', role: 'data' },
+          { role: 'scope' },
+          { role: 'style' },
+          { label: 'No Match', role: 'data' },
+          { role: 'scope' },
+          { role: 'style' },
+          { role: 'annotation' },
+        ],
       ...props.facetSummaryUnconditional.map(
         (facet) => {
           const count = (props.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0;
@@ -102,16 +109,17 @@ export default defineComponent({
             true,
             count > 0 ? (
               ecosystems.find((e) => e.name === facet.facet)
-              || { color: root.$vuetify.theme.currentTheme.primary }
+              || { color: theme.current.value.colors.primary }
             ).color : 'lightgray',
             excludedCount,
             false,
-            excludedCount > 0 ? 'lightgray' : root.$vuetify.theme.currentTheme.primary,
+            excludedCount > 0 ? 'lightgray' : theme.current.value.colors.primary,
             count > 0 ? `${count}` : 'No match',
           ];
         },
       ),
-    ]));
+    ];
+    });
     const barChartOptions = computed(() => ({
       height: props.height,
       chartArea: {
@@ -146,6 +154,7 @@ export default defineComponent({
 
     return {
       chartRef,
+      onChartReady,
       chartEvents,
       chartData,
       barChartOptions,
@@ -156,11 +165,11 @@ export default defineComponent({
 
 <template>
   <GChart
-    ref="chartRef"
     type="BarChart"
     class="rounded overflow-hidden"
     :data="chartData"
     :options="barChartOptions"
-    :events="chartEvents"
+    :events="chartEvents as any"
+    @ready="onChartReady"
   />
 </template>

@@ -1,7 +1,15 @@
 // Note: Each object in each `items` array represents a link in a dropdown menu.
 //       When defining a link for client-side routing, use the `to` property.
 //       When defining a link for server-side routing, use the `href` property.
-const Menus = [
+
+export interface MenuItem {
+  label: string;
+  href?: string;
+  to?: string;
+  items?: MenuItem[];
+}
+
+export const Menus: MenuItem[] = [
   {
     label: 'About Us',
     href: 'https://microbiomedata.org/about/',
@@ -142,5 +150,3 @@ const Menus = [
     ],
   },
 ];
-
-export default Menus;

@@ -1,6 +1,6 @@
 import {
   watch, Ref, computed, shallowReactive,
-} from '@vue/composition-api';
+} from 'vue';
 import { debounce } from 'lodash';
 import {
   SearchParams, Condition, DataObjectFilter, SearchResponse,
@@ -60,6 +60,7 @@ export default function usePaginatedResult<T>(
   // ENDTODO
 
   function setPage(newPage: number) {
+    console.log('setPage', newPage);
     data.offset = (newPage - 1) * data.limit;
     debouncedFetchResults();
   }

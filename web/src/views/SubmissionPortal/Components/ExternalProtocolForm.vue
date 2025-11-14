@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, computed, ref } from '@vue/composition-api';
+import { defineComponent, computed, ref } from 'vue';
 import { multiOmicsForm, checkDoiFormat } from '../store';
 
 export default defineComponent({
@@ -103,7 +103,7 @@ export default defineComponent({
     multiple
   >
     <v-expansion-panel>
-      <v-expansion-panel-header>
+      <v-expansion-panel-title>
         <template #actions>
           <v-icon>
             mdi-chevron-down
@@ -116,12 +116,11 @@ export default defineComponent({
             class="x-2"
             max-width="500"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-icon
-                v-bind="attrs"
+                v-bind="props"
                 class="ml-1 mb-1"
                 small
-                v-on="on"
               >
                 mdi-help-circle
               </v-icon>
@@ -132,8 +131,8 @@ export default defineComponent({
             </span>
           </v-tooltip>
         </div>
-      </v-expansion-panel-header>
-      <v-expansion-panel-content>
+      </v-expansion-panel-title>
+      <v-expansion-panel-text>
         <v-row
           no-gutters
         >
@@ -152,11 +151,10 @@ export default defineComponent({
                   class="x-2"
                   max-width="500"
                 >
-                  <template #activator="{ on, attrs }">
+                  <template #activator="{ props }">
                     <v-icon
-                      v-bind="attrs"
+                      v-bind="props"
                       dense
-                      v-on="on"
                     >
                       mdi-help-circle
                     </v-icon>
@@ -181,7 +179,7 @@ export default defineComponent({
                 v-model="currentProtocol.sampleProtocol.sharedDataName"
                 :items="protocolNames"
                 label="Select Protocol Name"
-                outlined
+                variant="outlined"
                 dense
                 class="mx-2"
                 @change="updateMultiOmicsForm()"
@@ -202,22 +200,21 @@ export default defineComponent({
               <v-text-field
                 v-model="currentProtocol.sampleProtocol.doi"
                 label="DOI"
-                outlined
+                variant="outlined"
                 dense
                 :rules="doiValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
-                <template #append-outer>
+                <template #append>
                   <v-tooltip
                     right
                     class="x-2"
                     max-width="500"
                   >
-                    <template #activator="{ on, attrs }">
+                    <template #activator="{ props }">
                       <v-icon
-                        v-bind="attrs"
+                        v-bind="props"
                         dense
-                        v-on="on"
                       >
                         mdi-help-circle
                       </v-icon>
@@ -235,22 +232,21 @@ export default defineComponent({
               <v-text-field
                 v-model="currentProtocol.sampleProtocol.url"
                 label="URL"
-                outlined
+                variant="outlined"
                 dense
                 :rules="urlValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
-                <template #append-outer>
+                <template #append>
                   <v-tooltip
                     right
                     class="x-2"
                     max-width="500"
                   >
-                    <template #activator="{ on, attrs }">
+                    <template #activator="{ props }">
                       <v-icon
-                        v-bind="attrs"
+                        v-bind="props"
                         dense
-                        v-on="on"
                       >
                         mdi-help-circle
                       </v-icon>
@@ -278,20 +274,19 @@ export default defineComponent({
               <v-text-field
                 v-model="currentProtocol.sampleProtocol.name"
                 label="Protocol Name"
-                outlined
+                variant="outlined"
                 dense
                 @blur="updateMultiOmicsForm()"
               >
-                <template #append-outer>
+                <template #append>
                   <v-tooltip
                     right
                     max-width="500"
                   >
-                    <template #activator="{ on, attrs }">
+                    <template #activator="{ props }">
                       <v-icon
-                        v-bind="attrs"
+                        v-bind="props"
                         dense
-                        v-on="on"
                       >
                         mdi-help-circle
                       </v-icon>
@@ -312,17 +307,17 @@ export default defineComponent({
             <v-textarea
               v-model="currentProtocol.sampleProtocol.description"
               label="Protocol Description"
-              outlined
+              variant="outlined"
               dense
               rows="3"
               @blur="updateMultiOmicsForm()"
             />
           </v-row>
         </template>
-      </v-expansion-panel-content>
+      </v-expansion-panel-text>
     </v-expansion-panel>
     <v-expansion-panel>
-      <v-expansion-panel-header>
+      <v-expansion-panel-title>
         <div>
           Data Acquisition Protocol
           <v-tooltip
@@ -330,12 +325,11 @@ export default defineComponent({
             class="x-2"
             max-width="500"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-icon
-                v-bind="attrs"
+                v-bind="props"
                 class="ml-1 mb-1"
                 small
-                v-on="on"
               >
                 mdi-help-circle
               </v-icon>
@@ -346,8 +340,8 @@ export default defineComponent({
             </span>
           </v-tooltip>
         </div>
-      </v-expansion-panel-header>
-      <v-expansion-panel-content>
+      </v-expansion-panel-title>
+      <v-expansion-panel-text>
         <v-row
           class="mx-8 "
           no-gutters
@@ -358,22 +352,21 @@ export default defineComponent({
             <v-text-field
               v-model="currentProtocol.acquisitionProtocol.doi"
               label="DOI"
-              outlined
+              variant="outlined"
               dense
               :rules="doiValueRules()"
               @blur="updateMultiOmicsForm()"
             >
-              <template #append-outer>
+              <template #append>
                 <v-tooltip
                   right
                   class="x-2"
                   max-width="500"
                 >
-                  <template #activator="{ on, attrs }">
+                  <template #activator="{ props }">
                     <v-icon
-                      v-bind="attrs"
+                      v-bind="props"
                       dense
-                      v-on="on"
                     >
                       mdi-help-circle
                     </v-icon>
@@ -392,22 +385,21 @@ export default defineComponent({
             <v-text-field
               v-model="currentProtocol.acquisitionProtocol.url"
               label="URL"
-              outlined
+              variant="outlined"
               dense
               :rules="urlValueRules()"
               @blur="updateMultiOmicsForm()"
             >
-              <template #append-outer>
+              <template #append>
                 <v-tooltip
                   right
                   class="x-2"
                   max-width="500"
                 >
-                  <template #activator="{ on, attrs }">
+                  <template #activator="{ props }">
                     <v-icon
-                      v-bind="attrs"
+                      v-bind="props"
                       dense
-                      v-on="on"
                     >
                       mdi-help-circle
                     </v-icon>
@@ -435,20 +427,19 @@ export default defineComponent({
             <v-text-field
               v-model="currentProtocol.acquisitionProtocol.name"
               label="Protocol Name"
-              outlined
+              variant="outlined"
               dense
               @blur="updateMultiOmicsForm()"
             >
-              <template #append-outer>
+              <template #append>
                 <v-tooltip
                   right
                   max-width="500"
                 >
-                  <template #activator="{ on, attrs }">
+                  <template #activator="{ props }">
                     <v-icon
-                      v-bind="attrs"
+                      v-bind="props"
                       dense
-                      v-on="on"
                     >
                       mdi-help-circle
                     </v-icon>
@@ -468,16 +459,16 @@ export default defineComponent({
           <v-textarea
             v-model="currentProtocol.acquisitionProtocol.description"
             label="Protocol Description"
-            outlined
+            variant="outlined"
             dense
             rows="3"
             @blur="updateMultiOmicsForm()"
           />
         </v-row>
-      </v-expansion-panel-content>
+      </v-expansion-panel-text>
     </v-expansion-panel>
     <v-expansion-panel>
-      <v-expansion-panel-header>
+      <v-expansion-panel-title>
         <div>
           Data Access
           <v-tooltip
@@ -485,12 +476,11 @@ export default defineComponent({
             class="x-2"
             max-width="500"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-icon
-                v-bind="attrs"
+                v-bind="props"
                 class="ml-1 mb-1"
                 small
-                v-on="on"
               >
                 mdi-help-circle
               </v-icon>
@@ -500,8 +490,8 @@ export default defineComponent({
             </span>
           </v-tooltip>
         </div>
-      </v-expansion-panel-header>
-      <v-expansion-panel-content>
+      </v-expansion-panel-title>
+      <v-expansion-panel-text>
         <div>
           <v-row
             class="mx-8 "
@@ -513,22 +503,21 @@ export default defineComponent({
               <v-text-field
                 v-model="currentProtocol.dataProtocol.doi"
                 label="DOI"
-                outlined
+                variant="outlined"
                 dense
                 :rules="doiValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
-                <template #append-outer>
+                <template #append>
                   <v-tooltip
                     right
                     class="x-2"
                     max-width="500"
                   >
-                    <template #activator="{ on, attrs }">
+                    <template #activator="{ props }">
                       <v-icon
-                        v-bind="attrs"
+                        v-bind="props"
                         dense
-                        v-on="on"
                       >
                         mdi-help-circle
                       </v-icon>
@@ -547,22 +536,21 @@ export default defineComponent({
               <v-text-field
                 v-model="currentProtocol.dataProtocol.url"
                 label="URL"
-                outlined
+                variant="outlined"
                 dense
                 :rules="urlValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
-                <template #append-outer>
+                <template #append>
                   <v-tooltip
                     right
                     class="x-2"
                     max-width="500"
                   >
-                    <template #activator="{ on, attrs }">
+                    <template #activator="{ props }">
                       <v-icon
-                        v-bind="attrs"
+                        v-bind="props"
                         dense
-                        v-on="on"
                       >
                         mdi-help-circle
                       </v-icon>
@@ -576,7 +564,7 @@ export default defineComponent({
             </v-col>
           </v-row>
         </div>
-      </v-expansion-panel-content>
+      </v-expansion-panel-text>
     </v-expansion-panel>
   </v-expansion-panels>
 </template>

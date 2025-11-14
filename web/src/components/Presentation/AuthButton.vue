@@ -1,8 +1,8 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
+import { useRouter } from 'vue-router';
 import { init, stateRefs } from '@/store';
 import { api } from '@/data/api';
-import { useRouter } from '@/use/useRouter';
 
 export default defineComponent({
   props: {
@@ -23,7 +23,7 @@ export default defineComponent({
       const submissionState = 'submission';
       const submissionRegex = new RegExp(submissionState);
       let state = '';
-      if (submissionRegex.test(router.currentRoute.path)) {
+      if (submissionRegex.test(router.currentRoute.value.path)) {
         state += submissionState;
       }
       api.initiateOrcidLogin(state);
@@ -32,7 +32,7 @@ export default defineComponent({
     async function handleLogout() {
       try {
         await api.logout();
-      } catch (e) {
+      } catch (_e) {
         // This can happen if the user attempts to log out after their access token has expired
         // and that's okay to silently ignore
       } finally {
@@ -73,12 +73,15 @@ export default defineComponent({
     <template v-else-if="me">
       <v-btn
         :text="!nav"
-        :plain="nav"
-        :small="nav"
+        :size="nav ? 'small' : 'default'"
+        :variant="nav ? 'plain' : 'elevated'"
         :ripple="!nav"
         :to="{ name: 'User' }"
       >
-        <v-icon left>
+        <v-icon
+          class="mr-2"
+          left
+        >
           mdi-account-circle
         </v-icon>
         {{ me.name }}
@@ -91,8 +94,8 @@ export default defineComponent({
       </v-btn>
       <v-btn
         :icon="!nav"
-        :plain="nav"
-        :small="nav"
+        :size="nav ? 'small' : 'default'"
+        :variant="nav ? 'plain' : 'elevated'"
         :ripple="!nav"
         @click="handleLogout"
       >
@@ -101,21 +104,18 @@ export default defineComponent({
     </template>
     <template v-else>
       <v-menu
-        bottom
+        location="bottom"
         max-width="500"
         :open-on-hover="true"
-        transition="fade-transition"
-        offset-y
         content-class="login-btn-orcid-help"
-        class="login-btn-orcid-help"
+        transition="fade-transition"
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-btn
             :text="!nav"
-            :plain="nav"
-            :small="nav"
-            v-bind="attrs"
-            v-on="on"
+            :size="nav ? 'small' : 'default'"
+            :variant="nav ? 'plain' : 'elevated'"
+            v-bind="props"
             @click="handleLogin"
           >
             <img

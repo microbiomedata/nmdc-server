@@ -1,5 +1,5 @@
 <script>
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
 
 export default defineComponent({
   props: {
@@ -17,20 +17,20 @@ export default defineComponent({
 <template>
   <v-card
     :id="id"
-    outlined
+    class="h-100"
+    variant="outlined"
   >
     <v-tooltip
-      :attach="`#${id}`"
-      left
-      nudge-bottom="20px"
+      location="left"
+      offset="20"
       min-width="300px"
       max-width="300px"
     >
-      <template #activator="{ on, attrs }">
+      <template #activator="{ props }">
         <v-icon
-          v-bind="attrs"
+          v-bind="props"
+          color="grey-darken-1"
           style="position: absolute; right: 6px; top: 6px; z-index: 2;"
-          v-on="on"
         >
           mdi-help-circle
         </v-icon>

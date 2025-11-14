@@ -1,12 +1,13 @@
 <script>
-import Vue from 'vue';
-import Treeselect from '@riophae/vue-treeselect';
-import '@riophae/vue-treeselect/dist/vue-treeselect.css';
+import { defineComponent, computed, ref, watch } from 'vue';
+import { computedAsync } from '@vueuse/core';
+import Treeselect from '@zanmato/vue3-treeselect';
+import '@zanmato/vue3-treeselect/dist/vue3-treeselect.min.css';
 import { uniqWith } from 'lodash';
 import { api } from '@/data/api';
 import { makeTree } from '@/util';
 
-export default Vue.extend({
+export default defineComponent({
   name: 'FilterSankeyTree',
   components: { Treeselect },
   props: {
@@ -22,7 +23,7 @@ export default Vue.extend({
       type: Array,
       required: true,
     },
-    heirarchy: {
+    hierarchy: {
       type: Array,
       default: () => [
         'ecosystem',
@@ -33,60 +34,68 @@ export default Vue.extend({
       ],
     },
   },
+  emits: ['select'],
+  setup(props, { emit }) {
+    const otherConditions = computed(() => props.conditions
+      .filter((c) => (!props.hierarchy.includes(c.field)) || (c.table !== props.table)));
 
-  data: () => ({
-    createdDelay: false,
-    filterText: '',
-    value: [],
-  }),
+    const data = computedAsync(
+      async () => api.getEnvironmentSankeyAggregation(otherConditions.value),
+      null,
+    );
 
-  asyncComputed: {
-    data() { return api.getEnvironmentSankeyAggregation(this.otherConditions); },
-  },
+    const createdDelay = ref(false);
+    const filterText = ref('');
+    const selected = ref([]);
 
-  computed: {
-    treeData() {
-      return makeTree(this.data || [], this.heirarchy);
-    },
-    tree() {
+    const treeData = computed(() => makeTree(data.value || [], props.hierarchy));
+    
+    const tree = computed(() => {
       // freeze is used because tree nodes contain back-references to their parent,
       // so recursive reactivity setup would cause a max depth exception
-      return Object.freeze(this.treeData.root.children);
-    },
-    otherConditions() {
-      return this.conditions
-        .filter((c) => (!this.heirarchy.includes(c.field)) || (c.table !== this.table));
-    },
-    myConditions() {
-      return this.conditions
-        .filter((c) => (this.heirarchy.includes(c.field)) && c.table === this.table);
-    },
-  },
+      return Object.freeze(treeData.value.root.children);
+    });
 
-  created() {
+    const myConditions = computed(() => props.conditions
+      .filter((c) => (props.hierarchy.includes(c.field)) && c.table === props.table));
+
     /* Enable loading bar after 2 seconds of no load, to avoid overly noisy facet dialogs */
-    window.setTimeout(() => { this.createdDelay = true; }, 2000);
-  },
+    setTimeout(() => { createdDelay.value = true; }, 2000);
 
-  methods: {
-    async setSelected(nodeKeys) {
-      const conditions = this.otherConditions;
+    function setSelected(nodeKeys) {
+      const conditions = otherConditions.value;
       nodeKeys.forEach((key) => {
-        let node = this.treeData.nodeMap[key];
+        let node = treeData.value.nodeMap[key];
         do {
           conditions.push({
             op: '==',
-            field: node.heirarchyKey,
+            field: node.hierarchyKey,
             value: node.label,
-            table: this.table,
+            table: props.table,
           });
           node = node.parent;
         } while (node.parent);
       });
-      this.$emit('select', {
+      emit('select', {
         conditions: uniqWith(conditions, (a, b) => a.field === b.field && a.value === b.value),
       });
-    },
+    }
+
+    watch(selected, (values) => {
+      setSelected(values);
+    }, { deep: true });
+
+    return {
+      data,
+      createdDelay,
+      filterText,
+      selected,
+      treeData,
+      tree,
+      otherConditions,
+      myConditions,
+      setSelected,
+    };
   },
 });
 </script>
@@ -99,13 +108,12 @@ export default Vue.extend({
       style="position: absolute;"
     />
     <treeselect
+      v-model="selected"
       :options="tree"
       multiple
       always-open
       class="ma-2 mt-4"
       :max-height="425"
-      :value="value"
-      @input="setSelected"
     >
       <template #option-label="{ node }">
         <span> {{ node.label }} ({{ node.raw.count }}) </span>

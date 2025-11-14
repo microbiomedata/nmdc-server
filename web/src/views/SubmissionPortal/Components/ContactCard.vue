@@ -1,5 +1,7 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
+
+type EmailSubjects = 'support' | 'bug' | 'feature';
 
 export default defineComponent({
   props: {
@@ -9,8 +11,8 @@ export default defineComponent({
     },
   },
   setup() {
-    function emailTemplate(value: string) {
-      const subjects: { [key: string]: string } = {
+    function emailTemplate(value: EmailSubjects) {
+      const subjects: { [_key in EmailSubjects]: string } = {
         support: 'Support Request',
         bug: 'Bug Report',
         feature: 'Feature Request',
@@ -43,7 +45,7 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="primary"
             class="mr-4"
             style="border: solid #4F3B80;"
@@ -70,7 +72,7 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="blue"
             class="mr-4"
             style="border: solid;"
@@ -96,7 +98,7 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="red"
             class="mr-4"
             style="border: solid;"
@@ -122,7 +124,7 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="grey darken-2"
             class="mr-4"
             style="border: solid;"

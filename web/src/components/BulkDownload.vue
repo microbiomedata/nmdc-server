@@ -1,7 +1,7 @@
 <script lang="ts">
-import { computed, defineComponent, ref } from '@vue/composition-api';
+import { computed, defineComponent, ref } from 'vue';
 // @ts-ignore
-import Treeselect from '@riophae/vue-treeselect';
+import Treeselect from '@zanmato/vue3-treeselect';
 import { stateRefs, dataObjectFilter } from '@/store';
 import DownloadDialog from '@/components/DownloadDialog.vue';
 import useBulkDownload from '@/use/useBulkDownload';
@@ -43,15 +43,20 @@ export default defineComponent({
       return `${labelString})`;
     }
 
-    const options = computed(() => Object.entries(downloadOptions.value)
-      .map(([key, val]) => ({
-        id: key,
-        label: createLabelString(key, val.count, val.size),
-        children: Object.entries(val.file_types).map(([filetype, fileTypeStats]) => ({
-          id: `${key}::${filetype}`,
-          label: createLabelString(filetype, fileTypeStats.count, fileTypeStats.size),
-        })),
-      })));
+    const options = computed(() => {
+      if (!downloadOptions.value || typeof downloadOptions.value !== 'object') {
+        return [];
+      }
+      return Object.entries(downloadOptions.value)
+        .map(([key, val]) => ({
+          id: key,
+          label: createLabelString(key, val.count, val.size),
+          children: Object.entries(val.file_types || {}).map(([filetype, fileTypeStats]) => ({
+            id: `${key}::${filetype}`,
+            label: createLabelString(filetype, fileTypeStats.count, fileTypeStats.size),
+          })),
+        }));
+    });
 
     async function createAndDownload() {
       const val = await download();
@@ -79,7 +84,7 @@ export default defineComponent({
 
 <template>
   <v-card
-    outlined
+    variant="flat"
     class="pa-3 d-flex flex-column align-end"
     color="primary"
   >
@@ -105,13 +110,12 @@ export default defineComponent({
         min-width="300px"
         max-width="300px"
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-icon
             small
             color="white"
-            v-bind="attrs"
+            v-bind="props"
             class="pr-2"
-            v-on="on"
           >
             mdi-help-circle
           </v-icon>
@@ -123,6 +127,7 @@ export default defineComponent({
       </v-tooltip>
       <Treeselect
         v-model="bulkDownloadSelected"
+        append-to-body
         multiple
         value-consists-of="LEAF_PRIORITY"
         open-direction="below"
@@ -135,13 +140,12 @@ export default defineComponent({
         :width="400"
         :disabled="downloadSummary.count === 0"
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-btn
             class="ml-3"
             color="white"
             depressed
-            v-bind="attrs"
-            v-on="on"
+            v-bind="props"
           >
             Download ZIP
             <v-icon class="pl-3">

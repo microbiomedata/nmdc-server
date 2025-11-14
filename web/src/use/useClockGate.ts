@@ -12,7 +12,7 @@
  * https://en.wikipedia.org/wiki/Clock_gating
  */
 import { cloneDeep } from 'lodash';
-import { computed, Ref, watch } from '@vue/composition-api';
+import { computed, Ref, watch } from 'vue';
 
 export default function useClockGate<T>(gate: Ref<boolean>, clock: Ref<T>) {
   let clockStateCache: T = cloneDeep(clock.value);

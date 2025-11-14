@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
 import { api } from '@/data/api';
 
 export default defineComponent({
@@ -17,8 +17,7 @@ export default defineComponent({
 <template>
   <v-alert
     class="mt-6 mb-0"
-    outlined
-    text
+    variant="outlined"
     type="warning"
     color="primary"
     prominent
@@ -27,7 +26,7 @@ export default defineComponent({
       Login to submit data
     </span>
     <v-btn
-      plain
+      type="plain"
       depressed
       text
       right
@@ -50,9 +49,7 @@ export default defineComponent({
         target="_blank"
         title="Learn about registering an ORCiD"
       >
-        <v-icon
-          v-on="on"
-        >
+        <v-icon>
           mdi-help-circle
         </v-icon>
       </a>

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api';
+import { defineComponent, ref } from 'vue';
 
 export default defineComponent({
   props: {
@@ -47,7 +47,7 @@ export default defineComponent({
           <v-btn
             color="primary"
             block
-            outlined
+            variant="outlined"
             @click="$emit('export')"
           >
             <v-icon class="pr-2">
@@ -71,7 +71,7 @@ export default defineComponent({
             <v-btn
               color="primary"
               block
-              outlined
+              variant="outlined"
               :disabled="importDisabled"
               @click="showOpenFileDialog"
             >
