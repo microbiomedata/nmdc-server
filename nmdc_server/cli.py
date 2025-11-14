@@ -41,7 +41,7 @@ def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: s
           of the same secret be enabled simultaneously, which I think would be harder to
           detect downstream (e.g. "cannot access secret" versus silent continuation).
           Either way, Google Secret Manager does not offer an atomic swap operation.
-    
+
     TODO: Consider storing both values within the _same_ secret so that they can be
           (effectively) swapped atomically.
 
