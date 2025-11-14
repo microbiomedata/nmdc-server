@@ -95,15 +95,17 @@ function canEditSubmissionByStatus(): boolean {
 }
 
 function canEditSubmissionMetadata(): boolean {
+  if (stateRefs.user.value?.is_admin) return true;
   if (!_permissionLevel) return false;
   if (!canEditSubmissionByStatus()) return false;
-  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor || !!stateRefs.user.value?.is_admin;
+  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
 }
 
 function canEditSampleMetadata(): boolean {
+  if (stateRefs.user.value?.is_admin) return true;
   if (!_permissionLevel) return false;
   if (!canEditSubmissionByStatus()) return false;
-  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor || !!stateRefs.user.value?.is_admin;
+  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
 }
 
 const hasChanged = ref(0);

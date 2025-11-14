@@ -684,6 +684,7 @@ export default defineComponent({
       changeTemplate,
       canEditSampleMetadata,
       canEditSubmissionByStatus,
+      isOwner,
     };
   },
 });
@@ -718,7 +719,7 @@ export default defineComponent({
           color="success"
           timeout="5000"
         >
-          Validation Passed! If this is your submission and it is ready for NMDC review, please submit.
+          Validation Passed! When ready for NMDC review, please have the owner submit this study.
         </v-snackbar>
         <v-snackbar
           v-model="importErrorSnackbar"
@@ -1064,7 +1065,7 @@ export default defineComponent({
             <v-btn
               color="success"
               depressed
-              :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || isOwner || submitCount > 0"
+              :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
               :loading="submitLoading"
               @click="canEditSubmissionByStatus() ? submitDialog = true: null"
             >
@@ -1120,10 +1121,13 @@ export default defineComponent({
             </v-btn>
           </div>
         </template>
-        <span v-if="!canSubmit && canEditSubmissionByStatus()">
+        <span v-if="!isOwner() && canEditSubmissionByStatus()">
+          Only the owner of this study can submit.
+        </span>
+        <span v-else-if="!canSubmit && canEditSubmissionByStatus()">
           You must validate all tabs before submitting your study and metadata.
         </span>
-        <span v-if="canSubmit && canEditSubmissionByStatus()">
+        <span v-else-if="canSubmit && canEditSubmissionByStatus()">
           Submit for NMDC review.
         </span>
       </v-tooltip>
