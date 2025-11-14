@@ -36,6 +36,7 @@ import {
   SampleProtocol,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
+import { stateRefs } from '@/store';
 
 // TODO: Remove in version 3;
 Vue.use(CompositionApi);
@@ -96,13 +97,13 @@ function canEditSubmissionByStatus(): boolean {
 function canEditSubmissionMetadata(): boolean {
   if (!_permissionLevel) return false;
   if (!canEditSubmissionByStatus()) return false;
-  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
+  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor || !!stateRefs.user.value?.is_admin;
 }
 
 function canEditSampleMetadata(): boolean {
   if (!_permissionLevel) return false;
   if (!canEditSubmissionByStatus()) return false;
-  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
+  return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor || !!stateRefs.user.value?.is_admin;
 }
 
 const hasChanged = ref(0);

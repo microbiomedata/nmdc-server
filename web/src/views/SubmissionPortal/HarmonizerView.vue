@@ -718,7 +718,7 @@ export default defineComponent({
           color="success"
           timeout="5000"
         >
-          Validation Passed! You can continue editing or submit if you own this submission.
+          Validation Passed! If this is your submission and it is ready for NMDC review, please submit.
         </v-snackbar>
         <v-snackbar
           v-model="importErrorSnackbar"
@@ -1064,7 +1064,7 @@ export default defineComponent({
             <v-btn
               color="success"
               depressed
-              :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
+              :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || isOwner || submitCount > 0"
               :loading="submitLoading"
               @click="canEditSubmissionByStatus() ? submitDialog = true: null"
             >

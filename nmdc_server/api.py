@@ -1156,7 +1156,7 @@ async def get_submission(
         permission_level = None
         if user.orcid in submission.owners:
             permission_level = models.SubmissionEditorRole.owner.value
-        elif user.is_admin or user.orcid in submission.editors:
+        elif user.orcid in submission.editors:
             permission_level = models.SubmissionEditorRole.editor.value
         elif user.orcid in submission.metadata_contributors:
             permission_level = models.SubmissionEditorRole.metadata_contributor.value
