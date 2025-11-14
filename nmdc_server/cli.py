@@ -24,25 +24,22 @@ from nmdc_server.storage import BucketName, storage
 def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: str) -> None:
     """Swaps the values of two secrets in Google Secret Manager.
 
-    Note: To update a secret's content, we disable the latest "version" of that secret, then
-          add a new "version" of the secret. The new "version" contains the new value.
+    Note: To update a given secret's value, we disable the latest "version" of that secret,
+          then we add a new "version" (enabled by default) of the secret. The new "version"
+          contains the new value.
+
+    Note: ⚠️ This algorithm leaves a gap in time during which no versions of the secret
+          are enabled. This was easier for me to think about than having _both_ versions
+          of the same secret be enabled simultaneously, which I think would be harder to
+          detect downstream (I'd prefer an error versus silent continuation with a stale
+          value). Either way, Google Secret Manager does not offer an atomic swap operation.
+
+    TODO: Consider storing both values within the _same_ secret so that they can be
+          swapped atomically. This is analogous to how things are done on Rancher/Spin.
 
     Note: The "Add version" form on the Google Secret Manager console (web UI) has
           a checkbox that can be used to disable all previous versions of the secret.
           I am not aware of a corresponding kwarg to the `add_secret_version` method.
-
-    TODO: Consider having two versions of the secret pre-created on GCP,
-          and then—here—just activate one version or the other. That could
-          make it so we aren't storing so many versions of each secret.
-
-    Note: ⚠️ This algorithm creates a gap in time during which no versions of the secret
-          are enabled. This was easier for me to think about than having _both_ versions
-          of the same secret be enabled simultaneously, which I think would be harder to
-          detect downstream (I'd prefer an error versus silent continuation). Either way,
-          Google Secret Manager does not offer an atomic swap operation.
-
-    TODO: Consider storing both values within the _same_ secret so that they can be
-          (effectively) swapped atomically. This is analogous to how things are on Spin.
 
     References (note: the `noqa` comment prevents the linter from flagging the line length):
     - Importing the Python library: https://cloud.google.com/secret-manager/docs/reference/libraries#client-libraries-install-python  # noqa: E501
@@ -56,6 +53,7 @@ def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: s
     secret_a_path = client.secret_path(gcp_project_id, secret_a_id)
     request = secretmanager.AccessSecretVersionRequest(name=f"{secret_a_path}/versions/latest")
     response = client.access_secret_version(request=request)
+    secret_a_version: str = response.name
     secret_a_value: bytes = response.payload.data
     click.echo(f"Read latest version of secret: {secret_a_path}")
 
@@ -63,18 +61,19 @@ def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: s
     secret_b_path = client.secret_path(gcp_project_id, secret_b_id)
     request = secretmanager.AccessSecretVersionRequest(name=f"{secret_b_path}/versions/latest")
     response = client.access_secret_version(request=request)
+    secret_b_version: str = response.name
     secret_b_value: bytes = response.payload.data
     click.echo(f"Read latest version of secret: {secret_b_path}")
 
-    # Disable the latest "version" of the first secret.
-    request = secretmanager.DisableSecretVersionRequest(name=f"{secret_a_path}/versions/latest")
+    # Disable that "version" of the first secret.
+    request = secretmanager.DisableSecretVersionRequest(name=f"{secret_a_path}/versions/{secret_a_version}")
     _ = client.disable_secret_version(request=request)
-    click.echo(f"Disabled latest version of secret: {secret_a_path}")
+    click.echo(f"Disabled read version of secret: {secret_a_path}")
 
-    # Disable the latest "version" of the second secret.
-    request = secretmanager.DisableSecretVersionRequest(name=f"{secret_b_path}/versions/latest")
+    # Disable that "version" of the second secret.
+    request = secretmanager.DisableSecretVersionRequest(name=f"{secret_b_path}/versions/{secret_b_version}")
     _ = client.disable_secret_version(request=request)
-    click.echo(f"Disabled latest version of secret: {secret_b_path}")
+    click.echo(f"Disabled read version of secret: {secret_b_path}")
 
     # Add a "version" to the first secret, containing the value from the second secret.
     payload = secretmanager.SecretPayload(data=secret_b_value)
