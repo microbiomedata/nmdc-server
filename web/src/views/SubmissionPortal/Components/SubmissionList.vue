@@ -363,6 +363,8 @@ export default defineComponent({
                 v-if="currentUser?.is_admin && item.status === SubmissionStatusEnum.InProgress.text"
                 :value="item.status"
                 :items="availableStatuses"
+                item-title="text"
+                item-value="value"
                 item-disabled="disabled"
                 dense
                 hide-details
@@ -376,6 +378,8 @@ export default defineComponent({
                 v-else-if="currentUser?.is_admin"
                 :value="item.status"
                 :items="availableStatuses"
+                item-title="text"
+                item-value="value"
                 item-disabled="disabled"
                 dense
                 hide-details

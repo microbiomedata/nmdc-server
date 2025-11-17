@@ -499,6 +499,8 @@ export default defineComponent({
               label="Data DOI Provider *"
               :hint="Definitions.dataDoiProvider"
               :items="doiProviderValues"
+              item-title="text"
+              item-value="value"
               persistent-hint
               variant="outlined"
               dense
