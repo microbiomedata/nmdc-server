@@ -101,7 +101,7 @@ export default defineComponent({
       </template>
     </span>
     <div class="d-flex flex-row align-center">
-      <div class="white--text pr-2 text-caption grow font-weight-bold">
+      <div class="text-white pr-2 text-caption font-weight-bold">
         Bulk Download
       </div>
       <v-tooltip
@@ -112,7 +112,7 @@ export default defineComponent({
       >
         <template #activator="{ props }">
           <v-icon
-            small
+            size="small"
             color="white"
             v-bind="props"
             class="pr-2"
@@ -128,6 +128,7 @@ export default defineComponent({
       <Treeselect
         v-model="bulkDownloadSelected"
         append-to-body
+        class="flex-1-1-0"
         multiple
         value-consists-of="LEAF_PRIORITY"
         open-direction="below"
@@ -160,7 +161,7 @@ export default defineComponent({
       </v-dialog>
       <v-chip
         v-else
-        class="grow text-subtitle-1 ml-4"
+        class="text-subtitle-1 ml-4"
         @click="handleLoginClick"
       >
         Log in to download
