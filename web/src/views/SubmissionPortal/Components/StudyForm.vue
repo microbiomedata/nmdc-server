@@ -11,9 +11,8 @@ import {
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
-  multiOmicsForm,
   studyForm,
-  studyFormValid,
+  validForms,
   permissionTitleToDbValueMap,
   isOwner,
   canEditSubmissionMetadata,
@@ -124,8 +123,7 @@ export default defineComponent({
     return {
       formRef,
       studyForm,
-      multiOmicsForm,
-      studyFormValid,
+      validForms,
       NmdcSchema,
       Definitions,
       addContributor,
@@ -167,7 +165,7 @@ export default defineComponent({
     <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-form
       ref="formRef"
-      v-model="studyFormValid"
+      v-model="validForms.studyFormValid"
       class="my-6"
       style="max-width: 1000px;"
       :disabled="!canEditSubmissionMetadata()"
@@ -572,21 +570,21 @@ export default defineComponent({
       <v-btn
         color="gray"
         depressed
-        :to="{ name: 'Submission Home' }"
+        :to="{ name: 'Submission Summary' }"
       >
         <v-icon class="pl-1">
           mdi-arrow-left-circle
         </v-icon>
-        Go to previous step
+        Go to Submission Summary
       </v-btn>
       <v-spacer />
       <v-btn
         color="primary"
         depressed
-        :disabled="!studyFormValid"
+        :disabled="!validForms.studyFormValid"
         :to="{ name: 'Multiomics Form' }"
       >
-        Go to next step
+        Go to Multiomics Form
         <v-icon class="pl-1">
           mdi-arrow-right-circle
         </v-icon>
