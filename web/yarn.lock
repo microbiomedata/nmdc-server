@@ -431,10 +431,10 @@
   resolved "https://registry.yarnpkg.com/@mdi/font/-/font-7.4.47.tgz#2ae522867da3a5c88b738d54b403eb91471903af"
   integrity sha512-43MtGpd585SNzHZPcYowu/84Vz2a2g31TvPMTm9uTiCSWzaheQySUcSyUH/46fPnuPQWof2yd0pGBtzee/IQWw==
 
-"@microbiomedata/data-harmonizer@^1.7.0":
-  version "1.7.0"
-  resolved "https://registry.yarnpkg.com/@microbiomedata/data-harmonizer/-/data-harmonizer-1.7.0.tgz#cc523e4ff72532bc6c0c05570b6d09aeb89123f2"
-  integrity sha512-IOj2OfS4jST80cz1Pzx9walrPzIej3YQb2FAFr8slzfkm/ujDyv8Y7il+uODxCZFjR9VJKu6Jv0HlrAAQq4wYw==
+"@microbiomedata/data-harmonizer@^1.7.1":
+  version "1.7.1"
+  resolved "https://registry.yarnpkg.com/@microbiomedata/data-harmonizer/-/data-harmonizer-1.7.1.tgz#b291380834026e1b0022586c496b41952d9ae80b"
+  integrity sha512-0PKDcRHS4qG2Ac0nu/SEVu3xfvOu51eCIkDz6DmtOnNdeR+A+1BvekIVlEvcXLmO8K3LSZQJNdAXRYcQ22tyuA==
   dependencies:
     "@selectize/selectize" "^0.13.5"
     date-fns "^2.28.0"

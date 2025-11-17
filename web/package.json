@@ -14,7 +14,7 @@
   "dependencies": {
     "@fontsource/roboto": "5.2.7",
     "@mdi/font": "7.4.47",
-    "@microbiomedata/data-harmonizer": "^1.7.0",
+    "@microbiomedata/data-harmonizer": "^1.7.1",
     "@sentry/vue": "^10.24.0",
     "@types/lodash": "^4.17.20",
     "@vue-leaflet/vue-leaflet": "^0.10.1",
