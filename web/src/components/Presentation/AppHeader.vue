@@ -53,12 +53,9 @@ export default defineComponent({
       <v-menu
         v-else
         :key="`menu-${menu.label}`"
-        bottom
-        right
-        offset-y
+        location="bottom"
         content-class="navigation-button-text-animate elevation-4"
-        :open-on-hover="true"
-        transition="fade-transition"
+        open-on-hover
       >
         <template #activator="{ props }">
           <v-btn
@@ -90,10 +87,9 @@ export default defineComponent({
             :href="item.href"
             :to="item.to"
             :ripple="false"
-            class="text-uppercase"
           >
             <v-list-item-title>
-              <div class="navigation-button-text">
+              <div class="navigation-button-text text-uppercase">
                 {{ item.label }}
               </div>
             </v-list-item-title>
