@@ -341,14 +341,20 @@ export default defineComponent({
         >
           <template #label>
             <span class="mr-4">Other</span>
-            <v-text-field
-              v-model="multiOmicsForm.otherAward"
-              class="pa-0 ma-0"
-              dense
-              hide-details="auto"
-              variant="outlined"
-              :rules="otherAwardValidationRules()"
-            />
+            <v-responsive
+              class="mx-auto"
+              max-width="344"
+              min-width="344"
+            >
+              <v-text-field
+                v-model="multiOmicsForm.otherAward"
+                class="pa-0 ma-0"
+                dense
+                hide-details="auto"
+                variant="outlined"
+                :rules="otherAwardValidationRules()"
+              />
+            </v-responsive>
           </template>
         </v-radio>
       </v-radio-group>
