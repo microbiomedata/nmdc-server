@@ -446,6 +446,7 @@ export default defineComponent({
           <v-btn
             v-if="(multiOmicsForm.dataGenerated || multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')) && multiOmicsForm.awardDois !== null"
             icon
+            variant="plain"
             class="pb-2"
             :disabled="!(multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length)"
             @click="removeAwardDoi(i)"
