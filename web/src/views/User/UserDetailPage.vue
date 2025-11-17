@@ -133,15 +133,13 @@ export default defineComponent({
           />
           <v-row>
             <v-col
-              cols="3"
               class="pt-6"
             >
               <v-text-field
                 v-model="user.email"
                 label="Email"
-                dense
                 :readonly="!editEmail"
-                filled
+                variant="filled"
                 :rules="requiredRules('E-mail is required', [
                   v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
                 ])"
@@ -151,28 +149,29 @@ export default defineComponent({
                 >
                   <v-btn
                     icon
+                    variant="plain"
                     @click="updateEmail(user.email)"
                   >
                     <v-icon>
                       {{ !editEmail ? 'mdi-pencil' : 'mdi-content-save' }}
                     </v-icon>
                   </v-btn>
+                  <v-tooltip
+                    v-if="!user.email"
+                    location="right"
+                  >
+                    <template #activator="{ props }">
+                      <v-icon
+                        color="red"
+                        v-bind="props"
+                      >
+                        mdi-alert-circle
+                      </v-icon>
+                    </template>
+                    <span>Email is required</span>
+                  </v-tooltip>
                 </template>
               </v-text-field>
-              <v-tooltip
-                v-if="!user.email"
-                location="right"
-              >
-                <template #activator="{ props }">
-                  <v-icon
-                    color="red"
-                    v-bind="props"
-                  >
-                    mdi-alert-circle
-                  </v-icon>
-                </template>
-                <span>Email is required</span>
-              </v-tooltip>
             </v-col>
           </v-row>
         </div>
@@ -190,18 +189,16 @@ export default defineComponent({
           </p>
 
           <v-row>
-            <v-col
-              cols="auto"
-            >
+            <v-col>
               <v-text-field
                 ref="refreshTokenInput"
+                v-model="refreshToken"
                 label="Refresh Token"
                 readonly
-                filled
+                variant="filled"
                 :type="isTokenVisible ? 'text' : 'password'"
-                :value="refreshToken"
               >
-                <template #append>
+                <template #append-inner>
                   <v-tooltip
                     bottom
                     open-delay="600"
@@ -236,15 +233,13 @@ export default defineComponent({
                 </template>
               </v-text-field>
             </v-col>
-            <v-col
-              cols="auto"
-            >
+            <v-col>
               <v-text-field
+                v-model="refreshTokenExpirationDate"
                 label="Expiration Date"
                 readonly
-                filled
+                variant="filled"
                 type="text"
-                :value="refreshTokenExpirationDate"
               />
             </v-col>
           </v-row>
