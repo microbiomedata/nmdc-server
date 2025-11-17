@@ -76,4 +76,11 @@ export default defineConfig({
       },
     },
   },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        silenceDeprecations: ["color-functions", "global-builtin", "import", "slash-div"]
+      }
+    }
+  },
 })
