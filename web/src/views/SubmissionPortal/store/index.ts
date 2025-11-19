@@ -70,7 +70,7 @@ function availableStatusTransitions(currentStatus:SubmissionStatusKey, submissio
   // Admins can see all statuses and select any that aren't user invoked
   if (submission_role === 'admin') {
     return Object.keys(SubmissionStatusTitleMapping)
-      .filter((key) => !excludeFromAll.includes(key))
+      .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
       .map((key) => ({
         value: key,
         text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
