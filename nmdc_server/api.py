@@ -1316,20 +1316,7 @@ async def update_submission_status(
     )
     current_status = submission.status
 
-    allowed_transitions = {
-        SubmissionEditorRole.reviewer: {
-            SubmissionStatusEnum.PendingUserFacility.text: [
-                SubmissionStatusEnum.UpdatesRequired.text,
-                SubmissionStatusEnum.ApprovedHeld.text,
-            ]
-        },
-        SubmissionEditorRole.owner: {
-            SubmissionStatusEnum.UpdatesRequired.text: [SubmissionStatusEnum.InProgress.text],
-            SubmissionStatusEnum.InProgress.text: [
-                SubmissionStatusEnum.SubmittedPendingReview.text
-            ],
-        },
-    }
+    allowed_transitions = await get_transitions()
 
     # Admins can change to any status
     if user.is_admin:
