@@ -7,6 +7,8 @@ import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
   generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, availableStatusTransitions,
+  canEditSampleMetadata,
+  canEditSubmissionMetadata,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -204,6 +206,8 @@ export default defineComponent({
       TitleBanner,
       createNewSubmission,
       editablebyStatus,
+      canEditSampleMetadata,
+      canEditSubmissionMetadata,
       getStatus,
       resume,
       addReviewer,
@@ -420,7 +424,7 @@ export default defineComponent({
                 color="primary"
                 @click="() => resume(item)"
               >
-                <span v-if="editablebyStatus(item.status)">
+                <span v-if="editablebyStatus(item.status) && (canEditSubmissionMetadata() || canEditSampleMetadata())">
                   <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
                   Resume
                 </span>
