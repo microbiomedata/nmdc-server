@@ -67,7 +67,7 @@ function availableStatusTransitions(currentStatus:SubmissionStatusKey, submissio
     SubmissionStatusEnum.InProgress.text,
     SubmissionStatusEnum.SubmittedPendingReview.text,
   ];
-  // Admins can see all statuses
+  // Admins can see all statuses and select any that aren't user invoked
   if (submission_role === 'admin') {
     return Object.keys(SubmissionStatusTitleMapping)
       .filter((key) => !excludeFromAll.includes(key))
@@ -76,6 +76,8 @@ function availableStatusTransitions(currentStatus:SubmissionStatusKey, submissio
         text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
       }));
   }
+
+  // Non-admins can only see and select allowed transitions
   const user_transitions = transitions[submission_role] || {};
   const allowedStatusTransitions = user_transitions[currentStatus] || [];
 

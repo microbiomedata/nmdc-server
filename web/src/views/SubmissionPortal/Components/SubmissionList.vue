@@ -159,13 +159,6 @@ export default defineComponent({
       isReviewerAssignmentDialogOpen.value = false;
     }
 
-    function isReviewerForSubmission(item: MetadataSubmissionRecordSlim): boolean {
-      if (!currentUser.value?.orcid) {
-        return false;
-      }
-      return item.reviewers.includes(currentUser.value.orcid);
-    }
-
     // get all status transitions from the api
     type TransitionsType = Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
     const transitions = ref<TransitionsType>({
@@ -176,15 +169,20 @@ export default defineComponent({
       transitions.value = await api.getAllStatusTransitions() as unknown as TransitionsType;
     });
 
-    // get the available transitions for the status and the submission role
+    function isReviewerForSubmission(item: MetadataSubmissionRecordSlim): boolean {
+      if (!currentUser.value?.orcid) {
+        return false;
+      }
+      return item.reviewers.includes(currentUser.value.orcid);
+    }
+
+    // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
     function getAvailableStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
-      let submission_role: Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin';
+      let submission_role: 'reviewer' | 'admin';
       if (currentUser.value?.is_admin) {
         submission_role = 'admin';
       } else if (isReviewerForSubmission(item)) {
         submission_role = 'reviewer';
-      } else if (currentUser.value?.orcid === item.author.orcid) {
-        submission_role = 'owner';
       } else {
         return [];
       }
