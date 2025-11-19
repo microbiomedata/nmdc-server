@@ -1200,8 +1200,9 @@ def can_save_submission(role: models.SubmissionRole, data: dict, status: str):
     if status in [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.UpdatesRequired.text]:
         if permission_level == models.SubmissionEditorRole.owner:
             return True
-        elif (permission_level == models.SubmissionEditorRole.viewer 
-              or permission_level == models.SubmissionEditorRole.reviewer
+        elif (
+            permission_level == models.SubmissionEditorRole.viewer
+            or permission_level == models.SubmissionEditorRole.reviewer
         ):
             return False
         else:
@@ -1277,18 +1278,25 @@ async def update_submission(
 
     return submission
 
+
 @router.get("/status_transitions", name="Get the `Status` transitions allowed by user role")
 async def get_transitions() -> dict:
     allowed_transitions = {
         SubmissionEditorRole.reviewer: {
-            SubmissionStatusEnum.PendingUserFacility.text: [SubmissionStatusEnum.UpdatesRequired.text, SubmissionStatusEnum.ApprovedHeld.text]
+            SubmissionStatusEnum.PendingUserFacility.text: [
+                SubmissionStatusEnum.UpdatesRequired.text,
+                SubmissionStatusEnum.ApprovedHeld.text,
+            ]
         },
         SubmissionEditorRole.owner: {
             SubmissionStatusEnum.UpdatesRequired.text: [SubmissionStatusEnum.InProgress.text],
-            SubmissionStatusEnum.InProgress.text: [SubmissionStatusEnum.SubmittedPendingReview.text]
-            }
+            SubmissionStatusEnum.InProgress.text: [
+                SubmissionStatusEnum.SubmittedPendingReview.text
+            ],
+        },
     }
     return allowed_transitions
+
 
 @router.patch(
     "/metadata_submission/{id}/status",
@@ -1303,31 +1311,39 @@ async def update_submission_status(
     user: models.User = Depends(get_current_user),
 ) -> models.SubmissionMetadata:
     """Update submission status"""
-    submission = get_submission_for_user(db, id, user, allowed_roles=[SubmissionEditorRole.owner, SubmissionEditorRole.reviewer])
+    submission = get_submission_for_user(
+        db, id, user, allowed_roles=[SubmissionEditorRole.owner, SubmissionEditorRole.reviewer]
+    )
     current_status = submission.status
 
     allowed_transitions = {
         SubmissionEditorRole.reviewer: {
-            SubmissionStatusEnum.PendingUserFacility.text: [SubmissionStatusEnum.UpdatesRequired.text, SubmissionStatusEnum.ApprovedHeld.text]
+            SubmissionStatusEnum.PendingUserFacility.text: [
+                SubmissionStatusEnum.UpdatesRequired.text,
+                SubmissionStatusEnum.ApprovedHeld.text,
+            ]
         },
         SubmissionEditorRole.owner: {
             SubmissionStatusEnum.UpdatesRequired.text: [SubmissionStatusEnum.InProgress.text],
-            SubmissionStatusEnum.InProgress.text: [SubmissionStatusEnum.SubmittedPendingReview.text]
-            }
+            SubmissionStatusEnum.InProgress.text: [
+                SubmissionStatusEnum.SubmittedPendingReview.text
+            ],
+        },
     }
 
     # Admins can change to any status
     if user.is_admin:
         submission.status = body.status
 
+    # Non-admin users need to follow allowed transitions
     else:
 
-        # Owner transitions (NOTE: assuming you will not be reviewer of your own submission)
+        # Owner transitions
         if user.orcid in submission.owners:
             transitions = allowed_transitions[SubmissionEditorRole.owner]
 
-        # Reviewer transitions (NOTE: assuming you will not be reviewer of your own submission)
-        if user.orcid in submission.reviewers:
+        # Reviewer transitions (NOTE: assuming owner will not be a reviewer of their own submission)
+        elif user.orcid in submission.reviewers:
             transitions = allowed_transitions[SubmissionEditorRole.reviewer]
 
         # Apply restricted transitions
@@ -1335,14 +1351,14 @@ async def update_submission_status(
             transitions
             and current_status in transitions
             and body.status in transitions[current_status]
-            and submission.is_test_submission is False
         ):
             submission.status = body.status
 
         # Any other transitions not allowed
         else:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid status transition."
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid status transition.",
             )
 
     db.commit()
