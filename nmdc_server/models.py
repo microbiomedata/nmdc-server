@@ -1182,6 +1182,10 @@ class SubmissionMetadata(Base):
         ]
 
     @property
+    def reviewers(self) -> list[str]:
+        return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.reviewer]
+
+    @property
     def owners(self) -> list[str]:
         return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.owner]
 

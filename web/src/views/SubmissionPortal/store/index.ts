@@ -62,6 +62,50 @@ const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatus
 const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
 const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
 
+function availableStatusTransitions(currentStatus:SubmissionStatusKey, submission_role:Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin', transitions:Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
+  const excludeFromAll = [
+    SubmissionStatusEnum.InProgress.text,
+    SubmissionStatusEnum.SubmittedPendingReview.text,
+  ];
+  // Admins can see all statuses
+  if (submission_role === 'admin') {
+    console.log(Object.keys(SubmissionStatusTitleMapping)
+      .filter((key) => !excludeFromAll.includes(key))
+      .map((key) => ({
+        value: key,
+        text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      })));
+    return Object.keys(SubmissionStatusTitleMapping)
+      .filter((key) => !excludeFromAll.includes(key))
+      .map((key) => ({
+        value: key,
+        text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      }));
+  }
+  const user_transitions = transitions[submission_role] || {};
+  const allowedStatusTransitions = user_transitions[currentStatus] || [];
+
+  // Include the current status so it can be displayed
+  const statusesToShow = [...allowedStatusTransitions];
+  if (!statusesToShow.includes(currentStatus)) {
+    statusesToShow.push(currentStatus);
+  }
+
+  // Return allowed transitions
+  console.log(Object.keys(SubmissionStatusTitleMapping)
+    .filter((key) => statusesToShow.includes(key))
+    .map((key) => ({
+      value: key,
+      text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+    })));
+  return Object.keys(SubmissionStatusTitleMapping)
+    .filter((key) => statusesToShow.includes(key))
+    .map((key) => ({
+      value: key,
+      text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+    }));
+}
+
 const isTestSubmission = ref(false);
 const primaryStudyImageUrl = ref<string | null>(null);
 const piImageUrl = ref<string | null>(null);
@@ -604,4 +648,5 @@ export {
   templateHasData,
   checkJGITemplates,
   checkDoiFormat,
+  availableStatusTransitions,
 };
