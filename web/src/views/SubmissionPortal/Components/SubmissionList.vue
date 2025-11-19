@@ -188,7 +188,6 @@ export default defineComponent({
       } else {
         return [];
       }
-      console.log(submission_role);
       return availableStatusTransitions(item.status, submission_role, transitions.value);
     }
 
