@@ -69,11 +69,6 @@ function availableStatusTransitions(currentStatus:SubmissionStatusKey, submissio
   ];
   // Admins can see all statuses
   if (submission_role === 'admin') {
-      .filter((key) => !excludeFromAll.includes(key))
-      .map((key) => ({
-        value: key,
-        text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
-      })));
     return Object.keys(SubmissionStatusTitleMapping)
       .filter((key) => !excludeFromAll.includes(key))
       .map((key) => ({
@@ -91,11 +86,6 @@ function availableStatusTransitions(currentStatus:SubmissionStatusKey, submissio
   }
 
   // Return allowed transitions
-    .filter((key) => statusesToShow.includes(key))
-    .map((key) => ({
-      value: key,
-      text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
-    })));
   return Object.keys(SubmissionStatusTitleMapping)
     .filter((key) => statusesToShow.includes(key))
     .map((key) => ({
