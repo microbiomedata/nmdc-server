@@ -178,6 +178,13 @@ export default defineComponent({
       return item.reviewers.includes(currentUser.value.orcid);
     }
 
+    function isContributorForSubmission(item: MetadataSubmissionRecordSlim): boolean {
+      if (!currentUser.value?.orcid) {
+        return false;
+      }
+      return item.contributors.includes(currentUser.value.orcid);
+    }
+
     // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
     function getAvailableStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
       let submission_role: 'reviewer' | 'admin';
@@ -221,6 +228,7 @@ export default defineComponent({
       getAvailableStatusTransitions,
       handleStatusChange,
       SubmissionStatusEnum,
+      isContributorForSubmission,
     };
   },
 });
@@ -424,8 +432,8 @@ export default defineComponent({
                 color="primary"
                 @click="() => resume(item)"
               >
-                <span v-if="editablebyStatus(item.status) && (canEditSubmissionMetadata() || canEditSampleMetadata())">
-                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
+                <span v-if="editablebyStatus(item.status) && isContributorForSubmission(item)">
+                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
                   Resume
                 </span>
                 <span v-else>

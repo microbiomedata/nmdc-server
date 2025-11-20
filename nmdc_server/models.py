@@ -1190,6 +1190,11 @@ class SubmissionMetadata(Base):
     @property
     def owners(self) -> list[str]:
         return [role.user_orcid for role in self.roles if role.role == SubmissionEditorRole.owner]
+    
+    @property
+    def contributors(self) -> list[str]:
+        contributor_roles = [SubmissionEditorRole.owner, SubmissionEditorRole.editor, SubmissionEditorRole.metadata_contributor]
+        return [role.user_orcid for role in self.roles if role.role in contributor_roles]
 
     @property
     def study_images_total_size(self) -> int:

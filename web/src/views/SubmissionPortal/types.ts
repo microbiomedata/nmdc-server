@@ -245,6 +245,7 @@ export interface MetadataSubmissionRecordSlim {
   is_test_submission: boolean;
   sample_count: number;
   reviewers: string[];
+  contributors: string[];
 }
 
 export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {

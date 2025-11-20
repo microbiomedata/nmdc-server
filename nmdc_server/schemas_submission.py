@@ -178,6 +178,7 @@ class SubmissionMetadataSchemaSlim(BaseModel):
     is_test_submission: bool = False
     sample_count: int = 0
     reviewers: List[str]
+    contributors: List[str]
 
 
 class SubmissionImagesObject(BaseModel):
