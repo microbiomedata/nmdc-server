@@ -43,13 +43,3 @@ def upgrade():
             .where(data_object.c.status == mapping["old"])
             .values(status=mapping["new"])
         )
-
-
-def downgrade():
-    data_object = table("submission_metadata", column("status", sa.String))
-    for mapping in STATUS_MAP:
-        op.execute(
-            data_object.update()
-            .where(data_object.c.status == mapping["new"])
-            .values(status=mapping["old"])
-        )
