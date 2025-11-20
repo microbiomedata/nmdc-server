@@ -5,17 +5,17 @@ Revises: 9a0ff33a4e6b
 Create Date: 2025-11-17 18:41:13.169730
 
 """
+
 from typing import Optional
 
+import sqlalchemy as sa
 from alembic import op
 from nmdc_schema.nmdc import SubmissionStatusEnum
-import sqlalchemy as sa
 from sqlalchemy.sql import column, table
 
-
 # revision identifiers, used by Alembic.
-revision: str = '23ef8096759e'
-down_revision: Optional[str] = '9a0ff33a4e6b'
+revision: str = "23ef8096759e"
+down_revision: Optional[str] = "9a0ff33a4e6b"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
