@@ -1322,14 +1322,14 @@ async def update_submission_status(
     if user.is_admin:
         submission.status = body.status
 
-    # Non-admin users need to follow allowed transitions
+    # Non-admin users need to follow allowed transitions based on role
     else:
 
         # Owner transitions
         if user.orcid in submission.owners:
             transitions = allowed_transitions[SubmissionEditorRole.owner]
 
-        # Reviewer transitions (NOTE: assuming owner will not be a reviewer of their own submission)
+        # Reviewer transitions
         elif user.orcid in submission.reviewers:
             transitions = allowed_transitions[SubmissionEditorRole.reviewer]
 

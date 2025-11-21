@@ -7,8 +7,6 @@ import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
   generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, formatStatusTransitions,
-  canEditSampleMetadata,
-  canEditSubmissionMetadata,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -178,7 +176,7 @@ export default defineComponent({
       return item.reviewers.includes(currentUser.value.orcid);
     }
 
-    function isContributorForSubmission(item: MetadataSubmissionRecordSlim): boolean {
+    function isAnyContributorForSubmission(item: MetadataSubmissionRecordSlim): boolean {
       if (!currentUser.value?.orcid) {
         return false;
       }
@@ -187,15 +185,15 @@ export default defineComponent({
 
     // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
     function getFormattedStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
-      let submission_role: 'reviewer' | 'admin';
+      let dropdown_type: 'reviewer' | 'admin';
       if (currentUser.value?.is_admin) {
-        submission_role = 'admin';
+        dropdown_type = 'admin';
       } else if (isReviewerForSubmission(item)) {
-        submission_role = 'reviewer';
+        dropdown_type = 'reviewer';
       } else {
         return [];
       }
-      return formatStatusTransitions(item.status, submission_role, transitions.value);
+      return formatStatusTransitions(item.status, dropdown_type, transitions.value);
     }
 
     return {
@@ -213,8 +211,6 @@ export default defineComponent({
       TitleBanner,
       createNewSubmission,
       editablebyStatus,
-      canEditSampleMetadata,
-      canEditSubmissionMetadata,
       getStatus,
       resume,
       addReviewer,
@@ -228,7 +224,7 @@ export default defineComponent({
       getFormattedStatusTransitions,
       handleStatusChange,
       SubmissionStatusEnum,
-      isContributorForSubmission,
+      isAnyContributorForSubmission,
     };
   },
 });
@@ -432,7 +428,7 @@ export default defineComponent({
                 color="primary"
                 @click="() => resume(item)"
               >
-                <span v-if="editablebyStatus(item.status) && isContributorForSubmission(item)">
+                <span v-if="editablebyStatus(item.status) && isAnyContributorForSubmission(item)">
                   <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
                   Resume
                 </span>

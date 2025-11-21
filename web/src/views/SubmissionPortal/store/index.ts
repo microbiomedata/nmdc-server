@@ -62,13 +62,13 @@ const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatus
 const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
 const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
 
-function formatStatusTransitions(currentStatus:SubmissionStatusKey, submission_role:Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin', transitions:Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
+function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_type:Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin', transitions:Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
   const excludeFromAll = [
     SubmissionStatusEnum.InProgress.text,
     SubmissionStatusEnum.SubmittedPendingReview.text,
   ];
   // Admins can see all statuses and select any that aren't user invoked
-  if (submission_role === 'admin') {
+  if (dropdown_type === 'admin') {
     return Object.keys(SubmissionStatusTitleMapping)
       .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
       .map((key) => ({
@@ -78,7 +78,7 @@ function formatStatusTransitions(currentStatus:SubmissionStatusKey, submission_r
   }
 
   // Non-admins can only see and select allowed transitions
-  const user_transitions = transitions[submission_role] || {};
+  const user_transitions = transitions[dropdown_type] || {};
   const allowedStatusTransitions = user_transitions[currentStatus] || [];
 
   // Include the current status so it can be displayed
