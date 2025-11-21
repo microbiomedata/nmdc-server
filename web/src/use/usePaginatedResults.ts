@@ -60,7 +60,6 @@ export default function usePaginatedResult<T>(
   // ENDTODO
 
   function setPage(newPage: number) {
-    console.log('setPage', newPage);
     data.offset = (newPage - 1) * data.limit;
     debouncedFetchResults();
   }

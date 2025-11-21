@@ -78,40 +78,34 @@ export default defineComponent({
     async function fetchFacetSummary() {
       try {
         const conds = otherConditions.value.concat(props.useAllConditions ? myConditions.value : []);
-        console.log('FETCHING CONDITIONAL FACET SUMMARY with conditions:', conds);
         facetSummary.value = await api.getFacetSummary(
           props.table,
           props.field,
           conds,
         );
-      } catch (error) {
-        console.error('Error fetching facet summary:', error);
+      } catch (_error) {
         facetSummary.value = [];
       }
     }
 
     async function fetchFacetSummaryUnconditional() {
       try {
-        console.log('FETCHING UNCONDITIONAL FACET SUMMARY');
         facetSummaryUnconditional.value = await api.getFacetSummary(
           props.table,
           props.field,
           [],
         );
-      } catch (error) {
-        console.error('Error fetching unconditional facet summary:', error);
+      } catch (_error) {
         facetSummaryUnconditional.value = [];
       }
     }
 
     // Watch for changes in conditions and refetch data
     watch(otherConditions, () => {
-      console.log('Conditions changed, refetching facet summary');
       fetchFacetSummary();
     }, { deep: true, immediate: true });
 
     watch(myConditions, () => {
-      console.log('My conditions changed, refetching facet summary');
       fetchFacetSummary();
     }, { deep: true });
 

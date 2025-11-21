@@ -86,7 +86,6 @@ export default defineComponent({
           table: table.value,
         });
       });
-      console.log(c);
       emit('select', { conditions: c });
     }
 
