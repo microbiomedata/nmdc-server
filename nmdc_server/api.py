@@ -1283,7 +1283,7 @@ async def update_submission(
 async def get_transitions() -> dict:
     allowed_transitions = {
         SubmissionEditorRole.reviewer: {
-            SubmissionStatusEnum.PendingUserFacility.text: [
+            SubmissionStatusEnum.ApprovedPendingUserFacility.text: [
                 SubmissionStatusEnum.UpdatesRequired.text,
                 SubmissionStatusEnum.ApprovedHeld.text,
             ]

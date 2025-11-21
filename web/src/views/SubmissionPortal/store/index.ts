@@ -62,7 +62,7 @@ const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatus
 const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
 const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
 
-function availableStatusTransitions(currentStatus:SubmissionStatusKey, submission_role:Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin', transitions:Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
+function formatStatusTransitions(currentStatus:SubmissionStatusKey, submission_role:Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin', transitions:Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
   const excludeFromAll = [
     SubmissionStatusEnum.InProgress.text,
     SubmissionStatusEnum.SubmittedPendingReview.text,
@@ -638,5 +638,5 @@ export {
   templateHasData,
   checkJGITemplates,
   checkDoiFormat,
-  availableStatusTransitions,
+  formatStatusTransitions,
 };

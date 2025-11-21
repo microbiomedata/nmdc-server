@@ -6,7 +6,7 @@ import { DataOptions, DataTableHeader } from 'vuetify';
 import { useRouter } from '@/use/useRouter';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, availableStatusTransitions,
+  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, formatStatusTransitions,
   canEditSampleMetadata,
   canEditSubmissionMetadata,
 } from '../store';
@@ -186,7 +186,7 @@ export default defineComponent({
     }
 
     // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
-    function getAvailableStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
+    function getFormattedStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
       let submission_role: 'reviewer' | 'admin';
       if (currentUser.value?.is_admin) {
         submission_role = 'admin';
@@ -195,7 +195,7 @@ export default defineComponent({
       } else {
         return [];
       }
-      return availableStatusTransitions(item.status, submission_role, transitions.value);
+      return formatStatusTransitions(item.status, submission_role, transitions.value);
     }
 
     return {
@@ -225,7 +225,7 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
-      getAvailableStatusTransitions,
+      getFormattedStatusTransitions,
       handleStatusChange,
       SubmissionStatusEnum,
       isContributorForSubmission,
@@ -393,7 +393,7 @@ export default defineComponent({
               <v-select
                 v-if="(currentUser.is_admin || isReviewerForSubmission(item)) && item.status === SubmissionStatusEnum.InProgress.text"
                 :value="item.status"
-                :items="getAvailableStatusTransitions(item)"
+                :items="getFormattedStatusTransitions(item)"
                 item-disabled="disabled"
                 dense
                 hide-details
@@ -406,7 +406,7 @@ export default defineComponent({
               <v-select
                 v-else-if="(currentUser.is_admin || isReviewerForSubmission(item))"
                 :value="item.status"
-                :items="getAvailableStatusTransitions(item)"
+                :items="getFormattedStatusTransitions(item)"
                 item-disabled="disabled"
                 dense
                 hide-details
