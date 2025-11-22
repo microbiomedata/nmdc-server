@@ -35,7 +35,9 @@ def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: s
           value). Either way, Google Secret Manager does not offer an atomic swap operation.
 
     TODO: Consider storing both values within the _same_ secret so that they can be
-          swapped atomically. This is analogous to how things are done on Rancher/Spin.
+          swapped atomically. This is analogous to how things are done on Rancher/Spin,
+          although—there—there's only one level of secret storage (i.e. Kubernetes) as
+          opposed to two (i.e. Kubernetes and Google Secret Manager).
 
     Note: The "Add version" form on the Google Secret Manager console (web UI) has
           a checkbox that can be used to disable all previous versions of the secret.
@@ -51,41 +53,45 @@ def swap_gcp_secret_values(gcp_project_id: str, secret_a_id: str, secret_b_id: s
 
     # Get the value of the latest "version" of the first secret.
     secret_a_path = client.secret_path(gcp_project_id, secret_a_id)
-    request = secretmanager.AccessSecretVersionRequest(name=f"{secret_a_path}/versions/latest")
+    secret_a_latest_path = f"{secret_a_path}/versions/latest"
+    request = secretmanager.AccessSecretVersionRequest(name=secret_a_latest_path)
     response = client.access_secret_version(request=request)
-    secret_a_version: str = response.name
+    secret_a_resolved_path: str = response.name  # ".../latest" is resolved to, e.g., ".../123"
     secret_a_value: bytes = response.payload.data
-    click.echo(f"Read latest version of secret: {secret_a_path}")
+    click.echo(f"Read secret version: {secret_a_resolved_path}")
 
     # Get the value of the latest "version" of the second secret.
     secret_b_path = client.secret_path(gcp_project_id, secret_b_id)
-    request = secretmanager.AccessSecretVersionRequest(name=f"{secret_b_path}/versions/latest")
+    secret_b_latest_path = f"{secret_b_path}/versions/latest"
+    request = secretmanager.AccessSecretVersionRequest(name=secret_b_latest_path)
     response = client.access_secret_version(request=request)
-    secret_b_version: str = response.name
+    secret_b_resolved_path: str = response.name  # ".../latest" is resolved to, e.g., ".../456"
     secret_b_value: bytes = response.payload.data
-    click.echo(f"Read latest version of secret: {secret_b_path}")
+    click.echo(f"Read secret version: {secret_b_resolved_path}")
 
     # Disable that "version" of the first secret.
-    request = secretmanager.DisableSecretVersionRequest(name=f"{secret_a_path}/versions/{secret_a_version}")
+    request = secretmanager.DisableSecretVersionRequest(name=secret_a_resolved_path)
     _ = client.disable_secret_version(request=request)
-    click.echo(f"Disabled read version of secret: {secret_a_path}")
+    click.echo(f"Disabled secret version: {secret_a_resolved_path}")
 
     # Disable that "version" of the second secret.
-    request = secretmanager.DisableSecretVersionRequest(name=f"{secret_b_path}/versions/{secret_b_version}")
+    request = secretmanager.DisableSecretVersionRequest(name=secret_b_resolved_path)
     _ = client.disable_secret_version(request=request)
-    click.echo(f"Disabled read version of secret: {secret_b_path}")
+    click.echo(f"Disabled secret version: {secret_b_resolved_path}")
 
     # Add a "version" to the first secret, containing the value from the second secret.
     payload = secretmanager.SecretPayload(data=secret_b_value)
     request = secretmanager.AddSecretVersionRequest(parent=secret_a_path, payload=payload)
-    _ = client.add_secret_version(request=request)
-    click.echo(f"Added new version of secret: {secret_a_path}")
+    response = client.add_secret_version(request=request)
+    added_secret_a_resolved_path: str = response.name
+    click.echo(f"Added secret version: {added_secret_a_resolved_path}")
 
     # Add a "version" to the second secret, containing the value from the first secret.
     payload = secretmanager.SecretPayload(data=secret_a_value)
     request = secretmanager.AddSecretVersionRequest(parent=secret_b_path, payload=payload)
-    _ = client.add_secret_version(request=request)
-    click.echo(f"Added new version of secret: {secret_b_path}")
+    response = client.add_secret_version(request=request)
+    added_secret_b_resolved_path: str = response.name
+    click.echo(f"Added secret version: {added_secret_b_resolved_path}")
 
 
 def swap_rancher_secret_values(
