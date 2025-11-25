@@ -227,15 +227,14 @@ export default defineComponent({
 
 <template>
   <v-card elevation="0">
-    <v-card-title>
-      Metadata Suggester
+    <v-card-title class="d-flex align-center mb-3">
+      <span>Metadata Suggester</span>
       <v-spacer />
       <v-tooltip
         bottom
         min-width="300px"
         max-width="600px"
         :open-delay="TOOLTIP_DELAY"
-        z-index="400"
       >
         <span>
           As you enter sample metadata, the Metadata Suggester will offer suggestions for metadata values based on the
@@ -301,6 +300,7 @@ export default defineComponent({
               >
                 <template #activator="{ props }">
                   <v-btn
+                    variant="text"
                     color="primary"
                     icon
                     v-bind="props"
@@ -320,6 +320,7 @@ export default defineComponent({
               >
                 <template #activator="{ props }">
                   <v-btn
+                    variant="text"
                     color="primary"
                     icon
                     v-bind="props"
@@ -392,6 +393,7 @@ export default defineComponent({
                     >
                       <template #activator="{ props }">
                         <v-btn
+                          variant="text"
                           icon
                           color="primary"
                           v-bind="props"
@@ -411,6 +413,7 @@ export default defineComponent({
                     >
                       <template #activator="{ props }">
                         <v-btn
+                          variant="text"
                           icon
                           color="primary"
                           v-bind="props"
@@ -430,6 +433,7 @@ export default defineComponent({
                     >
                       <template #activator="{ props }">
                         <v-btn
+                          variant="text"
                           icon
                           color="primary"
                           v-bind="props"

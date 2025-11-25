@@ -102,7 +102,6 @@ export default defineComponent({
           :key="tab.label"
           open-delay="600"
           top
-          z-index="400"
         >
           <template #activator="{ props }">
             <v-tab
