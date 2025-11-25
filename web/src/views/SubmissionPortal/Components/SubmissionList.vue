@@ -1,12 +1,12 @@
 <script lang="ts">
 import {
-  defineComponent, ref, watch,
+  defineComponent, ref, watch, onMounted,
 } from 'vue';
 import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping,
+  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, formatStatusTransitions,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -21,6 +21,9 @@ import {
   MetadataSubmissionRecord,
   MetadataSubmissionRecordSlim,
   PaginatedResponse,
+  PermissionLevelValues,
+  SubmissionStatusKey,
+  StatusOption,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';
@@ -82,13 +85,6 @@ export default defineComponent({
       { text: 'Show all submissions', val: null },
       { text: 'Show only test submissions', val: true },
       { text: 'Hide test submissions', val: false }];
-
-    const exclude = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.SubmittedPendingReview.text];
-    const availableStatuses = Object.keys(SubmissionStatusTitleMapping).map((key) => ({
-      value: key,
-      text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
-      disabled: exclude.includes(key),
-    }));
 
     async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
       return api.listRecords(params, isTestFilter.value);
@@ -171,6 +167,43 @@ export default defineComponent({
       isReviewerAssignmentDialogOpen.value = false;
     }
 
+    // get all status transitions from the api
+    type TransitionsType = Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
+    const transitions = ref<TransitionsType>({
+      reviewer: {},
+      owner: {},
+    });
+    onMounted(async () => {
+      transitions.value = await api.getAllStatusTransitions() as unknown as TransitionsType;
+    });
+
+    function isReviewerForSubmission(item: MetadataSubmissionRecordSlim): boolean {
+      if (!currentUser.value?.orcid) {
+        return false;
+      }
+      return item.reviewers.includes(currentUser.value.orcid);
+    }
+
+    function isAnyContributorForSubmission(item: MetadataSubmissionRecordSlim): boolean {
+      if (!currentUser.value?.orcid) {
+        return false;
+      }
+      return item.contributors.includes(currentUser.value.orcid);
+    }
+
+    // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
+    function getFormattedStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
+      let dropdown_type: 'reviewer' | 'admin';
+      if (currentUser.value?.is_admin) {
+        dropdown_type = 'admin';
+      } else if (isReviewerForSubmission(item)) {
+        dropdown_type = 'reviewer';
+      } else {
+        return [];
+      }
+      return formatStatusTransitions(item.status, dropdown_type, transitions.value);
+    }
+
     return {
       HARMONIZER_TEMPLATES,
       isDeleteDialogOpen,
@@ -179,6 +212,7 @@ export default defineComponent({
       currentUser,
       assignReviewerRequest,
       isReviewerAssignmentDialogOpen,
+      isReviewerForSubmission,
       reviewerOrcid,
       IconBar,
       IntroBlurb,
@@ -195,9 +229,10 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
-      availableStatuses,
+      getFormattedStatusTransitions,
       handleStatusChange,
       SubmissionStatusEnum,
+      isAnyContributorForSubmission,
     };
   },
 });
@@ -341,7 +376,7 @@ export default defineComponent({
           <template #[`header.status`]="{ column }">
             <div class="d-flex align-center ga-1">
               <v-tooltip
-                v-if="currentUser?.is_admin"
+                v-if="currentUser?.is_admin || submission.data.results.results.some(item => item.reviewers.includes(currentUser.orcid))"
                 location="bottom"
               >
                 <template #activator="{ props }">
@@ -353,7 +388,7 @@ export default defineComponent({
                     mdi-information-outline
                   </v-icon>
                 </template>
-                <span>Greyed out options are user-triggered statuses and cannot be changed or selected</span>
+                <span>Reviewer can change status of assigned submissions. Some values are user-triggered statuses and cannot be changed or selected.</span>
               </v-tooltip>
               <span>
                 {{ column.title }}
@@ -363,9 +398,9 @@ export default defineComponent({
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
               <v-select
-                v-if="currentUser?.is_admin && item.status === SubmissionStatusEnum.InProgress.text"
+                v-if="(currentUser?.is_admin || isReviewerForSubmission(item)) && item.status === SubmissionStatusEnum.InProgress.text"
                 :value="item.status"
-                :items="availableStatuses"
+                :items="getFormattedStatusTransitions(item)"
                 item-title="text"
                 item-value="value"
                 item-disabled="disabled"
@@ -378,9 +413,9 @@ export default defineComponent({
                 </template>
               </v-select>
               <v-select
-                v-else-if="currentUser?.is_admin"
+                v-else-if="(currentUser?.is_admin || isReviewerForSubmission(item))"
                 :value="item.status"
-                :items="availableStatuses"
+                :items="getFormattedStatusTransitions(item)"
                 item-title="text"
                 item-value="value"
                 item-disabled="disabled"
@@ -408,9 +443,9 @@ export default defineComponent({
                 color="primary"
                 @click="() => resume(item as MetadataSubmissionRecord)"
               >
-                <span v-if="editablebyStatus(item.status)">
+                <span v-if="editablebyStatus(item.status) && isAnyContributorForSubmission(item)">
                   Resume
-                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>
+                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
                 </span>
                 <span v-else>
                   <v-icon class="pl-1">mdi-eye</v-icon>
