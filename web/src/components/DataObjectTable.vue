@@ -395,8 +395,8 @@ export default defineComponent({
                     v-if="item.url"
                     icon
                     :disabled="!loggedInUser"
-                    variant="plain"
-                    color="grey-darken-2"
+                    variant="text"
+                    color="primary"
                     @click="handleDownload(item as unknown as OmicsProcessingResult)"
                   >
                     <v-icon>mdi-download</v-icon>
