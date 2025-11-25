@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent } from '@vue/composition-api';
+import { computed, defineComponent } from 'vue';
 import { stateRefs } from '@/store';
 
 export default defineComponent({
@@ -13,20 +13,12 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-banner
+  <v-alert
     v-if="showAppBanner"
+    :title="title || undefined"
+    :text="message || undefined"
     color="blue"
-    dark
     icon="mdi-information"
     class="ma-4"
-  >
-    <p
-      class="title"
-    >
-      {{ title || '' }}
-    </p>
-    <p>
-      {{ message || '' }}
-    </p>
-  </v-banner>
+  />
 </template>

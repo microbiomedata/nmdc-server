@@ -1,9 +1,9 @@
 <script lang="ts">
 import {
-  defineComponent, ref, watch, Ref, onMounted,
-} from '@vue/composition-api';
-import { DataOptions, DataTableHeader } from 'vuetify';
-import { useRouter } from '@/use/useRouter';
+  defineComponent, ref, watch, onMounted,
+} from 'vue';
+import { useRouter } from 'vue-router';
+import { DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
   generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, formatStatusTransitions,
@@ -30,27 +30,28 @@ import useRequest from '@/use/useRequest';
 
 const headers: DataTableHeader[] = [
   {
-    text: 'Study Name',
+    title: 'Study Name',
     value: 'study_name',
   },
   {
-    text: 'Author',
+    title: 'Author',
     value: 'author.name',
   },
   {
-    text: 'Template',
+    title: 'Template',
     value: 'templates',
   },
   {
-    text: 'Status',
+    title: 'Status',
     value: 'status',
+    width: '200px',
   },
   {
-    text: 'Last Modified',
+    title: 'Last Modified',
     value: 'date_last_modified',
   },
   {
-    text: '',
+    title: '',
     value: 'action',
     align: 'end',
     sortable: false,
@@ -64,7 +65,7 @@ export default defineComponent({
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
-    const options: Ref<DataOptions> = ref<DataOptions>({
+    const options = ref({
       page: 1,
       itemsPerPage,
       sortBy: ['date_last_modified'],
@@ -107,6 +108,14 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
+    
+    function applySortOptions() {
+      const sortOrder = options.value.sortDesc && options.value.sortDesc[0] ? 'desc' : 'asc';
+      const sortBy = options.value.sortBy[0] || 'date_last_modified';
+      submission.setSortOptions(sortBy, sortOrder);
+    }
+
+    applySortOptions();
     const assignReviewerRequest = useRequest();
 
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
@@ -116,19 +125,18 @@ export default defineComponent({
 
     watch(options, () => {
       submission.setPage(options.value.page);
-      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
-      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+      applySortOptions();
     }, { deep: true });
+    
     watch(isTestFilter, () => {
       options.value.page = 1;
       submission.setPage(options.value.page);
-      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
-      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+      applySortOptions();
     }, { deep: true });
 
     function handleOpenDeleteDialog(item: MetadataSubmissionRecordSlim | null) {
       deleteDialogSubmission.value = item;
-      if (deleteDialogSubmission) {
+      if (deleteDialogSubmission.value) {
         isDeleteDialogOpen.value = true;
       }
     }
@@ -236,14 +244,13 @@ export default defineComponent({
       offset-x
       left
     >
-      <template #activator="{on, attrs}">
+      <template #activator="{ props }">
         <v-btn
           color="primary"
           large
           class="mr-0"
           style="transform:translateY(-50%) rotate(-90deg); right: -50px; top: 50%; position: fixed; z-index: 100;"
-          v-bind="attrs"
-          v-on="on"
+          v-bind="props"
         >
           support
           <v-icon
@@ -283,18 +290,18 @@ export default defineComponent({
         <v-btn
           color="primary"
           class="ml-3"
-          outlined
+          variant="outlined"
           @click="createNewSubmission(true)"
         >
           <v-icon>mdi-plus</v-icon>
           Create Test Submission
         </v-btn>
         <v-tooltip right>
-          <template #activator="{ on }">
+          <template #activator="{ props }">
             <v-icon
               class="pl-2"
               color="primary"
-              v-on="on"
+              v-bind="props"
             >
               mdi-information
             </v-icon>
@@ -323,21 +330,22 @@ export default defineComponent({
           <v-select
             v-model="isTestFilter"
             :items="testFilterValues"
-            item-text="text"
+            item-title="text"
             item-value="val"
             label="Test Submissions"
+            variant="outlined"
             hide-details
           />
         </v-col>
       </v-row>
-      <v-card outlined>
+      <v-card variant="outlined">
         <v-data-table
+          v-model:options="options"
+          v-model:items-per-page="submission.data.limit"
           :headers="headers"
           :items="submission.data.results.results"
           :server-items-length="submission.data.results.count"
-          :options.sync="options"
           :loading="submission.loading.value"
-          :items-per-page.sync="submission.data.limit"
           :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
         >
           <template #[`item.study_name`]="{ item }">
@@ -360,63 +368,70 @@ export default defineComponent({
             />
           </template>
           <template #[`item.templates`]="{ item }">
-            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
+            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template]?.displayName).join(' + ') }}
           </template>
           <template #[`item.date_last_modified`]="{ item }">
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
-          <template #[`header.status`]="{ header }">
-            <v-tooltip
-              v-if="currentUser.is_admin || submission.data.results.results.some(item => item.reviewers.includes(currentUser.orcid))"
-              bottom
-            >
-              <template #activator="{ on, attrs }">
-                <v-icon
-                  class="ml-1"
-                  color="grey"
-                  v-bind="attrs"
-                  v-on="on"
-                >
-                  mdi-information-outline
-                </v-icon>
-              </template>
-              <span>Reviewer can change status of assigned submissions. Some values are user-triggered statuses and cannot be changed or selected.</span>
-            </v-tooltip>
-            {{ header.text }}
+          <template #[`header.status`]="{ column }">
+            <div class="d-flex align-center ga-1">
+              <v-tooltip
+                v-if="currentUser?.is_admin || submission.data.results.results.some(item => item.reviewers.includes(currentUser.orcid))"
+                location="bottom"
+              >
+                <template #activator="{ props }">
+                  <v-icon
+                    class="ml-1"
+                    color="grey"
+                    v-bind="props"
+                  >
+                    mdi-information-outline
+                  </v-icon>
+                </template>
+                <span>Reviewer can change status of assigned submissions. Some values are user-triggered statuses and cannot be changed or selected.</span>
+              </v-tooltip>
+              <span>
+                {{ column.title }}
+              </span>
+            </div>
           </template>
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
               <v-select
-                v-if="(currentUser.is_admin || isReviewerForSubmission(item)) && item.status === SubmissionStatusEnum.InProgress.text"
+                v-if="(currentUser?.is_admin || isReviewerForSubmission(item)) && item.status === SubmissionStatusEnum.InProgress.text"
                 :value="item.status"
                 :items="getFormattedStatusTransitions(item)"
+                item-title="text"
+                item-value="value"
                 item-disabled="disabled"
                 dense
                 hide-details
                 disabled
               >
                 <template #selection="{ item: statusItem }">
-                  {{ statusItem.text }}
+                  {{ statusItem.title }}
                 </template>
               </v-select>
               <v-select
-                v-else-if="(currentUser.is_admin || isReviewerForSubmission(item))"
+                v-else-if="(currentUser?.is_admin || isReviewerForSubmission(item))"
                 :value="item.status"
                 :items="getFormattedStatusTransitions(item)"
+                item-title="text"
+                item-value="value"
                 item-disabled="disabled"
                 dense
                 hide-details
-                @change="(newStatus) => handleStatusChange(item, newStatus)"
+                @change="(newStatus: string) => handleStatusChange(item, newStatus)"
               >
                 <template #selection="{ item: statusItem }">
-                  {{ statusItem.text }}
+                  {{ statusItem.title }}
                 </template>
               </v-select>
               <v-chip
                 v-else
-                :color="getStatus(item).color"
+                :color="getStatus(item as MetadataSubmissionRecord).color"
               >
-                {{ getStatus(item).text }}
+                {{ getStatus(item as MetadataSubmissionRecord).text }}
               </v-chip>
             </div>
           </template>
@@ -424,13 +439,13 @@ export default defineComponent({
             <div class="d-flex align-center">
               <v-spacer />
               <v-btn
-                small
+                size="small"
                 color="primary"
-                @click="() => resume(item)"
+                @click="() => resume(item as MetadataSubmissionRecord)"
               >
                 <span v-if="editablebyStatus(item.status) && isAnyContributorForSubmission(item)">
-                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
                   Resume
+                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
                 </span>
                 <span v-else>
                   <v-icon class="pl-1">mdi-eye</v-icon>
@@ -440,12 +455,12 @@ export default defineComponent({
               <v-menu
                 offset-x
               >
-                <template #activator="{ on }">
+                <template #activator="{ props }">
                   <v-btn
-                    text
+                    variant="text"
                     icon
                     class="ml-1"
-                    v-on="on"
+                    v-bind="props"
                   >
                     <v-icon>
                       mdi-dots-vertical
@@ -459,7 +474,7 @@ export default defineComponent({
                     <v-list-item-title>Delete</v-list-item-title>
                   </v-list-item>
                   <v-list-item
-                    v-if="currentUser.is_admin"
+                    v-if="currentUser?.is_admin"
                     @click="() => openReviewerDialog(item)"
                   >
                     <v-list-item-title>Assign Reviewer</v-list-item-title>
@@ -493,7 +508,7 @@ export default defineComponent({
           <v-spacer />
           <v-btn
             class="ma-3"
-            @click="isDeleteDialogOpen=False"
+            @click="isDeleteDialogOpen = false"
           >
             Cancel
           </v-btn>
@@ -529,7 +544,7 @@ export default defineComponent({
                 v-model="reviewerOrcid"
                 class="mt-4"
                 label="ORCiD"
-                outlined
+                variant="outlined"
                 dense
               />
             </v-col>

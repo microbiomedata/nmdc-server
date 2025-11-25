@@ -1,14 +1,11 @@
-// @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
-import Vue from 'vue';
-import CompositionApi, {
+import {
   computed, reactive, Ref, ref, shallowRef, watch,
-} from '@vue/composition-api';
+} from 'vue';
 import {
   chunk, clone, forEach, isString,
 } from 'lodash';
 import axios from 'axios';
-import * as api from './api';
 import { User } from '@/types';
 import {
   HARMONIZER_TEMPLATES,
@@ -36,9 +33,7 @@ import {
   SampleProtocol,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
-
-// TODO: Remove in version 3;
-Vue.use(CompositionApi);
+import * as api from './api';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, PermissionLevelValues> = {
   Viewer: 'viewer',
@@ -198,11 +193,11 @@ const studyFormDefault = {
 const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
 
-const protocols = {
-  sampleProtocol: {} as SampleProtocol,
-  acquisitionProtocol: {} as AcquisitionProtocol,
-  dataProtocol: {} as DataProtocol,
-};
+interface Protocols {
+  sampleProtocol: SampleProtocol,
+  acquisitionProtocol: AcquisitionProtocol,
+  dataProtocol: DataProtocol,
+}
 
 /**
  * Multi-Omics Form Step
@@ -224,10 +219,10 @@ const multiOmicsFormDefault = {
   ship: undefined as undefined | boolean,
   studyNumber: '',
   unknownDoi: undefined as undefined | boolean,
-  mpProtocols: undefined as undefined | typeof protocols,
-  mbProtocols: undefined as undefined | typeof protocols,
-  lipProtocols: undefined as undefined | typeof protocols,
-  nomProtocols: undefined as undefined | typeof protocols,
+  mpProtocols: undefined as undefined | Protocols,
+  mbProtocols: undefined as undefined | Protocols,
+  lipProtocols: undefined as undefined | Protocols,
+  nomProtocols: undefined as undefined | Protocols,
 };
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
@@ -301,7 +296,7 @@ const templateList = computed(() => {
     }
   } else {
     // Have data already been generated? No
-    // eslint-disable-next-line no-lonely-if
+     
     if (multiOmicsForm.doe) {
       // Are you submitting samples to a DOE user facility? Yes
       if (multiOmicsForm.facilities.includes('EMSL')) {
@@ -369,7 +364,7 @@ const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   sampleData: sampleData.value,
 }));
 
-function templateHasData(templateName: string): boolean {
+function templateHasData(templateName: string = ''): boolean {
   //if DH hasn't been touched at all then there's no data nd it's ok edit
   if (Object.keys(sampleData.value).length === 0) {
     return false;
@@ -393,7 +388,7 @@ function templateHasData(templateName: string): boolean {
   // If the DH has been touched, see if the given template actually
   // contain data. If it does, then do not allow changing that template.
   // Otherwise, allow it to be changed.
-  if (Object.values(sampleData.value[templateName]).length > 0) {
+  if (Object.values(sampleData.value[templateName] || {}).length > 0) {
     return true;
   }
   return false;
@@ -402,9 +397,9 @@ function templateHasData(templateName: string): boolean {
 function checkJGITemplates() {
   //checks to see if there is data present in any of the templates that are associated with JGI
   const fields = ['jgi_mg', 'jgi_mg_lr', 'jgi_mt', 'data_mg', 'data_mg_interleaved', 'data_mt', 'data_mt_interleaved'];
-  let data_present: Boolean = false;
+  let data_present: boolean = false;
   fields.forEach((val) => {
-    const sampleSlot = HARMONIZER_TEMPLATES[val].sampleDataSlot;
+    const sampleSlot = HARMONIZER_TEMPLATES[val]?.sampleDataSlot;
     if (isString(sampleSlot) && templateHasData(sampleSlot)) {
       data_present = true;
     }
@@ -556,9 +551,9 @@ function mergeSampleData(key: string | undefined, data: any[]) {
 async function addMetadataSuggestions(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
   const batches = chunk(requests, batchSize);
   for (let i = 0; i < batches.length; i += 1) {
-    const batch = batches[i];
+    const batch = batches[i] || [];
 
-    // eslint-disable-next-line no-await-in-loop -- we are intentionally throttling requests to the sever
+     
     const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
 
     // Drop all the existing suggestions for the rows in this batch

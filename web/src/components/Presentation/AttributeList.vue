@@ -1,14 +1,15 @@
 <script lang="ts">
-import { computed, defineComponent, PropType } from '@vue/composition-api';
+import { computed, defineComponent, PropType } from 'vue';
 import { isObject } from 'lodash';
 
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 import { getField } from '@/encoding';
-import AttributeItem from './AttributeItem.vue';
+// @ts-ignore
 import { formatBiosampleDepth } from '@/util';
 import gold from '@/assets/GOLD.png';
 import img from '@/assets/IMG.png';
 import emsl from '@/assets/EMSL.png';
+import AttributeItem from './AttributeItem.vue';
 
 export default defineComponent({
   components: { AttributeItem },
@@ -111,9 +112,9 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="display-1">
+    <h2>
       Attributes
-    </div>
+    </h2>
     <v-list
       style="column-count: 3;"
       class="d-block py-4"
@@ -121,19 +122,19 @@ export default defineComponent({
       <v-col
         v-for="field in displayFields"
         :key="field"
-        class="pa-0 d-inline-block"
+        class="pa-2 d-inline-block"
       >
         <AttributeItem v-bind="{ item, field }" />
       </v-col>
     </v-list>
-    <v-list v-if="alternateIdentifiers.length > 0 || item.emsl_biosample_identifiers.length > 0">
-      <div class="display-1">
+    <v-list v-if="alternateIdentifiers.length > 0 || Array.isArray(item.emsl_biosample_identifiers) && item.emsl_biosample_identifiers.length > 0">
+      <h2>
         Alternative Identifiers
-      </div>
+      </h2>
       <AttributeItem
         v-for="({ name, target }) in alternateIdentifiers"
         :key="name"
-        v-bind="{ item, field, link: { name, target } }"
+        v-bind="{ item, link: { name, target } }"
         :image="name.startsWith('gold') ? gold : name.startsWith('img') ? img : ''"
       />
       <AttributeItem
@@ -143,7 +144,7 @@ export default defineComponent({
         :image="emsl"
       />
     </v-list>
-    <v-list v-if="type === 'biosample' && relatedBiosamples.length">
+    <v-list v-if="type === 'biosample' && Array.isArray(relatedBiosamples) && relatedBiosamples.length > 0">
       <div class="display-1">
         Related Biosamples
       </div>
@@ -152,17 +153,15 @@ export default defineComponent({
         :key="biosample.id"
         :href="'/details/sample/' + biosample.id"
       >
-        <v-list-item-avatar>
+        <template #prepend>
           <v-icon>mdi-link</v-icon>
-        </v-list-item-avatar>
-        <v-list-item-content>
-          <v-list-item-title>
-            {{ biosample.name }}
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            ID: {{ biosample.id }}
-          </v-list-item-subtitle>
-        </v-list-item-content>
+        </template>
+        <v-list-item-title>
+          {{ biosample.name }}
+        </v-list-item-title>
+        <v-list-item-subtitle>
+          ID: {{ biosample.id }}
+        </v-list-item-subtitle>
       </v-list-item>
     </v-list>
   </div>

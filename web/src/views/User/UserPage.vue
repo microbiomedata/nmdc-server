@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref, watch } from '@vue/composition-api';
+import { defineComponent, ref, watch } from 'vue';
 import { DataTableHeader } from 'vuetify';
 import { api, SearchParams, SearchResponse } from '@/data/api';
 import { stateRefs } from '@/store';
@@ -21,13 +21,13 @@ export default defineComponent({
     const searchFilter = ref('');
     const headers : DataTableHeader[] = [
       {
-        text: 'ORCID',
+        title: 'ORCID',
         align: 'start',
         sortable: false,
         value: 'orcid',
       },
-      { text: 'Name', value: 'name', sortable: false },
-      { text: 'Admin', value: 'is_admin', sortable: false },
+      { title: 'Name', value: 'name', sortable: false },
+      { title: 'Admin', value: 'is_admin', sortable: false },
     ];
 
     async function getUsers(params: SearchParams): Promise<SearchResponse<User>> {
@@ -69,18 +69,18 @@ export default defineComponent({
           v-model="searchFilter"
           label="Search Users"
           class="mb-2"
-          outlined
+          variant="outlined"
           hide-details
         />
-        <v-card outlined>
+        <v-card variant="outlined">
           <v-data-table
+            v-model:options="options"
+            v-model:items-per-page="users.data.limit"
             dense
             :headers="headers"
             :items="users.data.results.results"
             :server-items-length="users.data.results.count"
-            :options.sync="options"
             :loading="users.loading.value"
-            :items-per-page.sync="users.data.limit"
             :footer-props="{itemsPerPageOptions : [10, 20, 50] }"
             item-key="name"
             class="elevation-1"
@@ -96,7 +96,7 @@ export default defineComponent({
               <v-switch
                 v-model="item.is_admin"
                 class="mt-2"
-                :disabled="item.name==currentUser"
+                :disabled="item.name==currentUser?.name"
                 @click="updateAdminStatus(item)"
               />
             </template>

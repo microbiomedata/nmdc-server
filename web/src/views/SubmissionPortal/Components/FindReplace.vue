@@ -5,8 +5,8 @@ import {
   ref,
   watch,
   PropType,
-} from '@vue/composition-api';
-import type { Ref } from '@vue/composition-api';
+} from 'vue';
+import type { Ref } from 'vue';
 import type HarmonizerApi from '../harmonizerApi';
 
 type SearchResult = {
@@ -53,7 +53,7 @@ export default defineComponent({
         result.value = { row: 0, col: 0 };
       } else if (count.value > 0) {
         // update result if there's a valid query
-        result.value = results.value[cursor.value];
+        result.value = results.value[cursor.value] || { row: 0, col: 0 };
         // highlight the result
         props.harmonizerApi.highlight(result.value.row, result.value.col);
         props.harmonizerApi.scrollViewportTo(result.value.row, result.value.col);
@@ -77,7 +77,7 @@ export default defineComponent({
       let high = count.value - 1;
       while (low <= high) {
         const mid = Math.floor((low + high) / 2);
-        if (comparator(results.value[mid], result.value) >= 0) {
+        if (results.value[mid] && comparator(results.value[mid], result.value) >= 0) {
           high = mid - 1;
         } else {
           low = mid + 1;
@@ -146,18 +146,19 @@ export default defineComponent({
               v-model="query"
               clearable
               label="Find"
+              variant="outlined"
               :counter="query ? count : undefined"
-              :counter-value="query ? () => (count ? cursor + 1 : 0) : null"
+              :counter-value="query ? () => (count ? cursor + 1 : 0) : 0"
             />
           </v-form>
         </v-col>
         <v-col class="flex-grow-0 flex-shrink-0 text-no-wrap">
           <v-tooltip left>
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                v-bind="attrs"
-                v-on="on"
+                variant="plain"
+                v-bind="props"
                 @click="previous"
               >
                 <v-icon>mdi-arrow-up-thin</v-icon>
@@ -166,11 +167,11 @@ export default defineComponent({
             <span>Find previous</span>
           </v-tooltip>
           <v-tooltip left>
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                v-bind="attrs"
-                v-on="on"
+                variant="plain"
+                v-bind="props"
                 @click="next"
               >
                 <v-icon>mdi-arrow-down-thin</v-icon>
@@ -190,15 +191,16 @@ export default defineComponent({
             v-model="replacement"
             clearable
             label="Replace"
+            variant="outlined"
           />
         </v-col>
         <v-col class="flex-grow-0 flex-shrink-0 text-no-wrap">
           <v-tooltip left>
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                v-bind="attrs"
-                v-on="on"
+                variant="plain"
+                v-bind="props"
                 @click="replaceOnce"
               >
                 <v-icon>mdi-repeat-once</v-icon>
@@ -207,11 +209,11 @@ export default defineComponent({
             <span>Replace</span>
           </v-tooltip>
           <v-tooltip left>
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                v-bind="attrs"
-                v-on="on"
+                variant="plain"
+                v-bind="props"
                 @click="replaceAll"
               >
                 <v-icon>mdi-repeat</v-icon>

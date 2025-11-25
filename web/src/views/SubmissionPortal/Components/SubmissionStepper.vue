@@ -1,7 +1,8 @@
 <script lang="ts">
 import {
-  computed, defineComponent, reactive, toRef,
-} from '@vue/composition-api';
+  computed, defineComponent,
+} from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const StepperMap: Record<string | number, number | string> = {
   'Submission Home': 1,
@@ -24,14 +25,19 @@ const StepperMap: Record<string | number, number | string> = {
 };
 
 export default defineComponent({
-  setup(props, { root }) {
-    const currentRoute = toRef(reactive(root.$router), 'currentRoute');
-    const step = computed(() => StepperMap[currentRoute.value.name || ''] || 0);
+  setup() {
+    const router = useRouter();
+    const route = useRoute();
+    
+    const step = computed(() => {
+      const mappedStep = StepperMap[route.name as string || ''];
+      return typeof mappedStep === 'number' ? mappedStep : 0;
+    });
 
     function gotoStep(newstep: number) {
       const routeName = StepperMap[newstep];
       if (newstep < step.value && typeof routeName === 'string') {
-        root.$router.push({ name: routeName });
+        router.push({ name: routeName as any });
       }
     }
 
@@ -42,62 +48,60 @@ export default defineComponent({
 
 <template>
   <v-stepper
-    :value="step"
+    :model-value="step"
+    bg-color="grey-darken-4"
     class="mb-3 flex-shrink-0"
-    outlined
-    tile
-    dark
   >
     <v-stepper-header>
-      <v-stepper-step
-        step="1"
-        :editable="1 < step"
+      <v-stepper-item
+        :value="1"
         :complete="1 < step"
+        :editable="1 < step"
+        title="Home"
+        subtitle="Begin or resume a submission."
+        color="primary"
         @click="gotoStep(1)"
-      >
-        Home
-        <small>Begin or resume a submission.</small>
-      </v-stepper-step>
+      />
       <v-divider />
-      <v-stepper-step
-        step="2"
-        :editable="2 < step"
+      <v-stepper-item
+        :value="2"
         :complete="2 < step"
+        :editable="2 < step"
+        title="Study Information"
+        subtitle="Input Form"
+        color="primary"
         @click="gotoStep(2)"
-      >
-        Study Information
-        <small>Input Form</small>
-      </v-stepper-step>
+      />
       <v-divider />
-      <v-stepper-step
-        step="3"
-        :editable="3 < step"
+      <v-stepper-item
+        :value="3"
         :complete="3 < step"
+        :editable="3 < step"
+        title="Multi-omics Data"
+        subtitle="Input Form"
+        color="primary"
         @click="gotoStep(3)"
-      >
-        Multi-omics Data
-        <small>Input Form</small>
-      </v-stepper-step>
+      />
       <v-divider />
-      <v-stepper-step
-        step="4"
-        :editable="4 < step"
+      <v-stepper-item
+        :value="4"
         :complete="4 < step"
+        :editable="4 < step"
+        title="Sample Environment"
+        subtitle="Choose MIxS Extension"
+        color="primary"
         @click="gotoStep(4)"
-      >
-        Sample Environment
-        <small>Choose MIxS Extension</small>
-      </v-stepper-step>
+      />
       <v-divider />
-      <v-stepper-step
-        step="5"
-        :editable="5 < step"
+      <v-stepper-item
+        :value="5"
         :complete="5 < step"
+        :editable="5 < step"
+        title="Customize Metadata Export"
+        subtitle="DataHarmonizer sample validation"
+        color="primary"
         @click="gotoStep(5)"
-      >
-        Customize Metadata Export
-        <small>DataHarmonizer sample validation</small>
-      </v-stepper-step>
+      />
     </v-stepper-header>
   </v-stepper>
 </template>

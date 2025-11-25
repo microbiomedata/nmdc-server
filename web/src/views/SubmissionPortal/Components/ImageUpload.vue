@@ -4,10 +4,11 @@ import {
   defineComponent,
   PropType,
   ref,
-} from '@vue/composition-api';
+} from 'vue';
 import { deleteSubmissionImage, generateSignedUploadUrl, setSubmissionImage } from '@/views/SubmissionPortal/store/api';
 import useRequest from '@/use/useRequest';
 import { SubmissionImageType } from '@/views/SubmissionPortal/types';
+import { useRoute } from 'vue-router';
 
 export default defineComponent({
   props: {
@@ -69,7 +70,8 @@ export default defineComponent({
      */
     'on-delete-success',
   ],
-  setup(props, { root, emit }) {
+  setup(props, { emit }) {
+    const route = useRoute();
     const fileInputRef = ref();
     const fileRef = ref<File | null>(null);
     const filePreview = computed(() => {
@@ -84,7 +86,7 @@ export default defineComponent({
       if (!fileRef.value) {
         return;
       }
-      const submissionId = root.$route.params.id;
+      const submissionId = (route.params as { id: string }).id;
       // First, get a signed URL from the backend
       const signedUrlResponse = await generateSignedUploadUrl(submissionId, fileRef.value);
 
@@ -110,7 +112,7 @@ export default defineComponent({
 
     const { request: deleteRequest, loading: deleting, error: deleteError } = useRequest();
     const handleDelete = () => deleteRequest(async () => {
-      const submissionId = root.$route.params.id;
+      const submissionId = (route.params as { id: string }).id;
       await deleteSubmissionImage(submissionId, props.imageType);
       emit('on-delete-success');
     });
@@ -148,8 +150,7 @@ export default defineComponent({
       :prepend-icon="inputIcon"
       :disabled="uploading"
       persistent-hint
-      outlined
-      dense
+      variant="outlined"
       truncate-length="100"
       class="my-2"
     />
@@ -235,7 +236,7 @@ export default defineComponent({
         outlined
         class="mt-2"
       >
-        Error uploading image: {{ uploadError.message }}
+        Error uploading image: {{ uploadError }}
       </v-alert>
       <v-alert
         v-if="deleteError"
@@ -243,7 +244,7 @@ export default defineComponent({
         outlined
         class="mt-2"
       >
-        Error deleting image: {{ deleteError.message }}
+        Error deleting image: {{ deleteError }}
       </v-alert>
     </div>
   </div>
