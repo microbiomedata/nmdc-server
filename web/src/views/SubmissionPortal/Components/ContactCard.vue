@@ -56,13 +56,11 @@ export default defineComponent({
               mdi-open-in-new
             </v-icon>
           </v-btn>
-          <v-list-item-content>
-            <v-list-item-title
-              class="primary--text"
-            >
-              Visit our support page
-            </v-list-item-title>
-          </v-list-item-content>
+          <v-list-item-title
+            class="primary--text"
+          >
+            Visit our support page
+          </v-list-item-title>
         </v-list-item>
         <v-list-item
           two-line
@@ -79,16 +77,14 @@ export default defineComponent({
           >
             <v-icon>mdi-email</v-icon>
           </v-btn>
-          <v-list-item-content>
-            <v-list-item-title
-              class="blue--text"
-            >
-              Send us a message
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              Ask us for help
-            </v-list-item-subtitle>
-          </v-list-item-content>
+          <v-list-item-title
+            class="blue--text"
+          >
+            Send us a message
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            Ask us for help
+          </v-list-item-subtitle>
         </v-list-item>
         <v-list-item
           two-line
@@ -105,16 +101,14 @@ export default defineComponent({
           >
             <v-icon>mdi-bug</v-icon>
           </v-btn>
-          <v-list-item-content>
-            <v-list-item-title
-              class="red--text"
-            >
-              Report an issue
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              Let us know of any bugs
-            </v-list-item-subtitle>
-          </v-list-item-content>
+          <v-list-item-title
+            class="red--text"
+          >
+            Report an issue
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            Let us know of any bugs
+          </v-list-item-subtitle>
         </v-list-item>
         <v-list-item
           two-line
@@ -131,16 +125,14 @@ export default defineComponent({
           >
             <v-icon>mdi-plus-circle</v-icon>
           </v-btn>
-          <v-list-item-content>
-            <v-list-item-title
-              class="grey--text text--darken-2"
-            >
-              Request a feature
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              Suggest a new feature
-            </v-list-item-subtitle>
-          </v-list-item-content>
+          <v-list-item-title
+            class="grey--text text--darken-2"
+          >
+            Request a feature
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            Suggest a new feature
+          </v-list-item-subtitle>
         </v-list-item>
       </v-list>
     </v-card-text>
