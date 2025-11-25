@@ -125,6 +125,7 @@ export default defineComponent({
 
     const activeTemplateKey = ref(templateList.value[0]);
     const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value!]);
+    const activeTabIndex = ref(0);
     const activeTemplateData = computed(() => {
       if (!activeTemplate.value?.sampleDataSlot) {
         return [];
@@ -469,6 +470,10 @@ export default defineComponent({
     watch(columnVisibility, () => {
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
+    
+    watch(activeTabIndex, (newIndex) => {
+      changeTemplate(newIndex);
+    });
 
     const selectedHelpDict = computed(() => {
       if (harmonizerApi.selectedColumn.value) {
@@ -665,6 +670,7 @@ export default defineComponent({
       templateList,
       activeTemplate,
       activeTemplateKey,
+      activeTabIndex,
       invalidCells,
       validationErrors,
       validationErrorGroups,
@@ -926,7 +932,7 @@ export default defineComponent({
     </div>
 
     <v-layout class="harmonizer-and-sidebar">
-      <v-tabs @change="changeTemplate">
+      <v-tabs v-model="activeTabIndex">
         <v-tooltip
           v-for="templateKey in templateList"
           :key="templateKey"
