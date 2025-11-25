@@ -29,7 +29,8 @@ export default defineComponent({
       <v-col cols="auto">
         <v-btn
           icon
-          color="primary"
+          variant="tonal"
+          color="grey-darken-2"
           size="x-large"
           :to="{name: 'Search'}"
         >
