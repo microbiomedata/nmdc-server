@@ -77,7 +77,6 @@ export default defineComponent({
     const isReviewerAssignmentDialogOpen = ref(false);
     const selectedSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
     const currentUser = stateRefs.user;
-    console.log('Current User:', currentUser.value);
     const isTestFilter = ref(null);
     const testFilterValues = [
       { text: 'Show all submissions', val: null },
@@ -114,14 +113,12 @@ export default defineComponent({
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
     
-    // Helper function to apply current sort options
     function applySortOptions() {
-      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
+      const sortOrder = options.value.sortDesc && options.value.sortDesc[0] ? 'desc' : 'asc';
       const sortBy = options.value.sortBy[0] || 'date_last_modified';
       submission.setSortOptions(sortBy, sortOrder);
     }
 
-    // Set initial sort options before the first fetch
     applySortOptions();
     const assignReviewerRequest = useRequest();
 
