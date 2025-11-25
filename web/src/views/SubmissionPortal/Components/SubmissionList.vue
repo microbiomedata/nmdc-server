@@ -41,6 +41,7 @@ const headers: DataTableHeader[] = [
   {
     title: 'Status',
     value: 'status',
+    width: '200px',
   },
   {
     title: 'Last Modified',
@@ -76,6 +77,7 @@ export default defineComponent({
     const isReviewerAssignmentDialogOpen = ref(false);
     const selectedSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
     const currentUser = stateRefs.user;
+    console.log('Current User:', currentUser.value);
     const isTestFilter = ref(null);
     const testFilterValues = [
       { text: 'Show all submissions', val: null },
@@ -340,22 +342,26 @@ export default defineComponent({
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
           <template #[`header.status`]="{ column }">
-            <v-tooltip
-              v-if="currentUser?.is_admin"
-              bottom
-            >
-              <template #activator="{ props }">
-                <v-icon
-                  class="ml-1"
-                  color="grey"
-                  v-bind="props"
-                >
-                  mdi-information-outline
-                </v-icon>
-              </template>
-              <span>Greyed out options are user-triggered statuses and cannot be changed or selected</span>
-            </v-tooltip>
-            {{ column.title }}
+            <div class="d-flex align-center ga-1">
+              <v-tooltip
+                v-if="currentUser?.is_admin"
+                location="bottom"
+              >
+                <template #activator="{ props }">
+                  <v-icon
+                    class="ml-1"
+                    color="grey"
+                    v-bind="props"
+                  >
+                    mdi-information-outline
+                  </v-icon>
+                </template>
+                <span>Greyed out options are user-triggered statuses and cannot be changed or selected</span>
+              </v-tooltip>
+              <span>
+                {{ column.title }}
+              </span>
+            </div>
           </template>
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
