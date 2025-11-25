@@ -275,9 +275,9 @@ export default defineComponent({
             />
           </v-container>
           <v-col offset="1">
-            <div class="display-1">
+            <h2 class="text-h4">
               NMDC Details
-            </div>
+            </h2>
             <v-list>
               <AttributeItem
                 v-bind="{ item, field: 'id', bindClick: true }"
@@ -294,9 +294,9 @@ export default defineComponent({
                   (item.protocol_link && item.protocol_link.length > 0) ||
                   item.principal_investigator_websites.length > 0"
             >
-              <div class="display-1">
+              <h2 class="text-h4">
                 Additional Resources
-              </div>
+              </h2>
               <v-list
                 v-if="
                   goldLinks.size > 0 || bioprojectLinks.length > 0 ||
