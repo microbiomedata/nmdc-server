@@ -82,13 +82,15 @@ export default defineComponent({
       api.getStudy(props.id).then((b) => { item.value = b; });
     });
 
-    const studyData = computed(() => Object.values(item)
-      .map((val) => ({
-        ...val,
-        sample_count: val?.children?.reduce((acc: number, child: StudySearchResults) => acc + child.sample_count, val.sample_count),
-      }))[0]);
+    const studyData = computed(() => {
+      if (!item.value) return null;
+      return {
+        ...item.value,
+        sample_count: item.value?.children?.reduce((acc: number, child: StudySearchResults) => acc + child.sample_count, item.value.sample_count),
+      };
+    });
 
-    const displayFields = computed(() => {
+      const displayFields = computed(() => {
       if (item.value === null) {
         return [];
       }
@@ -284,6 +286,7 @@ export default defineComponent({
                 @click="seeStudyInContext(item)"
               />
               <AttributeItem
+                v-if="studyData"
                 v-bind="{ item: studyData, field: 'sample_count', bindClick: true }"
                 @click="seeStudyInContext(item)"
               />
