@@ -3,7 +3,7 @@
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import {
   computed, defineComponent, PropType, reactive, ref, Ref, watch,
-} from '@vue/composition-api';
+} from 'vue';
 import { flattenDeep } from 'lodash';
 
 import { DataTableHeader } from 'vuetify';
@@ -33,6 +33,12 @@ const descriptionMap: Record<string, string> = {
   'Protein FAA': 'FASTA amino acid file for annotated proteins.',
 };
 
+export interface NomMetadataItem {
+  massSpecPolarityMode?: string,
+  eluentIntroductionCategory?: string,
+  sampledPortions?: string,
+}
+
 export default defineComponent({
   components: { DownloadDialog },
 
@@ -58,34 +64,34 @@ export default defineComponent({
   setup(props) {
     const headers: DataTableHeader[] = [
       {
-        text: '',
+        title: '',
         value: 'group_name',
         sortable: false,
       },
       {
-        text: 'Data Object Type',
+        title: 'Data Object Type',
         value: 'object_type',
         sortable: false,
       },
       {
-        text: 'Data Object Description',
+        title: 'Data Object Description',
         value: 'object_description',
         sortable: false,
       },
       {
-        text: 'File Size',
+        title: 'File Size',
         value: 'file_size_bytes',
         width: 100,
         sortable: false,
       },
       {
-        text: 'Downloads',
+        title: 'Downloads',
         value: 'downloads',
         width: 80,
         sortable: false,
       },
       {
-        text: 'Download',
+        title: 'Download',
         value: 'action',
         width: 80,
         sortable: false,
@@ -124,11 +130,7 @@ export default defineComponent({
       value: false,
     });
 
-    function nomMetadataString(item: {
-      massSpecPolarityMode: string,
-      eluentIntroductionCategory: string,
-      sampledPortions: string,
-    }): string {
+    function nomMetadataString(item: NomMetadataItem): string {
       return [item.eluentIntroductionCategory, item.sampledPortions, item.massSpecPolarityMode].filter((value) => !!value).join(', ');
     }
 
@@ -143,7 +145,7 @@ export default defineComponent({
           omicsCopy.massSpecConfigId = annotations.mass_spectrometry_configuration_id || '';
           omicsCopy.massSpecConfigName = annotations.mass_spectrometry_configuration_name || '';
           const polarityMode = annotations.mass_spectrometry_config_polarity_mode
-            ? `${PolarityModeEnum.permissible_values[annotations.mass_spectrometry_config_polarity_mode].text} mode`
+            ? `${PolarityModeEnum.permissible_values[annotations.mass_spectrometry_config_polarity_mode as string].text} mode`
             : '';
           omicsCopy.massSpecPolarityMode = polarityMode;
         }
@@ -152,7 +154,7 @@ export default defineComponent({
           omicsCopy.chromConfigName = annotations.chromatography_configuration_name || '';
         }
         if (annotations.eluent_introduction_category) {
-          omicsCopy.eluentIntroductionCategory = EluentIntroductionCategoryEnum.permissible_values[annotations.eluent_introduction_category].title;
+          omicsCopy.eluentIntroductionCategory = EluentIntroductionCategoryEnum.permissible_values[annotations.eluent_introduction_category as string].title;
         }
         if (annotations.sampled_portions?.length) {
           const displaySampledPortions = (annotations.sampled_portions as string[]).map((sampledPortion: string) => (
@@ -241,7 +243,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-card outlined>
+  <v-card variant="outlined">
     <v-dialog
       v-if="termsDialog.item"
       v-model="termsDialog.value"
@@ -300,7 +302,7 @@ export default defineComponent({
     <v-data-table
       :headers="headers"
       :items="items"
-      dense
+      density="compact"
     >
       <template #item="{ item, index }">
         <tr
@@ -328,12 +330,12 @@ export default defineComponent({
             </span>
             <span v-if="omicsType === 'Proteomics'">
               <br>
-              <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category] }}</b>
+              <b>{{ metaproteomicCategoryEnumToDisplay[item.omics_data.metaproteomics_analysis_category as keyof typeof metaproteomicCategoryEnumToDisplay] }}</b>
             </span>
-            <span v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data)">
+            <span v-if="omicsType === 'Organic Matter Characterization' && nomMetadataString(item.omics_data as NomMetadataItem)">
               <br>
               <b>Data Generation: </b> NOM via
-              {{ nomMetadataString(item.omics_data) }}
+              {{ nomMetadataString(item.omics_data as NomMetadataItem) }}
             </span>
             <br>
             <div v-if="getRelatedBiosampleIds(item.omics_data).length">
@@ -354,17 +356,18 @@ export default defineComponent({
         </tr>
         <tr>
           <td>
-            <v-tooltip right>
-              <template #activator="{on, attrs }">
+            <v-tooltip
+              location="right"
+              text="This file is included in the currently selected bulk download"
+            >
+              <template #activator="{ props }">
                 <v-icon
-                  v-bind="attrs"
+                  v-bind="props"
                   :style="{ visibility: item.selected ? 'visible' : 'hidden'}"
-                  v-on="on"
                 >
                   mdi-checkbox-marked-circle-outline
                 </v-icon>
               </template>
-              <span>This file is included in the currently selected bulk download</span>
             </v-tooltip>
           </td>
           <td>
@@ -384,23 +387,24 @@ export default defineComponent({
           <td>
             <v-tooltip
               :disabled="!!(loggedInUser && item.url)"
-              bottom
+              location="bottom"
             >
-              <template #activator="{ on, attrs }">
-                <span v-on="on">
+              <template #activator="{ props }">
+                <span v-bind="props">
                   <v-btn
                     v-if="item.url"
                     icon
                     :disabled="!loggedInUser"
-                    v-bind="attrs"
+                    variant="text"
                     color="primary"
-                    @click="handleDownload(item)"
+                    @click="handleDownload(item as unknown as OmicsProcessingResult)"
                   >
                     <v-icon>mdi-download</v-icon>
                   </v-btn>
                   <v-btn
                     v-else
                     icon
+                    variant="plain"
                     disabled
                   >
                     <v-icon>
@@ -409,12 +413,14 @@ export default defineComponent({
                   </v-btn>
                 </span>
               </template>
-              <span v-if="item.url">
-                You must be logged in
-              </span>
-              <span v-else>
-                File unavailable
-              </span>
+              <template #default>
+                <span v-if="item.url">
+                  You must be logged in
+                </span>
+                <span v-else>
+                  File unavailable
+                </span>
+              </template>
             </v-tooltip>
           </td>
         </tr>

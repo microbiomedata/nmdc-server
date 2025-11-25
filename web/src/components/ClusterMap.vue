@@ -1,27 +1,26 @@
 <script lang="ts">
 import {
   computed,
-  defineComponent, PropType, reactive, ref, toRef, watch, watchEffect,
-} from '@vue/composition-api';
+  defineComponent, PropType, reactive, ref, toRef, watch, onMounted, nextTick,
+} from 'vue';
 
 /**
  * LEAFLET imports
  */
 import L, { Icon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import {
-  LMap, LTileLayer, LMarker, LPopup,
-} from 'vue2-leaflet';
-// @ts-ignore
-import * as markerurl from 'leaflet/dist/images/marker-icon.png';
-// @ts-ignore
-import * as retinaurl from 'leaflet/dist/images/marker-icon-2x.png';
-// @ts-ignore
-import * as shadowurl from 'leaflet/dist/images/marker-shadow.png';
-// @ts-ignore
-import LMarkerCluster from 'vue2-leaflet-markercluster';
+import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
+import {
+  LMap, LTileLayer,
+} from '@vue-leaflet/vue-leaflet';
+// @ts-ignore
+import markerurl from 'leaflet/dist/images/marker-icon.png';
+// @ts-ignore
+import retinaurl from 'leaflet/dist/images/marker-icon-2x.png';
+// @ts-ignore
+import shadowurl from 'leaflet/dist/images/marker-shadow.png';
 /**
  * END LEAFLET
  */
@@ -50,9 +49,6 @@ export default defineComponent({
   components: {
     LMap,
     LTileLayer,
-    LMarker,
-    LPopup,
-    LMarkerCluster,
   },
 
   props: {
@@ -69,9 +65,11 @@ export default defineComponent({
       default: null,
     },
   },
-
+  emits: ['selected'],
   setup(props, { emit }) {
     const mapRef = ref();
+    const mapReady = ref(false);
+    const markerClusterGroup = ref<any>(null);
     const mapProps = reactive({
       bounds: null as L.LatLngBoundsExpression | null,
       zoom: 3,
@@ -113,6 +111,48 @@ export default defineComponent({
       mapData.value = values;
     }
 
+    function updateMarkers() {
+      const leafletMap = mapRef.value?.leafletObject;
+      if (!leafletMap || !mapReady.value) return;
+
+      // Remove existing cluster group if it exists
+      if (markerClusterGroup.value) {
+        leafletMap.removeLayer(markerClusterGroup.value);
+      }
+
+      // Create new marker cluster group
+      // @ts-ignore - MarkerClusterGroup is added by leaflet.markercluster plugin
+      markerClusterGroup.value = L.markerClusterGroup();
+
+      // Add markers to the cluster group
+      mapData.value.forEach((m) => {
+        const marker = L.marker(m.latLng);
+        const popupContent = `
+          <h3>Sample Collection</h3>
+          <ul class="pl-4">
+            <li>Ecosystem: ${m.ecosystem || 'N/A'}</li>
+            <li>Ecosystem Category: ${m.ecosystem_category || 'N/A'}</li>
+            <li>Latitude: ${m.latitude}</li>
+            <li>Longitude: ${m.longitude}</li>
+          </ul>
+        `;
+        marker.bindPopup(popupContent);
+        markerClusterGroup.value.addLayer(marker);
+      });
+
+      // Add the cluster group to the map
+      leafletMap.addLayer(markerClusterGroup.value);
+
+      // Fit bounds if we have data
+      if (mapData.value.length > 0 && mapCenter.value) {
+        const fitBoundsOptions = {
+          padding: [20, 20],
+          maxZoom: 5,
+        };
+        leafletMap.fitBounds(mapCenter.value, fitBoundsOptions);
+      }
+    }
+
     function updateBounds() {
       const { bounds } = mapProps;
       if (bounds) {
@@ -139,25 +179,58 @@ export default defineComponent({
       }
     }
 
-    getMapData();
+    function onMapReady() {
+      // Add a small delay to ensure the map is fully initialized
+      setTimeout(() => {
+        mapReady.value = true;
+      }, 100);
+    }
 
-    watchEffect(() => {
-      if (mapRef.value && mapCenter.value) {
-        const fitBoundsOptions = {
-          padding: [20, 20],
-          maxZoom: 5,
-        };
-        mapRef.value.fitBounds(mapCenter.value, fitBoundsOptions);
-        mapRef.value.mapObject.invalidateSize(false);
+    onMounted(async () => {
+      await nextTick();
+      // Wait for map to be ready before loading data
+      if (!mapReady.value) {
+        setTimeout(() => {
+          if (mapReady.value) {
+            getMapData();
+          }
+        }, 200);
+      } else {
+        getMapData();
       }
     });
-    watch([toRef(props, 'conditions')], getMapData);
+
+    // Watch for map data changes and update markers
+    watch(mapData, () => {
+      if (mapReady.value) {
+        nextTick(() => {
+          updateMarkers();
+        });
+      }
+    });
+
+    // Watch for map ready state
+    watch(mapReady, (ready) => {
+      if (ready && mapData.value.length > 0) {
+        nextTick(() => {
+          updateMarkers();
+        });
+      }
+    });
+
+    watch([toRef(props, 'conditions')], () => {
+      if (mapReady.value) {
+        getMapData();
+      }
+    });
 
     return {
       mapCenter,
       mapData,
       mapProps,
       mapRef,
+      mapReady,
+      onMapReady,
       /* methods */
       updateBounds,
     };
@@ -188,6 +261,7 @@ export default defineComponent({
         width: '100%',
         zIndex: 1,
       }"
+      @ready="onMapReady"
       @update:bounds="mapProps.bounds = $event"
     >
       <l-tile-layer
@@ -198,23 +272,6 @@ export default defineComponent({
           maxNativeZoom: 18,
         }"
       />
-      <l-marker-cluster>
-        <l-marker
-          v-for="(m, i) in mapData"
-          :key="i"
-          :lat-lng="m.latLng"
-        >
-          <l-popup>
-            <h3>Sample Collection</h3>
-            <ul>
-              <li>Ecosystem: {{ m.ecosystem }}</li>
-              <li>Ecosystem Category: {{ m.ecosystem_category }}</li>
-              <li>Latitude: {{ m.latitude }}</li>
-              <li>Longitude: {{ m.longitude }}</li>
-            </ul>
-          </l-popup>
-        </l-marker>
-      </l-marker-cluster>
     </l-map>
   </div>
 </template>

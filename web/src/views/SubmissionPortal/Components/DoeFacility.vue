@@ -1,10 +1,10 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
+import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
+import Definitions from '@/definitions';
 import {
   multiOmicsForm, addAwardDoi, templateHasData, checkJGITemplates,
 } from '../store';
-import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
-import Definitions from '@/definitions';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 
 export default defineComponent({
@@ -55,8 +55,7 @@ export default defineComponent({
       label="EMSL"
       value="EMSL"
       hide-details
-      class="mb-2 mt-0"
-      :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
       @change="facilityChange"
     />
     <div
@@ -75,7 +74,7 @@ export default defineComponent({
           persistent-hint
           label="EMSL Proposal Number *"
           class="mt-4"
-          outlined
+          variant="outlined"
           validate-on-blur
           dense
         />
@@ -110,28 +109,28 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Lipidome"
         value="lipidome-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metaproteome"
         value="mp-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metabolome"
         value="mb-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Natural Organic Matter (FT-ICR MS)"
         value="nom-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
         hide-details
       />
     </div>
@@ -140,7 +139,6 @@ export default defineComponent({
       label="JGI"
       value="JGI"
       hide-details
-      class="mb-2 mt-0"
       :disabled="checkJGITemplates()"
       @change="facilityChange"
     />
@@ -160,7 +158,7 @@ export default defineComponent({
           persistent-hint
           label="JGI Proposal Number *"
           class="mt-4"
-          outlined
+          variant="outlined"
           validate-on-blur
           dense
         />
@@ -175,21 +173,21 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metagenome"
         value="mg-jgi"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mg.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mg?.sampleDataSlot)"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metagenome (Long Read)"
         value="mg-lr-jgi"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mg_lr.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mg_lr?.sampleDataSlot)"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metatranscriptome"
         value="mt-jgi"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mt.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mt?.sampleDataSlot)"
         hide-details
       />
       <v-checkbox

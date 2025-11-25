@@ -1,5 +1,6 @@
 <script lang="ts">
-import { defineComponent, computed } from '@vue/composition-api';
+import { defineComponent, computed } from 'vue';
+import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   templateList,
   packageName,
@@ -11,14 +12,13 @@ import {
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
-import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import StatusAlert from './StatusAlert.vue';
 
 export default defineComponent({
   components: { SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert },
   setup() {
     const templateListDisplayNames = computed(() => templateList.value
-      .map((templateKey) => HARMONIZER_TEMPLATES[templateKey].displayName)
+      .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
       .join(' + '));
 
     return {
@@ -62,9 +62,8 @@ export default defineComponent({
       v-model="packageName"
       dense
       hide-details
-      class="my-2"
-      :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]].sampleDataSlot) || !canEditSubmissionMetadata()"
-      :label="HARMONIZER_TEMPLATES[option[0]].displayName"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
+      :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
       :value="option[0]"
     />
     <p class="grey--text text--darken-1 my-5">
@@ -75,16 +74,15 @@ export default defineComponent({
       :key="option[0]"
       v-model="packageName"
       hide-details
-      class="my-2"
       :disabled="true"
-      :label="HARMONIZER_TEMPLATES[option[0]].displayName"
+      :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
       :value="option[0]"
     />
     <template v-if="canEditSubmissionByStatus()">
       <v-alert
         v-if="!templateHasData('all')"
         color="grey lighten-2"
-        class="mt-3"
+        class="my-3"
       >
         <p class="text-h5">
           DataHarmonizer Template Choice
@@ -115,7 +113,7 @@ export default defineComponent({
     <v-alert
       v-if="!canEditSubmissionByStatus() && packageName.length > 0"
       color="grey lighten-2"
-      class="mt-3"
+      class="my-3"
     >
       <p class="text-h5">
         DataHarmonizer Template
@@ -128,7 +126,7 @@ export default defineComponent({
         depressed
         :to="{ name: 'Multiomics Form' }"
       >
-        <v-icon class="pr-1">
+        <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
         Go to previous step
@@ -142,10 +140,10 @@ export default defineComponent({
           name: 'Submission Sample Editor',
         }"
       >
-        <v-icon class="pr-1">
+        Go to next step
+        <v-icon class="pl-2">
           mdi-arrow-right-circle
         </v-icon>
-        Go to next step
       </v-btn>
     </div>
   </div>

@@ -1,4 +1,4 @@
-import { reactive, toRefs } from '@vue/composition-api';
+import { reactive, toRefs } from 'vue';
 
 export default function useRequest() {
   const state = reactive({

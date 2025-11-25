@@ -7,7 +7,7 @@ import {
   onMounted,
   ref,
   Ref,
-} from '@vue/composition-api';
+} from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
@@ -30,6 +30,7 @@ import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import ImageUpload from './ImageUpload.vue';
 import StatusAlert from './StatusAlert.vue';
+import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 
 export default defineComponent({
   components: {
@@ -89,7 +90,7 @@ export default defineComponent({
       });
     }
 
-    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
+    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,
@@ -100,7 +101,7 @@ export default defineComponent({
       if (idx > studyForm.contributors.length) return true;
       const contributor = studyForm.contributors[idx];
       // show error when: permission level exists, but orcid does not
-      return (contributor.permissionLevel && !!v) || !contributor.permissionLevel || 'ORCID iD is required if a permission level is specified';
+      return (contributor?.permissionLevel && !!v) || !contributor?.permissionLevel || 'ORCID iD is required if a permission level is specified';
     };
 
     const uniqueOrcidRule = (idx: number) => (v: string) => {
@@ -154,10 +155,10 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="text-h2">
+    <h1 class="text-h2">
       Study Information
       <submission-docs-link anchor="study" />
-    </div>
+    </h1>
     <div class="text-h5">
       {{ NmdcSchema.classes.Study.description }}
     </div>
@@ -181,7 +182,7 @@ export default defineComponent({
         label="Study Name *"
         :hint="Definitions.studyName"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
         class="my-2"
       />
@@ -190,7 +191,7 @@ export default defineComponent({
         label="Study Description"
         :hint="Definitions.studyDescription"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
         class="my-2"
       >
@@ -203,7 +204,7 @@ export default defineComponent({
         label="Webpage Links"
         :hint="Definitions.linkOutWebpage"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
         multiple
         small-chips
@@ -215,7 +216,7 @@ export default defineComponent({
         label="Optional Notes"
         :hint="Definitions.studyOptionalNotes"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
         class="my-2"
       />
@@ -241,7 +242,7 @@ export default defineComponent({
         label="Name"
         :hint="Definitions.piName"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
         class="my-2"
       />
@@ -255,7 +256,7 @@ export default defineComponent({
         persistent-hint
         type="email"
         required
-        outlined
+        variant="outlined"
         dense
         class="my-2"
       />
@@ -263,7 +264,7 @@ export default defineComponent({
         v-model="studyForm.piOrcid"
         label="ORCID iD"
         :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid"
-        outlined
+        variant="outlined"
         :hint="Definitions.piOrcid"
         persistent-hint
         dense
@@ -299,7 +300,7 @@ export default defineComponent({
         :key="`fundingSource${i}`"
         class="d-flex"
       >
-        <v-card class="d-flex flex-column grow pa-4 mb-4">
+        <v-card class="d-flex flex-column flex-fill pa-4 mb-4">
           <div class="d-flex">
             <v-text-field
               v-if="studyForm.fundingSources !== null"
@@ -307,7 +308,7 @@ export default defineComponent({
               label="Funding Source *"
               :hint="Definitions.fundingSources"
               persistent-hint
-              outlined
+              variant="outlined"
               dense
               class="mb-2 mr-3"
               :error-messages="studyForm.fundingSources[i] ? undefined : ['Field cannot be empty.']"
@@ -321,6 +322,7 @@ export default defineComponent({
         <v-btn
           v-if="studyForm.fundingSources !== null"
           icon
+          variant="plain"
           :disabled="!isOwner()"
           @click="studyForm.fundingSources.splice(i, 1)"
         >
@@ -338,10 +340,6 @@ export default defineComponent({
         </v-icon>
         Add Funding Source
       </v-btn>
-      <template #message="{ message }">
-        <span v-html="message" />
-      </template>
-
       <div class="text-h4 mt-8">
         Contributors
       </div>
@@ -353,13 +351,13 @@ export default defineComponent({
         :key="`contributor${i}`"
         class="d-flex"
       >
-        <v-card class="d-flex flex-column grow pa-4 mb-4">
+        <v-card class="d-flex flex-column flex-fill pa-4 mb-4">
           <div class="d-flex">
             <v-text-field
               v-model="contributor.name"
               label="Full name *"
               :hint="Definitions.contributorFullName"
-              outlined
+              variant="outlined"
               dense
               persistent-hint
               :error-messages="contributor.name ? undefined : ['Field cannot be empty.']"
@@ -371,7 +369,7 @@ export default defineComponent({
               :hint="Definitions.contributorOrcid"
               :disabled="currentUserOrcid === contributor.orcid"
               label="ORCID"
-              outlined
+              variant="outlined"
               persistent-hint
               dense
               :style="{ maxWidth: '400px'}"
@@ -389,7 +387,7 @@ export default defineComponent({
               :hint="Definitions.contributorRoles"
               deletable-chips
               multiple
-              outlined
+              variant="outlined"
               chips
               small-chips
               dense
@@ -411,7 +409,7 @@ export default defineComponent({
               :style="{ maxWidth: '400px'}"
               label="Permission Level"
               hint="Level of permissions the contributor has for this submission"
-              outlined
+              variant="outlined"
               dense
               persistent-hint
               @change="() => formRef.validate()"
@@ -421,12 +419,12 @@ export default defineComponent({
                   bottom
                   max-width="500px"
                 >
-                  <template #activator="{on, attrs}">
+                  <template #activator="{props}">
                     <v-btn
                       icon
-                      small
-                      v-bind="attrs"
-                      v-on="on"
+                      size="small"
+                      variant="plain"
+                      v-bind="props"
                     >
                       <v-icon>mdi-help-circle</v-icon>
                     </v-btn>
@@ -445,6 +443,7 @@ export default defineComponent({
         </v-card>
         <v-btn
           icon
+          variant="plain"
           :disabled="!isOwner() || currentUserOrcid === contributor.orcid"
           @click="studyForm.contributors.splice(i, 1)"
         >
@@ -474,15 +473,15 @@ export default defineComponent({
         :key="`dataDois${i}`"
         class="d-flex"
       >
-        <v-card class="d-flex flex-column grow pa-4 mb-4">
+        <v-card class="d-flex flex-column flex-fill pa-4 mb-4">
           <div class="d-flex">
             <v-text-field
               v-if="studyForm.dataDois !== null"
-              v-model="studyForm.dataDois[i].value"
+              v-model="studyForm.dataDois[i]!.value"
               label="Data DOI value *"
               :hint="Definitions.dataDoiValue"
               persistent-hint
-              outlined
+              variant="outlined"
               dense
               required
               class="mb-2 mr-3"
@@ -496,16 +495,18 @@ export default defineComponent({
             </v-text-field>
             <v-select
               v-if="studyForm.dataDois !== null"
-              v-model="studyForm.dataDois[i].provider"
+              v-model="studyForm.dataDois[i]!.provider"
               label="Data DOI Provider *"
               :hint="Definitions.dataDoiProvider"
               :items="doiProviderValues"
+              item-title="text"
+              item-value="value"
               persistent-hint
-              outlined
+              variant="outlined"
               dense
               clearable
               class="mb-2 mr-3"
-              :rules="studyForm.dataDois[i].provider ? undefined : ['A provider must be selected.']"
+              :rules="studyForm.dataDois[i]?.provider ? undefined : ['A provider must be selected.']"
             >
               <template #message="{ message }">
                 <span v-html="message" />
@@ -516,6 +517,7 @@ export default defineComponent({
         <v-btn
           v-if="studyForm.dataDois !== null"
           icon
+          variant="plain"
           :disabled="!isOwner()"
           @click="studyForm.dataDois.splice(i, 1)"
         >
@@ -542,7 +544,7 @@ export default defineComponent({
         label="GOLD Study ID"
         :hint="Definitions.studyGoldID"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
       />
       <v-text-field
@@ -550,7 +552,7 @@ export default defineComponent({
         label="NCBI BioProject Accession"
         :hint="Definitions.studyNCBIBioProjectAccession"
         persistent-hint
-        outlined
+        variant="outlined"
         dense
       />
       <v-combobox
@@ -560,7 +562,7 @@ export default defineComponent({
         persistent-hint
         deletable-chips
         multiple
-        outlined
+        variant="outlined"
         chips
         small-chips
         dense
@@ -571,10 +573,9 @@ export default defineComponent({
     <div class="d-flex mt-5">
       <v-btn
         color="gray"
-        depressed
         :to="{ name: 'Submission Home' }"
       >
-        <v-icon class="pl-1">
+        <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
         Go to previous step
@@ -582,12 +583,11 @@ export default defineComponent({
       <v-spacer />
       <v-btn
         color="primary"
-        depressed
         :disabled="!studyFormValid"
         :to="{ name: 'Multiomics Form' }"
       >
         Go to next step
-        <v-icon class="pl-1">
+        <v-icon class="pl-2">
           mdi-arrow-right-circle
         </v-icon>
       </v-btn>
