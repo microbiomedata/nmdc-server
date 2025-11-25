@@ -166,3 +166,9 @@ export default defineComponent({
     </v-list>
   </div>
 </template>
+
+<style scoped lang="scss">
+a.v-list-item {
+  color: inherit;
+}
+</style>
