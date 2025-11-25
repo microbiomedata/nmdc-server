@@ -62,7 +62,6 @@ export default defineComponent({
       v-model="packageName"
       dense
       hide-details
-      class="my-2"
       :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
       :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
       :value="option[0]"
@@ -75,7 +74,6 @@ export default defineComponent({
       :key="option[0]"
       v-model="packageName"
       hide-details
-      class="my-2"
       :disabled="true"
       :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
       :value="option[0]"

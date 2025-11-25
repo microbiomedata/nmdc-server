@@ -223,13 +223,11 @@ export default defineComponent({
           label="No"
           :value="false"
           hide-details
-          class="mb-2 mt-0"
         />
         <v-radio
           label="Yes"
           :value="true"
           hide-details
-          class="mb-2 mt-0"
         />
       </v-radio-group>
       <div
@@ -250,12 +248,10 @@ export default defineComponent({
         <v-radio
           label="No"
           :value="false"
-          class="mb-2 mt-0"
         />
         <v-radio
           label="Yes"
           :value="true"
-          class="mb-2 mt-0"
         />
       </v-radio-group>
 
@@ -266,12 +262,13 @@ export default defineComponent({
         :rules="projectAwardValidationRules()"
         class="pb-5"
       >
-        <div class="d-flex">
+        <div class="d-flex align-center ga-1">
           <v-radio
+            class="flex-0-0"
             value="CSP"
             label="CSP"
           />
-          <div class="ml-1">
+          <div>
             (<a
               href="https://jgi.doe.gov/user-programs/program-info/csp-overview/csp-annual-call/"
               target="_blank"
@@ -280,12 +277,13 @@ export default defineComponent({
           </div>
         </div>
 
-        <div class="d-flex">
+        <div class="d-flex align-center ga-1">
           <v-radio
+            class="flex-0-0"
             value="BERSS"
             label="BERSS"
           />
-          <div class="ml-1">
+          <div>
             (<a
               href="https://jgi.doe.gov/user-programs/other-programs/"
               target="_blank"
@@ -294,12 +292,13 @@ export default defineComponent({
           </div>
         </div>
 
-        <div class="d-flex">
+        <div class="d-flex align-center ga-1">
           <v-radio
+            class="flex-0-0"
             value="BRCs"
             label="BRCs"
           />
-          <div class="ml-1">
+          <div>
             (<a
               href="https://jgi.doe.gov/user-programs/other-programs/"
               target="_blank"
@@ -308,12 +307,13 @@ export default defineComponent({
           </div>
         </div>
 
-        <div class="d-flex">
+        <div class="d-flex align-center ga-1">
           <v-radio
+            class="flex-0-0"
             value="FICUS"
             label="FICUS"
           />
-          <div class="ml-1">
+          <div>
             (<a
               href="https://www.emsl.pnnl.gov/basic/ficus-program/1872"
               target="_blank"
@@ -322,12 +322,13 @@ export default defineComponent({
           </div>
         </div>
 
-        <div class="d-flex">
+        <div class="d-flex align-center ga-1">
           <v-radio
+            class="flex-0-0"
             value="MONet"
             label="MONet"
           />
-          <div class="ml-1">
+          <div>
             (<a
               href="https://www.emsl.pnnl.gov/monet"
               target="_blank"
@@ -349,7 +350,7 @@ export default defineComponent({
               <v-text-field
                 v-model="multiOmicsForm.otherAward"
                 class="pa-0 ma-0"
-                dense
+                density="compact"
                 hide-details="auto"
                 variant="outlined"
                 :rules="otherAwardValidationRules()"

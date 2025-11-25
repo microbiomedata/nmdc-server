@@ -55,7 +55,6 @@ export default defineComponent({
       label="EMSL"
       value="EMSL"
       hide-details
-      class="mb-2 mt-0"
       :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
       @change="facilityChange"
     />
@@ -140,7 +139,6 @@ export default defineComponent({
       label="JGI"
       value="JGI"
       hide-details
-      class="mb-2 mt-0"
       :disabled="checkJGITemplates()"
       @change="facilityChange"
     />
