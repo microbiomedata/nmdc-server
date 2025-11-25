@@ -83,18 +83,24 @@ export default defineComponent({
         @update:model-value="updateFromTextField"
       />
     </template>
-    <v-date-picker
-      v-model="isoDate"
-      no-title
-      scrollable
-      @update:model-value="updateFromDatePicker"
-    />
-    <v-btn
-      text
-      color="primary"
-      @click="closeMenu"
-    >
-      OK
-    </v-btn>
+    <v-card>
+      <v-date-picker
+        v-model="isoDate"
+        elevation="0"
+        no-title
+        scrollable
+        @update:model-value="updateFromDatePicker"
+      />
+      <div class="d-flex justify-end pa-2">
+        <v-btn
+          text
+          variant="plain"
+          color="primary"
+          @click="closeMenu"
+        >
+          OK
+        </v-btn>
+      </div>
+    </v-card>
   </v-menu>
 </template>
