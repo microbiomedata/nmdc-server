@@ -87,11 +87,15 @@ export default defineComponent({
       { text: 'Show only test submissions', val: true },
       { text: 'Hide test submissions', val: false }];
 
+    const statusUpdatingSubmissionId = ref<string | null>(null);
     const exclude = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.SubmittedPendingReview.text];
     const availableStatuses = Object.keys(SubmissionStatusTitleMapping).map((key) => ({
       value: key,
-      text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
-      disabled: exclude.includes(key),
+      title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      props: {
+        density: 'compact',
+        disabled: exclude.includes(key)
+      },
     }));
 
     async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
@@ -127,8 +131,13 @@ export default defineComponent({
     const assignReviewerRequest = useRequest();
 
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
-      await updateSubmissionStatus(item.id, newStatus);
-      await submission.refetch();
+      statusUpdatingSubmissionId.value = item.id;
+      try {
+        await updateSubmissionStatus(item.id, newStatus);
+        await submission.refetch();
+      } finally {
+        statusUpdatingSubmissionId.value = null;
+      }
     }
 
     function updateTableOptions(newOptions: any) {
@@ -136,7 +145,7 @@ export default defineComponent({
       submission.setPage(options.value.page);
       applySortOptions();
     }
-    
+
     watch(isTestFilter, () => {
       options.value.page = 1;
       submission.setPage(options.value.page);
@@ -200,6 +209,7 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
+      statusUpdatingSubmissionId,
       availableStatuses,
       handleStatusChange,
       SubmissionStatusEnum,
@@ -374,35 +384,16 @@ export default defineComponent({
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
               <v-select
-                v-if="currentUser?.is_admin && item.status === SubmissionStatusEnum.InProgress.text"
-                :value="item.status"
+                v-if="currentUser?.is_admin"
+                :model-value="item.status"
                 :items="availableStatuses"
-                item-title="text"
-                item-value="value"
-                item-disabled="disabled"
-                dense
+                :loading="statusUpdatingSubmissionId === item.id"
+                density="compact"
+                variant="underlined"
                 hide-details
-                disabled
-              >
-                <template #selection="{ item: statusItem }">
-                  {{ statusItem.title }}
-                </template>
-              </v-select>
-              <v-select
-                v-else-if="currentUser?.is_admin"
-                :value="item.status"
-                :items="availableStatuses"
-                item-title="text"
-                item-value="value"
-                item-disabled="disabled"
-                dense
-                hide-details
-                @change="(newStatus: string) => handleStatusChange(item, newStatus)"
-              >
-                <template #selection="{ item: statusItem }">
-                  {{ statusItem.title }}
-                </template>
-              </v-select>
+                :disabled="item.status === SubmissionStatusEnum.InProgress.text"
+                @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
+              />
               <v-chip
                 v-else
                 :color="getStatus(item as MetadataSubmissionRecord).color"
