@@ -34,6 +34,7 @@ export default [
       'vuejs-accessibility/click-events-have-key-events': 'off',
       'vue/no-dupe-keys': 'off',
       'vue/no-v-html': 'off',
+      'vue/no-v-text-v-html-on-component': 'off',
       // See: https://github.com/vuejs/eslint-plugin-vue/issues/365
       // The issue is supposed to be resolved, but eslint complains without the ignore
       'vue/html-indent': ['warn', 2, { ignores: ['VElement[name=pre].children'] }],

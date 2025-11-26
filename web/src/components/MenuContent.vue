@@ -107,9 +107,8 @@ export default defineComponent({
     <v-card-text
       v-if="description"
       class="py-1 text-caption"
-    >
-      {{ urlify(description) }}
-    </v-card-text>
+      v-html="urlify(description)"
+    />
     <template v-if="isOpen">
       <filter-list
         v-if="summary.type === 'string'"
