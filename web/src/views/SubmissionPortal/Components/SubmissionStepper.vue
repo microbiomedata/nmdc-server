@@ -50,7 +50,7 @@ export default defineComponent({
   <v-stepper
     :model-value="step"
     bg-color="grey-darken-4"
-    class="mb-3 flex-shrink-0"
+    class="mb-3 flex-shrink-0 rounded-0"
   >
     <v-stepper-header>
       <v-stepper-item
