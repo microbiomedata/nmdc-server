@@ -1065,7 +1065,7 @@ export default defineComponent({
               depressed
               :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
               :loading="submitLoading"
-              @click="canEditSubmissionByStatus() ? submitDialog = true: null"
+              @click="canEditSubmissionByStatus() ? submitDialog = true : null"
             >
               <span v-if="status === SubmissionStatusEnum.SubmittedPendingReview.text || submitCount">
                 <v-icon>mdi-check-circle</v-icon>
@@ -1076,7 +1076,6 @@ export default defineComponent({
               </span>
               <v-dialog
                 v-model="submitDialog"
-                activator="parent"
                 width="auto"
               >
                 <v-card v-if="isTestSubmission">
