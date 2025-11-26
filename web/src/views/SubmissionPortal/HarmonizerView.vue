@@ -1043,9 +1043,9 @@ export default defineComponent({
         <v-chip
           v-for="val in ColorKey"
           :key="val.label"
-          :style="{ backgroundColor: val.color, opacity: 1 }"
+          :style="{ backgroundColor: val.color, opacity: 1, color: '#000000' }"
           class="mr-1"
-          disabled
+          variant="flat"
         >
           {{ val.label }}
         </v-chip>
