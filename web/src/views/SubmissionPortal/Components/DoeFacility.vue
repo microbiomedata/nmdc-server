@@ -20,13 +20,12 @@ export default defineComponent({
   },
   emits: ['revalidate'],
 
-  setup() {
+  setup(_, { emit }) {
     function facilityChange() {
       if (multiOmicsForm.awardDois === null || multiOmicsForm.awardDois.length < multiOmicsForm.facilities.length) {
         addAwardDoi();
       }
-      // @ts-ignore
-      this.$emit('revalidate');
+      emit('revalidate');
     }
 
     return {
