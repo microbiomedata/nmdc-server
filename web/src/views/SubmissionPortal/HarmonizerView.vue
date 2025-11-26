@@ -1020,110 +1020,111 @@ export default defineComponent({
         />
       </v-navigation-drawer>
     </v-layout>
-
-    <div class="harmonizer-style-container">
-      <div
-        v-if="canEditSampleMetadata()"
-        id="harmonizer-footer-root"
-      />
-    </div>
-    <div class="d-flex ma-2">
-      <v-btn
-        color="gray"
-        depressed
-        :to="{ name: 'Sample Environment' }"
-      >
-        <v-icon class="pr-1">
-          mdi-arrow-left-circle
-        </v-icon>
-        Go to previous step
-      </v-btn>
-      <v-spacer />
-      <div class="d-flex align-center">
-        <span class="mr-1">Color key</span>
-        <v-chip
-          v-for="val in ColorKey"
-          :key="val.label"
-          :style="{ backgroundColor: val.color, opacity: 1, color: '#000000' }"
-          class="mr-1"
-          variant="flat"
-        >
-          {{ val.label }}
-        </v-chip>
+    <div class="harmonizer-bottom-container">
+      <div class="harmonizer-style-container">
+        <div
+          v-if="canEditSampleMetadata()"
+          id="harmonizer-footer-root"
+        />
       </div>
-      <v-spacer />
-      <v-tooltip
-        top
-      >
-        <template #activator="{ props }">
-          <div
-            v-bind="props"
+      <div class="d-flex ma-2">
+        <v-btn
+          color="gray"
+          depressed
+          :to="{ name: 'Sample Environment' }"
+        >
+          <v-icon class="pr-1">
+            mdi-arrow-left-circle
+          </v-icon>
+          Go to previous step
+        </v-btn>
+        <v-spacer />
+        <div class="d-flex align-center">
+          <span class="mr-1">Color key</span>
+          <v-chip
+            v-for="val in ColorKey"
+            :key="val.label"
+            :style="{ backgroundColor: val.color, opacity: 1, color: '#000000' }"
+            class="mr-1"
+            variant="flat"
           >
-            <v-btn
-              color="success"
-              depressed
-              :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
-              :loading="submitLoading"
-              @click="canEditSubmissionByStatus() ? submitDialog = true : null"
+            {{ val.label }}
+          </v-chip>
+        </div>
+        <v-spacer />
+        <v-tooltip
+          top
+        >
+          <template #activator="{ props }">
+            <div
+              v-bind="props"
             >
-              <span v-if="status === SubmissionStatusEnum.SubmittedPendingReview.text || submitCount">
-                <v-icon>mdi-check-circle</v-icon>
-                Submitted
-              </span>
-              <span v-else>
-                Submit
-              </span>
-              <v-dialog
-                v-model="submitDialog"
-                width="auto"
+              <v-btn
+                color="success"
+                depressed
+                :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
+                :loading="submitLoading"
+                @click="canEditSubmissionByStatus() ? submitDialog = true : null"
               >
-                <v-card v-if="isTestSubmission">
-                  <v-card-title>
-                    Submit
-                  </v-card-title>
-                  <v-card-text>
-                    Test submissions cannot be submitted for NMDC review.
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn
-                      text
-                      @click="submitDialog = false"
-                    >
-                      Close
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-                <v-card v-else>
-                  <v-card-title>
-                    Submit
-                  </v-card-title>
-                  <v-card-text>
-                    You are about to submit this study and metadata for NMDC review. Would you like to continue?
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn
-                      color="primary"
-                      class="mr-2"
-                      @click="doSubmit"
-                    >
-                      Yes- Submit
-                    </v-btn>
-                    <v-btn @click="submitDialog = false">
-                      Cancel
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
-            </v-btn>
-          </div>
-        </template>
-        <span v-if="!canSubmit && canEditSubmissionByStatus()">
-          You must validate all tabs before submitting your study and metadata.
-        </span>
-        <span v-if="canSubmit && canEditSubmissionByStatus()">
-          Submit for NMDC review.
-        </span>
-      </v-tooltip>
+                <span v-if="status === SubmissionStatusEnum.SubmittedPendingReview.text || submitCount">
+                  <v-icon>mdi-check-circle</v-icon>
+                  Submitted
+                </span>
+                <span v-else>
+                  Submit
+                </span>
+                <v-dialog
+                  v-model="submitDialog"
+                  width="auto"
+                >
+                  <v-card v-if="isTestSubmission">
+                    <v-card-title>
+                      Submit
+                    </v-card-title>
+                    <v-card-text>
+                      Test submissions cannot be submitted for NMDC review.
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn
+                        text
+                        @click="submitDialog = false"
+                      >
+                        Close
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                  <v-card v-else>
+                    <v-card-title>
+                      Submit
+                    </v-card-title>
+                    <v-card-text>
+                      You are about to submit this study and metadata for NMDC review. Would you like to continue?
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn
+                        color="primary"
+                        class="mr-2"
+                        @click="doSubmit"
+                      >
+                        Yes- Submit
+                      </v-btn>
+                      <v-btn @click="submitDialog = false">
+                        Cancel
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </v-btn>
+            </div>
+          </template>
+          <span v-if="!canSubmit && canEditSubmissionByStatus()">
+            You must validate all tabs before submitting your study and metadata.
+          </span>
+          <span v-if="canSubmit && canEditSubmissionByStatus()">
+            Submit for NMDC review.
+          </span>
+        </v-tooltip>
+      </div>
     </div>
   </div>
 </template>
@@ -1185,6 +1186,14 @@ html {
   height: 100%;
   flex-grow: 1;
   overflow: hidden;
+}
+
+.harmonizer-bottom-container {
+  position: fixed;
+  bottom: 0;
+  z-index: 1000;
+  background: #fff;
+  width: 100%;
 }
 
 .v-navigation-drawer__scrim {
@@ -1266,7 +1275,7 @@ html {
 
 #harmonizer-footer-root {
   width: 50%;
-  padding: 12px 0;
+  padding: 0.5rem;
 }
 
 .HandsontableCopyPaste {
