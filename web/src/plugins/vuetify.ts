@@ -20,6 +20,7 @@ export default createVuetify({
           secondary: colors.secondary,
           accent: colors.accent,
           success: colors.success,
+          error: colors.error,
         },
       },
     },

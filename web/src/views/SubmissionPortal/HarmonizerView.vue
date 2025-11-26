@@ -758,9 +758,8 @@ export default defineComponent({
             :items="validationItems"
             item-title="text"
             solo
-            color="error"
-            style="background-color: red;"
-            dense
+            style="background-color: #ffffff; color: #000000;"
+            density="compact"
             class="mx-2 z-above-sidebar"
             hide-details
           >

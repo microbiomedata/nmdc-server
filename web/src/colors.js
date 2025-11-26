@@ -1,6 +1,7 @@
 import colors from 'vuetify/lib/util/colors';
 
 const red = '#ED5338';
+const red2 = '#ff5252'
 const orange = '#E88320';
 const green = colors.lightGreen.darken2;
 const blue = '#00AAE7';
@@ -24,4 +25,5 @@ export default {
   metatranscriptome: green,
   sequencing: red,
   success: green,
+  error: red2,
 };
