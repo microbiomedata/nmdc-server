@@ -389,7 +389,7 @@ export default defineComponent({
     function errorClick(index: number) {
       const currentSeries = validationErrors.value[validationActiveCategory.value];
       highlightedValidationError.value = clamp(index, 0, (currentSeries?.length || 0) - 1);
-      const currentError = currentSeries?[highlightedValidationError.value] : null;
+      const currentError = currentSeries ? currentSeries[highlightedValidationError.value] : null;
       if (currentError && currentError[0] !== undefined && currentError[1] !== undefined) {
         harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
       }
