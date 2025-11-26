@@ -1199,6 +1199,14 @@ html {
   bottom: 0;
   left: 0;
 
+  /**
+    This ensures that the bootstrap modal appears
+    below the app header.
+  */
+  .modal {
+    top: 61px !important;
+  }
+
   .secondary-header-cell:hover {
     cursor: pointer;
   }
