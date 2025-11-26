@@ -263,7 +263,7 @@ export default defineComponent({
       <v-text-field
         v-model="studyForm.piOrcid"
         label="ORCID iD"
-        :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid"
+        :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid || undefined"
         variant="outlined"
         :hint="Definitions.piOrcid"
         persistent-hint
@@ -367,7 +367,7 @@ export default defineComponent({
               v-model="contributor.orcid"
               :rules="[orcidRequiredRule(i), uniqueOrcidRule(i)]"
               :hint="Definitions.contributorOrcid"
-              :disabled="currentUserOrcid === contributor.orcid"
+              :disabled="currentUserOrcid === contributor.orcid || undefined"
               label="ORCID"
               variant="outlined"
               persistent-hint
@@ -444,7 +444,7 @@ export default defineComponent({
         <v-btn
           icon
           variant="plain"
-          :disabled="!isOwner() || currentUserOrcid === contributor.orcid"
+          :disabled="!isOwner() || currentUserOrcid === contributor.orcid || undefined"
           @click="studyForm.contributors.splice(i, 1)"
         >
           <v-icon>mdi-minus-circle</v-icon>

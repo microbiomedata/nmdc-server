@@ -85,7 +85,7 @@ emits: ['revalidate'],
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metagenome"
       value="mg"
-      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot)"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot) || undefined"
       hide-details
       @change="handleMetagenomeChange"
     />
@@ -115,7 +115,7 @@ emits: ['revalidate'],
         v-model="multiOmicsForm.mgCompatible"
         label="Is the generated data compatible? *"
         :rules="[v => v !== undefined || 'This field is required']"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot) || undefined"
         @change="handleMgCompatibleChange"
       >
         <v-radio
@@ -154,7 +154,7 @@ emits: ['revalidate'],
         v-if="multiOmicsForm.mgCompatible"
         v-model="multiOmicsForm.mgInterleaved"
         label="Is the data in interleaved format? *"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot) || undefined"
         :rules="[v => v !== undefined || 'This field is required']"
       >
         <v-radio
@@ -171,7 +171,7 @@ emits: ['revalidate'],
       v-model="multiOmicsForm.omicsProcessingTypes"
       label="Metatranscriptome"
       value="mt"
-      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot)"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot) || undefined"
       hide-details
       @change="handleMetatranscriptomeChange"
     />
@@ -206,7 +206,7 @@ emits: ['revalidate'],
         v-model="multiOmicsForm.mtCompatible"
         label="Is the generated data compatible? *"
         :rules="[v => v !== undefined || 'This field is required']"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot) || undefined"
         @change="handleMtCompatibleChange"
       >
         <v-radio
@@ -245,7 +245,7 @@ emits: ['revalidate'],
         v-if="multiOmicsForm.mtCompatible"
         v-model="multiOmicsForm.mtInterleaved"
         label="Is the data in interleaved format? *"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot) || undefined"
         :rules="[v => v !== undefined || 'This field is required']"
       >
         <v-radio

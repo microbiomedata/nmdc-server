@@ -5,6 +5,10 @@ import {
   PropType,
   ref,
 } from 'vue';
+// WARNING: The useForm composable is not part of the Vuetify public API yet
+//          https://github.com/vuetifyjs/vuetify/issues/19315
+// @ts-ignore
+import { useForm } from 'vuetify/lib/composables/form';
 import { deleteSubmissionImage, generateSignedUploadUrl, setSubmissionImage } from '@/views/SubmissionPortal/store/api';
 import useRequest from '@/use/useRequest';
 import { SubmissionImageType } from '@/views/SubmissionPortal/types';
@@ -74,6 +78,7 @@ export default defineComponent({
     const route = useRoute();
     const fileInputRef = ref();
     const fileRef = ref<File | null>(null);
+    const form = useForm();
     const filePreview = computed(() => {
       if (fileRef.value) {
         return URL.createObjectURL(fileRef.value);
@@ -124,6 +129,7 @@ export default defineComponent({
     };
 
     return {
+      disabled: form.isDisabled,
       fileInputRef,
       fileRef,
       filePreview,
@@ -148,7 +154,7 @@ export default defineComponent({
       :label="inputLabel"
       :hint="inputHint"
       :prepend-icon="inputIcon"
-      :disabled="uploading"
+      :disabled="uploading || disabled"
       persistent-hint
       variant="outlined"
       truncate-length="100"
@@ -179,7 +185,7 @@ export default defineComponent({
             class="my-2 elevation-2"
           >
         </div>
-        <div v-if="imageUrl && !fileRef">
+        <div v-if="!disabled && imageUrl && !fileRef">
           <v-btn
             class="mr-2"
             depressed
