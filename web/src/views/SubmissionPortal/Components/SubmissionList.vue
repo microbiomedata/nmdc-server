@@ -112,7 +112,7 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
-    
+    console.log(submission);
     function applySortOptions() {
       const sortOrder = options.value.sortDesc && options.value.sortDesc[0] ? 'desc' : 'asc';
       const sortBy = options.value.sortBy[0] || 'date_last_modified';
@@ -304,12 +304,12 @@ export default defineComponent({
         </v-col>
       </v-row>
       <v-card variant="outlined">
-        <v-data-table
+        <v-data-table-server
           v-model:options="options"
           v-model:items-per-page="submission.data.limit"
           :headers="headers"
           :items="submission.data.results.results"
-          :server-items-length="submission.data.results.count"
+          :items-length="submission.data.results.count"
           :loading="submission.loading.value"
           :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
         >
@@ -448,7 +448,7 @@ export default defineComponent({
               </v-menu>
             </div>
           </template>
-        </v-data-table>
+        </v-data-table-server>
       </v-card>
     </v-card>
     <v-dialog
