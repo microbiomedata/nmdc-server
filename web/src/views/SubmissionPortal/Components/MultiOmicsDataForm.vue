@@ -199,7 +199,7 @@ export default defineComponent({
         v-model="multiOmicsForm.dataGenerated"
         label="Have data already been generated for your study? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('dataGenerated')"
       >
         <v-radio
@@ -216,7 +216,7 @@ export default defineComponent({
         v-model="multiOmicsForm.facilityGenerated"
         label="Was data generated at a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('facilityGenerated')"
       >
         <v-radio
@@ -242,7 +242,7 @@ export default defineComponent({
         v-model="multiOmicsForm.doe"
         label="Are you submitting samples to a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('doe')"
       >
         <v-radio
