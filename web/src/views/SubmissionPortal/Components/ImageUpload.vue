@@ -7,6 +7,7 @@ import {
 } from 'vue';
 // WARNING: The useForm composable is not part of the Vuetify public API yet
 //          https://github.com/vuetifyjs/vuetify/issues/19315
+// @ts-ignore
 import { useForm } from 'vuetify/lib/composables/form';
 import { deleteSubmissionImage, generateSignedUploadUrl, setSubmissionImage } from '@/views/SubmissionPortal/store/api';
 import useRequest from '@/use/useRequest';
