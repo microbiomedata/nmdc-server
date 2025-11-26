@@ -850,7 +850,6 @@ export default defineComponent({
           @update:model-value="jumpTo"
         />
         <v-menu
-          class="z-above-sidebar"
           offset-y
           nudge-bottom="4px"
           :close-on-click="true"
