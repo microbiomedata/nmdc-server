@@ -944,6 +944,7 @@ export default defineComponent({
               <v-tab>
                 <v-badge
                   :content="validationTotalCounts[templateKey] || '!'"
+                  floating
                   location="top right"
                   :value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
                   :color="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) ? 'error' : 'warning'"
