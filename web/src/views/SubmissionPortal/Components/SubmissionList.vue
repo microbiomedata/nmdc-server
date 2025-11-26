@@ -389,6 +389,7 @@ export default defineComponent({
                 :items="availableStatuses"
                 :loading="statusUpdatingSubmissionId === item.id"
                 density="compact"
+                variant="underlined"
                 hide-details
                 :disabled="item.status === SubmissionStatusEnum.InProgress.text"
                 @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
