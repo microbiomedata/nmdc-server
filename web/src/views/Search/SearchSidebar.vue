@@ -314,9 +314,10 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-btn
                 icon
-                variant="plain"
-                size="x-small"
+                variant="text"
+                size="small"
                 v-bind="props"
+                density="comfortable"
               >
                 <v-icon>mdi-help-circle</v-icon>
               </v-btn>
