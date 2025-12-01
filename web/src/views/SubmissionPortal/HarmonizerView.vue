@@ -470,7 +470,7 @@ export default defineComponent({
     watch(columnVisibility, () => {
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
-    
+
     watch(activeTabIndex, (newIndex) => {
       changeTemplate(newIndex);
     });
@@ -643,7 +643,7 @@ export default defineComponent({
         }
       }
     });
-    
+
     return {
       user,
       APP_HEADER_HEIGHT,
@@ -1007,6 +1007,7 @@ export default defineComponent({
         v-model="sidebarOpen"
         :width="HELP_SIDEBAR_WIDTH"
         absolute
+        temporary
         location="right"
         class="z-above-data-harmonizer"
       >

@@ -242,6 +242,7 @@ export default defineComponent({
         </span>
         <template #activator="{ props }">
           <v-icon
+            size="x-small"
             v-bind="props"
           >
             mdi-information-outline
