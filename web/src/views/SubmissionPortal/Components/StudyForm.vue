@@ -329,9 +329,8 @@ export default defineComponent({
           <v-icon>mdi-minus-circle</v-icon>
         </v-btn>
       </div>
-      <v-btn
+      <v-btn-grey
         class="mb-4"
-        depressed
         :disabled="!canEditSubmissionMetadata()"
         @click="addFundingSource"
       >
@@ -339,7 +338,8 @@ export default defineComponent({
           mdi-plus-circle
         </v-icon>
         Add Funding Source
-      </v-btn>
+      </v-btn-grey>
+
       <div class="text-h4 mt-8">
         Contributors
       </div>
@@ -450,8 +450,7 @@ export default defineComponent({
           <v-icon>mdi-minus-circle</v-icon>
         </v-btn>
       </div>
-      <v-btn
-        depressed
+      <v-btn-grey
         :disabled="!canEditSubmissionMetadata()"
         class="mb-4"
         @click="addContributor"
@@ -460,7 +459,7 @@ export default defineComponent({
           mdi-plus-circle
         </v-icon>
         Add Contributor
-      </v-btn>
+      </v-btn-grey>
 
       <div class="text-h4 mt-8">
         Data DOIs
@@ -524,9 +523,8 @@ export default defineComponent({
           <v-icon>mdi-minus-circle</v-icon>
         </v-btn>
       </div>
-      <v-btn
+      <v-btn-grey
         class="mb-4"
-        depressed
         :disabled="!canEditSubmissionMetadata()"
         @click="addDataDoi"
       >
@@ -534,7 +532,7 @@ export default defineComponent({
           mdi-plus-circle
         </v-icon>
         Add Data DOI
-      </v-btn>
+      </v-btn-grey>
 
       <div class="text-h4 mt-8">
         External Identifiers
@@ -569,17 +567,16 @@ export default defineComponent({
         append-icon=""
       />
     </v-form>
+
     <strong>* indicates required field</strong>
+
     <div class="d-flex mt-5">
-      <v-btn
-        color="gray"
-        :to="{ name: 'Submission Home' }"
-      >
+      <v-btn-grey :to="{ name: 'Submission Home' }">
         <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
         Go to previous step
-      </v-btn>
+      </v-btn-grey>
       <v-spacer />
       <v-btn
         color="primary"

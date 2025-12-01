@@ -121,20 +121,15 @@ export default defineComponent({
       This submission uses the "{{ templateListDisplayNames }}" template.
     </v-alert>
     <div class="d-flex">
-      <v-btn
-        color="gray"
-        depressed
-        :to="{ name: 'Multiomics Form' }"
-      >
+      <v-btn-grey :to="{ name: 'Multiomics Form' }">
         <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
         Go to previous step
-      </v-btn>
+      </v-btn-grey>
       <v-spacer />
       <v-btn
         color="primary"
-        depressed
         :disabled="packageName.length === 0"
         :to="{
           name: 'Submission Sample Editor',

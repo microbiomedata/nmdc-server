@@ -158,7 +158,6 @@ export default defineComponent({
       persistent-hint
       variant="outlined"
       truncate-length="100"
-      class="my-2"
     />
 
     <div class="ml-8">
@@ -186,9 +185,8 @@ export default defineComponent({
           >
         </div>
         <div v-if="!disabled && imageUrl && !fileRef">
-          <v-btn
+          <v-btn-grey
             class="mr-2"
-            depressed
             small
             @click="handleChangeClick"
           >
@@ -196,11 +194,10 @@ export default defineComponent({
               mdi-pencil-outline
             </v-icon>
             Change
-          </v-btn>
-          <v-btn
+          </v-btn-grey>
+          <v-btn-grey
             :loading="deleting"
             :disabled="deleting"
-            depressed
             small
             @click="handleDelete"
           >
@@ -208,13 +205,12 @@ export default defineComponent({
               mdi-trash-can-outline
             </v-icon>
             Remove
-          </v-btn>
+          </v-btn-grey>
         </div>
         <div v-else-if="fileRef">
           <v-btn
             class="mr-2"
             color="primary"
-            depressed
             small
             :loading="uploading"
             :disabled="uploading"
@@ -225,14 +221,13 @@ export default defineComponent({
             </v-icon>
             Upload
           </v-btn>
-          <v-btn
-            depressed
+          <v-btn-grey
             small
             :disabled="uploading"
             @click="fileRef = null"
           >
             Cancel
-          </v-btn>
+          </v-btn-grey>
         </div>
       </div>
 
