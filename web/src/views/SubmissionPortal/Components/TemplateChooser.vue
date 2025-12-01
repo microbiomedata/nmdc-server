@@ -101,6 +101,7 @@ export default defineComponent({
       <v-alert
         v-else
         type="warning"
+        class="mb-4"
       >
         <p class="text-h5">
           Template choice disabled

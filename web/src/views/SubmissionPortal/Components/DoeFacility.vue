@@ -61,7 +61,7 @@ export default defineComponent({
       v-if="multiOmicsForm.facilities.includes('EMSL')"
       class="mb-4 ml-4"
     >
-      <div class="d-flex flex-column grow mb-4">
+      <div class="d-flex flex-column grow">
         <v-text-field
           v-if="multiOmicsForm.facilities.includes('EMSL')"
           v-model="multiOmicsForm.studyNumber"
@@ -98,7 +98,7 @@ export default defineComponent({
         v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.ship && multiOmicsForm.facilities.includes('EMSL')"
       />
       <div
-        class="v-label theme--light mt-6"
+        class="v-label theme--light mb-2"
         style="font-size: 14px;"
       >
         Data types?
@@ -145,7 +145,7 @@ export default defineComponent({
       v-if="multiOmicsForm.facilities.includes('JGI')"
       class="mb-4 ml-4"
     >
-      <div class="d-flex flex-column grow mb-4">
+      <div class="d-flex flex-column grow">
         <v-text-field
           v-if="multiOmicsForm.facilities.includes('JGI')"
           v-model="multiOmicsForm.JGIStudyId"
