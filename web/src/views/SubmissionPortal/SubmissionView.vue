@@ -47,7 +47,7 @@ export default defineComponent({
     const showBanner = computed(() => route.path === '/submission/home');
 
     const color = 'primary';
-    const density = 'compact';
+    const density = 'comfortable';
     const styleDefaults = {
       VBtn: {
         variant: "flat",
