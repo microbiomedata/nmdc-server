@@ -126,9 +126,7 @@ export default defineComponent({
       <template #activator="{ props }">
         <v-btn
           :disabled="!canEditSubmissionMetadata()"
-          absolute
-          top
-          right
+          class="topRightButton"
           color="primary"
           v-bind="props"
         >
@@ -370,3 +368,11 @@ export default defineComponent({
     </v-dialog>
   </v-card>
 </template>
+
+<style scoped>
+.topRightButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+</style>
