@@ -184,7 +184,6 @@ export default defineComponent({
           :hint="Definitions.studyName"
           persistent-hint
           variant="outlined"
-          dense
         />
         <v-textarea
           v-model="studyForm.description"
@@ -251,7 +250,6 @@ export default defineComponent({
           type="email"
           required
           variant="outlined"
-          dense
         />
         <v-text-field
           v-model="studyForm.piOrcid"
@@ -529,7 +527,6 @@ export default defineComponent({
           :hint="Definitions.studyGoldID"
           persistent-hint
           variant="outlined"
-          dense
         />
         <v-text-field
           v-model="studyForm.NCBIBioProjectId"
@@ -537,7 +534,6 @@ export default defineComponent({
           :hint="Definitions.studyNCBIBioProjectAccession"
           persistent-hint
           variant="outlined"
-          dense
         />
         <v-combobox
           v-model="studyForm.alternativeNames"
@@ -549,7 +545,6 @@ export default defineComponent({
           variant="outlined"
           chips
           small-chips
-          dense
           append-icon=""
         />
       </div>

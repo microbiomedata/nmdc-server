@@ -417,7 +417,6 @@ export default defineComponent({
                   persistent-hint
                   validate-on-blur
                   variant="outlined"
-                  dense
                   @change="revalidate"
                 >
                   <template #message="{ message }">
@@ -439,7 +438,6 @@ export default defineComponent({
                   item-value="value"
                   persistent-hint
                   variant="outlined"
-                  dense
                   clearable
                   :rules="doiProviderRules(i)"
                   @change="revalidate"

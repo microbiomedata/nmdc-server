@@ -257,7 +257,6 @@ export default defineComponent({
           <v-select
             v-model="suggestionMode"
             :items="suggestionModeOptions"
-            dense
             hide-details
             label="Suggestion Mode"
             variant="outlined"
@@ -267,7 +266,6 @@ export default defineComponent({
           <v-select
             v-model="suggestionType"
             :items="suggestionTypeOptions"
-            dense
             hide-details
             label="Suggestion Type"
             variant="outlined"

@@ -75,7 +75,6 @@ export default defineComponent({
       label="search"
       clearable
       class="mx-3"
-      dense
       hide-details
       variant="outlined"
       flat

@@ -75,7 +75,6 @@ export default defineComponent({
           class="mt-4"
           variant="outlined"
           validate-on-blur
-          dense
         />
       </div>
       <v-radio-group
@@ -159,7 +158,6 @@ export default defineComponent({
           class="mt-4"
           variant="outlined"
           validate-on-blur
-          dense
         />
       </div>
       <div

@@ -60,7 +60,6 @@ export default defineComponent({
       v-for="option in templates.filter((v) => v[1].status === 'published')"
       :key="option[0]"
       v-model="packageName"
-      dense
       hide-details
       :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
       :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
