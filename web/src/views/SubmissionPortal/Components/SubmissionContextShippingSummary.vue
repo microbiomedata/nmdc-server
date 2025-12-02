@@ -84,36 +84,35 @@ export default defineComponent({
     flat
     multiple
   >
-    <v-expansion-panel>
-      <v-expansion-panel-header class="pa-0 ma-0">
-        <template #actions>
-          <v-icon class="icon">
-            $expand
-          </v-icon>
+    <v-expansion-panel hide-actions>
+      <v-expansion-panel-title class="pl-2">
+        <template #default="{ expanded, expandIcon, collapseIcon }">
+          <div>
+            <v-icon>{{ expanded ? expandIcon : collapseIcon }}</v-icon>
+            <span class="mr-2">Sender</span>
+            <span class="expansion-panel-preview">{{ shipperAddressOneLiner }}</span>
+          </div>
         </template>
-        <div class="header">
-          <span class="mr-2">Sender</span>
-          <span class="expansion-panel-preview">{{ shipperAddressOneLiner }}</span>
-        </div>
-      </v-expansion-panel-header>
-      <v-expansion-panel-content>
+      </v-expansion-panel-title>
+      <v-expansion-panel-text>
         <span
           style="white-space: pre-line;"
         >
           {{ shipperSummary }}
         </span>
-      </v-expansion-panel-content>
+      </v-expansion-panel-text>
     </v-expansion-panel>
-    <v-expansion-panel>
-      <v-expansion-panel-header class="pl-0">
-        <template #actions>
-          <v-icon class="icon">
-            $expand
-          </v-icon>
+
+    <v-expansion-panel hide-actions>
+      <v-expansion-panel-title class="pl-2">
+        <template #default="{ expanded, expandIcon, collapseIcon }">
+          <div>
+            <v-icon>{{ expanded ? expandIcon : collapseIcon }}</v-icon>
+            Sample
+          </div>
         </template>
-        <span class="header">Sample</span>
-      </v-expansion-panel-header>
-      <v-expansion-panel-content>
+      </v-expansion-panel-title>
+      <v-expansion-panel-text>
         <div
           style="white-space: pre-line;"
         >
@@ -129,38 +128,30 @@ export default defineComponent({
             </p>
           </span>
         </div>
-      </v-expansion-panel-content>
+      </v-expansion-panel-text>
     </v-expansion-panel>
-    <v-expansion-panel>
-      <v-expansion-panel-header class="pl-0">
-        <template #actions>
-          <v-icon class="icon">
-            $expand
-          </v-icon>
+
+    <v-expansion-panel hide-actions>
+      <v-expansion-panel-title class="pl-2">
+        <template #default="{ expanded, expandIcon, collapseIcon }">
+          <div>
+            <v-icon>{{ expanded ? expandIcon : collapseIcon }}</v-icon>
+            Additional Comments
+          </div>
         </template>
-        <span class="header">Additional Comments</span>
-      </v-expansion-panel-header>
-      <v-expansion-panel-content>
+      </v-expansion-panel-title>
+      <v-expansion-panel-text>
         <span
           style="white-space: pre-line;"
         >
           {{ addressForm.comments }}
         </span>
-      </v-expansion-panel-content>
+      </v-expansion-panel-text>
     </v-expansion-panel>
   </v-expansion-panels>
 </template>
 
 <style scoped>
-.icon {
-  order: 0;
-}
-
-.header {
-  order: 1;
-  justify-content: flex-start;
-}
-
 .expansion-panel-preview {
   color: gray;
   font-style: italic;
