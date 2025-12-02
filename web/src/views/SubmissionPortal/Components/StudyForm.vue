@@ -573,11 +573,3 @@ export default defineComponent({
     </div>
   </div>
 </template>
-
-<style scoped>
-.stack-md {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-</style>

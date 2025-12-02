@@ -61,26 +61,25 @@ export default defineComponent({
       v-if="multiOmicsForm.facilities.includes('EMSL')"
       class="mb-4 ml-4"
     >
-      <div class="d-flex flex-column grow">
-        <v-text-field
-          v-if="multiOmicsForm.facilities.includes('EMSL')"
-          v-model="multiOmicsForm.studyNumber"
-          :rules="[
-            v => !!v || 'EMSL Proposal Number is required when processing was done at EMSL',
-            v => /^\d{5}$/.test(v) || 'EMSL Proposal Number must be a 5 digit numerical value'
-          ]"
-          hint="EMSL Proposal Number is required when processing was done at EMSL"
-          persistent-hint
-          label="EMSL Proposal Number *"
-          class="mt-4"
-          variant="outlined"
-          validate-on-blur
-        />
-      </div>
+      <v-text-field
+        v-if="multiOmicsForm.facilities.includes('EMSL')"
+        v-model="multiOmicsForm.studyNumber"
+        :rules="[
+          v => !!v || 'EMSL Proposal Number is required when processing was done at EMSL',
+          v => /^\d{5}$/.test(v) || 'EMSL Proposal Number must be a 5 digit numerical value'
+        ]"
+        hint="EMSL Proposal Number is required when processing was done at EMSL"
+        persistent-hint
+        label="EMSL Proposal Number *"
+        class="mb-4"
+        variant="outlined"
+        validate-on-blur
+      />
       <v-radio-group
         v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.facilities.includes('EMSL')"
         v-model="multiOmicsForm.ship"
         label="Will samples be shipped? *"
+        class="mb-4"
         :rules="[v => (v === true || v === false) || 'This field is required']"
         @change="$emit('revalidate')"
       >
