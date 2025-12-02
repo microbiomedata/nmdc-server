@@ -88,7 +88,7 @@ export default defineComponent({
       <v-expansion-panel-title class="pl-2">
         <template #default="{ expanded, expandIcon, collapseIcon }">
           <div>
-            <v-icon>{{ expanded ? expandIcon : collapseIcon }}</v-icon>
+            <v-icon>{{ expanded ? collapseIcon : expandIcon }}</v-icon>
             <span class="mr-2">Sender</span>
             <span class="expansion-panel-preview">{{ shipperAddressOneLiner }}</span>
           </div>
@@ -107,7 +107,7 @@ export default defineComponent({
       <v-expansion-panel-title class="pl-2">
         <template #default="{ expanded, expandIcon, collapseIcon }">
           <div>
-            <v-icon>{{ expanded ? expandIcon : collapseIcon }}</v-icon>
+            <v-icon>{{ expanded ? collapseIcon : expandIcon }}</v-icon>
             Sample
           </div>
         </template>
@@ -135,7 +135,7 @@ export default defineComponent({
       <v-expansion-panel-title class="pl-2">
         <template #default="{ expanded, expandIcon, collapseIcon }">
           <div>
-            <v-icon>{{ expanded ? expandIcon : collapseIcon }}</v-icon>
+            <v-icon>{{ expanded ? collapseIcon : expandIcon }}</v-icon>
             Additional Comments
           </div>
         </template>
