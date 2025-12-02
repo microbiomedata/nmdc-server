@@ -50,12 +50,10 @@ export default defineComponent({
       ],
     }]);
 
-    const reformatDate = (dateString: string | Date) => new Date(dateString).toISOString().substring(0, 10);
+    const expectedShippingDate = ref<Date | undefined>();
 
-    const expectedShippingDateString = ref('');
-
-    watch(expectedShippingDateString, (newValue: string) => {
-      addressForm.expectedShippingDate = newValue.length ? new Date(newValue) : undefined;
+    watch(expectedShippingDate, (newValue) => {
+      addressForm.expectedShippingDate = newValue ? newValue.toISOString() : undefined;
     });
 
     function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[]) {
@@ -70,10 +68,14 @@ export default defineComponent({
     });
 
     onMounted(() => {
-      expectedShippingDateString.value = addressForm.expectedShippingDate
-        ? reformatDate(addressForm.expectedShippingDate)
-        : '';
+      if (addressForm.expectedShippingDate) {
+        expectedShippingDate.value = new Date(addressForm.expectedShippingDate);
+      }
     });
+
+    function handleExpectedShippingDateClear() {
+      expectedShippingDate.value = undefined;
+    }
 
     return {
       addressFormRef,
@@ -81,7 +83,7 @@ export default defineComponent({
       addressFormValid,
       showAddressForm,
       datePicker,
-      expectedShippingDateString,
+      expectedShippingDate,
       sampleItems,
       biosafetyLevelValues,
       BiosafetyLevels,
@@ -90,6 +92,7 @@ export default defineComponent({
       shippingConditionsItems,
       canEditSubmissionMetadata,
       requiredRules,
+      handleExpectedShippingDateClear,
     };
   },
 });
@@ -246,7 +249,7 @@ export default defineComponent({
               >
                 <template #activator="{ props }">
                   <v-text-field
-                    v-model="expectedShippingDateString"
+                    :model-value="expectedShippingDate?.toLocaleDateString()"
                     :rules="requiredRules('Expected Shipping Date is required', [])"
                     label="Expected Shipping Date *"
                     prepend-icon="mdi-calendar"
@@ -254,14 +257,14 @@ export default defineComponent({
                     readonly
                     variant="outlined"
                     v-bind="props"
-                    @click.clear="addressForm.expectedShippingDate = undefined"
+                    @click:clear="handleExpectedShippingDateClear"
                   />
                 </template>
                 <v-date-picker
-                  v-model="expectedShippingDateString"
+                  v-model="expectedShippingDate"
                   no-title
                   scrollable
-                  @input="datePicker = false"
+                  @update:model-value="datePicker = false"
                 />
               </v-menu>
             </div>
