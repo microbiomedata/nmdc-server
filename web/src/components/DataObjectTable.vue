@@ -107,6 +107,7 @@ export default defineComponent({
         'Kraken2 Krona Plot',
         'GOTTCHA2 Krona Plot',
         'Centrifuge Krona Plot',
+        'SingleM Krona Plot',
       ].includes(fileType);
     }
     async function openHtmlDataModal(item: any) {
