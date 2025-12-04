@@ -34,7 +34,7 @@ export default defineComponent({
       >
         <v-btn
           color="primary"
-          variant="plain"
+          variant="text"
           icon
         >
           <v-icon size="24px">

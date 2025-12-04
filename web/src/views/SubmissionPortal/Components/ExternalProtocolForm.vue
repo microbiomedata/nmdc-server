@@ -154,7 +154,6 @@ export default defineComponent({
                   <template #activator="{ props }">
                     <v-icon
                       v-bind="props"
-                      dense
                     >
                       mdi-help-circle
                     </v-icon>
@@ -180,7 +179,6 @@ export default defineComponent({
                 :items="protocolNames"
                 label="Select Protocol Name"
                 variant="outlined"
-                dense
                 class="mx-2"
                 @change="updateMultiOmicsForm()"
               />
@@ -201,7 +199,6 @@ export default defineComponent({
                 v-model="currentProtocol.sampleProtocol.doi"
                 label="DOI"
                 variant="outlined"
-                dense
                 :rules="doiValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
@@ -214,7 +211,6 @@ export default defineComponent({
                     <template #activator="{ props }">
                       <v-icon
                         v-bind="props"
-                        dense
                       >
                         mdi-help-circle
                       </v-icon>
@@ -233,7 +229,6 @@ export default defineComponent({
                 v-model="currentProtocol.sampleProtocol.url"
                 label="URL"
                 variant="outlined"
-                dense
                 :rules="urlValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
@@ -246,7 +241,6 @@ export default defineComponent({
                     <template #activator="{ props }">
                       <v-icon
                         v-bind="props"
-                        dense
                       >
                         mdi-help-circle
                       </v-icon>
@@ -275,7 +269,6 @@ export default defineComponent({
                 v-model="currentProtocol.sampleProtocol.name"
                 label="Protocol Name"
                 variant="outlined"
-                dense
                 @blur="updateMultiOmicsForm()"
               >
                 <template #append>
@@ -286,7 +279,6 @@ export default defineComponent({
                     <template #activator="{ props }">
                       <v-icon
                         v-bind="props"
-                        dense
                       >
                         mdi-help-circle
                       </v-icon>
@@ -308,7 +300,6 @@ export default defineComponent({
               v-model="currentProtocol.sampleProtocol.description"
               label="Protocol Description"
               variant="outlined"
-              dense
               rows="3"
               @blur="updateMultiOmicsForm()"
             />
@@ -353,7 +344,6 @@ export default defineComponent({
               v-model="currentProtocol.acquisitionProtocol.doi"
               label="DOI"
               variant="outlined"
-              dense
               :rules="doiValueRules()"
               @blur="updateMultiOmicsForm()"
             >
@@ -366,7 +356,6 @@ export default defineComponent({
                   <template #activator="{ props }">
                     <v-icon
                       v-bind="props"
-                      dense
                     >
                       mdi-help-circle
                     </v-icon>
@@ -386,7 +375,6 @@ export default defineComponent({
               v-model="currentProtocol.acquisitionProtocol.url"
               label="URL"
               variant="outlined"
-              dense
               :rules="urlValueRules()"
               @blur="updateMultiOmicsForm()"
             >
@@ -399,7 +387,6 @@ export default defineComponent({
                   <template #activator="{ props }">
                     <v-icon
                       v-bind="props"
-                      dense
                     >
                       mdi-help-circle
                     </v-icon>
@@ -428,7 +415,6 @@ export default defineComponent({
               v-model="currentProtocol.acquisitionProtocol.name"
               label="Protocol Name"
               variant="outlined"
-              dense
               @blur="updateMultiOmicsForm()"
             >
               <template #append>
@@ -439,7 +425,6 @@ export default defineComponent({
                   <template #activator="{ props }">
                     <v-icon
                       v-bind="props"
-                      dense
                     >
                       mdi-help-circle
                     </v-icon>
@@ -460,7 +445,6 @@ export default defineComponent({
             v-model="currentProtocol.acquisitionProtocol.description"
             label="Protocol Description"
             variant="outlined"
-            dense
             rows="3"
             @blur="updateMultiOmicsForm()"
           />
@@ -504,7 +488,6 @@ export default defineComponent({
                 v-model="currentProtocol.dataProtocol.doi"
                 label="DOI"
                 variant="outlined"
-                dense
                 :rules="doiValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
@@ -517,7 +500,6 @@ export default defineComponent({
                     <template #activator="{ props }">
                       <v-icon
                         v-bind="props"
-                        dense
                       >
                         mdi-help-circle
                       </v-icon>
@@ -537,7 +519,6 @@ export default defineComponent({
                 v-model="currentProtocol.dataProtocol.url"
                 label="URL"
                 variant="outlined"
-                dense
                 :rules="urlValueRules()"
                 @blur="updateMultiOmicsForm()"
               >
@@ -550,7 +531,6 @@ export default defineComponent({
                     <template #activator="{ props }">
                       <v-icon
                         v-bind="props"
-                        dense
                       >
                         mdi-help-circle
                       </v-icon>

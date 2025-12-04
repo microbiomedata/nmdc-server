@@ -470,7 +470,7 @@ export default defineComponent({
     watch(columnVisibility, () => {
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
-    
+
     watch(activeTabIndex, (newIndex) => {
       changeTemplate(newIndex);
     });
@@ -643,7 +643,7 @@ export default defineComponent({
         }
       }
     });
-    
+
     return {
       user,
       APP_HEADER_HEIGHT,
@@ -1007,6 +1007,7 @@ export default defineComponent({
         v-model="sidebarOpen"
         :width="HELP_SIDEBAR_WIDTH"
         absolute
+        temporary
         location="right"
         class="z-above-data-harmonizer"
       >
@@ -1028,16 +1029,12 @@ export default defineComponent({
         />
       </div>
       <div class="d-flex ma-2">
-        <v-btn
-          color="gray"
-          depressed
-          :to="{ name: 'Sample Environment' }"
-        >
+        <v-btn-grey :to="{ name: 'Sample Environment' }">
           <v-icon class="pr-1">
             mdi-arrow-left-circle
           </v-icon>
           Go to previous step
-        </v-btn>
+        </v-btn-grey>
         <v-spacer />
         <div class="d-flex align-center">
           <span class="mr-1">Color key</span>
@@ -1061,7 +1058,6 @@ export default defineComponent({
             >
               <v-btn
                 color="success"
-                depressed
                 :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
                 :loading="submitLoading"
                 @click="canEditSubmissionByStatus() ? submitDialog = true : null"

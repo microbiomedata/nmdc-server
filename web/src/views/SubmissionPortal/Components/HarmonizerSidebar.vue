@@ -95,19 +95,20 @@ export default defineComponent({
     <div class="flex-0-0">
       <v-tabs
         v-model="tabModel"
+        color="primary"
         grow
       >
         <v-tooltip
           v-for="tab in TABS"
           :key="tab.label"
           open-delay="600"
-          top
+          location="top"
         >
           <template #activator="{ props }">
             <v-tab
               v-bind="props"
             >
-              <v-icon>{{ tab.icon }}</v-icon>
+              <v-icon size="x-large">{{ tab.icon }}</v-icon>
             </v-tab>
           </template>
           <span>{{ tab.label }}</span>
