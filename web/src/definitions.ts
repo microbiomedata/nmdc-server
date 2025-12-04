@@ -15,6 +15,7 @@ const Definitions = {
   studyGoldID: 'Provide the GOLD study IDs associated with samples for this study.',
   studyNCBIProjectTitle: 'Provide the NCBI BioProject Title(s) associated with this study.',
   studyNCBIBioProjectAccession: 'Provide the NCBI BioProject Accession Number associated with the listed NCBI BioProject Title.',
+  submitterEmail: 'The submitter\'s email is required for submission. The submitter does not have to be the Principal Investigator.',
   metadataTypes: 'Check all -omics data types associated with samples collected for this study.',
   doi: 'DOI associated with the user project awarded. This is required when data is already generated and can be found <a href="https://www.osti.gov/award-doi-service/" target="_blank" rel="noopener noreferrer">here</a>.',
   dataDoiProvider: 'The authority, or organization, that created and provided the DOI.',
