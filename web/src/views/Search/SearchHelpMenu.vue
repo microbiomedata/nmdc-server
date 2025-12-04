@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
 
 export default defineComponent({});
 </script>
@@ -7,16 +7,14 @@ export default defineComponent({});
 <template>
   <v-menu
     open-on-hover
-    bottom
-    left
-    offset-y
-    close-delay="200"
+    location="bottom start"
+    :close-delay="200"
   >
-    <template #activator="{ on, attrs }">
+    <template #activator="{ props }">
       <v-btn
         icon
-        v-bind="attrs"
-        v-on="on"
+        variant="plain"
+        v-bind="props"
       >
         <v-icon>
           mdi-help-circle

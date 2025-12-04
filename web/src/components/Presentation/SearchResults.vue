@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, PropType, ref } from '@vue/composition-api';
+import { defineComponent, PropType, ref } from 'vue';
 
 import { BaseSearchResult } from '@/data/api';
 
@@ -42,6 +42,7 @@ export default defineComponent({
       default: false,
     },
   },
+  emits: ['set-page', 'set-items-per-page', 'selected'],
   setup(props) {
     const rows = ref(props.itemsPerPage);
     return {
@@ -60,11 +61,11 @@ export default defineComponent({
       class="d-flex pt-2 pb-0 align-end justify-center"
     >
       <v-pagination
-        :value="page"
+        :model-value="page"
         :length="Math.ceil(count / rows)"
         :total-visible="7"
-        depressed
-        @input="$emit('set-page', $event)"
+        active-color="primary"
+        @update:model-value="$emit('set-page', $event)"
       />
       <!-- flex-basis is based on the "Items per page" label. Since it is absolutely
            positioned it doesn't count towards the `auto` width -->
@@ -75,73 +76,75 @@ export default defineComponent({
         class="ml-4 mb-1 flex-grow-0"
         :style="{ 'flex-basis': '6rem' }"
         hide-details
-        @input="$emit('set-items-per-page', $event)"
+        variant="plain"
+        @update:model-value="$emit('set-items-per-page', $event)"
       />
     </div>
     <v-list
-      dense
+      density="compact"
       class="rounded-b"
     >
       <template
         v-for="(result, resultIndex) in results"
+        :key="result.id"
       >
         <v-divider
           v-if="resultIndex > 0"
-          :key="`${result.id}-divider`"
         />
 
         <v-list-item
-          :key="result.id"
           :ripple="!disableNavigateOnClick"
-          :inactive="disableNavigateOnClick"
+          :active="false"
           v-on="{
             click: disableNavigateOnClick
               ? () => {}
               : () => $emit('selected', result.id),
           }"
         >
-          <slot
-            name="action"
-            v-bind="{ result }"
-          />
-          <v-list-item-avatar>
-            <v-icon
-              v-if="result.children && result.children.length > 0 && result.study_category === 'research_study'"
-            >
-              mdi-book-multiple-outline
+          <template #prepend>
+            <slot
+              name="action"
+              v-bind="{ result }"
+            />
+            <v-icon>
+              {{
+                result.children && Array.isArray(result.children) && result.children.length > 0 && result.study_category === 'research_study'
+                  ? 'mdi-book-multiple-outline'
+                  : icon
+              }}
             </v-icon>
-            <v-icon
-              v-else
-            >
-              {{ icon }}
-            </v-icon>
-          </v-list-item-avatar>
-          <v-list-item-content>
-            <v-list-item-title>
-              {{ result[titleKey] }}
+          </template>
+
+          <v-list-item-title>
+            <div class="d-flex align-center">
+              <div class="text-subtitle-2">
+                {{ result[titleKey] }}
+              </div>
               <slot
                 name="child-list"
                 v-bind="{ result}"
               />
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              <slot
-                name="subtitle"
-                v-bind="{ result }"
-              >
-                {{ result[subtitleKey] || 'No description' }}
-              </slot>
-            </v-list-item-subtitle>
+            </div>
+          </v-list-item-title>
+          <v-list-item-subtitle>
             <slot
-              name="item-content"
+              name="subtitle"
               v-bind="{ result }"
-            />
-          </v-list-item-content>
-
+            >
+              {{ result[subtitleKey] || 'No description' }}
+            </slot>
+          </v-list-item-subtitle>
           <slot
-            name="action-right"
+            name="item-content"
             v-bind="{ result }"
           />
+
+          <template #append>
+            <slot
+              name="action-right"
+              v-bind="{ result }"
+            />
+          </template>
         </v-list-item>
       </template>
     </v-list>

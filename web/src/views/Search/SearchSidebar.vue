@@ -1,13 +1,13 @@
 <script lang="ts">
 import {
   computed, defineComponent, ref, watch,
-} from '@vue/composition-api';
+} from 'vue';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
 import { geneFunctionTables, types } from '@/encoding';
 import {
-  api, Condition, DatabaseSummaryResponse, entityType,
+  api, AttributeSummary, Condition, DatabaseSummaryResponse, entityType,
 } from '@/data/api';
 
 import ConditionChips from '@/components/Presentation/ConditionChips.vue';
@@ -18,7 +18,7 @@ import FacetedSearch, { SearchFacet } from '@/components/FacetedSearch.vue';
 import {
   stateRefs, removeConditions, setConditions, toggleConditions,
 } from '@/store';
-import useGtag from '@/use/useGtag';
+import { event } from 'vue-gtag'
 
 /**
  * Sidebar has a fixed list of facets, possibly from different tables.
@@ -145,7 +145,6 @@ export default defineComponent({
     const filterText = ref('');
     const textSearchResults = ref([] as Condition[]);
     const dbSummary = ref({} as DatabaseSummaryResponse);
-    const gtag = useGtag();
     const biosampleDescription = computed(() => {
       const { schemaName } = types.biosample;
       if (schemaName !== undefined) {
@@ -158,9 +157,9 @@ export default defineComponent({
 
     api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
 
-    function dbSummaryForTable(table: entityType, field: string) {
+    function dbSummaryForTable(table: entityType, field: string): AttributeSummary {
       if (table in dbSummary.value) {
-        return dbSummary.value[table].attributes[field];
+        return dbSummary.value[table].attributes[field] as AttributeSummary;
       }
       if (geneFunctionTables.includes(table)) {
         const tableToType: Record<string, string> = {
@@ -171,9 +170,9 @@ export default defineComponent({
         };
         return {
           type: tableToType[table],
-        };
+        } as AttributeSummary;
       }
-      return {};
+      return {} as AttributeSummary;
     }
 
     async function updateSearch() {
@@ -188,33 +187,33 @@ export default defineComponent({
     function trackFilterConditions(newConditionList: Condition[], oldConditionList: Condition[]) {
       // Do nothing if Google Analytics is not available. This is expected in development mode.
       // Also do nothing if there are no new conditions or if the conditions have not changed (spurious effect).
-      if (!gtag || newConditionList.length === 0 || JSON.stringify(newConditionList) === JSON.stringify(oldConditionList)) {
+      if (import.meta.env.DEV || newConditionList.length === 0 || JSON.stringify(newConditionList) === JSON.stringify(oldConditionList)) {
         return;
       }
       // On initial load, track each filter condition that exists
       // Otherwise, track the last filter condition added or updated
       if (oldConditionList.length === 0 && newConditionList.length > 0) {
         newConditionList.forEach((condition) => {
-          gtag.event('filter_added', {
+          event('filter_added', {
             event_category: 'search',
             event_label: condition.field,
-            value: condition.value,
+            event_value: condition.value,
           });
         });
       // If a condition is added or updated, track that condition
       } else if (newConditionList.length > oldConditionList.length || newConditionList.length === oldConditionList.length) {
-        gtag.event('filter_added', {
+        event('filter_added', {
           event_category: 'search',
-          event_label: newConditionList[newConditionList.length - 1].field,
-          value: newConditionList[newConditionList.length - 1].value,
+          event_label: newConditionList[newConditionList.length - 1]?.field,
+          event_value: newConditionList[newConditionList.length - 1]?.value,
         });
         // Special case for map usage: if lat/lon were the last two filters added
         // then track both filters because they are added together from the map interface
-        if (newConditionList[newConditionList.length - 1].field === 'longitude' && newConditionList[newConditionList.length - 2].field === 'latitude') {
-          gtag.event('filter_added', {
+        if (newConditionList[newConditionList.length - 1]?.field === 'longitude' && newConditionList[newConditionList.length - 2]?.field === 'latitude') {
+          event('filter_added', {
             event_category: 'search',
-            event_label: newConditionList[newConditionList.length - 2].field,
-            value: newConditionList[newConditionList.length - 2].value,
+            event_label: newConditionList[newConditionList.length - 2]?.field,
+            event_value: newConditionList[newConditionList.length - 2]?.value,
           });
         }
       }
@@ -243,8 +242,6 @@ export default defineComponent({
 
 <template>
   <v-navigation-drawer
-    app
-    clipped
     permanent
     width="320"
   >
@@ -252,22 +249,24 @@ export default defineComponent({
       <div class="mx-3 my-2">
         <div
           v-if="conditions.length"
-          class="text-subtitle-2 primary--text d-flex flex-row"
+          class="text-subtitle-2 text-primary d-flex align-center"
         >
-          <span class="grow">Active query terms</span>
+          <span class="flex-fill">Active query terms</span>
           <v-tooltip
-            bottom
+            location="bottom"
             open-delay="600"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
-                icon
-                x-small
-                v-bind="attrs"
-                v-on="on"
+                variant="plain"
+                size="x-small"
+                v-bind="props"
                 @click="removeConditions"
               >
-                <v-icon>mdi-filter-off</v-icon>
+                <v-icon class="mr-2">
+                  mdi-filter-off
+                </v-icon>
+                Clear all
               </v-btn>
             </template>
             <span>Clear query terms</span>
@@ -276,6 +275,7 @@ export default defineComponent({
       </div>
 
       <ConditionChips
+        v-if="conditions.length"
         :conditions="conditions"
         :db-summary="dbSummary"
         class="ma-3"
@@ -298,21 +298,26 @@ export default defineComponent({
         </template>
       </ConditionChips>
 
-      <div class="font-weight-bold text-subtitle-2 primary--text mx-3">
+      <div class="font-weight-bold text-subtitle-2 text-primary mx-3">
         <span v-if="isLoading">
           Loading results...
         </span>
-        <span v-else>Found {{ resultsCount }} samples.
+        <span
+          v-else
+          class="d-flex align-center"
+        >
+          <span>Found {{ resultsCount }} samples.</span>
           <v-tooltip
-            bottom
+            location="bottom"
             open-delay="600"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                x-small
-                v-bind="attrs"
-                v-on="on"
+                variant="text"
+                size="small"
+                v-bind="props"
+                density="comfortable"
               >
                 <v-icon>mdi-help-circle</v-icon>
               </v-btn>
@@ -326,7 +331,7 @@ export default defineComponent({
     </template>
 
     <FacetedSearch
-      :filter-text.sync="filterText"
+      v-model:filter-text="filterText"
       :facet-values="textSearchResults"
       :conditions="conditions"
       :fields="FunctionSearchFacets"

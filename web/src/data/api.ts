@@ -4,7 +4,7 @@ import { setupCache } from 'axios-cache-adapter';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
-import { User } from '@/types';
+import type { User } from '@/types';
 
 // The token refresh and retry logic stores an extra bit of state on the request config
 declare module 'axios' {
@@ -34,7 +34,7 @@ const cache = setupCache({
 });
 
 const client = axios.create({
-  baseURL: process.env.VUE_APP_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_BASE_URL || '/api',
   adapter: cache.adapter,
 });
 
@@ -142,7 +142,7 @@ export interface BiosampleSearchResult extends BaseSearchResult {
   emsl_biosample_identifiers: string[];
 }
 
-interface PrincipalInvestigator {
+export interface PrincipalInvestigator {
   name?: string;
   email?: string;
   orcid?: string;
@@ -331,6 +331,7 @@ export interface EnvoNode {
   id: string;
   label: string;
   children?: EnvoNode[];
+  isExpanded?: boolean;
 }
 
 export interface EnvoTree {
@@ -499,7 +500,7 @@ async function getFacetSummary(
   return Object.keys(data.facets)
     .map((facetName) => ({
       facet: facetName,
-      count: data.facets[facetName],
+      count: data.facets[facetName] || 0,
     }))
     .sort((a, b) => b.count - a.count);
 }

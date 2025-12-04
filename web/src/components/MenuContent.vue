@@ -1,18 +1,20 @@
 <script lang="ts">
 import {
   defineComponent, PropType, onBeforeUnmount, computed,
-} from '@vue/composition-api';
+} from 'vue';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
-
+// @ts-ignore
 import { fieldDisplayName } from '@/util';
-import { getField, geneFunctionTypeInfo, geneFunctionTables } from '@/encoding';
+import {
+  getField, geneFunctionTypeInfo, geneFunctionTables, geneFunctionType as _geneFunctionType,
+} from '@/encoding';
 import FacetSummaryWrapper from '@/components/Wrappers/FacetSummaryWrapper.vue';
 import FilterDate from '@/components/Presentation/FilterDate.vue';
 import FilterFloat from '@/components/Presentation/FilterFloat.vue';
 import FilterList from '@/components/Presentation/FilterList.vue';
 import FilterSankeyTree from '@/components/FilterSankeyTree.vue';
-import FilterGene from '@/components/FilterGene.vue';
+import FilterGene, { GeneType as _GeneType } from '@/components/FilterGene.vue';
 import FilterTree from '@/components/FilterTree.vue';
 import { urlify } from '@/data/utils';
 import { AttributeSummary, Condition, entityType } from '@/data/api';
@@ -54,7 +56,7 @@ export default defineComponent({
       default: false,
     },
   },
-
+  emits: ['close', 'select'],
   setup(props, { emit }) {
     onBeforeUnmount(() => emit('close'));
 
@@ -85,7 +87,7 @@ export default defineComponent({
 
 <template>
   <div>
-    <v-card-title class="pb-0">
+    <v-card-title class="pb-0 d-flex align-center">
       {{ fieldDisplayName(field, table) }}
       <span
         v-if="summary.units"
@@ -96,6 +98,7 @@ export default defineComponent({
       <v-spacer />
       <v-btn
         icon
+        variant="plain"
         @click="$emit('close')"
       >
         <v-icon>mdi-close</v-icon>
@@ -119,16 +122,16 @@ export default defineComponent({
         :field="field"
         :table="table"
         :conditions="conditions"
-        :gene-type-params="geneFunctionTypeInfo[summary.type.split('_')[0]]"
-        :gene-type="summary.type.split('_')[0]"
+        :gene-type-params="geneFunctionTypeInfo[summary.type.split('_')[0] as _geneFunctionType]"
+        :gene-type="summary.type.split('_')[0] as _GeneType"
         @select="$emit('select', $event)"
       />
       <filter-date
         v-if="summary.type === 'date'"
         v-bind="{
           field, type: table, conditions,
-          min: summary.min,
-          max: summary.max,
+          min: summary.min as string,
+          max: summary.max as string,
           update,
         }"
         class="pa-5"
@@ -138,8 +141,8 @@ export default defineComponent({
         v-else-if="['float', 'integer'].includes(summary.type)"
         v-bind="{
           field, type: table, conditions,
-          min: summary.min,
-          max: summary.max,
+          min: summary.min as number,
+          max: summary.max as number,
           update,
         }"
         class="pa-5"

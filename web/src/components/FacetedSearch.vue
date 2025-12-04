@@ -1,10 +1,10 @@
 <script lang="ts">
-import Vue, { PropType } from 'vue';
+import { defineComponent, PropType } from 'vue';
 import { groupBy } from 'lodash';
 
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
-
+// @ts-ignore
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
 import { Condition, entityType } from '@/data/api';
@@ -27,7 +27,7 @@ export interface SearchFacet {
 
 type KeyedFieldData = encoding.FieldsData & SearchFacet & { key: string; };
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     conditions: {
       type: Array as PropType<Condition[]>,
@@ -46,6 +46,7 @@ export default Vue.extend({
       required: true,
     },
   },
+  emits: ['update:filterText', 'select'],
   data() {
     return {
       menuState: {} as Record<string, boolean>,
@@ -95,7 +96,7 @@ export default Vue.extend({
   methods: {
     fieldDisplayName,
     toggleMenu(category: string, value: boolean): void {
-      Vue.set(this.menuState, category, value);
+      this.menuState[category] = value;
     },
     hasActiveConditions(category: string): boolean {
       return this.conditions.some((cond) => `${cond.table}_${cond.field}` === category);
@@ -119,21 +120,19 @@ export default Vue.extend({
 <template>
   <div>
     <v-text-field
-      :value="filterText"
-      solo
+      :model-value="filterText"
       label="search"
       clearable
-      class="mx-3"
-      dense
+      class="mx-3 pt-1"
       hide-details
-      outlined
-      flat
-      append-icon="mdi-magnify"
-      @input="$emit('update:filterText', $event || '')"
+      variant="outlined"
+      density="compact"
+      append-inner-icon="mdi-magnify"
+      @update:model-value="$emit('update:filterText', $event || '')"
     />
     <v-list
       ref="list"
-      dense
+      density="compact"
       shaped
       class="compact"
     >
@@ -141,22 +140,22 @@ export default Vue.extend({
         v-for="[groupname, filteredFields] in groupedFields"
         :key="groupname"
       >
-        <v-subheader
+        <v-list-subheader
           v-show="groupedFields.length > 1 && filteredFields.length > 0"
         >
           {{ groupname !== 'undefined' ? groupname : 'Other' }}
           <v-tooltip
             v-if="groupname === 'GOLD Ecosystems'"
-            right
+            location="end"
             open-delay="600"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                x-small
-                v-bind="attrs"
-                class="ml-2"
-                v-on="on"
+                variant="text"
+                size="small"
+                density="comfortable"
+                v-bind="props"
               >
                 <v-icon>mdi-help-circle</v-icon>
               </v-btn>
@@ -165,44 +164,44 @@ export default Vue.extend({
           </v-tooltip>
           <v-tooltip
             v-if="groupname === 'MIxS Environmental Triad'"
-            right
+            location="end"
             open-delay="600"
           >
-            <template #activator="{ on, attrs }">
+            <template #activator="{ props }">
               <v-btn
                 icon
-                x-small
-                v-bind="attrs"
-                class="ml-2"
-                v-on="on"
+                variant="text"
+                size="small"
+                density="comfortable"
+                v-bind="props"
               >
                 <v-icon>mdi-help-circle</v-icon>
               </v-btn>
             </template>
             <span> {{ mixsDescription }}</span>
           </v-tooltip>
-        </v-subheader>
-        <template v-for="sf in filteredFields">
+        </v-list-subheader>
+        <template
+          v-for="sf in filteredFields"
+          :key="sf.key"
+        >
           <v-menu
-            :key="sf.key"
-            :value="menuState[sf.key]"
-            offset-x
+            :model-value="menuState[sf.key]"
+            location="end"
             :close-on-content-click="false"
-            @input="toggleMenu(sf.key, $event)"
+            @update:model-value="toggleMenu(sf.key, $event)"
           >
-            <template #activator="{ on }">
+            <template #activator="{ props }">
               <v-list-item
                 v-show="!hasActiveConditions(sf.key)"
-                v-on="on"
+                v-bind="props"
               >
-                <v-list-item-content>
-                  <v-list-item-title>
-                    {{ fieldDisplayName(sf.field, sf.table) }}
-                  </v-list-item-title>
-                </v-list-item-content>
-                <v-list-item-icon>
-                  <v-icon> mdi-play </v-icon>
-                </v-list-item-icon>
+                <v-list-item-title>
+                  {{ fieldDisplayName(sf.field, sf.table) }}
+                </v-list-item-title>
+                <template #append>
+                  <v-icon>mdi-play</v-icon>
+                </template>
               </v-list-item>
             </template>
             <v-card
@@ -214,7 +213,7 @@ export default Vue.extend({
                   field: sf.field,
                   table: sf.table,
                   isOpen: menuState[sf.key],
-                  toggleMenu: (val) => toggleMenu(sf.key, val),
+                  toggleMenu: (val: boolean) => toggleMenu(sf.key, val),
                 }"
               />
             </v-card>
@@ -225,28 +224,24 @@ export default Vue.extend({
         v-if="facetValues.length && groupedFields.length"
         class="my-2"
       />
-      <v-subheader v-if="facetValues.length">
+      <v-list-subheader v-if="facetValues.length">
         Query Options
-      </v-subheader>
+      </v-list-subheader>
       <v-list-item
         v-for="condition in facetValues"
         :key="`${condition.table}:${condition.field}:${condition.value}`"
         @click="$emit('select', condition)"
       >
-        <v-list-item-content>
-          <v-list-item-title>
-            {{ condition.value }}
-          </v-list-item-title>
-          <v-list-item-subtitle>
-            {{ fieldDisplayName(condition.field) }}
-            <span v-if="condition.op === 'like'">({{ tableName(condition.table) }})</span>
-          </v-list-item-subtitle>
-        </v-list-item-content>
-        <v-list-item-icon class="align-self-center">
-          <v-icon>
-            mdi-filter-plus
-          </v-icon>
-        </v-list-item-icon>
+        <v-list-item-title>
+          {{ condition.value }}
+        </v-list-item-title>
+        <v-list-item-subtitle>
+          {{ fieldDisplayName(condition.field) }}
+          <span v-if="condition.op === 'like'">({{ tableName(condition.table) }})</span>
+        </v-list-item-subtitle>
+        <template #append>
+          <v-icon>mdi-filter-plus</v-icon>
+        </template>
       </v-list-item>
       <v-list-item
         v-if="facetValues.length === 0 && groupedFields.length === 0"
@@ -256,3 +251,17 @@ export default Vue.extend({
     </v-list>
   </div>
 </template>
+
+<style scoped>
+.compact .v-list-item-title {
+  font-size: .8125rem;
+  font-weight: 500;
+  line-height: 1rem;
+}
+
+.compact .v-list-subheader {
+  font-size: .75rem;
+  height: 40px;
+  padding-inline-start: 0.5rem !important;
+}
+</style>

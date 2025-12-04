@@ -1,7 +1,7 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
 import AuthButton from '@/components/Presentation/AuthButton.vue';
-import Menus from '@/menus';
+import { Menus } from '@/menus';
 
 export const APP_HEADER_HEIGHT = 82;
 
@@ -20,11 +20,8 @@ export default defineComponent({
 
 <template>
   <v-app-bar
-    app
     class="navigation-button-text-animate"
     color="white"
-    clipped-left
-    elevation="4"
     :height="APP_HEADER_HEIGHT"
   >
     <a
@@ -42,9 +39,9 @@ export default defineComponent({
     <template v-for="(menu) in Menus">
       <v-btn
         v-if="!menu.items || !menu.items.length"
-        :key="menu.label"
-        plain
-        small
+        :key="`btn-${menu.label}`"
+        variant="plain"
+        size="small"
         :ripple="false"
         :href="menu.href"
       >
@@ -55,23 +52,18 @@ export default defineComponent({
 
       <v-menu
         v-else
-        :key="menu.label"
-        bottom
-        right
-        offset-y
+        :key="`menu-${menu.label}`"
+        location="bottom"
         content-class="navigation-button-text-animate elevation-4"
-        :open-on-hover="true"
-        transition="fade-transition"
-        z-index="501"
+        open-on-hover
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-btn
-            plain
-            small
+            variant="plain"
+            size="small"
             :ripple="false"
             :href="menu.href"
-            v-bind="attrs"
-            v-on="on"
+            v-bind="props"
           >
             <div class="navigation-button-text">
               {{ menu.label }}
@@ -83,7 +75,8 @@ export default defineComponent({
         </template>
 
         <v-list
-          dense
+          density="compact"
+          variant="plain"
           expand
           flat
           nav
@@ -94,15 +87,12 @@ export default defineComponent({
             :href="item.href"
             :to="item.to"
             :ripple="false"
-            class="text-uppercase"
           >
-            <v-list-item-content>
-              <v-list-item-title>
-                <div class="navigation-button-text">
-                  {{ item.label }}
-                </div>
-              </v-list-item-title>
-            </v-list-item-content>
+            <v-list-item-title>
+              <div class="navigation-button-text text-uppercase">
+                {{ item.label }}
+              </div>
+            </v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
@@ -115,10 +105,11 @@ export default defineComponent({
 </template>
 
 <style lang="scss" scoped>
+
   .header-logo {
     height: 100%;
     img {
-      padding: 9px 0;
+      padding: 0.75rem 1rem;
       height: 100%;
     }
   }
@@ -127,19 +118,19 @@ export default defineComponent({
     .navigation-button-text {
       display: inline-block;
       padding: 2px 0;
-      background-image: linear-gradient(var(--v-primary-base), var(--v-primary-base));
+      background-image: linear-gradient(rgb(var(--v-theme-primary)), rgb(var(--v-theme-primary)));
       background-position: 0 100%;
       background-repeat: no-repeat;
       background-size: 0 1px;
       transition-property: background-size;
-      transition-duration: 0.15s;
+      transition-duration: 0.25s;
       transition-timing-function: ease;
     }
 
     .v-btn, .v-list-item {
       &.v-btn--active, &:hover, &:focus, &.v-list-item--active {
         .navigation-button-text {
-          color: var(--v-primary-base);
+          color: rgb(var(--v-theme-primary));
           background-size: 100% 1px;
         }
       }

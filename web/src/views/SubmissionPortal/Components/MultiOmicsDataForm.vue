@@ -6,15 +6,16 @@ import {
   watch,
   nextTick,
   computed,
-} from '@vue/composition-api';
+} from 'vue';
+import { VForm } from 'vuetify/components';
 
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
+import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
   templateHasData, checkDoiFormat, canEditSubmissionByStatus, SubmissionStatusTitleMapping, status,
 } from '../store';
-import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
@@ -33,10 +34,10 @@ export default defineComponent({
     StatusAlert,
   },
   setup() {
-    const formRef = ref();
+    const formRef = ref<VForm | null>(null);
 
     function reValidate() {
-      formRef.value.validate();
+      formRef.value!.validate();
     }
 
     const projectAwardValidationRules = () => [(v: string | undefined) => {
@@ -106,7 +107,7 @@ export default defineComponent({
     );
 
     const revalidate = () => {
-      nextTick(() => formRef.value.validate());
+      nextTick(() => formRef.value!.validate());
     };
 
     function resetFields(field: string) {
@@ -141,7 +142,7 @@ export default defineComponent({
     );
 
     onMounted(() => {
-      formRef.value.validate();
+      formRef.value!.validate();
     });
 
     return {
@@ -199,7 +200,7 @@ export default defineComponent({
         v-model="multiOmicsForm.dataGenerated"
         label="Have data already been generated for your study? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('dataGenerated')"
       >
         <v-radio
@@ -216,20 +217,18 @@ export default defineComponent({
         v-model="multiOmicsForm.facilityGenerated"
         label="Was data generated at a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('facilityGenerated')"
       >
         <v-radio
           label="No"
           :value="false"
           hide-details
-          class="mb-2 mt-0"
         />
         <v-radio
           label="Yes"
           :value="true"
           hide-details
-          class="mb-2 mt-0"
         />
       </v-radio-group>
       <div
@@ -244,18 +243,16 @@ export default defineComponent({
         v-model="multiOmicsForm.doe"
         label="Are you submitting samples to a DOE user facility (JGI, EMSL)? *"
         :rules="[v => (v === true || v === false) || 'This field is required']"
-        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('doe')"
       >
         <v-radio
           label="No"
           :value="false"
-          class="mb-2 mt-0"
         />
         <v-radio
           label="Yes"
           :value="true"
-          class="mb-2 mt-0"
         />
       </v-radio-group>
 
@@ -266,12 +263,13 @@ export default defineComponent({
         :rules="projectAwardValidationRules()"
         class="pb-5"
       >
-        <div class="d-flex">
+        <div class="d-flex align-center ga-1">
           <v-radio
+            class="flex-0-0"
             value="CSP"
             label="CSP"
           />
-          <div class="ml-1">
+          <div>
             (<a
               href="https://jgi.doe.gov/user-programs/program-info/csp-overview/csp-annual-call/"
               target="_blank"
@@ -280,12 +278,13 @@ export default defineComponent({
           </div>
         </div>
 
-        <div class="d-flex">
+        <div class="d-flex align-center ga-1">
           <v-radio
+            class="flex-0-0"
             value="BERSS"
             label="BERSS"
           />
-          <div class="ml-1">
+          <div>
             (<a
               href="https://jgi.doe.gov/user-programs/other-programs/"
               target="_blank"
@@ -294,12 +293,13 @@ export default defineComponent({
           </div>
         </div>
 
-        <div class="d-flex">
+        <div class="d-flex align-center ga-1">
           <v-radio
+            class="flex-0-0"
             value="BRCs"
             label="BRCs"
           />
-          <div class="ml-1">
+          <div>
             (<a
               href="https://jgi.doe.gov/user-programs/other-programs/"
               target="_blank"
@@ -308,12 +308,13 @@ export default defineComponent({
           </div>
         </div>
 
-        <div class="d-flex">
+        <div class="d-flex align-center ga-1">
           <v-radio
+            class="flex-0-0"
             value="FICUS"
             label="FICUS"
           />
-          <div class="ml-1">
+          <div>
             (<a
               href="https://www.emsl.pnnl.gov/basic/ficus-program/1872"
               target="_blank"
@@ -322,12 +323,13 @@ export default defineComponent({
           </div>
         </div>
 
-        <div class="d-flex">
+        <div class="d-flex align-center ga-1">
           <v-radio
+            class="flex-0-0"
             value="MONet"
             label="MONet"
           />
-          <div class="ml-1">
+          <div>
             (<a
               href="https://www.emsl.pnnl.gov/monet"
               target="_blank"
@@ -341,14 +343,20 @@ export default defineComponent({
         >
           <template #label>
             <span class="mr-4">Other</span>
-            <v-text-field
-              v-model="multiOmicsForm.otherAward"
-              class="pa-0 ma-0"
-              dense
-              hide-details="auto"
-              outlined
-              :rules="otherAwardValidationRules()"
-            />
+            <v-responsive
+              class="mx-auto"
+              max-width="344"
+              min-width="344"
+            >
+              <v-text-field
+                v-model="multiOmicsForm.otherAward"
+                class="pa-0 ma-0"
+                density="compact"
+                hide-details="auto"
+                variant="outlined"
+                :rules="otherAwardValidationRules()"
+              />
+            </v-responsive>
           </template>
         </v-radio>
       </v-radio-group>
@@ -375,7 +383,7 @@ export default defineComponent({
       />
 
       <v-alert
-        v-if="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl.sampleDataSlot)"
+        v-if="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
         type="warning"
       >
         <p class="text-h5">
@@ -402,14 +410,13 @@ export default defineComponent({
               >
                 <v-text-field
                   v-if="multiOmicsForm.awardDois !== null"
-                  v-model="multiOmicsForm.awardDois[i].value"
+                  v-model="multiOmicsForm.awardDois[i]!.value"
                   label="Award DOI *"
                   :hint="Definitions.doi"
                   :rules="doiValueRules(i)"
                   persistent-hint
                   validate-on-blur
-                  outlined
-                  dense
+                  variant="outlined"
                   @change="revalidate"
                 >
                   <template #message="{ message }">
@@ -423,13 +430,14 @@ export default defineComponent({
               >
                 <v-select
                   v-if="multiOmicsForm.awardDois !== null"
-                  v-model="multiOmicsForm.awardDois[i].provider"
+                  v-model="multiOmicsForm.awardDois[i]!.provider"
                   label="Award DOI Provider *"
                   :hint="Definitions.dataDoiProvider"
                   :items="doiProviderValues"
+                  item-title="text"
+                  item-value="value"
                   persistent-hint
-                  outlined
-                  dense
+                  variant="outlined"
                   clearable
                   :rules="doiProviderRules(i)"
                   @change="revalidate"
@@ -444,8 +452,9 @@ export default defineComponent({
           <v-btn
             v-if="(multiOmicsForm.dataGenerated || multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')) && multiOmicsForm.awardDois !== null"
             icon
+            variant="plain"
             class="pb-2"
-            :disabled="!(multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length)"
+            :disabled="!(multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length) || formRef?.isDisabled"
             @click="removeAwardDoi(i)"
           >
             <v-icon>mdi-minus-circle</v-icon>
@@ -461,39 +470,34 @@ export default defineComponent({
           @change="revalidate"
         />
       </div>
-      <v-btn
+      <v-btn-grey
         v-if="multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')"
         class="mb-4"
-        depressed
+        :disabled="formRef?.isDisabled"
         @click="addAwardDoi"
       >
         <v-icon class="pr-1">
           mdi-plus-circle
         </v-icon>
         Add Award DOI
-      </v-btn>
+      </v-btn-grey>
     </v-form>
     <strong>* indicates required field</strong>
     <div class="d-flex mt-5">
-      <v-btn
-        color="gray"
-        depressed
-        :to="{ name: 'Study Form' }"
-      >
-        <v-icon class="pr-1">
+      <v-btn-grey :to="{ name: 'Study Form' }">
+        <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
         Go to previous step
-      </v-btn>
+      </v-btn-grey>
       <v-spacer />
       <v-btn
         color="primary"
-        depressed
         :disabled="(!multiOmicsFormValid)"
         :to="{ name: 'Sample Environment' }"
       >
         Go to next step
-        <v-icon class="pl-1">
+        <v-icon class="pl-2">
           mdi-arrow-right-circle
         </v-icon>
       </v-btn>

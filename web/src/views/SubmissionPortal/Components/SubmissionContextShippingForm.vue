@@ -6,17 +6,18 @@ import {
   onMounted,
   ref,
   watch,
-} from '@vue/composition-api';
+} from 'vue';
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
 import {
   addressForm,
   addressFormValid,
   canEditSubmissionMetadata,
 } from '../store';
-import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
+import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 
 export default defineComponent({
   components: { SubmissionContextShippingSummary },
@@ -49,15 +50,13 @@ export default defineComponent({
       ],
     }]);
 
-    const reformatDate = (dateString: string | Date) => new Date(dateString).toISOString().substring(0, 10);
+    const expectedShippingDate = ref<Date | undefined>();
 
-    const expectedShippingDateString = ref('');
-
-    watch(expectedShippingDateString, (newValue: string) => {
-      addressForm.expectedShippingDate = newValue.length ? new Date(newValue) : undefined;
+    watch(expectedShippingDate, (newValue) => {
+      addressForm.expectedShippingDate = newValue ? newValue.toISOString() : undefined;
     });
 
-    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[]) {
+    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[]) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,
@@ -69,10 +68,14 @@ export default defineComponent({
     });
 
     onMounted(() => {
-      expectedShippingDateString.value = addressForm.expectedShippingDate
-        ? reformatDate(addressForm.expectedShippingDate)
-        : '';
+      if (addressForm.expectedShippingDate) {
+        expectedShippingDate.value = new Date(addressForm.expectedShippingDate);
+      }
     });
+
+    function handleExpectedShippingDateClear() {
+      expectedShippingDate.value = undefined;
+    }
 
     return {
       addressFormRef,
@@ -80,7 +83,7 @@ export default defineComponent({
       addressFormValid,
       showAddressForm,
       datePicker,
-      expectedShippingDateString,
+      expectedShippingDate,
       sampleItems,
       biosafetyLevelValues,
       BiosafetyLevels,
@@ -89,6 +92,7 @@ export default defineComponent({
       shippingConditionsItems,
       canEditSubmissionMetadata,
       requiredRules,
+      handleExpectedShippingDateClear,
     };
   },
 });
@@ -97,7 +101,7 @@ export default defineComponent({
 <template>
   <v-card
     class="mt-4 pa-0"
-    outlined
+    variant="outlined"
     :style="addressFormValid ? '' : 'border: 2px solid red'"
   >
     <v-card-text
@@ -119,39 +123,33 @@ export default defineComponent({
       width="1200"
       eager
     >
-      <template #activator="{ on, attrs }">
+      <template #activator="{ props }">
         <v-btn
           :disabled="!canEditSubmissionMetadata()"
-          absolute
-          top
-          right
+          class="topRightButton"
           color="primary"
-          v-bind="attrs"
-          v-on="on"
+          v-bind="props"
         >
           Enter sender info
         </v-btn>
       </template>
       <v-card>
         <v-card-title>
-          <v-spacer />
-          <span class="text-h5">Shipping Information</span>
-          <v-tooltip bottom>
-            <template #activator="{ on, attrs }">
-              <v-btn
-                icon
-                color="primary"
-                v-bind="attrs"
-                v-on="on"
-              >
-                <v-icon>
+          <div class="text-h5">
+            Shipping Information
+            <v-tooltip bottom>
+              <template #activator="{ props }">
+                <v-icon
+                  color="primary"
+                  size="x-small"
+                  v-bind="props"
+                >
                   mdi-information
                 </v-icon>
-              </v-btn>
-            </template>
-            <span>Provide the address that the samples are being shipped from. </span>
-          </v-tooltip>
-          <v-spacer />
+              </template>
+              <span>Provide the address that the samples are being shipped from. </span>
+            </v-tooltip>
+          </div>
         </v-card-title>
         <v-card-text>
           <v-form
@@ -161,192 +159,196 @@ export default defineComponent({
             style="max-width: 1000px"
             :disabled="!canEditSubmissionMetadata()"
           >
-            <v-subheader>
+            <v-list-subheader>
               <span class="text-h6">Sender</span>
-            </v-subheader>
+            </v-list-subheader>
             <v-divider />
             <!-- Shipper Name, E-mail address, etc. -->
-            <v-text-field
-              v-model="addressForm.shipper.name"
-              :rules="requiredRules('Name is required', [])"
-              label="Sender Name *"
-              outlined
-              dense
-              class="mt-2"
-            />
-            <v-text-field
-              v-model="addressForm.shipper.email"
-              :rules="requiredRules('E-mail is required', [
-                v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
-              ])"
-              label="E-mail Address *"
-              outlined
-              dense
-            />
-            <v-text-field
-              v-model="addressForm.shipper.phone"
-              label="Phone Number"
-              outlined
-              dense
-            />
-            <v-text-field
-              v-model="addressForm.shipper.line1"
-              label="Address Line 1"
-              outlined
-              dense
-            />
-            <v-text-field
-              v-model="addressForm.shipper.line2"
-              label="Address Line 2"
-              outlined
-              dense
-            />
-            <v-text-field
-              v-model="addressForm.shipper.city"
-              label="City"
-              outlined
-              dense
-            />
-            <div class="d-flex">
+            <div class="stack-sm mb-4">
               <v-text-field
-                v-model="addressForm.shipper.state"
-                label="State"
-                outlined
-                dense
-                class="mr-4"
+                v-model="addressForm.shipper.name"
+                :rules="requiredRules('Name is required', [])"
+                label="Sender Name *"
+                variant="outlined"
+                density="compact"
+                class="mt-2"
               />
               <v-text-field
-                v-model="addressForm.shipper.postalCode"
-                label="Zip Code"
-                outlined
-                dense
-                class="mr-4"
+                v-model="addressForm.shipper.email"
+                :rules="requiredRules('E-mail is required', [
+                  v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+                ])"
+                label="E-mail Address *"
+                variant="outlined"
+                density="compact"
               />
               <v-text-field
-                v-model="addressForm.shipper.country"
-                :rules="requiredRules('Country is required', [])"
-                label="Country *"
-                outlined
-                dense
+                v-model="addressForm.shipper.phone"
+                label="Phone Number"
+                variant="outlined"
+                density="compact"
               />
-            </div>
-            <v-combobox
-              v-model="addressForm.shippingConditions"
-              :rules="requiredRules('Shipping conditions are required', [])"
-              label="Shipping Conditions *"
-              :items="shippingConditionsItems"
-              outlined
-              dense
-            />
-            <v-menu
-              ref="datePickerEl"
-              v-model="datePicker"
-              :close-on-content-click="false"
-              transition="scale-transition"
-              offset-y
-              min-width="auto"
-            >
-              <template #activator="{ on, attrs }">
+              <v-text-field
+                v-model="addressForm.shipper.line1"
+                label="Address Line 1"
+                variant="outlined"
+                density="compact"
+              />
+              <v-text-field
+                v-model="addressForm.shipper.line2"
+                label="Address Line 2"
+                variant="outlined"
+                density="compact"
+              />
+              <v-text-field
+                v-model="addressForm.shipper.city"
+                label="City"
+                variant="outlined"
+                density="compact"
+              />
+              <div class="d-flex">
                 <v-text-field
-                  v-model="expectedShippingDateString"
-                  :rules="requiredRules('Expected Shipping Date is required', [])"
-                  label="Expected Shipping Date *"
-                  prepend-icon="mdi-calendar"
-                  clearable
-                  readonly
-                  outlined
-                  dense
-                  v-bind="attrs"
-                  v-on="on"
-                  @click.clear="addressForm.expectedShippingDate = undefined"
+                  v-model="addressForm.shipper.state"
+                  label="State"
+                  variant="outlined"
+                  density="compact"
+                  class="mr-4"
                 />
-              </template>
-              <v-date-picker
-                v-model="expectedShippingDateString"
-                no-title
-                scrollable
-                @input="datePicker = false"
+                <v-text-field
+                  v-model="addressForm.shipper.postalCode"
+                  label="Zip Code"
+                  variant="outlined"
+                  density="compact"
+                  class="mr-4"
+                />
+                <v-text-field
+                  v-model="addressForm.shipper.country"
+                  :rules="requiredRules('Country is required', [])"
+                  label="Country *"
+                  variant="outlined"
+                  density="compact"
+                />
+              </div>
+              <v-combobox
+                v-model="addressForm.shippingConditions"
+                :rules="requiredRules('Shipping conditions are required', [])"
+                label="Shipping Conditions *"
+                :items="shippingConditionsItems"
+                density="compact"
+                variant="outlined"
               />
-            </v-menu>
-            <v-subheader>
+              <v-menu
+                ref="datePickerEl"
+                v-model="datePicker"
+                :close-on-content-click="false"
+                transition="scale-transition"
+                offset-y
+                min-width="auto"
+              >
+                <template #activator="{ props }">
+                  <v-text-field
+                    :model-value="expectedShippingDate?.toLocaleDateString()"
+                    :rules="requiredRules('Expected Shipping Date is required', [])"
+                    label="Expected Shipping Date *"
+                    prepend-icon="mdi-calendar"
+                    clearable
+                    readonly
+                    variant="outlined"
+                    v-bind="props"
+                    @click:clear="handleExpectedShippingDateClear"
+                  />
+                </template>
+                <v-date-picker
+                  v-model="expectedShippingDate"
+                  no-title
+                  scrollable
+                  @update:model-value="datePicker = false"
+                />
+              </v-menu>
+            </div>
+
+            <v-list-subheader>
               <span class="text-h6">Sample Type/Species</span>
-            </v-subheader>
+            </v-list-subheader>
             <v-divider />
-            <v-select
-              v-model="addressForm.sample"
-              class="mt-2"
-              :rules="requiredRules('Sample Type/Species is required', [])"
-              :items="sampleEnumValues"
-              label="Sample Type/Species *"
-              dense
-              outlined
-            />
-            <v-textarea
-              v-model="addressForm.description"
-              label="Sample Description"
-              :rules="requiredRules('Sample Description is required', [])"
-              hint="Number of samples, sample container type..."
-              outlined
-              dense
-              rows="2"
-            />
-            <v-textarea
-              v-model="addressForm.experimentalGoals"
-              :rules="requiredRules('Experiment Goals are required', [])"
-              label="Experiment Goals *"
-              hint="Briefly describe the goal for your experiment"
-              outlined
-              dense
-              rows="2"
-            />
-            <v-textarea
-              v-model="addressForm.randomization"
-              label="Randomization"
-              hint="What experimental conditions will be used for"
-              outlined
-              dense
-              rows="1"
-            />
-            <div class="d-flex">
-              <v-checkbox
-                v-model="addressForm.usdaRegulated"
-                class="mr-4 mt-0"
-                label="USDA Regulated?"
-                hide-details
-              />
-              <v-text-field
-                v-model="addressForm.permitNumber"
-                label="Permit Number"
-                outlined
-                dense
-              />
-              <v-spacer />
-            </div>
-            <div class="d-flex">
+            <div class="stack-sm mb-4">
               <v-select
-                v-model="addressForm.biosafetyLevel"
-                class="mr-4"
-                :items="biosafetyLevelValues"
-                label="Biosafety Level"
-                dense
-                outlined
+                v-model="addressForm.sample"
+                class="mt-2"
+                :rules="requiredRules('Sample Type/Species is required', [])"
+                :items="sampleEnumValues"
+                label="Sample Type/Species *"
+                variant="outlined"
+                density="compact"
               />
-              <v-checkbox
-                v-model="addressForm.irbOrHipaa"
-                class="mt-0"
-                label="IRB/HIPAA Compliance?"
+              <v-textarea
+                v-model="addressForm.description"
+                label="Sample Description"
+                :rules="requiredRules('Sample Description is required', [])"
+                hint="Number of samples, sample container type..."
+                variant="outlined"
+                density="compact"
+                rows="2"
               />
-              <v-spacer />
+              <v-textarea
+                v-model="addressForm.experimentalGoals"
+                :rules="requiredRules('Experiment Goals are required', [])"
+                label="Experiment Goals *"
+                hint="Briefly describe the goal for your experiment"
+                variant="outlined"
+                density="compact"
+                rows="2"
+              />
+              <v-textarea
+                v-model="addressForm.randomization"
+                label="Randomization"
+                hint="What experimental conditions will be used for"
+                variant="outlined"
+                density="compact"
+                rows="1"
+              />
+              <div class="d-flex">
+                <v-checkbox
+                  v-model="addressForm.usdaRegulated"
+                  class="mr-4 mt-0"
+                  label="USDA Regulated?"
+                  density="compact"
+                />
+                <v-text-field
+                  v-model="addressForm.permitNumber"
+                  label="Permit Number"
+                  variant="outlined"
+                  density="compact"
+                />
+                <v-spacer />
+              </div>
+              <div class="d-flex">
+                <v-select
+                  v-model="addressForm.biosafetyLevel as BiosafetyLevels"
+                  class="mr-4"
+                  :items="biosafetyLevelValues"
+                  label="Biosafety Level"
+                  variant="outlined"
+                  density="compact"
+                />
+                <v-checkbox
+                  v-model="addressForm.irbOrHipaa"
+                  class="mt-0"
+                  label="IRB/HIPAA Compliance?"
+                  density="compact"
+                />
+                <v-spacer />
+              </div>
             </div>
-            <v-subheader>
+            <v-list-subheader>
               <span class="text-h6">Additional Comments</span>
-            </v-subheader>
+            </v-list-subheader>
             <v-divider class="mb-2" />
             <v-textarea
               v-model="addressForm.comments"
               label="Comments"
-              outlined
-              dense
+              variant="outlined"
+              density="compact"
               lines="4"
             />
           </v-form>
@@ -355,6 +357,7 @@ export default defineComponent({
           <v-spacer />
           <v-btn
             color="primary"
+            variant="elevated"
             @click="showAddressForm = false"
           >
             Save
@@ -365,3 +368,11 @@ export default defineComponent({
     </v-dialog>
   </v-card>
 </template>
+
+<style scoped>
+.topRightButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+</style>

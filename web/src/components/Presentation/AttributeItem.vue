@@ -1,6 +1,7 @@
 <script lang="ts">
-import { defineComponent, PropType } from '@vue/composition-api';
+import { defineComponent, PropType } from 'vue';
 import { getField } from '@/encoding';
+// @ts-ignore
 import { fieldDisplayName, formatBiosampleDepth, valueDisplayName } from '@/util';
 import { BaseSearchResult, BiosampleSearchResult } from '@/data/api';
 
@@ -38,7 +39,7 @@ export default defineComponent({
       default: '',
     },
   },
-
+  emits: ['click'],
   setup(props) {
     function getValue(field: string) {
       // For the "depth" field, format it as a string or `null`.
@@ -68,13 +69,13 @@ export default defineComponent({
       return valueDisplayName(field, props.item[field]);
     }
 
-    function href(field: string) {
+    function href(field: string): string | undefined {
       if (field.startsWith('open_in_')) {
-        return props.item[field];
+        return props.item[field] as string;
       }
       const value = props.item[field] as string;
       if (typeof value === 'string' && value.startsWith('http')) {
-        return props.item[field];
+        return props.item[field] as string;
       }
       if (field === 'study_id') {
         return `/details/study/${props.item.study_id}`;
@@ -116,24 +117,28 @@ export default defineComponent({
     :key="link.name"
     :href="link.target"
   >
-    <img
-      v-if="image"
-      :src="image"
-      width="160px"
-      class="pr-2"
-      alt="Logo"
-    >
-    <v-list-item-avatar v-else>
-      <v-icon>mdi-link</v-icon>
-    </v-list-item-avatar>
-    <v-list-item-content>
-      <v-list-item-title>
-        {{ link.name }}
-      </v-list-item-title>
-      <v-list-item-subtitle>
-        {{ link.target }}
-      </v-list-item-subtitle>
-    </v-list-item-content>
+    <template #prepend>
+      <img
+        v-if="image"
+        :src="image"
+        width="160px"
+        class="pr-2"
+        alt="Logo"
+      >
+      <v-icon 
+        v-else
+        class="mr-4"
+        color="grey"
+      >
+        mdi-link
+      </v-icon>
+    </template>
+    <v-list-item-title>
+      {{ link.name }}
+    </v-list-item-title>
+    <v-list-item-subtitle>
+      {{ link.target }}
+    </v-list-item-subtitle>
   </v-list-item>
   <v-list-item
     v-else
@@ -145,27 +150,35 @@ export default defineComponent({
       click: bindClick ? () => $emit('click') : undefined
     }"
   >
-    <img
-      v-if="image"
-      :src="image"
-      width="160px"
-      class="pr-2"
-      alt="Logo"
-    >
-    <v-list-item-avatar v-else-if="getField(field)">
-      <v-icon>
+    <template #prepend>
+      <img
+        v-if="image"
+        :src="image"
+        width="160px"
+        class="pr-2"
+        alt="Logo"
+      >
+      <v-icon 
+        v-else-if="getField(field)"
+        class="mr-4"
+        color="grey"
+      >
         {{ getField(field).icon || 'mdi-text' }}
       </v-icon>
-    </v-list-item-avatar>
-    <v-list-item-content>
-      <v-list-item-title>
-        {{ displayName.length > 0 ? displayName : fieldDisplayName(field) }}
-      </v-list-item-title>
-      <v-list-item-subtitle
-        style="white-space: initial;"
-      >
-        {{ getValue(field) }}
-      </v-list-item-subtitle>
-    </v-list-item-content>
+    </template>
+    <v-list-item-title>
+      {{ displayName.length > 0 ? displayName : fieldDisplayName(field) }}
+    </v-list-item-title>
+    <v-list-item-subtitle
+      style="white-space: initial;"
+    >
+      {{ getValue(field) }}
+    </v-list-item-subtitle>
   </v-list-item>
 </template>
+
+<style scoped lang="scss">
+a.v-list-item {
+  color: inherit;
+}
+</style>

@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   defineComponent,
-} from '@vue/composition-api';
+} from 'vue';
 
 export default defineComponent({});
 </script>
@@ -10,7 +10,7 @@ export default defineComponent({});
   <v-container class="mt-1">
     <v-row>
       <v-col class="px-0">
-        <h2 class="blue--text text-h6">
+        <h2 class="text-blue text-h6">
           Making it easy to follow standards
         </h2>
         <p class="text-justify mb-0 text-body-1">
@@ -20,7 +20,7 @@ export default defineComponent({});
     </v-row>
     <v-row>
       <v-col class="px-0">
-        <h2 class="blue--text text-h6">
+        <h2 class="text-blue text-h6">
           Supporting FAIR data
         </h2>
         <p class="text-justify mb-0 text-body-1">
@@ -44,7 +44,7 @@ export default defineComponent({});
     </v-row>
     <v-row>
       <v-col class="px-0">
-        <h2 class="blue--text text-h6">
+        <h2 class="text-blue text-h6">
           Interoperability with DOE User Facilities
         </h2>
         <p class="text-justify mb-0 text-body-1">

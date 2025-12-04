@@ -1,8 +1,13 @@
 <script lang="ts">
-import Vue, { PropType } from 'vue';
+import {
+  defineComponent,
+  PropType,
+  ref,
+  computed,
+} from 'vue';
 import { Condition, opType } from '@/data/api';
 
-export default Vue.extend({
+export default defineComponent({
   props: {
     field: {
       type: String as PropType<string>,
@@ -29,65 +34,67 @@ export default Vue.extend({
       default: false,
     },
   },
+  emits: ['select'],
 
-  data() {
-    return {
-      options: [
-        { text: 'is between', value: 'between' },
-        { text: 'is greater than', value: '>' },
-        { text: 'is greater than or equal to', value: '>=' },
-        { text: 'is less than', value: '<' },
-        { text: 'is less than or equal to', value: '<=' },
-        { text: 'is equal to', value: '==' },
-        { text: 'is not', value: '!=' },
-      ],
-      selectedOption: 'between' as opType,
-      value1: this.min.toString(),
-      value2: this.max.toString(),
-    };
-  },
+  setup(props, { emit }) {
+    const options = ref([
+      { text: 'is between', value: 'between' },
+      { text: 'is greater than', value: '>' },
+      { text: 'is greater than or equal to', value: '>=' },
+      { text: 'is less than', value: '<' },
+      { text: 'is less than or equal to', value: '<=' },
+      { text: 'is equal to', value: '==' },
+      { text: 'is not', value: '!=' },
+    ]);
+    const selectedOption = ref<opType>('between');
+    const value1 = ref(props.min.toString());
+    const value2 = ref(props.max.toString());
 
-  computed: {
-    otherConditions(): Condition[] {
-      // conditions from OTHER fields
-      return this.conditions.filter((c) => (c.field !== this.field) || (c.table !== this.type));
-    },
-    myConditions(): Condition[] {
-      // conditions that match our field.
-      return this.conditions.filter((c) => (c.field === this.field) && (c.table === this.type));
-    },
-  },
+    // conditions from OTHER fields
+    const otherConditions = computed(() => props.conditions.filter((c) => (c.field !== props.field) || (c.table !== props.type)));
 
-  created() {
-    this.loadFromConditions();
-  },
+    // conditions that match our field.
+    const myConditions = computed(() => props.conditions.filter((c) => (c.field === props.field) && (c.table === props.type)));
 
-  methods: {
-    loadFromConditions() {
-      if (this.myConditions.length === 1) {
-        const [condition] = this.myConditions;
-        this.selectedOption = condition.op;
-        if (condition.op === 'between' && typeof condition.value === 'object') {
-          [this.value1, this.value2] = condition.value.map((v) => v.toString());
+    // If we have an existing condition for this field, use it to set our initial state.
+    if (myConditions.value.length === 1) {
+      const [condition] = myConditions.value;
+      selectedOption.value = condition?.op || 'between';
+      if (condition?.op === 'between' && typeof condition.value === 'object') {
+        const conditionValueStrings = condition.value.map((v) => v.toString());
+        if (conditionValueStrings.length === 2 && conditionValueStrings[0] && conditionValueStrings[1]) {
+          [value1.value, value2.value] = conditionValueStrings;
         } else {
-          this.value1 = condition.value.toString();
+          value1.value = props.min.toString();
+          value2.value = props.max.toString();
         }
+      } else {
+        value1.value = condition?.value.toString() || props.min.toString();
       }
-    },
-    addFilter() {
-      const value = this.selectedOption === 'between'
-        ? [parseFloat(this.value1), parseFloat(this.value2)]
-        : parseFloat(this.value1);
+    }
+
+    function addFilter() {
+      const value = selectedOption.value === 'between'
+        ? [parseFloat(value1.value), parseFloat(value2.value)]
+        : parseFloat(value1.value);
       const condition = {
-        field: this.field,
-        op: this.selectedOption,
+        field: props.field,
+        op: selectedOption.value,
         value,
-        table: this.type,
+        table: props.type,
       };
-      this.$emit('select', {
-        conditions: [...this.otherConditions, condition],
+      emit('select', {
+        conditions: [...otherConditions.value, condition],
       });
-    },
+    }
+
+    return {
+      options,
+      selectedOption,
+      value1,
+      value2,
+      addFilter,
+    };
   },
 });
 </script>
@@ -97,10 +104,11 @@ export default Vue.extend({
     <v-select
       v-model="selectedOption"
       :items="options"
+      item-title="text"
+      item-value="value"
       hide-details
-      outlined
-      flat
-      dense
+      variant="outlined"
+      density="compact"
       class="pb-4"
     />
     <div class="d-flex flex-row align-center pb-4">
@@ -109,9 +117,8 @@ export default Vue.extend({
         type="number"
         required
         hide-details
-        dense
-        flat
-        outlined
+        density="compact"
+        variant="outlined"
       />
       <template v-if="selectedOption === 'between'">
         <span class="px-4">and</span>
@@ -120,9 +127,8 @@ export default Vue.extend({
           type="number"
           required
           hide-details
-          dense
-          flat
-          outlined
+          density="compact"
+          variant="outlined"
         />
       </template>
     </div>

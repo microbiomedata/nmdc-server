@@ -1,12 +1,15 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
 import { writeFile, utils } from 'xlsx';
-import { submit, submitPayload } from '../store';
+// @ts-ignore
 import { saveAs } from '@/util';
 import useRequest from '@/use/useRequest';
+import { submit, submitPayload } from '../store';
+import { useRoute } from 'vue-router';
 
 export default defineComponent({
-  setup(_, { root }) {
+  setup() {
+    const route = useRoute();
     // TODO: https://github.com/microbiomedata/nmdc-server/issues/852
     function downloadSamples() {
       const worksheet = utils.aoa_to_sheet([]);
@@ -21,7 +24,7 @@ export default defineComponent({
     }
 
     const { request, loading: submitLoading, count: submitCount } = useRequest();
-    const doSubmit = () => request(() => submit(root.$route.params.id));
+    const doSubmit = () => request(() => submit((route.params as { id: string }).id));
 
     return {
       submitPayload,
@@ -45,7 +48,7 @@ export default defineComponent({
     </div>
     <v-card
       class="pa-3"
-      outlined
+      variant="outlined"
       style="max-height: 550px; overflow-y: auto;"
     >
       <pre style="font-size: 14px">{{ submitPayload }}</pre>
@@ -54,7 +57,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         class="mr-2"
-        outlined
+        variant="outlined"
         @click="downloadJson"
       >
         <v-icon class="pr-2">
@@ -64,7 +67,7 @@ export default defineComponent({
       </v-btn>
       <v-btn
         color="primary"
-        outlined
+        variant="outlined"
         @click="downloadSamples"
       >
         <v-icon class="pr-2">
