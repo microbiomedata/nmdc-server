@@ -443,7 +443,7 @@ export default defineComponent({
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
-      return allTabsValid && isOwner();
+      return allTabsValid && (isOwner() || stateRefs.user?.is_admin);
     });
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
