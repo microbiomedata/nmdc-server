@@ -443,9 +443,9 @@ export default defineComponent({
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
-      const hasSubmitPermission = isOwner() || stateRefs.user?.is_admin;
+      const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
       const canSubmitByStatus = status.value === SubmissionStatusEnum.InProgress.text || status.value === SubmissionStatusEnum.UpdatesRequired.text
-      const isSubmitted = submitCount > 0 || status === SubmissionStatusEnum.SubmittedPendingReview.text;
+      const isSubmitted = submitCount.value > 0 || status.value === SubmissionStatusEnum.SubmittedPendingReview.text;
       return {
         isSubmitted,
         canSubmit: allTabsValid && hasSubmitPermission && canSubmitByStatus
