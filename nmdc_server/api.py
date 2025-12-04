@@ -1241,9 +1241,8 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # If the user has a role on the submission (being an admin, alone, is insufficient),
-    # and the status is "Updates Required", automatically change it to "In Progress" upon edit
-    if current_user_role and submission.status == SubmissionStatusEnum.UpdatesRequired.text:
+    # If the status is "Updates Required", automatically change it to "In Progress" upon edit
+    if submission.status == SubmissionStatusEnum.UpdatesRequired.text:
         submission.status = SubmissionStatusEnum.InProgress.text
 
     if body.field_notes_metadata is not None:
@@ -1477,36 +1476,43 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
     params = {
         "state": "all",
         "per_page": 100,
+        "page": 1,
     }
+    
+    matching_issues = []
+    max_pages = 20  # Stopgap: prevent checking more than 1000 issues (10 pages * 100 per page)
+    pages_checked = 0
 
     try:
-        response = requests.get(gh_url, headers=headers, params=cast(Any, params))
+        while pages_checked < max_pages:
+            response = requests.get(gh_url, headers=headers, params=cast(Any, params))
+            issues = response.json()
 
-        if response.status_code != 200:
-            logging.error(
-                f"Request to search Github issues succeeded but API returned error {response.status_code} - {response.text}"
-            )
-            return None
+            if not issues: # If no issues returned on this page break the loop
+                break
+
+            # Look for an issue with matching submission id anywhere in github
+            for issue in issues:
+                title = issue.get("title", "") or ""
+                body = issue.get("body", "") or ""
+
+                if submission_id_string in title or submission_id_string in body:
+                    matching_issues.append(issue)
+
+            # Get next page
+            link_header = response.headers.get("Link", "")
+            if 'rel="next"' not in link_header:
+                break  # No more pages
+            
+            # Move to next page
+            params["page"] += 1
+            pages_checked += 1
 
     except requests.RequestException as e:
         logging.error(f"Request failed to check existing GitHub issues: {str(e)}")
         return None
 
-    issues = response.json()
-
-    # Look for an issue with matching submission id anywhere in github
-    matching_issues = []
-    for issue in issues:
-        title = issue.get("title", "") or ""
-        body = issue.get("body", "") or ""
-
-        if submission_id_string in title or submission_id_string in body:
-            matching_issues.append(issue)
-
-    if len(matching_issues) > 0:
-        return matching_issues  # list of matching github issues
-    else:
-        return None  # No matching github issues
+    return matching_issues if matching_issues else None # list of matching github issues or None
 
 
 def update_github_issue_for_resubmission(existing_issue, user, headers):
