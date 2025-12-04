@@ -270,8 +270,6 @@ async def orcid_authorize(request: Request, db: Session = Depends(get_db)):
         email_elements = root.findall(".//email:email", namespace)
 
         user_email = None
-        # user_email = "email@test.com"
-        # user_model.email = user_email
         # Get the first valid email
         # TODO - Consider storing all valid emails in the future
         for email in email_elements:
@@ -281,8 +279,7 @@ async def orcid_authorize(request: Request, db: Session = Depends(get_db)):
         # Assign user email
         user_model.email = user_email
 
-    # user_model.name = user.name
-    user_model.name = "TEST NAME HERE"
+    user_model.name = user.name
     db.commit()
 
     redirect_uri = request.session.pop("redirect_uri")
