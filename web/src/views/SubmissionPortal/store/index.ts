@@ -68,7 +68,7 @@ function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_typ
       .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
       .map((key) => ({
         value: key,
-        text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+        title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
       }));
   }
 
@@ -87,7 +87,7 @@ function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_typ
     .filter((key) => statusesToShow.includes(key))
     .map((key) => ({
       value: key,
-      text: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
     }));
 }
 

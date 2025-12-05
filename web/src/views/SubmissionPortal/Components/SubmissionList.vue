@@ -122,6 +122,7 @@ export default defineComponent({
     applySortOptions();
     const assignReviewerRequest = useRequest();
 
+    const statusUpdatingSubmissionId = ref<string | null>(null);
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
       statusUpdatingSubmissionId.value = item.id;
       try {
@@ -211,6 +212,9 @@ export default defineComponent({
       } else {
         return [];
       }
+      console.log(item.status);
+      console.log(dropdown_type);
+      console.log(transitions.value);
       return formatStatusTransitions(item.status, dropdown_type, transitions.value);
     }
 
@@ -239,6 +243,7 @@ export default defineComponent({
       options,
       submission,
       testFilterValues,
+      statusUpdatingSubmissionId,
       getFormattedStatusTransitions,
       handleStatusChange,
       SubmissionStatusEnum,
@@ -414,10 +419,10 @@ export default defineComponent({
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
               <v-select
-                v-if="currentUser?.is_admin"
+                v-if="currentUser?.is_admin  || isReviewerForSubmission(item)"
                 :model-value="item.status"
                 :items="getFormattedStatusTransitions(item)"
-                :loading="statusUpdatingSubmissionId === item.id"
+                :loading="statusUpdatingSubmissionId === item.id"s
                 density="compact"
                 variant="underlined"
                 hide-details

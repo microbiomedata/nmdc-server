@@ -320,5 +320,5 @@ export interface UploadCompleteRequest {
 export type SubmissionImageType = 'pi_image' | 'primary_study_image' | 'study_images';
 export interface StatusOption {
   value: string;
-  text: string;
+  title: string;
 }
