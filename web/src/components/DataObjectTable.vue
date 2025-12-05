@@ -107,6 +107,7 @@ export default defineComponent({
         'Kraken2 Krona Plot',
         'GOTTCHA2 Krona Plot',
         'Centrifuge Krona Plot',
+        'SingleM Krona Plot',
       ].includes(fileType);
     }
     async function openHtmlDataModal(item: any) {
@@ -261,7 +262,7 @@ export default defineComponent({
       scrollable
     >
       <v-card
-        class="d-flex flex-column"
+        class="d-flex flex-column flex-0-0"
         width="100%"
         height="80vh"
       >
@@ -376,6 +377,7 @@ export default defineComponent({
               v-if="hasHtmlData(item.file_type)"
               color="primary"
               icon
+              variant="plain"
               @click="openHtmlDataModal(item)"
             >
               <v-icon>mdi-magnify</v-icon>

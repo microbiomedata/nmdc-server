@@ -681,6 +681,7 @@ async def get_data_object_html_content(data_object_id: str, db: Session = Depend
         "Kraken2 Krona Plot",
         "GOTTCHA2 Krona Plot",
         "Centrifuge Krona Plot",
+        "SingleM Krona Plot",
     ]:
         return {
             "url": url,
