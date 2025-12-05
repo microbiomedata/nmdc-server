@@ -2,8 +2,12 @@
 import {
   computed,
   defineComponent,
+  InjectionKey,
   PropType,
+  provide,
+  Ref,
   toRef,
+  useTemplateRef,
   watch,
 } from 'vue';
 import { stateRefs } from '@/store';
@@ -16,10 +20,11 @@ import LoginPrompt from '@/views/SubmissionPortal/Components/LoginPrompt.vue';
 import { loadRecord } from './store';
 import { useRoute } from 'vue-router';
 
+export const AppBannerHeightKey = Symbol() as InjectionKey<Ref<number>>;
+
 export default defineComponent({
   components: {
     AppBanner,
-
     IconBar,
     IntroBlurb,
     LoginPrompt,
@@ -89,6 +94,11 @@ export default defineComponent({
       },
     }
 
+    // Get the height of the app banner to provide to child components
+    const appBanner = useTemplateRef<InstanceType<typeof AppBanner>>("appBanner");
+    const appBannerHeight = computed(() => appBanner.value?.height || 0);
+    provide(AppBannerHeightKey, appBannerHeight);
+
     return {
       stateRefs,
       req,
@@ -101,8 +111,8 @@ export default defineComponent({
 
 <template>
   <v-defaults-provider :defaults="styleDefaults">
-    <v-main>
-      <AppBanner />
+    <v-main class="d-flex flex-column">
+      <AppBanner ref="appBanner" />
       <v-container
         v-if="!stateRefs.user.value && !req.loading.value"
       >
