@@ -1241,9 +1241,8 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # If the user has a role on the submission (being an admin, alone, is insufficient),
-    # and the status is "Updates Required", automatically change it to "In Progress" upon edit
-    if current_user_role and submission.status == SubmissionStatusEnum.UpdatesRequired.text:
+    # If the status is "Updates Required", automatically change it to "In Progress" upon edit
+    if submission.status == SubmissionStatusEnum.UpdatesRequired.text:
         submission.status = SubmissionStatusEnum.InProgress.text
 
     if body.field_notes_metadata is not None:
@@ -1326,6 +1325,21 @@ async def update_submission_status(
             logging.error(f"Failed to create/update Github issue: {str(e)}")
 
     return submission
+
+
+@router.get(
+    "/metadata_submission/{id}/status",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def get_submission_status(
+    id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """Get current submission status"""
+    submission = get_submission_for_user(db, id, user)
+    return {"status": submission.status}
 
 
 @router.post(

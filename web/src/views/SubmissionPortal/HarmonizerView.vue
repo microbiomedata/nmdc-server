@@ -45,6 +45,7 @@ import {
   isTestSubmission,
   canEditSubmissionByStatus,
   SubmissionStatusEnum,
+  refreshStatus,
 } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
@@ -438,13 +439,25 @@ export default defineComponent({
       validationSuccessSnackbar.value = Object.values(tabsValidated.value).every((value) => value);
     }
 
-    const canSubmit = computed(() => {
+    const submissionState = computed(() => {
       let allTabsValid = true;
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
-      return allTabsValid && isOwner();
+      const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
+      const canSubmitByStatus = status.value === SubmissionStatusEnum.InProgress.text
+      const isSubmitted = submitCount.value > 0 || status.value === SubmissionStatusEnum.SubmittedPendingReview.text;
+      return {
+        isSubmitted,
+        canSubmit: allTabsValid && hasSubmitPermission && canSubmitByStatus
+      };
     });
+
+    const handleSubmitClick = () => {
+      if (submissionState.value.canSubmit) {
+        submitDialog.value = true;
+      }
+    };
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -624,6 +637,7 @@ export default defineComponent({
     });
 
     onMounted(async () => {
+      await refreshStatus((route.params as { id: string }).id);
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
         api.getSubmissionSchema(),
         api.getGoldEcosystemTree(),
@@ -655,7 +669,6 @@ export default defineComponent({
       harmonizerElement,
       jumpToModel,
       harmonizerApi,
-      canSubmit,
       tabsValidated,
       saveRecordRequest,
       submitLoading,
@@ -686,6 +699,7 @@ export default defineComponent({
       emptySheetSnackbar,
       isTestSubmission,
       StatusAlert,
+      submissionState,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -697,6 +711,7 @@ export default defineComponent({
       changeTemplate,
       canEditSampleMetadata,
       canEditSubmissionByStatus,
+      handleSubmitClick,
     };
   },
 });
@@ -1058,11 +1073,12 @@ export default defineComponent({
             >
               <v-btn
                 color="success"
-                :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
+                depressed
+                :disabled="!submissionState.canSubmit"
                 :loading="submitLoading"
-                @click="canEditSubmissionByStatus() ? submitDialog = true : null"
+                @click="handleSubmitClick"
               >
-                <span v-if="status === SubmissionStatusEnum.SubmittedPendingReview.text || submitCount">
+                <span v-if="submissionState.isSubmitted">
                   <v-icon>mdi-check-circle</v-icon>
                   Submitted
                 </span>
@@ -1113,10 +1129,10 @@ export default defineComponent({
               </v-btn>
             </div>
           </template>
-          <span v-if="!canSubmit && canEditSubmissionByStatus()">
+          <span v-if="!submissionState.canSubmit">
             You must validate all tabs before submitting your study and metadata.
           </span>
-          <span v-if="canSubmit && canEditSubmissionByStatus()">
+          <span v-if="submissionState.canSubmit">
             Submit for NMDC review.
           </span>
         </v-tooltip>
