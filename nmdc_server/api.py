@@ -1543,7 +1543,11 @@ The submission has been updated and resubmitted for review.
     comment_url = f"{issue_url}/comments"
     comment_payload = {"body": comment_body}
 
-    comment_response = requests.post(comment_url, headers=headers, data=json.dumps(comment_payload))
+    # Update headers for JSON content
+    json_headers = headers.copy()
+    json_headers["Content-Type"] = "application/json"
+
+    comment_response = requests.post(comment_url, headers=json_headers, json=comment_payload)
 
     if comment_response.status_code != 201:
         raise HTTPException(
@@ -1555,9 +1559,7 @@ The submission has been updated and resubmitted for review.
     if existing_issue.get("state") == "closed":
         reopen_payload = {"state": "open", "state_reason": "reopened"}
 
-        reopen_response = requests.patch(
-            issue_url, headers=headers, data=json.dumps(reopen_payload)
-        )
+        reopen_response = requests.patch(issue_url, headers=json_headers, json=reopen_payload)
 
         if reopen_response.status_code != 200:
             raise HTTPException(
