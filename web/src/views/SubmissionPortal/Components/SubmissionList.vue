@@ -212,9 +212,6 @@ export default defineComponent({
       } else {
         return [];
       }
-      console.log(item.status);
-      console.log(dropdown_type);
-      console.log(transitions.value);
       return formatStatusTransitions(item.status, dropdown_type, transitions.value);
     }
 
