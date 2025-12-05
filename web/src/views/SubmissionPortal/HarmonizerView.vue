@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
+  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, inject,
 } from 'vue';
 import {
   clamp, debounce, flattenDeep, has, sum,
@@ -46,6 +46,7 @@ import {
   canEditSubmissionByStatus,
   SubmissionStatusEnum,
 } from './store';
+import { AppBannerHeightKey } from './SubmissionView.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
@@ -644,9 +645,14 @@ export default defineComponent({
       }
     });
 
+    // Get app banner height provided by SubmissionView. This will be used to correctly size
+    // the DataHarmonizer container, which needs a fixed height.
+    const appBannerHeight = inject(AppBannerHeightKey);
+
     return {
       user,
       APP_HEADER_HEIGHT,
+      appBannerHeight,
       HELP_SIDEBAR_WIDTH,
       TABS_HEIGHT,
       ColorKey,
@@ -704,7 +710,7 @@ export default defineComponent({
 
 <template>
   <div
-    :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT}px)`}"
+    :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
     <SubmissionStepper />
@@ -930,7 +936,10 @@ export default defineComponent({
     </div>
 
     <v-layout class="harmonizer-and-sidebar">
-      <v-tabs v-model="activeTabIndex" color="primary">
+      <v-tabs
+        v-model="activeTabIndex"
+        color="primary"
+      >
         <v-tooltip
           v-for="templateKey in templateList"
           :key="templateKey"
@@ -1182,14 +1191,6 @@ html {
   height: 100%;
   flex-grow: 1;
   overflow: hidden;
-}
-
-.harmonizer-bottom-container {
-  position: fixed;
-  bottom: 0;
-  z-index: 1000;
-  background: #fff;
-  width: 100%;
 }
 
 .v-navigation-drawer__scrim {
