@@ -1747,6 +1747,7 @@ def test_github_issue_resubmission_creates_comment_only(
     search_response = Mock()
     search_response.status_code = 200
     search_response.json.return_value = [existing_issue]
+    search_response.headers.get.return_value = ""
 
     # Fake response from github API call making a comment on existing issue
     comment_response = Mock()
