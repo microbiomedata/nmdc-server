@@ -440,7 +440,6 @@ export default defineComponent({
     }
 
     const submissionState = computed(() => {
-      console.log(status.value);
       let allTabsValid = true;
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
