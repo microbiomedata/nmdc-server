@@ -389,7 +389,7 @@ export default defineComponent({
           <template #[`header.status`]="{ column, getSortIcon, toggleSort }">
             <div class="d-flex align-center ga-1">
               <v-tooltip
-                v-if="currentUser?.is_admin || submission.data.results.results.some(item => item.reviewers.includes(currentUser?.orcid))"
+                v-if="currentUser?.is_admin || (currentUser?.orcid && submission.data.results.results.some(item => item.reviewers.includes(currentUser.orcid)))"
                 location="bottom"
               >
                 <template #activator="{ props }">
