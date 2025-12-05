@@ -5,6 +5,10 @@ import {
   PropType,
   ref,
 } from 'vue';
+// WARNING: The useForm composable is not part of the Vuetify public API yet
+//          https://github.com/vuetifyjs/vuetify/issues/19315
+// @ts-ignore
+import { useForm } from 'vuetify/lib/composables/form';
 import { deleteSubmissionImage, generateSignedUploadUrl, setSubmissionImage } from '@/views/SubmissionPortal/store/api';
 import useRequest from '@/use/useRequest';
 import { SubmissionImageType } from '@/views/SubmissionPortal/types';
@@ -74,6 +78,7 @@ export default defineComponent({
     const route = useRoute();
     const fileInputRef = ref();
     const fileRef = ref<File | null>(null);
+    const form = useForm();
     const filePreview = computed(() => {
       if (fileRef.value) {
         return URL.createObjectURL(fileRef.value);
@@ -124,6 +129,7 @@ export default defineComponent({
     };
 
     return {
+      disabled: form.isDisabled,
       fileInputRef,
       fileRef,
       filePreview,
@@ -148,11 +154,10 @@ export default defineComponent({
       :label="inputLabel"
       :hint="inputHint"
       :prepend-icon="inputIcon"
-      :disabled="uploading"
+      :disabled="uploading || disabled"
       persistent-hint
       variant="outlined"
       truncate-length="100"
-      class="my-2"
     />
 
     <div class="ml-8">
@@ -179,10 +184,9 @@ export default defineComponent({
             class="my-2 elevation-2"
           >
         </div>
-        <div v-if="imageUrl && !fileRef">
-          <v-btn
+        <div v-if="!disabled && imageUrl && !fileRef">
+          <v-btn-grey
             class="mr-2"
-            depressed
             small
             @click="handleChangeClick"
           >
@@ -190,11 +194,10 @@ export default defineComponent({
               mdi-pencil-outline
             </v-icon>
             Change
-          </v-btn>
-          <v-btn
+          </v-btn-grey>
+          <v-btn-grey
             :loading="deleting"
             :disabled="deleting"
-            depressed
             small
             @click="handleDelete"
           >
@@ -202,13 +205,12 @@ export default defineComponent({
               mdi-trash-can-outline
             </v-icon>
             Remove
-          </v-btn>
+          </v-btn-grey>
         </div>
         <div v-else-if="fileRef">
           <v-btn
             class="mr-2"
             color="primary"
-            depressed
             small
             :loading="uploading"
             :disabled="uploading"
@@ -219,14 +221,13 @@ export default defineComponent({
             </v-icon>
             Upload
           </v-btn>
-          <v-btn
-            depressed
+          <v-btn-grey
             small
             :disabled="uploading"
             @click="fileRef = null"
           >
             Cancel
-          </v-btn>
+          </v-btn-grey>
         </div>
       </div>
 

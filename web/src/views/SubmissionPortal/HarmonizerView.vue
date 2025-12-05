@@ -389,7 +389,7 @@ export default defineComponent({
     function errorClick(index: number) {
       const currentSeries = validationErrors.value[validationActiveCategory.value];
       highlightedValidationError.value = clamp(index, 0, (currentSeries?.length || 0) - 1);
-      const currentError = currentSeries?[highlightedValidationError.value] : null;
+      const currentError = currentSeries ? currentSeries[highlightedValidationError.value] : null;
       if (currentError && currentError[0] !== undefined && currentError[1] !== undefined) {
         harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
       }
@@ -470,7 +470,7 @@ export default defineComponent({
     watch(columnVisibility, () => {
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
-    
+
     watch(activeTabIndex, (newIndex) => {
       changeTemplate(newIndex);
     });
@@ -643,7 +643,7 @@ export default defineComponent({
         }
       }
     });
-    
+
     return {
       user,
       APP_HEADER_HEIGHT,
@@ -758,9 +758,8 @@ export default defineComponent({
             :items="validationItems"
             item-title="text"
             solo
-            color="error"
-            style="background-color: red;"
-            dense
+            style="background-color: #ffffff; color: #000000;"
+            density="compact"
             class="mx-2 z-above-sidebar"
             hide-details
           >
@@ -850,7 +849,6 @@ export default defineComponent({
           @update:model-value="jumpTo"
         />
         <v-menu
-          class="z-above-sidebar"
           offset-y
           nudge-bottom="4px"
           :close-on-click="true"
@@ -932,7 +930,7 @@ export default defineComponent({
     </div>
 
     <v-layout class="harmonizer-and-sidebar">
-      <v-tabs v-model="activeTabIndex">
+      <v-tabs v-model="activeTabIndex" color="primary">
         <v-tooltip
           v-for="templateKey in templateList"
           :key="templateKey"
@@ -947,6 +945,7 @@ export default defineComponent({
                 <v-badge
                   :content="validationTotalCounts[templateKey] || '!'"
                   floating
+                  location="top right"
                   :value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
                   :color="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) ? 'error' : 'warning'"
                 >
@@ -1008,6 +1007,7 @@ export default defineComponent({
         v-model="sidebarOpen"
         :width="HELP_SIDEBAR_WIDTH"
         absolute
+        temporary
         location="right"
         class="z-above-data-harmonizer"
       >
@@ -1021,111 +1021,106 @@ export default defineComponent({
         />
       </v-navigation-drawer>
     </v-layout>
-
-    <div class="harmonizer-style-container">
-      <div
-        v-if="canEditSampleMetadata()"
-        id="harmonizer-footer-root"
-      />
-    </div>
-    <div class="d-flex ma-2">
-      <v-btn
-        color="gray"
-        depressed
-        :to="{ name: 'Sample Environment' }"
-      >
-        <v-icon class="pr-1">
-          mdi-arrow-left-circle
-        </v-icon>
-        Go to previous step
-      </v-btn>
-      <v-spacer />
-      <div class="d-flex align-center">
-        <span class="mr-1">Color key</span>
-        <v-chip
-          v-for="val in ColorKey"
-          :key="val.label"
-          :style="{ backgroundColor: val.color, opacity: 1 }"
-          class="mr-1"
-          disabled
-        >
-          {{ val.label }}
-        </v-chip>
+    <div class="harmonizer-bottom-container">
+      <div class="harmonizer-style-container">
+        <div
+          v-if="canEditSampleMetadata()"
+          id="harmonizer-footer-root"
+        />
       </div>
-      <v-spacer />
-      <v-tooltip
-        top
-      >
-        <template #activator="{ props }">
-          <div
-            v-bind="props"
+      <div class="d-flex ma-2">
+        <v-btn-grey :to="{ name: 'Sample Environment' }">
+          <v-icon class="pr-1">
+            mdi-arrow-left-circle
+          </v-icon>
+          Go to previous step
+        </v-btn-grey>
+        <v-spacer />
+        <div class="d-flex align-center">
+          <span class="mr-1">Color key</span>
+          <v-chip
+            v-for="val in ColorKey"
+            :key="val.label"
+            :style="{ backgroundColor: val.color, opacity: 1, color: '#000000' }"
+            class="mr-1"
+            variant="flat"
           >
-            <v-btn
-              color="success"
-              depressed
-              :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
-              :loading="submitLoading"
-              @click="canEditSubmissionByStatus() ? submitDialog = true: null"
+            {{ val.label }}
+          </v-chip>
+        </div>
+        <v-spacer />
+        <v-tooltip
+          top
+        >
+          <template #activator="{ props }">
+            <div
+              v-bind="props"
             >
-              <span v-if="status === SubmissionStatusEnum.SubmittedPendingReview.text || submitCount">
-                <v-icon>mdi-check-circle</v-icon>
-                Submitted
-              </span>
-              <span v-else>
-                Submit
-              </span>
-              <v-dialog
-                v-model="submitDialog"
-                activator="parent"
-                width="auto"
+              <v-btn
+                color="success"
+                :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
+                :loading="submitLoading"
+                @click="canEditSubmissionByStatus() ? submitDialog = true : null"
               >
-                <v-card v-if="isTestSubmission">
-                  <v-card-title>
-                    Submit
-                  </v-card-title>
-                  <v-card-text>
-                    Test submissions cannot be submitted for NMDC review.
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn
-                      text
-                      @click="submitDialog = false"
-                    >
-                      Close
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-                <v-card v-else>
-                  <v-card-title>
-                    Submit
-                  </v-card-title>
-                  <v-card-text>
-                    You are about to submit this study and metadata for NMDC review. Would you like to continue?
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn
-                      color="primary"
-                      class="mr-2"
-                      @click="doSubmit"
-                    >
-                      Yes- Submit
-                    </v-btn>
-                    <v-btn @click="submitDialog = false">
-                      Cancel
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
-            </v-btn>
-          </div>
-        </template>
-        <span v-if="!canSubmit && canEditSubmissionByStatus()">
-          You must validate all tabs before submitting your study and metadata.
-        </span>
-        <span v-if="canSubmit && canEditSubmissionByStatus()">
-          Submit for NMDC review.
-        </span>
-      </v-tooltip>
+                <span v-if="status === SubmissionStatusEnum.SubmittedPendingReview.text || submitCount">
+                  <v-icon>mdi-check-circle</v-icon>
+                  Submitted
+                </span>
+                <span v-else>
+                  Submit
+                </span>
+                <v-dialog
+                  v-model="submitDialog"
+                  width="auto"
+                >
+                  <v-card v-if="isTestSubmission">
+                    <v-card-title>
+                      Submit
+                    </v-card-title>
+                    <v-card-text>
+                      Test submissions cannot be submitted for NMDC review.
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn
+                        text
+                        @click="submitDialog = false"
+                      >
+                        Close
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                  <v-card v-else>
+                    <v-card-title>
+                      Submit
+                    </v-card-title>
+                    <v-card-text>
+                      You are about to submit this study and metadata for NMDC review. Would you like to continue?
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn
+                        color="primary"
+                        class="mr-2"
+                        @click="doSubmit"
+                      >
+                        Yes- Submit
+                      </v-btn>
+                      <v-btn @click="submitDialog = false">
+                        Cancel
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </v-btn>
+            </div>
+          </template>
+          <span v-if="!canSubmit && canEditSubmissionByStatus()">
+            You must validate all tabs before submitting your study and metadata.
+          </span>
+          <span v-if="canSubmit && canEditSubmissionByStatus()">
+            Submit for NMDC review.
+          </span>
+        </v-tooltip>
+      </div>
     </div>
   </div>
 </template>
@@ -1189,6 +1184,14 @@ html {
   overflow: hidden;
 }
 
+.harmonizer-bottom-container {
+  position: fixed;
+  bottom: 0;
+  z-index: 1000;
+  background: #fff;
+  width: 100%;
+}
+
 .v-navigation-drawer__scrim {
   display: none;
 }
@@ -1198,6 +1201,14 @@ html {
   position: absolute;
   bottom: 0;
   left: 0;
+
+  /**
+    This ensures that the bootstrap modal appears
+    below the app header.
+  */
+  .modal {
+    top: 61px !important;
+  }
 
   .secondary-header-cell:hover {
     cursor: pointer;
@@ -1260,7 +1271,7 @@ html {
 
 #harmonizer-footer-root {
   width: 50%;
-  padding: 12px 0;
+  padding: 0.5rem;
 }
 
 .HandsontableCopyPaste {

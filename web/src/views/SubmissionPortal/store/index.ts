@@ -149,7 +149,7 @@ const addressFormDefault = {
     postalCode: '',
     country: '',
   } as NmdcAddress,
-  expectedShippingDate: undefined as undefined | Date,
+  expectedShippingDate: undefined as undefined | string,
   shippingConditions: '',
   // Sample info
   sample: '',
@@ -296,7 +296,7 @@ const templateList = computed(() => {
     }
   } else {
     // Have data already been generated? No
-     
+
     if (multiOmicsForm.doe) {
       // Are you submitting samples to a DOE user facility? Yes
       if (multiOmicsForm.facilities.includes('EMSL')) {
@@ -553,7 +553,7 @@ async function addMetadataSuggestions(submissionId: string, schemaClassName: str
   for (let i = 0; i < batches.length; i += 1) {
     const batch = batches[i] || [];
 
-     
+
     const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
 
     // Drop all the existing suggestions for the rows in this batch

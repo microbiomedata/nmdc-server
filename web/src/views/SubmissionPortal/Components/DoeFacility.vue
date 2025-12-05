@@ -20,13 +20,12 @@ export default defineComponent({
   },
   emits: ['revalidate'],
 
-  setup() {
+  setup(_, { emit }) {
     function facilityChange() {
       if (multiOmicsForm.awardDois === null || multiOmicsForm.awardDois.length < multiOmicsForm.facilities.length) {
         addAwardDoi();
       }
-      // @ts-ignore
-      this.$emit('revalidate');
+      emit('revalidate');
     }
 
     return {
@@ -55,34 +54,32 @@ export default defineComponent({
       label="EMSL"
       value="EMSL"
       hide-details
-      :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
+      :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
       @change="facilityChange"
     />
     <div
       v-if="multiOmicsForm.facilities.includes('EMSL')"
       class="mb-4 ml-4"
     >
-      <div class="d-flex flex-column grow mb-4">
-        <v-text-field
-          v-if="multiOmicsForm.facilities.includes('EMSL')"
-          v-model="multiOmicsForm.studyNumber"
-          :rules="[
-            v => !!v || 'EMSL Proposal Number is required when processing was done at EMSL',
-            v => /^\d{5}$/.test(v) || 'EMSL Proposal Number must be a 5 digit numerical value'
-          ]"
-          hint="EMSL Proposal Number is required when processing was done at EMSL"
-          persistent-hint
-          label="EMSL Proposal Number *"
-          class="mt-4"
-          variant="outlined"
-          validate-on-blur
-          dense
-        />
-      </div>
+      <v-text-field
+        v-if="multiOmicsForm.facilities.includes('EMSL')"
+        v-model="multiOmicsForm.studyNumber"
+        :rules="[
+          v => !!v || 'EMSL Proposal Number is required when processing was done at EMSL',
+          v => /^\d{5}$/.test(v) || 'EMSL Proposal Number must be a 5 digit numerical value'
+        ]"
+        hint="EMSL Proposal Number is required when processing was done at EMSL"
+        persistent-hint
+        label="EMSL Proposal Number *"
+        class="mb-4"
+        variant="outlined"
+        validate-on-blur
+      />
       <v-radio-group
         v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.facilities.includes('EMSL')"
         v-model="multiOmicsForm.ship"
         label="Will samples be shipped? *"
+        class="mb-4"
         :rules="[v => (v === true || v === false) || 'This field is required']"
         @change="$emit('revalidate')"
       >
@@ -99,7 +96,7 @@ export default defineComponent({
         v-if="multiOmicsForm.dataGenerated === false && multiOmicsForm.ship && multiOmicsForm.facilities.includes('EMSL')"
       />
       <div
-        class="v-label theme--light mt-6"
+        class="v-label theme--light mb-2"
         style="font-size: 14px;"
       >
         Data types?
@@ -109,28 +106,28 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Lipidome"
         value="lipidome-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metaproteome"
         value="mp-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metabolome"
         value="mb-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Natural Organic Matter (FT-ICR MS)"
         value="nom-emsl"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         hide-details
       />
     </div>
@@ -139,14 +136,14 @@ export default defineComponent({
       label="JGI"
       value="JGI"
       hide-details
-      :disabled="checkJGITemplates()"
+      :disabled="checkJGITemplates() || undefined"
       @change="facilityChange"
     />
     <div
       v-if="multiOmicsForm.facilities.includes('JGI')"
       class="mb-4 ml-4"
     >
-      <div class="d-flex flex-column grow mb-4">
+      <div class="d-flex flex-column grow">
         <v-text-field
           v-if="multiOmicsForm.facilities.includes('JGI')"
           v-model="multiOmicsForm.JGIStudyId"
@@ -160,7 +157,6 @@ export default defineComponent({
           class="mt-4"
           variant="outlined"
           validate-on-blur
-          dense
         />
       </div>
       <div
@@ -173,21 +169,21 @@ export default defineComponent({
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metagenome"
         value="mg-jgi"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mg?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mg?.sampleDataSlot) || undefined"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metagenome (Long Read)"
         value="mg-lr-jgi"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mg_lr?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mg_lr?.sampleDataSlot) || undefined"
         hide-details
       />
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metatranscriptome"
         value="mt-jgi"
-        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mt?.sampleDataSlot)"
+        :disabled="templateHasData(HARMONIZER_TEMPLATES.jgi_mt?.sampleDataSlot) || undefined"
         hide-details
       />
       <v-checkbox

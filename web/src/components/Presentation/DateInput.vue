@@ -80,6 +80,7 @@ export default defineComponent({
         label="Choose"
         prepend-icon="mdi-calendar"
         v-bind="props"
+        variant="underlined"
         @update:model-value="updateFromTextField"
       />
     </template>

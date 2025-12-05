@@ -32,23 +32,28 @@ const headers: DataTableHeader[] = [
   {
     title: 'Study Name',
     value: 'study_name',
+    sortable: true,
   },
   {
     title: 'Author',
     value: 'author.name',
+    sortable: true,
   },
   {
     title: 'Template',
     value: 'templates',
+    sortable: true,
   },
   {
     title: 'Status',
     value: 'status',
     width: '200px',
+    sortable: true,
   },
   {
     title: 'Last Modified',
     value: 'date_last_modified',
+    sortable: true,
   },
   {
     title: '',
@@ -65,15 +70,14 @@ export default defineComponent({
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
+    const defaultSortBy = 'date_last_modified';
+    const defaultSortOrder = 'desc';
     const options = ref({
       page: 1,
       itemsPerPage,
-      sortBy: ['date_last_modified'],
-      sortDesc: [true],
-      groupBy: [],
-      groupDesc: [],
-      multiSort: false,
-      mustSort: false,
+      sortBy: [{ key: defaultSortBy, order: defaultSortOrder }],
+      groupBy: {},
+      search: null,
     });
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
@@ -108,10 +112,10 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
-    
+
     function applySortOptions() {
-      const sortOrder = options.value.sortDesc && options.value.sortDesc[0] ? 'desc' : 'asc';
-      const sortBy = options.value.sortBy[0] || 'date_last_modified';
+      const sortOrder = options.value.sortBy[0] ? options.value.sortBy[0].order : defaultSortOrder;
+      const sortBy = options.value.sortBy[0] ? options.value.sortBy[0].key : defaultSortBy;
       submission.setSortOptions(sortBy, sortOrder);
     }
 
@@ -119,15 +123,21 @@ export default defineComponent({
     const assignReviewerRequest = useRequest();
 
     async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
-      await updateSubmissionStatus(item.id, newStatus);
-      await submission.refetch();
+      statusUpdatingSubmissionId.value = item.id;
+      try {
+        await updateSubmissionStatus(item.id, newStatus);
+        await submission.refetch();
+      } finally {
+        statusUpdatingSubmissionId.value = null;
+      }
     }
 
-    watch(options, () => {
+    function updateTableOptions(newOptions: any) {
+      options.value = newOptions;
       submission.setPage(options.value.page);
       applySortOptions();
-    }, { deep: true });
-    
+    }
+
     watch(isTestFilter, () => {
       options.value.page = 1;
       submission.setPage(options.value.page);
@@ -233,6 +243,7 @@ export default defineComponent({
       handleStatusChange,
       SubmissionStatusEnum,
       isAnyContributorForSubmission,
+      updateTableOptions,
     };
   },
 });
@@ -339,14 +350,14 @@ export default defineComponent({
         </v-col>
       </v-row>
       <v-card variant="outlined">
-        <v-data-table
-          v-model:options="options"
+        <v-data-table-server
           v-model:items-per-page="submission.data.limit"
           :headers="headers"
           :items="submission.data.results.results"
-          :server-items-length="submission.data.results.count"
+          :items-length="submission.data.results.count"
           :loading="submission.loading.value"
           :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
+          @update:options="updateTableOptions"
         >
           <template #[`item.study_name`]="{ item }">
             {{ item.study_name }}
@@ -373,7 +384,7 @@ export default defineComponent({
           <template #[`item.date_last_modified`]="{ item }">
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
-          <template #[`header.status`]="{ column }">
+          <template #[`header.status`]="{ column, getSortIcon, toggleSort }">
             <div class="d-flex align-center ga-1">
               <v-tooltip
                 v-if="currentUser?.is_admin || submission.data.results.results.some(item => item.reviewers.includes(currentUser.orcid))"
@@ -393,40 +404,26 @@ export default defineComponent({
               <span>
                 {{ column.title }}
               </span>
+              <v-icon
+                class="v-data-table-header__sort-icon"
+                :icon="getSortIcon(column)"
+                @click="toggleSort(column)"
+              />
             </div>
           </template>
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
               <v-select
-                v-if="(currentUser?.is_admin || isReviewerForSubmission(item)) && item.status === SubmissionStatusEnum.InProgress.text"
-                :value="item.status"
+                v-if="currentUser?.is_admin"
+                :model-value="item.status"
                 :items="getFormattedStatusTransitions(item)"
-                item-title="text"
-                item-value="value"
-                item-disabled="disabled"
-                dense
+                :loading="statusUpdatingSubmissionId === item.id"
+                density="compact"
+                variant="underlined"
                 hide-details
-                disabled
-              >
-                <template #selection="{ item: statusItem }">
-                  {{ statusItem.title }}
-                </template>
-              </v-select>
-              <v-select
-                v-else-if="(currentUser?.is_admin || isReviewerForSubmission(item))"
-                :value="item.status"
-                :items="getFormattedStatusTransitions(item)"
-                item-title="text"
-                item-value="value"
-                item-disabled="disabled"
-                dense
-                hide-details
-                @change="(newStatus: string) => handleStatusChange(item, newStatus)"
-              >
-                <template #selection="{ item: statusItem }">
-                  {{ statusItem.title }}
-                </template>
-              </v-select>
+                :disabled="item.status === SubmissionStatusEnum.InProgress.text"
+                @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
+              />
               <v-chip
                 v-else
                 :color="getStatus(item as MetadataSubmissionRecord).color"
@@ -483,7 +480,7 @@ export default defineComponent({
               </v-menu>
             </div>
           </template>
-        </v-data-table>
+        </v-data-table-server>
       </v-card>
     </v-card>
     <v-dialog
@@ -545,7 +542,6 @@ export default defineComponent({
                 class="mt-4"
                 label="ORCiD"
                 variant="outlined"
-                dense
               />
             </v-col>
           </v-row>
