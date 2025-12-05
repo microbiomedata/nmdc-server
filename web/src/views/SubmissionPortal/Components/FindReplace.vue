@@ -147,6 +147,7 @@ export default defineComponent({
               clearable
               label="Find"
               variant="outlined"
+              hide-details
               :counter="query ? count : undefined"
               :counter-value="query ? () => (count ? cursor + 1 : 0) : 0"
             />
@@ -157,7 +158,7 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-btn
                 icon
-                variant="plain"
+                variant="text"
                 v-bind="props"
                 @click="previous"
               >
@@ -170,7 +171,7 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-btn
                 icon
-                variant="plain"
+                variant="text"
                 v-bind="props"
                 @click="next"
               >
@@ -192,6 +193,7 @@ export default defineComponent({
             clearable
             label="Replace"
             variant="outlined"
+            hide-details
           />
         </v-col>
         <v-col class="flex-grow-0 flex-shrink-0 text-no-wrap">
@@ -199,7 +201,7 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-btn
                 icon
-                variant="plain"
+                variant="text"
                 v-bind="props"
                 @click="replaceOnce"
               >
@@ -212,7 +214,7 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-btn
                 icon
-                variant="plain"
+                variant="text"
                 v-bind="props"
                 @click="replaceAll"
               >

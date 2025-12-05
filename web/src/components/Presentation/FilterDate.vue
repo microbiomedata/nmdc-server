@@ -114,7 +114,7 @@ export default defineComponent({
       hide-details
       variant="outlined"
       flat
-      dense
+      density="compact"
       class="pb-4"
     />
     <div class="d-flex flex-row align-center pb-4">

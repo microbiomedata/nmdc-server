@@ -152,10 +152,10 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-btn
                 icon
-                variant="plain"
-                size="x-small"
+                variant="text"
+                size="small"
+                density="comfortable"
                 v-bind="props"
-                class="ml-2"
               >
                 <v-icon>mdi-help-circle</v-icon>
               </v-btn>
@@ -170,10 +170,10 @@ export default defineComponent({
             <template #activator="{ props }">
               <v-btn
                 icon
-                variant="plain"
-                size="x-small"
+                variant="text"
+                size="small"
+                density="comfortable"
                 v-bind="props"
-                class="ml-2"
               >
                 <v-icon>mdi-help-circle</v-icon>
               </v-btn>

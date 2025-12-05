@@ -8,6 +8,7 @@ import '@mdi/font/css/materialdesignicons.css';
 import 'vuetify/styles';
 // @ts-ignore
 import colors from '@/colors';
+import { VBtn } from 'vuetify/components';
 
 export default createVuetify({
   theme: {
@@ -25,4 +26,12 @@ export default createVuetify({
       },
     },
   },
+  aliases: {
+    VBtnGrey: VBtn
+  },
+  defaults: {
+    VBtnGrey: {
+      color: 'grey-lighten-3',
+    },
+  }
 })

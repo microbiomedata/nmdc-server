@@ -512,7 +512,6 @@ export default defineComponent({
                 class="mt-4"
                 label="ORCiD"
                 variant="outlined"
-                dense
               />
             </v-col>
           </v-row>
