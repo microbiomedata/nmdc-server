@@ -45,6 +45,7 @@ import {
   isTestSubmission,
   canEditSubmissionByStatus,
   SubmissionStatusEnum,
+  refreshStatus,
 } from './store';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
@@ -439,12 +440,13 @@ export default defineComponent({
     }
 
     const submissionState = computed(() => {
+      console.log(status.value);
       let allTabsValid = true;
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
       const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
-      const canSubmitByStatus = status.value === SubmissionStatusEnum.InProgress.text || status.value === SubmissionStatusEnum.UpdatesRequired.text
+      const canSubmitByStatus = status.value === SubmissionStatusEnum.InProgress.text
       const isSubmitted = submitCount.value > 0 || status.value === SubmissionStatusEnum.SubmittedPendingReview.text;
       return {
         isSubmitted,
@@ -636,6 +638,7 @@ export default defineComponent({
     });
 
     onMounted(async () => {
+      await refreshStatus((route.params as { id: string }).id);
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
         api.getSubmissionSchema(),
         api.getGoldEcosystemTree(),

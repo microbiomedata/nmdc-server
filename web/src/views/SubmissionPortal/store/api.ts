@@ -88,6 +88,11 @@ async function getRecord(id: string) {
   return resp.data;
 }
 
+async function getSubmissionStatus(id: string) {
+  const resp = await client.get<{ status: string }>(`metadata_submission/${id}/status`);
+  return resp.data.status;
+}
+
 async function lockSubmission(id: string) {
   const resp = await client.put<LockOperationResult>(`metadata_submission/${id}/lock`);
   return resp.data;
@@ -169,4 +174,5 @@ export {
   deleteSubmissionImage,
   updateSubmissionStatus,
   addSubmissionRole,
+  getSubmissionStatus,
 };

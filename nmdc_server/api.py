@@ -1327,6 +1327,21 @@ async def update_submission_status(
     return submission
 
 
+@router.get(
+    "/metadata_submission/{id}/status",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def get_submission_status(
+    id: str,
+    db: Session = Depends(get_db),
+    user: models.User = Depends(get_current_user),
+):
+    """Get current submission status"""
+    submission = get_submission_for_user(db, id, user)
+    return {"status": submission.status}
+
+
 @router.post(
     "/metadata_submission/{id}/role",
     tags=["metadata_submission"],

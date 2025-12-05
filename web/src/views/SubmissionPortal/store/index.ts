@@ -406,6 +406,11 @@ async function submit(id: string, status?: SubmissionStatusKey) {
   }
 }
 
+async function refreshStatus(id: string) {
+  const fetchedStatus = await api.getSubmissionStatus(id);
+  status.value = isSubmissionStatus(fetchedStatus) ? fetchedStatus : SubmissionStatusEnum.InProgress.text;
+}
+
 function reset() {
   Object.assign(addressForm, addressFormDefault);
   addressFormValid.value = false;
@@ -599,4 +604,5 @@ export {
   templateHasData,
   checkJGITemplates,
   checkDoiFormat,
+  refreshStatus,
 };
