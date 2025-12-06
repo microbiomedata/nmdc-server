@@ -37,7 +37,9 @@ export default defineComponent({
     }
 
     onMounted(async () => {
-      formRef.value.validate();
+      if (formRef.value) {
+        formRef.value.validate();
+      }
     });
 
     const { user } = stateRefs;
@@ -56,31 +58,33 @@ export default defineComponent({
     const editEmail = ref(false);
     const isEmailValid = ref(false);
 
-    const updateEmail = (email: string | undefined) => {
-      if (editEmail.value) {
-        if (email == null) {
-          return;
-        }
-        isEmailValid.value = /.+@.+\..+/.test(email);
-        if (isEmailValid.value) {
-          updateUser(email);
-          editEmail.value = !editEmail.value;
-        }
-      } else {
-        editEmail.value = !editEmail.value;
-      }
-    };
-
     const submitterEmail = ref(user.value?.email || '');
-
     studyForm.submitterEmail = submitterEmail.value;
 
     watch(submitterEmail, async (newEmail) => {
       if (newEmail && /.+@.+\..+/.test(newEmail)) {
-        await updateUser(newEmail);
-        studyForm.submitterEmail = newEmail;
+        isEmailValid.value = true;
       }
+    }, { immediate: true });
+
+    const dialog = computed({
+      get: () => props.value,
+      set: (v: boolean) => emit('input', v),
     });
+
+    const updateEmail = async () => {
+      const email = submitterEmail.value?.trim();
+      if (!email || !/.+@.+\..+/.test(email)) {
+        isEmailValid.value = false;
+        if (formRef.value) {
+          formRef.value.validate();
+        }
+        return;
+      }
+      await updateUser(email);
+      studyForm.submitterEmail = email;
+      dialog.value = false;
+    };
 
     return {
       formRef,
@@ -91,15 +95,12 @@ export default defineComponent({
       canEditSubmissionMetadata,
       currentUserOrcid,
       editEmail,
-      updateEmail,
       isEmailValid,
       submitterEmail,
       user,
       updateUser,
-      dialog: computed({
-        get: () => props.value,
-        set: (v: boolean) => emit('input', v),
-      }),
+      updateEmail,
+      dialog,
     };
   },
 });
@@ -107,66 +108,27 @@ export default defineComponent({
 
 <template>
   <teleport to="body">
-    <div>
-      <v-form
-        ref="formRef"
-        class="my-6"
-        style="max-width: 1000px;"
-        :disabled="!canEditSubmissionMetadata()"
-      >
-        <v-text-field
-          v-model="studyForm.submitterEmail"
-          :rules="requiredRules('E-mail is required',[
-            v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
-          ])"
-          validate-on-blur
-          label="Submitter E-mail *"
-          :hint="Definitions.submitterEmail"
-          persistent-hint
-          outlined
-          dense
-          class="my-2"
-        />
-      </v-form>
-      <strong>* indicates required field</strong>
-    </div>
-  </teleport>
-</template>
-
-<!-- <template>
-  <teleport to="body">
-    <div
-      class="modal-backdrop"
-      style="position: fixed;
-      background: rgba(0, 0, 0, 0.45);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 10000;"
-      @click.self="close"
+    <v-dialog
+      v-model="dialog"
+      persistent
+      max-width="600"
     >
-      <v-card
-        elevation="24"
-        width="420"
-      >
+      <v-card>
         <v-card-title class="headline">
-          <span class="title-text">Please add your e‑mail</span>
+          Please add your email
         </v-card-title>
         <v-card-text>
           <v-form
             ref="formRef"
             class="my-6"
-            :disabled="!canEditSubmissionMetadata()"
-            style="max-width: 1000px;"
-            @submit.prevent="save"
           >
             <v-text-field
-              v-model="studyForm.submitterEmail"
-              :rules="requiredRules('E-mail is required',[
-                v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+              v-model="submitterEmail"
+              :rules="requiredRules('Email is required', [
+                v => /.+@.+\..+/.test(v) || 'Email must be valid',
               ])"
               validate-on-blur
-              label="Submitter E‑mail *"
+              label="User Email *"
               :hint="Definitions.submitterEmail"
               persistent-hint
               outlined
@@ -176,23 +138,18 @@ export default defineComponent({
           </v-form>
           <strong>* indicates required field</strong>
         </v-card-text>
-        <v-card-actions class="justify-end">
-          <v-spacer />
-          <v-btn
-            text
-            @click="close"
-          >
-            Cancel
-          </v-btn>
-          <v-btn
-            color="primary"
-            :disabled="!isFormValid"
-            @click="save"
-          >
-            Save
-          </v-btn>
+        <v-card-actions>
+          <v-spacer>
+            <v-btn
+              color="primary"
+              :disabled="!isEmailValid"
+              @click="updateEmail"
+            >
+              Save
+            </v-btn>
+          </v-spacer>
         </v-card-actions>
       </v-card>
-    </div>
+    </v-dialog>
   </teleport>
-</template> -->
+</template>

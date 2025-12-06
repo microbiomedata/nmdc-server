@@ -3,18 +3,14 @@ import {
   defineComponent,
   onMounted,
   onUnmounted,
-  // watch,
-  computed,
+  watch,
+  ref,
 } from '@vue/composition-api';
-// import { VDialog } from 'vuetify/lib';
 import AppHeader from '@/components/Presentation/AppHeader.vue';
 import UserEmailModal from './views/SubmissionPortal/Components/UserEmailModal.vue';
 import { stateRefs, init } from '@/store/';
 import { useRouter } from '@/use/useRouter';
 import { api, REFRESH_TOKEN_EXPIRED_EVENT, RefreshTokenExchangeError } from '@/data/api';
-// import {
-//   showEmailModal,
-// } from './views/SubmissionPortal/store/index';
 
 export default defineComponent({
   name: 'App',
@@ -31,7 +27,16 @@ export default defineComponent({
 
     const { user } = stateRefs;
 
-    const showEmailModal = computed(() => !!user && !user.value?.email?.trim());
+    const showEmailModal = ref(false);
+
+    watch(
+      user,
+      (newUser) => {
+        const missingEmail = !!newUser && !newUser.email?.trim();
+        showEmailModal.value = missingEmail;
+      },
+      { immediate: true },
+    );
 
     onMounted(async () => {
       window.addEventListener(REFRESH_TOKEN_EXPIRED_EVENT, handleRefreshTokenExpired);
@@ -75,22 +80,9 @@ export default defineComponent({
 <template>
   <v-app>
     <app-header />
-    <!-- <v-dialog v-model="isModalOpen" max-width="400">
-      <v-card>
-        <v-card-title class="headline">Notice</v-card-title>
-        <v-card-actions>
-          <v-spacer />
-          <v-btn color="primary" text @click="isModalOpen = false">OK</v-btn>
-        </v-card-actions>
-      </v-card>
-    </v-dialog> -->
     <keep-alive>
       <router-view />
     </keep-alive>
-    <!-- <user-email-modal v-model="showEmailModal" /> -->
-    <user-email-modal
-      v-if="showEmailModal"
-      @close="showEmailModal = false"
-    />
+    <user-email-modal v-model="showEmailModal" />
   </v-app>
 </template>
