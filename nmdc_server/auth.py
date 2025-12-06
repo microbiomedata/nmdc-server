@@ -257,7 +257,9 @@ async def orcid_authorize(request: Request, db: Session = Depends(get_db)):
     if not user_model.email:
         # Make API call to ORCID
         orcid_email_response = await oauth2_client.orcid.get(
-            f"https://pub.orcid.org/v3.0/{token_response['orcid']}/email", token=token_response, headers={'Accept': 'application/vnd.orcid+json'}
+            f"https://pub.orcid.org/v3.0/{token_response['orcid']}/email",
+            token=token_response,
+            headers={"Accept": "application/vnd.orcid+json"},
         )
 
         # XML data from ORCID API
@@ -284,7 +286,7 @@ async def orcid_authorize(request: Request, db: Session = Depends(get_db)):
 
     redirect_uri = request.session.pop("redirect_uri")
     state = request.session.pop("state", None)
-    
+
     # TODO: also include code_challenge and code_challenge_method in this request to emulate PKCE?
 
     code = crud.create_authorization_code(db, user_model, redirect_uri)
