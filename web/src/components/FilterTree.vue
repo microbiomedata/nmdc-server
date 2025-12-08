@@ -1,10 +1,10 @@
 <script lang="ts">
 import {
-  defineComponent, computed, toRef, PropType,
-} from '@vue/composition-api';
+  defineComponent, computed, toRef, PropType, ref, watch,
+} from 'vue';
 // @ts-ignore
-import Treeselect from '@riophae/vue-treeselect';
-import '@riophae/vue-treeselect/dist/vue-treeselect.css';
+import Treeselect from '@zanmato/vue3-treeselect';
+import '@zanmato/vue3-treeselect/dist/vue3-treeselect.min.css';
 
 import { cloneDeep } from 'lodash';
 import {
@@ -35,7 +35,7 @@ export default defineComponent({
       default: () => [],
     },
   },
-
+  emits: ['select'],
   setup(props, { emit }) {
     const conditions = toRef(props, 'conditions');
     const field = toRef(props, 'field');
@@ -45,16 +45,10 @@ export default defineComponent({
     const tree = computed(() => {
       let t = stateRefs.treeData.value?.trees[`${props.field}_id`];
       /* Eliminate nodes with only one child from the top */
-      while (t && t?.length === 1 && t[0].children?.length) {
+      while (t && t?.length === 1 && t[0]?.children?.length) {
         t = t[0].children;
       }
       return t;
-    });
-    const selected = computed(() => {
-      if (stateRefs.treeData.value === null) {
-        return [];
-      }
-      return myConditions.value.map((v) => unreactive.nodeMapLabel[v.value as string].id);
     });
 
     const facetSummaryMap = computed(() => {
@@ -66,13 +60,29 @@ export default defineComponent({
     const { loading, request } = useRequest();
     request(getTreeData);
 
-    async function setSelected(values: string[]) {
+    const selected = ref<string[]>([]);
+
+    // Update selected when conditions change
+    watch([myConditions, () => stateRefs.treeData.value], () => {
+      if (stateRefs.treeData.value === null) {
+        selected.value = [];
+      } else {
+        selected.value = myConditions.value.map((v) => unreactive.nodeMapLabel[v.value as string]!.id);
+      }
+    }, { immediate: true });
+
+    // Update conditions when selected changes
+    watch(selected, (values) => {
+      setSelected(values);
+    }, { deep: true });
+
+    function setSelected(values: string[]) {
       const c = cloneDeep(otherConditions.value);
       values.forEach((value) => {
         c.push({
           op: '==',
           field: field.value,
-          value: unreactive.nodeMapId[value].label,
+          value: unreactive.nodeMapId[value]!.label,
           table: table.value,
         });
       });
@@ -103,13 +113,12 @@ export default defineComponent({
     />
     <treeselect
       v-else-if="tree !== null"
-      :value="selected"
+      v-model="selected"
       :options="tree"
       :normailzer="normalizer"
       multiple
       always-open
       class="ma-2"
-      @input="setSelected"
     >
       <template #option-label="{ node }">
         <span> {{ node.label }} ({{ facetSummaryMap[node.label] || '0' }}) </span>

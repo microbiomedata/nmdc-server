@@ -1,7 +1,5 @@
 <script lang="ts">
-import {
-  defineComponent,
-} from '@vue/composition-api';
+import { defineComponent, ref } from 'vue';
 import {
   SubmissionStatusTitleMapping,
   status,
@@ -10,7 +8,9 @@ import {
 export default defineComponent({
   components: {},
   setup() {
+    const message = ref(`This submission has status "${SubmissionStatusTitleMapping[status.value]}" and cannot be edited.`);
     return {
+      message,
       status,
       SubmissionStatusTitleMapping,
     };
@@ -20,21 +20,21 @@ export default defineComponent({
 
 <template>
   <v-alert
+    :text="message"
     type="info"
-    class="ma-2"
+    class="ma-2 overflow-visible"
   >
-    <template #prepend>
+    <template #append>
       <v-menu
         bottom
         offset-y
         :close-on-content-click="false"
         max-width="300"
       >
-        <template #activator="{ on, attrs }">
+        <template #activator="{ props }">
           <v-icon
-            v-bind="attrs"
+            v-bind="props"
             style="cursor: pointer;"
-            v-on="on"
           >
             mdi-information
           </v-icon>
@@ -47,6 +47,5 @@ export default defineComponent({
         </v-card>
       </v-menu>
     </template>
-    This submission has status "{{ SubmissionStatusTitleMapping[status] }}" and cannot be edited.
   </v-alert>
 </template>

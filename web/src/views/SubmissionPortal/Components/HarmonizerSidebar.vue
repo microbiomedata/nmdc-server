@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
   defineComponent, PropType, ref,
-} from '@vue/composition-api';
+} from 'vue';
 import FindReplace from '@/views/SubmissionPortal/Components/FindReplace.vue';
 import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
@@ -92,7 +92,7 @@ export default defineComponent({
 
 <template>
   <div class="harmonizer-sidebar-content d-flex flex-column fill-height">
-    <div class="flex-grow-0 flex-shrink-0">
+    <div class="flex-0-0">
       <v-tabs
         v-model="tabModel"
         grow
@@ -102,12 +102,10 @@ export default defineComponent({
           :key="tab.label"
           open-delay="600"
           top
-          z-index="400"
         >
-          <template #activator="{ on, attrs }">
+          <template #activator="{ props }">
             <v-tab
-              v-bind="attrs"
-              v-on="on"
+              v-bind="props"
             >
               <v-icon>{{ tab.icon }}</v-icon>
             </v-tab>
@@ -118,40 +116,40 @@ export default defineComponent({
       <v-divider />
     </div>
 
-    <v-tabs-items
+    <v-window
       v-model="tabModel"
       class="flex-grow-1 overflow-y-auto"
     >
-      <v-tab-item>
+      <v-window-item>
         <ColumnHelp
           :column-help="columnHelp"
           :harmonizer-template="harmonizerTemplate"
           @full-reference-click="harmonizerApi.launchReference()"
         />
-      </v-tab-item>
-      <v-tab-item>
+      </v-window-item>
+      <v-window-item>
         <FindReplace
           :harmonizer-api="harmonizerApi"
         />
-      </v-tab-item>
-      <v-tab-item>
+      </v-window-item>
+      <v-window-item>
         <MetadataSuggester
           :enabled="metadataEditingAllowed"
           :harmonizer-api="harmonizerApi"
-          :schema-class-name="harmonizerTemplate.schemaClass"
+          :schema-class-name="harmonizerTemplate.schemaClass || ''"
         />
-      </v-tab-item>
-      <v-tab-item>
+      </v-window-item>
+      <v-window-item>
         <ImportExportButtons
           :import-disabled="!metadataEditingAllowed"
           @export="$emit('export-xlsx')"
           @import="handleImport"
         />
-      </v-tab-item>
-      <v-tab-item>
+      </v-window-item>
+      <v-window-item>
         <ContactCard elevation="0" />
-      </v-tab-item>
-    </v-tabs-items>
+      </v-window-item>
+    </v-window>
   </div>
 </template>
 

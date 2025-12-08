@@ -5,7 +5,7 @@ import {
   computed,
   defineComponent,
   ref,
-} from '@vue/composition-api';
+} from 'vue';
 import {
   validForms,
   canEditSubmissionMetadata,
@@ -184,7 +184,7 @@ export default defineComponent({
         multiple
       >
         <v-expansion-panel>
-          <v-expansion-panel-header disable-icon-rotate>
+          <v-expansion-panel-title disable-icon-rotate>
             <div class="my-4">
               <div class="text-h5">
                 Study Form Status
@@ -208,8 +208,8 @@ export default defineComponent({
                 {{ validForms.studyFormValid ? 'mdi-check' : 'mdi-close-circle' }}
               </v-icon>
             </template>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-list>
               <v-list-item
                 v-for="(item, i) in studyFormContent"
@@ -222,10 +222,10 @@ export default defineComponent({
                 {{ item }}
               </v-list-item>
             </v-list>
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel>
-          <v-expansion-panel-header disable-icon-rotate>
+          <v-expansion-panel-title disable-icon-rotate>
             <div class="my-4">
               <div class="text-h5">
                 Multi-Omics Form Status
@@ -249,8 +249,8 @@ export default defineComponent({
                 {{ validForms.multiOmicsFormValid ? 'mdi-check' : 'mdi-close-circle' }}
               </v-icon>
             </template>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
             <v-list>
               <v-list-item
                 v-for="(item, i) in multiOmicsContent"
@@ -263,10 +263,10 @@ export default defineComponent({
                 {{ item }}
               </v-list-item>
             </v-list>
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel>
-          <v-expansion-panel-header disable-icon-rotate>
+          <v-expansion-panel-title disable-icon-rotate>
             <div class="my-4">
               <div class="text-h5">
                 Sample Environment/Template status
@@ -290,13 +290,13 @@ export default defineComponent({
                 {{ validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle' }}
               </v-icon>
             </template>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
             {{ validForms.templatesValid ? 'No changes needed.' : 'You must select one or more templates.' }}
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel>
-          <v-expansion-panel-header disable-icon-rotate>
+          <v-expansion-panel-title disable-icon-rotate>
             <div class="my-4">
               <div class="text-h5">
                 Data Harmonizer Status
@@ -320,10 +320,10 @@ export default defineComponent({
                 {{ validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle' }}
               </v-icon>
             </template>
-          </v-expansion-panel-header>
-          <v-expansion-panel-content>
+          </v-expansion-panel-title>
+          <v-expansion-panel-text>
             {{ harmonizerContent }}
-          </v-expansion-panel-content>
+          </v-expansion-panel-text>
         </v-expansion-panel>
       </v-expansion-panels>
       <div class="d-flex my-4">

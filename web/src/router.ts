@@ -1,6 +1,10 @@
-import Vue from 'vue';
-import VueRouter, { Route } from 'vue-router';
+/**
+ * router/index.ts
+ *
+ * Automatic routes for `./src/pages/*.vue`
+ */
 
+import { createRouter, createWebHistory } from 'vue-router'
 import Search from '@/views/Search/SearchLayout.vue';
 import SamplePage from '@/views/IndividualResults/SamplePage.vue';
 import StudyPage from '@/views/IndividualResults/StudyPage.vue';
@@ -24,11 +28,8 @@ import { incrementalSaveRecord } from '@/views/SubmissionPortal/store';
 
 import { parseQuery, stringifyQuery } from './utils';
 
-Vue.use(VueRouter);
-
-const router = new VueRouter({
-  mode: 'history',
-  base: process.env.BASE_URL,
+const router = createRouter({
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
@@ -117,22 +118,46 @@ const router = new VueRouter({
       component: LoginPage,
     },
   ],
-  scrollBehavior: () => ({ x: 0, y: 0 }),
+  scrollBehavior: (to, from, savedPosition) => {
+    if (savedPosition) {
+      return savedPosition;
+    } else {
+      return { top: 0, left: 0 };
+    }
+  },
   parseQuery,
   stringifyQuery,
 });
-router.beforeEach((to: Route, from: Route, next: Function) => {
-  if (from.fullPath.includes('submission') && !!from.params.id) {
+router.beforeEach((to, from, next) => {
+  if (from.fullPath.includes('submission') && !!(from.params as any).id) {
     // We are navigating away from a submission edit screen, so save the progress
-    incrementalSaveRecord(from.params.id);
-    if (to.fullPath.includes('submission') && !!to.params.id && to.params.id === from.params.id) {
+    incrementalSaveRecord((from.params as any).id);
+    if (to.fullPath.includes('submission') && !!(to.params as any).id && (to.params as any).id === (from.params as any).id) {
       // We are navigating to a submission edit screen for the same submission, no need to  unlock
       next();
       return;
     }
-    unlockSubmission(from.params.id);
+    unlockSubmission((from.params as any).id);
   }
   next();
 });
+// Workaround for https://github.com/vitejs/vite/issues/11804
+router.onError((err, to) => {
+  if (err?.message?.includes?.('Failed to fetch dynamically imported module')) {
+    if (localStorage.getItem('vuetify:dynamic-reload')) {
+      console.error('Dynamic import error, reloading page did not fix it', err)
+    } else {
+      console.log('Reloading page to fix dynamic import error')
+      localStorage.setItem('vuetify:dynamic-reload', 'true')
+      location.assign(to.fullPath)
+    }
+  } else {
+    console.error(err)
+  }
+})
 
-export default router;
+router.isReady().then(() => {
+  localStorage.removeItem('vuetify:dynamic-reload')
+})
+
+export default router

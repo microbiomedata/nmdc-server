@@ -1615,7 +1615,7 @@ def test_make_submission_images_public_unauthorized(
         ),
         (
             SubmissionStatusEnum.InProgress.text,
-            SubmissionStatusEnum.PendingUserFacility.text,
+            SubmissionStatusEnum.ApprovedPendingUserFacility.text,
             False,
         ),
     ],
@@ -1662,7 +1662,7 @@ def test_admin_allowed_to_make_any_status_changes(
     )
     db.commit()
 
-    new_status = SubmissionStatusEnum.PendingUserFacility.text
+    new_status = SubmissionStatusEnum.ApprovedPendingUserFacility.text
     response = client.request(
         method="patch",
         url=f"/api/metadata_submission/{submission.id}/status",

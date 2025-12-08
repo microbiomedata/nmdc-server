@@ -2,8 +2,9 @@
 import {
   computed,
   defineComponent,
-} from '@vue/composition-api';
+} from 'vue';
 import { validForms } from '../store';
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
   setup(props, { root }) {
@@ -34,9 +35,10 @@ export default defineComponent({
         icon: 'mdi-text-box-outline',
       },
     ]);
-
+    const router = useRouter();
+    
     function gotoPage(newPage: string) {
-      root.$router.push({ name: newPage });
+      router?.push({ name: newPage });
     }
 
     return {

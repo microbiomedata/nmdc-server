@@ -1,5 +1,7 @@
 <script lang="ts">
-import { defineComponent } from '@vue/composition-api';
+import { defineComponent } from 'vue';
+
+type EmailSubjects = 'support' | 'bug' | 'feature';
 
 export default defineComponent({
   props: {
@@ -9,8 +11,8 @@ export default defineComponent({
     },
   },
   setup() {
-    function emailTemplate(value: string) {
-      const subjects: { [key: string]: string } = {
+    function emailTemplate(value: EmailSubjects) {
+      const subjects: { [_key in EmailSubjects]: string } = {
         support: 'Support Request',
         bug: 'Bug Report',
         feature: 'Feature Request',
@@ -43,7 +45,7 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="primary"
             class="mr-4"
             style="border: solid #4F3B80;"
@@ -54,13 +56,11 @@ export default defineComponent({
               mdi-open-in-new
             </v-icon>
           </v-btn>
-          <v-list-item-content>
-            <v-list-item-title
-              class="primary--text"
-            >
-              Visit our support page
-            </v-list-item-title>
-          </v-list-item-content>
+          <v-list-item-title
+            class="primary--text"
+          >
+            Visit our support page
+          </v-list-item-title>
         </v-list-item>
         <v-list-item
           two-line
@@ -70,23 +70,21 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="blue"
             class="mr-4"
             style="border: solid;"
           >
             <v-icon>mdi-email</v-icon>
           </v-btn>
-          <v-list-item-content>
-            <v-list-item-title
-              class="blue--text"
-            >
-              Send us a message
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              Ask us for help
-            </v-list-item-subtitle>
-          </v-list-item-content>
+          <v-list-item-title
+            class="blue--text"
+          >
+            Send us a message
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            Ask us for help
+          </v-list-item-subtitle>
         </v-list-item>
         <v-list-item
           two-line
@@ -96,23 +94,21 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="red"
             class="mr-4"
             style="border: solid;"
           >
             <v-icon>mdi-bug</v-icon>
           </v-btn>
-          <v-list-item-content>
-            <v-list-item-title
-              class="red--text"
-            >
-              Report an issue
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              Let us know of any bugs
-            </v-list-item-subtitle>
-          </v-list-item-content>
+          <v-list-item-title
+            class="red--text"
+          >
+            Report an issue
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            Let us know of any bugs
+          </v-list-item-subtitle>
         </v-list-item>
         <v-list-item
           two-line
@@ -122,23 +118,21 @@ export default defineComponent({
         >
           <v-btn
             icon
-            outlined
+            variant="outlined"
             color="grey darken-2"
             class="mr-4"
             style="border: solid;"
           >
             <v-icon>mdi-plus-circle</v-icon>
           </v-btn>
-          <v-list-item-content>
-            <v-list-item-title
-              class="grey--text text--darken-2"
-            >
-              Request a feature
-            </v-list-item-title>
-            <v-list-item-subtitle>
-              Suggest a new feature
-            </v-list-item-subtitle>
-          </v-list-item-content>
+          <v-list-item-title
+            class="grey--text text--darken-2"
+          >
+            Request a feature
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            Suggest a new feature
+          </v-list-item-subtitle>
         </v-list-item>
       </v-list>
     </v-card-text>
