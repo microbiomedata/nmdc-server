@@ -3,6 +3,7 @@ import { defineComponent, ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
 import AttributeList from '@/components/Presentation/AttributeList.vue';
+import JsonDownload from '@/components/JsonDownload.vue';
 
 import IndividualTitle from './IndividualTitle.vue';
 
@@ -13,6 +14,7 @@ export default defineComponent({
     AppBanner,
     AttributeList,
     IndividualTitle,
+    JsonDownload,
   },
 
   props: {
@@ -26,7 +28,10 @@ export default defineComponent({
     const result = ref({} as BiosampleSearchResult);
 
     watchEffect(() => {
-      api.getBiosample(props.id).then((b) => { result.value = b; });
+      api.getBiosample(props.id).then((b) => { 
+        console.log(b);
+        result.value = b; 
+      });
     });
 
     return { result };
@@ -38,7 +43,13 @@ export default defineComponent({
   <v-main v-if="result.id">
     <AppBanner />
     <v-container fluid>
-      <IndividualTitle :item="result" />
+      <div class="d-flex align-center">
+        <IndividualTitle :item="result" />
+        <JsonDownload 
+          :json="result" 
+          :filename="`${result.id}.json`"
+        />
+      </div>
       <AttributeList
         type="biosample"
         :item="result"
