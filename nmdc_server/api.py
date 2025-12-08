@@ -1400,9 +1400,9 @@ def create_github_issue(submission_model: SubmissionMetadata, user):
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
 
     # Check for existing issues first
-    existing_issues = check_existing_github_issues(submission.id, headers, gh_url, user)
+    existing_issue = check_existing_github_issues(submission.id, headers, gh_url, user)
 
-    if existing_issues is None:
+    if existing_issue is None:
 
         # Gathering the fields we want to display in the issue
         study_form = submission.metadata_submission.studyForm
@@ -1460,11 +1460,10 @@ def create_github_issue(submission_model: SubmissionMetadata, user):
             logging.info(res.reason)
 
     else:
-        for issue in existing_issues:
-            try:
-                update_github_issue_for_resubmission(issue, user, headers)
-            except Exception as e:
-                logging.error(f"Failed to update existing GitHub issue: {str(e)}")
+        try:
+            update_github_issue_for_resubmission(existing_issue, user, headers)
+        except Exception as e:
+            logging.error(f"Failed to update existing GitHub issue: {str(e)}")
 
 
 def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str, user):
@@ -1480,8 +1479,7 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
         "page": 1,
     }
 
-    matching_issues = []
-    max_pages = 20  # Stopgap: prevent checking more than 1000 issues (10 pages * 100 per page)
+    max_pages = 20  # Stopgap: prevent checking more than 2000 issues (10 pages * 100 per page)
     pages_checked = 0
 
     try:
@@ -1498,7 +1496,7 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
                 body = issue.get("body", "") or ""
 
                 if submission_id_string in title or submission_id_string in body:
-                    matching_issues.append(issue)
+                    return issue  # Return first matching issue immediately
 
             # Get next page
             link_header = response.headers.get("Link", "")
@@ -1514,7 +1512,7 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
         logging.error(f"Request failed to check existing GitHub issues: {str(e)}")
         return None
 
-    return matching_issues if matching_issues else None  # list of matching github issues or None
+    return None  # No matching issues found
 
 
 def update_github_issue_for_resubmission(existing_issue, user, headers):
