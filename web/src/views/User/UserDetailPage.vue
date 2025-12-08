@@ -69,19 +69,12 @@ export default defineComponent({
         if (email == null) {
           return;
         }
-        // isEmailValid.value = /.+@.+\..+/.test(email);
-        // if (isEmailValid.value) {
-        //   updateUser(email);
-        //   editEmail.value = !editEmail.value;
-        // }
-        isEmailValid.value = email === '' || /.+@.+\..+/.test(email);
+        isEmailValid.value = /.+@.+\..+/.test(email);
         if (isEmailValid.value) {
-          updateUser(email || '');
-          if (user.value) {
-            user.value.email = email || '';
-          }
+          updateUser(email);
           editEmail.value = !editEmail.value;
         }
+        // isEmailValid.value = email === '' || /.+@.+\..+/.test(email);
       } else {
         editEmail.value = !editEmail.value;
       }
