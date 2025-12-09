@@ -22,11 +22,11 @@ from nmdc_server.auth import admin_required, get_current_user, login_required_re
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
 from nmdc_server.crud import (
+    ALLOWED_TRANSITIONS,
     DataObjectReportVariant,
     context_edit_roles,
     get_submission_for_user,
     replace_nersc_data_url_prefix,
-    ALLOWED_TRANSITIONS,
 )
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db

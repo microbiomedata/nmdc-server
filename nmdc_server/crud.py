@@ -24,9 +24,7 @@ ALLOWED_TRANSITIONS = {
     },
     models.SubmissionEditorRole.owner: {
         SubmissionStatusEnum.UpdatesRequired.text: [SubmissionStatusEnum.InProgress.text],
-        SubmissionStatusEnum.InProgress.text: [
-            SubmissionStatusEnum.SubmittedPendingReview.text
-        ],
+        SubmissionStatusEnum.InProgress.text: [SubmissionStatusEnum.SubmittedPendingReview.text],
     },
 }
 
