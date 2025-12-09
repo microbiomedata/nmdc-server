@@ -3,7 +3,7 @@ import {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from 'vue';
 import {
-  chunk, clone, forEach, isString,
+  chunk, clone, forEach, isEqual, isString,
 } from 'lodash';
 import axios from 'axios';
 import { User } from '@/types';
@@ -31,6 +31,7 @@ import {
   AcquisitionProtocol,
   DataProtocol,
   SampleProtocol,
+  MetadataSubmissionRecord,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
@@ -261,7 +262,7 @@ function checkDoiFormat(v: string) {
  * Environmental Package Step
  */
 const packageName = ref([] as (keyof typeof HARMONIZER_TEMPLATES)[]);
-const templateList = computed(() => {
+const templateList = computed<string[]>((prevTemplates) => {
   const templates = new Set(packageName.value);
   if (multiOmicsForm.dataGenerated) {
     // Have data already been generated? Yes
@@ -335,7 +336,11 @@ const templateList = computed(() => {
       }
     }
   }
-  return Array.from(templates);
+  const newTemplates = Array.from(templates);
+  if (prevTemplates !== undefined && isEqual(prevTemplates, newTemplates)) {
+    return prevTemplates;
+  }
+  return newTemplates;
 });
 /**
  * DataHarmonizer Step
@@ -346,7 +351,10 @@ const suggestionMode = ref(SuggestionsMode.LIVE);
 const suggestionType = ref(SuggestionType.ALL);
 
 const tabsValidated = ref({} as Record<string, boolean>);
-watch(templateList, () => {
+watch(templateList, (newList, oldList) => {
+  if (isEqual(newList, oldList)) {
+    return;
+  }
   const newTabsValidated = {} as Record<string, boolean>;
   forEach(templateList.value, (templateKey) => {
     newTabsValidated[templateKey] = false;
@@ -434,10 +442,12 @@ async function submit(id: string, status?: SubmissionStatusKey) {
   if (!canEditSubmissionByStatus()) {
     throw new Error('Unable to submit with current submission status.');
   }
-  await api.updateRecord(id, payloadObject.value);
+  const response = await api.updateRecord(id, payloadObject.value);
+  let record = response.data;
   if (status) {
-    await api.updateSubmissionStatus(id, status);
+    record = await api.updateSubmissionStatus(id, status);
   }
+  updateStateFromRecord(record);
 }
 
 async function refreshStatus(id: string) {
@@ -486,7 +496,7 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
 
   if (hasChanged.value) {
     const response = await api.updateRecord(id, payload, permissions);
-    hasChanged.value = 0;
+    updateStateFromRecord(response.data);
     return response.httpStatus;
   }
   hasChanged.value = 0;
@@ -501,21 +511,32 @@ async function generateRecord(isTestSubBool: boolean) {
   return record;
 }
 
+function updateStateFromRecord(record: MetadataSubmissionRecord) {
+  packageName.value = record.metadata_submission.packageName;
+  if (!isEqual(studyForm, record.metadata_submission.studyForm)) {
+    Object.assign(studyForm, record.metadata_submission.studyForm);
+  }
+  if (!isEqual(multiOmicsForm, record.metadata_submission.multiOmicsForm)) {
+    Object.assign(multiOmicsForm, record.metadata_submission.multiOmicsForm);
+  }
+  if (!isEqual(addressForm, record.metadata_submission.addressForm)) {
+    Object.assign(addressForm, record.metadata_submission.addressForm);
+  }
+  sampleData.value = record.metadata_submission.sampleData;
+  status.value = isSubmissionStatus(record.status) ? record.status : SubmissionStatusEnum.InProgress.text;
+  if (record.permission_level !== null) {
+    _permissionLevel = (record.permission_level as PermissionLevelValues);
+  }
+  isTestSubmission.value = record.is_test_submission;
+  primaryStudyImageUrl.value = record.primary_study_image_url;
+  piImageUrl.value = record.pi_image_url;
+  hasChanged.value = 0;
+}
+
 async function loadRecord(id: string) {
   reset();
   const val = await api.getRecord(id);
-  packageName.value = val.metadata_submission.packageName;
-  Object.assign(studyForm, val.metadata_submission.studyForm);
-  Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
-  Object.assign(addressForm, val.metadata_submission.addressForm);
-  sampleData.value = val.metadata_submission.sampleData;
-  hasChanged.value = 0;
-  status.value = isSubmissionStatus(val.status) ? val.status : SubmissionStatusEnum.InProgress.text;
-  _permissionLevel = (val.permission_level as PermissionLevelValues);
-  isTestSubmission.value = val.is_test_submission;
-  primaryStudyImageUrl.value = val.primary_study_image_url;
-  piImageUrl.value = val.pi_image_url;
-
+  updateStateFromRecord(val);
   try {
     const lockResponse = await api.lockSubmission(id);
     _submissionLockedBy = lockResponse.locked_by || null;
