@@ -26,6 +26,7 @@ from nmdc_server.crud import (
     context_edit_roles,
     get_submission_for_user,
     replace_nersc_data_url_prefix,
+    ALLOWED_TRANSITIONS,
 )
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
@@ -1281,21 +1282,7 @@ async def update_submission(
 
 @router.get("/status_transitions", name="Get the `Status` transitions allowed by user role")
 async def get_transitions() -> dict:
-    allowed_transitions = {
-        SubmissionEditorRole.reviewer: {
-            SubmissionStatusEnum.ApprovedPendingUserFacility.text: [
-                SubmissionStatusEnum.UpdatesRequired.text,
-                SubmissionStatusEnum.ApprovedHeld.text,
-            ]
-        },
-        SubmissionEditorRole.owner: {
-            SubmissionStatusEnum.UpdatesRequired.text: [SubmissionStatusEnum.InProgress.text],
-            SubmissionStatusEnum.InProgress.text: [
-                SubmissionStatusEnum.SubmittedPendingReview.text
-            ],
-        },
-    }
-    return allowed_transitions
+    return ALLOWED_TRANSITIONS
 
 
 @router.patch(
@@ -1316,8 +1303,6 @@ async def update_submission_status(
     )
     current_status = submission.status
 
-    allowed_transitions = await get_transitions()
-
     # Admins can change to any status
     if user.is_admin:
         submission.status = body.status
@@ -1327,11 +1312,11 @@ async def update_submission_status(
 
         # Owner transitions
         if user.orcid in submission.owners:
-            transitions = allowed_transitions[SubmissionEditorRole.owner]
+            transitions = ALLOWED_TRANSITIONS[SubmissionEditorRole.owner]
 
         # Reviewer transitions
         elif user.orcid in submission.reviewers:
-            transitions = allowed_transitions[SubmissionEditorRole.reviewer]
+            transitions = ALLOWED_TRANSITIONS[SubmissionEditorRole.reviewer]
 
         # Apply restricted transitions
         if (
