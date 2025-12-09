@@ -1942,7 +1942,7 @@ async def get_users(
     pagination: Pagination = Depends(),
     search_filter: Optional[str] = None,
 ):
-    users = db.query(User)
+    users = db.query(User).order_by(models.User.name)
     if search_filter:
         users = users.filter(
             (

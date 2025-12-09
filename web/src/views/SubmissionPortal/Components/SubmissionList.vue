@@ -357,8 +357,8 @@ export default defineComponent({
           :headers="headers"
           :items="submission.data.results.results"
           :items-length="submission.data.results.count"
+          :items-per-page-options="[10, 20, 50]"
           :loading="submission.loading.value"
-          :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
           @update:options="updateTableOptions"
         >
           <template #[`item.study_name`]="{ item }">
