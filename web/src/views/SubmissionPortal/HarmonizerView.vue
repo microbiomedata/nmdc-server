@@ -979,7 +979,7 @@ export default defineComponent({
                   :content="validationTotalCounts[templateKey] || '!'"
                   floating
                   location="top right"
-                  :value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
+                  :model-value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
                   :color="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) ? 'error' : 'warning'"
                 >
                   {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
