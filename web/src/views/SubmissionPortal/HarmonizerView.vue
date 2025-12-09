@@ -448,9 +448,18 @@ export default defineComponent({
       const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
       const canSubmitByStatus = status.value === SubmissionStatusEnum.InProgress.text
       const isSubmitted = submitCount.value > 0 || status.value === SubmissionStatusEnum.SubmittedPendingReview.text;
+      let submitDisabledReason: string | null = null;
+      if (!allTabsValid) {
+        submitDisabledReason = 'All tabs must be validated before submission.';
+      } else if (!hasSubmitPermission) {
+        submitDisabledReason = 'You do not have permission to submit this record.';
+      } else if (!canSubmitByStatus) {
+        submitDisabledReason = `Submission cannot be made while in status: ${status.value}.`;
+      }
       return {
         isSubmitted,
-        canSubmit: allTabsValid && hasSubmitPermission && canSubmitByStatus
+        submitDisabledReason,
+        canSubmit: submitDisabledReason === null,
       };
     });
 
@@ -1139,7 +1148,7 @@ export default defineComponent({
             </div>
           </template>
           <span v-if="!submissionState.canSubmit">
-            You must validate all tabs before submitting your study and metadata.
+            {{ submissionState.submitDisabledReason }}
           </span>
           <span v-if="submissionState.canSubmit">
             Submit for NMDC review.
