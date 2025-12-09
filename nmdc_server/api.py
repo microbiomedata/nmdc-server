@@ -5,7 +5,7 @@ import time
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
 import httpx
@@ -1421,9 +1421,9 @@ def create_github_issue(submission_model: SubmissionMetadata, user):
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
 
     # Check for existing issues first
-    existing_issues = check_existing_github_issues(submission.id, headers, gh_url, user)
+    existing_issue = check_existing_github_issues(submission.id, headers, gh_url, user)
 
-    if existing_issues is None:
+    if existing_issue is None:
 
         # Gathering the fields we want to display in the issue
         study_form = submission.metadata_submission.studyForm
@@ -1481,11 +1481,10 @@ def create_github_issue(submission_model: SubmissionMetadata, user):
             logging.info(res.reason)
 
     else:
-        for issue in existing_issues:
-            try:
-                update_github_issue_for_resubmission(issue, user, headers)
-            except Exception as e:
-                logging.error(f"Failed to update existing GitHub issue: {str(e)}")
+        try:
+            update_github_issue_for_resubmission(existing_issue, user, headers)
+        except Exception as e:
+            logging.error(f"Failed to update existing GitHub issue: {str(e)}")
 
 
 def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str, user):
@@ -1495,39 +1494,46 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
     Returns list of matching issues.
     """
     submission_id_string = str(submission_id)
-    params = {
+    params: dict[str, str | int] = {
         "state": "all",
         "per_page": 100,
+        "page": 1,
     }
 
-    try:
-        response = requests.get(gh_url, headers=headers, params=cast(Any, params))
+    max_pages = 20  # Stopgap: prevent checking more than 2000 issues (10 pages * 100 per page)
+    pages_checked = 0
 
-        if response.status_code != 200:
-            logging.error(
-                f"Request to search Github issues succeeded but API returned error {response.status_code} - {response.text}"
-            )
-            return None
+    try:
+        while pages_checked < max_pages:
+            response = requests.get(gh_url, headers=headers, params=params)
+            issues = response.json()
+
+            if not issues:  # If no issues returned on this page break the loop
+                break
+
+            # Look for an issue with matching submission id anywhere in github
+            for issue in issues:
+                title = issue.get("title", "") or ""
+                body = issue.get("body", "") or ""
+
+                if submission_id_string in title or submission_id_string in body:
+                    return issue  # Return first matching issue immediately
+
+            # Get next page
+            link_header = response.headers.get("Link", "")
+            if 'rel="next"' not in link_header:
+                break  # No more pages
+
+            # Move to next page
+            assert isinstance(params["page"], int)
+            params["page"] += 1
+            pages_checked += 1
 
     except requests.RequestException as e:
         logging.error(f"Request failed to check existing GitHub issues: {str(e)}")
         return None
 
-    issues = response.json()
-
-    # Look for an issue with matching submission id anywhere in github
-    matching_issues = []
-    for issue in issues:
-        title = issue.get("title", "") or ""
-        body = issue.get("body", "") or ""
-
-        if submission_id_string in title or submission_id_string in body:
-            matching_issues.append(issue)
-
-    if len(matching_issues) > 0:
-        return matching_issues  # list of matching github issues
-    else:
-        return None  # No matching github issues
+    return None  # No matching issues found
 
 
 def update_github_issue_for_resubmission(existing_issue, user, headers):
