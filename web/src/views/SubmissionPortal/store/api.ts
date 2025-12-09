@@ -58,6 +58,12 @@ async function updateSubmissionStatus(submission_id: string, newStatus: string) 
   return resp.data;
 }
 
+async function getAllStatusTransitions() {
+  const resp = await client.get<Record<string, string[]>>('status_transitions', {
+  });
+  return resp.data;
+}
+
 async function addSubmissionRole(submission_id: string, orcid: string, role: string) {
   const resp = await client.post<MetadataSubmissionRecord>(`metadata_submission/${submission_id}/role`, {
     orcid,
@@ -170,6 +176,7 @@ export {
   deleteSubmission,
   getMetadataSuggestions,
   generateSignedUploadUrl,
+  getAllStatusTransitions,
   setSubmissionImage,
   deleteSubmissionImage,
   updateSubmissionStatus,
