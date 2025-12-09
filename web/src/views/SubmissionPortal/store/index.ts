@@ -57,6 +57,40 @@ const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatus
 const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
 const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
 
+function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_type:Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin', transitions:Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
+  const excludeFromAll = [
+    SubmissionStatusEnum.InProgress.text,
+    SubmissionStatusEnum.SubmittedPendingReview.text,
+  ];
+  // Admins can see all statuses and select any that aren't user invoked
+  if (dropdown_type === 'admin') {
+    return Object.keys(SubmissionStatusTitleMapping)
+      .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
+      .map((key) => ({
+        value: key,
+        title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      }));
+  }
+
+  // Non-admins can only see and select allowed transitions
+  const user_transitions = transitions[dropdown_type] || {};
+  const allowedStatusTransitions = user_transitions[currentStatus] || [];
+
+  // Include the current status so it can be displayed
+  const statusesToShow = [...allowedStatusTransitions];
+  if (!statusesToShow.includes(currentStatus)) {
+    statusesToShow.push(currentStatus);
+  }
+
+  // Return allowed transitions
+  return Object.keys(SubmissionStatusTitleMapping)
+    .filter((key) => statusesToShow.includes(key))
+    .map((key) => ({
+      value: key,
+      title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+    }));
+}
+
 const isTestSubmission = ref(false);
 const primaryStudyImageUrl = ref<string | null>(null);
 const piImageUrl = ref<string | null>(null);
@@ -599,4 +633,5 @@ export {
   templateHasData,
   checkJGITemplates,
   checkDoiFormat,
+  formatStatusTransitions,
 };
