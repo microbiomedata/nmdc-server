@@ -439,13 +439,34 @@ export default defineComponent({
       validationSuccessSnackbar.value = Object.values(tabsValidated.value).every((value) => value);
     }
 
-    const canSubmit = computed(() => {
+    const submissionState = computed(() => {
       let allTabsValid = true;
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
-      return allTabsValid && isOwner();
+      const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
+      const canSubmitByStatus = status.value === SubmissionStatusEnum.InProgress.text
+      const isSubmitted = submitCount.value > 0 || status.value === SubmissionStatusEnum.SubmittedPendingReview.text;
+      let submitDisabledReason: string | null = null;
+      if (!allTabsValid) {
+        submitDisabledReason = 'All tabs must be validated before submission.';
+      } else if (!hasSubmitPermission) {
+        submitDisabledReason = 'You do not have permission to submit this record.';
+      } else if (!canSubmitByStatus) {
+        submitDisabledReason = `Submission cannot be made while in status: ${status.value}.`;
+      }
+      return {
+        isSubmitted,
+        submitDisabledReason,
+        canSubmit: submitDisabledReason === null,
+      };
     });
+
+    const handleSubmitClick = () => {
+      if (submissionState.value.canSubmit) {
+        submitDialog.value = true;
+      }
+    };
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -661,7 +682,6 @@ export default defineComponent({
       harmonizerElement,
       jumpToModel,
       harmonizerApi,
-      canSubmit,
       tabsValidated,
       saveRecordRequest,
       submitLoading,
@@ -692,6 +712,7 @@ export default defineComponent({
       emptySheetSnackbar,
       isTestSubmission,
       StatusAlert,
+      submissionState,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -703,6 +724,7 @@ export default defineComponent({
       changeTemplate,
       canEditSampleMetadata,
       canEditSubmissionByStatus,
+      handleSubmitClick,
     };
   },
 });
@@ -955,7 +977,7 @@ export default defineComponent({
                   :content="validationTotalCounts[templateKey] || '!'"
                   floating
                   location="top right"
-                  :value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
+                  :model-value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
                   :color="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) ? 'error' : 'warning'"
                 >
                   {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
@@ -1067,11 +1089,12 @@ export default defineComponent({
             >
               <v-btn
                 color="success"
-                :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
+                depressed
+                :disabled="!submissionState.canSubmit"
                 :loading="submitLoading"
-                @click="canEditSubmissionByStatus() ? submitDialog = true : null"
+                @click="handleSubmitClick"
               >
-                <span v-if="status === SubmissionStatusEnum.SubmittedPendingReview.text || submitCount">
+                <span v-if="submissionState.isSubmitted">
                   <v-icon>mdi-check-circle</v-icon>
                   Submitted
                 </span>
@@ -1122,10 +1145,10 @@ export default defineComponent({
               </v-btn>
             </div>
           </template>
-          <span v-if="!canSubmit && canEditSubmissionByStatus()">
-            You must validate all tabs before submitting your study and metadata.
+          <span v-if="!submissionState.canSubmit">
+            {{ submissionState.submitDisabledReason }}
           </span>
-          <span v-if="canSubmit && canEditSubmissionByStatus()">
+          <span v-if="submissionState.canSubmit">
             Submit for NMDC review.
           </span>
         </v-tooltip>
