@@ -45,7 +45,6 @@ import {
   isTestSubmission,
   canEditSubmissionByStatus,
   SubmissionStatusEnum,
-  refreshStatus,
 } from './store';
 import { AppBannerHeightKey } from './SubmissionView.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
@@ -647,7 +646,6 @@ export default defineComponent({
     });
 
     onMounted(async () => {
-      await refreshStatus((route.params as { id: string }).id);
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
         api.getSubmissionSchema(),
         api.getGoldEcosystemTree(),

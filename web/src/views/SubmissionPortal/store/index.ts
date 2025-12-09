@@ -450,11 +450,6 @@ async function submit(id: string, status?: SubmissionStatusKey) {
   updateStateFromRecord(record);
 }
 
-async function refreshStatus(id: string) {
-  const fetchedStatus = await api.getSubmissionStatus(id);
-  status.value = isSubmissionStatus(fetchedStatus) ? fetchedStatus : SubmissionStatusEnum.InProgress.text;
-}
-
 function reset() {
   Object.assign(addressForm, addressFormDefault);
   addressFormValid.value = false;
@@ -660,5 +655,4 @@ export {
   checkJGITemplates,
   checkDoiFormat,
   formatStatusTransitions,
-  refreshStatus,
 };
