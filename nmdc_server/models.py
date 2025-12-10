@@ -156,6 +156,52 @@ class EnvoAncestor(Base):
     ancestor = relationship(EnvoTerm, foreign_keys=[ancestor_id], lazy="joined")
 
 
+# Generic ontology models to store all ontology classes and relations
+class OntologyClass(Base):
+    __tablename__ = "ontology_class"
+
+    id = Column(String, primary_key=True)  # e.g., "ENVO:00000001"
+    type = Column(String, nullable=False, default="nmdc:OntologyClass")
+    name = Column(String, nullable=False, index=True)  # label/name
+    definition = Column(Text)
+    alternative_names = Column(JSONB, default=list)  # array of strings
+    is_root = Column(Boolean, nullable=False, default=False)
+    is_obsolete = Column(Boolean, nullable=False, default=False)
+    # Additional metadata can be stored in annotations
+    annotations = Column(JSONB, default=dict)
+
+    # Relationships are stored in OntologyRelation table
+    relations = relationship(
+        "OntologyRelation",
+        foreign_keys="OntologyRelation.subject",
+        back_populates="subject_class",
+        cascade="all, delete-orphan",
+    )
+
+    @property
+    def ontology_prefix(self) -> str:
+        """Extract the ontology prefix from the ID (e.g., 'ENVO' from 'ENVO:00000001')"""
+        return self.id.split(":")[0] if ":" in self.id else ""
+
+
+class OntologyRelation(Base):
+    __tablename__ = "ontology_relation"
+    __table_args__ = (
+        UniqueConstraint("subject", "predicate", "object"),
+        Index("idx_ontology_relation_subject", "subject"),
+        Index("idx_ontology_relation_object", "object"),
+        Index("idx_ontology_relation_predicate", "predicate"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    subject = Column(String, ForeignKey(OntologyClass.id), nullable=False)
+    predicate = Column(String, nullable=False)  # e.g., "rdfs:subClassOf", "BFO:0000050"
+    object = Column(String, nullable=False)  # Can reference terms from other ontologies
+    type = Column(String, nullable=False, default="nmdc:OntologyRelation")
+
+    subject_class = relationship("OntologyClass", back_populates="relations")
+
+
 class KoTermToModule(Base):
     __tablename__ = "ko_term_to_module"
 
