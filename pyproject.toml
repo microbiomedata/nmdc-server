@@ -98,6 +98,7 @@ dependencies = [
     "mkdocs-redirects==1.2.1",
     "mypy==1.11.2",
     "mypy-extensions==1.0.0",
+    "nmdc_api_utilities==0.5.0",
     "nmdc-schema==v11.14.0-rc.1",
     "nmdc-submission-schema==11.13.0",
     "nmdc-geoloc-tools==0.3.0",

@@ -13,6 +13,7 @@ import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
+from nmdc_api_utilities.biosample_search import BiosampleSearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
@@ -351,6 +352,17 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
     if db_biosample is None:
         raise HTTPException(status_code=404, detail="Biosample not found")
     return db_biosample
+
+@router.get(
+    "/biosample/{biosample_id}/mongo",
+    tags=["biosample"],
+)
+async def get_mongo_biosample(biosample_id: str):
+    biosample = BiosampleSearch()
+    mongo_biosample = biosample.get_record_by_id(biosample_id)
+    if mongo_biosample is None:
+        raise HTTPException(status_code=404, detail="Biosample not found in Mongo")
+    return mongo_biosample
 
 
 @router.get(

@@ -33,7 +33,6 @@ declare module 'vue' {
     FilterList: typeof import('./components/Presentation/FilterList.vue')['default']
     FilterSankeyTree: typeof import('./components/FilterSankeyTree.vue')['default']
     FilterTree: typeof import('./components/FilterTree.vue')['default']
-    JsonDownload: typeof import('./components/JsonDownload.vue')['default']
     MenuContent: typeof import('./components/MenuContent.vue')['default']
     OrcidId: typeof import('./components/Presentation/OrcidId.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']

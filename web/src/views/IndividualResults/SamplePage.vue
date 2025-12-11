@@ -1,41 +1,27 @@
-<script lang="ts">
-import { defineComponent, ref, watchEffect } from 'vue';
+<script setup lang="ts">
+import { ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
 import AttributeList from '@/components/Presentation/AttributeList.vue';
-import JsonDownload from '@/components/JsonDownload.vue';
+import { downloadJson } from '@/utils';
 
 import IndividualTitle from './IndividualTitle.vue';
 
-export default defineComponent({
-  name: 'SamplePage',
+const props = defineProps<{
+  id: string;
+}>();
 
-  components: {
-    AppBanner,
-    AttributeList,
-    IndividualTitle,
-    JsonDownload,
-  },
+const result = ref({} as BiosampleSearchResult);
 
-  props: {
-    id: {
-      type: String,
-      required: true,
-    },
-  },
+async function downloadSampleData() {
+  const data = await api.getMongoBiosample(props.id);
+  downloadJson(data, `${props.id}.json`);
+}
 
-  setup(props) {
-    const result = ref({} as BiosampleSearchResult);
-
-    watchEffect(() => {
-      api.getBiosample(props.id).then((b) => { 
-        console.log(b);
-        result.value = b; 
-      });
-    });
-
-    return { result };
-  },
+watchEffect(() => {
+  api.getBiosample(props.id).then((b) => { 
+    result.value = b; 
+  });
 });
 </script>
 
@@ -49,6 +35,15 @@ export default defineComponent({
           :json="result" 
           :filename="`${result.id}.json`"
         />
+        <v-btn 
+          color="primary" 
+          @click="downloadSampleData"
+        >
+          <v-icon class="mr-2">
+            mdi-download
+          </v-icon>
+          Download Sample Data
+        </v-btn>
       </div>
       <AttributeList
         type="biosample"

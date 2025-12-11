@@ -142,6 +142,49 @@ export interface BiosampleSearchResult extends BaseSearchResult {
   emsl_biosample_identifiers: string[];
 }
 
+export interface NmdcValue {
+  type: string;
+  has_raw_value: string;
+  has_numeric_value?: number;
+  has_maximum_numeric_value?: number;
+  has_minimum_numeric_value?: number;
+  has_unit?: string;
+  latitude?: number;
+  longitude?: number;
+  term?: {
+    id: string;
+    type: string;
+    name: string;
+  }
+}
+
+export interface MongoBiosampleResult {
+  id: string;
+  type: string;
+  name: string;
+  associated_studies: string[];
+  env_broad_scale: NmdcValue;
+  env_local_scale: NmdcValue;
+  env_medium: NmdcValue;
+  samp_name: string;
+  depth: NmdcValue;
+  collection_date: NmdcValue;
+  ecosystem: string;
+  ecosystem_category: string;
+  ecosystem_type: string;
+  ecosystem_subtype: string;
+  elev: number;
+  env_package: NmdcValue;
+  geo_loc_name: NmdcValue;
+  growth_facil: NmdcValue;
+  lat_lon: NmdcValue;
+  samp_store_temp: NmdcValue;
+  specific_ecosystem: string;
+  store_cond: NmdcValue;
+  analysis_type: string[];
+  gold_biosample_identifiers: string[];
+}
+
 export interface PrincipalInvestigator {
   name?: string;
   email?: string;
@@ -481,6 +524,11 @@ async function getBiosample(id: string): Promise<BiosampleSearchResult> {
 
 async function getStudy(id: string): Promise<StudySearchResults> {
   return _getById<StudySearchResults>('study', id);
+}
+
+async function getMongoBiosample(id: string): Promise<MongoBiosampleResult> {
+  const { data } = await client.get<MongoBiosampleResult>(`biosample/${id}/mongo`);
+  return data;
 }
 
 function _useDataGenerationRouteForField(field: string) {
@@ -868,6 +916,7 @@ const api = {
   getStudy,
   getSubmissionSchema,
   getGoldEcosystemTree,
+  getMongoBiosample,
   me,
   searchBiosample,
   searchOmicsProcessing,
