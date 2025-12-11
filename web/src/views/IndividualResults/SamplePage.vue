@@ -31,10 +31,6 @@ watchEffect(() => {
     <v-container fluid>
       <div class="d-flex align-center">
         <IndividualTitle :item="result" />
-        <JsonDownload 
-          :json="result" 
-          :filename="`${result.id}.json`"
-        />
         <v-btn 
           color="primary" 
           @click="downloadSampleData"

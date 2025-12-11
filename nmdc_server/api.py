@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, 
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_api_utilities.biosample_search import BiosampleSearch
+from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
@@ -353,6 +354,7 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Biosample not found")
     return db_biosample
 
+
 @router.get(
     "/biosample/{biosample_id}/mongo",
     tags=["biosample"],
@@ -557,6 +559,17 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
     if image is None:
         raise HTTPException(status_code=404, detail="No image exists for this study")
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
+
+@router.get(
+    "/study/{study_id}/mongo",
+    tags=["study"],
+)
+async def get_mongo_study(study_id: str):
+    study = StudySearch()
+    mongo_study = study.get_record_by_id(study_id)
+    if mongo_study is None:
+        raise HTTPException(status_code=404, detail="Study not found in Mongo")
+    return mongo_study
 
 
 # data_generation

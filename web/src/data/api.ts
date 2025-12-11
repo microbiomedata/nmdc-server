@@ -151,6 +151,8 @@ export interface NmdcValue {
   has_unit?: string;
   latitude?: number;
   longitude?: number;
+  name?: string;
+  orcid?: string;
   term?: {
     id: string;
     type: string;
@@ -158,6 +160,9 @@ export interface NmdcValue {
   }
 }
 
+// NOTE: This type definition may be incomplete compared to the actual NMDC MongoDB schema
+// but, at the time of writing, the result is only used for downloading JSON data 
+// so it should be sufficient
 export interface MongoBiosampleResult {
   id: string;
   type: string;
@@ -247,6 +252,25 @@ export interface StudySearchResults extends BaseSearchResult {
       email?: string;
     };
   }[];
+}
+
+// NOTE: This type definition may be incomplete compared to the actual NMDC MongoDB schema
+// but, at the time of writing, the result is only used for downloading JSON data 
+// so it should be sufficient
+export interface MongoStudyResult {
+  id: string;
+  type: string;
+  name: string;
+  description: string;
+  study_category: string;
+  has_credit_associations: {
+    applies_to_person: NmdcValue;
+    applied_roles: string[];
+    type: string;
+  }[];
+  principal_investigator: NmdcValue;
+  title: string;
+  websites: string[]
 }
 
 export interface ReadsQCResult extends DerivedDataResult {
@@ -528,6 +552,11 @@ async function getStudy(id: string): Promise<StudySearchResults> {
 
 async function getMongoBiosample(id: string): Promise<MongoBiosampleResult> {
   const { data } = await client.get<MongoBiosampleResult>(`biosample/${id}/mongo`);
+  return data;
+}
+
+async function getMongoStudy(id: string): Promise<MongoStudyResult> {
+  const { data } = await client.get<MongoStudyResult>(`study/${id}/mongo`);
   return data;
 }
 
@@ -917,6 +946,7 @@ const api = {
   getSubmissionSchema,
   getGoldEcosystemTree,
   getMongoBiosample,
+  getMongoStudy,
   me,
   searchBiosample,
   searchOmicsProcessing,

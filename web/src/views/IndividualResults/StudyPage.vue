@@ -22,6 +22,7 @@ import AttributeItem from '@/components/Presentation/AttributeItem.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
 import TeamInfo from '@/components/TeamInfo.vue';
 import gold from '@/assets/GOLD.png';
+import { downloadJson } from '@/utils';
 /**
  * Override citations for certain DOIs
  */
@@ -191,6 +192,11 @@ export default defineComponent({
       setConditions(conditions, true);
     }
 
+    async function downloadStudyData() {
+      const data = await api.getMongoStudy(props.id);
+      downloadJson(data, `${props.id}.json`);
+    }
+
     watch(item, async (_item) => {
       const doiMap = _item?.doi_map;
       if (doiMap) {
@@ -240,6 +246,7 @@ export default defineComponent({
       parentStudies,
       gold,
       xs,
+      downloadStudyData,
     };
   },
 });
@@ -270,6 +277,16 @@ export default defineComponent({
                     </v-chip>
                   </template>
                 </div>
+                <v-btn
+                  class="mt-2"
+                  color="primary"
+                  @click="downloadStudyData"
+                >
+                  <v-icon class="mr-2">
+                    mdi-download
+                  </v-icon>
+                  Download Study Data
+                </v-btn>
               </template>
             </IndividualTitle>
             <TeamInfo
