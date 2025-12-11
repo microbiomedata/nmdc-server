@@ -129,7 +129,7 @@ export default defineComponent({
               ])"
               validate-on-blur
               label="User Email *"
-              :hint="Definitions.submitterEmail"
+              hint="User's email is required to continue."
               persistent-hint
               outlined
               dense

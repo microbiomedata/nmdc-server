@@ -74,7 +74,6 @@ export default defineComponent({
           updateUser(email);
           editEmail.value = !editEmail.value;
         }
-        // isEmailValid.value = email === '' || /.+@.+\..+/.test(email);
       } else {
         editEmail.value = !editEmail.value;
       }
