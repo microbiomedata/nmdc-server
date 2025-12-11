@@ -27,7 +27,7 @@ export default defineComponent({
       }
       if (addressForm.expectedShippingDate) {
         const date = new Date(addressForm.expectedShippingDate);
-        result += `\nExpected Shipping Date: ${date.toLocaleDateString()}`;
+        result += `\nExpected Shipping Date: ${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, '0')}-${String(date.getUTCDate()).padStart(2, '0')}`;
       }
 
       return result.trim();
