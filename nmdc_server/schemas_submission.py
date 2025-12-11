@@ -115,8 +115,8 @@ class AddressForm(BaseModel):
 
 
 class ValidForms(BaseModel):
-    studyFormValid: bool = False
-    multiOmicsFormValid: bool = False
+    studyFormValid: list = []
+    multiOmicsFormValid: list = []
     templatesValid: bool = False
     harmonizerValid: bool = False
     addressFormValid: bool = False

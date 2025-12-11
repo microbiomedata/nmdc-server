@@ -12,12 +12,12 @@ export default defineComponent({
       {
         title: 'Study Form',
         pageName: 'Study Form',
-        icon: validForms.studyFormValid ? 'mdi-check' : 'mdi-close-circle',
+        icon: validForms.studyFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle',
       },
       {
         title: 'Multiomics Form',
         pageName: 'Multiomics Form',
-        icon: validForms.multiOmicsFormValid ? 'mdi-check' : 'mdi-close-circle',
+        icon: validForms.multiOmicsFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle',
       },
       {
         title: 'Sample Environment',

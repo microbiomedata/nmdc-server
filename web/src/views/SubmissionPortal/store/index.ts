@@ -107,14 +107,15 @@ const hasChanged = ref(0);
 */
 
 const validFormsDefault = {
-  studyFormValid: false,
-  multiOmicsFormValid: false,
+  studyFormValid: ['You must visit this form at least once.'],
+  multiOmicsFormValid: ['You must visit this form at least once.'],
   templatesValid: false,
   harmonizerValid: false,
   addressFormValid: false,
 };
 
 const validForms = reactive(clone(validFormsDefault));
+
 
 const addressFormDefault = {
   // Shipper info

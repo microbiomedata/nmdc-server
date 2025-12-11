@@ -23,127 +23,17 @@ export default defineComponent({
     const panels = ref([]);
 
     const studyFormContent = computed(() => {
-      if (validForms.studyFormValid) {
+      if (validForms.studyFormValid.length === 0) {
         return ['No changes needed.'];
       }
-      const missingReqs: Array<string> = [];
-      if (studyForm.studyName === null || studyForm.studyName.length < 8) {
-        missingReqs.push('Study name is required and must be 8 or more characters long.');
-      }
-      if (studyForm.piEmail === null || /.+@.+\..+/.test(studyForm.piEmail) === false) {
-        missingReqs.push('A PI email is required, and must be formatted correctly.');
-      }
-      let fundingInvalid = false;
-      if (studyForm.fundingSources != null && studyForm.fundingSources.length > 0) {
-        studyForm.fundingSources.forEach((source) => {
-          if (source === null || source.length === 0) {
-            fundingInvalid = true;
-          }
-        });
-      }
-      if (fundingInvalid) {
-        missingReqs.push('One or more funding sources is incomplete.');
-      }
-
-      let contributorsInvalid = false;
-      if (studyForm.contributors != null && studyForm.contributors.length > 0) {
-        studyForm.contributors.forEach((contributor) => {
-          if (contributor.name === null || contributor.roles.length === 0) {
-            contributorsInvalid = true;
-          }
-        });
-      }
-      if (contributorsInvalid) {
-        missingReqs.push('One or more contributors is incomplete.');
-      }
-
-      let doisInvalid = false;
-      if (studyForm.dataDois != null && studyForm.dataDois.length > 0) {
-        studyForm.dataDois.forEach((doi) => {
-          if (doi.provider === null || doi.value === null || checkDoiFormat(doi.value) === false) {
-            doisInvalid = true;
-          }
-        });
-      }
-      if (doisInvalid) {
-        missingReqs.push('One or more data DOIs is incomplete.');
-      }
-      return missingReqs;
+      return [...new Set(validForms.studyFormValid)];
     });
 
     const multiOmicsContent = computed(() => {
-      if (validForms.multiOmicsFormValid) {
+      if (validForms.multiOmicsFormValid.length === 0) {
         return ['No changes needed.'];
       }
-      if (multiOmicsForm.dataGenerated === null) {
-        return ['Select whether or not data has been generated to determine requirements.'];
-      }
-      const missingReqs: Array<string> = [];
-      //data has been generated
-      if (multiOmicsForm.dataGenerated) {
-        if (multiOmicsForm.facilityGenerated === undefined) {
-          missingReqs.push('You must select whether or not data was generated at a DOE facility');
-        //data was NOT generated at a doe facility
-        } else if (multiOmicsForm.facilityGenerated === false) {
-          if (multiOmicsForm.omicsProcessingTypes.includes('mg') && multiOmicsForm.mgCompatible === undefined) {
-            missingReqs.push('You must select if your MG data is compatible, or deselect MG.');
-          }
-          if (multiOmicsForm.omicsProcessingTypes.includes('mt') && multiOmicsForm.mtCompatible === undefined) {
-            missingReqs.push('You must select if your MT data is compatible, or deselect MT.');
-          }
-        //data was generated at a DOE facility
-        } else {
-          if (multiOmicsForm.facilities.includes('EMSL')) {
-            if (/^\d{5}$/.test(multiOmicsForm.studyNumber) === false) {
-              missingReqs.push('You must include a valid EMSL study ID when EMSL is selected.');
-            }
-          }
-          if (multiOmicsForm.facilities.includes('JGI')) {
-            if (/^\d{6}$/.test(multiOmicsForm.JGIStudyId) === false) {
-              missingReqs.push('You must include a valid JGI study ID when JGI is selected.');
-            }
-          }
-        }
-      //data has not been generated yet
-      } else {
-        if (multiOmicsForm.doe === undefined) {
-          missingReqs.push('You must select whether or not data will generated at a DOE facility');
-        }
-        //data will be generated at a DOE facility
-        if (multiOmicsForm.doe === true) {
-          if (multiOmicsForm.facilities.length > 0 && multiOmicsForm.award === undefined) {
-            missingReqs.push('You must select the type of project you have been awarded when submitting to a DOE facility.');
-          }
-          if (multiOmicsForm.facilities.includes('EMSL')) {
-            if (/^\d{5}$/.test(multiOmicsForm.studyNumber) === false) {
-              missingReqs.push('You must include a valid EMSL study ID when EMSL is selected.');
-            }
-            if (multiOmicsForm.ship === null) {
-              missingReqs.push('You must select whether or not samples will be shipped.');
-            }
-            if (multiOmicsForm.ship === true && validForms.addressFormValid === false) {
-              missingReqs.push('You must fill out the address form for shipping.');
-            }
-          }
-          if (multiOmicsForm.facilities.includes('JGI')) {
-            if (/^\d{6}$/.test(multiOmicsForm.JGIStudyId) === false) {
-              missingReqs.push('You must include a valid JGI study ID when JGI is selected.');
-            }
-          }
-        }
-      }
-      let doisInvalid = false;
-      if (multiOmicsForm.awardDois != null && multiOmicsForm.awardDois.length > 0 && (multiOmicsForm.unknownDoi !== true || multiOmicsForm.dataGenerated === true)) {
-        multiOmicsForm.awardDois.forEach((doi) => {
-          if (doi.provider === null || doi.value === null || checkDoiFormat(doi.value) === false) {
-            doisInvalid = true;
-          }
-        });
-      }
-      if (doisInvalid) {
-        missingReqs.push('One or more award DOIs is incomplete.');
-      }
-      return missingReqs;
+      return [...new Set(validForms.multiOmicsFormValid)];
     });
 
     const harmonizerContent = computed(() => {
@@ -202,10 +92,10 @@ export default defineComponent({
             </div>
             <template #actions>
               <v-icon
-                :color="validForms.studyFormValid ? 'green' : 'red'"
+                :color="validForms.studyFormValid.length === 0 ? 'green' : 'red'"
                 :size="32"
               >
-                {{ validForms.studyFormValid ? 'mdi-check' : 'mdi-close-circle' }}
+                {{ validForms.studyFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle' }}
               </v-icon>
             </template>
           </v-expansion-panel-title>
@@ -243,10 +133,10 @@ export default defineComponent({
             </div>
             <template #actions>
               <v-icon
-                :color="validForms.multiOmicsFormValid ? 'green' : 'red'"
+                :color="validForms.multiOmicsFormValid.length === 0 ? 'green' : 'red'"
                 :size="32"
               >
-                {{ validForms.multiOmicsFormValid ? 'mdi-check' : 'mdi-close-circle' }}
+                {{ validForms.multiOmicsFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle' }}
               </v-icon>
             </template>
           </v-expansion-panel-title>

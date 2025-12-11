@@ -140,7 +140,7 @@ export default defineComponent({
       if (validForms.templatesValid === false) {
         text.push('No tabs will be present until one or more templates are selected in the Sample Envrionment form.');
       }
-      if (validForms.multiOmicsFormValid === false) {
+      if (validForms.multiOmicsFormValid.length === 0) {
         text.push('Facility tabs will not be present until the Multiomics Form is complete.');
       }
       return text;
@@ -468,7 +468,7 @@ export default defineComponent({
         allTabsValid = allTabsValid && value;
       });
       validForms.harmonizerValid = allTabsValid && isOwner() && validForms.templatesValid;
-      return allTabsValid && isOwner() && validForms.templatesValid && validForms.studyFormValid && validForms.multiOmicsFormValid;
+      return allTabsValid && isOwner() && validForms.templatesValid && validForms.studyFormValid.length === 0 && validForms.multiOmicsFormValid.length === 0;
     });
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)

@@ -105,9 +105,19 @@ export default defineComponent({
         },
       ]
     );
+    let errors: Array<string> = [];
+    function storeErrors() {
+      if (!formRef.value) return;
+      if (!formRef.value?.errors) errors = [];
+
+      errors = formRef.value.errors.reduce((all, err) => {
+        return all.concat(err.errorMessages)}, [] as string[]);
+      validForms.multiOmicsFormValid = errors;
+    }
 
     const revalidate = () => {
       nextTick(() => formRef.value!.validate());
+      storeErrors();
     };
 
     function resetFields(field: string) {
@@ -191,7 +201,6 @@ export default defineComponent({
     <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-form
       ref="formRef"
-      v-model="validForms.multiOmicsFormValid"
       class="my-6 mb-10"
       style="max-width: 1000px;"
       :disabled="!canEditSubmissionMetadata()"
@@ -199,7 +208,7 @@ export default defineComponent({
       <v-radio-group
         v-model="multiOmicsForm.dataGenerated"
         label="Have data already been generated for your study? *"
-        :rules="[v => (v === true || v === false) || 'This field is required']"
+        :rules="[v => (v === true || v === false) || 'You must select if data has been generated.']"
         :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('dataGenerated')"
       >
@@ -216,7 +225,7 @@ export default defineComponent({
         v-if="multiOmicsForm.dataGenerated"
         v-model="multiOmicsForm.facilityGenerated"
         label="Was data generated at a DOE user facility (JGI, EMSL)? *"
-        :rules="[v => (v === true || v === false) || 'This field is required']"
+        :rules="[v => (v === true || v === false) || 'You must select if data was generated at a DOE user facility.']"
         :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('facilityGenerated')"
       >
@@ -242,7 +251,7 @@ export default defineComponent({
         v-if="multiOmicsForm.dataGenerated === false"
         v-model="multiOmicsForm.doe"
         label="Are you submitting samples to a DOE user facility (JGI, EMSL)? *"
-        :rules="[v => (v === true || v === false) || 'This field is required']"
+        :rules="[v => (v === true || v === false) || 'You must select if you are submitting samples to a DOE user facility.']"
         :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('doe')"
       >
@@ -491,6 +500,7 @@ export default defineComponent({
         color="gray"
         depressed
         :to="{ name: 'Study Form' }"
+        @click="revalidate"
       >
         <v-icon class="pr-2">
           mdi-arrow-left-circle
@@ -502,6 +512,7 @@ export default defineComponent({
         color="primary"
         depressed
         :to="{ name: 'Sample Environment' }"
+        @click="revalidate"
       >
         Go to Sample Environment
         <v-icon class="pl-1">

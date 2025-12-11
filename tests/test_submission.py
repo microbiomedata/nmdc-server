@@ -306,8 +306,8 @@ def test_get_metadata_submissions_report_as_admin(
                 "comments": "",
             },
             "validForms": {
-                "studyFormValid": False,
-                "multiOmicsFormValid": False,
+                "studyFormValid": [],
+                "multiOmicsFormValid": [],
                 "templatesValid": False,
                 "harmonizerValid": False,
                 "addressFormValid": False,

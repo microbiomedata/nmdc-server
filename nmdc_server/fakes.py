@@ -399,8 +399,8 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "comments": "",
         },
         "validForms": {
-            "studyFormValid": False,
-            "multiOmicsFormValid": False,
+            "studyFormValid": [],
+            "multiOmicsFormValid": [],
             "templatesValid": False,
             "harmonizerValid": False,
             "addressFormValid": False,

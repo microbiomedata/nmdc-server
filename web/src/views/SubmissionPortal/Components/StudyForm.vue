@@ -7,6 +7,7 @@ import {
   onMounted,
   ref,
   Ref,
+  nextTick,
 } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
@@ -89,6 +90,21 @@ export default defineComponent({
       });
     }
 
+    let errors: Array<string> = [];
+    function storeErrors() {
+      if (!formRef.value) return;
+      if (!formRef.value?.errors) errors = [];
+
+      errors = formRef.value.errors.reduce((all, err) => {
+        return all.concat(err.errorMessages)}, [] as string[]);
+      validForms.studyFormValid = errors;
+    }
+
+    const revalidate = () => {
+      nextTick(() => formRef.value!.validate());
+      storeErrors();
+    };
+
     function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
       return [
         (v: string) => !!v || msg,
@@ -146,6 +162,7 @@ export default defineComponent({
       SubmissionStatusTitleMapping,
       status,
       StatusAlert,
+      revalidate,
     };
   },
 });
@@ -166,7 +183,6 @@ export default defineComponent({
     <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-form
       ref="formRef"
-      v-model="validForms.studyFormValid"
       class="my-6"
       style="max-width: 1000px;"
       :disabled="!canEditSubmissionMetadata()"
@@ -183,6 +199,7 @@ export default defineComponent({
         variant="outlined"
         dense
         class="my-2"
+        @change="revalidate()"
       />
       <v-textarea
         v-model="studyForm.description"
@@ -257,6 +274,7 @@ export default defineComponent({
         variant="outlined"
         dense
         class="my-2"
+        @change="revalidate()"
       />
       <v-text-field
         v-model="studyForm.piOrcid"
@@ -309,7 +327,8 @@ export default defineComponent({
               variant="outlined"
               dense
               class="mb-2 mr-3"
-              :error-messages="studyForm.fundingSources[i] ? undefined : ['Field cannot be empty.']"
+              :error-messages="studyForm.fundingSources[i] ? undefined : ['Funding source cannot be empty.']"
+              @change="revalidate()"
             >
               <template #message="{ message }">
                 <span v-html="message" />
@@ -358,8 +377,9 @@ export default defineComponent({
               variant="outlined"
               dense
               persistent-hint
-              :error-messages="contributor.name ? undefined : ['Field cannot be empty.']"
+              :error-messages="contributor.name ? undefined : ['Contributor Name cannot be empty.']"
               class="mb-2 mr-3"
+              @change="revalidate()"
             />
             <v-text-field
               v-model="contributor.orcid"
@@ -392,6 +412,7 @@ export default defineComponent({
               persistent-hint
               :error-messages="!contributor.roles || contributor.roles.length === 0 ? ['At least one role is required'] : undefined"
               class="mb-2 mr-3"
+              @change="revalidate()"
             >
               <template #message="{ message }">
                 <span v-html="message" />
@@ -410,7 +431,7 @@ export default defineComponent({
               variant="outlined"
               dense
               persistent-hint
-              @change="() => formRef.validate()"
+              @change="revalidate()"
             >
               <template #prepend-inner>
                 <v-tooltip
@@ -486,6 +507,7 @@ export default defineComponent({
               :rules="requiredRules('DOI value must be provided',[
                 v => checkDoiFormat(v) || 'DOI must be valid',
               ])"
+              @change="revalidate()"
             >
               <template #message="{ message }">
                 <span v-html="message" />
@@ -572,6 +594,7 @@ export default defineComponent({
       <v-btn
         color="gray"
         :to="{ name: 'Submission Summary' }"
+        @click="revalidate()"
       >
         <v-icon class="pr-2">
           mdi-arrow-left-circle
@@ -582,6 +605,7 @@ export default defineComponent({
       <v-btn
         color="primary"
         :to="{ name: 'Multiomics Form' }"
+        @click="revalidate()"
       >
         Go to Multi-Omics Form
         <v-icon class="pl-2">
