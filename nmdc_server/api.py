@@ -354,17 +354,17 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Biosample not found")
     return db_biosample
 
-
+# Biosample source data via the Runtime API
 @router.get(
-    "/biosample/{biosample_id}/mongo",
+    "/biosample/{biosample_id}/source",
     tags=["biosample"],
 )
-async def get_mongo_biosample(biosample_id: str):
+async def get_biosample_source(biosample_id: str):
     biosample = BiosampleSearch()
-    mongo_biosample = biosample.get_record_by_id(biosample_id)
-    if mongo_biosample is None:
-        raise HTTPException(status_code=404, detail="Biosample not found in Mongo")
-    return mongo_biosample
+    source_biosample = biosample.get_record_by_id(biosample_id)
+    if source_biosample is None:
+        raise HTTPException(status_code=404, detail="Biosample not found in source database")
+    return source_biosample
 
 
 @router.get(
@@ -560,16 +560,17 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="No image exists for this study")
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
 
+# Study source data via the Runtime API
 @router.get(
-    "/study/{study_id}/mongo",
+    "/study/{study_id}/source",
     tags=["study"],
 )
-async def get_mongo_study(study_id: str):
+async def get_study_source(study_id: str):
     study = StudySearch()
-    mongo_study = study.get_record_by_id(study_id)
-    if mongo_study is None:
-        raise HTTPException(status_code=404, detail="Study not found in Mongo")
-    return mongo_study
+    source_study = study.get_record_by_id(study_id)
+    if source_study is None:
+        raise HTTPException(status_code=404, detail="Study not found in the source database")
+    return source_study
 
 
 # data_generation

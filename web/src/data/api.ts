@@ -1,13 +1,17 @@
-import { merge } from 'lodash';
-import axios, { AxiosError } from 'axios';
-import { setupCache } from 'axios-cache-adapter';
+import { merge } from "lodash";
+import axios, { AxiosError } from "axios";
+import { setupCache } from "axios-cache-adapter";
 // @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
-import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
-import type { User } from '@/types';
+import NmdcSchema from "nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml";
+import {
+  clearRefreshToken,
+  getRefreshToken,
+  setRefreshToken,
+} from "@/store/localStorage";
+import type { User } from "@/types";
 
 // The token refresh and retry logic stores an extra bit of state on the request config
-declare module 'axios' {
+declare module "axios" {
   interface AxiosRequestConfig {
     sent?: boolean;
   }
@@ -15,50 +19,45 @@ declare module 'axios' {
 
 // The name of a custom event that is dispatched when a refresh token exchange fails
 // Consider moving this to a separate module if we end up having more custom events
-export const REFRESH_TOKEN_EXPIRED_EVENT = 'nmdc:refreshTokenExpired';
+export const REFRESH_TOKEN_EXPIRED_EVENT = "nmdc:refreshTokenExpired";
 
 const cache = setupCache({
   key: (req) => req.url + JSON.stringify(req.params) + JSON.stringify(req.data),
   maxAge: 15 * 60 * 1000,
   exclude: {
     query: false,
-    methods: ['delete'],
-    paths: [
-      /me/,
-      /users/,
-      /logout/,
-      /bulk_download/,
-      /data_object\/.*/,
-    ],
+    methods: ["delete"],
+    paths: [/me/, /users/, /logout/, /bulk_download/, /data_object\/.*/],
   },
 });
 
 const client = axios.create({
-  baseURL: import.meta.env.VITE_BASE_URL || '/api',
+  baseURL: import.meta.env.VITE_BASE_URL || "/api",
   adapter: cache.adapter,
 });
 
 const staticFileClient = axios.create({
-  baseURL: '/static',
+  baseURL: "/static",
 });
 
 const authClient = axios.create({
-  baseURL: '/auth',
+  baseURL: "/auth",
 });
 
 /* The real entity types */
-export type entityType = 'biosample'
-  | 'study'
-  | 'omics_processing'
-  | 'reads_qc'
-  | 'metagenome_assembly'
-  | 'metagenome_annotation'
-  | 'metaproteomic_analysis'
-  | 'data_object'
-  | 'kegg_function'
-  | 'cog_function'
-  | 'pfam_function'
-  | 'go_function';
+export type entityType =
+  | "biosample"
+  | "study"
+  | "omics_processing"
+  | "reads_qc"
+  | "metagenome_assembly"
+  | "metagenome_annotation"
+  | "metaproteomic_analysis"
+  | "data_object"
+  | "kegg_function"
+  | "cog_function"
+  | "pfam_function"
+  | "go_function";
 
 /**
  * By including this file in source with a git submodule,
@@ -157,13 +156,13 @@ export interface NmdcValue {
     id: string;
     type: string;
     name: string;
-  }
+  };
 }
 
 // NOTE: This type definition may be incomplete compared to the actual NMDC MongoDB schema
-// but, at the time of writing, the result is only used for downloading JSON data 
+// but, at the time of writing, the result is only used for downloading JSON data
 // so it should be sufficient
-export interface MongoBiosampleResult {
+export interface BiosampleResultFromSource {
   id: string;
   type: string;
   name: string;
@@ -197,15 +196,15 @@ export interface PrincipalInvestigator {
 }
 
 export interface DOI {
-  cite: string,
-  id:string,
-  provider: string,
+  cite: string;
+  id: string;
+  provider: string;
 }
 
 export interface DOIMAP {
-  info: Record<string, any>,
-  category: string,
-  provider: string,
+  info: Record<string, any>;
+  category: string;
+  provider: string;
 }
 
 export interface StudySearchResults extends BaseSearchResult {
@@ -215,8 +214,8 @@ export interface StudySearchResults extends BaseSearchResult {
   image_url: string;
   principal_investigator: PrincipalInvestigator;
   award_dois: DOI[];
-  dataset_dois: DOI[],
-  doi_map: Record<string, DOIMAP>,
+  dataset_dois: DOI[];
+  doi_map: Record<string, DOIMAP>;
   publication_dois: DOI[];
   omics_counts: {
     type: string;
@@ -255,9 +254,9 @@ export interface StudySearchResults extends BaseSearchResult {
 }
 
 // NOTE: This type definition may be incomplete compared to the actual NMDC MongoDB schema
-// but, at the time of writing, the result is only used for downloading JSON data 
+// but, at the time of writing, the result is only used for downloading JSON data
 // so it should be sufficient
-export interface MongoStudyResult {
+export interface StudyResultFromSource {
   id: string;
   type: string;
   name: string;
@@ -270,7 +269,7 @@ export interface MongoStudyResult {
   }[];
   principal_investigator: NmdcValue;
   title: string;
-  websites: string[]
+  websites: string[];
 }
 
 export interface ReadsQCResult extends DerivedDataResult {
@@ -305,7 +304,15 @@ export interface UnitSchema {
 
 export interface AttributeSummary {
   count: number;
-  type: 'string' | 'date' | 'integer' | 'float' | 'kegg_search' | 'gene_search' | 'cog_search' | 'pfam_search';
+  type:
+    | "string"
+    | "date"
+    | "integer"
+    | "float"
+    | "kegg_search"
+    | "gene_search"
+    | "cog_search"
+    | "pfam_search";
   min?: string | number;
   max?: string | number;
   units?: UnitSchema;
@@ -357,25 +364,37 @@ export interface EnvironmentSankeyResponse {
   [index: number]: EnvironmentSankeyEntity;
 }
 
-export type opType = 'between' | '<' | '<=' | '>' | '>=' | '==' | '!=' | 'has' | 'like';
+export type opType =
+  | "between"
+  | "<"
+  | "<="
+  | ">"
+  | ">="
+  | "=="
+  | "!="
+  | "has"
+  | "like";
 export const opMap: Record<opType, string> = {
-  between: 'between',
-  has: 'has',
-  '<': 'less',
-  '<=': 'lte',
-  '>': 'greater',
-  '>=': 'gte',
-  '!=': 'not',
-  '==': 'is',
-  like: 'like',
+  between: "between",
+  has: "has",
+  "<": "less",
+  "<=": "lte",
+  ">": "greater",
+  ">=": "gte",
+  "!=": "not",
+  "==": "is",
+  like: "like",
 };
 
 // See https://github.com/microbiomedata/nmdc-server/pull/403 for documentation
-export type BulkDownloadSummary = Record<string, {
-  count: number;
-  size: number;
-  file_types: Record<string, { count: number, size: number }>,
-}>;
+export type BulkDownloadSummary = Record<
+  string,
+  {
+    count: number;
+    size: number;
+    file_types: Record<string, { count: number; size: number }>;
+  }
+>;
 
 export type BulkDownloadAggregateSummary = {
   count: number;
@@ -445,90 +464,88 @@ export interface TokenResponse {
 export class RefreshTokenExchangeError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'RefreshTokenExchangeError';
+    this.name = "RefreshTokenExchangeError";
   }
 }
 
 async function _search<T>(
   table: string,
-  {
-    offset = 0, limit = 100, conditions, data_object_filter,
-  }: SearchParams,
+  { offset = 0, limit = 100, conditions, data_object_filter }: SearchParams
 ): Promise<SearchResponse<T>> {
   const { data } = await client.post<SearchResponse<T>>(
     `${table}/search`,
     { conditions, data_object_filter },
     {
       params: { offset, limit },
-    },
+    }
   );
   return data;
 }
 
 async function searchBiosample(params: SearchParams) {
-  return _search<BiosampleSearchResult>('biosample', params);
+  return _search<BiosampleSearchResult>("biosample", params);
 }
 
 async function searchStudy(params: SearchParams) {
-  return _search<StudySearchResults>('study', params);
+  return _search<StudySearchResults>("study", params);
 }
 
 async function searchOmicsProcessing(params: SearchParams) {
-  return _search<OmicsProcessingResult>('data_generation', params);
+  return _search<OmicsProcessingResult>("data_generation", params);
 }
 
 async function searchReadsQC(params: SearchParams) {
-  return _search<ReadsQCResult>('reads_qc', params);
+  return _search<ReadsQCResult>("reads_qc", params);
 }
 
 async function searchMetagenomeAssembly(params: SearchParams) {
-  return _search<MetagenomeAssembyResult>('metagenome_assembly', params);
+  return _search<MetagenomeAssembyResult>("metagenome_assembly", params);
 }
 
 async function searchMetagenomeAnnotation(params: SearchParams) {
-  return _search<MetagenomeAnnotationResult>('metagenome_annotation', params);
+  return _search<MetagenomeAnnotationResult>("metagenome_annotation", params);
 }
 
 async function searchMetaproteomicAnalysis(params: SearchParams) {
-  return _search<MetaproteomicAnalysisResult>('metaproteomic_analysis', params);
+  return _search<MetaproteomicAnalysisResult>("metaproteomic_analysis", params);
 }
 
 async function searchDataObject(params: SearchParams) {
-  return _search<DataObjectSearchResult>('data_object', params);
+  return _search<DataObjectSearchResult>("data_object", params);
 }
 
-export type ResultUnion = (
-    SearchResponse<BiosampleSearchResult>
-| SearchResponse<OmicsProcessingResult>
-| SearchResponse<StudySearchResults>
-| SearchResponse<ReadsQCResult>
-| SearchResponse<MetagenomeAssembyResult>
-| SearchResponse<MetagenomeAnnotationResult>
-| SearchResponse<MetaproteomicAnalysisResult>
-| SearchResponse<DataObjectSearchResult>);
+export type ResultUnion =
+  | SearchResponse<BiosampleSearchResult>
+  | SearchResponse<OmicsProcessingResult>
+  | SearchResponse<StudySearchResults>
+  | SearchResponse<ReadsQCResult>
+  | SearchResponse<MetagenomeAssembyResult>
+  | SearchResponse<MetagenomeAnnotationResult>
+  | SearchResponse<MetaproteomicAnalysisResult>
+  | SearchResponse<DataObjectSearchResult>;
 
 async function search(type: entityType, params: SearchParams) {
   let results: ResultUnion;
   switch (type) {
-    case 'study':
+    case "study":
       results = await searchStudy(params);
       break;
-    case 'omics_processing':
+    case "omics_processing":
       results = await searchOmicsProcessing(params);
       break;
-    case 'biosample':
+    case "biosample":
       results = await searchBiosample(params);
       break;
-    case 'metagenome_assembly':
+    case "metagenome_assembly":
       results = await searchMetagenomeAssembly(params);
       break;
-    case 'metagenome_annotation':
+    case "metagenome_annotation":
       results = await searchMetagenomeAnnotation(params);
       break;
-    case 'reads_qc':
+    case "reads_qc":
       results = await searchReadsQC(params);
       break;
-    case 'data_object':
+    case "data_object":
       results = await searchDataObject(params);
       break;
     default:
@@ -543,37 +560,46 @@ async function _getById<T>(route: string, id: string): Promise<T> {
 }
 
 async function getBiosample(id: string): Promise<BiosampleSearchResult> {
-  return _getById<BiosampleSearchResult>('biosample', id);
+  return _getById<BiosampleSearchResult>("biosample", id);
 }
 
 async function getStudy(id: string): Promise<StudySearchResults> {
-  return _getById<StudySearchResults>('study', id);
+  return _getById<StudySearchResults>("study", id);
 }
 
-async function getMongoBiosample(id: string): Promise<MongoBiosampleResult> {
-  const { data } = await client.get<MongoBiosampleResult>(`biosample/${id}/mongo`);
+async function getBiosampleSource(id: string): Promise<BiosampleResultFromSource> {
+  const { data } = await client.get<BiosampleResultFromSource>(
+    `biosample/${id}/source`
+  );
   return data;
 }
 
-async function getMongoStudy(id: string): Promise<MongoStudyResult> {
-  const { data } = await client.get<MongoStudyResult>(`study/${id}/mongo`);
+async function getStudySource(id: string): Promise<StudyResultFromSource> {
+  const { data } = await client.get<StudyResultFromSource>(`study/${id}/source`);
   return data;
 }
 
 function _useDataGenerationRouteForField(field: string) {
-  const fields = new Set(['metaproteomics_analysis_category']);
+  const fields = new Set(["metaproteomics_analysis_category"]);
   return fields.has(field);
 }
 
 async function getFacetSummary(
   type: string,
   field: string,
-  conditions: Condition[],
+  conditions: Condition[]
 ): Promise<FacetSummaryResponse[]> {
-  const path = (type === 'omics_processing' || _useDataGenerationRouteForField(field)) ? 'data_generation' : type;
-  const { data } = await client.post<{ facets: Record<string, number> }>(`${path}/facet`, {
-    conditions, attribute: field,
-  });
+  const path =
+    type === "omics_processing" || _useDataGenerationRouteForField(field)
+      ? "data_generation"
+      : type;
+  const { data } = await client.post<{ facets: Record<string, number> }>(
+    `${path}/facet`,
+    {
+      conditions,
+      attribute: field,
+    }
+  );
   return Object.keys(data.facets)
     .map((facetName) => ({
       facet: facetName,
@@ -587,9 +613,9 @@ async function getBinnedFacet<T = string | number>(
   attribute: string,
   conditions: Condition[],
   numBins: number,
-  resolution: 'day' | 'week' | 'month' | 'year' = 'month',
+  resolution: "day" | "week" | "month" | "year" = "month"
 ) {
-  const path = table === 'omics_processing' ? 'data_generation' : table;
+  const path = table === "omics_processing" ? "data_generation" : table;
   const { data } = await client.post<BinResponse<T>>(`${path}/binned_facet`, {
     attribute,
     conditions,
@@ -600,26 +626,26 @@ async function getBinnedFacet<T = string | number>(
 }
 
 async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
-  const { data } = await client.get<DatabaseSummaryResponse>('summary');
+  const { data } = await client.get<DatabaseSummaryResponse>("summary");
   // TODO: fix this on the server
   // merge this object with summary response
   const mergeSummary = {
     biosample: {
       attributes: {
         gold_classification: {
-          type: 'sankey-tree',
+          type: "sankey-tree",
           count: -1,
         },
         env_broad_scale: {
-          type: 'tree',
+          type: "tree",
           count: -1,
         },
         env_local_scale: {
-          type: 'tree',
+          type: "tree",
           count: -1,
         },
         env_medium: {
-          type: 'tree',
+          type: "tree",
           count: -1,
         },
       },
@@ -627,7 +653,7 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
     gene_function: {
       attributes: {
         id: {
-          type: 'gene_search',
+          type: "gene_search",
         },
       },
     },
@@ -636,46 +662,54 @@ async function getDatabaseSummary(): Promise<DatabaseSummaryResponse> {
 }
 
 async function getDatabaseStats() {
-  const { data } = await client.get<DatabaseStatsResponse>('stats');
+  const { data } = await client.get<DatabaseStatsResponse>("stats");
   return data;
 }
 
 async function getEnvironmentGeospatialAggregation(
-  conditions: Condition[],
+  conditions: Condition[]
 ): Promise<EnvironmentGeospatialEntity[]> {
-  const { data } = await client.post<EnvironmentGeospatialEntity[]>('environment/geospatial', {
-    conditions,
-  });
+  const { data } = await client.post<EnvironmentGeospatialEntity[]>(
+    "environment/geospatial",
+    {
+      conditions,
+    }
+  );
   return data;
 }
 
 async function getEnvironmentSankeyAggregation(
-  conditions: Condition[],
+  conditions: Condition[]
 ): Promise<EnvironmentSankeyResponse> {
-  const { data } = await client.post<EnvironmentSankeyResponse>('environment/sankey', {
-    conditions,
-  });
+  const { data } = await client.post<EnvironmentSankeyResponse>(
+    "environment/sankey",
+    {
+      conditions,
+    }
+  );
   return data;
 }
 
 async function getDataObjectList(
   parentType: entityType,
-  parentId: string,
+  parentId: string
 ): Promise<DataObjectSearchResult[]> {
   const type = parentType;
   if (type === undefined) {
     return [];
   }
   const supportedTypes: entityType[] = [
-    'omics_processing',
-    'reads_qc',
-    'metagenome_assembly',
-    'metagenome_annotation',
-    'metaproteomic_analysis',
+    "omics_processing",
+    "reads_qc",
+    "metagenome_assembly",
+    "metagenome_annotation",
+    "metaproteomic_analysis",
   ];
   if (supportedTypes.indexOf(type) >= 0) {
-    const path = type === 'omics_processing' ? 'data_generation' : type;
-    const { data } = await client.get<DataObjectSearchResult[]>(`${path}/${parentId}/outputs`);
+    const path = type === "omics_processing" ? "data_generation" : type;
+    const { data } = await client.get<DataObjectSearchResult[]>(
+      `${path}/${parentId}/outputs`
+    );
     return data;
   }
   return [];
@@ -685,7 +719,7 @@ async function getDataObjectList(
  * ENVO Tree API
  */
 async function getEnvoTrees() {
-  const { data } = await client.get<EnvoTree>('envo/tree');
+  const { data } = await client.get<EnvoTree>("envo/tree");
   return data;
 }
 
@@ -693,22 +727,34 @@ async function getEnvoTrees() {
  * Bulk Download API
  */
 async function getBulkDownloadSummary(conditions: Condition[]) {
-  const { data } = await client.post<BulkDownloadSummary>('data_object/workflow_summary', {
-    conditions,
-  });
+  const { data } = await client.post<BulkDownloadSummary>(
+    "data_object/workflow_summary",
+    {
+      conditions,
+    }
+  );
   return data;
 }
 
-async function getBulkDownloadAggregateSummary(conditions: Condition[], dataObjectFilter: DataObjectFilter[]) {
-  const { data } = await client.post<BulkDownloadAggregateSummary>('bulk_download/summary', {
-    conditions,
-    data_object_filter: dataObjectFilter,
-  });
+async function getBulkDownloadAggregateSummary(
+  conditions: Condition[],
+  dataObjectFilter: DataObjectFilter[]
+) {
+  const { data } = await client.post<BulkDownloadAggregateSummary>(
+    "bulk_download/summary",
+    {
+      conditions,
+      data_object_filter: dataObjectFilter,
+    }
+  );
   return data;
 }
 
-async function createBulkDownload(conditions: Condition[], dataObjectFilter: DataObjectFilter[]) {
-  const { data } = await client.post<BulkDownload>('bulk_download', {
+async function createBulkDownload(
+  conditions: Condition[],
+  dataObjectFilter: DataObjectFilter[]
+) {
+  const { data } = await client.post<BulkDownload>("bulk_download", {
     conditions,
     data_object_filter: dataObjectFilter,
   });
@@ -719,8 +765,12 @@ async function createBulkDownload(conditions: Condition[], dataObjectFilter: Dat
   };
 }
 
-async function getDataObjectHtmlContentUrl(dataObjectId: string): Promise<string> {
-  const { data } = await client.get<{ url: string }>(`data_object/${dataObjectId}/get_html_content_url`);
+async function getDataObjectHtmlContentUrl(
+  dataObjectId: string
+): Promise<string> {
+  const { data } = await client.get<{ url: string }>(
+    `data_object/${dataObjectId}/get_html_content_url`
+  );
   return data.url;
 }
 
@@ -729,22 +779,22 @@ export interface KeggTermSearchResponse {
   text: string;
 }
 async function keggSearch(query: string) {
-  const { data } = await client.get('kegg/term/search', { params: { query } });
+  const { data } = await client.get("kegg/term/search", { params: { query } });
   return data.terms as KeggTermSearchResponse[];
 }
 
 async function cogSearch(query: string) {
-  const { data } = await client.get('cog/term/search', { params: { query } });
+  const { data } = await client.get("cog/term/search", { params: { query } });
   return data.terms as KeggTermSearchResponse[];
 }
 
 async function pfamSearch(query: string) {
-  const { data } = await client.get('pfam/term/search', { params: { query } });
+  const { data } = await client.get("pfam/term/search", { params: { query } });
   return data.terms as KeggTermSearchResponse[];
 }
 
 async function goSearch(query: string) {
-  const { data } = await client.get('go/term/search', { params: { query } });
+  const { data } = await client.get("go/term/search", { params: { query } });
   return data.terms as KeggTermSearchResponse[];
 }
 
@@ -752,13 +802,15 @@ async function goSearch(query: string) {
  * Discover facet values by text search
  */
 async function textSearch(terms: string) {
-  const { data } = await client.get<Condition[]>('search', { params: { terms, limit: 10 } });
+  const { data } = await client.get<Condition[]>("search", {
+    params: { terms, limit: 10 },
+  });
   return data;
 }
 
 async function me(): Promise<User | null> {
   try {
-    const { data } = await client.get<User>('me');
+    const { data } = await client.get<User>("me");
     return data;
   } catch (error) {
     if (error instanceof RefreshTokenExchangeError) {
@@ -769,7 +821,7 @@ async function me(): Promise<User | null> {
 }
 
 async function getAllUsers(params: SearchParams, searchFilter: string) {
-  const { data } = await client.get<SearchResponse<User>>('users', {
+  const { data } = await client.get<SearchResponse<User>>("users", {
     params: {
       limit: params.limit,
       offset: params.offset,
@@ -791,17 +843,21 @@ interface PortalSettings {
 }
 
 async function getAppSettings(): Promise<PortalSettings> {
-  const { data } = await client.get<PortalSettings>('settings');
+  const { data } = await client.get<PortalSettings>("settings");
   return data;
 }
 
 async function getSubmissionSchema() {
-  const { data } = await staticFileClient.get('/submission_schema/submission_schema.json');
+  const { data } = await staticFileClient.get(
+    "/submission_schema/submission_schema.json"
+  );
   return data;
 }
 
 async function getGoldEcosystemTree() {
-  const { data } = await staticFileClient.get('/submission_schema/GoldEcosystemTree.json');
+  const { data } = await staticFileClient.get(
+    "/submission_schema/GoldEcosystemTree.json"
+  );
   return data;
 }
 
@@ -810,8 +866,10 @@ const REDIRECT_URI = `${window.location.origin}/login`;
  * Initiates the ORCID login flow by navigating to the /auth/login endpoint, providing the
  * redirect_uri as the frontend route (/login) which will handle the authorization code exchange.
  */
-function initiateOrcidLogin(state: string = '') {
-  let loginUrl = `${window.location.origin}/auth/login?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+function initiateOrcidLogin(state: string = "") {
+  let loginUrl = `${
+    window.location.origin
+  }/auth/login?redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
   if (state) {
     loginUrl += `&state=${encodeURIComponent(state)}`;
   }
@@ -838,7 +896,7 @@ function handleTokenResponse(response: TokenResponse) {
  * @param code Authorization code
  */
 async function exchangeAuthCode(code: string): Promise<void> {
-  const { data } = await authClient.post('/token', {
+  const { data } = await authClient.post("/token", {
     code,
     redirect_uri: REDIRECT_URI,
   });
@@ -853,7 +911,7 @@ async function exchangeAuthCode(code: string): Promise<void> {
  */
 async function logout() {
   try {
-    await authClient.post('/logout', null, {
+    await authClient.post("/logout", null, {
       headers: {
         Authorization: client.defaults.headers.common.Authorization,
       },
@@ -880,18 +938,22 @@ function exchangeRefreshToken(): Promise<TokenResponse> {
   async function _doExchange(): Promise<TokenResponse> {
     const refreshToken = getRefreshToken();
     if (!refreshToken) {
-      throw new RefreshTokenExchangeError('No refresh token found');
+      throw new RefreshTokenExchangeError("No refresh token found");
     }
     delete client.defaults.headers.common.Authorization;
     try {
-      const { data } = await authClient.post<TokenResponse>('/refresh', { refresh_token: refreshToken });
+      const { data } = await authClient.post<TokenResponse>("/refresh", {
+        refresh_token: refreshToken,
+      });
       handleTokenResponse(data);
       return data;
     } catch (error) {
       clearRefreshToken();
-      window.dispatchEvent(new CustomEvent(REFRESH_TOKEN_EXPIRED_EVENT, {
-        detail: { error },
-      }));
+      window.dispatchEvent(
+        new CustomEvent(REFRESH_TOKEN_EXPIRED_EVENT, {
+          detail: { error },
+        })
+      );
       throw new RefreshTokenExchangeError(`Refresh request failed: ${error}`);
     }
   }
@@ -934,6 +996,7 @@ const api = {
   getBulkDownloadSummary,
   getBulkDownloadAggregateSummary,
   getBiosample,
+  getBiosampleSource,
   getDatabaseSummary,
   getAppSettings,
   getDatabaseStats,
@@ -943,10 +1006,9 @@ const api = {
   getEnvoTrees,
   getFacetSummary,
   getStudy,
+  getStudySource,
   getSubmissionSchema,
   getGoldEcosystemTree,
-  getMongoBiosample,
-  getMongoStudy,
   me,
   searchBiosample,
   searchOmicsProcessing,
@@ -969,7 +1031,4 @@ const api = {
   logout,
 };
 
-export {
-  api,
-  client,
-};
+export { api, client };

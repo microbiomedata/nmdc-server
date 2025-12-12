@@ -193,7 +193,7 @@ export default defineComponent({
     }
 
     async function downloadStudyData() {
-      const data = await api.getMongoStudy(props.id);
+      const data = await api.getStudySource(props.id);
       downloadJson(data, `${props.id}.json`);
     }
 

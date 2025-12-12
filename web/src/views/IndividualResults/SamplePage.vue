@@ -14,7 +14,7 @@ const props = defineProps<{
 const result = ref({} as BiosampleSearchResult);
 
 async function downloadSampleData() {
-  const data = await api.getMongoBiosample(props.id);
+  const data = await api.getBiosampleSource(props.id);
   downloadJson(data, `${props.id}.json`);
 }
 
