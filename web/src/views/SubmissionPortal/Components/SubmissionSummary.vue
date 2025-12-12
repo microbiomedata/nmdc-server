@@ -9,9 +9,6 @@ import {
 import {
   validForms,
   canEditSubmissionMetadata,
-  studyForm,
-  multiOmicsForm,
-  checkDoiFormat,
 } from '../store';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 

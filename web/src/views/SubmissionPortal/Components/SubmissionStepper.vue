@@ -7,7 +7,7 @@ import { validForms } from '../store';
 import { useRouter } from 'vue-router';
 
 export default defineComponent({
-  setup(props, { root }) {
+  setup() {
     const pages = computed(() => [
       {
         title: 'Study Form',
