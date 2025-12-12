@@ -99,7 +99,7 @@ export default defineComponent({
   <v-card
     class="mt-4 pa-0"
     variant="outlined"
-    :style="addressFormValid ? '' : 'border: 2px solid red'"
+    :style="validForms.addressFormValid ? '' : 'border: 2px solid red'"
   >
     <v-card-text
       class="pt-2"

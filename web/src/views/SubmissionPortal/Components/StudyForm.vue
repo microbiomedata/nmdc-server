@@ -95,7 +95,7 @@ export default defineComponent({
       if (!formRef.value) return;
       if (!formRef.value?.errors) errors = [];
 
-      errors = formRef.value.errors.reduce((all, err) => {
+      errors = formRef.value.errors.reduce((all: string[], err: {errorMessages: string[]}) => {
         return all.concat(err.errorMessages)}, [] as string[]);
       validForms.studyFormValid = errors;
     }
