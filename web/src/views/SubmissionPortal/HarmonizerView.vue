@@ -311,7 +311,7 @@ export default defineComponent({
           const rowId = row[SCHEMA_ID];
           return environmentSlots.some((environmentSlot) => {
             const environmentRow = nextData[environmentSlot as string]?.findIndex((r) => r[SCHEMA_ID] === rowId);
-            return environmentRow && environmentRow >= 0;
+            return environmentRow !== undefined && environmentRow >= 0;
           });
         });
       }
