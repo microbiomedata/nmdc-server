@@ -973,15 +973,14 @@ export default defineComponent({
               v-bind="props"
             >
               <v-tab>
+                {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
                 <v-badge
                   :content="validationTotalCounts[templateKey] || '!'"
-                  floating
-                  location="top right"
+                  max="99"
+                  inline
                   :model-value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
                   :color="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) ? 'error' : 'warning'"
-                >
-                  {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
-                </v-badge>
+                />
               </v-tab>
             </div>
           </template>
