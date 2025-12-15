@@ -57,7 +57,7 @@ export default defineComponent({
 <template>
   <div>
     <div
-      v-if="!disablePagination"
+      v-if="!disablePagination && count > 0"
       class="d-flex pt-2 pb-0 align-end justify-center"
     >
       <v-pagination
@@ -95,6 +95,7 @@ export default defineComponent({
         <v-list-item
           :ripple="!disableNavigateOnClick"
           :active="false"
+          :link="!disableNavigateOnClick"
           v-on="{
             click: disableNavigateOnClick
               ? () => {}
