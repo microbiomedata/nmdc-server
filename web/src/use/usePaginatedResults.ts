@@ -7,12 +7,33 @@ import {
 } from '@/data/api';
 import useRequest from './useRequest';
 
+export interface PaginatedResult<T> {
+  data: {
+    results: SearchResponse<T>;
+    offset: number;
+    limit: number;
+    sortColumn: string;
+    sortOrder: string;
+    pageSync: number;
+  };
+  error: Ref<string | null>;
+  loading: Ref<boolean>;
+  page: Ref<number>;
+  refetch: () => Promise<SearchResponse<T> | void>;
+  setPage: (newPage: number) => void;
+  setItemsPerPage: (newLimit: number) => void;
+  setSortOptions: (columnSort: string, sortOrder: string) => void;
+  fetchCount: Ref<number>;
+  reset: () => void;
+}
+
 export default function usePaginatedResult<T>(
   conditions: Ref<Condition[]>,
   func: (param: SearchParams) => Promise<SearchResponse<T>>,
   dataObjectFilter?: Ref<DataObjectFilter[]>,
   limit = 15,
-) {
+  enabled: Ref<boolean> = computed(() => true),
+): PaginatedResult<T> {
   const data = shallowReactive({
     results: { count: 0, results: [] } as SearchResponse<T>,
     offset: 0,
@@ -21,7 +42,13 @@ export default function usePaginatedResult<T>(
     sortOrder: 'desc',
     pageSync: 1,
   });
-  const { error, loading, request } = useRequest();
+  const {
+    error,
+    loading,
+    count,
+    request,
+    reset: requestReset,
+  } = useRequest();
 
   const page = computed(() => {
     const { offset, limit: l } = data;
@@ -31,7 +58,10 @@ export default function usePaginatedResult<T>(
 
   // TODO replace with watchEffect
   async function fetchResults() {
-    return request(async () => {
+    if (!enabled.value) {
+      return;
+    }
+    await request(async () => {
       data.results = await func({
         limit: data.limit,
         offset: data.offset,
@@ -41,7 +71,6 @@ export default function usePaginatedResult<T>(
         data_object_filter: dataObjectFilter?.value,
       });
       data.pageSync = Math.floor(data.offset / data.limit) + 1;
-      return data.results;
     });
   }
 
@@ -50,7 +79,9 @@ export default function usePaginatedResult<T>(
   watch([conditions], () => {
     const doFetch = data.offset === 0;
     data.offset = 0;
-    if (doFetch) debouncedFetchResults();
+    if (doFetch) {
+      debouncedFetchResults();
+    }
   });
 
   if (dataObjectFilter !== undefined) {
@@ -76,11 +107,23 @@ export default function usePaginatedResult<T>(
     debouncedFetchResults();
   }
 
+  function reset() {
+    requestReset();
+    data.results = { count: 0, results: [] } as SearchResponse<T>;
+    data.offset = 0;
+    data.limit = limit;
+    data.sortColumn = '';
+    data.sortOrder = 'desc';
+    data.pageSync = 1;
+  }
+
   return {
     data,
     error,
+    fetchCount: count,
     loading,
     page,
+    reset,
     refetch: fetchResults,
     setPage,
     setItemsPerPage,
