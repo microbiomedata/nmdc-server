@@ -25,18 +25,28 @@ export default defineComponent({
       type: String,
       default: ORCID_BASE_URL,
     },
+    isNameLinked: {
+      type: Boolean,
+      default: true,
+    },
   },
 });
 </script>
 
 <template>
   <div :style="{display: 'flex'}">
+    <span
+      v-if="name && !isNameLinked"
+      class="mr-1"
+    >
+      {{ name }}
+    </span>
     <a
       :href="`${orcidBaseUrl}/${orcidId}`"
       :style="{display: 'flex'}"
     >
       <span
-        v-if="name"
+        v-if="name && isNameLinked"
         class="mr-1"
       >
         {{ name }}

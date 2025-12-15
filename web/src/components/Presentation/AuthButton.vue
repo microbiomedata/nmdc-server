@@ -156,7 +156,7 @@ export default defineComponent({
 }
 </style>
 <style>
-.v-skeleton-loader__text {
+.user-loading .v-skeleton-loader__text {
   margin: 0;
 }
 </style>
