@@ -30,6 +30,15 @@ def test_api_spec(client: TestClient):
     assert resp.json()["info"]["version"] == nmdc_server.__version__
 
 
+def test_get_health(client: TestClient):
+    resp = client.get("/api/health")
+    assert resp.status_code == 200
+
+    body = resp.json()
+    assert body["is_web_server_healthy"] is True
+    assert body["is_database_healthy"] is True
+
+
 def test_get_settings(client: TestClient):
     resp = client.get("/api/settings")
     assert_status(resp)
