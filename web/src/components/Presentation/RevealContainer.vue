@@ -5,6 +5,7 @@ import {
   onMounted,
   onUnmounted,
   ref,
+  useId,
 } from 'vue';
 
 /**
@@ -49,6 +50,7 @@ export default defineComponent({
     const containerRef = ref<HTMLElement | null>(null);
     const contentRef = ref<HTMLElement | null>(null);
     const contentHeight = ref(props.closedHeight);
+    const contentId = useId()
 
     const canCollapse = computed(() => (
       contentHeight.value > (props.closedHeight + props.thresholdHeight)
@@ -79,6 +81,7 @@ export default defineComponent({
     return {
       containerRef,
       contentHeight,
+      contentId,
       contentRef,
       isCollapsed,
       canCollapse,
@@ -100,7 +103,10 @@ export default defineComponent({
         maxHeight: (canCollapse && isCollapsed) ? `${closedHeight}px` : `${contentHeight}px`
       }"
     >
-      <div ref="contentRef">
+      <div
+        :id="contentId"
+        ref="contentRef"
+      >
         <slot />
       </div>
     </div>
@@ -110,6 +116,8 @@ export default defineComponent({
         variant="plain"
         :ripple="false"
         size="small"
+        :aria-expanded="isCollapsed ? 'false' : 'true'"
+        :aria-controls="contentId"
         @click="toggle"
       >
         {{ isCollapsed ? showLabel : hideLabel }}

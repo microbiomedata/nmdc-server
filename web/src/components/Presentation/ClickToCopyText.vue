@@ -37,7 +37,9 @@ export default defineComponent({
       <span v-bind="tooltipProps">
         <v-hover>
           <template #default="{ isHovering, props: hoverProps }">
-            <span
+            <!-- Intentionally using <button> here instead of <v-btn> because it should be completely unstyled
+                 (i.e. look like plain text) but still have the accessibility features of a native button. -->
+            <button
               v-bind="hoverProps"
               ref="containerRef"
               class="slot-container"
@@ -51,7 +53,7 @@ export default defineComponent({
               >
                 mdi-content-copy
               </v-icon>
-            </span>
+            </button>
           </template>
         </v-hover>
       </span>
@@ -63,6 +65,6 @@ export default defineComponent({
 
 <style scoped>
 .slot-container {
-  cursor: pointer;
+  letter-spacing: inherit;
 }
 </style>
