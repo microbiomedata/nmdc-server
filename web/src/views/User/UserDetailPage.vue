@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref } from '@vue/composition-api';
+import { defineComponent, ref } from 'vue';
 import moment from 'moment';
 import { jwtDecode } from 'jwt-decode';
 import AppBanner from '@/components/AppBanner.vue';
@@ -8,6 +8,7 @@ import { stateRefs } from '@/store';
 import { getRefreshToken } from '@/store/localStorage';
 import { User } from '@/types';
 import { api } from '@/data/api';
+import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 
 export default defineComponent({
   name: 'UserDetailPage',
@@ -44,7 +45,7 @@ export default defineComponent({
         }, 50);
       }
     };
-    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
+    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,
@@ -132,41 +133,37 @@ export default defineComponent({
           />
           <v-row>
             <v-col
-              cols="3"
               class="pt-6"
             >
               <v-text-field
                 v-model="user.email"
                 label="Email"
-                dense
                 :readonly="!editEmail"
-                filled
+                variant="filled"
+                :rules="requiredRules('E-mail is required', [
+                  v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+                ])"
               >
                 <template
                   #append
                 >
                   <v-btn
                     icon
+                    variant="plain"
                     @click="updateEmail(user.email)"
                   >
-                    <v-icon
-                      v-text="!editEmail ? 'mdi-pencil' : 'mdi-content-save'"
-                    />
+                    <v-icon>
+                      {{ !editEmail ? 'mdi-pencil' : 'mdi-content-save' }}
+                    </v-icon>
                   </v-btn>
-                </template>
-                <template
-                  v-if="!user.email"
-                  #append-outer
-                >
                   <v-tooltip
-                    right
+                    v-if="!user.email"
+                    location="right"
                   >
-                    <template #activator="{ on, attrs }">
+                    <template #activator="{ props }">
                       <v-icon
-                        right
                         color="red"
-                        v-bind="attrs"
-                        v-on="on"
+                        v-bind="props"
                       >
                         mdi-alert-circle
                       </v-icon>
@@ -192,27 +189,24 @@ export default defineComponent({
           </p>
 
           <v-row>
-            <v-col
-              cols="auto"
-            >
+            <v-col>
               <v-text-field
                 ref="refreshTokenInput"
+                v-model="refreshToken"
                 label="Refresh Token"
                 readonly
-                filled
+                variant="filled"
                 :type="isTokenVisible ? 'text' : 'password'"
-                :value="refreshToken"
               >
-                <template #append>
+                <template #append-inner>
                   <v-tooltip
                     bottom
                     open-delay="600"
                   >
-                    <template #activator="{ on, attrs }">
+                    <template #activator="{ props }">
                       <v-icon
                         right
-                        v-bind="attrs"
-                        v-on="on"
+                        v-bind="props"
                         @click="handleRefreshTokenVisibilityButtonClick"
                       >
                         {{ isTokenVisible ? 'mdi-eye' : 'mdi-eye-off' }}
@@ -225,11 +219,10 @@ export default defineComponent({
                     bottom
                     open-delay="600"
                   >
-                    <template #activator="{ on, attrs }">
+                    <template #activator="{ props }">
                       <v-icon
                         right
-                        v-bind="attrs"
-                        v-on="on"
+                        v-bind="props"
                         @click="handleRefreshTokenCopyButtonClick"
                       >
                         mdi-content-copy
@@ -240,15 +233,13 @@ export default defineComponent({
                 </template>
               </v-text-field>
             </v-col>
-            <v-col
-              cols="auto"
-            >
+            <v-col>
               <v-text-field
+                v-model="refreshTokenExpirationDate"
                 label="Expiration Date"
                 readonly
-                filled
+                variant="filled"
                 type="text"
-                :value="refreshTokenExpirationDate"
               />
             </v-col>
           </v-row>

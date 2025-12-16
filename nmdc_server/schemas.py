@@ -723,3 +723,21 @@ class UploadCompleteRequest(BaseModel):
     object_name: str
     file_size: int = Field(description="Size of the file in bytes")
     content_type: str
+
+
+class SubmissionImagesMakePublicRequest(BaseModel):
+    """Request to make submission images public.
+
+    This model is used to request that all images associated with a submission
+    be made public and associated with the `nmdc:Study` ID provided.
+    """
+
+    study_id: str
+
+
+class SubmissionImagesMakePublicResponse(BaseModel):
+    """Response containing the public URLs of submission image copies."""
+
+    pi_image_url: Optional[str] = None
+    primary_study_image_url: Optional[str] = None
+    study_image_urls: List[str] = []

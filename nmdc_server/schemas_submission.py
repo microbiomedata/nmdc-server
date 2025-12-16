@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional
 from uuid import UUID
 
+from nmdc_schema.nmdc import SubmissionStatusEnum
 from pydantic import BaseModel, ConfigDict, Field, ValidationInfo, computed_field, field_validator
 
 from nmdc_server import schemas
@@ -86,7 +87,7 @@ class MultiOmicsForm(BaseModel):
     model_config = ConfigDict(extra="allow")
 
 
-class NmcdAddress(BaseModel):
+class NmdcAddress(BaseModel):
     name: str
     email: str
     phone: str
@@ -99,7 +100,7 @@ class NmcdAddress(BaseModel):
 
 
 class AddressForm(BaseModel):
-    shipper: NmcdAddress
+    shipper: NmdcAddress
     expectedShippingDate: Optional[datetime] = None
     shippingConditions: str
     sample: str
@@ -146,10 +147,24 @@ class SubmissionMetadataSchemaPatch(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     metadata_submission: PartialMetadataSubmissionRecord
-    status: Optional[str] = None
     # Map of ORCID iD to permission level
     permissions: Optional[Dict[str, str]] = None
     field_notes_metadata: Optional[Dict[str, Any]] = None
+
+
+class SubmissionMetadataStatusPatch(BaseModel):
+    status: str
+
+    @field_validator("status", mode="after")
+    @classmethod
+    def validate_status(cls, status):
+        SubmissionStatusEnum(status)  # will raise ValueError if invalid
+        return status
+
+
+class SubmissionMetadataRoleAdd(BaseModel):
+    orcid: str
+    role: SubmissionEditorRole
 
 
 class SubmissionMetadataSchemaSlim(BaseModel):
@@ -162,6 +177,8 @@ class SubmissionMetadataSchemaSlim(BaseModel):
     created: datetime
     is_test_submission: bool = False
     sample_count: int = 0
+    reviewers: List[str]
+    contributors: List[str]
 
 
 class SubmissionImagesObject(BaseModel):
@@ -196,6 +213,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
         owners = set(info.data.get("owners", []))
         editors = set(info.data.get("editors", []))
         viewers = set(info.data.get("viewers", []))
+        reviewers = set(info.data.get("reviewers", []))
         metadata_contributors = set(info.data.get("metadata_contributors", []))
 
         for contributor in metadata_submission.get("studyForm", {}).get("contributors", []):
@@ -209,6 +227,8 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
                     contributor["role"] = SubmissionEditorRole.metadata_contributor.value
                 elif orcid in viewers:
                     contributor["role"] = SubmissionEditorRole.viewer.value
+                elif orcid in reviewers:
+                    contributor["role"] = SubmissionEditorRole.reviewer.value
         return metadata_submission
 
     # Mypy doesn't understand the combined use of `@computed_field` and `@property`

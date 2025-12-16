@@ -1,7 +1,7 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
-} from '@vue/composition-api';
+  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, inject,
+} from 'vue';
 import {
   clamp, debounce, flattenDeep, has, sum,
 } from 'lodash';
@@ -9,25 +9,6 @@ import { read, writeFile, utils } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
 
-import HarmonizerApi from './harmonizerApi';
-import {
-  packageName,
-  sampleData,
-  status,
-  submit,
-  incrementalSaveRecord,
-  templateList,
-  mergeSampleData,
-  hasChanged,
-  tabsValidated,
-  submissionStatus,
-  canEditSampleMetadata,
-  isOwner,
-  addMetadataSuggestions,
-  suggestionMode,
-  metadataSuggestions,
-  isTestSubmission,
-} from './store';
 import {
   DATA_MG_INTERLEAVED,
   DATA_MG,
@@ -41,12 +22,36 @@ import {
   SuggestionsMode,
 } from '@/views/SubmissionPortal/types';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
-import SubmissionStepper from './Components/SubmissionStepper.vue';
-import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
-import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import { APP_HEADER_HEIGHT } from '@/components/Presentation/AppHeader.vue';
 import { stateRefs } from '@/store';
 import { getPendingSuggestions } from '@/store/localStorage';
+import HarmonizerApi from './harmonizerApi';
+import {
+  packageName,
+  sampleData,
+  status,
+  submit,
+  incrementalSaveRecord,
+  templateList,
+  mergeSampleData,
+  hasChanged,
+  tabsValidated,
+  SubmissionStatusTitleMapping,
+  canEditSampleMetadata,
+  isOwner,
+  addMetadataSuggestions,
+  suggestionMode,
+  metadataSuggestions,
+  isTestSubmission,
+  canEditSubmissionByStatus,
+  SubmissionStatusEnum,
+} from './store';
+import { AppBannerHeightKey } from './SubmissionView.vue';
+import SubmissionStepper from './Components/SubmissionStepper.vue';
+import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
+import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
+import StatusAlert from './Components/StatusAlert.vue';
+import { useRoute } from 'vue-router';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -71,8 +76,8 @@ const ColorKey = {
   },
 };
 
-const HELP_SIDEBAR_WIDTH = '320px';
-const TABS_HEIGHT = '48px';
+const HELP_SIDEBAR_WIDTH = 320;
+const TABS_HEIGHT = 48;
 
 const SUGGESTION_REQUEST_DELAY = 3000;
 
@@ -103,10 +108,12 @@ export default defineComponent({
     SubmissionStepper,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
+    StatusAlert,
   },
 
-  setup(_, { root }) {
+  setup() {
     const { user } = stateRefs;
+    const route = useRoute();
 
     const harmonizerElement = ref();
     const harmonizerApi = new HarmonizerApi();
@@ -118,9 +125,10 @@ export default defineComponent({
     const invalidCells = shallowRef({} as Record<string, Record<number, Record<number, string>>>);
 
     const activeTemplateKey = ref(templateList.value[0]);
-    const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value]);
+    const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value!]);
+    const activeTabIndex = ref(0);
     const activeTemplateData = computed(() => {
-      if (!activeTemplate.value.sampleDataSlot) {
+      if (!activeTemplate.value?.sampleDataSlot) {
         return [];
       }
       return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
@@ -139,19 +147,19 @@ export default defineComponent({
       harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
 
       // If the environment tab selected is a mixin it should be readonly
-      const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'mixin');
-      if (environmentList.includes(activeTemplateKey.value)) {
+      const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'mixin');
+      if (environmentList.includes(activeTemplateKey.value!)) {
         harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
       harmonizerApi.loadData(activeTemplateData.value);
-      harmonizerApi.setInvalidCells(invalidCells.value[activeTemplateKey.value] || {});
+      harmonizerApi.setInvalidCells(invalidCells.value[activeTemplateKey.value!] || {});
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
     const validationErrors = computed(() => {
       const remapped: ValidationErrors = {};
-      const invalid: Record<number, Record<number, string>> = invalidCells.value[activeTemplateKey.value] || {};
+      const invalid: Record<number, Record<number, string>> = invalidCells.value[activeTemplateKey.value!] || {};
       if (Object.keys(invalid).length) {
         remapped['All Errors'] = [];
       }
@@ -160,11 +168,11 @@ export default defineComponent({
           const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
           const issue = errorText || 'Other Validation Error';
           if (has(remapped, issue)) {
-            remapped[issue].push(entry);
+            remapped[issue]?.push(entry);
           } else {
             remapped[issue] = [entry];
           }
-          remapped['All Errors'].push(entry);
+          remapped['All Errors']?.push(entry);
         });
       });
       return remapped;
@@ -180,12 +188,12 @@ export default defineComponent({
     ));
 
     const saveRecordRequest = useRequest();
-    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord(root.$route.params.id));
+    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord((route.params as { id: string }).id));
 
     let changeBatch: any[] = [];
     const debouncedSuggestionRequest = debounce(async () => {
       const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-      await addMetadataSuggestions(root.$route.params.id, activeTemplate.value.schemaClass!, changedRowData);
+      await addMetadataSuggestions((route.params as { id: string }).id, activeTemplate.value?.schemaClass!, changedRowData);
       changeBatch = [];
     }, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
 
@@ -198,7 +206,7 @@ export default defineComponent({
     });
 
     function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
-      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
+      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
       if (environmentKeys.includes(templateKey)) {
         return true;
       }
@@ -240,16 +248,16 @@ export default defineComponent({
     const isNonEmpty = (val: any) => val !== null && val !== '';
 
     function synchronizeTabData(templateKey: string) {
-      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t].status === 'published');
+      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
       if (environmentKeys.includes(templateKey)) {
         return;
       }
       const nextData = { ...sampleData.value };
-      const templateSlot = HARMONIZER_TEMPLATES[templateKey].sampleDataSlot;
+      const templateSlot = HARMONIZER_TEMPLATES[templateKey]?.sampleDataSlot;
 
       const environmentSlots = templateList.value
-        .filter((t) => HARMONIZER_TEMPLATES[t].status === 'published')
-        .map((t) => HARMONIZER_TEMPLATES[t].sampleDataSlot);
+        .filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published')
+        .map((t) => HARMONIZER_TEMPLATES[t]?.sampleDataSlot);
 
       if (!templateSlot || !environmentSlots) {
         return;
@@ -269,7 +277,7 @@ export default defineComponent({
       // add/update any rows from the environment tabs to the active tab if they apply and if
       // they aren't there already.
       environmentSlots.forEach((environmentSlot) => {
-        nextData[environmentSlot as string].forEach((row) => {
+        nextData[environmentSlot as string]?.forEach((row) => {
           const rowId = row[SCHEMA_ID];
 
           const existing = nextData[templateSlot] && nextData[templateSlot].find((r) => r[SCHEMA_ID] === rowId);
@@ -278,7 +286,7 @@ export default defineComponent({
             COMMON_COLUMNS.forEach((col) => {
               newRow[col] = row[col];
             });
-            nextData[templateSlot].push(newRow);
+            nextData[templateSlot]?.push(newRow);
             //update validation status for the tab, if data changed it needs to be revalidated
             tabsValidated.value[templateKey] = false;
           }
@@ -302,8 +310,8 @@ export default defineComponent({
           tabsValidated.value[templateKey] = false;
           const rowId = row[SCHEMA_ID];
           return environmentSlots.some((environmentSlot) => {
-            const environmentRow = nextData[environmentSlot as string].findIndex((r) => r[SCHEMA_ID] === rowId);
-            return environmentRow >= 0;
+            const environmentRow = nextData[environmentSlot as string]?.findIndex((r) => r[SCHEMA_ID] === rowId);
+            return environmentRow !== undefined && environmentRow >= 0;
           });
         });
       }
@@ -317,7 +325,7 @@ export default defineComponent({
      */
     const syncAndMergeTabsForRemovedRows = async () => {
       mergeSampleData(
-        activeTemplate.value.sampleDataSlot,
+        activeTemplate.value?.sampleDataSlot,
         harmonizerApi.exportJson(),
       );
       // If there are any sampleDataSlots populated that somehow are missing from
@@ -349,7 +357,7 @@ export default defineComponent({
       }
       // If any changes touched the sample name or analysis/data type columns on an environment
       // tab, we need to synch those changes to non-active tabs
-      const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value.schemaClass || '');
+      const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value?.schemaClass || '');
       const shouldSynchronizeTabs = !!changes.find((change) => {
         const isRelevantColumn = templateOrderedAttrNames[change[1]] === SAMP_NAME || templateOrderedAttrNames[change[1]] === ANALYSIS_TYPE;
         const isNonemptyChange = isNonEmpty(change[2]) || isNonEmpty(change[3]);
@@ -361,10 +369,10 @@ export default defineComponent({
         syncAndMergeTabsForRemovedRows();
       } else {
         const data = harmonizerApi.exportJson();
-        mergeSampleData(activeTemplate.value.sampleDataSlot, data);
+        mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
       }
       saveRecord(); // This is a background save that we intentionally don't wait for
-      tabsValidated.value[activeTemplateKey.value] = false;
+      tabsValidated.value[activeTemplateKey.value!] = false;
     };
 
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
@@ -381,9 +389,11 @@ export default defineComponent({
 
     function errorClick(index: number) {
       const currentSeries = validationErrors.value[validationActiveCategory.value];
-      highlightedValidationError.value = clamp(index, 0, currentSeries.length - 1);
-      const currentError = currentSeries[highlightedValidationError.value];
-      harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
+      highlightedValidationError.value = clamp(index, 0, (currentSeries?.length || 0) - 1);
+      const currentError = currentSeries ? currentSeries[highlightedValidationError.value] : null;
+      if (currentError && currentError[0] !== undefined && currentError[1] !== undefined) {
+        harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
+      }
     }
 
     async function validate() {
@@ -395,18 +405,18 @@ export default defineComponent({
       if (isEmpty) {
         invalidCells.value = {
           ...invalidCells.value,
-          [activeTemplateKey.value]: data,
+          [activeTemplateKey.value!]: data,
         };
         tabsValidated.value = {
           ...tabsValidated.value,
-          [activeTemplateKey.value]: false,
+          [activeTemplateKey.value!]: false,
         };
         emptySheetSnackbar.value = true;
 
         return;
       }
 
-      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
+      mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
       const result = await harmonizerApi.validate();
       const valid = Object.keys(result).length === 0;
       if (!valid && !sidebarOpen.value) {
@@ -415,7 +425,7 @@ export default defineComponent({
 
       invalidCells.value = {
         ...invalidCells.value,
-        [activeTemplateKey.value]: result,
+        [activeTemplateKey.value!]: result,
       };
       saveRecord(); // This is a background save that we intentionally don't wait for
       if (valid === false) {
@@ -423,23 +433,45 @@ export default defineComponent({
       }
       tabsValidated.value = {
         ...tabsValidated.value,
-        [activeTemplateKey.value]: valid,
+        [activeTemplateKey.value!]: valid,
       };
 
       validationSuccessSnackbar.value = Object.values(tabsValidated.value).every((value) => value);
     }
 
-    const canSubmit = computed(() => {
+    const submissionState = computed(() => {
       let allTabsValid = true;
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
-      return allTabsValid && isOwner();
+      const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
+      const canSubmitByStatus = status.value === SubmissionStatusEnum.InProgress.text
+      const isSubmitted = submitCount.value > 0 || status.value === SubmissionStatusEnum.SubmittedPendingReview.text;
+      let submitDisabledReason: string | null = null;
+      if (!allTabsValid) {
+        submitDisabledReason = 'All tabs must be validated before submission.';
+      } else if (!hasSubmitPermission) {
+        submitDisabledReason = 'You do not have permission to submit this record.';
+      } else if (!canSubmitByStatus) {
+        submitDisabledReason = `Submission cannot be made while in status: ${status.value}.`;
+      }
+      return {
+        isSubmitted,
+        submitDisabledReason,
+        canSubmit: submitDisabledReason === null,
+      };
     });
+
+    const handleSubmitClick = () => {
+      if (submissionState.value.canSubmit) {
+        submitDialog.value = true;
+      }
+    };
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
         const val = {
+          type: !columnName ? 'subheader' : 'item',
           text: columnName ? `  ${columnName}` : sectionName,
           value: {
             sectionName, columnName, column, row: 0,
@@ -451,7 +483,7 @@ export default defineComponent({
     const validationItems = computed(() => validationErrorGroups.value.map((errorGroup) => {
       const errors = validationErrors.value[errorGroup];
       return {
-        text: `${errorGroup} (${errors.length})`,
+        text: `${errorGroup} (${errors?.length})`,
         value: errorGroup,
       };
     }));
@@ -459,6 +491,10 @@ export default defineComponent({
     watch(validationActiveCategory, () => errorClick(0));
     watch(columnVisibility, () => {
       harmonizerApi.changeVisibility(columnVisibility.value);
+    });
+
+    watch(activeTabIndex, (newIndex) => {
+      changeTemplate(newIndex);
     });
 
     const selectedHelpDict = computed(() => {
@@ -471,8 +507,9 @@ export default defineComponent({
     const { request: submitRequest, loading: submitLoading, count: submitCount } = useRequest();
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
-      mergeSampleData(activeTemplate.value.sampleDataSlot, data);
-      await submit(root.$route.params.id, 'SubmittedPendingReview');
+      mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
+      await submit((route.params as { id: string }).id, SubmissionStatusEnum.SubmittedPendingReview.text);
+      status.value = SubmissionStatusEnum.SubmittedPendingReview.text;
       submitDialog.value = false;
     });
 
@@ -484,12 +521,12 @@ export default defineComponent({
       const workbook = utils.book_new();
       templateList.value.forEach((templateKey) => {
         const template = HARMONIZER_TEMPLATES[templateKey];
-        if (!template.sampleDataSlot || !template.schemaClass) {
+        if (!template?.sampleDataSlot || !template.schemaClass) {
           return;
         }
         const worksheet = utils.json_to_sheet([
           harmonizerApi.getHeaderRow(template.schemaClass),
-          ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot]),
+          ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot] || []),
         ], {
           skipHeader: true,
         });
@@ -512,7 +549,7 @@ export default defineComponent({
             template.excelWorksheetName === name || template.displayName === name
           ));
           const templateSelected = templateList.value.find((selectedTemplate) => {
-            const templateName = HARMONIZER_TEMPLATES[selectedTemplate].displayName || '';
+            const templateName = HARMONIZER_TEMPLATES[selectedTemplate]?.displayName || '';
             return (
               template?.displayName === templateName
               || template?.excelWorksheetName === templateName
@@ -584,19 +621,29 @@ export default defineComponent({
       await validate();
 
       const nextTemplateKey = templateList.value[index];
-      const nextTemplate = HARMONIZER_TEMPLATES[nextTemplateKey];
+      const nextTemplate = nextTemplateKey ? HARMONIZER_TEMPLATES[nextTemplateKey] : null;
 
-      // Get the stashed suggestions (if any) for the next template and present them.
-      metadataSuggestions.value = getPendingSuggestions(root.$route.params.id, nextTemplate.schemaClass!);
+      if (nextTemplate && nextTemplateKey) {
+        // Get the stashed suggestions (if any) for the next template and present them.
+        metadataSuggestions.value = getPendingSuggestions((route.params as { id: string }).id, nextTemplate.schemaClass!);
 
-      // When changing templates we may need to populate the common columns
-      // from the environment tabs
-      synchronizeTabData(nextTemplateKey);
-      activeTemplateKey.value = nextTemplateKey;
-      activeTemplate.value = nextTemplate;
-      harmonizerApi.useTemplate(nextTemplate.schemaClass);
-      addHooks();
+        // When changing templates we may need to populate the common columns
+        // from the environment tabs
+        synchronizeTabData(nextTemplateKey);
+        activeTemplateKey.value = nextTemplateKey;
+        activeTemplate.value = nextTemplate;
+        harmonizerApi.useTemplate(nextTemplate.schemaClass);
+        addHooks();
+      }
     }
+
+    watch(() => canEditSampleMetadata(), (canEdit) => {
+      if (harmonizerApi.ready.value) {
+        if (!canEdit) {
+          harmonizerApi.setTableReadOnly();
+        }
+      }
+    });
 
     onMounted(async () => {
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
@@ -605,13 +652,13 @@ export default defineComponent({
       ]));
       const r = document.getElementById('harmonizer-root');
       if (r && schema) {
-        await harmonizerApi.init(r, schema, activeTemplate.value.schemaClass, goldEcosystemTree);
+        await harmonizerApi.init(r, schema, activeTemplate.value?.schemaClass, goldEcosystemTree);
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
         addHooks();
         metadataSuggestions.value = getPendingSuggestions(
-          root.$route.params.id,
-          activeTemplate.value.schemaClass!,
+          (route.params as { id: string }).id,
+          activeTemplate.value?.schemaClass!,
         );
         if (!canEditSampleMetadata()) {
           harmonizerApi.setTableReadOnly();
@@ -619,9 +666,14 @@ export default defineComponent({
       }
     });
 
+    // Get app banner height provided by SubmissionView. This will be used to correctly size
+    // the DataHarmonizer container, which needs a fixed height.
+    const appBannerHeight = inject(AppBannerHeightKey);
+
     return {
       user,
       APP_HEADER_HEIGHT,
+      appBannerHeight,
       HELP_SIDEBAR_WIDTH,
       TABS_HEIGHT,
       ColorKey,
@@ -630,7 +682,6 @@ export default defineComponent({
       harmonizerElement,
       jumpToModel,
       harmonizerApi,
-      canSubmit,
       tabsValidated,
       saveRecordRequest,
       submitLoading,
@@ -645,11 +696,13 @@ export default defineComponent({
       templateList,
       activeTemplate,
       activeTemplateKey,
+      activeTabIndex,
       invalidCells,
       validationErrors,
       validationErrorGroups,
       validationTotalCounts,
-      submissionStatus,
+      SubmissionStatusTitleMapping,
+      SubmissionStatusEnum,
       status,
       submitDialog,
       validationSuccessSnackbar,
@@ -658,6 +711,8 @@ export default defineComponent({
       notImportedWorksheetNames,
       emptySheetSnackbar,
       isTestSubmission,
+      StatusAlert,
+      submissionState,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -668,6 +723,8 @@ export default defineComponent({
       validate,
       changeTemplate,
       canEditSampleMetadata,
+      canEditSubmissionByStatus,
+      handleSubmitClick,
     };
   },
 });
@@ -675,19 +732,20 @@ export default defineComponent({
 
 <template>
   <div
-    :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT}px)`}"
+    :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
     <SubmissionStepper />
     <submission-permission-banner
-      v-if="!canEditSampleMetadata()"
+      v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
     />
+    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <div class="d-flex flex-column px-2 pb-2">
       <div class="d-flex align-center">
         <v-btn
           v-if="validationErrorGroups.length === 0"
           color="primary"
-          outlined
+          variant="outlined"
           :disabled="!canEditSampleMetadata()"
           @click="validate"
         >
@@ -726,10 +784,10 @@ export default defineComponent({
           <v-select
             v-model="validationActiveCategory"
             :items="validationItems"
+            item-title="text"
             solo
-            color="error"
-            style="background-color: red;"
-            dense
+            style="background-color: #ffffff; color: #000000;"
+            density="compact"
             class="mx-2 z-above-sidebar"
             hide-details
           >
@@ -738,7 +796,7 @@ export default defineComponent({
                 style="font-size: 14px"
                 class="my-0"
               >
-                {{ item.text }}
+                {{ item.title }}
               </p>
             </template>
           </v-select>
@@ -750,7 +808,7 @@ export default defineComponent({
             </v-icon>
             <v-spacer />
             <span class="mx-1">
-              ({{ highlightedValidationError + 1 }}/{{ validationErrors[validationActiveCategory].length }})
+              ({{ highlightedValidationError + 1 }}/{{ validationErrors[validationActiveCategory]?.length }})
             </span>
             <v-spacer />
             <v-icon
@@ -760,7 +818,7 @@ export default defineComponent({
             </v-icon>
           </div>
           <v-btn
-            outlined
+            variant="outlined"
             small
             class="mx-2"
             @click="validate"
@@ -806,38 +864,27 @@ export default defineComponent({
         <v-autocomplete
           v-model="jumpToModel"
           :items="fields"
+          item-title="text"
+          item-value="value"
           label="Jump to column..."
-          class="shrink mr-2 z-above-sidebar"
-          outlined
-          dense
+          class="flex-0-0 mr-2 z-above-sidebar"
+          variant="outlined"
+          density="compact"
           hide-details
-          offset-y
           :menu-props="{ maxHeight: 500 }"
+          width="233"
           @focus="focus"
-          @change="jumpTo"
-        >
-          <template #item="{ item }">
-            <span
-              :class="{
-                'pl-4': item.value.columnName !== '',
-                'text-h5': item.value.columnName === '',
-              }"
-            >
-              {{ item.value.columnName || item.value.sectionName }}
-            </span>
-          </template>
-        </v-autocomplete>
+          @update:model-value="jumpTo"
+        />
         <v-menu
-          class="z-above-sidebar"
           offset-y
           nudge-bottom="4px"
           :close-on-click="true"
         >
-          <template #activator="{on, attrs}">
+          <template #activator="{ props }">
             <v-btn
-              outlined
-              v-bind="attrs"
-              v-on="on"
+              variant="outlined"
+              v-bind="props"
             >
               <v-icon class="pr-1">
                 mdi-eye
@@ -850,7 +897,7 @@ export default defineComponent({
           <v-card
             class="py-1 px-2"
             width="280"
-            outlined
+            variant="outlined"
           >
             <v-radio-group
               v-model="columnVisibility"
@@ -910,38 +957,41 @@ export default defineComponent({
       </div>
     </div>
 
-    <div class="harmonizer-and-sidebar">
-      <v-tabs @change="changeTemplate">
+    <v-layout class="harmonizer-and-sidebar">
+      <v-tabs
+        v-model="activeTabIndex"
+        color="primary"
+      >
         <v-tooltip
           v-for="templateKey in templateList"
           :key="templateKey"
           right
         >
-          <template #activator="{on, attrs}">
+          <template #activator="{ props }">
             <div
               style="display: flex;"
-              v-bind="attrs"
-              v-on="on"
+              v-bind="props"
             >
               <v-tab>
+                {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
                 <v-badge
                   :content="validationTotalCounts[templateKey] || '!'"
-                  :value="validationTotalCounts[templateKey] > 0 || !tabsValidated[templateKey]"
-                  :color="validationTotalCounts[templateKey] > 0 ? 'error' : 'warning'"
-                >
-                  {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
-                </v-badge>
+                  max="99"
+                  inline
+                  :model-value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
+                  :color="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) ? 'error' : 'warning'"
+                />
               </v-tab>
             </div>
           </template>
-          <span v-if="validationTotalCounts[templateKey] > 0">
+          <span v-if="validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0">
             {{ validationTotalCounts[templateKey] }} validation errors
           </span>
           <span v-else-if="!tabsValidated[templateKey]">
             This tab must be validated before submission
           </span>
           <span v-else>
-            {{ HARMONIZER_TEMPLATES[templateKey].displayName }}
+            {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
           </span>
         </v-tooltip>
       </v-tabs>
@@ -954,21 +1004,21 @@ export default defineComponent({
         id="harmonizer-root"
         class="harmonizer-style-container"
         :style="{
-          'right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
-          'top': TABS_HEIGHT,
+          'right': sidebarOpen ? `${HELP_SIDEBAR_WIDTH}px` : '0px',
+          'top': `${TABS_HEIGHT}px`,
         }"
       />
 
       <v-btn
         class="sidebar-toggle"
         tile
-        plain
+        variant="plain"
         color="black"
         :ripple="false"
         :height="TABS_HEIGHT"
         :width="TABS_HEIGHT"
         :style="{
-          'right': sidebarOpen ? HELP_SIDEBAR_WIDTH : '0px',
+          'right': sidebarOpen ? `${HELP_SIDEBAR_WIDTH}px` : '0px',
         }"
         @click="sidebarOpen = !sidebarOpen"
       >
@@ -984,130 +1034,124 @@ export default defineComponent({
       </v-btn>
 
       <v-navigation-drawer
+        v-model="sidebarOpen"
         :width="HELP_SIDEBAR_WIDTH"
-        :value="sidebarOpen"
         absolute
-        class="z-above-data-harmonizer"
-        floating
-        hide-overlay
-        right
-        stateless
         temporary
+        location="right"
+        class="z-above-data-harmonizer"
       >
         <HarmonizerSidebar
           :column-help="selectedHelpDict"
           :harmonizer-api="harmonizerApi"
-          :harmonizer-template="activeTemplate"
+          :harmonizer-template="activeTemplate!"
           :metadata-editing-allowed="canEditSampleMetadata()"
           @import-xlsx="openFile"
           @export-xlsx="downloadSamples"
         />
       </v-navigation-drawer>
-    </div>
-
-    <div class="harmonizer-style-container">
-      <div
-        v-if="canEditSampleMetadata()"
-        id="harmonizer-footer-root"
-      />
-    </div>
-    <div class="d-flex ma-2">
-      <v-btn
-        color="gray"
-        depressed
-        :to="{ name: 'Sample Environment' }"
-      >
-        <v-icon class="pr-1">
-          mdi-arrow-left-circle
-        </v-icon>
-        Go to previous step
-      </v-btn>
-      <v-spacer />
-      <div class="d-flex align-center">
-        <span class="mr-1">Color key</span>
-        <v-chip
-          v-for="val in ColorKey"
-          :key="val.label"
-          :style="{ backgroundColor: val.color, opacity: 1 }"
-          class="mr-1"
-          disabled
-        >
-          {{ val.label }}
-        </v-chip>
+    </v-layout>
+    <div class="harmonizer-bottom-container">
+      <div class="harmonizer-style-container">
+        <div
+          v-if="canEditSampleMetadata()"
+          id="harmonizer-footer-root"
+        />
       </div>
-      <v-spacer />
-      <v-tooltip top>
-        <template #activator="{ on, attrs }">
-          <div
-            v-bind="attrs"
-            v-on="on"
+      <div class="d-flex ma-2">
+        <v-btn-grey :to="{ name: 'Sample Environment' }">
+          <v-icon class="pr-1">
+            mdi-arrow-left-circle
+          </v-icon>
+          Go to previous step
+        </v-btn-grey>
+        <v-spacer />
+        <div class="d-flex align-center">
+          <span class="mr-1">Color key</span>
+          <v-chip
+            v-for="val in ColorKey"
+            :key="val.label"
+            :style="{ backgroundColor: val.color, opacity: 1, color: '#000000' }"
+            class="mr-1"
+            variant="flat"
           >
-            <v-btn
-              color="success"
-              depressed
-              :disabled="!canSubmit || status !== 'InProgress' || submitCount > 0"
-              :loading="submitLoading"
-              @click="submitDialog = true"
+            {{ val.label }}
+          </v-chip>
+        </div>
+        <v-spacer />
+        <v-tooltip
+          top
+        >
+          <template #activator="{ props }">
+            <div
+              v-bind="props"
             >
-              <span v-if="status === 'SubmittedPendingReview' || submitCount">
-                <v-icon>mdi-check-circle</v-icon>
-                Submitted
-              </span>
-              <span v-else>
-                Submit
-              </span>
-              <v-dialog
-                v-model="submitDialog"
-                activator="parent"
-                width="auto"
+              <v-btn
+                color="success"
+                depressed
+                :disabled="!submissionState.canSubmit"
+                :loading="submitLoading"
+                @click="handleSubmitClick"
               >
-                <v-card v-if="isTestSubmission">
-                  <v-card-title>
-                    Submit
-                  </v-card-title>
-                  <v-card-text>
-                    Test submissions cannot be submitted for NMDC review.
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn
-                      text
-                      @click="submitDialog = false"
-                    >
-                      Close
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-                <v-card v-else>
-                  <v-card-title>
-                    Submit
-                  </v-card-title>
-                  <v-card-text>
-                    You are about to submit this study and metadata for NMDC review. Would you like to continue?
-                  </v-card-text>
-                  <v-card-actions>
-                    <v-btn
-                      color="primary"
-                      class="mr-2"
-                      @click="doSubmit"
-                    >
-                      Yes- Submit
-                    </v-btn>
-                    <v-btn @click="submitDialog = false">
-                      Cancel
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
-            </v-btn>
-          </div>
-        </template>
-        <span v-if="!canSubmit">
-          You must validate all tabs before submitting your study and metadata.
-        </span>
-        <span v-else>
-          Submit for NMDC review.
-        </span>
-      </v-tooltip>
+                <span v-if="submissionState.isSubmitted">
+                  <v-icon>mdi-check-circle</v-icon>
+                  Submitted
+                </span>
+                <span v-else>
+                  Submit
+                </span>
+                <v-dialog
+                  v-model="submitDialog"
+                  width="auto"
+                >
+                  <v-card v-if="isTestSubmission">
+                    <v-card-title>
+                      Submit
+                    </v-card-title>
+                    <v-card-text>
+                      Test submissions cannot be submitted for NMDC review.
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn
+                        text
+                        @click="submitDialog = false"
+                      >
+                        Close
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                  <v-card v-else>
+                    <v-card-title>
+                      Submit
+                    </v-card-title>
+                    <v-card-text>
+                      You are about to submit this study and metadata for NMDC review. Would you like to continue?
+                    </v-card-text>
+                    <v-card-actions>
+                      <v-btn
+                        color="primary"
+                        class="mr-2"
+                        @click="doSubmit"
+                      >
+                        Yes- Submit
+                      </v-btn>
+                      <v-btn @click="submitDialog = false">
+                        Cancel
+                      </v-btn>
+                    </v-card-actions>
+                  </v-card>
+                </v-dialog>
+              </v-btn>
+            </div>
+          </template>
+          <span v-if="!submissionState.canSubmit">
+            {{ submissionState.submitDisabledReason }}
+          </span>
+          <span v-if="submissionState.canSubmit">
+            Submit for NMDC review.
+          </span>
+        </v-tooltip>
+      </div>
     </div>
   </div>
 </template>
@@ -1115,7 +1159,7 @@ export default defineComponent({
 <style lang="scss">
 // Handsontable attaches hidden elements to <body> in order to measure text widths. Therefore this
 // cannot be nested inside .harmonizer-style-container or else the measurements will be off.
-@import '~data-harmonizer/lib/dist/es/index';
+@import '@microbiomedata/data-harmonizer/data-harmonizer.css';
 
 /*
   https://developer.mozilla.org/en-US/docs/Web/CSS/overscroll-behavior#examples
@@ -1141,16 +1185,16 @@ html {
     There's also some kind of performance bottleneck with "Force Reflow" when you include the whole
     stylesheet, so I brought in the minimum modules for things not to break.
   */
-  @import '~bootstrap/scss/functions';
-  @import '~bootstrap/scss/variables';
-  @import '~bootstrap/scss/mixins';
-  @import "~bootstrap/scss/reboot";
-  @import '~bootstrap/scss/type';
-  @import '~bootstrap/scss/modal';
-  @import '~bootstrap/scss/buttons';
-  @import '~bootstrap/scss/forms';
-  @import '~bootstrap/scss/input-group';
-  @import '~bootstrap/scss/utilities';
+  @import 'bootstrap/scss/functions';
+  @import 'bootstrap/scss/variables';
+  @import 'bootstrap/scss/mixins';
+  @import "bootstrap/scss/reboot";
+  @import 'bootstrap/scss/type';
+  @import 'bootstrap/scss/modal';
+  @import 'bootstrap/scss/buttons';
+  @import 'bootstrap/scss/forms';
+  @import 'bootstrap/scss/input-group';
+  @import 'bootstrap/scss/utilities';
 }
 
 .handsontable.listbox td {
@@ -1171,11 +1215,23 @@ html {
   overflow: hidden;
 }
 
+.v-navigation-drawer__scrim {
+  display: none;
+}
+
 /* Grid */
 #harmonizer-root {
   position: absolute;
   bottom: 0;
   left: 0;
+
+  /**
+    This ensures that the bootstrap modal appears
+    below the app header.
+  */
+  .modal {
+    top: 61px !important;
+  }
 
   .secondary-header-cell:hover {
     cursor: pointer;
@@ -1238,7 +1294,7 @@ html {
 
 #harmonizer-footer-root {
   width: 50%;
-  padding: 12px 0;
+  padding: 0.5rem;
 }
 
 .HandsontableCopyPaste {

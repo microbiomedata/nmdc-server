@@ -1,14 +1,11 @@
-// @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
-import Vue from 'vue';
-import CompositionApi, {
-  computed, reactive, Ref, ref, shallowRef, watch,
-} from '@vue/composition-api';
 import {
-  chunk, clone, forEach, isString,
+  computed, reactive, Ref, ref, shallowRef, watch,
+} from 'vue';
+import {
+  chunk, clone, forEach, isEqual, isString,
 } from 'lodash';
 import axios from 'axios';
-import * as api from './api';
 import { User } from '@/types';
 import {
   HARMONIZER_TEMPLATES,
@@ -34,11 +31,10 @@ import {
   AcquisitionProtocol,
   DataProtocol,
   SampleProtocol,
+  MetadataSubmissionRecord,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
-
-// TODO: Remove in version 3;
-Vue.use(CompositionApi);
+import * as api from './api';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, PermissionLevelValues> = {
   Viewer: 'viewer',
@@ -50,18 +46,55 @@ const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
   owner: 4,
   editor: 3,
   metadata_contributor: 2,
+  reviewer: 1,
   viewer: 1,
 };
 
 //use schema enum to define submission status
-const submissionStatus: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
-  Object.entries(NmdcSchema.enums.SubmissionStatusEnum.permissible_values).map(([key, item]: [SubmissionStatusKey, SubmissionStatusTitle]) => [key, item.title]),
-);
+const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
+const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
+  Object.entries(SubmissionStatusEnum).map(([key, item]: [string, any]) => [key, item.title]),
+) as Record<SubmissionStatusKey, SubmissionStatusTitle>; //key to title mapping for vue scripts where status saved to variable
+const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
+const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
 
-const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(submissionStatus).includes(str);
+function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_type:Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin', transitions:Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
+  const excludeFromAll = [
+    SubmissionStatusEnum.InProgress.text,
+    SubmissionStatusEnum.SubmittedPendingReview.text,
+  ];
+  // Admins can see all statuses and select any that aren't user invoked
+  if (dropdown_type === 'admin') {
+    return Object.keys(SubmissionStatusTitleMapping)
+      .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
+      .map((key) => ({
+        value: key,
+        title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      }));
+  }
 
-const status = ref('InProgress');
+  // Non-admins can only see and select allowed transitions
+  const user_transitions = transitions[dropdown_type] || {};
+  const allowedStatusTransitions = user_transitions[currentStatus] || [];
+
+  // Include the current status so it can be displayed
+  const statusesToShow = [...allowedStatusTransitions];
+  if (!statusesToShow.includes(currentStatus)) {
+    statusesToShow.push(currentStatus);
+  }
+
+  // Return allowed transitions
+  return Object.keys(SubmissionStatusTitleMapping)
+    .filter((key) => statusesToShow.includes(key))
+    .map((key) => ({
+      value: key,
+      title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+    }));
+}
+
 const isTestSubmission = ref(false);
+const primaryStudyImageUrl = ref<string | null>(null);
+const piImageUrl = ref<string | null>(null);
 
 /**
  * Submission record locking information
@@ -81,13 +114,24 @@ function isOwner(): boolean {
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
 
+function editablebyStatus(status: string): boolean {
+  const editableStatuses = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.UpdatesRequired.text];
+  return editableStatuses.includes(status);
+}
+
+function canEditSubmissionByStatus(): boolean {
+  return editablebyStatus(status.value);
+}
+
 function canEditSubmissionMetadata(): boolean {
   if (!_permissionLevel) return false;
+  if (!canEditSubmissionByStatus()) return false;
   return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.editor;
 }
 
 function canEditSampleMetadata(): boolean {
   if (!_permissionLevel) return false;
+  if (!canEditSubmissionByStatus()) return false;
   return permissionLevelHierarchy[_permissionLevel] >= permissionLevelHierarchy.metadata_contributor;
 }
 
@@ -106,7 +150,7 @@ const addressFormDefault = {
     postalCode: '',
     country: '',
   } as NmdcAddress,
-  expectedShippingDate: undefined as undefined | Date,
+  expectedShippingDate: undefined as undefined | string,
   shippingConditions: '',
   // Sample info
   sample: '',
@@ -151,11 +195,11 @@ const studyFormDefault = {
 const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
 
-const protocols = {
-  sampleProtocol: {} as SampleProtocol,
-  acquisitionProtocol: {} as AcquisitionProtocol,
-  dataProtocol: {} as DataProtocol,
-};
+interface Protocols {
+  sampleProtocol: SampleProtocol,
+  acquisitionProtocol: AcquisitionProtocol,
+  dataProtocol: DataProtocol,
+}
 
 /**
  * Multi-Omics Form Step
@@ -177,10 +221,10 @@ const multiOmicsFormDefault = {
   ship: undefined as undefined | boolean,
   studyNumber: '',
   unknownDoi: undefined as undefined | boolean,
-  mpProtocols: protocols,
-  mbProtocols: protocols,
-  lipProtocols: protocols,
-  nomProtocols: protocols,
+  mpProtocols: undefined as undefined | Protocols,
+  mbProtocols: undefined as undefined | Protocols,
+  lipProtocols: undefined as undefined | Protocols,
+  nomProtocols: undefined as undefined | Protocols,
 };
 const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
@@ -219,7 +263,7 @@ function checkDoiFormat(v: string) {
  * Environmental Package Step
  */
 const packageName = ref([] as (keyof typeof HARMONIZER_TEMPLATES)[]);
-const templateList = computed(() => {
+const templateList = computed<string[]>((prevTemplates) => {
   const templates = new Set(packageName.value);
   if (multiOmicsForm.dataGenerated) {
     // Have data already been generated? Yes
@@ -254,7 +298,7 @@ const templateList = computed(() => {
     }
   } else {
     // Have data already been generated? No
-    // eslint-disable-next-line no-lonely-if
+
     if (multiOmicsForm.doe) {
       // Are you submitting samples to a DOE user facility? Yes
       if (multiOmicsForm.facilities.includes('EMSL')) {
@@ -293,7 +337,11 @@ const templateList = computed(() => {
       }
     }
   }
-  return Array.from(templates);
+  const newTemplates = Array.from(templates);
+  if (prevTemplates !== undefined && isEqual(prevTemplates, newTemplates)) {
+    return prevTemplates;
+  }
+  return newTemplates;
 });
 /**
  * DataHarmonizer Step
@@ -304,7 +352,10 @@ const suggestionMode = ref(SuggestionsMode.LIVE);
 const suggestionType = ref(SuggestionType.ALL);
 
 const tabsValidated = ref({} as Record<string, boolean>);
-watch(templateList, () => {
+watch(templateList, (newList, oldList) => {
+  if (isEqual(newList, oldList)) {
+    return;
+  }
   const newTabsValidated = {} as Record<string, boolean>;
   forEach(templateList.value, (templateKey) => {
     newTabsValidated[templateKey] = false;
@@ -322,7 +373,7 @@ const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   sampleData: sampleData.value,
 }));
 
-function templateHasData(templateName: string): boolean {
+function templateHasData(templateName: string = ''): boolean {
   //if DH hasn't been touched at all then there's no data nd it's ok edit
   if (Object.keys(sampleData.value).length === 0) {
     return false;
@@ -346,7 +397,7 @@ function templateHasData(templateName: string): boolean {
   // If the DH has been touched, see if the given template actually
   // contain data. If it does, then do not allow changing that template.
   // Otherwise, allow it to be changed.
-  if (Object.values(sampleData.value[templateName]).length > 0) {
+  if (Object.values(sampleData.value[templateName] || {}).length > 0) {
     return true;
   }
   return false;
@@ -355,9 +406,9 @@ function templateHasData(templateName: string): boolean {
 function checkJGITemplates() {
   //checks to see if there is data present in any of the templates that are associated with JGI
   const fields = ['jgi_mg', 'jgi_mg_lr', 'jgi_mt', 'data_mg', 'data_mg_interleaved', 'data_mt', 'data_mt_interleaved'];
-  let data_present: Boolean = false;
+  let data_present: boolean = false;
   fields.forEach((val) => {
-    const sampleSlot = HARMONIZER_TEMPLATES[val].sampleDataSlot;
+    const sampleSlot = HARMONIZER_TEMPLATES[val]?.sampleDataSlot;
     if (isString(sampleSlot) && templateHasData(sampleSlot)) {
       data_present = true;
     }
@@ -385,11 +436,19 @@ const submitPayload = computed(() => {
   return value;
 });
 
-function submit(id: string, status: SubmissionStatusKey = 'InProgress') {
-  if (canEditSubmissionMetadata()) {
-    return api.updateRecord(id, payloadObject.value, status);
+async function submit(id: string, status?: SubmissionStatusKey) {
+  if (!canEditSubmissionMetadata()) {
+    throw new Error('Unable to submit due to inadequate permission level for this submission.');
   }
-  throw new Error('Unable to submit due to inadequate permission level for this submission.');
+  if (!canEditSubmissionByStatus()) {
+    throw new Error('Unable to submit with current submission status.');
+  }
+  const response = await api.updateRecord(id, payloadObject.value);
+  let record = response.data;
+  if (status) {
+    record = await api.updateSubmissionStatus(id, status);
+  }
+  updateStateFromRecord(record);
 }
 
 function reset() {
@@ -404,12 +463,17 @@ function reset() {
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
   sampleData.value = {};
-  status.value = 'InProgress';
+  status.value = SubmissionStatusEnum.InProgress.text;
   isTestSubmission.value = false;
+  primaryStudyImageUrl.value = null;
+  piImageUrl.value = null;
 }
 
 async function incrementalSaveRecord(id: string): Promise<number | void> {
   if (!canEditSampleMetadata()) {
+    return Promise.resolve();
+  }
+  if (!canEditSubmissionByStatus()) {
     return Promise.resolve();
   }
 
@@ -427,8 +491,8 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   if (hasChanged.value) {
-    const response = await api.updateRecord(id, payload, undefined, permissions);
-    hasChanged.value = 0;
+    const response = await api.updateRecord(id, payload, permissions);
+    updateStateFromRecord(response.data);
     return response.httpStatus;
   }
   hasChanged.value = 0;
@@ -443,19 +507,32 @@ async function generateRecord(isTestSubBool: boolean) {
   return record;
 }
 
+function updateStateFromRecord(record: MetadataSubmissionRecord) {
+  packageName.value = record.metadata_submission.packageName;
+  if (!isEqual(studyForm, record.metadata_submission.studyForm)) {
+    Object.assign(studyForm, record.metadata_submission.studyForm);
+  }
+  if (!isEqual(multiOmicsForm, record.metadata_submission.multiOmicsForm)) {
+    Object.assign(multiOmicsForm, record.metadata_submission.multiOmicsForm);
+  }
+  if (!isEqual(addressForm, record.metadata_submission.addressForm)) {
+    Object.assign(addressForm, record.metadata_submission.addressForm);
+  }
+  sampleData.value = record.metadata_submission.sampleData;
+  status.value = isSubmissionStatus(record.status) ? record.status : SubmissionStatusEnum.InProgress.text;
+  if (record.permission_level !== null) {
+    _permissionLevel = (record.permission_level as PermissionLevelValues);
+  }
+  isTestSubmission.value = record.is_test_submission;
+  primaryStudyImageUrl.value = record.primary_study_image_url;
+  piImageUrl.value = record.pi_image_url;
+  hasChanged.value = 0;
+}
+
 async function loadRecord(id: string) {
   reset();
   const val = await api.getRecord(id);
-  packageName.value = val.metadata_submission.packageName;
-  Object.assign(studyForm, val.metadata_submission.studyForm);
-  Object.assign(multiOmicsForm, val.metadata_submission.multiOmicsForm);
-  Object.assign(addressForm, val.metadata_submission.addressForm);
-  sampleData.value = val.metadata_submission.sampleData;
-  hasChanged.value = 0;
-  status.value = isSubmissionStatus(val.status) ? val.status : 'InProgress';
-  _permissionLevel = (val.permission_level as PermissionLevelValues);
-  isTestSubmission.value = val.is_test_submission;
-
+  updateStateFromRecord(val);
   try {
     const lockResponse = await api.lockSubmission(id);
     _submissionLockedBy = lockResponse.locked_by || null;
@@ -496,9 +573,9 @@ function mergeSampleData(key: string | undefined, data: any[]) {
 async function addMetadataSuggestions(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
   const batches = chunk(requests, batchSize);
   for (let i = 0; i < batches.length; i += 1) {
-    const batch = batches[i];
+    const batch = batches[i] || [];
 
-    // eslint-disable-next-line no-await-in-loop -- we are intentionally throttling requests to the sever
+
     const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
 
     // Drop all the existing suggestions for the rows in this batch
@@ -532,7 +609,7 @@ function removeMetadataSuggestions(submissionId: string, schemaClassName: string
 }
 
 export {
-  submissionStatus,
+  SubmissionStatusTitleMapping,
   permissionTitleToDbValueMap,
   permissionLevelHierarchy,
   /* state */
@@ -554,9 +631,12 @@ export {
   tabsValidated,
   status,
   isTestSubmission,
+  primaryStudyImageUrl,
+  piImageUrl,
   metadataSuggestions,
   suggestionMode,
   suggestionType,
+  SubmissionStatusEnum,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,
@@ -568,9 +648,12 @@ export {
   isOwner,
   canEditSampleMetadata,
   canEditSubmissionMetadata,
+  canEditSubmissionByStatus,
+  editablebyStatus,
   addMetadataSuggestions,
   removeMetadataSuggestions,
   templateHasData,
   checkJGITemplates,
   checkDoiFormat,
+  formatStatusTransitions,
 };

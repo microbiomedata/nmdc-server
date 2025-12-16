@@ -1,12 +1,12 @@
 <script lang="ts">
 import {
-  defineComponent, ref, watch, Ref,
-} from '@vue/composition-api';
-import { DataOptions, DataTableHeader } from 'vuetify';
-import { useRouter } from '@/use/useRouter';
+  defineComponent, ref, watch, onMounted,
+} from 'vue';
+import { useRouter } from 'vue-router';
+import { DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  generateRecord, submissionStatus,
+  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, formatStatusTransitions,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -15,37 +15,48 @@ import IconBar from '@/views/SubmissionPortal/Components/IconBar.vue';
 import IntroBlurb from '@/views/SubmissionPortal/Components/IntroBlurb.vue';
 import ContactCard from '@/views/SubmissionPortal/Components/ContactCard.vue';
 import { SearchParams } from '@/data/api';
-import { deleteSubmission } from '../store/api';
+import { addSubmissionRole, deleteSubmission, updateSubmissionStatus } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
   MetadataSubmissionRecord,
   MetadataSubmissionRecordSlim,
   PaginatedResponse,
+  PermissionLevelValues,
+  SubmissionStatusKey,
+  StatusOption,
 } from '@/views/SubmissionPortal/types';
+import { stateRefs } from '@/store';
+import useRequest from '@/use/useRequest';
 
 const headers: DataTableHeader[] = [
   {
-    text: 'Study Name',
+    title: 'Study Name',
     value: 'study_name',
+    sortable: true,
   },
   {
-    text: 'Author',
+    title: 'Author',
     value: 'author.name',
+    sortable: true,
   },
   {
-    text: 'Template',
+    title: 'Template',
     value: 'templates',
+    sortable: true,
   },
   {
-    text: 'Status',
+    title: 'Status',
     value: 'status',
+    width: '200px',
+    sortable: true,
   },
   {
-    text: 'Last Modified',
+    title: 'Last Modified',
     value: 'date_last_modified',
+    sortable: true,
   },
   {
-    text: '',
+    title: '',
     value: 'action',
     align: 'end',
     sortable: false,
@@ -59,18 +70,20 @@ export default defineComponent({
   setup() {
     const router = useRouter();
     const itemsPerPage = 10;
-    const options: Ref<DataOptions> = ref<DataOptions>({
+    const defaultSortBy = 'date_last_modified';
+    const defaultSortOrder = 'desc';
+    const options = ref({
       page: 1,
       itemsPerPage,
-      sortBy: ['date_last_modified'],
-      sortDesc: [true],
-      groupBy: [],
-      groupDesc: [],
-      multiSort: false,
-      mustSort: false,
+      sortBy: [{ key: defaultSortBy, order: defaultSortOrder }],
+      groupBy: {},
+      search: null,
     });
     const isDeleteDialogOpen = ref(false);
     const deleteDialogSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
+    const isReviewerAssignmentDialogOpen = ref(false);
+    const selectedSubmission = ref<MetadataSubmissionRecordSlim | null>(null);
+    const currentUser = stateRefs.user;
     const isTestFilter = ref(null);
     const testFilterValues = [
       { text: 'Show all submissions', val: null },
@@ -82,9 +95,9 @@ export default defineComponent({
     }
 
     function getStatus(item: MetadataSubmissionRecord) {
-      const color = item.status === submissionStatus.Released ? 'success' : 'default';
+      const color = item.status === SubmissionStatusEnum.Released.text ? 'success' : 'default';
       return {
-        text: submissionStatus[item.status as keyof typeof submissionStatus] || item.status,
+        text: SubmissionStatusTitleMapping[item.status as keyof typeof SubmissionStatusTitleMapping] || item.status,
         color,
       };
     }
@@ -99,21 +112,42 @@ export default defineComponent({
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
-    watch(options, () => {
+
+    function applySortOptions() {
+      const sortOrder = options.value.sortBy[0] ? options.value.sortBy[0].order : defaultSortOrder;
+      const sortBy = options.value.sortBy[0] ? options.value.sortBy[0].key : defaultSortBy;
+      submission.setSortOptions(sortBy, sortOrder);
+    }
+
+    applySortOptions();
+    const assignReviewerRequest = useRequest();
+
+    const statusUpdatingSubmissionId = ref<string | null>(null);
+    async function handleStatusChange(item: MetadataSubmissionRecordSlim, newStatus: string) {
+      statusUpdatingSubmissionId.value = item.id;
+      try {
+        await updateSubmissionStatus(item.id, newStatus);
+        await submission.refetch();
+      } finally {
+        statusUpdatingSubmissionId.value = null;
+      }
+    }
+
+    function updateTableOptions(newOptions: any) {
+      options.value = newOptions;
       submission.setPage(options.value.page);
-      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
-      submission.setSortOptions(options.value.sortBy[0], sortOrder);
-    }, { deep: true });
+      applySortOptions();
+    }
+
     watch(isTestFilter, () => {
       options.value.page = 1;
       submission.setPage(options.value.page);
-      const sortOrder = options.value.sortDesc[0] ? 'desc' : 'asc';
-      submission.setSortOptions(options.value.sortBy[0], sortOrder);
+      applySortOptions();
     }, { deep: true });
 
     function handleOpenDeleteDialog(item: MetadataSubmissionRecordSlim | null) {
       deleteDialogSubmission.value = item;
-      if (deleteDialogSubmission) {
+      if (deleteDialogSubmission.value) {
         isDeleteDialogOpen.value = true;
       }
     }
@@ -128,23 +162,90 @@ export default defineComponent({
       isDeleteDialogOpen.value = false;
     }
 
+    const reviewerOrcid = ref('');
+    function openReviewerDialog(item: MetadataSubmissionRecordSlim | null) {
+      isReviewerAssignmentDialogOpen.value = true;
+      selectedSubmission.value = item;
+    }
+
+    async function addReviewer() {
+      await assignReviewerRequest.request(async () => {
+        if (!selectedSubmission.value) {
+          return;
+        }
+        await addSubmissionRole(selectedSubmission.value.id, reviewerOrcid.value, 'reviewer');
+      });
+      isReviewerAssignmentDialogOpen.value = false;
+    }
+
+    // get all status transitions from the api
+    type TransitionsType = Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
+    const transitions = ref<TransitionsType>({
+      reviewer: {},
+      owner: {},
+    });
+    onMounted(async () => {
+      transitions.value = await api.getAllStatusTransitions() as unknown as TransitionsType;
+    });
+
+    function isReviewerForSubmission(item: MetadataSubmissionRecordSlim): boolean {
+      if (!currentUser.value?.orcid) {
+        return false;
+      }
+      return item.reviewers.includes(currentUser.value.orcid);
+    }
+
+    function isAnyContributorForSubmission(item: MetadataSubmissionRecordSlim): boolean {
+      if (!currentUser.value?.orcid) {
+        return false;
+      }
+      return item.contributors.includes(currentUser.value.orcid);
+    }
+
+    // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
+    function getFormattedStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
+      let dropdown_type: 'reviewer' | 'admin';
+      if (currentUser.value?.is_admin) {
+        dropdown_type = 'admin';
+      } else if (isReviewerForSubmission(item)) {
+        dropdown_type = 'reviewer';
+      } else {
+        return [];
+      }
+      return formatStatusTransitions(item.status, dropdown_type, transitions.value);
+    }
+
     return {
       HARMONIZER_TEMPLATES,
       isDeleteDialogOpen,
       isTestFilter,
       deleteDialogSubmission,
+      currentUser,
+      assignReviewerRequest,
+      isReviewerAssignmentDialogOpen,
+      isReviewerForSubmission,
+      reviewerOrcid,
       IconBar,
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
+      editablebyStatus,
       getStatus,
       resume,
+      addReviewer,
       handleDelete,
       handleOpenDeleteDialog,
+      openReviewerDialog,
       headers,
       options,
       submission,
       testFilterValues,
+      statusUpdatingSubmissionId,
+      getFormattedStatusTransitions,
+      handleStatusChange,
+      SubmissionStatusEnum,
+      isAnyContributorForSubmission,
+      updateTableOptions,
     };
   },
 });
@@ -156,14 +257,13 @@ export default defineComponent({
       offset-x
       left
     >
-      <template #activator="{on, attrs}">
+      <template #activator="{ props }">
         <v-btn
           color="primary"
           large
           class="mr-0"
           style="transform:translateY(-50%) rotate(-90deg); right: -50px; top: 50%; position: fixed; z-index: 100;"
-          v-bind="attrs"
-          v-on="on"
+          v-bind="props"
         >
           support
           <v-icon
@@ -203,18 +303,18 @@ export default defineComponent({
         <v-btn
           color="primary"
           class="ml-3"
-          outlined
+          variant="outlined"
           @click="createNewSubmission(true)"
         >
           <v-icon>mdi-plus</v-icon>
           Create Test Submission
         </v-btn>
         <v-tooltip right>
-          <template #activator="{ on }">
+          <template #activator="{ props }">
             <v-icon
               class="pl-2"
               color="primary"
-              v-on="on"
+              v-bind="props"
             >
               mdi-information
             </v-icon>
@@ -243,22 +343,23 @@ export default defineComponent({
           <v-select
             v-model="isTestFilter"
             :items="testFilterValues"
-            item-text="text"
+            item-title="text"
             item-value="val"
             label="Test Submissions"
+            variant="outlined"
             hide-details
           />
         </v-col>
       </v-row>
-      <v-card outlined>
-        <v-data-table
+      <v-card variant="outlined">
+        <v-data-table-server
+          v-model:items-per-page="submission.data.limit"
           :headers="headers"
           :items="submission.data.results.results"
-          :server-items-length="submission.data.results.count"
-          :options.sync="options"
+          :items-length="submission.data.results.count"
+          :items-per-page-options="[10, 20, 50]"
           :loading="submission.loading.value"
-          :items-per-page.sync="submission.data.limit"
-          :footer-props="{ itemsPerPageOptions: [10, 20, 50] }"
+          @update:options="updateTableOptions"
         >
           <template #[`item.study_name`]="{ item }">
             {{ item.study_name }}
@@ -280,40 +381,85 @@ export default defineComponent({
             />
           </template>
           <template #[`item.templates`]="{ item }">
-            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template].displayName).join(' + ') }}
+            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template]?.displayName).join(' + ') }}
           </template>
           <template #[`item.date_last_modified`]="{ item }">
             {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
           </template>
+          <template #[`header.status`]="{ column, getSortIcon, toggleSort }">
+            <div class="d-flex align-center ga-1">
+              <v-tooltip
+                v-if="currentUser?.is_admin || (currentUser?.orcid && submission.data.results.results.some(item => item.reviewers.includes(currentUser!.orcid)))"
+                location="bottom"
+              >
+                <template #activator="{ props }">
+                  <v-icon
+                    class="ml-1"
+                    color="grey"
+                    v-bind="props"
+                  >
+                    mdi-information-outline
+                  </v-icon>
+                </template>
+                <span>Reviewer can change status of assigned submissions. Some values are user-triggered statuses and cannot be changed or selected.</span>
+              </v-tooltip>
+              <span>
+                {{ column.title }}
+              </span>
+              <v-icon
+                class="v-data-table-header__sort-icon"
+                :icon="getSortIcon(column)"
+                @click="toggleSort(column)"
+              />
+            </div>
+          </template>
           <template #[`item.status`]="{ item }">
-            <v-chip
-              :color="getStatus(item).color"
-            >
-              {{ getStatus(item).text }}
-            </v-chip>
+            <div class="d-flex align-center">
+              <v-select
+                v-if="currentUser?.is_admin  || isReviewerForSubmission(item)"
+                :model-value="item.status"
+                :items="getFormattedStatusTransitions(item)"
+                :loading="statusUpdatingSubmissionId === item.id"s
+                density="compact"
+                variant="underlined"
+                hide-details
+                :disabled="item.status === SubmissionStatusEnum.InProgress.text"
+                @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
+              />
+              <v-chip
+                v-else
+                :color="getStatus(item as MetadataSubmissionRecord).color"
+              >
+                {{ getStatus(item as MetadataSubmissionRecord).text }}
+              </v-chip>
+            </div>
           </template>
           <template #[`item.action`]="{ item }">
             <div class="d-flex align-center">
               <v-spacer />
               <v-btn
-                small
+                size="small"
                 color="primary"
-                @click="() => resume(item)"
+                @click="() => resume(item as MetadataSubmissionRecord)"
               >
-                Resume
-                <v-icon class="pl-1">
-                  mdi-arrow-right-circle
-                </v-icon>
+                <span v-if="editablebyStatus(item.status) && isAnyContributorForSubmission(item)">
+                  Resume
+                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
+                </span>
+                <span v-else>
+                  <v-icon class="pl-1">mdi-eye</v-icon>
+                  View
+                </span>
               </v-btn>
               <v-menu
                 offset-x
               >
-                <template #activator="{ on }">
+                <template #activator="{ props }">
                   <v-btn
-                    text
+                    variant="text"
                     icon
                     class="ml-1"
-                    v-on="on"
+                    v-bind="props"
                   >
                     <v-icon>
                       mdi-dots-vertical
@@ -326,11 +472,17 @@ export default defineComponent({
                   >
                     <v-list-item-title>Delete</v-list-item-title>
                   </v-list-item>
+                  <v-list-item
+                    v-if="currentUser?.is_admin"
+                    @click="() => openReviewerDialog(item)"
+                  >
+                    <v-list-item-title>Assign Reviewer</v-list-item-title>
+                  </v-list-item>
                 </v-list>
               </v-menu>
             </div>
           </template>
-        </v-data-table>
+        </v-data-table-server>
       </v-card>
     </v-card>
     <v-dialog
@@ -355,7 +507,7 @@ export default defineComponent({
           <v-spacer />
           <v-btn
             class="ma-3"
-            @click="isDeleteDialogOpen=False"
+            @click="isDeleteDialogOpen = false"
           >
             Cancel
           </v-btn>
@@ -365,6 +517,55 @@ export default defineComponent({
             @click="handleDelete(deleteDialogSubmission)"
           >
             Delete
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog
+      v-model="isReviewerAssignmentDialogOpen"
+      max-width="600px"
+    >
+      <v-card>
+        <v-card-title class="text-h5">
+          Assign Reviewer
+        </v-card-title>
+        <v-card-text
+          class="pb-0"
+        >
+          <v-row
+            no-gutters
+          >
+            <legend>
+              Please enter the reviewer's ORCiD below. This will give the reviewer the ability to view, approve and run scripts on this submission.
+            </legend>
+            <v-col cols="4">
+              <v-text-field
+                v-model="reviewerOrcid"
+                class="mt-4"
+                label="ORCiD"
+                variant="outlined"
+              />
+            </v-col>
+          </v-row>
+        </v-card-text>
+        <v-card-actions
+          class="pt-0"
+        >
+          <v-btn
+            class="ma-3"
+            @click="isReviewerAssignmentDialogOpen = false"
+          >
+            Cancel
+          </v-btn>
+          <v-spacer />
+
+          <v-btn
+            color="primary"
+            class="mt-2"
+            :loading="assignReviewerRequest.loading.value"
+            @click="() => addReviewer()"
+          >
+            Assign Reviewer
           </v-btn>
         </v-card-actions>
       </v-card>

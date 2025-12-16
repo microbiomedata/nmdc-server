@@ -1,8 +1,8 @@
 import {
   Ref, ref, nextTick,
-} from '@vue/composition-api';
+} from 'vue';
 import { debounce } from 'lodash';
-import { DataHarmonizer, Footer } from 'data-harmonizer';
+import { DataHarmonizer, Footer } from '@microbiomedata/data-harmonizer';
 import {
   CellData,
   HARMONIZER_TEMPLATES,
@@ -78,7 +78,7 @@ export default class HarmonizerApi {
       if (!classDefinition) {
         return;
       }
-      // eslint-disable-next-line no-param-reassign
+       
       template.excelWorksheetName = classDefinition.annotations?.excel_worksheet_name?.value;
     });
 
@@ -107,7 +107,7 @@ export default class HarmonizerApi {
     this.dh.template.forEach((section: any) => {
       ret[section.title] = { '': column_ptr };
       section.children.forEach((column: any) => {
-        ret[section.title][column.title] = column_ptr;
+        ret[section.title]![column.title] = column_ptr;
         column_ptr += 1;
       });
     });
@@ -157,7 +157,7 @@ export default class HarmonizerApi {
           // as the autocomplete options. If the field has an enum range in the schema (i.e.
           // the field object has a `flatVocabulary` field here) then the options are restricted
           // to that set.
-          newCol.source = (_: any, next: (opts: any) => void) => {
+          newCol.source = (_: any, next: (_opts: any) => void) => {
             const dependentRowData = this._getSameRowCellData(GOLD_FIELDS[field].upstream);
             let options = this._getGoldOptions(dependentRowData);
             if (flatVocab) {

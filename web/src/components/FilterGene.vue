@@ -7,7 +7,7 @@ import {
   ref,
   watch,
   nextTick,
-} from '@vue/composition-api';
+} from 'vue';
 import { DataTableHeader } from 'vuetify';
 import {
   Condition, entityType, KeggTermSearchResponse,
@@ -17,6 +17,9 @@ import {
 } from '@/encoding';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import useRequest from '@/use/useRequest';
+import { computedAsync } from '@vueuse/core';
+
+export type GeneType = 'kegg' | 'cog' | 'pfam' | 'go';
 
 export default defineComponent({
 
@@ -30,17 +33,17 @@ export default defineComponent({
       required: true,
     },
     geneType: {
-      type: String,
+      type: String as PropType<GeneType>,
       default: 'kegg', // can be kegg, cog, or pfam
     },
   },
-
+  emits: ['select'],
   setup(props, { emit }) {
-    const selected = ref(null);
+    const selected = ref<string | null>(null);
     const conditions = toRef(props, 'conditions');
     const field = ref('id');
     const table = computed(() => {
-      const typeToTable: Record<string, entityType> = {
+      const typeToTable: Record<GeneType, entityType> = {
         kegg: 'kegg_function',
         cog: 'cog_function',
         pfam: 'pfam_function',
@@ -52,12 +55,28 @@ export default defineComponent({
 
     /** Autocomplete state */
     const { loading, request } = useRequest();
-    const items = ref([] as { text: string; value: string }[]);
     const search = ref('');
 
     async function geneSearch(): Promise<KeggTermSearchResponse[]> {
       return request(() => props.geneTypeParams.searchFunction(search.value || ''));
     }
+
+    async function getGeneResults() {
+      const resp = await geneSearch();
+      const results = resp
+        .map((v: KeggTermSearchResponse) => ({ text: getTermDisplayText(v.term, v.text), value: v.term }));
+      if (results.length === 0 && search.value && props.geneTypeParams.searchWithInputText(search.value)) {
+        results.push({ value: search.value, text: search.value });
+      }
+      return results;
+    }
+
+    const items = computedAsync(
+      async () => {
+        return getGeneResults();
+      },
+      [] as { text: string; value: string }[],
+    );
 
     function getTermDisplayText(term: string, text: string) {
       if (text) {
@@ -66,28 +85,26 @@ export default defineComponent({
       return term;
     }
 
+    function setSearch(val: string) {
+      search.value = val;
+    }
+
     watch(search, async () => {
-      const resp = (await geneSearch())
-        .map((v: KeggTermSearchResponse) => ({ text: getTermDisplayText(v.term, v.text), value: v.term }));
-      if (resp.length === 0 && search.value && props.geneTypeParams.searchWithInputText(search.value)) {
-        resp.push({ value: search.value, text: search.value });
-      }
-      items.value = resp;
+      items.value = await getGeneResults();
     });
 
     const headers: DataTableHeader[] = [
       {
-        text: 'Term',
+        title: 'Term',
         value: 'value',
         width: '300',
         sortable: true,
       },
       {
-        text: 'Remove',
+        title: 'Remove',
         value: 'remove',
         sortable: false,
         width: 90,
-        filterable: false,
       },
     ];
 
@@ -126,6 +143,7 @@ export default defineComponent({
       keggEncode,
       addTerm,
       removeTerm,
+      setSearch,
     };
   },
 });
@@ -150,19 +168,21 @@ export default defineComponent({
         v-model="selected"
         :loading="loading"
         :items="items"
-        :search-input.sync="search"
+        item-title="text"
+        item-value="value"
         :label="geneTypeParams.label"
         clearable
         class="px-3 grow"
-        dense
+        density="compact"
         hide-details
-        outlined
+        variant="outlined"
         flat
-        @change="addTerm"
+        @update:model-value="addTerm"
+        @update:search="setSearch"
       />
     </v-row>
     <v-data-table
-      dense
+      density="compact"
       height="355px"
       :items-per-page="10"
       :item-key="'facet'"
@@ -170,16 +190,16 @@ export default defineComponent({
       :headers="headers"
     >
       <template #[`item.value`]="{ item }">
-        <a :href="geneTypeParams.encodeFunction(item.value, true)">
+        <a :href="geneTypeParams.encodeFunction(item.value as string, true)">
           {{ item.value }}
         </a>
       </template>
       <template #[`item.remove`]="{ item }">
         <v-btn
-          x-small
+          size="x-small"
           depr
           color="error"
-          @click="removeTerm(item.value)"
+          @click="removeTerm(item.value as string)"
         >
           remove
         </v-btn>

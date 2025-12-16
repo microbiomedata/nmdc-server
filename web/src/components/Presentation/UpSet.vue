@@ -1,8 +1,9 @@
 <script>
-import { defineComponent, watchEffect, ref } from '@vue/composition-api';
+import { defineComponent, watchEffect, ref } from 'vue';
 import { select } from 'd3-selection';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { MultiomicsValue } from '@/encoding';
+import colors from '@/colors';
 
 export default defineComponent({
   props: {
@@ -27,8 +28,8 @@ export default defineComponent({
       required: true,
     },
   },
-
-  setup(props, { root, emit }) {
+  emits: ['select'],
+  setup(props, { emit }) {
     const svgRoot = ref(undefined);
 
     const margin = {
@@ -77,9 +78,9 @@ export default defineComponent({
 
       select(el).selectAll('g').remove();
 
-      const selectSamples = (event, values) => {
+      const selectSamples = (_event, values) => {
         const value = values.sets.reduce((prev, cur) => {
-          const next = prev | MultiomicsValue[cur]; //eslint-disable-line no-bitwise
+          const next = prev | MultiomicsValue[cur];  
           return next;
         }, 0);
         const conditions = [{
@@ -132,7 +133,7 @@ export default defineComponent({
         .attr('y1', (d, i) => y(i) + y.step() / 2)
         .attr('y2', (d, i) => y(i) + y.step() / 2)
         .attr('stroke-width', 3)
-        .attr('stroke', root.$vuetify.theme.currentTheme.blue);
+        .attr('stroke', colors.blue);
 
       svg.selectAll('circle')
         .data(setMembers)
@@ -140,7 +141,7 @@ export default defineComponent({
         .attr('cx', (d) => membershipX(d.set))
         .attr('cy', (d) => y(d.index) + y.step() / 2)
         .attr('r', 5)
-        .attr('fill', root.$vuetify.theme.currentTheme.blue);
+        .attr('fill', colors.blue);
 
       uniqueCounts.forEach((count, _i) => {
         const barX = scaleLinear()
@@ -165,7 +166,7 @@ export default defineComponent({
               .attr('y', (d, i) => y(i))
               .attr('width', (d) => barX(d.counts[count]))
               .attr('height', y.bandwidth())
-              .attr('fill', root.$vuetify.theme.currentTheme.blue)
+              .attr('fill', colors.blue)
               .classed('upset-bar-clickable', true)
               .on('click', selectSamples);
             parent.append('text')

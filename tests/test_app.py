@@ -1,8 +1,10 @@
 import json
+from csv import DictReader
 from importlib.metadata import version
 from itertools import product
 
 import pytest
+from fastapi import status
 from fastapi.testclient import TestClient
 from httpx import Response
 from sqlalchemy.orm.session import Session
@@ -112,12 +114,13 @@ def test_api_stats(db: Session, client: TestClient):
     """
     for i in range(10):
         data_object = fakes.DataObjectFactory(file_size_bytes=i + 1)
-        # Create some data objects that are not associated with any processes
-        fakes.DataObjectFactory(file_size_bytes=i + 1)
         fakes.BiosampleFactory()
         fakes.MetagenomeAnnotationFactory(outputs=[data_object])
         fakes.MetagenomeAssemblyFactory(outputs=[data_object])
         fakes.MetaproteomicAnalysisFactory(outputs=[data_object])
+
+        # Create some data objects that are not associated with any workflow executions
+        fakes.DataObjectFactory(file_size_bytes=i + 1)
 
     # Create some additional, interrelated studies.
     # Note: The database already contains 10 studies at this point, created elsewhere.
@@ -364,3 +367,62 @@ def test_gold_tree_complex_query(gold_tree_biosamples, client: TestClient):
         "0_0_1_1_0",
         "0_0_1_1_1",
     }
+
+
+def test_get_data_object_report_as_non_admin(db: Session, client: TestClient, logged_in_user):
+    response = client.request(method="GET", url="/api/admin/data_object_report")
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_get_data_object_report_normal(db: Session, client: TestClient, logged_in_admin_user):
+    # Load some example data objects.
+    dobj_a = fakes.DataObjectFactory(file_size_bytes=10, url="http://example.com/a")
+    dobj_b = fakes.DataObjectFactory(file_size_bytes=20, url="http://example.com/b")
+    dobj_c = fakes.DataObjectFactory(file_size_bytes=30, url="http://example.com/c")
+    fakes.DataObjectFactory(file_size_bytes=5, url="http://example.com/d")  # not a WFE output
+    fakes.MetagenomeAnnotationFactory(outputs=[dobj_a, dobj_b, dobj_c])
+    db.commit()
+
+    response = client.request(method="GET", url="/api/admin/data_object_report")
+    assert response.status_code == status.HTTP_200_OK
+
+    # Confirm the response payload is a TSV file having the data we expect.
+    column_names = ["data_object.id", "data_object.url", "data_object.file_size_bytes"]
+    reader = DictReader(response.text.splitlines(), fieldnames=column_names, delimiter="\t")
+    rows = [row for row in reader]
+
+    # Check the header row.
+    header_row = rows[0]
+    assert [str(k) for k in header_row.keys()] == column_names
+
+    # Check the data rows.
+    data_rows = rows[1:]  # get the data rows
+    assert len(data_rows) == 3
+    assert all(isinstance(row["data_object.id"], str) for row in data_rows)
+    assert {int(row["data_object.file_size_bytes"]) for row in data_rows} == {10, 20, 30}
+    assert all(row["data_object.url"].startswith("http://example.com") for row in data_rows)
+
+
+def test_get_data_object_report_urls_only(db: Session, client: TestClient, logged_in_admin_user):
+    # Load some example data objects.
+    dobj_a = fakes.DataObjectFactory(file_size_bytes=10, url="http://example.com/a")
+    dobj_b = fakes.DataObjectFactory(file_size_bytes=20, url="http://example.com/b")
+    dobj_c = fakes.DataObjectFactory(file_size_bytes=30, url="http://example.com/c")
+    fakes.DataObjectFactory(file_size_bytes=5, url="http://example.com/d")  # not a WFE output
+    fakes.MetagenomeAnnotationFactory(outputs=[dobj_a, dobj_b, dobj_c])
+    db.commit()
+
+    response = client.request(method="GET", url="/api/admin/data_object_report?variant=urls_only")
+    assert response.status_code == status.HTTP_200_OK
+    column_names = ["data_object.url"]
+    reader = DictReader(response.text.splitlines(), fieldnames=column_names, delimiter="\t")
+    rows = [row for row in reader]
+
+    # Check the header row.
+    header_row = rows[0]
+    assert [str(k) for k in header_row.keys()] == column_names
+
+    # Check the data rows.
+    data_rows = rows[1:]  # get the data rows
+    assert len(data_rows) == 3
+    assert all(row["data_object.url"].startswith("http://example.com") for row in data_rows)

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent } from '@vue/composition-api';
+import { computed, defineComponent } from 'vue';
 
 export default defineComponent({
   props: {
@@ -24,18 +24,17 @@ export default defineComponent({
 <template>
   <v-tooltip bottom>
     View documentation
-    <template #activator="{ on, attrs }">
+    <template #activator="{ props }">
       <a
         class="ml-2"
         :href="fullUrl"
         target="_blank"
         rel="noopener noreferrer"
-        v-bind="attrs"
-        v-on="on"
+        v-bind="props"
       >
         <v-btn
           color="primary"
-          text
+          variant="text"
           icon
         >
           <v-icon size="24px">

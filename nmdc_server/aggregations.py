@@ -189,6 +189,17 @@ def get_aggregation_summary(db: Session):
     )
 
 
+def get_wfe_output_data_objects(db: Session) -> List[models.DataObject]:
+    r"""
+    Returns a list of all `DataObject`s that are the output of any `WorkflowExecution`.
+    """
+
+    wfe_outputs_subquery = make_all_wfe_outputs_subquery(db)
+    wfe_outputs_inner_query = select(wfe_outputs_subquery.c.id)  # type: ignore
+    q = db.query(models.DataObject).filter(models.DataObject.id.in_(wfe_outputs_inner_query))
+    return q.all()
+
+
 def get_sankey_aggregation(
     db: Session,
     biosample_query: query.BiosampleQuerySchema,

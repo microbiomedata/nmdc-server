@@ -1,3 +1,4 @@
+ 
 // @ts-ignore
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
 
@@ -244,6 +245,8 @@ export interface MetadataSubmissionRecordSlim {
   created: string;
   is_test_submission: boolean;
   sample_count: number;
+  reviewers: string[];
+  contributors: string[];
 }
 
 export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
@@ -253,6 +256,8 @@ export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
   lock_updated: string;
   permission_level: string | null;
   source_client: 'submission_portal' | 'field_notes' | 'nmdc_edge' | null;
+  primary_study_image_url: string | null;
+  pi_image_url: string | null;
 }
 
 export interface PaginatedResponse<T> {
@@ -288,8 +293,32 @@ export interface SampleProtocol extends AcquisitionProtocol {
 
 export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
-export type PermissionLevelValues = 'viewer' | 'metadata_contributor' | 'editor' | 'owner';
+export type PermissionLevelValues = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
 
 export type SubmissionStatusKey = Extract<keyof typeof NmdcSchema.enums.submissionStatus.permissible_values, string>;
 
 export type SubmissionStatusTitle = typeof NmdcSchema.enums.submissionStatus.permissible_values[SubmissionStatusKey]['title'];
+
+export interface SignedUploadUrlRequest {
+  file_name: string;
+  file_size: number;
+  content_type: string;
+}
+
+export interface SignedUrl {
+  url: string;
+  object_name: string;
+  expiration: string;
+}
+
+export interface UploadCompleteRequest {
+  object_name: string;
+  file_size: number;
+  content_type: string;
+}
+
+export type SubmissionImageType = 'pi_image' | 'primary_study_image' | 'study_images';
+export interface StatusOption {
+  value: string;
+  title: string;
+}
