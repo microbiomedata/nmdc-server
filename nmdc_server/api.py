@@ -14,7 +14,6 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, 
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_schema.nmdc import SubmissionStatusEnum
-from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
@@ -51,31 +50,12 @@ router = APIRouter()
 logger = get_logger(__name__)
 
 
-class HealthResponse(BaseModel):
-    r"""A response containing system health information."""
-
-    # Raise a `ValidationError` if extra parameters are passed in when instantiating this class.
-    # Docs: https://docs.pydantic.dev/latest/api/config/#pydantic.config.ConfigDict.extra
-    model_config = ConfigDict(extra="forbid")
-
-    web_server: bool = Field(
-        ...,
-        title="Web server health",
-        description="Whether the web server is up and running",
-    )
-    database: bool = Field(
-        ...,
-        title="Database health",
-        description="Whether the web server can access the database server",
-    )
-
-
 # Get system health.
-@router.get("/health", name="Get system health", response_model=HealthResponse)
+@router.get("/health", name="Get system health", response_model=schemas.HealthResponse)
 def get_health(
     response: Response,
     db: Session = Depends(get_db),
-) -> HealthResponse:
+) -> schemas.HealthResponse:
     r"""Get system health information."""
 
     # Declare that our web server is healthy.
@@ -97,7 +77,7 @@ def get_health(
     )
 
     # Return a health response.
-    return HealthResponse(
+    return schemas.HealthResponse(
         web_server=is_web_server_healthy,
         database=is_database_healthy,
     )
