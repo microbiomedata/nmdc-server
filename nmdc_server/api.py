@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, 
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_schema.nmdc import SubmissionStatusEnum
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -47,6 +48,39 @@ from nmdc_server.table import Table
 router = APIRouter()
 
 logger = get_logger(__name__)
+
+
+# Get system health.
+@router.get("/health", name="Get system health", response_model=schemas.HealthResponse)
+def get_health(
+    response: Response,
+    db: Session = Depends(get_db),
+) -> schemas.HealthResponse:
+    r"""Get system health information."""
+
+    # Declare that our web server is healthy.
+    is_web_server_healthy = True
+
+    # Check whether our database connection is healthy.
+    is_database_healthy = False
+    try:
+        db.execute(text("SELECT 1"))
+        is_database_healthy = True
+    except Exception as e:
+        logger.exception(e)
+
+    # Set the HTTP response code accordingly.
+    response.status_code = (
+        status.HTTP_200_OK
+        if all([is_database_healthy, is_web_server_healthy])
+        else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
+
+    # Return a health response.
+    return schemas.HealthResponse(
+        web_server=is_web_server_healthy,
+        database=is_database_healthy,
+    )
 
 
 # get application settings
