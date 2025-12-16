@@ -3,6 +3,7 @@ import { defineComponent, ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
 import AttributeList from '@/components/Presentation/AttributeList.vue';
+import ClickToCopyText from '@/components/Presentation/ClickToCopyText.vue';
 
 import IndividualTitle from './IndividualTitle.vue';
 import useRequest from '@/use/useRequest.ts';
@@ -12,6 +13,7 @@ export default defineComponent({
 
   components: {
     AppBanner,
+    ClickToCopyText,
     AttributeList,
     IndividualTitle,
   },

@@ -82,7 +82,7 @@ export default defineComponent({
 
       const _study = await api.getStudy(props.id);
 
-      sampleCount.value = _study.children.reduce((prev, curr) => prev + curr.sample_count, _study.sample_count)
+      sampleCount.value = _study.children.reduce((prev, curr) => prev + curr.sample_count, _study.sample_count);
       omicsProcessingCounts.value = null;
       if (_study.omics_processing_counts !== null) {
         const counts: Record<string, number> = {};
