@@ -129,7 +129,7 @@ export default defineComponent({
               ])"
               validate-on-blur
               label="User Email *"
-              hint="User's email is required to continue."
+              hint="User email is required to continue."
               persistent-hint
               outlined
               dense
