@@ -71,7 +71,7 @@ class HealthResponse(BaseModel):
 
 
 # Get system health.
-@router.get("/health", name="Get system health")
+@router.get("/health", name="Get system health", response_model=HealthResponse)
 def get_health(
     response: Response,
     db: Session = Depends(get_db),
