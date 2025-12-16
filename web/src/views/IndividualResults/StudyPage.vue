@@ -209,10 +209,7 @@ export default defineComponent({
             cols="12"
             :md="study.image_url ? 8 : 12"
           >
-            <IndividualTitle
-              :item="study"
-              class="mb-8"
-            >
+            <IndividualTitle :item="study">
               <template
                 v-if="study.description"
                 #subtitle

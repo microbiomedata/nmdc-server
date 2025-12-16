@@ -22,7 +22,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <div>
+  <div class="mb-8">
     <div class="text-h4 mb-2">
       {{ item.annotations.title || item.name }}
     </div>
