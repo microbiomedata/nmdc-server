@@ -35,8 +35,8 @@ def test_get_health(client: TestClient):
     assert resp.status_code == 200
 
     body = resp.json()
-    assert body["is_web_server_healthy"] is True
-    assert body["is_database_healthy"] is True
+    assert body["web_server"] is True
+    assert body["database"] is True
 
 
 def test_get_settings(client: TestClient):
