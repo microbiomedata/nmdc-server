@@ -1,13 +1,27 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 
+/**
+ * AttributeRow is a second-level organization unit for detail pages. It
+ * provides a label (with optional hint) and a slot for content.
+ *
+ * See also: PageSection.vue for a first-level organization unit.
+ */
 export default defineComponent({
   props: {
+    /**
+     * Optional label for the attribute row. If a 'label' slot is provided, it
+     * will take precedence over this prop. If neither is provided, no label
+     * will be displayed.
+     */
     label: {
       type: String,
       required: false,
       default: '',
     },
+    /**
+     * Optional hint text to provide additional context for the label.
+     */
     hint: {
       type: String,
       required: false,
