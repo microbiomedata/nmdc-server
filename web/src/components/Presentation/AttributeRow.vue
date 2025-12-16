@@ -53,7 +53,7 @@ export default defineComponent({
         {{ label }}
         <div
           v-if="hint"
-          class="text--secondary text-caption"
+          class="text-medium-emphasis text-caption"
         >
           {{ hint }}
         </div>

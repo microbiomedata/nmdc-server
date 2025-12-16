@@ -75,7 +75,7 @@ export default defineComponent({
       <span class="pr-2">Study ID:</span>
       <router-link
         :to="{name: 'Study', params: { id: props.result.study_id }}"
-        class="pr-2 grey--text text--darken-2"
+        class="pr-2 text-grey-darken-2"
         v-text="props.result.study_id"
       />
       <template
@@ -86,7 +86,7 @@ export default defineComponent({
           v-for="id in props.result.alternate_identifiers"
           :key="id"
           :href="`https://identifiers.org/${id}`"
-          class="pr-2 grey--text text--darken-2"
+          class="pr-2 text-grey-darken-2"
           target="_blank"
           rel="noopener noreferrer"
         >{{ id }}</a>
