@@ -574,6 +574,14 @@ async function getBiosampleSource(id: string): Promise<BiosampleResultFromSource
   return data;
 }
 
+async function searchBiosampleSource(conditions: Condition[]) {
+  const { data } = await client.post<string[]>(
+    `biosample/search/source`,
+    { conditions }
+  );
+  return data;
+}
+
 async function getStudySource(id: string): Promise<StudyResultFromSource> {
   const { data } = await client.get<StudyResultFromSource>(`study/${id}/source`);
   return data;
@@ -1011,6 +1019,7 @@ const api = {
   getGoldEcosystemTree,
   me,
   searchBiosample,
+  searchBiosampleSource,
   searchOmicsProcessing,
   searchStudy,
   searchReadsQC,

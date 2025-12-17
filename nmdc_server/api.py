@@ -354,17 +354,36 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Biosample not found")
     return db_biosample
 
-# Biosample source data via the Runtime API
+# Get a single record of biosample source data via the Runtime API
+# based on the supplied ID
 @router.get(
     "/biosample/{biosample_id}/source",
     tags=["biosample"],
 )
 async def get_biosample_source(biosample_id: str):
-    biosample = BiosampleSearch()
-    source_biosample = biosample.get_record_by_id(biosample_id)
+    biosample_search = BiosampleSearch()
+    source_biosample = biosample_search.get_record_by_id(biosample_id)
     if source_biosample is None:
         raise HTTPException(status_code=404, detail="Biosample not found in source database")
     return source_biosample
+
+
+# Get a list of biosample source data via the Runtime API
+# based on supplied conditions
+@router.post(
+    "/biosample/search/source",
+    tags=["biosample"],
+)
+async def search_biosample_source(
+    biosample_query: query.BiosampleQuerySchema = query.BiosampleQuerySchema(),
+    db: Session = Depends(get_db),
+):
+    biosample_search = BiosampleSearch()
+    biosamples = biosample_query.query(db).all()
+    results = biosample_search.get_records_by_id([biosample.id for biosample in biosamples])
+    if not results:
+        raise HTTPException(status_code=404, detail="Could not retrieve source data for biosamples")
+    return results
 
 
 @router.get(
@@ -566,8 +585,8 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
     tags=["study"],
 )
 async def get_study_source(study_id: str):
-    study = StudySearch()
-    source_study = study.get_record_by_id(study_id)
+    study_search = StudySearch()
+    source_study = study_search.get_record_by_id(study_id)
     if source_study is None:
         raise HTTPException(status_code=404, detail="Study not found in the source database")
     return source_study

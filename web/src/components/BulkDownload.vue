@@ -71,6 +71,22 @@ export default defineComponent({
       api.initiateOrcidLogin();
     }
 
+    async function downloadSamplesMetadata() {
+      const samples = await api.searchBiosampleSource(stateRefs.conditions.value)
+      console.log(samples);
+      // .then((data) => {
+        //   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        //   const url = window.URL.createObjectURL(blob);
+        //   const link = document.createElement('a');
+        //   link.href = url;
+        //   link.setAttribute('download', 'samples_metadata.json');
+        //   document.body.appendChild(link);
+        //   link.click();
+        //   document.body.removeChild(link);
+        //   window.URL.revokeObjectURL(url);
+        // });
+    }
+
     watch(
       () => downloadMenuOpen.value,
       (newVal) => {
@@ -92,6 +108,7 @@ export default defineComponent({
       tab,
       downloadMenuOpen,
       treeMenuOpen,
+      downloadSamplesMetadata,
     };
   },
 });
@@ -230,7 +247,7 @@ export default defineComponent({
         <v-tabs-window-item value="metadata">
           <v-sheet class="pa-5">
             <v-btn
-              @click="termsDialog = true"
+              @click="downloadSamplesMetadata"
             >
               <v-icon class="pr-3">
                 mdi-download
