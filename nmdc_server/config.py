@@ -140,6 +140,18 @@ class Settings(BaseSettings):
     mongo_password: str = ""
 
     sentry_dsn: Optional[str] = None
+    r"""
+    The Sentry DSN (Data Source Name) you want the Sentry SDK to use. This URL is specific
+    to a Sentry project and can be obtained from the Sentry project's dashboard.
+    Docs: https://docs.sentry.io/concepts/key-terms/dsn-explainer/
+    """
+
+    sentry_environment: str = "unknown"
+    r"""
+    The name of the environment (e.g., "production", "development", "local", "unknown")
+    on Sentry within which you want data sent from this application instance to be stored.
+    Docs: https://docs.sentry.io/platforms/python/configuration/environments/
+    """
 
     # Enable/disable and configure tracing through environment
     # variables to lessen friction when fine-tuning settings
