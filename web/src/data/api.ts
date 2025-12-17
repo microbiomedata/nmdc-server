@@ -154,7 +154,7 @@ export interface DOI {
   provider: string,
 }
 
-export interface DOIMAP {
+export interface DoiInfo {
   info: Record<string, any>,
   category: string,
   provider: string,
@@ -168,7 +168,7 @@ export interface StudySearchResults extends BaseSearchResult {
   principal_investigator: PrincipalInvestigator;
   award_dois: DOI[];
   dataset_dois: DOI[],
-  doi_map: Record<string, DOIMAP>,
+  doi_map: Record<string, DoiInfo>,
   publication_dois: DOI[];
   omics_counts: {
     type: string;
@@ -177,7 +177,7 @@ export interface StudySearchResults extends BaseSearchResult {
   omics_processing_counts: {
     type: string;
     count: number;
-  }[];
+  }[] | null;
   gold_name: string;
   gold_description: string;
   scientific_objective: string;
@@ -185,8 +185,8 @@ export interface StudySearchResults extends BaseSearchResult {
   mod_date: string;
   open_in_gold: string;
   funding_sources?: string[];
-  protocol_link: string[];
-  gold_study_identifiers: string[];
+  protocol_link: string[] | null;
+  gold_study_identifiers: string[] | null;
   annotations: {
     insdc_bioproject_identifiers?: string[];
     title: string;
@@ -203,7 +203,7 @@ export interface StudySearchResults extends BaseSearchResult {
       orcid?: string;
       email?: string;
     };
-  }[];
+  }[] | null;
 }
 
 export interface ReadsQCResult extends DerivedDataResult {
