@@ -21,7 +21,7 @@ from nmdc_server.swagger_ui.helpers import load_template
 def initialize_sentry():
     """
     Initialize the Sentry SDK.
-    
+
     Reference: https://docs.sentry.io/concepts/key-terms/dsn-explainer/
     """
 
