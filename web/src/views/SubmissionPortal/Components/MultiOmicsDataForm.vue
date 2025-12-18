@@ -426,7 +426,6 @@ export default defineComponent({
                   persistent-hint
                   validate-on-blur
                   variant="outlined"
-                  dense
                   @change="revalidate"
                 >
                   <template #message="{ message }">
@@ -448,7 +447,6 @@ export default defineComponent({
                   item-value="value"
                   persistent-hint
                   variant="outlined"
-                  dense
                   clearable
                   :rules="doiProviderRules(i)"
                   @change="revalidate"
@@ -481,10 +479,9 @@ export default defineComponent({
           @change="revalidate"
         />
       </div>
-      <v-btn
+      <v-btn-grey
         v-if="multiOmicsForm.facilities.includes('EMSL') || multiOmicsForm.facilities.includes('JGI')"
         class="mb-4"
-        depressed
         :disabled="formRef?.isDisabled"
         @click="addAwardDoi"
       >
@@ -492,13 +489,11 @@ export default defineComponent({
           mdi-plus-circle
         </v-icon>
         Add Award DOI
-      </v-btn>
+      </v-btn-grey>
     </v-form>
     <strong>* indicates required field</strong>
     <div class="d-flex mt-5">
-      <v-btn
-        color="gray"
-        depressed
+      <v-btn-grey
         :to="{ name: 'Study Form' }"
         @click="revalidate"
       >
@@ -506,11 +501,10 @@ export default defineComponent({
           mdi-arrow-left-circle
         </v-icon>
         Go to Study Form
-      </v-btn>
+      </v-btn-grey>
       <v-spacer />
       <v-btn
         color="primary"
-        depressed
         :to="{ name: 'Sample Environment' }"
         @click="revalidate"
       >

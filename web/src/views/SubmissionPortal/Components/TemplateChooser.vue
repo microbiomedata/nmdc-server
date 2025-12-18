@@ -69,7 +69,6 @@ export default defineComponent({
       v-for="option in templates.filter((v) => v[1].status === 'published')"
       :key="option[0]"
       v-model="packageName"
-      dense
       hide-details
       :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
       :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
@@ -110,6 +109,7 @@ export default defineComponent({
       <v-alert
         v-else
         type="warning"
+        class="mb-4"
       >
         <p class="text-h5">
           Template choice disabled
@@ -130,20 +130,15 @@ export default defineComponent({
       This submission uses the "{{ templateListDisplayNames }}" template.
     </v-alert>
     <div class="d-flex">
-      <v-btn
-        color="gray"
-        depressed
-        :to="{ name: 'Multiomics Form' }"
-      >
+      <v-btn-grey :to="{ name: 'Multiomics Form' }">
         <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
         Go to Multiomics Form
-      </v-btn>
+      </v-btn-grey>
       <v-spacer />
       <v-btn
         color="primary"
-        depressed
         :to="{
           name: 'Submission Sample Editor',
         }"

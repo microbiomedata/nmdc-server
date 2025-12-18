@@ -60,6 +60,7 @@ function setUniqueCondition(
   field: string[],
   table: string[],
   conditions: Condition[],
+  push: boolean = false,
 ) {
   const others = state.conditions.filter((c) => (
     !field.includes(c.field)) || (!table.includes(c.table)
@@ -67,7 +68,7 @@ function setUniqueCondition(
   setConditions([
     ...others,
     ...conditions,
-  ]);
+  ], push);
 }
 
 /**

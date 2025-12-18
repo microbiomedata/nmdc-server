@@ -187,6 +187,8 @@ class SubmissionMetadataSchemaSlim(BaseModel):
     created: datetime
     is_test_submission: bool = False
     sample_count: int = 0
+    reviewers: List[str]
+    contributors: List[str]
 
 
 class SubmissionImagesObject(BaseModel):
@@ -221,6 +223,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
         owners = set(info.data.get("owners", []))
         editors = set(info.data.get("editors", []))
         viewers = set(info.data.get("viewers", []))
+        reviewers = set(info.data.get("reviewers", []))
         metadata_contributors = set(info.data.get("metadata_contributors", []))
 
         for contributor in metadata_submission.get("studyForm", {}).get("contributors", []):
@@ -234,6 +237,8 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
                     contributor["role"] = SubmissionEditorRole.metadata_contributor.value
                 elif orcid in viewers:
                     contributor["role"] = SubmissionEditorRole.viewer.value
+                elif orcid in reviewers:
+                    contributor["role"] = SubmissionEditorRole.reviewer.value
         return metadata_submission
 
     # Mypy doesn't understand the combined use of `@computed_field` and `@property`

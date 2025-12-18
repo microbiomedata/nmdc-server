@@ -86,6 +86,9 @@ export function urlify(text: string): string {
     urlified += `<a href="${match.url}" target="_blank" rel="noopener noreferrer">${match.text}</a>`;
     lastIndex = match.lastIndex;
   });
+  if (lastIndex < text.length) {
+    urlified += text.substring(lastIndex);
+  }
   return urlified;
 }
 

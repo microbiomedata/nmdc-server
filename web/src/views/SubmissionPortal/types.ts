@@ -246,6 +246,8 @@ export interface MetadataSubmissionRecordSlim {
   created: string;
   is_test_submission: boolean;
   sample_count: number;
+  reviewers: string[];
+  contributors: string[];
 }
 
 export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
@@ -317,3 +319,7 @@ export interface UploadCompleteRequest {
 }
 
 export type SubmissionImageType = 'pi_image' | 'primary_study_image' | 'study_images';
+export interface StatusOption {
+  value: string;
+  title: string;
+}

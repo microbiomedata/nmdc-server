@@ -16,23 +16,23 @@ import {
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import useClockGate from '@/use/useClockGate';
-import SampleListExpansion from '@/components/SampleListExpansion.vue';
 import AppBanner from '@/components/AppBanner.vue';
 import BulkDownload from '@/components/BulkDownload.vue';
 import EnvironmentVisGroup from './EnvironmentVisGroup.vue';
 import BiosampleVisGroup from './BiosampleVisGroup.vue';
 import SearchSidebar from './SearchSidebar.vue';
 import SearchHelpMenu from './SearchHelpMenu.vue';
+import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchResults.vue';
 
 export default defineComponent({
   name: 'SearchLayout',
 
   components: {
+    BiosampleSearchResults,
     AppBanner,
     BiosampleVisGroup,
     BulkDownload,
     EnvironmentVisGroup,
-    SampleListExpansion,
     SearchResults,
     SearchSidebar,
     SearchHelpMenu,
@@ -168,7 +168,7 @@ export default defineComponent({
     );
     const showChildren:Ref<any[]> = ref([]);
     function toggleChildren(value:StudySearchResults) {
-       
+
       showChildren.value.includes(value.id) ? showChildren.value.splice(showChildren.value.indexOf(value.id), 1) : showChildren.value.push(value.id);
     }
 
@@ -350,7 +350,7 @@ export default defineComponent({
                           :to="{ name: 'Study', params: { id: result.id } }"
                         >
                           <v-icon>
-                            mdi-open-in-new
+                            mdi-chevron-right
                           </v-icon>
                         </v-btn>
                       </v-list-item-action>
@@ -409,7 +409,7 @@ export default defineComponent({
                                 :to="{ name: 'Study', params: { id: result.id } }"
                               >
                                 <v-icon>
-                                  mdi-open-in-new
+                                  mdi-chevron-right
                                 </v-icon>
                               </v-btn>
                             </v-list-item-action>
@@ -533,7 +533,7 @@ export default defineComponent({
                           :to="{ name: 'Study', params: { id: result.id } }"
                         >
                           <v-icon>
-                            mdi-open-in-new
+                            mdi-chevron-right
                           </v-icon>
                         </v-btn>
                       </v-list-item-action>
@@ -592,7 +592,7 @@ export default defineComponent({
                                 :to="{ name: 'Study', params: { id: result.id } }"
                               >
                                 <v-icon>
-                                  mdi-open-in-new
+                                  mdi-chevron-right
                                 </v-icon>
                               </v-btn>
                             </v-list-item-action>
@@ -649,73 +649,10 @@ export default defineComponent({
                 </div>
               </div>
             </div>
-            <SearchResults
-              disable-navigate-on-click
-              :count="biosample.data.results.count"
-              :icon="biosampleType.icon"
-              :items-per-page="biosample.data.limit"
-              :results="biosample.data.results.results"
-              :page="biosample.data.pageSync"
-              :subtitle-key="'study_id'"
-              :loading="biosample.loading.value"
-              @set-page="biosample.setPage($event)"
-              @selected="$router.push({ name: 'Sample', params: { id: $event }})"
-              @set-items-per-page="biosample.setItemsPerPage($event)"
-            >
-              <template #subtitle="props">
-                <span class="pr-2">Study ID:</span>
-                <router-link
-                  :to="{name: 'Study', params: { id: props.result.study_id }}"
-                  class="pr-2 text-grey-darken-4"
-                >
-                  {{ props.result.study_id }}
-                </router-link>
-                <template
-                  v-if="props.result.alternate_identifiers.length || props.result.emsl_biosample_identifiers.length"
-                >
-                  <span class="pr-2">Sample Identifiers:</span>
-                  <a
-                    v-for="id in props.result.alternate_identifiers"
-                    :key="id"
-                    :href="`https://identifiers.org/${id}`"
-                    class="pr-2 text-grey-darken-4"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >{{ id }}</a>
-                  <span
-                    v-for="id in props.result.emsl_biosample_identifiers"
-                    :key="id"
-                  >
-                    {{ id }}
-                  </span>
-                </template>
-              </template>
-              <template #item-content="props">
-                <SampleListExpansion
-                  v-bind="{
-                    result: props.result,
-                    expanded: expandedOmicsDetails,
-                    loggedInUser,
-                    showBulk: dataObjectFilter.length > 0,
-                  }"
-                  @open-details="setExpanded(props.result.id, $event)"
-                />
-              </template>
-              <template #action-right="{ result }">
-                <v-list-item-action>
-                  <v-btn
-                    icon
-                    variant="plain"
-                    size="large"
-                    :to="{ name: 'Sample', params: { id: result.id } }"
-                  >
-                    <v-icon>
-                      mdi-open-in-new
-                    </v-icon>
-                  </v-btn>
-                </v-list-item-action>
-              </template>
-            </SearchResults>
+            <BiosampleSearchResults
+              :data-object-filter="dataObjectFilter"
+              :biosample-search="biosample"
+            />
             <h2 v-if="biosample.data.results.count === 0">
               No results for selected conditions in sample table
             </h2>

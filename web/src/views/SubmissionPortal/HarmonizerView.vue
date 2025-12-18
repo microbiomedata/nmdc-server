@@ -1,6 +1,6 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef,
+  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, inject,
 } from 'vue';
 import {
   clamp, debounce, flattenDeep, has, sum,
@@ -47,6 +47,7 @@ import {
   SubmissionStatusEnum,
   validForms,
 } from './store';
+import { AppBannerHeightKey } from './SubmissionView.vue';
 import SubmissionStepper from './Components/SubmissionStepper.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
@@ -334,7 +335,7 @@ export default defineComponent({
           const rowId = row[SCHEMA_ID];
           return environmentSlots.some((environmentSlot) => {
             const environmentRow = nextData[environmentSlot as string]?.findIndex((r) => r[SCHEMA_ID] === rowId);
-            return environmentRow && environmentRow >= 0;
+            return environmentRow !== undefined && environmentRow >= 0;
           });
         });
       }
@@ -462,14 +463,37 @@ export default defineComponent({
       validationSuccessSnackbar.value = Object.values(tabsValidated.value).every((value) => value);
     }
 
-    const canSubmit = computed(() => {
+    const submissionState = computed(() => {
       let allTabsValid = true;
       Object.values(tabsValidated.value).forEach((value) => {
         allTabsValid = allTabsValid && value;
       });
+      const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
+      const canSubmitByStatus = status.value === SubmissionStatusEnum.InProgress.text
+      const isSubmitted = submitCount.value > 0 || status.value === SubmissionStatusEnum.SubmittedPendingReview.text;
       validForms.harmonizerValid = allTabsValid && isOwner() && validForms.templatesValid;
-      return allTabsValid && isOwner() && validForms.templatesValid && validForms.studyFormValid.length === 0 && validForms.multiOmicsFormValid.length === 0;
+      let submitDisabledReason: string | null = null;
+      if (!allTabsValid) {
+        submitDisabledReason = 'All tabs must be validated before submission.';
+      } else if (validForms.templatesValid && validForms.studyFormValid.length === 0 && validForms.multiOmicsFormValid.length === 0) {
+        submitDisabledReason = 'Validation issues on other screens must be fixed.';
+      } else if (!hasSubmitPermission) {
+        submitDisabledReason = 'You do not have permission to submit this record.';
+      } else if (!canSubmitByStatus) {
+        submitDisabledReason = `Submission cannot be made while in status: ${status.value}.`;
+      }
+      return {
+        isSubmitted,
+        submitDisabledReason,
+        canSubmit: submitDisabledReason === null,
+      };
     });
+
+    const handleSubmitClick = () => {
+      if (submissionState.value.canSubmit) {
+        submitDialog.value = true;
+      }
+    };
 
     const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
       .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
@@ -495,7 +519,7 @@ export default defineComponent({
     watch(columnVisibility, () => {
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
-    
+
     watch(activeTabIndex, (newIndex) => {
       changeTemplate(newIndex);
     });
@@ -668,10 +692,15 @@ export default defineComponent({
         }
       }
     });
-    
+
+    // Get app banner height provided by SubmissionView. This will be used to correctly size
+    // the DataHarmonizer container, which needs a fixed height.
+    const appBannerHeight = inject(AppBannerHeightKey);
+
     return {
       user,
       APP_HEADER_HEIGHT,
+      appBannerHeight,
       HELP_SIDEBAR_WIDTH,
       TABS_HEIGHT,
       ColorKey,
@@ -680,7 +709,6 @@ export default defineComponent({
       harmonizerElement,
       jumpToModel,
       harmonizerApi,
-      canSubmit,
       tabsValidated,
       saveRecordRequest,
       submitLoading,
@@ -713,6 +741,7 @@ export default defineComponent({
       emptySheetSnackbar,
       isTestSubmission,
       StatusAlert,
+      submissionState,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -724,6 +753,7 @@ export default defineComponent({
       changeTemplate,
       canEditSampleMetadata,
       canEditSubmissionByStatus,
+      handleSubmitClick,
     };
   },
 });
@@ -731,7 +761,7 @@ export default defineComponent({
 
 <template>
   <div
-    :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT}px)`}"
+    :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
     <SubmissionStepper />
@@ -957,7 +987,10 @@ export default defineComponent({
     </div>
 
     <v-layout class="harmonizer-and-sidebar">
-      <v-tabs v-model="activeTabIndex" color="primary">
+      <v-tabs
+        v-model="activeTabIndex"
+        color="primary"
+      >
         <v-tooltip
           v-for="templateKey in templateList"
           :key="templateKey"
@@ -969,15 +1002,14 @@ export default defineComponent({
               v-bind="props"
             >
               <v-tab>
+                {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
                 <v-badge
                   :content="validationTotalCounts[templateKey] || '!'"
-                  floating
-                  location="top right"
-                  :value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
+                  max="99"
+                  inline
+                  :model-value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
                   :color="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) ? 'error' : 'warning'"
-                >
-                  {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
-                </v-badge>
+                />
               </v-tab>
             </div>
           </template>
@@ -1034,6 +1066,7 @@ export default defineComponent({
         v-model="sidebarOpen"
         :width="HELP_SIDEBAR_WIDTH"
         absolute
+        temporary
         location="right"
         class="z-above-data-harmonizer"
       >
@@ -1055,16 +1088,12 @@ export default defineComponent({
         />
       </div>
       <div class="d-flex ma-2">
-        <v-btn
-          color="gray"
-          depressed
-          :to="{ name: 'Sample Environment' }"
-        >
+        <v-btn-grey :to="{ name: 'Sample Environment' }">
           <v-icon class="pr-1">
             mdi-arrow-left-circle
           </v-icon>
           Go to previous step
-        </v-btn>
+        </v-btn-grey>
         <v-spacer />
         <div class="d-flex align-center">
           <span class="mr-1">Color key</span>
@@ -1089,11 +1118,11 @@ export default defineComponent({
               <v-btn
                 color="success"
                 depressed
-                :disabled="!canSubmit || status !== SubmissionStatusEnum.InProgress.text || submitCount > 0"
+                :disabled="!submissionState.canSubmit"
                 :loading="submitLoading"
-                @click="canEditSubmissionByStatus() ? submitDialog = true : null"
+                @click="handleSubmitClick"
               >
-                <span v-if="status === SubmissionStatusEnum.SubmittedPendingReview.text || submitCount">
+                <span v-if="submissionState.isSubmitted">
                   <v-icon>mdi-check-circle</v-icon>
                   Submitted
                 </span>
@@ -1143,43 +1172,43 @@ export default defineComponent({
                 </v-dialog>
               </v-btn>
             </div>
-          <div>
-            <v-dialog
-              v-model="missingTabsDialog"
-              width="auto"
-            >
-              <v-card>
-                <v-card-title>
-                  Not all tabs may be present!
-                </v-card-title>
-                <v-card-text>
-                  <div
-                    v-for="(item, index) in missingTabsText"
-                    :key="index"
-                    class="mb-2"
+            <div>
+              <v-dialog
+                v-model="missingTabsDialog"
+                width="auto"
+              >
+                <v-card>
+                  <v-card-title>
+                    Not all tabs may be present!
+                  </v-card-title>
+                  <v-card-text>
+                    <div
+                      v-for="(item, index) in missingTabsText"
+                      :key="index"
+                      class="mb-2"
+                    >
+                      {{ item }}
+                    </div>
+                  </v-card-text>
+                  <v-card-actions
+                    class="justify-center"
                   >
-                    {{ item }}
-                  </div>
-                </v-card-text>
-                <v-card-actions
-                  class="justify-center"
-                >
-                  <v-btn
-                    color="primary"
-                    class="mr-2"
-                    @click="missingTabsDialog = false"
-                  >
-                    Acknowledge
-                  </v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
-          </div>
+                    <v-btn
+                      color="primary"
+                      class="mr-2"
+                      @click="missingTabsDialog = false"
+                    >
+                      Acknowledge
+                    </v-btn>
+                  </v-card-actions>
+                </v-card>
+              </v-dialog>
+            </div>
           </template>
-          <span v-if="!canSubmit && canEditSubmissionByStatus()">
-            You must validate all tabs before submitting your study and metadata.
+          <span v-if="!submissionState.canSubmit">
+            {{ submissionState.submitDisabledReason }}
           </span>
-          <span v-if="canSubmit && canEditSubmissionByStatus()">
+          <span v-if="submissionState.canSubmit">
             Submit for NMDC review.
           </span>
         </v-tooltip>
@@ -1245,14 +1274,6 @@ html {
   height: 100%;
   flex-grow: 1;
   overflow: hidden;
-}
-
-.harmonizer-bottom-container {
-  position: fixed;
-  bottom: 0;
-  z-index: 1000;
-  background: #fff;
-  width: 100%;
 }
 
 .v-navigation-drawer__scrim {
