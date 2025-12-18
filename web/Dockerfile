@@ -1,4 +1,4 @@
-FROM node:lts as build-stage
+FROM node:lts AS build-stage
 
 # Define a "build argument" (i.e. a build-time parameter), which can be set via
 # the `--build-arg KEY=VALUE` argument to the `$ docker build` command.
@@ -18,7 +18,7 @@ COPY . .
 RUN yarn run build
 
 
-FROM nginx:1.28-alpine as production-stage
+FROM nginx:1.28-alpine AS production-stage
 LABEL org.opencontainers.image.source=https://github.com/microbiomedata/nmdc-server
 
 RUN rm -v /etc/nginx/nginx.conf
