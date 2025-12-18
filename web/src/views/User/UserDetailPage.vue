@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref } from '@vue/composition-api';
 import moment from 'moment';
 import { jwtDecode } from 'jwt-decode';
 import AppBanner from '@/components/AppBanner.vue';

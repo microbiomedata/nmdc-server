@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent } from 'vue';
+import { computed, defineComponent } from '@vue/composition-api';
 import { addressForm } from '../store';
 import { addressToString } from '../store/api';
 

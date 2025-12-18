@@ -9,7 +9,7 @@ import {
   toRef,
   useTemplateRef,
   watch,
-} from 'vue';
+} from '@vue/composition-api';
 import { stateRefs } from '@/store';
 import useRequest from '@/use/useRequest';
 import AppBanner from '@/components/AppBanner.vue';

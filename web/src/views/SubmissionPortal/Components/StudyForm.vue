@@ -250,7 +250,6 @@ export default defineComponent({
         dense
         class="my-2"
       />
-      <div class="d-flex">
       <div class="stack-md">
         <v-text-field
           v-model="studyForm.studyName"
