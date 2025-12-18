@@ -7,7 +7,8 @@ import {
   onMounted,
   ref,
   Ref,
-} from 'vue';
+  watch,
+} from '@vue/composition-api';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
@@ -28,6 +29,8 @@ import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
+import { api } from '@/data/api';
+import { User } from '@/types';
 import ImageUpload from './ImageUpload.vue';
 import StatusAlert from './StatusAlert.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
@@ -122,6 +125,48 @@ export default defineComponent({
       formRef.value.validate();
     });
 
+    const { user } = stateRefs;
+
+    const updateUser = async (value:string) => {
+      const update: User = {
+        id: user.value?.id as string,
+        orcid: user.value?.orcid as string,
+        name: user.value?.name as string,
+        email: value,
+        is_admin: user.value?.is_admin as boolean,
+      };
+      await api.updateUser(user.value?.id as string, update);
+    };
+
+    // const editEmail = ref(false);
+    // const isEmailValid = ref(false);
+
+    // const updateEmail = (email: string | undefined) => {
+    //   if (editEmail.value) {
+    //     if (email == null) {
+    //       return;
+    //     }
+    //     isEmailValid.value = /.+@.+\..+/.test(email);
+    //     if (isEmailValid.value) {
+    //       updateUser(email);
+    //       editEmail.value = !editEmail.value;
+    //     }
+    //   } else {
+    //     editEmail.value = !editEmail.value;
+    //   }
+    // };
+
+    const submitterEmail = ref(user.value?.email || '');
+
+    studyForm.submitterEmail = submitterEmail.value;
+
+    watch(submitterEmail, async (newEmail) => {
+      if (newEmail && /.+@.+\..+/.test(newEmail)) {
+        await updateUser(newEmail);
+        studyForm.submitterEmail = newEmail;
+      }
+    });
+
     return {
       formRef,
       studyForm,
@@ -142,6 +187,12 @@ export default defineComponent({
       currentUserOrcid,
       permissionHelpText,
       checkDoiFormat,
+      // editEmail,
+      // updateEmail,
+      // isEmailValid,
+      submitterEmail,
+      user,
+      updateUser,
       primaryStudyImageUrl,
       piImageUrl,
       canEditSubmissionByStatus,
@@ -173,6 +224,33 @@ export default defineComponent({
       style="max-width: 1000px;"
       :disabled="!canEditSubmissionMetadata()"
     >
+      <v-text-field
+        v-model="studyForm.studyName"
+        :rules="requiredRules('Name is required',[
+          v => v.length > 6 || 'Study name too short',
+        ])"
+        validate-on-blur
+        label="Study Name *"
+        :hint="Definitions.studyName"
+        persistent-hint
+        outlined
+        dense
+        class="my-2"
+      />
+      <v-text-field
+        v-model="studyForm.submitterEmail"
+        :rules="requiredRules('E-mail is required',[
+          v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+        ])"
+        validate-on-blur
+        label="Submitter E-mail *"
+        :hint="Definitions.submitterEmail"
+        persistent-hint
+        outlined
+        dense
+        class="my-2"
+      />
+      <div class="d-flex">
       <div class="stack-md">
         <v-text-field
           v-model="studyForm.studyName"
