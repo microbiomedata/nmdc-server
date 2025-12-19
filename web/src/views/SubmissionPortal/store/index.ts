@@ -1,4 +1,4 @@
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from 'vue';
@@ -85,7 +85,7 @@ function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_typ
 
   // Return allowed transitions
   return Object.keys(SubmissionStatusTitleMapping)
-    .filter((key) => statusesToShow.includes(key))
+    .filter((key) => statusesToShow.includes(key as SubmissionStatusKey))
     .map((key) => ({
       value: key,
       title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],

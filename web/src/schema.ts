@@ -1,5 +1,4 @@
-//@ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
 const doiProviderValues = Object.values(NmdcSchema.enums.DoiProviderEnum.permissible_values)
   .map((pv: any) => ({

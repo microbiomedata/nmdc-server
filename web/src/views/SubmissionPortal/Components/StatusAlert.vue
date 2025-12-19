@@ -4,11 +4,12 @@ import {
   SubmissionStatusTitleMapping,
   status,
 } from '../store';
+import { SubmissionStatusKey } from '@/views/SubmissionPortal/types.ts';
 
 export default defineComponent({
   components: {},
   setup() {
-    const message = ref(`This submission has status "${SubmissionStatusTitleMapping[status.value]}" and cannot be edited.`);
+    const message = ref(`This submission has status "${SubmissionStatusTitleMapping[status.value as SubmissionStatusKey]}" and cannot be edited.`);
     return {
       message,
       status,

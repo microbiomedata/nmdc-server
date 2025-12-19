@@ -181,8 +181,8 @@ export default defineComponent({
     // get all status transitions from the api
     type TransitionsType = Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
     const transitions = ref<TransitionsType>({
-      reviewer: {},
-      owner: {},
+      reviewer: {} as Record<SubmissionStatusKey, SubmissionStatusKey[]>,
+      owner: {} as Record<SubmissionStatusKey, SubmissionStatusKey[]>,
     });
     onMounted(async () => {
       transitions.value = await api.getAllStatusTransitions() as unknown as TransitionsType;
@@ -212,7 +212,7 @@ export default defineComponent({
       } else {
         return [];
       }
-      return formatStatusTransitions(item.status, dropdown_type, transitions.value);
+      return formatStatusTransitions(item.status as SubmissionStatusKey, dropdown_type, transitions.value);
     }
 
     return {
@@ -416,10 +416,10 @@ export default defineComponent({
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
               <v-select
-                v-if="currentUser?.is_admin  || isReviewerForSubmission(item)"
+                v-if="currentUser?.is_admin || isReviewerForSubmission(item)"
                 :model-value="item.status"
                 :items="getFormattedStatusTransitions(item)"
-                :loading="statusUpdatingSubmissionId === item.id"s
+                :loading="statusUpdatingSubmissionId === item.id"
                 density="compact"
                 variant="underlined"
                 hide-details

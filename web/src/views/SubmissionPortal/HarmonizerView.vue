@@ -508,7 +508,7 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
-      await submit((route.params as { id: string }).id, SubmissionStatusEnum.SubmittedPendingReview.text);
+      await submit((route.params as { id: string }).id, 'SubmittedPendingReview');
       status.value = SubmissionStatusEnum.SubmittedPendingReview.text;
       submitDialog.value = false;
     });
