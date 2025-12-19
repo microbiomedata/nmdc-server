@@ -582,6 +582,16 @@ async function searchBiosampleSource(conditions: Condition[]) {
   return data;
 }
 
+async function getMetadataZip(conditions: Condition[], endpoints: string[]) {
+  const { data } = await client.post<any>(
+    `download_metadata`,
+    { conditions, endpoints },
+    { responseType: 'blob' }
+
+  );
+  return data;
+}
+
 async function getStudySource(id: string): Promise<StudyResultFromSource> {
   const { data } = await client.get<StudyResultFromSource>(`study/${id}/source`);
   return data;
@@ -1013,6 +1023,7 @@ const api = {
   getEnvironmentSankeyAggregation,
   getEnvoTrees,
   getFacetSummary,
+  getMetadataZip,
   getStudy,
   getStudySource,
   getSubmissionSchema,

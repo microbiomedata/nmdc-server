@@ -91,3 +91,14 @@ export function downloadJson(json: object, filename: string) {
   downloadAnchorNode.click();
   downloadAnchorNode.remove();
 }
+
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob);
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute('href', url);
+  downloadAnchorNode.setAttribute('download', filename);
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+  window.URL.revokeObjectURL(url);
+}

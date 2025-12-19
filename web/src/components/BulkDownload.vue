@@ -7,6 +7,8 @@ import DownloadDialog from '@/components/DownloadDialog.vue';
 import useBulkDownload from '@/use/useBulkDownload';
 import { humanFileSize } from '@/data/utils';
 import { api } from '@/data/api';
+import { downloadBlob } from '@/utils';
+// import { downloadJson } from '@/utils';
 
 export default defineComponent({
 
@@ -30,6 +32,7 @@ export default defineComponent({
     const downloadMenuOpen = ref(false);
     const treeMenuOpen = ref(false);
     const tab = ref('one');
+    const metadataDownloadSelected = ref<string[]>([]);
 
     const {
       loading,
@@ -46,7 +49,7 @@ export default defineComponent({
       return `${labelString})`;
     }
 
-    const options = computed(() => {
+    const dataProductOptions = computed(() => {
       if (!downloadOptions.value || typeof downloadOptions.value !== 'object') {
         return [];
       }
@@ -61,6 +64,17 @@ export default defineComponent({
         }));
     });
 
+    const metadataOptions = computed(() => [
+      {
+        id: 'biosamples',
+        label: 'Biosamples',
+      },
+      {
+        id: 'studies',
+        label: 'Studies',
+      },
+    ]);
+
     async function createAndDownload() {
       const val = await download();
       termsDialog.value = false;
@@ -72,19 +86,9 @@ export default defineComponent({
     }
 
     async function downloadSamplesMetadata() {
-      const samples = await api.searchBiosampleSource(stateRefs.conditions.value)
-      console.log(samples);
-      // .then((data) => {
-        //   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-        //   const url = window.URL.createObjectURL(blob);
-        //   const link = document.createElement('a');
-        //   link.href = url;
-        //   link.setAttribute('download', 'samples_metadata.json');
-        //   document.body.appendChild(link);
-        //   link.click();
-        //   document.body.removeChild(link);
-        //   window.URL.revokeObjectURL(url);
-        // });
+      const endpoints = metadataDownloadSelected.value;
+      const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints);
+      downloadBlob(blob, 'metadata.zip');
     }
 
     watch(
@@ -98,7 +102,8 @@ export default defineComponent({
 
     return {
       bulkDownloadSelected: stateRefs.bulkDownloadSelected,
-      options,
+      dataProductOptions,
+      metadataOptions,
       loading,
       downloadSummary,
       termsDialog,
@@ -109,6 +114,7 @@ export default defineComponent({
       downloadMenuOpen,
       treeMenuOpen,
       downloadSamplesMetadata,
+      metadataDownloadSelected,
     };
   },
 });
@@ -150,9 +156,46 @@ export default defineComponent({
       >
         <v-tab value="data-products">
           Data Products
+          <v-tooltip
+            location="top"
+            min-width="300px"
+            max-width="300px"
+          >
+            <template #activator="{ props }">
+              <v-icon
+                class="ml-2"
+                size="small"
+                v-bind="props"
+              >
+                mdi-help-circle
+              </v-icon>
+            </template>
+            <span>
+              Choose a group of files to download based on file type
+              from the currently filtered search results.
+            </span>
+          </v-tooltip>
         </v-tab>
         <v-tab value="metadata">
           Metadata
+          <v-tooltip
+            location="top"
+            min-width="300px"
+            max-width="300px"
+          >
+            <template #activator="{ props }">
+              <v-icon
+                class="ml-2"
+                size="small"
+                v-bind="props"
+              >
+                mdi-help-circle
+              </v-icon>
+            </template>
+            <span>
+              Download metadata as JSON for the currently filtered search results.
+            </span>
+          </v-tooltip>
         </v-tab>
       </v-tabs>
       <v-divider />
@@ -165,44 +208,18 @@ export default defineComponent({
             variant="flat"
             class="pa-3 d-flex flex-column"
           >
-            <div class="d-flex flex-row align-center justify-space-between mb-2">
-              <div class="d-flex flex-row align-center mr-3">
-                <div class="pr-2 text-caption font-weight-bold">
-                  Bulk Download
-                </div>
-                <v-tooltip
-                  left
-                  nudge-bottom="20px"
-                  min-width="300px"
-                  max-width="300px"
-                >
-                  <template #activator="{ props }">
-                    <v-icon
-                      size="small"
-                      v-bind="props"
-                    >
-                      mdi-help-circle
-                    </v-icon>
-                  </template>
-                  <span>
-                    Choose a group of files to download based on file type
-                    from the currently filtered search results.
-                  </span>
-                </v-tooltip>
-              </div>
-              <span
-                class="text-caption font-weight-bold white--text"
-              >
-                <template v-if="downloadSummary.count === 0">
-                  No files selected
-                </template>
-                <template v-else>
-                  Download {{ downloadSummary.count }} files
-                  from {{ searchResultCount }} sample search results.
-                  (Download archive size {{ humanFileSize(downloadSummary.size) }})
-                </template>
-              </span>
-            </div>
+            <span
+              class="text-caption font-weight-bold"
+            >
+              <template v-if="downloadSummary.count === 0">
+                No files selected
+              </template>
+              <template v-else>
+                Download {{ downloadSummary.count }} files
+                from {{ searchResultCount }} sample search results.
+                (Download archive size {{ humanFileSize(downloadSummary.size) }})
+              </template>
+            </span>
             <div>
               <div @click.stop>
                 <Treeselect
@@ -212,8 +229,8 @@ export default defineComponent({
                   multiple
                   value-consists-of="LEAF_PRIORITY"
                   open-direction="below"
-                  :options="options"
-                  placeholder="Select file type"
+                  :options="dataProductOptions"
+                  placeholder="Select file types"
                   z-index="2001"
                   @open="treeMenuOpen = true"
                   @close="treeMenuOpen = false"
@@ -233,7 +250,7 @@ export default defineComponent({
                     <v-icon class="pr-3">
                       mdi-download
                     </v-icon>
-                    Download ZIP
+                    Download Data Products ZIP
                   </v-btn>
                 </template>
                 <DownloadDialog
@@ -246,13 +263,29 @@ export default defineComponent({
         </v-tabs-window-item>
         <v-tabs-window-item value="metadata">
           <v-sheet class="pa-5">
+            <div @click.stop>
+              <Treeselect
+                v-model="metadataDownloadSelected"
+                append-to-body
+                class="flex-1-1-0"
+                multiple
+                value-consists-of="LEAF_PRIORITY"
+                open-direction="below"
+                :options="metadataOptions"
+                placeholder="Select metadata types"
+                z-index="2001"
+                @open="treeMenuOpen = true"
+                @close="treeMenuOpen = false"
+              />
+            </div>
             <v-btn
+              class="mt-3"
               @click="downloadSamplesMetadata"
             >
               <v-icon class="pr-3">
                 mdi-download
               </v-icon>
-              Samples JSON
+              Download Metadata Zip
             </v-btn>
           </v-sheet>
         </v-tabs-window-item>
@@ -263,7 +296,7 @@ export default defineComponent({
 
 <style scoped>
 .download-menu {
-  width: 500px;
+  width: 550px;
 }
 
 .vue3-treeselect {

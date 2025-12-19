@@ -821,6 +821,7 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
 
 class BiosampleQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
+    endpoints: List[str] = []
 
     @property
     def table(self) -> Table:
@@ -1037,6 +1038,10 @@ class Paginated(BaseModel, Generic[T]):
 
 class SearchQuery(BaseModel):
     conditions: List[ConditionSchema] = []
+
+
+class MultiSearchQuery(SearchQuery):
+    endpoints: List[str] = []
 
 
 class ConditionResultSchema(SimpleConditionSchema):
