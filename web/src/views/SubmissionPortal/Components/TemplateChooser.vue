@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed, watch } from 'vue';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   templateList,
@@ -9,6 +9,7 @@ import {
   canEditSubmissionByStatus,
   SubmissionStatusTitleMapping,
   status,
+  validForms,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
@@ -20,6 +21,14 @@ export default defineComponent({
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
       .join(' + '));
+
+    watch(packageName, () => {
+      if (packageName.value.length === 0) {
+        validForms.templatesValid = false;
+      } else {
+        validForms.templatesValid = true;
+      }
+    });
 
     return {
       packageName,
@@ -65,7 +74,7 @@ export default defineComponent({
       :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
       :value="option[0]"
     />
-    <p class="grey--text text--darken-1 my-5">
+    <p class="text-grey-darken-1 my-5">
       Under development
     </p>
     <v-checkbox
@@ -125,17 +134,16 @@ export default defineComponent({
         <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
-        Go to previous step
+        Go to Multiomics Form
       </v-btn-grey>
       <v-spacer />
       <v-btn
         color="primary"
-        :disabled="packageName.length === 0"
         :to="{
           name: 'Submission Sample Editor',
         }"
       >
-        Go to next step
+        Go to Data Harmonizer
         <v-icon class="pl-2">
           mdi-arrow-right-circle
         </v-icon>

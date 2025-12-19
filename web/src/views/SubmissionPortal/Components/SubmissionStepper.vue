@@ -1,107 +1,82 @@
 <script lang="ts">
 import {
-  computed, defineComponent,
+  computed,
+  defineComponent,
 } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-
-const StepperMap: Record<string | number, number | string> = {
-  'Submission Home': 1,
-  1: 'Submission Home',
-
-  'Study Form': 2,
-  2: 'Study Form',
-
-  'Multiomics Form': 3,
-  3: 'Multiomics Form',
-
-  'Sample Environment': 4,
-  4: 'Sample Environment',
-
-  'Submission Sample Editor': 5,
-  5: 'Submission Sample Editor',
-
-  // 'Validate And Submit': 5,
-  // 5: 'Validate And Submit',
-};
+import { validForms } from '../store';
+import { useRouter } from 'vue-router';
 
 export default defineComponent({
   setup() {
+    const pages = computed(() => [
+      {
+        title: 'Study Form',
+        pageName: 'Study Form',
+        icon: validForms.studyFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle',
+      },
+      {
+        title: 'Multiomics Form',
+        pageName: 'Multiomics Form',
+        icon: validForms.multiOmicsFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle',
+      },
+      {
+        title: 'Sample Environment',
+        pageName: 'Sample Environment',
+        icon: validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle',
+      },
+      {
+        title: 'Data Harmonizer',
+        pageName: 'Submission Sample Editor',
+        icon: validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle',
+      },
+      {
+        title: 'Submission Summary',
+        pageName: 'Submission Summary',
+        icon: 'mdi-text-box-outline',
+      },
+    ]);
     const router = useRouter();
-    const route = useRoute();
-    
-    const step = computed(() => {
-      const mappedStep = StepperMap[route.name as string || ''];
-      return typeof mappedStep === 'number' ? mappedStep : 0;
-    });
 
-    function gotoStep(newstep: number) {
-      const routeName = StepperMap[newstep];
-      if (newstep < step.value && typeof routeName === 'string') {
-        router.push({ name: routeName as any });
-      }
+    function gotoPage(newPage: string) {
+      router?.push({name: newPage});
     }
 
-    return { step, gotoStep, StepperMap };
+    return {
+      gotoPage,
+      pages,
+    };
   },
 });
 </script>
 
 <template>
-  <v-stepper
-    :model-value="step"
-    bg-color="grey-darken-4"
-    class="mb-3 flex-shrink-0 rounded-0"
+  <v-navigation-drawer
+    app
+    permanent
+    clipped
   >
-    <v-stepper-header>
-      <v-stepper-item
-        :value="1"
-        :complete="1 < step"
-        :editable="1 < step"
-        title="Home"
-        subtitle="Begin or resume a submission."
-        color="primary"
-        @click="gotoStep(1)"
+    <v-list-item subtitle="Click to go to">
+      <template #title>
+        <div class="text-h6">
+          Pages
+        </div>
+      </template>
+    </v-list-item>
+
+    <v-divider />
+
+    <v-list
+      dense
+      nav
+    >
+      <v-list-item
+        v-for="item in pages"
+        :key="item.title"
+        link
+        :append-icon="item.icon"
+        :title="item.title"
+        @click="gotoPage(item.pageName)"
       />
-      <v-divider />
-      <v-stepper-item
-        :value="2"
-        :complete="2 < step"
-        :editable="2 < step"
-        title="Study Information"
-        subtitle="Input Form"
-        color="primary"
-        @click="gotoStep(2)"
-      />
-      <v-divider />
-      <v-stepper-item
-        :value="3"
-        :complete="3 < step"
-        :editable="3 < step"
-        title="Multi-omics Data"
-        subtitle="Input Form"
-        color="primary"
-        @click="gotoStep(3)"
-      />
-      <v-divider />
-      <v-stepper-item
-        :value="4"
-        :complete="4 < step"
-        :editable="4 < step"
-        title="Sample Environment"
-        subtitle="Choose MIxS Extension"
-        color="primary"
-        @click="gotoStep(4)"
-      />
-      <v-divider />
-      <v-stepper-item
-        :value="5"
-        :complete="5 < step"
-        :editable="5 < step"
-        title="Customize Metadata Export"
-        subtitle="DataHarmonizer sample validation"
-        color="primary"
-        @click="gotoStep(5)"
-      />
-    </v-stepper-header>
-  </v-stepper>
+    </v-list>
+  </v-navigation-drawer>
 </template>
