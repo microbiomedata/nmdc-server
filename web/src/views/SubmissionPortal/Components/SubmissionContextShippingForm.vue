@@ -18,6 +18,7 @@ import {
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
+import moment from 'moment';
 
 export default defineComponent({
   components: { SubmissionContextShippingSummary },
@@ -77,6 +78,13 @@ export default defineComponent({
       expectedShippingDate.value = undefined;
     }
 
+    function formatShippingDate (date: string | Date | null | undefined): string {
+      if(!date) {
+        return '';
+      }
+      return moment(date).format('YYYY-MM-DD');
+    }
+
     return {
       addressFormRef,
       addressForm,
@@ -93,6 +101,7 @@ export default defineComponent({
       canEditSubmissionMetadata,
       requiredRules,
       handleExpectedShippingDateClear,
+      formatShippingDate,
     };
   },
 });
@@ -247,7 +256,7 @@ export default defineComponent({
               >
                 <template #activator="{ props }">
                   <v-text-field
-                    :model-value="expectedShippingDate?.toLocaleDateString()"
+                    :model-value="formatShippingDate(expectedShippingDate)"
                     :rules="requiredRules('Expected Shipping Date is required', [])"
                     label="Expected Shipping Date *"
                     prepend-icon="mdi-calendar"
