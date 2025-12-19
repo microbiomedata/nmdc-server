@@ -102,10 +102,8 @@ export default defineComponent({
                 v-for="(item, i) in studyFormContent"
                 :key="i"
                 :value="item"
+                prepend-icon="mdi-circle-small"
               >
-                <v-list-item-icon>
-                  <v-icon> mdi-circle-small </v-icon>
-                </v-list-item-icon>
                 {{ item }}
               </v-list-item>
             </v-list>
@@ -143,10 +141,8 @@ export default defineComponent({
                 v-for="(item, i) in multiOmicsContent"
                 :key="i"
                 :value="item"
+                prepend-icon="mdi-circle-small"
               >
-                <v-list-item-icon>
-                  <v-icon> mdi-circle-small </v-icon>
-                </v-list-item-icon>
                 {{ item }}
               </v-list-item>
             </v-list>

@@ -74,7 +74,7 @@ export default defineComponent({
       :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
       :value="option[0]"
     />
-    <p class="grey--text text--darken-1 my-5">
+    <p class="text-grey-darken-1 my-5">
       Under development
     </p>
     <v-checkbox

@@ -36,9 +36,9 @@ export default defineComponent({
       },
     ]);
     const router = useRouter();
-    
+
     function gotoPage(newPage: string) {
-      router?.push({ name: newPage });
+      router?.push({name: newPage});
     }
 
     return {
@@ -55,15 +55,12 @@ export default defineComponent({
     permanent
     clipped
   >
-    <v-list-item>
-      <v-list-item-content>
-        <v-list-item-title class="text-h6">
+    <v-list-item subtitle="Click to go to">
+      <template #title>
+        <div class="text-h6">
           Pages
-        </v-list-item-title>
-        <v-list-item-subtitle>
-          Click to go to
-        </v-list-item-subtitle>
-      </v-list-item-content>
+        </div>
+      </template>
     </v-list-item>
 
     <v-divider />
@@ -76,16 +73,10 @@ export default defineComponent({
         v-for="item in pages"
         :key="item.title"
         link
+        :append-icon="item.icon"
+        :title="item.title"
         @click="gotoPage(item.pageName)"
-      >
-        <v-list-item-icon>
-          <v-icon>{{ item.icon }}</v-icon>
-        </v-list-item-icon>
-
-        <v-list-item-content>
-          <v-list-item-title>{{ item.title }}</v-list-item-title>
-        </v-list-item-content>
-      </v-list-item>
+      />
     </v-list>
   </v-navigation-drawer>
 </template>
