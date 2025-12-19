@@ -475,7 +475,7 @@ export default defineComponent({
       let submitDisabledReason: string | null = null;
       if (!allTabsValid) {
         submitDisabledReason = 'All tabs must be validated before submission.';
-      } else if (validForms.templatesValid && validForms.studyFormValid.length === 0 && validForms.multiOmicsFormValid.length === 0) {
+      } else if (validForms.templatesValid || validForms.studyFormValid.length === 0 || validForms.multiOmicsFormValid.length === 0) {
         submitDisabledReason = 'Validation issues on other screens must be fixed.';
       } else if (!hasSubmitPermission) {
         submitDisabledReason = 'You do not have permission to submit this record.';
