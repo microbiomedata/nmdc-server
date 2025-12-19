@@ -139,9 +139,9 @@ export default defineComponent({
     const missingTabsText = computed(() => {
       const text: Array<string> = [];
       if (validForms.templatesValid === false) {
-        text.push('No tabs will be present until one or more templates are selected in the Sample Envrionment form.');
+        text.push('No tabs will be present until one or more templates are selected in the Sample Environment form.');
       }
-      if (validForms.multiOmicsFormValid.length === 0) {
+      if (validForms.multiOmicsFormValid.length > 0) {
         text.push('Facility tabs will not be present until the Multiomics Form is complete.');
       }
       return text;
