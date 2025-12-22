@@ -28,10 +28,9 @@ import {
   JGI_MG_LR,
   JGI_MT,
   AcquisitionProtocol,
-  AllowedStatusTransitions,
   DataProtocol,
   SampleProtocol,
-  MetadataSubmissionRecord,
+  MetadataSubmissionRecord, AllowedStatusTransitions,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
