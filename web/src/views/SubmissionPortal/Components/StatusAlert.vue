@@ -5,7 +5,7 @@ import { SubmissionStatusEnum, status } from '../store';
 export default defineComponent({
   components: {},
   setup() {
-    const message = ref(`This submission has status "${SubmissionStatusEnum[status.value]}" and cannot be edited.`);
+    const message = ref(`This submission has status "${SubmissionStatusEnum[status.value].title}" and cannot be edited.`);
     return {
       message,
       status,

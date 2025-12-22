@@ -96,7 +96,7 @@ export default defineComponent({
     function getStatus(item: MetadataSubmissionRecord) {
       const color = item.status === SubmissionStatusEnum.Released.text ? 'success' : 'default';
       return {
-        text: SubmissionStatusEnum[item.status]?.text || item.status,
+        text: SubmissionStatusEnum[item.status]?.title || item.status,
         color,
       };
     }
