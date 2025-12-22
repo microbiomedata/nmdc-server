@@ -297,6 +297,8 @@ export type SubmissionStatusKey = keyof typeof NmdcSchema.enums.SubmissionStatus
 
 export type SubmissionStatusTitle = typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values[SubmissionStatusKey]['title'];
 
+export type AllowedStatusTransitions = Record<SubmissionEditorRole, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
+
 export interface SignedUploadUrlRequest {
   file_name: string;
   file_size: number;

@@ -18,6 +18,7 @@ import { SearchParams } from '@/data/api';
 import { addSubmissionRole, deleteSubmission, updateSubmissionStatus } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
+  AllowedStatusTransitions,
   MetadataSubmissionRecord,
   MetadataSubmissionRecordSlim,
   PaginatedResponse,
@@ -179,13 +180,9 @@ export default defineComponent({
     }
 
     // get all status transitions from the api
-    type TransitionsType = Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
-    const transitions = ref<TransitionsType>({
-      reviewer: {} as Record<SubmissionStatusKey, SubmissionStatusKey[]>,
-      owner: {} as Record<SubmissionStatusKey, SubmissionStatusKey[]>,
-    });
+    const allowedStatusTransitions = ref<AllowedStatusTransitions | null>(null);
     onMounted(async () => {
-      transitions.value = await api.getAllStatusTransitions() as unknown as TransitionsType;
+      allowedStatusTransitions.value = await api.getAllStatusTransitions();
     });
 
     function isReviewerForSubmission(item: MetadataSubmissionRecordSlim): boolean {
@@ -204,6 +201,9 @@ export default defineComponent({
 
     // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
     function getFormattedStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
+      if (!allowedStatusTransitions.value) {
+        return [];
+      }
       let dropdown_type: 'reviewer' | 'admin';
       if (currentUser.value?.is_admin) {
         dropdown_type = 'admin';
@@ -212,7 +212,7 @@ export default defineComponent({
       } else {
         return [];
       }
-      return formatStatusTransitions(item.status as SubmissionStatusKey, dropdown_type, transitions.value);
+      return formatStatusTransitions(item.status as SubmissionStatusKey, dropdown_type, allowedStatusTransitions.value);
     }
 
     return {
