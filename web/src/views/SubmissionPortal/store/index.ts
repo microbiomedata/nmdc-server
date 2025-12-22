@@ -12,7 +12,7 @@ import {
   MetadataSubmission,
   MetadataSuggestion,
   NmdcAddress,
-  PermissionLevelValues,
+  SubmissionEditorRole,
   PermissionTitle,
   SubmissionStatusKey,
   SubmissionStatusTitle,
@@ -36,13 +36,13 @@ import {
 import { setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
 
-const permissionTitleToDbValueMap: Record<PermissionTitle, PermissionLevelValues> = {
+const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
   'Metadata Contributor': 'metadata_contributor',
   Editor: 'editor',
 };
 
-const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
+const permissionLevelHierarchy: Record<SubmissionEditorRole, number> = {
   owner: 4,
   editor: 3,
   metadata_contributor: 2,
@@ -58,7 +58,7 @@ const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatus
 const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
 const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
 
-function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_type:Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin', transitions:Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
+function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_type: SubmissionEditorRole | 'admin', transitions:Record<SubmissionEditorRole, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
   const excludeFromAll = [
     SubmissionStatusEnum.InProgress.text,
     SubmissionStatusEnum.SubmittedPendingReview.text,
@@ -104,8 +104,8 @@ function getSubmissionLockedBy(): User | null {
   return _submissionLockedBy;
 }
 
-let _permissionLevel: PermissionLevelValues | null = null;
-function getPermissionLevel(): PermissionLevelValues | null {
+let _permissionLevel: SubmissionEditorRole | null = null;
+function getPermissionLevel(): SubmissionEditorRole | null {
   return _permissionLevel;
 }
 
@@ -185,7 +185,7 @@ const studyFormDefault = {
     name: string;
     orcid: string;
     roles: string[];
-    permissionLevel: PermissionLevelValues | null;
+    permissionLevel: SubmissionEditorRole | null;
   }[],
   alternativeNames: [] as string[],
   GOLDStudyId: '',
@@ -415,8 +415,8 @@ function checkJGITemplates() {
   return data_present;
 }
 
-function getPermissions(): Record<string, PermissionLevelValues> {
-  const permissions: Record<string, PermissionLevelValues> = {};
+function getPermissions(): Record<string, SubmissionEditorRole> {
+  const permissions: Record<string, SubmissionEditorRole> = {};
   studyForm.contributors.forEach((contributor) => {
     const { orcid, permissionLevel } = contributor;
     if (orcid && permissionLevel) {
@@ -477,7 +477,7 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   let payload: Partial<MetadataSubmission> = {};
-  let permissions: Record<string, PermissionLevelValues> | undefined;
+  let permissions: Record<string, SubmissionEditorRole> | undefined;
   if (isOwner()) {
     payload = payloadObject.value;
     permissions = getPermissions();
@@ -520,7 +520,7 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   sampleData.value = record.metadata_submission.sampleData;
   status.value = isSubmissionStatus(record.status) ? record.status : SubmissionStatusEnum.InProgress.text;
   if (record.permission_level !== null) {
-    _permissionLevel = (record.permission_level as PermissionLevelValues);
+    _permissionLevel = (record.permission_level as SubmissionEditorRole);
   }
   isTestSubmission.value = record.is_test_submission;
   primaryStudyImageUrl.value = record.primary_study_image_url;

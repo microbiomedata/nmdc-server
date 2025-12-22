@@ -291,7 +291,7 @@ export interface SampleProtocol extends AcquisitionProtocol {
 
 export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
-export type PermissionLevelValues = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
+export type SubmissionEditorRole = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
 
 export type SubmissionStatusKey = keyof typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
 

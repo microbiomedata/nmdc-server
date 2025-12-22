@@ -22,7 +22,6 @@ import {
   MetadataSubmissionRecord,
   MetadataSubmissionRecordSlim,
   PaginatedResponse,
-  PermissionLevelValues,
   SubmissionStatusKey,
   StatusOption,
 } from '@/views/SubmissionPortal/types';
