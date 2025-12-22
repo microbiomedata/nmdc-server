@@ -156,9 +156,9 @@ export default defineComponent({
             'PolarityModeEnum',
           );
           if (polarityModePv) {
-            omicsCopy.massSpecConfigPolarityMode = polarityModePv.text + ' mode';
+            omicsCopy.massSpecPolarityMode = polarityModePv.text + ' mode';
           } else {
-            omicsCopy.massSpecConfigPolarityMode = '';
+            omicsCopy.massSpecPolarityMode = '';
           }
         }
         if (annotations.chromatography_configuration_id) {
