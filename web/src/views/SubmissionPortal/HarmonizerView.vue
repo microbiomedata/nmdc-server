@@ -36,7 +36,6 @@ import {
   mergeSampleData,
   hasChanged,
   tabsValidated,
-  SubmissionStatusTitleMapping,
   canEditSampleMetadata,
   isOwner,
   addMetadataSuggestions,
@@ -445,8 +444,8 @@ export default defineComponent({
         allTabsValid = allTabsValid && value;
       });
       const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
-      const canSubmitByStatus = status.value === SubmissionStatusEnum.InProgress.text
-      const isSubmitted = submitCount.value > 0 || status.value === SubmissionStatusEnum.SubmittedPendingReview.text;
+      const canSubmitByStatus = status.value === 'InProgress'
+      const isSubmitted = submitCount.value > 0 || status.value === 'SubmittedPendingReview';
       let submitDisabledReason: string | null = null;
       if (!allTabsValid) {
         submitDisabledReason = 'All tabs must be validated before submission.';
@@ -508,8 +507,7 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
-      await submit((route.params as { id: string }).id, SubmissionStatusEnum.SubmittedPendingReview.text);
-      status.value = SubmissionStatusEnum.SubmittedPendingReview.text;
+      await submit((route.params as { id: string }).id, 'SubmittedPendingReview');
       submitDialog.value = false;
     });
 
@@ -701,7 +699,6 @@ export default defineComponent({
       validationErrors,
       validationErrorGroups,
       validationTotalCounts,
-      SubmissionStatusTitleMapping,
       SubmissionStatusEnum,
       status,
       submitDialog,

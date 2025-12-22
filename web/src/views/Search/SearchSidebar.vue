@@ -1,9 +1,8 @@
 <script lang="ts">
 import {
-  computed, defineComponent, ref, watch,
+  defineComponent, ref, watch,
 } from 'vue';
-// @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
 import { geneFunctionTables, types } from '@/encoding';
 import {
@@ -145,15 +144,7 @@ export default defineComponent({
     const filterText = ref('');
     const textSearchResults = ref([] as Condition[]);
     const dbSummary = ref({} as DatabaseSummaryResponse);
-    const biosampleDescription = computed(() => {
-      const { schemaName } = types.biosample;
-      if (schemaName !== undefined) {
-        // @ts-ignore
-        const schema = NmdcSchema.classes[schemaName];
-        return schema.description || '';
-      }
-      return '';
-    });
+    const biosampleDescription = NmdcSchema.classes[types.biosample.schemaName].description;
 
     api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
 

@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, formatStatusTransitions,
+  generateRecord, SubmissionStatusEnum, editableByStatus, formatStatusTransitions,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -18,11 +18,10 @@ import { SearchParams } from '@/data/api';
 import { addSubmissionRole, deleteSubmission, updateSubmissionStatus } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
+  AllowedStatusTransitions,
   MetadataSubmissionRecord,
   MetadataSubmissionRecordSlim,
   PaginatedResponse,
-  PermissionLevelValues,
-  SubmissionStatusKey,
   StatusOption,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -95,9 +94,9 @@ export default defineComponent({
     }
 
     function getStatus(item: MetadataSubmissionRecord) {
-      const color = item.status === SubmissionStatusEnum.Released.text ? 'success' : 'default';
+      const color = item.status === 'Released' ? 'success' : 'default';
       return {
-        text: SubmissionStatusTitleMapping[item.status as keyof typeof SubmissionStatusTitleMapping] || item.status,
+        text: SubmissionStatusEnum[item.status]?.title || item.status,
         color,
       };
     }
@@ -179,13 +178,9 @@ export default defineComponent({
     }
 
     // get all status transitions from the api
-    type TransitionsType = Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
-    const transitions = ref<TransitionsType>({
-      reviewer: {},
-      owner: {},
-    });
+    const allowedStatusTransitions = ref<AllowedStatusTransitions | null>(null);
     onMounted(async () => {
-      transitions.value = await api.getAllStatusTransitions() as unknown as TransitionsType;
+      allowedStatusTransitions.value = await api.getAllStatusTransitions();
     });
 
     function isReviewerForSubmission(item: MetadataSubmissionRecordSlim): boolean {
@@ -204,6 +199,9 @@ export default defineComponent({
 
     // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
     function getFormattedStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
+      if (!allowedStatusTransitions.value) {
+        return [];
+      }
       let dropdown_type: 'reviewer' | 'admin';
       if (currentUser.value?.is_admin) {
         dropdown_type = 'admin';
@@ -212,7 +210,7 @@ export default defineComponent({
       } else {
         return [];
       }
-      return formatStatusTransitions(item.status, dropdown_type, transitions.value);
+      return formatStatusTransitions(item.status, dropdown_type, allowedStatusTransitions.value);
     }
 
     return {
@@ -229,7 +227,7 @@ export default defineComponent({
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
-      editablebyStatus,
+      editableByStatus,
       getStatus,
       resume,
       addReviewer,
@@ -416,14 +414,14 @@ export default defineComponent({
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
               <v-select
-                v-if="currentUser?.is_admin  || isReviewerForSubmission(item)"
+                v-if="currentUser?.is_admin || isReviewerForSubmission(item)"
                 :model-value="item.status"
                 :items="getFormattedStatusTransitions(item)"
-                :loading="statusUpdatingSubmissionId === item.id"s
+                :loading="statusUpdatingSubmissionId === item.id"
                 density="compact"
                 variant="underlined"
                 hide-details
-                :disabled="item.status === SubmissionStatusEnum.InProgress.text"
+                :disabled="item.status === 'InProgress'"
                 @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
               />
               <v-chip
@@ -442,7 +440,7 @@ export default defineComponent({
                 color="primary"
                 @click="() => resume(item as MetadataSubmissionRecord)"
               >
-                <span v-if="editablebyStatus(item.status) && isAnyContributorForSubmission(item)">
+                <span v-if="editableByStatus(item.status) && isAnyContributorForSubmission(item)">
                   Resume
                   <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
                 </span>

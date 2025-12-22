@@ -1,4 +1,4 @@
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import {
   computed, reactive, Ref, ref, shallowRef, watch,
 } from 'vue';
@@ -12,10 +12,9 @@ import {
   MetadataSubmission,
   MetadataSuggestion,
   NmdcAddress,
-  PermissionLevelValues,
+  SubmissionEditorRole,
   PermissionTitle,
   SubmissionStatusKey,
-  SubmissionStatusTitle,
   SuggestionType,
   SuggestionsMode,
   MetadataSuggestionRequest,
@@ -31,18 +30,18 @@ import {
   AcquisitionProtocol,
   DataProtocol,
   SampleProtocol,
-  MetadataSubmissionRecord,
+  MetadataSubmissionRecord, AllowedStatusTransitions,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
 
-const permissionTitleToDbValueMap: Record<PermissionTitle, PermissionLevelValues> = {
+const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
   'Metadata Contributor': 'metadata_contributor',
   Editor: 'editor',
 };
 
-const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
+const permissionLevelHierarchy: Record<SubmissionEditorRole, number> = {
   owner: 4,
   editor: 3,
   metadata_contributor: 2,
@@ -52,29 +51,26 @@ const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
 
 //use schema enum to define submission status
 const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
-const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
-  Object.entries(SubmissionStatusEnum).map(([key, item]: [string, any]) => [key, item.title]),
-) as Record<SubmissionStatusKey, SubmissionStatusTitle>; //key to title mapping for vue scripts where status saved to variable
-const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
-const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
+const status = ref<SubmissionStatusKey>('InProgress');
 
-function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_type:Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin', transitions:Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
-  const excludeFromAll = [
-    SubmissionStatusEnum.InProgress.text,
-    SubmissionStatusEnum.SubmittedPendingReview.text,
+function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
+  const excludeFromAll: SubmissionStatusKey[] = [
+    'InProgress',
+    'SubmittedPendingReview',
   ];
+
   // Admins can see all statuses and select any that aren't user invoked
-  if (dropdown_type === 'admin') {
-    return Object.keys(SubmissionStatusTitleMapping)
+  if (dropdownType === 'admin') {
+    return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
       .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
       .map((key) => ({
         value: key,
-        title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+        title: SubmissionStatusEnum[key].title,
       }));
   }
 
   // Non-admins can only see and select allowed transitions
-  const user_transitions = transitions[dropdown_type] || {};
+  const user_transitions = transitions[dropdownType] || {};
   const allowedStatusTransitions = user_transitions[currentStatus] || [];
 
   // Include the current status so it can be displayed
@@ -84,11 +80,11 @@ function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_typ
   }
 
   // Return allowed transitions
-  return Object.keys(SubmissionStatusTitleMapping)
-    .filter((key) => statusesToShow.includes(key))
+  return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
+    .filter((key) => statusesToShow.includes(key as SubmissionStatusKey))
     .map((key) => ({
       value: key,
-      title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      title: SubmissionStatusEnum[key].title,
     }));
 }
 
@@ -104,8 +100,8 @@ function getSubmissionLockedBy(): User | null {
   return _submissionLockedBy;
 }
 
-let _permissionLevel: PermissionLevelValues | null = null;
-function getPermissionLevel(): PermissionLevelValues | null {
+let _permissionLevel: SubmissionEditorRole | null = null;
+function getPermissionLevel(): SubmissionEditorRole | null {
   return _permissionLevel;
 }
 
@@ -114,13 +110,13 @@ function isOwner(): boolean {
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
 
-function editablebyStatus(status: string): boolean {
-  const editableStatuses = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.UpdatesRequired.text];
+function editableByStatus(status: SubmissionStatusKey): boolean {
+  const editableStatuses: SubmissionStatusKey[] = ['InProgress', 'UpdatesRequired'];
   return editableStatuses.includes(status);
 }
 
 function canEditSubmissionByStatus(): boolean {
-  return editablebyStatus(status.value);
+  return editableByStatus(status.value);
 }
 
 function canEditSubmissionMetadata(): boolean {
@@ -185,7 +181,7 @@ const studyFormDefault = {
     name: string;
     orcid: string;
     roles: string[];
-    permissionLevel: PermissionLevelValues | null;
+    permissionLevel: SubmissionEditorRole | null;
   }[],
   alternativeNames: [] as string[],
   GOLDStudyId: '',
@@ -415,8 +411,8 @@ function checkJGITemplates() {
   return data_present;
 }
 
-function getPermissions(): Record<string, PermissionLevelValues> {
-  const permissions: Record<string, PermissionLevelValues> = {};
+function getPermissions(): Record<string, SubmissionEditorRole> {
+  const permissions: Record<string, SubmissionEditorRole> = {};
   studyForm.contributors.forEach((contributor) => {
     const { orcid, permissionLevel } = contributor;
     if (orcid && permissionLevel) {
@@ -462,7 +458,7 @@ function reset() {
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
   sampleData.value = {};
-  status.value = SubmissionStatusEnum.InProgress.text;
+  status.value = 'InProgress';
   isTestSubmission.value = false;
   primaryStudyImageUrl.value = null;
   piImageUrl.value = null;
@@ -477,7 +473,7 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   let payload: Partial<MetadataSubmission> = {};
-  let permissions: Record<string, PermissionLevelValues> | undefined;
+  let permissions: Record<string, SubmissionEditorRole> | undefined;
   if (isOwner()) {
     payload = payloadObject.value;
     permissions = getPermissions();
@@ -518,9 +514,9 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
     Object.assign(addressForm, record.metadata_submission.addressForm);
   }
   sampleData.value = record.metadata_submission.sampleData;
-  status.value = isSubmissionStatus(record.status) ? record.status : SubmissionStatusEnum.InProgress.text;
+  status.value = record.status;
   if (record.permission_level !== null) {
-    _permissionLevel = (record.permission_level as PermissionLevelValues);
+    _permissionLevel = (record.permission_level as SubmissionEditorRole);
   }
   isTestSubmission.value = record.is_test_submission;
   primaryStudyImageUrl.value = record.primary_study_image_url;
@@ -608,7 +604,6 @@ function removeMetadataSuggestions(submissionId: string, schemaClassName: string
 }
 
 export {
-  SubmissionStatusTitleMapping,
   permissionTitleToDbValueMap,
   permissionLevelHierarchy,
   /* state */
@@ -648,7 +643,7 @@ export {
   canEditSampleMetadata,
   canEditSubmissionMetadata,
   canEditSubmissionByStatus,
-  editablebyStatus,
+  editableByStatus,
   addMetadataSuggestions,
   removeMetadataSuggestions,
   templateHasData,

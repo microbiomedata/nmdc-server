@@ -1315,7 +1315,7 @@ async def update_submission(
 
 
 @router.get("/status_transitions", name="Get the `Status` transitions allowed by user role")
-async def get_transitions() -> dict:
+async def get_transitions():
     return ALLOWED_TRANSITIONS
 
 
