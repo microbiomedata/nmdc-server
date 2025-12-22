@@ -444,8 +444,8 @@ export default defineComponent({
         allTabsValid = allTabsValid && value;
       });
       const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
-      const canSubmitByStatus = status.value === SubmissionStatusEnum.InProgress.text
-      const isSubmitted = submitCount.value > 0 || status.value === SubmissionStatusEnum.SubmittedPendingReview.text;
+      const canSubmitByStatus = status.value === 'InProgress'
+      const isSubmitted = submitCount.value > 0 || status.value === 'SubmittedPendingReview';
       let submitDisabledReason: string | null = null;
       if (!allTabsValid) {
         submitDisabledReason = 'All tabs must be validated before submission.';

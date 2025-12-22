@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  generateRecord, SubmissionStatusEnum, editablebyStatus, formatStatusTransitions,
+  generateRecord, SubmissionStatusEnum, editableByStatus, formatStatusTransitions,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -94,7 +94,7 @@ export default defineComponent({
     }
 
     function getStatus(item: MetadataSubmissionRecord) {
-      const color = item.status === SubmissionStatusEnum.Released.text ? 'success' : 'default';
+      const color = item.status === 'Released' ? 'success' : 'default';
       return {
         text: SubmissionStatusEnum[item.status]?.title || item.status,
         color,
@@ -227,7 +227,7 @@ export default defineComponent({
       IntroBlurb,
       TitleBanner,
       createNewSubmission,
-      editablebyStatus,
+      editableByStatus,
       getStatus,
       resume,
       addReviewer,
@@ -421,7 +421,7 @@ export default defineComponent({
                 density="compact"
                 variant="underlined"
                 hide-details
-                :disabled="item.status === SubmissionStatusEnum.InProgress.text"
+                :disabled="item.status === 'InProgress'"
                 @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
               />
               <v-chip
@@ -440,7 +440,7 @@ export default defineComponent({
                 color="primary"
                 @click="() => resume(item as MetadataSubmissionRecord)"
               >
-                <span v-if="editablebyStatus(item.status) && isAnyContributorForSubmission(item)">
+                <span v-if="editableByStatus(item.status) && isAnyContributorForSubmission(item)">
                   Resume
                   <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
                 </span>

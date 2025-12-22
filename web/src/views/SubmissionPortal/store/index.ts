@@ -110,13 +110,13 @@ function isOwner(): boolean {
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
 
-function editablebyStatus(status: string): boolean {
-  const editableStatuses = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.UpdatesRequired.text];
+function editableByStatus(status: SubmissionStatusKey): boolean {
+  const editableStatuses: SubmissionStatusKey[] = ['InProgress', 'UpdatesRequired'];
   return editableStatuses.includes(status);
 }
 
 function canEditSubmissionByStatus(): boolean {
-  return editablebyStatus(status.value);
+  return editableByStatus(status.value);
 }
 
 function canEditSubmissionMetadata(): boolean {
@@ -643,7 +643,7 @@ export {
   canEditSampleMetadata,
   canEditSubmissionMetadata,
   canEditSubmissionByStatus,
-  editablebyStatus,
+  editableByStatus,
   addMetadataSuggestions,
   removeMetadataSuggestions,
   templateHasData,
