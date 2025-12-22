@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  generateRecord, SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, formatStatusTransitions,
+  generateRecord, SubmissionStatusEnum, editablebyStatus, formatStatusTransitions,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -22,7 +22,6 @@ import {
   MetadataSubmissionRecord,
   MetadataSubmissionRecordSlim,
   PaginatedResponse,
-  SubmissionStatusKey,
   StatusOption,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -97,7 +96,7 @@ export default defineComponent({
     function getStatus(item: MetadataSubmissionRecord) {
       const color = item.status === SubmissionStatusEnum.Released.text ? 'success' : 'default';
       return {
-        text: SubmissionStatusTitleMapping[item.status as keyof typeof SubmissionStatusTitleMapping] || item.status,
+        text: SubmissionStatusEnum[item.status]?.text || item.status,
         color,
       };
     }
@@ -211,7 +210,7 @@ export default defineComponent({
       } else {
         return [];
       }
-      return formatStatusTransitions(item.status as SubmissionStatusKey, dropdown_type, allowedStatusTransitions.value);
+      return formatStatusTransitions(item.status, dropdown_type, allowedStatusTransitions.value);
     }
 
     return {

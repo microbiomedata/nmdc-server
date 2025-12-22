@@ -15,7 +15,6 @@ import {
   SubmissionEditorRole,
   PermissionTitle,
   SubmissionStatusKey,
-  SubmissionStatusTitle,
   SuggestionType,
   SuggestionsMode,
   MetadataSuggestionRequest,
@@ -29,6 +28,7 @@ import {
   JGI_MG_LR,
   JGI_MT,
   AcquisitionProtocol,
+  AllowedStatusTransitions,
   DataProtocol,
   SampleProtocol,
   MetadataSubmissionRecord,
@@ -52,29 +52,26 @@ const permissionLevelHierarchy: Record<SubmissionEditorRole, number> = {
 
 //use schema enum to define submission status
 const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
-const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
-  Object.entries(SubmissionStatusEnum).map(([key, item]: [string, any]) => [key, item.title]),
-) as Record<SubmissionStatusKey, SubmissionStatusTitle>; //key to title mapping for vue scripts where status saved to variable
-const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
-const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
+const status = ref<SubmissionStatusKey>('InProgress');
 
-function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_type: SubmissionEditorRole | 'admin', transitions:Record<SubmissionEditorRole, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
-  const excludeFromAll = [
-    SubmissionStatusEnum.InProgress.text,
-    SubmissionStatusEnum.SubmittedPendingReview.text,
+function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
+  const excludeFromAll: SubmissionStatusKey[] = [
+    'InProgress',
+    'SubmittedPendingReview',
   ];
+
   // Admins can see all statuses and select any that aren't user invoked
-  if (dropdown_type === 'admin') {
-    return Object.keys(SubmissionStatusTitleMapping)
+  if (dropdownType === 'admin') {
+    return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
       .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
       .map((key) => ({
         value: key,
-        title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+        title: SubmissionStatusEnum[key].title,
       }));
   }
 
   // Non-admins can only see and select allowed transitions
-  const user_transitions = transitions[dropdown_type] || {};
+  const user_transitions = transitions[dropdownType] || {};
   const allowedStatusTransitions = user_transitions[currentStatus] || [];
 
   // Include the current status so it can be displayed
@@ -84,11 +81,11 @@ function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_typ
   }
 
   // Return allowed transitions
-  return Object.keys(SubmissionStatusTitleMapping)
+  return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
     .filter((key) => statusesToShow.includes(key as SubmissionStatusKey))
     .map((key) => ({
       value: key,
-      title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      title: SubmissionStatusEnum[key].title,
     }));
 }
 
@@ -462,7 +459,7 @@ function reset() {
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
   sampleData.value = {};
-  status.value = SubmissionStatusEnum.InProgress.text;
+  status.value = 'InProgress';
   isTestSubmission.value = false;
   primaryStudyImageUrl.value = null;
   piImageUrl.value = null;
@@ -518,7 +515,7 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
     Object.assign(addressForm, record.metadata_submission.addressForm);
   }
   sampleData.value = record.metadata_submission.sampleData;
-  status.value = isSubmissionStatus(record.status) ? record.status : SubmissionStatusEnum.InProgress.text;
+  status.value = record.status;
   if (record.permission_level !== null) {
     _permissionLevel = (record.permission_level as SubmissionEditorRole);
   }
@@ -608,7 +605,6 @@ function removeMetadataSuggestions(submissionId: string, schemaClassName: string
 }
 
 export {
-  SubmissionStatusTitleMapping,
   permissionTitleToDbValueMap,
   permissionLevelHierarchy,
   /* state */

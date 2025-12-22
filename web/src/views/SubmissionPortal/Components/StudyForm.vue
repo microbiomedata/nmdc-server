@@ -20,7 +20,6 @@ import {
   primaryStudyImageUrl,
   piImageUrl,
   canEditSubmissionByStatus,
-  SubmissionStatusTitleMapping,
   status,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
@@ -144,7 +143,6 @@ export default defineComponent({
       primaryStudyImageUrl,
       piImageUrl,
       canEditSubmissionByStatus,
-      SubmissionStatusTitleMapping,
       status,
       StatusAlert,
     };

@@ -36,7 +36,6 @@ import {
   mergeSampleData,
   hasChanged,
   tabsValidated,
-  SubmissionStatusTitleMapping,
   canEditSampleMetadata,
   isOwner,
   addMetadataSuggestions,
@@ -509,7 +508,6 @@ export default defineComponent({
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
       await submit((route.params as { id: string }).id, 'SubmittedPendingReview');
-      status.value = SubmissionStatusEnum.SubmittedPendingReview.text;
       submitDialog.value = false;
     });
 
@@ -701,7 +699,6 @@ export default defineComponent({
       validationErrors,
       validationErrorGroups,
       validationTotalCounts,
-      SubmissionStatusTitleMapping,
       SubmissionStatusEnum,
       status,
       submitDialog,

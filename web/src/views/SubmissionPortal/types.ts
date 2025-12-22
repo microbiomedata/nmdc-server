@@ -238,7 +238,7 @@ export interface MetadataSubmissionRecordSlim {
   author: User;
   study_name: string;
   templates: string[];
-  status: string;
+  status: SubmissionStatusKey;
   date_last_modified: string;
   created: string;
   is_test_submission: boolean;
@@ -294,8 +294,6 @@ export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 export type SubmissionEditorRole = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
 
 export type SubmissionStatusKey = keyof typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
-
-export type SubmissionStatusTitle = typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values[SubmissionStatusKey]['title'];
 
 export type AllowedStatusTransitions = Record<SubmissionEditorRole, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
 
