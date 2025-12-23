@@ -1,9 +1,6 @@
 <script lang="ts">
-import {
-  defineComponent,
-  ref,
-  watch,
-} from 'vue';
+import { defineComponent, ref, watch } from 'vue';
+import { useDisplay } from 'vuetify';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
 import {
@@ -51,6 +48,7 @@ export default defineComponent({
   },
 
   setup(props) {
+    const { smAndDown } = useDisplay();
     const study = ref<StudySearchResults | null>(null);
 
     const sampleCount = ref(0);
@@ -179,6 +177,7 @@ export default defineComponent({
       datasetDois,
       biosampleSearch,
       parentStudies,
+      smAndDown,
       /* Methods */
       fieldDisplayName,
       seeStudyInContext,
@@ -196,114 +195,108 @@ export default defineComponent({
       <v-skeleton-loader type="article" />
     </v-container>
     <v-container v-if="!loading && study !== null">
-      <div class="text-caption">
+      <div class="text-caption mb-3">
         <!-- eslint-disable-next-line-->
         <router-link :to="{ name: 'Search' }">Home</router-link>
         <span class="mx-2">/</span>
         <ClickToCopyText>{{ study.id }}</ClickToCopyText>
       </div>
 
-      <PageSection>
-        <v-row class="mt-0">
-          <v-col
-            cols="12"
-            :md="study.image_url ? 8 : 12"
+      <div :class="['mainInfoRow', smAndDown ? 'smAndDown' : 'mdAndUp']">
+        <div :class="['mainInfoCol', study.image_url ? 'withImage' : '']">
+          <IndividualTitle :item="study">
+            <template
+              v-if="study.description"
+              #subtitle
+            >
+              <RevealContainer>
+                <span v-html="urlify(study.description)" />
+              </RevealContainer>
+            </template>
+          </IndividualTitle>
+
+          <AttributeRow
+            v-if="parentStudies.length > 0"
+            label="Part Of"
           >
-            <IndividualTitle :item="study">
+            <div class="stack-sm">
+              <div
+                v-for="parent in parentStudies"
+                :key="parent.id"
+              >
+                <router-link
+                  :to="{ name: 'Study', params: { id: parent.id }}"
+                >
+                  {{ parent.annotations.title }}
+                </router-link>
+              </div>
+            </div>
+          </AttributeRow>
+
+          <AttributeRow
+            v-if="study.children.length > 0"
+            label="Associated Studies"
+          >
+            <div class="stack-sm">
+              <div
+                v-for="child in study.children"
+                :key="child.id"
+              >
+                <router-link
+                  :to="{ name: 'Study', params: { id: child.id }}"
+                >
+                  {{ child.annotations.title }}
+                </router-link>
+              </div>
+            </div>
+          </AttributeRow>
+
+          <AttributeRow
+            v-if="sampleCount > 0 || omicsProcessingCounts !== null"
+            label="Data Summary"
+          >
+            <v-chip
+              v-if="sampleCount > 0"
+              class="mb-4"
+              size="small"
+              color="primary"
+              variant="flat"
+              @click="seeStudyInContext"
+            >
+              All Samples: {{ sampleCount }}
+            </v-chip>
+            <div v-if="omicsProcessingCounts !== null">
+              <div class="text-caption font-weight-medium">
+                Omics Types
+              </div>
               <template
-                v-if="study.description"
-                #subtitle
+                v-for="(count, type) in omicsProcessingCounts"
+                :key="type"
               >
-                <RevealContainer>
-                  <span v-html="urlify(study.description)" />
-                </RevealContainer>
+                <v-chip
+                  class="mr-2"
+                  size="small"
+                  @click="seeOmicsForStudy(type)"
+                >
+                  {{ fieldDisplayName(type) }}: {{ count }}
+                </v-chip>
               </template>
-            </IndividualTitle>
+            </div>
+          </AttributeRow>
+        </div>
 
-            <AttributeRow
-              v-if="parentStudies.length > 0"
-              label="Part Of"
-            >
-              <div class="stack-sm">
-                <div
-                  v-for="parent in parentStudies"
-                  :key="parent.id"
-                >
-                  <router-link
-                    :to="{ name: 'Study', params: { id: parent.id }}"
-                  >
-                    {{ parent.annotations.title }}
-                  </router-link>
-                </div>
-              </div>
-            </AttributeRow>
-
-            <AttributeRow
-              v-if="study.children.length > 0"
-              label="Associated Studies"
-            >
-              <div class="stack-sm">
-                <div
-                  v-for="child in study.children"
-                  :key="child.id"
-                >
-                  <router-link
-                    :to="{ name: 'Study', params: { id: child.id }}"
-                  >
-                    {{ child.annotations.title }}
-                  </router-link>
-                </div>
-              </div>
-            </AttributeRow>
-
-            <AttributeRow
-              v-if="sampleCount > 0 || omicsProcessingCounts !== null"
-              label="Data Summary"
-            >
-              <v-chip
-                v-if="sampleCount > 0"
-                class="mb-4"
-                size="small"
-                color="primary"
-                variant="flat"
-                @click="seeStudyInContext"
-              >
-                All Samples: {{ sampleCount }}
-              </v-chip>
-              <div v-if="omicsProcessingCounts !== null">
-                <div class="text-caption font-weight-medium">
-                  Omics Types
-                </div>
-                <template
-                  v-for="(count, type) in omicsProcessingCounts"
-                  :key="type"
-                >
-                  <v-chip
-                    class="mr-2"
-                    size="small"
-                    @click="seeOmicsForStudy(type)"
-                  >
-                    {{ fieldDisplayName(type) }}: {{ count }}
-                  </v-chip>
-                </template>
-              </div>
-            </AttributeRow>
-          </v-col>
-
-          <v-col
-            v-if="study.image_url"
-            cols="12"
-            md="4"
-          >
-            <v-img
-              :src="study.image_url"
-              :alt="study.name"
-              contain
-              max-width="450"
-            />
-          </v-col>
-        </v-row>
-      </PageSection>
+        <div
+          v-if="study.image_url"
+          class="imageCol"
+        >
+          <v-img
+            :src="study.image_url"
+            :alt="study.name"
+            contain
+            :max-height="smAndDown ? 300 : undefined"
+          />
+        </div>
+      </div>
 
       <PageSection heading="Team">
         <RevealContainer :closed-height="150">
@@ -463,3 +456,53 @@ export default defineComponent({
     </v-container>
   </v-main>
 </template>
+
+<style lang="scss" scoped>
+/* Baseline styles
+
+   Stack the main info column and image column vertically. The
+   height of the image in this case is controlled by the `max-height`
+   prop on the <v-img> component. Each column has its own margin-bottom
+   so that margin collapsing happens correctly. */
+.mainInfoRow {
+  .mainInfoCol {
+    width: 100%;
+    margin-bottom: 64px;
+  }
+  .imageCol {
+    width: 100%;
+    margin-bottom: 64px;
+  }
+}
+
+/* Medium and larger screen styles
+
+   Place the main info column and image column side by side. The
+   image column is absolutely positioned to the right of the main
+   info column, which allows the main info column to determine the
+   height of the row.
+*/
+.mainInfoRow.mdAndUp {
+  position: relative;
+
+  /* If there is an image, the main info column takes up 2/3 of
+     the width to make room for the image on the right. Otherwise,
+     without an image, it continues to take up the full width.
+   */
+  .mainInfoCol.withImage {
+    width: 66.66667%;
+    padding-right: 24px;
+  }
+
+  /* This is absolutely positioned to allow the main info column to
+     determine the height of the row. */
+  .imageCol {
+    width: 33.33333%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin-bottom: 0;
+  }
+}
+</style>
