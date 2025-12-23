@@ -203,10 +203,7 @@ export default defineComponent({
       </div>
 
       <div :class="['mainInfoRow', smAndDown ? 'smAndDown' : 'mdAndUp']">
-        <div
-          ref="main-info-col"
-          :class="['mainInfoCol', study.image_url ? 'withImage' : '']"
-        >
+        <div :class="['mainInfoCol', study.image_url ? 'withImage' : '']">
           <IndividualTitle :item="study">
             <template
               v-if="study.description"
