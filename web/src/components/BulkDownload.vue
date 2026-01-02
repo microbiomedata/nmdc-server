@@ -8,7 +8,6 @@ import useBulkDownload from '@/use/useBulkDownload';
 import { humanFileSize } from '@/data/utils';
 import { api } from '@/data/api';
 import { downloadBlob } from '@/utils';
-// import { downloadJson } from '@/utils';
 
 export default defineComponent({
 
