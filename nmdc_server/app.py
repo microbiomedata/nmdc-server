@@ -18,12 +18,16 @@ from nmdc_server.static_files import static_path
 from nmdc_server.swagger_ui.helpers import load_template
 
 
-def attach_sentry(app: FastAPI):
-    if not settings.sentry_dsn:
-        return
+def initialize_sentry():
+    """
+    Initialize the Sentry SDK.
+
+    Reference: https://docs.sentry.io/concepts/key-terms/dsn-explainer/
+    """
 
     sentry_sdk.init(
         dsn=settings.sentry_dsn,
+        environment=settings.sentry_environment,
         integrations=[
             LoggingIntegration(level=logging.INFO, event_level=logging.WARNING),
             SqlalchemyIntegration(),
@@ -74,7 +78,10 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
     async def redirect_docs():
         return "/api/docs"
 
-    attach_sentry(app)
+    # Initialize Sentry if the application is configured with a Sentry DSN.
+    if settings.sentry_dsn:
+        initialize_sentry()
+
     errors.attach_error_handlers(app)
     app.include_router(api.router, prefix="/api")
     app.include_router(auth.router, prefix="/auth")

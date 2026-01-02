@@ -741,3 +741,22 @@ class SubmissionImagesMakePublicResponse(BaseModel):
     pi_image_url: Optional[str] = None
     primary_study_image_url: Optional[str] = None
     study_image_urls: List[str] = []
+
+
+class HealthResponse(BaseModel):
+    r"""Response containing system health information."""
+
+    # Raise a `ValidationError` if extra parameters are passed in when instantiating this class.
+    # Docs: https://docs.pydantic.dev/latest/api/config/#pydantic.config.ConfigDict.extra
+    model_config = ConfigDict(extra="forbid")
+
+    web_server: bool = Field(
+        ...,
+        title="Web server health",
+        description="Whether the web server is up and running",
+    )
+    database: bool = Field(
+        ...,
+        title="Database health",
+        description="Whether the web server can access the database server",
+    )

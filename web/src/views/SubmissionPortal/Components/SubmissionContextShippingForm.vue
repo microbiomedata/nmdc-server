@@ -7,8 +7,7 @@ import {
   ref,
   watch,
 } from 'vue';
-// @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
 import {
   addressForm,

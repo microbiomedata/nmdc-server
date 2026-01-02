@@ -14,7 +14,7 @@ import doiProviderValues from '@/schema';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
-  templateHasData, checkDoiFormat, canEditSubmissionByStatus, SubmissionStatusTitleMapping, status,
+  templateHasData, checkDoiFormat, canEditSubmissionByStatus, status,
 } from '../store';
 
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -168,7 +168,6 @@ export default defineComponent({
       checkJGITemplates,
       templateHasData,
       canEditSubmissionByStatus,
-      SubmissionStatusTitleMapping,
       status,
       StatusAlert,
     };

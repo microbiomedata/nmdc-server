@@ -7,7 +7,6 @@ import {
   canEditSubmissionMetadata,
   templateHasData,
   canEditSubmissionByStatus,
-  SubmissionStatusTitleMapping,
   status,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
@@ -29,7 +28,6 @@ export default defineComponent({
       canEditSubmissionMetadata,
       templateHasData,
       canEditSubmissionByStatus,
-      SubmissionStatusTitleMapping,
       status,
       StatusAlert,
     };

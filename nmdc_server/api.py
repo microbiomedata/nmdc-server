@@ -6,7 +6,7 @@ import time
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
-from typing import Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 import zipfile
 
@@ -18,6 +18,7 @@ from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_api_utilities.biosample_search import BiosampleSearch
 from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -26,6 +27,7 @@ from nmdc_server.auth import admin_required, get_current_user, login_required_re
 from nmdc_server.bulk_download_schema import BulkDownload, BulkDownloadCreate
 from nmdc_server.config import settings
 from nmdc_server.crud import (
+    ALLOWED_TRANSITIONS,
     DataObjectReportVariant,
     context_edit_roles,
     get_submission_for_user,
@@ -50,6 +52,39 @@ from nmdc_server.table import Table
 router = APIRouter()
 
 logger = get_logger(__name__)
+
+
+# Get system health.
+@router.get("/health", name="Get system health", response_model=schemas.HealthResponse)
+def get_health(
+    response: Response,
+    db: Session = Depends(get_db),
+) -> schemas.HealthResponse:
+    r"""Get system health information."""
+
+    # Declare that our web server is healthy.
+    is_web_server_healthy = True
+
+    # Check whether our database connection is healthy.
+    is_database_healthy = False
+    try:
+        db.execute(text("SELECT 1"))
+        is_database_healthy = True
+    except Exception as e:
+        logger.exception(e)
+
+    # Set the HTTP response code accordingly.
+    response.status_code = (
+        status.HTTP_200_OK
+        if all([is_database_healthy, is_web_server_healthy])
+        else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
+
+    # Return a health response.
+    return schemas.HealthResponse(
+        web_server=is_web_server_healthy,
+        database=is_database_healthy,
+    )
 
 
 # get application settings
@@ -1261,6 +1296,8 @@ async def get_submission(
             permission_level = models.SubmissionEditorRole.metadata_contributor.value
         elif user.orcid in submission.viewers:
             permission_level = models.SubmissionEditorRole.viewer.value
+        elif user.orcid in submission.reviewers:
+            permission_level = models.SubmissionEditorRole.reviewer.value
         submission_metadata_schema = schemas_submission.SubmissionMetadataSchema.model_validate(
             submission
         )
@@ -1297,7 +1334,10 @@ def can_save_submission(role: models.SubmissionRole, data: dict, status: str):
     if status in [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.UpdatesRequired.text]:
         if permission_level == models.SubmissionEditorRole.owner:
             return True
-        elif permission_level == models.SubmissionEditorRole.viewer:
+        elif (
+            permission_level == models.SubmissionEditorRole.viewer
+            or permission_level == models.SubmissionEditorRole.reviewer
+        ):
             return False
         else:
             allowed_fields = fields_for_permission[permission_level]
@@ -1340,9 +1380,8 @@ async def update_submission(
             detail="This submission is currently being edited by a different user.",
         )
 
-    # If the user has a role on the submission (being an admin, alone, is insufficient),
-    # and the status is "Updates Required", automatically change it to "In Progress" upon edit
-    if current_user_role and submission.status == SubmissionStatusEnum.UpdatesRequired.text:
+    # If the status is "Updates Required", automatically change it to "In Progress" upon edit
+    if submission.status == SubmissionStatusEnum.UpdatesRequired.text:
         submission.status = SubmissionStatusEnum.InProgress.text
 
     if body.field_notes_metadata is not None:
@@ -1373,6 +1412,11 @@ async def update_submission(
     return submission
 
 
+@router.get("/status_transitions", name="Get the `Status` transitions allowed by user role")
+async def get_transitions():
+    return ALLOWED_TRANSITIONS
+
+
 @router.patch(
     "/metadata_submission/{id}/status",
     tags=["metadata_submission"],
@@ -1386,31 +1430,40 @@ async def update_submission_status(
     user: models.User = Depends(get_current_user),
 ) -> models.SubmissionMetadata:
     """Update submission status"""
-    submission = get_submission_for_user(db, id, user, allowed_roles=[SubmissionEditorRole.owner])
+    submission = get_submission_for_user(
+        db, id, user, allowed_roles=[SubmissionEditorRole.owner, SubmissionEditorRole.reviewer]
+    )
     current_status = submission.status
-
-    allowed_transitions = {
-        SubmissionStatusEnum.UpdatesRequired.text: [SubmissionStatusEnum.InProgress.text],
-        SubmissionStatusEnum.InProgress.text: [SubmissionStatusEnum.SubmittedPendingReview.text],
-    }
 
     # Admins can change to any status
     if user.is_admin:
         submission.status = body.status
 
-    # Owner can only do select transitions
-    elif (
-        current_status in allowed_transitions
-        and body.status in allowed_transitions[current_status]
-        and submission.is_test_submission is False
-    ):
-        submission.status = body.status
-
-    # Anything else is not allowed
+    # Non-admin users need to follow allowed transitions based on role
     else:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid status transition."
-        )
+
+        # Owner transitions
+        if user.orcid in submission.owners:
+            transitions = ALLOWED_TRANSITIONS[SubmissionEditorRole.owner]
+
+        # Reviewer transitions
+        elif user.orcid in submission.reviewers:
+            transitions = ALLOWED_TRANSITIONS[SubmissionEditorRole.reviewer]
+
+        # Apply restricted transitions
+        if (
+            transitions
+            and current_status in transitions
+            and body.status in transitions[current_status]
+        ):
+            submission.status = body.status
+
+        # Any other transitions not allowed
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Invalid status transition.",
+            )
 
     db.commit()
 
@@ -1499,9 +1552,9 @@ def create_github_issue(submission_model: SubmissionMetadata, user):
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
 
     # Check for existing issues first
-    existing_issues = check_existing_github_issues(submission.id, headers, gh_url, user)
+    existing_issue = check_existing_github_issues(submission.id, headers, gh_url, user)
 
-    if existing_issues is None:
+    if existing_issue is None:
 
         # Gathering the fields we want to display in the issue
         study_form = submission.metadata_submission.studyForm
@@ -1559,11 +1612,10 @@ def create_github_issue(submission_model: SubmissionMetadata, user):
             logging.info(res.reason)
 
     else:
-        for issue in existing_issues:
-            try:
-                update_github_issue_for_resubmission(issue, user, headers)
-            except Exception as e:
-                logging.error(f"Failed to update existing GitHub issue: {str(e)}")
+        try:
+            update_github_issue_for_resubmission(existing_issue, user, headers)
+        except Exception as e:
+            logging.error(f"Failed to update existing GitHub issue: {str(e)}")
 
 
 def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str, user):
@@ -1573,39 +1625,46 @@ def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str
     Returns list of matching issues.
     """
     submission_id_string = str(submission_id)
-    params = {
+    params: dict[str, str | int] = {
         "state": "all",
         "per_page": 100,
+        "page": 1,
     }
 
-    try:
-        response = requests.get(gh_url, headers=headers, params=cast(Any, params))
+    max_pages = 20  # Stopgap: prevent checking more than 2000 issues (10 pages * 100 per page)
+    pages_checked = 0
 
-        if response.status_code != 200:
-            logging.error(
-                f"Request to search Github issues succeeded but API returned error {response.status_code} - {response.text}"
-            )
-            return None
+    try:
+        while pages_checked < max_pages:
+            response = requests.get(gh_url, headers=headers, params=params)
+            issues = response.json()
+
+            if not issues:  # If no issues returned on this page break the loop
+                break
+
+            # Look for an issue with matching submission id anywhere in github
+            for issue in issues:
+                title = issue.get("title", "") or ""
+                body = issue.get("body", "") or ""
+
+                if submission_id_string in title or submission_id_string in body:
+                    return issue  # Return first matching issue immediately
+
+            # Get next page
+            link_header = response.headers.get("Link", "")
+            if 'rel="next"' not in link_header:
+                break  # No more pages
+
+            # Move to next page
+            assert isinstance(params["page"], int)
+            params["page"] += 1
+            pages_checked += 1
 
     except requests.RequestException as e:
         logging.error(f"Request failed to check existing GitHub issues: {str(e)}")
         return None
 
-    issues = response.json()
-
-    # Look for an issue with matching submission id anywhere in github
-    matching_issues = []
-    for issue in issues:
-        title = issue.get("title", "") or ""
-        body = issue.get("body", "") or ""
-
-        if submission_id_string in title or submission_id_string in body:
-            matching_issues.append(issue)
-
-    if len(matching_issues) > 0:
-        return matching_issues  # list of matching github issues
-    else:
-        return None  # No matching github issues
+    return None  # No matching issues found
 
 
 def update_github_issue_for_resubmission(existing_issue, user, headers):
@@ -2015,7 +2074,7 @@ async def get_users(
     pagination: Pagination = Depends(),
     search_filter: Optional[str] = None,
 ):
-    users = db.query(User)
+    users = db.query(User).order_by(models.User.name)
     if search_filter:
         users = users.filter(
             (

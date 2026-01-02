@@ -41,8 +41,15 @@ export default defineComponent({
       users.setPage(options.value.page);
     }, { deep: true });
 
+    const updating = ref(false);
     async function updateAdminStatus(item: User) {
-      await api.updateUser(item.id, item);
+      updating.value = true;
+      try {
+        await api.updateUser(item.id, item);
+        await users.refetch();
+      } finally {
+        updating.value = false;
+      }
     }
 
     return {
@@ -52,6 +59,7 @@ export default defineComponent({
       options,
       currentUser,
       searchFilter,
+      updating,
     };
   },
 });
@@ -73,17 +81,15 @@ export default defineComponent({
           hide-details
         />
         <v-card variant="outlined">
-          <v-data-table
+          <v-data-table-server
             v-model:options="options"
             v-model:items-per-page="users.data.limit"
-            dense
+            density="compact"
             :headers="headers"
             :items="users.data.results.results"
-            :server-items-length="users.data.results.count"
-            :loading="users.loading.value"
-            :footer-props="{itemsPerPageOptions : [10, 20, 50] }"
-            item-key="name"
-            class="elevation-1"
+            :items-length="users.data.results.count"
+            :items-per-page-options="[10, 20, 50]"
+            :loading="users.loading.value || updating"
           >
             <template #[`item.orcid`]="{ item }">
               <orcid-id
@@ -95,12 +101,13 @@ export default defineComponent({
             <template #[`item.is_admin`]="{ item }">
               <v-switch
                 v-model="item.is_admin"
-                class="mt-2"
+                color="primary"
+                hide-details
                 :disabled="item.name==currentUser?.name"
-                @click="updateAdminStatus(item)"
+                @update:model-value="updateAdminStatus(item)"
               />
             </template>
-          </v-data-table>
+          </v-data-table-server>
         </v-card>
       </v-card>
     </v-container>

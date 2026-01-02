@@ -2,8 +2,7 @@
 import { defineComponent, PropType } from 'vue';
 import { groupBy } from 'lodash';
 
-// @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
@@ -82,15 +81,11 @@ export default defineComponent({
           return ai - bi;
         });
     },
-    goldDescription() {
-      // @ts-ignore
-      const schema = NmdcSchema.slots.gold_path_field;
-      return schema.annotations?.tooltip?.value || '';
+    goldDescription(): string {
+      return NmdcSchema.slots.gold_path_field.annotations.tooltip.value;
     },
-    mixsDescription() {
-      // @ts-ignore
-      const schema = NmdcSchema.slots.mixs_env_triad_field;
-      return schema.annotations?.tooltip?.value || '';
+    mixsDescription(): string {
+      return NmdcSchema.slots.mixs_env_triad_field.annotations.tooltip.value;
     },
   },
   methods: {

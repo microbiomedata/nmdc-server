@@ -42,7 +42,7 @@
     "linkify-it": "^4.0.1",
     "lodash": "^4.17.21",
     "moment": "^2.29.4",
-    "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v11.14.0-rc.1",
+    "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v11.14.0",
     "popper.js": "1.16.1",
     "protobufjs": "^6.11.3",
     "serialize-javascript": "^6.0.0",
@@ -54,7 +54,6 @@
     "xlsx": "^0.17.5"
   },
   "devDependencies": {
-    "@modyfi/vite-plugin-yaml": "^1.1.1",
     "@tsconfig/node22": "^22.0.0",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^22.9.0",

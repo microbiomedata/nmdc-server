@@ -1,6 +1,5 @@
 <script lang="ts">
-// @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import {
   computed, defineComponent, PropType, reactive, ref, Ref, watch,
 } from 'vue';
@@ -135,33 +134,54 @@ export default defineComponent({
       return [item.eluentIntroductionCategory, item.sampledPortions, item.massSpecPolarityMode].filter((value) => !!value).join(', ');
     }
 
+    function getPermissibleValue<T extends keyof typeof NmdcSchema.enums>(permissibleValueName: string, enumName: T): typeof NmdcSchema.enums[T]['permissible_values'][keyof typeof NmdcSchema.enums[T]['permissible_values']] | null {
+      const enumObj = NmdcSchema.enums[enumName];
+      if (permissibleValueName in enumObj.permissible_values) {
+        return enumObj.permissible_values[permissibleValueName as keyof typeof enumObj.permissible_values];
+      }
+      return null;
+    }
+
     function getOmicsDataWithInputIds(omicsProcessing: OmicsProcessingResult) {
       const biosampleInputIds = (omicsProcessing.biosample_inputs as BiosampleSearchResult[]).map((input) => input.id);
       const annotations = omicsProcessing.annotations as Record<string, string | string[]>;
       return omicsProcessing.omics_data.map((omics) => {
-        const { EluentIntroductionCategoryEnum, PolarityModeEnum, SamplePortionEnum } = NmdcSchema.enums;
         const omicsCopy = { ...omics };
         omicsCopy.inputIds = biosampleInputIds;
         if (annotations.mass_spectrometry_configuration_id) {
           omicsCopy.massSpecConfigId = annotations.mass_spectrometry_configuration_id || '';
           omicsCopy.massSpecConfigName = annotations.mass_spectrometry_configuration_name || '';
-          const polarityMode = annotations.mass_spectrometry_config_polarity_mode
-            ? `${PolarityModeEnum.permissible_values[annotations.mass_spectrometry_config_polarity_mode as string].text} mode`
-            : '';
-          omicsCopy.massSpecPolarityMode = polarityMode;
+          const polarityModePv = getPermissibleValue(
+            annotations.mass_spectrometry_config_polarity_mode as string,
+            'PolarityModeEnum',
+          );
+          if (polarityModePv) {
+            omicsCopy.massSpecPolarityMode = polarityModePv.text + ' mode';
+          } else {
+            omicsCopy.massSpecPolarityMode = '';
+          }
         }
         if (annotations.chromatography_configuration_id) {
           omicsCopy.chromConfigId = annotations.chromatography_configuration_id || '';
           omicsCopy.chromConfigName = annotations.chromatography_configuration_name || '';
         }
         if (annotations.eluent_introduction_category) {
-          omicsCopy.eluentIntroductionCategory = EluentIntroductionCategoryEnum.permissible_values[annotations.eluent_introduction_category as string].title;
+          omicsCopy.eluentIntroductionCategory = getPermissibleValue(
+            annotations.eluent_introduction_category as string,
+            'EluentIntroductionCategoryEnum'
+          )?.title || '';
         }
         if (annotations.sampled_portions?.length) {
-          const displaySampledPortions = (annotations.sampled_portions as string[]).map((sampledPortion: string) => (
-            SamplePortionEnum.permissible_values[sampledPortion].title
-            || SamplePortionEnum.permissible_values[sampledPortion].text
-          ));
+          const displaySampledPortions = (annotations.sampled_portions as string[]).map((sampledPortion: string) => {
+            const samplePortionPv = getPermissibleValue(sampledPortion, 'SamplePortionEnum');
+            if (!samplePortionPv) {
+              return sampledPortion;
+            }
+            if ('title' in samplePortionPv) {
+              return samplePortionPv.title;
+            }
+            return samplePortionPv.text;
+          });
           omicsCopy.sampledPortions = displaySampledPortions.join(', ');
         }
         return omicsCopy;

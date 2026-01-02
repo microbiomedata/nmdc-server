@@ -1,6 +1,4 @@
- 
-// @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
 import { User } from '@/types';
 
@@ -240,11 +238,13 @@ export interface MetadataSubmissionRecordSlim {
   author: User;
   study_name: string;
   templates: string[];
-  status: string;
+  status: SubmissionStatusKey;
   date_last_modified: string;
   created: string;
   is_test_submission: boolean;
   sample_count: number;
+  reviewers: string[];
+  contributors: string[];
 }
 
 export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
@@ -291,11 +291,11 @@ export interface SampleProtocol extends AcquisitionProtocol {
 
 export type PermissionTitle = 'Viewer' | 'Metadata Contributor' | 'Editor';
 
-export type PermissionLevelValues = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
+export type SubmissionEditorRole = 'viewer' | 'reviewer' | 'metadata_contributor' | 'editor' | 'owner';
 
-export type SubmissionStatusKey = Extract<keyof typeof NmdcSchema.enums.submissionStatus.permissible_values, string>;
+export type SubmissionStatusKey = keyof typeof NmdcSchema.enums.SubmissionStatusEnum.permissible_values;
 
-export type SubmissionStatusTitle = typeof NmdcSchema.enums.submissionStatus.permissible_values[SubmissionStatusKey]['title'];
+export type AllowedStatusTransitions = Record<SubmissionEditorRole, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
 
 export interface SignedUploadUrlRequest {
   file_name: string;
@@ -316,3 +316,7 @@ export interface UploadCompleteRequest {
 }
 
 export type SubmissionImageType = 'pi_image' | 'primary_study_image' | 'study_images';
+export interface StatusOption {
+  value: string;
+  title: string;
+}

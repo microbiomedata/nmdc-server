@@ -1,6 +1,6 @@
 import moment from 'moment';
 import filesize from 'filesize';
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { types, getField } from './encoding';
 
 export function valueCardinality(value) {

@@ -15,6 +15,26 @@ from nmdc_server import aggregations, bulk_download_schema, models, query, schem
 from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
 
+# This dict defines the allowed status transitions for submissions based on the role of the editor.
+# The format is:
+# {
+#     <SubmissionEditorRole>: {
+#         <current_status>: [<allowed_next_statuses>]
+#     }
+# }
+ALLOWED_TRANSITIONS: dict[models.SubmissionEditorRole, dict[str, list[str]]] = {
+    models.SubmissionEditorRole.reviewer: {
+        SubmissionStatusEnum.ApprovedPendingUserFacility.text: [
+            SubmissionStatusEnum.UpdatesRequired.text,
+            SubmissionStatusEnum.ApprovedHeld.text,
+        ]
+    },
+    models.SubmissionEditorRole.owner: {
+        SubmissionStatusEnum.UpdatesRequired.text: [SubmissionStatusEnum.InProgress.text],
+        SubmissionStatusEnum.InProgress.text: [SubmissionStatusEnum.SubmittedPendingReview.text],
+    },
+}
+
 logger = get_logger(__name__)
 NumericValue = query.NumericValue
 T = TypeVar("T", bound=models.Base)

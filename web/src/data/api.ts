@@ -1,14 +1,9 @@
-import { merge } from "lodash";
-import axios, { AxiosError } from "axios";
-import { setupCache } from "axios-cache-adapter";
-// @ts-ignore
-import NmdcSchema from "nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml";
-import {
-  clearRefreshToken,
-  getRefreshToken,
-  setRefreshToken,
-} from "@/store/localStorage";
-import type { User } from "@/types";
+import { merge } from 'lodash';
+import axios, { AxiosError } from 'axios';
+import { setupCache } from 'axios-cache-adapter';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import { clearRefreshToken, getRefreshToken, setRefreshToken } from '@/store/localStorage';
+import type { User } from '@/types';
 
 // The token refresh and retry logic stores an extra bit of state on the request config
 declare module "axios" {
@@ -59,11 +54,6 @@ export type entityType =
   | "pfam_function"
   | "go_function";
 
-/**
- * By including this file in source with a git submodule,
- * we get build-time typescript support for the dynamic types coming
- * out of an entirely different repository.
- */
 export type entitySchemaType = keyof typeof NmdcSchema.classes;
 
 export interface BaseSearchResult {
@@ -201,10 +191,10 @@ export interface DOI {
   provider: string;
 }
 
-export interface DOIMAP {
-  info: Record<string, any>;
-  category: string;
-  provider: string;
+export interface DoiInfo {
+  info: Record<string, any>,
+  category: string,
+  provider: string,
 }
 
 export interface StudySearchResults extends BaseSearchResult {
@@ -214,8 +204,8 @@ export interface StudySearchResults extends BaseSearchResult {
   image_url: string;
   principal_investigator: PrincipalInvestigator;
   award_dois: DOI[];
-  dataset_dois: DOI[];
-  doi_map: Record<string, DOIMAP>;
+  dataset_dois: DOI[],
+  doi_map: Record<string, DoiInfo>,
   publication_dois: DOI[];
   omics_counts: {
     type: string;
@@ -224,7 +214,7 @@ export interface StudySearchResults extends BaseSearchResult {
   omics_processing_counts: {
     type: string;
     count: number;
-  }[];
+  }[] | null;
   gold_name: string;
   gold_description: string;
   scientific_objective: string;
@@ -232,8 +222,8 @@ export interface StudySearchResults extends BaseSearchResult {
   mod_date: string;
   open_in_gold: string;
   funding_sources?: string[];
-  protocol_link: string[];
-  gold_study_identifiers: string[];
+  protocol_link: string[] | null;
+  gold_study_identifiers: string[] | null;
   annotations: {
     insdc_bioproject_identifiers?: string[];
     title: string;
@@ -250,7 +240,7 @@ export interface StudySearchResults extends BaseSearchResult {
       orcid?: string;
       email?: string;
     };
-  }[];
+  }[] | null;
 }
 
 // NOTE: This type definition may be incomplete compared to the actual NMDC MongoDB schema
@@ -556,6 +546,7 @@ async function search(type: entityType, params: SearchParams) {
 
 async function _getById<T>(route: string, id: string): Promise<T> {
   const { data } = await client.get<T>(`${route}/${id}`);
+  console.log('Fetched', route, id, data);
   return data;
 }
 

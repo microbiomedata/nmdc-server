@@ -1,46 +1,46 @@
 <script lang="ts">
 import {
-  computed, defineComponent, watchEffect, ref, watch,
-  ComputedRef,
+  defineComponent,
+  ref,
+  watch,
 } from 'vue';
-import { useRouter } from 'vue-router';
-import { useDisplay } from 'vuetify';
-
-import { isObject } from 'lodash';
 // @ts-ignore
-import Cite from 'citation-js';
-import {
-  typeWithCardinality, valueCardinality, fieldDisplayName,
-  // @ts-ignore
-} from '@/util';
-import {
-  api, StudySearchResults, DOI, Condition,
-} from '@/data/api';
-import { setUniqueCondition, setConditions } from '@/store';
-import AppBanner from '@/components/AppBanner.vue';
-import AttributeItem from '@/components/Presentation/AttributeItem.vue';
-import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
-import TeamInfo from '@/components/TeamInfo.vue';
-import gold from '@/assets/GOLD.png';
+import { fieldDisplayName } from '@/util';
 import { downloadJson } from '@/utils';
-/**
- * Override citations for certain DOIs
- */
- interface CitationOverridesType {
-  [key: string]: string;
-}
-const CitationOverrides: CitationOverridesType = {
-  '10.46936/10.25585/60000017': 'Doktycz, M. (2020) BioScales - Defining plant gene function and its connection to ecosystem nitrogen and carbon cycling [Data set]. DOE Joint Genome Institute. https://doi.org/10.46936/10.25585/60000017',
-};
-const GoldStudyLinkBase = 'https://gold.jgi.doe.gov/study?id=';
-const BioprojectLinkBase = 'https://bioregistry.io/';
+import {
+  api,
+  Condition,
+  DoiInfo,
+  StudySearchResults,
+} from '@/data/api';
+import { setConditions, setUniqueCondition } from '@/store';
+import AppBanner from '@/components/AppBanner.vue';
+import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
+import ClickToCopyText from '@/components/Presentation/ClickToCopyText.vue';
+import TeamInfo from '@/components/TeamInfo.vue';
+import RevealContainer from '@/components/Presentation/RevealContainer.vue';
+import usePaginatedResults from '@/use/usePaginatedResults';
+import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchResults.vue';
+import { urlify } from '@/data/utils';
+import useRequest from '@/use/useRequest';
+import PageSection from '@/views/IndividualResults/PageSection.vue';
+import AttributeRow from '@/components/Presentation/AttributeRow.vue';
+import DoiCitation from '@/components/Presentation/DoiCitation.vue';
+
+const GOLD_STUDY_LINK_BASE = 'https://gold.jgi.doe.gov/study?id=';
+const BIOPROJECT_LINK_BASE = 'https://bioregistry.io/';
+const DEFAULT_BIOSAMPLE_PAGE_SIZE = 5;
 
 export default defineComponent({
-
   components: {
     AppBanner,
-    AttributeItem,
+    AttributeRow,
+    BiosampleSearchResults,
+    ClickToCopyText,
+    DoiCitation,
     IndividualTitle,
+    PageSection,
+    RevealContainer,
     TeamInfo,
   },
 
@@ -52,136 +52,87 @@ export default defineComponent({
   },
 
   setup(props) {
-    const { xs } = useDisplay();
-    
-    const dois = ref({
-      awardDois: [] as DOI[],
-      publicationDois: [] as DOI[],
-      datasetDois: [] as DOI[],
-      massiveDois: [] as DOI[],
-      essDiveDois: [] as DOI[],
-    });
+    const study = ref<StudySearchResults | null>(null);
 
-    const item = ref(null as StudySearchResults | null);
-    const parentStudies = ref([]as StudySearchResults[]);
+    const sampleCount = ref(0);
+    const omicsProcessingCounts = ref<Record<string, number> | null>(null);
 
-    watch(item, () => {
-      if (item.value?.part_of) {
-        item.value.part_of.forEach((id: string) => {
-          if (!parentStudies.value.some((study) => study.id === id)) {
-            api.getStudy(id).then((b) => {
-              parentStudies.value.push(b);
-            });
+    const parentStudies = ref<StudySearchResults[]>([]);
+    const conditions = ref<Condition[]>([]);
+    const biosampleSearchEnabled = ref(false);
+
+    const publicationDois = ref<DoiInfo[]>([]);
+    const awardDois = ref<DoiInfo[]>([]);
+    const datasetDois = ref<DoiInfo[]>([]);
+
+    const goldLinks = ref<string[]>([]);
+    const bioprojectLinks = ref<string[]>([]);
+    const websiteLinks = ref<string[]>([]);
+
+    const biosampleSearch = usePaginatedResults(
+      conditions,
+      api.searchBiosample,
+      undefined,
+      DEFAULT_BIOSAMPLE_PAGE_SIZE,
+      biosampleSearchEnabled,
+    );
+
+    const getStudyRequest = useRequest();
+
+    async function downloadStudyData() {
+      const data = await api.getStudySource(props.id);
+      downloadJson(data, `${props.id}.json`);
+    }
+
+    watch(() => props.id, () => getStudyRequest.request(async () => {
+      biosampleSearch.reset();
+
+      const _study = await api.getStudy(props.id);
+
+      sampleCount.value = _study.children.reduce((prev, curr) => prev + curr.sample_count, _study.sample_count);
+      omicsProcessingCounts.value = null;
+      if (_study.omics_processing_counts !== null) {
+        const counts: Record<string, number> = {};
+        _study.omics_processing_counts.forEach(({type, count}) => {
+          if (type.toLowerCase() !== 'lipidomics' && count > 0) {
+            counts[type] = count;
           }
         });
+        omicsProcessingCounts.value = counts;
+      }
+
+      if (_study.part_of) {
+        parentStudies.value = await Promise.all(
+          _study.part_of.map((id) => api.getStudy(id)),
+        );
       } else {
         parentStudies.value = [];
       }
-    });
 
-    watchEffect(() => {
-      api.getStudy(props.id).then((b) => { item.value = b; });
-    });
+      publicationDois.value = Object.values(_study.doi_map).filter((doi) => doi.category === 'publication_doi');
+      awardDois.value = Object.values(_study.doi_map).filter((doi) => doi.category === 'award_doi');
+      datasetDois.value = Object.values(_study.doi_map).filter((doi) => doi.category === 'dataset_doi');
 
-    const studyData = computed(() => {
-      if (!item.value) return null;
-      return {
-        ...item.value,
-        sample_count: item.value?.children?.reduce((acc: number, child: StudySearchResults) => acc + child.sample_count, item.value.sample_count),
-      };
-    });
+      goldLinks.value = (_study.gold_study_identifiers || []).map((gold_id: string) => (
+        GOLD_STUDY_LINK_BASE + gold_id.replace('gold:', '')
+      ));
+      bioprojectLinks.value = (_study.annotations?.insdc_bioproject_identifiers || []).map((id: string) => (
+        BIOPROJECT_LINK_BASE + id
+      ));
+      websiteLinks.value = [
+        ...(_study.homepage_website || []),
+        ...(_study.principal_investigator_websites || []),
+      ];
 
-      const displayFields = computed(() => {
-      if (item.value === null) {
-        return [];
-      }
-      return Object.entries(item.value).filter(([field, value]) => {
-        if (['name', 'description'].includes(field)) {
-          return false;
-        }
-        return !isObject(value);
-      });
-    });
-
-    const goldLinks: ComputedRef<Set<string>> = computed(() => {
-      if (!item.value?.gold_study_identifiers && !item.value?.open_in_gold) {
-        return new Set();
-      }
-      const links = new Set();
-      if (item.value.open_in_gold) {
-        links.add(item.value.open_in_gold);
-      }
-      if (item.value.gold_study_identifiers) {
-        item.value.gold_study_identifiers.forEach((identifier: string) => {
-          if (identifier.toLowerCase().startsWith('gold:')) {
-            links.add(GoldStudyLinkBase + identifier.substring(5));
-          }
-        });
-      }
-      return links as Set<string>;
-    });
-
-    const bioprojectLinks = computed(() => {
-      if (item.value?.annotations?.insdc_bioproject_identifiers) {
-        return item.value.annotations.insdc_bioproject_identifiers.map((id) => (
-          BioprojectLinkBase + id
-        ));
-      }
-      return [];
-    });
-
-    function relatedTypeDescription(relatedType: string) {
-      if (item.value) {
-        const n = valueCardinality(item.value[`${relatedType}_id`]);
-        return `${n} ${typeWithCardinality(relatedType, n)}`;
-      }
-      return '';
-    }
-
-    function openLink(url: string) {
-      window.open(url, '_blank');
-    }
-
-    function formatAPA(citation: any) {
-      return citation.format('bibliography', {
-        format: 'text',
-        template: 'apa',
-        lang: 'en-US',
-      });
-    }
-
-    const router = useRouter();
-
-    function seeOmicsForStudy(omicsType = '') {
-      setUniqueCondition(
-        ['study_id', 'omics_type'],
-        ['study', 'omics_processing'],
-        [{
-          value: props.id,
-          table: 'study',
-          op: '==',
-          field: 'id',
-        }, {
-          value: omicsType,
-          table: 'omics_processing',
-          field: 'omics_type',
-          op: '==',
-        }],
-      );
-      /* @ts-ignore */
-      router.go({ name: 'Search' });
-    }
-
-    function seeStudyInContext(item: StudySearchResults) {
-      const conditions: Condition[] = [{
+      conditions.value = [{
         op: '==',
         table: 'study',
         field: 'study_id',
-        value: props.id,
+        value: _study.id,
       }];
-      if (item.children.length > 0) {
-        item.children.forEach((child: StudySearchResults) => {
-          conditions.push({
+      if (_study.children.length > 0) {
+        _study.children.forEach((child: StudySearchResults) => {
+          conditions.value.push({
             value: child.id,
             table: 'study',
             field: 'study_id',
@@ -189,63 +140,57 @@ export default defineComponent({
           });
         });
       }
-      setConditions(conditions, true);
-    }
+      biosampleSearchEnabled.value = true;
 
-    async function downloadStudyData() {
-      const data = await api.getStudySource(props.id);
-      downloadJson(data, `${props.id}.json`);
-    }
-
-    watch(item, async (_item) => {
-      const doiMap = _item?.doi_map;
-      if (doiMap) {
-        dois.value.awardDois = [];
-        dois.value.publicationDois = [];
-        dois.value.datasetDois = [];
-        dois.value.awardDois = Object.values(doiMap)
-          .filter((doi) => doi.category === 'award_doi')
-          .map((doi) => [{
-            cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
-            id: doi.info.DOI,
-            provider: doi.provider,
-          }]).flat();
-        dois.value.datasetDois = Object.values(doiMap)
-          .filter((doi) => doi.category === 'dataset_doi')
-          .map((doi) => [{
-            cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
-            id: doi.info.DOI,
-            provider: doi.provider,
-          }]).flat();
-        dois.value.publicationDois = Object.values(doiMap)
-          .filter((doi) => doi.category === 'publication_doi')
-          .map((doi) => [{
-            cite: CitationOverrides[doi.info.DOI] || formatAPA(new Cite(doi.info.DOI)),
-            id: doi.info.DOI,
-            provider: doi.provider,
-          }]).flat();
-      }
+      study.value = _study;
+    }), {
+      immediate: true,
     });
+
+    function seeStudyInContext() {
+      setConditions(conditions.value, true);
+    }
+
+    function seeOmicsForStudy(omicsType = '') {
+      setUniqueCondition(
+        ['study_id', 'omics_type'],
+        ['study', 'omics_processing'],
+        [
+          {
+            value: props.id,
+            table: 'study',
+            op: '==',
+            field: 'id',
+          },
+          {
+            value: omicsType,
+            table: 'omics_processing',
+            field: 'omics_type',
+            op: '==',
+          },
+        ],
+        true,
+      );
+    }
+
     return {
-      CitationOverrides,
-      GoldStudyLinkBase,
+      study,
+      sampleCount,
+      omicsProcessingCounts,
+      loading: getStudyRequest.loading,
       goldLinks,
       bioprojectLinks,
-      data: dois,
-      item,
-      studyData,
-      displayFields,
+      websiteLinks,
+      publicationDois,
+      awardDois,
+      datasetDois,
+      biosampleSearch,
+      parentStudies,
       /* Methods */
-      seeOmicsForStudy,
-      relatedTypeDescription,
-      openLink,
-      formatAPA,
-      typeWithCardinality,
       fieldDisplayName,
       seeStudyInContext,
-      parentStudies,
-      gold,
-      xs,
+      seeOmicsForStudy,
+      urlify,
       downloadStudyData,
     };
   },
@@ -253,328 +198,286 @@ export default defineComponent({
 </script>
 
 <template>
-  <v-container fluid>
-    <v-main v-if="item !== null">
-      <AppBanner />
-      <v-row :class="{'flex-column': xs}">
-        <v-col
-          cols="12"
-          md="7"
-        >
-          <v-container>
-            <IndividualTitle :item="item">
-              <template #default>
-                <div v-if="item.omics_processing_counts">
-                  <template v-for="val in item.omics_processing_counts">
-                    <v-chip
-                      v-if="val.count && (val.type.toLowerCase() !== 'lipidomics')"
-                      :key="val.type"
-                      small
-                      class="mr-2 my-1"
-                      @click="seeOmicsForStudy(val.type)"
-                    >
-                      {{ fieldDisplayName(val.type) }}: {{ val.count }}
-                    </v-chip>
-                  </template>
-                </div>
-                <v-btn
-                  class="mt-2"
-                  color="primary"
-                  @click="downloadStudyData"
-                >
-                  <v-icon class="mr-2">
-                    mdi-download
-                  </v-icon>
-                  Download Study Data
-                </v-btn>
+  <v-main>
+    <AppBanner />
+    <v-container v-if="loading">
+      <v-skeleton-loader type="article" />
+    </v-container>
+    <v-container v-if="!loading && study !== null">
+      <div class="text-caption">
+        <!-- eslint-disable-next-line-->
+        <router-link :to="{ name: 'Search' }">Home</router-link>
+        <span class="mx-2">/</span>
+        <ClickToCopyText>{{ study.id }}</ClickToCopyText>
+      </div>
+
+      <PageSection>
+        <v-row class="mt-0">
+          <v-col
+            cols="12"
+            :md="study.image_url ? 8 : 12"
+          >
+            <IndividualTitle :item="study">
+              <template
+                v-if="study.description"
+                #subtitle
+              >
+                <RevealContainer>
+                  <span v-html="urlify(study.description)" />
+                </RevealContainer>
               </template>
             </IndividualTitle>
-            <TeamInfo
-              :item="item"
-            />
-          </v-container>
-          <v-col offset="1">
-            <h2 class="text-h4">
-              NMDC Details
-            </h2>
-            <v-list>
-              <AttributeItem
-                v-bind="{ item, field: 'id', bindClick: true }"
-                @click="seeStudyInContext(item)"
-              />
-              <AttributeItem
-                v-if="studyData"
-                v-bind="{ item: studyData, field: 'sample_count', bindClick: true }"
-                @click="seeStudyInContext(item)"
-              />
-            </v-list>
-            <template
-              v-if="
-                goldLinks.size > 0 || bioprojectLinks.length > 0 ||
-                  (item.protocol_link && item.protocol_link.length > 0) ||
-                  item.principal_investigator_websites.length > 0"
+            <v-btn
+              class="mt-2 mb-8"
+              color="primary"
+              size="small"
+              @click="downloadStudyData"
             >
-              <h2 class="text-h4">
-                Additional Resources
-              </h2>
-              <v-list
-                v-if="
-                  goldLinks.size > 0 || bioprojectLinks.length > 0 ||
-                    (item.protocol_link && item.protocol_link.length > 0) ||
-                    item.principal_investigator_websites.length > 0"
-              >
-                <v-list-item v-if="item.protocol_link">
-                  <template #prepend>
-                    <v-avatar>
-                      <v-icon>mdi-file-document</v-icon>
-                    </v-avatar>
-                  </template>
-                  <v-list-item-title class="text-h6">
-                    Protocols
-                  </v-list-item-title>
-                </v-list-item>
-                <AttributeItem
-                  v-for="proto in (item.protocol_link || [])"
-                  :key="proto"
-                  style="padding-left: 60px;"
-                  v-bind="{
-                    item,
-                    link: { name: proto, target: proto},
-                    field: 'protocol_link' }
-                  "
-                />
-                <v-list-item v-if="goldLinks.size > 0 || bioprojectLinks.length > 0 || item.principal_investigator_websites.length > 0">
-                  <template #prepend>
-                    <v-avatar>
-                      <v-icon>mdi-file-document</v-icon>
-                    </v-avatar>
-                  </template>
-                  <v-list-item-title class="text-h6">
-                    Links
-                  </v-list-item-title>
-                </v-list-item>
-                <AttributeItem
-                  v-for="link in goldLinks"
-                  :key="link"
-                  style="padding-left: 60px;"
-                  v-bind="{
-                    item,
-                    link: {
-                      name: 'GOLD Metadata',
-                      target: link
-                    }
-                  }"
-                  :image="gold"
-                />
-                <AttributeItem
-                  v-for="link in bioprojectLinks"
-                  :key="link"
-                  style="padding-left: 60px;"
-                  v-bind="{
-                    item,
-                    link: {
-                      name: 'BioProject',
-                      target: link
-                    }
-                  }"
-                />
-                <template
-                  v-for="site in (item.principal_investigator_websites || [])"
-                  :key="site"
+              <v-icon class="mr-2">
+                mdi-download
+              </v-icon>
+              Download Study Metdata
+            </v-btn>
+            <AttributeRow
+              v-if="parentStudies.length > 0"
+              label="Part Of"
+            >
+              <div class="stack-sm">
+                <div
+                  v-for="parent in parentStudies"
+                  :key="parent.id"
                 >
-                  <AttributeItem
-                    style="padding-left: 60px;"
-                    v-bind="{
-                      item,
-                      link: { name: site, target: site},
-                    }
-                    "
-                  />
-                </template>
-              </v-list>
-            </template>
-          </v-col>
-        </v-col>
-        <v-col
-          cols="12"
-          md="5"
-        >
-          <div
-            v-if="Object.keys(item.doi_map).length > 0"
-            class="ma-4 pa-2 bg-grey-lighten-4"
-          >
-            <template v-if="data.awardDois.length > 0">
-              <v-list-subheader>
-                Award DOIs
-              </v-list-subheader>
-              <v-list
-                class="bg-grey-lighten-4"
-              >
-                <v-divider />
-                <v-list-item
-                  v-for="(award, index) in data.awardDois"
-                  :key="index"
-                >
-                  <v-list-item-title>
-                    {{ award.cite }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle
-                    v-if="award.provider"
-                    class="pt-2"
+                  <router-link
+                    :to="{ name: 'Study', params: { id: parent.id }}"
                   >
-                    <span class="font-weight-bold pr-2">Provider:</span>
-                    <span class="text-uppercase">{{ award.provider }}</span>
-                  </v-list-item-subtitle>
+                    {{ parent.annotations.title }}
+                  </router-link>
+                </div>
+              </div>
+            </AttributeRow>
 
-                  <template #append>
-                    <v-tooltip top>
-                      <template #activator="{ props }">
-                        <v-btn
-                          icon
-                          variant="plain"
-                          v-bind="props"
-                          @click="openLink(`https://doi.org/${award.id}`)"
-                        >
-                          <v-icon>mdi-open-in-new</v-icon>
-                        </v-btn>
-                      </template>
-                      <span>Visit site</span>
-                    </v-tooltip>
-                  </template>
-                </v-list-item>
-              </v-list>
-            </template>
-            <template
-              v-if="data.publicationDois.length > 0"
+            <AttributeRow
+              v-if="study.children.length > 0"
+              label="Associated Studies"
             >
-              <v-list-subheader>
-                Publications
-              </v-list-subheader>
-              <v-divider />
-              <v-list
-                class="bg-grey-lighten-4"
-              >
-                <template
-                  v-for="(pub, pubIndex) in data.publicationDois"
-                  :key="pubIndex"
+              <div class="stack-sm">
+                <div
+                  v-for="child in study.children"
+                  :key="child.id"
                 >
-                  <v-list-item>
-                    <v-list-item-title>
-                      {{ pub.cite }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle
-                      v-if="pub.provider"
-                      class="pt-2"
-                    >
-                      <span class="font-weight-bold pr-2">Provider:</span>
-                      <span class="text-uppercase">{{ pub.provider }}</span>
-                    </v-list-item-subtitle>
-                    <template #append>
-                      <v-tooltip top>
-                        <template #activator="{ props }">
-                          <v-btn
-                            icon
-                            variant="plain"
-                            v-bind="props"
-                            @click="openLink(`https://doi.org/${pub.id}`)"
-                          >
-                            <v-icon>mdi-open-in-new</v-icon>
-                          </v-btn>
-                        </template>
-                        <span>Visit site</span>
-                      </v-tooltip>
-                    </template>
-                  </v-list-item>
-                </template>
-              </v-list>
-            </template>
-            <template v-if="data.datasetDois.length > 0">
-              <v-list-subheader>
-                Data DOIs
-              </v-list-subheader>
-              <v-list
-                class="bg-grey-lighten-4"
-              >
-                <v-divider />
-                <v-list-item
-                  v-for="(dataDOI, index) in data.datasetDois"
-                  :key="index"
-                >
-                  <v-list-item-title>
-                    {{ dataDOI.cite }}
-                  </v-list-item-title>
-                  <v-list-item-subtitle
-                    v-if="dataDOI.provider"
-                    class="pt-2"
+                  <router-link
+                    :to="{ name: 'Study', params: { id: child.id }}"
                   >
-                    <span class="font-weight-bold pr-2">Provider:</span>
-                    <span class="text-uppercase">{{ dataDOI.provider }}</span>
-                  </v-list-item-subtitle>
-                  <template #append>
-                    <v-tooltip top>
-                      <template #activator="{ props }">
-                        <v-btn
-                          icon
-                          variant="plain"
-                          v-bind="props"
-                          @click="openLink(`https://doi.org/${dataDOI.id}`)"
-                        >
-                          <v-icon>mdi-open-in-new</v-icon>
-                        </v-btn>
-                      </template>
-                      <span>Visit site</span>
-                    </v-tooltip>
-                  </template>
-                </v-list-item>
-              </v-list>
-            </template>
+                    {{ child.annotations.title }}
+                  </router-link>
+                </div>
+              </div>
+            </AttributeRow>
+
+            <AttributeRow
+              v-if="sampleCount > 0 || omicsProcessingCounts !== null"
+              label="Data Summary"
+            >
+              <v-chip
+                v-if="sampleCount > 0"
+                class="mb-4"
+                size="small"
+                color="primary"
+                variant="flat"
+                @click="seeStudyInContext"
+              >
+                All Samples: {{ sampleCount }}
+              </v-chip>
+              <div v-if="omicsProcessingCounts !== null">
+                <div class="text-caption font-weight-medium">
+                  Omics Types
+                </div>
+                <template
+                  v-for="(count, type) in omicsProcessingCounts"
+                  :key="type"
+                >
+                  <v-chip
+                    class="mr-2"
+                    size="small"
+                    @click="seeOmicsForStudy(type)"
+                  >
+                    {{ fieldDisplayName(type) }}: {{ count }}
+                  </v-chip>
+                </template>
+              </div>
+            </AttributeRow>
+          </v-col>
+
+          <v-col
+            v-if="study.image_url"
+            cols="12"
+            md="4"
+          >
+            <v-img
+              :src="study.image_url"
+              :alt="study.name"
+              contain
+              max-width="450"
+            />
+          </v-col>
+        </v-row>
+      </PageSection>
+
+      <PageSection heading="Team">
+        <RevealContainer :closed-height="150">
+          <TeamInfo :item="study" />
+        </RevealContainer>
+      </PageSection>
+
+      <PageSection heading="Study Details">
+        <AttributeRow
+          v-if="publicationDois.length > 0"
+          label="Publications"
+        >
+          <div class="stack-sm">
+            <DoiCitation
+              v-for="doi in publicationDois"
+              :key="doi.info.DOI"
+              :doi="doi"
+            />
           </div>
-          <v-card
-            v-if="item.part_of && item.part_of.length > 0"
-            flat
-          >
-            <v-card-title class="display-1">
-              Part of:
-            </v-card-title>
-            <v-list>
-              <v-list-item
-                v-for="study in parentStudies"
-                :key="study.id"
-                :to="`${study.id}`"
+        </AttributeRow>
+
+        <AttributeRow
+          v-if="study.funding_sources && study.funding_sources.length > 0"
+          label="Funding Sources"
+        >
+          <div class="stack-sm">
+            <span
+              v-for="source in study.funding_sources"
+              :key="source"
+              v-html="urlify(source)"
+            />
+          </div>
+        </AttributeRow>
+
+        <AttributeRow
+          v-if="awardDois.length > 0"
+          label="Awards"
+        >
+          <div class="stack-sm">
+            <DoiCitation
+              v-for="doi in awardDois"
+              :key="doi.info.DOI"
+              :doi="doi"
+            />
+          </div>
+        </AttributeRow>
+
+        <AttributeRow
+          v-if="websiteLinks.length > 0"
+          label="Websites"
+        >
+          <div class="stack-sm">
+            <div
+              v-for="url in websiteLinks"
+              :key="url"
+            >
+              <a
+                :href="url"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <template #prepend>
-                  <v-icon>mdi-file-document</v-icon>
-                </template>
-                <v-list-item-title class="px-2">
-                  {{ study.annotations.title }}
-                </v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-card>
-          <v-card
-            v-if="item.children && item.children.length > 0"
-            flat
-          >
-            <v-card-title class="display-1">
-              Associated Studies:
-            </v-card-title>
-            <v-list>
-              <v-list-item
-                v-for="study in item.children"
-                :key="study.id"
-                :to="`${study.id}`"
+                {{ url }}
+              </a>
+            </div>
+          </div>
+        </AttributeRow>
+
+        <AttributeRow
+          v-if="study.protocol_link && study.protocol_link.length > 0"
+          label="Protocols"
+        >
+          <div class="stack-sm">
+            <div
+              v-for="link in study.protocol_link"
+              :key="link"
+            >
+              <a
+                :href="link"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <template #prepend>
-                  <v-icon>mdi-file-document</v-icon>
-                </template>
-                <v-list-item-title class="px-2">
-                  {{ study.annotations.title }}
-                </v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-card>
-        </v-col>
-      </v-row>
-    </v-main>
-  </v-container>
+                {{ link }}
+              </a>
+            </div>
+          </div>
+        </AttributeRow>
+      </PageSection>
+
+      <PageSection heading="Related External Resources">
+        <AttributeRow
+          v-if="datasetDois.length > 0"
+          label="Datasets"
+        >
+          <div class="stack-sm">
+            <DoiCitation
+              v-for="doi in datasetDois"
+              :key="doi.info.DOI"
+              :doi="doi"
+            />
+          </div>
+        </AttributeRow>
+
+        <AttributeRow
+          v-if="goldLinks.length > 0"
+          label="GOLD Studies"
+        >
+          <div class="stack-sm">
+            <div
+              v-for="link in goldLinks"
+              :key="link"
+            >
+              <a
+                :href="link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ link }}
+              </a>
+            </div>
+          </div>
+        </AttributeRow>
+
+        <AttributeRow
+          v-if="bioprojectLinks.length > 0"
+          label="BioProjects"
+        >
+          <div class="stack-sm">
+            <div
+              v-for="link in bioprojectLinks"
+              :key="link"
+            >
+              <a
+                :href="link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ link }}
+              </a>
+            </div>
+          </div>
+        </AttributeRow>
+      </PageSection>
+
+      <PageSection heading="Samples">
+        <v-skeleton-loader
+          v-if="biosampleSearch.fetchCount.value === 0"
+          type="list-item-three-line, list-item-three-line"
+        />
+
+        <div v-if="biosampleSearch.data.results.count > 0">
+          <BiosampleSearchResults
+            :biosample-search="biosampleSearch"
+            :data-object-filter="[]"
+          />
+        </div>
+      </PageSection>
+    </v-container>
+  </v-main>
 </template>

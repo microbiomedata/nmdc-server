@@ -1,6 +1,5 @@
 <script lang="ts">
-// @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import {
   computed,
   defineComponent,
@@ -21,7 +20,6 @@ import {
   primaryStudyImageUrl,
   piImageUrl,
   canEditSubmissionByStatus,
-  SubmissionStatusTitleMapping,
   status,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
@@ -145,7 +143,6 @@ export default defineComponent({
       primaryStudyImageUrl,
       piImageUrl,
       canEditSubmissionByStatus,
-      SubmissionStatusTitleMapping,
       status,
       StatusAlert,
     };

@@ -11,8 +11,8 @@ export default function useRequest() {
     try {
       state.loading = true;
       state.error = null;
-      state.count += 1;
       const val = await func();
+      state.count += 1;
       state.loading = false;
       return val;
     } catch (err) {
@@ -22,7 +22,7 @@ export default function useRequest() {
     }
   }
 
-  async function reset() {
+  function reset() {
     state.loading = false;
     state.error = null;
     state.count = 0;
