@@ -391,6 +391,7 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Biosample not found")
     return db_biosample
 
+
 # Get a single record of biosample source data via the Runtime API
 # based on the supplied ID
 @router.get(
@@ -416,7 +417,9 @@ async def search_biosample_source(
     db: Session = Depends(get_db),
 ):
     biosample_search = BiosampleSearch()
-    biosample_ids = crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
+    biosample_ids = (
+        crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
+    )
     results = biosample_search.get_records_by_id([id for (id,) in biosample_ids])
     if not results:
         raise HTTPException(status_code=404, detail="Could not retrieve source data for biosamples")
@@ -425,34 +428,28 @@ async def search_biosample_source(
 
 # Download multiple metadata lists as a zip file given a list of endpoint labels.
 # Endpoint labels are mapped to functions that retrieve JSON
-@router.post(
-    "/download_metadata", 
-    tags=["bulk_download"]
-)
-async def download_metadata(
-    q: query.MultiSearchQuery,
-    db: Session = Depends(get_db)
-):
+@router.post("/download_metadata", tags=["bulk_download"])
+async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get_db)):
     endpoint_map = {
         "biosamples": search_biosample_source,
         "studies": search_study_source,
     }
-    
+
     zip_buffer = io.BytesIO()
-    
-    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for endpoint_name in q.endpoints:
             if endpoint_name in endpoint_map:
                 data = await endpoint_map[endpoint_name](q, db)
                 json_str = json.dumps(data, indent=2, ensure_ascii=False)
-                zip_file.writestr(f"{endpoint_name}.json", json_str.encode('utf-8'))
-    
+                zip_file.writestr(f"{endpoint_name}.json", json_str.encode("utf-8"))
+
     zip_buffer.seek(0)
-    
+
     return Response(
         content=zip_buffer.getvalue(),
         media_type="application/zip",
-        headers={"Content-Disposition": "attachment; filename=metadata.zip"}
+        headers={"Content-Disposition": "attachment; filename=metadata.zip"},
     )
 
 
@@ -648,6 +645,7 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
     if image is None:
         raise HTTPException(status_code=404, detail="No image exists for this study")
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
+
 
 # Study source data via the Runtime API
 @router.get(
