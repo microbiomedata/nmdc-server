@@ -398,7 +398,6 @@ async def download_metadata(
     q: query.MultiSearchQuery,
     db: Session = Depends(get_db)
 ):
-
     endpoint_map = {
         "biosamples": search_biosample_source,
         "studies": search_study_source,
