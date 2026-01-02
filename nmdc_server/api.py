@@ -3,12 +3,12 @@ import io
 import json
 import logging
 import time
+import zipfile
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
-import zipfile
 
 import httpx
 import requests
