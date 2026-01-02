@@ -236,7 +236,7 @@ export default defineComponent({
               <v-icon class="mr-2">
                 mdi-download
               </v-icon>
-              Download Study Metdata
+              Download Study Metadata
             </v-btn>
             <AttributeRow
               v-if="parentStudies.length > 0"
