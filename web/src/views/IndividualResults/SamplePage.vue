@@ -16,18 +16,27 @@ const props = defineProps<{
 const biosample = ref<BiosampleSearchResult | null>(null);
 const getBiosampleRequest = useRequest();
 const loading = getBiosampleRequest.loading;
+const sampleDownloadDialog = ref(false);
+const sampleDownloadLoading = ref(false);
+const errorDialog = ref(false);
 
 async function downloadSampleData() {
-  const data = await api.getBiosampleSource(props.id);
-  downloadJson(data, `${props.id}.json`);
+  try {
+    sampleDownloadDialog.value = false;
+    sampleDownloadLoading.value = true;
+    const data = await api.getBiosampleSource(props.id);
+    downloadJson(data, `${props.id}.json`);
+  } catch (error) {
+    console.error('Failed to download study data:', error);
+    errorDialog.value = true;
+  } finally {
+    sampleDownloadLoading.value = false;
+  }
 }
 
 watchEffect(() => {
   getBiosampleRequest.request(async () => {
-    console.log('Fetching biosample', props.id);
     biosample.value = await api.getBiosample(props.id);
-    console.log('Fetched biosample', biosample.value);
-    console.log(getBiosampleRequest.loading.value);
   });
 });
 </script>
@@ -47,17 +56,44 @@ watchEffect(() => {
         <ClickToCopyText>{{ biosample.id }}</ClickToCopyText>
       </div>
       <IndividualTitle :item="biosample" />
-      <v-btn
-        class="mb-8"
-        color="primary"
-        size="small"
-        @click="downloadSampleData"
+      <v-dialog
+        v-model="sampleDownloadDialog"
+        max-width="400"
       >
-        <v-icon class="mr-2">
-          mdi-download
-        </v-icon>
-        Download Sample Metadata
-      </v-btn>
+        <template #activator="{ props: dialogProps }">
+          <v-btn
+            v-bind="dialogProps"
+            class="mb-8"
+            color="primary"
+            size="small"
+          >
+            <v-icon class="mr-2">
+              mdi-download
+            </v-icon>
+            Download Sample Metadata
+          </v-btn>
+        </template>
+        <DownloadDialog
+          :loading="sampleDownloadLoading"
+          @clicked="downloadSampleData"
+        />
+      </v-dialog>
+      <v-snackbar
+        v-model="sampleDownloadLoading"
+        location="right bottom"
+        timeout="-1"
+      >
+        <v-progress-circular
+          indeterminate
+          class="mr-3"
+        />
+        <span>
+          Downloading sample metadata
+        </span>
+      </v-snackbar>
+      <ErrorDialog
+        v-model:show="errorDialog"
+      />
       <AttributeList
         type="biosample"
         :item="biosample"

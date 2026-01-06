@@ -8,11 +8,13 @@ import useBulkDownload from '@/use/useBulkDownload';
 import { humanFileSize } from '@/data/utils';
 import { api } from '@/data/api';
 import { downloadBlob } from '@/utils';
+import ErrorDialog from './ErrorDialog.vue';
 
 export default defineComponent({
 
   components: {
     DownloadDialog,
+    ErrorDialog,
     Treeselect,
   },
   props: {
@@ -105,7 +107,6 @@ export default defineComponent({
         console.error('Failed to download metadata:', error);
         errorDialog.value = true;
       } finally {
-        metadataTermsDialog.value = false;
         metadataDownloadLoading.value = false;
       }
     }
@@ -353,34 +354,9 @@ export default defineComponent({
       Downloading metadata
     </span>
   </v-snackbar>
-  <v-dialog
-    v-model="errorDialog"
-    :width="500"
-  >
-    <v-card>
-      <v-card-title>
-        <v-icon
-          color="error"
-        >
-          mdi-alert-circle
-        </v-icon>
-        Download Failed
-      </v-card-title>
-      <v-card-text>
-        Your download could not be completed at this time.
-      </v-card-text>
-      <v-card-actions>
-        <v-spacer />
-        <v-btn
-          color="primary"
-          text
-          @click="errorDialog = false"
-        >
-          Close
-        </v-btn>
-      </v-card-actions>
-    </v-card>
-  </v-dialog>
+  <ErrorDialog
+    v-model:show="errorDialog"
+  />
 </template>
 
 <style scoped>

@@ -31,6 +31,7 @@ declare module 'vue' {
     DoiCitation: typeof import('./components/Presentation/DoiCitation.vue')['default']
     DownloadDialog: typeof import('./components/DownloadDialog.vue')['default']
     EcosystemSankey: typeof import('./components/EcosystemSankey.vue')['default']
+    ErrorDialog: typeof import('./components/ErrorDialog.vue')['default']
     FacetBarChart: typeof import('./components/Presentation/FacetBarChart.vue')['default']
     FacetedSearch: typeof import('./components/FacetedSearch.vue')['default']
     FacetSummaryWrapper: typeof import('./components/Wrappers/FacetSummaryWrapper.vue')['default']

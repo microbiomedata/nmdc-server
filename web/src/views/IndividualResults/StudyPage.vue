@@ -27,6 +27,7 @@ import PageSection from '@/views/IndividualResults/PageSection.vue';
 import AttributeRow from '@/components/Presentation/AttributeRow.vue';
 import DoiCitation from '@/components/Presentation/DoiCitation.vue';
 import DownloadDialog from '@/components/DownloadDialog.vue';
+import ErrorDialog from '@/components/ErrorDialog.vue';
 
 const GOLD_STUDY_LINK_BASE = 'https://gold.jgi.doe.gov/study?id=';
 const BIOPROJECT_LINK_BASE = 'https://bioregistry.io/';
@@ -40,6 +41,7 @@ export default defineComponent({
     ClickToCopyText,
     DoiCitation,
     DownloadDialog,
+    ErrorDialog,
     IndividualTitle,
     PageSection,
     RevealContainer,
@@ -57,6 +59,7 @@ export default defineComponent({
     const study = ref<StudySearchResults | null>(null);
     const studyDownloadDialog = ref(false);
     const studyDownloadLoading = ref(false);
+    const errorDialog = ref(false);
     const sampleCount = ref(0);
     const omicsProcessingCounts = ref<Record<string, number> | null>(null);
 
@@ -89,9 +92,8 @@ export default defineComponent({
         const data = await api.getStudySource(props.id);
         downloadJson(data, `${props.id}.json`);
       } catch (error) {
-        // Provide feedback if the download operation fails
         console.error('Failed to download study data:', error);
-        window.alert('Failed to download study data. Please try again later.');
+        errorDialog.value = true;
       } finally {
         studyDownloadLoading.value = false;
       }
@@ -207,6 +209,7 @@ export default defineComponent({
       downloadStudyData,
       studyDownloadDialog,
       studyDownloadLoading,
+      errorDialog,
     };
   },
 });
@@ -277,6 +280,9 @@ export default defineComponent({
                 Downloading study metadata
               </span>
             </v-snackbar>
+            <ErrorDialog
+              v-model:show="errorDialog"
+            />
             <AttributeRow
               v-if="parentStudies.length > 0"
               label="Part Of"
