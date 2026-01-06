@@ -546,7 +546,6 @@ async function search(type: entityType, params: SearchParams) {
 
 async function _getById<T>(route: string, id: string): Promise<T> {
   const { data } = await client.get<T>(`${route}/${id}`);
-  console.log('Fetched', route, id, data);
   return data;
 }
 
