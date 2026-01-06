@@ -26,6 +26,7 @@ import useRequest from '@/use/useRequest';
 import PageSection from '@/views/IndividualResults/PageSection.vue';
 import AttributeRow from '@/components/Presentation/AttributeRow.vue';
 import DoiCitation from '@/components/Presentation/DoiCitation.vue';
+import DownloadDialog from '@/components/DownloadDialog.vue';
 
 const GOLD_STUDY_LINK_BASE = 'https://gold.jgi.doe.gov/study?id=';
 const BIOPROJECT_LINK_BASE = 'https://bioregistry.io/';
@@ -38,6 +39,7 @@ export default defineComponent({
     BiosampleSearchResults,
     ClickToCopyText,
     DoiCitation,
+    DownloadDialog,
     IndividualTitle,
     PageSection,
     RevealContainer,
@@ -53,7 +55,8 @@ export default defineComponent({
 
   setup(props) {
     const study = ref<StudySearchResults | null>(null);
-
+    const studyDownloadDialog = ref(false);
+    const studyDownloadLoading = ref(false);
     const sampleCount = ref(0);
     const omicsProcessingCounts = ref<Record<string, number> | null>(null);
 
@@ -80,8 +83,18 @@ export default defineComponent({
     const getStudyRequest = useRequest();
 
     async function downloadStudyData() {
-      const data = await api.getStudySource(props.id);
-      downloadJson(data, `${props.id}.json`);
+      try {
+        studyDownloadDialog.value = false;
+        studyDownloadLoading.value = true;
+        const data = await api.getStudySource(props.id);
+        downloadJson(data, `${props.id}.json`);
+      } catch (error) {
+        // Provide feedback if the download operation fails
+        console.error('Failed to download study data:', error);
+        window.alert('Failed to download study data. Please try again later.');
+      } finally {
+        studyDownloadLoading.value = false;
+      }
     }
 
     watch(() => props.id, () => getStudyRequest.request(async () => {
@@ -192,6 +205,8 @@ export default defineComponent({
       seeOmicsForStudy,
       urlify,
       downloadStudyData,
+      studyDownloadDialog,
+      studyDownloadLoading,
     };
   },
 });
@@ -227,17 +242,41 @@ export default defineComponent({
                 </RevealContainer>
               </template>
             </IndividualTitle>
-            <v-btn
-              class="mt-2 mb-8"
-              color="primary"
-              size="small"
-              @click="downloadStudyData"
+            <v-dialog
+              v-model="studyDownloadDialog"
+              max-width="400"
             >
-              <v-icon class="mr-2">
-                mdi-download
-              </v-icon>
-              Download Study Metadata
-            </v-btn>
+              <template #activator="{ props }">
+                <v-btn
+                  v-bind="props"
+                  class="mt-2 mb-8"
+                  color="primary"
+                  size="small"
+                >
+                  <v-icon class="mr-2">
+                    mdi-download
+                  </v-icon>
+                  Download Study Metadata
+                </v-btn>
+              </template>
+              <DownloadDialog
+                :loading="studyDownloadLoading"
+                @clicked="downloadStudyData"
+              />
+            </v-dialog>
+            <v-snackbar
+              v-model="studyDownloadLoading"
+              location="right bottom"
+              timeout="-1"
+            >
+              <v-progress-circular
+                indeterminate
+                class="mr-3"
+              />
+              <span>
+                Downloading study metadata
+              </span>
+            </v-snackbar>
             <AttributeRow
               v-if="parentStudies.length > 0"
               label="Part Of"

@@ -27,7 +27,10 @@ export default defineComponent({
   },
 
   setup() {
-    const termsDialog = ref(false);
+    const errorDialog = ref(false);
+    const bulkTermsDialog = ref(false);
+    const metadataTermsDialog = ref(false);
+    const metadataDownloadLoading = ref(false);
     const downloadMenuOpen = ref(false);
     const treeMenuOpen = ref(false);
     const tab = ref('one');
@@ -75,9 +78,15 @@ export default defineComponent({
     ]);
 
     async function createAndDownload() {
-      const val = await download();
-      termsDialog.value = false;
-      window.location.assign(val.url);
+      try {
+        downloadMenuOpen.value = false;
+        bulkTermsDialog.value = false;
+        const val = await download();
+        window.location.assign(val.url);
+      } catch (error) {
+        console.error('Failed to create bulk download:', error);
+        errorDialog.value = true;
+      }
     }
 
     function handleLoginClick() {
@@ -85,9 +94,20 @@ export default defineComponent({
     }
 
     async function downloadSamplesMetadata() {
-      const endpoints = metadataDownloadSelected.value;
-      const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints);
-      downloadBlob(blob, 'metadata.zip');
+      try {
+        downloadMenuOpen.value = false;
+        metadataDownloadLoading.value = true;
+        metadataTermsDialog.value = false;
+        const endpoints = metadataDownloadSelected.value;
+        const blob = await api.getMetadataZip(stateRefs.conditions.value, endpoints);
+        downloadBlob(blob, 'metadata.zip');
+      } catch (error) {
+        console.error('Failed to download metadata:', error);
+        errorDialog.value = true;
+      } finally {
+        metadataTermsDialog.value = false;
+        metadataDownloadLoading.value = false;
+      }
     }
 
     watch(
@@ -100,12 +120,14 @@ export default defineComponent({
     );
 
     return {
+      errorDialog,
       bulkDownloadSelected: stateRefs.bulkDownloadSelected,
       dataProductOptions,
       metadataOptions,
       loading,
       downloadSummary,
-      termsDialog,
+      bulkTermsDialog,
+      metadataTermsDialog,
       createAndDownload,
       humanFileSize,
       handleLoginClick,
@@ -114,6 +136,7 @@ export default defineComponent({
       treeMenuOpen,
       downloadSamplesMetadata,
       metadataDownloadSelected,
+      metadataDownloadLoading,
     };
   },
 });
@@ -236,7 +259,7 @@ export default defineComponent({
                 />
               </div>
               <v-dialog
-                v-model="termsDialog"
+                v-model="bulkTermsDialog"
                 :width="400"
                 :disabled="downloadSummary.count === 0"
               >
@@ -277,20 +300,87 @@ export default defineComponent({
                 @close="treeMenuOpen = false"
               />
             </div>
-            <v-btn
-              class="mt-3"
-              @click="downloadSamplesMetadata"
+            <v-dialog
+              v-model="metadataTermsDialog"
+              :width="400"
+              :disabled="metadataDownloadSelected.length === 0"
             >
-              <v-icon class="pr-3">
-                mdi-download
-              </v-icon>
-              Download Metadata Zip
-            </v-btn>
+              <template #activator="{ props }">
+                <v-btn
+                  class="mt-3"
+                  color="white"
+                  v-bind="props"
+                >
+                  <v-icon class="pr-3">
+                    mdi-download
+                  </v-icon>
+                  Download Metadata Zip
+                </v-btn>
+              </template>
+              <DownloadDialog
+                :loading="metadataDownloadLoading"
+                @clicked="downloadSamplesMetadata"
+              />
+            </v-dialog>
           </v-sheet>
         </v-tabs-window-item>
       </v-tabs-window>
     </v-sheet>
   </v-menu>
+  <v-snackbar
+    v-model="loading"
+    location="right bottom"
+    timeout="-1"
+  >
+    <v-progress-circular
+      indeterminate
+      class="mr-3"
+    />
+    <span>
+      Downloading data products
+    </span>
+  </v-snackbar>
+  <v-snackbar
+    v-model="metadataDownloadLoading"
+    location="right bottom"
+    timeout="-1"
+  >
+    <v-progress-circular
+      indeterminate
+      class="mr-3"
+    />
+    <span>
+      Downloading metadata
+    </span>
+  </v-snackbar>
+  <v-dialog
+    v-model="errorDialog"
+    :width="500"
+  >
+    <v-card>
+      <v-card-title>
+        <v-icon
+          color="error"
+        >
+          mdi-alert-circle
+        </v-icon>
+        Download Failed
+      </v-card-title>
+      <v-card-text>
+        Your download could not be completed at this time.
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer />
+        <v-btn
+          color="primary"
+          text
+          @click="errorDialog = false"
+        >
+          Close
+        </v-btn>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped>
