@@ -95,7 +95,7 @@ export default defineComponent({
       api.initiateOrcidLogin();
     }
 
-    async function downloadSamplesMetadata() {
+    async function downloadMetadata() {
       try {
         downloadMenuOpen.value = false;
         metadataDownloadLoading.value = true;
@@ -135,7 +135,7 @@ export default defineComponent({
       tab,
       downloadMenuOpen,
       treeMenuOpen,
-      downloadSamplesMetadata,
+      downloadMetadata,
       metadataDownloadSelected,
       metadataDownloadLoading,
     };
@@ -320,7 +320,7 @@ export default defineComponent({
               </template>
               <DownloadDialog
                 :loading="metadataDownloadLoading"
-                @clicked="downloadSamplesMetadata"
+                @clicked="downloadMetadata"
               />
             </v-dialog>
           </v-sheet>
