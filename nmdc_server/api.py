@@ -392,13 +392,15 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
     return db_biosample
 
 
-# Get a single record of biosample source data via the Runtime API
-# based on the supplied ID
 @router.get(
     "/biosample/{biosample_id}/source",
     tags=["biosample"],
 )
 async def get_biosample_source(biosample_id: str):
+    """
+    Get a single record of biosample source data via the Runtime API
+    based on the supplied ID
+    """
     biosample_search = BiosampleSearch()
     source_biosample = biosample_search.get_record_by_id(biosample_id)
     if source_biosample is None:
@@ -406,8 +408,6 @@ async def get_biosample_source(biosample_id: str):
     return source_biosample
 
 
-# Get a list of biosample source data via the Runtime API
-# based on supplied conditions
 @router.post(
     "/biosample/search/source",
     tags=["biosample"],
@@ -416,6 +416,10 @@ async def search_biosample_source(
     q: query.SearchQuery = query.SearchQuery(),
     db: Session = Depends(get_db),
 ):
+    """
+    Get a list of biosample source data via the Runtime API
+    based on supplied conditions
+    """
     biosample_search = BiosampleSearch()
     biosample_ids = (
         crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
@@ -440,7 +444,7 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for endpoint_name in q.endpoints:
             if endpoint_name in endpoint_map:
-                data = await endpoint_map[endpoint_name](q, db)
+                data = await endpoint_map[endpoint_name](q=q, db=db)
                 json_str = json.dumps(data, indent=2, ensure_ascii=False)
                 zip_file.writestr(f"{endpoint_name}.json", json_str.encode("utf-8"))
 
@@ -647,12 +651,14 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
 
 
-# Study source data via the Runtime API
 @router.get(
     "/study/{study_id}/source",
     tags=["study"],
 )
 async def get_study_source(study_id: str):
+    """
+    Get a single record of study source data via the Runtime API
+    """
     study_search = StudySearch()
     source_study = study_search.get_record_by_id(study_id)
     if source_study is None:
@@ -660,8 +666,6 @@ async def get_study_source(study_id: str):
     return source_study
 
 
-# Get a list of study source data via the Runtime API
-# based on supplied conditions
 @router.post(
     "/study/search/source",
     tags=["study"],
@@ -670,6 +674,10 @@ async def search_study_source(
     q: query.SearchQuery = query.SearchQuery(),
     db: Session = Depends(get_db),
 ):
+    """
+    Get a list of study source data via the Runtime API
+    based on supplied conditions
+    """
     study_search = StudySearch()
     study_ids = crud.search_study(db, q.conditions).with_entities(models.Study.id).all()
     results = study_search.get_records_by_id([id for (id,) in study_ids])
