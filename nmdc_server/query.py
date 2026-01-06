@@ -821,7 +821,6 @@ class OmicsProcessingQuerySchema(BaseQuerySchema):
 
 class BiosampleQuerySchema(BaseQuerySchema):
     data_object_filter: List[DataObjectFilter] = []
-    endpoints: List[str] = []
 
     @property
     def table(self) -> Table:
