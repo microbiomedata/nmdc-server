@@ -227,8 +227,7 @@ export default defineComponent({
         class="download-menu"
       >
         <v-tabs-window-item value="data-products">
-          <v-card
-            variant="flat"
+          <v-sheet
             class="pa-3 d-flex flex-column"
           >
             <span
@@ -282,10 +281,10 @@ export default defineComponent({
                 />
               </v-dialog>
             </div>
-          </v-card>
+          </v-sheet>
         </v-tabs-window-item>
         <v-tabs-window-item value="metadata">
-          <v-sheet class="pa-5">
+          <v-sheet class="pa-3">
             <div @click.stop>
               <Treeselect
                 v-model="metadataDownloadSelected"
