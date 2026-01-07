@@ -1,4 +1,7 @@
 <script lang="ts" setup>
+const { message = 'Your download could not be completed.' } = defineProps<{
+  message?: string;
+}>();
 const showDialog = defineModel<boolean>('show', { required: true });
 </script>
 
@@ -17,7 +20,7 @@ const showDialog = defineModel<boolean>('show', { required: true });
         Download Failed
       </v-card-title>
       <v-card-text>
-        Your download could not be completed at this time.
+        {{ message }}
       </v-card-text>
       <v-card-actions>
         <v-spacer />
