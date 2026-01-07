@@ -159,6 +159,7 @@ export default defineComponent({
     <template #activator="{ props }">
       <v-btn
         color="primary"
+        elevation="0"
         v-bind="props"
       >
         <v-icon class="pr-2">
