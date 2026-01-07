@@ -18,7 +18,7 @@ import {
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
-import moment from 'moment';
+import { formatShippingDate } from '../utils';
 
 export default defineComponent({
   components: { SubmissionContextShippingSummary },
@@ -76,13 +76,6 @@ export default defineComponent({
 
     function handleExpectedShippingDateClear() {
       expectedShippingDate.value = undefined;
-    }
-
-    function formatShippingDate (date: string | Date | null | undefined): string {
-      if(!date) {
-        return '';
-      }
-      return moment(date).format('YYYY-MM-DD');
     }
 
     return {

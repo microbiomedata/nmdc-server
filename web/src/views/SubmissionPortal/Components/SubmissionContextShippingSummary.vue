@@ -2,7 +2,7 @@
 import { computed, defineComponent } from 'vue';
 import { addressForm } from '../store';
 import { addressToString } from '../store/api';
-import moment from 'moment';
+import { formatShippingDate } from '../utils';
 
 export default defineComponent({
   setup() {
@@ -19,13 +19,6 @@ export default defineComponent({
       const existingShipperData = shipperData.filter((shipperDatum) => !!shipperDatum.trim());
       return existingShipperData.join(', ');
     });
-
-    function formatShippingDate (date: string | Date | null | undefined): string {
-      if(!date) {
-        return '';
-      }
-      return moment(date).format('YYYY-MM-DD');
-    }
 
     const shipperAddressString = computed(() => addressToString(addressForm.shipper));
     const shipperSummary = computed(() => {
