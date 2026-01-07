@@ -8,7 +8,7 @@ import {
   ref,
   Ref,
   watch,
-} from '@vue/composition-api';
+} from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {

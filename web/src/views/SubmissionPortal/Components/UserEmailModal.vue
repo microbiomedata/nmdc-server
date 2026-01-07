@@ -5,7 +5,8 @@ import {
   onMounted,
   ref,
   watch,
-} from '@vue/composition-api';
+} from 'vue';
+import type { ValidationRule } from 'vuetify';
 import Definitions from '@/definitions';
 import {
   studyForm,
@@ -29,7 +30,10 @@ export default defineComponent({
     const formRef = ref();
     const currentUserOrcid = computed(() => stateRefs.user.value?.orcid);
 
-    function requiredRules(msg: string, otherRules: ((v: string) => unknown)[] = []) {
+    function requiredRules(
+      msg: string,
+      otherRules: ValidationRule[] = []
+    ): ValidationRule[] {
       return [
         (v: string) => !!v || msg,
         ...otherRules,

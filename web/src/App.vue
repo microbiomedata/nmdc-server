@@ -5,13 +5,12 @@ import {
   onUnmounted,
   watch,
   ref,
-} from '@vue/composition-api';
+} from 'vue';
 import AppHeader from '@/components/Presentation/AppHeader.vue';
 import UserEmailModal from './views/SubmissionPortal/Components/UserEmailModal.vue';
 import { stateRefs, init } from '@/store/';
-import { useRouter } from '@/use/useRouter';
+import { useRouter } from 'vue-router';
 import { api, REFRESH_TOKEN_EXPIRED_EVENT, RefreshTokenExchangeError } from '@/data/api';
-import { init, stateRefs } from '@/store/';
 
 export default defineComponent({
   name: 'App',
@@ -80,6 +79,7 @@ const handleRefreshTokenExpired = () => {
     <keep-alive>
       <router-view />
     </keep-alive>
-    <user-email-modal v-model="showEmailModal" />
-  </v-app>
+    <user-email-modal v-model:value="showEmailModal" />
+  </v-layout>
 </template>
+ 
