@@ -398,8 +398,8 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
 )
 async def get_biosample_source_metadata(biosample_id: str):
     """
-    Get a single record of biosample source data via the Runtime API
-    based on the supplied ID
+    Get a single record of biosample source metadata via the Runtime API
+    (i.e. the source of truth) based on the supplied biosample ID.
     """
     biosample_search = BiosampleSearch()
     source_biosample = biosample_search.get_record_by_id(biosample_id)
@@ -417,7 +417,7 @@ async def search_biosample_source_metadata(
     db: Session = Depends(get_db),
 ):
     """
-    Get a list of biosample source data via the Runtime API
+    Get a list of biosample source metadata via the Runtime API
     based on supplied conditions
     """
     biosample_search = BiosampleSearch()
@@ -659,7 +659,8 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
 )
 async def get_study_source_metadata(study_id: str):
     """
-    Get a single record of study source data via the Runtime API
+    Get a single record of study source metadata via the Runtime API
+    based on the supplied study ID.
     """
     study_search = StudySearch()
     source_study = study_search.get_record_by_id(study_id)
@@ -677,8 +678,8 @@ async def search_study_source_metadata(
     db: Session = Depends(get_db),
 ):
     """
-    Get a list of study source data via the Runtime API
-    based on supplied conditions
+    Get a list of study source metadata via the Runtime API
+    based on supplied conditions.
     """
     study_search = StudySearch()
     study_ids = crud.search_study(db, q.conditions).with_entities(models.Study.id).all()
