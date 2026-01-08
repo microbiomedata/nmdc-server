@@ -63,7 +63,7 @@ watchEffect(() => {
         <template #activator="{ props: dialogProps }">
           <v-btn
             v-bind="dialogProps"
-            class="mb-8"
+            class="mt-2 mb-8"
             color="primary"
             size="small"
           >
