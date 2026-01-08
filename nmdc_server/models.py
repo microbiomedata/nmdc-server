@@ -1121,6 +1121,7 @@ class SubmissionMetadata(Base):
     date_last_modified = Column(
         DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=func.now()
     )
+    submission_issue = Column(String, nullable=True)
 
     # The client which initially created the submission. A null value indicates it was created by
     # an "unregistered" client. This could be legitimate usage, but it should be monitored.
