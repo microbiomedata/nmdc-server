@@ -559,14 +559,14 @@ async function getStudy(id: string): Promise<StudySearchResults> {
 
 async function getBiosampleSource(id: string): Promise<BiosampleResultFromSource> {
   const { data } = await client.get<BiosampleResultFromSource>(
-    `biosample/${id}/source`
+    `biosample/${id}/source_metadata`
   );
   return data;
 }
 
 async function searchBiosampleSource(conditions: Condition[]) {
   const { data } = await client.post<string[]>(
-    `biosample/search/source`,
+    `biosample/search/source_metadata`,
     { conditions }
   );
   return data;
@@ -583,7 +583,7 @@ async function getMetadataZip(conditions: Condition[], endpoints: string[]) {
 }
 
 async function getStudySource(id: string): Promise<StudyResultFromSource> {
-  const { data } = await client.get<StudyResultFromSource>(`study/${id}/source`);
+  const { data } = await client.get<StudyResultFromSource>(`study/${id}/source_metadata`);
   return data;
 }
 

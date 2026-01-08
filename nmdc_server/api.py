@@ -393,10 +393,10 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/biosample/{biosample_id}/source",
+    "/biosample/{biosample_id}/source_metadata",
     tags=["biosample"],
 )
-async def get_biosample_source(biosample_id: str):
+async def get_biosample_source_metadata(biosample_id: str):
     """
     Get a single record of biosample source data via the Runtime API
     based on the supplied ID
@@ -409,10 +409,10 @@ async def get_biosample_source(biosample_id: str):
 
 
 @router.post(
-    "/biosample/search/source",
+    "/biosample/search/source_metadata",
     tags=["biosample"],
 )
-async def search_biosample_source(
+async def search_biosample_source_metadata(
     q: query.SearchQuery = query.SearchQuery(),
     db: Session = Depends(get_db),
 ):
@@ -437,8 +437,8 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
     Endpoint labels are mapped to functions that retrieve JSON.
     """
     endpoint_map = {
-        "biosamples": search_biosample_source,
-        "studies": search_study_source,
+        "biosamples": search_biosample_source_metadata,
+        "studies": search_study_source_metadata,
     }
 
     zip_buffer = io.BytesIO()
@@ -654,10 +654,10 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
 
 
 @router.get(
-    "/study/{study_id}/source",
+    "/study/{study_id}/source_metadata",
     tags=["study"],
 )
-async def get_study_source(study_id: str):
+async def get_study_source_metadata(study_id: str):
     """
     Get a single record of study source data via the Runtime API
     """
@@ -669,10 +669,10 @@ async def get_study_source(study_id: str):
 
 
 @router.post(
-    "/study/search/source",
+    "/study/search/source_metadata",
     tags=["study"],
 )
-async def search_study_source(
+async def search_study_source_metadata(
     q: query.SearchQuery = query.SearchQuery(),
     db: Session = Depends(get_db),
 ):
