@@ -82,6 +82,9 @@ export function parseQuery(q: string) {
   return parsed;
 }
 
+/**
+ * Download a given JSON object as a file with the given filename.
+ */
 export function downloadJson(json: object, filename: string) {
   const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(json, null, 2));
   const downloadAnchorNode = document.createElement('a');
@@ -92,6 +95,9 @@ export function downloadJson(json: object, filename: string) {
   downloadAnchorNode.remove();
 }
 
+/**
+ * Download a given Blob as a file with the given filename.
+ */
 export function downloadBlob(blob: Blob, filename: string) {
   const url = window.URL.createObjectURL(blob);
   const downloadAnchorNode = document.createElement('a');

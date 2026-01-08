@@ -85,14 +85,14 @@ export default defineComponent({
 
     const getStudyRequest = useRequest();
 
-    async function downloadStudyData() {
+    async function downloadStudyMetadata() {
       try {
         studyDownloadDialog.value = false;
         studyDownloadLoading.value = true;
         const data = await api.getStudySource(props.id);
         downloadJson(data, `${props.id}.json`);
       } catch (error) {
-        console.error('Failed to download study data:', error);
+        console.error('Failed to download study metadata:', error);
         errorDialog.value = true;
       } finally {
         studyDownloadLoading.value = false;
@@ -206,7 +206,7 @@ export default defineComponent({
       seeStudyInContext,
       seeOmicsForStudy,
       urlify,
-      downloadStudyData,
+      downloadStudyMetadata,
       studyDownloadDialog,
       studyDownloadLoading,
       errorDialog,
@@ -264,7 +264,7 @@ export default defineComponent({
               </template>
               <DownloadDialog
                 :loading="studyDownloadLoading"
-                @clicked="downloadStudyData"
+                @clicked="downloadStudyMetadata"
               />
             </v-dialog>
             <v-snackbar

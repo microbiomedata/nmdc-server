@@ -20,14 +20,14 @@ const sampleDownloadDialog = ref(false);
 const sampleDownloadLoading = ref(false);
 const errorDialog = ref(false);
 
-async function downloadSampleData() {
+async function downloadSampleMetadata() {
   try {
     sampleDownloadDialog.value = false;
     sampleDownloadLoading.value = true;
     const data = await api.getBiosampleSource(props.id);
     downloadJson(data, `${props.id}.json`);
   } catch (error) {
-    console.error('Failed to download study data:', error);
+    console.error('Failed to download sample metadata:', error);
     errorDialog.value = true;
   } finally {
     sampleDownloadLoading.value = false;
@@ -75,7 +75,7 @@ watchEffect(() => {
         </template>
         <DownloadDialog
           :loading="sampleDownloadLoading"
-          @clicked="downloadSampleData"
+          @clicked="downloadSampleMetadata"
         />
       </v-dialog>
       <v-snackbar
