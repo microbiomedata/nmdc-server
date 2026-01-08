@@ -430,10 +430,12 @@ async def search_biosample_source(
     return results
 
 
-# Download multiple metadata lists as a zip file given a list of endpoint labels.
-# Endpoint labels are mapped to functions that retrieve JSON
 @router.post("/download_metadata", tags=["bulk_download"])
 async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get_db)):
+    """
+    Download multiple metadata lists as a zip file given a list of endpoint labels.
+    Endpoint labels are mapped to functions that retrieve JSON.
+    """
     endpoint_map = {
         "biosamples": search_biosample_source,
         "studies": search_study_source,
