@@ -573,7 +573,7 @@ async function searchBiosampleSource(conditions: Condition[]) {
 }
 
 async function getMetadataZip(conditions: Condition[], endpoints: string[]) {
-  const { data } = await client.post<any>(
+  const { data } = await client.post<Blob>(
     `download_metadata`,
     { conditions, endpoints },
     { responseType: 'blob' }
