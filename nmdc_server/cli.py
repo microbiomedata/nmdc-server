@@ -383,9 +383,15 @@ def shell(print_sql: bool, script: Optional[Path]):
     required=True,
     help="Path to backup file to load",
 )
-@click.option("-u", "--user", help="[DEPRECATED] NERSC username", default=os.getenv("USER"), show_default=True)
-@click.option("-h", "--host", help="[DEPRECATED] NERSC host", default="dtn01.nersc.gov", show_default=True)
-@click.option("--list-backups", is_flag=True, help="[DEPRECATED] Only list available backup filenames")
+@click.option(
+    "-u", "--user", help="[DEPRECATED] NERSC username", default=os.getenv("USER"), show_default=True
+)
+@click.option(
+    "-h", "--host", help="[DEPRECATED] NERSC host", default="dtn01.nersc.gov", show_default=True
+)
+@click.option(
+    "--list-backups", is_flag=True, help="[DEPRECATED] Only list available backup filenames"
+)
 @click.option(
     "-k",
     "--key-file",
