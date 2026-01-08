@@ -3,7 +3,10 @@ LABEL org.opencontainers.image.source=https://github.com/microbiomedata/nmdc-ser
 
 RUN apt clean
 RUN apt-get upgrade
-RUN apt-get update 
+RUN apt-get update
+# Keep the postgres-client version in sync with:
+#   - .github/workflows/server.yml
+#   - docker-compose.yml
 RUN apt-get install -y postgresql-client-15 git libpq-dev libc6-dev gcc
 
 RUN pip install -U pip setuptools wheel

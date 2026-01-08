@@ -5,7 +5,9 @@ services:
     image: nginx
 
   db:
-    # This version is duplicated in the GitHub Actions workflow
+    # Keep this version in sync with:
+    #   - .github/workflows/server.yml
+    #   - Dockerfile
     image: postgres:15
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
