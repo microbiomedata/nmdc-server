@@ -442,13 +442,13 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
     }
 
     zip_buffer = io.BytesIO()
-    
+
     if not q.endpoints or len(q.endpoints) == 0:
         raise HTTPException(
             status_code=400,
             detail="No endpoints specified for metadata download.",
         )
-    
+
     with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
         for endpoint_name in q.endpoints:
             if endpoint_name in endpoint_map:
