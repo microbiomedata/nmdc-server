@@ -1,7 +1,9 @@
 import csv
+import io
 import json
 import logging
 import time
+import zipfile
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
@@ -13,6 +15,8 @@ import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
+from nmdc_api_utilities.biosample_search import BiosampleSearch
+from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import text
 from sqlalchemy.orm import Session
@@ -389,6 +393,79 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
 
 
 @router.get(
+    "/biosample/{biosample_id}/source_metadata",
+    tags=["biosample"],
+)
+async def get_biosample_source_metadata(biosample_id: str):
+    """
+    Get a single record of biosample source metadata via the Runtime API
+    (i.e. the source of truth) based on the supplied biosample ID.
+    """
+    biosample_search = BiosampleSearch()
+    source_biosample = biosample_search.get_record_by_id(biosample_id)
+    if source_biosample is None:
+        raise HTTPException(status_code=404, detail="Biosample not found in source database")
+    return source_biosample
+
+
+@router.post(
+    "/biosample/search/source_metadata",
+    tags=["biosample"],
+)
+async def search_biosample_source_metadata(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+):
+    """
+    Get a list of biosample source metadata via the Runtime API
+    based on supplied conditions
+    """
+    biosample_search = BiosampleSearch()
+    biosample_ids = (
+        crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
+    )
+    results = biosample_search.get_records_by_id([id for (id,) in biosample_ids])
+    if not results:
+        raise HTTPException(status_code=404, detail="Could not retrieve source data for biosamples")
+    return results
+
+
+@router.post("/download_metadata", tags=["bulk_download"])
+async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get_db)):
+    """
+    Download multiple metadata lists as a zip file given a list of endpoint labels.
+    Endpoint labels are mapped to functions that retrieve JSON.
+    """
+    endpoint_map = {
+        "biosamples": search_biosample_source_metadata,
+        "studies": search_study_source_metadata,
+    }
+
+    zip_buffer = io.BytesIO()
+
+    if not q.endpoints or len(q.endpoints) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="No endpoints specified for metadata download.",
+        )
+
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for endpoint_name in q.endpoints:
+            if endpoint_name in endpoint_map:
+                data = await endpoint_map[endpoint_name](q=q, db=db)
+                json_str = json.dumps(data, indent=2, ensure_ascii=False)
+                zip_file.writestr(f"{endpoint_name}.json", json_str.encode("utf-8"))
+
+    zip_buffer.seek(0)
+
+    return Response(
+        content=zip_buffer.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=metadata.zip"},
+    )
+
+
+@router.get(
     "/envo/tree",
     response_model=schemas.EnvoTreeResponse,
     tags=["envo"],
@@ -580,6 +657,42 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
     if image is None:
         raise HTTPException(status_code=404, detail="No image exists for this study")
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
+
+
+@router.get(
+    "/study/{study_id}/source_metadata",
+    tags=["study"],
+)
+async def get_study_source_metadata(study_id: str):
+    """
+    Get a single record of study source metadata via the Runtime API
+    based on the supplied study ID.
+    """
+    study_search = StudySearch()
+    source_study = study_search.get_record_by_id(study_id)
+    if source_study is None:
+        raise HTTPException(status_code=404, detail="Study not found in the source database")
+    return source_study
+
+
+@router.post(
+    "/study/search/source_metadata",
+    tags=["study"],
+)
+async def search_study_source_metadata(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+):
+    """
+    Get a list of study source metadata via the Runtime API
+    based on supplied conditions.
+    """
+    study_search = StudySearch()
+    study_ids = crud.search_study(db, q.conditions).with_entities(models.Study.id).all()
+    results = study_search.get_records_by_id([id for (id,) in study_ids])
+    if not results:
+        raise HTTPException(status_code=404, detail="Could not retrieve source data for studies")
+    return results
 
 
 # data_generation

@@ -41,7 +41,7 @@ function base64UrlencodedToArrayBuffer(base64Urlencoded: string) {
  * If the query contains conditions, encode them as a protobuf message, put the result into the
  * q parameter, and remove the conditions parameter.
  */
-function stringifyQuery(params: any) {
+export function stringifyQuery(params: any) {
   if ('conditions' in params) {
     if (params.conditions.length) {
       const clone = cloneDeep(params);
@@ -65,7 +65,7 @@ function stringifyQuery(params: any) {
 /**
  * If the query contains a q parameter, decode it into the conditions parameter.
  */
-function parseQuery(q: string) {
+export function parseQuery(q: string) {
   const params = new URLSearchParams(q);
   const parsed = Object.fromEntries(params.entries());
   if (params.has('q')) {
@@ -82,7 +82,29 @@ function parseQuery(q: string) {
   return parsed;
 }
 
-export {
-  parseQuery,
-  stringifyQuery,
-};
+/**
+ * Download a given JSON object as a file with the given filename.
+ */
+export function downloadJson(json: object, filename: string) {
+  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(json, null, 2));
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute('href', dataStr);
+  downloadAnchorNode.setAttribute('download', filename);
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
+
+/**
+ * Download a given Blob as a file with the given filename.
+ */
+export function downloadBlob(blob: Blob, filename: string) {
+  const url = window.URL.createObjectURL(blob);
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute('href', url);
+  downloadAnchorNode.setAttribute('download', filename);
+  document.body.appendChild(downloadAnchorNode);
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+  window.URL.revokeObjectURL(url);
+}

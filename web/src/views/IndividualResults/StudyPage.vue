@@ -3,6 +3,7 @@ import { defineComponent, ref, watch } from 'vue';
 import { useDisplay } from 'vuetify';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
+import { downloadJson } from '@/utils';
 import {
   api,
   Condition,
@@ -22,6 +23,8 @@ import useRequest from '@/use/useRequest';
 import PageSection from '@/views/IndividualResults/PageSection.vue';
 import AttributeRow from '@/components/Presentation/AttributeRow.vue';
 import DoiCitation from '@/components/Presentation/DoiCitation.vue';
+import DownloadDialog from '@/components/DownloadDialog.vue';
+import ErrorDialog from '@/components/ErrorDialog.vue';
 
 const GOLD_STUDY_LINK_BASE = 'https://gold.jgi.doe.gov/study?id=';
 const BIOPROJECT_LINK_BASE = 'https://bioregistry.io/';
@@ -34,6 +37,8 @@ export default defineComponent({
     BiosampleSearchResults,
     ClickToCopyText,
     DoiCitation,
+    DownloadDialog,
+    ErrorDialog,
     IndividualTitle,
     PageSection,
     RevealContainer,
@@ -50,7 +55,9 @@ export default defineComponent({
   setup(props) {
     const { smAndDown } = useDisplay();
     const study = ref<StudySearchResults | null>(null);
-
+    const studyDownloadDialog = ref(false);
+    const studyDownloadLoading = ref(false);
+    const errorDialog = ref(false);
     const sampleCount = ref(0);
     const omicsProcessingCounts = ref<Record<string, number> | null>(null);
 
@@ -75,6 +82,21 @@ export default defineComponent({
     );
 
     const getStudyRequest = useRequest();
+
+    async function downloadStudyMetadata() {
+      try {
+        studyDownloadDialog.value = false;
+        studyDownloadLoading.value = true;
+        const data = await api.getStudySource(props.id);
+        downloadJson(data, `${props.id}.json`);
+      } catch (error) {
+        console.error('Failed to download study metadata:', error);
+        errorDialog.value = true;
+      } finally {
+        studyDownloadLoading.value = false;
+      }
+    }
+
     watch(() => props.id, () => getStudyRequest.request(async () => {
       biosampleSearch.reset();
 
@@ -183,6 +205,10 @@ export default defineComponent({
       seeStudyInContext,
       seeOmicsForStudy,
       urlify,
+      downloadStudyMetadata,
+      studyDownloadDialog,
+      studyDownloadLoading,
+      errorDialog,
     };
   },
 });
@@ -214,7 +240,44 @@ export default defineComponent({
               </RevealContainer>
             </template>
           </IndividualTitle>
-
+          <v-dialog
+            v-model="studyDownloadDialog"
+            max-width="400"
+          >
+            <template #activator="{ props }">
+              <v-btn
+                v-bind="props"
+                class="mt-2 mb-8"
+                color="primary"
+                size="small"
+              >
+                <v-icon class="mr-2">
+                  mdi-download
+                </v-icon>
+                Download Study Metadata
+              </v-btn>
+            </template>
+            <DownloadDialog
+              :loading="studyDownloadLoading"
+              @clicked="downloadStudyMetadata"
+            />
+          </v-dialog>
+          <v-snackbar
+            v-model="studyDownloadLoading"
+            location="right bottom"
+            timeout="-1"
+          >
+            <v-progress-circular
+              indeterminate
+              class="mr-3"
+            />
+            <span>
+              Downloading study metadata
+            </span>
+          </v-snackbar>
+          <ErrorDialog
+            v-model:show="errorDialog"
+          />
           <AttributeRow
             v-if="parentStudies.length > 0"
             label="Part Of"
