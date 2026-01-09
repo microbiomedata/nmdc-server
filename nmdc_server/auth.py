@@ -1,4 +1,3 @@
-import xml.etree.ElementTree as ElementTree
 from datetime import UTC, datetime, timedelta
 from enum import Enum
 from functools import lru_cache
