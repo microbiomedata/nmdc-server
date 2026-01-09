@@ -25,7 +25,7 @@ export default defineComponent({
       required: true,
     },
   },
-  emits: ['input'],
+  emits: ['update:value'],
   setup(props, { emit }) {
     const formRef = ref();
     const currentUserOrcid = computed(() => stateRefs.user.value?.orcid);
@@ -73,7 +73,7 @@ export default defineComponent({
 
     const dialog = computed({
       get: () => props.value,
-      set: (v: boolean) => emit('input', v),
+      set: (v: boolean) => emit('update:value', v),
     });
 
     const updateEmail = async () => {
