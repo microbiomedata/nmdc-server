@@ -253,7 +253,6 @@ async def orcid_authorize(request: Request, db: Session = Depends(get_db)):
     user = User(orcid=token_response["orcid"], name=token_response["name"])
     user_model = crud.get_or_create_user(db, user)
 
-    # if user_model.email is None:
     if not user_model.email:
         # Make API call to ORCID
         orcid_email_response = await oauth2_client.orcid.get(
@@ -262,21 +261,15 @@ async def orcid_authorize(request: Request, db: Session = Depends(get_db)):
             headers={"Accept": "application/vnd.orcid+json"},
         )
 
-        # XML data from ORCID API
-        # xml_content = orcid_email_response._content
-        xml_content = orcid_email_response.json()
-        root = ElementTree.fromstring(xml_content)
-        namespace = {
-            "email": "http://www.orcid.org/ns/email",
-        }
-        email_elements = root.findall(".//email:email", namespace)
-
+        # JSON data from ORCID API
+        email_response_body = orcid_email_response.json()
+        
         user_email = None
+        for email in email_response_body.get('email', []):
         # Get the first valid email
         # TODO - Consider storing all valid emails in the future
-        for email in email_elements:
-            if email.text and "@" in email.text:
-                user_email = email.text
+            if email:
+                user_email = email.get('email')
                 break
         # Assign user email
         user_model.email = user_email
