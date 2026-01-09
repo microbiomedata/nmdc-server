@@ -1,10 +1,21 @@
-<script lang="ts" setup>
-import { onMounted, onUnmounted } from 'vue';
+<script lang="ts">
+import {
+  defineComponent,
+  onMounted,
+  watch,
+  ref,
+} from 'vue';
+import AppHeader from '@/components/Presentation/AppHeader.vue';
+import UserEmailModal from './views/SubmissionPortal/Components/UserEmailModal.vue';
+import { stateRefs, init } from '@/store/';
 import { useRouter } from 'vue-router';
 import { api, REFRESH_TOKEN_EXPIRED_EVENT, RefreshTokenExchangeError } from '@/data/api';
-import { init, stateRefs } from '@/store/';
 
-const router = useRouter();
+export default defineComponent({
+  name: 'App',
+  components: { AppHeader, UserEmailModal },
+  setup() {
+    const router = useRouter();
 
 const handleRefreshTokenExpired = () => {
   stateRefs.user.value = null;
@@ -13,8 +24,21 @@ const handleRefreshTokenExpired = () => {
   }
 };
 
-onMounted(async () => {
-  window.addEventListener(REFRESH_TOKEN_EXPIRED_EVENT, handleRefreshTokenExpired);
+    const { user } = stateRefs;
+
+    const showEmailModal = ref(false);
+
+    watch(
+      user,
+      (newUser) => {
+        const missingEmail = !!newUser && !newUser.email?.trim();
+        showEmailModal.value = missingEmail;
+      },
+      { immediate: true },
+    );
+
+    onMounted(async () => {
+      window.addEventListener(REFRESH_TOKEN_EXPIRED_EVENT, handleRefreshTokenExpired);
 
   if (!router) {
     return;
@@ -40,14 +64,21 @@ onMounted(async () => {
   }
 });
 
-onUnmounted(() => {
-  window.removeEventListener(REFRESH_TOKEN_EXPIRED_EVENT, handleRefreshTokenExpired);
+    return {
+      stateRefs,
+      showEmailModal,
+    };
+  },
 });
 </script>
 
 <template>
   <v-layout>
     <app-header />
-    <router-view />
+    <keep-alive>
+      <router-view />
+    </keep-alive>
+    <user-email-modal v-model:value="showEmailModal" />
   </v-layout>
 </template>
+ 

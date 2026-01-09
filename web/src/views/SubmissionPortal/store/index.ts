@@ -168,6 +168,7 @@ const addressFormValid = ref(false);
  */
 const studyFormDefault = {
   studyName: '',
+  submitterEmail: '',
   piName: '',
   piEmail: '',
   piOrcid: '',
