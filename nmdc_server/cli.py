@@ -239,7 +239,7 @@ def ingest(
 
     # Send a Slack message announcing that this ingest is starting.
     send_slack_message(
-        f"Ingest is starting.\n"
+        f"▶️ Ingest is starting.\n"
         f"• Environment: `{settings.environment_name_for_ingester}`\n"
         f"• Start time: `{ingest_start_datetime_str}`"
     )
@@ -250,7 +250,7 @@ def ingest(
             jobs.do_ingest(function_limit, skip_annotation)
         except Exception as e:
             send_slack_message(
-                f"Ingest failed.\n"
+                f"❌ Ingest failed.\n"
                 f"• Environment: `{settings.environment_name_for_ingester}`\n"
                 f"• Start time: `{ingest_start_datetime_str}`\n"
                 f"• Error message: {e}"
@@ -329,7 +329,7 @@ def ingest(
 
     # Send a Slack message announcing that this ingest is done.
     send_slack_message(
-        f"Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
+        f"✅ Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
         f"• Environment: `{settings.environment_name_for_ingester}`\n"
         f"• Start time: `{ingest_start_datetime_str}`"
     )
