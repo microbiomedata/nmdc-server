@@ -240,8 +240,8 @@ def ingest(
     # Send a Slack message announcing that this ingest is starting.
     send_slack_message(
         f"Ingest is starting.\n"
-        f"• Start time: `{ingest_start_datetime_str}`\n"
-        f"• MongoDB host: `{settings.mongo_host}`"
+        f"• Environment: `{settings.environment_name_for_ingester}`\n"
+        f"• Start time: `{ingest_start_datetime_str}`"
     )
 
     # Unless the user opted to skip the ETL step, perform it now.
@@ -251,8 +251,8 @@ def ingest(
         except Exception as e:
             send_slack_message(
                 f"Ingest failed.\n"
+                f"• Environment: `{settings.environment_name_for_ingester}`\n"
                 f"• Start time: `{ingest_start_datetime_str}`\n"
-                f"• MongoDB host: `{settings.mongo_host}`\n"
                 f"• Error message: {e}"
             )
 
@@ -330,8 +330,8 @@ def ingest(
     # Send a Slack message announcing that this ingest is done.
     send_slack_message(
         f"Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
-        f"• Start time: `{ingest_start_datetime_str}`\n"
-        f"• MongoDB host: `{settings.mongo_host}`"
+        f"• Environment: `{settings.environment_name_for_ingester}`\n"
+        f"• Start time: `{ingest_start_datetime_str}`"
     )
 
 

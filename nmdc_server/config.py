@@ -193,6 +193,13 @@ class Settings(BaseSettings):
     # Parameters related to posting messages to Slack.
     # Reference: https://api.slack.com/messaging/webhooks
     slack_webhook_url_for_ingester: Optional[str] = None
+    """A Slack incoming webhook URL, which the ingester can use to post messages to Slack."""
+
+    environment_name_for_ingester: str = "unknown"
+    """
+    A name for this environment (e.g., "production", "development", "local", "unknown"),
+    which the ingester will incorporate into the messages it posts to Slack.
+    """
 
     # CORS settings necessary for allowing request from Field Notes app
     cors_allow_origins: Optional[str] = None  # comma separated list of allowed origins
