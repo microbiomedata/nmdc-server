@@ -139,6 +139,18 @@ class Settings(BaseSettings):
     mongo_user: str = ""
     mongo_password: str = ""
 
+    slack_webhook_url_for_ingester: Optional[str] = None
+    """
+    A Slack incoming webhook URL, which the ingester can use to post messages to Slack.
+    Reference: https://api.slack.com/messaging/webhooks
+    """
+
+    environment_name_for_ingester: str = "unknown"
+    """
+    A name for this environment (e.g., "production", "development", "local", "unknown"),
+    which the ingester will incorporate into the messages it posts to Slack.
+    """
+
     sentry_dsn: Optional[str] = None
     r"""
     The Sentry DSN (Data Source Name) you want the Sentry SDK to use. This URL is specific
@@ -188,17 +200,6 @@ class Settings(BaseSettings):
     """The ID of the Google Secret Manager secret containing the secondary Postgres URI.
 
     This is only required when running the ingest script with its `--swap-google-secrets` flag.
-    """
-
-    # Parameters related to posting messages to Slack.
-    # Reference: https://api.slack.com/messaging/webhooks
-    slack_webhook_url_for_ingester: Optional[str] = None
-    """A Slack incoming webhook URL, which the ingester can use to post messages to Slack."""
-
-    environment_name_for_ingester: str = "unknown"
-    """
-    A name for this environment (e.g., "production", "development", "local", "unknown"),
-    which the ingester will incorporate into the messages it posts to Slack.
     """
 
     # CORS settings necessary for allowing request from Field Notes app
