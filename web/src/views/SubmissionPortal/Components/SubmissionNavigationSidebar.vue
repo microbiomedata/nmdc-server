@@ -57,7 +57,7 @@ export default defineComponent({
   >
     <v-list-item subtitle="Click to go to">
       <template #title>
-        <div class="text-h6">
+        <div class="text-h6 text-wrap">
           {{ studyForm.studyName }}
         </div>
       </template>
