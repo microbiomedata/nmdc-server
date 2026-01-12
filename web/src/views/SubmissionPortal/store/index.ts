@@ -509,10 +509,12 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   return Promise.resolve();
 }
 
-async function generateRecord(isTestSubBool: boolean) {
+async function generateRecord(isTestSubBool: boolean, studyNameStr: string = '', piEmailStr: string = ''): Promise<MetadataSubmissionRecord> {
   reset();
-  const record = await api.createRecord(payloadObject.value, isTestSubBool);
+  const record = await api.createRecord(payloadObject.value, isTestSubBool, studyNameStr, piEmailStr);
   isTestSubmission.value = isTestSubBool;
+  studyForm.studyName = studyNameStr;
+  studyForm.piEmail = piEmailStr;
   return record;
 }
 

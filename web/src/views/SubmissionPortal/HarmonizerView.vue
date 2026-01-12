@@ -48,7 +48,7 @@ import {
   validForms,
 } from './store';
 import { AppBannerHeightKey } from './SubmissionView.vue';
-import SubmissionStepper from './Components/SubmissionStepper.vue';
+import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import StatusAlert from './Components/StatusAlert.vue';
@@ -106,7 +106,7 @@ const ALWAYS_READ_ONLY_COLUMNS = [
 export default defineComponent({
   components: {
     HarmonizerSidebar,
-    SubmissionStepper,
+    SubmissionNavigationSidebar,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
     StatusAlert,
@@ -764,7 +764,7 @@ export default defineComponent({
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
-    <SubmissionStepper />
+    <SubmissionNavigationSidebar />
     <submission-permission-banner
       v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
     />

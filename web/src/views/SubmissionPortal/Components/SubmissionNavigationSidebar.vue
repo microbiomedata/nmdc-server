@@ -3,12 +3,16 @@ import {
   computed,
   defineComponent,
 } from 'vue';
-import { validForms } from '../store';
+import { validForms, studyForm } from '../store';
 import { useRouter } from 'vue-router';
 
 export default defineComponent({
   setup() {
     const pages = computed(() => [
+      {
+        title: 'Submission Summary',
+        pageName: 'Submission Summary',
+      },
       {
         title: 'Study Form',
         pageName: 'Study Form',
@@ -29,11 +33,6 @@ export default defineComponent({
         pageName: 'Submission Sample Editor',
         icon: validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle',
       },
-      {
-        title: 'Submission Summary',
-        pageName: 'Submission Summary',
-        icon: 'mdi-text-box-outline',
-      },
     ]);
     const router = useRouter();
 
@@ -44,6 +43,7 @@ export default defineComponent({
     return {
       gotoPage,
       pages,
+      studyForm
     };
   },
 });
@@ -58,7 +58,7 @@ export default defineComponent({
     <v-list-item subtitle="Click to go to">
       <template #title>
         <div class="text-h6">
-          Pages
+          {{ studyForm.studyName }}
         </div>
       </template>
     </v-list-item>

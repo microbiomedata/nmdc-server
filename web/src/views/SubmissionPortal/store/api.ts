@@ -30,7 +30,9 @@ function addressToString(address: NmdcAddress): string {
   return result;
 }
 
-async function createRecord(record: MetadataSubmission, isTestSubmission: boolean) {
+async function createRecord(record: MetadataSubmission, isTestSubmission: boolean, studyNameStr: string = '', piEmailStr: string = '') {
+  record.studyForm.studyName = studyNameStr;
+  record.studyForm.piEmail = piEmailStr;
   const resp = await client.post<
     MetadataSubmissionRecord,
     AxiosResponse<MetadataSubmissionRecord>,
