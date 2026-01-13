@@ -12,7 +12,7 @@ import {
   studyForm,
   studyFormValid,
   canEditSubmissionMetadata,
-} from '../store';
+} from '../views/SubmissionPortal/store';
 import { stateRefs } from '@/store';
 import { api } from '@/data/api';
 import { User } from '@/types';

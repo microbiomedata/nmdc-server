@@ -6,7 +6,7 @@ import {
   ref,
 } from 'vue';
 import AppHeader from '@/components/Presentation/AppHeader.vue';
-import UserEmailModal from './views/SubmissionPortal/Components/UserEmailModal.vue';
+import UserEmailModal from './components/UserEmailModal.vue';
 import { stateRefs, init } from '@/store/';
 import { useRouter } from 'vue-router';
 import { api, REFRESH_TOKEN_EXPIRED_EVENT, RefreshTokenExchangeError } from '@/data/api';
