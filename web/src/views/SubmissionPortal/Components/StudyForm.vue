@@ -138,24 +138,6 @@ export default defineComponent({
       await api.updateUser(user.value?.id as string, update);
     };
 
-    // const editEmail = ref(false);
-    // const isEmailValid = ref(false);
-
-    // const updateEmail = (email: string | undefined) => {
-    //   if (editEmail.value) {
-    //     if (email == null) {
-    //       return;
-    //     }
-    //     isEmailValid.value = /.+@.+\..+/.test(email);
-    //     if (isEmailValid.value) {
-    //       updateUser(email);
-    //       editEmail.value = !editEmail.value;
-    //     }
-    //   } else {
-    //     editEmail.value = !editEmail.value;
-    //   }
-    // };
-
     const submitterEmail = ref(user.value?.email || '');
 
     studyForm.submitterEmail = submitterEmail.value;
@@ -187,9 +169,6 @@ export default defineComponent({
       currentUserOrcid,
       permissionHelpText,
       checkDoiFormat,
-      // editEmail,
-      // updateEmail,
-      // isEmailValid,
       submitterEmail,
       user,
       updateUser,
