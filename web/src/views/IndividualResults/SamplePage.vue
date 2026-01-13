@@ -4,7 +4,6 @@ import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
 import AttributeList from '@/components/Presentation/AttributeList.vue';
 import { downloadJson } from '@/utils';
-import ClickToCopyText from '@/components/Presentation/ClickToCopyText.vue';
 
 import IndividualTitle from './IndividualTitle.vue';
 import useRequest from '@/use/useRequest.ts';
@@ -48,13 +47,12 @@ watchEffect(() => {
       <v-skeleton-loader type="article" />
     </v-container>
     <v-container v-if="!loading && biosample !== null">
-      <div class="text-caption mb-3">
-        <router-link :to="{ name: 'Search' }">
-          Home
-        </router-link>
-        <span class="mx-2">/</span>
-        <ClickToCopyText>{{ biosample.id }}</ClickToCopyText>
-      </div>
+      <BreadcrumbList
+        :items="[
+          { text: 'Data Portal Home', to: { name: 'Search' } },
+          { text: biosample.id, copyable: true }
+        ]"
+      />
       <IndividualTitle :item="biosample" />
       <v-dialog
         v-model="sampleDownloadDialog"

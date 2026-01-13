@@ -13,7 +13,6 @@ import {
 import { setConditions, setUniqueCondition } from '@/store';
 import AppBanner from '@/components/AppBanner.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
-import ClickToCopyText from '@/components/Presentation/ClickToCopyText.vue';
 import TeamInfo from '@/components/TeamInfo.vue';
 import RevealContainer from '@/components/Presentation/RevealContainer.vue';
 import usePaginatedResults from '@/use/usePaginatedResults';
@@ -35,7 +34,6 @@ export default defineComponent({
     AppBanner,
     AttributeRow,
     BiosampleSearchResults,
-    ClickToCopyText,
     DoiCitation,
     DownloadDialog,
     ErrorDialog,
@@ -221,12 +219,12 @@ export default defineComponent({
       <v-skeleton-loader type="article" />
     </v-container>
     <v-container v-if="!loading && study !== null">
-      <div class="text-caption mb-3">
-        <!-- eslint-disable-next-line-->
-        <router-link :to="{ name: 'Search' }">Home</router-link>
-        <span class="mx-2">/</span>
-        <ClickToCopyText>{{ study.id }}</ClickToCopyText>
-      </div>
+      <BreadcrumbList
+        :items="[
+          { text: 'Data Portal Home', to: { name: 'Search' } },
+          { text: study.id, copyable: true }
+        ]"
+      />
 
       <div :class="['mainInfoRow', smAndDown ? 'smAndDown' : 'mdAndUp']">
         <div :class="['mainInfoCol', study.image_url ? 'withImage' : '']">
