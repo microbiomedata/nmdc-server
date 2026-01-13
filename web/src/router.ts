@@ -22,6 +22,7 @@ import HarmonizerView from '@/views/SubmissionPortal/HarmonizerView.vue';
 import ValidateSubmit from '@/views/SubmissionPortal/Components/ValidateSubmit.vue';
 import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
 import SubmissionSummary from '@/views/SubmissionPortal/Components/SubmissionSummary.vue';
+import SubmissionCreationForm from '@/views/SubmissionPortal/Components/SubmissionCreationForm.vue';
 
 import { unlockSubmission } from '@/views/SubmissionPortal/store/api';
 import { incrementalSaveRecord } from '@/views/SubmissionPortal/store';
@@ -64,15 +65,20 @@ const router = createRouter({
           component: SubmissionList,
         },
         {
-          name: 'Submission Summary',
-          path: ':id/summary',
-          component: SubmissionSummary,
+          name: 'Create Submission', 
+          path: 'create',
+          component: SubmissionCreationForm, 
         },
         {
           component: StepperView,
           path: '',
           props: true,
           children: [
+            {
+              name: 'Submission Summary',
+              path: ':id/summary',
+              component: SubmissionSummary,
+            },
             {
               name: 'Study Form',
               path: ':id/study',
