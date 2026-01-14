@@ -307,148 +307,55 @@ export default defineComponent({
         </template>
       </v-expansion-panel-text>
     </v-expansion-panel>
-    <v-expansion-panel>
-      <v-expansion-panel-title>
-        <div>
-          Data Acquisition Protocol
-          <v-tooltip
-            right
-            class="x-2"
-            max-width="500"
-          >
-            <template #activator="{ props }">
-              <v-icon
-                v-bind="props"
-                class="ml-1 mb-1"
-                small
-              >
-                mdi-help-circle
-              </v-icon>
-            </template>
-            <span>
-              This protocol should describe the chromatography and mass spectrometry methods used for data acquisition.
-              Provide a DOI, URL, or descriptive text.
-            </span>
-          </v-tooltip>
+    <v-expansion-panel title="Data Acquisition Protocol">
+      <v-expansion-panel-text class="text-body-2 px-8">
+        <div class="mb-4">
+          Use these fields to describe the chromatography and mass spectrometry methods used for data acquisition.
         </div>
-      </v-expansion-panel-title>
-      <v-expansion-panel-text>
-        <v-row
-          class="mx-8 "
-          no-gutters
-        >
-          <v-col
-            cols="5"
-          >
+        <div class="mb-2">
+          <b>If a published protocol is available</b>, provide the DOI or URL here. The DOI or URL should link to publicly available documentation that describes the experimental protocol in detail, not for the research study publication.
+        </div>
+        <v-row class="mb-4">
+          <v-col>
             <v-text-field
               v-model="currentProtocol.acquisitionProtocol.doi"
               label="DOI"
               variant="outlined"
               :rules="doiValueRules()"
+              persistent-hint
+              hint="A DOI for the protocol"
               @blur="updateMultiOmicsForm()"
-            >
-              <template #append>
-                <v-tooltip
-                  right
-                  class="x-2"
-                  max-width="500"
-                >
-                  <template #activator="{ props }">
-                    <v-icon
-                      v-bind="props"
-                    >
-                      mdi-help-circle
-                    </v-icon>
-                  </template>
-                  <span>
-                    Provide a DOI for the protocol. This is a DOI for publicly available documentation that describes the experimental protocol in detail, not for the research study publication. Multiple DOIs can be provided.
-                  </span>
-                </v-tooltip>
-              </template>
-            </v-text-field>
+            />
           </v-col>
-          <v-col
-            cols="5"
-            class="ml-4"
-          >
+          <v-col>
             <v-text-field
               v-model="currentProtocol.acquisitionProtocol.url"
               label="URL"
               variant="outlined"
               :rules="urlValueRules()"
+              persistent-hint
+              hint="A URL for the protocol"
               @blur="updateMultiOmicsForm()"
-            >
-              <template #append>
-                <v-tooltip
-                  right
-                  class="x-2"
-                  max-width="500"
-                >
-                  <template #activator="{ props }">
-                    <v-icon
-                      v-bind="props"
-                    >
-                      mdi-help-circle
-                    </v-icon>
-                  </template>
-                  <span>
-                    Provide a URL for the protocol. This is a URL for publicly available documentation that describes the experimental protocol in detail, not for the research study publication. Multiple URLs can be provided.
-                  </span>
-                </v-tooltip>
-              </template>
-            </v-text-field>
+            />
           </v-col>
         </v-row>
-        <div
-          class="v-label theme--light my-2 mx-8 d-flex align-center"
-        >
-          If a published protocol is unavailable, enter the sample preparation protocol(s) here.
+        <div class="mb-2">
+          <b>If a published protocol is unavailable</b>, enter the data acquisition protocol here.
         </div>
-        <v-row
-          class="mx-8"
-          no-gutters
-        >
-          <v-col
-            cols="5"
-          >
-            <v-text-field
-              v-model="currentProtocol.acquisitionProtocol.name"
-              label="Protocol Name"
-              variant="outlined"
-              @blur="updateMultiOmicsForm()"
-            >
-              <template #append>
-                <v-tooltip
-                  right
-                  max-width="500"
-                >
-                  <template #activator="{ props }">
-                    <v-icon
-                      v-bind="props"
-                    >
-                      mdi-help-circle
-                    </v-icon>
-                  </template>
-                  <span>
-                    Provide a name for this protocol.
-                  </span>
-                </v-tooltip>
-              </template>
-            </v-text-field>
-          </v-col>
-        </v-row>
-        <v-row
-          class="mx-8"
-          no-gutters
-        >
-          <v-textarea
-            v-model="currentProtocol.acquisitionProtocol.description"
-            label="Protocol Description"
-            variant="outlined"
-            rows="3"
-            @blur="updateMultiOmicsForm()"
-          />
-        </v-row>
+        <v-text-field
+          v-model="currentProtocol.acquisitionProtocol.name"
+          label="Protocol Name"
+          variant="outlined"
+          @blur="updateMultiOmicsForm()"
+        />
+        <v-textarea
+          v-model="currentProtocol.acquisitionProtocol.description"
+          label="Protocol Description"
+          variant="outlined"
+          hide-details="auto"
+          rows="3"
+          @blur="updateMultiOmicsForm()"
+        />
       </v-expansion-panel-text>
     </v-expansion-panel>
     <v-expansion-panel>
