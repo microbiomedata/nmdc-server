@@ -50,7 +50,7 @@
     "vue-google-charts": "^1.1.0",
     "vue-gtag": "^3.6.3",
     "vue-router": "^4.5.1",
-    "vuetify": "^3.10.1",
+    "vuetify": "^3.11.6",
     "xlsx": "^0.17.5"
   },
   "devDependencies": {

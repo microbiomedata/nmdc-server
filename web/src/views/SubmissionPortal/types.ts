@@ -277,7 +277,7 @@ export interface Doi {
 
 export interface DataProtocol {
   url?: string;
-  doi?: Doi;
+  doi?: string;
 }
 export interface AcquisitionProtocol extends DataProtocol {
   name?: string;
