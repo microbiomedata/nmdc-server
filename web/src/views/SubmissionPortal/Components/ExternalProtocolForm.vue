@@ -2,8 +2,10 @@
 import { defineProps, computed, ref } from 'vue';
 import { multiOmicsForm, checkDoiFormat } from '../store';
 
+type DataType = 'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols';
+
 const props = defineProps<{
-  dataType: 'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols',
+  dataType: DataType,
 }>();
 
 const protocolNames = computed(() => {
@@ -23,7 +25,7 @@ const protocolNames = computed(() => {
   return Array.from(names);
 });
 
-const existingProtocols = computed(() => (multiOmicsForm as Record<'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols', any>)[props.dataType]);
+const existingProtocols = computed(() => multiOmicsForm[props.dataType]);
 
 const currentProtocol = ref({
   sampleProtocol: {
@@ -47,7 +49,7 @@ const currentProtocol = ref({
 });
 
 function updateMultiOmicsForm() {
-  (multiOmicsForm as Record<'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols', any>)[props.dataType] = currentProtocol.value;
+  multiOmicsForm[props.dataType] = currentProtocol.value;
 }
 
 const doiValueRules = () => (
