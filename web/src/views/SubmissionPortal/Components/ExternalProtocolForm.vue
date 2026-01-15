@@ -13,7 +13,7 @@ type ProtocolHelp = {
 
 const protocolHelp: Record<DataType, ProtocolHelp> = {
   mpProtocols: {
-    samplePrepHint: "The description should include details such as extractant(s), digestion enzyme(s), alklyation, and fractionation (if performed).",
+    samplePrepHint: "The description should include details such as extractant(s), digestion enzyme(s), alkylation, and fractionation (if performed).",
     samplePrepExample: "30g of soil was bead beat in 60% MeOH for 15 min at 4°C. 12 mL of ice-cold chloroform was added " +
       "to the sample. Samples were probe sonicated at 60% amplitude for 30 seconds on ice, cooled on ice and sonicated " +
       "again. Samples were incubated for 5 min at -80°C, vortexed for 1 min and centrifuged at 4,500g for 10 min at " +
@@ -234,7 +234,7 @@ const urlValueRules = () => (
             </v-col>
           </v-row>
           <div class="mb-2">
-            <b>If a published protocol is unavailable</b>, enter the data acquisition protocol here.
+            <b>If a published protocol is unavailable</b>, enter the sample preparation protocol here.
           </div>
           <v-text-field
             v-model="currentProtocol.sampleProtocol.name"
