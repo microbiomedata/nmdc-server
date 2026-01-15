@@ -1,99 +1,83 @@
-<script lang="ts">
-import { defineComponent, computed, ref } from 'vue';
+<script setup lang="ts">
+import { defineProps, computed, ref } from 'vue';
 import { multiOmicsForm, checkDoiFormat } from '../store';
 
-export default defineComponent({
-  name: 'ExternalProtocolForm',
-  props: {
-    dataType: {
-      type: String as () => 'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols',
-      required: true,
-    },
+const props = defineProps<{
+  dataType: 'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols',
+}>();
+
+const protocolNames = computed(() => {
+  const names = new Set<string>();
+  if (multiOmicsForm.mpProtocols?.sampleProtocol.name) {
+    names.add(multiOmicsForm.mpProtocols.sampleProtocol.name);
+  }
+  if (multiOmicsForm.mbProtocols?.sampleProtocol.name) {
+    names.add(multiOmicsForm.mbProtocols.sampleProtocol.name);
+  }
+  if (multiOmicsForm.nomProtocols?.sampleProtocol.name) {
+    names.add(multiOmicsForm.nomProtocols.sampleProtocol.name);
+  }
+  if (multiOmicsForm.lipProtocols?.sampleProtocol.name) {
+    names.add(multiOmicsForm.lipProtocols.sampleProtocol.name);
+  }
+  return Array.from(names);
+});
+
+const existingProtocols = computed(() => (multiOmicsForm as Record<'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols', any>)[props.dataType]);
+
+const currentProtocol = ref({
+  sampleProtocol: {
+    name: existingProtocols.value?.sampleProtocol.name || '',
+    description: existingProtocols.value?.sampleProtocol.description || '',
+    doi: existingProtocols.value?.sampleProtocol.doi || '',
+    url: existingProtocols.value?.sampleProtocol.url || '',
+    sharedData: existingProtocols.value?.sampleProtocol.sharedData || false,
+    sharedDataName: existingProtocols.value?.sampleProtocol.sharedDataName || '',
   },
-  setup(props) {
-    const protocolNames = computed(() => {
-      const names = new Set<string>();
-      if (multiOmicsForm.mpProtocols?.sampleProtocol.name) {
-        names.add(multiOmicsForm.mpProtocols.sampleProtocol.name);
-      }
-      if (multiOmicsForm.mbProtocols?.sampleProtocol.name) {
-        names.add(multiOmicsForm.mbProtocols.sampleProtocol.name);
-      }
-      if (multiOmicsForm.nomProtocols?.sampleProtocol.name) {
-        names.add(multiOmicsForm.nomProtocols.sampleProtocol.name);
-      }
-      if (multiOmicsForm.lipProtocols?.sampleProtocol.name) {
-        names.add(multiOmicsForm.lipProtocols.sampleProtocol.name);
-      }
-      return Array.from(names);
-    });
-
-    const existingProtocols = computed(() => (multiOmicsForm as Record<'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols', any>)[props.dataType]);
-
-    const currentProtocol = ref({
-      sampleProtocol: {
-        name: existingProtocols.value?.sampleProtocol.name || '',
-        description: existingProtocols.value?.sampleProtocol.description || '',
-        doi: existingProtocols.value?.sampleProtocol.doi || '',
-        url: existingProtocols.value?.sampleProtocol.url || '',
-        sharedData: existingProtocols.value?.sampleProtocol.sharedData || false,
-        sharedDataName: existingProtocols.value?.sampleProtocol.sharedDataName || '',
-      },
-      acquisitionProtocol: {
-        doi: existingProtocols.value?.acquisitionProtocol.doi || '',
-        url: existingProtocols.value?.acquisitionProtocol.url || '',
-        name: existingProtocols.value?.acquisitionProtocol.name || '',
-        description: existingProtocols.value?.acquisitionProtocol.description || '',
-      },
-      dataProtocol: {
-        doi: existingProtocols.value?.dataProtocol.doi || '',
-        url: existingProtocols.value?.dataProtocol.url || '',
-      },
-    });
-
-    function updateMultiOmicsForm() {
-      (multiOmicsForm as Record<'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols', any>)[props.dataType] = currentProtocol.value;
-    }
-
-    const doiValueRules = () => (
-      [
-        (value: string) => {
-          if (!value) return true;
-
-          // Split by comma and validate each DOI
-          const dois = value.split(',').map((doi) => doi.trim());
-          const allValid = dois.every((doi) => checkDoiFormat(doi));
-
-          return allValid || 'All DOIs must be valid (comma-separated if multiple)';
-        },
-      ]
-    );
-
-    const urlValueRules = () => (
-      [
-        (value: string) => {
-          if (!value) return true;
-
-          // Split by comma and validate each URL
-          const urls = value.split(',').map((url) => url.trim());
-          const urlRegex = /^https?:\/\//i;
-          const allValid = urls.every((url) => urlRegex.test(url));
-
-          return allValid || 'All URLs must be valid (comma-separated if multiple)';
-        },
-      ]
-    );
-
-    return {
-      currentProtocol,
-      multiOmicsForm,
-      protocolNames,
-      doiValueRules,
-      urlValueRules,
-      updateMultiOmicsForm,
-    };
+  acquisitionProtocol: {
+    doi: existingProtocols.value?.acquisitionProtocol.doi || '',
+    url: existingProtocols.value?.acquisitionProtocol.url || '',
+    name: existingProtocols.value?.acquisitionProtocol.name || '',
+    description: existingProtocols.value?.acquisitionProtocol.description || '',
+  },
+  dataProtocol: {
+    doi: existingProtocols.value?.dataProtocol.doi || '',
+    url: existingProtocols.value?.dataProtocol.url || '',
   },
 });
+
+function updateMultiOmicsForm() {
+  (multiOmicsForm as Record<'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols', any>)[props.dataType] = currentProtocol.value;
+}
+
+const doiValueRules = () => (
+  [
+    (value: string) => {
+      if (!value) return true;
+
+      // Split by comma and validate each DOI
+      const dois = value.split(',').map((doi) => doi.trim());
+      const allValid = dois.every((doi) => checkDoiFormat(doi));
+
+      return allValid || 'All DOIs must be valid (comma-separated if multiple)';
+    },
+  ]
+);
+
+const urlValueRules = () => (
+  [
+    (value: string) => {
+      if (!value) return true;
+
+      // Split by comma and validate each URL
+      const urls = value.split(',').map((url) => url.trim());
+      const urlRegex = /^https?:\/\//i;
+      const allValid = urls.every((url) => urlRegex.test(url));
+
+      return allValid || 'All URLs must be valid (comma-separated if multiple)';
+    },
+  ]
+);
 </script>
 
 <template>
