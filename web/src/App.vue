@@ -75,9 +75,7 @@ export default defineComponent({
 <template>
   <v-layout>
     <app-header />
-    <keep-alive>
-      <router-view />
-    </keep-alive>
+    <router-view />
     <user-email-modal v-model:value="showEmailModal" />
   </v-layout>
 </template>
