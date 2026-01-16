@@ -117,10 +117,7 @@ export default defineComponent({
       persistent
       max-width="600"
     >
-      <v-card>
-        <v-card-title class="headline">
-          Please add your email
-        </v-card-title>
+      <v-card title="Please add your email">
         <v-card-text>
           <v-form
             ref="formRef"
