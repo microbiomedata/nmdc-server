@@ -14,6 +14,7 @@ from nmdc_server.ingest import (
     envo,
     kegg,
     omics_processing,
+    ontology,
     pipeline,
     search_index,
     study,
@@ -62,9 +63,21 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     )
     mongodb = client[settings.mongo_database]
 
-    logger.info("Loading envo terms...")
-    envo.load(db)
-    db.commit()
+    # Load generic ontology data first
+    logger.info("Loading ontology data...")
+    if "ontology_class_set" in mongodb.list_collection_names() and "ontology_relation_set" in mongodb.list_collection_names():
+        ontology.load(
+            db,
+            mongodb["ontology_class_set"].find(),
+            mongodb["ontology_relation_set"].find()
+        )
+        db.commit()
+        logger.info("Ontology data loaded successfully")
+    else:
+        logger.warning("Ontology collections not found in MongoDB, using legacy ENVO loading")
+        logger.info("Loading envo terms...")
+        envo.load(db)
+        db.commit()
 
     logger.info("Loading Kegg orthology...")
     kegg.load(db)

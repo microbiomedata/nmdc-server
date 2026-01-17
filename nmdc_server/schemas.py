@@ -80,6 +80,37 @@ class EnvoTerm(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class OntologyClassCreate(BaseModel):
+    id: str
+    type: str = "nmdc:OntologyClass"
+    name: str
+    definition: Optional[str] = None
+    alternative_names: List[str] = []
+    is_root: bool = False
+    is_obsolete: bool = False
+    annotations: Dict[str, Any] = {}
+
+
+class OntologyClass(OntologyClassCreate):
+    model_config = ConfigDict(from_attributes=True)
+    
+    @property
+    def ontology_prefix(self) -> str:
+        return self.id.split(":")[0] if ":" in self.id else ""
+
+
+class OntologyRelationCreate(BaseModel):
+    subject: str
+    predicate: str
+    object: str
+    type: str = "nmdc:OntologyRelation"
+
+
+class OntologyRelation(OntologyRelationCreate):
+    id: Optional[int] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
 class AnnotatedBase(BaseModel):
     id: str
     name: str = ""
