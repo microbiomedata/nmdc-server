@@ -1,6 +1,5 @@
 import csv
 import json
-import logging
 import time
 from enum import StrEnum
 from importlib import resources
@@ -1390,6 +1389,7 @@ async def update_submission_status(
                     status_code=500,
                     detail=f"Failed to update GitHub issue: {str(e)}",
                 )
+    return submission
 
 
 @router.post(
@@ -1516,7 +1516,7 @@ def create_github_issue(submission_model: SubmissionMetadata, user):
             detail=f"Github issue creation failed: {res.reason}",
         )
 
-    return res.json()['number']
+    return res.json()["number"]
 
 
 def update_github_issue_for_resubmission(existing_issue, user):
@@ -1536,7 +1536,7 @@ def update_github_issue_for_resubmission(existing_issue, user):
     # If the settings for issue creation weren't supplied return, no need to do anything further
     if gh_url is None or token is None:
         return None
-    
+
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
 
     # Make comment
@@ -1560,7 +1560,7 @@ The submission has been updated and resubmitted for review.
             status_code=comment_response.status_code,
             detail=f"Failed to add comment to GitHub issue: {comment_response.reason}",
         )
-    
+
     # If the issue is closed, reopen it
     res = requests.get(url=issue_url, headers=headers)
     if res.status_code != 200:
