@@ -2,6 +2,7 @@
 import { computed, defineComponent } from 'vue';
 import { addressForm } from '../store';
 import { addressToString } from '../store/api';
+import { formatShippingDate } from '../utils';
 
 export default defineComponent({
   setup() {
@@ -18,6 +19,7 @@ export default defineComponent({
       const existingShipperData = shipperData.filter((shipperDatum) => !!shipperDatum.trim());
       return existingShipperData.join(', ');
     });
+
     const shipperAddressString = computed(() => addressToString(addressForm.shipper));
     const shipperSummary = computed(() => {
       let result = '';
@@ -27,7 +29,7 @@ export default defineComponent({
       }
       if (addressForm.expectedShippingDate) {
         const date = new Date(addressForm.expectedShippingDate);
-        result += `\nExpected Shipping Date: ${date.toLocaleDateString()}`;
+        result += `\nExpected Shipping Date: ${formatShippingDate(date)}`;
       }
 
       return result.trim();
@@ -73,6 +75,7 @@ export default defineComponent({
       shipperSummary,
       addressForm,
       sampleProperties,
+      formatShippingDate,
     };
   },
 });

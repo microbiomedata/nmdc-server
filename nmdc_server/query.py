@@ -1039,6 +1039,10 @@ class SearchQuery(BaseModel):
     conditions: List[ConditionSchema] = []
 
 
+class MultiSearchQuery(SearchQuery):
+    endpoints: List[str] = []
+
+
 class ConditionResultSchema(SimpleConditionSchema):
     model_config = ConfigDict(from_attributes=True)
 

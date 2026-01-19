@@ -239,9 +239,9 @@ def ingest(
 
     # Send a Slack message announcing that this ingest is starting.
     send_slack_message(
-        f"Ingest is starting.\n"
-        f"• Start time: `{ingest_start_datetime_str}`\n"
-        f"• MongoDB host: `{settings.mongo_host}`"
+        f"▶️ Ingest is starting.\n"
+        f"• Environment: `{settings.environment_name_for_ingester}`\n"
+        f"• Start time: `{ingest_start_datetime_str}`"
     )
 
     # Unless the user opted to skip the ETL step, perform it now.
@@ -250,9 +250,9 @@ def ingest(
             jobs.do_ingest(function_limit, skip_annotation)
         except Exception as e:
             send_slack_message(
-                f"Ingest failed.\n"
+                f"❌ Ingest failed.\n"
+                f"• Environment: `{settings.environment_name_for_ingester}`\n"
                 f"• Start time: `{ingest_start_datetime_str}`\n"
-                f"• MongoDB host: `{settings.mongo_host}`\n"
                 f"• Error message: {e}"
             )
 
@@ -329,9 +329,9 @@ def ingest(
 
     # Send a Slack message announcing that this ingest is done.
     send_slack_message(
-        f"Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
-        f"• Start time: `{ingest_start_datetime_str}`\n"
-        f"• MongoDB host: `{settings.mongo_host}`"
+        f"✅ Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
+        f"• Environment: `{settings.environment_name_for_ingester}`\n"
+        f"• Start time: `{ingest_start_datetime_str}`"
     )
 
 
@@ -377,28 +377,34 @@ def shell(print_sql: bool, script: Optional[Path]):
 
 
 @cli.command()
-@click.option("-u", "--user", help="NERSC username", default=os.getenv("USER"), show_default=True)
-@click.option("-h", "--host", help="NERSC host", default="dtn01.nersc.gov", show_default=True)
-@click.option("--list-backups", is_flag=True, help="Only list available backup filenames")
 @click.option(
     "-f",
     "--backup-file",
-    help=(
-        "Filename in NERSC's backup directory to load. "
-        "If not provided, the latest backup will be loaded."
-    ),
+    required=True,
+    help="Path to backup file to load",
+)
+@click.option(
+    "-u", "--user", help="[DEPRECATED] NERSC username", default=os.getenv("USER"), show_default=True
+)
+@click.option(
+    "-h", "--host", help="[DEPRECATED] NERSC host", default="dtn01.nersc.gov", show_default=True
+)
+@click.option(
+    "--list-backups", is_flag=True, help="[DEPRECATED] Only list available backup filenames"
 )
 @click.option(
     "-k",
     "--key-file",
     default="/tmp/nersc",
     show_default=True,
-    help="Path to NERSC SSH key file within Docker container. Use if not using standard mounting.",
+    help="[DEPRECATED] Path to NERSC SSH key file within Docker container. Use if not using standard mounting.",
 )
 def load_db(key_file, user, host, list_backups, backup_file):
-    """Load a local database from a production backup on NERSC."""
+    """Load a local database from a backup file."""
     pgdump_dir = "/global/cfs/cdirs/m3408/pgdump"
 
+    # TODO: Remove deprecated NERSC options in the future release and replace
+    #       with Google Cloud Storage-based implementation.
     if list_backups or not backup_file:
         click.echo("Finding latest production backups...")
         proc = subprocess.run(
