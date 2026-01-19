@@ -25,7 +25,7 @@ export default defineComponent({
         icon: validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle',
       },
       {
-        title: 'Data Harmonizer',
+        title: 'Sample Metadata',
         pageName: 'Submission Sample Editor',
         icon: validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle',
       },

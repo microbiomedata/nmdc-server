@@ -143,7 +143,7 @@ export default defineComponent({
           name: 'Submission Sample Editor',
         }"
       >
-        Go to Data Harmonizer
+        Go to Sample Metadata
         <v-icon class="pl-2">
           mdi-arrow-right-circle
         </v-icon>

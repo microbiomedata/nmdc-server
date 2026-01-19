@@ -182,14 +182,14 @@ export default defineComponent({
           <v-expansion-panel-title disable-icon-rotate>
             <div class="my-4">
               <div class="text-h5">
-                Data Harmonizer Status
+                Sample Metadata Status
               </div>
               <v-btn
                 color="primary"
                 depressed
                 :to="{ name: 'Submission Sample Editor' }"
               >
-                Go to Data Harmonizer
+                Go to Sample Metadata
                 <v-icon class="pl-1">
                   mdi-arrow-right-circle
                 </v-icon>
