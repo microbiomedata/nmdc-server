@@ -762,12 +762,12 @@ export default defineComponent({
 <template>
   <div v-if="missingTabs">
     <SubmissionStepper />
-    <v-container centered max-width="700">
-      <v-card>
-        <v-card-title class="text-center justify-center">
+    <v-container centered>
+      <v-card elevation="5">
+        <v-card-title class="text-center justify-center text-h4">
           Not all tabs may be present!
         </v-card-title>
-        <v-card-text class="text-center justify-center">
+        <v-card-text class="text-center justify-center text-h5">
           <div
             v-for="(item, index) in missingTabsText"
             :key="index"
