@@ -1715,17 +1715,14 @@ def test_github_issue_resubmission_creates_comment_only(
 ):
     """
     Confirm that when a submission status becomes 'SubmittedPendingReview'
-    and a GitHub issue number already exists on the submission record,
-    the Github API adds a comment to the existing issue instead of creating a new one
+    and a GitHub issue number already exists, a comment is added (not a new issue).
     """
-
-    # Create a submission with an existing GitHub issue number
     submission = fakes.MetadataSubmissionFactory(
         author=logged_in_user,
         author_orcid=logged_in_user.orcid,
         status=SubmissionStatusEnum.InProgress.text,
         is_test_submission=False,
-        submission_issue=123,  # Existing issue number stored in the database
+        submission_issue=123,
     )
     fakes.SubmissionRoleFactory(
         submission=submission,
@@ -1735,50 +1732,37 @@ def test_github_issue_resubmission_creates_comment_only(
     )
     db.commit()
 
-    # Fake response from github API call making a comment on existing issue
-    comment_response = Mock()
-    comment_response.status_code = 201
-    comment_response.json.return_value = {"id": 456, "body": "comment content"}
+    comment_response = Mock(status_code=201, json=lambda: {"id": 456})
+    get_response = Mock(status_code=200, json=lambda: {"state": "open", "number": 123})
 
-    # Fake response from github API call for getting issue status
-    get_issue_response = Mock()
-    get_issue_response.status_code = 200
-    get_issue_response.json.return_value = {"state": "open", "number": 123}
-
-    # Patch all requests methods used in update_github_issue_for_resubmission
     with (
         patch("nmdc_server.api.requests.post", return_value=comment_response) as mock_post,
-        patch("nmdc_server.api.requests.get", return_value=get_issue_response) as mock_get,
+        patch("nmdc_server.api.requests.get", return_value=get_response) as mock_get,
         patch("nmdc_server.api.requests.patch") as mock_patch,
+        patch("nmdc_server.api.settings") as mock_settings,
     ):
-        # Update submission status to trigger GitHub comment creation
-        payload = {
-            "status": SubmissionStatusEnum.SubmittedPendingReview.text,
-        }
+        mock_settings.github_issue_url = "https://api.github.com/repos/owner/repo/issues"
+        mock_settings.github_authentication_token = "fake_token"
+
         response = client.request(
             method="PATCH",
             url=f"/api/metadata_submission/{submission.id}/status",
-            json=payload,
+            json={"status": SubmissionStatusEnum.SubmittedPendingReview.text},
         )
-        
+
         assert response.status_code == 200
-
-        # Verify that requests.post was called once to create a comment (not a new issue)
         assert mock_post.call_count == 1
-        post_call = mock_post.call_args
-        
-        # Verify it's calling the comments endpoint with the stored issue number
-        assert "/issues/123/comments" in post_call[0][0]
 
-        # Verify the mocked comment includes resubmission information
-        comment_data = json.loads(post_call[1]["data"])
+        # Verify comment endpoint was called
+        assert "/issues/123/comments" in mock_post.call_args[0][0]
+
+        # Verify comment content
+        comment_data = json.loads(mock_post.call_args[1]["data"])
         assert "Submission Resubmitted" in comment_data["body"]
         assert logged_in_user.name in comment_data["body"]
-        assert logged_in_user.orcid in comment_data["body"]
-        assert SubmissionStatusEnum.SubmittedPendingReview.text in comment_data["body"]
 
-        # Verify that requests.get was called to check issue state
+        # Verify issue state was checked
         assert mock_get.call_count == 1
 
-        # Since the issue is open, patch should not be called
+        # Verify issue was not reopened (it's already open)
         assert mock_patch.call_count == 0

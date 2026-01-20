@@ -75,6 +75,9 @@ manual_gh_issue_entries = {
     "e3b3be26-7da9-417d-b3a6-4fc747a1d586": "921",
     "1eced560-5f6b-436f-9ccc-4fca9ad2ed48": "1099",
     "3ebdb329-42ad-427f-bf25-7dc74fc4cc72": "1101",
+    "1efa01f4-2298-4ecb-99af-6e03d8898534": "1357",
+    "b23188f2-8c1c-44b8-b2f8-9548c564282d": "1366",
+    "77965dc2-6d0a-48e3-8e48-e804d442d967": "1439",
 }
 
 
@@ -191,7 +194,7 @@ def upgrade():  # noqa: C901
     print("\nProcessing complete!")
     if manual_review:
         print(
-            "Submissions that match multiple GH issues OR are missing a GH issue AND are not `InProgress` AND started after 2023. Manual review needed because GH issue expected."
+            "Submissions that match multiple GH issues OR are missing a GH issue AND are not `InProgress` AND started after 2023. Manual review needed because single GH issue expected."
         )
         for issue in manual_review:
             print(
