@@ -25,7 +25,7 @@ def upgrade():
         "biosample",
         sa.Column(
             "emsl_biosample_identifiers",
-            postgresql.JSONB(astext_type=sa.Text()),  # type:ignore
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore
             nullable=True,
         ),
     )
