@@ -25,7 +25,7 @@ def upgrade():
     op.add_column("submission_metadata", sa.Column("study_name", sa.String(), nullable=True))
     op.add_column(
         "submission_metadata",
-        sa.Column("templates", JSONB(astext_type=sa.Text()), nullable=True),  # type:ignore
+        sa.Column("templates", JSONB(astext_type=sa.Text()), nullable=True),  # type: ignore
     )
     submission_metadata = table(
         "submission_metadata",

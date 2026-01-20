@@ -45,28 +45,20 @@ def upgrade():
         ["author_id"],
         ["id"],
     )
-    op.execute(
-        (
-            """
+    op.execute(("""
                 insert into user_logins(orcid, name)
                     select author_orcid, '' from submission_metadata
                     UNION
                     select orcid, '' from file_download
                     UNION
                     select orcid, '' from bulk_download
-            """
-        )
-    )
-    op.execute(
-        (
-            """
+            """))
+    op.execute(("""
             UPDATE submission_metadata
             SET author_id = u.id
             FROM user_logins as u
             WHERE submission_metadata.author_orcid = u.orcid
-            """
-        )
-    )
+            """))
     # ### end Alembic commands ###
 
 
