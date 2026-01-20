@@ -77,16 +77,17 @@ manual_gh_issue_matches = {
     "3ebdb329-42ad-427f-bf25-7dc74fc4cc72": "1101",
     "1efa01f4-2298-4ecb-99af-6e03d8898534": "1357",
     "b23188f2-8c1c-44b8-b2f8-9548c564282d": "1366",
-    "77965dc2-6d0a-48e3-8e48-e804d442d967": "1439"
+    "77965dc2-6d0a-48e3-8e48-e804d442d967": "1439",
 }
 
 # Manually reviewed submissions that do not have a github issue and that's fine per Bea 1/20/25
 manual_gh_issue_nomatches_confirmed = [
-    "a6f53548-9729-43ee-b0f4-1075a47dde24", # Test submission
-    "3946dfa5-2e00-4ee5-b58b-bfd97711a50c", # Bea already tracking on super issue, fine if resubmitted and creates new issue
-    "4c03a633-c7c1-4c7b-9d3f-b16b279b4782", # Test submission
-    "ad2b1e4b-0c1b-4e6d-85e1-b16409dc8791" # Test submission
+    "a6f53548-9729-43ee-b0f4-1075a47dde24",  # Test submission
+    "3946dfa5-2e00-4ee5-b58b-bfd97711a50c",  # Bea already tracking on super issue, fine if resubmitted and creates new issue
+    "4c03a633-c7c1-4c7b-9d3f-b16b279b4782",  # Test submission
+    "ad2b1e4b-0c1b-4e6d-85e1-b16409dc8791",  # Test submission
 ]
+
 
 def upgrade():  # noqa: C901
 
@@ -136,9 +137,7 @@ def upgrade():  # noqa: C901
         batch_submissions = submissions[batch_num : batch_num + batch_size]
         batch_submission_ids = [row[0] for row in batch_submissions]
 
-        print(
-            f"Batch {batch_num // batch_size + 1}/{total_batches}"
-        )
+        print(f"Batch {batch_num // batch_size + 1}/{total_batches}")
 
         gh_issues_by_id = search_github_issues_batch(batch_submission_ids, headers)
 
@@ -177,9 +176,11 @@ def upgrade():  # noqa: C901
 
             # No GH issues but its status other than "InProgress" and submission created after 2023, log for manual review
             else:
-                if (submission_status != "InProgress") and (
-                    submission_created >= datetime(2024, 1, 1)
-                ) and (str(submission_id) not in manual_gh_issue_nomatches_confirmed):
+                if (
+                    (submission_status != "InProgress")
+                    and (submission_created >= datetime(2024, 1, 1))
+                    and (str(submission_id) not in manual_gh_issue_nomatches_confirmed)
+                ):
                     manual_review.append(
                         [
                             submission_id,
