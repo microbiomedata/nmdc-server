@@ -124,7 +124,7 @@ def upgrade():  # noqa: C901
     )
     submissions = result.fetchall()
 
-    print(f"Found {len(submissions)} submissions to process")
+    print(f"Found {len(submissions)} submissions that need to be checked for GitHub issues")
 
     manual_review = []
 
