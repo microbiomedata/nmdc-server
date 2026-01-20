@@ -65,7 +65,7 @@ def search_github_issues_batch(submission_ids: list, headers: dict):
 
 
 # Manually reviewed Github issues
-manual_gh_issue_entries = {
+manual_gh_issue_matches = {
     "adc54fc8-2c94-457d-9b5c-89d7f005fb59": "999",
     "a2cba002-2b81-446c-959b-4b933b3424ef": "1400",
     "81041da9-3b7a-40c9-a66b-5166ccb3367e": "667",
@@ -77,9 +77,16 @@ manual_gh_issue_entries = {
     "3ebdb329-42ad-427f-bf25-7dc74fc4cc72": "1101",
     "1efa01f4-2298-4ecb-99af-6e03d8898534": "1357",
     "b23188f2-8c1c-44b8-b2f8-9548c564282d": "1366",
-    "77965dc2-6d0a-48e3-8e48-e804d442d967": "1439",
+    "77965dc2-6d0a-48e3-8e48-e804d442d967": "1439"
 }
 
+# Manually reviewed submissions that do not have a github issue and that's fine per Bea 1/20/25
+manual_gh_issue_nomatches_confirmed = [
+    "a6f53548-9729-43ee-b0f4-1075a47dde24", # Test submission
+    "3946dfa5-2e00-4ee5-b58b-bfd97711a50c", # Bea already tracking on super issue, fine if resubmitted and creates new issue
+    "4c03a633-c7c1-4c7b-9d3f-b16b279b4782", # Test submission
+    "ad2b1e4b-0c1b-4e6d-85e1-b16409dc8791" # Test submission
+]
 
 def upgrade():  # noqa: C901
 
@@ -90,7 +97,7 @@ def upgrade():  # noqa: C901
     op.add_column("submission_metadata", sa.Column("submission_issue", sa.String(), nullable=True))
 
     # Pre-fill manually reviewed GitHub issues
-    for submission_id, issue_number in manual_gh_issue_entries.items():
+    for submission_id, issue_number in manual_gh_issue_matches.items():
         connection.execute(
             sa.text(
                 "UPDATE submission_metadata SET submission_issue = :issue_number WHERE id = :id"
@@ -130,14 +137,10 @@ def upgrade():  # noqa: C901
         batch_submission_ids = [row[0] for row in batch_submissions]
 
         print(
-            f"Batch {batch_num // batch_size + 1}/{total_batches}: Searching {len(batch_submissions)} submissions..."
+            f"Batch {batch_num // batch_size + 1}/{total_batches}"
         )
 
         gh_issues_by_id = search_github_issues_batch(batch_submission_ids, headers)
-
-        print(
-            f"Found issues for {sum(len(v) for v in gh_issues_by_id.values())} submissions in this batch."
-        )
 
         # Process GH issues for each submission in the batch
         for row in batch_submissions:
@@ -174,9 +177,9 @@ def upgrade():  # noqa: C901
 
             # No GH issues but its status other than "InProgress" and submission created after 2023, log for manual review
             else:
-                if (submission_status != "InProgress") & (
+                if (submission_status != "InProgress") and (
                     submission_created >= datetime(2024, 1, 1)
-                ):
+                ) and (str(submission_id) not in manual_gh_issue_nomatches_confirmed):
                     manual_review.append(
                         [
                             submission_id,
