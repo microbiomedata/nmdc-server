@@ -178,7 +178,9 @@ def truncate():
             db.commit()
         except Exception:
             db.rollback()
-            db.execute(text("""
+            db.execute(
+                text(
+                    """
                 DO $$ DECLARE
                      r RECORD;
                  BEGIN
@@ -187,7 +189,9 @@ def truncate():
                          EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(r.tablename) || ' CASCADE';
                      END LOOP;
                  END $$;
-            """))
+            """
+                )
+            )
             db.commit()
 
 
