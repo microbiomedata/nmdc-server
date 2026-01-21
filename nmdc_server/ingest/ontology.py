@@ -1,13 +1,14 @@
 """ETL script to load generic ontology data from MongoDB to PostgreSQL."""
 
 import logging
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Set
 
 from pymongo.cursor import Cursor
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from nmdc_server.ingest.common import extract_extras, extract_value
+from nmdc_server.ingest.common import extract_extras
 from nmdc_server.models import OntologyClass, OntologyRelation
 from nmdc_server.schemas import OntologyClassCreate
 
@@ -17,14 +18,19 @@ logger = logging.getLogger(__name__)
 class OntologyClassLoader(OntologyClassCreate):
     """Pydantic model for validating and transforming OntologyClass documents from MongoDB."""
 
+    @property
+    def ontology_prefix(self) -> str:
+        """Extract the ontology prefix from the ID (e.g., 'ENVO' from 'ENVO:00000001')."""
+        return self.id.split(":")[0] if ":" in self.id else ""
+
     @classmethod
     def from_mongo(cls, doc: Dict) -> "OntologyClassLoader":
         """Create an OntologyClassLoader from a MongoDB document.
 
         Handles the transformation from MongoDB's schema to our PostgreSQL schema.
         """
-        # Extract relations for separate processing
-        relations = doc.pop("relations", [])
+        # Remove relations field if present (not stored in OntologyClass table)
+        doc.pop("relations", None)
 
         # Transform the document
         transformed = {
@@ -38,7 +44,7 @@ class OntologyClassLoader(OntologyClassCreate):
         }
 
         # Extract any extra fields into annotations
-        transformed = extract_extras(cls, transformed, exclude={"relations"})
+        transformed = extract_extras(cls, transformed, exclude={"relations"})  # type: ignore[arg-type]
 
         return cls(**transformed)
 
@@ -203,14 +209,14 @@ def populate_envo_terms_from_ontology(db: Session) -> None:
     logger.info("Populating EnvoTerm table from generic ontology data...")
 
     # First, clear existing ENVO data
-    db.execute("DELETE FROM envo_ancestor")
-    db.execute("DELETE FROM envo_term")
+    db.execute(text("DELETE FROM envo_ancestor"))
+    db.execute(text("DELETE FROM envo_term"))
     db.commit()
 
     # Insert ENVO terms from OntologyClass
     insert_envo_terms_sql = """
     INSERT INTO envo_term (id, label, data)
-    SELECT 
+    SELECT
         oc.id,
         oc.name as label,
         jsonb_build_object(
@@ -223,7 +229,7 @@ def populate_envo_terms_from_ontology(db: Session) -> None:
     FROM ontology_class oc
     WHERE oc.id LIKE 'ENVO:%'
     """
-    db.execute(insert_envo_terms_sql)
+    db.execute(text(insert_envo_terms_sql))
 
     # Populate EnvoAncestor with direct parent relationships
     insert_direct_parents_sql = """
@@ -237,7 +243,7 @@ def populate_envo_terms_from_ontology(db: Session) -> None:
       AND r.object LIKE 'ENVO:%'
       AND r.predicate IN ('rdfs:subClassOf', 'BFO:0000050')
     """
-    db.execute(insert_direct_parents_sql)
+    db.execute(text(insert_direct_parents_sql))
 
     # Populate EnvoAncestor with all ancestors (including indirect)
     # This uses the closure relationships if they exist
@@ -252,18 +258,18 @@ def populate_envo_terms_from_ontology(db: Session) -> None:
       AND r.object LIKE 'ENVO:%'
       AND r.predicate = 'entailed_isa_partof_closure'
       AND NOT EXISTS (
-          SELECT 1 FROM envo_ancestor ea 
-          WHERE ea.id = r.subject 
+          SELECT 1 FROM envo_ancestor ea
+          WHERE ea.id = r.subject
             AND ea.ancestor_id = r.object
       )
     """
-    db.execute(insert_all_ancestors_sql)
+    db.execute(text(insert_all_ancestors_sql))
 
     db.commit()
 
     # Get counts for logging
-    envo_term_count = db.execute("SELECT COUNT(*) FROM envo_term").scalar()
-    envo_ancestor_count = db.execute("SELECT COUNT(*) FROM envo_ancestor").scalar()
+    envo_term_count = db.execute(text("SELECT COUNT(*) FROM envo_term")).scalar()
+    envo_ancestor_count = db.execute(text("SELECT COUNT(*) FROM envo_ancestor")).scalar()
 
     logger.info(
         f"Populated {envo_term_count} ENVO terms and {envo_ancestor_count} ancestor relationships"

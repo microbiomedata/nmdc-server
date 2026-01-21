@@ -12,8 +12,8 @@ Create Date: 2026-01-21 01:33:58.970768
 
 from typing import Optional
 
-from alembic import op
 import sqlalchemy as sa
+from alembic import op
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
@@ -31,10 +31,10 @@ def upgrade():
         sa.Column("type", sa.String(), nullable=False),
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("definition", sa.Text(), nullable=True),
-        sa.Column("alternative_names", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column("alternative_names", postgresql.JSONB(astext_type=sa.Text()), nullable=True),  # type: ignore
         sa.Column("is_root", sa.Boolean(), nullable=False),
         sa.Column("is_obsolete", sa.Boolean(), nullable=False),
-        sa.Column("annotations", postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+        sa.Column("annotations", postgresql.JSONB(astext_type=sa.Text()), nullable=True),  # type: ignore
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ontology_class")),
     )
     op.create_index(op.f("ix_ontology_class_name"), "ontology_class", ["name"], unique=False)

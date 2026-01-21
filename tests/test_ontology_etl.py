@@ -1,6 +1,5 @@
 """Test the generic ontology ETL functionality."""
 
-import pytest
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
@@ -73,17 +72,17 @@ def test_populate_envo_from_generic_ontology(db: Session):
     root_term = envo_terms[0]
     assert root_term.id == "ENVO:00000001"
     assert root_term.label == "environment"
-    assert root_term.data["definition"] == "The root environment term"
-    assert root_term.data["is_root"] is True
-    assert root_term.data["alternative_names"] == ["env", "environmental system"]
-    assert root_term.data["annotations"]["test"] == "data"
+    assert root_term.data["definition"] == "The root environment term"  # type: ignore
+    assert root_term.data["is_root"] is True  # type: ignore
+    assert root_term.data["alternative_names"] == ["env", "environmental system"]  # type: ignore
+    assert root_term.data["annotations"]["test"] == "data"  # type: ignore
 
     # Check child term
     child_term = envo_terms[1]
     assert child_term.id == "ENVO:00000002"
     assert child_term.label == "aquatic environment"
-    assert child_term.data["definition"] == "An aquatic environment"
-    assert child_term.data["is_root"] is False
+    assert child_term.data["definition"] == "An aquatic environment"  # type: ignore
+    assert child_term.data["is_root"] is False  # type: ignore
 
     # Verify EnvoAncestor table
     ancestors = db.query(models.EnvoAncestor).all()
@@ -163,7 +162,7 @@ def test_ontology_etl_integration(db: Session):
     ]
 
     # Run the ETL
-    ontology.load(db, MockCursor(class_data), MockCursor(relation_data))
+    ontology.load(db, MockCursor(class_data), MockCursor(relation_data))  # type: ignore
 
     # Verify generic tables were populated
     assert db.query(models.OntologyClass).count() == 2
@@ -175,5 +174,6 @@ def test_ontology_etl_integration(db: Session):
 
     # Check specific term
     biome = db.query(models.EnvoTerm).filter_by(id="ENVO:00000428").first()
+    assert biome is not None
     assert biome.label == "biome"
-    assert biome.data["definition"] == "A biome is..."
+    assert biome.data["definition"] == "A biome is..."  # type: ignore
