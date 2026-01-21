@@ -99,6 +99,9 @@ const ALWAYS_READ_ONLY_COLUMNS = [
   'jgi_seq_project',
   'jgi_samp_id',
   'jgi_seq_project_name',
+  'jgi_sample_contact',
+  'jgi_project_pi',
+  'jgi_proposal_id',
 ];
 
 export default defineComponent({
