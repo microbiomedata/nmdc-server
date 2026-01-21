@@ -196,7 +196,7 @@ def _bulk_insert_relations(db: Session, relations: List[Dict]) -> None:
 
     stmt = insert(OntologyRelation).values(relations)
     # Use on_conflict_do_nothing since we have a unique constraint on (subject, predicate, object)
-    stmt = stmt.on_conflict_do_nothing(constraint="ontology_relation_subject_predicate_object_key")
+    stmt = stmt.on_conflict_do_nothing(index_elements=["subject", "predicate", "object"])
     db.execute(stmt)
     db.commit()
 

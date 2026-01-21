@@ -44,6 +44,7 @@ def test_populate_envo_from_generic_ontology(db: Session):
     db.add_all([envo_root, envo_child, uberon_term])
 
     # Create relationships
+    # ENVO:00000002 is a direct child of ENVO:00000001
     direct_relation = models.OntologyRelation(
         subject="ENVO:00000002",
         predicate="rdfs:subClassOf",
@@ -51,14 +52,15 @@ def test_populate_envo_from_generic_ontology(db: Session):
         type="nmdc:OntologyRelation",
     )
 
-    closure_relation = models.OntologyRelation(
+    # The closure also includes this relationship (redundant with direct)
+    closure_direct = models.OntologyRelation(
         subject="ENVO:00000002",
         predicate="entailed_isa_partof_closure",
         object="ENVO:00000001",
         type="nmdc:OntologyRelation",
     )
 
-    db.add_all([direct_relation, closure_relation])
+    db.add_all([direct_relation, closure_direct])
     db.commit()
 
     # Run the population function
@@ -85,24 +87,16 @@ def test_populate_envo_from_generic_ontology(db: Session):
     assert child_term.data["is_root"] is False  # type: ignore
 
     # Verify EnvoAncestor table
+    # Note: Since (id, ancestor_id) is unique, and this relationship exists in both
+    # direct and closure predicates, only one row is created with direct=True
     ancestors = db.query(models.EnvoAncestor).all()
-    assert len(ancestors) == 2  # One direct, one from closure
+    assert len(ancestors) == 1
 
-    # Check direct parent relationship
-    direct_ancestor = (
-        db.query(models.EnvoAncestor)
-        .filter_by(id="ENVO:00000002", ancestor_id="ENVO:00000001", direct=True)
-        .first()
-    )
-    assert direct_ancestor is not None
-
-    # Check closure relationship
-    closure_ancestor = (
-        db.query(models.EnvoAncestor)
-        .filter_by(id="ENVO:00000002", ancestor_id="ENVO:00000001", direct=False)
-        .first()
-    )
-    assert closure_ancestor is not None
+    # Check that the ancestor relationship is marked as direct (takes precedence over closure)
+    ancestor = ancestors[0]
+    assert ancestor.id == "ENVO:00000002"
+    assert ancestor.ancestor_id == "ENVO:00000001"
+    assert ancestor.direct is True
 
     # Verify relationships work through the model
     assert child_term.parent_entities[0].id == "ENVO:00000001"
