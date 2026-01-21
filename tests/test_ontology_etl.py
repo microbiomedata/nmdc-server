@@ -86,12 +86,14 @@ def test_populate_envo_from_generic_ontology(db: Session):
         type="nmdc:OntologyRelation",
     )
 
-    db.add_all([
-        parent_to_grandparent,
-        child_to_parent,
-        closure_child_to_parent,
-        closure_child_to_grandparent,
-    ])
+    db.add_all(
+        [
+            parent_to_grandparent,
+            child_to_parent,
+            closure_child_to_parent,
+            closure_child_to_grandparent,
+        ]
+    )
     db.commit()
 
     # Run the population function
@@ -128,9 +130,11 @@ def test_populate_envo_from_generic_ontology(db: Session):
     # 1. parent -> grandparent (direct=True, from rdfs:subClassOf)
     # 2. child -> parent (direct=True, from rdfs:subClassOf, takes precedence over closure)
     # 3. child -> grandparent (direct=False, from closure only - this is indirect!)
-    ancestors = db.query(models.EnvoAncestor).order_by(
-        models.EnvoAncestor.id, models.EnvoAncestor.ancestor_id
-    ).all()
+    ancestors = (
+        db.query(models.EnvoAncestor)
+        .order_by(models.EnvoAncestor.id, models.EnvoAncestor.ancestor_id)
+        .all()
+    )
     assert len(ancestors) == 3
 
     # Check parent -> grandparent (direct)
@@ -151,14 +155,17 @@ def test_populate_envo_from_generic_ontology(db: Session):
     # Verify relationships work through the model
     # Child should have 1 direct parent and 2 total ancestors (parent + grandparent)
     child_direct_parents = [
-        a.ancestor_id for a in
-        db.query(models.EnvoAncestor).filter_by(id="ENVO:00000446", direct=True).all()
+        a.ancestor_id
+        for a in db.query(models.EnvoAncestor).filter_by(id="ENVO:00000446", direct=True).all()
     ]
     assert child_direct_parents == ["ENVO:00000428"]
 
     child_all_ancestors = [
-        a.ancestor_id for a in
-        db.query(models.EnvoAncestor).filter_by(id="ENVO:00000446").order_by(models.EnvoAncestor.ancestor_id).all()
+        a.ancestor_id
+        for a in db.query(models.EnvoAncestor)
+        .filter_by(id="ENVO:00000446")
+        .order_by(models.EnvoAncestor.ancestor_id)
+        .all()
     ]
     assert child_all_ancestors == ["ENVO:00000001", "ENVO:00000428"]
 
