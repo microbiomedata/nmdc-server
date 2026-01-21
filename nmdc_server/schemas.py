@@ -93,7 +93,7 @@ class OntologyClassCreate(BaseModel):
 
 class OntologyClass(OntologyClassCreate):
     model_config = ConfigDict(from_attributes=True)
-    
+
     @property
     def ontology_prefix(self) -> str:
         return self.id.split(":")[0] if ":" in self.id else ""

@@ -109,7 +109,8 @@ class UnmappedBase:
 Base = declarative_base(cls=UnmappedBase, metadata=metadata)
 
 
-update_nmdc_functions_sql = DDL("""
+update_nmdc_functions_sql = DDL(
+    """
 create or replace function nmdc_compare (lhs text, op text, rhs text)
 returns boolean as $$
     declare
@@ -201,7 +202,8 @@ BEGIN
     END LOOP;
 END;
 $$ LANGUAGE plpgsql;
-    """)
+    """
+)
 
 # define functions used for comparison between arbitrary types
 listen(
@@ -211,7 +213,8 @@ listen(
 )
 
 # A SQL function used to populate denormalized multiomics bitmasks
-update_multiomics_sql = DDL(f"""
+update_multiomics_sql = DDL(
+    f"""
 with m as (select
     b.id as id,
     bit_or(
@@ -269,7 +272,8 @@ group by s.id)
 update study set multiomics = m.multiomics
 from m
 where m.id = study.id;
-""")
+"""
+)
 
 
 def get_db():

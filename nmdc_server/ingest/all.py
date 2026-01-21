@@ -65,11 +65,12 @@ def load(db: Session, function_limit=None, skip_annotation=False):
 
     # Load generic ontology data first
     logger.info("Loading ontology data...")
-    if "ontology_class_set" in mongodb.list_collection_names() and "ontology_relation_set" in mongodb.list_collection_names():
+    if (
+        "ontology_class_set" in mongodb.list_collection_names()
+        and "ontology_relation_set" in mongodb.list_collection_names()
+    ):
         ontology.load(
-            db,
-            mongodb["ontology_class_set"].find(),
-            mongodb["ontology_relation_set"].find()
+            db, mongodb["ontology_class_set"].find(), mongodb["ontology_relation_set"].find()
         )
         db.commit()
         logger.info("Ontology data loaded successfully")
