@@ -29,7 +29,7 @@ export default defineComponent({
         icon: validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle',
       },
       {
-        title: 'Data Harmonizer',
+        title: 'Sample Metadata',
         pageName: 'samples',
         icon: validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle',
       },
