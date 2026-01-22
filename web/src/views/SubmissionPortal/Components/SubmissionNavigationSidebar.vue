@@ -11,26 +11,26 @@ export default defineComponent({
     const pages = computed(() => [
       {
         title: 'Submission Summary',
-        pageName: 'Submission Summary',
+        pageName: 'summary',
       },
       {
         title: 'Study Form',
-        pageName: 'Study Form',
+        pageName: 'study',
         icon: validForms.studyFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle',
       },
       {
         title: 'Multiomics Form',
-        pageName: 'Multiomics Form',
+        pageName: 'multiomics',
         icon: validForms.multiOmicsFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle',
       },
       {
         title: 'Sample Environment',
-        pageName: 'Sample Environment',
+        pageName: 'templates',
         icon: validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle',
       },
       {
         title: 'Data Harmonizer',
-        pageName: 'Submission Sample Editor',
+        pageName: 'samples',
         icon: validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle',
       },
     ]);
@@ -70,13 +70,18 @@ export default defineComponent({
       nav
     >
       <v-list-item
-        v-for="item in pages"
-        :key="item.title"
+        v-for="(item, i) in pages"
+        :key="i"
+        :to="item.pageName"
         link
-        :append-icon="item.icon"
-        :title="item.title"
-        @click="gotoPage(item.pageName)"
-      />
+      >
+        <v-list-item-title class="pr-2 text-subtitle-1">
+          {{ item.title }}
+        </v-list-item-title>
+        <template v-if="item.icon" #append>
+          <v-icon>{{ item.icon }}</v-icon>
+        </template>
+      </v-list-item>
     </v-list>
   </v-navigation-drawer>
 </template>
