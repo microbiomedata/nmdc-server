@@ -895,7 +895,12 @@ def get_submissions_for_user(
     all_submissions = (
         db.query(models.SubmissionMetadata)
         .join(models.User, models.SubmissionMetadata.author_id == models.User.id)
+        # Primary sort by requested column
         .order_by(column.asc() if order == "asc" else column.desc())
+        # Secondary sorts to ensure consistent order since primary sort may have ties
+        # (e.g. multiple submissions from the same author)
+        .order_by(models.SubmissionMetadata.study_name.asc())
+        .order_by(models.SubmissionMetadata.id.asc())
     )
 
     if is_test_submission_filter != None:
