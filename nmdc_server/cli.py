@@ -119,7 +119,7 @@ def send_slack_message(text: str) -> bool:
     Reference: https://api.slack.com/messaging/webhooks#posting_with_webhooks
     """
     is_sent = False
-
+    click.echo(text)
     # Check whether a Slack Incoming Webhook URL is defined.
     if isinstance(settings.slack_webhook_url_for_ingester, str):
         click.echo(f"Sending Slack message having text: {text}")
