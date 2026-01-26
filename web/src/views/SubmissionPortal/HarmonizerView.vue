@@ -48,7 +48,7 @@ import {
   validForms,
 } from './store';
 import { AppBannerHeightKey } from './SubmissionView.vue';
-import SubmissionStepper from './Components/SubmissionStepper.vue';
+import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import StatusAlert from './Components/StatusAlert.vue';
@@ -106,7 +106,7 @@ const ALWAYS_READ_ONLY_COLUMNS = [
 export default defineComponent({
   components: {
     HarmonizerSidebar,
-    SubmissionStepper,
+    SubmissionNavigationSidebar,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
     StatusAlert,
@@ -146,17 +146,17 @@ export default defineComponent({
       }
       return text;
     });
-    function determineDialog() {
+    function determineMissingTabs() {
       if (missingTabsText.value.length > 0) {
         return true;
       }
       return false;
     }
-    const missingTabsDialog = ref(determineDialog());
+    const missingTabs = ref(determineMissingTabs());
 
     watch(missingTabsText, () => {
       if (missingTabsText.value.length > 0) {
-        missingTabsDialog.value = true;
+        missingTabs.value = true;
       }
     });
 
@@ -732,7 +732,7 @@ export default defineComponent({
       SubmissionStatusEnum,
       status,
       submitDialog,
-      missingTabsDialog,
+      missingTabs,
       missingTabsText,
       validationSuccessSnackbar,
       schemaLoading,
@@ -760,11 +760,31 @@ export default defineComponent({
 </script>
 
 <template>
+  <div v-if="missingTabs">
+    <SubmissionNavigationSidebar />
+    <v-container centered>
+      <v-card elevation="5">
+        <v-card-title class="text-center justify-center text-h4">
+          Not all tabs may be present!
+        </v-card-title>
+        <v-card-text class="text-center justify-center text-h5">
+          <div
+            v-for="(item, index) in missingTabsText"
+            :key="index"
+            class="mb-2"
+          >
+            {{ item }}
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-container>
+  </div>
   <div
+    v-else
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
-    <SubmissionStepper />
+    <SubmissionNavigationSidebar />
     <submission-permission-banner
       v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
     />
@@ -1171,38 +1191,6 @@ export default defineComponent({
                   </v-card>
                 </v-dialog>
               </v-btn>
-            </div>
-            <div>
-              <v-dialog
-                v-model="missingTabsDialog"
-                width="auto"
-              >
-                <v-card>
-                  <v-card-title>
-                    Not all tabs may be present!
-                  </v-card-title>
-                  <v-card-text>
-                    <div
-                      v-for="(item, index) in missingTabsText"
-                      :key="index"
-                      class="mb-2"
-                    >
-                      {{ item }}
-                    </div>
-                  </v-card-text>
-                  <v-card-actions
-                    class="justify-center"
-                  >
-                    <v-btn
-                      color="primary"
-                      class="mr-2"
-                      @click="missingTabsDialog = false"
-                    >
-                      Acknowledge
-                    </v-btn>
-                  </v-card-actions>
-                </v-card>
-              </v-dialog>
             </div>
           </template>
           <span v-if="!submissionState.canSubmit">

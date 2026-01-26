@@ -24,12 +24,12 @@ def upgrade():
     op.add_column(
         "study",
         sa.Column(
-            "children", postgresql.JSONB(astext_type=sa.Text()), nullable=True  # type:ignore
+            "children", postgresql.JSONB(astext_type=sa.Text()), nullable=True  # type: ignore
         ),
     )
     op.add_column(
         "study",
-        sa.Column("part_of", postgresql.JSONB(astext_type=sa.Text()), nullable=True),  # type:ignore
+        sa.Column("part_of", postgresql.JSONB(astext_type=sa.Text()), nullable=True),  # type: ignore
     )
     op.add_column("study", sa.Column("study_category", sa.String(), nullable=True))
     # ### end Alembic commands ###

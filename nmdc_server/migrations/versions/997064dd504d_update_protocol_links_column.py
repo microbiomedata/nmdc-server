@@ -25,7 +25,7 @@ def upgrade():
         "study",
         sa.Column(
             "protocol_link",
-            postgresql.JSONB(astext_type=sa.Text()),  # type:ignore
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore
             nullable=True,
         ),
     )
@@ -39,7 +39,7 @@ def downgrade():
         "study",
         sa.Column(
             "relevant_protocols",
-            postgresql.JSONB(astext_type=sa.Text()),  # type:ignore
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore
             autoincrement=False,
             nullable=True,
         ),
