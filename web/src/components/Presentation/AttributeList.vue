@@ -10,7 +10,7 @@ import gold from '@/assets/GOLD.png';
 import img from '@/assets/IMG.png';
 import emsl from '@/assets/EMSL.png';
 import AttributeItem from './AttributeItem.vue';
-import PageSection from '@/views/IndividualResults/PageSection.vue';
+import PageSection from './PageSection.vue';
 
 export default defineComponent({
   components: {PageSection, AttributeItem },

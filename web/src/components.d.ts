@@ -41,6 +41,7 @@ declare module 'vue' {
     FilterTree: typeof import('./components/FilterTree.vue')['default']
     MenuContent: typeof import('./components/MenuContent.vue')['default']
     OrcidId: typeof import('./components/Presentation/OrcidId.vue')['default']
+    PageSection: typeof import('./components/Presentation/PageSection.vue')['default']
     RevealContainer: typeof import('./components/Presentation/RevealContainer.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
