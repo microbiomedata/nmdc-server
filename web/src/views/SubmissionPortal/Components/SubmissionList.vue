@@ -287,19 +287,10 @@ export default defineComponent({
       <v-card-text>
         <v-btn
           color="primary"
-          @click="createNewSubmission(false)"
+          :to="{ name: 'Create Submission' }"
         >
           <v-icon>mdi-plus</v-icon>
           Create Submission
-        </v-btn>
-        <v-btn
-          color="primary"
-          class="ml-3"
-          variant="outlined"
-          @click="createNewSubmission(true)"
-        >
-          <v-icon>mdi-plus</v-icon>
-          Create Test Submission
         </v-btn>
         <v-tooltip right>
           <template #activator="{ props }">
