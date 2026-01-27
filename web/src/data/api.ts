@@ -408,6 +408,7 @@ export interface EnvoNode {
   label: string;
   children?: EnvoNode[];
   isExpanded?: boolean;
+  isDefaultExpanded?: boolean;
 }
 
 export interface EnvoTree {
