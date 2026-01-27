@@ -21,6 +21,8 @@ import TemplateChooser from '@/views/SubmissionPortal/Components/TemplateChooser
 import HarmonizerView from '@/views/SubmissionPortal/HarmonizerView.vue';
 import ValidateSubmit from '@/views/SubmissionPortal/Components/ValidateSubmit.vue';
 import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.vue';
+import SubmissionSummary from '@/views/SubmissionPortal/Components/SubmissionSummary.vue';
+import SubmissionCreationForm from '@/views/SubmissionPortal/Components/SubmissionCreationForm.vue';
 
 import { unlockSubmission } from '@/views/SubmissionPortal/store/api';
 import { incrementalSaveRecord } from '@/views/SubmissionPortal/store';
@@ -53,19 +55,29 @@ const router = createRouter({
       props: true,
       children: [
         {
+          name: 'Submission root',
+          path: '',
+          redirect: () => ({ name: 'Submission Home' }),
+        },
+        {
+          name: 'Submission Home',
+          path: 'home',
+          component: SubmissionList,
+        },
+        {
+          name: 'Create Submission', 
+          path: 'create',
+          component: SubmissionCreationForm, 
+        },
+        {
           component: StepperView,
           path: '',
           props: true,
           children: [
             {
-              name: 'Submission root',
-              path: '',
-              redirect: '/submission/home',
-            },
-            {
-              name: 'Submission Home',
-              path: 'home',
-              component: SubmissionList,
+              name: 'Submission Summary',
+              path: ':id/summary',
+              component: SubmissionSummary,
             },
             {
               name: 'Study Form',

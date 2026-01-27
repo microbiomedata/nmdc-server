@@ -231,6 +231,7 @@ export interface MetadataSubmission {
   studyForm: any;
   multiOmicsForm: any;
   sampleData: Record<string, any[]>;
+  validForms: any;
 }
 
 export interface MetadataSubmissionRecordSlim {

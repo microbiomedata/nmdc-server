@@ -44,9 +44,10 @@ import {
   isTestSubmission,
   canEditSubmissionByStatus,
   SubmissionStatusEnum,
+  validForms,
 } from './store';
 import { AppBannerHeightKey } from './SubmissionView.vue';
-import SubmissionStepper from './Components/SubmissionStepper.vue';
+import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import StatusAlert from './Components/StatusAlert.vue';
@@ -106,7 +107,7 @@ const ALWAYS_READ_ONLY_COLUMNS = [
 export default defineComponent({
   components: {
     HarmonizerSidebar,
-    SubmissionStepper,
+    SubmissionNavigationSidebar,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
     StatusAlert,
@@ -136,6 +137,29 @@ export default defineComponent({
     });
 
     const submitDialog = ref(false);
+    const missingTabsText = computed(() => {
+      const text: Array<string> = [];
+      if (validForms.templatesValid === false) {
+        text.push('No tabs will be present until one or more templates are selected in the Sample Environment form.');
+      }
+      if (validForms.multiOmicsFormValid.length > 0) {
+        text.push('Facility tabs will not be present until the Multiomics Form is complete.');
+      }
+      return text;
+    });
+    function determineMissingTabs() {
+      if (missingTabsText.value.length > 0) {
+        return true;
+      }
+      return false;
+    }
+    const missingTabs = ref(determineMissingTabs());
+
+    watch(missingTabsText, () => {
+      if (missingTabsText.value.length > 0) {
+        missingTabs.value = true;
+      }
+    });
 
     const validationSuccessSnackbar = ref(false);
     const importErrorSnackbar = ref(false);
@@ -448,9 +472,12 @@ export default defineComponent({
       const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
       const canSubmitByStatus = status.value === 'InProgress'
       const isSubmitted = submitCount.value > 0 || status.value === 'SubmittedPendingReview';
+      validForms.harmonizerValid = allTabsValid && isOwner() && validForms.templatesValid;
       let submitDisabledReason: string | null = null;
       if (!allTabsValid) {
         submitDisabledReason = 'All tabs must be validated before submission.';
+      } else if (validForms.templatesValid || validForms.studyFormValid.length === 0 || validForms.multiOmicsFormValid.length === 0) {
+        submitDisabledReason = 'Validation issues on other screens must be fixed.';
       } else if (!hasSubmitPermission) {
         submitDisabledReason = 'You do not have permission to submit this record.';
       } else if (!canSubmitByStatus) {
@@ -704,6 +731,8 @@ export default defineComponent({
       SubmissionStatusEnum,
       status,
       submitDialog,
+      missingTabs,
+      missingTabsText,
       validationSuccessSnackbar,
       schemaLoading,
       importErrorSnackbar,
@@ -730,16 +759,36 @@ export default defineComponent({
 </script>
 
 <template>
+  <div v-if="missingTabs">
+    <SubmissionNavigationSidebar />
+    <v-container centered>
+      <v-card elevation="5">
+        <v-card-title class="text-center justify-center text-h4">
+          Not all tabs may be present!
+        </v-card-title>
+        <v-card-text class="text-center justify-center text-h5">
+          <div
+            v-for="(item, index) in missingTabsText"
+            :key="index"
+            class="mb-2"
+          >
+            {{ item }}
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-container>
+  </div>
   <div
+    v-else
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
-    <SubmissionStepper />
+    <SubmissionNavigationSidebar />
     <submission-permission-banner
       v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
     />
     <StatusAlert v-if="!canEditSubmissionByStatus()" />
-    <div class="d-flex flex-column px-2 pb-2">
+    <div class="d-flex flex-column px-2 pb-2 pt-2">
       <div class="d-flex align-center">
         <v-btn
           v-if="validationErrorGroups.length === 0"

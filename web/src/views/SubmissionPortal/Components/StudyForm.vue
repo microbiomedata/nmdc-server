@@ -6,13 +6,13 @@ import {
   onMounted,
   ref,
   Ref,
+  nextTick,
 } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
-  multiOmicsForm,
   studyForm,
-  studyFormValid,
+  validForms,
   permissionTitleToDbValueMap,
   isOwner,
   canEditSubmissionMetadata,
@@ -88,6 +88,21 @@ export default defineComponent({
       });
     }
 
+    let errors: Array<string> = [];
+    function storeErrors() {
+      if (!formRef.value) return;
+      if (!formRef.value?.errors) errors = [];
+
+      errors = formRef.value.errors.reduce((all: string[], err: {errorMessages: string[]}) => {
+        return all.concat(err.errorMessages)}, [] as string[]);
+      validForms.studyFormValid = errors;
+    }
+
+    const revalidate = () => {
+      nextTick(() => formRef.value!.validate());
+      storeErrors();
+    };
+
     function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
       return [
         (v: string) => !!v || msg,
@@ -123,8 +138,7 @@ export default defineComponent({
     return {
       formRef,
       studyForm,
-      multiOmicsForm,
-      studyFormValid,
+      validForms,
       NmdcSchema,
       Definitions,
       addContributor,
@@ -145,6 +159,7 @@ export default defineComponent({
       canEditSubmissionByStatus,
       status,
       StatusAlert,
+      revalidate,
     };
   },
 });
@@ -165,7 +180,6 @@ export default defineComponent({
     <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-form
       ref="formRef"
-      v-model="studyFormValid"
       class="my-6"
       style="max-width: 1000px;"
       :disabled="!canEditSubmissionMetadata()"
@@ -181,6 +195,7 @@ export default defineComponent({
           :hint="Definitions.studyName"
           persistent-hint
           variant="outlined"
+          @change="revalidate()"
         />
         <v-textarea
           v-model="studyForm.description"
@@ -247,14 +262,16 @@ export default defineComponent({
           type="email"
           required
           variant="outlined"
-        />
-        <v-text-field
-          v-model="studyForm.piOrcid"
-          label="ORCID iD"
-          :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid || undefined"
-          variant="outlined"
-          :hint="Definitions.piOrcid"
-          persistent-hint
+        @change="revalidate()"
+      />
+      <v-text-field
+        v-model="studyForm.piOrcid"
+        label="ORCID iD"
+        :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid || undefined"
+        variant="outlined"
+        :hint="Definitions.piOrcid"
+        persistent-hint
+
         >
           <template #message="{ message }">
             <span v-html="message" />
@@ -297,7 +314,8 @@ export default defineComponent({
               persistent-hint
               variant="outlined"
               class="mr-3"
-              :error-messages="studyForm.fundingSources[i] ? undefined : ['Field cannot be empty.']"
+              :error-messages="studyForm.fundingSources[i] ? undefined : ['Funding source cannot be empty.']"
+              @change="revalidate()"
             >
               <template #message="{ message }">
                 <span v-html="message" />
@@ -345,8 +363,9 @@ export default defineComponent({
               :hint="Definitions.contributorFullName"
               variant="outlined"
               persistent-hint
-              :error-messages="contributor.name ? undefined : ['Field cannot be empty.']"
+              :error-messages="contributor.name ? undefined : ['Contributor Name cannot be empty.']"
               class="mr-3"
+              @change="revalidate()"
             />
             <v-text-field
               v-model="contributor.orcid"
@@ -377,6 +396,7 @@ export default defineComponent({
               persistent-hint
               :error-messages="!contributor.roles || contributor.roles.length === 0 ? ['At least one role is required'] : undefined"
               class="mr-3"
+              @change="revalidate()"
             >
               <template #message="{ message }">
                 <span v-html="message" />
@@ -394,7 +414,7 @@ export default defineComponent({
               hint="Level of permissions the contributor has for this submission"
               variant="outlined"
               persistent-hint
-              @change="() => formRef.validate()"
+              @change="revalidate()"
             >
               <template #prepend-inner>
                 <v-tooltip
@@ -468,6 +488,7 @@ export default defineComponent({
               :rules="requiredRules('DOI value must be provided',[
                 v => checkDoiFormat(v) || 'DOI must be valid',
               ])"
+              @change="revalidate()"
             >
               <template #message="{ message }">
                 <span v-html="message" />
@@ -550,19 +571,20 @@ export default defineComponent({
     <strong>* indicates required field</strong>
 
     <div class="d-flex mt-5">
-      <v-btn-grey :to="{ name: 'Submission Home' }">
+      <v-btn-grey :to="{ name: 'Submission Summary' }"
+        @click="revalidate()">
         <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
-        Go to previous step
+        Go to Submission Summary
       </v-btn-grey>
       <v-spacer />
       <v-btn
         color="primary"
-        :disabled="!studyFormValid"
         :to="{ name: 'Multiomics Form' }"
+        @click="revalidate()"
       >
-        Go to next step
+        Go to Multi-Omics Form
         <v-icon class="pl-2">
           mdi-arrow-right-circle
         </v-icon>

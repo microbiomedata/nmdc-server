@@ -19,7 +19,7 @@ import usePaginatedResults from '@/use/usePaginatedResults';
 import BiosampleSearchResults from '@/components/Presentation/BiosampleSearchResults.vue';
 import { urlify } from '@/data/utils';
 import useRequest from '@/use/useRequest';
-import PageSection from '@/views/IndividualResults/PageSection.vue';
+import PageSection from '@/components/Presentation/PageSection.vue';
 import AttributeRow from '@/components/Presentation/AttributeRow.vue';
 import DoiCitation from '@/components/Presentation/DoiCitation.vue';
 import DownloadDialog from '@/components/DownloadDialog.vue';

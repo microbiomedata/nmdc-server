@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  generateRecord, SubmissionStatusEnum, editableByStatus, formatStatusTransitions,
+  SubmissionStatusEnum, editableByStatus, formatStatusTransitions,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -102,12 +102,7 @@ export default defineComponent({
     }
 
     async function resume(item: MetadataSubmissionRecord) {
-      router?.push({ name: 'Study Form', params: { id: item.id } });
-    }
-
-    async function createNewSubmission(isTestSubmission: boolean) {
-      const item = await generateRecord(isTestSubmission);
-      router?.push({ name: 'Study Form', params: { id: item.id } });
+      router?.push({ name: 'Submission Summary', params: { id: item.id } });
     }
 
     const submission = usePaginatedResults(ref([]), getSubmissions, ref([]), itemsPerPage);
@@ -226,7 +221,6 @@ export default defineComponent({
       IconBar,
       IntroBlurb,
       TitleBanner,
-      createNewSubmission,
       editableByStatus,
       getStatus,
       resume,
@@ -293,19 +287,10 @@ export default defineComponent({
       <v-card-text>
         <v-btn
           color="primary"
-          @click="createNewSubmission(false)"
+          :to="{ name: 'Create Submission' }"
         >
           <v-icon>mdi-plus</v-icon>
           Create Submission
-        </v-btn>
-        <v-btn
-          color="primary"
-          class="ml-3"
-          variant="outlined"
-          @click="createNewSubmission(true)"
-        >
-          <v-icon>mdi-plus</v-icon>
-          Create Test Submission
         </v-btn>
         <v-tooltip right>
           <template #activator="{ props }">
@@ -414,7 +399,7 @@ export default defineComponent({
           <template #[`item.status`]="{ item }">
             <div class="d-flex align-center">
               <v-select
-                v-if="currentUser?.is_admin || isReviewerForSubmission(item)"
+                v-if="currentUser?.is_admin  || isReviewerForSubmission(item)"
                 :model-value="item.status"
                 :items="getFormattedStatusTransitions(item)"
                 :loading="statusUpdatingSubmissionId === item.id"

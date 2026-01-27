@@ -4,12 +4,12 @@ import { computed, defineComponent, PropType } from 'vue';
 import OrcidId from '@/components/Presentation/OrcidId.vue';
 
 import { stateRefs } from '@/store';
-import SubmissionStepper from './Components/SubmissionStepper.vue';
+import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import { getSubmissionLockedBy } from './store';
 import { unlockSubmission } from './store/api';
 
 export default defineComponent({
-  components: { SubmissionStepper, OrcidId },
+  components: { SubmissionNavigationSidebar, OrcidId },
 
   props: {
     id: {
@@ -48,7 +48,7 @@ export default defineComponent({
 
 <template>
   <div>
-    <SubmissionStepper class="mx-0" />
+    <SubmissionNavigationSidebar class="mx-0" />
     <v-container v-if="loggedInUserHasLock || !isEditingSubmission">
       <router-view />
     </v-container>
