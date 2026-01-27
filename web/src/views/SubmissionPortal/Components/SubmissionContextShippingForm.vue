@@ -7,8 +7,7 @@ import {
   ref,
   watch,
 } from 'vue';
-// @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import { BiosafetyLevels } from '@/views/SubmissionPortal/types';
 import {
   addressForm,
@@ -18,6 +17,7 @@ import {
 import { addressToString } from '../store/api';
 import SubmissionContextShippingSummary from './SubmissionContextShippingSummary.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
+import { formatShippingDate } from '../utils';
 
 export default defineComponent({
   components: { SubmissionContextShippingSummary },
@@ -93,6 +93,7 @@ export default defineComponent({
       canEditSubmissionMetadata,
       requiredRules,
       handleExpectedShippingDateClear,
+      formatShippingDate,
     };
   },
 });
@@ -247,7 +248,7 @@ export default defineComponent({
               >
                 <template #activator="{ props }">
                   <v-text-field
-                    :model-value="expectedShippingDate?.toLocaleDateString()"
+                    :model-value="formatShippingDate(expectedShippingDate)"
                     :rules="requiredRules('Expected Shipping Date is required', [])"
                     label="Expected Shipping Date *"
                     prepend-icon="mdi-calendar"

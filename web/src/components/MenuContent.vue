@@ -2,8 +2,7 @@
 import {
   defineComponent, PropType, onBeforeUnmount, computed,
 } from 'vue';
-// @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
 import {
@@ -64,10 +63,18 @@ export default defineComponent({
       const fieldSchemaName = getField(props.field, props.table);
       const schemaName = fieldSchemaName.schemaName || props.field;
       if (schemaName !== undefined) {
-        const schema = NmdcSchema.classes[schemaName] || NmdcSchema.slots[schemaName];
+        let description = '';
+        if (schemaName in NmdcSchema.classes) {
+          const schemaClass = NmdcSchema.classes[schemaName as keyof typeof NmdcSchema.classes];
+          description = 'description' in schemaClass ? schemaClass.description : '';
+        }
+        if (schemaName in NmdcSchema.slots) {
+          const schemaSlot = NmdcSchema.slots[schemaName as keyof typeof NmdcSchema.slots];
+          description = 'description' in schemaSlot ? schemaSlot.description : '';
+        }
         // Avoid restating the field name as a description
-        if (schema && schema.description !== schemaName) {
-          return schema?.description || '';
+        if (description !== schemaName) {
+          return description;
         }
       }
       return '';

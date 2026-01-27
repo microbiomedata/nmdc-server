@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router';
 import { DataTableHeader } from 'vuetify';
 import usePaginatedResults from '@/use/usePaginatedResults';
 import {
-  SubmissionStatusEnum, editablebyStatus, SubmissionStatusTitleMapping, formatStatusTransitions,
+  SubmissionStatusEnum, editableByStatus, formatStatusTransitions,
 } from '../store';
 import * as api from '../store/api';
 import OrcidId from '../../../components/Presentation/OrcidId.vue';
@@ -18,11 +18,10 @@ import { SearchParams } from '@/data/api';
 import { addSubmissionRole, deleteSubmission, updateSubmissionStatus } from '../store/api';
 import {
   HARMONIZER_TEMPLATES,
+  AllowedStatusTransitions,
   MetadataSubmissionRecord,
   MetadataSubmissionRecordSlim,
   PaginatedResponse,
-  PermissionLevelValues,
-  SubmissionStatusKey,
   StatusOption,
 } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -95,9 +94,9 @@ export default defineComponent({
     }
 
     function getStatus(item: MetadataSubmissionRecord) {
-      const color = item.status === SubmissionStatusEnum.Released.text ? 'success' : 'default';
+      const color = item.status === 'Released' ? 'success' : 'default';
       return {
-        text: SubmissionStatusTitleMapping[item.status as keyof typeof SubmissionStatusTitleMapping] || item.status,
+        text: SubmissionStatusEnum[item.status]?.title || item.status,
         color,
       };
     }
@@ -174,13 +173,9 @@ export default defineComponent({
     }
 
     // get all status transitions from the api
-    type TransitionsType = Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>;
-    const transitions = ref<TransitionsType>({
-      reviewer: {},
-      owner: {},
-    });
+    const allowedStatusTransitions = ref<AllowedStatusTransitions | null>(null);
     onMounted(async () => {
-      transitions.value = await api.getAllStatusTransitions() as unknown as TransitionsType;
+      allowedStatusTransitions.value = await api.getAllStatusTransitions();
     });
 
     function isReviewerForSubmission(item: MetadataSubmissionRecordSlim): boolean {
@@ -199,6 +194,9 @@ export default defineComponent({
 
     // get available transitions for an admin or a reviewer (depending on user) based on submission's current status
     function getFormattedStatusTransitions(item: MetadataSubmissionRecordSlim): StatusOption[] {
+      if (!allowedStatusTransitions.value) {
+        return [];
+      }
       let dropdown_type: 'reviewer' | 'admin';
       if (currentUser.value?.is_admin) {
         dropdown_type = 'admin';
@@ -207,7 +205,7 @@ export default defineComponent({
       } else {
         return [];
       }
-      return formatStatusTransitions(item.status, dropdown_type, transitions.value);
+      return formatStatusTransitions(item.status, dropdown_type, allowedStatusTransitions.value);
     }
 
     return {
@@ -223,7 +221,7 @@ export default defineComponent({
       IconBar,
       IntroBlurb,
       TitleBanner,
-      editablebyStatus,
+      editableByStatus,
       getStatus,
       resume,
       addReviewer,
@@ -270,196 +268,215 @@ export default defineComponent({
       </template>
       <ContactCard />
     </v-menu>
-    <v-container>
-      <v-card flat>
-        <v-card-text class="pt-0 px-0">
-          <v-container>
-            <v-row>
-              <v-col class="pb-0">
-                <TitleBanner />
-                <IconBar />
-              </v-col>
-            </v-row>
-            <v-row v-if="submission.data.results.count === 0">
-              <v-col>
-                <IntroBlurb />
-              </v-col>
-            </v-row>
-          </v-container>
-        </v-card-text>
-        <v-card-text>
-          <v-btn
-            color="primary"
-            :to="{ name: 'Create Submission' }"
-          >
-            <v-icon>mdi-plus</v-icon>
-            Create Submission
-          </v-btn>
-        </v-card-text>
-        <v-card-title class="text-h4">
-          Past submissions
-        </v-card-title>
-        <v-row
-          justify="space-between"
-          class="pb-2"
-          no-gutters
+    <v-card flat>
+      <v-card-text class="pt-0 px-0">
+        <v-container>
+          <v-row>
+            <v-col class="pb-0">
+              <TitleBanner />
+              <IconBar />
+            </v-col>
+          </v-row>
+          <v-row v-if="submission.data.results.count === 0">
+            <v-col>
+              <IntroBlurb />
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-card-text>
+      <v-card-text>
+        <v-btn
+          color="primary"
+          @click="createNewSubmission(false)"
         >
-          <v-col
-            cols="5"
-          >
-            <v-card-text>
-              Pick up where you left off or review a previous submission.
-            </v-card-text>
-          </v-col>
-          <v-col
-            cols="3"
-          >
-            <v-select
-              v-model="isTestFilter"
-              :items="testFilterValues"
-              item-title="text"
-              item-value="val"
-              label="Test Submissions"
-              variant="outlined"
-              hide-details
+          <v-icon>mdi-plus</v-icon>
+          Create Submission
+        </v-btn>
+        <v-btn
+          color="primary"
+          class="ml-3"
+          variant="outlined"
+          @click="createNewSubmission(true)"
+        >
+          <v-icon>mdi-plus</v-icon>
+          Create Test Submission
+        </v-btn>
+        <v-tooltip right>
+          <template #activator="{ props }">
+            <v-icon
+              class="pl-2"
+              color="primary"
+              v-bind="props"
+            >
+              mdi-information
+            </v-icon>
+          </template>
+          <span>Test submissions should be used when at a workshop or doing a test, example, or training. These cannot be submitted.</span>
+        </v-tooltip>
+      </v-card-text>
+      <v-card-title class="text-h4">
+        Past submissions
+      </v-card-title>
+      <v-row
+        justify="space-between"
+        class="pb-2"
+        no-gutters
+      >
+        <v-col
+          cols="5"
+        >
+          <v-card-text>
+            Pick up where you left off or review a previous submission.
+          </v-card-text>
+        </v-col>
+        <v-col
+          cols="3"
+        >
+          <v-select
+            v-model="isTestFilter"
+            :items="testFilterValues"
+            item-title="text"
+            item-value="val"
+            label="Test Submissions"
+            variant="outlined"
+            hide-details
+          />
+        </v-col>
+      </v-row>
+      <v-card variant="outlined">
+        <v-data-table-server
+          v-model:items-per-page="submission.data.limit"
+          :headers="headers"
+          :items="submission.data.results.results"
+          :items-length="submission.data.results.count"
+          :items-per-page-options="[10, 20, 50]"
+          :loading="submission.loading.value"
+          @update:options="updateTableOptions"
+        >
+          <template #[`item.study_name`]="{ item }">
+            {{ item.study_name }}
+            <v-chip
+              v-if="item.is_test_submission"
+              color="orange"
+              text-color="white"
+              small
+            >
+              TEST
+            </v-chip>
+          </template>
+          <template #[`item.author.name`]="{ item }">
+            <orcid-id
+              :orcid-id="item.author.orcid"
+              :name="item.author.name"
+              :width="14"
+              :authenticated="true"
             />
-          </v-col>
-        </v-row>
-        <v-card variant="outlined">
-          <v-data-table-server
-            v-model:items-per-page="submission.data.limit"
-            :headers="headers"
-            :items="submission.data.results.results"
-            :items-length="submission.data.results.count"
-            :items-per-page-options="[10, 20, 50]"
-            :loading="submission.loading.value"
-            @update:options="updateTableOptions"
-          >
-            <template #[`item.study_name`]="{ item }">
-              {{ item.study_name }}
-              <v-chip
-                v-if="item.is_test_submission"
-                color="orange"
-                text-color="white"
-                small
+          </template>
+          <template #[`item.templates`]="{ item }">
+            {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template]?.displayName).join(' + ') }}
+          </template>
+          <template #[`item.date_last_modified`]="{ item }">
+            {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
+          </template>
+          <template #[`header.status`]="{ column, getSortIcon, toggleSort }">
+            <div class="d-flex align-center ga-1">
+              <v-tooltip
+                v-if="currentUser?.is_admin || (currentUser?.orcid && submission.data.results.results.some(item => item.reviewers.includes(currentUser!.orcid)))"
+                location="bottom"
               >
-                TEST
-              </v-chip>
-            </template>
-            <template #[`item.author.name`]="{ item }">
-              <orcid-id
-                :orcid-id="item.author.orcid"
-                :name="item.author.name"
-                :width="14"
-                :authenticated="true"
+                <template #activator="{ props }">
+                  <v-icon
+                    class="ml-1"
+                    color="grey"
+                    v-bind="props"
+                  >
+                    mdi-information-outline
+                  </v-icon>
+                </template>
+                <span>Reviewer can change status of assigned submissions. Some values are user-triggered statuses and cannot be changed or selected.</span>
+              </v-tooltip>
+              <span>
+                {{ column.title }}
+              </span>
+              <v-icon
+                class="v-data-table-header__sort-icon"
+                :icon="getSortIcon(column)"
+                @click="toggleSort(column)"
               />
-            </template>
-            <template #[`item.templates`]="{ item }">
-              {{ item.templates.map((template) => HARMONIZER_TEMPLATES[template]?.displayName).join(' + ') }}
-            </template>
-            <template #[`item.date_last_modified`]="{ item }">
-              {{ new Date(item.date_last_modified + 'Z').toLocaleString() }}
-            </template>
-            <template #[`header.status`]="{ column, getSortIcon, toggleSort }">
-              <div class="d-flex align-center ga-1">
-                <v-tooltip
-                  v-if="currentUser?.is_admin|| (currentUser?.orcid && submission.data.results.results.some(item => item.reviewers.includes(currentUser!.orcid)))"
-                  location="bottom"
-                >
-                  <template #activator="{ props }">
-                    <v-icon
-                      class="ml-1"
-                      color="grey"
-                      v-bind="props"
-                    >
-                      mdi-information-outline
-                    </v-icon>
-                  </template>
-                  <span>Reviewer can change status of assigned submissions. Some values are user-triggered statuses and cannot be changed or selected.</span>
-                </v-tooltip>
-                <span>
-                  {{ column.title }}
+            </div>
+          </template>
+          <template #[`item.status`]="{ item }">
+            <div class="d-flex align-center">
+              <v-select
+                v-if="currentUser?.is_admin  || isReviewerForSubmission(item)"
+                :model-value="item.status"
+                :items="getFormattedStatusTransitions(item)"
+                :loading="statusUpdatingSubmissionId === item.id"
+                density="compact"
+                variant="underlined"
+                hide-details
+                :disabled="item.status === 'InProgress'"
+                @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
+              />
+              <v-chip
+                v-else
+                :color="getStatus(item as MetadataSubmissionRecord).color"
+              >
+                {{ getStatus(item as MetadataSubmissionRecord).text }}
+              </v-chip>
+            </div>
+          </template>
+          <template #[`item.action`]="{ item }">
+            <div class="d-flex align-center">
+              <v-spacer />
+              <v-btn
+                size="small"
+                color="primary"
+                @click="() => resume(item as MetadataSubmissionRecord)"
+              >
+                <span v-if="editableByStatus(item.status) && isAnyContributorForSubmission(item)">
+                  Resume
+                  <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
                 </span>
-                <v-icon
-                  class="v-data-table-header__sort-icon"
-                  :icon="getSortIcon(column)"
-                  @click="toggleSort(column)"
-                />
-              </div>
-            </template>
-            <template #[`item.status`]="{ item }">
-              <div class="d-flex align-center">
-                <v-select
-                  v-if="currentUser?.is_admin|| isReviewerForSubmission(item)"
-                  :model-value="item.status"
-                  :items="getFormattedStatusTransitions(item)"
-                  :loading="statusUpdatingSubmissionId === item.id"s
-                  density="compact"
-                  variant="underlined"
-                  hide-details
-                  :disabled="item.status === SubmissionStatusEnum.InProgress.text"
-                  @update:model-value="(newStatus: string) => handleStatusChange(item, newStatus)"
-                />
-                <v-chip
-                  v-else
-                  :color="getStatus(item as MetadataSubmissionRecord).color"
-                >
-                  {{ getStatus(item as MetadataSubmissionRecord).text }}
-                </v-chip>
-              </div>
-            </template>
-            <template #[`item.action`]="{ item }">
-              <div class="d-flex align-center">
-                <v-spacer />
-                <v-btn
-                  size="small"
-                  color="primary"
-                  @click="() => resume(item as MetadataSubmissionRecord)"
-                >
-                  <span v-if="editablebyStatus(item.status)&& isAnyContributorForSubmission(item)">
-                    Resume
-                    <v-icon class="pl-1">mdi-arrow-right-circle</v-icon>.
-                  </span>
-                  <span v-else>
-                    <v-icon class="pl-1">mdi-eye</v-icon>
-                    View
-                  </span>
-                </v-btn>
-                <v-menu
-                  offset-x
-                >
-                  <template #activator="{ props }">
-                    <v-btn
-                      variant="text"
-                      icon
-                      class="ml-1"
-                      v-bind="props"
-                    >
-                      <v-icon>
-                        mdi-dots-vertical
-                      </v-icon>
-                    </v-btn>
-                  </template>
-                  <v-list>
-                    <v-list-item
-                      @click="() => handleOpenDeleteDialog(item)"
-                    >
-                      <v-list-item-title>Delete</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item
-                      v-if="currentUser?.is_admin"
-                      @click="() => openReviewerDialog(item)"
-                    >
-                      <v-list-item-title>Assign Reviewer</v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-menu>
-              </div>
-            </template>
-          </v-data-table-server>
-        </v-card>
+                <span v-else>
+                  <v-icon class="pl-1">mdi-eye</v-icon>
+                  View
+                </span>
+              </v-btn>
+              <v-menu
+                offset-x
+              >
+                <template #activator="{ props }">
+                  <v-btn
+                    variant="text"
+                    icon
+                    class="ml-1"
+                    v-bind="props"
+                  >
+                    <v-icon>
+                      mdi-dots-vertical
+                    </v-icon>
+                  </v-btn>
+                </template>
+                <v-list>
+                  <v-list-item
+                    @click="() => handleOpenDeleteDialog(item)"
+                  >
+                    <v-list-item-title>Delete</v-list-item-title>
+                  </v-list-item>
+                  <v-list-item
+                    v-if="currentUser?.is_admin"
+                    @click="() => openReviewerDialog(item)"
+                  >
+                    <v-list-item-title>Assign Reviewer</v-list-item-title>
+                  </v-list-item>
+                </v-list>
+              </v-menu>
+            </div>
+          </template>
+        </v-data-table-server>
       </v-card>
-    </v-container>
+    </v-card>
     <v-dialog
       v-model="isDeleteDialogOpen"
       :width="550"

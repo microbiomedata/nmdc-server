@@ -7,7 +7,6 @@ import {
   canEditSubmissionMetadata,
   templateHasData,
   canEditSubmissionByStatus,
-  SubmissionStatusTitleMapping,
   status,
   validForms,
 } from '../store';
@@ -38,7 +37,6 @@ export default defineComponent({
       canEditSubmissionMetadata,
       templateHasData,
       canEditSubmissionByStatus,
-      SubmissionStatusTitleMapping,
       status,
       StatusAlert,
     };

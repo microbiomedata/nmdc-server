@@ -1,18 +1,14 @@
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import {
-  SubmissionStatusTitleMapping,
-  status,
-} from '../store';
+import { SubmissionStatusEnum, status } from '../store';
 
 export default defineComponent({
   components: {},
   setup() {
-    const message = ref(`This submission has status "${SubmissionStatusTitleMapping[status.value]}" and cannot be edited.`);
+    const message = ref(`This submission has status "${SubmissionStatusEnum[status.value].title}" and cannot be edited.`);
     return {
       message,
       status,
-      SubmissionStatusTitleMapping,
     };
   },
 });

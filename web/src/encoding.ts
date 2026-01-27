@@ -231,7 +231,7 @@ function makeSetsFromBitmask(mask_str: string) {
   const mask = parseInt(mask_str, 10); // the bitmask comes in as a string
   const sets = [];
 
-   
+
   if ((1 << 2) & mask) {
     sets.push('NOM');
   }
@@ -256,7 +256,7 @@ function makeSetsFromBitmask(mask_str: string) {
   return sets;
 }
 
-const types: Record<entityType, EntityData> = {
+const types = {
   study: {
     icon: 'mdi-book',
     heading: 'Studies',
@@ -271,7 +271,7 @@ const types: Record<entityType, EntityData> = {
     name: 'omics_processing',
     plural: 'Data Generations',
     visible: true,
-    schemaName: 'OmicsProcessing',
+    schemaName: 'DataGeneration',
   },
   biosample: {
     icon: 'mdi-test-tube',
@@ -302,7 +302,7 @@ const types: Record<entityType, EntityData> = {
     name: 'metagenome_annotation',
     plural: 'Metagenome annotation',
     visible: true,
-    schemaName: 'MetagenomeAnnotationActivity',
+    schemaName: 'MetagenomeAnnotation',
   },
   metaproteomic_analysis: {
     icon: 'mdi-dna',
@@ -310,7 +310,7 @@ const types: Record<entityType, EntityData> = {
     name: 'metaproteomic_analysis',
     plural: 'Metaproteomic analysis',
     visible: true,
-    schemaName: 'MetaproteomicsAnalysisActivity',
+    schemaName: 'MetaproteomicsAnalysis',
   },
   data_object: {
     icon: 'mdi-database',
@@ -348,7 +348,7 @@ const types: Record<entityType, EntityData> = {
     plural: 'Gene functions',
     visible: true,
   },
-};
+} as const satisfies Record<entityType, EntityData>;
 
 const fields: Record<string, FieldsData> = {
   id: {

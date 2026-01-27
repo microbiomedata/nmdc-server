@@ -1,11 +1,9 @@
 <script lang="ts">
-import {
-  defineComponent,
-  ref,
-  watch,
-} from 'vue';
+import { defineComponent, ref, watch } from 'vue';
+import { useDisplay } from 'vuetify';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
+import { downloadJson } from '@/utils';
 import {
   api,
   Condition,
@@ -15,7 +13,6 @@ import {
 import { setConditions, setUniqueCondition } from '@/store';
 import AppBanner from '@/components/AppBanner.vue';
 import IndividualTitle from '@/views/IndividualResults/IndividualTitle.vue';
-import ClickToCopyText from '@/components/Presentation/ClickToCopyText.vue';
 import TeamInfo from '@/components/TeamInfo.vue';
 import RevealContainer from '@/components/Presentation/RevealContainer.vue';
 import usePaginatedResults from '@/use/usePaginatedResults';
@@ -25,6 +22,8 @@ import useRequest from '@/use/useRequest';
 import PageSection from '@/views/IndividualResults/PageSection.vue';
 import AttributeRow from '@/components/Presentation/AttributeRow.vue';
 import DoiCitation from '@/components/Presentation/DoiCitation.vue';
+import DownloadDialog from '@/components/DownloadDialog.vue';
+import ErrorDialog from '@/components/ErrorDialog.vue';
 
 const GOLD_STUDY_LINK_BASE = 'https://gold.jgi.doe.gov/study?id=';
 const BIOPROJECT_LINK_BASE = 'https://bioregistry.io/';
@@ -35,8 +34,9 @@ export default defineComponent({
     AppBanner,
     AttributeRow,
     BiosampleSearchResults,
-    ClickToCopyText,
     DoiCitation,
+    DownloadDialog,
+    ErrorDialog,
     IndividualTitle,
     PageSection,
     RevealContainer,
@@ -51,8 +51,11 @@ export default defineComponent({
   },
 
   setup(props) {
+    const { smAndDown } = useDisplay();
     const study = ref<StudySearchResults | null>(null);
-
+    const studyDownloadDialog = ref(false);
+    const studyDownloadLoading = ref(false);
+    const errorDialog = ref(false);
     const sampleCount = ref(0);
     const omicsProcessingCounts = ref<Record<string, number> | null>(null);
 
@@ -77,6 +80,21 @@ export default defineComponent({
     );
 
     const getStudyRequest = useRequest();
+
+    async function downloadStudyMetadata() {
+      try {
+        studyDownloadDialog.value = false;
+        studyDownloadLoading.value = true;
+        const data = await api.getStudySource(props.id);
+        downloadJson(data, `${props.id}.json`);
+      } catch (error) {
+        console.error('Failed to download study metadata:', error);
+        errorDialog.value = true;
+      } finally {
+        studyDownloadLoading.value = false;
+      }
+    }
+
     watch(() => props.id, () => getStudyRequest.request(async () => {
       biosampleSearch.reset();
 
@@ -179,11 +197,16 @@ export default defineComponent({
       datasetDois,
       biosampleSearch,
       parentStudies,
+      smAndDown,
       /* Methods */
       fieldDisplayName,
       seeStudyInContext,
       seeOmicsForStudy,
       urlify,
+      downloadStudyMetadata,
+      studyDownloadDialog,
+      studyDownloadLoading,
+      errorDialog,
     };
   },
 });
@@ -196,114 +219,145 @@ export default defineComponent({
       <v-skeleton-loader type="article" />
     </v-container>
     <v-container v-if="!loading && study !== null">
-      <div class="text-caption">
-        <!-- eslint-disable-next-line-->
-        <router-link :to="{ name: 'Search' }">Home</router-link>
-        <span class="mx-2">/</span>
-        <ClickToCopyText>{{ study.id }}</ClickToCopyText>
-      </div>
+      <BreadcrumbList
+        :items="[
+          { text: 'Data Portal Home', to: { name: 'Search' } },
+          { text: study.id, copyable: true }
+        ]"
+      />
 
-      <PageSection>
-        <v-row class="mt-0">
-          <v-col
-            cols="12"
-            :md="study.image_url ? 8 : 12"
+      <div :class="['mainInfoRow', smAndDown ? 'smAndDown' : 'mdAndUp']">
+        <div :class="['mainInfoCol', study.image_url ? 'withImage' : '']">
+          <IndividualTitle :item="study">
+            <template
+              v-if="study.description"
+              #subtitle
+            >
+              <RevealContainer>
+                <span v-html="urlify(study.description)" />
+              </RevealContainer>
+            </template>
+          </IndividualTitle>
+          <v-dialog
+            v-model="studyDownloadDialog"
+            max-width="400"
           >
-            <IndividualTitle :item="study">
-              <template
-                v-if="study.description"
-                #subtitle
-              >
-                <RevealContainer>
-                  <span v-html="urlify(study.description)" />
-                </RevealContainer>
-              </template>
-            </IndividualTitle>
-
-            <AttributeRow
-              v-if="parentStudies.length > 0"
-              label="Part Of"
-            >
-              <div class="stack-sm">
-                <div
-                  v-for="parent in parentStudies"
-                  :key="parent.id"
-                >
-                  <router-link
-                    :to="{ name: 'Study', params: { id: parent.id }}"
-                  >
-                    {{ parent.annotations.title }}
-                  </router-link>
-                </div>
-              </div>
-            </AttributeRow>
-
-            <AttributeRow
-              v-if="study.children.length > 0"
-              label="Associated Studies"
-            >
-              <div class="stack-sm">
-                <div
-                  v-for="child in study.children"
-                  :key="child.id"
-                >
-                  <router-link
-                    :to="{ name: 'Study', params: { id: child.id }}"
-                  >
-                    {{ child.annotations.title }}
-                  </router-link>
-                </div>
-              </div>
-            </AttributeRow>
-
-            <AttributeRow
-              v-if="sampleCount > 0 || omicsProcessingCounts !== null"
-              label="Data Summary"
-            >
-              <v-chip
-                v-if="sampleCount > 0"
-                class="mb-4"
-                size="small"
+            <template #activator="{ props }">
+              <v-btn
+                v-bind="props"
+                class="mt-2 mb-8"
                 color="primary"
-                variant="flat"
-                @click="seeStudyInContext"
+                size="small"
               >
-                All Samples: {{ sampleCount }}
-              </v-chip>
-              <div v-if="omicsProcessingCounts !== null">
-                <div class="text-caption font-weight-medium">
-                  Omics Types
-                </div>
-                <template
-                  v-for="(count, type) in omicsProcessingCounts"
-                  :key="type"
-                >
-                  <v-chip
-                    class="mr-2"
-                    size="small"
-                    @click="seeOmicsForStudy(type)"
-                  >
-                    {{ fieldDisplayName(type) }}: {{ count }}
-                  </v-chip>
-                </template>
-              </div>
-            </AttributeRow>
-          </v-col>
-
-          <v-col
-            v-if="study.image_url"
-            cols="12"
-            md="4"
-          >
-            <v-img
-              :src="study.image_url"
-              :alt="study.name"
-              contain
-              max-width="450"
+                <v-icon class="mr-2">
+                  mdi-download
+                </v-icon>
+                Download Study Metadata
+              </v-btn>
+            </template>
+            <DownloadDialog
+              :loading="studyDownloadLoading"
+              @clicked="downloadStudyMetadata"
             />
-          </v-col>
-        </v-row>
-      </PageSection>
+          </v-dialog>
+          <v-snackbar
+            v-model="studyDownloadLoading"
+            location="right bottom"
+            timeout="-1"
+          >
+            <v-progress-circular
+              indeterminate
+              class="mr-3"
+            />
+            <span>
+              Downloading study metadata
+            </span>
+          </v-snackbar>
+          <ErrorDialog
+            v-model:show="errorDialog"
+          />
+          <AttributeRow
+            v-if="parentStudies.length > 0"
+            label="Part Of"
+          >
+            <div class="stack-sm">
+              <div
+                v-for="parent in parentStudies"
+                :key="parent.id"
+              >
+                <router-link
+                  :to="{ name: 'Study', params: { id: parent.id }}"
+                >
+                  {{ parent.annotations.title }}
+                </router-link>
+              </div>
+            </div>
+          </AttributeRow>
+
+          <AttributeRow
+            v-if="study.children.length > 0"
+            label="Associated Studies"
+          >
+            <div class="stack-sm">
+              <div
+                v-for="child in study.children"
+                :key="child.id"
+              >
+                <router-link
+                  :to="{ name: 'Study', params: { id: child.id }}"
+                >
+                  {{ child.annotations.title }}
+                </router-link>
+              </div>
+            </div>
+          </AttributeRow>
+
+          <AttributeRow
+            v-if="sampleCount > 0 || omicsProcessingCounts !== null"
+            label="Data Summary"
+          >
+            <v-chip
+              v-if="sampleCount > 0"
+              class="mb-4"
+              size="small"
+              color="primary"
+              variant="flat"
+              @click="seeStudyInContext"
+            >
+              All Samples: {{ sampleCount }}
+            </v-chip>
+            <div v-if="omicsProcessingCounts !== null">
+              <div class="text-caption font-weight-medium">
+                Omics Types
+              </div>
+              <template
+                v-for="(count, type) in omicsProcessingCounts"
+                :key="type"
+              >
+                <v-chip
+                  class="mr-2"
+                  size="small"
+                  @click="seeOmicsForStudy(type)"
+                >
+                  {{ fieldDisplayName(type) }}: {{ count }}
+                </v-chip>
+              </template>
+            </div>
+          </AttributeRow>
+        </div>
+
+        <div
+          v-if="study.image_url"
+          class="imageCol"
+        >
+          <v-img
+            :src="study.image_url"
+            :alt="study.name"
+            contain
+            :max-height="smAndDown ? 300 : undefined"
+          />
+        </div>
+      </div>
 
       <PageSection heading="Team">
         <RevealContainer :closed-height="150">
@@ -463,3 +517,53 @@ export default defineComponent({
     </v-container>
   </v-main>
 </template>
+
+<style lang="scss" scoped>
+/* Baseline styles
+
+   Stack the main info column and image column vertically. The
+   height of the image in this case is controlled by the `max-height`
+   prop on the <v-img> component. Each column has its own margin-bottom
+   so that margin collapsing happens correctly. */
+.mainInfoRow {
+  .mainInfoCol {
+    width: 100%;
+    margin-bottom: 64px;
+  }
+  .imageCol {
+    width: 100%;
+    margin-bottom: 64px;
+  }
+}
+
+/* Medium and larger screen styles
+
+   Place the main info column and image column side by side. The
+   image column is absolutely positioned to the right of the main
+   info column, which allows the main info column to determine the
+   height of the row.
+*/
+.mainInfoRow.mdAndUp {
+  position: relative;
+
+  /* If there is an image, the main info column takes up 2/3 of
+     the width to make room for the image on the right. Otherwise,
+     without an image, it continues to take up the full width.
+   */
+  .mainInfoCol.withImage {
+    width: 66.66667%;
+    padding-right: 24px;
+  }
+
+  /* This is absolutely positioned to allow the main info column to
+     determine the height of the row. */
+  .imageCol {
+    width: 33.33333%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    margin-bottom: 0;
+  }
+}
+</style>

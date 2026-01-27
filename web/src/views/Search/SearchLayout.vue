@@ -638,10 +638,7 @@ export default defineComponent({
                   </span>
                 </v-card-title>
                 <v-spacer />
-                <div
-                  v-if="!disableBulkDownload"
-                  style="width: 70%"
-                >
+                <div v-if="!disableBulkDownload">
                   <BulkDownload
                     :disabled="!loggedInUser"
                     :search-result-count="biosample.data.results.count"
