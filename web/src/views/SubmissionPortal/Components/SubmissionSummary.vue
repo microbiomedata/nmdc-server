@@ -14,7 +14,7 @@ import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 export default defineComponent({
-  components: { SubmissionPermissionBanner },
+  components: { SubmissionPermissionBanner, PageTitle },
   setup() {
     const textVal = ref('');
 
@@ -58,7 +58,7 @@ export default defineComponent({
 <template>
   <div>
     <v-container>
-      <page-title
+      <PageTitle
         title="Submission Summary"
         subtitle="Status and links to each portion of your submission."
       />

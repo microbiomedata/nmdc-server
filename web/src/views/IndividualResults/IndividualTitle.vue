@@ -6,6 +6,9 @@ import { urlify } from '@/data/utils';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 export default defineComponent({
+  components: {
+    PageTitle,
+  },
   props: {
     item: {
       type: Object as PropType<BaseSearchResult>,
@@ -24,7 +27,7 @@ export default defineComponent({
 
 <template>
   <div>
-    <page-title 
+    <PageTitle
       :title="item.annotations.title || item.name"
     >
       <template #subtitle>
@@ -35,6 +38,6 @@ export default defineComponent({
           {{ item[subtitleKey] }}
         </div>
       </template>
-    </page-title>
+    </PageTitle>
   </div>
 </template>

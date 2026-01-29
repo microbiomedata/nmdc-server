@@ -1,9 +1,6 @@
 <script lang="ts">
 import { defineComponent, type PropType } from 'vue';
 
-import type { BaseSearchResult } from '@/data/api';
-import { urlify } from '@/data/utils';
-
 export default defineComponent({
   props: {
     title: {

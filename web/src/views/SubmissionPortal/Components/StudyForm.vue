@@ -38,6 +38,8 @@ export default defineComponent({
     SubmissionDocsLink,
     SubmissionPermissionBanner,
     StatusAlert,
+    PageSection,
+    PageTitle,
   },
   setup() {
     const formRef = ref();

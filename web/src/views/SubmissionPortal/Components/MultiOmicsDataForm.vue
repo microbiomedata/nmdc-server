@@ -33,6 +33,7 @@ export default defineComponent({
     SubmissionDocsLink,
     SubmissionPermissionBanner,
     StatusAlert,
+    PageTitle,
   },
   setup() {
     const formRef = ref<VForm | null>(null);

@@ -16,7 +16,7 @@ import StatusAlert from './StatusAlert.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 export default defineComponent({
-  components: { SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert },
+  components: { SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert, PageTitle },
   setup() {
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
