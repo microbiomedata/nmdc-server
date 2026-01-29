@@ -22,6 +22,7 @@ import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
 import DoeFacility from './DoeFacility.vue';
 import StatusAlert from './StatusAlert.vue';
+import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 const OTHER = 'OTHER';
 
@@ -187,13 +188,14 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="text-h2">
-      Multi-omics Data
-      <submission-docs-link anchor="multi-omics-data" />
-    </div>
-    <div class="text-h5">
-      Information about the type of samples being submitted.
-    </div>
+    <PageTitle 
+      title="Multi-omics Data"
+      subtitle="Information about the type of samples being submitted."
+    >
+      <template #help>
+        <submission-docs-link anchor="multi-omics-data" />
+      </template>
+    </PageTitle>
     <submission-permission-banner
       v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />

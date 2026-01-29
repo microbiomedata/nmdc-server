@@ -13,6 +13,7 @@ import {
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import StatusAlert from './StatusAlert.vue';
+import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 export default defineComponent({
   components: { SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert },
@@ -46,19 +47,22 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="text-h2">
-      Sample Environment
-      <submission-docs-link anchor="environmental-package" />
-    </div>
-    <div class="text-h5">
-      Choose the
-      <a
-        href="https://genomicsstandardsconsortium.github.io/mixs/#extensions"
-        target="_blank"
-        rel="noopener noreferrer"
-      >MIxS Extension</a>
-      for your samples.
-    </div>
+    <PageTitle 
+      title="Sample Environment"
+    >
+      <template #help>
+        <submission-docs-link anchor="environmental-package" />
+      </template>
+      <template #subtitle>
+        Choose the
+        <a
+          href="https://genomicsstandardsconsortium.github.io/mixs/#extensions"
+          target="_blank"
+          rel="noopener noreferrer"
+        >MIxS Extension</a>
+        for your samples.
+      </template>
+    </PageTitle>
     <submission-permission-banner
       v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
