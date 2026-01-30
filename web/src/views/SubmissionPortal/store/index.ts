@@ -133,6 +133,21 @@ function canEditSampleMetadata(): boolean {
 
 const hasChanged = ref(0);
 
+/**
+ * Validating forms
+*/
+
+const validFormsDefault = {
+  studyFormValid: ['You must visit this form at least once.'],
+  multiOmicsFormValid: ['You must visit this form at least once.'],
+  templatesValid: false,
+  harmonizerValid: false,
+  addressFormValid: false,
+};
+
+const validForms = reactive(clone(validFormsDefault));
+
+
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -161,7 +176,6 @@ const addressFormDefault = {
 };
 
 const addressForm = reactive(clone(addressFormDefault));
-const addressFormValid = ref(false);
 
 /**
  * Study Form Step
@@ -187,7 +201,6 @@ const studyFormDefault = {
   GOLDStudyId: '',
   NCBIBioProjectId: '',
 };
-const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
 
 interface Protocols {
@@ -221,7 +234,6 @@ const multiOmicsFormDefault = {
   lipProtocols: undefined as undefined | Protocols,
   nomProtocols: undefined as undefined | Protocols,
 };
-const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
   emsl: false,
@@ -366,6 +378,7 @@ const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
+  validForms,
 }));
 
 function templateHasData(templateName: string = ''): boolean {
@@ -448,12 +461,9 @@ async function submit(id: string, status?: SubmissionStatusKey) {
 
 function reset() {
   Object.assign(addressForm, addressFormDefault);
-  addressFormValid.value = false;
-  studyFormValid.value = false;
-  addressFormValid.value = false;
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
-  multiOmicsFormValid.value = false;
+  Object.assign(validForms, validFormsDefault);
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
@@ -495,10 +505,12 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   return Promise.resolve();
 }
 
-async function generateRecord(isTestSubBool: boolean) {
+async function generateRecord(isTestSubBool: boolean, studyNameStr: string = '', piEmailStr: string = ''): Promise<MetadataSubmissionRecord> {
   reset();
+  studyForm.studyName = studyNameStr;
+  studyForm.piEmail = piEmailStr;
   const record = await api.createRecord(payloadObject.value, isTestSubBool);
-  isTestSubmission.value = isTestSubBool;
+  updateStateFromRecord(record);
   return record;
 }
 
@@ -512,6 +524,9 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   }
   if (!isEqual(addressForm, record.metadata_submission.addressForm)) {
     Object.assign(addressForm, record.metadata_submission.addressForm);
+  }
+  if (!isEqual(validForms, record.metadata_submission.validForms)) {
+    Object.assign(validForms, record.metadata_submission.validForms);
   }
   sampleData.value = record.metadata_submission.sampleData;
   status.value = record.status;
@@ -609,15 +624,13 @@ export {
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
-  multiOmicsFormValid,
   addAwardDoi,
   removeAwardDoi,
   sampleData,
   addressForm,
   addressFormDefault,
-  addressFormValid,
   studyForm,
-  studyFormValid,
+  validForms,
   submitPayload,
   packageName,
   templateList,

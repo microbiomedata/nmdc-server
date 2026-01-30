@@ -1,5 +1,5 @@
 <script lang="ts">
-import { defineComponent, computed } from 'vue';
+import { defineComponent, computed, watch } from 'vue';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
   templateList,
@@ -8,17 +8,27 @@ import {
   templateHasData,
   canEditSubmissionByStatus,
   status,
+  validForms,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import StatusAlert from './StatusAlert.vue';
+import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 export default defineComponent({
-  components: { SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert },
+  components: { SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert, PageTitle },
   setup() {
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
       .join(' + '));
+
+    watch(packageName, () => {
+      if (packageName.value.length === 0) {
+        validForms.templatesValid = false;
+      } else {
+        validForms.templatesValid = true;
+      }
+    });
 
     return {
       packageName,
@@ -37,19 +47,22 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="text-h2">
-      Sample Environment
-      <submission-docs-link anchor="environmental-package" />
-    </div>
-    <div class="text-h5">
-      Choose the
-      <a
-        href="https://genomicsstandardsconsortium.github.io/mixs/#extensions"
-        target="_blank"
-        rel="noopener noreferrer"
-      >MIxS Extension</a>
-      for your samples.
-    </div>
+    <PageTitle 
+      title="Sample Environment"
+    >
+      <template #help>
+        <submission-docs-link anchor="environmental-package" />
+      </template>
+      <template #subtitle>
+        Choose the
+        <a
+          href="https://genomicsstandardsconsortium.github.io/mixs/#extensions"
+          target="_blank"
+          rel="noopener noreferrer"
+        >MIxS Extension</a>
+        for your samples.
+      </template>
+    </PageTitle>
     <submission-permission-banner
       v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
@@ -63,7 +76,7 @@ export default defineComponent({
       :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
       :value="option[0]"
     />
-    <p class="grey--text text--darken-1 my-5">
+    <p class="text-grey-darken-1 my-5">
       Under development
     </p>
     <v-checkbox
@@ -123,17 +136,16 @@ export default defineComponent({
         <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
-        Go to previous step
+        Go to Multiomics Form
       </v-btn-grey>
       <v-spacer />
       <v-btn
         color="primary"
-        :disabled="packageName.length === 0"
         :to="{
           name: 'Submission Sample Editor',
         }"
       >
-        Go to next step
+        Go to Sample Metadata
         <v-icon class="pl-2">
           mdi-arrow-right-circle
         </v-icon>
