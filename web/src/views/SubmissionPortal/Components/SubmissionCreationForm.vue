@@ -10,8 +10,12 @@ import {
 } from '../store';
 import { useRouter } from 'vue-router';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
+import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 export default defineComponent({
+  components: {
+    PageTitle,
+  },
   setup() {
     const isTestSubmission = ref(null as boolean | null);
     const piEmail = ref("")
@@ -49,13 +53,10 @@ export default defineComponent({
 <template>
   <div>
     <v-container>
-      <h1 class="text-h2">
-        Study Information
-        <submission-docs-link anchor="study" />
-      </h1>
-      <div class="text-h5">
-        Input basic study information to get started with your submission. You may update the Study Name and Email later.
-      </div>
+      <PageTitle
+        title="Create New Submission"
+        subtitle="Input basic study information to get started with your submission. You may update the Study Name and Email later."
+      />
       <v-form
         v-model="isFormValid"
         class="my-6 mb-10"

@@ -11,9 +11,10 @@ import {
   canEditSubmissionMetadata,
 } from '../store';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
+import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 export default defineComponent({
-  components: { SubmissionPermissionBanner },
+  components: { SubmissionPermissionBanner, PageTitle },
   setup() {
     const textVal = ref('');
 
@@ -57,12 +58,10 @@ export default defineComponent({
 <template>
   <div>
     <v-container>
-      <div class="text-h2">
-        Submission Summary
-      </div>
-      <div class="text-h5">
-        Status and links to each portion of your submission. You may also link this submission to an existing study, or create a new study ID here.
-      </div>
+      <PageTitle
+        title="Submission Summary"
+        subtitle="Status and links to each portion of your submission."
+      />
       <submission-permission-banner
         v-if="!canEditSubmissionMetadata()"
       />
