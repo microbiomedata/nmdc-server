@@ -231,7 +231,10 @@ export interface MetadataSubmission {
   studyForm: any;
   multiOmicsForm: any;
   sampleData: Record<string, any[]>;
-  validForms: any;
+  // null indicates an unknown state (e.g. if the form has not been viewed or validated yet)
+  // an array of strings indicates validation errors for the form
+  // an empty array indicates the form has been validated with no errors
+  validationState: Record<string, string[] | null>;
 }
 
 export interface MetadataSubmissionRecordSlim {

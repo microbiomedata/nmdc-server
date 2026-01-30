@@ -1,26 +1,19 @@
 <script lang="ts">
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
-import {
-  computed,
-  defineComponent,
-  onMounted,
-  ref,
-  Ref,
-  nextTick,
-} from 'vue';
+import { computed, defineComponent, ref, Ref, useTemplateRef } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import {
-  studyForm,
-  validForms,
-  permissionTitleToDbValueMap,
-  isOwner,
+  canEditSubmissionByStatus,
   canEditSubmissionMetadata,
   checkDoiFormat,
-  primaryStudyImageUrl,
+  isOwner,
+  permissionTitleToDbValueMap,
   piImageUrl,
-  canEditSubmissionByStatus,
+  primaryStudyImageUrl,
   status,
+  studyForm,
+  validationState,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -31,9 +24,11 @@ import StatusAlert from './StatusAlert.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 import PageSection from '@/components/Presentation/PageSection.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
+import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
 
 export default defineComponent({
   components: {
+    SubmissionForm,
     ImageUpload,
     SubmissionDocsLink,
     SubmissionPermissionBanner,
@@ -42,7 +37,7 @@ export default defineComponent({
     PageTitle,
   },
   setup() {
-    const formRef = ref();
+    const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
 
     const currentUserOrcid = computed(() => stateRefs.user.value?.orcid);
 
@@ -92,20 +87,9 @@ export default defineComponent({
       });
     }
 
-    let errors: Array<string> = [];
-    function storeErrors() {
-      if (!formRef.value) return;
-      if (!formRef.value?.errors) errors = [];
-
-      errors = formRef.value.errors.reduce((all: string[], err: {errorMessages: string[]}) => {
-        return all.concat(err.errorMessages)}, [] as string[]);
-      validForms.studyFormValid = errors;
+    function revalidate() {
+      formRef.value?.validate()
     }
-
-    const revalidate = () => {
-      nextTick(() => formRef.value!.validate());
-      storeErrors();
-    };
 
     function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
       return [
@@ -135,14 +119,10 @@ export default defineComponent({
       });
     });
 
-    onMounted(async () => {
-      formRef.value.validate();
-    });
-
     return {
       formRef,
       studyForm,
-      validForms,
+      validationState,
       NmdcSchema,
       Definitions,
       addContributor,
@@ -171,7 +151,7 @@ export default defineComponent({
 
 <template>
   <div>
-    <PageTitle 
+    <PageTitle
       title="Study Information"
       :subtitle="NmdcSchema.classes.Study.description"
     >
@@ -183,11 +163,9 @@ export default defineComponent({
       v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
     <StatusAlert v-if="!canEditSubmissionByStatus()" />
-    <v-form
+    <SubmissionForm
       ref="formRef"
-      class="my-6"
-      style="max-width: 1000px;"
-      :disabled="!canEditSubmissionMetadata()"
+      @valid-state-changed="(state) => validationState.studyForm = state"
     >
       <div class="stack-md">
         <v-text-field
@@ -200,7 +178,6 @@ export default defineComponent({
           :hint="Definitions.studyName"
           persistent-hint
           variant="outlined"
-          @change="revalidate()"
         />
         <v-textarea
           v-model="studyForm.description"
@@ -265,16 +242,14 @@ export default defineComponent({
             type="email"
             required
             variant="outlined"
-          @change="revalidate()"
-        />
-        <v-text-field
-          v-model="studyForm.piOrcid"
-          label="ORCID iD"
-          :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid || undefined"
-          variant="outlined"
-          :hint="Definitions.piOrcid"
-          persistent-hint
-
+          />
+          <v-text-field
+            v-model="studyForm.piOrcid"
+            label="ORCID iD"
+            :disabled="!isOwner() || currentUserOrcid === studyForm.piOrcid || undefined"
+            variant="outlined"
+            :hint="Definitions.piOrcid"
+            persistent-hint
           >
             <template #message="{ message }">
               <span v-html="message" />
@@ -297,9 +272,12 @@ export default defineComponent({
         </div>
       </PageSection>
 
-      <PageSection heading="Funding Sources" subheading="Sources of funding for this study.">
+      <PageSection
+        heading="Funding Sources"
+        subheading="Sources of funding for this study."
+      >
         <div
-          v-for="_, i in studyForm.fundingSources"
+          v-for="(_, i) in studyForm.fundingSources"
           :key="`fundingSource${i}`"
           class="d-flex"
         >
@@ -314,7 +292,6 @@ export default defineComponent({
                 variant="outlined"
                 class="mr-3"
                 :error-messages="studyForm.fundingSources[i] ? undefined : ['Funding source cannot be empty.']"
-                @change="revalidate()"
               >
                 <template #message="{ message }">
                   <span v-html="message" />
@@ -344,9 +321,12 @@ export default defineComponent({
         </v-btn-grey>
       </PageSection>
 
-      <PageSection heading="Contributors" :subheading="Definitions.studyContributors">
+      <PageSection
+        heading="Contributors"
+        :subheading="Definitions.studyContributors"
+      >
         <div
-          v-for="contributor, i in studyForm.contributors"
+          v-for="(contributor, i) in studyForm.contributors"
           :key="`contributor${i}`"
           class="d-flex"
         >
@@ -360,7 +340,6 @@ export default defineComponent({
                 persistent-hint
                 :error-messages="contributor.name ? undefined : ['Contributor Name cannot be empty.']"
                 class="mr-3"
-                @change="revalidate()"
               />
               <v-text-field
                 v-model="contributor.orcid"
@@ -391,7 +370,6 @@ export default defineComponent({
                 persistent-hint
                 :error-messages="!contributor.roles || contributor.roles.length === 0 ? ['At least one role is required'] : undefined"
                 class="mr-3"
-                @change="revalidate()"
               >
                 <template #message="{ message }">
                   <span v-html="message" />
@@ -409,7 +387,7 @@ export default defineComponent({
                 hint="Level of permissions the contributor has for this submission"
                 variant="outlined"
                 persistent-hint
-                @change="revalidate()"
+                @update:model-value="revalidate"
               >
                 <template #prepend-inner>
                   <v-tooltip
@@ -459,9 +437,12 @@ export default defineComponent({
         </v-btn-grey>
       </PageSection>
 
-      <PageSection heading="Data DOIs" subheading="Data DOIs for this study">
+      <PageSection
+        heading="Data DOIs"
+        subheading="Data DOIs for this study"
+      >
         <div
-          v-for="_, i in studyForm.dataDois"
+          v-for="(_, i) in studyForm.dataDois"
           :key="`dataDois${i}`"
           class="d-flex"
         >
@@ -479,7 +460,6 @@ export default defineComponent({
                 :rules="requiredRules('DOI value must be provided',[
                   v => checkDoiFormat(v) || 'DOI must be valid',
                 ])"
-                @change="revalidate()"
               >
                 <template #message="{ message }">
                   <span v-html="message" />
@@ -557,13 +537,15 @@ export default defineComponent({
           />
         </div>
       </PageSection>
-    </v-form>
+    </SubmissionForm>
 
     <strong>* indicates required field</strong>
 
     <div class="d-flex mt-5">
-      <v-btn-grey :to="{ name: 'Submission Summary' }"
-        @click="revalidate()">
+      <v-btn-grey
+        :to="{ name: 'Submission Summary' }"
+        @click="revalidate()"
+      >
         <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>

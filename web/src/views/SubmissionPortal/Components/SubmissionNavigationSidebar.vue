@@ -1,47 +1,50 @@
 <script lang="ts">
-import {
-  computed,
-  defineComponent,
-} from 'vue';
-import { validForms, studyForm } from '../store';
-import { useRouter } from 'vue-router';
+import { computed, defineComponent, } from 'vue';
+import { studyForm, validationState } from '../store';
 
 export default defineComponent({
   setup() {
+    function combineErrors(...errorLists: (null | string[])[]) : null | string[] {
+      let combined: null | string[] = null;
+      errorLists.forEach((errors) => {
+        if (errors) {
+          if (combined === null) {
+            combined = [];
+          }
+          combined = combined.concat(errors);
+        }
+      });
+      return combined;
+    }
+
     const pages = computed(() => [
       {
         title: 'Submission Summary',
-        pageName: 'summary',
+        pageName: 'Submission Summary',
       },
       {
         title: 'Study Form',
-        pageName: 'study',
-        icon: validForms.studyFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle',
+        pageName: 'Study Form',
+        valid: validationState.studyForm,
       },
       {
         title: 'Multiomics Form',
-        pageName: 'multiomics',
-        icon: validForms.multiOmicsFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle',
+        pageName: 'Multiomics Form',
+        valid: combineErrors(validationState.multiOmicsForm, validationState.senderShippingInfoForm),
       },
       {
         title: 'Sample Environment',
-        pageName: 'templates',
-        icon: validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle',
+        pageName: 'Sample Environment',
+        valid: validationState.sampleEnvironmentForm,
       },
       {
-        title: 'Sample Metadata',
-        pageName: 'samples',
-        icon: validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle',
+        title: 'Data Harmonizer',
+        pageName: 'Submission Sample Editor',
+        valid: validationState.sampleMetadata,
       },
     ]);
-    const router = useRouter();
-
-    function gotoPage(newPage: string) {
-      router?.push({name: newPage});
-    }
 
     return {
-      gotoPage,
       pages,
       studyForm
     };
@@ -70,16 +73,29 @@ export default defineComponent({
       nav
     >
       <v-list-item
-        v-for="(item, i) in pages"
-        :key="i"
-        :to="item.pageName"
+        v-for="page in pages"
+        :key="page.pageName"
+        :to="{name: page.pageName}"
         link
+        :title="page.title"
       >
-        <v-list-item-title class="pr-2 text-subtitle-1">
-          {{ item.title }}
-        </v-list-item-title>
-        <template v-if="item.icon" #append>
-          <v-icon>{{ item.icon }}</v-icon>
+        <template
+          v-if="Array.isArray(page.valid)"
+          #append
+        >
+          <v-badge
+            v-if="page.valid?.length != 0"
+            inline
+            color="red"
+            :content="page.valid?.length"
+            :title="page.valid.join('\n')"
+          />
+          <v-icon
+            v-else
+            color="green"
+          >
+            mdi-check-circle-outline
+          </v-icon>
         </template>
       </v-list-item>
     </v-list>

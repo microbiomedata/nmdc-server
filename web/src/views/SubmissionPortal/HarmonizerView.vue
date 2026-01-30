@@ -1,24 +1,20 @@
 <script lang="ts">
-import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, inject,
-} from 'vue';
-import {
-  clamp, debounce, flattenDeep, has, sum,
-} from 'lodash';
-import { read, writeFile, utils } from 'xlsx';
+import { computed, defineComponent, inject, nextTick, onMounted, ref, shallowRef, watch } from 'vue';
+import { clamp, debounce, flattenDeep, has, sum } from 'lodash';
+import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
 
 import {
-  DATA_MG_INTERLEAVED,
   DATA_MG,
+  DATA_MG_INTERLEAVED,
   DATA_MT,
   DATA_MT_INTERLEAVED,
-  HARMONIZER_TEMPLATES,
   EMSL,
+  HARMONIZER_TEMPLATES,
   JGI_MG,
-  JGI_MT,
   JGI_MG_LR,
+  JGI_MT,
   SuggestionsMode,
 } from '@/views/SubmissionPortal/types';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
@@ -27,24 +23,24 @@ import { stateRefs } from '@/store';
 import { getPendingSuggestions } from '@/store/localStorage';
 import HarmonizerApi from './harmonizerApi';
 import {
+  addMetadataSuggestions,
+  canEditSampleMetadata,
+  canEditSubmissionByStatus,
+  hasChanged,
+  incrementalSaveRecord,
+  isOwner,
+  isTestSubmission,
+  mergeSampleData,
+  metadataSuggestions,
   packageName,
   sampleData,
   status,
-  submit,
-  incrementalSaveRecord,
-  templateList,
-  mergeSampleData,
-  hasChanged,
-  tabsValidated,
-  canEditSampleMetadata,
-  isOwner,
-  addMetadataSuggestions,
-  suggestionMode,
-  metadataSuggestions,
-  isTestSubmission,
-  canEditSubmissionByStatus,
   SubmissionStatusEnum,
-  validForms,
+  submit,
+  suggestionMode,
+  tabsValidated,
+  templateList,
+  validationState,
 } from './store';
 import { AppBannerHeightKey } from './SubmissionView.vue';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
@@ -135,31 +131,14 @@ export default defineComponent({
       }
       return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
     });
+    const validTemplateSelection = computed(() => (
+      Array.isArray(validationState.multiOmicsForm)
+        && validationState.multiOmicsForm.length === 0
+        && Array.isArray(validationState.sampleEnvironmentForm)
+        && validationState.sampleEnvironmentForm.length === 0
+    ));
 
     const submitDialog = ref(false);
-    const missingTabsText = computed(() => {
-      const text: Array<string> = [];
-      if (validForms.templatesValid === false) {
-        text.push('No tabs will be present until one or more templates are selected in the Sample Environment form.');
-      }
-      if (validForms.multiOmicsFormValid.length > 0) {
-        text.push('Facility tabs will not be present until the Multiomics Form is complete.');
-      }
-      return text;
-    });
-    function determineMissingTabs() {
-      if (missingTabsText.value.length > 0) {
-        return true;
-      }
-      return false;
-    }
-    const missingTabs = ref(determineMissingTabs());
-
-    watch(missingTabsText, () => {
-      if (missingTabsText.value.length > 0) {
-        missingTabs.value = true;
-      }
-    });
 
     const validationSuccessSnackbar = ref(false);
     const importErrorSnackbar = ref(false);
@@ -472,11 +451,10 @@ export default defineComponent({
       const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
       const canSubmitByStatus = status.value === 'InProgress'
       const isSubmitted = submitCount.value > 0 || status.value === 'SubmittedPendingReview';
-      validForms.harmonizerValid = allTabsValid && isOwner() && validForms.templatesValid;
       let submitDisabledReason: string | null = null;
       if (!allTabsValid) {
         submitDisabledReason = 'All tabs must be validated before submission.';
-      } else if (validForms.templatesValid || validForms.studyFormValid.length === 0 || validForms.multiOmicsFormValid.length === 0) {
+      } else if (validationState.sampleEnvironmentForm || validationState.studyForm?.length === 0 || validationState.multiOmicsForm?.length === 0) {
         submitDisabledReason = 'Validation issues on other screens must be fixed.';
       } else if (!hasSubmitPermission) {
         submitDisabledReason = 'You do not have permission to submit this record.';
@@ -731,8 +709,7 @@ export default defineComponent({
       SubmissionStatusEnum,
       status,
       submitDialog,
-      missingTabs,
-      missingTabsText,
+      validTemplateSelection,
       validationSuccessSnackbar,
       schemaLoading,
       importErrorSnackbar,
@@ -759,24 +736,14 @@ export default defineComponent({
 </script>
 
 <template>
-  <div v-if="missingTabs">
+  <div v-if="!validTemplateSelection">
     <SubmissionNavigationSidebar />
-    <v-container centered>
-      <v-card elevation="5">
-        <v-card-title class="text-center justify-center text-h4">
-          Not all tabs may be present!
-        </v-card-title>
-        <v-card-text class="text-center justify-center text-h5">
-          <div
-            v-for="(item, index) in missingTabsText"
-            :key="index"
-            class="mb-2"
-          >
-            {{ item }}
-          </div>
-        </v-card-text>
-      </v-card>
-    </v-container>
+    <v-alert
+      class="ma-8"
+      title="Incomplete Template Selection"
+      text="You must resolve all errors on the Multiomics and Sample Environment forms before entering sample metadata."
+      type="warning"
+    />
   </div>
   <div
     v-else

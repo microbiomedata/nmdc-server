@@ -1,13 +1,11 @@
 <script lang="ts">
-// @ts-ignore
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 import {
   computed,
   defineComponent,
   ref,
 } from 'vue';
 import {
-  validForms,
+  validationState,
   canEditSubmissionMetadata,
 } from '../store';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
@@ -21,29 +19,28 @@ export default defineComponent({
     const panels = ref([]);
 
     const studyFormContent = computed(() => {
-      if (validForms.studyFormValid.length === 0) {
+      if (validationState.studyForm?.length === 0) {
         return ['No changes needed.'];
       }
-      return [...new Set(validForms.studyFormValid)];
+      return [...new Set(validationState.studyForm)];
     });
 
     const multiOmicsContent = computed(() => {
-      if (validForms.multiOmicsFormValid.length === 0) {
+      if (validationState.multiOmicsForm?.length === 0) {
         return ['No changes needed.'];
       }
-      return [...new Set(validForms.multiOmicsFormValid)];
+      return [...new Set(validationState.multiOmicsForm)];
     });
 
     const harmonizerContent = computed(() => {
-      if (validForms.templatesValid) {
+      if (validationState.sampleEnvironmentForm) {
         return 'Validate and correct any errors in your harmonizer data.';
       }
       return 'You must select one or more templates in the sample environment tab.';
     });
 
     return {
-      validForms,
-      NmdcSchema,
+      validationState,
       textVal,
       panels,
       studyFormContent,
@@ -88,10 +85,10 @@ export default defineComponent({
             </div>
             <template #actions>
               <v-icon
-                :color="validForms.studyFormValid.length === 0 ? 'green' : 'red'"
+                :color="validationState.studyForm?.length === 0 ? 'green' : 'red'"
                 :size="32"
               >
-                {{ validForms.studyFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle' }}
+                {{ validationState.studyForm?.length === 0 ? 'mdi-check' : 'mdi-close-circle' }}
               </v-icon>
             </template>
           </v-expansion-panel-title>
@@ -127,10 +124,10 @@ export default defineComponent({
             </div>
             <template #actions>
               <v-icon
-                :color="validForms.multiOmicsFormValid.length === 0 ? 'green' : 'red'"
+                :color="validationState.multiOmicsForm?.length === 0 ? 'green' : 'red'"
                 :size="32"
               >
-                {{ validForms.multiOmicsFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle' }}
+                {{ validationState.multiOmicsForm?.length === 0 ? 'mdi-check' : 'mdi-close-circle' }}
               </v-icon>
             </template>
           </v-expansion-panel-title>
@@ -166,15 +163,15 @@ export default defineComponent({
             </div>
             <template #actions>
               <v-icon
-                :color="validForms.templatesValid ? 'green' : 'red'"
+                :color="validationState.sampleEnvironmentForm?.length === 0 ? 'green' : 'red'"
                 :size="32"
               >
-                {{ validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle' }}
+                {{ validationState.sampleEnvironmentForm?.length === 0 ? 'mdi-check' : 'mdi-close-circle' }}
               </v-icon>
             </template>
           </v-expansion-panel-title>
           <v-expansion-panel-text>
-            {{ validForms.templatesValid ? 'No changes needed.' : 'You must select one or more templates.' }}
+            {{ validationState.sampleEnvironmentForm?.length === 0 ? 'No changes needed.' : 'You must select one or more templates.' }}
           </v-expansion-panel-text>
         </v-expansion-panel>
         <v-expansion-panel>
@@ -196,10 +193,10 @@ export default defineComponent({
             </div>
             <template #actions>
               <v-icon
-                :color="validForms.harmonizerValid ? 'green' : 'red'"
+                :color="validationState.sampleMetadata?.length === 0 ? 'green' : 'red'"
                 :size="32"
               >
-                {{ validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle' }}
+                {{ validationState.sampleMetadata?.length === 0 ? 'mdi-check' : 'mdi-close-circle' }}
               </v-icon>
             </template>
           </v-expansion-panel-title>

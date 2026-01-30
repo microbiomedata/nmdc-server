@@ -137,16 +137,14 @@ const hasChanged = ref(0);
  * Validating forms
 */
 
-const validFormsDefault = {
-  studyFormValid: ['You must visit this form at least once.'],
-  multiOmicsFormValid: ['You must visit this form at least once.'],
-  templatesValid: false,
-  harmonizerValid: false,
-  addressFormValid: false,
+const validationStateDefault = {
+  studyForm: null as string[] | null,
+  multiOmicsForm: null as string[] | null,
+  sampleEnvironmentForm: null as string[] | null,
+  senderShippingInfoForm: null as string[] | null,
+  sampleMetadata: null as string[] | null,
 };
-
-const validForms = reactive(clone(validFormsDefault));
-
+const validationState = reactive(clone(validationStateDefault));
 
 const addressFormDefault = {
   // Shipper info
@@ -378,7 +376,7 @@ const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
-  validForms,
+  validationState,
 }));
 
 function templateHasData(templateName: string = ''): boolean {
@@ -463,7 +461,7 @@ function reset() {
   Object.assign(addressForm, addressFormDefault);
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
-  Object.assign(validForms, validFormsDefault);
+  Object.assign(validationState, validationStateDefault);
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
@@ -525,8 +523,8 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   if (!isEqual(addressForm, record.metadata_submission.addressForm)) {
     Object.assign(addressForm, record.metadata_submission.addressForm);
   }
-  if (!isEqual(validForms, record.metadata_submission.validForms)) {
-    Object.assign(validForms, record.metadata_submission.validForms);
+  if (!isEqual(validationState, record.metadata_submission.validationState)) {
+    Object.assign(validationState, record.metadata_submission.validationState);
   }
   sampleData.value = record.metadata_submission.sampleData;
   status.value = record.status;
@@ -630,7 +628,7 @@ export {
   addressForm,
   addressFormDefault,
   studyForm,
-  validForms,
+  validationState,
   submitPayload,
   packageName,
   templateList,

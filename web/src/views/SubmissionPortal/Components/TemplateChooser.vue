@@ -1,34 +1,27 @@
 <script lang="ts">
-import { defineComponent, computed, watch } from 'vue';
+import { computed, defineComponent } from 'vue';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
-  templateList,
-  packageName,
-  canEditSubmissionMetadata,
-  templateHasData,
   canEditSubmissionByStatus,
+  canEditSubmissionMetadata,
+  packageName,
   status,
-  validForms,
+  templateHasData,
+  templateList,
+  validationState,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import StatusAlert from './StatusAlert.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
+import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
 
 export default defineComponent({
-  components: { SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert, PageTitle },
+  components: { SubmissionForm, SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert, PageTitle },
   setup() {
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
       .join(' + '));
-
-    watch(packageName, () => {
-      if (packageName.value.length === 0) {
-        validForms.templatesValid = false;
-      } else {
-        validForms.templatesValid = true;
-      }
-    });
 
     return {
       packageName,
@@ -40,6 +33,7 @@ export default defineComponent({
       canEditSubmissionByStatus,
       status,
       StatusAlert,
+      validationState,
     };
   },
 });
@@ -47,7 +41,7 @@ export default defineComponent({
 
 <template>
   <div>
-    <PageTitle 
+    <PageTitle
       title="Sample Environment"
     >
       <template #help>
@@ -67,27 +61,29 @@ export default defineComponent({
       v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
     />
     <StatusAlert v-if="!canEditSubmissionByStatus()" />
-    <v-checkbox
-      v-for="option in templates.filter((v) => v[1].status === 'published')"
-      :key="option[0]"
-      v-model="packageName"
-      hide-details
-      :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
-      :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
-      :value="option[0]"
-    />
-    <p class="text-grey-darken-1 my-5">
-      Under development
-    </p>
-    <v-checkbox
-      v-for="option in templates.filter((v) => v[1].status === 'disabled')"
-      :key="option[0]"
-      v-model="packageName"
-      hide-details
-      :disabled="true"
-      :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
-      :value="option[0]"
-    />
+    <SubmissionForm
+      @valid-state-changed="(state) => validationState.sampleEnvironmentForm = state"
+    >
+      <v-input
+        v-model="packageName"
+        validate-on="input eager"
+        :rules="[(v) => (!!v && v.length > 0) || 'Please select at least one template.']"
+      >
+        <template #default>
+          <fieldset class="border-0">
+            <v-checkbox
+              v-for="option in templates.filter((v) => v[1].status === 'published')"
+              :key="option[0]"
+              v-model="packageName"
+              hide-details
+              :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
+              :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
+              :value="option[0]"
+            />
+          </fieldset>
+        </template>
+      </v-input>
+    </SubmissionForm>
     <template v-if="canEditSubmissionByStatus()">
       <v-alert
         v-if="!templateHasData('all')"
