@@ -24,6 +24,7 @@ import {
   canEditSubmissionByStatus,
   SubmissionStatusTitleMapping,
   status,
+  author,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -138,16 +139,15 @@ export default defineComponent({
       await api.updateUser(user.value?.id as string, update);
     };
 
-    const submitterEmail = ref(user.value?.email || '');
+    // Update author info using author record metadata
+    studyForm.submitterName = author.value?.name ?? '';
+    studyForm.submitterEmail = author.value?.email ?? '';
 
-    studyForm.submitterEmail = submitterEmail.value;
-
-    watch(submitterEmail, async (newEmail) => {
-      if (newEmail && /.+@.+\..+/.test(newEmail)) {
-        await updateUser(newEmail);
-        studyForm.submitterEmail = newEmail;
-      }
-    });
+    // Check if the current logged-in user is also the author of the submission
+    let isAuthor = false;
+    if (currentUserOrcid.value === author.value?.orcid) {
+      isAuthor = true;
+    }
 
     return {
       formRef,
@@ -169,7 +169,7 @@ export default defineComponent({
       currentUserOrcid,
       permissionHelpText,
       checkDoiFormat,
-      submitterEmail,
+      isAuthor,
       user,
       updateUser,
       primaryStudyImageUrl,
@@ -216,31 +216,7 @@ export default defineComponent({
         dense
         class="my-2"
       />
-      <v-text-field
-        v-model="studyForm.submitterEmail"
-        :rules="requiredRules('E-mail is required',[
-          v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
-        ])"
-        validate-on-blur
-        label="Submitter E-mail *"
-        :hint="Definitions.submitterEmail"
-        persistent-hint
-        outlined
-        dense
-        class="my-2"
-      />
       <div class="stack-md">
-        <v-text-field
-          v-model="studyForm.studyName"
-          :rules="requiredRules('Name is required',[
-            v => v.length > 6 || 'Study name too short',
-          ])"
-          validate-on-blur
-          label="Study Name *"
-          :hint="Definitions.studyName"
-          persistent-hint
-          variant="outlined"
-        />
         <v-textarea
           v-model="studyForm.description"
           label="Study Description"
@@ -332,6 +308,40 @@ export default defineComponent({
           @on-delete-success="() => {
             piImageUrl = null
           }"
+        />
+      </div>
+
+      <div class="text-h4 mt-8">
+        Author
+      </div>
+      <div class="stack-md">
+        <v-card-text v-if="isAuthor">
+          If the email below does not look correct, click here (TODO - add link)
+          to edit your User Profile and update the information. 
+        </v-card-text>
+        <v-card-text v-else>
+          Only the author of this study can edit this section. 
+        </v-card-text>
+        <v-text-field
+          v-model="studyForm.submitterName"
+          label="Name"
+          :hint="Definitions.submitterName"
+          persistent-hint
+          variant="outlined"
+          readonly
+        />
+        <v-text-field
+          v-model="studyForm.submitterEmail"
+          label="Email *"
+          :rules="requiredRules('E-mail is required',[
+            v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+          ])"
+          :hint="Definitions.submitterEmail"
+          persistent-hint
+          type="email"
+          required
+          variant="outlined"
+          readonly
         />
       </div>
 
