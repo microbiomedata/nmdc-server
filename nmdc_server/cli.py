@@ -146,12 +146,9 @@ def format_report_bullets(reports: Dict[str, ETLReport]) -> str:
     """Formats all bullets from all reports into a single string."""
 
     all_bullets = []
-    all_bullets_str = ""
     for report in reports.values():
         all_bullets.extend(report.get_bullets())
-    if len(all_bullets) > 0:
-        all_bullets_str = "\n".join(all_bullets)
-    return all_bullets_str
+    return "\n".join(all_bullets)
 
 
 def require_setting(name: str, flag: str = "that flag"):
