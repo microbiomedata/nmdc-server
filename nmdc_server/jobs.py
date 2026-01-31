@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Dict
 
 from alembic import command
 from alembic.config import Config
@@ -8,7 +9,11 @@ from sqlalchemy.orm import lazyload
 from nmdc_server import database, models
 from nmdc_server.config import settings
 from nmdc_server.ingest.all import load
-from nmdc_server.ingest.common import maybe_merge_download_artifact, merge_download_artifact
+from nmdc_server.ingest.common import (
+    ETLReport,
+    maybe_merge_download_artifact,
+    merge_download_artifact,
+)
 from nmdc_server.ingest.lock import ingest_lock
 from nmdc_server.logger import get_logger
 
@@ -48,11 +53,13 @@ def migrate(ingest_db: bool = False):
         command.upgrade(alembic_cfg, "head")
 
 
-def do_ingest(function_limit, skip_annotation):
+def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
     r"""
     Note: The `ingest_lock()` function invoked within this function may raise an exception.
           Since such an exception will not be caught within this function, it will propagate
           up to the code that _invoked_ this function.
+
+    Returns a dictionary containing reports about various parts of the ingest process.
     """
 
     with database.SessionLocalIngest() as ingest_db:
@@ -80,7 +87,9 @@ def do_ingest(function_limit, skip_annotation):
             logger.info(
                 f"Load with function_limit={function_limit}, skip_annotation={skip_annotation}"
             )
-            load(ingest_db, function_limit=function_limit, skip_annotation=skip_annotation)
+            reports = load(
+                ingest_db, function_limit=function_limit, skip_annotation=skip_annotation
+            )
 
             # copy persistent data from the production db to the ingest db
             logger.info("Merging file_download")
@@ -96,3 +105,5 @@ def do_ingest(function_limit, skip_annotation):
             )
 
     logger.info("Ingest finished successfully")
+
+    return reports

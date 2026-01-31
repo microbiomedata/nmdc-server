@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from nmdc_server import models
 from nmdc_server.attribute_units import extract_quantity
-from nmdc_server.ingest.common import extract_extras, extract_value
+from nmdc_server.ingest.common import ETLReport, extract_extras, extract_value
 from nmdc_server.ingest.errors import errors
 from nmdc_server.logger import get_logger
 from nmdc_server.schemas import BiosampleCreate
@@ -95,7 +95,13 @@ class Biosample(BiosampleCreate):
                     return raw_value
 
 
-def load_biosample(db: Session, obj: Dict[str, Any]):
+def load_biosample(db: Session, obj: Dict[str, Any]) -> bool:
+    """
+    TODO: Document this function.
+
+    :return: `True` if the biosample was added to the database session; otherwise `False`.
+    """
+
     logger = get_logger(__name__)
     env_broad_scale_id = obj.pop("env_broad_scale", {}).get("term", {}).get("id", "")
     env_broad_scale = db.query(models.EnvoTerm).get(env_broad_scale_id.replace("_", ":"))
@@ -114,7 +120,7 @@ def load_biosample(db: Session, obj: Dict[str, Any]):
     associated_studies = obj.pop("associated_studies", None)
     if associated_studies is None:
         logger.error(f"Could not determine study for biosample {obj['id']}")
-        return
+        return False
 
     obj["study_id"] = associated_studies[0]
     depth_obj = obj.get("depth", {})
@@ -142,13 +148,26 @@ def load_biosample(db: Session, obj: Dict[str, Any]):
 
     db.add(models.Biosample(**biosample.dict()))
 
+    return True
 
-def load(db: Session, cursor: Cursor):
+
+def load(db: Session, cursor: Cursor) -> ETLReport:
+
+    # Initialize the report we will return.
+    report = ETLReport(plural_subject="Biosamples")
+
     logger = get_logger(__name__)
     for obj in cursor:
+        report.num_extracted += 1
+
         try:
-            load_biosample(db, obj)
+            is_loaded = load_biosample(db, obj)
+            if is_loaded:
+                report.num_loaded += 1
+
         except Exception as err:
             logger.error(f"Error parsing biosample: {err}")
             logger.error(json.dumps(obj, indent=2, default=str))
             errors["biosample"].add(obj["id"])
+
+    return report
