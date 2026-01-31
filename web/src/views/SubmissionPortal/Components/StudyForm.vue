@@ -6,6 +6,7 @@ import {
   onMounted,
   ref,
   Ref,
+  watch,
 } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
@@ -21,11 +22,14 @@ import {
   piImageUrl,
   canEditSubmissionByStatus,
   status,
+  author,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
+import { api } from '@/data/api';
+import { User } from '@/types';
 import ImageUpload from './ImageUpload.vue';
 import StatusAlert from './StatusAlert.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
@@ -120,6 +124,29 @@ export default defineComponent({
       formRef.value.validate();
     });
 
+    const { user } = stateRefs;
+
+    const updateUser = async (value:string) => {
+      const update: User = {
+        id: user.value?.id as string,
+        orcid: user.value?.orcid as string,
+        name: user.value?.name as string,
+        email: value,
+        is_admin: user.value?.is_admin as boolean,
+      };
+      await api.updateUser(user.value?.id as string, update);
+    };
+
+    // Update author info using author record metadata
+    studyForm.submitterName = author.value?.name ?? '';
+    studyForm.submitterEmail = author.value?.email ?? '';
+
+    // Check if the current logged-in user is also the author of the submission
+    let isAuthor = false;
+    if (currentUserOrcid.value === author.value?.orcid) {
+      isAuthor = true;
+    }
+
     return {
       formRef,
       studyForm,
@@ -140,6 +167,9 @@ export default defineComponent({
       currentUserOrcid,
       permissionHelpText,
       checkDoiFormat,
+      isAuthor,
+      user,
+      updateUser,
       primaryStudyImageUrl,
       piImageUrl,
       canEditSubmissionByStatus,
@@ -170,18 +200,20 @@ export default defineComponent({
       style="max-width: 1000px;"
       :disabled="!canEditSubmissionMetadata()"
     >
+      <v-text-field
+        v-model="studyForm.studyName"
+        :rules="requiredRules('Name is required',[
+          v => v.length > 6 || 'Study name too short',
+        ])"
+        validate-on-blur
+        label="Study Name *"
+        :hint="Definitions.studyName"
+        persistent-hint
+        outlined
+        dense
+        class="my-2"
+      />
       <div class="stack-md">
-        <v-text-field
-          v-model="studyForm.studyName"
-          :rules="requiredRules('Name is required',[
-            v => v.length > 6 || 'Study name too short',
-          ])"
-          validate-on-blur
-          label="Study Name *"
-          :hint="Definitions.studyName"
-          persistent-hint
-          variant="outlined"
-        />
         <v-textarea
           v-model="studyForm.description"
           label="Study Description"
@@ -273,6 +305,45 @@ export default defineComponent({
           @on-delete-success="() => {
             piImageUrl = null
           }"
+        />
+      </div>
+
+      <div class="text-h4 mt-8">
+        Author
+      </div>
+      <div class="stack-md">
+        <v-card-text v-if="isAuthor">
+          <v-chip size="small" label prepend-icon="mdi-alert-circle">
+            If the email below does not look correct, click 
+            <router-link :to="{ name: 'User' }" class="mx-1 text-primary font-weight-medium">
+              here
+            </router-link>
+            to edit your User Profile and update the information.
+          </v-chip>
+        </v-card-text>
+        <v-card-text v-else>
+          Only the author of this study can edit this section. 
+        </v-card-text>
+        <v-text-field
+          v-model="studyForm.submitterName"
+          label="Name"
+          :hint="Definitions.submitterName"
+          persistent-hint
+          variant="outlined"
+          readonly
+        />
+        <v-text-field
+          v-model="studyForm.submitterEmail"
+          label="Email *"
+          :rules="requiredRules('E-mail is required',[
+            v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+          ])"
+          :hint="Definitions.submitterEmail"
+          persistent-hint
+          type="email"
+          required
+          variant="outlined"
+          readonly
         />
       </div>
 

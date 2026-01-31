@@ -91,6 +91,7 @@ function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownTyp
 const isTestSubmission = ref(false);
 const primaryStudyImageUrl = ref<string | null>(null);
 const piImageUrl = ref<string | null>(null);
+const author = ref<User | null>(null);
 
 /**
  * Submission record locking information
@@ -171,6 +172,8 @@ const studyFormDefault = {
   piName: '',
   piEmail: '',
   piOrcid: '',
+  submitterName: '',
+  submitterEmail: '',
   linkOutWebpage: [],
   studyDate: null,
   dataDois: [] as Doi[] | null,
@@ -522,6 +525,7 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   primaryStudyImageUrl.value = record.primary_study_image_url;
   piImageUrl.value = record.pi_image_url;
   hasChanged.value = 0;
+  author.value = record.author;
 }
 
 async function loadRecord(id: string) {
@@ -622,6 +626,7 @@ export {
   packageName,
   templateList,
   hasChanged,
+  author,
   tabsValidated,
   status,
   isTestSubmission,
