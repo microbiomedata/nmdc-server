@@ -30,7 +30,7 @@ def upgrade():
 
     connection = op.get_bind()
     submissions = connection.execute(
-        sa.select([submission_metadata.c.id, submission_metadata.c.metadata_submission])
+        sa.select(submission_metadata.c.id, submission_metadata.c.metadata_submission)
     )
 
     for submission in submissions:
