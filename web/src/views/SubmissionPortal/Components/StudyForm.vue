@@ -316,11 +316,13 @@ export default defineComponent({
       </div>
       <div class="stack-md">
         <v-card-text v-if="isAuthor">
-          If the email below does not look correct, click 
-          <router-link :to="{ name: 'User' }">
-            here
-          </router-link>
-          to edit your User Profile and update the information. 
+          <v-chip size="small" label prepend-icon="mdi-alert-circle">
+            If the email below does not look correct, click 
+            <router-link :to="{ name: 'User' }" class="mx-1 text-primary font-weight-medium">
+              here
+            </router-link>
+            to edit your User Profile and update the information.
+          </v-chip>
         </v-card-text>
         <v-card-text v-else>
           Only the author of this study can edit this section. 
