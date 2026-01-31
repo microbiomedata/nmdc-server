@@ -316,7 +316,10 @@ export default defineComponent({
       </div>
       <div class="stack-md">
         <v-card-text v-if="isAuthor">
-          If the email below does not look correct, click here (TODO - add link)
+          If the email below does not look correct, click 
+          <router-link :to="{ name: 'User' }">
+            here
+          </router-link>
           to edit your User Profile and update the information. 
         </v-card-text>
         <v-card-text v-else>
