@@ -69,10 +69,10 @@ def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
 
 
 def load(db: Session, cursor: Cursor) -> StudyETLReport:
-    
+
     # Initialize the report we will return.
     report = StudyETLReport()
-    
+
     for obj in cursor:
 
         # Update the report to account for this study having been extracted from the Mongo database.
@@ -108,7 +108,7 @@ def load(db: Session, cursor: Cursor) -> StudyETLReport:
             obj["protocol_link"] = [p["url"] for p in protocol_links if "url" in p]
 
         new_study = create_study(db, Study(**obj))
-        
+
         # Update the report to account for this study having been loaded into the ingest database.
         report.num_loaded += 1
 

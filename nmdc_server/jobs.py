@@ -84,9 +84,9 @@ def do_ingest(function_limit, skip_annotation) -> dict[str, StudyETLReport | Bio
             logger.info(
                 f"Load with function_limit={function_limit}, skip_annotation={skip_annotation}"
             )
-            reports = load(ingest_db,
-                           function_limit=function_limit,
-                           skip_annotation=skip_annotation)
+            reports = load(
+                ingest_db, function_limit=function_limit, skip_annotation=skip_annotation
+            )
 
             # copy persistent data from the production db to the ingest db
             logger.info("Merging file_download")

@@ -325,22 +325,23 @@ def ingest(
     ingest_duration_minutes = math.floor(ingest_duration.total_seconds() / 60)
 
     # Send a Slack message announcing that this ingest is done.
-    additional_lines = []
+    additional_bullets = []
+    additional_bullets_str = ""
     if "study_etl_report" in reports:
         report = reports["study_etl_report"]
-        additional_lines.append(f"• Studies extracted: `{report.num_extracted}`")
-        additional_lines.append(f"• Studies loaded: `{report.num_loaded}`")
+        additional_bullets.append(f"• Studies extracted: `{report.num_extracted}`")
+        additional_bullets.append(f"• Studies loaded: `{report.num_loaded}`")
     if "biosample_etl_report" in reports:
         report = reports["biosample_etl_report"]
-        additional_lines.append(f"• Biosamples extracted: `{report.num_extracted}`")
-        additional_lines.append(f"• Biosamples loaded: `{report.num_loaded}`")
-    if len(additional_lines) > 0:
-        additional_lines = "\n" + "\n".join(additional_lines)  # prefix and delimit
+        additional_bullets.append(f"• Biosamples extracted: `{report.num_extracted}`")
+        additional_bullets.append(f"• Biosamples loaded: `{report.num_loaded}`")
+    if len(additional_bullets) > 0:
+        additional_bullets_str = "\n" + "\n".join(additional_bullets)  # prefix and delimit
     send_slack_message(
         f"✅ Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
         f"• Environment: `{settings.environment_name_for_ingester}`\n"
         f"• Start time: `{ingest_start_datetime_str}`"
-        f"{additional_lines}"
+        f"{additional_bullets_str}"
     )
 
 
