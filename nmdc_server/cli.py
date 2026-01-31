@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import click
 import requests
@@ -16,6 +16,7 @@ from nmdc_server import jobs
 from nmdc_server.config import settings
 from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
+from nmdc_server.ingest.common import ETLReport
 from nmdc_server.models import SubmissionImagesObject
 from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
 from nmdc_server.storage import BucketName, storage
@@ -139,6 +140,18 @@ def send_slack_message(text: str) -> bool:
         click.echo("No Slack Incoming Webhook URL is defined.", err=True)
 
     return is_sent
+
+
+def format_report_bullets(reports: Dict[str, ETLReport]) -> str:
+    """Formats all bullets from all reports into a single string."""
+
+    all_bullets = []
+    all_bullets_str = ""
+    for report in reports.values():
+        all_bullets.extend(report.get_bullets())
+    if len(all_bullets) > 0:
+        all_bullets_str = "\n".join(all_bullets)
+    return all_bullets_str
 
 
 def require_setting(name: str, flag: str = "that flag"):
@@ -325,17 +338,13 @@ def ingest(
     ingest_duration_minutes = math.floor(ingest_duration.total_seconds() / 60)
 
     # Send a Slack message announcing that this ingest is done.
-    all_report_bullets = []
-    all_report_bullets_str = ""
-    for report in reports.values():
-        all_report_bullets.extend(report.get_bullets())
-    if len(all_report_bullets) > 0:
-        all_report_bullets_str = "\n" + "\n".join(all_report_bullets)
+    formatted_report_bullets = format_report_bullets(reports)
+    more_bullets = ("\n" + formatted_report_bullets) if len(formatted_report_bullets) > 0 else ""
     send_slack_message(
         f"✅ Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
         f"• Environment: `{settings.environment_name_for_ingester}`\n"
         f"• Start time: `{ingest_start_datetime_str}`"
-        f"{all_report_bullets_str}"
+        f"{more_bullets}"
     )
 
 
