@@ -37,7 +37,9 @@ def paginate_cursor(
         skip = skip + page_size
 
 
-def load(db: Session, function_limit=None, skip_annotation=False):
+def load(
+    db: Session, function_limit=None, skip_annotation=False
+) -> Dict[str, biosample.BiosampleETLReport | study.StudyETLReport]:
     """Ingest all data from the mongodb source.
 
     Optionally, you can limit the number of gene functions per omics_processing
@@ -47,6 +49,8 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     This function is called from the `nmdc-server` CLI.
     Watch for warnings during ingest for ignored
     entities due to invalid foreign key references.
+
+    Returns a dictionary containing reports about various parts of the ingest process.
     """
     logger = get_logger(__name__)
     settings = Settings()
@@ -71,8 +75,9 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     db.commit()
 
     logger.info("Loading studies...")
-    study.load(db, mongodb["study_set"].find())
+    study_etl_report = study.load(db, mongodb["study_set"].find())
     db.commit()
+    logger.info(study_etl_report)
 
     logger.info("Loading data objects...")
     data_object.load(
@@ -87,11 +92,12 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     cursor = mongodb["biosample_set"].find(
         no_cursor_timeout=True,
     )
-    biosample.load(
+    biosample_etl_report = biosample.load(
         db,
         cursor,
     )
     db.commit()
+    logger.info(biosample_etl_report)
 
     logger.info("Loading omics processing...")
     omics_processing.load(
@@ -255,3 +261,8 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     logger.info("Loading search indices")
     search_index.load(db)
     db.commit()
+
+    return dict(
+        study_etl_report=study_etl_report,
+        biosample_etl_report=biosample_etl_report,
+    )

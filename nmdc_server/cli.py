@@ -241,9 +241,10 @@ def ingest(
     )
 
     # Unless the user opted to skip the ETL step, perform it now.
+    reports = {}  # initially empty
     if not skip_etl:
         try:
-            jobs.do_ingest(function_limit, skip_annotation)
+            reports = jobs.do_ingest(function_limit, skip_annotation)
         except Exception as e:
             send_slack_message(
                 f"❌ Ingest failed.\n"
@@ -324,10 +325,22 @@ def ingest(
     ingest_duration_minutes = math.floor(ingest_duration.total_seconds() / 60)
 
     # Send a Slack message announcing that this ingest is done.
+    additional_lines = []
+    if "study_etl_report" in reports:
+        report = reports["study_etl_report"]
+        additional_lines.append(f"• Studies extracted: `{report.num_extracted}`")
+        additional_lines.append(f"• Studies loaded: `{report.num_loaded}`")
+    if "biosample_etl_report" in reports:
+        report = reports["biosample_etl_report"]
+        additional_lines.append(f"• Biosamples extracted: `{report.num_extracted}`")
+        additional_lines.append(f"• Biosamples loaded: `{report.num_loaded}`")
+    if len(additional_lines) > 0:
+        additional_lines = "\n" + "\n".join(additional_lines)  # prefix and delimit
     send_slack_message(
         f"✅ Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
         f"• Environment: `{settings.environment_name_for_ingester}`\n"
         f"• Start time: `{ingest_start_datetime_str}`"
+        f"{additional_lines}"
     )
 
 

@@ -18,6 +18,14 @@ from nmdc_server.schemas import BiosampleCreate
 date_fmt = re.compile(r"\d\d-[A-Z]+-\d\d \d\d\.\d\d\.\d\d\.\d+ [AP]M")
 
 
+class BiosampleETLReport:
+    """A report about the ETL process for biosamples."""
+
+    def __init__(self):
+        self.num_extracted: int = 0
+        self.num_loaded: int = 0
+
+
 class Biosample(BiosampleCreate):
     _extract_value = validator("*", pre=True, allow_reuse=True)(extract_value)
 
@@ -144,11 +152,25 @@ def load_biosample(db: Session, obj: Dict[str, Any]):
 
 
 def load(db: Session, cursor: Cursor):
+
+    # Initialize the report we will return.
+    report = BiosampleETLReport()
+
     logger = get_logger(__name__)
     for obj in cursor:
+
+        # Update the report to account for this biosample having been extracted from the Mongo database.
+        report.num_extracted += 1
+
         try:
             load_biosample(db, obj)
+
+            # Update the report to account for this biosample having been loaded into the ingest database.
+            report.num_loaded += 1
+
         except Exception as err:
             logger.error(f"Error parsing biosample: {err}")
             logger.error(json.dumps(obj, indent=2, default=str))
             errors["biosample"].add(obj["id"])
+
+    return report

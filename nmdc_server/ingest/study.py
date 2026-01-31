@@ -17,6 +17,14 @@ from nmdc_server.schemas import StudyCreate
 logger = get_logger(__name__)
 
 
+class StudyETLReport:
+    """A report about the ETL process for studies."""
+
+    def __init__(self):
+        self.num_extracted: int = 0
+        self.num_loaded: int = 0
+
+
 def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional[str]) -> str:
     pi = db.query(PrincipalInvestigator).filter_by(name=name).first()
     if pi:
@@ -60,8 +68,16 @@ def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
     return None
 
 
-def load(db: Session, cursor: Cursor):
+def load(db: Session, cursor: Cursor) -> StudyETLReport:
+    
+    # Initialize the report we will return.
+    report = StudyETLReport()
+    
     for obj in cursor:
+
+        # Update the report to account for this study having been extracted from the Mongo database.
+        report.num_extracted += 1
+
         pi_obj = obj.pop("principal_investigator", None)
         if pi_obj:
             if "name" in pi_obj:
@@ -92,8 +108,14 @@ def load(db: Session, cursor: Cursor):
             obj["protocol_link"] = [p["url"] for p in protocol_links if "url" in p]
 
         new_study = create_study(db, Study(**obj))
+        
+        # Update the report to account for this study having been loaded into the ingest database.
+        report.num_loaded += 1
+
         if dois:
             for doi in dois:
                 doi_object = get_doi(db, doi["doi_value"])
                 if doi_object:
                     new_study.dois.append(doi_object)
+
+    return report
