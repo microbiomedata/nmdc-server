@@ -16,7 +16,6 @@ from nmdc_server import jobs
 from nmdc_server.config import settings
 from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
-from nmdc_server.ingest.common import ETLReport
 from nmdc_server.models import SubmissionImagesObject
 from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
 from nmdc_server.storage import BucketName, storage

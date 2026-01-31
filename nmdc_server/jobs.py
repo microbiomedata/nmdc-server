@@ -9,7 +9,11 @@ from sqlalchemy.orm import lazyload
 from nmdc_server import database, models
 from nmdc_server.config import settings
 from nmdc_server.ingest.all import load
-from nmdc_server.ingest.common import ETLReport, maybe_merge_download_artifact, merge_download_artifact
+from nmdc_server.ingest.common import (
+    ETLReport,
+    maybe_merge_download_artifact,
+    merge_download_artifact,
+)
 from nmdc_server.ingest.lock import ingest_lock
 from nmdc_server.logger import get_logger
 

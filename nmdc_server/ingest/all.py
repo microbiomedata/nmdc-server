@@ -38,9 +38,7 @@ def paginate_cursor(
         skip = skip + page_size
 
 
-def load(
-    db: Session, function_limit=None, skip_annotation=False
-) -> Dict[str, common.ETLReport]:
+def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, common.ETLReport]:
     """Ingest all data from the mongodb source.
 
     Optionally, you can limit the number of gene functions per omics_processing
