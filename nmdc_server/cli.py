@@ -16,6 +16,8 @@ from nmdc_server import jobs
 from nmdc_server.config import settings
 from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
+from nmdc_server.ingest.biosample import BiosampleETLReport
+from nmdc_server.ingest.study import StudyETLReport
 from nmdc_server.models import SubmissionImagesObject
 from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
 from nmdc_server.storage import BucketName, storage
@@ -139,6 +141,25 @@ def send_slack_message(text: str) -> bool:
         click.echo("No Slack Incoming Webhook URL is defined.", err=True)
 
     return is_sent
+
+
+def format_reports_as_bullets(reports: dict[str, StudyETLReport | BiosampleETLReport]) -> str:
+    """Formats the specified reports as a single bulleted list (designed for a Slack messages)."""
+
+    bullet_lines = []
+    bullets_str = ""
+    if "study_etl_report" in reports:
+        report = reports["study_etl_report"]
+        bullet_lines.append(f"• Studies extracted: `{report.num_extracted}`")
+        bullet_lines.append(f"• Studies loaded: `{report.num_loaded}`")
+    if "biosample_etl_report" in reports:
+        report = reports["biosample_etl_report"]
+        bullet_lines.append(f"• Biosamples extracted: `{report.num_extracted}`")
+        bullet_lines.append(f"• Biosamples loaded: `{report.num_loaded}`")
+    if len(bullet_lines) > 0:
+        bullets_str = "\n" + "\n".join(bullet_lines)  # prefix and delimit
+
+    return bullets_str
 
 
 def require_setting(name: str, flag: str = "that flag"):
@@ -325,23 +346,12 @@ def ingest(
     ingest_duration_minutes = math.floor(ingest_duration.total_seconds() / 60)
 
     # Send a Slack message announcing that this ingest is done.
-    additional_bullets = []
-    additional_bullets_str = ""
-    if "study_etl_report" in reports:
-        report = reports["study_etl_report"]
-        additional_bullets.append(f"• Studies extracted: `{report.num_extracted}`")
-        additional_bullets.append(f"• Studies loaded: `{report.num_loaded}`")
-    if "biosample_etl_report" in reports:
-        report = reports["biosample_etl_report"]
-        additional_bullets.append(f"• Biosamples extracted: `{report.num_extracted}`")
-        additional_bullets.append(f"• Biosamples loaded: `{report.num_loaded}`")
-    if len(additional_bullets) > 0:
-        additional_bullets_str = "\n" + "\n".join(additional_bullets)  # prefix and delimit
+    additional_bullets: str = format_reports_as_bullets(reports)
     send_slack_message(
         f"✅ Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
         f"• Environment: `{settings.environment_name_for_ingester}`\n"
         f"• Start time: `{ingest_start_datetime_str}`"
-        f"{additional_bullets_str}"
+        f"{additional_bullets}"
     )
 
 
