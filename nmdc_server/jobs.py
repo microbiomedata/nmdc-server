@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Dict
 
 from alembic import command
 from alembic.config import Config
@@ -8,10 +9,8 @@ from sqlalchemy.orm import lazyload
 from nmdc_server import database, models
 from nmdc_server.config import settings
 from nmdc_server.ingest.all import load
-from nmdc_server.ingest.biosample import BiosampleETLReport
-from nmdc_server.ingest.common import maybe_merge_download_artifact, merge_download_artifact
+from nmdc_server.ingest.common import ETLReport, maybe_merge_download_artifact, merge_download_artifact
 from nmdc_server.ingest.lock import ingest_lock
-from nmdc_server.ingest.study import StudyETLReport
 from nmdc_server.logger import get_logger
 
 HERE = Path(__file__).parent
@@ -50,7 +49,7 @@ def migrate(ingest_db: bool = False):
         command.upgrade(alembic_cfg, "head")
 
 
-def do_ingest(function_limit, skip_annotation) -> dict[str, StudyETLReport | BiosampleETLReport]:
+def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
     r"""
     Note: The `ingest_lock()` function invoked within this function may raise an exception.
           Since such an exception will not be caught within this function, it will propagate

@@ -10,6 +10,7 @@ from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.ingest import (
     biosample,
+    common,
     data_object,
     envo,
     kegg,
@@ -39,7 +40,7 @@ def paginate_cursor(
 
 def load(
     db: Session, function_limit=None, skip_annotation=False
-) -> Dict[str, biosample.BiosampleETLReport | study.StudyETLReport]:
+) -> Dict[str, common.ETLReport]:
     """Ingest all data from the mongodb source.
 
     Optionally, you can limit the number of gene functions per omics_processing

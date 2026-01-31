@@ -8,21 +8,13 @@ from pymongo.cursor import Cursor
 from sqlalchemy.orm import Session
 
 from nmdc_server.crud import create_study, get_doi
-from nmdc_server.ingest.common import extract_extras, extract_value
+from nmdc_server.ingest.common import ETLReport, extract_extras, extract_value
 from nmdc_server.ingest.doi import upsert_doi
 from nmdc_server.logger import get_logger
 from nmdc_server.models import PrincipalInvestigator
 from nmdc_server.schemas import StudyCreate
 
 logger = get_logger(__name__)
-
-
-class StudyETLReport:
-    """A report about the ETL process for studies."""
-
-    def __init__(self):
-        self.num_extracted: int = 0
-        self.num_loaded: int = 0
 
 
 def get_or_create_pi(db: Session, name: str, url: Optional[str], orcid: Optional[str]) -> str:
@@ -68,10 +60,10 @@ def get_study_image_data(image_urls: List[dict[str, str]]) -> Optional[bytes]:
     return None
 
 
-def load(db: Session, cursor: Cursor) -> StudyETLReport:
+def load(db: Session, cursor: Cursor) -> ETLReport:
 
     # Initialize the report we will return.
-    report = StudyETLReport()
+    report = ETLReport(plural_subject="Studies")
 
     for obj in cursor:
 
