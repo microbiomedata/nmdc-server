@@ -226,3 +226,42 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+def get_database_name_safely_for_logging(postgres_uri: str) -> Optional[str]:
+    """
+    Returns the name of the database specified in the URI path of the given Postgres URI string.
+
+    Because the Postgres URI string can contain sensitive information, we use this function to
+    safely extract only the database name. As an additional safety measure, we use an allow list
+    to ensure the string we return is one we expect.
+
+    Note: This function handles the Postgres URIs that we have used in practice, in which the
+          database name is specified as part of the URI path. The spec allows for some additional
+          ways of specifying database names, such as via a `dbname` query parameter. This function
+          does not support those additional ways.
+
+    Reference: https://www.postgresql.org/docs/current/libpq-connect.html#LIBPQ-CONNSTRING-URIS
+
+    >>> get_database_name_safely_for_logging("postgresql://localhost:5432")
+    >>> get_database_name_safely_for_logging("postgresql://user:pass@localhost:5432/mydb")
+    >>> get_database_name_safely_for_logging("postgresql://user:pass@localhost:5432/nmdc_a")
+    'nmdc_a'
+    >>> get_database_name_safely_for_logging("postgresql://user:pass@localhost:5432/nmdc_a?opt=123")
+    'nmdc_a'
+    """
+
+    allow_list = ["nmdc_a", "nmdc_b"]
+
+    # If the URI does not contain a "/" character, we cannot extract a database name.
+    if "/" not in postgres_uri:
+        return None
+    
+    # Get the substring following the final "/" character in the database URI.
+    uri_suffix = postgres_uri.rsplit("/", 1)[-1]
+
+    # Get the substring before any query parameters.
+    database_name = uri_suffix.split("?", 1)[0]
+
+    # Return the database name only if it is in the allow list.
+    return database_name if database_name in allow_list else None
