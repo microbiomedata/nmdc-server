@@ -1,5 +1,6 @@
 import logging
 import typing
+from contextlib import asynccontextmanager
 
 import sentry_sdk
 from debug_toolbar.middleware import DebugToolbarMiddleware
@@ -12,10 +13,15 @@ from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from starlette.middleware.sessions import SessionMiddleware
 
 from nmdc_server import __version__, api, auth, errors
-from nmdc_server.config import settings
+from nmdc_server.config import get_database_name_safely_for_logging, settings
 from nmdc_server.database import after_cursor_execute, before_cursor_execute, listen
 from nmdc_server.static_files import static_path
 from nmdc_server.swagger_ui.helpers import load_template
+
+
+# Print the active/portal database name to the console.
+portal_database_name = get_database_name_safely_for_logging(settings.database_uri)
+print(f"Portal database: {portal_database_name}")
 
 
 def initialize_sentry():
