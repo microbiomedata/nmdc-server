@@ -256,7 +256,7 @@ def get_database_name_safely_for_logging(postgres_uri: str) -> Optional[str]:
     # If the URI does not contain a "/" character, we cannot extract a database name.
     if "/" not in postgres_uri:
         return None
-    
+
     # Get the substring following the final "/" character in the database URI.
     uri_suffix = postgres_uri.rsplit("/", 1)[-1]
 

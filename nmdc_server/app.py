@@ -17,7 +17,6 @@ from nmdc_server.database import after_cursor_execute, before_cursor_execute, li
 from nmdc_server.static_files import static_path
 from nmdc_server.swagger_ui.helpers import load_template
 
-
 # Print the active/portal database name to the console.
 portal_database_name = get_database_name_safely_for_logging(settings.database_uri)
 print(f"Portal database: {portal_database_name}")
