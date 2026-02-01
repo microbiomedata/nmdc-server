@@ -21,9 +21,9 @@ echo 'Creating and migrating database'
 # - `$ grep --quiet --word-regexp "${db_name}"` returns a success status if this name is among them.
 #   A success status will cause the `&&` to execute, resulting in `db_exists` containing "true".
 #
-echo 'Ensuring databases exist'
+echo "Ensuring databases exist..."
+db_names=$(PGDATABASE=postgres psql --list --tuples-only | cut -d '|' -f 1)
 for db_name in "nmdc_a" "nmdc_b"; do
-  db_names=$(PGDATABASE=postgres psql --list --tuples-only | cut -d '|' -f 1)
   db_exists=$(echo "${db_names}" | grep --quiet --word-regexp "${db_name}" && echo "true" || echo "false")
   if [ "${db_exists}" = "true" ]; then
     echo "Database exists: ${db_name}"
