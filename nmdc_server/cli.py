@@ -13,7 +13,7 @@ from google.cloud import secretmanager
 from sqlalchemy import text
 
 from nmdc_server import jobs
-from nmdc_server.config import settings
+from nmdc_server.config import get_database_name_safely_for_logging, settings
 from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
 from nmdc_server.models import SubmissionImagesObject
@@ -234,10 +234,12 @@ def ingest(
     ingest_start_datetime_str = ingest_start_datetime.isoformat(timespec="seconds")
 
     # Send a Slack message announcing that this ingest is starting.
+    ingest_database_name = get_database_name_safely_for_logging(settings.ingest_database_uri)
     send_slack_message(
         f"▶️ Ingest is starting.\n"
         f"• Environment: `{settings.environment_name_for_ingester}`\n"
-        f"• Start time: `{ingest_start_datetime_str}`"
+        f"• Start time: `{ingest_start_datetime_str}`\n"
+        f"• Ingest database: `{ingest_database_name}`"
     )
 
     # Unless the user opted to skip the ETL step, perform it now.
