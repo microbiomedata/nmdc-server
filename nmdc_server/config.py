@@ -260,7 +260,7 @@ def get_database_name_safely_for_logging(postgres_uri: str) -> Optional[str]:
     # Get the substring following the final "/" character in the database URI.
     uri_suffix = postgres_uri.rsplit("/", 1)[-1]
 
-    # Get the substring before any query parameters.
+    # Get the substring preceding the query parameters ("foo?bar=1&baz=0" -> "foo").
     database_name = uri_suffix.split("?", 1)[0]
 
     # Return the database name only if it is in the allow list.
