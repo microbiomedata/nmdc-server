@@ -1,6 +1,5 @@
 import logging
 import typing
-from contextlib import asynccontextmanager
 
 import sentry_sdk
 from debug_toolbar.middleware import DebugToolbarMiddleware
