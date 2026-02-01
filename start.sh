@@ -13,18 +13,12 @@ done
 echo 'Creating and migrating database'
 
 # If either database "nmdc_a" or "nmdc_b" doesn't exist yet, create it now so they both exist.
-#
-# Explanations of the commands used in this block:
-# - `$ psql --list --tuples-only` dumps a table whose first column contains database names
-#   and whose column borders are drawn using '|' characters (like a Markdown table).
-# - `$ cut -d '|' -f 1` captures the database names, which are in the first column of that table.
-# - `$ grep --quiet --word-regexp "${db_name}"` returns a success status if this name is among them.
-#   A success status will cause the `&&` to execute, resulting in `db_exists` containing "true".
-#
 echo "Ensuring databases exist..."
-db_names=$(PGDATABASE=postgres psql --list --tuples-only | cut -d '|' -f 1)
 for db_name in "nmdc_a" "nmdc_b"; do
-  db_exists=$(echo "${db_names}" | grep --quiet --word-regexp "${db_name}" && echo "true" || echo "false")
+  # Note: This psql command returns "true" if the database exists; otherwise it returns an empty
+  #       string. The `--no-psqlrc --tuples-only --no-align` options simplify the result format.
+  psql_command="SELECT 'true' FROM pg_database WHERE datname = '${db_name}' LIMIT 1;"
+  db_exists=$(PGDATABASE=postgres psql --no-psqlrc --tuples-only --no-align --command "${psql_command}")
   if [ "${db_exists}" = "true" ]; then
     echo "Database exists: ${db_name}"
   else
