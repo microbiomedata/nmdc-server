@@ -30,6 +30,7 @@ import {
   incrementalSaveRecord,
   incrementalSaveRecordRequest,
   isOwner,
+  isSubmissionValid,
   isTestSubmission,
   mergeSampleData,
   metadataSuggestions,
@@ -430,20 +431,16 @@ export default defineComponent({
     }
 
     const submissionState = computed(() => {
-      const allTabsValid = validationState.sampleMetadata &&
-        Object.values(validationState.sampleMetadata.tabsValidated).every((v) => v === true);
       const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
       const canSubmitByStatus = status.value === 'InProgress'
       const isSubmitted = submitCount.value > 0 || status.value === 'SubmittedPendingReview';
       let submitDisabledReason: string | null = null;
-      if (!allTabsValid) {
-        submitDisabledReason = 'All tabs must be validated before submission.';
-      } else if (validationState.sampleEnvironmentForm || validationState.studyForm?.length === 0 || validationState.multiOmicsForm?.length === 0) {
-        submitDisabledReason = 'Validation issues on other screens must be fixed.';
-      } else if (!hasSubmitPermission) {
+      if (!hasSubmitPermission) {
         submitDisabledReason = 'You do not have permission to submit this record.';
       } else if (!canSubmitByStatus) {
         submitDisabledReason = `Submission cannot be made while in status: ${status.value}.`;
+      } else if (!isSubmissionValid()) {
+        submitDisabledReason = 'Some forms contain validation errors.';
       }
       return {
         isSubmitted,
@@ -1249,6 +1246,9 @@ html {
 
   table {
     padding-right: 16px;
+  }
+  .listbox .ht_master table {
+    padding-right: 0;
   }
 
   td {

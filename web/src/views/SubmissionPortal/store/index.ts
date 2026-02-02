@@ -183,6 +183,34 @@ function resetSampleMetadataValidation() {
   })
 }
 
+function isSubmissionValid() {
+  // The required forms must be validated with no errors
+  if (!isEqual(validationState.studyForm, [])) {
+    return false;
+  }
+  if (!isEqual(validationState.multiOmicsForm, [])) {
+    return false;
+  }
+  if (!isEqual(validationState.sampleEnvironmentForm, [])) {
+    return false;
+  }
+  // The sender shipping info form is optional. If it has been validated, it must have no errors
+  if (validationState.senderShippingInfoForm != null && !isEqual(validationState.senderShippingInfoForm, [])) {
+    return false;
+  }
+  // The sample metadata must be validated with no errors
+  if (validationState.sampleMetadata == null) {
+    return false;
+  }
+  if (Object.values(validationState.sampleMetadata.tabsValidated).some((validated) => !validated)) {
+    return false;
+  }
+  if (Object.values(validationState.sampleMetadata.invalidCells).some((cells) => Object.keys(cells).length > 0)) {
+    return false;
+  }
+  return true;
+}
+
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -715,4 +743,5 @@ export {
   setTabValidated,
   setTabInvalidCells,
   resetSampleMetadataValidation,
+  isSubmissionValid,
 };
