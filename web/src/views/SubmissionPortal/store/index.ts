@@ -91,6 +91,7 @@ function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownTyp
     }));
 }
 
+const studyName = ref('');
 const isTestSubmission = ref(false);
 const primaryStudyImageUrl = ref<string | null>(null);
 const piImageUrl = ref<string | null>(null);
@@ -508,6 +509,7 @@ function reset() {
   packageName.value = [];
   sampleData.value = {};
   status.value = 'InProgress';
+  studyName.value = '';
   isTestSubmission.value = false;
   primaryStudyImageUrl.value = null;
   piImageUrl.value = null;
@@ -573,6 +575,7 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   if (record.permission_level !== null) {
     _permissionLevel = (record.permission_level as SubmissionEditorRole);
   }
+  studyName.value = record.study_name;
   isTestSubmission.value = record.is_test_submission;
   primaryStudyImageUrl.value = record.primary_study_image_url;
   piImageUrl.value = record.pi_image_url;
@@ -676,6 +679,7 @@ export {
   templateList,
   hasChanged,
   status,
+  studyName,
   isTestSubmission,
   incrementalSaveRecordRequest,
   primaryStudyImageUrl,

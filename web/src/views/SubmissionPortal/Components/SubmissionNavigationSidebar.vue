@@ -1,6 +1,6 @@
 <script lang="ts">
 import { computed, defineComponent, } from 'vue';
-import { studyForm, validationState } from '../store';
+import { studyName, validationState } from '../store';
 import { SampleMetadataValidationState } from '@/views/SubmissionPortal/types.ts';
 
 export default defineComponent({
@@ -74,7 +74,7 @@ export default defineComponent({
 
     return {
       pages,
-      studyForm
+      studyName
     };
   },
 });
@@ -86,10 +86,16 @@ export default defineComponent({
     permanent
     clipped
   >
-    <v-list-item subtitle="Click to go to">
+    <v-list-item>
       <template #title>
-        <div class="text-h6 text-wrap">
-          {{ studyForm.studyName }}
+        <div class="study-name">
+          <span v-if="studyName">{{ studyName }}</span>
+          <span
+            v-else
+            class="text-disabled font-italic"
+          >
+            No study name
+          </span>
         </div>
       </template>
     </v-list-item>
@@ -129,3 +135,14 @@ export default defineComponent({
     </v-list>
   </v-navigation-drawer>
 </template>
+
+<style scoped>
+.study-name {
+  font-weight: 600;
+  white-space: normal !important;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+</style>
