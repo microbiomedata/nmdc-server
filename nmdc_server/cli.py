@@ -143,7 +143,15 @@ def send_slack_message(text: str) -> bool:
 
 
 def format_report_bullets(reports: Dict[str, ETLReport]) -> str:
-    """Formats all bullets from all reports into a single string."""
+    r"""
+    Formats all bullets from all reports into a single string.
+
+    >>> format_report_bullets({
+    ...     "biosamples": ETLReport(plural_subject="Biosamples"),
+    ...     "studies": ETLReport(plural_subject="Studies"),
+    ... })
+    '• Biosamples: extracted `0`, loaded `0`\n• Studies: extracted `0`, loaded `0`'
+    """
 
     all_bullets = []
     for report in reports.values():

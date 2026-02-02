@@ -45,8 +45,7 @@ class ETLReport:
     def get_bullets(self) -> List[str]:
         """Get a list of bullet points representing the ETL report."""
         return [
-            f"• {self.plural_subject} extracted: `{self.num_extracted}`",
-            f"• {self.plural_subject} loaded: `{self.num_loaded}`",
+            f"• {self.plural_subject}: extracted `{self.num_extracted}`, loaded `{self.num_loaded}`",
         ]
 
 
