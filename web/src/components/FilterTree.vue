@@ -185,6 +185,7 @@ export default defineComponent({
       always-open
       async
       :load-options="loadOptions"
+      placeholder="Select or search by ID or label"
       class="ma-2"
     >
       <template #option-label="{ node }">
