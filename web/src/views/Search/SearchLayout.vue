@@ -11,8 +11,9 @@ import { fieldDisplayName } from '@/util';
 import { api, Condition, StudySearchResults } from '@/data/api';
 
 import {
-  stateRefs, toggleConditions, dataObjectFilter,
+  stateRefs, dataObjectFilter,
   setConditions,
+  removeConditions,
 } from '@/store';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import usePaginatedResults from '@/use/usePaginatedResults';
@@ -53,10 +54,11 @@ export default defineComponent({
 
     /**
      * Set a study (or consortium) as checked in the search results.
+     * @param checked - Whether the item is currently being checked (true) or unchecked (false)
      * @param studyId - ID of the study to select
      * @param children - Optional children studies to also select
      */
-    function setChecked(studyId: string, children: StudySearchResults[] = []) {
+    function setChecked(checked: boolean, studyId: string, children: StudySearchResults[] = []) {
       const conditions: Condition[] = [{
         value: studyId,
         table: 'study',
@@ -65,18 +67,19 @@ export default defineComponent({
       }];
       if (children.length > 0) {
         children.forEach((child) => {
-          if (!studyCheckboxState.value.includes(child.id)) {
-            conditions.push({
-              value: child.id,
-              table: 'study',
-              field: 'study_id',
-              op: '==',
-            });
-          }
+          conditions.push({
+            value: child.id,
+            table: 'study',
+            field: 'study_id',
+            op: '==',
+          });
         });
       }
-
-      toggleConditions(conditions);
+      if (checked) {
+        setConditions([...stateRefs.conditions.value, ...conditions]);
+      } else {
+        removeConditions(conditions);
+      }
     }
 
     /**
@@ -332,10 +335,10 @@ export default defineComponent({
                     <template #action="{ result }">
                       <v-list-item-action>
                         <v-checkbox-btn
-                          :input-value="studyCheckboxState"
+                          :model-value="studyCheckboxState"
                           :value="result.id"
                           @click.stop
-                          @change="setChecked(result.id, result.children)"
+                          @change="setChecked($event.target.checked, result.id, result.children)"
                         />
                       </v-list-item-action>
                     </template>
@@ -414,10 +417,10 @@ export default defineComponent({
                             <v-list-item-action>
                               <v-checkbox-btn
                                 :disabled="studyCheckboxState.includes(props.result.id)"
-                                :input-value="studyCheckboxState"
+                                :model-value="studyCheckboxState"
                                 :value="result.id"
                                 @click.stop
-                                @change="setChecked(result.id)"
+                                @change="setChecked($event.target.checked, result.id)"
                               />
                             </v-list-item-action>
                           </template>
@@ -514,10 +517,10 @@ export default defineComponent({
                     <template #action="{ result }">
                       <v-list-item-action>
                         <v-checkbox-btn
-                          :input-value="studyCheckboxState"
+                          :model-value="studyCheckboxState"
                           :value="result.id"
                           @click.stop
-                          @change="setChecked(result.id, result.children)"
+                          @change="setChecked($event.target.checked, result.id, result.children)"
                         />
                       </v-list-item-action>
                     </template>
@@ -597,10 +600,10 @@ export default defineComponent({
                             <v-list-item-action>
                               <v-checkbox-btn
                                 :disabled="studyCheckboxState.includes(props.result.id)"
-                                :input-value="studyCheckboxState"
+                                :model-value="studyCheckboxState"
                                 :value="result.id"
                                 @click.stop
-                                @change="setChecked(result.id)"
+                                @change="setChecked($event.target.checked, result.id)"
                               />
                             </v-list-item-action>
                           </template>
