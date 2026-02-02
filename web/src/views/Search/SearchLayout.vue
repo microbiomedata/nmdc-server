@@ -12,6 +12,7 @@ import { api, Condition, StudySearchResults } from '@/data/api';
 
 import {
   stateRefs, toggleConditions, dataObjectFilter,
+  setConditions,
 } from '@/store';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 import usePaginatedResults from '@/use/usePaginatedResults';
@@ -49,21 +50,19 @@ export default defineComponent({
         .filter((c) => c.table === 'study' && c.field === 'study_id')
         .map((c) => c.value)
     ));
-    function setChecked(studyId: string, { children = [] as StudySearchResults[], omicsType = '' } = {}) {
+
+    /**
+     * Set a study (or consortium) as checked in the search results.
+     * @param studyId - ID of the study to select
+     * @param children - Optional children studies to also select
+     */
+    function setChecked(studyId: string, children: StudySearchResults[] = []) {
       const conditions: Condition[] = [{
         value: studyId,
         table: 'study',
         op: '==',
         field: 'study_id',
       }];
-      if (omicsType) {
-        conditions.push({
-          value: omicsType,
-          table: 'omics_processing',
-          field: 'omics_type',
-          op: '==',
-        });
-      }
       if (children.length > 0) {
         children.forEach((child) => {
           if (!studyCheckboxState.value.includes(child.id)) {
@@ -78,6 +77,28 @@ export default defineComponent({
       }
 
       toggleConditions(conditions);
+    }
+
+    /**
+     * Set study and omics type conditions.
+     * Used when clicking on omics processing count chips.
+     * @param studyId - ID of the study to select
+     * @param omicsType - Type of omics processing to select 
+     */
+    function selectStudyAndOmics(studyId: string, omicsType: string) {
+      const conditions: Condition[] = [{
+        value: studyId,
+        table: 'study',
+        op: '==',
+        field: 'study_id',
+      },
+      {
+        value: omicsType,
+        table: 'omics_processing',
+        field: 'omics_type',
+        op: '==',
+      }];
+      setConditions([...stateRefs.conditions.value, ...conditions]);
     }
 
     const studyConditions: Ref<Record<string, Condition[]>> = ref<Record<string, Condition[]>>({
@@ -196,6 +217,7 @@ export default defineComponent({
       toggleChildren,
       /* methods */
       setChecked,
+      selectStudyAndOmics,
       setExpanded,
       fieldDisplayName,
     };
@@ -313,7 +335,7 @@ export default defineComponent({
                           :input-value="studyCheckboxState"
                           :value="result.id"
                           @click.stop
-                          @change="setChecked(result.id,{children:result.children})"
+                          @change="setChecked(result.id, result.children)"
                         />
                       </v-list-item-action>
                     </template>
@@ -365,7 +387,7 @@ export default defineComponent({
                             :key="item.type"
                             size="small"
                             class="mr-2 my-1"
-                            @click.stop="setChecked(props.result.id, {omicsType:item.type})"
+                            @click.stop="selectStudyAndOmics(props.result.id, item.type)"
                           >
                             {{ fieldDisplayName(item.type) }}: {{ item.count }}
                           </v-chip>
@@ -424,7 +446,7 @@ export default defineComponent({
                                   :key="item.type"
                                   size="small"
                                   class="mr-2 my-1"
-                                  @click.stop="setChecked(props.result.id, {omicsType:item.type})"
+                                  @click.stop="selectStudyAndOmics(props.result.id, item.type)"
                                 >
                                   {{ fieldDisplayName(item.type) }}: {{ item.count }}
                                 </v-chip>
@@ -495,7 +517,7 @@ export default defineComponent({
                           :input-value="studyCheckboxState"
                           :value="result.id"
                           @click.stop
-                          @change="setChecked(result.id, {children:result.children})"
+                          @change="setChecked(result.id, result.children)"
                         />
                       </v-list-item-action>
                     </template>
@@ -548,7 +570,7 @@ export default defineComponent({
                             :key="item.type"
                             size="small"
                             class="mr-2 my-1"
-                            @click.stop="setChecked(props.result.id, {omicsType:item.type})"
+                            @click.stop="selectStudyAndOmics(props.result.id, item.type)"
                           >
                             {{ fieldDisplayName(item.type) }}: {{ item.count }}
                           </v-chip>
@@ -607,7 +629,7 @@ export default defineComponent({
                                   :key="item.type"
                                   size="small"
                                   class="mr-2 my-1"
-                                  @click.stop="setChecked(childProps.result.id, {omicsType:item.type})"
+                                  @click.stop="selectStudyAndOmics(childProps.result.id, item.type)"
                                 >
                                   {{ fieldDisplayName(item.type) }}: {{ item.count }}
                                 </v-chip>
