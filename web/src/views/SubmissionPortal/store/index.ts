@@ -141,13 +141,46 @@ const hasChanged = ref(0);
 */
 
 const validationStateDefault: SubmissionValidationState = {
-  studyForm: null as string[] | null,
-  multiOmicsForm: null as string[] | null,
-  sampleEnvironmentForm: null as string[] | null,
-  senderShippingInfoForm: null as string[] | null,
-  sampleMetadata: null as string[] | null,
+  studyForm: null,
+  multiOmicsForm: null,
+  sampleEnvironmentForm: null,
+  senderShippingInfoForm: null,
+  sampleMetadata: null,
 };
 const validationState = reactive(clone(validationStateDefault));
+
+function setTabValidated(tabName: string, validated: boolean) {
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    }
+  }
+  validationState.sampleMetadata.tabsValidated[tabName] = validated;
+}
+
+function setTabInvalidCells(tabName: string, invalidCells: Record<number, Record<number, string>>) {
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    }
+  }
+  validationState.sampleMetadata.invalidCells[tabName] = invalidCells;
+}
+
+function resetSampleMetadataValidation() {
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    }
+  }
+  validationState.sampleMetadata.invalidCells = {};
+  Object.keys(validationState.sampleMetadata.tabsValidated).forEach((tab) => {
+    validationState.sampleMetadata!.tabsValidated[tab] = false;
+  })
+}
 
 const addressFormDefault = {
   // Shipper info
@@ -359,7 +392,6 @@ const metadataSuggestions = ref([] as MetadataSuggestion[]);
 const suggestionMode = ref(SuggestionsMode.LIVE);
 const suggestionType = ref(SuggestionType.ALL);
 
-const tabsValidated = ref({} as Record<string, boolean>);
 watch(templateList, (newList, oldList) => {
   if (isEqual(newList, oldList)) {
     return;
@@ -368,7 +400,13 @@ watch(templateList, (newList, oldList) => {
   forEach(templateList.value, (templateKey) => {
     newTabsValidated[templateKey] = false;
   });
-  tabsValidated.value = newTabsValidated;
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    }
+  }
+  validationState.sampleMetadata.tabsValidated = newTabsValidated;
 });
 
 /** Submit page */
@@ -637,7 +675,6 @@ export {
   packageName,
   templateList,
   hasChanged,
-  tabsValidated,
   status,
   isTestSubmission,
   incrementalSaveRecordRequest,
@@ -666,4 +703,7 @@ export {
   checkJGITemplates,
   checkDoiFormat,
   formatStatusTransitions,
+  setTabValidated,
+  setTabInvalidCells,
+  resetSampleMetadataValidation,
 };

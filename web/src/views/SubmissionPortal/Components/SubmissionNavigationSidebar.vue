@@ -1,6 +1,7 @@
 <script lang="ts">
 import { computed, defineComponent, } from 'vue';
 import { studyForm, validationState } from '../store';
+import { SampleMetadataValidationState } from '@/views/SubmissionPortal/types.ts';
 
 export default defineComponent({
   setup() {
@@ -17,7 +18,34 @@ export default defineComponent({
       return combined;
     }
 
-    const pages = computed(() => [
+    function combineSampleMetadataErrors(sampleMetadataState: SampleMetadataValidationState | null) : string[] | null {
+      if (sampleMetadataState === null) {
+        return null;
+      }
+      const combinedErrors: string[] = [];
+      Object.keys(sampleMetadataState.tabsValidated).forEach((tab) => {
+        let message = '';
+        if (!sampleMetadataState.tabsValidated[tab]) {
+          message = `Tab "${tab}" has not been validated.`;
+        }
+        if (tab in sampleMetadataState.invalidCells) {
+          const invalidCells = sampleMetadataState.invalidCells[tab];
+          if (invalidCells && Object.keys(invalidCells).length > 0) {
+            message = `Tab "${tab}" has invalid cells.`;
+          }
+        }
+        if (message) {
+          combinedErrors.push(message);
+        }
+      })
+      return combinedErrors;
+    }
+
+    const pages = computed<{
+      title: string;
+      pageName: string;
+      valid?: null | string[];
+    }[]>(() => [
       {
         title: 'Submission Summary',
         pageName: 'Submission Summary',
@@ -40,7 +68,7 @@ export default defineComponent({
       {
         title: 'Data Harmonizer',
         pageName: 'Submission Sample Editor',
-        valid: validationState.sampleMetadata,
+        valid: combineSampleMetadataErrors(validationState.sampleMetadata),
       },
     ]);
 

@@ -224,6 +224,11 @@ export interface NmdcAddress {
   country: string;
 }
 
+export interface SampleMetadataValidationState {
+  invalidCells: Record<string, Record<number, Record<number, string>>>;
+  tabsValidated: Record<string, boolean>;
+}
+
 // null indicates an unknown state (e.g. if the form has not been viewed or validated yet)
 // an array of strings indicates validation errors for the form
 // an empty array indicates the form has been validated with no errors
@@ -232,7 +237,7 @@ export interface SubmissionValidationState {
   multiOmicsForm: string[] | null;
   sampleEnvironmentForm: string[] | null;
   senderShippingInfoForm: string[] | null;
-  sampleMetadata: string[] | null;
+  sampleMetadata: SampleMetadataValidationState | null;
 }
 
 export interface MetadataSubmission {

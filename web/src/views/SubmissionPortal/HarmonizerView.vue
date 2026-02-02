@@ -1,5 +1,5 @@
 <script lang="ts">
-import { computed, defineComponent, inject, nextTick, onMounted, ref, shallowRef, watch } from 'vue';
+import { computed, defineComponent, inject, nextTick, onMounted, ref, watch } from 'vue';
 import { clamp, debounce, flattenDeep, has, sum } from 'lodash';
 import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
@@ -34,12 +34,14 @@ import {
   mergeSampleData,
   metadataSuggestions,
   packageName,
+  resetSampleMetadataValidation,
   sampleData,
+  setTabInvalidCells,
+  setTabValidated,
   status,
   SubmissionStatusEnum,
   submit,
   suggestionMode,
-  tabsValidated,
   templateList,
   validationState,
 } from './store';
@@ -121,7 +123,6 @@ export default defineComponent({
     const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
     const sidebarOpen = ref(true);
-    const invalidCells = shallowRef({} as Record<string, Record<number, Record<number, string>>>);
 
     const activeTemplateKey = ref(templateList.value[0]);
     const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value!]);
@@ -158,13 +159,13 @@ export default defineComponent({
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
       harmonizerApi.loadData(activeTemplateData.value);
-      harmonizerApi.setInvalidCells(invalidCells.value[activeTemplateKey.value!] || {});
+      harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
     const validationErrors = computed(() => {
       const remapped: ValidationErrors = {};
-      const invalid: Record<number, Record<number, string>> = invalidCells.value[activeTemplateKey.value!] || {};
+      const invalid: Record<number, Record<number, string>> = validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {};
       if (Object.keys(invalid).length) {
         remapped['All Errors'] = [];
       }
@@ -186,7 +187,7 @@ export default defineComponent({
     const validationErrorGroups = computed(() => Object.keys(validationErrors.value));
 
     const validationTotalCounts = computed(() => Object.fromEntries(
-      Object.entries(invalidCells.value).map(([template, cells]) => ([
+      Object.entries(validationState.sampleMetadata?.invalidCells || {}).map(([template, cells]) => ([
         template,
         sum(Object.values(cells).map((row) => Object.keys(row).length)),
       ])),
@@ -292,14 +293,14 @@ export default defineComponent({
             });
             nextData[templateSlot]?.push(newRow);
             //update validation status for the tab, if data changed it needs to be revalidated
-            tabsValidated.value[templateKey] = false;
+            setTabValidated(templateKey, false);
           }
           if (existing) {
             COMMON_COLUMNS.forEach((col) => {
               existing[col] = row[col];
             });
             //update validation status for the tab, if data changed it needs to be revalidated
-            tabsValidated.value[templateKey] = false;
+            setTabValidated(templateKey, false);
           }
         });
       });
@@ -311,7 +312,7 @@ export default defineComponent({
             return false;
           }
           //update validation status for the tab, if data changed it needs to be revalidated
-          tabsValidated.value[templateKey] = false;
+          setTabValidated(templateKey, false);
           const rowId = row[SCHEMA_ID];
           return environmentSlots.some((environmentSlot) => {
             const environmentRow = nextData[environmentSlot as string]?.findIndex((r) => r[SCHEMA_ID] === rowId);
@@ -375,8 +376,8 @@ export default defineComponent({
         const data = harmonizerApi.exportJson();
         mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
       }
+      setTabValidated(activeTemplateKey.value!, false);
       saveRecord(); // This is a background save that we intentionally don't wait for
-      tabsValidated.value[activeTemplateKey.value!] = false;
     };
 
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
@@ -407,16 +408,11 @@ export default defineComponent({
       const isEmpty = Object.keys(data).length === 0;
       // Update invalid cells if empty
       if (isEmpty) {
-        invalidCells.value = {
-          ...invalidCells.value,
-          [activeTemplateKey.value!]: data,
-        };
-        tabsValidated.value = {
-          ...tabsValidated.value,
-          [activeTemplateKey.value!]: false,
-        };
+        harmonizerApi.setInvalidCells({});
+        setTabInvalidCells(activeTemplateKey.value!, {});
+        setTabValidated(activeTemplateKey.value!, false);
         emptySheetSnackbar.value = true;
-
+        saveRecord(); // This is a background save that we intentionally don't wait for
         return;
       }
 
@@ -427,27 +423,19 @@ export default defineComponent({
         sidebarOpen.value = true;
       }
 
-      invalidCells.value = {
-        ...invalidCells.value,
-        [activeTemplateKey.value!]: result,
-      };
+      setTabInvalidCells(activeTemplateKey.value!, result);
+      setTabValidated(activeTemplateKey.value!, valid)
       saveRecord(); // This is a background save that we intentionally don't wait for
+
       if (valid === false) {
         errorClick(0);
       }
-      tabsValidated.value = {
-        ...tabsValidated.value,
-        [activeTemplateKey.value!]: valid,
-      };
-
-      validationSuccessSnackbar.value = Object.values(tabsValidated.value).every((value) => value);
+      validationSuccessSnackbar.value = Object.values(validationState.sampleMetadata?.tabsValidated || {}).every((value) => value);
     }
 
     const submissionState = computed(() => {
-      let allTabsValid = true;
-      Object.values(tabsValidated.value).forEach((value) => {
-        allTabsValid = allTabsValid && value;
-      });
+      const allTabsValid = validationState.sampleMetadata &&
+        Object.values(validationState.sampleMetadata.tabsValidated).every((v) => v === true);
       const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
       const canSubmitByStatus = status.value === 'InProgress'
       const isSubmitted = submitCount.value > 0 || status.value === 'SubmittedPendingReview';
@@ -590,10 +578,7 @@ export default defineComponent({
 
         // Clear validation state
         harmonizerApi.setInvalidCells({});
-        invalidCells.value = {};
-        Object.keys(tabsValidated.value).forEach((tab) => {
-          tabsValidated.value[tab] = false;
-        });
+        resetSampleMetadataValidation();
 
         // Sync with backend
         hasChanged.value += 1;
@@ -661,6 +646,7 @@ export default defineComponent({
         await harmonizerApi.init(r, schema, activeTemplate.value?.schemaClass, goldEcosystemTree);
         await nextTick();
         harmonizerApi.loadData(activeTemplateData.value);
+        harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
         addHooks();
         metadataSuggestions.value = getPendingSuggestions(
           (route.params as { id: string }).id,
@@ -688,7 +674,8 @@ export default defineComponent({
       harmonizerElement,
       jumpToModel,
       harmonizerApi,
-      tabsValidated,
+      tabsValidated: validationState.sampleMetadata?.tabsValidated || {},
+      invalidCells: validationState.sampleMetadata?.invalidCells || {},
       incrementalSaveRecordRequest,
       submitLoading,
       submitCount,
@@ -703,7 +690,6 @@ export default defineComponent({
       activeTemplate,
       activeTemplateKey,
       activeTabIndex,
-      invalidCells,
       validationErrors,
       validationErrorGroups,
       validationTotalCounts,

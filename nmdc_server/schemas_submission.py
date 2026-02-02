@@ -114,12 +114,17 @@ class AddressForm(BaseModel):
     comments: str
 
 
+class SampleMetadataValidationState(BaseModel):
+    invalidCells: Dict[str, Dict[int, Dict[int, str]]]
+    tabsValidated: Dict[str, bool]
+
+
 class SubmissionValidationState(BaseModel):
     studyForm: Optional[List[str]] = None
     multiOmicsForm: Optional[List[str]] = None
     sampleEnvironmentForm: Optional[List[str]] = None
     senderShippingInfoForm: Optional[List[str]] = None
-    sampleMetadata: Optional[List[str]] = None
+    sampleMetadata: Optional[SampleMetadataValidationState] = None
 
 
 class MetadataSubmissionRecordCreate(BaseModel):
@@ -133,9 +138,7 @@ class MetadataSubmissionRecordCreate(BaseModel):
 
 class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
     studyForm: StudyForm
-    validationState: SubmissionValidationState = Field(
-        default_factory=SubmissionValidationState
-    )
+    validationState: SubmissionValidationState = Field(default_factory=SubmissionValidationState)
 
 
 class PartialMetadataSubmissionRecord(BaseModel):
