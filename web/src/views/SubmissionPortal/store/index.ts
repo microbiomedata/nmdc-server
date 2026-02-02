@@ -397,6 +397,11 @@ watch(templateList, (newList, oldList) => {
   if (isEqual(newList, oldList)) {
     return;
   }
+  if (packageName.value.length === 0) {
+    // If no package is selected, set the sample metadata validation to an untouched state
+    validationState.sampleMetadata = null;
+    return;
+  }
   const newTabsValidated = {} as Record<string, boolean>;
   forEach(templateList.value, (templateKey) => {
     newTabsValidated[templateKey] = false;

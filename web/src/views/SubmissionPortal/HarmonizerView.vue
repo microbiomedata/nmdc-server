@@ -1,6 +1,6 @@
 <script lang="ts">
 import { computed, defineComponent, inject, nextTick, onMounted, ref, watch } from 'vue';
-import { clamp, debounce, flattenDeep, has, sum } from 'lodash';
+import { clamp, debounce, flattenDeep, has, isEqual, sum } from 'lodash';
 import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
@@ -133,12 +133,8 @@ export default defineComponent({
       }
       return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
     });
-    const validTemplateSelection = computed(() => (
-      Array.isArray(validationState.multiOmicsForm)
-        && validationState.multiOmicsForm.length === 0
-        && Array.isArray(validationState.sampleEnvironmentForm)
-        && validationState.sampleEnvironmentForm.length === 0
-    ));
+    const hasValidSampleEnvironmentSelection = computed(() => isEqual(validationState.sampleEnvironmentForm, []))
+    const hasValidUserFacilitySelection = computed(() => isEqual(validationState.multiOmicsForm, []))
 
     const submitDialog = ref(false);
 
@@ -696,7 +692,8 @@ export default defineComponent({
       SubmissionStatusEnum,
       status,
       submitDialog,
-      validTemplateSelection,
+      hasValidSampleEnvironmentSelection,
+      hasValidUserFacilitySelection,
       validationSuccessSnackbar,
       schemaLoading,
       importErrorSnackbar,
@@ -723,23 +720,30 @@ export default defineComponent({
 </script>
 
 <template>
-  <div v-if="!validTemplateSelection">
-    <SubmissionNavigationSidebar />
-    <v-alert
-      class="ma-8"
-      title="Incomplete Template Selection"
-      text="You must resolve all errors on the Multiomics and Sample Environment forms before entering sample metadata."
-      type="warning"
-    />
-  </div>
+  <SubmissionNavigationSidebar />
+  <v-alert
+    v-if="!hasValidSampleEnvironmentSelection"
+    class="ma-8"
+    title="Incomplete Sample Environment Selection"
+    text="You must complete the Sample Environment form before entering sample metadata."
+    type="warning"
+  />
   <div
     v-else
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
-    <SubmissionNavigationSidebar />
     <submission-permission-banner
       v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
+    />
+    <v-alert
+      v-if="!hasValidUserFacilitySelection"
+      class="overflow-visible"
+      density="compact"
+      text="Not all required tabs may be present until errors in the Multiomics Form are corrected."
+      tile
+      title="Incomplete User Facility Selection"
+      type="warning"
     />
     <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <div class="d-flex flex-column px-2 pb-2 pt-2">
