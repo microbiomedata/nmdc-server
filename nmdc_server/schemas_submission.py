@@ -114,12 +114,12 @@ class AddressForm(BaseModel):
     comments: str
 
 
-class ValidForms(BaseModel):
-    studyFormValid: list = []
-    multiOmicsFormValid: list = []
-    templatesValid: bool = False
-    harmonizerValid: bool = False
-    addressFormValid: bool = False
+class SubmissionValidationState(BaseModel):
+    studyForm: Optional[List[str]] = None
+    multiOmicsForm: Optional[List[str]] = None
+    sampleEnvironmentForm: Optional[List[str]] = None
+    senderShippingInfoForm: Optional[List[str]] = None
+    sampleMetadata: Optional[List[str]] = None
 
 
 class MetadataSubmissionRecordCreate(BaseModel):
@@ -129,11 +129,13 @@ class MetadataSubmissionRecordCreate(BaseModel):
     studyForm: StudyFormCreate
     multiOmicsForm: MultiOmicsForm
     sampleData: Dict[str, List[Any]]
-    validForms: ValidForms
 
 
 class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
     studyForm: StudyForm
+    validationState: SubmissionValidationState = Field(
+        default_factory=SubmissionValidationState
+    )
 
 
 class PartialMetadataSubmissionRecord(BaseModel):
@@ -143,7 +145,7 @@ class PartialMetadataSubmissionRecord(BaseModel):
     studyForm: Optional[StudyForm] = None
     multiOmicsForm: Optional[MultiOmicsForm] = None
     sampleData: Optional[Dict[str, List[Any]]] = None
-    validForms: Optional[ValidForms] = None
+    validationState: Optional[SubmissionValidationState] = None
 
 
 class SubmissionMetadataSchemaCreate(BaseModel):

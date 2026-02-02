@@ -30,10 +30,13 @@ import {
   AcquisitionProtocol,
   DataProtocol,
   SampleProtocol,
-  MetadataSubmissionRecord, AllowedStatusTransitions,
+  MetadataSubmissionRecord,
+  AllowedStatusTransitions,
+  SubmissionValidationState,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
+import useRequest from '@/use/useRequest.ts';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
@@ -137,7 +140,7 @@ const hasChanged = ref(0);
  * Validating forms
 */
 
-const validationStateDefault = {
+const validationStateDefault: SubmissionValidationState = {
   studyForm: null as string[] | null,
   multiOmicsForm: null as string[] | null,
   sampleEnvironmentForm: null as string[] | null,
@@ -472,12 +475,13 @@ function reset() {
   piImageUrl.value = null;
 }
 
-async function incrementalSaveRecord(id: string): Promise<number | void> {
+const incrementalSaveRecordRequest = useRequest();
+async function incrementalSaveRecord(id: string): Promise<void> {
   if (!canEditSampleMetadata()) {
-    return Promise.resolve();
+    return;
   }
   if (!canEditSubmissionByStatus()) {
-    return Promise.resolve();
+    return;
   }
 
   let payload: Partial<MetadataSubmission> = {};
@@ -494,13 +498,13 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   if (hasChanged.value) {
-    const response = await api.updateRecord(id, payload, permissions);
+    const response = await incrementalSaveRecordRequest.request(
+      () => api.updateRecord(id, payload, permissions)
+    );
     updateStateFromRecord(response.data);
-    return response.httpStatus;
+    return;
   }
   hasChanged.value = 0;
-  // Return a resolved Promise when hasChanged.value is false
-  return Promise.resolve();
 }
 
 async function generateRecord(isTestSubBool: boolean, studyNameStr: string = '', piEmailStr: string = ''): Promise<MetadataSubmissionRecord> {
@@ -636,6 +640,7 @@ export {
   tabsValidated,
   status,
   isTestSubmission,
+  incrementalSaveRecordRequest,
   primaryStudyImageUrl,
   piImageUrl,
   metadataSuggestions,

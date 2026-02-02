@@ -65,9 +65,9 @@ const router = createRouter({
           component: SubmissionList,
         },
         {
-          name: 'Create Submission', 
+          name: 'Create Submission',
           path: 'create',
-          component: SubmissionCreationForm, 
+          component: SubmissionCreationForm,
         },
         {
           component: StepperView,
@@ -134,10 +134,10 @@ const router = createRouter({
   parseQuery,
   stringifyQuery,
 });
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   if (from.fullPath.includes('submission') && !!(from.params as any).id) {
     // We are navigating away from a submission edit screen, so save the progress
-    incrementalSaveRecord((from.params as any).id);
+    await incrementalSaveRecord((from.params as any).id);
     if (to.fullPath.includes('submission') && !!(to.params as any).id && (to.params as any).id === (from.params as any).id) {
       // We are navigating to a submission edit screen for the same submission, no need to  unlock
       next();

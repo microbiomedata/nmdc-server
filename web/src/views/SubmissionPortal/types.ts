@@ -224,6 +224,17 @@ export interface NmdcAddress {
   country: string;
 }
 
+// null indicates an unknown state (e.g. if the form has not been viewed or validated yet)
+// an array of strings indicates validation errors for the form
+// an empty array indicates the form has been validated with no errors
+export interface SubmissionValidationState {
+  studyForm: string[] | null;
+  multiOmicsForm: string[] | null;
+  sampleEnvironmentForm: string[] | null;
+  senderShippingInfoForm: string[] | null;
+  sampleMetadata: string[] | null;
+}
+
 export interface MetadataSubmission {
   packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
   addressForm: any;
@@ -231,10 +242,7 @@ export interface MetadataSubmission {
   studyForm: any;
   multiOmicsForm: any;
   sampleData: Record<string, any[]>;
-  // null indicates an unknown state (e.g. if the form has not been viewed or validated yet)
-  // an array of strings indicates validation errors for the form
-  // an empty array indicates the form has been validated with no errors
-  validationState: Record<string, string[] | null>;
+  validationState: SubmissionValidationState;
 }
 
 export interface MetadataSubmissionRecordSlim {

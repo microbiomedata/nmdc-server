@@ -28,6 +28,7 @@ import {
   canEditSubmissionByStatus,
   hasChanged,
   incrementalSaveRecord,
+  incrementalSaveRecordRequest,
   isOwner,
   isTestSubmission,
   mergeSampleData,
@@ -191,8 +192,7 @@ export default defineComponent({
       ])),
     ));
 
-    const saveRecordRequest = useRequest();
-    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord((route.params as { id: string }).id));
+    const saveRecord = () => incrementalSaveRecord((route.params as { id: string }).id);
 
     let changeBatch: any[] = [];
     const debouncedSuggestionRequest = debounce(async () => {
@@ -651,6 +651,7 @@ export default defineComponent({
     });
 
     onMounted(async () => {
+      incrementalSaveRecordRequest.reset();
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
         api.getSubmissionSchema(),
         api.getGoldEcosystemTree(),
@@ -688,7 +689,7 @@ export default defineComponent({
       jumpToModel,
       harmonizerApi,
       tabsValidated,
-      saveRecordRequest,
+      incrementalSaveRecordRequest,
       submitLoading,
       submitCount,
       selectedHelpDict,
@@ -845,9 +846,9 @@ export default defineComponent({
           </v-btn>
         </v-card>
         <submission-docs-link anchor="sample-metadata" />
-        <span v-if="saveRecordRequest.count.value > 0">
+        <span v-if="incrementalSaveRecordRequest.count.value > 0">
           <span
-            v-if="saveRecordRequest.loading.value"
+            v-if="incrementalSaveRecordRequest.loading.value"
             class="text-center"
           >
             <v-progress-circular
@@ -858,7 +859,7 @@ export default defineComponent({
             />
             Saving progress
           </span>
-          <span v-if="!saveRecordRequest.error.value && !saveRecordRequest.loading.value">
+          <span v-if="!incrementalSaveRecordRequest.error.value && !incrementalSaveRecordRequest.loading.value">
             <v-icon
               color="green"
             >
@@ -866,7 +867,7 @@ export default defineComponent({
             </v-icon>
             Changes saved successfully
           </span>
-          <span v-else-if="saveRecordRequest.error.value && !saveRecordRequest.loading.value">
+          <span v-else-if="incrementalSaveRecordRequest.error.value && !incrementalSaveRecordRequest.loading.value">
             <v-icon
               color="red"
             >

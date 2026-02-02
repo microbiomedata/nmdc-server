@@ -5,7 +5,7 @@ import OrcidId from '@/components/Presentation/OrcidId.vue';
 
 import { stateRefs } from '@/store';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
-import { getSubmissionLockedBy } from './store';
+import { getSubmissionLockedBy, incrementalSaveRecordRequest } from './store';
 import { unlockSubmission } from './store/api';
 
 export default defineComponent({
@@ -40,14 +40,25 @@ export default defineComponent({
       }
     });
 
-    return { loggedInUserHasLock, getSubmissionLockedBy, isEditingSubmission };
+    return {
+      loggedInUserHasLock,
+      getSubmissionLockedBy,
+      isEditingSubmission,
+      incrementalSaveRecordRequest
+    };
   },
 
 });
 </script>
 
 <template>
-  <div>
+  <div class="position-relative">
+    <v-progress-linear
+      :active="incrementalSaveRecordRequest.loading.value"
+      absolute
+      indeterminate
+      color="primary"
+    />
     <SubmissionNavigationSidebar class="mx-0" />
     <v-container v-if="loggedInUserHasLock || !isEditingSubmission">
       <router-view />
