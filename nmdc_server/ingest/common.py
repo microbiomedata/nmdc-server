@@ -86,7 +86,7 @@ def duration_logger(logger: logging.Logger, task_name: str = "Task"):
     start_time = perf_counter()
 
     yield  # do task
-    
+
     end_time = perf_counter()
     duration_sec = end_time - start_time
     logger.info(f"{task_name} took {round(duration_sec)} seconds.")

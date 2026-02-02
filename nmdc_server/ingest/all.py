@@ -67,7 +67,7 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     with duration_logger(logger):
         envo.load(db)
         db.commit()
-    
+
     logger.info("Loading KEGG orthology...")
     with duration_logger(logger):
         kegg.load(db)
@@ -114,7 +114,9 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     with duration_logger(logger):
         pipeline.load(
             db,
-            mongodb[workflow_set].find({"type": WorkflowActivityTypeEnum.metabolomics_analysis.value}),
+            mongodb[workflow_set].find(
+                {"type": WorkflowActivityTypeEnum.metabolomics_analysis.value}
+            ),
             pipeline.load_metabolomics_analysis,
             WorkflowActivityTypeEnum.metabolomics_analysis.value,
         )
@@ -124,7 +126,9 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     with duration_logger(logger):
         pipeline.load(
             db,
-            mongodb[workflow_set].find({"type": WorkflowActivityTypeEnum.read_based_analysis.value}),
+            mongodb[workflow_set].find(
+                {"type": WorkflowActivityTypeEnum.read_based_analysis.value}
+            ),
             pipeline.load_read_based_analysis,
             WorkflowActivityTypeEnum.read_based_analysis.value,
         )
@@ -183,11 +187,15 @@ def load(db: Session, function_limit=None, skip_annotation=False):
                 # This has historically been fast, but it is only for the progress bar.
                 # It can be removed if it becomes slow.
                 annotation_activities = list(
-                    mongodb[workflow_set].find({"type": "nmdc:MetagenomeAnnotation"}, batch_size=100)
+                    mongodb[workflow_set].find(
+                        {"type": "nmdc:MetagenomeAnnotation"}, batch_size=100
+                    )
                 )
                 # TODO test this and make sure it works as expected
                 # this undoes the pagination that existed before
-                with click.progressbar(annotation_activities, length=len(annotation_activities)) as bar:
+                with click.progressbar(
+                    annotation_activities, length=len(annotation_activities)
+                ) as bar:
                     pipeline.load(
                         db,
                         bar,
@@ -257,7 +265,9 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     with duration_logger(logger):
         pipeline.load(
             db,
-            mongodb[workflow_set].find({"type": WorkflowActivityTypeEnum.metagenome_assembly.value}),
+            mongodb[workflow_set].find(
+                {"type": WorkflowActivityTypeEnum.metagenome_assembly.value}
+            ),
             pipeline.load_mg_assembly,
             WorkflowActivityTypeEnum.metagenome_assembly.value,
         )
