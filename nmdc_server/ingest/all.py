@@ -79,12 +79,13 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
     logger.info(study_etl_report)
 
     logger.info("Loading data objects...")
-    data_object.load(
+    data_object_etl_report = data_object.load(
         db,
         mongodb["data_object_set"].find(),
         list(mongodb["file_type_enum"].find()),
     )
     db.commit()
+    logger.info(data_object_etl_report)
 
     # Only grab biosamples associated with studies we are ingesting.
     logger.info("Loading biosamples...")
@@ -264,4 +265,5 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
     return dict(
         study_etl_report=study_etl_report,
         biosample_etl_report=biosample_etl_report,
+        data_object_etl_report=data_object_etl_report,
     )
