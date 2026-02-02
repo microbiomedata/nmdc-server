@@ -79,14 +79,23 @@ def maybe_merge_download_artifact(ingest_db: Session, query):
 @contextmanager
 def duration_logger(logger: logging.Logger, task_name: str = "Task"):
     """
-    Context manager that developers can use (via `with`) to measure how long a block of code takes
-    to be executed, and print that duration via the given logger (e.g. to print it to the console).
+    Context manager that developers can use (via `with`) to measure how long a task takes to perform
+    and print that duration via the specified logger (e.g. to print it to the console).
+
+    Example usage:
+    ```
+    with duration_logger(logger):
+        do_thing()
+    ```
     """
 
     start_time = perf_counter()
 
-    yield  # do task
-
-    end_time = perf_counter()
-    duration_sec = end_time - start_time
-    logger.info(f"{task_name} took {round(duration_sec)} seconds.")
+    # Note: We use `try/finally` here to ensure that we always log the duration,
+    #       even if the task (to which we yield) raises an exception.
+    try:
+        yield  # the task
+    finally:
+        end_time = perf_counter()
+        duration_sec = end_time - start_time
+        logger.info(f"{task_name} took {round(duration_sec)} seconds.")
