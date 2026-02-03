@@ -111,46 +111,46 @@ export default defineComponent({
 </script>
 
 <template>
-  <teleport to="body">
-    <v-dialog
-      v-model="dialog"
-      persistent
-      max-width="600"
-    >
-      <v-card title="Please add your email">
-        <v-card-text>
-          <v-form
-            ref="formRef"
-            class="my-6"
+  <v-dialog
+    v-model="dialog"
+    persistent
+    max-width="600"
+  >
+    <v-card title="Update Email Address">
+      <v-card-text>
+        We were unable to obtain your email address from ORCID. Please provide your email address below to continue.
+      </v-card-text>
+      <v-card-text>
+        <v-form
+          ref="formRef"
+          class="my-6"
+        >
+          <v-text-field
+            v-model="submitterEmail"
+            :rules="requiredRules('Email is required', [
+              v => /.+@.+\..+/.test(v) || 'Email must be valid',
+            ])"
+            validate-on-blur
+            label="User Email *"
+            hint="User email is required to complete your user profile."
+            persistent-hint
+            outlined
+            dense
+            class="my-2"
+          />
+        </v-form>
+      </v-card-text>
+      <v-card-actions>
+        <v-spacer class="text-center">
+          <v-btn
+            color="primary"
+            :disabled="!isEmailValid"
+            @click="updateEmail"
           >
-            <v-text-field
-              v-model="submitterEmail"
-              :rules="requiredRules('Email is required', [
-                v => /.+@.+\..+/.test(v) || 'Email must be valid',
-              ])"
-              validate-on-blur
-              label="User Email *"
-              hint="User email is required to complete your user profile."
-              persistent-hint
-              outlined
-              dense
-              class="my-2"
-            />
-          </v-form>
-          <strong>* indicates required field</strong>
-        </v-card-text>
-        <v-card-actions>
-          <v-spacer>
-            <v-btn
-              color="primary"
-              :disabled="!isEmailValid"
-              @click="updateEmail"
-            >
-              Save
-            </v-btn>
-          </v-spacer>
-        </v-card-actions>
-      </v-card>
-    </v-dialog>
-  </teleport>
+            Save
+          </v-btn>
+        </v-spacer>
+      </v-card-actions>
+    </v-card>
+  </v-dialog>
 </template>
