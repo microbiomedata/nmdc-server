@@ -1,5 +1,7 @@
 import logging
+from contextlib import contextmanager
 from datetime import datetime
+from time import perf_counter
 from typing import Any, Dict, List, Optional, Set, Union
 
 from pydantic import BaseModel
@@ -95,3 +97,29 @@ def maybe_merge_download_artifact(ingest_db: Session, query):
         except IntegrityError:
             logger.info("Error: data object with download history was removed.")
             ingest_db.rollback()
+
+
+@contextmanager
+def duration_logger(logger: logging.Logger, task_name: str = "Task"):
+    """
+    Context manager that developers can use (via `with`) to measure how long a task takes to perform
+    and print that duration via the specified logger (e.g. to print it to the console).
+
+    Example usage:
+    ```
+    with duration_logger(logger):
+        do_thing()
+    ```
+    """
+
+    logger.info(f"{task_name}: Starting.")
+    start_time = perf_counter()
+
+    # Note: We use `try/finally` here to ensure that we always log the duration,
+    #       even if the task (to which we yield) raises an exception.
+    try:
+        yield  # the task
+    finally:
+        end_time = perf_counter()
+        duration_sec = end_time - start_time
+        logger.info(f"{task_name}: Finished in {round(duration_sec)} seconds.")
