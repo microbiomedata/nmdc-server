@@ -107,7 +107,7 @@ class OntologyRelationCreate(BaseModel):
 
 
 class OntologyRelation(OntologyRelationCreate):
-    id: Optional[int] = None
+    id: int
     model_config = ConfigDict(from_attributes=True)
 
 

@@ -50,9 +50,17 @@ def upgrade():
             ["ontology_class.id"],
             name=op.f("fk_ontology_relation_subject_ontology_class"),
         ),
+        sa.ForeignKeyConstraint(
+            ["object"],
+            ["ontology_class.id"],
+            name=op.f("fk_ontology_relation_object_ontology_class"),
+        ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_ontology_relation")),
         sa.UniqueConstraint(
-            "subject", "predicate", "object", name=op.f("uq_ontology_relation_subject")
+            "subject",
+            "predicate",
+            "object",
+            name="uq_ontology_relation_subject_predicate_object",
         ),
     )
     op.create_index("idx_ontology_relation_object", "ontology_relation", ["object"], unique=False)

@@ -52,6 +52,10 @@ def test_populate_envo_from_generic_ontology(db: Session):
     )
 
     db.add_all([envo_grandparent, envo_parent, envo_child, uberon_term])
+    db.commit()
+
+    # Verify OntologyClass table contains all 4 terms (3 ENVO + 1 UBERON)
+    assert db.query(models.OntologyClass).count() == 4
 
     # Create relationships
     # Direct: parent is a subclass of grandparent
@@ -126,34 +130,55 @@ def test_populate_envo_from_generic_ontology(db: Session):
     assert child_term.data["is_root"] is False  # type: ignore
 
     # Verify EnvoAncestor table
-    # We should have:
-    # 1. parent -> grandparent (direct=True, from rdfs:subClassOf)
-    # 2. child -> parent (direct=True, from rdfs:subClassOf, takes precedence over closure)
-    # 3. child -> grandparent (direct=False, from closure only - this is indirect!)
+    # We should have 6 ancestors:
+    # Self-referential (required for faceted search):
+    # 1. grandparent -> grandparent (direct=False, self-ref)
+    # 2. parent -> parent (direct=False, self-ref)
+    # 3. child -> child (direct=False, self-ref)
+    # Direct parent relationships:
+    # 4. parent -> grandparent (direct=True, from rdfs:subClassOf)
+    # 5. child -> parent (direct=True, from rdfs:subClassOf)
+    # Indirect relationships:
+    # 6. child -> grandparent (direct=False, from closure)
     ancestors = (
         db.query(models.EnvoAncestor)
         .order_by(models.EnvoAncestor.id, models.EnvoAncestor.ancestor_id)
         .all()
     )
-    assert len(ancestors) == 3
+    assert len(ancestors) == 6
+
+    # Check grandparent -> grandparent (self-ref)
+    assert ancestors[0].id == "ENVO:00000001"
+    assert ancestors[0].ancestor_id == "ENVO:00000001"
+    assert ancestors[0].direct is False  # Self-refs are always direct=False
 
     # Check parent -> grandparent (direct)
-    assert ancestors[0].id == "ENVO:00000428"
-    assert ancestors[0].ancestor_id == "ENVO:00000001"
-    assert ancestors[0].direct is True
+    assert ancestors[1].id == "ENVO:00000428"
+    assert ancestors[1].ancestor_id == "ENVO:00000001"
+    assert ancestors[1].direct is True
+
+    # Check parent -> parent (self-ref)
+    assert ancestors[2].id == "ENVO:00000428"
+    assert ancestors[2].ancestor_id == "ENVO:00000428"
+    assert ancestors[2].direct is False
 
     # Check child -> grandparent (indirect via closure)
-    assert ancestors[1].id == "ENVO:00000446"
-    assert ancestors[1].ancestor_id == "ENVO:00000001"
-    assert ancestors[1].direct is False  # ← This is the key test for closure!
+    assert ancestors[3].id == "ENVO:00000446"
+    assert ancestors[3].ancestor_id == "ENVO:00000001"
+    assert ancestors[3].direct is False  # ← Key test: indirect via closure!
 
     # Check child -> parent (direct)
-    assert ancestors[2].id == "ENVO:00000446"
-    assert ancestors[2].ancestor_id == "ENVO:00000428"
-    assert ancestors[2].direct is True
+    assert ancestors[4].id == "ENVO:00000446"
+    assert ancestors[4].ancestor_id == "ENVO:00000428"
+    assert ancestors[4].direct is True
+
+    # Check child -> child (self-ref)
+    assert ancestors[5].id == "ENVO:00000446"
+    assert ancestors[5].ancestor_id == "ENVO:00000446"
+    assert ancestors[5].direct is False
 
     # Verify relationships work through the model
-    # Child should have 1 direct parent and 2 total ancestors (parent + grandparent)
+    # Child should have 1 direct parent and 3 total ancestors (self + parent + grandparent)
     child_direct_parents = [
         a.ancestor_id
         for a in db.query(models.EnvoAncestor).filter_by(id="ENVO:00000446", direct=True).all()
@@ -167,7 +192,7 @@ def test_populate_envo_from_generic_ontology(db: Session):
         .order_by(models.EnvoAncestor.ancestor_id)
         .all()
     ]
-    assert child_all_ancestors == ["ENVO:00000001", "ENVO:00000428"]
+    assert child_all_ancestors == ["ENVO:00000001", "ENVO:00000428", "ENVO:00000446"]
 
 
 def test_ontology_etl_integration(db: Session):
@@ -208,7 +233,7 @@ def test_ontology_etl_integration(db: Session):
             "alternative_names": ["ecological biome"],
             "is_root": False,
             "is_obsolete": False,
-            "relations": [],  # Will be removed by loader
+            "relations": [],  # This field is removed by the loader (stored in separate table)
         },
         {
             "id": "ENVO:00000446",
@@ -262,11 +287,14 @@ def test_ontology_etl_integration(db: Session):
 
     # Verify ENVO tables were populated
     assert db.query(models.EnvoTerm).count() == 3
-    # Should have 3 ancestors:
-    # 1. parent -> grandparent (direct)
-    # 2. child -> parent (direct)
-    # 3. child -> grandparent (indirect via closure)
-    assert db.query(models.EnvoAncestor).count() == 3
+    # Should have 6 ancestors:
+    # Self-referential (3 terms -> 3 self-refs):
+    # 1. grandparent -> grandparent, 2. parent -> parent, 3. child -> child
+    # Direct relationships (2):
+    # 4. parent -> grandparent, 5. child -> parent
+    # Indirect via closure (1):
+    # 6. child -> grandparent
+    assert db.query(models.EnvoAncestor).count() == 6
 
     # Check specific term
     biome = db.query(models.EnvoTerm).filter_by(id="ENVO:00000428").first()

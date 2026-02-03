@@ -170,12 +170,19 @@ class OntologyClass(Base):
     # Additional metadata can be stored in annotations
     annotations = Column(JSONB, default=dict)
 
-    # Relationships are stored in OntologyRelation table
+    # Relationships where this class is the subject
     relations = relationship(
         "OntologyRelation",
         foreign_keys="OntologyRelation.subject",
         back_populates="subject_class",
         cascade="all, delete-orphan",
+    )
+
+    # Relationships where this class is the object
+    incoming_relations = relationship(
+        "OntologyRelation",
+        foreign_keys="OntologyRelation.object",
+        back_populates="object_class",
     )
 
     @property
@@ -187,7 +194,9 @@ class OntologyClass(Base):
 class OntologyRelation(Base):
     __tablename__ = "ontology_relation"
     __table_args__ = (
-        UniqueConstraint("subject", "predicate", "object"),
+        UniqueConstraint(
+            "subject", "predicate", "object", name="uq_ontology_relation_subject_predicate_object"
+        ),
         Index("idx_ontology_relation_subject", "subject"),
         Index("idx_ontology_relation_object", "object"),
         Index("idx_ontology_relation_predicate", "predicate"),
@@ -196,10 +205,15 @@ class OntologyRelation(Base):
     id = Column(Integer, primary_key=True)
     subject = Column(String, ForeignKey(OntologyClass.id), nullable=False)
     predicate = Column(String, nullable=False)  # e.g., "rdfs:subClassOf", "BFO:0000050"
-    object = Column(String, nullable=False)  # Can reference terms from other ontologies
+    object = Column(String, ForeignKey(OntologyClass.id), nullable=False)
     type = Column(String, nullable=False, default="nmdc:OntologyRelation")
 
-    subject_class = relationship("OntologyClass", back_populates="relations")
+    subject_class = relationship(
+        "OntologyClass", foreign_keys=[subject], back_populates="relations"
+    )
+    object_class = relationship(
+        "OntologyClass", foreign_keys=[object], back_populates="incoming_relations"
+    )
 
 
 class KoTermToModule(Base):

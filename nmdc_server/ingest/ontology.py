@@ -37,7 +37,7 @@ class OntologyClassLoader(OntologyClassCreate):
             "id": doc.get("id"),
             "type": doc.get("type", "nmdc:OntologyClass"),
             "name": doc.get("name", ""),
-            "definition": doc.get("definition", ""),
+            "definition": doc.get("definition"),  # Preserve NULL semantics
             "alternative_names": doc.get("alternative_names", []),
             "is_root": doc.get("is_root", False),
             "is_obsolete": doc.get("is_obsolete", False),
@@ -154,9 +154,9 @@ def load_ontology_relations(
                 skipped_count += 1
                 continue
 
-            # Only include relations where the subject exists in our loaded classes
-            # (object can be from external ontologies)
-            if subject not in all_loaded_ids:
+            # Only include relations where both subject and object exist in our loaded classes
+            # (FK constraints require both to be valid references)
+            if subject not in all_loaded_ids or obj not in all_loaded_ids:
                 skipped_count += 1
                 continue
 
@@ -231,6 +231,16 @@ def populate_envo_terms_from_ontology(db: Session) -> None:
     """
     db.execute(text(insert_envo_terms_sql))
 
+    # Add self-referential ancestors (each term is an ancestor of itself)
+    # This is required for faceted search to work correctly - when searching for
+    # a term X, biosamples with exactly term X should also be found
+    insert_self_ancestors_sql = """
+    INSERT INTO envo_ancestor (id, ancestor_id, direct)
+    SELECT id, id, false
+    FROM envo_term
+    """
+    db.execute(text(insert_self_ancestors_sql))
+
     # Populate EnvoAncestor with direct parent relationships
     insert_direct_parents_sql = """
     INSERT INTO envo_ancestor (id, ancestor_id, direct)
@@ -242,11 +252,13 @@ def populate_envo_terms_from_ontology(db: Session) -> None:
     WHERE r.subject LIKE 'ENVO:%'
       AND r.object LIKE 'ENVO:%'
       AND r.predicate IN ('rdfs:subClassOf', 'BFO:0000050')
+    ON CONFLICT (id, ancestor_id) DO NOTHING
     """
     db.execute(text(insert_direct_parents_sql))
 
     # Populate EnvoAncestor with all ancestors (including indirect)
     # This uses the closure relationships if they exist
+    # Use ON CONFLICT to skip entries already inserted as direct parents
     insert_all_ancestors_sql = """
     INSERT INTO envo_ancestor (id, ancestor_id, direct)
     SELECT DISTINCT
@@ -257,11 +269,7 @@ def populate_envo_terms_from_ontology(db: Session) -> None:
     WHERE r.subject LIKE 'ENVO:%'
       AND r.object LIKE 'ENVO:%'
       AND r.predicate = 'entailed_isa_partof_closure'
-      AND NOT EXISTS (
-          SELECT 1 FROM envo_ancestor ea
-          WHERE ea.id = r.subject
-            AND ea.ancestor_id = r.object
-      )
+    ON CONFLICT (id, ancestor_id) DO NOTHING
     """
     db.execute(text(insert_all_ancestors_sql))
 

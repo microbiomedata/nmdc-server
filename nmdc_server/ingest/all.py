@@ -11,7 +11,7 @@ from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.ingest import (
     biosample,
     data_object,
-    envo,
+    envo,  # Still needed for build_envo_trees
     kegg,
     omics_processing,
     ontology,
@@ -63,22 +63,25 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     )
     mongodb = client[settings.mongo_database]
 
-    # Load generic ontology data first
+    # Load generic ontology data
     logger.info("Loading ontology data...")
-    if (
-        "ontology_class_set" in mongodb.list_collection_names()
-        and "ontology_relation_set" in mongodb.list_collection_names()
-    ):
-        ontology.load(
-            db, mongodb["ontology_class_set"].find(), mongodb["ontology_relation_set"].find()
+    collection_names = mongodb.list_collection_names()
+    if "ontology_class_set" not in collection_names:
+        raise Exception(
+            "Required collection 'ontology_class_set' not found in MongoDB. "
+            "Please ensure the ontology data has been loaded into MongoDB."
         )
-        db.commit()
-        logger.info("Ontology data loaded successfully")
-    else:
-        logger.warning("Ontology collections not found in MongoDB, using legacy ENVO loading")
-        logger.info("Loading envo terms...")
-        envo.load(db)
-        db.commit()
+    if "ontology_relation_set" not in collection_names:
+        raise Exception(
+            "Required collection 'ontology_relation_set' not found in MongoDB. "
+            "Please ensure the ontology data has been loaded into MongoDB."
+        )
+
+    ontology.load(
+        db, mongodb["ontology_class_set"].find(), mongodb["ontology_relation_set"].find()
+    )
+    db.commit()
+    logger.info("Ontology data loaded successfully")
 
     logger.info("Loading Kegg orthology...")
     kegg.load(db)
