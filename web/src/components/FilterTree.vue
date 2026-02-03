@@ -78,6 +78,7 @@ export default defineComponent({
     }, { deep: true });
 
     function setSelected(values: string[]) {
+      console.log('Selected values:', values);
       const c = cloneDeep(otherConditions.value);
       values.forEach((value) => {
         c.push({
@@ -92,7 +93,7 @@ export default defineComponent({
 
     function normalizer(node: EnvoNode) {
       return {
-        id: node.label,
+        id: node.id,
         label: node.label,
         children: node.children,
         isDefaultExpanded: node.isDefaultExpanded || node.isExpanded || false,
@@ -127,7 +128,7 @@ export default defineComponent({
         if (isMatch || childResults.length > 0) {
           // Return normalized node structure that Treeselect expects
           const matchedNode = {
-            id: node.label,
+            id: node.id,
             label: node.label,
             children: childResults.length > 0 ? childResults : node.children?.map(normalizer),
             isDefaultExpanded: childResults.length > 0 ? true : false,
