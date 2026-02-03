@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { useTemplateRef, watch } from 'vue';
+import { computed, useTemplateRef, watch } from 'vue';
 import { isEqual } from 'lodash';
+import { canEditSubmissionMetadata } from '@/views/SubmissionPortal/store';
 
 const emit = defineEmits<{
   validStateChanged: [state: null | string[]];
 }>();
 
 const formRef = useTemplateRef('formRef');
+const isDisabled = computed(() => !canEditSubmissionMetadata());
 
 let prevErrors: null | string[] = null;
-
 const handleValidStateChanged = () => {
   if (formRef.value === null) {
     return;
@@ -31,7 +32,7 @@ const validate = () => {
 
 defineExpose({
   validate,
-  isDisabled: false,
+  isDisabled,
 });
 </script>
 
@@ -39,6 +40,7 @@ defineExpose({
   <v-form
     ref="formRef"
     validate-on="eager invalid-input"
+    :disabled="isDisabled"
   >
     <slot />
   </v-form>

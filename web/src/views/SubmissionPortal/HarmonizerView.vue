@@ -735,9 +735,10 @@ export default defineComponent({
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
-    <submission-permission-banner
+    <SubmissionPermissionBanner
       v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
     />
+    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <v-alert
       v-if="!hasValidUserFacilitySelection"
       class="overflow-visible"
@@ -747,7 +748,6 @@ export default defineComponent({
       title="Incomplete User Facility Selection"
       type="warning"
     />
-    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <div class="d-flex flex-column px-2 pb-2 pt-2">
       <div class="d-flex align-center">
         <v-btn

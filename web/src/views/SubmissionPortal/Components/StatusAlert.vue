@@ -17,8 +17,9 @@ export default defineComponent({
 <template>
   <v-alert
     :text="message"
+    tile
     type="info"
-    class="ma-2 overflow-visible"
+    class="overflow-visible"
   >
     <template #append>
       <v-menu

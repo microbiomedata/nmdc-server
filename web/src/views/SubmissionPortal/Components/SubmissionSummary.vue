@@ -59,9 +59,6 @@ export default defineComponent({
         title="Submission Summary"
         subtitle="Status and links to each portion of your submission."
       />
-      <submission-permission-banner
-        v-if="!canEditSubmissionMetadata()"
-      />
       <v-expansion-panels
         model="panels"
         multiple

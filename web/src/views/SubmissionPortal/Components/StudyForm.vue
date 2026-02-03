@@ -159,10 +159,6 @@ export default defineComponent({
         <submission-docs-link anchor="study" />
       </template>
     </PageTitle>
-    <submission-permission-banner
-      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
-    />
-    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <SubmissionForm
       ref="formRef"
       @valid-state-changed="(state) => validationState.studyForm = state"

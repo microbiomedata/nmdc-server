@@ -181,10 +181,6 @@ export default defineComponent({
         <submission-docs-link anchor="multi-omics-data" />
       </template>
     </PageTitle>
-    <submission-permission-banner
-      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
-    />
-    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <SubmissionForm
       ref="formRef"
       @valid-state-changed="(state) => validationState.multiOmicsForm = state"

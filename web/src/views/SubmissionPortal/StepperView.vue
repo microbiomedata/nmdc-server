@@ -5,11 +5,18 @@ import OrcidId from '@/components/Presentation/OrcidId.vue';
 
 import { stateRefs } from '@/store';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
-import { getSubmissionLockedBy, incrementalSaveRecordRequest } from './store';
+import {
+  canEditSubmissionByStatus,
+  canEditSubmissionMetadata,
+  getSubmissionLockedBy,
+  incrementalSaveRecordRequest
+} from './store';
 import { unlockSubmission } from './store/api';
+import SubmissionPermissionBanner from '@/views/SubmissionPortal/Components/SubmissionPermissionBanner.vue';
+import StatusAlert from '@/views/SubmissionPortal/Components/StatusAlert.vue';
 
 export default defineComponent({
-  components: { SubmissionNavigationSidebar, OrcidId },
+  components: {StatusAlert, SubmissionPermissionBanner, SubmissionNavigationSidebar, OrcidId },
 
   props: {
     id: {
@@ -31,6 +38,8 @@ export default defineComponent({
     });
 
     const isEditingSubmission = computed(() => props.id !== null);
+    const showPermissionBanner = computed(() => canEditSubmissionByStatus() && !canEditSubmissionMetadata());
+    const showStatusAlert = computed(() => !canEditSubmissionByStatus());
 
     window.addEventListener('beforeunload', () => {
       if (isEditingSubmission.value) {
@@ -44,6 +53,8 @@ export default defineComponent({
       loggedInUserHasLock,
       getSubmissionLockedBy,
       isEditingSubmission,
+      showPermissionBanner,
+      showStatusAlert,
       incrementalSaveRecordRequest
     };
   },
@@ -60,9 +71,13 @@ export default defineComponent({
       color="primary"
     />
     <SubmissionNavigationSidebar class="mx-0" />
-    <v-container v-if="loggedInUserHasLock || !isEditingSubmission">
-      <router-view />
-    </v-container>
+    <div v-if="loggedInUserHasLock || !isEditingSubmission">
+      <SubmissionPermissionBanner v-if="showPermissionBanner" />
+      <StatusAlert v-if="showStatusAlert" />
+      <v-container>
+        <router-view />
+      </v-container>
+    </div>
     <v-alert v-else>
       <p class="text-h5">
         This submission is currently being edited by:

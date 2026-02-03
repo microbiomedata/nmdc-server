@@ -57,10 +57,6 @@ export default defineComponent({
         for your samples.
       </template>
     </PageTitle>
-    <submission-permission-banner
-      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
-    />
-    <StatusAlert v-if="!canEditSubmissionByStatus()" />
     <SubmissionForm
       @valid-state-changed="(state) => validationState.sampleEnvironmentForm = state"
     >
