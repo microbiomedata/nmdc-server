@@ -2,7 +2,7 @@ import logging
 from contextlib import contextmanager
 from datetime import datetime
 from time import perf_counter
-from typing import Any, Dict, Optional, Set, Union
+from typing import Any, Dict, List, Optional, Set, Union
 
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
@@ -26,6 +26,29 @@ EXCLUDED_FIELDS = {
     "igsn_biosample_identifiers",
     "img_identifiers",
 }
+
+
+class ETLReport:
+    """A report about the ETL process."""
+
+    def __init__(self, plural_subject: str = "Things"):
+        self.plural_subject: str = plural_subject
+        self.num_extracted: int = 0
+        self.num_loaded: int = 0
+
+    def __str__(self) -> str:
+        """Get a single-line representation of the ETL report."""
+        return (
+            f"{self.plural_subject}: "
+            f"extracted {self.num_extracted}, "
+            f"loaded {self.num_loaded}."
+        )
+
+    def get_bullets(self) -> List[str]:
+        """Get a list of bullet points representing the ETL report."""
+        return [
+            f"• {self.plural_subject}: extracted `{self.num_extracted}`, loaded `{self.num_loaded}`",
+        ]
 
 
 def coerce_value(value: Union[str, int, float]) -> AnnotationValue:
