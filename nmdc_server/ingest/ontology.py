@@ -28,9 +28,7 @@ class OntologyClassLoader(OntologyClassCreate):
         return self.id.split(":")[0] if ":" in self.id else ""
 
 
-def load_ontology_classes(
-    db: Session, cursor: Cursor, report: ETLReport
-) -> Dict[str, Set[str]]:
+def load_ontology_classes(db: Session, cursor: Cursor, report: ETLReport) -> Dict[str, Set[str]]:
     logger.info("Loading ontology classes...")
 
     loaded_classes: Dict[str, Set[str]] = {}
