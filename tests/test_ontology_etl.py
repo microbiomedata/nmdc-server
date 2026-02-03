@@ -226,12 +226,16 @@ def test_ontology_etl_integration(db: Session):
         },
     ]
 
-    # Run the ETL
+    # Run the ETL (ontology.load populates generic tables, envo.load populates ENVO tables)
     ontology.load(db, MockCursor(class_data), MockCursor(relation_data))  # type: ignore
+    db.commit()
 
     # Verify generic tables were populated
     assert db.query(models.OntologyClass).count() == 3
     assert db.query(models.OntologyRelation).count() == 4  # 2 direct + 2 closure
+
+    # Now populate ENVO tables from the generic tables
+    envo.load(db)
 
     # Verify the 'relations' field in source data was properly removed by the loader
     # (the biome class had relations: [] in its source document)
