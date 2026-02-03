@@ -1,6 +1,7 @@
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
 import { User } from '@/types';
+import { RouteLocationRaw } from 'vue-router';
 
 /**
  * A manifest of the options available in DataHarmonizer
@@ -222,6 +223,12 @@ export interface NmdcAddress {
   state: string;
   postalCode: string;
   country: string;
+}
+
+export interface SubmissionPage {
+  title: string;
+  link: RouteLocationRaw;
+  validationMessages: string[] | null;
 }
 
 export interface SampleMetadataValidationState {

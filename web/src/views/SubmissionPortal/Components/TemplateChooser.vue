@@ -5,19 +5,16 @@ import {
   canEditSubmissionByStatus,
   canEditSubmissionMetadata,
   packageName,
-  status,
   templateHasData,
   templateList,
   validationState,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
-import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
-import StatusAlert from './StatusAlert.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
 
 export default defineComponent({
-  components: { SubmissionForm, SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert, PageTitle },
+  components: { SubmissionForm, SubmissionDocsLink, PageTitle },
   setup() {
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
@@ -31,8 +28,6 @@ export default defineComponent({
       canEditSubmissionMetadata,
       templateHasData,
       canEditSubmissionByStatus,
-      status,
-      StatusAlert,
       validationState,
     };
   },

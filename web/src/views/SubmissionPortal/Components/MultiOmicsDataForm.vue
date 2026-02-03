@@ -13,16 +13,13 @@ import {
   multiOmicsAssociations,
   multiOmicsForm,
   removeAwardDoi,
-  status,
   templateHasData,
   validationState,
 } from '../store';
 
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
-import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
 import DoeFacility from './DoeFacility.vue';
-import StatusAlert from './StatusAlert.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
 
@@ -34,8 +31,6 @@ export default defineComponent({
     DataTypes,
     DoeFacility,
     SubmissionDocsLink,
-    SubmissionPermissionBanner,
-    StatusAlert,
     PageTitle,
   },
   setup() {
@@ -164,8 +159,6 @@ export default defineComponent({
       checkJGITemplates,
       templateHasData,
       canEditSubmissionByStatus,
-      status,
-      StatusAlert,
     };
   },
 });

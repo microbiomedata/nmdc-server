@@ -11,16 +11,13 @@ import {
   permissionTitleToDbValueMap,
   piImageUrl,
   primaryStudyImageUrl,
-  status,
   studyForm,
   validationState,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
-import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import ImageUpload from './ImageUpload.vue';
-import StatusAlert from './StatusAlert.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 import PageSection from '@/components/Presentation/PageSection.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
@@ -31,8 +28,6 @@ export default defineComponent({
     SubmissionForm,
     ImageUpload,
     SubmissionDocsLink,
-    SubmissionPermissionBanner,
-    StatusAlert,
     PageSection,
     PageTitle,
   },
@@ -141,8 +136,6 @@ export default defineComponent({
       primaryStudyImageUrl,
       piImageUrl,
       canEditSubmissionByStatus,
-      status,
-      StatusAlert,
       revalidate,
     };
   },

@@ -1,38 +1,36 @@
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
-import {
-  computed, reactive, Ref, ref, shallowRef, watch,
-} from 'vue';
-import {
-  chunk, clone, forEach, isEqual, isString,
-} from 'lodash';
+import { computed, reactive, Ref, ref, shallowRef, watch, } from 'vue';
+import { chunk, clone, forEach, isEqual, isString, } from 'lodash';
 import axios from 'axios';
 import { User } from '@/types';
 import {
-  HARMONIZER_TEMPLATES,
-  MetadataSubmission,
-  MetadataSuggestion,
-  NmdcAddress,
-  SubmissionEditorRole,
-  PermissionTitle,
-  SubmissionStatusKey,
-  SuggestionType,
-  SuggestionsMode,
-  MetadataSuggestionRequest,
-  Doi,
-  DATA_MG_INTERLEAVED,
+  AcquisitionProtocol,
+  AllowedStatusTransitions,
   DATA_MG,
-  DATA_MT_INTERLEAVED,
+  DATA_MG_INTERLEAVED,
   DATA_MT,
+  DATA_MT_INTERLEAVED,
+  DataProtocol,
+  Doi,
   EMSL,
+  HARMONIZER_TEMPLATES,
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
-  AcquisitionProtocol,
-  DataProtocol,
-  SampleProtocol,
+  MetadataSubmission,
   MetadataSubmissionRecord,
-  AllowedStatusTransitions,
+  MetadataSuggestion,
+  MetadataSuggestionRequest,
+  NmdcAddress,
+  PermissionTitle,
+  SampleMetadataValidationState,
+  SampleProtocol,
+  SubmissionEditorRole,
+  SubmissionPage,
+  SubmissionStatusKey,
   SubmissionValidationState,
+  SuggestionsMode,
+  SuggestionType,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
@@ -55,6 +53,7 @@ const permissionLevelHierarchy: Record<SubmissionEditorRole, number> = {
 //use schema enum to define submission status
 const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
 const status = ref<SubmissionStatusKey>('InProgress');
+const statusDisplay = computed(() => SubmissionStatusEnum[status.value].title)
 
 function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
   const excludeFromAll: SubmissionStatusKey[] = [
@@ -92,6 +91,8 @@ function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownTyp
 }
 
 const studyName = ref('');
+const createdDate = ref<Date | null>(null);
+const modifiedDate = ref<Date | null>(null);
 const isTestSubmission = ref(false);
 const primaryStudyImageUrl = ref<string | null>(null);
 const piImageUrl = ref<string | null>(null);
@@ -214,6 +215,70 @@ function isSubmissionValid() {
   }
   return true;
 }
+
+function combineErrors(...errorLists: (null | string[])[]) : null | string[] {
+  let combined: null | string[] = null;
+  errorLists.forEach((errors) => {
+    if (errors) {
+      if (combined === null) {
+        combined = [];
+      }
+      combined = combined.concat(errors);
+    }
+  });
+  return combined;
+}
+
+function combineSampleMetadataErrors(sampleMetadataState: SampleMetadataValidationState | null) : string[] | null {
+  if (sampleMetadataState === null) {
+    return null;
+  }
+  const combinedErrors: string[] = [];
+  const tabsValidatedKeys = Object.keys(sampleMetadataState.tabsValidated);
+  if (tabsValidatedKeys.length === 0) {
+    combinedErrors.push('No tabs have been validated.');
+  } else {
+    tabsValidatedKeys.forEach((tab) => {
+      let message = '';
+      if (!sampleMetadataState.tabsValidated[tab]) {
+        message = `Tab "${ tab }" has not been validated.`;
+      }
+      if (tab in sampleMetadataState.invalidCells) {
+        const invalidCells = sampleMetadataState.invalidCells[tab];
+        if (invalidCells && Object.keys(invalidCells).length > 0) {
+          message = `Tab "${ tab }" has invalid cells.`;
+        }
+      }
+      if (message) {
+        combinedErrors.push(message);
+      }
+    })
+  }
+  return combinedErrors;
+}
+
+const submissionPages = computed<SubmissionPage[]>(() => ([
+  {
+    title: 'Study Information',
+    link: { name: 'Study Form' },
+    validationMessages: validationState.studyForm,
+  },
+  {
+    title: 'Multi-omics Data',
+    link: { name: 'Multiomics Form' },
+    validationMessages: combineErrors(validationState.multiOmicsForm, validationState.senderShippingInfoForm),
+  },
+  {
+    title: 'Sample Environment',
+    link: { name: 'Sample Environment' },
+    validationMessages: validationState.sampleEnvironmentForm,
+  },
+  {
+    title: 'Sample Metadata',
+    link: { name: 'Submission Sample Editor' },
+    validationMessages: combineSampleMetadataErrors(validationState.sampleMetadata),
+  },
+]))
 
 const addressFormDefault = {
   // Shipper info
@@ -611,6 +676,8 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   if (!isEqual(validationState, record.metadata_submission.validationState)) {
     Object.assign(validationState, record.metadata_submission.validationState);
   }
+  createdDate.value = new Date(record.created);
+  modifiedDate.value = new Date(record.date_last_modified);
   sampleData.value = record.metadata_submission.sampleData;
   status.value = record.status;
   if (record.permission_level !== null) {
@@ -720,7 +787,10 @@ export {
   templateList,
   hasChanged,
   status,
+  statusDisplay,
   studyName,
+  createdDate,
+  modifiedDate,
   isTestSubmission,
   incrementalSaveRecordRequest,
   primaryStudyImageUrl,
@@ -729,6 +799,7 @@ export {
   suggestionMode,
   suggestionType,
   SubmissionStatusEnum,
+  submissionPages,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,
