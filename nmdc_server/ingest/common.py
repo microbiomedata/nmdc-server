@@ -1,6 +1,8 @@
 import logging
+from contextlib import contextmanager
 from datetime import datetime
-from typing import Any, Dict, Optional, Set, Union
+from time import perf_counter
+from typing import Any, Dict, List, Optional, Set, Union
 
 from pydantic import BaseModel
 from sqlalchemy.exc import IntegrityError
@@ -24,6 +26,29 @@ EXCLUDED_FIELDS = {
     "igsn_biosample_identifiers",
     "img_identifiers",
 }
+
+
+class ETLReport:
+    """A report about the ETL process."""
+
+    def __init__(self, plural_subject: str = "Things"):
+        self.plural_subject: str = plural_subject
+        self.num_extracted: int = 0
+        self.num_loaded: int = 0
+
+    def __str__(self) -> str:
+        """Get a single-line representation of the ETL report."""
+        return (
+            f"{self.plural_subject}: "
+            f"extracted {self.num_extracted}, "
+            f"loaded {self.num_loaded}."
+        )
+
+    def get_bullets(self) -> List[str]:
+        """Get a list of bullet points representing the ETL report."""
+        return [
+            f"• {self.plural_subject}: extracted `{self.num_extracted}`, loaded `{self.num_loaded}`",
+        ]
 
 
 def coerce_value(value: Union[str, int, float]) -> AnnotationValue:
@@ -72,3 +97,29 @@ def maybe_merge_download_artifact(ingest_db: Session, query):
         except IntegrityError:
             logger.info("Error: data object with download history was removed.")
             ingest_db.rollback()
+
+
+@contextmanager
+def duration_logger(logger: logging.Logger, task_name: str = "Task"):
+    """
+    Context manager that developers can use (via `with`) to measure how long a task takes to perform
+    and print that duration via the specified logger (e.g. to print it to the console).
+
+    Example usage:
+    ```
+    with duration_logger(logger):
+        do_thing()
+    ```
+    """
+
+    logger.info(f"{task_name}: Starting.")
+    start_time = perf_counter()
+
+    # Note: We use `try/finally` here to ensure that we always log the duration,
+    #       even if the task (to which we yield) raises an exception.
+    try:
+        yield  # the task
+    finally:
+        end_time = perf_counter()
+        duration_sec = end_time - start_time
+        logger.info(f"{task_name}: Finished in {round(duration_sec)} seconds.")

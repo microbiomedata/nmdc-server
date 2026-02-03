@@ -5,7 +5,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import click
 import requests
@@ -13,9 +13,10 @@ from google.cloud import secretmanager
 from sqlalchemy import text
 
 from nmdc_server import jobs
-from nmdc_server.config import settings
+from nmdc_server.config import get_database_name_safely_for_logging, settings
 from nmdc_server.database import SessionLocal, SessionLocalIngest
 from nmdc_server.ingest import errors
+from nmdc_server.ingest.common import ETLReport
 from nmdc_server.models import SubmissionImagesObject
 from nmdc_server.static_files import generate_submission_schema_files, initialize_static_directory
 from nmdc_server.storage import BucketName, storage
@@ -119,7 +120,7 @@ def send_slack_message(text: str) -> bool:
     Reference: https://api.slack.com/messaging/webhooks#posting_with_webhooks
     """
     is_sent = False
-
+    click.echo(text)
     # Check whether a Slack Incoming Webhook URL is defined.
     if isinstance(settings.slack_webhook_url_for_ingester, str):
         click.echo(f"Sending Slack message having text: {text}")
@@ -139,6 +140,23 @@ def send_slack_message(text: str) -> bool:
         click.echo("No Slack Incoming Webhook URL is defined.", err=True)
 
     return is_sent
+
+
+def format_report_bullets(reports: Dict[str, ETLReport]) -> str:
+    r"""
+    Formats all bullets from all reports into a single string.
+
+    >>> format_report_bullets({
+    ...     "biosamples": ETLReport(plural_subject="Biosamples"),
+    ...     "studies": ETLReport(plural_subject="Studies"),
+    ... })
+    '• Biosamples: extracted `0`, loaded `0`\n• Studies: extracted `0`, loaded `0`'
+    """
+
+    all_bullets = []
+    for report in reports.values():
+        all_bullets.extend(report.get_bullets())
+    return "\n".join(all_bullets)
 
 
 def require_setting(name: str, flag: str = "that flag"):
@@ -234,16 +252,19 @@ def ingest(
     ingest_start_datetime_str = ingest_start_datetime.isoformat(timespec="seconds")
 
     # Send a Slack message announcing that this ingest is starting.
+    ingest_database_name = get_database_name_safely_for_logging(settings.ingest_database_uri)
     send_slack_message(
         f"▶️ Ingest is starting.\n"
         f"• Environment: `{settings.environment_name_for_ingester}`\n"
-        f"• Start time: `{ingest_start_datetime_str}`"
+        f"• Start time: `{ingest_start_datetime_str}`\n"
+        f"• Ingest database: `{ingest_database_name}`"
     )
 
     # Unless the user opted to skip the ETL step, perform it now.
+    reports = {}  # initially empty
     if not skip_etl:
         try:
-            jobs.do_ingest(function_limit, skip_annotation)
+            reports = jobs.do_ingest(function_limit, skip_annotation)
         except Exception as e:
             send_slack_message(
                 f"❌ Ingest failed.\n"
@@ -324,10 +345,13 @@ def ingest(
     ingest_duration_minutes = math.floor(ingest_duration.total_seconds() / 60)
 
     # Send a Slack message announcing that this ingest is done.
+    formatted_report_bullets = format_report_bullets(reports)
+    more_bullets = ("\n" + formatted_report_bullets) if len(formatted_report_bullets) > 0 else ""
     send_slack_message(
         f"✅ Ingest *finished successfully* in _{ingest_duration_minutes} minutes_.\n"
         f"• Environment: `{settings.environment_name_for_ingester}`\n"
         f"• Start time: `{ingest_start_datetime_str}`"
+        f"{more_bullets}"
     )
 
 
