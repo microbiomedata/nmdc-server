@@ -1,5 +1,6 @@
 import functools
 import itertools
+import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set
@@ -11,6 +12,93 @@ from sqlalchemy.orm import Session
 from nmdc_server.database import SessionLocal
 from nmdc_server.models import Biosample, EnvoAncestor, EnvoTerm, EnvoTree
 from nmdc_server.schemas import EnvoTreeNode
+
+logger = logging.getLogger(__name__)
+
+
+def load(db: Session) -> None:
+    """Populate the EnvoTerm and EnvoAncestor tables from the generic ontology tables.
+
+    This maintains backward compatibility with existing code that uses EnvoTerm.
+
+    Note: This function does not commit. The caller is responsible for
+    committing the transaction to ensure atomicity (if INSERTs fail,
+    the DELETEs will also be rolled back).
+    """
+    logger.info("Populating EnvoTerm table from generic ontology data...")
+
+    # First, clear existing ENVO data
+    db.execute(text("DELETE FROM envo_ancestor"))
+    db.execute(text("DELETE FROM envo_term"))
+
+    # Insert ENVO terms from OntologyClass
+    insert_envo_terms_sql = """
+    INSERT INTO envo_term (id, label, data)
+    SELECT
+        oc.id,
+        oc.name as label,
+        jsonb_build_object(
+            'definition', COALESCE(oc.definition, ''),
+            'alternative_names', oc.alternative_names,
+            'is_obsolete', oc.is_obsolete,
+            'is_root', oc.is_root,
+            'annotations', oc.annotations
+        ) as data
+    FROM ontology_class oc
+    WHERE oc.id LIKE 'ENVO:%'
+    """
+    db.execute(text(insert_envo_terms_sql))
+
+    # Add self-referential ancestors (each term is an ancestor of itself)
+    # This is required for faceted search to work correctly - when searching for
+    # a term X, biosamples with exactly term X should also be found
+    insert_self_ancestors_sql = """
+    INSERT INTO envo_ancestor (id, ancestor_id, direct)
+    SELECT id, id, false
+    FROM envo_term
+    """
+    db.execute(text(insert_self_ancestors_sql))
+
+    # Populate EnvoAncestor with direct parent relationships
+    insert_direct_parents_sql = """
+    INSERT INTO envo_ancestor (id, ancestor_id, direct)
+    SELECT DISTINCT
+        r.subject as id,
+        r.object as ancestor_id,
+        true as direct
+    FROM ontology_relation r
+    WHERE r.subject LIKE 'ENVO:%'
+      AND r.object LIKE 'ENVO:%'
+      AND r.predicate IN ('rdfs:subClassOf', 'BFO:0000050')
+    ON CONFLICT (id, ancestor_id) DO NOTHING
+    """
+    db.execute(text(insert_direct_parents_sql))
+
+    # Populate EnvoAncestor with all ancestors (including indirect)
+    # This uses the closure relationships if they exist
+    # Use ON CONFLICT to skip entries already inserted as direct parents
+    insert_all_ancestors_sql = """
+    INSERT INTO envo_ancestor (id, ancestor_id, direct)
+    SELECT DISTINCT
+        r.subject as id,
+        r.object as ancestor_id,
+        false as direct
+    FROM ontology_relation r
+    WHERE r.subject LIKE 'ENVO:%'
+      AND r.object LIKE 'ENVO:%'
+      AND r.predicate = 'entailed_isa_partof_closure'
+    ON CONFLICT (id, ancestor_id) DO NOTHING
+    """
+    db.execute(text(insert_all_ancestors_sql))
+
+    # Get counts for logging (uses uncommitted data in current transaction)
+    envo_term_count = db.execute(text("SELECT COUNT(*) FROM envo_term")).scalar()
+    envo_ancestor_count = db.execute(text("SELECT COUNT(*) FROM envo_ancestor")).scalar()
+
+    logger.info(
+        f"Populated {envo_term_count} ENVO terms and {envo_ancestor_count} ancestor relationships"
+    )
+
 
 def get_biosample_roots(db: Session) -> Dict[str, Set[str]]:
     """

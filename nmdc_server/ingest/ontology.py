@@ -101,7 +101,11 @@ def load_ontology_classes(db: Session, cursor: Cursor) -> Dict[str, Set[str]]:
 
 
 def _bulk_upsert_classes(db: Session, classes: List[Dict]) -> None:
-    """Bulk upsert ontology classes using PostgreSQL's ON CONFLICT."""
+    """Bulk upsert ontology classes using PostgreSQL's ON CONFLICT.
+
+    Note: This function does not commit. The caller is responsible for
+    committing the transaction to ensure atomicity across all batches.
+    """
     if not classes:
         return
 
@@ -118,7 +122,6 @@ def _bulk_upsert_classes(db: Session, classes: List[Dict]) -> None:
         },
     )
     db.execute(stmt)
-    db.commit()
 
 
 def load_ontology_relations(
@@ -190,7 +193,11 @@ def load_ontology_relations(
 
 
 def _bulk_insert_relations(db: Session, relations: List[Dict]) -> None:
-    """Bulk insert ontology relations, ignoring conflicts."""
+    """Bulk insert ontology relations, ignoring conflicts.
+
+    Note: This function does not commit. The caller is responsible for
+    committing the transaction to ensure atomicity across all batches.
+    """
     if not relations:
         return
 
@@ -198,90 +205,6 @@ def _bulk_insert_relations(db: Session, relations: List[Dict]) -> None:
     # Use on_conflict_do_nothing since we have a unique constraint on (subject, predicate, object)
     stmt = stmt.on_conflict_do_nothing(index_elements=["subject", "predicate", "object"])
     db.execute(stmt)
-    db.commit()
-
-
-def populate_envo_terms_from_ontology(db: Session) -> None:
-    """Populate the EnvoTerm and EnvoAncestor tables from the generic ontology tables.
-
-    This maintains backward compatibility with existing code that uses EnvoTerm.
-    """
-    logger.info("Populating EnvoTerm table from generic ontology data...")
-
-    # First, clear existing ENVO data
-    db.execute(text("DELETE FROM envo_ancestor"))
-    db.execute(text("DELETE FROM envo_term"))
-    db.commit()
-
-    # Insert ENVO terms from OntologyClass
-    insert_envo_terms_sql = """
-    INSERT INTO envo_term (id, label, data)
-    SELECT
-        oc.id,
-        oc.name as label,
-        jsonb_build_object(
-            'definition', COALESCE(oc.definition, ''),
-            'alternative_names', oc.alternative_names,
-            'is_obsolete', oc.is_obsolete,
-            'is_root', oc.is_root,
-            'annotations', oc.annotations
-        ) as data
-    FROM ontology_class oc
-    WHERE oc.id LIKE 'ENVO:%'
-    """
-    db.execute(text(insert_envo_terms_sql))
-
-    # Add self-referential ancestors (each term is an ancestor of itself)
-    # This is required for faceted search to work correctly - when searching for
-    # a term X, biosamples with exactly term X should also be found
-    insert_self_ancestors_sql = """
-    INSERT INTO envo_ancestor (id, ancestor_id, direct)
-    SELECT id, id, false
-    FROM envo_term
-    """
-    db.execute(text(insert_self_ancestors_sql))
-
-    # Populate EnvoAncestor with direct parent relationships
-    insert_direct_parents_sql = """
-    INSERT INTO envo_ancestor (id, ancestor_id, direct)
-    SELECT DISTINCT
-        r.subject as id,
-        r.object as ancestor_id,
-        true as direct
-    FROM ontology_relation r
-    WHERE r.subject LIKE 'ENVO:%'
-      AND r.object LIKE 'ENVO:%'
-      AND r.predicate IN ('rdfs:subClassOf', 'BFO:0000050')
-    ON CONFLICT (id, ancestor_id) DO NOTHING
-    """
-    db.execute(text(insert_direct_parents_sql))
-
-    # Populate EnvoAncestor with all ancestors (including indirect)
-    # This uses the closure relationships if they exist
-    # Use ON CONFLICT to skip entries already inserted as direct parents
-    insert_all_ancestors_sql = """
-    INSERT INTO envo_ancestor (id, ancestor_id, direct)
-    SELECT DISTINCT
-        r.subject as id,
-        r.object as ancestor_id,
-        false as direct
-    FROM ontology_relation r
-    WHERE r.subject LIKE 'ENVO:%'
-      AND r.object LIKE 'ENVO:%'
-      AND r.predicate = 'entailed_isa_partof_closure'
-    ON CONFLICT (id, ancestor_id) DO NOTHING
-    """
-    db.execute(text(insert_all_ancestors_sql))
-
-    db.commit()
-
-    # Get counts for logging
-    envo_term_count = db.execute(text("SELECT COUNT(*) FROM envo_term")).scalar()
-    envo_ancestor_count = db.execute(text("SELECT COUNT(*) FROM envo_ancestor")).scalar()
-
-    logger.info(
-        f"Populated {envo_term_count} ENVO terms and {envo_ancestor_count} ancestor relationships"
-    )
 
 
 def load(db: Session, class_cursor: Cursor, relation_cursor: Cursor):
@@ -297,6 +220,3 @@ def load(db: Session, class_cursor: Cursor, relation_cursor: Cursor):
 
     # Load ontology relations
     load_ontology_relations(db, relation_cursor, loaded_classes)
-
-    # Populate ENVO-specific tables for backward compatibility
-    populate_envo_terms_from_ontology(db)

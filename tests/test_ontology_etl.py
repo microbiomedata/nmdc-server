@@ -3,7 +3,7 @@
 from sqlalchemy.orm import Session
 
 from nmdc_server import models
-from nmdc_server.ingest import ontology
+from nmdc_server.ingest import envo, ontology
 
 
 def test_populate_envo_from_generic_ontology(db: Session):
@@ -100,8 +100,8 @@ def test_populate_envo_from_generic_ontology(db: Session):
     )
     db.commit()
 
-    # Run the population function
-    ontology.populate_envo_terms_from_ontology(db)
+    # Run the ENVO population function
+    envo.load(db)
 
     # Verify EnvoTerm table
     envo_terms = db.query(models.EnvoTerm).order_by(models.EnvoTerm.id).all()
@@ -233,7 +233,9 @@ def test_ontology_etl_integration(db: Session):
             "alternative_names": ["ecological biome"],
             "is_root": False,
             "is_obsolete": False,
-            "relations": [],  # This field is removed by the loader (stored in separate table)
+            # MongoDB documents may include a 'relations' field that the loader
+            # removes before inserting (relations are stored in ontology_relation table)
+            "relations": [],
         },
         {
             "id": "ENVO:00000446",
@@ -284,6 +286,12 @@ def test_ontology_etl_integration(db: Session):
     # Verify generic tables were populated
     assert db.query(models.OntologyClass).count() == 3
     assert db.query(models.OntologyRelation).count() == 4  # 2 direct + 2 closure
+
+    # Verify the 'relations' field in source data was properly ignored
+    # (the biome class had relations: [] in its source document)
+    biome_class = db.query(models.OntologyClass).filter_by(id="ENVO:00000428").first()
+    assert biome_class is not None
+    assert biome_class.name == "biome"
 
     # Verify ENVO tables were populated
     assert db.query(models.EnvoTerm).count() == 3

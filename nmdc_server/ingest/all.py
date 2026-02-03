@@ -12,7 +12,7 @@ from nmdc_server.ingest import (
     biosample,
     common,
     data_object,
-    envo,  # Still needed for build_envo_trees
+    envo,
     kegg,
     omics_processing,
     ontology,
