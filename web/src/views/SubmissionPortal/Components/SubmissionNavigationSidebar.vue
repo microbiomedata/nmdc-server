@@ -23,21 +23,26 @@ export default defineComponent({
         return null;
       }
       const combinedErrors: string[] = [];
-      Object.keys(sampleMetadataState.tabsValidated).forEach((tab) => {
-        let message = '';
-        if (!sampleMetadataState.tabsValidated[tab]) {
-          message = `Tab "${tab}" has not been validated.`;
-        }
-        if (tab in sampleMetadataState.invalidCells) {
-          const invalidCells = sampleMetadataState.invalidCells[tab];
-          if (invalidCells && Object.keys(invalidCells).length > 0) {
-            message = `Tab "${tab}" has invalid cells.`;
+      const tabsValidatedKeys = Object.keys(sampleMetadataState.tabsValidated);
+      if (tabsValidatedKeys.length === 0) {
+        combinedErrors.push('No tabs have been validated.');
+      } else {
+        tabsValidatedKeys.forEach((tab) => {
+          let message = '';
+          if (!sampleMetadataState.tabsValidated[tab]) {
+            message = `Tab "${ tab }" has not been validated.`;
           }
-        }
-        if (message) {
-          combinedErrors.push(message);
-        }
-      })
+          if (tab in sampleMetadataState.invalidCells) {
+            const invalidCells = sampleMetadataState.invalidCells[tab];
+            if (invalidCells && Object.keys(invalidCells).length > 0) {
+              message = `Tab "${ tab }" has invalid cells.`;
+            }
+          }
+          if (message) {
+            combinedErrors.push(message);
+          }
+        })
+      }
       return combinedErrors;
     }
 

@@ -638,8 +638,13 @@ export default defineComponent({
       if (r && schema) {
         await harmonizerApi.init(r, schema, activeTemplate.value?.schemaClass, goldEcosystemTree);
         await nextTick();
+        // Load data and invalid cells for the active tab
         harmonizerApi.loadData(activeTemplateData.value);
         harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
+        // If the tab has no validation state from the server, mark it as unvalidated
+        if (!validationState.sampleMetadata || !has(validationState.sampleMetadata.tabsValidated, activeTemplateKey.value!)) {
+          setTabValidated(activeTemplateKey.value!, false);
+        }
         addHooks();
         metadataSuggestions.value = getPendingSuggestions(
           (route.params as { id: string }).id,

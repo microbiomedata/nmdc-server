@@ -202,7 +202,11 @@ function isSubmissionValid() {
   if (validationState.sampleMetadata == null) {
     return false;
   }
-  if (Object.values(validationState.sampleMetadata.tabsValidated).some((validated) => !validated)) {
+  const tabsValidatedValues = Object.values(validationState.sampleMetadata.tabsValidated);
+  if (tabsValidatedValues.length === 0) {
+    return false;
+  }
+  if (tabsValidatedValues.some((validated) => !validated)) {
     return false;
   }
   if (Object.values(validationState.sampleMetadata.invalidCells).some((cells) => Object.keys(cells).length > 0)) {
@@ -422,6 +426,10 @@ const suggestionMode = ref(SuggestionsMode.LIVE);
 const suggestionType = ref(SuggestionType.ALL);
 
 watch(templateList, (newList, oldList) => {
+  if (hasChanged.value === 0) {
+    // Initial load, do nothing
+    return;
+  }
   if (isEqual(newList, oldList)) {
     return;
   }
