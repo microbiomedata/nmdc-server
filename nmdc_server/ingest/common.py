@@ -89,6 +89,7 @@ def duration_logger(logger: logging.Logger, task_name: str = "Task"):
     ```
     """
 
+    logger.info(f"{task_name}: Starting.")
     start_time = perf_counter()
 
     # Note: We use `try/finally` here to ensure that we always log the duration,
@@ -98,4 +99,4 @@ def duration_logger(logger: logging.Logger, task_name: str = "Task"):
     finally:
         end_time = perf_counter()
         duration_sec = end_time - start_time
-        logger.info(f"{task_name} took {round(duration_sec)} seconds.")
+        logger.info(f"{task_name}: Finished in {round(duration_sec)} seconds.")

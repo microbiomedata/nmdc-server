@@ -63,22 +63,18 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     )
     mongodb = client[settings.mongo_database]
 
-    logger.info("Loading ENVO terms...")
     with duration_logger(logger, "Loading ENVO terms"):
         envo.load(db)
         db.commit()
 
-    logger.info("Loading KEGG orthology...")
     with duration_logger(logger, "Loading KEGG orthology"):
         kegg.load(db)
         db.commit()
 
-    logger.info("Loading studies...")
     with duration_logger(logger, "Loading studies"):
         study.load(db, mongodb["study_set"].find())
         db.commit()
 
-    logger.info("Loading data objects...")
     with duration_logger(logger, "Loading data objects"):
         data_object.load(
             db,
@@ -87,7 +83,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         )
         db.commit()
 
-    logger.info("Loading biosamples...")
     with duration_logger(logger, "Loading biosamples"):
         # Only grab biosamples associated with studies we are ingesting.
         cursor = mongodb["biosample_set"].find(
@@ -99,7 +94,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         )
         db.commit()
 
-    logger.info("Loading omics processing...")
     with duration_logger(logger, "Loading omics processing"):
         omics_processing.load(
             db,
@@ -110,7 +104,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
 
     workflow_set = "workflow_execution_set"
 
-    logger.info("Loading metabolomics analysis...")
     with duration_logger(logger, "Loading metabolomics analysis"):
         pipeline.load(
             db,
@@ -122,7 +115,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         )
         db.commit()
 
-    logger.info("Loading read-based analysis...")
     with duration_logger(logger, "Loading read-based analysis"):
         pipeline.load(
             db,
@@ -134,7 +126,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         )
         db.commit()
 
-    logger.info("Loading metatranscriptome expression analyses...")
     with duration_logger(logger, "Loading metatranscriptome expression analyses"):
         pipeline.load(
             db,
@@ -145,7 +136,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
             WorkflowActivityTypeEnum.metatranscriptome_expression.value,
         )
 
-    logger.info("Loading metatranscriptome assemblies...")
     with duration_logger(logger, "Loading metatranscriptome assemblies"):
         pipeline.load(
             db,
@@ -156,7 +146,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
             WorkflowActivityTypeEnum.metatranscriptome_assembly.value,
         )
 
-    logger.info("Loading NOM analysis...")
     with duration_logger(logger, "Loading NOM analysis"):
         pipeline.load(
             db,
@@ -166,7 +155,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         )
         db.commit()
 
-    logger.info("Loading MAGs...")
     with duration_logger(logger, "Loading MAGs"):
         pipeline.load(
             db,
@@ -181,7 +169,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
             # This section has its own subprogress bar because it takes several
             # hours to ingest all of the gene function products from the metag
             # workflows.
-            logger.info("Loading metagenome annotation...")
             with duration_logger(logger, "Loading metagenome annotation"):
 
                 # This has historically been fast, but it is only for the progress bar.
@@ -214,7 +201,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         logger.info("Skipping mg annotation ingest")
 
     try:
-        logger.info("Loading metatranscriptome annotation...")
         with duration_logger(logger, "Loading metatranscriptome annotation"):
             pipeline.load(
                 db,
@@ -231,7 +217,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     finally:
         db.commit()
 
-    logger.info("Loading ReadsQC...")
     with duration_logger(logger, "Loading ReadsQC"):
         pipeline.load(
             db,
@@ -242,7 +227,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         db.commit()
 
     try:
-        logger.info("Loading metaproteomic analysis...")
         with duration_logger(logger, "Loading metaproteomic analysis"):
             pipeline.load(
                 db,
@@ -261,7 +245,6 @@ def load(db: Session, function_limit=None, skip_annotation=False):
     finally:
         db.commit()
 
-    logger.info("Loading metagenome assembly...")
     with duration_logger(logger, "Loading metagenome assembly"):
         pipeline.load(
             db,
@@ -273,16 +256,13 @@ def load(db: Session, function_limit=None, skip_annotation=False):
         )
         db.commit()
 
-    logger.info("Populating multiomics...")
     with duration_logger(logger, "Populating multiomics"):
         models.Biosample.populate_multiomics(db)
         db.commit()
 
-    logger.info("Preprocessing ENVO term data...")
     with duration_logger(logger, "Preprocessing ENVO term data"):
         envo.build_envo_trees(db)
 
-    logger.info("Loading search indices...")
     with duration_logger(logger, "Loading search indices"):
         search_index.load(db)
         db.commit()
