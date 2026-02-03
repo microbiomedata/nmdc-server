@@ -287,11 +287,13 @@ def test_ontology_etl_integration(db: Session):
     assert db.query(models.OntologyClass).count() == 3
     assert db.query(models.OntologyRelation).count() == 4  # 2 direct + 2 closure
 
-    # Verify the 'relations' field in source data was properly ignored
+    # Verify the 'relations' field in source data was properly removed by the loader
     # (the biome class had relations: [] in its source document)
     biome_class = db.query(models.OntologyClass).filter_by(id="ENVO:00000428").first()
     assert biome_class is not None
     assert biome_class.name == "biome"
+    # The 'relations' field should NOT end up in annotations (it's removed before extract_extras)
+    assert "relations" not in (biome_class.annotations or {})
 
     # Verify ENVO tables were populated
     assert db.query(models.EnvoTerm).count() == 3
