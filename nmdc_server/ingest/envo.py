@@ -1,6 +1,5 @@
 import functools
 import itertools
-import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Set
@@ -10,10 +9,11 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from nmdc_server.database import SessionLocal
+from nmdc_server.logger import get_logger
 from nmdc_server.models import Biosample, EnvoAncestor, EnvoTerm, EnvoTree
 from nmdc_server.schemas import EnvoTreeNode
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 def load(db: Session) -> None:

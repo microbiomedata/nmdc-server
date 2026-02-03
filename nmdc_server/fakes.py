@@ -99,6 +99,32 @@ class EnvoAncestorFactory(SQLAlchemyModelFactory):
         sqlalchemy_session = db
 
 
+class OntologyClassFactory(SQLAlchemyModelFactory):
+    id = Faker("pystr")
+    name = Faker("word")
+    type = "nmdc:OntologyClass"
+    definition = Faker("sentence")
+    alternative_names = Faker("pylist", nb_elements=2, value_types=[str])
+    is_root = False
+    is_obsolete = False
+    annotations = Faker("pydict", value_types=["str"])
+
+    class Meta:
+        model = models.OntologyClass
+        sqlalchemy_session = db
+
+
+class OntologyRelationFactory(SQLAlchemyModelFactory):
+    subject = Faker("pystr")
+    predicate = Faker("word")
+    object = Faker("pystr")
+    type = "nmdc:OntologyRelation"
+
+    class Meta:
+        model = models.OntologyRelation
+        sqlalchemy_session = db
+
+
 class PrincipalInvestigator(SQLAlchemyModelFactory):
     id = Faker("uuid")
     name = Faker("name")

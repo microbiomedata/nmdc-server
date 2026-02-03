@@ -2,101 +2,50 @@
 
 from sqlalchemy.orm import Session
 
-from nmdc_server import models
+from nmdc_server import fakes, models
 from nmdc_server.ingest import envo, ontology
 
 
 def test_populate_envo_from_generic_ontology(db: Session):
-    """Test that EnvoTerm and EnvoAncestor are populated correctly from generic ontology tables."""
-
-    # Insert test data into generic ontology tables
-    # Create a realistic 3-level hierarchy: grandparent -> parent -> child
-    envo_grandparent = models.OntologyClass(
+    # Create a 3-level hierarchy: grandparent -> parent -> child
+    fakes.OntologyClassFactory(
         id="ENVO:00000001",
         name="environmental system",
-        type="nmdc:OntologyClass",
         is_root=True,
-        is_obsolete=False,
         definition="The root environmental system",
         alternative_names=["env", "environment"],
         annotations={"test": "data"},
     )
-
-    envo_parent = models.OntologyClass(
+    fakes.OntologyClassFactory(
         id="ENVO:00000428",
         name="biome",
-        type="nmdc:OntologyClass",
-        is_root=False,
-        is_obsolete=False,
         definition="A biome is an environmental system",
         alternative_names=["ecological biome"],
     )
-
-    envo_child = models.OntologyClass(
+    fakes.OntologyClassFactory(
         id="ENVO:00000446",
         name="terrestrial biome",
-        type="nmdc:OntologyClass",
-        is_root=False,
-        is_obsolete=False,
         definition="A biome that is on land",
         alternative_names=["land biome"],
     )
-
-    # Create a non-ENVO term that should be ignored
-    uberon_term = models.OntologyClass(
-        id="UBERON:0000001",
-        name="anatomical structure",
-        type="nmdc:OntologyClass",
-        is_root=True,
-        is_obsolete=False,
-    )
-
-    db.add_all([envo_grandparent, envo_parent, envo_child, uberon_term])
+    # Non-ENVO term that should be ignored
+    fakes.OntologyClassFactory(id="UBERON:0000001", name="anatomical structure", is_root=True)
     db.commit()
 
-    # Verify OntologyClass table contains all 4 terms (3 ENVO + 1 UBERON)
     assert db.query(models.OntologyClass).count() == 4
 
-    # Create relationships
-    # Direct: parent is a subclass of grandparent
-    parent_to_grandparent = models.OntologyRelation(
-        subject="ENVO:00000428",
-        predicate="rdfs:subClassOf",
-        object="ENVO:00000001",
-        type="nmdc:OntologyRelation",
+    # Create relationships (direct and closure)
+    fakes.OntologyRelationFactory(
+        subject="ENVO:00000428", predicate="rdfs:subClassOf", object="ENVO:00000001"
     )
-
-    # Direct: child is a subclass of parent
-    child_to_parent = models.OntologyRelation(
-        subject="ENVO:00000446",
-        predicate="rdfs:subClassOf",
-        object="ENVO:00000428",
-        type="nmdc:OntologyRelation",
+    fakes.OntologyRelationFactory(
+        subject="ENVO:00000446", predicate="rdfs:subClassOf", object="ENVO:00000428"
     )
-
-    # Closure: child -> parent (redundant with direct, but closure includes it)
-    closure_child_to_parent = models.OntologyRelation(
-        subject="ENVO:00000446",
-        predicate="entailed_isa_partof_closure",
-        object="ENVO:00000428",
-        type="nmdc:OntologyRelation",
+    fakes.OntologyRelationFactory(
+        subject="ENVO:00000446", predicate="entailed_isa_partof_closure", object="ENVO:00000428"
     )
-
-    # Closure: child -> grandparent (INDIRECT - this is the real value of closure!)
-    closure_child_to_grandparent = models.OntologyRelation(
-        subject="ENVO:00000446",
-        predicate="entailed_isa_partof_closure",
-        object="ENVO:00000001",
-        type="nmdc:OntologyRelation",
-    )
-
-    db.add_all(
-        [
-            parent_to_grandparent,
-            child_to_parent,
-            closure_child_to_parent,
-            closure_child_to_grandparent,
-        ]
+    fakes.OntologyRelationFactory(
+        subject="ENVO:00000446", predicate="entailed_isa_partof_closure", object="ENVO:00000001"
     )
     db.commit()
 
@@ -196,9 +145,6 @@ def test_populate_envo_from_generic_ontology(db: Session):
 
 
 def test_ontology_etl_integration(db: Session):
-    """Test the complete ontology ETL process."""
-
-    # Mock MongoDB cursor data
     class MockCursor:
         def __init__(self, data):
             self.data = data
