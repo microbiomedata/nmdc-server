@@ -171,7 +171,7 @@ class OntologyClass(Base):
     annotations = Column(JSONB, default=dict)
 
     # Relationships where this class is the subject
-    relations = relationship(
+    subject_relations = relationship(
         "OntologyRelation",
         foreign_keys="OntologyRelation.subject",
         back_populates="subject_class",
@@ -179,10 +179,11 @@ class OntologyClass(Base):
     )
 
     # Relationships where this class is the object
-    incoming_relations = relationship(
+    object_relations = relationship(
         "OntologyRelation",
         foreign_keys="OntologyRelation.object",
         back_populates="object_class",
+        cascade="all, delete-orphan",
     )
 
     @property
@@ -209,10 +210,10 @@ class OntologyRelation(Base):
     type = Column(String, nullable=False, default="nmdc:OntologyRelation")
 
     subject_class = relationship(
-        "OntologyClass", foreign_keys=[subject], back_populates="relations"
+        "OntologyClass", foreign_keys=[subject], back_populates="subject_relations"
     )
     object_class = relationship(
-        "OntologyClass", foreign_keys=[object], back_populates="incoming_relations"
+        "OntologyClass", foreign_keys=[object], back_populates="object_relations"
     )
 
 
