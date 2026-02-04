@@ -270,3 +270,68 @@ def test_ontology_etl_integration(db: Session):
     )
     assert child_to_grandparent is not None
     assert child_to_grandparent.direct is False  # ← Key assertion: indirect via closure!
+
+
+def test_envo_load_with_biosample_fk_constraint(db: Session):
+    """Test that envo.load() doesn't violate FK constraints when biosamples reference ENVO terms.
+
+    This verifies the upsert strategy in envo.load() correctly preserves EnvoTerm rows
+    that are referenced by biosample.env_* foreign keys.
+    """
+    # Create ENVO ontology classes
+    fakes.OntologyClassFactory(
+        id="ENVO:00000001",
+        name="environmental system",
+        is_root=True,
+    )
+    fakes.OntologyClassFactory(
+        id="ENVO:00000428",
+        name="biome",
+    )
+    fakes.OntologyClassFactory(
+        id="ENVO:00000446",
+        name="terrestrial biome",
+    )
+    # Create relationships
+    fakes.OntologyRelationFactory(
+        subject="ENVO:00000428", predicate="rdfs:subClassOf", object="ENVO:00000001"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:00000446", predicate="rdfs:subClassOf", object="ENVO:00000428"
+    )
+    db.commit()
+
+    # First load: populate EnvoTerm table
+    envo.load(db)
+    db.commit()
+
+    assert db.query(models.EnvoTerm).count() == 3
+
+    # Create EnvoTerm objects for the BiosampleFactory to use
+    envo_term_broad = db.query(models.EnvoTerm).filter_by(id="ENVO:00000001").first()
+    envo_term_local = db.query(models.EnvoTerm).filter_by(id="ENVO:00000428").first()
+    envo_term_medium = db.query(models.EnvoTerm).filter_by(id="ENVO:00000446").first()
+
+    # Create a biosample that references the ENVO terms (creates FK constraints)
+    biosample = fakes.BiosampleFactory(
+        env_broad_scale=envo_term_broad,
+        env_local_scale=envo_term_local,
+        env_medium=envo_term_medium,
+    )
+    db.commit()
+
+    # Verify biosample references the ENVO terms
+    assert biosample.env_broad_scale_id == "ENVO:00000001"
+    assert biosample.env_local_scale_id == "ENVO:00000428"
+    assert biosample.env_medium_id == "ENVO:00000446"
+
+    # Second load: should NOT fail due to FK constraints
+    # The upsert strategy in envo.load() should preserve the EnvoTerm rows
+    envo.load(db)
+    db.commit()
+
+    # Verify ENVO terms still exist and biosample FK references are intact
+    assert db.query(models.EnvoTerm).count() == 3
+    db.refresh(biosample)
+    assert biosample.env_broad_scale_id == "ENVO:00000001"
+    assert biosample.env_local_scale.label == "environmental system"

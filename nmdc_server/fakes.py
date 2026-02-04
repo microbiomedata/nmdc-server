@@ -115,9 +115,12 @@ class OntologyClassFactory(SQLAlchemyModelFactory):
 
 
 class OntologyRelationFactory(SQLAlchemyModelFactory):
-    subject = Faker("pystr")
+    # Create related OntologyClass instances and use their IDs as FK values
+    subject_class = SubFactory(OntologyClassFactory)
+    object_class = SubFactory(OntologyClassFactory)
+    subject = lazy_attribute(lambda o: o.subject_class.id)
     predicate = Faker("word")
-    object = Faker("pystr")
+    object = lazy_attribute(lambda o: o.object_class.id)
     type = "nmdc:OntologyRelation"
 
     class Meta:

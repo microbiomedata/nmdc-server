@@ -18,8 +18,8 @@ logger = get_logger(__name__)
 
 
 class OntologyClassLoader(OntologyClassCreate):
-    @classmethod
     @model_validator(mode="before")
+    @classmethod
     def extract_extras(cls, values):
         # Remove relations field if present (not stored in OntologyClass table)
         values.pop("relations", None)
