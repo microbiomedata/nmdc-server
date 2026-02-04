@@ -676,8 +676,8 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   if (!isEqual(validationState, record.metadata_submission.validationState)) {
     Object.assign(validationState, record.metadata_submission.validationState);
   }
-  createdDate.value = new Date(record.created);
-  modifiedDate.value = new Date(record.date_last_modified);
+  createdDate.value = new Date(record.created + 'Z');
+  modifiedDate.value = new Date(record.date_last_modified + 'Z');
   sampleData.value = record.metadata_submission.sampleData;
   status.value = record.status;
   if (record.permission_level !== null) {
@@ -690,10 +690,7 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   hasChanged.value = 0;
 }
 
-async function loadRecord(id: string) {
-  reset();
-  const val = await api.getRecord(id);
-  updateStateFromRecord(val);
+async function lockRecord(id: string) {
   try {
     const lockResponse = await api.lockSubmission(id);
     _submissionLockedBy = lockResponse.locked_by || null;
@@ -708,6 +705,21 @@ async function loadRecord(id: string) {
       _submissionLockedBy = null;
     }
   }
+}
+
+async function unlockRecord(id: string) {
+  try {
+    await api.unlockSubmission(id);
+    _submissionLockedBy = null;
+  } catch {
+    // Ignore errors when unlocking
+  }
+}
+
+async function loadRecord(id: string) {
+  reset();
+  const val = await api.getRecord(id);
+  updateStateFromRecord(val);
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
@@ -806,6 +818,8 @@ export {
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
+  lockRecord,
+  unlockRecord,
   submit,
   mergeSampleData,
   isOwner,
