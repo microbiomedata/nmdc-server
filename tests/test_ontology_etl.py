@@ -334,4 +334,4 @@ def test_envo_load_with_biosample_fk_constraint(db: Session):
     assert db.query(models.EnvoTerm).count() == 3
     db.refresh(biosample)
     assert biosample.env_broad_scale_id == "ENVO:00000001"
-    assert biosample.env_local_scale.label == "environmental system"
+    assert biosample.env_broad_scale.label == "environmental system"

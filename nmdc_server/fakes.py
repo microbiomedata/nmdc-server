@@ -115,17 +115,23 @@ class OntologyClassFactory(SQLAlchemyModelFactory):
 
 
 class OntologyRelationFactory(SQLAlchemyModelFactory):
-    # Create related OntologyClass instances and use their IDs as FK values
-    subject_class = SubFactory(OntologyClassFactory)
-    object_class = SubFactory(OntologyClassFactory)
-    subject = lazy_attribute(lambda o: o.subject_class.id)
     predicate = Faker("word")
-    object = lazy_attribute(lambda o: o.object_class.id)
     type = "nmdc:OntologyRelation"
 
     class Meta:
         model = models.OntologyRelation
         sqlalchemy_session = db
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        # Create OntologyClass instances for FK values when not explicitly provided
+        if "subject" not in kwargs:
+            subject_class = OntologyClassFactory()
+            kwargs["subject"] = subject_class.id
+        if "object" not in kwargs:
+            object_class = OntologyClassFactory()
+            kwargs["object"] = object_class.id
+        return super()._create(model_class, *args, **kwargs)
 
 
 class PrincipalInvestigator(SQLAlchemyModelFactory):
