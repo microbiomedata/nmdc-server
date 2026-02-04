@@ -293,18 +293,6 @@ export default defineComponent({
             <v-icon>mdi-plus</v-icon>
             Create Submission
           </v-btn>
-          <v-tooltip right>
-            <template #activator="{ props }">
-              <v-icon
-                class="pl-2"
-                color="primary"
-                v-bind="props"
-              >
-                mdi-information
-              </v-icon>
-            </template>
-            <span>Test submissions should be used when at a workshop or doing a test, example, or training. These cannot be submitted.</span>
-          </v-tooltip>
         </v-card-text>
         <v-card-title class="text-h4">
           Past submissions
