@@ -92,19 +92,10 @@ export default defineComponent({
             :rules="[v => (v === true || v === false) || 'You must select if this is a test submission.']"
           >
             <template #label>
-              <span> Is this a test submission? * </span>
-              <v-tooltip right>
-                <template #activator="{ props }">
-                  <v-icon
-                  class="pl-2"
-                  color="primary"
-                  v-bind="props"
-                  >
-                  mdi-information
-                  </v-icon>
-                </template>
-                <span>Test submissions should be used when at a workshop or doing a test, example, or training. These cannot be submitted.</span>
-              </v-tooltip>
+              <div>
+                <div> Is this a test submission? * </div>
+                <div class="text-caption"> Test submissions should be used when at a workshop or doing a test, example, or training. These cannot be submitted. </div>
+              </div>
             </template>
               <v-radio
                 label="Yes"

@@ -53,7 +53,7 @@ export default defineComponent({
       },
       {
         title: 'Metadata Contributor',
-        description: 'Metadata contributors can view all components of a submission and can only edit the sample metadata information on the last step of the submission process.',
+        description: 'Metadata contributors can view all components of a submission and can only edit the sample metadata information in the "Sample Metadata" page.',
       },
       {
         title: 'Editor',

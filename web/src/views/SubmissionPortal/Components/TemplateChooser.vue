@@ -95,12 +95,12 @@ export default defineComponent({
         class="my-3"
       >
         <p class="text-h5">
-          DataHarmonizer Template Choice
+          Sample Metadata Template Choice
         </p>
         <template
           v-if="packageName.length!=0"
         >
-          Your DataHarmonizer template is "{{ templateListDisplayNames }}".
+          Your Sample Metadata template is "{{ templateListDisplayNames }}".
         </template>
         <template
           v-else
@@ -116,9 +116,9 @@ export default defineComponent({
         <p class="text-h5">
           Template choice disabled
         </p>
-        Your DataHarmonizer template is "{{ templateListDisplayNames }}".
-        Template choices cannot be disabled while the matching tab in step 5 has data present.
-        To disable the template, return to step 5 and remove all data from that tab. You may add new templates at any time.
+        Your Sample Metadata template is "{{ templateListDisplayNames }}".
+        Template choices cannot be disabled while the matching tab in Sample Metadata has data present.
+        To disable the template, return to Sample Metadata and remove all data from that tab. You may add new templates at any time.
       </v-alert>
     </template>
     <v-alert
@@ -127,7 +127,7 @@ export default defineComponent({
       class="my-3"
     >
       <p class="text-h5">
-        DataHarmonizer Template
+        Sample Metadata Template
       </p>
       This submission uses the "{{ templateListDisplayNames }}" template.
     </v-alert>

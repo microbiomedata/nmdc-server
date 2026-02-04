@@ -400,7 +400,7 @@ export default defineComponent({
         <p class="text-h5">
           Some choices may be disabled
         </p>
-        Data types with data present in step 5 cannot be disabled. To change these templates, return to step 5 and remove data from the tabs you wish to disable.
+        Data types with data present in the Sample Metadata cannot be disabled. To change these templates, return to Sample Metadata and remove data from the tabs you wish to disable.
         You may add unselected data types at any time.
       </v-alert>
 

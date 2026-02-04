@@ -36,7 +36,7 @@ export default defineComponent({
 
     const harmonizerContent = computed(() => {
       if (validForms.templatesValid) {
-        return 'Validate and correct any errors in your harmonizer data.';
+        return 'Validate and correct any errors in your sample metadata.';
       }
       return 'You must select one or more templates in the sample environment tab.';
     });
