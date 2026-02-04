@@ -99,6 +99,7 @@ const ALWAYS_READ_ONLY_COLUMNS = [
   'jgi_samp_id',
   'jgi_seq_project_name',
   'jgi_project_pi',
+  'jgi_sample_contact',
   'jgi_proposal_id',
 ];
 

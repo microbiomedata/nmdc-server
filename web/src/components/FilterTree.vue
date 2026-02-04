@@ -13,6 +13,7 @@ import {
 import { unreactive, stateRefs, getTreeData } from '@/store';
 import useRequest from '@/use/useRequest';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
+import { LoadOptionsParams } from '@/types';
 
 export default defineComponent({
   components: { Treeselect },
@@ -94,11 +95,75 @@ export default defineComponent({
         id: node.label,
         label: node.label,
         children: node.children,
+        isDefaultExpanded: node.isDefaultExpanded || node.isExpanded || false,
       };
     }
 
+    /**
+     * Recursively search through an EnvoNode tree by label and id.
+     * @param nodes - Array of EnvoNode to search through
+     * @param query - Search term (case-insensitive)
+     * @param ancestors - Array of ancestor nodes (used for tracking during recursion)
+     * @returns Array of nodes that match the query or have matching descendants, including their ancestors
+     */
+    function searchTree(nodes: EnvoNode[], query: string, ancestors: EnvoNode[] = []): EnvoNode[] {
+      if (!query || query.trim() === '') {
+        return nodes;
+      }
+
+      const lowerQuery = query.toLowerCase();
+      const results: EnvoNode[] = [];
+
+      for (const node of nodes) {
+        const matchesLabel = node.label.toLowerCase().includes(lowerQuery);
+        const matchesId = node.id.toLowerCase().includes(lowerQuery);
+        const isMatch = matchesLabel || matchesId;
+
+        let childResults: EnvoNode[] = [];
+        if (node.children && node.children.length > 0) {
+          childResults = searchTree(node.children, query, [...ancestors, node]);
+        }
+
+        if (isMatch || childResults.length > 0) {
+          // Return normalized node structure that Treeselect expects
+          const matchedNode = {
+            id: node.label,
+            label: node.label,
+            children: childResults.length > 0 ? childResults : node.children?.map(normalizer),
+            isDefaultExpanded: childResults.length > 0 ? true : false,
+          };
+          results.push(matchedNode);
+        }
+      }
+
+      return results;
+    }
+
+    /**
+     * Programmatically load the options for the Treeselect component.
+     * This allows us to override the default search behavior.
+     */
+    function loadOptions({ action, callback, searchQuery }: LoadOptionsParams) {
+      if (action === "ASYNC_SEARCH") {
+        if (searchQuery && searchQuery.trim() !== '') {
+          const searchResults = searchTree(tree.value || [], searchQuery);
+          callback(null, searchResults);
+        } else {
+          callback(null, tree.value || []);
+        }
+      } else if (action === "LOAD_ROOT_OPTIONS") {
+        callback(null, tree.value || []);
+      }
+    }
+
     return {
-      tree, selected, loading, facetSummaryMap, setSelected, normalizer,
+      tree, 
+      selected, 
+      loading, 
+      facetSummaryMap, 
+      setSelected, 
+      normalizer,
+      loadOptions,
     };
   },
 });
@@ -118,6 +183,9 @@ export default defineComponent({
       :normailzer="normalizer"
       multiple
       always-open
+      async
+      :load-options="loadOptions"
+      placeholder="Select or search by ID or label"
       class="ma-2"
     >
       <template #option-label="{ node }">

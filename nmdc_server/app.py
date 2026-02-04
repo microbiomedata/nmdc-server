@@ -1,5 +1,6 @@
 import logging
 import typing
+from contextlib import asynccontextmanager
 
 import sentry_sdk
 from debug_toolbar.middleware import DebugToolbarMiddleware
@@ -12,10 +13,32 @@ from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
 from starlette.middleware.sessions import SessionMiddleware
 
 from nmdc_server import __version__, api, auth, errors
-from nmdc_server.config import settings
+from nmdc_server.config import get_database_name_safely_for_logging, settings
 from nmdc_server.database import after_cursor_execute, before_cursor_execute, listen
 from nmdc_server.static_files import static_path
 from nmdc_server.swagger_ui.helpers import load_template
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    A context manager that can be used to define things we want to happen at the beginning and/or
+    the end of the FastAPI app's lifespan.
+
+    From the [FastAPI documentation](https://fastapi.tiangolo.com/advanced/events/#lifespan):
+    > [Code before `yield`] will be executed once, before the application starts receiving requests.
+    >
+    > [Code after `yield` will be] executed when the application is shutting down [...].
+    > [It will be] executed once, after [the application has] handled possibly many requests.
+    """
+
+    # Print the active/portal database name to the console.
+    # TODO: Print this via `logging` (instead of `print`) so it is treated the same way as other
+    #       log entries. When testing using `logging`, keep in mind your log level/threshold.
+    portal_database_name = get_database_name_safely_for_logging(settings.database_uri)
+    print(f"Portal database: {portal_database_name}")
+
+    yield
 
 
 def initialize_sentry():
@@ -62,6 +85,7 @@ def create_app(env: typing.Mapping[str, str]) -> FastAPI:
         docs_url="/api/docs",
         openapi_url="/api/openapi.json",
         debug=settings.debug,
+        lifespan=lifespan,
     )
     if not static_path.is_dir():
         raise Exception("Static files not found")
