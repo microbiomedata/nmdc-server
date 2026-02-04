@@ -139,21 +139,25 @@ const router = createRouter({
   parseQuery,
   stringifyQuery,
 });
-router.beforeEach(async (to, from, next) => {
-  if (from.meta.requiresSubmissionLock && 'id' in from.params) {
-    const id = from.params.id as string;
-    // We are navigating away from a submission edit screen, so save the progress
-    await incrementalSaveRecord(id);
-    if (!to.meta.requiresSubmissionLock) {
-      // We are navigating to a screen that does not require a lock, so unlock
-      await unlockRecord(id);
+router.beforeEach(async (to, from) => {
+  try {
+    if (from.meta.requiresSubmissionLock && 'id' in from.params) {
+      const id = from.params.id as string;
+      // We are navigating away from a submission edit screen, so save the progress
+      await incrementalSaveRecord(id);
+      if (!to.meta.requiresSubmissionLock) {
+        // We are navigating to a screen that does not require a lock, so unlock
+        await unlockRecord(id);
+      }
+    } else if (to.meta.requiresSubmissionLock && 'id' in to.params) {
+      const id = to.params.id as string;
+      // We are navigating to a submission edit screen, so lock the record
+      await lockRecord(id);
     }
-  } else if (to.meta.requiresSubmissionLock && 'id' in to.params) {
-    const id = to.params.id as string;
-    // We are navigating to a submission edit screen, so lock the record
-    await lockRecord(id);
+  } catch (e) {
+    // If an error occurs during locking/unlocking, log it but allow navigation
+    console.error('Error during navigation guard:', e);
   }
-  next();
 });
 // Workaround for https://github.com/vitejs/vite/issues/11804
 router.onError((err, to) => {
