@@ -269,14 +269,12 @@ def test_ontology_etl_integration(db: Session):
         .first()
     )
     assert child_to_grandparent is not None
-    assert child_to_grandparent.direct is False  # ← Key assertion: indirect via closure!
+    assert child_to_grandparent.direct is False
 
 
 def test_envo_load_with_biosample_fk_constraint(db: Session):
     """Test that envo.load() doesn't violate FK constraints when biosamples reference ENVO terms.
 
-    This verifies the upsert strategy in envo.load() correctly preserves EnvoTerm rows
-    that are referenced by biosample.env_* foreign keys.
     """
     # Create ENVO ontology classes
     fakes.OntologyClassFactory(
@@ -325,7 +323,7 @@ def test_envo_load_with_biosample_fk_constraint(db: Session):
     assert biosample.env_local_scale_id == "ENVO:00000428"
     assert biosample.env_medium_id == "ENVO:00000446"
 
-    # Second load: should NOT fail due to FK constraints
+    # Second load: should NOT fail due to FK constraints.
     # The upsert strategy in envo.load() should preserve the EnvoTerm rows
     envo.load(db)
     db.commit()
