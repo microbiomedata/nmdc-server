@@ -25,7 +25,7 @@ export default defineComponent({
 </script>
 
 <template>
-  <div>
+  <div class="mb-8">
     <div class="d-flex">
       <div class="text-h4 mb-2">
         {{ title }}

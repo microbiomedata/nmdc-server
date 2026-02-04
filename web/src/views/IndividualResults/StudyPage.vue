@@ -233,33 +233,33 @@ export default defineComponent({
               v-if="study.description"
               #subtitle
             >
-              <RevealContainer>
+              <RevealContainer class="mb-2">
                 <span v-html="urlify(study.description)" />
               </RevealContainer>
+
+              <v-dialog
+                v-model="studyDownloadDialog"
+                max-width="400"
+              >
+                <template #activator="{ props }">
+                  <v-btn
+                    v-bind="props"
+                    color="primary"
+                    size="small"
+                  >
+                    <v-icon class="mr-2">
+                      mdi-download
+                    </v-icon>
+                    Download Study Metadata
+                  </v-btn>
+                </template>
+                <DownloadDialog
+                  :loading="studyDownloadLoading"
+                  @clicked="downloadStudyMetadata"
+                />
+              </v-dialog>
             </template>
           </IndividualTitle>
-          <v-dialog
-            v-model="studyDownloadDialog"
-            max-width="400"
-          >
-            <template #activator="{ props }">
-              <v-btn
-                v-bind="props"
-                class="mt-2 mb-8"
-                color="primary"
-                size="small"
-              >
-                <v-icon class="mr-2">
-                  mdi-download
-                </v-icon>
-                Download Study Metadata
-              </v-btn>
-            </template>
-            <DownloadDialog
-              :loading="studyDownloadLoading"
-              @clicked="downloadStudyMetadata"
-            />
-          </v-dialog>
           <v-snackbar
             v-model="studyDownloadLoading"
             location="right bottom"
