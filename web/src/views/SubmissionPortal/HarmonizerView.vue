@@ -425,7 +425,7 @@ export default defineComponent({
       }
 
       setTabInvalidCells(activeTemplateKey.value!, result);
-      setTabValidated(activeTemplateKey.value!, valid)
+      setTabValidated(activeTemplateKey.value!, valid);
       saveRecord(); // This is a background save that we intentionally don't wait for
 
       if (valid === false) {

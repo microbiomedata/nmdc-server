@@ -156,7 +156,7 @@ function setTabValidated(tabName: string, validated: boolean) {
     validationState.sampleMetadata = {
       invalidCells: {},
       tabsValidated: {},
-    }
+    };
   }
   validationState.sampleMetadata.tabsValidated[tabName] = validated;
 }
@@ -166,7 +166,7 @@ function setTabInvalidCells(tabName: string, invalidCells: Record<number, Record
     validationState.sampleMetadata = {
       invalidCells: {},
       tabsValidated: {},
-    }
+    };
   }
   validationState.sampleMetadata.invalidCells[tabName] = invalidCells;
 }
@@ -176,7 +176,7 @@ function resetSampleMetadataValidation() {
     validationState.sampleMetadata = {
       invalidCells: {},
       tabsValidated: {},
-    }
+    };
   }
   validationState.sampleMetadata.invalidCells = {};
   Object.keys(validationState.sampleMetadata.tabsValidated).forEach((tab) => {
@@ -278,7 +278,7 @@ const submissionPages = computed<SubmissionPage[]>(() => ([
     link: { name: 'Submission Sample Editor' },
     validationMessages: combineSampleMetadataErrors(validationState.sampleMetadata),
   },
-]))
+]));
 
 const addressFormDefault = {
   // Shipper info
