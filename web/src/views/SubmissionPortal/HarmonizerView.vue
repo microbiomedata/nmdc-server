@@ -1,24 +1,20 @@
 <script lang="ts">
-import {
-  computed, defineComponent, ref, nextTick, watch, onMounted, shallowRef, inject,
-} from 'vue';
-import {
-  clamp, debounce, flattenDeep, has, sum,
-} from 'lodash';
-import { read, writeFile, utils } from 'xlsx';
+import { computed, defineComponent, inject, nextTick, onMounted, ref, watch } from 'vue';
+import { clamp, debounce, flattenDeep, has, isEqual, sum } from 'lodash';
+import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
 import useRequest from '@/use/useRequest';
 
 import {
-  DATA_MG_INTERLEAVED,
   DATA_MG,
+  DATA_MG_INTERLEAVED,
   DATA_MT,
   DATA_MT_INTERLEAVED,
-  HARMONIZER_TEMPLATES,
   EMSL,
+  HARMONIZER_TEMPLATES,
   JGI_MG,
-  JGI_MT,
   JGI_MG_LR,
+  JGI_MT,
   SuggestionsMode,
 } from '@/views/SubmissionPortal/types';
 import HarmonizerSidebar from '@/views/SubmissionPortal/Components/HarmonizerSidebar.vue';
@@ -27,31 +23,33 @@ import { stateRefs } from '@/store';
 import { getPendingSuggestions } from '@/store/localStorage';
 import HarmonizerApi from './harmonizerApi';
 import {
+  addMetadataSuggestions,
+  canEditSampleMetadata,
+  canEditSubmissionByStatus,
+  hasChanged,
+  incrementalSaveRecord,
+  incrementalSaveRecordRequest,
+  isOwner,
+  isSubmissionValid,
+  isTestSubmission,
+  mergeSampleData,
+  metadataSuggestions,
   packageName,
+  resetSampleMetadataValidation,
   sampleData,
+  setTabInvalidCells,
+  setTabValidated,
   status,
   submit,
-  incrementalSaveRecord,
-  templateList,
-  mergeSampleData,
-  hasChanged,
-  tabsValidated,
-  canEditSampleMetadata,
-  isOwner,
-  addMetadataSuggestions,
   suggestionMode,
-  metadataSuggestions,
-  isTestSubmission,
-  canEditSubmissionByStatus,
-  SubmissionStatusEnum,
-  validForms,
+  templateList,
+  validationState,
 } from './store';
 import { AppBannerHeightKey } from './SubmissionView.vue';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import StatusAlert from './Components/StatusAlert.vue';
-import { useRoute } from 'vue-router';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -113,9 +111,15 @@ export default defineComponent({
     StatusAlert,
   },
 
-  setup() {
+  props: {
+    id: {
+      type: String,
+      required: true,
+    },
+  },
+
+  setup(props) {
     const { user } = stateRefs;
-    const route = useRoute();
 
     const harmonizerElement = ref();
     const harmonizerApi = new HarmonizerApi();
@@ -124,7 +128,6 @@ export default defineComponent({
     const validationActiveCategory = ref('All Errors');
     const columnVisibility = ref('all');
     const sidebarOpen = ref(true);
-    const invalidCells = shallowRef({} as Record<string, Record<number, Record<number, string>>>);
 
     const activeTemplateKey = ref(templateList.value[0]);
     const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value!]);
@@ -135,31 +138,10 @@ export default defineComponent({
       }
       return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
     });
+    const hasValidSampleEnvironmentSelection = computed(() => isEqual(validationState.sampleEnvironmentForm, []));
+    const hasValidUserFacilitySelection = computed(() => isEqual(validationState.multiOmicsForm, []));
 
     const submitDialog = ref(false);
-    const missingTabsText = computed(() => {
-      const text: Array<string> = [];
-      if (validForms.templatesValid === false) {
-        text.push('No tabs will be present until one or more templates are selected in the Sample Environment form.');
-      }
-      if (validForms.multiOmicsFormValid.length > 0) {
-        text.push('Facility tabs will not be present until the Multiomics Form is complete.');
-      }
-      return text;
-    });
-    function determineMissingTabs() {
-      if (missingTabsText.value.length > 0) {
-        return true;
-      }
-      return false;
-    }
-    const missingTabs = ref(determineMissingTabs());
-
-    watch(missingTabsText, () => {
-      if (missingTabsText.value.length > 0) {
-        missingTabs.value = true;
-      }
-    });
 
     const validationSuccessSnackbar = ref(false);
     const importErrorSnackbar = ref(false);
@@ -178,13 +160,13 @@ export default defineComponent({
         harmonizerApi.setMaxRows(activeTemplateData.value.length);
       }
       harmonizerApi.loadData(activeTemplateData.value);
-      harmonizerApi.setInvalidCells(invalidCells.value[activeTemplateKey.value!] || {});
+      harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
       harmonizerApi.changeVisibility(columnVisibility.value);
     });
 
     const validationErrors = computed(() => {
       const remapped: ValidationErrors = {};
-      const invalid: Record<number, Record<number, string>> = invalidCells.value[activeTemplateKey.value!] || {};
+      const invalid: Record<number, Record<number, string>> = validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {};
       if (Object.keys(invalid).length) {
         remapped['All Errors'] = [];
       }
@@ -206,19 +188,18 @@ export default defineComponent({
     const validationErrorGroups = computed(() => Object.keys(validationErrors.value));
 
     const validationTotalCounts = computed(() => Object.fromEntries(
-      Object.entries(invalidCells.value).map(([template, cells]) => ([
+      Object.entries(validationState.sampleMetadata?.invalidCells || {}).map(([template, cells]) => ([
         template,
         sum(Object.values(cells).map((row) => Object.keys(row).length)),
       ])),
     ));
 
-    const saveRecordRequest = useRequest();
-    const saveRecord = () => saveRecordRequest.request(() => incrementalSaveRecord((route.params as { id: string }).id));
+    const saveRecord = () => incrementalSaveRecord(props.id);
 
     let changeBatch: any[] = [];
     const debouncedSuggestionRequest = debounce(async () => {
       const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-      await addMetadataSuggestions((route.params as { id: string }).id, activeTemplate.value?.schemaClass!, changedRowData);
+      await addMetadataSuggestions(props.id, activeTemplate.value?.schemaClass!, changedRowData);
       changeBatch = [];
     }, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
 
@@ -313,14 +294,14 @@ export default defineComponent({
             });
             nextData[templateSlot]?.push(newRow);
             //update validation status for the tab, if data changed it needs to be revalidated
-            tabsValidated.value[templateKey] = false;
+            setTabValidated(templateKey, false);
           }
           if (existing) {
             COMMON_COLUMNS.forEach((col) => {
               existing[col] = row[col];
             });
             //update validation status for the tab, if data changed it needs to be revalidated
-            tabsValidated.value[templateKey] = false;
+            setTabValidated(templateKey, false);
           }
         });
       });
@@ -332,7 +313,7 @@ export default defineComponent({
             return false;
           }
           //update validation status for the tab, if data changed it needs to be revalidated
-          tabsValidated.value[templateKey] = false;
+          setTabValidated(templateKey, false);
           const rowId = row[SCHEMA_ID];
           return environmentSlots.some((environmentSlot) => {
             const environmentRow = nextData[environmentSlot as string]?.findIndex((r) => r[SCHEMA_ID] === rowId);
@@ -396,8 +377,8 @@ export default defineComponent({
         const data = harmonizerApi.exportJson();
         mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
       }
+      setTabValidated(activeTemplateKey.value!, false);
       saveRecord(); // This is a background save that we intentionally don't wait for
-      tabsValidated.value[activeTemplateKey.value!] = false;
     };
 
     const { request: schemaRequest, loading: schemaLoading } = useRequest();
@@ -428,16 +409,11 @@ export default defineComponent({
       const isEmpty = Object.keys(data).length === 0;
       // Update invalid cells if empty
       if (isEmpty) {
-        invalidCells.value = {
-          ...invalidCells.value,
-          [activeTemplateKey.value!]: data,
-        };
-        tabsValidated.value = {
-          ...tabsValidated.value,
-          [activeTemplateKey.value!]: false,
-        };
+        harmonizerApi.setInvalidCells({});
+        setTabInvalidCells(activeTemplateKey.value!, {});
+        setTabValidated(activeTemplateKey.value!, false);
         emptySheetSnackbar.value = true;
-
+        saveRecord(); // This is a background save that we intentionally don't wait for
         return;
       }
 
@@ -448,40 +424,27 @@ export default defineComponent({
         sidebarOpen.value = true;
       }
 
-      invalidCells.value = {
-        ...invalidCells.value,
-        [activeTemplateKey.value!]: result,
-      };
+      setTabInvalidCells(activeTemplateKey.value!, result);
+      setTabValidated(activeTemplateKey.value!, valid);
       saveRecord(); // This is a background save that we intentionally don't wait for
+
       if (valid === false) {
         errorClick(0);
       }
-      tabsValidated.value = {
-        ...tabsValidated.value,
-        [activeTemplateKey.value!]: valid,
-      };
-
-      validationSuccessSnackbar.value = Object.values(tabsValidated.value).every((value) => value);
+      validationSuccessSnackbar.value = Object.values(validationState.sampleMetadata?.tabsValidated || {}).every((value) => value);
     }
 
     const submissionState = computed(() => {
-      let allTabsValid = true;
-      Object.values(tabsValidated.value).forEach((value) => {
-        allTabsValid = allTabsValid && value;
-      });
       const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
       const canSubmitByStatus = status.value === 'InProgress'
       const isSubmitted = submitCount.value > 0 || status.value === 'SubmittedPendingReview';
-      validForms.harmonizerValid = allTabsValid && isOwner() && validForms.templatesValid;
       let submitDisabledReason: string | null = null;
-      if (!allTabsValid) {
-        submitDisabledReason = 'All tabs must be validated before submission.';
-      } else if (validForms.templatesValid || validForms.studyFormValid.length === 0 || validForms.multiOmicsFormValid.length === 0) {
-        submitDisabledReason = 'Validation issues on other screens must be fixed.';
-      } else if (!hasSubmitPermission) {
+      if (!hasSubmitPermission) {
         submitDisabledReason = 'You do not have permission to submit this record.';
       } else if (!canSubmitByStatus) {
         submitDisabledReason = `Submission cannot be made while in status: ${status.value}.`;
+      } else if (!isSubmissionValid()) {
+        submitDisabledReason = 'Some forms contain validation errors.';
       }
       return {
         isSubmitted,
@@ -536,7 +499,7 @@ export default defineComponent({
     const doSubmit = () => submitRequest(async () => {
       const data = await harmonizerApi.exportJson();
       mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
-      await submit((route.params as { id: string }).id, 'SubmittedPendingReview');
+      await submit(props.id, 'SubmittedPendingReview');
       submitDialog.value = false;
     });
 
@@ -612,10 +575,7 @@ export default defineComponent({
 
         // Clear validation state
         harmonizerApi.setInvalidCells({});
-        invalidCells.value = {};
-        Object.keys(tabsValidated.value).forEach((tab) => {
-          tabsValidated.value[tab] = false;
-        });
+        resetSampleMetadataValidation();
 
         // Sync with backend
         hasChanged.value += 1;
@@ -652,7 +612,7 @@ export default defineComponent({
 
       if (nextTemplate && nextTemplateKey) {
         // Get the stashed suggestions (if any) for the next template and present them.
-        metadataSuggestions.value = getPendingSuggestions((route.params as { id: string }).id, nextTemplate.schemaClass!);
+        metadataSuggestions.value = getPendingSuggestions(props.id, nextTemplate.schemaClass!);
 
         // When changing templates we may need to populate the common columns
         // from the environment tabs
@@ -673,6 +633,7 @@ export default defineComponent({
     });
 
     onMounted(async () => {
+      incrementalSaveRecordRequest.reset();
       const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
         api.getSubmissionSchema(),
         api.getGoldEcosystemTree(),
@@ -681,12 +642,15 @@ export default defineComponent({
       if (r && schema) {
         await harmonizerApi.init(r, schema, activeTemplate.value?.schemaClass, goldEcosystemTree);
         await nextTick();
+        // Load data and invalid cells for the active tab
         harmonizerApi.loadData(activeTemplateData.value);
+        harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
+        // If the tab has no validation state from the server, mark it as unvalidated
+        if (!validationState.sampleMetadata || !has(validationState.sampleMetadata.tabsValidated, activeTemplateKey.value!)) {
+          setTabValidated(activeTemplateKey.value!, false);
+        }
         addHooks();
-        metadataSuggestions.value = getPendingSuggestions(
-          (route.params as { id: string }).id,
-          activeTemplate.value?.schemaClass!,
-        );
+        metadataSuggestions.value = getPendingSuggestions(props.id, activeTemplate.value?.schemaClass!);
         if (!canEditSampleMetadata()) {
           harmonizerApi.setTableReadOnly();
         }
@@ -709,8 +673,9 @@ export default defineComponent({
       harmonizerElement,
       jumpToModel,
       harmonizerApi,
-      tabsValidated,
-      saveRecordRequest,
+      tabsValidated: validationState.sampleMetadata?.tabsValidated || {},
+      invalidCells: validationState.sampleMetadata?.invalidCells || {},
+      incrementalSaveRecordRequest,
       submitLoading,
       submitCount,
       selectedHelpDict,
@@ -724,15 +689,12 @@ export default defineComponent({
       activeTemplate,
       activeTemplateKey,
       activeTabIndex,
-      invalidCells,
       validationErrors,
       validationErrorGroups,
       validationTotalCounts,
-      SubmissionStatusEnum,
-      status,
       submitDialog,
-      missingTabs,
-      missingTabsText,
+      hasValidSampleEnvironmentSelection,
+      hasValidUserFacilitySelection,
       validationSuccessSnackbar,
       schemaLoading,
       importErrorSnackbar,
@@ -759,448 +721,448 @@ export default defineComponent({
 </script>
 
 <template>
-  <div v-if="missingTabs">
-    <SubmissionNavigationSidebar />
-    <v-container centered>
-      <v-card elevation="5">
-        <v-card-title class="text-center justify-center text-h4">
-          Not all tabs may be present!
-        </v-card-title>
-        <v-card-text class="text-center justify-center text-h5">
-          <div
-            v-for="(item, index) in missingTabsText"
-            :key="index"
-            class="mb-2"
-          >
-            {{ item }}
-          </div>
-        </v-card-text>
-      </v-card>
-    </v-container>
-  </div>
+  <SubmissionNavigationSidebar />
   <div
-    v-else
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
     class="d-flex flex-column"
   >
-    <SubmissionNavigationSidebar />
-    <submission-permission-banner
+    <SubmissionPermissionBanner
       v-if="canEditSubmissionByStatus() && !canEditSampleMetadata()"
     />
     <StatusAlert v-if="!canEditSubmissionByStatus()" />
-    <div class="d-flex flex-column px-2 pb-2 pt-2">
-      <div class="d-flex align-center">
-        <v-btn
-          v-if="validationErrorGroups.length === 0"
-          color="primary"
-          variant="outlined"
-          :disabled="!canEditSampleMetadata()"
-          @click="validate"
-        >
-          Validate
-          <v-icon class="pl-2">
-            mdi-refresh
-          </v-icon>
-        </v-btn>
-        <v-snackbar
-          v-model="validationSuccessSnackbar"
-          color="success"
-          timeout="3000"
-        >
-          Validation Passed! You can now submit or continue editing.
-        </v-snackbar>
-        <v-snackbar
-          v-model="importErrorSnackbar"
-          color="error"
-          timeout="5000"
-        >
-          The following worksheet names were not recognized: {{ notImportedWorksheetNames.join(', ') }}
-        </v-snackbar>
-        <v-snackbar
-          v-model="emptySheetSnackbar"
-          color="error"
-          timeout="5000"
-        >
-          The spreadsheet is empty. Please add data.
-        </v-snackbar>
-        <v-card
-          v-if="validationErrorGroups.length"
-          color="error"
-          width="600"
-          class="d-flex py-2 align-center"
-        >
-          <v-select
-            v-model="validationActiveCategory"
-            :items="validationItems"
-            item-title="text"
-            solo
-            style="background-color: #ffffff; color: #000000;"
-            density="compact"
-            class="mx-2 z-above-sidebar"
-            hide-details
-          >
-            <template #selection="{ item }">
-              <p
-                style="font-size: 14px"
-                class="my-0"
-              >
-                {{ item.title }}
-              </p>
-            </template>
-          </v-select>
-          <div class="d-flex align-center mx-2">
-            <v-icon
-              @click="errorClick(highlightedValidationError - 1)"
-            >
-              mdi-arrow-left-circle
-            </v-icon>
-            <v-spacer />
-            <span class="mx-1">
-              ({{ highlightedValidationError + 1 }}/{{ validationErrors[validationActiveCategory]?.length }})
-            </span>
-            <v-spacer />
-            <v-icon
-              @click="errorClick(highlightedValidationError + 1)"
-            >
-              mdi-arrow-right-circle
-            </v-icon>
-          </div>
+    <v-alert
+      v-if="!hasValidSampleEnvironmentSelection"
+      class="ma-8 flex-grow-0 overflow-visible"
+      title="Incomplete Sample Environment Selection"
+      text="You must complete the Sample Environment form before entering sample metadata."
+      type="warning"
+    />
+    <template
+      v-else
+    >
+      <v-alert
+        v-if="!hasValidUserFacilitySelection"
+        class="overflow-visible"
+        density="compact"
+        text="Not all required tabs may be present until errors in the Multiomics Form are corrected."
+        tile
+        title="Incomplete User Facility Selection"
+        type="warning"
+      />
+      <div class="d-flex flex-column px-2 pb-2 pt-2">
+        <div class="d-flex align-center">
           <v-btn
+            v-if="validationErrorGroups.length === 0"
+            color="primary"
             variant="outlined"
-            small
-            class="mx-2"
+            :disabled="!canEditSampleMetadata()"
             @click="validate"
           >
-            <v-icon class="pr-2">
+            Validate
+            <v-icon class="pl-2">
               mdi-refresh
             </v-icon>
-            Re-validate
           </v-btn>
-        </v-card>
-        <submission-docs-link anchor="sample-metadata" />
-        <span v-if="saveRecordRequest.count.value > 0">
-          <span
-            v-if="saveRecordRequest.loading.value"
-            class="text-center"
+          <v-snackbar
+            v-model="validationSuccessSnackbar"
+            color="success"
+            timeout="3000"
           >
-            <v-progress-circular
-              color="primary"
-              :width="1"
-              size="20"
-              indeterminate
-            />
-            Saving progress
-          </span>
-          <span v-if="!saveRecordRequest.error.value && !saveRecordRequest.loading.value">
-            <v-icon
-              color="green"
+            Validation Passed! You can now submit or continue editing.
+          </v-snackbar>
+          <v-snackbar
+            v-model="importErrorSnackbar"
+            color="error"
+            timeout="5000"
+          >
+            The following worksheet names were not recognized: {{ notImportedWorksheetNames.join(', ') }}
+          </v-snackbar>
+          <v-snackbar
+            v-model="emptySheetSnackbar"
+            color="error"
+            timeout="5000"
+          >
+            The spreadsheet is empty. Please add data.
+          </v-snackbar>
+          <v-card
+            v-if="validationErrorGroups.length"
+            color="error"
+            width="600"
+            class="d-flex py-2 align-center"
+          >
+            <v-select
+              v-model="validationActiveCategory"
+              :items="validationItems"
+              item-title="text"
+              solo
+              style="background-color: #ffffff; color: #000000;"
+              density="compact"
+              class="mx-2 z-above-sidebar"
+              hide-details
             >
-              mdi-check
-            </v-icon>
-            Changes saved successfully
-          </span>
-          <span v-else-if="saveRecordRequest.error.value && !saveRecordRequest.loading.value">
-            <v-icon
-              color="red"
-            >
-              mdi-close
-            </v-icon>
-            Failed to save changes
-          </span>
-        </span>
-        <v-spacer />
-        <v-autocomplete
-          v-model="jumpToModel"
-          :items="fields"
-          item-title="text"
-          item-value="value"
-          label="Jump to column..."
-          class="flex-0-0 mr-2 z-above-sidebar"
-          variant="outlined"
-          density="compact"
-          hide-details
-          :menu-props="{ maxHeight: 500 }"
-          width="233"
-          @focus="focus"
-          @update:model-value="jumpTo"
-        />
-        <v-menu
-          offset-y
-          nudge-bottom="4px"
-          :close-on-click="true"
-        >
-          <template #activator="{ props }">
+              <template #selection="{ item }">
+                <p
+                  style="font-size: 14px"
+                  class="my-0"
+                >
+                  {{ item.title }}
+                </p>
+              </template>
+            </v-select>
+            <div class="d-flex align-center mx-2">
+              <v-icon
+                @click="errorClick(highlightedValidationError - 1)"
+              >
+                mdi-arrow-left-circle
+              </v-icon>
+              <v-spacer />
+              <span class="mx-1">
+                ({{ highlightedValidationError + 1 }}/{{ validationErrors[validationActiveCategory]?.length }})
+              </span>
+              <v-spacer />
+              <v-icon
+                @click="errorClick(highlightedValidationError + 1)"
+              >
+                mdi-arrow-right-circle
+              </v-icon>
+            </div>
             <v-btn
               variant="outlined"
-              v-bind="props"
+              small
+              class="mx-2"
+              @click="validate"
             >
-              <v-icon class="pr-1">
-                mdi-eye
+              <v-icon class="pr-2">
+                mdi-refresh
               </v-icon>
-              <v-icon>
-                mdi-menu-down
-              </v-icon>
+              Re-validate
             </v-btn>
-          </template>
-          <v-card
-            class="py-1 px-2"
-            width="280"
-            variant="outlined"
-          >
-            <v-radio-group
-              v-model="columnVisibility"
-              label="Column visibility"
-            >
-              <v-radio
-                value="all"
-              >
-                <template #label>
-                  <div class="black--text">
-                    All Columns
-                  </div>
-                </template>
-              </v-radio>
-              <v-radio
-                value="required"
-              >
-                <template #label>
-                  <div class="black--text">
-                    <span :style="{ 'background-color': ColorKey.required.color }">Required</span>
-                    columns
-                  </div>
-                </template>
-              </v-radio>
-              <v-radio
-                value="recommended"
-              >
-                <template #label>
-                  <div class="black--text">
-                    <span :style="{ 'background-color': ColorKey.required.color }">Required</span>
-                    and
-                    <span :style="{ 'background-color': ColorKey.recommended.color }">recommended</span>
-                    columns
-                  </div>
-                </template>
-              </v-radio>
-              <v-divider class="mb-3" />
-              <span
-                class="grey--text text--darken-2 text-body-1 mb-2"
-              >
-                Show section
-              </span>
-              <v-radio
-                v-for="(sectionName, sectionTitle) in harmonizerApi.schemaSectionNames.value"
-                :key="sectionName"
-                :value="sectionName"
-              >
-                <template #label>
-                  <span>
-                    {{ sectionTitle }}
-                  </span>
-                </template>
-              </v-radio>
-            </v-radio-group>
           </v-card>
-        </v-menu>
-      </div>
-    </div>
-
-    <v-layout class="harmonizer-and-sidebar">
-      <v-tabs
-        v-model="activeTabIndex"
-        color="primary"
-      >
-        <v-tooltip
-          v-for="templateKey in templateList"
-          :key="templateKey"
-          right
-        >
-          <template #activator="{ props }">
-            <div
-              style="display: flex;"
-              v-bind="props"
+          <submission-docs-link anchor="sample-metadata" />
+          <span v-if="incrementalSaveRecordRequest.count.value > 0">
+            <span
+              v-if="incrementalSaveRecordRequest.loading.value"
+              class="text-center"
             >
-              <v-tab>
-                {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
-                <v-badge
-                  :content="validationTotalCounts[templateKey] || '!'"
-                  max="99"
-                  inline
-                  :model-value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
-                  :color="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) ? 'error' : 'warning'"
-                />
-              </v-tab>
-            </div>
-          </template>
-          <span v-if="validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0">
-            {{ validationTotalCounts[templateKey] }} validation errors
-          </span>
-          <span v-else-if="!tabsValidated[templateKey]">
-            This tab must be validated before submission
-          </span>
-          <span v-else>
-            {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
-          </span>
-        </v-tooltip>
-      </v-tabs>
-
-      <div v-if="schemaLoading">
-        Loading...
-      </div>
-
-      <div
-        id="harmonizer-root"
-        class="harmonizer-style-container"
-        :style="{
-          'right': sidebarOpen ? `${HELP_SIDEBAR_WIDTH}px` : '0px',
-          'top': `${TABS_HEIGHT}px`,
-        }"
-      />
-
-      <v-btn
-        class="sidebar-toggle"
-        tile
-        variant="plain"
-        color="black"
-        :ripple="false"
-        :height="TABS_HEIGHT"
-        :width="TABS_HEIGHT"
-        :style="{
-          'right': sidebarOpen ? `${HELP_SIDEBAR_WIDTH}px` : '0px',
-        }"
-        @click="sidebarOpen = !sidebarOpen"
-      >
-        <v-icon
-          v-if="sidebarOpen"
-          class="sidebar-toggle-close"
-        >
-          mdi-menu-open
-        </v-icon>
-        <v-icon v-else>
-          mdi-menu-open
-        </v-icon>
-      </v-btn>
-
-      <v-navigation-drawer
-        v-model="sidebarOpen"
-        :width="HELP_SIDEBAR_WIDTH"
-        absolute
-        temporary
-        location="right"
-        class="z-above-data-harmonizer"
-      >
-        <HarmonizerSidebar
-          :column-help="selectedHelpDict"
-          :harmonizer-api="harmonizerApi"
-          :harmonizer-template="activeTemplate!"
-          :metadata-editing-allowed="canEditSampleMetadata()"
-          @import-xlsx="openFile"
-          @export-xlsx="downloadSamples"
-        />
-      </v-navigation-drawer>
-    </v-layout>
-    <div class="harmonizer-bottom-container">
-      <div class="harmonizer-style-container">
-        <div
-          v-if="canEditSampleMetadata()"
-          id="harmonizer-footer-root"
-        />
-      </div>
-      <div class="d-flex ma-2">
-        <v-btn-grey :to="{ name: 'Sample Environment' }">
-          <v-icon class="pr-1">
-            mdi-arrow-left-circle
-          </v-icon>
-          Go to previous step
-        </v-btn-grey>
-        <v-spacer />
-        <div class="d-flex align-center">
-          <span class="mr-1">Color key</span>
-          <v-chip
-            v-for="val in ColorKey"
-            :key="val.label"
-            :style="{ backgroundColor: val.color, opacity: 1, color: '#000000' }"
-            class="mr-1"
-            variant="flat"
-          >
-            {{ val.label }}
-          </v-chip>
-        </div>
-        <v-spacer />
-        <v-tooltip
-          top
-        >
-          <template #activator="{ props }">
-            <div
-              v-bind="props"
-            >
-              <v-btn
-                color="success"
-                depressed
-                :disabled="!submissionState.canSubmit"
-                :loading="submitLoading"
-                @click="handleSubmitClick"
+              <v-progress-circular
+                color="primary"
+                :width="1"
+                size="20"
+                indeterminate
+              />
+              Saving progress
+            </span>
+            <span v-if="!incrementalSaveRecordRequest.error.value && !incrementalSaveRecordRequest.loading.value">
+              <v-icon
+                color="green"
               >
-                <span v-if="submissionState.isSubmitted">
-                  <v-icon>mdi-check-circle</v-icon>
-                  Submitted
-                </span>
-                <span v-else>
-                  Submit
-                </span>
-                <v-dialog
-                  v-model="submitDialog"
-                  width="auto"
-                >
-                  <v-card v-if="isTestSubmission">
-                    <v-card-title>
-                      Submit
-                    </v-card-title>
-                    <v-card-text>
-                      Test submissions cannot be submitted for NMDC review.
-                    </v-card-text>
-                    <v-card-actions>
-                      <v-btn
-                        text
-                        @click="submitDialog = false"
-                      >
-                        Close
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                  <v-card v-else>
-                    <v-card-title>
-                      Submit
-                    </v-card-title>
-                    <v-card-text>
-                      You are about to submit this study and metadata for NMDC review. Would you like to continue?
-                    </v-card-text>
-                    <v-card-actions>
-                      <v-btn
-                        color="primary"
-                        class="mr-2"
-                        @click="doSubmit"
-                      >
-                        Yes- Submit
-                      </v-btn>
-                      <v-btn @click="submitDialog = false">
-                        Cancel
-                      </v-btn>
-                    </v-card-actions>
-                  </v-card>
-                </v-dialog>
+                mdi-check
+              </v-icon>
+              Changes saved successfully
+            </span>
+            <span v-else-if="incrementalSaveRecordRequest.error.value && !incrementalSaveRecordRequest.loading.value">
+              <v-icon
+                color="red"
+              >
+                mdi-close
+              </v-icon>
+              Failed to save changes
+            </span>
+          </span>
+          <v-spacer />
+          <v-autocomplete
+            v-model="jumpToModel"
+            :items="fields"
+            item-title="text"
+            item-value="value"
+            label="Jump to column..."
+            class="flex-0-0 mr-2 z-above-sidebar"
+            variant="outlined"
+            density="compact"
+            hide-details
+            :menu-props="{ maxHeight: 500 }"
+            width="233"
+            @focus="focus"
+            @update:model-value="jumpTo"
+          />
+          <v-menu
+            offset-y
+            nudge-bottom="4px"
+            :close-on-click="true"
+          >
+            <template #activator="{ props }">
+              <v-btn
+                variant="outlined"
+                v-bind="props"
+              >
+                <v-icon class="pr-1">
+                  mdi-eye
+                </v-icon>
+                <v-icon>
+                  mdi-menu-down
+                </v-icon>
               </v-btn>
-            </div>
-          </template>
-          <span v-if="!submissionState.canSubmit">
-            {{ submissionState.submitDisabledReason }}
-          </span>
-          <span v-if="submissionState.canSubmit">
-            Submit for NMDC review.
-          </span>
-        </v-tooltip>
+            </template>
+            <v-card
+              class="py-1 px-2"
+              width="280"
+              variant="outlined"
+            >
+              <v-radio-group
+                v-model="columnVisibility"
+                label="Column visibility"
+              >
+                <v-radio
+                  value="all"
+                >
+                  <template #label>
+                    <div class="black--text">
+                      All Columns
+                    </div>
+                  </template>
+                </v-radio>
+                <v-radio
+                  value="required"
+                >
+                  <template #label>
+                    <div class="black--text">
+                      <span :style="{ 'background-color': ColorKey.required.color }">Required</span>
+                      columns
+                    </div>
+                  </template>
+                </v-radio>
+                <v-radio
+                  value="recommended"
+                >
+                  <template #label>
+                    <div class="black--text">
+                      <span :style="{ 'background-color': ColorKey.required.color }">Required</span>
+                      and
+                      <span :style="{ 'background-color': ColorKey.recommended.color }">recommended</span>
+                      columns
+                    </div>
+                  </template>
+                </v-radio>
+                <v-divider class="mb-3" />
+                <span
+                  class="grey--text text--darken-2 text-body-1 mb-2"
+                >
+                  Show section
+                </span>
+                <v-radio
+                  v-for="(sectionName, sectionTitle) in harmonizerApi.schemaSectionNames.value"
+                  :key="sectionName"
+                  :value="sectionName"
+                >
+                  <template #label>
+                    <span>
+                      {{ sectionTitle }}
+                    </span>
+                  </template>
+                </v-radio>
+              </v-radio-group>
+            </v-card>
+          </v-menu>
+        </div>
       </div>
-    </div>
+
+      <v-layout class="harmonizer-and-sidebar">
+        <v-tabs
+          v-model="activeTabIndex"
+          color="primary"
+        >
+          <v-tooltip
+            v-for="templateKey in templateList"
+            :key="templateKey"
+            right
+          >
+            <template #activator="{ props }">
+              <div
+                style="display: flex;"
+                v-bind="props"
+              >
+                <v-tab>
+                  {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
+                  <v-badge
+                    :content="validationTotalCounts[templateKey] || '!'"
+                    max="99"
+                    inline
+                    :model-value="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) || !tabsValidated[templateKey]"
+                    :color="(validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0) ? 'error' : 'warning'"
+                  />
+                </v-tab>
+              </div>
+            </template>
+            <span v-if="validationTotalCounts[templateKey] && validationTotalCounts[templateKey] > 0">
+              {{ validationTotalCounts[templateKey] }} validation errors
+            </span>
+            <span v-else-if="!tabsValidated[templateKey]">
+              This tab must be validated before submission
+            </span>
+            <span v-else>
+              {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
+            </span>
+          </v-tooltip>
+        </v-tabs>
+
+        <div v-if="schemaLoading">
+          Loading...
+        </div>
+
+        <div
+          id="harmonizer-root"
+          class="harmonizer-style-container"
+          :style="{
+            'right': sidebarOpen ? `${HELP_SIDEBAR_WIDTH}px` : '0px',
+            'top': `${TABS_HEIGHT}px`,
+          }"
+        />
+
+        <v-btn
+          class="sidebar-toggle"
+          tile
+          variant="plain"
+          color="black"
+          :ripple="false"
+          :height="TABS_HEIGHT"
+          :width="TABS_HEIGHT"
+          :style="{
+            'right': sidebarOpen ? `${HELP_SIDEBAR_WIDTH}px` : '0px',
+          }"
+          @click="sidebarOpen = !sidebarOpen"
+        >
+          <v-icon
+            v-if="sidebarOpen"
+            class="sidebar-toggle-close"
+          >
+            mdi-menu-open
+          </v-icon>
+          <v-icon v-else>
+            mdi-menu-open
+          </v-icon>
+        </v-btn>
+
+        <v-navigation-drawer
+          v-model="sidebarOpen"
+          :width="HELP_SIDEBAR_WIDTH"
+          absolute
+          temporary
+          location="right"
+          class="z-above-data-harmonizer"
+        >
+          <HarmonizerSidebar
+            :column-help="selectedHelpDict"
+            :harmonizer-api="harmonizerApi"
+            :harmonizer-template="activeTemplate!"
+            :metadata-editing-allowed="canEditSampleMetadata()"
+            @import-xlsx="openFile"
+            @export-xlsx="downloadSamples"
+          />
+        </v-navigation-drawer>
+      </v-layout>
+      <div class="harmonizer-bottom-container">
+        <div class="harmonizer-style-container">
+          <div
+            v-if="canEditSampleMetadata()"
+            id="harmonizer-footer-root"
+          />
+        </div>
+        <div class="d-flex ma-2">
+          <v-btn-grey :to="{ name: 'Sample Environment' }">
+            <v-icon class="pr-1">
+              mdi-arrow-left-circle
+            </v-icon>
+            Go to previous step
+          </v-btn-grey>
+          <v-spacer />
+          <div class="d-flex align-center">
+            <span class="mr-1">Color key</span>
+            <v-chip
+              v-for="val in ColorKey"
+              :key="val.label"
+              :style="{ backgroundColor: val.color, opacity: 1, color: '#000000' }"
+              class="mr-1"
+              variant="flat"
+            >
+              {{ val.label }}
+            </v-chip>
+          </div>
+          <v-spacer />
+          <v-tooltip
+            top
+          >
+            <template #activator="{ props }">
+              <div
+                v-bind="props"
+              >
+                <v-btn
+                  color="success"
+                  depressed
+                  :disabled="!submissionState.canSubmit"
+                  :loading="submitLoading"
+                  @click="handleSubmitClick"
+                >
+                  <span v-if="submissionState.isSubmitted">
+                    <v-icon>mdi-check-circle</v-icon>
+                    Submitted
+                  </span>
+                  <span v-else>
+                    Submit
+                  </span>
+                  <v-dialog
+                    v-model="submitDialog"
+                    width="auto"
+                  >
+                    <v-card v-if="isTestSubmission">
+                      <v-card-title>
+                        Submit
+                      </v-card-title>
+                      <v-card-text>
+                        Test submissions cannot be submitted for NMDC review.
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-btn
+                          text
+                          @click="submitDialog = false"
+                        >
+                          Close
+                        </v-btn>
+                      </v-card-actions>
+                    </v-card>
+                    <v-card v-else>
+                      <v-card-title>
+                        Submit
+                      </v-card-title>
+                      <v-card-text>
+                        You are about to submit this study and metadata for NMDC review. Would you like to continue?
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-btn
+                          color="primary"
+                          class="mr-2"
+                          @click="doSubmit"
+                        >
+                          Yes- Submit
+                        </v-btn>
+                        <v-btn @click="submitDialog = false">
+                          Cancel
+                        </v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-dialog>
+                </v-btn>
+              </div>
+            </template>
+            <span v-if="!submissionState.canSubmit">
+              {{ submissionState.submitDisabledReason }}
+            </span>
+            <span v-if="submissionState.canSubmit">
+              Submit for NMDC review.
+            </span>
+          </v-tooltip>
+        </div>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -1291,6 +1253,9 @@ html {
 
   table {
     padding-right: 16px;
+  }
+  .listbox .ht_master table {
+    padding-right: 0;
   }
 
   td {

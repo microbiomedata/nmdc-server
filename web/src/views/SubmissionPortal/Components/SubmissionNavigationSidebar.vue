@@ -1,49 +1,12 @@
 <script lang="ts">
-import {
-  computed,
-  defineComponent,
-} from 'vue';
-import { validForms, studyForm } from '../store';
-import { useRouter } from 'vue-router';
+import { defineComponent, } from 'vue';
+import { studyName, submissionPages } from '../store';
 
 export default defineComponent({
   setup() {
-    const pages = computed(() => [
-      {
-        title: 'Submission Summary',
-        pageName: 'summary',
-      },
-      {
-        title: 'Study Form',
-        pageName: 'study',
-        icon: validForms.studyFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle',
-      },
-      {
-        title: 'Multiomics Form',
-        pageName: 'multiomics',
-        icon: validForms.multiOmicsFormValid.length === 0 ? 'mdi-check' : 'mdi-close-circle',
-      },
-      {
-        title: 'Sample Environment',
-        pageName: 'templates',
-        icon: validForms.templatesValid ? 'mdi-check' : 'mdi-close-circle',
-      },
-      {
-        title: 'Sample Metadata',
-        pageName: 'samples',
-        icon: validForms.harmonizerValid ? 'mdi-check' : 'mdi-close-circle',
-      },
-    ]);
-    const router = useRouter();
-
-    function gotoPage(newPage: string) {
-      router?.push({name: newPage});
-    }
-
     return {
-      gotoPage,
-      pages,
-      studyForm
+      submissionPages,
+      studyName
     };
   },
 });
@@ -55,10 +18,22 @@ export default defineComponent({
     permanent
     clipped
   >
-    <v-list-item subtitle="Click to go to">
+    <v-list-item>
       <template #title>
-        <div class="text-h6 text-wrap">
-          {{ studyForm.studyName }}
+        <BreadcrumbList
+          class="pt-3"
+          :items="[
+            { text: 'Submission Portal Home', to: { name: 'Submission Home' } }
+          ]"
+        />
+        <div class="study-name">
+          <span v-if="studyName">{{ studyName }}</span>
+          <span
+            v-else
+            class="text-disabled font-italic"
+          >
+            No study name
+          </span>
         </div>
       </template>
     </v-list-item>
@@ -70,18 +45,47 @@ export default defineComponent({
       nav
     >
       <v-list-item
-        v-for="(item, i) in pages"
-        :key="i"
-        :to="item.pageName"
+        :to="{ name: 'Submission Summary' }"
         link
+        title="Submission Summary"
+      />
+      <v-list-item
+        v-for="page in submissionPages"
+        :key="page.title"
+        :to="page.link"
+        link
+        :title="page.title"
       >
-        <v-list-item-title class="pr-2 text-subtitle-1">
-          {{ item.title }}
-        </v-list-item-title>
-        <template v-if="item.icon" #append>
-          <v-icon>{{ item.icon }}</v-icon>
+        <template
+          v-if="Array.isArray(page.validationMessages)"
+          #append
+        >
+          <v-badge
+            v-if="page.validationMessages?.length != 0"
+            inline
+            color="red"
+            :content="page.validationMessages?.length"
+            :title="page.validationMessages.join('\n')"
+          />
+          <v-icon
+            v-else
+            color="green"
+          >
+            mdi-check-circle-outline
+          </v-icon>
         </template>
       </v-list-item>
     </v-list>
   </v-navigation-drawer>
 </template>
+
+<style scoped>
+.study-name {
+  font-weight: 600;
+  white-space: normal !important;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow: hidden;
+}
+</style>

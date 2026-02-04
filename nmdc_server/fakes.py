@@ -398,12 +398,12 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "biosafetyLevel": "",
             "comments": "",
         },
-        "validForms": {
-            "studyFormValid": [],
-            "multiOmicsFormValid": [],
-            "templatesValid": False,
-            "harmonizerValid": False,
-            "addressFormValid": False,
+        "validationState": {
+            "studyForm": None,
+            "multiOmicsForm": None,
+            "sampleEnvironmentForm": None,
+            "senderShippingInfoForm": None,
+            "sampleMetadata": None,
         },
         "packageName": [],
     }
