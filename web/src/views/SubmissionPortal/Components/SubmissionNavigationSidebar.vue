@@ -69,6 +69,7 @@ export default defineComponent({
           />
           <v-icon
             v-else
+            style="margin-right: 2px"
             color="green"
           >
             mdi-check-circle-outline
