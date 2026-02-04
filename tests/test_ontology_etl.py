@@ -274,7 +274,6 @@ def test_ontology_etl_integration(db: Session):
 
 def test_envo_load_with_biosample_fk_constraint(db: Session):
     """Test that envo.load() doesn't violate FK constraints when biosamples reference ENVO terms.
-
     """
     # Create ENVO ontology classes
     fakes.OntologyClassFactory(
