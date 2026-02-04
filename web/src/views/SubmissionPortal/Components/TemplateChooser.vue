@@ -56,7 +56,7 @@ export default defineComponent({
       @valid-state-changed="(state) => validationState.sampleEnvironmentForm = state"
     >
       <v-input
-        v-model="packageName"
+        :model-value="packageName"
         validate-on="input eager"
         :rules="[(v) => (!!v && v.length > 0) || 'Please select at least one template.']"
       >
