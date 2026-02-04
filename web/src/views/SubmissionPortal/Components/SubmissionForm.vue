@@ -24,7 +24,7 @@ const handleValidStateChanged = () => {
 
 watch(() => formRef.value?.errors, () => {
   handleValidStateChanged();
-})
+});
 
 const validate = () => {
   formRef.value?.validate();

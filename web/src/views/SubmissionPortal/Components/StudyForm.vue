@@ -83,7 +83,7 @@ export default defineComponent({
     }
 
     function revalidate() {
-      formRef.value?.validate()
+      formRef.value?.validate();
     }
 
     function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {

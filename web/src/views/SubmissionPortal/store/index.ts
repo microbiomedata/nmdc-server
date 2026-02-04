@@ -53,7 +53,7 @@ const permissionLevelHierarchy: Record<SubmissionEditorRole, number> = {
 //use schema enum to define submission status
 const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
 const status = ref<SubmissionStatusKey>('InProgress');
-const statusDisplay = computed(() => SubmissionStatusEnum[status.value].title)
+const statusDisplay = computed(() => SubmissionStatusEnum[status.value].title);
 
 function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
   const excludeFromAll: SubmissionStatusKey[] = [
@@ -181,7 +181,7 @@ function resetSampleMetadataValidation() {
   validationState.sampleMetadata.invalidCells = {};
   Object.keys(validationState.sampleMetadata.tabsValidated).forEach((tab) => {
     validationState.sampleMetadata!.tabsValidated[tab] = false;
-  })
+  });
 }
 
 function isSubmissionValid() {
@@ -511,7 +511,7 @@ watch(templateList, (newList, oldList) => {
     validationState.sampleMetadata = {
       invalidCells: {},
       tabsValidated: {},
-    }
+    };
   }
   validationState.sampleMetadata.tabsValidated = newTabsValidated;
 });

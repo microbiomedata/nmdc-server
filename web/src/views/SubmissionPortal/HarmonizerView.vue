@@ -138,8 +138,8 @@ export default defineComponent({
       }
       return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
     });
-    const hasValidSampleEnvironmentSelection = computed(() => isEqual(validationState.sampleEnvironmentForm, []))
-    const hasValidUserFacilitySelection = computed(() => isEqual(validationState.multiOmicsForm, []))
+    const hasValidSampleEnvironmentSelection = computed(() => isEqual(validationState.sampleEnvironmentForm, []));
+    const hasValidUserFacilitySelection = computed(() => isEqual(validationState.multiOmicsForm, []));
 
     const submitDialog = ref(false);
 

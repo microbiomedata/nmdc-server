@@ -50,7 +50,7 @@ export default defineComponent({
       set: (newValue: Date | undefined) => {
         addressForm.expectedShippingDate = newValue ? newValue.toISOString() : undefined;
       },
-    })
+    });
 
     function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[]) {
       return [

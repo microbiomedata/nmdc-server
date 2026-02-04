@@ -146,7 +146,7 @@ router.beforeEach(async (to, from, next) => {
     await incrementalSaveRecord(id);
     if (!to.meta.requiresSubmissionLock) {
       // We are navigating to a screen that does not require a lock, so unlock
-      await unlockRecord(id)
+      await unlockRecord(id);
     }
   } else if (to.meta.requiresSubmissionLock && 'id' in to.params) {
     const id = to.params.id as string;
