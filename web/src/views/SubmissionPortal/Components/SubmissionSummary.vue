@@ -106,18 +106,5 @@ export default defineComponent({
         </template>
       </v-list>
     </PageSection>
-
-    <div class="d-flex my-4">
-      <v-btn
-        color="gray"
-        depressed
-        :to="{ name: 'Submission Home' }"
-      >
-        <v-icon class="pl-1">
-          mdi-arrow-left-circle
-        </v-icon>
-        Go to Submission List
-      </v-btn>
-    </div>
   </div>
 </template>

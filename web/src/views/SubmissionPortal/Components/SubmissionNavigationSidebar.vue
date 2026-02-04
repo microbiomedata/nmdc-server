@@ -20,6 +20,12 @@ export default defineComponent({
   >
     <v-list-item>
       <template #title>
+        <BreadcrumbList
+          class="pt-3"
+          :items="[
+            { text: 'Submission Portal Home', to: { name: 'Submission Home' } }
+          ]"
+        />
         <div class="study-name">
           <span v-if="studyName">{{ studyName }}</span>
           <span
