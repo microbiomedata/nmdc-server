@@ -1,55 +1,21 @@
 <script lang="ts">
+import { defineComponent, } from 'vue';
 import {
-  computed,
-  defineComponent,
-  ref,
-} from 'vue';
-import {
-  validationState,
   canEditSubmissionMetadata,
-  submissionPages,
   createdDate,
+  isTestSubmission,
   modifiedDate,
   statusDisplay,
-  isTestSubmission,
+  submissionPages,
+  validationState,
 } from '../store';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 export default defineComponent({
   components: { PageTitle },
   setup() {
-    const textVal = ref('');
-
-    const panels = ref([]);
-
-    const studyFormContent = computed(() => {
-      if (validationState.studyForm?.length === 0) {
-        return ['No changes needed.'];
-      }
-      return [...new Set(validationState.studyForm)];
-    });
-
-    const multiOmicsContent = computed(() => {
-      if (validationState.multiOmicsForm?.length === 0) {
-        return ['No changes needed.'];
-      }
-      return [...new Set(validationState.multiOmicsForm)];
-    });
-
-    const harmonizerContent = computed(() => {
-      if (validationState.sampleEnvironmentForm) {
-        return 'Validate and correct any errors in your harmonizer data.';
-      }
-      return 'You must select one or more templates in the sample environment tab.';
-    });
-
     return {
       validationState,
-      textVal,
-      panels,
-      studyFormContent,
-      multiOmicsContent,
-      harmonizerContent,
       canEditSubmissionMetadata,
       submissionPages,
       createdDate,
