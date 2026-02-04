@@ -66,7 +66,7 @@ export default defineComponent({
           <v-text-field
             v-model="studyName"
             :rules="requiredRules('Name is required',[
-                v => v.length > 6 || 'Study name too short',
+              v => v.length > 6 || 'Study name too short',
             ])"
             validate-on-blur
             label="Study Name *"
@@ -78,7 +78,7 @@ export default defineComponent({
             v-model="piEmail"
             label="Email *"
             :rules="requiredRules('E-mail is required',[
-                v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
+              v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
             ])"
             :hint="Definitions.piEmail"
             persistent-hint
@@ -97,35 +97,35 @@ export default defineComponent({
                 <div class="text-caption"> Test submissions should be used when at a workshop or doing a test, example, or training. These cannot be submitted. </div>
               </div>
             </template>
-              <v-radio
-                label="Yes"
-                :value="true"
-              />
-              <v-radio
-                label="No"
-                :value="false"
-              />
-            </v-radio-group>
-          </div>
+            <v-radio
+              label="Yes"
+              :value="true"
+            />
+            <v-radio
+              label="No"
+              :value="false"
+            />
+          </v-radio-group>
+        </div>
       </v-form>
       <div class="d-flex my-4">
         <v-btn
-        color="gray"
-        depressed
-        :to="{ name: 'Submission Home' }"
+          color="gray"
+          depressed
+          :to="{ name: 'Submission Home' }"
         >
           <v-icon class="pl-1">
             mdi-arrow-left-circle
           </v-icon>
           Go to Submission List
-          </v-btn>
-          <v-spacer />
-          <v-btn
-            color="primary"
-            :disabled="!isFormValid"
-            @click="createNewSubmission()"
-          >
-            Start Submission
+        </v-btn>
+        <v-spacer />
+        <v-btn
+          color="primary"
+          :disabled="!isFormValid"
+          @click="createNewSubmission()"
+        >
+          Start Submission
         </v-btn>
       </div>
     </v-container>

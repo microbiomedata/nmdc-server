@@ -305,12 +305,12 @@ def test_get_metadata_submissions_report_as_admin(
                 "biosafetyLevel": "",
                 "comments": "",
             },
-            "validForms": {
-                "studyFormValid": [],
-                "multiOmicsFormValid": [],
-                "templatesValid": False,
-                "harmonizerValid": False,
-                "addressFormValid": False,
+            "validationState": {
+                "studyForm": None,
+                "multiOmicsForm": None,
+                "sampleEnvironmentForm": None,
+                "senderShippingInfoForm": None,
+                "sampleMetadata": None,
             },
             "packageName": [],
         },

@@ -26,17 +26,17 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class = "d-flex">
-        <div class="text-h4 mb-2">
-            {{ title }}
-        </div>
+    <div class="d-flex">
+      <div class="text-h4 mb-2">
+        {{ title }}
+      </div>
 
-        <div class="text-body-1">
-            <div v-if="help || $slots.help">
-                <slot name="help" />
-                {{ help }}
-            </div>
+      <div class="text-body-1">
+        <div v-if="help || $slots.help">
+          <slot name="help" />
+          {{ help }}
         </div>
+      </div>
     </div>
 
     <div class="text-body-1">

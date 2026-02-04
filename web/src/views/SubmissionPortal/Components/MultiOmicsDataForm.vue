@@ -1,46 +1,40 @@
 <script lang="ts">
-import {
-  defineComponent,
-  ref,
-  onMounted,
-  watch,
-  nextTick,
-  computed,
-} from 'vue';
-import { VForm } from 'vuetify/components';
+import { computed, defineComponent, nextTick, useTemplateRef, watch } from 'vue';
 
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
-  multiOmicsForm, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
-  templateHasData, checkDoiFormat, canEditSubmissionByStatus, status, validForms,
+  addAwardDoi,
+  canEditSubmissionByStatus,
+  canEditSubmissionMetadata,
+  checkDoiFormat,
+  checkJGITemplates,
+  multiOmicsAssociations,
+  multiOmicsForm,
+  removeAwardDoi,
+  templateHasData,
+  validationState,
 } from '../store';
 
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
-import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
 import DoeFacility from './DoeFacility.vue';
-import StatusAlert from './StatusAlert.vue';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
+import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
 
 const OTHER = 'OTHER';
 
 export default defineComponent({
   components: {
+    SubmissionForm,
     DataTypes,
     DoeFacility,
     SubmissionDocsLink,
-    SubmissionPermissionBanner,
-    StatusAlert,
     PageTitle,
   },
   setup() {
-    const formRef = ref<VForm | null>(null);
-
-    function reValidate() {
-      formRef.value!.validate();
-    }
+    const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
 
     const projectAwardValidationRules = () => [(v: string | undefined) => {
       const facilityChosen = multiOmicsForm.facilities.length > 0;
@@ -107,19 +101,9 @@ export default defineComponent({
         },
       ]
     );
-    let errors: Array<string> = [];
-    function storeErrors() {
-      if (!formRef.value) return;
-      if (!formRef.value?.errors) errors = [];
-
-      errors = formRef.value.errors.reduce((all, err) => {
-        return all.concat(err.errorMessages)}, [] as string[]);
-      validForms.multiOmicsFormValid = errors;
-    }
 
     const revalidate = () => {
       nextTick(() => formRef.value!.validate());
-      storeErrors();
     };
 
     function resetFields(field: string) {
@@ -153,10 +137,6 @@ export default defineComponent({
       },
     );
 
-    onMounted(() => {
-      formRef.value!.validate();
-    });
-
     return {
       OTHER,
       addAwardDoi,
@@ -170,18 +150,15 @@ export default defineComponent({
       formRef,
       multiOmicsForm,
       multiOmicsAssociations,
-      validForms,
+      validationState,
       Definitions,
       HARMONIZER_TEMPLATES,
       doiProviderValues,
       /* functions */
-      reValidate,
       canEditSubmissionMetadata,
       checkJGITemplates,
       templateHasData,
       canEditSubmissionByStatus,
-      status,
-      StatusAlert,
     };
   },
 });
@@ -189,7 +166,7 @@ export default defineComponent({
 
 <template>
   <div>
-    <PageTitle 
+    <PageTitle
       title="Multi-omics Data"
       subtitle="Information about the type of samples being submitted."
     >
@@ -197,15 +174,9 @@ export default defineComponent({
         <submission-docs-link anchor="multi-omics-data" />
       </template>
     </PageTitle>
-    <submission-permission-banner
-      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
-    />
-    <StatusAlert v-if="!canEditSubmissionByStatus()" />
-    <v-form
+    <SubmissionForm
       ref="formRef"
-      class="my-6 mb-10"
-      style="max-width: 1000px;"
-      :disabled="!canEditSubmissionMetadata()"
+      @valid-state-changed="(state) => validationState.multiOmicsForm = state"
     >
       <v-radio-group
         v-model="multiOmicsForm.dataGenerated"
@@ -409,7 +380,7 @@ export default defineComponent({
         class="my-4"
       >
         <div
-          v-for="_, i in multiOmicsForm.awardDois"
+          v-for="(_, i) in multiOmicsForm.awardDois"
           :key="`awardDois${i}`"
           class="d-flex"
         >
@@ -492,7 +463,7 @@ export default defineComponent({
         </v-icon>
         Add Award DOI
       </v-btn-grey>
-    </v-form>
+    </SubmissionForm>
     <strong>* indicates required field</strong>
     <div class="d-flex mt-5">
       <v-btn-grey

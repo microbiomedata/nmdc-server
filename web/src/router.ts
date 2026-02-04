@@ -24,8 +24,7 @@ import SubmissionList from '@/views/SubmissionPortal/Components/SubmissionList.v
 import SubmissionSummary from '@/views/SubmissionPortal/Components/SubmissionSummary.vue';
 import SubmissionCreationForm from '@/views/SubmissionPortal/Components/SubmissionCreationForm.vue';
 
-import { unlockSubmission } from '@/views/SubmissionPortal/store/api';
-import { incrementalSaveRecord } from '@/views/SubmissionPortal/store';
+import { incrementalSaveRecord, lockRecord, unlockRecord } from '@/views/SubmissionPortal/store';
 
 import { parseQuery, stringifyQuery } from './utils';
 
@@ -65,9 +64,9 @@ const router = createRouter({
           component: SubmissionList,
         },
         {
-          name: 'Create Submission', 
+          name: 'Create Submission',
           path: 'create',
-          component: SubmissionCreationForm, 
+          component: SubmissionCreationForm,
         },
         {
           component: StepperView,
@@ -83,21 +82,25 @@ const router = createRouter({
               name: 'Study Form',
               path: ':id/study',
               component: StudyForm,
+              meta: { requiresSubmissionLock: true },
             },
             {
               name: 'Multiomics Form',
               path: ':id/multiomics',
               component: MultiOmicsDataForm,
+              meta: { requiresSubmissionLock: true },
             },
             {
               name: 'Sample Environment',
               component: TemplateChooser,
               path: ':id/templates',
+              meta: { requiresSubmissionLock: true },
             },
             {
               name: 'Validate And Submit',
               component: ValidateSubmit,
               path: ':id/submit',
+              meta: { requiresSubmissionLock: true },
             },
           ],
         },
@@ -105,6 +108,8 @@ const router = createRouter({
           name: 'Submission Sample Editor',
           component: HarmonizerView,
           path: ':id/samples',
+          props: true,
+          meta: { requiresSubmissionLock: true },
         },
       ],
     },
@@ -134,18 +139,25 @@ const router = createRouter({
   parseQuery,
   stringifyQuery,
 });
-router.beforeEach((to, from, next) => {
-  if (from.fullPath.includes('submission') && !!(from.params as any).id) {
-    // We are navigating away from a submission edit screen, so save the progress
-    incrementalSaveRecord((from.params as any).id);
-    if (to.fullPath.includes('submission') && !!(to.params as any).id && (to.params as any).id === (from.params as any).id) {
-      // We are navigating to a submission edit screen for the same submission, no need to  unlock
-      next();
-      return;
+router.beforeEach(async (to, from) => {
+  try {
+    if (from.meta.requiresSubmissionLock && 'id' in from.params) {
+      const id = from.params.id as string;
+      // We are navigating away from a submission edit screen, so save the progress
+      await incrementalSaveRecord(id);
+      if (!to.meta.requiresSubmissionLock) {
+        // We are navigating to a screen that does not require a lock, so unlock
+        await unlockRecord(id);
+      }
+    } else if (to.meta.requiresSubmissionLock && 'id' in to.params) {
+      const id = to.params.id as string;
+      // We are navigating to a submission edit screen, so lock the record
+      await lockRecord(id);
     }
-    unlockSubmission((from.params as any).id);
+  } catch (e) {
+    // If an error occurs during locking/unlocking, log it but allow navigation
+    console.error('Error during navigation guard:', e);
   }
-  next();
 });
 // Workaround for https://github.com/vitejs/vite/issues/11804
 router.onError((err, to) => {
