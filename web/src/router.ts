@@ -108,6 +108,7 @@ const router = createRouter({
           name: 'Submission Sample Editor',
           component: HarmonizerView,
           path: ':id/samples',
+          props: true,
           meta: { requiresSubmissionLock: true },
         },
       ],
