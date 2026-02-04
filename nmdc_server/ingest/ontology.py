@@ -21,7 +21,6 @@ class OntologyClassLoader(OntologyClassCreate):
     @model_validator(mode="before")
     @classmethod
     def extract_extras(cls, values):
-        # Remove relations field if present (not stored in OntologyClass table)
         values.pop("relations", None)
         return extract_extras(cls, values, exclude={"relations"})  # type: ignore
 
