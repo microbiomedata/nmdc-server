@@ -27,12 +27,12 @@ def load(db: Session) -> None:
     """
     logger.info("Populating EnvoTerm table from generic ontology data...")
 
-    # First, clear existing ENVO data
+    # Clear envo_ancestor (safe to delete - not referenced by biosample)
+    # Note: envo_term cannot be deleted due to FK constraints from biosample.env_* columns
     db.execute(text("DELETE FROM envo_ancestor"))
-    db.execute(text("DELETE FROM envo_term"))
 
-    # Insert ENVO terms from OntologyClass
-    insert_envo_terms_sql = """
+    # Upsert ENVO terms from OntologyClass (upsert to preserve FK references from biosample)
+    upsert_envo_terms_sql = """
     INSERT INTO envo_term (id, label, data)
     SELECT
         oc.id,
@@ -46,8 +46,11 @@ def load(db: Session) -> None:
         ) as data
     FROM ontology_class oc
     WHERE oc.id LIKE 'ENVO:%'
+    ON CONFLICT (id) DO UPDATE SET
+        label = EXCLUDED.label,
+        data = EXCLUDED.data
     """
-    db.execute(text(insert_envo_terms_sql))
+    db.execute(text(upsert_envo_terms_sql))
 
     # Add self-referential ancestors (each term is an ancestor of itself)
     # This is required for faceted search to work correctly - when searching for

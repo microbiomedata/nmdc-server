@@ -4,6 +4,7 @@ from typing import Dict, List, Set
 
 from pydantic import model_validator
 from pymongo.cursor import Cursor
+from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -17,6 +18,7 @@ logger = get_logger(__name__)
 
 
 class OntologyClassLoader(OntologyClassCreate):
+    @classmethod
     @model_validator(mode="before")
     def extract_extras(cls, values):
         # Remove relations field if present (not stored in OntologyClass table)
@@ -168,6 +170,14 @@ def _bulk_insert_relations(db: Session, relations: List[Dict]) -> None:
 
 def load(db: Session, class_cursor: Cursor, relation_cursor: Cursor) -> ETLReport:
     report = ETLReport(plural_subject="OntologyClasses")
+
+    # Truncate ontology tables before reload to avoid:
+    # 1. Burning sequence values with ON CONFLICT DO NOTHING
+    # 2. Accumulating stale data from removed ontology entries
+    # Note: Must truncate relations first due to FK constraints
+    logger.info("Truncating ontology tables for fresh reload...")
+    db.execute(text("TRUNCATE TABLE ontology_relation RESTART IDENTITY"))
+    db.execute(text("TRUNCATE TABLE ontology_class CASCADE"))
 
     # Load ontology classes
     loaded_classes = load_ontology_classes(db, class_cursor, report)
