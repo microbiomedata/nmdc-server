@@ -19,20 +19,15 @@ logger = get_logger(__name__)
 def load(db: Session) -> None:
     """Populate the EnvoTerm and EnvoAncestor tables from the generic ontology tables.
 
-    This maintains backward compatibility with existing code that uses EnvoTerm.
-
-    Note: This function does not commit. The caller is responsible for
-    committing the transaction to ensure atomicity (if INSERTs fail,
-    the DELETEs will also be rolled back).
+    Loads ALL terms from ontology_class (not just ENVO) to preserve the full hierarchy.
+    The tree is filtered later to only show terms reachable from biosample env_* values.
     """
     logger.info("Populating EnvoTerm table from generic ontology data...")
 
-    # Clear envo_ancestor (safe to delete - not referenced by biosample)
-    # Note: envo_term cannot be deleted due to FK constraints from biosample.env_* columns
     db.execute(text("DELETE FROM envo_ancestor"))
 
-    # Upsert ENVO terms from OntologyClass (upsert to preserve FK references from biosample)
-    upsert_envo_terms_sql = """
+    # Upsert ALL terms from OntologyClass (ENVO, BFO, GO, UBERON, PO, etc.)
+    upsert_all_terms_sql = """
     INSERT INTO envo_term (id, label, data)
     SELECT
         oc.id,
@@ -45,16 +40,13 @@ def load(db: Session) -> None:
             'annotations', oc.annotations
         ) as data
     FROM ontology_class oc
-    WHERE oc.id LIKE 'ENVO:%'
     ON CONFLICT (id) DO UPDATE SET
         label = EXCLUDED.label,
         data = EXCLUDED.data
     """
-    db.execute(text(upsert_envo_terms_sql))
+    db.execute(text(upsert_all_terms_sql))
 
-    # Add self-referential ancestors (each term is an ancestor of itself)
-    # This is required for faceted search to work correctly - when searching for
-    # a term X, biosamples with exactly term X should also be found
+    # Self-referential ancestors for faceted search
     insert_self_ancestors_sql = """
     INSERT INTO envo_ancestor (id, ancestor_id, direct)
     SELECT id, id, false
@@ -62,7 +54,7 @@ def load(db: Session) -> None:
     """
     db.execute(text(insert_self_ancestors_sql))
 
-    # Populate EnvoAncestor with direct parent relationships
+    # Direct parent relationships (rdfs:subClassOf only, not part_of)
     insert_direct_parents_sql = """
     INSERT INTO envo_ancestor (id, ancestor_id, direct)
     SELECT DISTINCT
@@ -70,16 +62,14 @@ def load(db: Session) -> None:
         r.object as ancestor_id,
         true as direct
     FROM ontology_relation r
-    WHERE r.subject LIKE 'ENVO:%'
-      AND r.object LIKE 'ENVO:%'
-      AND r.predicate IN ('rdfs:subClassOf', 'BFO:0000050')
+    WHERE r.predicate = 'rdfs:subClassOf'
+      AND EXISTS (SELECT 1 FROM envo_term WHERE id = r.subject)
+      AND EXISTS (SELECT 1 FROM envo_term WHERE id = r.object)
     ON CONFLICT (id, ancestor_id) DO NOTHING
     """
     db.execute(text(insert_direct_parents_sql))
 
-    # Populate EnvoAncestor with all ancestors (including indirect)
-    # This uses the closure relationships if they exist
-    # Use ON CONFLICT to skip entries already inserted as direct parents
+    # Indirect ancestors from closure
     insert_all_ancestors_sql = """
     INSERT INTO envo_ancestor (id, ancestor_id, direct)
     SELECT DISTINCT
@@ -87,19 +77,18 @@ def load(db: Session) -> None:
         r.object as ancestor_id,
         false as direct
     FROM ontology_relation r
-    WHERE r.subject LIKE 'ENVO:%'
-      AND r.object LIKE 'ENVO:%'
-      AND r.predicate = 'entailed_isa_partof_closure'
+    WHERE r.predicate = 'entailed_isa_partof_closure'
+      AND EXISTS (SELECT 1 FROM envo_term WHERE id = r.subject)
+      AND EXISTS (SELECT 1 FROM envo_term WHERE id = r.object)
     ON CONFLICT (id, ancestor_id) DO NOTHING
     """
     db.execute(text(insert_all_ancestors_sql))
 
-    # Get counts for logging (uses uncommitted data in current transaction)
     envo_term_count = db.execute(text("SELECT COUNT(*) FROM envo_term")).scalar()
     envo_ancestor_count = db.execute(text("SELECT COUNT(*) FROM envo_ancestor")).scalar()
 
     logger.info(
-        f"Populated {envo_term_count} ENVO terms and {envo_ancestor_count} ancestor relationships"
+        f"Populated {envo_term_count} terms and {envo_ancestor_count} ancestor relationships"
     )
 
 
@@ -137,7 +126,11 @@ def get_biosample_roots(db: Session) -> Dict[str, Set[str]]:
     }
 
 
-def _build_envo_subtree(db: Session, parent_id: str) -> None:
+def _build_envo_subtree(db: Session, parent_id: str, visited: Set[str]) -> None:
+    if parent_id in visited:
+        return
+    visited.add(parent_id)
+
     query = (
         db.query(EnvoAncestor)
         .filter(EnvoAncestor.ancestor_id == parent_id)
@@ -156,7 +149,7 @@ def _build_envo_subtree(db: Session, parent_id: str) -> None:
         )
         db.execute(statement)
 
-        _build_envo_subtree(db, node.id)
+        _build_envo_subtree(db, node.id, visited)
 
 
 def build_envo_trees(db: Session) -> None:
@@ -172,6 +165,7 @@ def build_envo_trees(db: Session) -> None:
 
     roots = get_biosample_roots(db)
     root_set = set(itertools.chain(*roots.values()))
+    visited: Set[str] = set()
     for root in root_set:
         statement = insert(EnvoTree.__table__).values(
             {
@@ -181,7 +175,7 @@ def build_envo_trees(db: Session) -> None:
         )
         db.execute(statement)
 
-        _build_envo_subtree(db, root)
+        _build_envo_subtree(db, root, visited)
 
     db.commit()
 

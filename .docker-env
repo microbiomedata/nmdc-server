@@ -1,9 +1,9 @@
 POSTGRES_PASSWORD=postgres
-POSTGRES_DB=nmdc_a
+POSTGRES_DB=nmdc_b
 POSTGRES_USER=postgres
 PGUSER=postgres
 PGPASSWORD=postgres
-PGDATABASE=nmdc_a
-NMDC_DATABASE_URI="postgresql://postgres:postgres@db/nmdc_a"
-NMDC_INGEST_DATABASE_URI="postgresql://postgres:postgres@db/nmdc_b"
+PGDATABASE=nmdc_b
+NMDC_DATABASE_URI="postgresql://postgres:postgres@db/nmdc_b"
+NMDC_INGEST_DATABASE_URI="postgresql://postgres:postgres@db/nmdc_a"
 NMDC_MONGO_HOST=tunnel
