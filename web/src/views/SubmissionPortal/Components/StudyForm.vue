@@ -7,7 +7,6 @@ import {
   onMounted,
   ref,
   Ref,
-  watch,
 } from 'vue';
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
