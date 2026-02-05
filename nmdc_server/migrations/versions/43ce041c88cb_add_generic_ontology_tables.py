@@ -5,7 +5,7 @@ This migration:
 2. Adds critical indexes for ENVO facet queries to improve performance from 30+ seconds to <1 second
 
 Revision ID: 43ce041c88cb
-Revises: 23ef8096759e
+Revises: c5852f4f16b1
 Create Date: 2026-01-21 01:33:58.970768
 
 """
@@ -18,7 +18,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "43ce041c88cb"
-down_revision: Optional[str] = "23ef8096759e"
+down_revision: Optional[str] = "c5852f4f16b1"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
