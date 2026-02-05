@@ -17,8 +17,7 @@ gene_regex = re.compile(r"^(KEGG\.ORTHOLOGY|COG|PFAM)")
 
 
 class LoadObject(Protocol):
-    def __call__(self, db: Session, obj: Dict[str, Any], **kwargs: Any) -> LoadObjectReturn:
-        ...
+    def __call__(self, db: Session, obj: Dict[str, Any], **kwargs: Any) -> LoadObjectReturn: ...
 
 
 # Load metagenome annotation as well as the gene function annotations produced.
