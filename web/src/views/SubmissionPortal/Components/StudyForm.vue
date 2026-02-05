@@ -156,60 +156,62 @@ export default defineComponent({
       ref="formRef"
       @valid-state-changed="(state) => validationState.studyForm = state"
     >
-      <div class="stack-md">
-        <v-text-field
-          v-model="studyForm.studyName"
-          :rules="requiredRules('Name is required',[
-            v => v.length > 6 || 'Study name too short',
-          ])"
-          validate-on-blur
-          label="Study Name *"
-          :hint="Definitions.studyName"
-          persistent-hint
-          variant="outlined"
-        />
-        <v-textarea
-          v-model="studyForm.description"
-          label="Study Description"
-          :hint="Definitions.studyDescription"
-          persistent-hint
-          variant="outlined"
-        >
-          <template #message="{ message }">
-            <span v-html="message" />
-          </template>
-        </v-textarea>
-        <v-combobox
-          v-model="studyForm.linkOutWebpage"
-          label="Webpage Links"
-          :hint="Definitions.linkOutWebpage"
-          persistent-hint
-          variant="outlined"
-          multiple
-          small-chips
-          clearable
-        />
-        <v-text-field
-          v-model="studyForm.notes"
-          label="Optional Notes"
-          :hint="Definitions.studyOptionalNotes"
-          persistent-hint
-          variant="outlined"
-        />
-        <ImageUpload
-          input-label="Study Image"
-          :input-hint="Definitions.studyImage"
-          input-icon="mdi-image"
-          :image-url="primaryStudyImageUrl"
-          image-type="primary_study_image"
-          @on-upload-success="(updated) => {
-            primaryStudyImageUrl = updated.primary_study_image_url;
-          }"
-          @on-delete-success="() => {
-            primaryStudyImageUrl = null
-          }"
-        />
-      </div>
+      <PageSection>
+        <div class="stack-md">
+          <v-text-field
+            v-model="studyForm.studyName"
+            :rules="requiredRules('Name is required',[
+              v => v.length > 6 || 'Study name too short',
+            ])"
+            validate-on-blur
+            label="Study Name *"
+            :hint="Definitions.studyName"
+            persistent-hint
+            variant="outlined"
+          />
+          <v-textarea
+            v-model="studyForm.description"
+            label="Study Description"
+            :hint="Definitions.studyDescription"
+            persistent-hint
+            variant="outlined"
+          >
+            <template #message="{ message }">
+              <span v-html="message" />
+            </template>
+          </v-textarea>
+          <v-combobox
+            v-model="studyForm.linkOutWebpage"
+            label="Webpage Links"
+            :hint="Definitions.linkOutWebpage"
+            persistent-hint
+            variant="outlined"
+            multiple
+            small-chips
+            clearable
+          />
+          <v-text-field
+            v-model="studyForm.notes"
+            label="Optional Notes"
+            :hint="Definitions.studyOptionalNotes"
+            persistent-hint
+            variant="outlined"
+          />
+          <ImageUpload
+            input-label="Study Image"
+            :input-hint="Definitions.studyImage"
+            input-icon="mdi-image"
+            :image-url="primaryStudyImageUrl"
+            image-type="primary_study_image"
+            @on-upload-success="(updated) => {
+              primaryStudyImageUrl = updated.primary_study_image_url;
+            }"
+            @on-delete-success="() => {
+              primaryStudyImageUrl = null
+            }"
+          />
+        </div>
+      </PageSection>
 
       <PageSection heading="Principal Investigator">
         <div class="stack-md">
