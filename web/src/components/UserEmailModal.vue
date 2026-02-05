@@ -4,7 +4,6 @@ import {
   defineComponent,
   onMounted,
   ref,
-  watch,
 } from 'vue';
 import type { ValidationRule } from 'vuetify';
 import Definitions from '@/definitions';
@@ -40,7 +39,7 @@ export default defineComponent({
       ];
     }
 
-    onMounted(async () => {
+    onMounted(() => {
       if (formRef.value) {
         formRef.value.validate();
       }
@@ -59,18 +58,16 @@ export default defineComponent({
       await api.updateUser(user.value?.id as string, update);
     };
 
-    const editEmail = ref(false);
-    const isEmailValid = ref(false);
+    // isEmailValid binds to the "SAVE" button (disables and enables it)
+    const isEmailValid = computed(() => {
+      const email = submitterEmail.value?.trim() ?? '';
+      return /.+@.+\..+/.test(email);
+    });
 
-    const submitterEmail = ref(user.value?.email || '');
+    const submitterEmail = ref(user.value?.email ?? '');
     studyForm.submitterEmail = submitterEmail.value;
 
-    watch(submitterEmail, async (newEmail) => {
-      if (newEmail && /.+@.+\..+/.test(newEmail)) {
-        isEmailValid.value = true;
-      }
-    }, { immediate: true });
-
+    // dialog is bound to the modal to determine whether to display or not
     const dialog = computed({
       get: () => props.value,
       set: (v: boolean) => emit('update:value', v),
@@ -78,13 +75,6 @@ export default defineComponent({
 
     const updateEmail = async () => {
       const email = submitterEmail.value?.trim();
-      if (!email || !/.+@.+\..+/.test(email)) {
-        isEmailValid.value = false;
-        if (formRef.value) {
-          formRef.value.validate();
-        }
-        return;
-      }
       await updateUser(email);
       studyForm.submitterEmail = email;
       dialog.value = false;
@@ -98,7 +88,6 @@ export default defineComponent({
       requiredRules,
       canEditSubmissionMetadata,
       currentUserOrcid,
-      editEmail,
       isEmailValid,
       submitterEmail,
       user,

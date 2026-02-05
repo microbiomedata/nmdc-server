@@ -43,5 +43,6 @@ declare module 'vue' {
     TimeHistogram: typeof import('./components/Presentation/TimeHistogram.vue')['default']
     TooltipCard: typeof import('./components/TooltipCard.vue')['default']
     UpSet: typeof import('./components/Presentation/UpSet.vue')['default']
+    UserEmailModal: typeof import('./components/UserEmailModal.vue')['default']
   }
 }
