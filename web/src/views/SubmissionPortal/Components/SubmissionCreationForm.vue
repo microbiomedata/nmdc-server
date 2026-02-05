@@ -12,19 +12,19 @@ export default defineComponent({
   },
   setup() {
     const isTestSubmission = ref(null as boolean | null);
-    const piEmail = ref("")
-    const studyName = ref("")
+    const piEmail = ref('');
+    const studyName = ref('');
     const router = useRouter();
     const isFormValid = ref(false);
 
     async function createNewSubmission() {
       if (isTestSubmission.value != null) {
-        const item = await generateRecord(isTestSubmission.value,studyName.value,piEmail.value);
-        router?.push({ name: 'Submission Summary', params: { id: item.id } });
+        const item = await generateRecord(isTestSubmission.value, studyName.value, piEmail.value);
+        router?.push({name: 'Submission Summary', params: {id: item.id}});
       }
     }
 
-     function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
+    function requiredRules(msg: string, otherRules: ((_v: string) => ValidationResult)[] = []) {
       return [
         (v: string) => !!v || msg,
         ...otherRules,
@@ -87,8 +87,11 @@ export default defineComponent({
           >
             <template #label>
               <div>
-                <div> Is this a test submission? * </div>
-                <div class="text-caption"> Test submissions should be used when at a workshop or doing a test, example, or training. These cannot be submitted. </div>
+                <div>Is this a test submission? *</div>
+                <div class="text-caption">
+                  Test submissions should be used when at a workshop or doing a test, example, or training.
+                  These cannot be submitted.
+                </div>
               </div>
             </template>
             <v-radio
