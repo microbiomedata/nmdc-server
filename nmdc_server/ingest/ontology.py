@@ -30,7 +30,7 @@ class OntologyClassLoader(OntologyClassCreate):
 
 
 def load_ontology_classes(db: Session, cursor: Cursor, report: ETLReport) -> Dict[str, Set[str]]:
-    logger.info("Loading ontology classes...")
+    logger.debug("Loading ontology classes...")
 
     loaded_classes: Dict[str, Set[str]] = {}
     batch = []
@@ -53,7 +53,7 @@ def load_ontology_classes(db: Session, cursor: Cursor, report: ETLReport) -> Dic
             if len(batch) >= batch_size:
                 _bulk_upsert_classes(db, batch)
                 report.num_loaded += len(batch)
-                logger.info(f"Loaded {report.num_loaded} ontology classes...")
+                logger.debug(f"Loaded {report.num_loaded} ontology classes...")
                 batch = []
 
         except Exception as e:
@@ -66,11 +66,11 @@ def load_ontology_classes(db: Session, cursor: Cursor, report: ETLReport) -> Dic
         _bulk_upsert_classes(db, batch)
         report.num_loaded += len(batch)
 
-    logger.info(f"Finished loading {report.num_loaded} ontology classes")
+    logger.debug(f"Finished loading {report.num_loaded} ontology classes")
 
     # Log summary by ontology
     for prefix, ids in loaded_classes.items():
-        logger.info(f"  {prefix}: {len(ids)} classes")
+        logger.debug(f"  {prefix}: {len(ids)} classes")
 
     return loaded_classes
 
@@ -97,7 +97,7 @@ def _bulk_upsert_classes(db: Session, classes: List[Dict]) -> None:
 def load_ontology_relations(
     db: Session, cursor: Cursor, loaded_classes: Dict[str, Set[str]]
 ) -> int:
-    logger.info("Loading ontology relations...")
+    logger.debug("Loading ontology relations...")
 
     batch = []
     batch_size = 5000
@@ -139,7 +139,7 @@ def load_ontology_relations(
             if len(batch) >= batch_size:
                 _bulk_insert_relations(db, batch)
                 total_count += len(batch)
-                logger.info(f"Loaded {total_count} ontology relations...")
+                logger.debug(f"Loaded {total_count} ontology relations...")
                 batch = []
 
         except Exception as e:
@@ -153,7 +153,7 @@ def load_ontology_relations(
         _bulk_insert_relations(db, batch)
         total_count += len(batch)
 
-    logger.info(f"Finished loading {total_count} ontology relations (skipped {skipped_count})")
+    logger.debug(f"Finished loading {total_count} ontology relations (skipped {skipped_count})")
     return total_count
 
 
@@ -174,7 +174,7 @@ def load(db: Session, class_cursor: Cursor, relation_cursor: Cursor) -> ETLRepor
     # 1. Burning sequence values with ON CONFLICT DO NOTHING
     # 2. Accumulating stale data from removed ontology entries
     # Note: Must truncate relations first due to FK constraints
-    logger.info("Truncating ontology tables for fresh reload...")
+    logger.debug("Truncating ontology tables for fresh reload...")
     db.execute(text("TRUNCATE TABLE ontology_relation RESTART IDENTITY"))
     db.execute(text("TRUNCATE TABLE ontology_class CASCADE"))
 
