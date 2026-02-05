@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted, watch, ref, defineComponent } from 'vue';
+import { onMounted, onUnmounted, watch, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { api, REFRESH_TOKEN_EXPIRED_EVENT, RefreshTokenExchangeError } from '@/data/api';
 import { init, stateRefs } from '@/store/';

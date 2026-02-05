@@ -33,7 +33,7 @@ def downgrade():
         "study",
         sa.Column(
             "ess_dive_datasets",
-            postgresql.JSONB(astext_type=sa.Text()),  # type:ignore
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore
             autoincrement=False,
             nullable=True,
         ),
@@ -42,7 +42,7 @@ def downgrade():
         "study",
         sa.Column(
             "massive_study_identifiers",
-            postgresql.JSONB(astext_type=sa.Text()),  # type:ignore
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore
             autoincrement=False,
             nullable=True,
         ),
