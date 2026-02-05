@@ -55,7 +55,7 @@ export default defineComponent({
           {{ subheading }}
         </template>
         <template v-else>
-          <slot name="heading" />
+          <slot name="subheading" />
         </template>
       </div>
     </div>
