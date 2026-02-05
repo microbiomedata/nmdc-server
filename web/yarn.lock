@@ -26,7 +26,7 @@
   dependencies:
     "@babel/types" "^7.28.4"
 
-"@babel/runtime@^7.21.0", "@babel/runtime@^7.23.1":
+"@babel/runtime@^7.21.0":
   version "7.28.4"
   resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.28.4.tgz#a70226016fabe25c5783b2f22d3e1c9bc5ca3326"
   integrity sha512-Q/N6JNWvIvPnLDvjlE1OUBLPQHH6l3CltCEsHIujp45zQUSSh8K+gHnaEX45yAT1nyngnINhvWtzN+Nb9D8RAQ==
@@ -1183,23 +1183,9 @@
   resolved "https://registry.yarnpkg.com/@vueuse/shared/-/shared-13.9.0.tgz#7168b4ed647e625b05eb4e7e80fe8aabd00e3923"
   integrity sha512-e89uuTLMh0U5cZ9iDpEI2senqPGfbPRTHM/0AaQkcxnpqjkZqDYP8rpfm7edOz8s+pOCOROEy1PIveSW8+fL5g==
 
-"@zanmato/vue3-treeselect@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@zanmato/vue3-treeselect/-/vue3-treeselect-0.4.1.tgz#24c2734006793fe4527064d857baa09b5495e260"
-  integrity sha512-JAU6Wqhkso5kfTxaSV5YlmZ3kWbY1LRimkkkWx0e2KsIpL89ylhcjal47PpLM5bnC7HzwR5rrVfxZiEVDAIupA==
-  dependencies:
-    "@babel/runtime" "^7.23.1"
-    "@vue/babel-helper-vue-jsx-merge-props" "^1.4.0"
-    easings-css "2.0.3"
-    fuzzysearch "1.0.3"
-    is-promise "4.0.0"
-    lodash "^4.17.21"
-    material-colors "1.2.6"
-    watch-size "^2.0.0"
-
-"@zanmato/vue3-treeselect@git+ssh://git@github.com/zanmato/vue3-treeselect.git":
+"@zanmato/vue3-treeselect@github:zanmato/vue3-treeselect":
   version "0.4.2"
-  resolved "git+ssh://git@github.com/zanmato/vue3-treeselect.git#5a0d5e175a3d3f32f98ffbde1dc54e3d2168c4e9"
+  resolved "https://codeload.github.com/zanmato/vue3-treeselect/tar.gz/5a0d5e175a3d3f32f98ffbde1dc54e3d2168c4e9"
   dependencies:
     "@babel/runtime" "^7.28.6"
     "@vue/babel-helper-vue-jsx-merge-props" "^1.4.0"
@@ -1967,11 +1953,6 @@ dunder-proto@^1.0.1:
     call-bind-apply-helpers "^1.0.1"
     es-errors "^1.3.0"
     gopd "^1.2.0"
-
-easings-css@2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/easings-css/-/easings-css-2.0.3.tgz#b8e03e4c83ab0245910e9c808436e3faa96a2fb6"
-  integrity sha512-LfUjUBP2TrtesJluuBaIjIZt3ZKs89ZdDj+1oxSmdFNfwKNF938MfH3UUmuf0drzuShdyE9jYso0SVAvfj3Ppg==
 
 easings-css@2.1.1:
   version "2.1.1"
