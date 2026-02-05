@@ -1,13 +1,7 @@
 <script lang="ts">
-// @ts-ignore
-import {
-  defineComponent,
-  ref,
-} from 'vue';
+import { defineComponent, ref, } from 'vue';
 import Definitions from '@/definitions';
-import {
-  generateRecord,
-} from '../store';
+import { generateRecord, } from '../store';
 import { useRouter } from 'vue-router';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 import PageTitle from '@/components/Presentation/PageTitle.vue';
