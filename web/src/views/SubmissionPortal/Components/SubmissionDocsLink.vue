@@ -35,12 +35,9 @@ export default defineComponent({
         <v-btn
           color="primary"
           variant="text"
-          icon
-        >
-          <v-icon size="24px">
-            mdi-information
-          </v-icon>
-        </v-btn>
+          icon="mdi-information"
+          density="compact"
+        />
       </a>
     </template>
   </v-tooltip>

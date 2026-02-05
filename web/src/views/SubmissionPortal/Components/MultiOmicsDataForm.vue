@@ -1,44 +1,40 @@
 <script lang="ts">
-import {
-  defineComponent,
-  ref,
-  onMounted,
-  watch,
-  nextTick,
-  computed,
-} from 'vue';
-import { VForm } from 'vuetify/components';
+import { computed, defineComponent, nextTick, useTemplateRef, watch } from 'vue';
 
 import Definitions from '@/definitions';
 import doiProviderValues from '@/schema';
 import { AwardTypes, HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
-  multiOmicsForm, multiOmicsFormValid, multiOmicsAssociations, checkJGITemplates, canEditSubmissionMetadata, addAwardDoi, removeAwardDoi,
-  templateHasData, checkDoiFormat, canEditSubmissionByStatus, status,
+  addAwardDoi,
+  canEditSubmissionByStatus,
+  canEditSubmissionMetadata,
+  checkDoiFormat,
+  checkJGITemplates,
+  multiOmicsAssociations,
+  multiOmicsForm,
+  removeAwardDoi,
+  templateHasData,
+  validationState,
 } from '../store';
 
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
-import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
 import DataTypes from './DataTypes.vue';
 import DoeFacility from './DoeFacility.vue';
-import StatusAlert from './StatusAlert.vue';
+import PageTitle from '@/components/Presentation/PageTitle.vue';
+import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
 
 const OTHER = 'OTHER';
 
 export default defineComponent({
   components: {
+    SubmissionForm,
     DataTypes,
     DoeFacility,
     SubmissionDocsLink,
-    SubmissionPermissionBanner,
-    StatusAlert,
+    PageTitle,
   },
   setup() {
-    const formRef = ref<VForm | null>(null);
-
-    function reValidate() {
-      formRef.value!.validate();
-    }
+    const formRef = useTemplateRef<InstanceType<typeof SubmissionForm>>('formRef');
 
     const projectAwardValidationRules = () => [(v: string | undefined) => {
       const facilityChosen = multiOmicsForm.facilities.length > 0;
@@ -141,10 +137,6 @@ export default defineComponent({
       },
     );
 
-    onMounted(() => {
-      formRef.value!.validate();
-    });
-
     return {
       OTHER,
       addAwardDoi,
@@ -158,18 +150,15 @@ export default defineComponent({
       formRef,
       multiOmicsForm,
       multiOmicsAssociations,
-      multiOmicsFormValid,
+      validationState,
       Definitions,
       HARMONIZER_TEMPLATES,
       doiProviderValues,
       /* functions */
-      reValidate,
       canEditSubmissionMetadata,
       checkJGITemplates,
       templateHasData,
       canEditSubmissionByStatus,
-      status,
-      StatusAlert,
     };
   },
 });
@@ -177,28 +166,22 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="text-h2">
-      Multi-omics Data
-      <submission-docs-link anchor="multi-omics-data" />
-    </div>
-    <div class="text-h5">
-      Information about the type of samples being submitted.
-    </div>
-    <submission-permission-banner
-      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
-    />
-    <StatusAlert v-if="!canEditSubmissionByStatus()" />
-    <v-form
+    <PageTitle
+      title="Multi-omics Data"
+      subtitle="Information about the type of samples being submitted."
+    >
+      <template #help>
+        <submission-docs-link anchor="multi-omics-data" />
+      </template>
+    </PageTitle>
+    <SubmissionForm
       ref="formRef"
-      v-model="multiOmicsFormValid"
-      class="my-6 mb-10"
-      style="max-width: 1000px;"
-      :disabled="!canEditSubmissionMetadata()"
+      @valid-state-changed="(state) => validationState.multiOmicsForm = state"
     >
       <v-radio-group
         v-model="multiOmicsForm.dataGenerated"
         label="Have data already been generated for your study? *"
-        :rules="[v => (v === true || v === false) || 'This field is required']"
+        :rules="[v => (v === true || v === false) || 'You must select if data has been generated.']"
         :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('dataGenerated')"
       >
@@ -215,7 +198,7 @@ export default defineComponent({
         v-if="multiOmicsForm.dataGenerated"
         v-model="multiOmicsForm.facilityGenerated"
         label="Was data generated at a DOE user facility (JGI, EMSL)? *"
-        :rules="[v => (v === true || v === false) || 'This field is required']"
+        :rules="[v => (v === true || v === false) || 'You must select if data was generated at a DOE user facility.']"
         :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('facilityGenerated')"
       >
@@ -241,7 +224,7 @@ export default defineComponent({
         v-if="multiOmicsForm.dataGenerated === false"
         v-model="multiOmicsForm.doe"
         label="Are you submitting samples to a DOE user facility (JGI, EMSL)? *"
-        :rules="[v => (v === true || v === false) || 'This field is required']"
+        :rules="[v => (v === true || v === false) || 'You must select if you are submitting samples to a DOE user facility.']"
         :disabled="checkJGITemplates() || templateHasData(HARMONIZER_TEMPLATES.emsl?.sampleDataSlot) || undefined"
         @change="resetFields('doe')"
       >
@@ -388,7 +371,7 @@ export default defineComponent({
         <p class="text-h5">
           Some choices may be disabled
         </p>
-        Data types with data present in step 5 cannot be disabled. To change these templates, return to step 5 and remove data from the tabs you wish to disable.
+        Data types with data present in the Sample Metadata cannot be disabled. To change these templates, return to Sample Metadata and remove data from the tabs you wish to disable.
         You may add unselected data types at any time.
       </v-alert>
 
@@ -397,7 +380,7 @@ export default defineComponent({
         class="my-4"
       >
         <div
-          v-for="_, i in multiOmicsForm.awardDois"
+          v-for="(_, i) in multiOmicsForm.awardDois"
           :key="`awardDois${i}`"
           class="d-flex"
         >
@@ -480,23 +463,26 @@ export default defineComponent({
         </v-icon>
         Add Award DOI
       </v-btn-grey>
-    </v-form>
+    </SubmissionForm>
     <strong>* indicates required field</strong>
     <div class="d-flex mt-5">
-      <v-btn-grey :to="{ name: 'Study Form' }">
+      <v-btn-grey
+        :to="{ name: 'Study Form' }"
+        @click="revalidate"
+      >
         <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
-        Go to previous step
+        Go to Study Form
       </v-btn-grey>
       <v-spacer />
       <v-btn
         color="primary"
-        :disabled="(!multiOmicsFormValid)"
         :to="{ name: 'Sample Environment' }"
+        @click="revalidate"
       >
-        Go to next step
-        <v-icon class="pl-2">
+        Go to Sample Environment
+        <v-icon class="pl-1">
           mdi-arrow-right-circle
         </v-icon>
       </v-btn>

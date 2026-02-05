@@ -3,8 +3,12 @@ import { defineComponent, type PropType } from 'vue';
 
 import type { BaseSearchResult } from '@/data/api';
 import { urlify } from '@/data/utils';
+import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 export default defineComponent({
+  components: {
+    PageTitle,
+  },
   props: {
     item: {
       type: Object as PropType<BaseSearchResult>,
@@ -23,17 +27,17 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="text-h4 mb-2">
-      {{ item.annotations.title || item.name }}
-    </div>
-
-    <div class="text-body-1">
-      <div v-if="$slots.subtitle">
-        <slot name="subtitle" />
-      </div>
-      <div v-else-if="item[subtitleKey]">
-        {{ item[subtitleKey] }}
-      </div>
-    </div>
+    <PageTitle
+      :title="item.annotations.title || item.name"
+    >
+      <template #subtitle>
+        <div v-if="$slots.subtitle">
+          <slot name="subtitle" />
+        </div>
+        <div v-else-if="item[subtitleKey]">
+          {{ item[subtitleKey] }}
+        </div>
+      </template>
+    </PageTitle>
   </div>
 </template>

@@ -1,6 +1,7 @@
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
 import { User } from '@/types';
+import { RouteLocationRaw } from 'vue-router';
 
 /**
  * A manifest of the options available in DataHarmonizer
@@ -224,6 +225,28 @@ export interface NmdcAddress {
   country: string;
 }
 
+export interface SubmissionPage {
+  title: string;
+  link: RouteLocationRaw;
+  validationMessages: string[] | null;
+}
+
+export interface SampleMetadataValidationState {
+  invalidCells: Record<string, Record<number, Record<number, string>>>;
+  tabsValidated: Record<string, boolean>;
+}
+
+// null indicates an unknown state (e.g. if the form has not been viewed or validated yet)
+// an array of strings indicates validation errors for the form
+// an empty array indicates the form has been validated with no errors
+export interface SubmissionValidationState {
+  studyForm: string[] | null;
+  multiOmicsForm: string[] | null;
+  sampleEnvironmentForm: string[] | null;
+  senderShippingInfoForm: string[] | null;
+  sampleMetadata: SampleMetadataValidationState | null;
+}
+
 export interface MetadataSubmission {
   packageName: (keyof typeof HARMONIZER_TEMPLATES)[];
   addressForm: any;
@@ -231,6 +254,7 @@ export interface MetadataSubmission {
   studyForm: any;
   multiOmicsForm: any;
   sampleData: Record<string, any[]>;
+  validationState: SubmissionValidationState;
 }
 
 export interface MetadataSubmissionRecordSlim {
