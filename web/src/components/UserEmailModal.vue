@@ -4,6 +4,7 @@ import type { ValidationRule } from 'vuetify';
 import { stateRefs } from '@/store';
 import { api } from '@/data/api';
 import { User } from '@/types';
+import useRequest from '@/use/useRequest.ts';
 
 const props = defineProps<{
   value: boolean;
@@ -33,6 +34,7 @@ onMounted(() => {
 
 const { user } = stateRefs;
 
+const updateUserRequest = useRequest();
 const updateUser = async (value:string) => {
   if (!user.value) {
     return
@@ -41,7 +43,7 @@ const updateUser = async (value:string) => {
     ...user.value,
     email: value,
   };
-  user.value = await api.updateUser(user.value.id, update);
+  user.value = await updateUserRequest.request(() => api.updateUser(user.value!.id, update));
 };
 
 const submitterEmail = ref(user.value?.email ?? '');
@@ -88,12 +90,20 @@ const updateEmail = async () => {
             class="my-2"
           />
         </v-form>
+        <v-alert
+          v-if="updateUserRequest.error.value"
+          type="error"
+          class="mt-4"
+        >
+          Something went wrong while updating your email address. Please try again, and if the problem persists, contact us for assistance.
+        </v-alert>
       </v-card-text>
       <v-card-actions>
         <v-spacer class="text-center">
           <v-btn
             color="primary"
-            :disabled="!formRef?.isValid"
+            :disabled="!formRef?.isValid || updateUserRequest.loading.value"
+            :loading="updateUserRequest.loading.value"
             @click="updateEmail"
           >
             Save
