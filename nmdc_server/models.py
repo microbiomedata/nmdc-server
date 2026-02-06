@@ -1093,7 +1093,11 @@ Index("bulk_download_data_object_id_idx", BulkDownloadDataObject.data_object_id)
 class EnvoTree(Base):
     __tablename__ = "envo_tree"
 
-    id = Column(String, primary_key=True)
+    # Surrogate primary key to allow multiple parents per term
+    pk = Column(Integer, primary_key=True)
+    # The ontology term ID (e.g., "ENVO:00000447", "PO:0009005")
+    id = Column(String, nullable=False)
+    # Parent term ID, NULL for root nodes
     parent_id = Column(String, index=True)
 
 

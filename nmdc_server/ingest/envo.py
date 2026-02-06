@@ -2,7 +2,7 @@ import functools
 import itertools
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Tuple
 
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
@@ -126,30 +126,23 @@ def get_biosample_roots(db: Session) -> Dict[str, Set[str]]:
     }
 
 
-def _build_envo_subtree(db: Session, parent_id: str, visited: Set[str]) -> None:
-    if parent_id in visited:
-        return
-    visited.add(parent_id)
-
+def _build_envo_subtree(db: Session, parent_id: str, visited_edges: Set[Tuple[str, str]]) -> None:
+    # Track edges (child, parent) not just nodes - allows terms to have multiple parents
     query = (
         db.query(EnvoAncestor)
         .filter(EnvoAncestor.ancestor_id == parent_id)
         .filter(EnvoAncestor.direct.is_(True))
     )
     for node in query:
-        statement = (
-            insert(EnvoTree.__table__)
-            .values(
-                {
-                    "id": node.id,
-                    "parent_id": parent_id,
-                }
-            )
-            .on_conflict_do_nothing()
-        )
+        edge = (node.id, parent_id)
+        if edge in visited_edges:
+            continue
+        visited_edges.add(edge)
+
+        statement = insert(EnvoTree.__table__).values({"id": node.id, "parent_id": parent_id})
         db.execute(statement)
 
-        _build_envo_subtree(db, node.id, visited)
+        _build_envo_subtree(db, node.id, visited_edges)
 
 
 def build_envo_trees(db: Session) -> None:
@@ -165,7 +158,7 @@ def build_envo_trees(db: Session) -> None:
 
     roots = get_biosample_roots(db)
     root_set = set(itertools.chain(*roots.values()))
-    visited: Set[str] = set()
+    visited_edges: Set[Tuple[str, str]] = set()
     for root in root_set:
         statement = insert(EnvoTree.__table__).values(
             {
@@ -175,7 +168,7 @@ def build_envo_trees(db: Session) -> None:
         )
         db.execute(statement)
 
-        _build_envo_subtree(db, root, visited)
+        _build_envo_subtree(db, root, visited_edges)
 
     db.commit()
 
@@ -189,7 +182,8 @@ class _NodeInfo:
     label: str
 
 
-TreeChildren = Dict[Optional[str], List[_NodeInfo]]  # envo id -> child node list
+TreeChildren = Dict[Optional[str], List[_NodeInfo]]  # parent_id -> list of child nodes
+TreeParents = Dict[str, List[_NodeInfo]]  # term_id -> list of nodes (one per parent relationship)
 
 
 def _nested_envo_subtree(
@@ -246,25 +240,25 @@ def _prune_useless_roots(node: EnvoTreeNode, present_terms: Set[str]) -> EnvoTre
 def _get_trees_for_facet(
     db: Session,
     facet: str,
-    tree_nodes: Dict[str, _NodeInfo],
+    tree_parents: TreeParents,
     tree_children: TreeChildren,
 ) -> List[EnvoTreeNode]:
-    """
-    Get the pruned trees for each facet.
-
-    This is a pure function.
-    """
+    """Get the pruned trees for each facet."""
     query = db.query(getattr(Biosample, facet)).distinct()
     present_terms = set(r[0] for r in query) - {None}
     reachable: Set[str] = set()
 
-    # Find all nodes that are reachable from the set of present terms
+    # Find all nodes reachable by walking up ALL parent chains (multi-parent aware)
+    def mark_ancestors(term_id: str) -> None:
+        if term_id in reachable:
+            return
+        reachable.add(term_id)
+        for node in tree_parents.get(term_id, []):
+            if node.parent_id is not None:
+                mark_ancestors(node.parent_id)
+
     for term in present_terms:
-        node = tree_nodes[term]
-        reachable.add(node.id)
-        while node.parent_id is not None:
-            node = tree_nodes[node.parent_id]
-            reachable.add(node.id)
+        mark_ancestors(term)
 
     # Recursively build the tree structure
     root_nodes = _nested_envo_subtree(tree_children, reachable)
@@ -282,17 +276,17 @@ def _get_trees_for_facet(
 
 @functools.lru_cache(maxsize=None)
 def nested_envo_trees() -> Dict[str, List[EnvoTreeNode]]:
-    tree_children = defaultdict(list)
-    tree_nodes: Dict[str, _NodeInfo] = {}
+    tree_children: TreeChildren = defaultdict(list)
+    tree_parents: TreeParents = defaultdict(list)
 
     with SessionLocal() as session:
         query = session.query(EnvoTerm, EnvoTree).filter(EnvoTerm.id == EnvoTree.id)
         for term, edge in query:
             node = _NodeInfo(id=edge.id, parent_id=edge.parent_id, label=term.label)
             tree_children[edge.parent_id].append(node)
-            tree_nodes[edge.id] = node
+            tree_parents[edge.id].append(node)  # term can have multiple parent relationships
 
         return {
-            facet: _get_trees_for_facet(session, facet, tree_nodes, tree_children)
+            facet: _get_trees_for_facet(session, facet, tree_parents, tree_children)
             for facet in ["env_broad_scale_id", "env_local_scale_id", "env_medium_id"]
         }
