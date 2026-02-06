@@ -130,22 +130,28 @@ You also must generate a local object name prefix. This prefix is used to differ
 
 ## Load production data
 
-The `nmdc-server` CLI has a `load-db` subcommand which populates your local database using a nightly production backup. These backups are stored on NERSC. You must have NERSC credentials to use this subcommand.
+The `nmdc-server` CLI has a `load-db` subcommand which populates your local database using a backup file. These backups are produced nightly for both dev and prod and stored in Google Cloud Storage buckets. Typically, you will want to load from a recent production backup.
 
-First use NERSC's `sshproxy` [tool](https://docs.nersc.gov/connect/mfa/#sshproxy) to generate an ssh key if you haven't done so in the last 24 hours.
-
-```bash
-sshproxy.sh -u $NERSC_USER
-```
-
-Then run the `load-db` subcommand from a `backend` container, mounting the ssh key.
+1. Obtain a recent dev or production backup.
+   1. If you have Google Cloud Storage access and the `gcloud` CLI installed, you can list recent backups with:
+      ```bash
+      gcloud storage ls gs://nmdc-portal-prod-postgres-dump  # for production backups
+      gcloud storage ls gs://nmdc-portal-test-postgres-dump  # for dev backups
+      ```
+      Then download a recent backup with:
+      ```bash
+      gcloud storage cp gs://nmdc-portal-prod-postgres-dump/<backup-filename>.dump /tmp/backup.dump
+      ```
+      **Note**: the nightly backup process makes backups of both the `nmdc_a` and `nmdc_b` databases. Make sure you download the one which was the primary database (i.e. not the ingest database) at the time.
+   2. If you do not have Google Cloud Storage access, ask a team member with access to download a recent production backup for you. This will come in the form of a `.dump` file. Save the file locally (e.g. to `/tmp/backup.dump`).
+2. Run the `load-db` subcommand from a `backend` container, mounting the backup file to load.
 
 ```bash
 docker compose run \
   --rm \
-  -v ~/.ssh/nersc:/tmp/nersc \
+  -v <local/path/to/backup.dump>:/tmp/backup.dump \
   backend \
-  nmdc-server load-db -u $NERSC_USER
+  nmdc-server load-db -f /tmp/backup.dump
 ```
 
 To see all CLI options run:
@@ -161,25 +167,6 @@ docker compose down -v
 ```
 
 This should only need to be done once. When the `db` service starts up again (including via running the `load-db` command), the necessary roles and databases will be created automatically.
-
-<details>
-<summary><b>Don't have a NERSC account?</b></summary>
-If you're an NMDC team member, but don't have a NERSC account yet: talk to your team lead about getting a NERSC account, specifically one that has access to NMDC's project files. The process takes about a week. Docs: https://docs.nersc.gov/accounts/
-
-If that is not an option for you:
-
-1. Ask an NMDC team member with NERSC access to get a recent production backup for you. This will come in the form of a `.dump` file. Save the file locally.
-2. Bring your local database up
-    ```bash
-    docker compose up db -d
-    ```
-3. Load data from the `.dump` file into the running database
-    ```bash
-    docker compose run --rm \
-        -v <absolute path to .dump file>:/tmp/backup.dump \
-       db pg_restore --dbname postgresql://postgres:postgres@host.docker.internal:5432/nmdc_a --clean --if-exists --verbose --single-transaction /tmp/backup.dump
-    ```
-</details>
 
 ## Installing dependencies locally
 
@@ -452,4 +439,4 @@ For more on how `Conditions` are tranformed into `Filters`, see the `BaseQuerySc
 
 ## Google Analytics
 
-The frontend Vue app is configured to work with Google Analytics. There are two Google Analytics "properties" for the NMDC Data Portal. One is for the production site. One is for the dev site as well as local development. Each GA property has its own GA ID associated with it. This ID gets pulled into the view app from an environment variable called `VUE_APP_NMDC_GOOGLE_ANALYTICS_ID`. You can set this inside a `.env` file inside the `web` directory (note this is separate from the `.env` file at the root of the project).
+The frontend Vue app is configured to work with Google Analytics. There are two Google Analytics "properties" for the NMDC Data Portal. One is for the production site. One is for the dev site as well as local development. Each GA property has its own GA ID associated with it. This ID gets pulled into the Vue app from an environment variable called `VITE_APP_NMDC_GOOGLE_ANALYTICS_ID`. You can set this inside a `.env` file inside the `web` directory (note this is separate from the `.env` file at the root of the project).

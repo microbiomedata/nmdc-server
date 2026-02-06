@@ -111,6 +111,41 @@ path="/path/to/mongo/dumps"
 mongorestore --host "$host" --port "$port" --drop "$path"
 ```
 
+## Obtaining static files used by the ingester
+
+The ingester requires some static files to be present at `/data/ingest` within the container
+it's running in.
+
+For our purposes, the authoritative copies of those static files reside within the following
+`ingest` directory on the NERSC filesystem:
+
+```shell
+/global/cfs/cdirs/m3408/ingest
+```
+
+Download that `ingest` directory and its contents, and save it into the `./data` directory
+in the root directory of this repository; so that you end up with the following file tree:
+
+```shell
+# Run this command from the root directory of this repository.
+$ ls ./data/ingest/* 
+./data/ingest/cog:
+cog-20.def.tab  fun-20.tab
+
+./data/ingest/go:
+ko2go.tsv               pfam_go_mappings.txt
+
+./data/ingest/kegg:
+kegg_pathway.tab.txt
+
+./data/ingest/pfam:
+Pfam-A.clans.tsv
+```
+
+Now—since the `docker-compose.yml` file tells Docker to mount the host's `./data/ingest` directory
+at `/data/ingest` within the `backend` container—the next time you run the ingester,
+those files will be present where the ingester expects them to be.
+
 ## Running ingest
 
 First you'll need to make sure your local ingest process knows to pull data from your local mongo. Set the following in your `.env` file:

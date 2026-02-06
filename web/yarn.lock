@@ -449,15 +449,6 @@
     sifter "^0.5.4"
     xlsx "^0.18.5"
 
-"@modyfi/vite-plugin-yaml@^1.1.1":
-  version "1.1.1"
-  resolved "https://registry.yarnpkg.com/@modyfi/vite-plugin-yaml/-/vite-plugin-yaml-1.1.1.tgz#f3d85a76aebbbe3c143e8f783a59ce1dcf391670"
-  integrity sha512-rEbfFNlMGLKpAYs2RsfLAhxCHFa6M4QKHHk0A4EYcCJAUwFtFO6qiEdLjUGUTtnRUxAC7GxxCa+ZbeUILSDvqQ==
-  dependencies:
-    "@rollup/pluginutils" "5.1.0"
-    js-yaml "4.1.0"
-    tosource "2.0.0-alpha.3"
-
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"
@@ -639,15 +630,6 @@
     "@rollup/pluginutils" "^5.0.1"
     estree-walker "^2.0.2"
     magic-string "^0.30.3"
-
-"@rollup/pluginutils@5.1.0":
-  version "5.1.0"
-  resolved "https://registry.yarnpkg.com/@rollup/pluginutils/-/pluginutils-5.1.0.tgz#7e53eddc8c7f483a4ad0b94afb1f7f5fd3c771e0"
-  integrity sha512-XTIWOPPcpvyKI6L1NHo0lFlCyznUEyPmPY1mc3KpPVDYulHSTvyeLNVW00QTLIAFNhR3kYnJTQHeGqU4M3n09g==
-  dependencies:
-    "@types/estree" "^1.0.0"
-    estree-walker "^2.0.2"
-    picomatch "^2.3.1"
 
 "@rollup/pluginutils@^5.0.1":
   version "5.3.0"
@@ -2728,7 +2710,7 @@ jquery@3.5.1:
   resolved "https://registry.yarnpkg.com/jquery/-/jquery-3.7.1.tgz#083ef98927c9a6a74d05a6af02806566d16274de"
   integrity sha512-m4avr8yL8kmFN8psrbFFFmB/If14iN5o9nw/NgnnM+kybDJpRsAynV2BsfpTYrTRysYUdADVD7CkUUizgkpLfg==
 
-js-yaml@4.1.0, js-yaml@^4.1.0:
+js-yaml@^4.1.0:
   version "4.1.0"
   resolved "https://registry.yarnpkg.com/js-yaml/-/js-yaml-4.1.0.tgz#c1fb65f8f5017901cdd2c951864ba18458a10602"
   integrity sha512-wpxZs9NoxZaJESJGIZTyDEaYpl0FKSA+FB9aJiyemKhMwkxQg63h4T1KJgUGHpTqPDNRcmmYLugrRjJlBtWvRA==
@@ -3019,9 +3001,9 @@ natural-orderby@^5.0.0:
   resolved "https://registry.yarnpkg.com/natural-orderby/-/natural-orderby-5.0.0.tgz#bb655f669ee9c84e82cdc6cddbba25eb263cd9f4"
   integrity sha512-kKHJhxwpR/Okycz4HhQKKlhWe4ASEfPgkSWNmKFHd7+ezuQlxkA5cM3+XkBPvm1gmHen3w53qsYAv+8GwRrBlg==
 
-"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v11.14.0":
+"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v11.15.1":
   version "0.0.0"
-  resolved "https://github.com/microbiomedata/nmdc-schema#41b773441cdfac7edb24194fc0bab58de8b29018"
+  resolved "https://github.com/microbiomedata/nmdc-schema#6be9b890cd02d50b0567ae73ed24f1e8bcd985d0"
 
 node-addon-api@^7.0.0:
   version "7.1.1"
@@ -3738,11 +3720,6 @@ to-regex-range@^5.0.1:
   dependencies:
     is-number "^7.0.0"
 
-tosource@2.0.0-alpha.3:
-  version "2.0.0-alpha.3"
-  resolved "https://registry.yarnpkg.com/tosource/-/tosource-2.0.0-alpha.3.tgz#ef385dac9092e009bf25c018838ddaae436daeb6"
-  integrity sha512-KAB2lrSS48y91MzFPFuDg4hLbvDiyTjOVgaK7Erw+5AmZXNq4sFRVn8r6yxSLuNs15PaokrDRpS61ERY9uZOug==
-
 tr46@~0.0.3:
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/tr46/-/tr46-0.0.3.tgz#8184fd347dac9cdc185992f3a6622e14b9d9ab6a"
@@ -3985,10 +3962,10 @@ vue@^3.2.25, vue@^3.5.21:
     "@vue/server-renderer" "3.5.22"
     "@vue/shared" "3.5.22"
 
-vuetify@^3.10.1:
-  version "3.10.4"
-  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-3.10.4.tgz#8b1c3f4bf2cddbc3e1d2114f60835c4b6ef23c26"
-  integrity sha512-aatUQ0RM0i6VdkJaFyj3gydecuFmAgACNO3RwWznvjvIvRENQXxMRiv+vlGFoshbw2UG+zOPPMhO12OCPSa2UQ==
+vuetify@^3.11.6:
+  version "3.11.6"
+  resolved "https://registry.yarnpkg.com/vuetify/-/vuetify-3.11.6.tgz#d992b5fcad53fd8a5a572635a4ea0a40b7ae5cd6"
+  integrity sha512-vaWvEpDSeldRoib1tCKNVBp60paTD2/n0a0TmrVLF9BN4CJJn6/A4VKG2Sg+DE8Yc+SNOtFtipChxSlQxjcUvw==
 
 watch-size@^2.0.0:
   version "2.0.0"

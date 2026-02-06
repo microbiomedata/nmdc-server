@@ -1,7 +1,8 @@
 import csv
+import io
 import json
-import logging
 import time
+import zipfile
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
@@ -13,7 +14,10 @@ import requests
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, status
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
+from nmdc_api_utilities.biosample_search import BiosampleSearch
+from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
+from sqlalchemy import text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -47,6 +51,39 @@ from nmdc_server.table import Table
 router = APIRouter()
 
 logger = get_logger(__name__)
+
+
+# Get system health.
+@router.get("/health", name="Get system health", response_model=schemas.HealthResponse)
+def get_health(
+    response: Response,
+    db: Session = Depends(get_db),
+) -> schemas.HealthResponse:
+    r"""Get system health information."""
+
+    # Declare that our web server is healthy.
+    is_web_server_healthy = True
+
+    # Check whether our database connection is healthy.
+    is_database_healthy = False
+    try:
+        db.execute(text("SELECT 1"))
+        is_database_healthy = True
+    except Exception as e:
+        logger.exception(e)
+
+    # Set the HTTP response code accordingly.
+    response.status_code = (
+        status.HTTP_200_OK
+        if all([is_database_healthy, is_web_server_healthy])
+        else status.HTTP_503_SERVICE_UNAVAILABLE
+    )
+
+    # Return a health response.
+    return schemas.HealthResponse(
+        web_server=is_web_server_healthy,
+        database=is_database_healthy,
+    )
 
 
 # get application settings
@@ -355,6 +392,79 @@ async def get_biosample(biosample_id: str, db: Session = Depends(get_db)):
 
 
 @router.get(
+    "/biosample/{biosample_id}/source_metadata",
+    tags=["biosample"],
+)
+async def get_biosample_source_metadata(biosample_id: str):
+    """
+    Get a single record of biosample source metadata via the Runtime API
+    (i.e. the source of truth) based on the supplied biosample ID.
+    """
+    biosample_search = BiosampleSearch()
+    source_biosample = biosample_search.get_record_by_id(biosample_id)
+    if source_biosample is None:
+        raise HTTPException(status_code=404, detail="Biosample not found in source database")
+    return source_biosample
+
+
+@router.post(
+    "/biosample/search/source_metadata",
+    tags=["biosample"],
+)
+async def search_biosample_source_metadata(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+):
+    """
+    Get a list of biosample source metadata via the Runtime API
+    based on supplied conditions
+    """
+    biosample_search = BiosampleSearch()
+    biosample_ids = (
+        crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
+    )
+    results = biosample_search.get_records_by_id([id for (id,) in biosample_ids])
+    if not results:
+        raise HTTPException(status_code=404, detail="Could not retrieve source data for biosamples")
+    return results
+
+
+@router.post("/download_metadata", tags=["bulk_download"])
+async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get_db)):
+    """
+    Download multiple metadata lists as a zip file given a list of endpoint labels.
+    Endpoint labels are mapped to functions that retrieve JSON.
+    """
+    endpoint_map = {
+        "biosamples": search_biosample_source_metadata,
+        "studies": search_study_source_metadata,
+    }
+
+    zip_buffer = io.BytesIO()
+
+    if not q.endpoints or len(q.endpoints) == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="No endpoints specified for metadata download.",
+        )
+
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for endpoint_name in q.endpoints:
+            if endpoint_name in endpoint_map:
+                data = await endpoint_map[endpoint_name](q=q, db=db)
+                json_str = json.dumps(data, indent=2, ensure_ascii=False)
+                zip_file.writestr(f"{endpoint_name}.json", json_str.encode("utf-8"))
+
+    zip_buffer.seek(0)
+
+    return Response(
+        content=zip_buffer.getvalue(),
+        media_type="application/zip",
+        headers={"Content-Disposition": "attachment; filename=metadata.zip"},
+    )
+
+
+@router.get(
     "/envo/tree",
     response_model=schemas.EnvoTreeResponse,
     tags=["envo"],
@@ -546,6 +656,42 @@ async def get_study_image(study_id: str, db: Session = Depends(get_db)):
     if image is None:
         raise HTTPException(status_code=404, detail="No image exists for this study")
     return StreamingResponse(BytesIO(image), media_type="image/jpeg")
+
+
+@router.get(
+    "/study/{study_id}/source_metadata",
+    tags=["study"],
+)
+async def get_study_source_metadata(study_id: str):
+    """
+    Get a single record of study source metadata via the Runtime API
+    based on the supplied study ID.
+    """
+    study_search = StudySearch()
+    source_study = study_search.get_record_by_id(study_id)
+    if source_study is None:
+        raise HTTPException(status_code=404, detail="Study not found in the source database")
+    return source_study
+
+
+@router.post(
+    "/study/search/source_metadata",
+    tags=["study"],
+)
+async def search_study_source_metadata(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+):
+    """
+    Get a list of study source metadata via the Runtime API
+    based on supplied conditions.
+    """
+    study_search = StudySearch()
+    study_ids = crud.search_study(db, q.conditions).with_entities(models.Study.id).all()
+    results = study_search.get_records_by_id([id for (id,) in study_ids])
+    if not results:
+        raise HTTPException(status_code=404, detail="Could not retrieve source data for studies")
+    return results
 
 
 # data_generation
@@ -1281,7 +1427,7 @@ async def update_submission(
 
 
 @router.get("/status_transitions", name="Get the `Status` transitions allowed by user role")
-async def get_transitions() -> dict:
+async def get_transitions():
     return ALLOWED_TRANSITIONS
 
 
@@ -1297,7 +1443,7 @@ async def update_submission_status(
     db: Session = Depends(get_db),
     user: models.User = Depends(get_current_user),
 ) -> models.SubmissionMetadata:
-    """Update submission status"""
+    """Update submission status and create/update GitHub issue as needed."""
     submission = get_submission_for_user(
         db, id, user, allowed_roles=[SubmissionEditorRole.owner, SubmissionEditorRole.reviewer]
     )
@@ -1332,7 +1478,6 @@ async def update_submission_status(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Invalid status transition.",
             )
-
     db.commit()
 
     # If the new status is "Submitted - Pending Review", create or update the GitHub issue
@@ -1340,11 +1485,23 @@ async def update_submission_status(
         body.status == SubmissionStatusEnum.SubmittedPendingReview.text
         and submission.is_test_submission is False
     ):
-        try:
-            create_github_issue(submission, user)
-        except Exception as e:
-            logging.error(f"Failed to create/update Github issue: {str(e)}")
-
+        if submission.submission_issue is None:
+            try:
+                submission.submission_issue = create_github_issue(submission, user)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to create GitHub issue: {str(e)}",
+                )
+            db.commit()
+        else:
+            try:
+                update_github_issue_for_resubmission(submission.submission_issue, user)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Failed to update GitHub issue: {str(e)}",
+                )
     return submission
 
 
@@ -1406,146 +1563,96 @@ async def remove_submission_role(
 
 def create_github_issue(submission_model: SubmissionMetadata, user):
     """
-    Create or update a Github issue depending on if an issue exists for the submission id.
-    Updates all matching issues if there's more than one, but should typically be one.
+    Create a Github issue for the submission.
+    Return the issue number.
     """
     submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
     gh_url = str(settings.github_issue_url)
     token = settings.github_authentication_token
     assignee = settings.github_issue_assignee
+
     # If the settings for issue creation weren't supplied return, no need to do anything further
     if gh_url is None or token is None:
         return None
 
     headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
 
-    # Check for existing issues first
-    existing_issue = check_existing_github_issues(submission.id, headers, gh_url, user)
+    # Gathering the fields we want to display in the issue
+    study_form = submission.metadata_submission.studyForm
+    multiomics_form = submission.metadata_submission.multiOmicsForm
+    pi_name = study_form.piName
+    pi_orcid = study_form.piOrcid
+    data_generated = "Yes" if multiomics_form.dataGenerated else "No"
+    omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
+    sample_types = ", ".join(submission.metadata_submission.templates)
+    num_samples = submission.sample_count
 
-    if existing_issue is None:
+    # some variable data to supply depending on if data has been generated or not
+    id_dict = {
+        "NCBI ID: ": study_form.NCBIBioProjectId,
+        "GOLD ID: ": study_form.GOLDStudyId,
+        "JGI ID: ": multiomics_form.JGIStudyId,
+        "EMSL ID: ": multiomics_form.studyNumber,
+        "Alternative IDs: ": ", ".join(study_form.alternativeNames),
+    }
+    valid_ids = []
+    for key, value in id_dict.items():
+        if str(value) != "":
+            valid_ids.append(key + value)
 
-        # Gathering the fields we want to display in the issue
-        study_form = submission.metadata_submission.studyForm
-        multiomics_form = submission.metadata_submission.multiOmicsForm
-        pi_name = study_form.piName
-        pi_orcid = study_form.piOrcid
-        data_generated = "Yes" if multiomics_form.dataGenerated else "No"
-        omics_processing_types = ", ".join(multiomics_form.omicsProcessingTypes)
-        sample_types = ", ".join(submission.metadata_submission.templates)
-        num_samples = submission.sample_count
-
-        # some variable data to supply depending on if data has been generated or not
-        id_dict = {
-            "NCBI ID: ": study_form.NCBIBioProjectId,
-            "GOLD ID: ": study_form.GOLDStudyId,
-            "JGI ID: ": multiomics_form.JGIStudyId,
-            "EMSL ID: ": multiomics_form.studyNumber,
-            "Alternative IDs: ": ", ".join(study_form.alternativeNames),
-        }
-        valid_ids = []
-        for key, value in id_dict.items():
-            if str(value) != "":
-                valid_ids.append(key + value)
-
-        # assemble the body of the API request
-        body_lis = [
-            f"Issue created from host: {settings.host}",
-            f"Submitter: {user.name}, {user.orcid}",
-            f"Submission ID: {submission.id}",
-            f"Has data been generated: {data_generated}",
-            f"PI name: {pi_name}",
-            f"PI orcid: {pi_orcid}",
-            f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
-            f"Data types: {omics_processing_types}",
-            f"Sample type: {sample_types}",
-            f"Number of samples: {num_samples}",
-        ] + valid_ids
-        body_string = " \n ".join(body_lis)
-        payload_dict = {
-            "title": f"NMDC Submission: {submission.id}",
-            "body": body_string,
-            "assignees": [assignee],
-        }
-
-        payload = json.dumps(payload_dict)
-
-        # make request and log an error or success depending on reply
-        res = requests.post(url=gh_url, data=payload, headers=headers)
-        if res.status_code != 201:
-            logging.error(f"Github issue creation failed with code {res.status_code}")
-            logging.error(res.reason)
-
-        else:
-            logging.info(f"Github issue creation successful with code {res.status_code}")
-            logging.info(res.reason)
-
-    else:
-        try:
-            update_github_issue_for_resubmission(existing_issue, user, headers)
-        except Exception as e:
-            logging.error(f"Failed to update existing GitHub issue: {str(e)}")
-
-
-def check_existing_github_issues(submission_id: UUID, headers: dict, gh_url: str, user):
-    """
-    Check if GitHub issues already exist for the given submission ID using GitHub's search API.
-    Searches for submission id anywhere on issue, ignoring format for longevity.
-    Returns list of matching issues.
-    """
-    submission_id_string = str(submission_id)
-    params: dict[str, str | int] = {
-        "state": "all",
-        "per_page": 100,
-        "page": 1,
+    # assemble the body of the API request
+    body_lis = [
+        f"Issue created from host: {settings.host}",
+        f"Submitter: {user.name}, {user.orcid}",
+        f"Submission ID: {submission.id}",
+        f"Has data been generated: {data_generated}",
+        f"PI name: {pi_name}",
+        f"PI orcid: {pi_orcid}",
+        f"Status: {SubmissionStatusEnum.SubmittedPendingReview.text}",
+        f"Data types: {omics_processing_types}",
+        f"Sample type: {sample_types}",
+        f"Number of samples: {num_samples}",
+    ] + valid_ids
+    body_string = " \n ".join(body_lis)
+    payload_dict = {
+        "title": f"NMDC Submission: {submission.id}",
+        "body": body_string,
+        "assignees": [assignee],
     }
 
-    max_pages = 20  # Stopgap: prevent checking more than 2000 issues (10 pages * 100 per page)
-    pages_checked = 0
+    payload = json.dumps(payload_dict)
 
-    try:
-        while pages_checked < max_pages:
-            response = requests.get(gh_url, headers=headers, params=params)
-            issues = response.json()
+    res = requests.post(url=gh_url, data=payload, headers=headers)
+    if res.status_code != 201:
+        raise HTTPException(
+            status_code=res.status_code,
+            detail=f"Github issue creation failed: {res.reason}",
+        )
 
-            if not issues:  # If no issues returned on this page break the loop
-                break
-
-            # Look for an issue with matching submission id anywhere in github
-            for issue in issues:
-                title = issue.get("title", "") or ""
-                body = issue.get("body", "") or ""
-
-                if submission_id_string in title or submission_id_string in body:
-                    return issue  # Return first matching issue immediately
-
-            # Get next page
-            link_header = response.headers.get("Link", "")
-            if 'rel="next"' not in link_header:
-                break  # No more pages
-
-            # Move to next page
-            assert isinstance(params["page"], int)
-            params["page"] += 1
-            pages_checked += 1
-
-    except requests.RequestException as e:
-        logging.error(f"Request failed to check existing GitHub issues: {str(e)}")
-        return None
-
-    return None  # No matching issues found
+    return res.json()["number"]
 
 
-def update_github_issue_for_resubmission(existing_issue, user, headers):
+def update_github_issue_for_resubmission(existing_issue, user):
     """
     Update an existing GitHub issue to note that the submission was resubmitted.
     Adds a comment and reopens the issue if it was closed.
-    Returns nothing if update succesfully made.
+    Return nothing.
     """
-    issue_url = existing_issue.get("url")  # API URL for the issue
 
     # Create a comment noting the resubmission
     from datetime import datetime
 
+    gh_url = str(settings.github_issue_url)
+    issue_url = f"{gh_url}/{existing_issue}"
+    token = settings.github_authentication_token
+
+    # If the settings for issue creation weren't supplied return, no need to do anything further
+    if gh_url is None or token is None:
+        return None
+
+    headers = {"Authorization": f"Bearer {token}", "Content-Type": "text/plain; charset=utf-8"}
+
+    # Make comment
     timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S UTC")
     comment_body = f"""
 ## 🔄 Submission Resubmitted
@@ -1560,9 +1667,7 @@ The submission has been updated and resubmitted for review.
     # Add comment to the issue
     comment_url = f"{issue_url}/comments"
     comment_payload = {"body": comment_body}
-
     comment_response = requests.post(comment_url, headers=headers, data=json.dumps(comment_payload))
-
     if comment_response.status_code != 201:
         raise HTTPException(
             status_code=comment_response.status_code,
@@ -1570,13 +1675,18 @@ The submission has been updated and resubmitted for review.
         )
 
     # If the issue is closed, reopen it
+    res = requests.get(url=issue_url, headers=headers)
+    if res.status_code != 200:
+        raise HTTPException(
+            status_code=res.status_code,
+            detail=f"Failed to fetch GitHub issue: {res.reason}",
+        )
+    existing_issue = res.json()
     if existing_issue.get("state") == "closed":
         reopen_payload = {"state": "open", "state_reason": "reopened"}
-
         reopen_response = requests.patch(
             issue_url, headers=headers, data=json.dumps(reopen_payload)
         )
-
         if reopen_response.status_code != 200:
             raise HTTPException(
                 status_code=reopen_response.status_code,

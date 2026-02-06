@@ -1,17 +1,58 @@
 <script lang="ts">
 import { computed, defineComponent, PropType } from 'vue';
 import { StudySearchResults } from '@/data/api';
-import OrcidId from './Presentation/OrcidId.vue';
+import OrcidId from '@/components/Presentation/OrcidId.vue';
 
 function getOrcid(person: any) {
   const orcid = person?.applies_to_person?.orcid ?? person?.orcid ?? '';
   return orcid.replace('orcid:', '');
 }
 
+const PRINCIPAL_INVESTIGATOR_ROLE = 'Principal Investigator';
+
+export interface TeamMember {
+  name: string;
+  orcid: string;
+  roles: string[];
+  image_url?: string;
+}
+
+function compareRoles(a: string, b: string) {
+  // Sort certain roles first in a predefined order. Others are sorted alphabetically after.
+  const roleOrder = [PRINCIPAL_INVESTIGATOR_ROLE];
+  const indexA = roleOrder.indexOf(a);
+  const indexB = roleOrder.indexOf(b);
+  if (indexA !== -1 && indexB !== -1) {
+    return indexA - indexB;
+  }
+  if (indexA !== -1) {
+    return -1;
+  }
+  if (indexB !== -1) {
+    return 1;
+  }
+  return a.localeCompare(b);
+}
+
+function compareTeamMembers(a: TeamMember, b: TeamMember) {
+  // Sort PIs first, then those with images, then alphabetically by name
+  const aIsPI = a.roles.includes(PRINCIPAL_INVESTIGATOR_ROLE) ? 0 : 1;
+  const bIsPI = b.roles.includes(PRINCIPAL_INVESTIGATOR_ROLE) ? 0 : 1;
+  if (aIsPI !== bIsPI) {
+    return aIsPI - bIsPI;
+  }
+
+  const aHasImage = a.image_url ? 0 : 1;
+  const bHasImage = b.image_url ? 0 : 1;
+  if (aHasImage !== bHasImage) {
+    return aHasImage - bHasImage;
+  }
+
+  return a.name.localeCompare(b.name);
+}
+
 export default defineComponent({
-  components: {
-    OrcidId,
-  },
+  components: { OrcidId },
   props: {
     item: {
       type: Object as PropType<StudySearchResults>,
@@ -19,134 +60,84 @@ export default defineComponent({
     },
   },
   setup(props) {
-    const team = computed(() => props.item.has_credit_associations);
-    const hasOrcid = computed(() => props.item.principal_investigator?.orcid);
+    const team = computed<TeamMember[]>(() => {
+      const team: TeamMember[] = (props.item.has_credit_associations || []).map((a) => ({
+        name: a.applies_to_person.name || '',
+        orcid: getOrcid(a),
+        roles: a.applied_roles.sort(compareRoles),
+      }));
+      const pi_member = team.find((m) => m.orcid === getOrcid(props.item.principal_investigator));
+      if (pi_member) {
+        // If the PI is already in the team, ensure they have the PI role and image
+        if (!pi_member.roles.includes(PRINCIPAL_INVESTIGATOR_ROLE)) {
+          pi_member.roles.unshift(PRINCIPAL_INVESTIGATOR_ROLE);
+        }
+        if (!pi_member.image_url) {
+          pi_member.image_url = props.item.principal_investigator_image_url;
+        }
+      } else {
+        // If the PI is not in the team, add them
+        team.push({
+          name: props.item.principal_investigator.name || '',
+          orcid: getOrcid(props.item.principal_investigator),
+          roles: [PRINCIPAL_INVESTIGATOR_ROLE],
+          image_url: props.item.principal_investigator_image_url,
+        });
+      }
+
+      // Sort team members
+      team.sort(compareTeamMembers);
+
+      return team;
+    });
+
     return {
-      team, getOrcid, hasOrcid,
+      team,
     };
   },
 });
 </script>
 
 <template>
-  <!-- Adjust alignment when there isn't an image to display -->
-  <v-row
-    class="my-6"
-    :no-gutters=" !item.image_url && !item.principal_investigator_image_url"
-  >
-    <v-col
-      class="shrink"
-      offset="1"
+  <v-row>
+    <template
+      v-for="person in team"
+      :key="person.orcid || person.name"
     >
-      <v-img
-        v-if="item.image_url"
-        :key="item.image_url"
-        :src="item.image_url"
-        width="200"
-      />
-      <v-avatar
-        v-else-if="item.principal_investigator_image_url"
-        :size="200"
+      <v-col
+        cols="12"
+        md="4"
+        class="d-flex"
       >
-        <v-img
-          :src="item.principal_investigator_image_url"
-          :contain="item.id === 'gold:Gs0110119'"
-          position="40% 25%"
-        />
-      </v-avatar>
-    </v-col>
-    <v-col
-      class="grow mx-4 pr-8"
-    >
-      <v-row
-        align="center"
-        justify="start"
-        style="height: 100%"
-      >
-        <v-card flat>
-          <div v-if="item.study_category != 'consortium' && item.principal_investigator">
-            <div class="text-h3">
-              {{ item.principal_investigator_name }}
-            </div>
-            <div class="text-h5 py-2">
-              Principal investigator
-            </div>
-            <span
-              v-if="hasOrcid"
-              style="display: flex; align-items: center;"
-              class="py-1"
-            >
-              <orcid-id
-                :orcid-id="getOrcid(item.principal_investigator)"
-                :authenticated="false"
-                :width="24"
-              />
-            </span>
-          </div>
-          <div
-            v-if="item.homepage_website && item.homepage_website[0]"
-            class="text-h5 py-2 primary--text"
-          >
-            Consortium Homepage: <a :href="item.homepage_website[0]">{{ item.homepage_website[0] }}</a>
-          </div>
-          <div
-            v-if="team"
-            class="text-h5 py-2 primary--text"
-          >
-            Team
-          </div>
-          <div class="team">
-            <v-menu
-              v-for="member in team"
-              :key="member.applies_to_person.orcid"
-              bottom
-              max-width="450px"
-              nudge-bottom="34"
-            >
-              <template #activator="{ props }">
-                <div
-                  class="text-subtitle-1 px-1 grey--text text--darken-2"
-                  style="display: inline-block; text-decoration: underline;"
-                  v-bind="props"
-                >
-                  {{ member.applies_to_person.name }}
-                </div>
-              </template>
-              <v-card
-                class=" d-flex flex-column justify-start pa-2"
-              >
-                <v-card-title>{{ member.applies_to_person.name }}</v-card-title>
-                <v-card-subtitle>CRediT: {{ member.applied_roles.join(', ') }}</v-card-subtitle>
-                <orcid-id
-                  v-if="member.applies_to_person.orcid"
-                  :orcid-id="getOrcid(member)"
-                  :authenticated="false"
-                  :width="24"
-                />
-              </v-card>
-            </v-menu>
-          </div>
-          <div v-if="item.funding_sources">
-            <div class="text-h5 py-2 primary--text">
-              Funding Sources
-            </div>
-            <div>
-              {{ item.funding_sources.flat().toString() }}
+        <v-avatar
+          v-if="person.image_url"
+          size="64"
+          class="mr-2"
+        >
+          <v-img
+            :src="person.image_url"
+            :alt="person.name"
+          />
+        </v-avatar>
+
+        <div>
+          <div class="font-weight-medium">
+            <OrcidId
+              v-if="person.orcid"
+              :orcid-id="person.orcid"
+              :name="person.name"
+              :authenticated="false"
+              :is-name-linked="false"
+            />
+            <div v-else>
+              {{ person.name }}
             </div>
           </div>
-        </v-card>
-      </v-row>
-    </v-col>
+          <div class="text-caption">
+            {{ person.roles.join(', ') }}
+          </div>
+        </div>
+      </v-col>
+    </template>
   </v-row>
 </template>
-
-<style>
-.team {
-  -webkit-line-clamp: 3;
-  line-clamp: 3;
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  overflow-y: auto;
-  width: fit-content;
-}
-</style>

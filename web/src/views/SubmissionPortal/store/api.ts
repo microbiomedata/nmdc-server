@@ -1,6 +1,7 @@
 import { AxiosResponse } from 'axios';
 import { client, SearchParams } from '@/data/api';
 import {
+  AllowedStatusTransitions,
   LockOperationResult,
   MetadataSubmission,
   MetadataSubmissionRecord,
@@ -59,7 +60,7 @@ async function updateSubmissionStatus(submission_id: string, newStatus: string) 
 }
 
 async function getAllStatusTransitions() {
-  const resp = await client.get<Record<string, string[]>>('status_transitions', {
+  const resp = await client.get<AllowedStatusTransitions>('status_transitions', {
   });
   return resp.data;
 }

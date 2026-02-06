@@ -1,12 +1,13 @@
-version: "3.3"
 services:
 
   data:
     image: nginx
 
   db:
-    # This version is duplicated in the GitHub Actions workflow
-    image: postgres:13
+    # Keep this version in sync with:
+    #   - .github/workflows/server.yml
+    #   - Dockerfile
+    image: postgres:15
     volumes:
       - app-db-data:/var/lib/postgresql/data/pgdata
       - ./scripts/docker/init.sql:/docker-entrypoint-initdb.d/init.sql

@@ -28,8 +28,10 @@ jobs:
 
     services:
       postgres:
-        # This version is duplicated in the root docker-compose.yml
-        image: postgres:13
+        # Keep this version in sync with:
+        #   - docker-compose.yml
+        #   - Dockerfile
+        image: postgres:15
         env:
           POSTGRES_USER: nmdc
           POSTGRES_PASSWORD: nmdc

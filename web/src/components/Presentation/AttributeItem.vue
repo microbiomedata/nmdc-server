@@ -125,10 +125,10 @@ export default defineComponent({
         class="pr-2"
         alt="Logo"
       >
-      <v-icon 
+      <v-icon
         v-else
         class="mr-4"
-        color="grey"
+        color="grey-darken-4"
       >
         mdi-link
       </v-icon>
@@ -158,10 +158,10 @@ export default defineComponent({
         class="pr-2"
         alt="Logo"
       >
-      <v-icon 
+      <v-icon
         v-else-if="getField(field)"
         class="mr-4"
-        color="grey"
+        color="grey-darken-4"
       >
         {{ getField(field).icon || 'mdi-text' }}
       </v-icon>

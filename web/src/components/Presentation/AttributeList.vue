@@ -10,9 +10,10 @@ import gold from '@/assets/GOLD.png';
 import img from '@/assets/IMG.png';
 import emsl from '@/assets/EMSL.png';
 import AttributeItem from './AttributeItem.vue';
+import PageSection from './PageSection.vue';
 
 export default defineComponent({
-  components: { AttributeItem },
+  components: {PageSection, AttributeItem },
 
   props: {
     type: {
@@ -112,57 +113,72 @@ export default defineComponent({
 
 <template>
   <div>
-    <h2>
-      Attributes
-    </h2>
-    <v-list
-      style="column-count: 3;"
-      class="d-block py-4"
+    <PageSection heading="Attributes">
+      <v-list class="attribute-grid">
+        <div
+          v-for="field in displayFields"
+          :key="field"
+          class="mb-2"
+        >
+          <AttributeItem v-bind="{ item, field }" />
+        </div>
+      </v-list>
+    </PageSection>
+
+    <PageSection
+      v-if="alternateIdentifiers.length > 0 || Array.isArray(item.emsl_biosample_identifiers) && item.emsl_biosample_identifiers.length > 0"
+      heading="Alternative Identifiers"
     >
-      <v-col
-        v-for="field in displayFields"
-        :key="field"
-        class="pa-2 d-inline-block"
-      >
-        <AttributeItem v-bind="{ item, field }" />
-      </v-col>
-    </v-list>
-    <v-list v-if="alternateIdentifiers.length > 0 || Array.isArray(item.emsl_biosample_identifiers) && item.emsl_biosample_identifiers.length > 0">
-      <h2>
-        Alternative Identifiers
-      </h2>
-      <AttributeItem
-        v-for="({ name, target }) in alternateIdentifiers"
-        :key="name"
-        v-bind="{ item, link: { name, target } }"
-        :image="name.startsWith('gold') ? gold : name.startsWith('img') ? img : ''"
-      />
-      <AttributeItem
-        v-for="emslId, index in item.emsl_biosample_identifiers"
-        :key="emslId"
-        v-bind="{ item, field: 'emsl_biosample_identifiers', index, displayName: 'EMSL Identifier' }"
-        :image="emsl"
-      />
-    </v-list>
-    <v-list v-if="type === 'biosample' && Array.isArray(relatedBiosamples) && relatedBiosamples.length > 0">
-      <div class="display-1">
-        Related Biosamples
-      </div>
-      <v-list-item
-        v-for="biosample in relatedBiosamples"
-        :key="biosample.id"
-        :href="'/details/sample/' + biosample.id"
-      >
-        <template #prepend>
-          <v-icon>mdi-link</v-icon>
-        </template>
-        <v-list-item-title>
-          {{ biosample.name }}
-        </v-list-item-title>
-        <v-list-item-subtitle>
-          ID: {{ biosample.id }}
-        </v-list-item-subtitle>
-      </v-list-item>
-    </v-list>
+      <v-list class="pa-0">
+        <AttributeItem
+          v-for="({ name, target }) in alternateIdentifiers"
+          class="mb-2"
+          :key="name"
+          v-bind="{ item, link: { name, target } }"
+          :image="name.startsWith('gold') ? gold : name.startsWith('img') ? img : ''"
+        />
+        <AttributeItem
+          v-for="emslId, index in item.emsl_biosample_identifiers"
+          class="mb-2"
+          :key="emslId"
+          v-bind="{ item, field: 'emsl_biosample_identifiers', index, displayName: 'EMSL Identifier' }"
+          :image="emsl"
+        />
+      </v-list>
+    </PageSection>
+
+    <PageSection
+      v-if="type === 'biosample' && Array.isArray(relatedBiosamples) && relatedBiosamples.length > 0"
+      heading="Related Biosamples"
+    >
+      <v-list class="pa-0">
+        <v-list-item
+          v-for="biosample in relatedBiosamples"
+          :key="biosample.id"
+          class="mb-2"
+          :href="'/details/sample/' + biosample.id"
+        >
+          <template #prepend>
+            <v-icon>mdi-link</v-icon>
+          </template>
+          <v-list-item-title>
+            {{ biosample.name }}
+          </v-list-item-title>
+          <v-list-item-subtitle>
+            ID: {{ biosample.id }}
+          </v-list-item-subtitle>
+        </v-list-item>
+      </v-list>
+    </PageSection>
   </div>
 </template>
+
+<style scoped>
+.attribute-grid {
+  /* This does not use display: grid because we want a specific number of columns,
+     but with items that flow from top-to-bottom first then left-to-right. */
+  column-count: 3;
+  column-gap: 8px;
+  padding: 0;
+}
+</style>

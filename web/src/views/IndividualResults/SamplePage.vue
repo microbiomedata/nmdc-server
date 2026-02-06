@@ -1,47 +1,108 @@
-<script lang="ts">
-import { defineComponent, ref, watchEffect } from 'vue';
+<script setup lang="ts">
+import { ref, watchEffect } from 'vue';
 import { api, BiosampleSearchResult } from '@/data/api';
 import AppBanner from '@/components/AppBanner.vue';
 import AttributeList from '@/components/Presentation/AttributeList.vue';
+import { downloadJson } from '@/utils';
 
 import IndividualTitle from './IndividualTitle.vue';
+import useRequest from '@/use/useRequest.ts';
 
-export default defineComponent({
-  name: 'SamplePage',
+const props = defineProps<{
+  id: string;
+}>();
 
-  components: {
-    AppBanner,
-    AttributeList,
-    IndividualTitle,
-  },
+const biosample = ref<BiosampleSearchResult | null>(null);
+const getBiosampleRequest = useRequest();
+const loading = getBiosampleRequest.loading;
+const sampleDownloadDialog = ref(false);
+const sampleDownloadLoading = ref(false);
+const errorDialog = ref(false);
 
-  props: {
-    id: {
-      type: String,
-      required: true,
-    },
-  },
+async function downloadSampleMetadata() {
+  try {
+    sampleDownloadDialog.value = false;
+    sampleDownloadLoading.value = true;
+    const data = await api.getBiosampleSource(props.id);
+    downloadJson(data, `${props.id}.json`);
+  } catch (error) {
+    console.error('Failed to download sample metadata:', error);
+    errorDialog.value = true;
+  } finally {
+    sampleDownloadLoading.value = false;
+  }
+}
 
-  setup(props) {
-    const result = ref({} as BiosampleSearchResult);
-
-    watchEffect(() => {
-      api.getBiosample(props.id).then((b) => { result.value = b; });
-    });
-
-    return { result };
-  },
+watchEffect(() => {
+  getBiosampleRequest.request(async () => {
+    biosample.value = await api.getBiosample(props.id);
+  });
 });
 </script>
 
 <template>
-  <v-main v-if="result.id">
+  <v-main>
     <AppBanner />
-    <v-container fluid>
-      <IndividualTitle :item="result" />
+    <v-container v-if="loading">
+      <v-skeleton-loader type="article" />
+    </v-container>
+    <v-container v-if="!loading && biosample !== null">
+      <BreadcrumbList
+        :items="[
+          { text: 'Data Portal Home', to: { name: 'Search' } },
+          { text: biosample.id, copyable: true }
+        ]"
+      />
+      <IndividualTitle :item="biosample">
+        <template #subtitle>
+          <div
+            v-if="biosample.description"
+            class="mb-2"
+          >
+            {{ biosample.description }}
+          </div>
+          <v-dialog
+            v-model="sampleDownloadDialog"
+            max-width="400"
+          >
+            <template #activator="{ props: dialogProps }">
+              <v-btn
+                v-bind="dialogProps"
+                color="primary"
+                size="small"
+              >
+                <v-icon class="mr-2">
+                  mdi-download
+                </v-icon>
+                Download Sample Metadata
+              </v-btn>
+            </template>
+            <DownloadDialog
+              :loading="sampleDownloadLoading"
+              @clicked="downloadSampleMetadata"
+            />
+          </v-dialog>
+        </template>
+      </IndividualTitle>
+      <v-snackbar
+        v-model="sampleDownloadLoading"
+        location="right bottom"
+        timeout="-1"
+      >
+        <v-progress-circular
+          indeterminate
+          class="mr-3"
+        />
+        <span>
+          Downloading sample metadata
+        </span>
+      </v-snackbar>
+      <ErrorDialog
+        v-model:show="errorDialog"
+      />
       <AttributeList
         type="biosample"
-        :item="result"
+        :item="biosample"
       />
     </v-container>
   </v-main>

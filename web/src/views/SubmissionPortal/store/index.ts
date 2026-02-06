@@ -1,48 +1,48 @@
-import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.yaml';
-import {
-  computed, reactive, Ref, ref, shallowRef, watch,
-} from 'vue';
-import {
-  chunk, clone, forEach, isEqual, isString,
-} from 'lodash';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
+import { computed, reactive, Ref, ref, shallowRef, watch, } from 'vue';
+import { chunk, clone, forEach, isEqual, isString, } from 'lodash';
 import axios from 'axios';
 import { User } from '@/types';
 import {
-  HARMONIZER_TEMPLATES,
-  MetadataSubmission,
-  MetadataSuggestion,
-  NmdcAddress,
-  PermissionLevelValues,
-  PermissionTitle,
-  SubmissionStatusKey,
-  SubmissionStatusTitle,
-  SuggestionType,
-  SuggestionsMode,
-  MetadataSuggestionRequest,
-  Doi,
-  DATA_MG_INTERLEAVED,
+  AcquisitionProtocol,
+  AllowedStatusTransitions,
   DATA_MG,
-  DATA_MT_INTERLEAVED,
+  DATA_MG_INTERLEAVED,
   DATA_MT,
+  DATA_MT_INTERLEAVED,
+  DataProtocol,
+  Doi,
   EMSL,
+  HARMONIZER_TEMPLATES,
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
-  AcquisitionProtocol,
-  DataProtocol,
-  SampleProtocol,
+  MetadataSubmission,
   MetadataSubmissionRecord,
+  MetadataSuggestion,
+  MetadataSuggestionRequest,
+  NmdcAddress,
+  PermissionTitle,
+  SampleMetadataValidationState,
+  SampleProtocol,
+  SubmissionEditorRole,
+  SubmissionPage,
+  SubmissionStatusKey,
+  SubmissionValidationState,
+  SuggestionsMode,
+  SuggestionType,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
+import useRequest from '@/use/useRequest.ts';
 
-const permissionTitleToDbValueMap: Record<PermissionTitle, PermissionLevelValues> = {
+const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
   'Metadata Contributor': 'metadata_contributor',
   Editor: 'editor',
 };
 
-const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
+const permissionLevelHierarchy: Record<SubmissionEditorRole, number> = {
   owner: 4,
   editor: 3,
   metadata_contributor: 2,
@@ -52,29 +52,27 @@ const permissionLevelHierarchy: Record<PermissionLevelValues, number> = {
 
 //use schema enum to define submission status
 const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
-const SubmissionStatusTitleMapping: Record<SubmissionStatusKey, SubmissionStatusTitle> = Object.fromEntries(
-  Object.entries(SubmissionStatusEnum).map(([key, item]: [string, any]) => [key, item.title]),
-) as Record<SubmissionStatusKey, SubmissionStatusTitle>; //key to title mapping for vue scripts where status saved to variable
-const isSubmissionStatus = (str: any): str is SubmissionStatusKey => Object.keys(SubmissionStatusTitleMapping).includes(str); //check that provided status is valid
-const status = ref(SubmissionStatusEnum.InProgress.text); //start with InProgress status
+const status = ref<SubmissionStatusKey>('InProgress');
+const statusDisplay = computed(() => SubmissionStatusEnum[status.value].title);
 
-function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_type:Extract<PermissionLevelValues, 'reviewer' | 'owner'> | 'admin', transitions:Record<Extract<PermissionLevelValues, 'reviewer' | 'owner'>, Record<SubmissionStatusKey, SubmissionStatusKey[]>>) {
-  const excludeFromAll = [
-    SubmissionStatusEnum.InProgress.text,
-    SubmissionStatusEnum.SubmittedPendingReview.text,
+function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
+  const excludeFromAll: SubmissionStatusKey[] = [
+    'InProgress',
+    'SubmittedPendingReview',
   ];
+
   // Admins can see all statuses and select any that aren't user invoked
-  if (dropdown_type === 'admin') {
-    return Object.keys(SubmissionStatusTitleMapping)
+  if (dropdownType === 'admin') {
+    return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
       .filter((key) => !excludeFromAll.includes(key) || key === currentStatus)
       .map((key) => ({
         value: key,
-        title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+        title: SubmissionStatusEnum[key].title,
       }));
   }
 
   // Non-admins can only see and select allowed transitions
-  const user_transitions = transitions[dropdown_type] || {};
+  const user_transitions = transitions[dropdownType] || {};
   const allowedStatusTransitions = user_transitions[currentStatus] || [];
 
   // Include the current status so it can be displayed
@@ -84,14 +82,17 @@ function formatStatusTransitions(currentStatus:SubmissionStatusKey, dropdown_typ
   }
 
   // Return allowed transitions
-  return Object.keys(SubmissionStatusTitleMapping)
-    .filter((key) => statusesToShow.includes(key))
+  return (Object.keys(SubmissionStatusEnum) as SubmissionStatusKey[])
+    .filter((key) => statusesToShow.includes(key as SubmissionStatusKey))
     .map((key) => ({
       value: key,
-      title: SubmissionStatusTitleMapping[key as keyof typeof SubmissionStatusTitleMapping],
+      title: SubmissionStatusEnum[key].title,
     }));
 }
 
+const studyName = ref('');
+const createdDate = ref<Date | null>(null);
+const modifiedDate = ref<Date | null>(null);
 const isTestSubmission = ref(false);
 const primaryStudyImageUrl = ref<string | null>(null);
 const piImageUrl = ref<string | null>(null);
@@ -105,8 +106,8 @@ function getSubmissionLockedBy(): User | null {
   return _submissionLockedBy;
 }
 
-let _permissionLevel: PermissionLevelValues | null = null;
-function getPermissionLevel(): PermissionLevelValues | null {
+let _permissionLevel: SubmissionEditorRole | null = null;
+function getPermissionLevel(): SubmissionEditorRole | null {
   return _permissionLevel;
 }
 
@@ -115,13 +116,13 @@ function isOwner(): boolean {
   return permissionLevelHierarchy[_permissionLevel] === permissionLevelHierarchy.owner;
 }
 
-function editablebyStatus(status: string): boolean {
-  const editableStatuses = [SubmissionStatusEnum.InProgress.text, SubmissionStatusEnum.UpdatesRequired.text];
+function editableByStatus(status: SubmissionStatusKey): boolean {
+  const editableStatuses: SubmissionStatusKey[] = ['InProgress', 'UpdatesRequired'];
   return editableStatuses.includes(status);
 }
 
 function canEditSubmissionByStatus(): boolean {
-  return editablebyStatus(status.value);
+  return editableByStatus(status.value);
 }
 
 function canEditSubmissionMetadata(): boolean {
@@ -137,6 +138,148 @@ function canEditSampleMetadata(): boolean {
 }
 
 const hasChanged = ref(0);
+
+/**
+ * Validating forms
+*/
+
+const validationStateDefault: SubmissionValidationState = {
+  studyForm: null,
+  multiOmicsForm: null,
+  sampleEnvironmentForm: null,
+  senderShippingInfoForm: null,
+  sampleMetadata: null,
+};
+const validationState = reactive(clone(validationStateDefault));
+
+function setTabValidated(tabName: string, validated: boolean) {
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  validationState.sampleMetadata.tabsValidated[tabName] = validated;
+}
+
+function setTabInvalidCells(tabName: string, invalidCells: Record<number, Record<number, string>>) {
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  validationState.sampleMetadata.invalidCells[tabName] = invalidCells;
+}
+
+function resetSampleMetadataValidation() {
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  validationState.sampleMetadata.invalidCells = {};
+  Object.keys(validationState.sampleMetadata.tabsValidated).forEach((tab) => {
+    validationState.sampleMetadata!.tabsValidated[tab] = false;
+  });
+}
+
+function isSubmissionValid() {
+  // The required forms must be validated with no errors
+  if (!isEqual(validationState.studyForm, [])) {
+    return false;
+  }
+  if (!isEqual(validationState.multiOmicsForm, [])) {
+    return false;
+  }
+  if (!isEqual(validationState.sampleEnvironmentForm, [])) {
+    return false;
+  }
+  // The sender shipping info form is optional. If it has been validated, it must have no errors
+  if (validationState.senderShippingInfoForm != null && !isEqual(validationState.senderShippingInfoForm, [])) {
+    return false;
+  }
+  // The sample metadata must be validated with no errors
+  if (validationState.sampleMetadata == null) {
+    return false;
+  }
+  const tabsValidatedValues = Object.values(validationState.sampleMetadata.tabsValidated);
+  if (tabsValidatedValues.length === 0) {
+    return false;
+  }
+  if (tabsValidatedValues.some((validated) => !validated)) {
+    return false;
+  }
+  if (Object.values(validationState.sampleMetadata.invalidCells).some((cells) => Object.keys(cells).length > 0)) {
+    return false;
+  }
+  return true;
+}
+
+function combineErrors(...errorLists: (null | string[])[]) : null | string[] {
+  let combined: null | string[] = null;
+  errorLists.forEach((errors) => {
+    if (errors) {
+      if (combined === null) {
+        combined = [];
+      }
+      combined = combined.concat(errors);
+    }
+  });
+  return combined;
+}
+
+function combineSampleMetadataErrors(sampleMetadataState: SampleMetadataValidationState | null) : string[] | null {
+  if (sampleMetadataState === null) {
+    return null;
+  }
+  const combinedErrors: string[] = [];
+  const tabsValidatedKeys = Object.keys(sampleMetadataState.tabsValidated);
+  if (tabsValidatedKeys.length === 0) {
+    combinedErrors.push('No tabs have been validated.');
+  } else {
+    tabsValidatedKeys.forEach((tab) => {
+      let message = '';
+      if (!sampleMetadataState.tabsValidated[tab]) {
+        message = `Tab "${ tab }" has not been validated.`;
+      }
+      if (tab in sampleMetadataState.invalidCells) {
+        const invalidCells = sampleMetadataState.invalidCells[tab];
+        if (invalidCells && Object.keys(invalidCells).length > 0) {
+          message = `Tab "${ tab }" has invalid cells.`;
+        }
+      }
+      if (message) {
+        combinedErrors.push(message);
+      }
+    })
+  }
+  return combinedErrors;
+}
+
+const submissionPages = computed<SubmissionPage[]>(() => ([
+  {
+    title: 'Study Information',
+    link: { name: 'Study Form' },
+    validationMessages: validationState.studyForm,
+  },
+  {
+    title: 'Multi-omics Data',
+    link: { name: 'Multiomics Form' },
+    validationMessages: combineErrors(validationState.multiOmicsForm, validationState.senderShippingInfoForm),
+  },
+  {
+    title: 'Sample Environment',
+    link: { name: 'Sample Environment' },
+    validationMessages: validationState.sampleEnvironmentForm,
+  },
+  {
+    title: 'Sample Metadata',
+    link: { name: 'Submission Sample Editor' },
+    validationMessages: combineSampleMetadataErrors(validationState.sampleMetadata),
+  },
+]));
 
 const addressFormDefault = {
   // Shipper info
@@ -166,7 +309,6 @@ const addressFormDefault = {
 };
 
 const addressForm = reactive(clone(addressFormDefault));
-const addressFormValid = ref(false);
 
 /**
  * Study Form Step
@@ -188,13 +330,12 @@ const studyFormDefault = {
     name: string;
     orcid: string;
     roles: string[];
-    permissionLevel: PermissionLevelValues | null;
+    permissionLevel: SubmissionEditorRole | null;
   }[],
   alternativeNames: [] as string[],
   GOLDStudyId: '',
   NCBIBioProjectId: '',
 };
-const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
 
 interface Protocols {
@@ -228,7 +369,6 @@ const multiOmicsFormDefault = {
   lipProtocols: undefined as undefined | Protocols,
   nomProtocols: undefined as undefined | Protocols,
 };
-const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
   emsl: false,
@@ -353,16 +493,30 @@ const metadataSuggestions = ref([] as MetadataSuggestion[]);
 const suggestionMode = ref(SuggestionsMode.LIVE);
 const suggestionType = ref(SuggestionType.ALL);
 
-const tabsValidated = ref({} as Record<string, boolean>);
 watch(templateList, (newList, oldList) => {
+  if (hasChanged.value === 0) {
+    // Initial load, do nothing
+    return;
+  }
   if (isEqual(newList, oldList)) {
+    return;
+  }
+  if (packageName.value.length === 0) {
+    // If no package is selected, set the sample metadata validation to an untouched state
+    validationState.sampleMetadata = null;
     return;
   }
   const newTabsValidated = {} as Record<string, boolean>;
   forEach(templateList.value, (templateKey) => {
     newTabsValidated[templateKey] = false;
   });
-  tabsValidated.value = newTabsValidated;
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  validationState.sampleMetadata.tabsValidated = newTabsValidated;
 });
 
 /** Submit page */
@@ -373,6 +527,7 @@ const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
+  validationState,
 }));
 
 function templateHasData(templateName: string = ''): boolean {
@@ -418,8 +573,8 @@ function checkJGITemplates() {
   return data_present;
 }
 
-function getPermissions(): Record<string, PermissionLevelValues> {
-  const permissions: Record<string, PermissionLevelValues> = {};
+function getPermissions(): Record<string, SubmissionEditorRole> {
+  const permissions: Record<string, SubmissionEditorRole> = {};
   studyForm.contributors.forEach((contributor) => {
     const { orcid, permissionLevel } = contributor;
     if (orcid && permissionLevel) {
@@ -455,32 +610,31 @@ async function submit(id: string, status?: SubmissionStatusKey) {
 
 function reset() {
   Object.assign(addressForm, addressFormDefault);
-  addressFormValid.value = false;
-  studyFormValid.value = false;
-  addressFormValid.value = false;
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
-  multiOmicsFormValid.value = false;
+  Object.assign(validationState, validationStateDefault);
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
   sampleData.value = {};
-  status.value = SubmissionStatusEnum.InProgress.text;
+  status.value = 'InProgress';
+  studyName.value = '';
   isTestSubmission.value = false;
   primaryStudyImageUrl.value = null;
   piImageUrl.value = null;
 }
 
-async function incrementalSaveRecord(id: string): Promise<number | void> {
+const incrementalSaveRecordRequest = useRequest();
+async function incrementalSaveRecord(id: string): Promise<void> {
   if (!canEditSampleMetadata()) {
-    return Promise.resolve();
+    return;
   }
   if (!canEditSubmissionByStatus()) {
-    return Promise.resolve();
+    return;
   }
 
   let payload: Partial<MetadataSubmission> = {};
-  let permissions: Record<string, PermissionLevelValues> | undefined;
+  let permissions: Record<string, SubmissionEditorRole> | undefined;
   if (isOwner()) {
     payload = payloadObject.value;
     permissions = getPermissions();
@@ -493,19 +647,21 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   if (hasChanged.value) {
-    const response = await api.updateRecord(id, payload, permissions);
+    const response = await incrementalSaveRecordRequest.request(
+      () => api.updateRecord(id, payload, permissions)
+    );
     updateStateFromRecord(response.data);
-    return response.httpStatus;
+    return;
   }
   hasChanged.value = 0;
-  // Return a resolved Promise when hasChanged.value is false
-  return Promise.resolve();
 }
 
-async function generateRecord(isTestSubBool: boolean) {
+async function generateRecord(isTestSubBool: boolean, studyNameStr: string = '', piEmailStr: string = ''): Promise<MetadataSubmissionRecord> {
   reset();
+  studyForm.studyName = studyNameStr;
+  studyForm.piEmail = piEmailStr;
   const record = await api.createRecord(payloadObject.value, isTestSubBool);
-  isTestSubmission.value = isTestSubBool;
+  updateStateFromRecord(record);
   return record;
 }
 
@@ -520,11 +676,17 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   if (!isEqual(addressForm, record.metadata_submission.addressForm)) {
     Object.assign(addressForm, record.metadata_submission.addressForm);
   }
-  sampleData.value = record.metadata_submission.sampleData;
-  status.value = isSubmissionStatus(record.status) ? record.status : SubmissionStatusEnum.InProgress.text;
-  if (record.permission_level !== null) {
-    _permissionLevel = (record.permission_level as PermissionLevelValues);
+  if (!isEqual(validationState, record.metadata_submission.validationState)) {
+    Object.assign(validationState, record.metadata_submission.validationState);
   }
+  createdDate.value = new Date(record.created + 'Z');
+  modifiedDate.value = new Date(record.date_last_modified + 'Z');
+  sampleData.value = record.metadata_submission.sampleData;
+  status.value = record.status;
+  if (record.permission_level !== null) {
+    _permissionLevel = (record.permission_level as SubmissionEditorRole);
+  }
+  studyName.value = record.study_name;
   isTestSubmission.value = record.is_test_submission;
   primaryStudyImageUrl.value = record.primary_study_image_url;
   piImageUrl.value = record.pi_image_url;
@@ -532,10 +694,7 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   author.value = record.author;
 }
 
-async function loadRecord(id: string) {
-  reset();
-  const val = await api.getRecord(id);
-  updateStateFromRecord(val);
+async function lockRecord(id: string) {
   try {
     const lockResponse = await api.lockSubmission(id);
     _submissionLockedBy = lockResponse.locked_by || null;
@@ -550,6 +709,21 @@ async function loadRecord(id: string) {
       _submissionLockedBy = null;
     }
   }
+}
+
+async function unlockRecord(id: string) {
+  try {
+    await api.unlockSubmission(id);
+    _submissionLockedBy = null;
+  } catch {
+    // Ignore errors when unlocking
+  }
+}
+
+async function loadRecord(id: string) {
+  reset();
+  const val = await api.getRecord(id);
+  updateStateFromRecord(val);
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
@@ -612,52 +786,60 @@ function removeMetadataSuggestions(submissionId: string, schemaClassName: string
 }
 
 export {
-  SubmissionStatusTitleMapping,
   permissionTitleToDbValueMap,
   permissionLevelHierarchy,
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
-  multiOmicsFormValid,
   addAwardDoi,
   removeAwardDoi,
   sampleData,
   addressForm,
   addressFormDefault,
-  addressFormValid,
   studyForm,
-  studyFormValid,
+  validationState,
   submitPayload,
   packageName,
   templateList,
   hasChanged,
   author,
-  tabsValidated,
   status,
+  statusDisplay,
+  studyName,
+  createdDate,
+  modifiedDate,
   isTestSubmission,
+  incrementalSaveRecordRequest,
   primaryStudyImageUrl,
   piImageUrl,
   metadataSuggestions,
   suggestionMode,
   suggestionType,
   SubmissionStatusEnum,
+  submissionPages,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
+  lockRecord,
+  unlockRecord,
   submit,
   mergeSampleData,
   isOwner,
   canEditSampleMetadata,
   canEditSubmissionMetadata,
   canEditSubmissionByStatus,
-  editablebyStatus,
+  editableByStatus,
   addMetadataSuggestions,
   removeMetadataSuggestions,
   templateHasData,
   checkJGITemplates,
   checkDoiFormat,
   formatStatusTransitions,
+  setTabValidated,
+  setTabInvalidCells,
+  resetSampleMetadataValidation,
+  isSubmissionValid,
 };

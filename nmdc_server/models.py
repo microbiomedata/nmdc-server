@@ -334,7 +334,7 @@ class Study(Base, AnnotatedModel):
 
     @property
     def principal_investigator_image_url(self):
-        if self.principal_investigator_id is not None:
+        if self.principal_investigator_id is not None and self.principal_investigator.image:
             return f"/api/principal_investigator/{self.principal_investigator_id}"
         return ""
 
@@ -1121,6 +1121,7 @@ class SubmissionMetadata(Base):
     date_last_modified = Column(
         DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=func.now()
     )
+    submission_issue = Column(String, nullable=True)
 
     # The client which initially created the submission. A null value indicates it was created by
     # an "unregistered" client. This could be legitimate usage, but it should be monitored.

@@ -3,53 +3,41 @@ import { defineComponent, type PropType } from 'vue';
 
 import type { BaseSearchResult } from '@/data/api';
 import { urlify } from '@/data/utils';
-// @ts-ignore
-import { fieldDisplayName } from '@/util';
+import PageTitle from '@/components/Presentation/PageTitle.vue';
 
 export default defineComponent({
+  components: {
+    PageTitle,
+  },
   props: {
     item: {
       type: Object as PropType<BaseSearchResult>,
       required: true,
     },
     subtitleKey: {
-      type: String,
+      type: String as PropType<Extract<keyof BaseSearchResult, string>>,
       default: 'description',
     },
   },
   setup() {
-    return { fieldDisplayName, urlify };
+    return { urlify };
   },
 });
 </script>
 
 <template>
-  <v-container fluid>
-    <v-row class="align-center">
-      <v-col cols="auto">
-        <v-btn
-          icon
-          variant="tonal"
-          color="grey-darken-2"
-          size="x-large"
-          :to="{name: 'Search'}"
-        >
-          <v-icon>mdi-chevron-left-box</v-icon>
-        </v-btn>
-      </v-col>
-      <v-col>
-        <h1 class="headline">
-          {{ item.annotations.title || item.name }}
-        </h1>
-        <div
-          v-if="item[subtitleKey]"
-          class="subtitle-1"
-        >
-          <span class="font-weight-bold pr-1">{{ fieldDisplayName(subtitleKey) }}</span>
-          <span v-html="urlify(item[subtitleKey] as string)" />
+  <div>
+    <PageTitle
+      :title="item.annotations.title || item.name"
+    >
+      <template #subtitle>
+        <div v-if="$slots.subtitle">
+          <slot name="subtitle" />
         </div>
-        <slot />
-      </v-col>
-    </v-row>
-  </v-container>
+        <div v-else-if="item[subtitleKey]">
+          {{ item[subtitleKey] }}
+        </div>
+      </template>
+    </PageTitle>
+  </div>
 </template>

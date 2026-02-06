@@ -1,18 +1,11 @@
 <script lang="ts">
-import { defineComponent, ref } from 'vue';
-import {
-  SubmissionStatusTitleMapping,
-  status,
-} from '../store';
+import { defineComponent } from 'vue';
+import { statusDisplay } from '../store';
 
 export default defineComponent({
-  components: {},
   setup() {
-    const message = ref(`This submission has status "${SubmissionStatusTitleMapping[status.value]}" and cannot be edited.`);
     return {
-      message,
-      status,
-      SubmissionStatusTitleMapping,
+      statusDisplay,
     };
   },
 });
@@ -20,9 +13,10 @@ export default defineComponent({
 
 <template>
   <v-alert
-    :text="message"
+    :text="`This submission has status '${statusDisplay}' and cannot be edited.`"
+    tile
     type="info"
-    class="ma-2 overflow-visible"
+    class="overflow-visible"
   >
     <template #append>
       <v-menu
