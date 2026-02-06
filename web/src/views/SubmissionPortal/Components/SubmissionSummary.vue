@@ -1,29 +1,18 @@
-<script lang="ts">
-import { defineComponent, } from 'vue';
+<script setup lang="ts">
 import {
-  canEditSubmissionMetadata,
+  author,
   createdDate,
   isTestSubmission,
   modifiedDate,
   statusDisplay,
   submissionPages,
-  validationState,
 } from '../store';
-import PageTitle from '@/components/Presentation/PageTitle.vue';
+import { computed } from 'vue';
+import { stateRefs } from '@/store';
 
-export default defineComponent({
-  components: { PageTitle },
-  setup() {
-    return {
-      validationState,
-      canEditSubmissionMetadata,
-      submissionPages,
-      createdDate,
-      modifiedDate,
-      statusDisplay,
-      isTestSubmission,
-    };
-  },
+// Check if the current logged-in user is also the author of the submission
+const isCurrentUserAuthor = computed(() => {
+  return stateRefs.user.value && stateRefs.user.value.orcid === author.value?.orcid;
 });
 </script>
 
@@ -34,6 +23,31 @@ export default defineComponent({
     />
 
     <PageSection>
+      <AttributeRow label="Submission Author">
+        <div v-if="author">
+          <span v-if="author.name">
+            {{ author.name }}
+          </span>
+          <span v-else>
+            {{ author.orcid }}
+          </span>
+          <span v-if="author.email">
+            ({{ author.email }})
+          </span>
+          <span v-else>
+            (<i class="text-disabled font-italic">No email address</i>)
+          </span>
+        </div>
+        <div
+          v-if="isCurrentUserAuthor"
+          class="text-caption mt-1"
+        >
+          This is the email we will use to get in touch if we have questions. If it does not look correct, visit your
+          <!-- eslint-disable-next-line -->
+          <router-link :to="{ name: 'User' }">user profile</router-link>
+          to update it.
+        </div>
+      </AttributeRow>
       <AttributeRow label="Created">
         {{ createdDate?.toLocaleString() }}
       </AttributeRow>

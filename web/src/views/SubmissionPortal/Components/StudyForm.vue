@@ -13,7 +13,6 @@ import {
   primaryStudyImageUrl,
   studyForm,
   validationState,
-  author,
 } from '../store';
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
@@ -115,11 +114,6 @@ export default defineComponent({
       });
     });
 
-    // Check if the current logged-in user is also the author of the submission
-    const isCurrentUserAuthor = computed(() => {
-      return currentUserOrcid.value === author.value?.orcid;
-    });
-
     return {
       formRef,
       studyForm,
@@ -139,8 +133,6 @@ export default defineComponent({
       currentUserOrcid,
       permissionHelpText,
       checkDoiFormat,
-      author,
-      isCurrentUserAuthor,
       primaryStudyImageUrl,
       piImageUrl,
       canEditSubmissionByStatus,
@@ -270,42 +262,6 @@ export default defineComponent({
           />
         </div>
       </PageSection>
-
-      <div class="text-h4 mt-8">
-        Author
-      </div>
-      <div class="stack-md">
-        <v-card-text v-if="isCurrentUserAuthor">
-          <v-chip size="small" label prepend-icon="mdi-alert-circle">
-            If the email below does not look correct, click
-            <router-link :to="{ name: 'User' }" class="mx-1 text-primary font-weight-medium">
-              here
-            </router-link>
-            to edit your User Profile and update the information.
-          </v-chip>
-        </v-card-text>
-        <v-card-text v-else>
-          Only the author of this study can edit this section.
-        </v-card-text>
-        <v-text-field
-          :model-value="author?.name"
-          label="Name"
-          :hint="Definitions.submitterName"
-          persistent-hint
-          variant="outlined"
-          readonly
-        />
-        <v-text-field
-          :model-value="author?.email"
-          label="Email *"
-          :hint="Definitions.submitterEmail"
-          persistent-hint
-          type="email"
-          required
-          variant="outlined"
-          readonly
-        />
-      </div>
 
       <PageSection
         heading="Funding Sources"
