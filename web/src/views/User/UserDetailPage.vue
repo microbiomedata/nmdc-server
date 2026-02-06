@@ -24,6 +24,8 @@ if (refreshToken != null) {
 const isTokenVisible = ref(false);
 const isCopyRefreshTokenSnackbarVisible = ref(false);
 
+const origin = window.location.origin;
+
 const handleRefreshTokenCopyButtonClick = async () => {
   if (refreshToken != null) {
     await navigator.clipboard.writeText(refreshToken);
