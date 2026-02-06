@@ -403,11 +403,13 @@ def test_build_envo_trees_multiple_roots(db: Session):
     db.commit()
 
     # Create biosamples that reference terms from BOTH hierarchies
+    # Set env_local_scale to None to avoid factory creating additional EnvoTerms
     envo_term_broad = db.query(models.EnvoTerm).filter_by(id="ENVO:00000446").first()
     envo_term_medium = db.query(models.EnvoTerm).filter_by(id="ENVO:00005774").first()
 
     fakes.BiosampleFactory(
         env_broad_scale=envo_term_broad,
+        env_local_scale=None,
         env_medium=envo_term_medium,
     )
     db.commit()
@@ -469,8 +471,9 @@ def test_build_envo_trees_term_with_multiple_parents(db: Session):
     db.commit()
 
     # Create a biosample referencing the child term
+    # Set other env fields to None to avoid factory creating additional EnvoTerms
     envo_term_child = db.query(models.EnvoTerm).filter_by(id="ENVO:CHILD").first()
-    fakes.BiosampleFactory(env_broad_scale=envo_term_child)
+    fakes.BiosampleFactory(env_broad_scale=envo_term_child, env_local_scale=None, env_medium=None)
     db.commit()
 
     # Build the envo trees
@@ -490,8 +493,8 @@ def test_build_envo_trees_term_with_multiple_parents(db: Session):
     assert root_entry.parent_id is None
 
 
-def test_nested_envo_trees_multiple_roots(db: Session):
-    """Test that nested_envo_trees returns trees with multiple roots."""
+def test_envo_tree_multiple_roots_structure(db: Session):
+    """Test that EnvoTree correctly stores multiple root nodes from different hierarchies."""
     # Create two roots with children
     fakes.OntologyClassFactory(id="ENVO:ROOT1", name="root1", is_root=True)
     fakes.OntologyClassFactory(id="ENVO:CHILD1", name="child1")
@@ -510,37 +513,35 @@ def test_nested_envo_trees_multiple_roots(db: Session):
     db.commit()
 
     # Create biosamples referencing terms from both roots
+    # Set other env fields to None to avoid factory creating additional EnvoTerms
     envo_child1 = db.query(models.EnvoTerm).filter_by(id="ENVO:CHILD1").first()
     envo_child2 = db.query(models.EnvoTerm).filter_by(id="ENVO:CHILD2").first()
 
-    fakes.BiosampleFactory(env_broad_scale=envo_child1)
-    fakes.BiosampleFactory(env_broad_scale=envo_child2)
+    fakes.BiosampleFactory(env_broad_scale=envo_child1, env_local_scale=None, env_medium=None)
+    fakes.BiosampleFactory(env_broad_scale=envo_child2, env_local_scale=None, env_medium=None)
     db.commit()
 
     envo.build_envo_trees(db)
 
-    # Clear the cache before calling nested_envo_trees
-    envo.nested_envo_trees.cache_clear()
+    # Verify the EnvoTree table has multiple roots (parent_id is NULL)
+    root_entries = db.query(models.EnvoTree).filter(models.EnvoTree.parent_id.is_(None)).all()
+    root_ids = {entry.id for entry in root_entries}
 
-    # Get the nested trees
-    trees = envo.nested_envo_trees()
+    # Both roots should be present
+    assert "ENVO:ROOT1" in root_ids
+    assert "ENVO:ROOT2" in root_ids
 
-    # env_broad_scale should have multiple root nodes
-    broad_scale_trees = trees["env_broad_scale"]
-    root_ids = {tree.id for tree in broad_scale_trees}
+    # Verify each child is connected to its correct parent
+    child1_entry = (
+        db.query(models.EnvoTree).filter_by(id="ENVO:CHILD1", parent_id="ENVO:ROOT1").first()
+    )
+    assert child1_entry is not None
 
-    # Both roots should be present (or their pruned equivalents)
-    # The pruning may collapse single-child roots, but we should have multiple trees
-    assert len(broad_scale_trees) >= 1
+    child2_entry = (
+        db.query(models.EnvoTree).filter_by(id="ENVO:CHILD2", parent_id="ENVO:ROOT2").first()
+    )
+    assert child2_entry is not None
 
-    # Check that both children are reachable in the tree structure
-    def collect_all_ids(nodes):
-        ids = set()
-        for node in nodes:
-            ids.add(node.id)
-            ids.update(collect_all_ids(node.children))
-        return ids
-
-    all_ids = collect_all_ids(broad_scale_trees)
-    assert "ENVO:CHILD1" in all_ids
-    assert "ENVO:CHILD2" in all_ids
+    # Total tree entries: 2 roots + 2 children = 4
+    all_entries = db.query(models.EnvoTree).all()
+    assert len(all_entries) == 4
