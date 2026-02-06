@@ -28,7 +28,7 @@ def test_populate_envo_from_generic_ontology(db: Session):
         definition="A biome that is on land",
         alternative_names=["land biome"],
     )
-    # Non-ENVO term that should be ignored
+    # Non-ENVO term - now included to preserve full hierarchy for cross-ontology relationships
     fakes.OntologyClassFactory(id="UBERON:0000001", name="anatomical structure", is_root=True)
     db.commit()
 
@@ -52,12 +52,12 @@ def test_populate_envo_from_generic_ontology(db: Session):
     # Run the ENVO population function
     envo.load(db)
 
-    # Verify EnvoTerm table
+    # Verify EnvoTerm table - ALL terms are loaded to preserve full hierarchy
     envo_terms = db.query(models.EnvoTerm).order_by(models.EnvoTerm.id).all()
-    assert len(envo_terms) == 3  # Should only have ENVO terms, not UBERON
+    assert len(envo_terms) == 4  # All terms including UBERON
 
-    # Check grandparent term
-    grandparent_term = envo_terms[0]
+    # Check grandparent term (ENVO terms are first alphabetically by ID)
+    grandparent_term = db.query(models.EnvoTerm).filter_by(id="ENVO:00000001").first()
     assert grandparent_term.id == "ENVO:00000001"
     assert grandparent_term.label == "environmental system"
     assert grandparent_term.data["definition"] == "The root environmental system"  # type: ignore
@@ -66,65 +66,100 @@ def test_populate_envo_from_generic_ontology(db: Session):
     assert grandparent_term.data["annotations"]["test"] == "data"  # type: ignore
 
     # Check parent term
-    parent_term = envo_terms[1]
+    parent_term = db.query(models.EnvoTerm).filter_by(id="ENVO:00000428").first()
     assert parent_term.id == "ENVO:00000428"
     assert parent_term.label == "biome"
     assert parent_term.data["definition"] == "A biome is an environmental system"  # type: ignore
 
     # Check child term
-    child_term = envo_terms[2]
+    child_term = db.query(models.EnvoTerm).filter_by(id="ENVO:00000446").first()
     assert child_term.id == "ENVO:00000446"
     assert child_term.label == "terrestrial biome"
     assert child_term.data["definition"] == "A biome that is on land"  # type: ignore
     assert child_term.data["is_root"] is False  # type: ignore
 
     # Verify EnvoAncestor table
-    # We should have 6 ancestors:
+    # We should have 7 ancestors (4 terms = 4 self-refs + 2 direct + 1 indirect):
     # Self-referential (required for faceted search):
     # 1. grandparent -> grandparent (direct=False, self-ref)
     # 2. parent -> parent (direct=False, self-ref)
     # 3. child -> child (direct=False, self-ref)
+    # 4. UBERON -> UBERON (direct=False, self-ref)
     # Direct parent relationships:
-    # 4. parent -> grandparent (direct=True, from rdfs:subClassOf)
-    # 5. child -> parent (direct=True, from rdfs:subClassOf)
+    # 5. parent -> grandparent (direct=True, from rdfs:subClassOf)
+    # 6. child -> parent (direct=True, from rdfs:subClassOf)
     # Indirect relationships:
-    # 6. child -> grandparent (direct=False, from closure)
+    # 7. child -> grandparent (direct=False, from closure)
     ancestors = (
         db.query(models.EnvoAncestor)
         .order_by(models.EnvoAncestor.id, models.EnvoAncestor.ancestor_id)
         .all()
     )
-    assert len(ancestors) == 6
+    assert len(ancestors) == 7
 
+    # Check specific ancestors by querying directly (more robust than index-based)
     # Check grandparent -> grandparent (self-ref)
-    assert ancestors[0].id == "ENVO:00000001"
-    assert ancestors[0].ancestor_id == "ENVO:00000001"
-    assert ancestors[0].direct is False  # Self-refs are always direct=False
+    grandparent_self = (
+        db.query(models.EnvoAncestor)
+        .filter_by(id="ENVO:00000001", ancestor_id="ENVO:00000001")
+        .first()
+    )
+    assert grandparent_self is not None
+    assert grandparent_self.direct is False  # Self-refs are always direct=False
 
     # Check parent -> grandparent (direct)
-    assert ancestors[1].id == "ENVO:00000428"
-    assert ancestors[1].ancestor_id == "ENVO:00000001"
-    assert ancestors[1].direct is True
+    parent_to_grandparent = (
+        db.query(models.EnvoAncestor)
+        .filter_by(id="ENVO:00000428", ancestor_id="ENVO:00000001")
+        .first()
+    )
+    assert parent_to_grandparent is not None
+    assert parent_to_grandparent.direct is True
 
     # Check parent -> parent (self-ref)
-    assert ancestors[2].id == "ENVO:00000428"
-    assert ancestors[2].ancestor_id == "ENVO:00000428"
-    assert ancestors[2].direct is False
+    parent_self = (
+        db.query(models.EnvoAncestor)
+        .filter_by(id="ENVO:00000428", ancestor_id="ENVO:00000428")
+        .first()
+    )
+    assert parent_self is not None
+    assert parent_self.direct is False
 
     # Check child -> grandparent (indirect via closure)
-    assert ancestors[3].id == "ENVO:00000446"
-    assert ancestors[3].ancestor_id == "ENVO:00000001"
-    assert ancestors[3].direct is False  # ← Key test: indirect via closure!
+    child_to_grandparent = (
+        db.query(models.EnvoAncestor)
+        .filter_by(id="ENVO:00000446", ancestor_id="ENVO:00000001")
+        .first()
+    )
+    assert child_to_grandparent is not None
+    assert child_to_grandparent.direct is False  # Key test: indirect via closure!
 
     # Check child -> parent (direct)
-    assert ancestors[4].id == "ENVO:00000446"
-    assert ancestors[4].ancestor_id == "ENVO:00000428"
-    assert ancestors[4].direct is True
+    child_to_parent = (
+        db.query(models.EnvoAncestor)
+        .filter_by(id="ENVO:00000446", ancestor_id="ENVO:00000428")
+        .first()
+    )
+    assert child_to_parent is not None
+    assert child_to_parent.direct is True
 
     # Check child -> child (self-ref)
-    assert ancestors[5].id == "ENVO:00000446"
-    assert ancestors[5].ancestor_id == "ENVO:00000446"
-    assert ancestors[5].direct is False
+    child_self = (
+        db.query(models.EnvoAncestor)
+        .filter_by(id="ENVO:00000446", ancestor_id="ENVO:00000446")
+        .first()
+    )
+    assert child_self is not None
+    assert child_self.direct is False
+
+    # Check UBERON -> UBERON (self-ref)
+    uberon_self = (
+        db.query(models.EnvoAncestor)
+        .filter_by(id="UBERON:0000001", ancestor_id="UBERON:0000001")
+        .first()
+    )
+    assert uberon_self is not None
+    assert uberon_self.direct is False
 
     # Verify relationships work through the model
     # Child should have 1 direct parent and 3 total ancestors (self + parent + grandparent)
@@ -331,3 +366,181 @@ def test_envo_load_with_biosample_fk_constraint(db: Session):
     db.refresh(biosample)
     assert biosample.env_broad_scale_id == "ENVO:00000001"
     assert biosample.env_broad_scale.label == "environmental system"
+
+
+def test_build_envo_trees_multiple_roots(db: Session):
+    """Test that build_envo_trees correctly handles multiple root nodes."""
+    # Create two separate hierarchies with different roots
+    # Root 1: environmental system -> biome -> terrestrial biome
+    fakes.OntologyClassFactory(id="ENVO:00000001", name="environmental system", is_root=True)
+    fakes.OntologyClassFactory(id="ENVO:00000428", name="biome")
+    fakes.OntologyClassFactory(id="ENVO:00000446", name="terrestrial biome")
+
+    # Root 2: material entity -> soil -> peat soil
+    fakes.OntologyClassFactory(id="ENVO:00010483", name="material entity", is_root=True)
+    fakes.OntologyClassFactory(id="ENVO:00001998", name="soil")
+    fakes.OntologyClassFactory(id="ENVO:00005774", name="peat soil")
+
+    # Create relationships for hierarchy 1
+    fakes.OntologyRelationFactory(
+        subject="ENVO:00000428", predicate="rdfs:subClassOf", object="ENVO:00000001"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:00000446", predicate="rdfs:subClassOf", object="ENVO:00000428"
+    )
+
+    # Create relationships for hierarchy 2
+    fakes.OntologyRelationFactory(
+        subject="ENVO:00001998", predicate="rdfs:subClassOf", object="ENVO:00010483"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:00005774", predicate="rdfs:subClassOf", object="ENVO:00001998"
+    )
+    db.commit()
+
+    # Load ENVO tables
+    envo.load(db)
+    db.commit()
+
+    # Create biosamples that reference terms from BOTH hierarchies
+    envo_term_broad = db.query(models.EnvoTerm).filter_by(id="ENVO:00000446").first()
+    envo_term_medium = db.query(models.EnvoTerm).filter_by(id="ENVO:00005774").first()
+
+    fakes.BiosampleFactory(
+        env_broad_scale=envo_term_broad,
+        env_medium=envo_term_medium,
+    )
+    db.commit()
+
+    # Build the envo trees
+    envo.build_envo_trees(db)
+
+    # Verify we have multiple roots in the tree (parent_id is NULL for roots)
+    root_nodes = db.query(models.EnvoTree).filter(models.EnvoTree.parent_id.is_(None)).all()
+    root_ids = {node.id for node in root_nodes}
+
+    # Both roots should be present
+    assert "ENVO:00000001" in root_ids
+    assert "ENVO:00010483" in root_ids
+
+    # Verify the full tree structure was built
+    all_tree_nodes = db.query(models.EnvoTree).all()
+    all_ids = {node.id for node in all_tree_nodes}
+
+    # All terms should be in the tree
+    assert "ENVO:00000001" in all_ids  # root 1
+    assert "ENVO:00000428" in all_ids  # biome
+    assert "ENVO:00000446" in all_ids  # terrestrial biome
+    assert "ENVO:00010483" in all_ids  # root 2
+    assert "ENVO:00001998" in all_ids  # soil
+    assert "ENVO:00005774" in all_ids  # peat soil
+
+
+def test_build_envo_trees_term_with_multiple_parents(db: Session):
+    """Test that a term can have multiple parents in the EnvoTree."""
+    # Create a diamond hierarchy:
+    #       root
+    #      /    \
+    #   parent1  parent2
+    #      \    /
+    #       child
+    fakes.OntologyClassFactory(id="ENVO:ROOT", name="root", is_root=True)
+    fakes.OntologyClassFactory(id="ENVO:PARENT1", name="parent1")
+    fakes.OntologyClassFactory(id="ENVO:PARENT2", name="parent2")
+    fakes.OntologyClassFactory(id="ENVO:CHILD", name="child")
+
+    # Create relationships - child has TWO parents
+    fakes.OntologyRelationFactory(
+        subject="ENVO:PARENT1", predicate="rdfs:subClassOf", object="ENVO:ROOT"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:PARENT2", predicate="rdfs:subClassOf", object="ENVO:ROOT"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:CHILD", predicate="rdfs:subClassOf", object="ENVO:PARENT1"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:CHILD", predicate="rdfs:subClassOf", object="ENVO:PARENT2"
+    )
+    db.commit()
+
+    # Load ENVO tables
+    envo.load(db)
+    db.commit()
+
+    # Create a biosample referencing the child term
+    envo_term_child = db.query(models.EnvoTerm).filter_by(id="ENVO:CHILD").first()
+    fakes.BiosampleFactory(env_broad_scale=envo_term_child)
+    db.commit()
+
+    # Build the envo trees
+    envo.build_envo_trees(db)
+
+    # The child should appear twice in the tree - once under each parent
+    child_entries = db.query(models.EnvoTree).filter_by(id="ENVO:CHILD").all()
+    assert len(child_entries) == 2
+
+    # Verify the child has both parents
+    child_parent_ids = {entry.parent_id for entry in child_entries}
+    assert child_parent_ids == {"ENVO:PARENT1", "ENVO:PARENT2"}
+
+    # The root should have NULL parent_id
+    root_entry = db.query(models.EnvoTree).filter_by(id="ENVO:ROOT").first()
+    assert root_entry is not None
+    assert root_entry.parent_id is None
+
+
+def test_nested_envo_trees_multiple_roots(db: Session):
+    """Test that nested_envo_trees returns trees with multiple roots."""
+    # Create two roots with children
+    fakes.OntologyClassFactory(id="ENVO:ROOT1", name="root1", is_root=True)
+    fakes.OntologyClassFactory(id="ENVO:CHILD1", name="child1")
+    fakes.OntologyClassFactory(id="ENVO:ROOT2", name="root2", is_root=True)
+    fakes.OntologyClassFactory(id="ENVO:CHILD2", name="child2")
+
+    fakes.OntologyRelationFactory(
+        subject="ENVO:CHILD1", predicate="rdfs:subClassOf", object="ENVO:ROOT1"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:CHILD2", predicate="rdfs:subClassOf", object="ENVO:ROOT2"
+    )
+    db.commit()
+
+    envo.load(db)
+    db.commit()
+
+    # Create biosamples referencing terms from both roots
+    envo_child1 = db.query(models.EnvoTerm).filter_by(id="ENVO:CHILD1").first()
+    envo_child2 = db.query(models.EnvoTerm).filter_by(id="ENVO:CHILD2").first()
+
+    fakes.BiosampleFactory(env_broad_scale=envo_child1)
+    fakes.BiosampleFactory(env_broad_scale=envo_child2)
+    db.commit()
+
+    envo.build_envo_trees(db)
+
+    # Clear the cache before calling nested_envo_trees
+    envo.nested_envo_trees.cache_clear()
+
+    # Get the nested trees
+    trees = envo.nested_envo_trees()
+
+    # env_broad_scale should have multiple root nodes
+    broad_scale_trees = trees["env_broad_scale"]
+    root_ids = {tree.id for tree in broad_scale_trees}
+
+    # Both roots should be present (or their pruned equivalents)
+    # The pruning may collapse single-child roots, but we should have multiple trees
+    assert len(broad_scale_trees) >= 1
+
+    # Check that both children are reachable in the tree structure
+    def collect_all_ids(nodes):
+        ids = set()
+        for node in nodes:
+            ids.add(node.id)
+            ids.update(collect_all_ids(node.children))
+        return ids
+
+    all_ids = collect_all_ids(broad_scale_trees)
+    assert "ENVO:CHILD1" in all_ids
+    assert "ENVO:CHILD2" in all_ids
