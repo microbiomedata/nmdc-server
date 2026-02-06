@@ -2075,6 +2075,8 @@ async def update_user(
 ):
     if not (current_user.is_admin or current_user.id == id):
         raise HTTPException(status_code=403, detail="Unauthorized to update this user")
+    if not current_user.is_admin and body.is_admin:
+        raise HTTPException(status_code=403, detail="Only admins can grant admin privileges")
     if body.id != id:
         raise HTTPException(status_code=400, detail="Invalid id")
     return crud.update_user(db, body)
