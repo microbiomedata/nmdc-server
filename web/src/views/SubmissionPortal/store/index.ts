@@ -318,8 +318,6 @@ const studyFormDefault = {
   piName: '',
   piEmail: '',
   piOrcid: '',
-  submitterName: '',
-  submitterEmail: '',
   linkOutWebpage: [],
   studyDate: null,
   dataDois: [] as Doi[] | null,

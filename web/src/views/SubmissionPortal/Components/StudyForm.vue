@@ -18,8 +18,6 @@ import {
 import { PermissionTitle } from '@/views/SubmissionPortal/types';
 import { stateRefs } from '@/store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
-import { api } from '@/data/api';
-import { User } from '@/types';
 import ImageUpload from './ImageUpload.vue';
 import { ValidationResult } from 'vuetify/lib/composables/validation.mjs';
 import PageSection from '@/components/Presentation/PageSection.vue';
@@ -117,28 +115,10 @@ export default defineComponent({
       });
     });
 
-    const { user } = stateRefs;
-
-    const updateUser = async (value:string) => {
-      const update: User = {
-        id: user.value?.id as string,
-        orcid: user.value?.orcid as string,
-        name: user.value?.name as string,
-        email: value,
-        is_admin: user.value?.is_admin as boolean,
-      };
-      await api.updateUser(user.value?.id as string, update);
-    };
-
-    // Update author info using author record metadata
-    studyForm.submitterName = author.value?.name ?? '';
-    studyForm.submitterEmail = author.value?.email ?? '';
-
     // Check if the current logged-in user is also the author of the submission
-    let isAuthor = false;
-    if (currentUserOrcid.value === author.value?.orcid) {
-      isAuthor = true;
-    }
+    const isCurrentUserAuthor = computed(() => {
+      return currentUserOrcid.value === author.value?.orcid;
+    });
 
     return {
       formRef,
@@ -159,9 +139,8 @@ export default defineComponent({
       currentUserOrcid,
       permissionHelpText,
       checkDoiFormat,
-      isAuthor,
-      user,
-      updateUser,
+      author,
+      isCurrentUserAuthor,
       primaryStudyImageUrl,
       piImageUrl,
       canEditSubmissionByStatus,
@@ -296,7 +275,7 @@ export default defineComponent({
         Author
       </div>
       <div class="stack-md">
-        <v-card-text v-if="isAuthor">
+        <v-card-text v-if="isCurrentUserAuthor">
           <v-chip size="small" label prepend-icon="mdi-alert-circle">
             If the email below does not look correct, click
             <router-link :to="{ name: 'User' }" class="mx-1 text-primary font-weight-medium">
@@ -309,7 +288,7 @@ export default defineComponent({
           Only the author of this study can edit this section.
         </v-card-text>
         <v-text-field
-          v-model="studyForm.submitterName"
+          :model-value="author?.name"
           label="Name"
           :hint="Definitions.submitterName"
           persistent-hint
@@ -317,11 +296,8 @@ export default defineComponent({
           readonly
         />
         <v-text-field
-          v-model="studyForm.submitterEmail"
+          :model-value="author?.email"
           label="Email *"
-          :rules="requiredRules('E-mail is required',[
-            v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
-          ])"
           :hint="Definitions.submitterEmail"
           persistent-hint
           type="email"

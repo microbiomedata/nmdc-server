@@ -1,102 +1,62 @@
-<script lang="ts">
-import {
-  computed,
-  defineComponent,
-  onMounted,
-  ref,
-} from 'vue';
+<script setup lang="ts">
+import { computed, onMounted, ref, useTemplateRef, } from 'vue';
 import type { ValidationRule } from 'vuetify';
-import Definitions from '@/definitions';
-import {
-  studyForm,
-  studyFormValid,
-  canEditSubmissionMetadata,
-} from '../views/SubmissionPortal/store';
 import { stateRefs } from '@/store';
 import { api } from '@/data/api';
 import { User } from '@/types';
 
-export default defineComponent({
-  name: 'UserEmailModal',
-  props: {
-    value: {
-      type: Boolean,
-      required: true,
-    },
-  },
-  emits: ['update:value'],
-  setup(props, { emit }) {
-    const formRef = ref();
-    const currentUserOrcid = computed(() => stateRefs.user.value?.orcid);
+const props = defineProps<{
+  value: boolean;
+}>();
 
-    function requiredRules(
-      msg: string,
-      otherRules: ValidationRule[] = []
-    ): ValidationRule[] {
-      return [
-        (v: string) => !!v || msg,
-        ...otherRules,
-      ];
-    }
+const emit = defineEmits<{
+  'update:value': [value: boolean];
+}>();
 
-    onMounted(() => {
-      if (formRef.value) {
-        formRef.value.validate();
-      }
-    });
+const formRef = useTemplateRef('formRef');
 
-    const { user } = stateRefs;
+function requiredRules(
+  msg: string,
+  otherRules: ValidationRule[] = []
+): ValidationRule[] {
+  return [
+    (v: string) => !!v || msg,
+    ...otherRules,
+  ];
+}
 
-    const updateUser = async (value:string) => {
-      const update: User = {
-        id: user.value?.id as string,
-        orcid: user.value?.orcid as string,
-        name: user.value?.name as string,
-        email: value,
-        is_admin: user.value?.is_admin as boolean,
-      };
-      await api.updateUser(user.value?.id as string, update);
-    };
-
-    // isEmailValid binds to the "SAVE" button (disables and enables it)
-    const isEmailValid = computed(() => {
-      const email = submitterEmail.value?.trim() ?? '';
-      return /.+@.+\..+/.test(email);
-    });
-
-    const submitterEmail = ref(user.value?.email ?? '');
-    studyForm.submitterEmail = submitterEmail.value;
-
-    // dialog is bound to the modal to determine whether to display or not
-    const dialog = computed({
-      get: () => props.value,
-      set: (v: boolean) => emit('update:value', v),
-    });
-
-    const updateEmail = async () => {
-      const email = submitterEmail.value?.trim();
-      await updateUser(email);
-      studyForm.submitterEmail = email;
-      dialog.value = false;
-    };
-
-    return {
-      formRef,
-      studyForm,
-      studyFormValid,
-      Definitions,
-      requiredRules,
-      canEditSubmissionMetadata,
-      currentUserOrcid,
-      isEmailValid,
-      submitterEmail,
-      user,
-      updateUser,
-      updateEmail,
-      dialog,
-    };
-  },
+onMounted(() => {
+  if (formRef.value) {
+    formRef.value.validate();
+  }
 });
+
+const { user } = stateRefs;
+
+const updateUser = async (value:string) => {
+  if (!user.value) {
+    return
+  }
+  const update: User = {
+    ...user.value,
+    email: value,
+  };
+  user.value = await api.updateUser(user.value.id, update);
+};
+
+const submitterEmail = ref(user.value?.email ?? '');
+
+// dialog is bound to the modal to determine whether to display or not
+const dialog = computed({
+  get: () => props.value,
+  set: (v: boolean) => emit('update:value', v),
+});
+
+const updateEmail = async () => {
+  const email = submitterEmail.value?.trim();
+  await updateUser(email);
+  dialog.value = false;
+};
 </script>
 
 <template>
@@ -133,7 +93,7 @@ export default defineComponent({
         <v-spacer class="text-center">
           <v-btn
             color="primary"
-            :disabled="!isEmailValid"
+            :disabled="!formRef?.isValid"
             @click="updateEmail"
           >
             Save
