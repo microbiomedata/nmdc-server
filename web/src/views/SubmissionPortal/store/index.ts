@@ -35,7 +35,6 @@ import {
 import { setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
 import useRequest from '@/use/useRequest.ts';
-import MultiOmicsDataForm from '../Components/MultiOmicsDataForm.vue';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
