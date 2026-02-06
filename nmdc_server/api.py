@@ -2071,8 +2071,10 @@ async def update_user(
     id: UUID,
     body: schemas.User,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(admin_required),
+    current_user: models.User = Depends(get_current_user),
 ):
+    if not (current_user.is_admin or current_user.id == id):
+        raise HTTPException(status_code=403, detail="Unauthorized to update this user")
     if body.id != id:
         raise HTTPException(status_code=400, detail="Invalid id")
     return crud.update_user(db, body)
