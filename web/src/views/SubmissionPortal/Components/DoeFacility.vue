@@ -3,7 +3,7 @@ import { defineComponent } from 'vue';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import Definitions from '@/definitions';
 import {
-  multiOmicsForm, addAwardDoi, templateHasData, checkJGITemplates, validationState,
+  multiOmicsForm, addAwardDoi, templateHasData, checkJGITemplates,
 } from '../store';
 import SubmissionContextShippingForm from './SubmissionContextShippingForm.vue';
 
@@ -30,7 +30,6 @@ export default defineComponent({
 
     return {
       facilityChange,
-      validationState,
       Definitions,
       multiOmicsForm,
       templateHasData,
@@ -87,7 +86,6 @@ export default defineComponent({
         <v-radio
           label="No"
           :value="false"
-          @click="validationState.senderShippingInfoForm = null"
         />
         <v-radio
           label="Yes"

@@ -35,6 +35,7 @@ import {
 import { setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
 import useRequest from '@/use/useRequest.ts';
+import MultiOmicsDataForm from '../Components/MultiOmicsDataForm.vue';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
@@ -398,6 +399,13 @@ function checkDoiFormat(v: string) {
   const valid = /^(?:doi:)?10.\d{2,9}\/.*$/.test(v);
   return valid;
 }
+
+// Watch for changes to the "ship" field in the multi-omics form. If it becomes false, reset the sender shipping info form validation state to null (untouched).
+watch(() => multiOmicsForm.ship, (newVal) => {
+  if (newVal === false) {
+    validationState.senderShippingInfoForm = null;
+  }
+});
 
 /**
  * Environmental Package Step
