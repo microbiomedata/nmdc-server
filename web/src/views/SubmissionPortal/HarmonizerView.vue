@@ -330,7 +330,7 @@ export default defineComponent({
      * It ensures that row deletion is cascaded to facility templates from the main
      * environment templates
      */
-    const syncAndMergeTabsForRemovedRows = async () => {
+    const syncAndMergeTabsForRemovedRows = () => {
       mergeSampleData(
         activeTemplate.value?.sampleDataSlot,
         harmonizerApi.exportJson(),

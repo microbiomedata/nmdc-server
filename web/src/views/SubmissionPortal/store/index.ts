@@ -159,6 +159,9 @@ function setTabValidated(tabName: string, validated: boolean) {
       tabsValidated: {},
     };
   }
+  if (!templateList.value.includes(tabName)) {
+    return;
+  }
   validationState.sampleMetadata.tabsValidated[tabName] = validated;
 }
 
@@ -168,6 +171,9 @@ function setTabInvalidCells(tabName: string, invalidCells: Record<number, Record
       invalidCells: {},
       tabsValidated: {},
     };
+  }
+  if (!templateList.value.includes(tabName)) {
+    return;
   }
   validationState.sampleMetadata.invalidCells[tabName] = invalidCells;
 }
@@ -522,6 +528,25 @@ watch(templateList, (newList, oldList) => {
     };
   }
   validationState.sampleMetadata.tabsValidated = newTabsValidated;
+
+  // Remove sampleData and validation state for any templates that are no longer included in the package
+  const removedTemplates = oldList.filter((template) => !newList.includes(template));
+  if (removedTemplates.length > 0) {
+    const newSampleData = { ...sampleData.value };
+    removedTemplates.forEach((template) => {
+      const sampleDataSlot = HARMONIZER_TEMPLATES[template as keyof typeof HARMONIZER_TEMPLATES]?.sampleDataSlot;
+      if (sampleDataSlot === undefined) {
+        return;
+      }
+      delete newSampleData[sampleDataSlot];
+      if (validationState.sampleMetadata) {
+        delete validationState.sampleMetadata.tabsValidated[template];
+        delete validationState.sampleMetadata.invalidCells[template];
+      }
+    });
+    sampleData.value = newSampleData;
+  }
+  hasChanged.value += 1;
 });
 
 /** Submit page */

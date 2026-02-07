@@ -54,7 +54,6 @@ export default defineComponent({
       <v-form
         v-model="isFormValid"
         class="my-6 mb-10"
-        style="max-width: 1000px;"
       >
         <div class="stack-md">
           <v-text-field
@@ -63,14 +62,14 @@ export default defineComponent({
               v => v.length > 6 || 'Study name too short',
             ])"
             validate-on-blur
-            label="Study Name *"
+            label="Study Name"
             :hint="Definitions.studyName"
             persistent-hint
             variant="outlined"
           />
           <v-text-field
             v-model="piEmail"
-            label="Email *"
+            label="Principal Investigator Email"
             :rules="requiredRules('E-mail is required',[
               v => /.+@.+\..+/.test(v) || 'E-mail must be valid',
             ])"
@@ -87,7 +86,7 @@ export default defineComponent({
           >
             <template #label>
               <div>
-                <div>Is this a test submission? *</div>
+                <div>Is this a test submission?</div>
                 <div class="text-caption">
                   Test submissions should be used when at a workshop or doing a test, example, or training.
                   These cannot be submitted.
