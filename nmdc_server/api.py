@@ -179,6 +179,14 @@ def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
     return [*filters, *plaintext_filters]
 
 
+# full text search
+@router.get(
+    "/full_text_search",
+)
+def full_text_search(term: str, limit=6, db: Session = Depends(get_db)):
+    return crud.full_text_search_biosample(db, term)
+
+
 # database summary
 @router.get(
     "/summary",

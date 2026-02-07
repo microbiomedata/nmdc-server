@@ -435,6 +435,17 @@ def search_biosample(
     ).execute(db, prefetch_omics_processing_data)
 
 
+def full_text_search_biosample(
+    db: Session,
+    term: str,
+) -> Query:
+    return db.query(models.Biosample).filter(
+        func.to_tsvector('english', models.Biosample.study_id).op('@@')(
+            func.plainto_tsquery('english', term)
+        )
+    )
+
+
 def facet_biosample(
     db: Session, attribute: str, conditions: List[query.ConditionSchema], **kwargs
 ) -> query.FacetResponse:
