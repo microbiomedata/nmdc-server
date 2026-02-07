@@ -399,6 +399,13 @@ function checkDoiFormat(v: string) {
   return valid;
 }
 
+// Watch for changes to the "ship" field in the multi-omics form. If it becomes false, reset the sender shipping info form validation state to null (untouched).
+watch(() => multiOmicsForm.ship, (newVal) => {
+  if (newVal === false) {
+    validationState.senderShippingInfoForm = null;
+  }
+});
+
 /**
  * Environmental Package Step
  */
