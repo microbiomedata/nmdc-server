@@ -193,6 +193,7 @@ const urlValueRules = () => (
               <div>Use protocol described for other data types</div>
               <div class="text-caption">
                 Select this option to reuse a protocol name already provided for another data type in this submission.
+                Ensure all steps for this data type are included in the selected protocol.
               </div>
             </div>
           </template>
