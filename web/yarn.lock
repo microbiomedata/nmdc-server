@@ -3001,9 +3001,9 @@ natural-orderby@^5.0.0:
   resolved "https://registry.yarnpkg.com/natural-orderby/-/natural-orderby-5.0.0.tgz#bb655f669ee9c84e82cdc6cddbba25eb263cd9f4"
   integrity sha512-kKHJhxwpR/Okycz4HhQKKlhWe4ASEfPgkSWNmKFHd7+ezuQlxkA5cM3+XkBPvm1gmHen3w53qsYAv+8GwRrBlg==
 
-"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v11.16.0":
+"nmdc-schema@https://github.com/microbiomedata/nmdc-schema#v11.16.1":
   version "0.0.0"
-  resolved "https://github.com/microbiomedata/nmdc-schema#2aef0ebbd369dbba7acf94a68269a95fd158ede5"
+  resolved "https://github.com/microbiomedata/nmdc-schema#f53db13d6421cb92a4247c9230bed70d1d17a612"
 
 node-addon-api@^7.0.0:
   version "7.1.1"
