@@ -11,6 +11,7 @@ from nmdc_server.config import settings
 from nmdc_server.ingest.all import load
 from nmdc_server.ingest.common import (
     ETLReport,
+    duration_logger,
     maybe_merge_download_artifact,
     merge_download_artifact,
 )
@@ -89,15 +90,15 @@ def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
             #       the MongoDB database (this data has some foreign keys pointing to that data).
             #
             logger.info("Copying dependent data from the portal database to the ingest database.")
-            logger.info("Merging download-related data")
-            maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
-            maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
-            maybe_merge_download_artifact(
-                ingest_db,
-                prod_db.query(models.BulkDownloadDataObject).options(
-                    lazyload(models.BulkDownloadDataObject.data_object)
-                ),
-            )
+            with duration_logger(logger, "Merging download-related data"):
+                maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
+                maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
+                maybe_merge_download_artifact(
+                    ingest_db,
+                    prod_db.query(models.BulkDownloadDataObject).options(
+                        lazyload(models.BulkDownloadDataObject.data_object)
+                    ),
+                )
 
             # Copy "independent" data from the "portal" database into the "ingest" database.
             #
@@ -109,14 +110,14 @@ def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
             #       reduce the opportunity for submission changes to end up in the wrong database.
             #
             logger.info("Copying independent data from the portal database to the ingest database.")
-            logger.info("Merging auth-related data")
-            merge_download_artifact(ingest_db, prod_db.query(models.User))
-            merge_download_artifact(ingest_db, prod_db.query(models.AuthorizationCode))
-            merge_download_artifact(ingest_db, prod_db.query(models.InvalidatedToken))
-            logger.info("Merging submission-related data")
-            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionImagesObject))
-            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionMetadata))
-            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionRole))
+            with duration_logger(logger, "Merging auth-related data"):
+                merge_download_artifact(ingest_db, prod_db.query(models.User))
+                merge_download_artifact(ingest_db, prod_db.query(models.AuthorizationCode))
+                merge_download_artifact(ingest_db, prod_db.query(models.InvalidatedToken))
+            with duration_logger(logger, "Merging submission-related data"):
+                merge_download_artifact(ingest_db, prod_db.query(models.SubmissionImagesObject))
+                merge_download_artifact(ingest_db, prod_db.query(models.SubmissionMetadata))
+                merge_download_artifact(ingest_db, prod_db.query(models.SubmissionRole))
 
     logger.info("Ingest finished successfully")
 
