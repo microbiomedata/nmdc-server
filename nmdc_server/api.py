@@ -184,7 +184,7 @@ def text_search(terms: str, limit=6, db: Session = Depends(get_db)):
     "/full_text_search",
 )
 def full_text_search(term: str, limit=6, db: Session = Depends(get_db)):
-    return crud.full_text_search_biosample(db, term)
+    return crud.full_text_search_biosample(db, term, limit)
 
 
 # database summary

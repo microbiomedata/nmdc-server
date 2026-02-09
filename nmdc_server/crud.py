@@ -8,7 +8,7 @@ from uuid import UUID
 from fastapi import HTTPException, status
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import and_
-from sqlalchemy.orm import Query, Session
+from sqlalchemy.orm import Query, Session, noload
 from sqlalchemy.sql import func
 
 from nmdc_server import aggregations, bulk_download_schema, models, query, schemas
@@ -438,11 +438,18 @@ def search_biosample(
 def full_text_search_biosample(
     db: Session,
     term: str,
-) -> Query:
-    return db.query(models.Biosample).filter(
-        func.to_tsvector('english', models.Biosample.study_id).op('@@')(
-            func.plainto_tsquery('english', term)
+    limit: int = 6,
+) -> List[models.Biosample]:
+    return (
+        db.query(models.Biosample)
+        .options(noload('*'))
+        .filter(
+            func.to_tsvector('english', models.Biosample.study_id).op('@@')(
+                func.plainto_tsquery('english', term)
+            )
         )
+        .limit(limit)
+        .all()
     )
 
 
