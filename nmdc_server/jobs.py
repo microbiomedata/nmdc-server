@@ -75,15 +75,7 @@ def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
         with ingest_lock(prod_db):
             ingest_db.execute(text("select truncate_tables()")).all()
 
-            # Copy persistent data that does not depend on ingest FK
-            merge_download_artifact(ingest_db, prod_db.query(models.User))
-            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionImagesObject))
-            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionMetadata))
-            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionRole))
-            merge_download_artifact(ingest_db, prod_db.query(models.AuthorizationCode))
-            merge_download_artifact(ingest_db, prod_db.query(models.InvalidatedToken))
-
-            # ingest data
+            # Ingest data from the MongoDB database into the "ingest" Postgres database.
             logger.info(
                 f"Load with function_limit={function_limit}, skip_annotation={skip_annotation}"
             )
@@ -91,18 +83,40 @@ def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
                 ingest_db, function_limit=function_limit, skip_annotation=skip_annotation
             )
 
-            # copy persistent data from the production db to the ingest db
-            logger.info("Merging file_download")
+            # Copy "dependent" data from the "portal" database into the "ingest" database.
+            #
+            # Note: This set of data depends upon the script having already ingested data from
+            #       the MongoDB database (this data has some foreign keys pointing to that data).
+            #
+            logger.info("Copying dependent data from the portal database to the ingest database.")
+            logger.info("Merging download-related data")
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.FileDownload))
-            logger.info("Merging bulk_download")
             maybe_merge_download_artifact(ingest_db, prod_db.query(models.BulkDownload))
-            logger.info("Merging bulk_download_data_object")
             maybe_merge_download_artifact(
                 ingest_db,
                 prod_db.query(models.BulkDownloadDataObject).options(
                     lazyload(models.BulkDownloadDataObject.data_object)
                 ),
             )
+
+            # Copy "independent" data from the "portal" database into the "ingest" database.
+            #
+            # Note: This set of data does _not_ depend upon the script having already ingested data
+            #       from the MongoDB database (this data has no foreign keys pointing to that data).
+            #       So, we could copy this data earlier in the ingest process. The reason we do it
+            #       this late is to minimize the amount of time between when we copy submission data
+            #       and when we promote the "ingest" database into the new "portal" database, to
+            #       reduce the opportunity for submission changes to end up in the wrong database.
+            #
+            logger.info("Copying independent data from the portal database to the ingest database.")
+            logger.info("Merging auth-related data")
+            merge_download_artifact(ingest_db, prod_db.query(models.User))
+            merge_download_artifact(ingest_db, prod_db.query(models.AuthorizationCode))
+            merge_download_artifact(ingest_db, prod_db.query(models.InvalidatedToken))
+            logger.info("Merging submission-related data")
+            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionImagesObject))
+            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionMetadata))
+            merge_download_artifact(ingest_db, prod_db.query(models.SubmissionRole))
 
     logger.info("Ingest finished successfully")
 
