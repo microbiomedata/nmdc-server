@@ -58,6 +58,7 @@ def test_populate_envo_from_generic_ontology(db: Session):
 
     # Check grandparent term (ENVO terms are first alphabetically by ID)
     grandparent_term = db.query(models.EnvoTerm).filter_by(id="ENVO:00000001").first()
+    assert grandparent_term is not None
     assert grandparent_term.id == "ENVO:00000001"
     assert grandparent_term.label == "environmental system"
     assert grandparent_term.data["definition"] == "The root environmental system"  # type: ignore
@@ -67,12 +68,14 @@ def test_populate_envo_from_generic_ontology(db: Session):
 
     # Check parent term
     parent_term = db.query(models.EnvoTerm).filter_by(id="ENVO:00000428").first()
+    assert parent_term is not None
     assert parent_term.id == "ENVO:00000428"
     assert parent_term.label == "biome"
     assert parent_term.data["definition"] == "A biome is an environmental system"  # type: ignore
 
     # Check child term
     child_term = db.query(models.EnvoTerm).filter_by(id="ENVO:00000446").first()
+    assert child_term is not None
     assert child_term.id == "ENVO:00000446"
     assert child_term.label == "terrestrial biome"
     assert child_term.data["definition"] == "A biome that is on land"  # type: ignore
