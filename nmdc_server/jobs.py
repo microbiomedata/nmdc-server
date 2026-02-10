@@ -88,6 +88,8 @@ def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
             #
             # Note: This set of data depends upon the script having already ingested data from
             #       the MongoDB database (this data has some foreign keys pointing to that data).
+            #       Specifically, each `FileDownload` has a foreign key pointing to a `DataObject`,
+            #       and the latter is ingested from the MongoDB database.
             #
             logger.info("Copying dependent data from the portal database to the ingest database.")
             with duration_logger(logger, "Merging download-related data"):
@@ -104,10 +106,10 @@ def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
             #
             # Note: This set of data does _not_ depend upon the script having already ingested data
             #       from the MongoDB database (this data has no foreign keys pointing to that data).
-            #       So, we could copy this data earlier in the ingest process. The reason we do it
-            #       this late is to minimize the amount of time between when we copy submission data
-            #       and when we promote the "ingest" database into the new "portal" database, to
-            #       reduce the opportunity for submission changes to end up in the wrong database.
+            #       The reason we copy this data so late in the ingest process is to minimize the
+            #       amount of time between when we copy it and when we promote the "ingest" database
+            #       into the new "portal" database, to reduce the opportunity for submission changes
+            #       users make during the overall ingest process to end up in the wrong database.
             #
             logger.info("Copying independent data from the portal database to the ingest database.")
             with duration_logger(logger, "Merging auth-related data"):
