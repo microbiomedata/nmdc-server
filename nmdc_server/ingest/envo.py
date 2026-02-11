@@ -131,6 +131,46 @@ def get_biosample_roots(db: Session) -> Dict[str, Set[str]]:
     }
 
 
+def _compute_depths(
+    children_of: Dict[str, Set[str]],
+    root_set: Set[str],
+    max_depth: int = 30,
+) -> Dict[str, int]:
+    """Compute minimum depth for each node (shortest path from any root)."""
+    depth: Dict[str, int] = {}
+    stack = list(root_set)
+    for root in root_set:
+        depth[root] = 0
+
+    while stack:
+        node = stack.pop()
+        for child in children_of.get(node, set()):
+            new_depth = depth[node] + 1
+            if new_depth > max_depth:
+                continue
+            if child not in depth or new_depth < depth[child]:
+                depth[child] = new_depth
+                stack.append(child)
+
+    return depth
+
+
+def _choose_parents(
+    parents_of: Dict[str, Set[str]],
+    root_set: Set[str],
+    depth: Dict[str, int],
+) -> Dict[str, str]:
+    """For each non-root node, choose the shallowest parent for determinism."""
+    chosen_parent: Dict[str, str] = {}
+    for node_id, node_parents in parents_of.items():
+        if node_id in root_set:
+            continue
+        eligible = [p for p in node_parents if p in depth]
+        if eligible:
+            chosen_parent[node_id] = min(eligible, key=lambda p: (depth[p], p))
+    return chosen_parent
+
+
 def build_envo_trees(db: Session) -> None:
     """
     Convert the envo_ancestors graph into a single-parent tree per root.
@@ -155,34 +195,8 @@ def build_envo_trees(db: Session) -> None:
             children_of[ancestor.ancestor_id].add(ancestor.id)
             parents_of[ancestor.id].add(ancestor.ancestor_id)
 
-    # Compute min depth for each node (shortest path from any root).
-    # We start at the roots (depth 0) and walk down to children.
-    # If we find a shorter path to a node, we update its depth and revisit.
-    MAX_DEPTH = 30  # safety cap to prevent infinite loops from data cycles
-    depth: Dict[str, int] = {}
-    stack = list(root_set)
-    for root in root_set:
-        depth[root] = 0
-
-    while stack:
-        node = stack.pop()
-        for child in children_of.get(node, set()):
-            new_depth = depth[node] + 1
-            if new_depth > MAX_DEPTH:
-                continue
-            if child not in depth or new_depth < depth[child]:
-                depth[child] = new_depth
-                stack.append(child)
-
-    # For each non-root node, choose the shallowest parent (shortest path).
-    # Ties broken by smallest lexicographic parent ID for determinism.
-    chosen_parent: Dict[str, str] = {}
-    for node_id, node_parents in parents_of.items():
-        if node_id in root_set:
-            continue
-        eligible = [p for p in node_parents if p in depth]
-        if eligible:
-            chosen_parent[node_id] = min(eligible, key=lambda p: (depth[p], p))
+    depth = _compute_depths(children_of, root_set)
+    chosen_parent = _choose_parents(parents_of, root_set, depth)
 
     # Insert roots
     for root in root_set:
@@ -201,9 +215,7 @@ def build_envo_trees(db: Session) -> None:
             if chosen_parent.get(child) != parent_id:
                 continue  # this child chose a different (deeper) parent
             visited.add(child)
-            statement = insert(EnvoTree.__table__).values(
-                {"id": child, "parent_id": parent_id}
-            )
+            statement = insert(EnvoTree.__table__).values({"id": child, "parent_id": parent_id})
             db.execute(statement)
             stack.append(child)
 
