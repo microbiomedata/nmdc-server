@@ -155,9 +155,9 @@ def build_envo_trees(db: Session) -> None:
             children_of[ancestor.ancestor_id].add(ancestor.id)
             parents_of[ancestor.id].add(ancestor.ancestor_id)
 
-    # Compute max depth for each node. We start at the roots (depth 0) and
-    # walk down to children. If we find a longer path to a node than we've
-    # seen before, we update its depth and revisit its children.
+    # Compute min depth for each node (shortest path from any root).
+    # We start at the roots (depth 0) and walk down to children.
+    # If we find a shorter path to a node, we update its depth and revisit.
     MAX_DEPTH = 30  # safety cap to prevent infinite loops from data cycles
     depth: Dict[str, int] = {}
     stack = list(root_set)
@@ -170,19 +170,19 @@ def build_envo_trees(db: Session) -> None:
             new_depth = depth[node] + 1
             if new_depth > MAX_DEPTH:
                 continue
-            if child not in depth or new_depth > depth[child]:
+            if child not in depth or new_depth < depth[child]:
                 depth[child] = new_depth
                 stack.append(child)
 
-    # For each non-root node, choose the deepest parent (longest path).
-    # Ties broken by lexicographic parent ID for determinism.
+    # For each non-root node, choose the shallowest parent (shortest path).
+    # Ties broken by smallest lexicographic parent ID for determinism.
     chosen_parent: Dict[str, str] = {}
     for node_id, node_parents in parents_of.items():
         if node_id in root_set:
             continue
         eligible = [p for p in node_parents if p in depth]
         if eligible:
-            chosen_parent[node_id] = max(eligible, key=lambda p: (depth[p], p))
+            chosen_parent[node_id] = min(eligible, key=lambda p: (depth[p], p))
 
     # Insert roots
     for root in root_set:
