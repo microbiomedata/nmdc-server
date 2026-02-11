@@ -442,7 +442,7 @@ def test_build_envo_trees_multiple_roots(db: Session):
 
 
 def test_build_envo_trees_term_with_multiple_parents(db: Session):
-    """Test that a term can have multiple parents in the EnvoTree."""
+    """Test that a multi-parent term appears once, under the deepest parent."""
     # Create a diamond hierarchy:
     #       root
     #      /    \
@@ -482,18 +482,109 @@ def test_build_envo_trees_term_with_multiple_parents(db: Session):
     # Build the envo trees
     envo.build_envo_trees(db)
 
-    # The child should appear twice in the tree - once under each parent
+    # The child should appear exactly ONCE (longest-path dedup, single parent chosen)
     child_entries = db.query(models.EnvoTree).filter_by(id="ENVO:CHILD").all()
-    assert len(child_entries) == 2
+    assert len(child_entries) == 1
 
-    # Verify the child has both parents
-    child_parent_ids = {entry.parent_id for entry in child_entries}
-    assert child_parent_ids == {"ENVO:PARENT1", "ENVO:PARENT2"}
+    # Both parents are at equal depth (1), so tiebreaker picks lexicographically larger ID
+    assert child_entries[0].parent_id == "ENVO:PARENT2"
 
     # The root should have NULL parent_id
     root_entry = db.query(models.EnvoTree).filter_by(id="ENVO:ROOT").first()
     assert root_entry is not None
     assert root_entry.parent_id is None
+
+
+def test_build_envo_trees_longest_path_selection(db: Session):
+    """Test that a multi-parent term is placed under the deeper parent."""
+    # Create an asymmetric hierarchy:
+    #       root
+    #      /    \
+    #   shallow  mid
+    #      \      \
+    #       child  deep
+    #              /
+    #           child  (same child, two parents at different depths)
+    fakes.OntologyClassFactory(id="ENVO:ROOT", name="root", is_root=True)
+    fakes.OntologyClassFactory(id="ENVO:SHALLOW", name="shallow")
+    fakes.OntologyClassFactory(id="ENVO:MID", name="mid")
+    fakes.OntologyClassFactory(id="ENVO:DEEP", name="deep")
+    fakes.OntologyClassFactory(id="ENVO:CHILD", name="child")
+
+    # root -> shallow (depth 1), root -> mid (depth 1), mid -> deep (depth 2)
+    fakes.OntologyRelationFactory(
+        subject="ENVO:SHALLOW", predicate="rdfs:subClassOf", object="ENVO:ROOT"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:MID", predicate="rdfs:subClassOf", object="ENVO:ROOT"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:DEEP", predicate="rdfs:subClassOf", object="ENVO:MID"
+    )
+    # child has two parents: shallow (depth 1) and deep (depth 2)
+    fakes.OntologyRelationFactory(
+        subject="ENVO:CHILD", predicate="rdfs:subClassOf", object="ENVO:SHALLOW"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:CHILD", predicate="rdfs:subClassOf", object="ENVO:DEEP"
+    )
+    db.commit()
+
+    envo.load(db)
+    db.commit()
+
+    envo_term_child = db.query(models.EnvoTerm).filter_by(id="ENVO:CHILD").first()
+    fakes.BiosampleFactory(env_broad_scale=envo_term_child, env_local_scale=None, env_medium=None)
+    db.commit()
+
+    envo.build_envo_trees(db)
+
+    # Child should appear once, under DEEP (depth 2) not SHALLOW (depth 1)
+    child_entries = db.query(models.EnvoTree).filter_by(id="ENVO:CHILD").all()
+    assert len(child_entries) == 1
+    assert child_entries[0].parent_id == "ENVO:DEEP"
+
+
+def test_no_false_roots_with_multi_parent_terms(db: Session):
+    """Test that multi-parent terms don't create false roots."""
+    # Create hierarchy where child has two parents under the same root
+    #       root
+    #      /    \
+    #   parent1  parent2
+    #      \    /
+    #       child
+    fakes.OntologyClassFactory(id="ENVO:ROOT", name="root", is_root=True)
+    fakes.OntologyClassFactory(id="ENVO:P1", name="parent1")
+    fakes.OntologyClassFactory(id="ENVO:P2", name="parent2")
+    fakes.OntologyClassFactory(id="ENVO:CHILD", name="child")
+
+    fakes.OntologyRelationFactory(
+        subject="ENVO:P1", predicate="rdfs:subClassOf", object="ENVO:ROOT"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:P2", predicate="rdfs:subClassOf", object="ENVO:ROOT"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:CHILD", predicate="rdfs:subClassOf", object="ENVO:P1"
+    )
+    fakes.OntologyRelationFactory(
+        subject="ENVO:CHILD", predicate="rdfs:subClassOf", object="ENVO:P2"
+    )
+    db.commit()
+
+    envo.load(db)
+    db.commit()
+
+    envo_term_child = db.query(models.EnvoTerm).filter_by(id="ENVO:CHILD").first()
+    fakes.BiosampleFactory(env_broad_scale=envo_term_child, env_local_scale=None, env_medium=None)
+    db.commit()
+
+    envo.build_envo_trees(db)
+
+    # Only ENVO:ROOT should be a root (parent_id is NULL) - no false roots
+    root_entries = db.query(models.EnvoTree).filter(models.EnvoTree.parent_id.is_(None)).all()
+    root_ids = {entry.id for entry in root_entries}
+    assert root_ids == {"ENVO:ROOT"}
 
 
 def test_envo_tree_multiple_roots_structure(db: Session):

@@ -2,7 +2,7 @@ import functools
 import itertools
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 from sqlalchemy import text
 from sqlalchemy.dialects.postgresql import insert
@@ -98,10 +98,12 @@ def get_biosample_roots(db: Session) -> Dict[str, Set[str]]:
 
     Returns a dict mapping facet name to the set of reachable roots.
     """
-    parents: Dict[str, str] = {}
+    # Build multi-parent map: term_id -> set of all direct parent IDs
+    parents: Dict[str, Set[str]] = defaultdict(set)
     query = db.query(EnvoAncestor).filter(EnvoAncestor.direct.is_(True))
     for ancestor in query:
-        parents[ancestor.id] = ancestor.ancestor_id
+        if ancestor.id != ancestor.ancestor_id:  # skip self-refs
+            parents[ancestor.id].add(ancestor.ancestor_id)
 
     def reachable_roots(attr: str) -> Set[str]:
         query = db.query(getattr(Biosample, attr)).distinct()
@@ -109,48 +111,33 @@ def get_biosample_roots(db: Session) -> Dict[str, Set[str]]:
         roots = set()
 
         for term in terms:
-            # traverse up the ancestors until reaching a root
-            if term not in parents:
-                roots.add(term)
-            else:
-                parent = parents[term]
-                while parent in parents:
-                    parent = parents[parent]
-                roots.add(parent)
+            # Walk up ALL parent chains to find true roots
+            frontier = {term}
+            visited: Set[str] = set()
+            while frontier:
+                current = frontier.pop()
+                if current in visited:
+                    continue
+                visited.add(current)
+                if current not in parents:
+                    roots.add(current)  # no parents -> true root
+                else:
+                    frontier.update(parents[current])
         return roots
 
-    # TODO should we store these results in the database?
     return {
         key: reachable_roots(key)
         for key in ["env_broad_scale_id", "env_local_scale_id", "env_medium_id"]
     }
 
 
-def _build_envo_subtree(db: Session, parent_id: str, visited_edges: Set[Tuple[str, str]]) -> None:
-    # Track edges (child, parent) not just nodes - allows terms to have multiple parents
-    query = (
-        db.query(EnvoAncestor)
-        .filter(EnvoAncestor.ancestor_id == parent_id)
-        .filter(EnvoAncestor.direct.is_(True))
-    )
-    for node in query:
-        edge = (node.id, parent_id)
-        if edge in visited_edges:
-            continue
-        visited_edges.add(edge)
-
-        statement = insert(EnvoTree.__table__).values({"id": node.id, "parent_id": parent_id})
-        db.execute(statement)
-
-        _build_envo_subtree(db, node.id, visited_edges)
-
-
 def build_envo_trees(db: Session) -> None:
     """
-    Convert the envo_ancestors graph into trees, and store them (normalized).
+    Convert the envo_ancestors graph into a single-parent tree per root.
 
-    If a node is encountered more than once, we arbitrarily choose its first
-    encountered location in the graph.
+    For terms with multiple parents, the term is placed under the parent that
+    gives the longest path from a root (the deepest position), favoring the most
+    specific hierarchical context. Ties are broken by lexicographic parent ID.
 
     This should only be called after biosamples have been ingested.
     """
@@ -158,17 +145,67 @@ def build_envo_trees(db: Session) -> None:
 
     roots = get_biosample_roots(db)
     root_set = set(itertools.chain(*roots.values()))
-    visited_edges: Set[Tuple[str, str]] = set()
+
+    # Build full parent/child graph from direct ancestors
+    children_of: Dict[str, Set[str]] = defaultdict(set)
+    parents_of: Dict[str, Set[str]] = defaultdict(set)
+    query = db.query(EnvoAncestor).filter(EnvoAncestor.direct.is_(True))
+    for ancestor in query:
+        if ancestor.id != ancestor.ancestor_id:
+            children_of[ancestor.ancestor_id].add(ancestor.id)
+            parents_of[ancestor.id].add(ancestor.ancestor_id)
+
+    # Compute max depth for each node. We start at the roots (depth 0) and
+    # walk down to children. If we find a longer path to a node than we've
+    # seen before, we update its depth and revisit its children.
+    MAX_DEPTH = 30  # safety cap to prevent infinite loops from data cycles
+    depth: Dict[str, int] = {}
+    stack = list(root_set)
     for root in root_set:
-        statement = insert(EnvoTree.__table__).values(
-            {
-                "id": root,
-                "parent_id": None,  # null parent_id indicates root node(s)
-            }
-        )
+        depth[root] = 0
+
+    while stack:
+        node = stack.pop()
+        for child in children_of.get(node, set()):
+            new_depth = depth[node] + 1
+            if new_depth > MAX_DEPTH:
+                continue
+            if child not in depth or new_depth > depth[child]:
+                depth[child] = new_depth
+                stack.append(child)
+
+    # For each non-root node, choose the deepest parent (longest path).
+    # Ties broken by lexicographic parent ID for determinism.
+    chosen_parent: Dict[str, str] = {}
+    for node_id, node_parents in parents_of.items():
+        if node_id in root_set:
+            continue
+        eligible = [p for p in node_parents if p in depth]
+        if eligible:
+            chosen_parent[node_id] = max(eligible, key=lambda p: (depth[p], p))
+
+    # Insert roots
+    for root in root_set:
+        statement = insert(EnvoTree.__table__).values({"id": root, "parent_id": None})
         db.execute(statement)
 
-        _build_envo_subtree(db, root, visited_edges)
+    # Walk down from roots, inserting each child under its chosen parent.
+    visited: Set[str] = set(root_set)
+    stack = list(root_set)
+
+    while stack:
+        parent_id = stack.pop()
+        for child in children_of.get(parent_id, set()):
+            if child in visited:
+                continue
+            if chosen_parent.get(child) != parent_id:
+                continue  # this child chose a different (deeper) parent
+            visited.add(child)
+            statement = insert(EnvoTree.__table__).values(
+                {"id": child, "parent_id": parent_id}
+            )
+            db.execute(statement)
+            stack.append(child)
 
     db.commit()
 
@@ -209,13 +246,10 @@ def _prune_useless_nodes(
     modified: bool = False,
 ) -> bool:
     """
-    Remove useless internal (non-root) nodes from a tree.
+    Remove internal (non-root) nodes from a tree.
 
     A useless node is one that is not in the terms present in the biosample set, and that has
-    only a single child node.
-
-    This modifies the structure in-place, returning the new root. Returns whether or not
-    any modifications were made to the tree.
+    only a single child node. This modifies the structure in-place, returning the new root.
     """
     if parent is not None and len(node.children) == 1 and node.id not in present_terms:
         # Delete this node, move its only child up under the parent
