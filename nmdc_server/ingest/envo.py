@@ -136,8 +136,8 @@ def build_envo_trees(db: Session) -> None:
     Convert the envo_ancestors graph into a single-parent tree per root.
 
     For terms with multiple parents, the term is placed under the parent that
-    gives the longest path from a root (the deepest position), favoring the most
-    specific hierarchical context. Ties are broken by lexicographic parent ID.
+    gives the shortest path from a root (the shallowest position), keeping the
+    tree compact. Ties are broken by lexicographic parent ID.
 
     This should only be called after biosamples have been ingested.
     """
