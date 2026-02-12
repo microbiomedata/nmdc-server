@@ -38,6 +38,10 @@ export const Menus: MenuItem[] = [
         label: 'Contact Us',
         href: 'https://microbiomedata.org/contact/',
       },
+      {
+        label: 'Previous Initiatives',
+        href: 'https://microbiomedata.org/previous-initiatives/',
+      }
     ],
   },
   {
@@ -50,14 +54,6 @@ export const Menus: MenuItem[] = [
       {
         label: 'Submission Portal',
         to: '/submission/home',
-      },
-      {
-        label: 'NMDC EDGE',
-        href: 'https://nmdc-edge.org',
-      },
-      {
-        label: 'Field Notes Mobile App',
-        href: 'https://microbiomedata.org/field-notes/',
       },
       {
         label: 'Data API',
@@ -105,14 +101,6 @@ export const Menus: MenuItem[] = [
       {
         label: 'Community',
         href: 'https://microbiomedata.org/community/',
-      },
-      {
-        label: 'Ambassadors',
-        href: 'https://microbiomedata.org/ambassadors/',
-      },
-      {
-        label: 'Champions',
-        href: 'https://microbiomedata.org/community/championsprogram/',
       },
       {
         label: 'User Research',
