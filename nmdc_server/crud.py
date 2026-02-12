@@ -440,12 +440,31 @@ def full_text_search_biosample(
     term: str,
     limit: int = 6,
 ) -> List[models.Biosample]:
+    search_fields = func.concat_ws(
+        ' ',
+        models.Biosample.id,
+        models.Biosample.name,
+        models.Biosample.description,
+        models.Biosample.alternate_identifiers,
+        models.Biosample.annotations,
+        models.Biosample.collection_date,
+        models.Biosample.study_id,
+        models.Biosample.env_broad_scale_id,
+        models.Biosample.env_local_scale_id,
+        models.Biosample.env_medium_id,
+        models.Biosample.ecosystem,
+        models.Biosample.ecosystem_category,
+        models.Biosample.ecosystem_type,
+        models.Biosample.ecosystem_subtype,
+        models.Biosample.specific_ecosystem
+    )
+
     return (
         db.query(models.Biosample)
         .options(noload('*'))
         .filter(
-            func.to_tsvector('english', models.Biosample.study_id).op('@@')(
-                func.plainto_tsquery('english', term)
+            func.to_tsvector('simple', search_fields).op('@@')(
+                func.plainto_tsquery('simple', term)
             )
         )
         .limit(limit)
