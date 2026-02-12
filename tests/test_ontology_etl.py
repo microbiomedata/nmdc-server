@@ -442,7 +442,7 @@ def test_build_envo_trees_multiple_roots(db: Session):
 
 
 def test_build_envo_trees_term_with_multiple_parents(db: Session):
-    """Test that a multi-parent term appears once, under the deepest parent."""
+    """Test that a multi-parent term appears once, under the shallowest parent."""
     # Create a diamond hierarchy:
     #       root
     #      /    \
@@ -482,12 +482,12 @@ def test_build_envo_trees_term_with_multiple_parents(db: Session):
     # Build the envo trees
     envo.build_envo_trees(db)
 
-    # The child should appear exactly ONCE (longest-path dedup, single parent chosen)
+    # The child should appear exactly ONCE (shortest-path dedup, single parent chosen)
     child_entries = db.query(models.EnvoTree).filter_by(id="ENVO:CHILD").all()
     assert len(child_entries) == 1
 
-    # Both parents are at equal depth (1), so tiebreaker picks lexicographically larger ID
-    assert child_entries[0].parent_id == "ENVO:PARENT2"
+    # Both parents are at equal depth (1), so tiebreaker picks lexicographically smaller ID
+    assert child_entries[0].parent_id == "ENVO:PARENT1"
 
     # The root should have NULL parent_id
     root_entry = db.query(models.EnvoTree).filter_by(id="ENVO:ROOT").first()
@@ -495,8 +495,8 @@ def test_build_envo_trees_term_with_multiple_parents(db: Session):
     assert root_entry.parent_id is None
 
 
-def test_build_envo_trees_longest_path_selection(db: Session):
-    """Test that a multi-parent term is placed under the deeper parent."""
+def test_build_envo_trees_shortest_path_selection(db: Session):
+    """Test that a multi-parent term is placed under the shallower parent."""
     # Create an asymmetric hierarchy:
     #       root
     #      /    \
@@ -539,10 +539,10 @@ def test_build_envo_trees_longest_path_selection(db: Session):
 
     envo.build_envo_trees(db)
 
-    # Child should appear once, under DEEP (depth 2) not SHALLOW (depth 1)
+    # Child should appear once, under SHALLOW (depth 1) not DEEP (depth 2)
     child_entries = db.query(models.EnvoTree).filter_by(id="ENVO:CHILD").all()
     assert len(child_entries) == 1
-    assert child_entries[0].parent_id == "ENVO:DEEP"
+    assert child_entries[0].parent_id == "ENVO:SHALLOW"
 
 
 def test_no_false_roots_with_multi_parent_terms(db: Session):
