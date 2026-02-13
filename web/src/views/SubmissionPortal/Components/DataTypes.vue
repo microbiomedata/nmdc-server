@@ -72,6 +72,7 @@ emits: ['revalidate'],
           label="Is the generated data compatible? *"
           :rules="[v => v !== undefined || 'This field is required']"
           :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot) || undefined"
+          @change="$emit('revalidate')"
         >
           <v-radio
             :value="false"
@@ -156,6 +157,7 @@ emits: ['revalidate'],
           label="Is the generated data compatible? *"
           :rules="[v => v !== undefined || 'This field is required']"
           :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot) || undefined"
+          @change="$emit('revalidate')"
         >
           <v-radio
             :value="false"
