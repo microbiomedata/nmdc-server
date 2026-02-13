@@ -487,7 +487,8 @@ watch(() => multiOmicsForm.mtCompatible, (newValue, oldValue) => {
   }
 });
 
-// Watch for changes to the "ship" field in the multi-omics form. If it becomes false, reset the sender shipping info form validation state to null (untouched).
+// Watch for changes to the "Will samples be shipped?" field. If the field is reset or the answer becomes "No",
+// reset the sender shipping info form validation state to null (untouched).
 watch(() => multiOmicsForm.ship, (newVal) => {
   if (newVal !== true) {
     validationState.senderShippingInfoForm = null;
