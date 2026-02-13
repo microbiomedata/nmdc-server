@@ -405,9 +405,92 @@ function checkDoiFormat(v: string) {
   return valid;
 }
 
-// Watch for changes to the "ship" field in the multi-omics form. If it becomes false, reset the sender shipping info form validation state to null (untouched).
+// When "Have data already been generated for your study?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.dataGenerated, () => {
+  multiOmicsForm.facilityGenerated = undefined;
+  multiOmicsForm.doe = undefined;
+  multiOmicsForm.omicsProcessingTypes = [];
+});
+
+// When "Was the data generated at a DOE user facility?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.facilityGenerated, () => {
+  multiOmicsForm.facilities = [];
+  multiOmicsForm.omicsProcessingTypes = [];
+});
+
+// When "Are you submitting samples to a DOE user facility?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.doe, () => {
+  multiOmicsForm.award = undefined;
+  multiOmicsForm.otherAward = undefined;
+  multiOmicsForm.facilities = [];
+  multiOmicsForm.omicsProcessingTypes = [];
+});
+
+// When "Which facility?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.facilities, (newValue, prevValue) => {
+  // EMSL was removed
+  if (!newValue.includes('EMSL') && prevValue.includes('EMSL')) {
+    multiOmicsForm.studyNumber = '';
+    multiOmicsForm.ship = undefined;
+    multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
+      t !== 'lipidome-emsl' && t !== 'mp-emsl' && t !== 'mb-emsl' && t !== 'nom-emsl'
+    ));
+  }
+  // JGI was removed
+  if (!newValue.includes('JGI') && prevValue.includes('JGI')) {
+    multiOmicsForm.JGIStudyId = '';
+    multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
+      t !== 'mg-jgi' && t !== 'mg-lr-jgi' && t !== 'mt-jgi' && t !== 'mb-jgi'
+    ));
+  }
+});
+
+// When "Which data types were generated?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.omicsProcessingTypes, (newValue, oldValue) => {
+  // mg was removed
+  if (!newValue.includes('mg') && oldValue.includes('mg')) {
+    multiOmicsForm.mgCompatible = undefined;
+  }
+  // mt was removed
+  if (!newValue.includes('mt') && oldValue.includes('mt')) {
+    multiOmicsForm.mtCompatible = undefined;
+  }
+  // mp was removed
+  if (!newValue.includes('mp') && oldValue.includes('mp')) {
+    multiOmicsForm.mpProtocols = undefined;
+  }
+  // mb was removed
+  if (!newValue.includes('mb') && oldValue.includes('mb')) {
+    multiOmicsForm.mbProtocols = undefined;
+  }
+  // nom was removed
+  if (!newValue.includes('nom') && oldValue.includes('nom')) {
+    multiOmicsForm.nomProtocols = undefined;
+  }
+  // lipidome was removed
+  if (!newValue.includes('lipidome-emsl') && oldValue.includes('lipidome-emsl')) {
+    multiOmicsForm.lipProtocols = undefined;
+  }
+});
+
+// When "Is the generated data compatible?" changes for either mg or mt, reset the answers to dependent questions
+watch(() => multiOmicsForm.mgCompatible, (newValue, oldValue) => {
+  // mg compatible was cleared or changed from true to false
+  if (newValue === undefined || (newValue === false && oldValue === true)) {
+    multiOmicsForm.mgInterleaved = undefined;
+  }
+});
+watch(() => multiOmicsForm.mtCompatible, (newValue, oldValue) => {
+  // mt compatible was cleared or changed from true to false
+  if (newValue === undefined || (newValue === false && oldValue === true)) {
+    multiOmicsForm.mtInterleaved = undefined;
+  }
+});
+
+// Watch for changes to the "Will samples be shipped?" field. If the field is reset or the answer becomes "No",
+// reset the sender shipping info form validation state to null (untouched).
 watch(() => multiOmicsForm.ship, (newVal) => {
-  if (newVal === false) {
+  if (newVal !== true) {
     validationState.senderShippingInfoForm = null;
   }
 });
