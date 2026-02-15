@@ -25,7 +25,7 @@ dependencies = [
     "certifi==2024.8.30",
     # We updated `cffi` from 1.17.1 to 2.0.0 because the latter is the minimum required by
     # `cryptography` 46.0.5, which contains a fix for a security vulnerability (CVE-2026-26007).
-    # Docs: https://cffi.readthedocs.io/en/stable/whatsnew.html#v2-0-0
+    # Reference: https://cffi.readthedocs.io/en/stable/whatsnew.html#v2-0-0
     "cffi==2.0.0",
     "cfgraph==0.2.1",
     "chardet==5.2.0",
@@ -35,6 +35,9 @@ dependencies = [
     "click-plugins==1.1.1",
     "click-repl==0.3.0",
     "colorama==0.4.6",
+    # We updated `cryptography` from 43.0.1 to 46.0.5 because the latter contains a fix for a
+    # security vulnerability (CVE-2026-26007).
+    # Reference: https://cryptography.io/en/latest/changelog/#v46-0-5
     "cryptography==46.0.5",
     "curies==0.9.2",  # transitive dependency
     "decorator==5.1.1",
