@@ -1183,9 +1183,10 @@
   resolved "https://registry.yarnpkg.com/@vueuse/shared/-/shared-13.9.0.tgz#7168b4ed647e625b05eb4e7e80fe8aabd00e3923"
   integrity sha512-e89uuTLMh0U5cZ9iDpEI2senqPGfbPRTHM/0AaQkcxnpqjkZqDYP8rpfm7edOz8s+pOCOROEy1PIveSW8+fL5g==
 
-"@zanmato/vue3-treeselect@github:zanmato/vue3-treeselect":
-  version "0.4.2"
-  resolved "https://codeload.github.com/zanmato/vue3-treeselect/tar.gz/5a0d5e175a3d3f32f98ffbde1dc54e3d2168c4e9"
+"@zanmato/vue3-treeselect@^0.4.3":
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/@zanmato/vue3-treeselect/-/vue3-treeselect-0.4.3.tgz#3c657145536adb16ebabc26fd6924f4ba37f0c00"
+  integrity sha512-GRJWRLs9gW/cReH45K8MfdJIrR3//6IX+2Y+5qjM4cERsVFABKKZqjlTQ7RBAlpi4lwIby+zAiMeerhlrIhR9g==
   dependencies:
     "@babel/runtime" "^7.28.6"
     "@vue/babel-helper-vue-jsx-merge-props" "^1.4.0"
