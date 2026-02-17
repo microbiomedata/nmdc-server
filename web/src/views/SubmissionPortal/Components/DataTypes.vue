@@ -70,7 +70,7 @@ emits: ['revalidate'],
         <v-radio-group
           v-model="multiOmicsForm.mgCompatible"
           label="Is the generated data compatible? *"
-          :rules="[v => v !== undefined || 'This field is required']"
+          :rules="[v => (v === true || v === false) || 'This field is required']"
           :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot) || undefined"
           @change="$emit('revalidate')"
         >
@@ -112,7 +112,7 @@ emits: ['revalidate'],
           v-model="multiOmicsForm.mgInterleaved"
           label="Is the data in interleaved format? *"
           :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mg?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mg_interleaved?.sampleDataSlot) || undefined"
-          :rules="[v => v !== undefined || 'This field is required']"
+          :rules="[v => (v === true || v === false) || 'This field is required']"
         >
           <v-radio
             label="No"
@@ -155,7 +155,7 @@ emits: ['revalidate'],
         <v-radio-group
           v-model="multiOmicsForm.mtCompatible"
           label="Is the generated data compatible? *"
-          :rules="[v => v !== undefined || 'This field is required']"
+          :rules="[v => (v === true || v === false) || 'This field is required']"
           :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot) || undefined"
           @change="$emit('revalidate')"
         >
@@ -197,7 +197,7 @@ emits: ['revalidate'],
           v-model="multiOmicsForm.mtInterleaved"
           label="Is the data in interleaved format? *"
           :disabled="templateHasData(HARMONIZER_TEMPLATES.data_mt?.sampleDataSlot) || templateHasData(HARMONIZER_TEMPLATES.data_mt_interleaved?.sampleDataSlot) || undefined"
-          :rules="[v => v !== undefined || 'This field is required']"
+          :rules="[v => (v === true || v === false) || 'This field is required']"
         >
           <v-radio
             label="No"
