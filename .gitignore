@@ -10,3 +10,4 @@ vetur.config.js
 **.local**
 build/**
 data/**
+.DS_Store
