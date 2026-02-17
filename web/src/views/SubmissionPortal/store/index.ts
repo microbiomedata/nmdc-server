@@ -352,26 +352,26 @@ interface Protocols {
  * Multi-Omics Form Step
  */
 const multiOmicsFormDefault = {
-  award: undefined as undefined | string,
+  award: null as null | string,
   awardDois: [] as Doi[] | null,
-  dataGenerated: undefined as undefined | boolean,
-  doe: undefined as undefined | boolean,
+  dataGenerated: null as null | boolean,
+  doe: null as null | boolean,
   facilities: [] as string[],
-  facilityGenerated: undefined as undefined | boolean,
+  facilityGenerated: null as null | boolean,
   JGIStudyId: '',
-  mgCompatible: undefined as undefined | boolean,
-  mgInterleaved: undefined as undefined | boolean,
-  mtCompatible: undefined as undefined | boolean,
-  mtInterleaved: undefined as undefined | boolean,
+  mgCompatible: null as null | boolean,
+  mgInterleaved: null as null | boolean,
+  mtCompatible: null as null | boolean,
+  mtInterleaved: null as null | boolean,
   omicsProcessingTypes: [] as string[],
-  otherAward: undefined as undefined | string,
-  ship: undefined as undefined | boolean,
+  otherAward: null as null | string,
+  ship: null as null | boolean,
   studyNumber: '',
-  unknownDoi: undefined as undefined | boolean,
-  mpProtocols: undefined as undefined | Protocols,
-  mbProtocols: undefined as undefined | Protocols,
-  lipProtocols: undefined as undefined | Protocols,
-  nomProtocols: undefined as undefined | Protocols,
+  unknownDoi: null as null | boolean,
+  mpProtocols: null as null | Protocols,
+  mbProtocols: null as null | Protocols,
+  lipProtocols: null as null | Protocols,
+  nomProtocols: null as null | Protocols,
 };
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
@@ -395,7 +395,7 @@ function removeAwardDoi(i: number) {
   if (multiOmicsForm.awardDois === null) {
     multiOmicsForm.awardDois = [];
   }
-  if ((multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
+  if ((multiOmicsForm.facilities?.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
     multiOmicsForm.awardDois.splice(i, 1);
   }
 }
@@ -406,24 +406,47 @@ function checkDoiFormat(v: string) {
 }
 
 // When "Have data already been generated for your study?" changes, reset the answers to dependent questions
-watch(() => multiOmicsForm.dataGenerated, () => {
-  multiOmicsForm.facilityGenerated = undefined;
-  multiOmicsForm.doe = undefined;
-  multiOmicsForm.omicsProcessingTypes = [];
+watch(() => multiOmicsForm.dataGenerated, (newValue, prevValue) => {
+  // The answer was reset or changed from "No" to "Yes"
+  // Reset "Are you submitting samples to a DOE user facility (JGI, EMSL)?"
+  if (newValue === null || (prevValue === false && newValue === true)) {
+    multiOmicsForm.doe = null;
+  }
+  // The answer was reset or changed from "Yes" to "No"
+  // Reset "Was data generated at a DOE user facility (JGI, EMSL)?"
+  if (newValue === null || (prevValue === true && newValue === false)) {
+    multiOmicsForm.facilityGenerated = null;
+  }
 });
 
-// When "Was the data generated at a DOE user facility?" changes, reset the answers to dependent questions
-watch(() => multiOmicsForm.facilityGenerated, () => {
-  multiOmicsForm.facilities = [];
-  multiOmicsForm.omicsProcessingTypes = [];
+// When "Was data generated at a DOE user facility?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.facilityGenerated, (newValue, prevValue) => {
+  // The answer was reset or changed from "No" to "Yes"
+  // Uncheck all "Which facility?" checkboxes
+  if (newValue === null || (prevValue === false && newValue === true)) {
+    multiOmicsForm.omicsProcessingTypes = [];
+  }
+  // The answer was reset or changed from "Yes" to "No"
+  // Uncheck all "Which data types were generated?" checkboxes
+  if (newValue === null || (prevValue === true && newValue === false)) {
+    multiOmicsForm.facilities = [];
+    multiOmicsForm.awardDois = []
+  }
 });
 
 // When "Are you submitting samples to a DOE user facility?" changes, reset the answers to dependent questions
-watch(() => multiOmicsForm.doe, () => {
-  multiOmicsForm.award = undefined;
-  multiOmicsForm.otherAward = undefined;
-  multiOmicsForm.facilities = [];
-  multiOmicsForm.omicsProcessingTypes = [];
+watch(() => multiOmicsForm.doe, ( newValue, prevValue) => {
+  // The answer was reset or changed from "No" to "Yes"
+  if (newValue === null || (prevValue === false && newValue === true)) {
+    multiOmicsForm.omicsProcessingTypes = [];
+  }
+  // The answer was reset or changed from "Yes" to "No"
+  if (newValue === null || (prevValue === true && newValue === false)) {
+    multiOmicsForm.award = null;
+    multiOmicsForm.otherAward = null;
+    multiOmicsForm.facilities = [];
+    multiOmicsForm.awardDois = [];
+  }
 });
 
 // When "Which facility?" changes, reset the answers to dependent questions
@@ -431,7 +454,7 @@ watch(() => multiOmicsForm.facilities, (newValue, prevValue) => {
   // EMSL was removed
   if (!newValue.includes('EMSL') && prevValue.includes('EMSL')) {
     multiOmicsForm.studyNumber = '';
-    multiOmicsForm.ship = undefined;
+    multiOmicsForm.ship = null;
     multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
       t !== 'lipidome-emsl' && t !== 'mp-emsl' && t !== 'mb-emsl' && t !== 'nom-emsl'
     ));
@@ -449,41 +472,41 @@ watch(() => multiOmicsForm.facilities, (newValue, prevValue) => {
 watch(() => multiOmicsForm.omicsProcessingTypes, (newValue, oldValue) => {
   // mg was removed
   if (!newValue.includes('mg') && oldValue.includes('mg')) {
-    multiOmicsForm.mgCompatible = undefined;
+    multiOmicsForm.mgCompatible = null;
   }
   // mt was removed
   if (!newValue.includes('mt') && oldValue.includes('mt')) {
-    multiOmicsForm.mtCompatible = undefined;
+    multiOmicsForm.mtCompatible = null;
   }
   // mp was removed
   if (!newValue.includes('mp') && oldValue.includes('mp')) {
-    multiOmicsForm.mpProtocols = undefined;
+    multiOmicsForm.mpProtocols = null;
   }
   // mb was removed
   if (!newValue.includes('mb') && oldValue.includes('mb')) {
-    multiOmicsForm.mbProtocols = undefined;
+    multiOmicsForm.mbProtocols = null;
   }
   // nom was removed
   if (!newValue.includes('nom') && oldValue.includes('nom')) {
-    multiOmicsForm.nomProtocols = undefined;
+    multiOmicsForm.nomProtocols = null;
   }
   // lipidome was removed
   if (!newValue.includes('lipidome-emsl') && oldValue.includes('lipidome-emsl')) {
-    multiOmicsForm.lipProtocols = undefined;
+    multiOmicsForm.lipProtocols = null;
   }
 });
 
 // When "Is the generated data compatible?" changes for either mg or mt, reset the answers to dependent questions
 watch(() => multiOmicsForm.mgCompatible, (newValue, oldValue) => {
   // mg compatible was cleared or changed from true to false
-  if (newValue === undefined || (newValue === false && oldValue === true)) {
-    multiOmicsForm.mgInterleaved = undefined;
+  if (newValue === null || (newValue === false && oldValue === true)) {
+    multiOmicsForm.mgInterleaved = null;
   }
 });
 watch(() => multiOmicsForm.mtCompatible, (newValue, oldValue) => {
   // mt compatible was cleared or changed from true to false
-  if (newValue === undefined || (newValue === false && oldValue === true)) {
-    multiOmicsForm.mtInterleaved = undefined;
+  if (newValue === null || (newValue === false && oldValue === true)) {
+    multiOmicsForm.mtInterleaved = null;
   }
 });
 
@@ -537,7 +560,7 @@ const templateList = computed<string[]>((prevTemplates) => {
 
     if (multiOmicsForm.doe) {
       // Are you submitting samples to a DOE user facility? Yes
-      if (multiOmicsForm.facilities.includes('EMSL')) {
+      if (multiOmicsForm.facilities?.includes('EMSL')) {
         // Which facility? EMSL
         if (multiOmicsForm.omicsProcessingTypes.includes('lipidome-emsl')) {
           // Data types? Lipidome
@@ -556,7 +579,7 @@ const templateList = computed<string[]>((prevTemplates) => {
           templates.add(EMSL);
         }
       }
-      if (multiOmicsForm.facilities.includes('JGI')) {
+      if (multiOmicsForm.facilities?.includes('JGI')) {
         // Which facility? JGI
         if (multiOmicsForm.omicsProcessingTypes.includes('mg-jgi')) {
           // Data types? Metagenome
@@ -834,9 +857,13 @@ async function unlockRecord(id: string) {
 }
 
 async function loadRecord(id: string) {
+  console.log("reset")
   reset();
+  console.log("request")
   const val = await api.getRecord(id);
+  console.log("update state")
   updateStateFromRecord(val);
+  console.log("finished")
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
