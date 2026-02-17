@@ -8,6 +8,7 @@ import {
   api,
   Condition,
   DoiInfo,
+  LabelLink,
   StudySearchResults,
 } from '@/data/api';
 import { setConditions, setUniqueCondition } from '@/store';
@@ -70,6 +71,7 @@ export default defineComponent({
     const goldLinks = ref<string[]>([]);
     const bioprojectLinks = ref<string[]>([]);
     const websiteLinks = ref<string[]>([]);
+    const emslLinks = ref<LabelLink[]>([]);
 
     const biosampleSearch = usePaginatedResults(
       conditions,
@@ -134,6 +136,14 @@ export default defineComponent({
         ...(_study.homepage_website || []),
         ...(_study.principal_investigator_websites || []),
       ];
+      emslLinks.value = (_study.annotations?.emsl_project_identifiers || []).map((id: string) => {
+        const projectId = id.split(':')[1];
+        const url = `https://sc.emsl.pnnl.gov/login?subSrc=data%2F%3FprojectId%3D${projectId}`;
+        return {
+          label: projectId,
+          url
+        };
+      });
 
       conditions.value = [{
         op: '==',
@@ -195,6 +205,7 @@ export default defineComponent({
       publicationDois,
       awardDois,
       datasetDois,
+      emslLinks,
       biosampleSearch,
       parentStudies,
       smAndDown,
@@ -495,6 +506,27 @@ export default defineComponent({
                 rel="noopener noreferrer"
               >
                 {{ link }}
+              </a>
+            </div>
+          </div>
+        </AttributeRow>
+
+        <AttributeRow
+          v-if="emslLinks.length > 0"
+          label="EMSL Project Identifiers"
+        >
+          <div class="stack-sm">
+            <div
+              v-for="emslLink in emslLinks"
+              :key="emslLink.label"
+            >
+              <a
+                v-if="emslLink.label"
+                :href="emslLink.url"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ emslLink.label }}
               </a>
             </div>
           </div>
