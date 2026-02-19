@@ -1073,7 +1073,7 @@ export default defineComponent({
             <v-icon class="pr-1">
               mdi-arrow-left-circle
             </v-icon>
-            Go to Template Selection
+            Go to Sample Environment
           </v-btn-grey>
           <v-spacer />
           <div class="d-flex align-center">
