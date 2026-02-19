@@ -15,6 +15,7 @@ from nmdc_server.ingest import (
     envo,
     kegg,
     omics_processing,
+    ontology,
     pipeline,
     search_index,
     study,
@@ -65,6 +66,12 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
         directConnection=True,
     )
     mongodb = client[settings.mongo_database]
+
+    with duration_logger(logger, "Loading ontology data"):
+        ontology.load(
+            db, mongodb["ontology_class_set"].find(), mongodb["ontology_relation_set"].find()
+        )
+        db.commit()
 
     with duration_logger(logger, "Loading ENVO terms"):
         envo.load(db)
