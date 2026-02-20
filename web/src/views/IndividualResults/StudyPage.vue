@@ -25,6 +25,7 @@ import AttributeRow from '@/components/Presentation/AttributeRow.vue';
 import DoiCitation from '@/components/Presentation/DoiCitation.vue';
 import DownloadDialog from '@/components/DownloadDialog.vue';
 import ErrorDialog from '@/components/ErrorDialog.vue';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
 const GOLD_STUDY_LINK_BASE = 'https://gold.jgi.doe.gov/study?id=';
 const BIOPROJECT_LINK_BASE = 'https://bioregistry.io/';
@@ -138,10 +139,9 @@ export default defineComponent({
       ];
       emslLinks.value = (_study.annotations?.emsl_project_identifiers || []).map((id: string) => {
         const projectId = id.split(':')[1];
-        const url = `https://sc.emsl.pnnl.gov/login?subSrc=data%2F%3FprojectId%3D${projectId}`;
         return {
           label: projectId,
-          url
+          url: NmdcSchema.prefixes['emsl.project'].prefix_reference + projectId
         };
       });
 
