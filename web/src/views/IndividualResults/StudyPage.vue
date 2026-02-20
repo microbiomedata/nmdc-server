@@ -27,8 +27,6 @@ import DownloadDialog from '@/components/DownloadDialog.vue';
 import ErrorDialog from '@/components/ErrorDialog.vue';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
-const GOLD_STUDY_LINK_BASE = 'https://gold.jgi.doe.gov/study?id=';
-const BIOPROJECT_LINK_BASE = 'https://bioregistry.io/';
 const DEFAULT_BIOSAMPLE_PAGE_SIZE = 5;
 
 export default defineComponent({
@@ -127,12 +125,14 @@ export default defineComponent({
       awardDois.value = Object.values(_study.doi_map).filter((doi) => doi.category === 'award_doi');
       datasetDois.value = Object.values(_study.doi_map).filter((doi) => doi.category === 'dataset_doi');
 
-      goldLinks.value = (_study.gold_study_identifiers || []).map((gold_id: string) => (
-        GOLD_STUDY_LINK_BASE + gold_id.replace('gold:', '')
-      ));
-      bioprojectLinks.value = (_study.annotations?.insdc_bioproject_identifiers || []).map((id: string) => (
-        BIOPROJECT_LINK_BASE + id
-      ));
+      goldLinks.value = (_study.gold_study_identifiers || []).map((id: string) => {
+        const goldId = id.split(':')[1];
+        return NmdcSchema.prefixes['gold'].prefix_reference + goldId;
+      });
+      bioprojectLinks.value = (_study.annotations?.insdc_bioproject_identifiers || []).map((id: string) => {
+        const projectId = id.split(':')[1];
+        return NmdcSchema.prefixes['bioproject'].prefix_reference + projectId;
+      });
       websiteLinks.value = [
         ...(_study.homepage_website || []),
         ...(_study.principal_investigator_websites || []),
