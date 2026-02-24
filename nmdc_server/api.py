@@ -15,6 +15,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, 
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_api_utilities.biosample_search import BiosampleSearch
+from nmdc_api_utilities.data_object_search import DataObjectSearch
 from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import text
@@ -438,6 +439,7 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
     endpoint_map = {
         "biosamples": search_biosample_source_metadata,
         "studies": search_study_source_metadata,
+        "data_objects": search_data_object_source_metadata,
     }
 
     zip_buffer = io.BytesIO()
@@ -847,6 +849,28 @@ def data_object_aggregation(
     db: Session = Depends(get_db),
 ):
     return crud.aggregate_data_object_by_workflow(db, query.conditions)
+
+
+@router.post(
+    "/data_object/search/source_metadata",
+    tags=["data_object"],
+)
+async def search_data_object_source_metadata(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+):
+    """
+    Get a list of data_object source metadata via the Runtime API
+    based on supplied biosample conditions.
+    """
+    data_object_search = DataObjectSearch()
+    data_object_ids = crud.search_data_objects(db, q.conditions).with_entities(models.DataObject.id).all()
+    print(data_object_ids)
+    # return [id for (id,) in data_object_ids]
+    results = data_object_search.get_records_by_id([id for (id,) in data_object_ids])
+    if not results:
+        raise HTTPException(status_code=404, detail="Could not retrieve source data for data objects")
+    return results
 
 
 @router.get("/principal_investigator/{principal_investigator_id}", tags=["principal_investigator"])
