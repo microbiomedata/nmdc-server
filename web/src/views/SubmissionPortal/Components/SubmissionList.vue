@@ -88,9 +88,10 @@ export default defineComponent({
       { text: 'Show all submissions', val: null },
       { text: 'Show only test submissions', val: true },
       { text: 'Hide test submissions', val: false }];
+    const searchText = ref('');
 
     async function getSubmissions(params: SearchParams): Promise<PaginatedResponse<MetadataSubmissionRecordSlim>> {
-      return api.listRecords(params, isTestFilter.value);
+      return api.listRecords(params, isTestFilter.value,searchText.value);
     }
 
     function getStatus(item: MetadataSubmissionRecord) {
@@ -138,6 +139,12 @@ export default defineComponent({
       submission.setPage(options.value.page);
       applySortOptions();
     }, { deep: true });
+
+    watch(searchText, () => {
+      options.value.page = 1;
+      submission.setPage(options.value.page);
+      applySortOptions();
+    });
 
     function handleOpenDeleteDialog(item: MetadataSubmissionRecordSlim | null) {
       deleteDialogSubmission.value = item;
@@ -238,6 +245,7 @@ export default defineComponent({
       SubmissionStatusEnum,
       isAnyContributorForSubmission,
       updateTableOptions,
+      searchText,
     };
   },
 });
@@ -312,6 +320,16 @@ export default defineComponent({
           <v-col
             cols="3"
           >
+            <v-text-field
+              v-model="searchText"
+              label="Search"
+              variant="outlined"
+              class="pr-2"
+              hide-details
+              clearable
+            />
+          </v-col>
+          <v-col>
             <v-select
               v-model="isTestFilter"
               :items="testFilterValues"

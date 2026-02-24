@@ -1250,13 +1250,14 @@ async def get_paginated_submission_list(
     column_sort: str = "created",
     sort_order: str = "desc",
     is_test_submission_filter: Optional[bool] = None,
+    search_text: str = "",
 ):
     """
     Dependency function for getting a list of submissions with pagination, sorting, and filtering
     applied.
     """
     query = crud.get_submissions_for_user(
-        db, user, column_sort, sort_order, is_test_submission_filter
+        db, user, column_sort, sort_order, is_test_submission_filter, search_text
     )
     return pagination.response(query)
 
