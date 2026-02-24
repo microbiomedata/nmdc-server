@@ -20,11 +20,14 @@ from nmdc_server.logger import get_logger
 
 HERE = Path(__file__).parent
 
-logger = get_logger(__name__)
-
 
 def update_nmdc_functions():
     """Update NMDC custom functions for both databases."""
+
+    # Note: We get the logger within this function instead of at the module level because, when we
+    #       got it at the module level, it would work in local development only—not in production.
+    logger = get_logger(__name__)
+
     for db_info in [(database.SessionLocal, "active"), (database.SessionLocalIngest, "ingest")]:
         db_to_update, db_type = db_info
         with db_to_update() as db:
@@ -62,6 +65,10 @@ def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
 
     Returns a dictionary containing reports about various parts of the ingest process.
     """
+
+    # Note: We get the logger within this function instead of at the module level because, when we
+    #       got it at the module level, it would work in local development only—not in production.
+    logger = get_logger(__name__)
 
     with database.SessionLocalIngest() as ingest_db:
         try:
