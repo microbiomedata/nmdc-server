@@ -53,18 +53,19 @@ def migrate(ingest_db: bool = False):
         alembic_cfg.attributes["configure_logger"] = True
         command.upgrade(alembic_cfg, "head")
 
-    # Re-enable the `nmdc_server.jobs` logger, since Alembic will have disabled it [1].
-    #
-    # Note: Alembic configures logging (in `nmdc_server/migrations/env.py`) by calling the
-    #       `logging.config.fileConfig` function, which has a `disable_existing_logger` parameter
-    #       whose default value is `True` and whose default value is not being overridden.
-    #       Rather than modify that `env.py` file, we have opted to re-enable the logger here.
-    #
-    # References:
-    # - [1] https://stackoverflow.com/a/78780205
-    # - [2] https://docs.python.org/3/library/logging.config.html#logging.config.fileConfig
-    #
-    logger.disabled = False
+        # Re-enable the `nmdc_server.jobs` logger, since Alembic will have disabled it [1].
+        #
+        # Note: Alembic configures logging (in `nmdc_server/migrations/env.py`) by calling the
+        #       `logging.config.fileConfig` function. That function has a parameter named
+        #       `disable_existing_logger` whose default value is `True` and is not being overridden.
+        #       Rather than modify that `env.py` file in order to prevent the disabling of the
+        #       logger, we have opted to re-enable the (recently-disabled) logger here.
+        #
+        # References:
+        # - [1] https://stackoverflow.com/a/78780205
+        # - [2] https://docs.python.org/3/library/logging.config.html#logging.config.fileConfig
+        #
+        logger.disabled = False
 
 def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
     r"""
