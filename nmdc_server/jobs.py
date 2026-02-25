@@ -20,14 +20,11 @@ from nmdc_server.logger import get_logger
 
 HERE = Path(__file__).parent
 
+logger = get_logger(__name__)
+
 
 def update_nmdc_functions():
     """Update NMDC custom functions for both databases."""
-
-    # Note: We get the logger within this function instead of at the module level because, when we
-    #       got it at the module level, it would work in local development only—not in production.
-    logger = get_logger(__name__)
-
     for db_info in [(database.SessionLocal, "active"), (database.SessionLocalIngest, "ingest")]:
         db_to_update, db_type = db_info
         with db_to_update() as db:
@@ -56,6 +53,23 @@ def migrate(ingest_db: bool = False):
         alembic_cfg.attributes["configure_logger"] = True
         command.upgrade(alembic_cfg, "head")
 
+        # Reenable the `nmdc_server.jobs` logger, since Alembic will have disabled it [1].
+        #
+        # Note: Alembic configures logging (in `nmdc_server/migrations/env.py`) by calling the
+        #       `logging.config.fileConfig` function. That function has a parameter named
+        #       `disable_existing_loggers` whose default value is `True` and is not being overridden.
+        #       Rather than modify that `env.py` file in order to prevent the disabling of existing
+        #       loggers, we have opted to reenable the specific logger we still want to use.
+        #
+        # TODO: Consider modifying `env.py` to prevent the disabling of existing loggers in the
+        #       first place.
+        #
+        # References:
+        # - [1] https://stackoverflow.com/a/78780205
+        # - [2] https://docs.python.org/3/library/logging.config.html#logging.config.fileConfig
+        #
+        logger.disabled = False
+
 
 def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
     r"""
@@ -65,11 +79,6 @@ def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
 
     Returns a dictionary containing reports about various parts of the ingest process.
     """
-
-    # Note: We get the logger within this function instead of at the module level because, when we
-    #       got it at the module level, it would work in local development only—not in production.
-    logger = get_logger(__name__)
-
     with database.SessionLocalIngest() as ingest_db:
         try:
             ingest_db.execute(text("select truncate_tables()")).all()
