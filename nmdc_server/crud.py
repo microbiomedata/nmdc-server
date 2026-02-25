@@ -884,7 +884,7 @@ def get_submissions_for_user(
     column_sort: str,
     order: str,
     is_test_submission_filter: Optional[bool] = None,
-    search_text: str = "",
+    search_text: Optional[str] = None,
 ):
     """Return all submissions that a user has permission to view."""
     column = (
@@ -908,13 +908,13 @@ def get_submissions_for_user(
         all_submissions = all_submissions.filter(
             models.SubmissionMetadata.is_test_submission == is_test_submission_filter
         )
-
-    if search_text != "":
-        search_text = f"%{search_text.lower()}%"
+    print(search_text)
+    if search_text:
+        search_text = f"%{search_text}%"
         all_submissions = all_submissions.filter(
             or_(
-                func.lower(models.SubmissionMetadata.study_name).ilike(search_text),
-                func.lower(models.User.name).ilike(search_text),
+                models.SubmissionMetadata.study_name.ilike(search_text),
+                models.User.name.ilike(search_text),
             )
         )
 

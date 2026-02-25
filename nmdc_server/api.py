@@ -1250,7 +1250,7 @@ async def get_paginated_submission_list(
     column_sort: str = "created",
     sort_order: str = "desc",
     is_test_submission_filter: Optional[bool] = None,
-    search_text: str = "",
+    search_text: Optional[str] = None,
 ):
     """
     Dependency function for getting a list of submissions with pagination, sorting, and filtering

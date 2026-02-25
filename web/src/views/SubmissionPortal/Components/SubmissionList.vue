@@ -325,6 +325,8 @@ export default defineComponent({
               label="Search"
               variant="outlined"
               class="pr-2"
+              placeholder="Search by study name or author"
+              persistent-placeholder
               hide-details
               clearable
             />
