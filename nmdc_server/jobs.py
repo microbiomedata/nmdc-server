@@ -67,6 +67,7 @@ def migrate(ingest_db: bool = False):
         #
         logger.disabled = False
 
+
 def do_ingest(function_limit, skip_annotation) -> Dict[str, ETLReport]:
     r"""
     Note: The `ingest_lock()` function invoked within this function may raise an exception.
