@@ -330,7 +330,7 @@ export default defineComponent({
                 variant="outlined"
                 persistent-hint
                 :error-messages="contributor.name ? undefined : ['Contributor Name cannot be empty.']"
-                class="mr-3"
+                class="mr-3 mb-3"
               />
               <v-text-field
                 v-model="contributor.orcid"
@@ -339,6 +339,7 @@ export default defineComponent({
                 :disabled="currentUserOrcid === contributor.orcid || undefined"
                 label="ORCID"
                 variant="outlined"
+                class="mb-3"
                 persistent-hint
                 :style="{ maxWidth: '400px'}"
               >
