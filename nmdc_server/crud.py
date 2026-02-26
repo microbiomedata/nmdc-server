@@ -908,7 +908,6 @@ def get_submissions_for_user(
         all_submissions = all_submissions.filter(
             models.SubmissionMetadata.is_test_submission == is_test_submission_filter
         )
-    print(search_text)
     if search_text:
         search_text = f"%{search_text}%"
         all_submissions = all_submissions.filter(
