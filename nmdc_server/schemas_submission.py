@@ -79,8 +79,10 @@ class MultiOmicsForm(BaseModel):
     unknownDoi: Optional[bool] = None
     mpProtocols: Optional[Protocols] = None
     mbProtocols: Optional[Protocols] = None
+    mbGcProtocols: Optional[Protocols] = None
     lipProtocols: Optional[Protocols] = None
     nomProtocols: Optional[Protocols] = None
+    nomLcProtocols: Optional[Protocols] = None
 
     # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
     # NCBIBioProjectId in this form until it catches up with the new data model in its next release
