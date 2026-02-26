@@ -351,6 +351,11 @@ interface Protocols {
 /**
  * Multi-Omics Form Step
  */
+export type OmicsProcessingType =
+  // non-doe types
+  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' |
+  // doe facility associated types
+  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' | 'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi';
 const multiOmicsFormDefault = {
   award: null as null | string,
   awardDois: [] as Doi[] | null,
@@ -363,15 +368,17 @@ const multiOmicsFormDefault = {
   mgInterleaved: null as null | boolean,
   mtCompatible: null as null | boolean,
   mtInterleaved: null as null | boolean,
-  omicsProcessingTypes: [] as string[],
+  omicsProcessingTypes: [] as OmicsProcessingType[],
   otherAward: null as null | string,
   ship: null as null | boolean,
   studyNumber: '',
   unknownDoi: null as null | boolean,
   mpProtocols: null as null | Protocols,
   mbProtocols: null as null | Protocols,
+  mbGcProtocols: null as null | Protocols,
   lipProtocols: null as null | Protocols,
   nomProtocols: null as null | Protocols,
+  nomLcProtocols: null as null | Protocols,
 };
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
@@ -486,12 +493,20 @@ watch(() => multiOmicsForm.omicsProcessingTypes, (newValue, oldValue) => {
   if (!newValue.includes('mb') && oldValue.includes('mb')) {
     multiOmicsForm.mbProtocols = null;
   }
+  // mb-gc was removed
+  if (!newValue.includes('mb-gc') && oldValue.includes('mb-gc')) {
+    multiOmicsForm.mbGcProtocols = null;
+  }
   // nom was removed
   if (!newValue.includes('nom') && oldValue.includes('nom')) {
     multiOmicsForm.nomProtocols = null;
   }
+  // nom-lc was removed
+  if (!newValue.includes('nom-lc') && oldValue.includes('nom-lc')) {
+    multiOmicsForm.nomLcProtocols = null;
+  }
   // lipidome was removed
-  if (!newValue.includes('lipidome-emsl') && oldValue.includes('lipidome-emsl')) {
+  if (!newValue.includes('lipidome') && oldValue.includes('lipidome')) {
     multiOmicsForm.lipProtocols = null;
   }
 });
