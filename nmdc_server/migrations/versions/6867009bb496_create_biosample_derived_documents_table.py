@@ -5,12 +5,12 @@ Revises: c5852f4f16b1
 Create Date: 2026-02-26 08:56:09.654967
 
 """
+
 from typing import Optional
 
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
-
 
 # revision identifiers, used by Alembic.
 revision: str = "6867009bb496"
@@ -32,7 +32,7 @@ def upgrade():
             postgresql.UUID(as_uuid=True),
             nullable=False,
             primary_key=True,
-            server_default=sa.text("gen_random_uuid()")
+            server_default=sa.text("gen_random_uuid()"),
         ),
         sa.Column(
             "biosample_id", sa.String(), nullable=False, comment="The ID of the subject biosample"
@@ -41,7 +41,7 @@ def upgrade():
             "document",
             sa.JSON(),
             nullable=False,
-            comment="NMDC Schema-compliant document downstream of the subject biosample"
+            comment="NMDC Schema-compliant document downstream of the subject biosample",
         ),
         sa.ForeignKeyConstraint(
             ["biosample_id"],
