@@ -13,8 +13,8 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6867009bb496'
-down_revision: Optional[str] = 'c5852f4f16b1'
+revision: str = "6867009bb496"
+down_revision: Optional[str] = "c5852f4f16b1"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
@@ -27,9 +27,22 @@ def upgrade():
         #       a SQL client (such as DBeaver) to create a row that _lacks_ an `id` value, and
         #       Postgres will _automatically_ generate one. This can save developers from having to
         #       context switch.
-        sa.Column("id", postgresql.UUID(as_uuid=True), nullable=False, primary_key=True, server_default=sa.text("gen_random_uuid()")),
-        sa.Column("biosample_id", sa.String(), nullable=False, comment="The ID of the subject biosample"),
-        sa.Column("document", sa.JSON(), nullable=False, comment="NMDC Schema-compliant document downstream of the subject biosample"),
+        sa.Column(
+            "id",
+            postgresql.UUID(as_uuid=True),
+            nullable=False,
+            primary_key=True,
+            server_default=sa.text("gen_random_uuid()")
+        ),
+        sa.Column(
+            "biosample_id", sa.String(), nullable=False, comment="The ID of the subject biosample"
+        ),
+        sa.Column(
+            "document",
+            sa.JSON(),
+            nullable=False,
+            comment="NMDC Schema-compliant document downstream of the subject biosample"
+        ),
         sa.ForeignKeyConstraint(
             ["biosample_id"],
             ["biosample.id"],
