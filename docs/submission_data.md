@@ -48,6 +48,19 @@ all_submissions = (
 )
 ```
 
+## Data Flow and Submission Process
+
+### User Edits
+As users interact with the Submission Portal forms and DataHarmonizer, the `submission_metadata` table in the PostgreSQL database is updated in real-time. This means that while a submission's status is `InProgress`, it may contain incomplete or temporarily incorrect information. This is expected behavior as the data is actively being drafted.
+
+### Review and Ingestion
+When a user officially submits their submission, it enters a manual review phase. During this time, NMDC staff review the submission for completeness and accuracy.
+
+Once the manual review is successfully completed, the submission data is finalized and prepared for ingestion into MongoDB.
+
+### Translation to NMDC Schema
+The final stage of the data flow involves translating the submission record into formal NMDC schema objects (e.g., `Study`, `Biosample`, `NucleotideSequencing`). This process is managed by a Dagster job within the `nmdc-runtime` environment. The `nmdc-runtime` code fetches the submission metadata from `nmdc-server` and uses a [dedicated translator](https://github.com/microbiomedata/nmdc-runtime/blob/273bb0d738deafdf7ff55e7a3904f3d9be00801d/nmdc_runtime/site/translation/submission_portal_translator.py) to map the JSONB form data into standard `nmdc-schema` instances.
+
 ## API Access
 
 Outside of the internal `nmdc-server` code, submission data can be accessed via several REST API endpoints:
