@@ -102,9 +102,8 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
         logger.info(biosample_etl_report)
 
     with duration_logger(logger, "Loading biosample-related documents"):
-        biosample_related_document_etl_report = biosample_related_document.load(db, mongodb)
+        biosample_related_document.load(db, mongodb)
         db.commit()
-        logger.info(biosample_related_document_etl_report)
 
     with duration_logger(logger, "Loading omics processing"):
         omics_processing.load(
@@ -283,5 +282,4 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
         study_etl_report=study_etl_report,
         biosample_etl_report=biosample_etl_report,
         data_object_etl_report=data_object_etl_report,
-        biosample_related_document_etl_report=biosample_related_document_etl_report,
     )
