@@ -10,6 +10,7 @@ from nmdc_server.config import Settings
 from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.ingest import (
     biosample,
+    biosample_related_document,
     common,
     data_object,
     envo,
@@ -99,6 +100,11 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
         )
         db.commit()
         logger.info(biosample_etl_report)
+
+    with duration_logger(logger, "Loading biosample-related documents"):
+        biosample_related_document_etl_report = biosample_related_document.load(db, mongodb)
+        db.commit()
+        logger.info(biosample_related_document_etl_report)
 
     with duration_logger(logger, "Loading omics processing"):
         omics_processing.load(
@@ -277,4 +283,5 @@ def load(db: Session, function_limit=None, skip_annotation=False) -> Dict[str, c
         study_etl_report=study_etl_report,
         biosample_etl_report=biosample_etl_report,
         data_object_etl_report=data_object_etl_report,
+        biosample_related_document_etl_report=biosample_related_document_etl_report,
     )
