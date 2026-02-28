@@ -42,7 +42,7 @@ def upgrade():
         ),
         sa.Column(
             "document",
-            postgresql.JSONB(astext_type=sa.Text()),
+            postgresql.JSONB(astext_type=sa.Text()),  # type: ignore[call-arg]
             nullable=False,
             comment="NMDC Schema-compliant document downstream of the subject biosample",
         ),

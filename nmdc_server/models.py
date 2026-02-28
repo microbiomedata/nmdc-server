@@ -450,6 +450,7 @@ class BiosampleRelatedDocument(Base):
     Table containing JSON documents (typically ingested from a MongoDB database)
     related to biosamples.
     """
+
     __tablename__ = "biosample_related_document"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
