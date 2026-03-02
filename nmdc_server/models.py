@@ -455,6 +455,7 @@ class BiosampleRelatedDocument(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     biosample_id = Column(String, ForeignKey("biosample.id", ondelete="CASCADE"), nullable=False)
+    high_level_type = Column(String, nullable=False)
     document = Column(JSONB, nullable=False)
 
     # Note: This makes it so an instance of this class has an attribute named `biosample` that

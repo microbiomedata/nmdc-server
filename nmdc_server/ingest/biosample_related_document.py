@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 from pymongo.database import Database
 from sqlalchemy.orm import Session
@@ -6,13 +6,16 @@ from sqlalchemy.orm import Session
 from nmdc_server.models import BiosampleRelatedDocument
 
 
-def get_downstream_related_documents(biosample_id: str, mongodb: Database) -> List[dict]:
+def get_downstream_related_documents(biosample_id: str, mongodb: Database) -> List[Tuple[dict, str]]:
     """
     Gets documents that are downstream of the specified `Biosample` and whose type ancestry chains
     include any of the following types (in this function, we call these "target types"):
     - nmdc:DataGeneration
     - nmdc:WorkflowExecution
     - nmdc:DataObject
+
+    Returns a list of tuples; in which the first element of each tuple is a document and
+    the second element is the target type (see above) of that document.
 
     TODO: Use the source of truth collections instead of the derived `alldocs` collection,
           whose existence we want to keep as an "internal implementation detail of the Runtime."
@@ -82,21 +85,24 @@ def get_downstream_related_documents(biosample_id: str, mongodb: Database) -> Li
         downstream_document_type_and_ancestors = sparse_downstream_document["_type_and_ancestors"]
         downstream_document_id = sparse_downstream_document["id"]
 
-        # Identify the collection that contains the "dense" version of the "sparse" document.
+        # Identify the collection that contains the "dense" version of the "sparse" document
+        # and determine which target type was matched.
         collection_name = None
+        matched_target_type = None
         for target_type in target_types:
             if target_type in downstream_document_type_and_ancestors:
                 collection_name = target_type_to_collection_name_map[target_type]
+                matched_target_type = target_type
                 break
 
         # Get the "dense" document from the identified collection.
-        if collection_name is not None:
+        if collection_name is not None and matched_target_type is not None:
             document = mongodb.get_collection(collection_name).find_one(
                 {"id": downstream_document_id},
                 projection,
             )
             if document is not None:
-                downstream_related_documents.append(document)
+                downstream_related_documents.append((document, matched_target_type))
             else:
                 raise ValueError(
                     f"Failed to find document '{downstream_document_id}' in '{collection_name}' collection"
@@ -119,25 +125,26 @@ def load(db: Session, mongodb: Database) -> None:
 
     # Fetch documents from MongoDB
     for biosample_document in biosample_set.find({}, projection):
-        documents_to_load = []
+        documents_and_target_types: List[Tuple[dict, str]] = []
 
         # Include the `Biosample` document, itself.
-        documents_to_load.append(biosample_document)
+        documents_and_target_types.append((biosample_document, "nmdc:Biosample"))
 
         # Include the associated `Study` document(s).
         associated_studies = biosample_document["associated_studies"]
         for study_document in study_set.find({"id": {"$in": associated_studies}}, projection):
-            documents_to_load.append(study_document)
+            documents_and_target_types.append((study_document, "nmdc:Study"))
 
         # Include the downstream related documents (that are either `DataGeneration`s,
         # `WorkflowExecution`s, or `DataObject`s).
         biosample_id = biosample_document["id"]
-        downstream_related_documents = get_downstream_related_documents(biosample_id, mongodb)
-        documents_to_load.extend(downstream_related_documents)
+        downstream_related_documents_and_target_types = get_downstream_related_documents(biosample_id, mongodb)
+        documents_and_target_types.extend(downstream_related_documents_and_target_types)
 
         # Load the documents into the Postgres database.
-        for document_to_load in documents_to_load:
+        for document_to_load, target_type in documents_and_target_types:
             biosample_related_document = BiosampleRelatedDocument()
             biosample_related_document.biosample_id = biosample_id
+            biosample_related_document.high_level_type = target_type
             biosample_related_document.document = document_to_load
             db.add(biosample_related_document)
