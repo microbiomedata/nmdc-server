@@ -347,7 +347,7 @@ docker compose run --rm backend alembic -c nmdc_server/alembic.ini upgrade +1
 
 # Migrate the database backward by 1 migration.
 # This can be used to invoke a migration's `downgrade` function.
-docker compose run --rm backend alembic -c nmdc_server/alembic.ini upgrade -1
+docker compose run --rm backend alembic -c nmdc_server/alembic.ini downgrade -1
 ```
 
 ## Developing with the shell
