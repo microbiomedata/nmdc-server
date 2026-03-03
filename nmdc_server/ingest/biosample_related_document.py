@@ -141,7 +141,7 @@ def load(db: Session, mongodb: Database) -> None:
         biosample_ids = [
             row[0]
             for row in db.query(
-                BiosampleRelatedDocument.document["id"].astext,  # type: ignore[reportOptionCall]
+                BiosampleRelatedDocument.document["id"].astext,
             )
             .filter(BiosampleRelatedDocument.high_level_type == "nmdc:Biosample")
             .all()
@@ -195,15 +195,13 @@ def load(db: Session, mongodb: Database) -> None:
 
             # Update each document that is _anywhere_ downstream from this biosample, so that its
             # `biosample_ids` column contains the ID of this biosample.
-            # Docs: https://www.postgresql.org/docs/current/functions-array.html
-            db.execute(
-                update(BiosampleRelatedDocument)
-                .where(BiosampleRelatedDocument.document["id"].astext.in_(downstream_document_ids))
-                .values(
-                    biosample_ids=func.array_append(
-                        BiosampleRelatedDocument.biosample_ids, biosample_id
-                    )
-                )
+            downstream_documents = (
+                db.query(BiosampleRelatedDocument)
+                .filter(BiosampleRelatedDocument.document["id"].astext.in_(downstream_document_ids))
+                .all()
             )
+            for downstream_document in downstream_documents:
+                if biosample_id not in downstream_document.biosample_ids:
+                    downstream_document.biosample_ids.append(biosample_id)
 
     return None
