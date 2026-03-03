@@ -39,81 +39,99 @@ def load(db: Session, mongodb: Database) -> None:
 
     with duration_logger(logger, "Loading biosamples and identifying downstream neighbors"):
         for biosample_document in biosample_set.find({}, projection_omitting_oid):
-                biosample_related_document = BiosampleRelatedDocument()
-                biosample_related_document.biosample_ids = [biosample_document["id"]]
-                biosample_related_document.high_level_type = "nmdc:Biosample"
-                biosample_related_document.document = biosample_document
+            biosample_related_document = BiosampleRelatedDocument()
+            biosample_related_document.biosample_ids = [biosample_document["id"]]
+            biosample_related_document.high_level_type = "nmdc:Biosample"
+            biosample_related_document.document = biosample_document
 
-                # Identify downstream neighbors.
-                biosample_related_document.downstream_neighbor_ids = []
-                for data_generation_document in data_generation_set.find({"has_input": biosample_document["id"]}, projection_selecting_id):
-                    biosample_related_document.downstream_neighbor_ids.append(data_generation_document["id"])
+            # Identify downstream neighbors.
+            biosample_related_document.downstream_neighbor_ids = []
+            for data_generation_document in data_generation_set.find(
+                {"has_input": biosample_document["id"]}, projection_selecting_id
+            ):
+                biosample_related_document.downstream_neighbor_ids.append(
+                    data_generation_document["id"]
+                )
 
-                db.add(biosample_related_document)
+            db.add(biosample_related_document)
         db.commit()
 
-    with duration_logger(logger, "Loading studies and identifying downstream neighbors (and related biosamples)"):
+    with duration_logger(
+        logger, "Loading studies and identifying downstream neighbors (and related biosamples)"
+    ):
         for study_document in study_set.find({}, projection_omitting_oid):
-                biosample_related_document = BiosampleRelatedDocument()
-                biosample_related_document.biosample_ids = []
-                biosample_related_document.high_level_type = "nmdc:Study"
-                biosample_related_document.document = study_document
+            biosample_related_document = BiosampleRelatedDocument()
+            biosample_related_document.biosample_ids = []
+            biosample_related_document.high_level_type = "nmdc:Study"
+            biosample_related_document.document = study_document
 
-                # Identify downstream neighbors.
-                biosample_related_document.downstream_neighbor_ids = []
-                for biosample_document in biosample_set.find({"associated_studies": study_document["id"]}, projection_selecting_id):
-                    biosample_related_document.downstream_neighbor_ids.append(biosample_document["id"])
+            # Identify downstream neighbors.
+            biosample_related_document.downstream_neighbor_ids = []
+            for biosample_document in biosample_set.find(
+                {"associated_studies": study_document["id"]}, projection_selecting_id
+            ):
+                biosample_related_document.downstream_neighbor_ids.append(biosample_document["id"])
 
-                    # In this case, we also record this downstream neighbor as a related biosample,
-                    # specifically, since we want to identify those anyway for each document.
-                    biosample_related_document.biosample_ids.append(biosample_document["id"])
+                # In this case, we also record this downstream neighbor as a related biosample,
+                # specifically, since we want to identify those anyway for each document.
+                biosample_related_document.biosample_ids.append(biosample_document["id"])
 
-                db.add(biosample_related_document)
+            db.add(biosample_related_document)
         db.commit()
 
     with duration_logger(logger, "Loading data generations and identifying downstream neighbors"):
         for data_generation_document in data_generation_set.find({}, projection_omitting_oid):
-                biosample_related_document = BiosampleRelatedDocument()
-                biosample_related_document.biosample_ids = []
-                biosample_related_document.high_level_type = "nmdc:DataGeneration"
-                biosample_related_document.document = data_generation_document
+            biosample_related_document = BiosampleRelatedDocument()
+            biosample_related_document.biosample_ids = []
+            biosample_related_document.high_level_type = "nmdc:DataGeneration"
+            biosample_related_document.document = data_generation_document
 
-                # Identify downstream neighbors.
-                biosample_related_document.downstream_neighbor_ids = []
-                if "has_output" in data_generation_document:
-                    biosample_related_document.downstream_neighbor_ids = data_generation_document["has_output"]
+            # Identify downstream neighbors.
+            biosample_related_document.downstream_neighbor_ids = []
+            if "has_output" in data_generation_document:
+                biosample_related_document.downstream_neighbor_ids = data_generation_document[
+                    "has_output"
+                ]
 
-                db.add(biosample_related_document)
+            db.add(biosample_related_document)
         db.commit()
 
-    with duration_logger(logger, "Loading workflow executions and identifying downstream neighbors"):
+    with duration_logger(
+        logger, "Loading workflow executions and identifying downstream neighbors"
+    ):
         for workflow_execution_document in workflow_execution_set.find({}, projection_omitting_oid):
-                biosample_related_document = BiosampleRelatedDocument()
-                biosample_related_document.biosample_ids = []
-                biosample_related_document.high_level_type = "nmdc:WorkflowExecution"
-                biosample_related_document.document = workflow_execution_document
+            biosample_related_document = BiosampleRelatedDocument()
+            biosample_related_document.biosample_ids = []
+            biosample_related_document.high_level_type = "nmdc:WorkflowExecution"
+            biosample_related_document.document = workflow_execution_document
 
-                # Identify downstream neighbors.
-                biosample_related_document.downstream_neighbor_ids = []
-                if "has_output" in workflow_execution_document:
-                    biosample_related_document.downstream_neighbor_ids = workflow_execution_document["has_output"]
+            # Identify downstream neighbors.
+            biosample_related_document.downstream_neighbor_ids = []
+            if "has_output" in workflow_execution_document:
+                biosample_related_document.downstream_neighbor_ids = workflow_execution_document[
+                    "has_output"
+                ]
 
-                db.add(biosample_related_document)
+            db.add(biosample_related_document)
         db.commit()
 
     with duration_logger(logger, "Loading data objects and identifying downstream neighbors"):
         for data_object_document in data_object_set.find({}, projection_omitting_oid):
-                biosample_related_document = BiosampleRelatedDocument()
-                biosample_related_document.biosample_ids = []
-                biosample_related_document.high_level_type = "nmdc:DataObject"
-                biosample_related_document.document = data_object_document
+            biosample_related_document = BiosampleRelatedDocument()
+            biosample_related_document.biosample_ids = []
+            biosample_related_document.high_level_type = "nmdc:DataObject"
+            biosample_related_document.document = data_object_document
 
-                # Identify downstream neighbors.
-                biosample_related_document.downstream_neighbor_ids = []
-                for workflow_execution_document in workflow_execution_set.find({"has_input": data_object_document["id"]}, projection_selecting_id):
-                    biosample_related_document.downstream_neighbor_ids.append(workflow_execution_document["id"])
+            # Identify downstream neighbors.
+            biosample_related_document.downstream_neighbor_ids = []
+            for workflow_execution_document in workflow_execution_set.find(
+                {"has_input": data_object_document["id"]}, projection_selecting_id
+            ):
+                biosample_related_document.downstream_neighbor_ids.append(
+                    workflow_execution_document["id"]
+                )
 
-                db.add(biosample_related_document)
+            db.add(biosample_related_document)
         db.commit()
 
     # Use the downstream neighbor identities we gathered above to determine which biosample(s)
@@ -121,11 +139,12 @@ def load(db: Session, mongodb: Database) -> None:
     with duration_logger(logger, "Populating `biosample_ids` fields."):
         # Get the IDs of all biosamples.
         biosample_ids = [
-            row[0] for row in db.query(
+            row[0]
+            for row in db.query(
                 BiosampleRelatedDocument.document["id"].astext,  # type: ignore[reportOptionCall]
-            ).filter(
-                BiosampleRelatedDocument.high_level_type == "nmdc:Biosample"
-            ).all()
+            )
+            .filter(BiosampleRelatedDocument.high_level_type == "nmdc:Biosample")
+            .all()
         ]
         # For each biosample ID, identify each document that is _anywhere_ downstream from that biosample.
         for biosample_id in biosample_ids:
@@ -170,15 +189,21 @@ def load(db: Session, mongodb: Database) -> None:
             """
             rows = db.execute(text(query), {"biosample_id": biosample_id}).fetchall()
             downstream_document_ids: List[str] = [row[0] for row in rows]
-            logger.debug(f"Biosample {biosample_id} downstream documents: {downstream_document_ids}")
+            logger.debug(
+                f"Biosample {biosample_id} downstream documents: {downstream_document_ids}"
+            )
 
             # Update each document that is _anywhere_ downstream from this biosample, so that its
             # `biosample_ids` column contains the ID of this biosample.
             # Docs: https://www.postgresql.org/docs/current/functions-array.html
             db.execute(
-                 update(BiosampleRelatedDocument)
-                 .where(BiosampleRelatedDocument.document["id"].astext.in_(downstream_document_ids))
-                 .values(biosample_ids=func.array_append(BiosampleRelatedDocument.biosample_ids, biosample_id))
+                update(BiosampleRelatedDocument)
+                .where(BiosampleRelatedDocument.document["id"].astext.in_(downstream_document_ids))
+                .values(
+                    biosample_ids=func.array_append(
+                        BiosampleRelatedDocument.biosample_ids, biosample_id
+                    )
+                )
             )
 
     return None
