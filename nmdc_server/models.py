@@ -23,7 +23,7 @@ from sqlalchemy import (
     UniqueConstraint,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, backref, query_expression, relationship
@@ -411,15 +411,6 @@ class Biosample(Base, AnnotatedModel):
     env_local_scale = relationship(EnvoTerm, foreign_keys=[env_local_scale_id], lazy="joined")
     env_medium = relationship(EnvoTerm, foreign_keys=[env_medium_id], lazy="joined")
 
-    # Note: This makes it so an instance of this class has an attribute named
-    #       `biosample_related_documents` that can be used to access the related
-    #       `BiosampleRelatedDocument` instance. The latter will be lazy loaded
-    #       once the attribute is accessed.
-    biosample_related_documents = relationship(
-        "BiosampleRelatedDocument",  # in quotes because the class hasn't been defined at this point
-        back_populates="biosample",
-    )
-
     @property
     def env_broad_scale_terms(self) -> List[str]:
         return list(self.env_broad_scale.ancestors)
@@ -454,14 +445,10 @@ class BiosampleRelatedDocument(Base):
     __tablename__ = "biosample_related_document"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    biosample_id = Column(String, ForeignKey("biosample.id", ondelete="CASCADE"), nullable=False)
+    biosample_ids = Column(ARRAY(String), nullable=False, default=list)
     high_level_type = Column(String, nullable=False)
     document = Column(JSONB, nullable=False)
-
-    # Note: This makes it so an instance of this class has an attribute named `biosample` that
-    #       can be used to access the related Biosample instance. The latter will be lazy loaded
-    #       once the attribute is accessed.
-    biosample = relationship(Biosample, back_populates="biosample_related_documents")
+    downstream_neighbor_ids = Column(ARRAY(String), nullable=False, default=list)
 
 
 omics_processing_output_association = output_association("omics_processing")
