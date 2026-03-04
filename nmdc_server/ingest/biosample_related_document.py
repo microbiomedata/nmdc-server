@@ -149,43 +149,51 @@ def load(db: Session, mongodb: Database) -> None:
         # For each biosample ID, identify each document that is _anywhere_ downstream from that biosample.
         for biosample_id in biosample_ids:
             query = """--sql
-                -- Note: This "WITH" statement is a Common Table Expression (CTE), which creates a
-                --       temporary table that we can use for a single query. We use it to recursively
-                --       traverse downstream neighbor relationships beginning from a single biosample.
+                -- Note: This "WITH RECURSIVE" statement creates a temporary so-called "working table"
+                --       (which happens to have a single column, named `downstream_neighbor_id`)
+                --       that we can reference from within the "recursive term" of the same query.
+                --       We use this query to recursively traverse downstream neighbors, relative to
+                --       one specific biosample (whose ID is referenced by `:biosample_id` below).
                 --
                 -- Docs: https://www.postgresql.org/docs/current/queries-with.html#QUERIES-WITH-RECURSIVE
                 --
-                WITH RECURSIVE temp_table AS (
-                    -- ▶️ Base case: Get the immediate downstream neighbors of the specified biosample.
-                    --               We could have gotten those IDs outside of this query, but doing it
-                    --               here keeps this base case more symmetrical with the recursive case.
-                    --
-                    -- Note: `unnest()` expands an array into a set of rows, where each array element
-                    --       is on its own row. We use it here to expand the `downstream_neighbor_ids`
-                    --       array elements into individual rows so that we can join on each of them.
-                    --       Docs: https://www.postgresql.org/docs/current/functions-array.html
-                    --
-                    -- Note: `:biosample_id` is a reference to a query parameter having that name.
-                    --
-                    SELECT unnest(downstream_neighbor_ids) AS downstream_document_id
-                    FROM biosample_related_document
-                    WHERE document->>'id' = :biosample_id
-
+                -- Note: We could, technically, make this faster by processing all biosample IDs in
+                --       a single query. I opted not to do that because (a) I already find recursion
+                --       to be difficult to think about, and I think doing that would increase the
+                --       difficulty; and (b) this runs during an ETL process and already takes under
+                --       ten seconds, in total, to process all biosample IDs (when run locally).
+                --
+                WITH RECURSIVE working_table(downstream_neighbor_id) AS (
+                        -- 1️⃣ Non-recursive term: Get the IDs of the (immediate) downstream neighbors
+                        --                        of the specified biosample. We could have gotten
+                        --                        those IDs outside of this query, but doing it here
+                        --                        keeps this "non-recursive term" more conceptually
+                        --                        symmetrical with the "recursive term" below.
+                        --
+                        -- Note: `unnest()` expands an array into a set of rows, where each array
+                        --       element is on its own row. We use it here to expand the
+                        --       `downstream_neighbor_ids` array elements into individual rows so
+                        --       that we can then "join" on each of them.
+                        --
+                        -- Docs: https://www.postgresql.org/docs/current/functions-array.html
+                        --
+                        SELECT unnest(brd.downstream_neighbor_ids) AS downstream_neighbor_id
+                        FROM biosample_related_document AS brd
+                        WHERE brd.document->>'id' = :biosample_id
                     UNION ALL
-
-                    -- 🔁 Recursive case: Get the downstream neighbors of the documents identified
-                    --                    in the previous iteration.
-                    --
-                    -- ⏹️ Exit condition: When there are no downstream neighbors, the `SELECT` will
-                    --                    return an empty set, which causes recursion to end.
-                    --
-                    SELECT unnest(current_document.downstream_neighbor_ids) AS downstream_document_id
-                    FROM temp_table AS previous_temp_table, biosample_related_document AS current_document
-                    WHERE current_document.document->>'id' = previous_temp_table.downstream_document_id
+                        -- 🔁 Recursive term: Get the IDs of the (immediate) downstream neighbors of
+                        --                    the documents identified in the previous iteration.
+                        --                    Once there are no such IDs, this will return no rows,
+                        --                    causing recursion [down that specific path] to end.
+                        --
+                        SELECT unnest(brd_2.downstream_neighbor_ids) AS downstream_neighbor_id
+                        FROM working_table AS previous_working_table,
+                             biosample_related_document AS brd_2
+                        WHERE brd_2.document->>'id' = previous_working_table.downstream_neighbor_id
                 )
 
                 -- Return the distinct IDs of all the documents that are downstream from the biosample.
-                SELECT DISTINCT downstream_document_id FROM temp_table;
+                SELECT DISTINCT downstream_neighbor_id FROM working_table;
             """
             rows = db.execute(text(query), {"biosample_id": biosample_id}).fetchall()
             downstream_document_ids: List[str] = [row[0] for row in rows]
@@ -203,5 +211,7 @@ def load(db: Session, mongodb: Database) -> None:
             for downstream_document in downstream_documents:
                 if biosample_id not in downstream_document.biosample_ids:
                     downstream_document.biosample_ids.append(biosample_id)
+
+        db.commit()
 
     return None
