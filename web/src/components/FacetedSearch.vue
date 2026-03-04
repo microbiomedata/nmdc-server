@@ -118,14 +118,17 @@ export default defineComponent({
       :model-value="filterText"
       label="search"
       clearable
-      class="mx-3 pt-1"
+      class="mx-3 mb-3 pt-1"
       hide-details
       variant="outlined"
       density="compact"
       append-inner-icon="mdi-magnify"
       @update:model-value="$emit('update:filterText', $event || '')"
     />
-    <v-expansion-panels variant="accordion">
+    <v-expansion-panels
+      variant="accordion" 
+      flat
+    >
       <v-expansion-panel 
         v-for="[groupname, filteredFields] in groupedFields"
         :key="groupname"
@@ -152,6 +155,7 @@ export default defineComponent({
                   <v-list-item
                     v-show="!hasActiveConditions(sf.key)"
                     v-bind="props"
+                    class="pl-0 pr-0"
                   >
                     <v-list-item-title>
                       {{ fieldDisplayName(sf.field, sf.table) }}
@@ -218,7 +222,7 @@ export default defineComponent({
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .compact .v-list-item-title {
   font-size: .8125rem;
   font-weight: 500;
@@ -229,5 +233,20 @@ export default defineComponent({
   font-size: .75rem;
   height: 40px;
   padding-inline-start: 0.5rem !important;
+}
+
+:deep(.v-expansion-panel-title) {
+  opacity: 0.8;
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
+}
+
+:deep(.v-expansion-panel-title--active) {
+  font-weight: bold;
+}
+
+:deep(.v-expansion-panel-text__wrapper) {
+  padding: 0.75rem !important;
+  padding-top: 0 !important;
 }
 </style>
