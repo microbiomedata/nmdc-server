@@ -37,7 +37,7 @@ def load(db: Session, mongodb: Database) -> None:
     workflow_execution_set = mongodb.get_collection("workflow_execution_set")
     data_object_set = mongodb.get_collection("data_object_set")
 
-    with duration_logger(logger, "Loading biosamples and identifying downstream neighbors"):
+    with duration_logger(logger, "🧪 Loading biosamples and identifying downstream neighbors"):
         for biosample_document in biosample_set.find({}, projection_omitting_oid):
             biosample_related_document = BiosampleRelatedDocument()
             biosample_related_document.biosample_ids = [biosample_document["id"]]
@@ -57,7 +57,7 @@ def load(db: Session, mongodb: Database) -> None:
         db.commit()
 
     with duration_logger(
-        logger, "Loading studies and identifying downstream neighbors (and related biosamples)"
+        logger, "📰 Loading studies and identifying downstream neighbors (and related biosamples)"
     ):
         for study_document in study_set.find({}, projection_omitting_oid):
             biosample_related_document = BiosampleRelatedDocument()
@@ -79,7 +79,7 @@ def load(db: Session, mongodb: Database) -> None:
             db.add(biosample_related_document)
         db.commit()
 
-    with duration_logger(logger, "Loading data generations and identifying downstream neighbors"):
+    with duration_logger(logger, "🔬 Loading data generations and identifying downstream neighbors"):
         for data_generation_document in data_generation_set.find({}, projection_omitting_oid):
             biosample_related_document = BiosampleRelatedDocument()
             biosample_related_document.biosample_ids = []
@@ -97,7 +97,7 @@ def load(db: Session, mongodb: Database) -> None:
         db.commit()
 
     with duration_logger(
-        logger, "Loading workflow executions and identifying downstream neighbors"
+        logger, "⚗️ Loading workflow executions and identifying downstream neighbors"
     ):
         for workflow_execution_document in workflow_execution_set.find({}, projection_omitting_oid):
             biosample_related_document = BiosampleRelatedDocument()
@@ -115,7 +115,7 @@ def load(db: Session, mongodb: Database) -> None:
             db.add(biosample_related_document)
         db.commit()
 
-    with duration_logger(logger, "Loading data objects and identifying downstream neighbors"):
+    with duration_logger(logger, "💾 Loading data objects and identifying downstream neighbors"):
         for data_object_document in data_object_set.find({}, projection_omitting_oid):
             biosample_related_document = BiosampleRelatedDocument()
             biosample_related_document.biosample_ids = []
@@ -136,7 +136,7 @@ def load(db: Session, mongodb: Database) -> None:
 
     # Use the downstream neighbor identities we gathered above to determine which biosample(s)
     # each document is associated with.
-    with duration_logger(logger, "Populating `biosample_ids` fields."):
+    with duration_logger(logger, "🕵️ Populating `biosample_ids` fields"):
         # Get the IDs of all biosamples.
         biosample_ids = [
             row[0]
@@ -187,9 +187,9 @@ def load(db: Session, mongodb: Database) -> None:
                         --                    causing recursion [down that specific path] to end.
                         --
                         SELECT unnest(brd_2.downstream_neighbor_ids) AS downstream_neighbor_id
-                        FROM working_table AS previous_working_table,
-                             biosample_related_document AS brd_2
-                        WHERE brd_2.document->>'id' = previous_working_table.downstream_neighbor_id
+                        FROM biosample_related_document AS brd_2,
+                             working_table
+                        WHERE brd_2.document->>'id' = working_table.downstream_neighbor_id
                 )
 
                 -- Return the distinct IDs of all the documents that are downstream from the biosample.
@@ -211,6 +211,14 @@ def load(db: Session, mongodb: Database) -> None:
             for downstream_document in downstream_documents:
                 if biosample_id not in downstream_document.biosample_ids:
                     downstream_document.biosample_ids.append(biosample_id)
+
+        db.commit()
+
+    # Clean up: Delete rows that have no associated biosample.
+    with duration_logger(logger, "🧹 Deleting rows having no associated biosample"):
+        db.query(BiosampleRelatedDocument).filter(
+            func.cardinality(BiosampleRelatedDocument.biosample_ids) == 0
+        ).delete(synchronize_session=False)
 
         db.commit()
 
