@@ -258,9 +258,6 @@ def load(db: Session, mongodb: Database) -> None:
             """
             rows = db.execute(text(query), {"biosample_id": biosample_id}).fetchall()
             downstream_document_ids: List[str] = [row[0] for row in rows]
-            logger.debug(
-                f"Biosample {biosample_id} downstream documents: {downstream_document_ids}"
-            )
 
             # Update each document that is _anywhere_ downstream from this biosample, so that its
             # `biosample_ids` column contains the ID of this biosample.
