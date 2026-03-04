@@ -16,6 +16,7 @@ from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_api_utilities.biosample_search import BiosampleSearch
 from nmdc_api_utilities.data_object_search import DataObjectSearch
+from nmdc_api_utilities.nmdc_search import NMDCSearch
 from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy import text
@@ -863,11 +864,27 @@ async def search_data_object_source_metadata(
     Get a list of data_object source metadata via the Runtime API
     based on supplied biosample conditions.
     """
+    # # Filter data objects with postgres
+    # data_object_search = DataObjectSearch()
+    # data_object_ids = crud.search_data_objects(db, q.conditions).with_entities(models.DataObject.id).all()
+    # print(data_object_ids)
+    # # return [id for (id,) in data_object_ids]
+    # results = data_object_search.get_records_by_id([id for (id,) in data_object_ids])
+    # if not results:
+    #     raise HTTPException(status_code=404, detail="Could not retrieve source data for data objects")
+    # return results
+
+    # Filter data objects with Runtime (linked_instances)
+    nmdc_search = NMDCSearch()
     data_object_search = DataObjectSearch()
-    data_object_ids = crud.search_data_objects(db, q.conditions).with_entities(models.DataObject.id).all()
-    print(data_object_ids)
-    # return [id for (id,) in data_object_ids]
-    results = data_object_search.get_records_by_id([id for (id,) in data_object_ids])
+    biosample_ids = (
+        crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
+    )
+    biosample_ids_list = [id for (id,) in biosample_ids]
+    # Could use the hydrate param to get data_object metadata in one query
+    data_objects_linked_instances = nmdc_search.get_linked_instances(ids=biosample_ids_list, types=["nmdc:DataObject"])
+    data_object_ids = [instance["id"] for instance in data_objects_linked_instances]
+    results = data_object_search.get_records_by_id(data_object_ids)
     if not results:
         raise HTTPException(status_code=404, detail="Could not retrieve source data for data objects")
     return results
