@@ -1,7 +1,7 @@
 from typing import List
 
 from pymongo.database import Database
-from sqlalchemy import text
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -90,7 +90,9 @@ def load(db: Session, mongodb: Database) -> None:
             db.add(biosample_related_document)
         db.commit()
 
-    with duration_logger(logger, "🔬 Loading data generations and identifying downstream neighbors"):
+    with duration_logger(
+        logger, "🔬 Loading data generations and identifying downstream neighbors"
+    ):
         for data_generation_document in data_generation_set.find({}, projection_omitting_oid):
             biosample_related_document = BiosampleRelatedDocument()
             biosample_related_document.biosample_ids = []
@@ -107,8 +109,12 @@ def load(db: Session, mongodb: Database) -> None:
             db.add(biosample_related_document)
         db.commit()
 
-    with duration_logger(logger, "⚗️  Loading material processings and identifying downstream neighbors"):
-        for material_processing_document in material_processing_set.find({}, projection_omitting_oid):
+    with duration_logger(
+        logger, "⚗️  Loading material processings and identifying downstream neighbors"
+    ):
+        for material_processing_document in material_processing_set.find(
+            {}, projection_omitting_oid
+        ):
             biosample_related_document = BiosampleRelatedDocument()
             biosample_related_document.biosample_ids = []
             biosample_related_document.high_level_type = "nmdc:MaterialProcessing"
@@ -124,7 +130,9 @@ def load(db: Session, mongodb: Database) -> None:
             db.add(biosample_related_document)
         db.commit()
 
-    with duration_logger(logger, "🧪 Loading processed samples and identifying downstream neighbors"):
+    with duration_logger(
+        logger, "🧪 Loading processed samples and identifying downstream neighbors"
+    ):
         for processed_sample_document in processed_sample_set.find({}, projection_omitting_oid):
             biosample_related_document = BiosampleRelatedDocument()
             biosample_related_document.biosample_ids = []
@@ -274,9 +282,11 @@ def load(db: Session, mongodb: Database) -> None:
 
     # Clean up: Delete rows that have no associated biosample.
     with duration_logger(logger, "🧹 Deleting rows having no associated biosample"):
-        num_rows_deleted = db.query(BiosampleRelatedDocument).filter(
-            func.cardinality(BiosampleRelatedDocument.biosample_ids) == 0
-        ).delete(synchronize_session=False)
+        num_rows_deleted = (
+            db.query(BiosampleRelatedDocument)
+            .filter(func.cardinality(BiosampleRelatedDocument.biosample_ids) == 0)
+            .delete(synchronize_session=False)
+        )
         logger.info(f"Deleted {num_rows_deleted} rows.")
 
         db.commit()
