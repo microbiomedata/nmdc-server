@@ -125,96 +125,67 @@ export default defineComponent({
       append-inner-icon="mdi-magnify"
       @update:model-value="$emit('update:filterText', $event || '')"
     />
+    <v-expansion-panels variant="accordion">
+      <v-expansion-panel 
+        v-for="[groupname, filteredFields] in groupedFields"
+        :key="groupname"
+        :title="groupname"
+      >
+        <v-expansion-panel-text>
+          <v-list
+            ref="list"
+            density="compact"
+            shaped
+            class="compact"
+          >
+            <template
+              v-for="sf in filteredFields"
+              :key="sf.key"
+            >
+              <v-menu
+                :model-value="menuState[sf.key]"
+                location="end"
+                :close-on-content-click="false"
+                @update:model-value="toggleMenu(sf.key, $event)"
+              >
+                <template #activator="{ props }">
+                  <v-list-item
+                    v-show="!hasActiveConditions(sf.key)"
+                    v-bind="props"
+                  >
+                    <v-list-item-title>
+                      {{ fieldDisplayName(sf.field, sf.table) }}
+                    </v-list-item-title>
+                    <template #append>
+                      <v-icon>mdi-play</v-icon>
+                    </template>
+                  </v-list-item>
+                </template>
+                <v-card
+                  width="500"
+                >
+                  <slot
+                    name="menu"
+                    v-bind="{
+                      field: sf.field,
+                      table: sf.table,
+                      isOpen: menuState[sf.key],
+                      toggleMenu: (val: boolean) => toggleMenu(sf.key, val),
+                    }"
+                  />
+                </v-card>
+              </v-menu>
+            </template>
+          </v-list>
+        </v-expansion-panel-text>
+      </v-expansion-panel>
+    </v-expansion-panels>
     <v-list
       ref="list"
       density="compact"
       shaped
       class="compact"
     >
-      <div
-        v-for="[groupname, filteredFields] in groupedFields"
-        :key="groupname"
-      >
-        <v-list-subheader
-          v-show="groupedFields.length > 1 && filteredFields.length > 0"
-        >
-          {{ groupname !== 'undefined' ? groupname : 'Other' }}
-          <v-tooltip
-            v-if="groupname === 'GOLD Ecosystems'"
-            location="end"
-            open-delay="600"
-          >
-            <template #activator="{ props }">
-              <v-btn
-                icon
-                variant="text"
-                size="small"
-                density="comfortable"
-                v-bind="props"
-              >
-                <v-icon>mdi-help-circle</v-icon>
-              </v-btn>
-            </template>
-            <span> {{ goldDescription }}</span>
-          </v-tooltip>
-          <v-tooltip
-            v-if="groupname === 'MIxS Environmental Triad'"
-            location="end"
-            open-delay="600"
-          >
-            <template #activator="{ props }">
-              <v-btn
-                icon
-                variant="text"
-                size="small"
-                density="comfortable"
-                v-bind="props"
-              >
-                <v-icon>mdi-help-circle</v-icon>
-              </v-btn>
-            </template>
-            <span> {{ mixsDescription }}</span>
-          </v-tooltip>
-        </v-list-subheader>
-        <template
-          v-for="sf in filteredFields"
-          :key="sf.key"
-        >
-          <v-menu
-            :model-value="menuState[sf.key]"
-            location="end"
-            :close-on-content-click="false"
-            @update:model-value="toggleMenu(sf.key, $event)"
-          >
-            <template #activator="{ props }">
-              <v-list-item
-                v-show="!hasActiveConditions(sf.key)"
-                v-bind="props"
-              >
-                <v-list-item-title>
-                  {{ fieldDisplayName(sf.field, sf.table) }}
-                </v-list-item-title>
-                <template #append>
-                  <v-icon>mdi-play</v-icon>
-                </template>
-              </v-list-item>
-            </template>
-            <v-card
-              width="500"
-            >
-              <slot
-                name="menu"
-                v-bind="{
-                  field: sf.field,
-                  table: sf.table,
-                  isOpen: menuState[sf.key],
-                  toggleMenu: (val: boolean) => toggleMenu(sf.key, val),
-                }"
-              />
-            </v-card>
-          </v-menu>
-        </template>
-      </div>
       <v-divider
         v-if="facetValues.length && groupedFields.length"
         class="my-2"
