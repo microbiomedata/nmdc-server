@@ -1,8 +1,9 @@
 from typing import List
 
 from pymongo.database import Database
-from sqlalchemy import func, text, update
+from sqlalchemy import text
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from nmdc_server.ingest.common import duration_logger
 from nmdc_server.logger import get_logger
@@ -19,6 +20,8 @@ def load(db: Session, mongodb: Database) -> None:
     The MongoDB collections are:
     - `biosample_set`
     - `study_set`
+    - `material_processing_set`
+    - `processed_sample_set`
     - `data_generation_set`
     - `workflow_execution_set`
     - `data_object_set`
@@ -33,6 +36,8 @@ def load(db: Session, mongodb: Database) -> None:
 
     biosample_set = mongodb.get_collection("biosample_set")
     study_set = mongodb.get_collection("study_set")
+    material_processing_set = mongodb.get_collection("material_processing_set")
+    processed_sample_set = mongodb.get_collection("processed_sample_set")
     data_generation_set = mongodb.get_collection("data_generation_set")
     workflow_execution_set = mongodb.get_collection("workflow_execution_set")
     data_object_set = mongodb.get_collection("data_object_set")
@@ -51,6 +56,12 @@ def load(db: Session, mongodb: Database) -> None:
             ):
                 biosample_related_document.downstream_neighbor_ids.append(
                     data_generation_document["id"]
+                )
+            for material_processing_document in material_processing_set.find(
+                {"has_input": biosample_document["id"]}, projection_selecting_id
+            ):
+                biosample_related_document.downstream_neighbor_ids.append(
+                    material_processing_document["id"]
                 )
 
             db.add(biosample_related_document)
@@ -96,8 +107,50 @@ def load(db: Session, mongodb: Database) -> None:
             db.add(biosample_related_document)
         db.commit()
 
+    with duration_logger(logger, "⚗️  Loading material processings and identifying downstream neighbors"):
+        for material_processing_document in material_processing_set.find({}, projection_omitting_oid):
+            biosample_related_document = BiosampleRelatedDocument()
+            biosample_related_document.biosample_ids = []
+            biosample_related_document.high_level_type = "nmdc:MaterialProcessing"
+            biosample_related_document.document = material_processing_document
+
+            # Identify downstream neighbors.
+            biosample_related_document.downstream_neighbor_ids = []
+            if "has_output" in material_processing_document:
+                biosample_related_document.downstream_neighbor_ids = material_processing_document[
+                    "has_output"
+                ]
+
+            db.add(biosample_related_document)
+        db.commit()
+
+    with duration_logger(logger, "🧪 Loading processed samples and identifying downstream neighbors"):
+        for processed_sample_document in processed_sample_set.find({}, projection_omitting_oid):
+            biosample_related_document = BiosampleRelatedDocument()
+            biosample_related_document.biosample_ids = []
+            biosample_related_document.high_level_type = "nmdc:ProcessedSample"
+            biosample_related_document.document = processed_sample_document
+
+            # Identify downstream neighbors.
+            biosample_related_document.downstream_neighbor_ids = []
+            for data_generation_document in data_generation_set.find(
+                {"has_input": processed_sample_document["id"]}, projection_selecting_id
+            ):
+                biosample_related_document.downstream_neighbor_ids.append(
+                    data_generation_document["id"]
+                )
+            for material_processing_document in material_processing_set.find(
+                {"has_input": processed_sample_document["id"]}, projection_selecting_id
+            ):
+                biosample_related_document.downstream_neighbor_ids.append(
+                    material_processing_document["id"]
+                )
+
+            db.add(biosample_related_document)
+        db.commit()
+
     with duration_logger(
-        logger, "⚗️ Loading workflow executions and identifying downstream neighbors"
+        logger, "🖥️  Loading workflow executions and identifying downstream neighbors"
     ):
         for workflow_execution_document in workflow_execution_set.find({}, projection_omitting_oid):
             biosample_related_document = BiosampleRelatedDocument()
@@ -136,7 +189,7 @@ def load(db: Session, mongodb: Database) -> None:
 
     # Use the downstream neighbor identities we gathered above to determine which biosample(s)
     # each document is associated with.
-    with duration_logger(logger, "🕵️ Populating `biosample_ids` fields"):
+    with duration_logger(logger, "🕵️  Populating `biosample_ids` fields"):
         # Get the IDs of all biosamples.
         biosample_ids = [
             row[0]
@@ -212,13 +265,19 @@ def load(db: Session, mongodb: Database) -> None:
                 if biosample_id not in downstream_document.biosample_ids:
                     downstream_document.biosample_ids.append(biosample_id)
 
+                    # Tell SQLAlchemy that this document's `biosample_ids` field has been modified,
+                    # so that SQLAlchemy knows to update the corresponding row in the database when
+                    # we commit. (SQLAlchemy doesn't automatically detect changes to arrays.)
+                    flag_modified(downstream_document, "biosample_ids")
+
         db.commit()
 
     # Clean up: Delete rows that have no associated biosample.
     with duration_logger(logger, "🧹 Deleting rows having no associated biosample"):
-        db.query(BiosampleRelatedDocument).filter(
+        num_rows_deleted = db.query(BiosampleRelatedDocument).filter(
             func.cardinality(BiosampleRelatedDocument.biosample_ids) == 0
         ).delete(synchronize_session=False)
+        logger.info(f"Deleted {num_rows_deleted} rows.")
 
         db.commit()
 
