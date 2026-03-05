@@ -95,13 +95,12 @@ def load_data_generations(
 
         db.add(biosample_related_document)
 
+
 def load_material_processings(
     db: Session,
     material_processing_set: Collection,
 ) -> None:
-    for material_processing_document in material_processing_set.find(
-        {}, projection_omitting_oid
-    ):
+    for material_processing_document in material_processing_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
         biosample_related_document.biosample_ids = []
         biosample_related_document.high_level_type = "nmdc:MaterialProcessing"
@@ -259,6 +258,7 @@ def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None
                 # we commit. (SQLAlchemy doesn't automatically detect changes to arrays.)
                 flag_modified(downstream_document, "biosample_ids")
 
+
 def delete_documents_having_no_associated_biosamples(db: Database) -> int:
     num_rows_deleted = (
         db.query(BiosampleRelatedDocument)
@@ -298,7 +298,9 @@ def load(db: Session, mongodb: Database) -> None:
     data_object_set = mongodb.get_collection("data_object_set")
 
     with duration_logger(logger, "🧪 Loading biosamples"):
-        biosample_ids = load_biosamples(db, biosample_set, data_generation_set, material_processing_set)
+        biosample_ids = load_biosamples(
+            db, biosample_set, data_generation_set, material_processing_set
+        )
         db.commit()
 
     with duration_logger(logger, "📰 Loading studies"):
@@ -314,7 +316,9 @@ def load(db: Session, mongodb: Database) -> None:
         db.commit()
 
     with duration_logger(logger, "🧪 Loading processed samples"):
-        load_processed_samples(db, processed_sample_set, data_generation_set, material_processing_set)
+        load_processed_samples(
+            db, processed_sample_set, data_generation_set, material_processing_set
+        )
         db.commit()
 
     with duration_logger(logger, "🖥️ Loading workflow executions"):
