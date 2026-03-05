@@ -12,10 +12,10 @@ from nmdc_server.models import BiosampleRelatedDocument
 
 def load(db: Session, mongodb: Database) -> None:
     r"""
-    Reads all documents from the following MongoDB collections (listed below); then, for each
-    document, determines the IDs its downstream neighbor(s), determines the IDs of the biosample(s)
-    the document is associated with, and writes the document (without its `_id` field), the IDs of
-    its downstream neighbors, and the IDs of the associated biosample(s) to the Postgres database.
+    Reads all documents from the MongoDB collections listed below; then, for each document,
+    determines the IDs of (a) its immediate downstream neighbor(s), and (b) its associated
+    biosample(s), and writes the document (without its `_id` field) and those determined things
+    to the Postgres database.
 
     The MongoDB collections are:
     - `biosample_set`
@@ -110,7 +110,7 @@ def load(db: Session, mongodb: Database) -> None:
         db.commit()
 
     with duration_logger(
-        logger, "⚗️  Loading material processings and identifying downstream neighbors"
+        logger, "⚗️ Loading material processings and identifying downstream neighbors"
     ):
         for material_processing_document in material_processing_set.find(
             {}, projection_omitting_oid
@@ -158,7 +158,7 @@ def load(db: Session, mongodb: Database) -> None:
         db.commit()
 
     with duration_logger(
-        logger, "🖥️  Loading workflow executions and identifying downstream neighbors"
+        logger, "🖥️ Loading workflow executions and identifying downstream neighbors"
     ):
         for workflow_execution_document in workflow_execution_set.find({}, projection_omitting_oid):
             biosample_related_document = BiosampleRelatedDocument()
@@ -197,7 +197,7 @@ def load(db: Session, mongodb: Database) -> None:
 
     # Use the downstream neighbor identities we gathered above to determine which biosample(s)
     # each document is associated with.
-    with duration_logger(logger, "🕵️  Populating `biosample_ids` fields"):
+    with duration_logger(logger, "🕵️ Populating `biosample_ids` fields"):
         # Get the IDs of all biosamples.
         biosample_ids = [
             row[0]
