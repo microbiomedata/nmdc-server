@@ -152,24 +152,40 @@ export default defineComponent({
       isStacked: true,
     }));
 
+    const isLoading = computed(() => props.facetSummaryUnconditional.length === 0);
+
     return {
       chartRef,
       onChartReady,
       chartEvents,
       chartData,
       barChartOptions,
+      isLoading,
     };
   },
 });
 </script>
 
 <template>
-  <GChart
-    type="BarChart"
-    class="rounded overflow-hidden"
-    :data="chartData"
-    :options="barChartOptions"
-    :events="chartEvents as any"
-    @ready="onChartReady"
-  />
+  <div>
+    <div
+      v-if="isLoading"
+      class="d-flex justify-center align-center"
+      :style="{ height: `${height}px` }"
+    >
+      <v-progress-circular
+        indeterminate
+        color="primary"
+      />
+    </div>
+    <GChart
+      v-else
+      type="BarChart"
+      class="rounded overflow-hidden"
+      :data="chartData"
+      :options="barChartOptions"
+      :events="chartEvents as any"
+      @ready="onChartReady"
+    />
+  </div>
 </template>
