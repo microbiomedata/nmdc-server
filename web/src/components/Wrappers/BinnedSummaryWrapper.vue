@@ -41,13 +41,13 @@ export default defineComponent({
         );
         return api.getBinnedFacet(props.table, props.field, conditions);
       },
-      { bins: [], facets: [] }
+      null
     );
 
     // Async computed for facetSummaryUnconditional
     const facetSummaryUnconditional = computedAsync(
       async () => api.getBinnedFacet(props.table, props.field, []),
-      { bins: [], facets: [] }
+      null
     );
 
     return {

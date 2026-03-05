@@ -3,6 +3,7 @@ import moment from 'moment';
 import {
   defineComponent,
   ref,
+  computed,
   watch,
   nextTick,
 } from 'vue';
@@ -135,10 +136,16 @@ export default defineComponent({
       }
     }, { immediate: true });
 
+    const isLoading = computed(() => !props.facetSummary
+      || !props.facetSummaryUnconditional
+      || !props.facetSummaryUnconditional.bins
+      || props.facetSummaryUnconditional.bins.length === 0);
+
     return {
       range,
       afterDrag,
       onBrushEnd,
+      isLoading,
     };
   },
 });
@@ -146,7 +153,20 @@ export default defineComponent({
 
 <template>
   <div class="histogram">
-    <ChartContainer :height="height">
+    <div
+      v-if="isLoading"
+      class="d-flex justify-center align-center"
+      :style="{ height: `${height}px` }"
+    >
+      <v-progress-circular
+        indeterminate
+        color="primary"
+      />
+    </div>
+    <ChartContainer
+      v-else
+      :height="height"
+    >
       <template #default="{ width }">
         <TimeHistogram
           ref="histogram"
