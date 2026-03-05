@@ -99,18 +99,33 @@ const sankeyOptions = computed(() => {
     },
   };
 });
+
+const isLoading = computed(() => sankeyData.value.length <= 1);
 </script>
 
 <template>
-  <GChart
-    ref="chart"
-    :settings="{
-      packages: ['sankey'],
-    }"
-    type="Sankey"
-    :data="sankeyData"
-    :options="sankeyOptions"
-    :events="chartEvents as any"
-    @ready="onChartReady"
-  />
+  <div>
+    <div
+      v-if="isLoading"
+      class="d-flex justify-center align-center"
+      style="height: 500px"
+    >
+      <v-progress-circular
+        indeterminate
+        color="primary"
+      />
+    </div>
+    <GChart
+      v-else
+      ref="chart"
+      :settings="{
+        packages: ['sankey'],
+      }"
+      type="Sankey"
+      :data="sankeyData"
+      :options="sankeyOptions"
+      :events="chartEvents as any"
+      @ready="onChartReady"
+    />
+  </div>
 </template>
