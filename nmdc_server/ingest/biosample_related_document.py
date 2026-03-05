@@ -259,7 +259,7 @@ def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None
                 flag_modified(downstream_document, "biosample_ids")
 
 
-def delete_documents_having_no_associated_biosamples(db: Database) -> int:
+def delete_documents_having_no_associated_biosamples(db: Session) -> int:
     num_rows_deleted = (
         db.query(BiosampleRelatedDocument)
         .filter(func.cardinality(BiosampleRelatedDocument.biosample_ids) == 0)
