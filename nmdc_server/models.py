@@ -444,7 +444,7 @@ class BiosampleRelatedDocument(Base):
 
     __tablename__ = "biosample_related_document"
 
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    id = Column(String, primary_key=True)
     biosample_ids = Column(ARRAY(String), nullable=False, default=list)
     high_level_type = Column(String, nullable=False)
     document = Column(JSONB, nullable=False)

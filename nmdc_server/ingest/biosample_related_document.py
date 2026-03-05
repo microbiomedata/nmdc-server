@@ -33,6 +33,7 @@ def load_biosamples(
     biosample_ids = []
     for biosample_document in biosample_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
+        biosample_related_document.id = biosample_document["id"]
         biosample_related_document.biosample_ids = [biosample_document["id"]]
         biosample_related_document.high_level_type = "nmdc:Biosample"
         biosample_related_document.document = biosample_document
@@ -75,6 +76,7 @@ def load_studies(
 
     for study_document in study_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
+        biosample_related_document.id = study_document["id"]
         biosample_related_document.biosample_ids = []
         biosample_related_document.high_level_type = "nmdc:Study"
         biosample_related_document.document = study_document
@@ -105,6 +107,7 @@ def load_data_generations(
 
     for data_generation_document in data_generation_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
+        biosample_related_document.id = data_generation_document["id"]
         biosample_related_document.biosample_ids = []
         biosample_related_document.high_level_type = "nmdc:DataGeneration"
         biosample_related_document.document = data_generation_document
@@ -131,6 +134,7 @@ def load_material_processings(
 
     for material_processing_document in material_processing_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
+        biosample_related_document.id = material_processing_document["id"]
         biosample_related_document.biosample_ids = []
         biosample_related_document.high_level_type = "nmdc:MaterialProcessing"
         biosample_related_document.document = material_processing_document
@@ -159,6 +163,7 @@ def load_processed_samples(
 
     for processed_sample_document in processed_sample_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
+        biosample_related_document.id = processed_sample_document["id"]
         biosample_related_document.biosample_ids = []
         biosample_related_document.high_level_type = "nmdc:ProcessedSample"
         biosample_related_document.document = processed_sample_document
@@ -193,6 +198,7 @@ def load_workflow_executions(
 
     for workflow_execution_document in workflow_execution_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
+        biosample_related_document.id = workflow_execution_document["id"]
         biosample_related_document.biosample_ids = []
         biosample_related_document.high_level_type = "nmdc:WorkflowExecution"
         biosample_related_document.document = workflow_execution_document
@@ -220,6 +226,7 @@ def load_data_objects(
 
     for data_object_document in data_object_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
+        biosample_related_document.id = data_object_document["id"]
         biosample_related_document.biosample_ids = []
         biosample_related_document.high_level_type = "nmdc:DataObject"
         biosample_related_document.document = data_object_document
@@ -279,7 +286,7 @@ def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None
                     --
                     SELECT unnest(brd.downstream_neighbor_ids) AS downstream_neighbor_id
                     FROM biosample_related_document AS brd
-                    WHERE brd.document->>'id' = :biosample_id
+                    WHERE brd.id = :biosample_id
                 UNION ALL
                     -- 🔁 Recursive term: Get the IDs of the (immediate) downstream neighbors of
                     --                    the documents identified in the previous iteration.
@@ -289,7 +296,7 @@ def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None
                     SELECT unnest(brd_2.downstream_neighbor_ids) AS downstream_neighbor_id
                     FROM biosample_related_document AS brd_2,
                             working_table
-                    WHERE brd_2.document->>'id' = working_table.downstream_neighbor_id
+                    WHERE brd_2.id = working_table.downstream_neighbor_id
             )
 
             -- Return the distinct IDs of all the documents that are downstream from the biosample.
@@ -302,7 +309,7 @@ def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None
         # `biosample_ids` column contains this one.
         downstream_documents = (
             db.query(BiosampleRelatedDocument)
-            .filter(BiosampleRelatedDocument.document["id"].astext.in_(downstream_document_ids))
+            .filter(BiosampleRelatedDocument.id.in_(downstream_document_ids))
             .all()
         )
         for downstream_document in downstream_documents:
