@@ -69,6 +69,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const mapRef = ref();
     const mapReady = ref(false);
+    const isLoading = ref(true);
     const markerClusterGroup = ref<any>(null);
     const mapProps = reactive({
       bounds: null as L.LatLngBoundsExpression | null,
@@ -92,6 +93,7 @@ export default defineComponent({
         // Don't update map data if ENVIRONMENT tab is clicked
         return;
       }
+      isLoading.value = true;
       await new Promise<void>((res) => {
         window.setTimeout(res, 300);
       });
@@ -109,6 +111,7 @@ export default defineComponent({
         }
       });
       mapData.value = values;
+      isLoading.value = false;
     }
 
     function updateMarkers() {
@@ -230,6 +233,7 @@ export default defineComponent({
       mapProps,
       mapRef,
       mapReady,
+      isLoading,
       onMapReady,
       /* methods */
       updateBounds,
@@ -239,7 +243,23 @@ export default defineComponent({
 </script>
 
 <template>
-  <div>
+  <div style="position: relative">
+    <div
+      v-if="isLoading"
+      class="d-flex justify-center align-center"
+      :style="{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 2,
+        height: `${height}px`,
+        background: 'rgba(255,255,255,0.7)',
+      }"
+    >
+      <v-progress-circular
+        indeterminate
+        color="primary"
+      />
+    </div>
     <v-btn
       small
       color="primary"
