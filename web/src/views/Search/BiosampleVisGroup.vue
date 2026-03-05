@@ -72,6 +72,7 @@ export default defineComponent({
   setup(props) {
     const sampleFacetSummary = ref([] as FacetSummaryResponse[]);
     const studyFacetSummary = ref([] as FacetSummaryResponse[]);
+    const isUpsetLoading = ref(true);
 
     const upsetData = computed(() => {
       const multiomicsObj: Record<string, { counts: any, sets: any }> = {};
@@ -107,16 +108,12 @@ export default defineComponent({
     });
 
     watchEffect(async () => {
-      sampleFacetSummary.value = await api.getFacetSummary(
-        'biosample',
-        'multiomics',
-        props.conditions,
-      );
-      studyFacetSummary.value = await api.getFacetSummary(
-        'study',
-        'multiomics',
-        props.conditions,
-      );
+      isUpsetLoading.value = true;
+      [sampleFacetSummary.value, studyFacetSummary.value] = await Promise.all([
+        api.getFacetSummary('biosample', 'multiomics', props.conditions),
+        api.getFacetSummary('study', 'multiomics', props.conditions),
+      ]);
+      isUpsetLoading.value = false;
     });
 
     function setBoundsFromMap(val: Condition[]) {
@@ -134,6 +131,7 @@ export default defineComponent({
       setBoundsFromMap,
       staticUpsetTooltips,
       upsetData,
+      isUpsetLoading,
     };
   },
 });
@@ -211,7 +209,20 @@ export default defineComponent({
           :text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"
         >
-          <ChartContainer :height="240">
+          <div
+            v-if="isUpsetLoading"
+            class="d-flex justify-center align-center"
+            style="height: 240px"
+          >
+            <v-progress-circular
+              indeterminate
+              color="primary"
+            />
+          </div>
+          <ChartContainer
+            v-else
+            :height="240"
+          >
             <template #default="{ width, height }">
               <UpSet
                 v-bind="{
