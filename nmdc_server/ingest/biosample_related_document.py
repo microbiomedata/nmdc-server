@@ -1,7 +1,7 @@
 from typing import List
 
-from pymongo.database import Database
 from pymongo.collection import Collection
+from pymongo.database import Database
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
