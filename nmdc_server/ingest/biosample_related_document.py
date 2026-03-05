@@ -21,6 +21,15 @@ def load_biosamples(
     data_generation_set: Collection,
     material_processing_set: Collection,
 ) -> List[str]:
+    """
+    Reads each document from the `biosample_set` MongoDB collection, identifies its [immediate]
+    downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres session)
+    that represents that document. The row will have its `biosample_ids` column initialized to
+    an array consisting of the ID of the biosample whose document is on that row.
+
+    Returns a list of all biosample IDs.
+    """
+
     biosample_ids = []
     for biosample_document in biosample_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
@@ -56,6 +65,14 @@ def load_studies(
     study_set: Collection,
     biosample_set: Collection,
 ) -> None:
+    """
+    Reads each document from the `study_set` MongoDB collection, identifies its [immediate]
+    downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres session)
+    that represents that document.
+
+    Also identifies the biosample(s) associated with each study, since it's so readily accessible.
+    """
+
     for study_document in study_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
         biosample_related_document.biosample_ids = []
@@ -80,6 +97,12 @@ def load_data_generations(
     db: Session,
     data_generation_set: Collection,
 ) -> None:
+    """
+    Reads each document from the `data_generation_set` MongoDB collection, identifies its
+    [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
+    session) that represents that document.
+    """
+
     for data_generation_document in data_generation_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
         biosample_related_document.biosample_ids = []
@@ -100,6 +123,12 @@ def load_material_processings(
     db: Session,
     material_processing_set: Collection,
 ) -> None:
+    """
+    Reads each document from the `material_processing_set` MongoDB collection, identifies its
+    [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
+    session) that represents that document.
+    """
+
     for material_processing_document in material_processing_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
         biosample_related_document.biosample_ids = []
@@ -122,6 +151,12 @@ def load_processed_samples(
     data_generation_set: Collection,
     material_processing_set: Collection,
 ) -> None:
+    """
+    Reads each document from the `processed_sample_set` MongoDB collection, identifies its
+    [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
+    session) that represents that document.
+    """
+
     for processed_sample_document in processed_sample_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
         biosample_related_document.biosample_ids = []
@@ -150,6 +185,12 @@ def load_workflow_executions(
     db: Session,
     workflow_execution_set: Collection,
 ) -> None:
+    """
+    Reads each document from the `workflow_execution_set` MongoDB collection, identifies its
+    [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
+    session) that represents that document.
+    """
+
     for workflow_execution_document in workflow_execution_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
         biosample_related_document.biosample_ids = []
@@ -171,6 +212,12 @@ def load_data_objects(
     data_object_set: Collection,
     workflow_execution_set: Collection,
 ) -> None:
+    """
+    Reads each document from the `workflow_execution_set` MongoDB collection, identifies its
+    [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
+    session) that represents that document.
+    """
+
     for data_object_document in data_object_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
         biosample_related_document.biosample_ids = []
@@ -190,6 +237,15 @@ def load_data_objects(
 
 
 def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None:
+    """
+    Identifies the IDs of all relevant documents that are downstream from each biosample (whose ID
+    is passed in), and then updates the `biosample_ids` column (in the Postgres session) of each
+    downstream document's row so that it contains the ID of that [upstream] biosample.
+
+    This involves a recursive Postgres query. We included extensive commentary within the query in
+    an attempt to facilitate maintaining the query over time.
+    """
+
     # For each biosample ID, identify each document that is _anywhere_ downstream from that biosample.
     for biosample_id in biosample_ids:
         query = """--sql
@@ -260,6 +316,11 @@ def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None
 
 
 def delete_documents_having_no_associated_biosamples(db: Session) -> int:
+    """
+    Deletes all `BiosampleRelatedDocument` rows where the `biosample_ids` column consists
+    of an empty array.
+    """
+
     num_rows_deleted = (
         db.query(BiosampleRelatedDocument)
         .filter(func.cardinality(BiosampleRelatedDocument.biosample_ids) == 0)
