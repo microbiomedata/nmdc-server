@@ -1,7 +1,7 @@
 <script>
 import { defineComponent, computed, watch, ref } from 'vue';
 import { valueDisplayName } from '@/util';
-import { api } from '@/data/api';
+import { api, FacetSummaryResponse } from '@/data/api';
 
 export default defineComponent({
   props: {
@@ -24,8 +24,9 @@ export default defineComponent({
   },
 
   setup(props) {
-    const facetSummary = ref([]);
-    const facetSummaryUnconditional = ref([]);
+    const facetSummary = ref<FacetSummaryResponse[] | null>(null);
+    const facetSummaryUnconditional = ref(null);
+    const errorMessage = ref(null);
     
     // Computed properties for conditions (from SegmentConditions mixin logic)
     const otherConditions = computed(() => 
@@ -45,8 +46,10 @@ export default defineComponent({
         const result = await api.getFacetSummary(props.table, props.field, conditions);
         // Create a new array reference to trigger reactivity
         facetSummary.value = [...result];
+        errorMessage.value = null;
       } catch (_error) {
-        facetSummary.value = [];
+        facetSummary.value = null;
+        errorMessage.value = 'Error fetching facet summary';
       }
     };
 
@@ -54,8 +57,10 @@ export default defineComponent({
     const fetchFacetSummaryUnconditional = async () => {
       try {
         facetSummaryUnconditional.value = await api.getFacetSummary(props.table, props.field, []);
+        errorMessage.value = null;
       } catch (_error) {
-        facetSummaryUnconditional.value = [];
+        facetSummaryUnconditional.value = null;
+        errorMessage.value = 'Error fetching facet summary';
       }
     };
 
@@ -98,6 +103,7 @@ export default defineComponent({
       myConditions,
       otherConditions,
       table: props.table,
+      errorMessage,
     };
   },
 });
@@ -115,6 +121,7 @@ export default defineComponent({
         myConditions,
         otherConditions,
         table,
+        errorMessage,
       }"
     />
   </div>

@@ -59,6 +59,10 @@ export default defineComponent({
       type: Array as PropType<FacetSummaryResponse[]>,
       required: true,
     },
+    errorMessage: {
+      type: String,
+      default: null,
+    },
   },
   emits: ['selected'],
   setup(props, { emit }) {
@@ -152,8 +156,9 @@ export default defineComponent({
       isStacked: true,
     }));
 
-    const isLoading = computed(() => props.facetSummaryUnconditional.length === 0);
-
+    const isLoading = computed(() => props.facetSummaryUnconditional == null && props.errorMessage == null);
+    console.log(isLoading.value);
+    console.log(props.errorMessage);
     return {
       chartRef,
       onChartReady,
@@ -161,6 +166,7 @@ export default defineComponent({
       chartData,
       barChartOptions,
       isLoading,
+      errorMessage: props.errorMessage,
     };
   },
 });
@@ -169,14 +175,18 @@ export default defineComponent({
 <template>
   <div>
     <div
-      v-if="isLoading"
+      v-if="isLoading || errorMessage"
       class="d-flex justify-center align-center"
       :style="{ height: `${height}px` }"
     >
       <v-progress-circular
+        v-if="isLoading"
         indeterminate
         color="primary"
       />
+      <div v-else>
+        {{ errorMessage }}
+      </div>
     </div>
     <GChart
       v-else
