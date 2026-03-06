@@ -19,7 +19,8 @@ const {
 } = defineProps<EcosystemSankeyProps>();
 
 const emit = defineEmits(['selected']);
-
+const errorMessage = ref<string | null>(null);
+const isLoading = computed(() => !errorMessage.value && sankeyData.value.length <= 1);
 const chartRef = ref();
 
  
@@ -29,6 +30,7 @@ const onChartReady = (chart: any) => {
 
 const sankeyData = computedAsync(
   async () => {
+    errorMessage.value = null;
     const data = await api.getEnvironmentSankeyAggregation(conditions);
     const tree = makeTree(data, hierarchy);
     return [
@@ -48,6 +50,7 @@ const sankeyData = computedAsync(
     ];
   },
   [['From', 'To', 'Samples']], // Default value while loading
+  { onError: (_e) => { errorMessage.value = 'Could not retrieve ecosystem data'; } },
 );
 
 const chartEvents = {
@@ -99,21 +102,23 @@ const sankeyOptions = computed(() => {
     },
   };
 });
-
-const isLoading = computed(() => sankeyData.value.length <= 1);
 </script>
 
 <template>
   <div>
     <div
-      v-if="isLoading"
+      v-if="isLoading || errorMessage"
       class="d-flex justify-center align-center"
       style="height: 500px"
     >
       <v-progress-circular
+        v-if="isLoading"
         indeterminate
         color="primary"
       />
+      <div v-else>
+        {{ errorMessage }}
+      </div>
     </div>
     <GChart
       v-else

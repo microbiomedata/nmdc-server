@@ -13,7 +13,9 @@ const props = defineProps<{
 
 const facetSummary = ref<FacetSummaryResponse[] | null>(null);
 const facetSummaryUnconditional = ref<FacetSummaryResponse[] | null>(null);
-const errorMessage = ref<string | null>(null);
+const conditionalErrorMessage = ref<string | null>(null);
+const unconditionalErrorMessage = ref<string | null>(null);
+const errorMessage = computed(() => conditionalErrorMessage.value || unconditionalErrorMessage.value);
 
 // Computed properties for conditions (from SegmentConditions mixin logic)
 const otherConditions = computed(() => 
@@ -33,10 +35,10 @@ const fetchFacetSummary = async () => {
     const result = await api.getFacetSummary(props.table, props.field, conditions);
     // Create a new array reference to trigger reactivity
     facetSummary.value = [...result];
-    errorMessage.value = null;
+    conditionalErrorMessage.value = null;
   } catch (_error) {
     facetSummary.value = null;
-    errorMessage.value = 'Could not retrieve summary values with conditions';
+    conditionalErrorMessage.value = 'Could not retrieve summary values with conditions';
   }
 };
 
@@ -44,10 +46,10 @@ const fetchFacetSummary = async () => {
 const fetchFacetSummaryUnconditional = async () => {
   try {
     facetSummaryUnconditional.value = await api.getFacetSummary(props.table, props.field, []);
-    errorMessage.value = null;
+    unconditionalErrorMessage.value = null;
   } catch (_error) {
     facetSummaryUnconditional.value = null;
-    errorMessage.value = 'Could not retrieve summary values';
+    unconditionalErrorMessage.value = 'Could not retrieve summary values';
   }
 };
 
@@ -65,14 +67,16 @@ const facetSummaryAggregate = computed(() => {
     }));
   
   if (facetSummaryUnconditional.value) {
-    aggregate.concat(facetSummaryUnconditional.value
-      .filter((item1) => !currentFacetSummary.some((item2) => item1.facet === item2.facet))
-      .map((item) => ({
-        ...item,
-        count: 0,
-        isSelectable: false,
-        name: valueDisplayName(props.field, item.facet),
-      })));
+    aggregate.push(
+      ...facetSummaryUnconditional.value
+        .filter((item1) => !currentFacetSummary.some((item2) => item1.facet === item2.facet))
+        .map((item) => ({
+          ...item,
+          count: 0,
+          isSelectable: false,
+          name: valueDisplayName(props.field, item.facet),
+        }))
+    );
   }
   return aggregate;
 });

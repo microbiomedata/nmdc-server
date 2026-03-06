@@ -45,6 +45,9 @@ const onChartReady = (chart: any) => {
 const chartEvents = {
   select: () => {
     const selection = chartRef.value.getSelection();
+    if (selection.length === 0) {
+      return;
+    }
     const value = !props.facetSummaryUnconditional ? null : props.facetSummaryUnconditional[selection[0].row]?.facet;
     if (value && selection.length === 1) {
       emit('selected', {

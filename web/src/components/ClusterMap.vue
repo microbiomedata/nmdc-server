@@ -84,9 +84,12 @@ async function getMapData() {
   try {
     if (props.vistab === 1) {
       // Don't update map data if ENVIRONMENT tab is clicked
+      isLoading.value = false;
+      errorMessage.value = null;
       return;
     }
     isLoading.value = true;
+    errorMessage.value = null;
     await new Promise<void>((res) => {
       window.setTimeout(res, 300);
     });

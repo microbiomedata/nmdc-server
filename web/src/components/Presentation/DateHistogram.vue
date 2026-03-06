@@ -94,7 +94,7 @@ watch(() => props.myConditions, () => {
     range.value = [min.value, max.value];
   }
 }, { immediate: true });
-console.log(props.errorMessage);
+
 const isLoading = computed(() => !props.errorMessage
   && (!props.facetSummary
   || !props.facetSummaryUnconditional
