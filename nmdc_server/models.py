@@ -1118,6 +1118,7 @@ class SubmissionMetadata(Base):
     templates = Column(JSONB, nullable=True)
     field_notes_metadata = Column(JSONB, nullable=True)
     is_test_submission = Column(Boolean, nullable=False, default=False)
+    nmdc_study_id = Column(String, nullable=True)
     date_last_modified = Column(
         DateTime, nullable=False, default=lambda: datetime.now(UTC), onupdate=func.now()
     )
