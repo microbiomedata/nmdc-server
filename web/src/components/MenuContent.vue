@@ -29,7 +29,7 @@ const props = withDefaults(defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void;
-  (e: 'select', value: unknown): void;
+  (e: 'select', value: { conditions: Condition[] }): void;
 }>();
 
 onBeforeUnmount(() => emit('close'));
