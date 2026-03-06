@@ -12,8 +12,8 @@ import TimeHistogram from '@/components/Presentation/TimeHistogram.vue';
 import { BinResponse, Condition } from '@/data/api';
 
 const props = withDefaults(defineProps<{
-  facetSummary: BinResponse<string> | null;
-  facetSummaryUnconditional: BinResponse<string> | null;
+  facetSummary: BinResponse<string | number> | null;
+  facetSummaryUnconditional: BinResponse<string | number> | null;
   otherConditions: Condition[];
   myConditions: Condition[];
   table: string;
@@ -62,9 +62,9 @@ watch(() => props.facetSummary, () => {
     || props.facetSummaryUnconditional.bins.length === 0) {
       return;
     }
-    const minDate = Date.parse(props.facetSummaryUnconditional.bins[0]!);
+    const minDate = Date.parse(props.facetSummaryUnconditional.bins[0]! as string);
     const maxDate = Date.parse(
-      props.facetSummaryUnconditional.bins[props.facetSummaryUnconditional.bins.length - 1]!,
+      props.facetSummaryUnconditional.bins[props.facetSummaryUnconditional.bins.length - 1]! as string,
     );
     if (Number.isNaN(minDate) || Number.isNaN(maxDate)) {
       return;

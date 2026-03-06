@@ -137,8 +137,6 @@ const barChartOptions = computed(() => ({
 }));
 
 const isLoading = computed(() => props.facetSummaryUnconditional == null && props.errorMessage == null);
-console.log(isLoading.value);
-console.log(props.errorMessage);
 </script>
 
 <template>

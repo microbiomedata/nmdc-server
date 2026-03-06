@@ -129,9 +129,9 @@ function setBoundsFromMap(val: Condition[]) {
             :conditions="conditions"
             use-all-conditions
           >
-            <template #default="props">
+            <template #default="slotProps">
               <FacetBarChart
-                v-bind="props"
+                v-bind="slotProps"
                 :height="360"
                 :show-title="false"
                 :show-baseline="false"
@@ -172,9 +172,9 @@ function setBoundsFromMap(val: Condition[]) {
             :conditions="conditions"
             use-all-conditions
           >
-            <template #default="props">
+            <template #default="slotProps">
               <DateHistogram
-                v-bind="props"
+                v-bind="slotProps"
                 :height="240"
                 @select="setUniqueCondition(['collection_date'], ['biosample'], $event.conditions)"
               />

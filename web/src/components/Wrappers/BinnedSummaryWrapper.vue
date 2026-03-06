@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { computedAsync } from '@vueuse/core';
 import { api, Condition, EntityType } from '@/data/api';
 
@@ -12,6 +12,7 @@ const props = withDefaults(defineProps<{
   useAllConditions: false,
   conditions: () => [],
 });
+const errorMessage = ref<string | null>(null);
 
 // Computed properties for conditions (from SegmentConditions mixin logic)
 const otherConditions = computed(() =>
@@ -25,29 +26,22 @@ const myConditions = computed(() =>
 // Async computed for facetSummary
 const facetSummary = computedAsync(
   async () => {
+    errorMessage.value = null;
     const conditions = otherConditions.value.concat(
       props.useAllConditions ? myConditions.value : []
     );
     return api.getBinnedFacet(props.table, props.field, conditions);
   },
-  null
+  null,
+  { onError: (_e) => { errorMessage.value = 'Could not retrieve summary values with conditions'; } },
 );
 
 // Async computed for facetSummaryUnconditional
 const facetSummaryUnconditional = computedAsync(
   async () => api.getBinnedFacet(props.table, props.field, []),
-  null
+  null,
+  { onError: (_e) => { errorMessage.value = 'Could not retrieve summary values'; } },
 );
-
-const errorMessage = computed(() => {
-  if (facetSummaryUnconditional.value === null) {
-    return 'Could not retrieve summary values';
-  }
-  if (facetSummary.value === null) {
-    return 'Could not retrieve summary values with conditions';
-  }
-  return null;
-});
 
 </script>
 
