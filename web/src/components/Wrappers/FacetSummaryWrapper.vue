@@ -30,7 +30,6 @@ const fetchFacetSummary = async () => {
     props.useAllConditions ? myConditions.value : []
   );
   try {
-    console.log('Fetching facet summary for', props.table, props.field, 'with conditions', conditions);
     const result = await api.getFacetSummary(props.table, props.field, conditions);
     // Create a new array reference to trigger reactivity
     facetSummary.value = [...result];
@@ -44,11 +43,9 @@ const fetchFacetSummary = async () => {
 // Fetch unconditional facet summary
 const fetchFacetSummaryUnconditional = async () => {
   try {
-    console.log('Fetching unconditional facet summary for', props.table, props.field);
     facetSummaryUnconditional.value = await api.getFacetSummary(props.table, props.field, []);
     errorMessage.value = null;
   } catch (_error) {
-    console.error('Error fetching facet summary unconditional:', _error);
     facetSummaryUnconditional.value = null;
     errorMessage.value = 'Could not retrieve summary values';
   }
