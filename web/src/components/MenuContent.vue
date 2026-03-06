@@ -16,7 +16,7 @@ import FilterSankeyTree from '@/components/FilterSankeyTree.vue';
 import FilterGene, { GeneType as _GeneType } from '@/components/FilterGene.vue';
 import FilterTree from '@/components/FilterTree.vue';
 import { urlify } from '@/data/utils';
-import { AttributeSummary, Condition, entityType } from '@/data/api';
+import { AttributeSummary, Condition, EntityType } from '@/data/api';
 
 export default defineComponent({
   components: {
@@ -39,7 +39,7 @@ export default defineComponent({
       required: true,
     },
     table: {
-      type: String as PropType<entityType>,
+      type: String as PropType<EntityType>,
       required: true,
     },
     summary: {

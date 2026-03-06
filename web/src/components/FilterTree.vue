@@ -8,7 +8,7 @@ import '@zanmato/vue3-treeselect/dist/vue3-treeselect.min.css';
 
 import { cloneDeep } from 'lodash';
 import {
-  Condition, entityType, FacetSummaryResponse,
+  Condition, EntityType, FacetSummaryResponse,
 } from '@/data/api';
 import { unreactive, stateRefs, getTreeData } from '@/store';
 import useRequest from '@/use/useRequest';
@@ -23,7 +23,7 @@ export default defineComponent({
       required: true,
     },
     table: {
-      type: String as PropType<entityType>,
+      type: String as PropType<EntityType>,
       required: true,
     },
     conditions: {

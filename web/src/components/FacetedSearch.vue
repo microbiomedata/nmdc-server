@@ -6,7 +6,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json'
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
 import * as encoding from '@/encoding';
-import { Condition, entityType } from '@/data/api';
+import { Condition, EntityType } from '@/data/api';
 
 const groupOrders = [
   'study',
@@ -20,7 +20,7 @@ const groupOrders = [
 
 export interface SearchFacet {
   field: string;
-  table: entityType;
+  table: EntityType;
   group?: string;
 }
 

@@ -10,7 +10,7 @@ import {
 } from 'vue';
 import { DataTableHeader } from 'vuetify';
 import {
-  Condition, entityType, KeggTermSearchResponse,
+  Condition, EntityType, KeggTermSearchResponse,
 } from '@/data/api';
 import {
   keggEncode, GeneFunctionSearchParams,
@@ -43,7 +43,7 @@ export default defineComponent({
     const conditions = toRef(props, 'conditions');
     const field = ref('id');
     const table = computed(() => {
-      const typeToTable: Record<GeneType, entityType> = {
+      const typeToTable: Record<GeneType, EntityType> = {
         kegg: 'kegg_function',
         cog: 'cog_function',
         pfam: 'pfam_function',

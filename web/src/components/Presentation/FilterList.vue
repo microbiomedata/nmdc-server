@@ -4,7 +4,7 @@ import {
 } from 'vue';
 // @ts-ignore
 import { valueDisplayName, fieldDisplayName } from '@/util';
-import { api, Condition, entityType, FacetSummaryResponse } from '@/data/api';
+import { api, Condition, EntityType, FacetSummaryResponse } from '@/data/api';
 import useFacetSummaryData from '@/use/useFacetSummaryData';
 
 export interface FacetItem extends FacetSummaryResponse {
@@ -19,7 +19,7 @@ export default defineComponent({
       required: true,
     },
     table: {
-      type: String as PropType<entityType>,
+      type: String as PropType<EntityType>,
       required: true,
     },
     useAllConditions: {

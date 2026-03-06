@@ -40,7 +40,7 @@ const authClient = axios.create({
 });
 
 /* The real entity types */
-export type entityType =
+export type EntityType =
   | "biosample"
   | "study"
   | "omics_processing"
@@ -313,7 +313,7 @@ export interface TableSummary {
   attributes: Record<string, AttributeSummary>;
 }
 
-export type DatabaseSummaryResponse = Record<entityType, TableSummary>;
+export type DatabaseSummaryResponse = Record<EntityType, TableSummary>;
 
 export interface DatabaseStatsResponse {
   studies: number;
@@ -394,7 +394,7 @@ export type BulkDownloadAggregateSummary = {
 export interface Condition {
   field: string;
   op: opType;
-  value: string | number | [number, number];
+  value: string | number | [number, number] | [string, string];
   table: string;
 }
 
@@ -515,7 +515,7 @@ export type ResultUnion =
   | SearchResponse<MetaproteomicAnalysisResult>
   | SearchResponse<DataObjectSearchResult>;
 
-async function search(type: entityType, params: SearchParams) {
+async function search(type: EntityType, params: SearchParams) {
   let results: ResultUnion;
   switch (type) {
     case "study":
@@ -618,10 +618,10 @@ async function getFacetSummary(
 }
 
 async function getBinnedFacet<T = string | number>(
-  table: entityType,
+  table: EntityType,
   attribute: string,
   conditions: Condition[],
-  numBins: number,
+  numBins?: number,
   resolution: "day" | "week" | "month" | "year" = "month"
 ) {
   const path = table === "omics_processing" ? "data_generation" : table;
@@ -700,14 +700,14 @@ async function getEnvironmentSankeyAggregation(
 }
 
 async function getDataObjectList(
-  parentType: entityType,
+  parentType: EntityType,
   parentId: string
 ): Promise<DataObjectSearchResult[]> {
   const type = parentType;
   if (type === undefined) {
     return [];
   }
-  const supportedTypes: entityType[] = [
+  const supportedTypes: EntityType[] = [
     "omics_processing",
     "reads_qc",
     "metagenome_assembly",

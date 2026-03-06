@@ -1,65 +1,54 @@
-<script>
-import { defineComponent, computed } from 'vue';
+<script setup lang="ts">
+import { computed } from 'vue';
 import { computedAsync } from '@vueuse/core';
-import { api } from '@/data/api';
+import { api, Condition, EntityType } from '@/data/api';
 
-export default defineComponent({
-  props: {
-    field: {
-      type: String,
-      required: true,
-    },
-    table: {
-      type: String,
-      required: true,
-    },
-    useAllConditions: {
-      type: Boolean,
-      default: false,
-    },
-    conditions: {
-      type: Array,
-      default: () => [],
-    },
-  },
-
-  setup(props) {
-    // Computed properties for conditions (from SegmentConditions mixin logic)
-    const otherConditions = computed(() => 
-      props.conditions.filter((c) => (c.field !== props.field) || (c.table !== props.table))
-    );
-    
-    const myConditions = computed(() => 
-      props.conditions.filter((c) => (c.field === props.field) && (c.table === props.table))
-    );
-
-    // Async computed for facetSummary
-    const facetSummary = computedAsync(
-      async () => {
-        const conditions = otherConditions.value.concat(
-          props.useAllConditions ? myConditions.value : []
-        );
-        return api.getBinnedFacet(props.table, props.field, conditions);
-      },
-      null
-    );
-
-    // Async computed for facetSummaryUnconditional
-    const facetSummaryUnconditional = computedAsync(
-      async () => api.getBinnedFacet(props.table, props.field, []),
-      null
-    );
-
-    return {
-      facetSummary,
-      facetSummaryUnconditional,
-      otherConditions,
-      myConditions,
-      field: props.field,
-      table: props.table,
-    };
-  },
+const props = withDefaults(defineProps<{
+  field: string;
+  table: EntityType;
+  useAllConditions?: boolean;
+  conditions?: Condition[];
+}>(), {
+  useAllConditions: false,
+  conditions: () => [],
 });
+
+// Computed properties for conditions (from SegmentConditions mixin logic)
+const otherConditions = computed(() =>
+  props.conditions.filter((c) => (c.field !== props.field) || (c.table !== props.table))
+);
+
+const myConditions = computed(() =>
+  props.conditions.filter((c) => (c.field === props.field) && (c.table === props.table))
+);
+
+// Async computed for facetSummary
+const facetSummary = computedAsync(
+  async () => {
+    const conditions = otherConditions.value.concat(
+      props.useAllConditions ? myConditions.value : []
+    );
+    return api.getBinnedFacet(props.table, props.field, conditions);
+  },
+  null
+);
+
+// Async computed for facetSummaryUnconditional
+const facetSummaryUnconditional = computedAsync(
+  async () => api.getBinnedFacet(props.table, props.field, []),
+  null
+);
+
+const errorMessage = computed(() => {
+  if (facetSummaryUnconditional.value === null) {
+    return 'Could not retrieve summary values';
+  }
+  if (facetSummary.value === null) {
+    return 'Could not retrieve summary values with conditions';
+  }
+  return null;
+});
+
 </script>
 
 <template>
@@ -72,6 +61,7 @@ export default defineComponent({
         table,
         myConditions,
         otherConditions,
+        errorMessage,
       }"
     />
   </div>
