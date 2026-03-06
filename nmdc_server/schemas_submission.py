@@ -20,7 +20,7 @@ class Contributor(BaseModel):
 
 class Doi(BaseModel):
     value: str
-    provider: str
+    provider: Optional[str] = None
 
 
 class StudyFormCreate(BaseModel):
@@ -30,6 +30,7 @@ class StudyFormCreate(BaseModel):
     piOrcid: str
     fundingSources: Optional[List[str]] = None
     dataDois: Optional[List[Doi]] = None
+    publicationDois: Optional[List[Doi]] = None
     linkOutWebpage: List[str]
     studyDate: Optional[str] = None
     description: str
