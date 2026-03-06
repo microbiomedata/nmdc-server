@@ -2,12 +2,12 @@
 import { computed, watch, ref } from 'vue';
 // @ts-ignore
 import { valueDisplayName } from '@/util';
-import { api, Condition, FacetSummaryResponse } from '@/data/api';
+import { api, Condition, EntityType, FacetSummaryResponse } from '@/data/api';
 
 const props = defineProps<{
   field: string,
-  table: string,
-  useAllConditions: boolean,
+  table: EntityType,
+  useAllConditions?: boolean,
   conditions: Condition[],
 }>()
 
@@ -30,6 +30,7 @@ const fetchFacetSummary = async () => {
     props.useAllConditions ? myConditions.value : []
   );
   try {
+    console.log('Fetching facet summary for', props.table, props.field, 'with conditions', conditions);
     const result = await api.getFacetSummary(props.table, props.field, conditions);
     // Create a new array reference to trigger reactivity
     facetSummary.value = [...result];
@@ -43,6 +44,7 @@ const fetchFacetSummary = async () => {
 // Fetch unconditional facet summary
 const fetchFacetSummaryUnconditional = async () => {
   try {
+    console.log('Fetching unconditional facet summary for', props.table, props.field);
     facetSummaryUnconditional.value = await api.getFacetSummary(props.table, props.field, []);
     errorMessage.value = null;
   } catch (_error) {
@@ -84,7 +86,7 @@ watch(
   () => {
     fetchFacetSummary();
   },
-  { deep: true, immediate: true }
+  { immediate: true }
 );
 
 // Fetch unconditional data once on mount

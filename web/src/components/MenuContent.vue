@@ -1,7 +1,5 @@
-<script lang="ts">
-import {
-  defineComponent, PropType, onBeforeUnmount, computed,
-} from 'vue';
+<script setup lang="ts">
+import { onBeforeUnmount, computed } from 'vue';
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
@@ -18,77 +16,43 @@ import FilterTree from '@/components/FilterTree.vue';
 import { urlify } from '@/data/utils';
 import { AttributeSummary, Condition, EntityType } from '@/data/api';
 
-export default defineComponent({
-  components: {
-    FacetSummaryWrapper,
-    FilterDate,
-    FilterFloat,
-    FilterList,
-    FilterGene,
-    FilterSankeyTree,
-    FilterTree,
-  },
+const props = withDefaults(defineProps<{
+  isOpen: boolean;
+  field: string;
+  table: EntityType;
+  summary: AttributeSummary;
+  conditions: Condition[];
+  update?: boolean;
+}>(), {
+  update: false,
+});
 
-  props: {
-    isOpen: {
-      type: Boolean,
-      required: true,
-    },
-    field: {
-      type: String,
-      required: true,
-    },
-    table: {
-      type: String as PropType<EntityType>,
-      required: true,
-    },
-    summary: {
-      type: Object as PropType<AttributeSummary>,
-      required: true,
-    },
-    conditions: {
-      type: Array as PropType<Condition[]>,
-      required: true,
-    },
-    update: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  emits: ['close', 'select'],
-  setup(props, { emit }) {
-    onBeforeUnmount(() => emit('close'));
+const emit = defineEmits<{
+  (e: 'close'): void;
+  (e: 'select', value: unknown): void;
+}>();
 
-    const description = computed(() => {
-      const fieldSchemaName = getField(props.field, props.table);
-      const schemaName = fieldSchemaName.schemaName || props.field;
-      if (schemaName !== undefined) {
-        let description = '';
-        if (schemaName in NmdcSchema.classes) {
-          const schemaClass = NmdcSchema.classes[schemaName as keyof typeof NmdcSchema.classes];
-          description = 'description' in schemaClass ? schemaClass.description : '';
-        }
-        if (schemaName in NmdcSchema.slots) {
-          const schemaSlot = NmdcSchema.slots[schemaName as keyof typeof NmdcSchema.slots];
-          description = 'description' in schemaSlot ? schemaSlot.description : '';
-        }
-        // Avoid restating the field name as a description
-        if (description !== schemaName) {
-          return description;
-        }
-      }
-      return '';
-    });
+onBeforeUnmount(() => emit('close'));
 
-    return {
-      description,
-      fieldDisplayName,
-      getField,
-      urlify,
-      geneFunctionTypeInfo,
-      geneFunctionTables,
-    };
-  },
+const description = computed(() => {
+  const fieldSchemaName = getField(props.field, props.table);
+  const schemaName = fieldSchemaName.schemaName || props.field;
+  if (schemaName !== undefined) {
+    let description = '';
+    if (schemaName in NmdcSchema.classes) {
+      const schemaClass = NmdcSchema.classes[schemaName as keyof typeof NmdcSchema.classes];
+      description = 'description' in schemaClass ? schemaClass.description : '';
+    }
+    if (schemaName in NmdcSchema.slots) {
+      const schemaSlot = NmdcSchema.slots[schemaName as keyof typeof NmdcSchema.slots];
+      description = 'description' in schemaSlot ? schemaSlot.description : '';
+    }
+    // Avoid restating the field name as a description
+    if (description !== schemaName) {
+      return description;
+    }
+  }
+  return '';
 });
 </script>
 
@@ -97,10 +61,10 @@ export default defineComponent({
     <v-card-title class="pb-0 d-flex align-center">
       {{ fieldDisplayName(field, table) }}
       <span
-        v-if="summary.units"
+        v-if="props.summary.units"
         class="pl-2"
       >
-        ({{ summary.units.name }})
+        ({{ props.summary.units.name }})
       </span>
       <v-spacer />
       <v-btn
@@ -116,41 +80,45 @@ export default defineComponent({
       class="py-1 text-caption"
       v-html="urlify(description)"
     />
-    <template v-if="isOpen">
+    <template v-if="props.isOpen">
       <filter-list
-        v-if="summary.type === 'string'"
-        :field="field"
-        :table="table"
-        :conditions="conditions"
+        v-if="props.summary.type === 'string'"
+        :field="props.field"
+        :table="props.table"
+        :conditions="props.conditions"
         @select="$emit('select', $event)"
       />
       <FilterGene
         v-if="geneFunctionTables.includes(summary.type)"
-        :field="field"
-        :table="table"
-        :conditions="conditions"
-        :gene-type-params="geneFunctionTypeInfo[summary.type.split('_')[0] as _geneFunctionType]"
-        :gene-type="summary.type.split('_')[0] as _GeneType"
+        :field="props.field"
+        :table="props.table"
+        :conditions="props.conditions"
+        :gene-type-params="geneFunctionTypeInfo[props.summary.type.split('_')[0] as _geneFunctionType]"
+        :gene-type="props.summary.type.split('_')[0] as _GeneType"
         @select="$emit('select', $event)"
       />
       <filter-date
-        v-if="summary.type === 'date'"
+        v-if="props.summary.type === 'date'"
         v-bind="{
-          field, type: table, conditions,
-          min: summary.min as string,
-          max: summary.max as string,
-          update,
+          field: props.field,
+          type: props.table, 
+          conditions: props.conditions,
+          min: props.summary.min as string,
+          max: props.summary.max as string,
+          update: props.update,
         }"
         class="pa-5"
         @select="$emit('select', $event)"
       />
       <filter-float
-        v-else-if="['float', 'integer'].includes(summary.type)"
+        v-else-if="['float', 'integer'].includes(props.summary.type)"
         v-bind="{
-          field, type: table, conditions,
-          min: summary.min as number,
-          max: summary.max as number,
-          update,
+          field: props.field,
+          type: props.table, 
+          conditions: props.conditions,
+          min: props.summary.min as number,
+          max: props.summary.max as number,
+          update: props.update,
         }"
         class="pa-5"
         @select="$emit('select', $event)"
@@ -162,11 +130,15 @@ export default defineComponent({
       />
       <facet-summary-wrapper
         v-else-if="['tree'].includes(summary.type)"
-        v-bind="{ table, field, conditions }"
+        v-bind="{
+          table: props.table,
+          field: props.field ,
+          conditions: props.conditions,
+        }"
       >
-        <template #default="props">
+        <template #default="slotProps">
           <filter-tree
-            v-bind="props"
+            v-bind="slotProps"
             @select="$emit('select', $event)"
           />
         </template>
