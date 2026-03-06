@@ -1,10 +1,7 @@
-<script lang="ts">
-import {
-  computed, defineComponent, ref, watchEffect, PropType,
-} from 'vue';
+<script setup lang="ts">
+import { computed, ref, watchEffect } from 'vue';
 import FacetBarChart from '@/components/Presentation/FacetBarChart.vue';
 import DateHistogram from '@/components/Presentation/DateHistogram.vue';
-
 import UpSet from '@/components/Presentation/UpSet.vue';
 import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 // TODO: replace with composition functions
@@ -15,7 +12,7 @@ import TooltipCard from '@/components/TooltipCard.vue';
 import ClusterMap from '@/components/ClusterMap.vue';
 
 import {
-  toggleConditions, removeConditions, setUniqueCondition,
+  toggleConditions, setUniqueCondition,
 } from '@/store';
 import { api, Condition, FacetSummaryResponse } from '@/data/api';
 import { makeSetsFromBitmask } from '@/encoding';
@@ -43,98 +40,82 @@ const staticUpsetTooltips = {
   AMP: 'Amplicon',
 };
 
-export default defineComponent({
-  name: 'SampleVisGroup',
+const props = withDefaults(defineProps<{
+  conditions: Condition[];
+  vistab?: number | null;
+}>(), {
+  vistab: null,
+});
 
-  components: {
-    ChartContainer,
-    DateHistogram,
-    FacetBarChart,
-    ClusterMap,
-    TooltipCard,
-    // TODO replace with composition functions
-    FacetSummaryWrapper,
-    BinnedSummaryWrapper,
-    UpSet,
-  },
+const sampleFacetSummary = ref<FacetSummaryResponse[] | null>(null);
+const studyFacetSummary = ref<FacetSummaryResponse[] | null>(null);
+const isUpsetLoading = ref(true);
 
-  props: {
-    conditions: {
-      type: Array as PropType<Condition[]>,
-      required: true,
-    },
-    vistab: {
-      type: Number,
-      default: null,
-    },
-  },
-
-  setup(props) {
-    const sampleFacetSummary = ref([] as FacetSummaryResponse[]);
-    const studyFacetSummary = ref([] as FacetSummaryResponse[]);
-    const isUpsetLoading = ref(true);
-
-    const upsetData = computed(() => {
-      const multiomicsObj: Record<string, { counts: any, sets: any }> = {};
-      sampleFacetSummary.value.forEach(({ facet, count }) => {
-        if (parseInt(facet, 10) === 0) {
-          return;
-        }
+const upsetData = computed(() => {
+  const multiomicsObj: Record<string, { counts: any, sets: any }> = {};
+  if (sampleFacetSummary.value) {
+    sampleFacetSummary.value.forEach(({ facet, count }) => {
+      if (parseInt(facet, 10) === 0) {
+        return;
+      }
+      multiomicsObj[facet] = {
+        counts: {
+          Samples: count,
+          Studies: 0,
+        },
+        sets: makeSetsFromBitmask(facet),
+      };
+    });
+  }
+  if (studyFacetSummary.value) {
+    studyFacetSummary.value.forEach(({ facet, count }) => {
+      if (parseInt(facet, 10) === 0) {
+        return;
+      }
+      if (!multiomicsObj[facet]) {
         multiomicsObj[facet] = {
           counts: {
-            Samples: count,
-            Studies: 0,
+            Samples: 0,
           },
           sets: makeSetsFromBitmask(facet),
         };
-      });
-      studyFacetSummary.value.forEach(({ facet, count }) => {
-        if (parseInt(facet, 10) === 0) {
-          return;
-        }
-        if (!multiomicsObj[facet]) {
-          multiomicsObj[facet] = {
-            counts: {
-              Samples: 0,
-            },
-            sets: makeSetsFromBitmask(facet),
-          };
-        }
-        multiomicsObj[facet].counts.Studies = count;
-      });
-      return Object.keys(multiomicsObj)
-        .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
-        .map((k) => multiomicsObj[k]);
+      }
+      multiomicsObj[facet].counts.Studies = count;
     });
-
-    watchEffect(async () => {
-      isUpsetLoading.value = true;
-      [sampleFacetSummary.value, studyFacetSummary.value] = await Promise.all([
-        api.getFacetSummary('biosample', 'multiomics', props.conditions),
-        api.getFacetSummary('study', 'multiomics', props.conditions),
-      ]);
-      isUpsetLoading.value = false;
-    });
-
-    function setBoundsFromMap(val: Condition[]) {
-      setUniqueCondition(['latitude', 'longitude'], ['biosample'], val);
-    }
-
-    return {
-      helpBarchart,
-      helpMap,
-      helpTimeline,
-      helpUpset,
-      toggleConditions,
-      setUniqueCondition,
-      removeConditions,
-      setBoundsFromMap,
-      staticUpsetTooltips,
-      upsetData,
-      isUpsetLoading,
-    };
-  },
+  }
+  return Object.keys(multiomicsObj)
+    .sort((a, b) => parseInt(a, 10) - parseInt(b, 10))
+    .map((k) => multiomicsObj[k]);
 });
+
+const upsetErrorMessage = computed(() => {
+  if (sampleFacetSummary.value === null) {
+    return 'Could not retrieve sample summary values for UpSet plot';
+  } else if (studyFacetSummary.value === null) {
+    return 'Could not retrieve study summary values for UpSet plot';
+  }
+  return null;
+});
+
+watchEffect(async () => {
+  try {
+    isUpsetLoading.value = true;
+    [sampleFacetSummary.value, studyFacetSummary.value] = await Promise.all([
+      api.getFacetSummary('biosample', 'multiomics', props.conditions),
+      api.getFacetSummary('study', 'multiomics', props.conditions),
+    ]);
+  } catch (error) {
+    console.error('Error fetching facet summaries for UpSet plot:', error);
+    sampleFacetSummary.value = null;
+    studyFacetSummary.value = null;
+  } finally {
+    isUpsetLoading.value = false;
+  }
+});
+
+function setBoundsFromMap(val: Condition[]) {
+  setUniqueCondition(['latitude', 'longitude'], ['biosample'], val);
+}
 </script>
 
 <template>
@@ -210,14 +191,18 @@ export default defineComponent({
           class="py-0 d-flex flex-column justify-center fill-height"
         >
           <div
-            v-if="isUpsetLoading"
+            v-if="isUpsetLoading || upsetErrorMessage"
             class="d-flex justify-center align-center"
             style="height: 240px"
           >
             <v-progress-circular
+              v-if="isUpsetLoading"
               indeterminate
               color="primary"
             />
+            <div v-else>
+              {{ upsetErrorMessage }}
+            </div>
           </div>
           <ChartContainer
             v-else
