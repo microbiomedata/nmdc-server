@@ -327,6 +327,7 @@ const studyFormDefault = {
   linkOutWebpage: [],
   studyDate: null,
   dataDois: [] as Doi[] | null,
+  publicationDois: [] as Doi[] | null,
   fundingSources: [] as string[] | null,
   description: '',
   notes: '',
@@ -407,9 +408,8 @@ function removeAwardDoi(i: number) {
   }
 }
 
-function checkDoiFormat(v: string) {
-  const valid = /^(?:doi:)?10.\d{2,9}\/.*$/.test(v);
-  return valid;
+function checkDoiFormat(v: string): string | boolean {
+  return /^(?:doi:)?10.\d{2,9}\/.*$/.test(v) || 'DOI must be in the format "10.xxxx/xxxxx"';
 }
 
 // When "Have data already been generated for your study?" changes, reset the answers to dependent questions

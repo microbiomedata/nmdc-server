@@ -191,9 +191,9 @@ const doiValueRules = () => (
 
       // Split by comma and validate each DOI
       const dois = value.split(',').map((doi) => doi.trim());
-      const allValid = dois.every((doi) => checkDoiFormat(doi));
+      const allValid = dois.every((doi) => checkDoiFormat(doi) === true);
 
-      return allValid || 'All DOIs must be valid (comma-separated if multiple)';
+      return allValid || 'All DOIs must be in 10.xxxx/xxxxx format (comma-separated if multiple)';
     },
   ]
 );
