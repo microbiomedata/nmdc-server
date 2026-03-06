@@ -86,7 +86,7 @@ dependencies = [
     "linkml-dataops==0.1.0",
     "linkml-runtime==1.9.5",
     "mako==1.3.5",
-    "markdown==3.7",
+    "markdown==3.8.1",
     "markupsafe==3.0.1",
     "matplotlib-inline==0.1.7",
     "mergedeep==1.3.4",
