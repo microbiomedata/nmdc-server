@@ -31,7 +31,7 @@ def invert_dict_of_lists(dict_of_lists: dict[str, List[str]]) -> dict[str, List[
     Inverts a dictionary whose values are lists; so that the keys of the returned dictionary are
     the distinct elements of those lists, and the values are lists of the keys from the original
     dictionary that had that element in their values.
-    
+
     >>> invert_dict_of_lists({"a": ["1", "2"], "b": ["2", "3"], "c": []})
     {'1': ['a'], '2': ['a', 'b'], '3': ['b']}
     >>> invert_dict_of_lists({"a": ["1", "1"]})  # test: omits duplicates
@@ -40,7 +40,7 @@ def invert_dict_of_lists(dict_of_lists: dict[str, List[str]]) -> dict[str, List[
     {}
     """
 
-    inverted_dict = {}
+    inverted_dict: dict[str, List[str]] = {}
     for string_key, string_values in dict_of_lists.items():
         for string_value in string_values:
             if string_value not in inverted_dict.keys():  # initializes list
@@ -102,9 +102,9 @@ def load_biosamples(
 
         # Store its "associated_studies" value in the dictionary we will return.
         if "associated_studies" in biosample_document:
-            biosample_associated_studies_values[
-                biosample_document["id"]
-            ] = biosample_document["associated_studies"]
+            biosample_associated_studies_values[biosample_document["id"]] = biosample_document[
+                "associated_studies"
+            ]
 
         db.add(biosample_related_document)
 
@@ -149,9 +149,7 @@ def load_studies(
         biosample_related_document.downstream_neighbor_ids = dedupe(
             biosample_related_document.downstream_neighbor_ids
         )
-        biosample_related_document.biosample_ids = dedupe(
-            biosample_related_document.biosample_ids
-        )
+        biosample_related_document.biosample_ids = dedupe(biosample_related_document.biosample_ids)
 
         db.add(biosample_related_document)
 
@@ -197,9 +195,9 @@ def load_data_generations(
 
         # Store its "has_input" value in the dictionary we will return.
         if "has_input" in data_generation_document:
-            data_generation_has_input_values[
-                data_generation_document["id"]
-            ] = data_generation_document["has_input"]
+            data_generation_has_input_values[data_generation_document["id"]] = (
+                data_generation_document["has_input"]
+            )
 
     return data_generation_has_input_values
 
@@ -274,9 +272,9 @@ def load_material_processings(
 
         # Store its "has_input" value in the dictionary we will return.
         if "has_input" in material_processing_document:
-            material_processing_has_input_values[
-                material_processing_document["id"]
-            ] = material_processing_document["has_input"]
+            material_processing_has_input_values[material_processing_document["id"]] = (
+                material_processing_document["has_input"]
+            )
 
     return material_processing_has_input_values
 
@@ -356,9 +354,9 @@ def load_workflow_executions(
 
         # Store its "has_input" value in the dictionary we will return.
         if "has_input" in workflow_execution_document:
-            workflow_execution_has_input_values[
-                workflow_execution_document["id"]
-            ] = workflow_execution_document["has_input"]
+            workflow_execution_has_input_values[workflow_execution_document["id"]] = (
+                workflow_execution_document["has_input"]
+            )
 
     return workflow_execution_has_input_values
 
@@ -541,8 +539,12 @@ def load(db: Session, mongodb: Database) -> None:
         db.commit()
 
     with duration_logger(logger, "⚗️ Loading material processings"):
-        material_processing_has_input_values = load_material_processings(db, material_processing_set)
-        material_processing_ids_by_input_id = invert_dict_of_lists(material_processing_has_input_values)
+        material_processing_has_input_values = load_material_processings(
+            db, material_processing_set
+        )
+        material_processing_ids_by_input_id = invert_dict_of_lists(
+            material_processing_has_input_values
+        )
         db.commit()
 
     with duration_logger(logger, "🧪 Loading biosamples"):
@@ -552,7 +554,9 @@ def load(db: Session, mongodb: Database) -> None:
             data_generation_ids_by_input_id,
             material_processing_ids_by_input_id,
         )
-        biosample_ids_by_associated_study_id = invert_dict_of_lists(biosample_associated_studies_values)
+        biosample_ids_by_associated_study_id = invert_dict_of_lists(
+            biosample_associated_studies_values
+        )
         db.commit()
 
     with duration_logger(logger, "📰 Loading studies"):
@@ -574,7 +578,9 @@ def load(db: Session, mongodb: Database) -> None:
 
     with duration_logger(logger, "🖥️ Loading workflow executions"):
         workflow_execution_has_input_values = load_workflow_executions(db, workflow_execution_set)
-        workflow_execution_ids_by_input_id = invert_dict_of_lists(workflow_execution_has_input_values)
+        workflow_execution_ids_by_input_id = invert_dict_of_lists(
+            workflow_execution_has_input_values
+        )
         db.commit()
 
     with duration_logger(logger, "💾 Loading data objects"):
