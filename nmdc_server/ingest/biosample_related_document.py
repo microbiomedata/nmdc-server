@@ -15,6 +15,16 @@ projection_omitting_oid = {"_id": 0}
 projection_selecting_id = {"_id": 0, "id": 1}
 
 
+def dedupe(ids: List[str]) -> List[str]:
+    """
+    Returns the specified list after deleting any redundant values from it.
+
+    >>> deduplicate_list_of_ids([1, 2, 3, 2])
+    [1, 2, 3]
+    """
+    return list(set(ids))
+
+
 def load_biosamples(
     db: Session,
     biosample_set: Collection,
@@ -52,6 +62,10 @@ def load_biosamples(
             biosample_related_document.downstream_neighbor_ids.append(
                 material_processing_document["id"]
             )
+
+        biosample_related_document.downstream_neighbor_ids = dedupe(
+            biosample_related_document.downstream_neighbor_ids
+        )
 
         # Add the biosample's ID to our list.
         biosample_ids.append(biosample_document["id"])
@@ -92,6 +106,10 @@ def load_studies(
             # specifically, since we want to identify those anyway for each document.
             biosample_related_document.biosample_ids.append(biosample_document["id"])
 
+        biosample_related_document.downstream_neighbor_ids = dedupe(
+            biosample_related_document.downstream_neighbor_ids
+        )
+
         db.add(biosample_related_document)
 
 
@@ -123,6 +141,10 @@ def load_data_generations(
                 data_generation_document["generates_calibration"]
             )
 
+        biosample_related_document.downstream_neighbor_ids = dedupe(
+            biosample_related_document.downstream_neighbor_ids
+        )
+
         db.add(biosample_related_document)
 
 
@@ -152,6 +174,10 @@ def load_calibrations(
                 calibration_document["calibration_object"]
             )
 
+        biosample_related_document.downstream_neighbor_ids = dedupe(
+            biosample_related_document.downstream_neighbor_ids
+        )
+
         db.add(biosample_related_document)
 
 
@@ -178,6 +204,10 @@ def load_material_processings(
             biosample_related_document.downstream_neighbor_ids.extend(
                 material_processing_document["has_output"]
             )
+
+        biosample_related_document.downstream_neighbor_ids = dedupe(
+            biosample_related_document.downstream_neighbor_ids
+        )
 
         db.add(biosample_related_document)
 
@@ -216,6 +246,10 @@ def load_processed_samples(
                 material_processing_document["id"]
             )
 
+        biosample_related_document.downstream_neighbor_ids = dedupe(
+            biosample_related_document.downstream_neighbor_ids
+        )
+
         db.add(biosample_related_document)
 
 
@@ -242,6 +276,10 @@ def load_workflow_executions(
             biosample_related_document.downstream_neighbor_ids.extend(
                 workflow_execution_document["has_output"]
             )
+
+        biosample_related_document.downstream_neighbor_ids = dedupe(
+            biosample_related_document.downstream_neighbor_ids
+        )
 
         db.add(biosample_related_document)
 
@@ -272,6 +310,10 @@ def load_data_objects(
             biosample_related_document.downstream_neighbor_ids.append(
                 workflow_execution_document["id"]
             )
+
+        biosample_related_document.downstream_neighbor_ids = dedupe(
+            biosample_related_document.downstream_neighbor_ids
+        )
 
         db.add(biosample_related_document)
 
