@@ -115,9 +115,42 @@ def load_data_generations(
         # Identify downstream neighbors.
         biosample_related_document.downstream_neighbor_ids = []
         if "has_output" in data_generation_document:
-            biosample_related_document.downstream_neighbor_ids = data_generation_document[
-                "has_output"
-            ]
+            biosample_related_document.downstream_neighbor_ids.extend(
+                data_generation_document["has_output"]
+            )
+        if "generates_calibration" in data_generation_document:
+            biosample_related_document.downstream_neighbor_ids.append(
+                data_generation_document["generates_calibration"]
+            )
+
+        db.add(biosample_related_document)
+
+
+def load_calibrations(
+    db: Session,
+    calibration_set: Collection,
+) -> None:
+    """
+    Reads each document from the `calibration_set` MongoDB collection, identifies its
+    [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
+    session) that represents that document.
+
+    Reference: https://microbiomedata.github.io/nmdc-schema/CalibrationInformation/
+    """
+
+    for calibration_document in calibration_set.find({}, projection_omitting_oid):
+        biosample_related_document = BiosampleRelatedDocument()
+        biosample_related_document.id = calibration_document["id"]
+        biosample_related_document.biosample_ids = []
+        biosample_related_document.high_level_type = "nmdc:CalibrationInformation"
+        biosample_related_document.document = calibration_document
+
+        # Identify downstream neighbors.
+        biosample_related_document.downstream_neighbor_ids = []
+        if "calibration_object" in calibration_document:
+            biosample_related_document.downstream_neighbor_ids.append(
+                calibration_document["calibration_object"]
+            )
 
         db.add(biosample_related_document)
 
@@ -142,9 +175,9 @@ def load_material_processings(
         # Identify downstream neighbors.
         biosample_related_document.downstream_neighbor_ids = []
         if "has_output" in material_processing_document:
-            biosample_related_document.downstream_neighbor_ids = material_processing_document[
-                "has_output"
-            ]
+            biosample_related_document.downstream_neighbor_ids.extend(
+                material_processing_document["has_output"]
+            )
 
         db.add(biosample_related_document)
 
@@ -206,9 +239,9 @@ def load_workflow_executions(
         # Identify downstream neighbors.
         biosample_related_document.downstream_neighbor_ids = []
         if "has_output" in workflow_execution_document:
-            biosample_related_document.downstream_neighbor_ids = workflow_execution_document[
-                "has_output"
-            ]
+            biosample_related_document.downstream_neighbor_ids.extend(
+                workflow_execution_document["has_output"]
+            )
 
         db.add(biosample_related_document)
 
@@ -349,6 +382,7 @@ def load(db: Session, mongodb: Database) -> None:
     - `material_processing_set`
     - `processed_sample_set`
     - `data_generation_set`
+    - `calibration_set`
     - `workflow_execution_set`
     - `data_object_set`
     """
@@ -362,6 +396,7 @@ def load(db: Session, mongodb: Database) -> None:
     material_processing_set = mongodb.get_collection("material_processing_set")
     processed_sample_set = mongodb.get_collection("processed_sample_set")
     data_generation_set = mongodb.get_collection("data_generation_set")
+    calibration_set = mongodb.get_collection("calibration_set")
     workflow_execution_set = mongodb.get_collection("workflow_execution_set")
     data_object_set = mongodb.get_collection("data_object_set")
 
@@ -377,6 +412,10 @@ def load(db: Session, mongodb: Database) -> None:
 
     with duration_logger(logger, "🔬 Loading data generations"):
         load_data_generations(db, data_generation_set)
+        db.commit()
+
+    with duration_logger(logger, "📐 Loading calibrations"):
+        load_calibrations(db, calibration_set)
         db.commit()
 
     with duration_logger(logger, "⚗️ Loading material processings"):
