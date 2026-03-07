@@ -350,8 +350,8 @@ def load_data_objects(
 
         # Identify downstream neighbors.
         #
-        # Note: Instead of querying the `biosample_set` MongoDB collections here, we take advantage
-        #       of the dictionary passed in.
+        # Note: Instead of querying the `workflow_execution_set` MongoDB collections here,
+        #       we take advantage of the dictionary passed in.
         #
         biosample_related_document.downstream_neighbor_ids = []
         for k, v in workflow_execution_has_input_values.items():
