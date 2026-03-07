@@ -362,7 +362,7 @@ def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None
                     SELECT unnest(brd.downstream_neighbor_ids) AS downstream_neighbor_id
                     FROM biosample_related_document AS brd
                     WHERE brd.id = :biosample_id
-                UNION ALL
+                UNION
                     -- 🔁 Recursive term: Get the IDs of the (immediate) downstream neighbors of
                     --                    the documents identified in the previous iteration.
                     --                    Once there are no such IDs, this will return no rows,
