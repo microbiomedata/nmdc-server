@@ -35,7 +35,7 @@ def upgrade():
             postgresql.ARRAY(sa.String()),
             nullable=False,
             server_default=sa.text("'{}'"),  # in Postgres, "{}" represents an empty array
-            comment="The IDs of all biosamples upstream of, or representing, the document",
+            comment="The IDs of all biosamples downstream of, upstream of, or representing the document",
         ),
         sa.Column(
             "high_level_type",
@@ -47,7 +47,7 @@ def upgrade():
             "document",
             postgresql.JSONB(astext_type=sa.Text()),  # type: ignore[call-arg]
             nullable=False,
-            comment="NMDC Schema-compliant document downstream, upstream, or representing the subject biosample",
+            comment="NMDC Schema-compliant document downstream of, upstream of, or representing the subject biosample",
         ),
         sa.Column(
             "downstream_neighbor_ids",
