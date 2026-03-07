@@ -19,17 +19,44 @@ def dedupe(ids: List[str]) -> List[str]:
     """
     Returns the specified list after deleting any redundant values from it.
 
-    >>> deduplicate_list_of_ids([1, 2, 3, 2])
+    >>> dedupe([1, 2, 3, 2])
     [1, 2, 3]
+    >>> dedupe([])
+    []
     """
     return list(set(ids))
+
+
+def invert_dict_of_lists(dict_of_lists: dict[str, List[str]]) -> dict[str, List[str]]:
+    """
+    Inverts a dictionary whose values are lists; so that the keys of the returned dictionary are
+    the distinct elements of those lists, and the values are lists of the keys from the original
+    dictionary that had that element in their values.
+    
+    >>> invert_dict_of_lists({"a": ["1", "2"], "b": ["2", "3"], "c": []})
+    {'1': ['a'], '2': ['a', 'b'], '3': ['b']}
+    >>> invert_dict_of_lists({"a": ["1", "1"]})  # test: omits duplicates
+    {'1': ['a']}
+    >>> invert_dict_of_lists({})
+    {}
+    """
+
+    inverted_dict = {}
+    for string_key, string_values in dict_of_lists.items():
+        for string_value in string_values:
+            if string_value not in inverted_dict.keys():  # initializes list
+                inverted_dict[string_value] = []
+            if string_key not in inverted_dict[string_value]:  # omits duplicate values
+                inverted_dict[string_value].append(string_key)
+
+    return inverted_dict
 
 
 def load_biosamples(
     db: Session,
     biosample_set: Collection,
-    data_generation_has_input_values: dict[str, List[str]],
-    material_processing_has_input_values: dict[str, List[str]],
+    data_generation_ids_by_input_id: dict[str, List[str]],
+    material_processing_ids_by_input_id: dict[str, List[str]],
 ) -> tuple[list[str], dict[str, list[str]]]:
     """
     Reads each document from the `biosample_set` MongoDB collection, identifies its [immediate]
@@ -55,15 +82,17 @@ def load_biosamples(
         # Identify downstream neighbors.
         #
         # Note: Instead of querying the `data_generation_set` and `material_processing_set`
-        #       MongoDB collections here, we take advantage of the dictionaries passed in.
+        #       MongoDB collections here, we take advantage of the look-up tables passed in.
         #
         biosample_related_document.downstream_neighbor_ids = []
-        for k, v in data_generation_has_input_values.items():
-            if biosample_document["id"] in v:
-                biosample_related_document.downstream_neighbor_ids.append(k)
-        for k, v in material_processing_has_input_values.items():
-            if biosample_document["id"] in v:
-                biosample_related_document.downstream_neighbor_ids.append(k)
+        if biosample_document["id"] in data_generation_ids_by_input_id:
+            biosample_related_document.downstream_neighbor_ids.extend(
+                data_generation_ids_by_input_id[biosample_document["id"]]
+            )
+        if biosample_document["id"] in material_processing_ids_by_input_id:
+            biosample_related_document.downstream_neighbor_ids.extend(
+                material_processing_ids_by_input_id[biosample_document["id"]]
+            )
 
         biosample_related_document.downstream_neighbor_ids = dedupe(
             biosample_related_document.downstream_neighbor_ids
@@ -86,7 +115,7 @@ def load_biosamples(
 def load_studies(
     db: Session,
     study_set: Collection,
-    biosample_associated_studies_values: dict[str, list[str]],
+    biosample_ids_by_associated_study_id: dict[str, list[str]],
 ) -> None:
     """
     Reads each document from the `study_set` MongoDB collection, identifies its [immediate]
@@ -105,21 +134,24 @@ def load_studies(
 
         # Identify downstream neighbors.
         #
-        # Note: Instead of querying the `biosample_set` MongoDB collection here, we take advantage
-        #       of the dictionary passed in.
+        # Note: Instead of querying the `biosample_set` MongoDB collection here,
+        #       we take advantage of the look-up tables passed in.
         #
         biosample_related_document.downstream_neighbor_ids = []
-        for k, v in biosample_associated_studies_values.items():
-            if study_document["id"] in v:
-                biosample_related_document.downstream_neighbor_ids.append(k)
+        if study_document["id"] in biosample_ids_by_associated_study_id:
+            biosample_ids = biosample_ids_by_associated_study_id[study_document["id"]]
+            biosample_related_document.downstream_neighbor_ids.extend(biosample_ids)
 
-                # Also store this biosample's `id` as a related biosample `id`; given that our
-                # later step of traversing the schema will only go _downstream_ (not upstream)
-                # of biosamples.
-                biosample_related_document.biosample_ids.append(k)
+            # Also store the biosamples' `id`s as related biosample `id`s; given that our
+            # later step of traversing the schema will only go _downstream_ (not upstream)
+            # of biosamples (whereas studies are _upstream_ of biosamples).
+            biosample_related_document.biosample_ids.extend(biosample_ids)
 
         biosample_related_document.downstream_neighbor_ids = dedupe(
             biosample_related_document.downstream_neighbor_ids
+        )
+        biosample_related_document.biosample_ids = dedupe(
+            biosample_related_document.biosample_ids
         )
 
         db.add(biosample_related_document)
@@ -253,8 +285,8 @@ def load_material_processings(
 def load_processed_samples(
     db: Session,
     processed_sample_set: Collection,
-    data_generation_has_input_values: dict[str, List[str]],
-    material_processing_has_input_values: dict[str, List[str]],
+    data_generation_ids_by_input_id: dict[str, List[str]],
+    material_processing_ids_by_input_id: dict[str, List[str]],
 ) -> None:
     """
     Reads each document from the `processed_sample_set` MongoDB collection, identifies its
@@ -272,15 +304,17 @@ def load_processed_samples(
         # Identify downstream neighbors.
         #
         # Note: Instead of querying the `data_generation_set` and `material_processing_set`
-        #       MongoDB collections here, we take advantage of the dictionaries passed in.
+        #       MongoDB collections here, we take advantage of the look-up tables passed in.
         #
         biosample_related_document.downstream_neighbor_ids = []
-        for k, v in data_generation_has_input_values.items():
-            if processed_sample_document["id"] in v:
-                biosample_related_document.downstream_neighbor_ids.append(k)
-        for k, v in material_processing_has_input_values.items():
-            if processed_sample_document["id"] in v:
-                biosample_related_document.downstream_neighbor_ids.append(k)
+        if processed_sample_document["id"] in data_generation_ids_by_input_id:
+            biosample_related_document.downstream_neighbor_ids.extend(
+                data_generation_ids_by_input_id[processed_sample_document["id"]]
+            )
+        if processed_sample_document["id"] in material_processing_ids_by_input_id:
+            biosample_related_document.downstream_neighbor_ids.extend(
+                material_processing_ids_by_input_id[processed_sample_document["id"]]
+            )
 
         biosample_related_document.downstream_neighbor_ids = dedupe(
             biosample_related_document.downstream_neighbor_ids
@@ -333,7 +367,7 @@ def load_workflow_executions(
 def load_data_objects(
     db: Session,
     data_object_set: Collection,
-    workflow_execution_has_input_values: dict[str, List[str]],
+    workflow_execution_ids_by_input_id: dict[str, List[str]],
 ) -> None:
     """
     Reads each document from the `workflow_execution_set` MongoDB collection, identifies its
@@ -351,12 +385,13 @@ def load_data_objects(
         # Identify downstream neighbors.
         #
         # Note: Instead of querying the `workflow_execution_set` MongoDB collection here,
-        #       we take advantage of the dictionary passed in.
+        #       we take advantage of the look-up tables passed in.
         #
         biosample_related_document.downstream_neighbor_ids = []
-        for k, v in workflow_execution_has_input_values.items():
-            if data_object_document["id"] in v:
-                biosample_related_document.downstream_neighbor_ids.append(k)
+        if data_object_document["id"] in workflow_execution_ids_by_input_id:
+            biosample_related_document.downstream_neighbor_ids.extend(
+                workflow_execution_ids_by_input_id[data_object_document["id"]]
+            )
 
         biosample_related_document.downstream_neighbor_ids = dedupe(
             biosample_related_document.downstream_neighbor_ids
@@ -496,23 +531,26 @@ def load(db: Session, mongodb: Database) -> None:
 
     with duration_logger(logger, "🔬 Loading data generations"):
         data_generation_has_input_values = load_data_generations(db, data_generation_set)
+        data_generation_ids_by_input_id = invert_dict_of_lists(data_generation_has_input_values)
         db.commit()
 
     with duration_logger(logger, "⚗️ Loading material processings"):
         material_processing_has_input_values = load_material_processings(db, material_processing_set)
+        material_processing_ids_by_input_id = invert_dict_of_lists(material_processing_has_input_values)
         db.commit()
 
     with duration_logger(logger, "🧪 Loading biosamples"):
         biosample_ids, biosample_associated_studies_values = load_biosamples(
             db,
             biosample_set,
-            data_generation_has_input_values,
-            material_processing_has_input_values,
+            data_generation_ids_by_input_id,
+            material_processing_ids_by_input_id,
         )
+        biosample_ids_by_associated_study_id = invert_dict_of_lists(biosample_associated_studies_values)
         db.commit()
 
     with duration_logger(logger, "📰 Loading studies"):
-        load_studies(db, study_set, biosample_associated_studies_values)
+        load_studies(db, study_set, biosample_ids_by_associated_study_id)
         db.commit()
 
     with duration_logger(logger, "📐 Loading calibrations"):
@@ -523,17 +561,18 @@ def load(db: Session, mongodb: Database) -> None:
         load_processed_samples(
             db,
             processed_sample_set,
-            data_generation_has_input_values,
-            material_processing_has_input_values,
+            data_generation_ids_by_input_id,
+            material_processing_ids_by_input_id,
         )
         db.commit()
 
     with duration_logger(logger, "🖥️ Loading workflow executions"):
         workflow_execution_has_input_values = load_workflow_executions(db, workflow_execution_set)
+        workflow_execution_ids_by_input_id = invert_dict_of_lists(workflow_execution_has_input_values)
         db.commit()
 
     with duration_logger(logger, "💾 Loading data objects"):
-        load_data_objects(db, data_object_set, workflow_execution_has_input_values)
+        load_data_objects(db, data_object_set, workflow_execution_ids_by_input_id)
         db.commit()
 
     # Use the downstream neighbor identities we gathered above to determine which biosample(s)
