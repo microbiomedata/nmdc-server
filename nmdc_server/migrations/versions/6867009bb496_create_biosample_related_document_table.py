@@ -34,7 +34,7 @@ def upgrade():
             "biosample_ids",
             postgresql.ARRAY(sa.String()),
             nullable=False,
-            server_default="{}",  # in Postgres, "{}" represents an empty array
+            server_default=sa.text("'{}'"),  # in Postgres, "{}" represents an empty array
             comment="The IDs of all biosamples upstream of, or representing, the document",
         ),
         sa.Column(
@@ -53,7 +53,7 @@ def upgrade():
             "downstream_neighbor_ids",
             postgresql.ARRAY(sa.String()),
             nullable=False,
-            server_default="{}",  # in Postgres, "{}" represents an empty array
+            server_default=sa.text("'{}'"),  # in Postgres, "{}" represents an empty array
             comment="IDs of documents that are immediate downstream neighbors of this document",
         ),
     )
