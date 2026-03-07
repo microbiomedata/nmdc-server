@@ -4,7 +4,6 @@ from pymongo.collection import Collection
 from pymongo.database import Database
 from sqlalchemy import func, text
 from sqlalchemy.orm import Session
-from sqlalchemy.orm.attributes import flag_modified
 
 from nmdc_server.ingest.common import duration_logger
 from nmdc_server.logger import get_logger
@@ -452,7 +451,7 @@ def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None
                     --
                     SELECT unnest(brd_2.downstream_neighbor_ids) AS downstream_neighbor_id
                     FROM biosample_related_document AS brd_2,
-                            working_table
+                         working_table
                     WHERE brd_2.id = working_table.downstream_neighbor_id
             )
 
@@ -462,21 +461,28 @@ def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None
         rows = db.execute(text(query), {"biosample_id": biosample_id}).fetchall()
         downstream_document_ids: List[str] = [row[0] for row in rows]
 
-        # Update each document that is _anywhere_ downstream from this biosample, so that its
-        # `biosample_ids` column contains this one.
-        downstream_documents = (
-            db.query(BiosampleRelatedDocument)
-            .filter(BiosampleRelatedDocument.id.in_(downstream_document_ids))
-            .all()
-        )
-        for downstream_document in downstream_documents:
-            if biosample_id not in downstream_document.biosample_ids:
-                downstream_document.biosample_ids.append(biosample_id)
-
-                # Tell SQLAlchemy that this document's `biosample_ids` field has been modified,
-                # so that SQLAlchemy knows to update the corresponding row in the database when
-                # we commit. (SQLAlchemy doesn't automatically detect changes to arrays.)
-                flag_modified(downstream_document, "biosample_ids")
+        # Update all of those downstream documents so their `biosample_ids` array contains the `id`
+        # of the current biosample.
+        #
+        # Note: We use Postgres's `array_append()` function to update the array. We use the `WHERE`
+        #       clause to avoid adding the biosample's `id` to arrays that already contain it.
+        #
+        # Docs: https://www.postgresql.org/docs/current/functions-array.html
+        #
+        if len(downstream_document_ids) > 0:
+            update_query = """--sql
+                UPDATE biosample_related_document
+                SET biosample_ids = array_append(biosample_ids, :biosample_id)
+                WHERE id = ANY(:downstream_document_ids)
+                  AND NOT (:biosample_id = ANY(biosample_ids));
+            """
+            db.execute(
+                text(update_query),
+                {
+                    "biosample_id": biosample_id,
+                    "downstream_document_ids": downstream_document_ids,
+                },
+            )
 
 
 def delete_documents_having_no_associated_biosamples(db: Session) -> int:
