@@ -28,19 +28,23 @@ def dedupe(ids: List[str]) -> List[str]:
 def load_biosamples(
     db: Session,
     biosample_set: Collection,
-    data_generation_set: Collection,
-    material_processing_set: Collection,
-) -> List[str]:
+    data_generation_has_input_values: dict[str, List[str]],
+    material_processing_has_input_values: dict[str, List[str]],
+) -> tuple[list[str], dict[str, list[str]]]:
     """
     Reads each document from the `biosample_set` MongoDB collection, identifies its [immediate]
     downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres session)
     that represents that document. The row will have its `biosample_ids` column initialized to
     an array consisting of the ID of the biosample whose document is on that row.
 
-    Returns a list of all biosample IDs.
+    Returns a tuple, whose first item is a list of all biosample IDs and whose second item is
+    a dictionary mapping the `id` of each `Biosample` that has any associated studies, to its
+    `associated_studies` value.
     """
 
     biosample_ids = []
+    biosample_associated_studies_values = {}
+
     for biosample_document in biosample_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
         biosample_related_document.id = biosample_document["id"]
@@ -49,36 +53,40 @@ def load_biosamples(
         biosample_related_document.document = biosample_document
 
         # Identify downstream neighbors.
+        #
+        # Note: Instead of querying the `data_generation_set` and `material_processing_set`
+        #       MongoDB collections here, we take advantage of the dictionaries passed in.
+        #
         biosample_related_document.downstream_neighbor_ids = []
-        for data_generation_document in data_generation_set.find(
-            {"has_input": biosample_document["id"]}, projection_selecting_id
-        ):
-            biosample_related_document.downstream_neighbor_ids.append(
-                data_generation_document["id"]
-            )
-        for material_processing_document in material_processing_set.find(
-            {"has_input": biosample_document["id"]}, projection_selecting_id
-        ):
-            biosample_related_document.downstream_neighbor_ids.append(
-                material_processing_document["id"]
-            )
+        for k, v in data_generation_has_input_values.items():
+            if biosample_document["id"] in v:
+                biosample_related_document.downstream_neighbor_ids.append(k)
+        for k, v in material_processing_has_input_values.items():
+            if biosample_document["id"] in v:
+                biosample_related_document.downstream_neighbor_ids.append(k)
 
         biosample_related_document.downstream_neighbor_ids = dedupe(
             biosample_related_document.downstream_neighbor_ids
         )
 
-        # Add the biosample's ID to our list.
+        # Add the biosample's ID to the list we will return.
         biosample_ids.append(biosample_document["id"])
+
+        # Store its "associated_studies" value in the dictionary we will return.
+        if "associated_studies" in biosample_document:
+            biosample_associated_studies_values[
+                biosample_document["id"]
+            ] = biosample_document["associated_studies"]
 
         db.add(biosample_related_document)
 
-    return biosample_ids
+    return biosample_ids, biosample_associated_studies_values
 
 
 def load_studies(
     db: Session,
     study_set: Collection,
-    biosample_set: Collection,
+    biosample_associated_studies_values: dict[str, list[str]],
 ) -> None:
     """
     Reads each document from the `study_set` MongoDB collection, identifies its [immediate]
@@ -96,15 +104,19 @@ def load_studies(
         biosample_related_document.document = study_document
 
         # Identify downstream neighbors.
+        #
+        # Note: Instead of querying the `biosample_set` MongoDB collections here, we take advantage
+        #       of the dictionary passed in.
+        #
         biosample_related_document.downstream_neighbor_ids = []
-        for biosample_document in biosample_set.find(
-            {"associated_studies": study_document["id"]}, projection_selecting_id
-        ):
-            biosample_related_document.downstream_neighbor_ids.append(biosample_document["id"])
+        for k, v in biosample_associated_studies_values.items():
+            if study_document["id"] in v:
+                biosample_related_document.downstream_neighbor_ids.append(k)
 
-            # In this case, we also record this downstream neighbor as a related biosample,
-            # specifically, since we want to identify those anyway for each document.
-            biosample_related_document.biosample_ids.append(biosample_document["id"])
+                # Also store this biosample's `id` as a related biosample `id`; given that our
+                # later step of traversing the schema will only go _downstream_ (not upstream)
+                # of biosamples.
+                biosample_related_document.biosample_ids.append(k)
 
         biosample_related_document.downstream_neighbor_ids = dedupe(
             biosample_related_document.downstream_neighbor_ids
@@ -116,12 +128,17 @@ def load_studies(
 def load_data_generations(
     db: Session,
     data_generation_set: Collection,
-) -> None:
+) -> dict[str, list[str]]:
     """
     Reads each document from the `data_generation_set` MongoDB collection, identifies its
     [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
     session) that represents that document.
+
+    Returns a dictionary mapping the `id` of each `DataGeneration` that has any any inputs,
+    to its `has_input` value.
     """
+
+    data_generation_has_input_values = {}
 
     for data_generation_document in data_generation_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
@@ -146,6 +163,14 @@ def load_data_generations(
         )
 
         db.add(biosample_related_document)
+
+        # Store its "has_input" value in the dictionary we will return.
+        if "has_input" in data_generation_document:
+            data_generation_has_input_values[
+                data_generation_document["id"]
+            ] = data_generation_document["has_input"]
+
+    return data_generation_has_input_values
 
 
 def load_calibrations(
@@ -184,12 +209,17 @@ def load_calibrations(
 def load_material_processings(
     db: Session,
     material_processing_set: Collection,
-) -> None:
+) -> dict[str, list[str]]:
     """
     Reads each document from the `material_processing_set` MongoDB collection, identifies its
     [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
     session) that represents that document.
+
+    Returns a dictionary mapping the `id` of each `MaterialProcessing` that has any any inputs,
+    to its `has_input` value.
     """
+
+    material_processing_has_input_values = {}
 
     for material_processing_document in material_processing_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
@@ -211,12 +241,20 @@ def load_material_processings(
 
         db.add(biosample_related_document)
 
+        # Store its "has_input" value in the dictionary we will return.
+        if "has_input" in material_processing_document:
+            material_processing_has_input_values[
+                material_processing_document["id"]
+            ] = material_processing_document["has_input"]
+
+    return material_processing_has_input_values
+
 
 def load_processed_samples(
     db: Session,
     processed_sample_set: Collection,
-    data_generation_set: Collection,
-    material_processing_set: Collection,
+    data_generation_has_input_values: dict[str, List[str]],
+    material_processing_has_input_values: dict[str, List[str]],
 ) -> None:
     """
     Reads each document from the `processed_sample_set` MongoDB collection, identifies its
@@ -232,19 +270,17 @@ def load_processed_samples(
         biosample_related_document.document = processed_sample_document
 
         # Identify downstream neighbors.
+        #
+        # Note: Instead of querying the `data_generation_set` and `material_processing_set`
+        #       MongoDB collections here, we take advantage of the dictionaries passed in.
+        #
         biosample_related_document.downstream_neighbor_ids = []
-        for data_generation_document in data_generation_set.find(
-            {"has_input": processed_sample_document["id"]}, projection_selecting_id
-        ):
-            biosample_related_document.downstream_neighbor_ids.append(
-                data_generation_document["id"]
-            )
-        for material_processing_document in material_processing_set.find(
-            {"has_input": processed_sample_document["id"]}, projection_selecting_id
-        ):
-            biosample_related_document.downstream_neighbor_ids.append(
-                material_processing_document["id"]
-            )
+        for k, v in data_generation_has_input_values.items():
+            if processed_sample_document["id"] in v:
+                biosample_related_document.downstream_neighbor_ids.append(k)
+        for k, v in material_processing_has_input_values.items():
+            if processed_sample_document["id"] in v:
+                biosample_related_document.downstream_neighbor_ids.append(k)
 
         biosample_related_document.downstream_neighbor_ids = dedupe(
             biosample_related_document.downstream_neighbor_ids
@@ -256,12 +292,14 @@ def load_processed_samples(
 def load_workflow_executions(
     db: Session,
     workflow_execution_set: Collection,
-) -> None:
+) -> dict[str, list[str]]:
     """
     Reads each document from the `workflow_execution_set` MongoDB collection, identifies its
     [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
     session) that represents that document.
     """
+
+    workflow_execution_has_input_values = {}
 
     for workflow_execution_document in workflow_execution_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
@@ -283,11 +321,19 @@ def load_workflow_executions(
 
         db.add(biosample_related_document)
 
+        # Store its "has_input" value in the dictionary we will return.
+        if "has_input" in workflow_execution_document:
+            workflow_execution_has_input_values[
+                workflow_execution_document["id"]
+            ] = workflow_execution_document["has_input"]
+
+    return workflow_execution_has_input_values
+
 
 def load_data_objects(
     db: Session,
     data_object_set: Collection,
-    workflow_execution_set: Collection,
+    workflow_execution_has_input_values: dict[str, List[str]],
 ) -> None:
     """
     Reads each document from the `workflow_execution_set` MongoDB collection, identifies its
@@ -303,13 +349,14 @@ def load_data_objects(
         biosample_related_document.document = data_object_document
 
         # Identify downstream neighbors.
+        #
+        # Note: Instead of querying the `biosample_set` MongoDB collections here, we take advantage
+        #       of the dictionary passed in.
+        #
         biosample_related_document.downstream_neighbor_ids = []
-        for workflow_execution_document in workflow_execution_set.find(
-            {"has_input": data_object_document["id"]}, projection_selecting_id
-        ):
-            biosample_related_document.downstream_neighbor_ids.append(
-                workflow_execution_document["id"]
-            )
+        for k, v in workflow_execution_has_input_values.items():
+            if data_object_document["id"] in v:
+                biosample_related_document.downstream_neighbor_ids.append(k)
 
         biosample_related_document.downstream_neighbor_ids = dedupe(
             biosample_related_document.downstream_neighbor_ids
@@ -433,6 +480,11 @@ def load(db: Session, mongodb: Database) -> None:
 
     # Read the documents (omitting their `_id` fields) from the MongoDB database
     # and store them in the Postgres database.
+    #
+    # Note: We made some of the `load_...` functions return look-up tables that can be used by
+    #       subsequently-invoked `load_...` functions. That way, we can avoid having to query
+    #       the same collection multiple times. It is a performance optimization.
+    #
     biosample_set = mongodb.get_collection("biosample_set")
     study_set = mongodb.get_collection("study_set")
     material_processing_set = mongodb.get_collection("material_processing_set")
@@ -442,40 +494,46 @@ def load(db: Session, mongodb: Database) -> None:
     workflow_execution_set = mongodb.get_collection("workflow_execution_set")
     data_object_set = mongodb.get_collection("data_object_set")
 
+    with duration_logger(logger, "🔬 Loading data generations"):
+        data_generation_has_input_values = load_data_generations(db, data_generation_set)
+        db.commit()
+
+    with duration_logger(logger, "⚗️ Loading material processings"):
+        material_processing_has_input_values = load_material_processings(db, material_processing_set)
+        db.commit()
+
     with duration_logger(logger, "🧪 Loading biosamples"):
-        biosample_ids = load_biosamples(
-            db, biosample_set, data_generation_set, material_processing_set
+        biosample_ids, biosample_associated_studies_values = load_biosamples(
+            db,
+            biosample_set,
+            data_generation_has_input_values,
+            material_processing_has_input_values,
         )
         db.commit()
 
     with duration_logger(logger, "📰 Loading studies"):
-        load_studies(db, study_set, biosample_set)
-        db.commit()
-
-    with duration_logger(logger, "🔬 Loading data generations"):
-        load_data_generations(db, data_generation_set)
+        load_studies(db, study_set, biosample_associated_studies_values)
         db.commit()
 
     with duration_logger(logger, "📐 Loading calibrations"):
         load_calibrations(db, calibration_set)
         db.commit()
 
-    with duration_logger(logger, "⚗️ Loading material processings"):
-        load_material_processings(db, material_processing_set)
-        db.commit()
-
     with duration_logger(logger, "🧪 Loading processed samples"):
         load_processed_samples(
-            db, processed_sample_set, data_generation_set, material_processing_set
+            db,
+            processed_sample_set,
+            data_generation_has_input_values,
+            material_processing_has_input_values,
         )
         db.commit()
 
     with duration_logger(logger, "🖥️ Loading workflow executions"):
-        load_workflow_executions(db, workflow_execution_set)
+        workflow_execution_has_input_values = load_workflow_executions(db, workflow_execution_set)
         db.commit()
 
     with duration_logger(logger, "💾 Loading data objects"):
-        load_data_objects(db, data_object_set, workflow_execution_set)
+        load_data_objects(db, data_object_set, workflow_execution_has_input_values)
         db.commit()
 
     # Use the downstream neighbor identities we gathered above to determine which biosample(s)
