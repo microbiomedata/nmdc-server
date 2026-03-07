@@ -418,12 +418,6 @@ def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None
             --
             -- Docs: https://www.postgresql.org/docs/current/queries-with.html#QUERIES-WITH-RECURSIVE
             --
-            -- Note: We could, technically, make this faster by processing all biosample IDs in
-            --       a single query. I opted not to do that because (a) I already find recursion
-            --       to be difficult to think about, and I think doing that would increase the
-            --       difficulty; and (b) this runs during an ETL process and already takes under
-            --       ten seconds, in total, to process all biosample IDs (when run locally).
-            --
             WITH RECURSIVE working_table(downstream_neighbor_id) AS (
                     -- 1️⃣ Non-recursive term: Get the IDs of the (immediate) downstream neighbors
                     --                        of the specified biosample. We could have gotten
