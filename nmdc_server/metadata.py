@@ -43,11 +43,12 @@ class SampleMetadataSuggester:
         study_description = submission.metadata_submission.studyForm.description
         study_notes = submission.metadata_submission.studyForm.notes
         print(
-            "Currently not providing any suggestions based on this information, but this is where "
-            "that logic would go in the future.\n"
+            "I have the following information to pass to the nmdc-metadata-suggestor-ai-tool:\n"
             f"  - Study name: {study_name}\n"
             f"  - Study description: {study_description}\n"
             f"  - Study notes: {study_notes}\n"
+            f"I assume that some day I will be able to call the nmdc-metadata-suggestor-ai-tool "
+            f"with this information and get back some suggestions based on it.",
         )
 
     def get_suggestions(
