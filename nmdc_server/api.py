@@ -1848,13 +1848,18 @@ async def suggest_meta_from_study(
     id: str,
     db: Session = Depends(get_db),
     suggester: SampleMetadataSuggester = Depends(SampleMetadataSuggester),
-    user: models.User = Depends(get_current_user)
+    user: models.User = Depends(get_current_user),
 ) -> str:
-    submission_model = get_submission_for_user(db, id, user, allowed_roles=[
-        SubmissionEditorRole.owner,
-        SubmissionEditorRole.editor,
-        SubmissionEditorRole.metadata_contributor,
-    ])
+    submission_model = get_submission_for_user(
+        db,
+        id,
+        user,
+        allowed_roles=[
+            SubmissionEditorRole.owner,
+            SubmissionEditorRole.editor,
+            SubmissionEditorRole.metadata_contributor,
+        ],
+    )
     submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
     suggester.get_suggestions_from_study_information(submission)
     return "OK"
