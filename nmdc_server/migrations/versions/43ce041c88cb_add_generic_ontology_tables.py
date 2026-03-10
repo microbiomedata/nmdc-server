@@ -79,6 +79,19 @@ def upgrade():
         "idx_biosample_env_local_scale_id", "biosample", ["env_local_scale_id"], unique=False
     )
     op.create_index("idx_biosample_env_medium_id", "biosample", ["env_medium_id"], unique=False)
+
+    # Recreate envo_tree with surrogate pk to allow multiple parents per term.
+    # The table is truncated and repopulated on every ingest, so drop/recreate is safe.
+    op.drop_index("ix_envo_tree_parent_id", table_name="envo_tree")
+    op.drop_table("envo_tree")
+    op.create_table(
+        "envo_tree",
+        sa.Column("pk", sa.Integer(), autoincrement=True, nullable=False),
+        sa.Column("id", sa.String(), nullable=False),
+        sa.Column("parent_id", sa.String(), nullable=True),
+        sa.PrimaryKeyConstraint("pk", name=op.f("pk_envo_tree")),
+    )
+    op.create_index(op.f("ix_envo_tree_parent_id"), "envo_tree", ["parent_id"], unique=False)
     # ### end Alembic commands ###
 
 
@@ -89,6 +102,17 @@ def downgrade():
     op.drop_index("idx_biosample_env_local_scale_id", table_name="biosample")
     op.drop_index("idx_biosample_env_broad_scale_id", table_name="biosample")
     op.drop_index("idx_envo_ancestor_ancestor_id", table_name="envo_ancestor")
+
+    # Restore original envo_tree with id as primary key
+    op.drop_index(op.f("ix_envo_tree_parent_id"), table_name="envo_tree")
+    op.drop_table("envo_tree")
+    op.create_table(
+        "envo_tree",
+        sa.Column("id", sa.String(), nullable=False),
+        sa.Column("parent_id", sa.String(), nullable=True),
+        sa.PrimaryKeyConstraint("id", name=op.f("pk_envo_tree")),
+    )
+    op.create_index(op.f("ix_envo_tree_parent_id"), "envo_tree", ["parent_id"], unique=False)
 
     op.drop_index("idx_ontology_relation_subject", table_name="ontology_relation")
     op.drop_index("idx_ontology_relation_predicate", table_name="ontology_relation")
