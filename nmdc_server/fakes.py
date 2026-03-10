@@ -99,6 +99,41 @@ class EnvoAncestorFactory(SQLAlchemyModelFactory):
         sqlalchemy_session = db
 
 
+class OntologyClassFactory(SQLAlchemyModelFactory):
+    id = Faker("pystr")
+    name = Faker("word")
+    type = "nmdc:OntologyClass"
+    definition = Faker("sentence")
+    alternative_names = Faker("pylist", nb_elements=2, value_types=[str])
+    is_root = False
+    is_obsolete = False
+    annotations = Faker("pydict", value_types=["str"])
+
+    class Meta:
+        model = models.OntologyClass
+        sqlalchemy_session = db
+
+
+class OntologyRelationFactory(SQLAlchemyModelFactory):
+    predicate = Faker("word")
+    type = "nmdc:OntologyRelation"
+
+    class Meta:
+        model = models.OntologyRelation
+        sqlalchemy_session = db
+
+    @classmethod
+    def _create(cls, model_class, *args, **kwargs):
+        # Create OntologyClass instances for FK values when not explicitly provided
+        if "subject" not in kwargs:
+            subject_class = OntologyClassFactory()
+            kwargs["subject"] = subject_class.id
+        if "object" not in kwargs:
+            object_class = OntologyClassFactory()
+            kwargs["object"] = object_class.id
+        return super()._create(model_class, *args, **kwargs)
+
+
 class PrincipalInvestigator(SQLAlchemyModelFactory):
     id = Faker("uuid")
     name = Faker("name")
