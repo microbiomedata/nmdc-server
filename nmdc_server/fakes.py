@@ -433,6 +433,13 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
             "biosafetyLevel": "",
             "comments": "",
         },
+        "validationState": {
+            "studyForm": None,
+            "multiOmicsForm": None,
+            "sampleEnvironmentForm": None,
+            "senderShippingInfoForm": None,
+            "sampleMetadata": None,
+        },
         "packageName": [],
     }
     locked_by = None

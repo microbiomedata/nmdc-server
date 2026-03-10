@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, watch, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { api, REFRESH_TOKEN_EXPIRED_EVENT, RefreshTokenExchangeError } from '@/data/api';
 import { init, stateRefs } from '@/store/';
@@ -12,6 +12,19 @@ const handleRefreshTokenExpired = () => {
     init(router, false);
   }
 };
+
+const { user } = stateRefs;
+
+const showEmailModal = ref(false);
+
+watch(
+  user,
+  (newUser) => {
+    const missingEmail = !!newUser && !newUser.email?.trim();
+    showEmailModal.value = missingEmail;
+  },
+  { immediate: true },
+);
 
 onMounted(async () => {
   window.addEventListener(REFRESH_TOKEN_EXPIRED_EVENT, handleRefreshTokenExpired);
@@ -49,5 +62,6 @@ onUnmounted(() => {
   <v-layout>
     <app-header />
     <router-view />
+    <user-email-modal v-model:value="showEmailModal" />
   </v-layout>
 </template>

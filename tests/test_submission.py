@@ -305,6 +305,13 @@ def test_get_metadata_submissions_report_as_admin(
                 "biosafetyLevel": "",
                 "comments": "",
             },
+            "validationState": {
+                "studyForm": None,
+                "multiOmicsForm": None,
+                "sampleEnvironmentForm": None,
+                "senderShippingInfoForm": None,
+                "sampleMetadata": None,
+            },
             "packageName": [],
         },
         is_test_submission=True,

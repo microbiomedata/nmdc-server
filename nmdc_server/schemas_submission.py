@@ -20,7 +20,7 @@ class Contributor(BaseModel):
 
 class Doi(BaseModel):
     value: str
-    provider: str
+    provider: Optional[str] = None
 
 
 class StudyFormCreate(BaseModel):
@@ -30,6 +30,7 @@ class StudyFormCreate(BaseModel):
     piOrcid: str
     fundingSources: Optional[List[str]] = None
     dataDois: Optional[List[Doi]] = None
+    publicationDois: Optional[List[Doi]] = None
     linkOutWebpage: List[str]
     studyDate: Optional[str] = None
     description: str
@@ -79,8 +80,10 @@ class MultiOmicsForm(BaseModel):
     unknownDoi: Optional[bool] = None
     mpProtocols: Optional[Protocols] = None
     mbProtocols: Optional[Protocols] = None
+    mbGcProtocols: Optional[Protocols] = None
     lipProtocols: Optional[Protocols] = None
     nomProtocols: Optional[Protocols] = None
+    nomLcProtocols: Optional[Protocols] = None
 
     # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
     # NCBIBioProjectId in this form until it catches up with the new data model in its next release
@@ -114,6 +117,19 @@ class AddressForm(BaseModel):
     comments: str
 
 
+class SampleMetadataValidationState(BaseModel):
+    invalidCells: Dict[str, Dict[int, Dict[int, str]]]
+    tabsValidated: Dict[str, bool]
+
+
+class SubmissionValidationState(BaseModel):
+    studyForm: Optional[List[str]] = None
+    multiOmicsForm: Optional[List[str]] = None
+    sampleEnvironmentForm: Optional[List[str]] = None
+    senderShippingInfoForm: Optional[List[str]] = None
+    sampleMetadata: Optional[SampleMetadataValidationState] = None
+
+
 class MetadataSubmissionRecordCreate(BaseModel):
     packageName: List[str]
     addressForm: AddressForm
@@ -125,6 +141,7 @@ class MetadataSubmissionRecordCreate(BaseModel):
 
 class MetadataSubmissionRecord(MetadataSubmissionRecordCreate):
     studyForm: StudyForm
+    validationState: SubmissionValidationState = Field(default_factory=SubmissionValidationState)
 
 
 class PartialMetadataSubmissionRecord(BaseModel):
@@ -134,6 +151,7 @@ class PartialMetadataSubmissionRecord(BaseModel):
     studyForm: Optional[StudyForm] = None
     multiOmicsForm: Optional[MultiOmicsForm] = None
     sampleData: Optional[Dict[str, List[Any]]] = None
+    validationState: Optional[SubmissionValidationState] = None
 
 
 class SubmissionMetadataSchemaCreate(BaseModel):

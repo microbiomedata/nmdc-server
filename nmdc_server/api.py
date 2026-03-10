@@ -1250,13 +1250,14 @@ async def get_paginated_submission_list(
     column_sort: str = "created",
     sort_order: str = "desc",
     is_test_submission_filter: Optional[bool] = None,
+    search_text: Optional[str] = None,
 ):
     """
     Dependency function for getting a list of submissions with pagination, sorting, and filtering
     applied.
     """
     query = crud.get_submissions_for_user(
-        db, user, column_sort, sort_order, is_test_submission_filter
+        db, user, column_sort, sort_order, is_test_submission_filter, search_text
     )
     return pagination.response(query)
 
@@ -2071,8 +2072,12 @@ async def update_user(
     id: UUID,
     body: schemas.User,
     db: Session = Depends(get_db),
-    current_user: models.User = Depends(admin_required),
+    current_user: models.User = Depends(get_current_user),
 ):
+    if not (current_user.is_admin or current_user.id == id):
+        raise HTTPException(status_code=403, detail="Unauthorized to update this user")
+    if not current_user.is_admin and body.is_admin:
+        raise HTTPException(status_code=403, detail="Only admins can grant admin privileges")
     if body.id != id:
         raise HTTPException(status_code=400, detail="Invalid id")
     return crud.update_user(db, body)

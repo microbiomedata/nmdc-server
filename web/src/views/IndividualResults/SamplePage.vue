@@ -53,29 +53,37 @@ watchEffect(() => {
           { text: biosample.id, copyable: true }
         ]"
       />
-      <IndividualTitle :item="biosample" />
-      <v-dialog
-        v-model="sampleDownloadDialog"
-        max-width="400"
-      >
-        <template #activator="{ props: dialogProps }">
-          <v-btn
-            v-bind="dialogProps"
-            class="mt-2 mb-8"
-            color="primary"
-            size="small"
+      <IndividualTitle :item="biosample">
+        <template #subtitle>
+          <div
+            v-if="biosample.description"
+            class="mb-2"
           >
-            <v-icon class="mr-2">
-              mdi-download
-            </v-icon>
-            Download Sample Metadata
-          </v-btn>
+            {{ biosample.description }}
+          </div>
+          <v-dialog
+            v-model="sampleDownloadDialog"
+            max-width="400"
+          >
+            <template #activator="{ props: dialogProps }">
+              <v-btn
+                v-bind="dialogProps"
+                color="primary"
+                size="small"
+              >
+                <v-icon class="mr-2">
+                  mdi-download
+                </v-icon>
+                Download Sample Metadata
+              </v-btn>
+            </template>
+            <DownloadDialog
+              :loading="sampleDownloadLoading"
+              @clicked="downloadSampleMetadata"
+            />
+          </v-dialog>
         </template>
-        <DownloadDialog
-          :loading="sampleDownloadLoading"
-          @clicked="downloadSampleMetadata"
-        />
-      </v-dialog>
+      </IndividualTitle>
       <v-snackbar
         v-model="sampleDownloadLoading"
         location="right bottom"

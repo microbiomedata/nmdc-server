@@ -4,12 +4,19 @@ import { computed, defineComponent, PropType } from 'vue';
 import OrcidId from '@/components/Presentation/OrcidId.vue';
 
 import { stateRefs } from '@/store';
-import SubmissionStepper from './Components/SubmissionStepper.vue';
-import { getSubmissionLockedBy } from './store';
+import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
+import {
+  canEditSubmissionByStatus,
+  canEditSubmissionMetadata,
+  getSubmissionLockedBy,
+  incrementalSaveRecordRequest
+} from './store';
 import { unlockSubmission } from './store/api';
+import SubmissionPermissionBanner from '@/views/SubmissionPortal/Components/SubmissionPermissionBanner.vue';
+import StatusAlert from '@/views/SubmissionPortal/Components/StatusAlert.vue';
 
 export default defineComponent({
-  components: { SubmissionStepper, OrcidId },
+  components: {StatusAlert, SubmissionPermissionBanner, SubmissionNavigationSidebar, OrcidId },
 
   props: {
     id: {
@@ -31,6 +38,8 @@ export default defineComponent({
     });
 
     const isEditingSubmission = computed(() => props.id !== null);
+    const showPermissionBanner = computed(() => canEditSubmissionByStatus() && !canEditSubmissionMetadata());
+    const showStatusAlert = computed(() => !canEditSubmissionByStatus());
 
     window.addEventListener('beforeunload', () => {
       if (isEditingSubmission.value) {
@@ -40,18 +49,35 @@ export default defineComponent({
       }
     });
 
-    return { loggedInUserHasLock, getSubmissionLockedBy, isEditingSubmission };
+    return {
+      loggedInUserHasLock,
+      getSubmissionLockedBy,
+      isEditingSubmission,
+      showPermissionBanner,
+      showStatusAlert,
+      incrementalSaveRecordRequest
+    };
   },
 
 });
 </script>
 
 <template>
-  <div>
-    <SubmissionStepper class="mx-0" />
-    <v-container v-if="loggedInUserHasLock || !isEditingSubmission">
-      <router-view />
-    </v-container>
+  <div class="position-relative">
+    <v-progress-linear
+      :active="incrementalSaveRecordRequest.loading.value"
+      absolute
+      indeterminate
+      color="primary"
+    />
+    <SubmissionNavigationSidebar class="mx-0" />
+    <div v-if="loggedInUserHasLock || !isEditingSubmission">
+      <SubmissionPermissionBanner v-if="showPermissionBanner" />
+      <StatusAlert v-if="showStatusAlert" />
+      <v-container>
+        <router-view />
+      </v-container>
+    </div>
     <v-alert v-else>
       <p class="text-h5">
         This submission is currently being edited by:

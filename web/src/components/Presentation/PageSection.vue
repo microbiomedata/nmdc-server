@@ -3,7 +3,7 @@ import { defineComponent } from 'vue';
 
 /**
  * PageSection is a first-level organization unit for detail pages. It
- * provides an optional heading and a slot for content. If no content is
+ * provides an optional heading, descriptive subheading, and a slot for content. If no content is
  * provided, a fallback message is displayed.
  *
  * See also: AttributeRow.vue for a second-level organization unit within
@@ -21,6 +21,11 @@ export default defineComponent({
       required: false,
       default: '',
     },
+    subheading: {
+      type: String,
+      required: false,
+      default: '',
+    },
   },
   setup() {
     return {};
@@ -30,16 +35,29 @@ export default defineComponent({
 
 <template>
   <div class="mb-16">
-    <div
-      v-if="heading || $slots.heading"
-      class="text-h5 mb-4"
-    >
-      <template v-if="heading">
-        {{ heading }}
-      </template>
-      <template v-else>
-        <slot name="heading" />
-      </template>
+    <div class="mb-4">
+      <div
+        v-if="heading || $slots.heading"
+        class="text-h5"
+      >
+        <template v-if="heading">
+          {{ heading }}
+        </template>
+        <template v-else>
+          <slot name="heading" />
+        </template>
+      </div>
+      <div
+        v-if="subheading || $slots.subheading"
+        class="text-subtitle-1"
+      >
+        <template v-if="subheading">
+          {{ subheading }}
+        </template>
+        <template v-else>
+          <slot name="subheading" />
+        </template>
+      </div>
     </div>
     <slot>
       <i class="text-medium-emphasis">

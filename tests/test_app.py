@@ -2,6 +2,7 @@ import json
 from csv import DictReader
 from importlib.metadata import version
 from itertools import product
+from uuid import uuid4
 
 import pytest
 from fastapi import status
@@ -435,3 +436,95 @@ def test_get_data_object_report_urls_only(db: Session, client: TestClient, logge
     data_rows = rows[1:]  # get the data rows
     assert len(data_rows) == 3
     assert all(row["data_object.url"].startswith("http://example.com") for row in data_rows)
+
+
+def test_update_own_user_email(client: TestClient, logged_in_user):
+    user = logged_in_user
+    new_email = "new_email@example.com"
+
+    # Body needs to include all required fields of schemas.User
+    body = {
+        "id": str(user.id),
+        "orcid": user.orcid,
+        "name": user.name or "",
+        "email": new_email,
+        "is_admin": user.is_admin,
+    }
+
+    resp = client.post(f"/api/users/{user.id}", json=body)
+    assert_status(resp, status.HTTP_200_OK)
+
+    data = resp.json()
+    assert data["email"] == new_email
+    assert data["id"] == str(user.id)
+
+
+def test_update_user_is_admin_as_non_admin_fails(client: TestClient, logged_in_user):
+    user = logged_in_user
+
+    body = {
+        "id": str(user.id),
+        "orcid": user.orcid,
+        "name": user.name or "",
+        "email": user.email,
+        "is_admin": True,  # Attempting to become admin
+    }
+
+    resp = client.post(f"/api/users/{user.id}", json=body)
+    assert_status(resp, status.HTTP_403_FORBIDDEN)
+    assert resp.json()["detail"] == "Only admins can grant admin privileges"
+
+
+def test_update_other_user_as_non_admin_fails(db: Session, client: TestClient, logged_in_user):
+    other_user = fakes.UserFactory()
+    db.commit()
+
+    body = {
+        "id": str(other_user.id),
+        "orcid": other_user.orcid,
+        "name": other_user.name or "",
+        "email": "hacker@example.com",
+        "is_admin": other_user.is_admin,
+    }
+
+    resp = client.post(f"/api/users/{other_user.id}", json=body)
+    assert_status(resp, status.HTTP_403_FORBIDDEN)
+    assert resp.json()["detail"] == "Unauthorized to update this user"
+
+
+def test_update_user_as_admin(db: Session, client: TestClient, logged_in_admin_user):
+    other_user = fakes.UserFactory()
+    db.commit()
+
+    new_email = "admin_updated@example.com"
+    body = {
+        "id": str(other_user.id),
+        "orcid": other_user.orcid,
+        "name": other_user.name or "",
+        "email": new_email,
+        "is_admin": True,  # Admin can make others admin
+    }
+
+    resp = client.post(f"/api/users/{other_user.id}", json=body)
+    assert_status(resp, status.HTTP_200_OK)
+
+    data = resp.json()
+    assert data["email"] == new_email
+    assert data["is_admin"] is True
+
+
+def test_update_user_invalid_id(client: TestClient, logged_in_user):
+    user = logged_in_user
+    other_id = str(uuid4())
+
+    body = {
+        "id": other_id,  # ID in body doesn't match ID in URL
+        "orcid": user.orcid,
+        "name": user.name or "",
+        "email": user.email,
+        "is_admin": user.is_admin,
+    }
+
+    resp = client.post(f"/api/users/{user.id}", json=body)
+    assert_status(resp, status.HTTP_400_BAD_REQUEST)
+    assert resp.json()["detail"] == "Invalid id"

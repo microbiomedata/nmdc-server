@@ -2,7 +2,13 @@
 import { defineProps, computed, ref } from 'vue';
 import { multiOmicsForm, checkDoiFormat } from '../store';
 
-type DataType = 'mpProtocols' | 'mbProtocols' | 'nomProtocols' | 'lipProtocols';
+type DataType =
+  'mpProtocols' |
+  'mbProtocols' |
+  'mbGcProtocols' |
+  'lipProtocols' |
+  'nomProtocols' |
+  'nomLcProtocols';
 
 type ProtocolHelp = {
   samplePrepHint: string,
@@ -57,7 +63,37 @@ const protocolHelp: Record<DataType, ProtocolHelp> = {
       "using electrospray ionization. MS/MS data were collected in data-dependent mode using normalized collision " +
       "energies (NCE) of 35 or 30. Each sample was analyzed in both positive and negative ESI modes.",
   },
+  mbGcProtocols: {
+    samplePrepHint: "The description should include details such as extractant(s), derivatization, any cleanup steps, " +
+      "and reconstitution solvent(s).",
+    samplePrepExample: "Soil was bead beat in 60% MeOH for 15 min at 4°C. 12 mL of ice-cold chloroform was added to " +
+      "the sample. Samples were probe sonicated at 60% amplitude for 30 seconds on ice, cooled on ice and sonicated " +
+      "again. Samples were incubated for 5 min at -80°C, vortexed for 1 min and centrifuged at 4,500g for 10 min at " +
+      "4°C. The upper aqueous phase was collected into a separate glass vial, dried in a vacuum concentrator, and " +
+      "stored at -20C. Samples were resuspended in 200uL of methanol and centrifuged. The supernatant was transferred " +
+      "to a smaller glass vial and dried in a vacuum concentrator. Dried samples were dissolved in 20uL methoxyamine " +
+      "solution and incubated at 37C for 90min, then centrifuged and vialed for GC-MS analysis.",
+    dataAcquisitionHint: "This description should include chromatographic and spectrometry conditions including resolution.",
+    dataAcquisitionExample: "An Agilent GC 7890A coupled with a single quadrupole MSD 5975C (Agilent Technologies, " +
+      "Inc, Santa Clara, CA) system was used for all analyses, and separations were performed using a HP-5MS column " +
+      "(30 m × 0.25 mm × 0.25 μm; Agilent Technologies, Inc.). The sample injection mode was splitless, and the " +
+      "injection volume was 1 μL. The GC oven was held at 60°C for 1 min after injection, and then increased to 325°C " +
+      "by 10°C/min, followed by a 5 min hold at 325°C. The injection port temperature was held at 250°C throughout " +
+      "the analysis.",
+  },
   nomProtocols: {
+    samplePrepHint: "The description should include details such as extractant(s) and any cleanup steps.",
+    samplePrepExample: "300mg of soil was added to a glass vial for sequential extraction. 1mL of MilliQ water was " +
+      "added to the vial. The vial was shaken at room temperature and 2000 RPM for 2 hours, then centrifuged at " +
+      "4500RPM for 5 minutes. The water supernatant was pulled off and stored at -80C. Extraction was repeated using " +
+      "1mL of methanol followed by 1mL of ethanol-stabilized chloroform.",
+    dataAcquisitionHint: "This description should include spectrometry conditions like polarity and acquisition mode and (if applicable) chromatographic conditions.",
+    dataAcquisitionExample: "Extracts were analyzed using Fourier transform ion cyclotron mass spectrometry (FT-ICR-MS) " +
+      "with a 12 T Bruker SolariX equipped with a standard Bruker electrospray ionization (ESI) source using negative " +
+      "polarity acquired in full scan, located at the Environmental Molecular Sciences Laboratory (EMSL) user facility " +
+      "located in Richland, WA, USA.",
+  },
+  nomLcProtocols: {
     samplePrepHint: "The description should include details such as extractant(s) and any cleanup steps.",
     samplePrepExample: "300mg of soil was added to a glass vial for sequential extraction. 1mL of MilliQ water was " +
       "added to the vial. The vial was shaken at room temperature and 2000 RPM for 2 hours, then centrifuged at " +
@@ -104,8 +140,14 @@ const protocolNames = computed(() => {
   if (multiOmicsForm.mbProtocols?.sampleProtocol.name) {
     names.add(multiOmicsForm.mbProtocols.sampleProtocol.name);
   }
+  if (multiOmicsForm.mbGcProtocols?.sampleProtocol.name) {
+    names.add(multiOmicsForm.mbGcProtocols.sampleProtocol.name);
+  }
   if (multiOmicsForm.nomProtocols?.sampleProtocol.name) {
     names.add(multiOmicsForm.nomProtocols.sampleProtocol.name);
+  }
+  if (multiOmicsForm.nomLcProtocols?.sampleProtocol.name) {
+    names.add(multiOmicsForm.nomLcProtocols.sampleProtocol.name);
   }
   if (multiOmicsForm.lipProtocols?.sampleProtocol.name) {
     names.add(multiOmicsForm.lipProtocols.sampleProtocol.name);
@@ -149,9 +191,9 @@ const doiValueRules = () => (
 
       // Split by comma and validate each DOI
       const dois = value.split(',').map((doi) => doi.trim());
-      const allValid = dois.every((doi) => checkDoiFormat(doi));
+      const allValid = dois.every((doi) => checkDoiFormat(doi) === true);
 
-      return allValid || 'All DOIs must be valid (comma-separated if multiple)';
+      return allValid || 'All DOIs must be in 10.xxxx/xxxxx format (comma-separated if multiple)';
     },
   ]
 );
@@ -193,6 +235,7 @@ const urlValueRules = () => (
               <div>Use protocol described for other data types</div>
               <div class="text-caption">
                 Select this option to reuse a protocol name already provided for another data type in this submission.
+                Ensure all steps for this data type are included in the selected protocol.
               </div>
             </div>
           </template>

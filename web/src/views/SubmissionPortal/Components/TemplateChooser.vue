@@ -1,20 +1,20 @@
 <script lang="ts">
-import { defineComponent, computed } from 'vue';
+import { computed, defineComponent } from 'vue';
 import { HARMONIZER_TEMPLATES } from '@/views/SubmissionPortal/types';
 import {
-  templateList,
-  packageName,
-  canEditSubmissionMetadata,
-  templateHasData,
   canEditSubmissionByStatus,
-  status,
+  canEditSubmissionMetadata,
+  packageName,
+  templateHasData,
+  templateList,
+  validationState,
 } from '../store';
 import SubmissionDocsLink from './SubmissionDocsLink.vue';
-import SubmissionPermissionBanner from './SubmissionPermissionBanner.vue';
-import StatusAlert from './StatusAlert.vue';
+import PageTitle from '@/components/Presentation/PageTitle.vue';
+import SubmissionForm from '@/views/SubmissionPortal/Components/SubmissionForm.vue';
 
 export default defineComponent({
-  components: { SubmissionDocsLink, SubmissionPermissionBanner, StatusAlert },
+  components: { SubmissionForm, SubmissionDocsLink, PageTitle },
   setup() {
     const templateListDisplayNames = computed(() => templateList.value
       .map((templateKey) => HARMONIZER_TEMPLATES[templateKey]?.displayName)
@@ -28,8 +28,7 @@ export default defineComponent({
       canEditSubmissionMetadata,
       templateHasData,
       canEditSubmissionByStatus,
-      status,
-      StatusAlert,
+      validationState,
     };
   },
 });
@@ -37,44 +36,45 @@ export default defineComponent({
 
 <template>
   <div>
-    <div class="text-h2">
-      Sample Environment
-      <submission-docs-link anchor="environmental-package" />
-    </div>
-    <div class="text-h5">
-      Choose the
-      <a
-        href="https://genomicsstandardsconsortium.github.io/mixs/#extensions"
-        target="_blank"
-        rel="noopener noreferrer"
-      >MIxS Extension</a>
-      for your samples.
-    </div>
-    <submission-permission-banner
-      v-if="canEditSubmissionByStatus() && !canEditSubmissionMetadata()"
-    />
-    <StatusAlert v-if="!canEditSubmissionByStatus()" />
-    <v-checkbox
-      v-for="option in templates.filter((v) => v[1].status === 'published')"
-      :key="option[0]"
-      v-model="packageName"
-      hide-details
-      :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
-      :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
-      :value="option[0]"
-    />
-    <p class="grey--text text--darken-1 my-5">
-      Under development
-    </p>
-    <v-checkbox
-      v-for="option in templates.filter((v) => v[1].status === 'disabled')"
-      :key="option[0]"
-      v-model="packageName"
-      hide-details
-      :disabled="true"
-      :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
-      :value="option[0]"
-    />
+    <PageTitle
+      title="Sample Environment"
+    >
+      <template #help>
+        <submission-docs-link anchor="environmental-package" />
+      </template>
+      <template #subtitle>
+        Choose the
+        <a
+          href="https://genomicsstandardsconsortium.github.io/mixs/#extensions"
+          target="_blank"
+          rel="noopener noreferrer"
+        >MIxS Extension</a>
+        for your samples.
+      </template>
+    </PageTitle>
+    <SubmissionForm
+      @valid-state-changed="(state) => validationState.sampleEnvironmentForm = state"
+    >
+      <v-input
+        :model-value="packageName"
+        validate-on="input eager"
+        :rules="[(v) => (!!v && v.length > 0) || 'Please select at least one template.']"
+      >
+        <template #default>
+          <fieldset class="border-0">
+            <v-checkbox
+              v-for="option in templates.filter((v) => v[1].status === 'published')"
+              :key="option[0]"
+              v-model="packageName"
+              hide-details
+              :disabled="templateHasData(HARMONIZER_TEMPLATES[option[0]]?.sampleDataSlot) || !canEditSubmissionMetadata()"
+              :label="HARMONIZER_TEMPLATES[option[0]]?.displayName"
+              :value="option[0]"
+            />
+          </fieldset>
+        </template>
+      </v-input>
+    </SubmissionForm>
     <template v-if="canEditSubmissionByStatus()">
       <v-alert
         v-if="!templateHasData('all')"
@@ -82,12 +82,12 @@ export default defineComponent({
         class="my-3"
       >
         <p class="text-h5">
-          DataHarmonizer Template Choice
+          Sample Metadata Template Choice
         </p>
         <template
           v-if="packageName.length!=0"
         >
-          Your DataHarmonizer template is "{{ templateListDisplayNames }}".
+          Your Sample Metadata template is "{{ templateListDisplayNames }}".
         </template>
         <template
           v-else
@@ -103,9 +103,9 @@ export default defineComponent({
         <p class="text-h5">
           Template choice disabled
         </p>
-        Your DataHarmonizer template is "{{ templateListDisplayNames }}".
-        Template choices cannot be disabled while the matching tab in step 5 has data present.
-        To disable the template, return to step 5 and remove all data from that tab. You may add new templates at any time.
+        Your Sample Metadata template is "{{ templateListDisplayNames }}".
+        Template choices cannot be disabled while the matching tab in Sample Metadata has data present.
+        To disable the template, return to Sample Metadata and remove all data from that tab. You may add new templates at any time.
       </v-alert>
     </template>
     <v-alert
@@ -114,7 +114,7 @@ export default defineComponent({
       class="my-3"
     >
       <p class="text-h5">
-        DataHarmonizer Template
+        Sample Metadata Template
       </p>
       This submission uses the "{{ templateListDisplayNames }}" template.
     </v-alert>
@@ -123,17 +123,16 @@ export default defineComponent({
         <v-icon class="pr-2">
           mdi-arrow-left-circle
         </v-icon>
-        Go to previous step
+        Go to Multiomics Form
       </v-btn-grey>
       <v-spacer />
       <v-btn
         color="primary"
-        :disabled="packageName.length === 0"
         :to="{
           name: 'Submission Sample Editor',
         }"
       >
-        Go to next step
+        Go to Sample Metadata
         <v-icon class="pl-2">
           mdi-arrow-right-circle
         </v-icon>

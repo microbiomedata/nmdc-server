@@ -1,39 +1,40 @@
 import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
-import {
-  computed, reactive, Ref, ref, shallowRef, watch,
-} from 'vue';
-import {
-  chunk, clone, forEach, isEqual, isString,
-} from 'lodash';
+import { computed, reactive, Ref, ref, shallowRef, watch, } from 'vue';
+import { chunk, clone, forEach, isEqual, isString, } from 'lodash';
 import axios from 'axios';
 import { User } from '@/types';
 import {
-  HARMONIZER_TEMPLATES,
-  MetadataSubmission,
-  MetadataSuggestion,
-  NmdcAddress,
-  SubmissionEditorRole,
-  PermissionTitle,
-  SubmissionStatusKey,
-  SuggestionType,
-  SuggestionsMode,
-  MetadataSuggestionRequest,
-  Doi,
-  DATA_MG_INTERLEAVED,
+  AcquisitionProtocol,
+  AllowedStatusTransitions,
   DATA_MG,
-  DATA_MT_INTERLEAVED,
+  DATA_MG_INTERLEAVED,
   DATA_MT,
+  DATA_MT_INTERLEAVED,
+  DataProtocol,
+  Doi,
   EMSL,
+  HARMONIZER_TEMPLATES,
   JGI_MG,
   JGI_MG_LR,
   JGI_MT,
-  AcquisitionProtocol,
-  DataProtocol,
+  MetadataSubmission,
+  MetadataSubmissionRecord,
+  MetadataSuggestion,
+  MetadataSuggestionRequest,
+  NmdcAddress,
+  PermissionTitle,
+  SampleMetadataValidationState,
   SampleProtocol,
-  MetadataSubmissionRecord, AllowedStatusTransitions,
+  SubmissionEditorRole,
+  SubmissionPage,
+  SubmissionStatusKey,
+  SubmissionValidationState,
+  SuggestionsMode,
+  SuggestionType,
 } from '@/views/SubmissionPortal/types';
 import { setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
+import useRequest from '@/use/useRequest.ts';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
@@ -52,6 +53,7 @@ const permissionLevelHierarchy: Record<SubmissionEditorRole, number> = {
 //use schema enum to define submission status
 const SubmissionStatusEnum = NmdcSchema.enums.SubmissionStatusEnum.permissible_values; //enum from schema
 const status = ref<SubmissionStatusKey>('InProgress');
+const statusDisplay = computed(() => SubmissionStatusEnum[status.value].title);
 
 function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownType: SubmissionEditorRole | 'admin', transitions: AllowedStatusTransitions) {
   const excludeFromAll: SubmissionStatusKey[] = [
@@ -88,9 +90,13 @@ function formatStatusTransitions(currentStatus: SubmissionStatusKey, dropdownTyp
     }));
 }
 
+const studyName = ref('');
+const createdDate = ref<Date | null>(null);
+const modifiedDate = ref<Date | null>(null);
 const isTestSubmission = ref(false);
 const primaryStudyImageUrl = ref<string | null>(null);
 const piImageUrl = ref<string | null>(null);
+const author = ref<User | null>(null);
 
 /**
  * Submission record locking information
@@ -133,6 +139,154 @@ function canEditSampleMetadata(): boolean {
 
 const hasChanged = ref(0);
 
+/**
+ * Validating forms
+*/
+
+const validationStateDefault: SubmissionValidationState = {
+  studyForm: null,
+  multiOmicsForm: null,
+  sampleEnvironmentForm: null,
+  senderShippingInfoForm: null,
+  sampleMetadata: null,
+};
+const validationState = reactive(clone(validationStateDefault));
+
+function setTabValidated(tabName: string, validated: boolean) {
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  if (!templateList.value.includes(tabName)) {
+    return;
+  }
+  validationState.sampleMetadata.tabsValidated[tabName] = validated;
+}
+
+function setTabInvalidCells(tabName: string, invalidCells: Record<number, Record<number, string>>) {
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  if (!templateList.value.includes(tabName)) {
+    return;
+  }
+  validationState.sampleMetadata.invalidCells[tabName] = invalidCells;
+}
+
+function resetSampleMetadataValidation() {
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  validationState.sampleMetadata.invalidCells = {};
+  Object.keys(validationState.sampleMetadata.tabsValidated).forEach((tab) => {
+    validationState.sampleMetadata!.tabsValidated[tab] = false;
+  });
+}
+
+function isSubmissionValid() {
+  // The required forms must be validated with no errors
+  if (!isEqual(validationState.studyForm, [])) {
+    return false;
+  }
+  if (!isEqual(validationState.multiOmicsForm, [])) {
+    return false;
+  }
+  if (!isEqual(validationState.sampleEnvironmentForm, [])) {
+    return false;
+  }
+  // The sender shipping info form is optional. If it has been validated, it must have no errors
+  if (validationState.senderShippingInfoForm != null && !isEqual(validationState.senderShippingInfoForm, [])) {
+    return false;
+  }
+  // The sample metadata must be validated with no errors
+  if (validationState.sampleMetadata == null) {
+    return false;
+  }
+  const tabsValidatedValues = Object.values(validationState.sampleMetadata.tabsValidated);
+  if (tabsValidatedValues.length === 0) {
+    return false;
+  }
+  if (tabsValidatedValues.some((validated) => !validated)) {
+    return false;
+  }
+  if (Object.values(validationState.sampleMetadata.invalidCells).some((cells) => Object.keys(cells).length > 0)) {
+    return false;
+  }
+  return true;
+}
+
+function combineErrors(...errorLists: (null | string[])[]) : null | string[] {
+  let combined: null | string[] = null;
+  errorLists.forEach((errors) => {
+    if (errors) {
+      if (combined === null) {
+        combined = [];
+      }
+      combined = combined.concat(errors);
+    }
+  });
+  return combined;
+}
+
+function combineSampleMetadataErrors(sampleMetadataState: SampleMetadataValidationState | null) : string[] | null {
+  if (sampleMetadataState === null) {
+    return null;
+  }
+  const combinedErrors: string[] = [];
+  const tabsValidatedKeys = Object.keys(sampleMetadataState.tabsValidated);
+  if (tabsValidatedKeys.length === 0) {
+    combinedErrors.push('No tabs have been validated.');
+  } else {
+    tabsValidatedKeys.forEach((tab) => {
+      let message = '';
+      if (!sampleMetadataState.tabsValidated[tab]) {
+        message = `Tab "${ tab }" has not been validated.`;
+      }
+      if (tab in sampleMetadataState.invalidCells) {
+        const invalidCells = sampleMetadataState.invalidCells[tab];
+        if (invalidCells && Object.keys(invalidCells).length > 0) {
+          message = `Tab "${ tab }" has invalid cells.`;
+        }
+      }
+      if (message) {
+        combinedErrors.push(message);
+      }
+    })
+  }
+  return combinedErrors;
+}
+
+const submissionPages = computed<SubmissionPage[]>(() => ([
+  {
+    title: 'Study Information',
+    link: { name: 'Study Form' },
+    validationMessages: validationState.studyForm,
+  },
+  {
+    title: 'Multi-omics Data',
+    link: { name: 'Multiomics Form' },
+    validationMessages: combineErrors(validationState.multiOmicsForm, validationState.senderShippingInfoForm),
+  },
+  {
+    title: 'Sample Environment',
+    link: { name: 'Sample Environment' },
+    validationMessages: validationState.sampleEnvironmentForm,
+  },
+  {
+    title: 'Sample Metadata',
+    link: { name: 'Submission Sample Editor' },
+    validationMessages: combineSampleMetadataErrors(validationState.sampleMetadata),
+  },
+]));
+
 const addressFormDefault = {
   // Shipper info
   shipper: {
@@ -161,7 +315,6 @@ const addressFormDefault = {
 };
 
 const addressForm = reactive(clone(addressFormDefault));
-const addressFormValid = ref(false);
 
 /**
  * Study Form Step
@@ -174,6 +327,7 @@ const studyFormDefault = {
   linkOutWebpage: [],
   studyDate: null,
   dataDois: [] as Doi[] | null,
+  publicationDois: [] as Doi[] | null,
   fundingSources: [] as string[] | null,
   description: '',
   notes: '',
@@ -187,7 +341,6 @@ const studyFormDefault = {
   GOLDStudyId: '',
   NCBIBioProjectId: '',
 };
-const studyFormValid = ref(false);
 const studyForm = reactive(clone(studyFormDefault));
 
 interface Protocols {
@@ -199,29 +352,35 @@ interface Protocols {
 /**
  * Multi-Omics Form Step
  */
+export type OmicsProcessingType =
+  // non-doe types
+  'mg' | 'mt' | 'mp' | 'mb' | 'mb-gc' | 'nom' | 'nom-lc' | 'lipidome' |
+  // doe facility associated types
+  'lipidome-emsl' | 'mp-emsl' | 'mb-emsl' | 'nom-emsl' | 'mg-jgi' | 'mg-lr-jgi' | 'mt-jgi' | 'mb-jgi';
 const multiOmicsFormDefault = {
-  award: undefined as undefined | string,
+  award: null as null | string,
   awardDois: [] as Doi[] | null,
-  dataGenerated: undefined as undefined | boolean,
-  doe: undefined as undefined | boolean,
+  dataGenerated: null as null | boolean,
+  doe: null as null | boolean,
   facilities: [] as string[],
-  facilityGenerated: undefined as undefined | boolean,
+  facilityGenerated: null as null | boolean,
   JGIStudyId: '',
-  mgCompatible: undefined as undefined | boolean,
-  mgInterleaved: undefined as undefined | boolean,
-  mtCompatible: undefined as undefined | boolean,
-  mtInterleaved: undefined as undefined | boolean,
-  omicsProcessingTypes: [] as string[],
-  otherAward: undefined as undefined | string,
-  ship: undefined as undefined | boolean,
+  mgCompatible: null as null | boolean,
+  mgInterleaved: null as null | boolean,
+  mtCompatible: null as null | boolean,
+  mtInterleaved: null as null | boolean,
+  omicsProcessingTypes: [] as OmicsProcessingType[],
+  otherAward: null as null | string,
+  ship: null as null | boolean,
   studyNumber: '',
-  unknownDoi: undefined as undefined | boolean,
-  mpProtocols: undefined as undefined | Protocols,
-  mbProtocols: undefined as undefined | Protocols,
-  lipProtocols: undefined as undefined | Protocols,
-  nomProtocols: undefined as undefined | Protocols,
+  unknownDoi: null as null | boolean,
+  mpProtocols: null as null | Protocols,
+  mbProtocols: null as null | Protocols,
+  mbGcProtocols: null as null | Protocols,
+  lipProtocols: null as null | Protocols,
+  nomProtocols: null as null | Protocols,
+  nomLcProtocols: null as null | Protocols,
 };
-const multiOmicsFormValid = ref(false);
 const multiOmicsForm = reactive(clone(multiOmicsFormDefault));
 const multiOmicsAssociationsDefault = {
   emsl: false,
@@ -244,15 +403,135 @@ function removeAwardDoi(i: number) {
   if (multiOmicsForm.awardDois === null) {
     multiOmicsForm.awardDois = [];
   }
-  if ((multiOmicsForm.facilities.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
+  if ((multiOmicsForm.facilities?.length < multiOmicsForm.awardDois.length && !multiOmicsForm.dataGenerated) || (multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated && multiOmicsForm.awardDois.length > 1) || (!multiOmicsForm.facilityGenerated && multiOmicsForm.dataGenerated)) {
     multiOmicsForm.awardDois.splice(i, 1);
   }
 }
 
-function checkDoiFormat(v: string) {
-  const valid = /^(?:doi:)?10.\d{2,9}\/.*$/.test(v);
-  return valid;
+function checkDoiFormat(v: string): string | boolean {
+  return /^(?:doi:)?10.\d{2,9}\/.*$/.test(v) || 'DOI must be in the format "10.xxxx/xxxxx"';
 }
+
+// When "Have data already been generated for your study?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.dataGenerated, (newValue, prevValue) => {
+  // The answer was reset or changed from "No" to "Yes"
+  // Reset "Are you submitting samples to a DOE user facility (JGI, EMSL)?"
+  if (newValue === null || (prevValue === false && newValue === true)) {
+    multiOmicsForm.doe = null;
+  }
+  // The answer was reset or changed from "Yes" to "No"
+  // Reset "Was data generated at a DOE user facility (JGI, EMSL)?"
+  if (newValue === null || (prevValue === true && newValue === false)) {
+    multiOmicsForm.facilityGenerated = null;
+  }
+});
+
+// When "Was data generated at a DOE user facility?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.facilityGenerated, (newValue, prevValue) => {
+  // The answer was reset or changed from "No" to "Yes"
+  // Uncheck all "Which facility?" checkboxes
+  if (newValue === null || (prevValue === false && newValue === true)) {
+    multiOmicsForm.omicsProcessingTypes = [];
+  }
+  // The answer was reset or changed from "Yes" to "No"
+  // Uncheck all "Which data types were generated?" checkboxes
+  if (newValue === null || (prevValue === true && newValue === false)) {
+    multiOmicsForm.facilities = [];
+    multiOmicsForm.awardDois = []
+  }
+});
+
+// When "Are you submitting samples to a DOE user facility?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.doe, ( newValue, prevValue) => {
+  // The answer was reset or changed from "No" to "Yes"
+  if (newValue === null || (prevValue === false && newValue === true)) {
+    multiOmicsForm.omicsProcessingTypes = [];
+  }
+  // The answer was reset or changed from "Yes" to "No"
+  if (newValue === null || (prevValue === true && newValue === false)) {
+    multiOmicsForm.award = null;
+    multiOmicsForm.otherAward = null;
+    multiOmicsForm.facilities = [];
+    multiOmicsForm.awardDois = [];
+  }
+});
+
+// When "Which facility?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.facilities, (newValue, prevValue) => {
+  // EMSL was removed
+  if (!newValue.includes('EMSL') && prevValue.includes('EMSL')) {
+    multiOmicsForm.studyNumber = '';
+    multiOmicsForm.ship = null;
+    multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
+      t !== 'lipidome-emsl' && t !== 'mp-emsl' && t !== 'mb-emsl' && t !== 'nom-emsl'
+    ));
+  }
+  // JGI was removed
+  if (!newValue.includes('JGI') && prevValue.includes('JGI')) {
+    multiOmicsForm.JGIStudyId = '';
+    multiOmicsForm.omicsProcessingTypes = multiOmicsForm.omicsProcessingTypes.filter(t => (
+      t !== 'mg-jgi' && t !== 'mg-lr-jgi' && t !== 'mt-jgi' && t !== 'mb-jgi'
+    ));
+  }
+});
+
+// When "Which data types were generated?" changes, reset the answers to dependent questions
+watch(() => multiOmicsForm.omicsProcessingTypes, (newValue, oldValue) => {
+  // mg was removed
+  if (!newValue.includes('mg') && oldValue.includes('mg')) {
+    multiOmicsForm.mgCompatible = null;
+  }
+  // mt was removed
+  if (!newValue.includes('mt') && oldValue.includes('mt')) {
+    multiOmicsForm.mtCompatible = null;
+  }
+  // mp was removed
+  if (!newValue.includes('mp') && oldValue.includes('mp')) {
+    multiOmicsForm.mpProtocols = null;
+  }
+  // mb was removed
+  if (!newValue.includes('mb') && oldValue.includes('mb')) {
+    multiOmicsForm.mbProtocols = null;
+  }
+  // mb-gc was removed
+  if (!newValue.includes('mb-gc') && oldValue.includes('mb-gc')) {
+    multiOmicsForm.mbGcProtocols = null;
+  }
+  // nom was removed
+  if (!newValue.includes('nom') && oldValue.includes('nom')) {
+    multiOmicsForm.nomProtocols = null;
+  }
+  // nom-lc was removed
+  if (!newValue.includes('nom-lc') && oldValue.includes('nom-lc')) {
+    multiOmicsForm.nomLcProtocols = null;
+  }
+  // lipidome was removed
+  if (!newValue.includes('lipidome') && oldValue.includes('lipidome')) {
+    multiOmicsForm.lipProtocols = null;
+  }
+});
+
+// When "Is the generated data compatible?" changes for either mg or mt, reset the answers to dependent questions
+watch(() => multiOmicsForm.mgCompatible, (newValue, oldValue) => {
+  // mg compatible was cleared or changed from true to false
+  if (newValue === null || (newValue === false && oldValue === true)) {
+    multiOmicsForm.mgInterleaved = null;
+  }
+});
+watch(() => multiOmicsForm.mtCompatible, (newValue, oldValue) => {
+  // mt compatible was cleared or changed from true to false
+  if (newValue === null || (newValue === false && oldValue === true)) {
+    multiOmicsForm.mtInterleaved = null;
+  }
+});
+
+// Watch for changes to the "Will samples be shipped?" field. If the field is reset or the answer becomes "No",
+// reset the sender shipping info form validation state to null (untouched).
+watch(() => multiOmicsForm.ship, (newVal) => {
+  if (newVal !== true) {
+    validationState.senderShippingInfoForm = null;
+  }
+});
 
 /**
  * Environmental Package Step
@@ -296,7 +575,7 @@ const templateList = computed<string[]>((prevTemplates) => {
 
     if (multiOmicsForm.doe) {
       // Are you submitting samples to a DOE user facility? Yes
-      if (multiOmicsForm.facilities.includes('EMSL')) {
+      if (multiOmicsForm.facilities?.includes('EMSL')) {
         // Which facility? EMSL
         if (multiOmicsForm.omicsProcessingTypes.includes('lipidome-emsl')) {
           // Data types? Lipidome
@@ -315,7 +594,7 @@ const templateList = computed<string[]>((prevTemplates) => {
           templates.add(EMSL);
         }
       }
-      if (multiOmicsForm.facilities.includes('JGI')) {
+      if (multiOmicsForm.facilities?.includes('JGI')) {
         // Which facility? JGI
         if (multiOmicsForm.omicsProcessingTypes.includes('mg-jgi')) {
           // Data types? Metagenome
@@ -346,16 +625,49 @@ const metadataSuggestions = ref([] as MetadataSuggestion[]);
 const suggestionMode = ref(SuggestionsMode.LIVE);
 const suggestionType = ref(SuggestionType.ALL);
 
-const tabsValidated = ref({} as Record<string, boolean>);
 watch(templateList, (newList, oldList) => {
+  if (hasChanged.value === 0) {
+    // Initial load, do nothing
+    return;
+  }
   if (isEqual(newList, oldList)) {
+    return;
+  }
+  if (packageName.value.length === 0) {
+    // If no package is selected, set the sample metadata validation to an untouched state
+    validationState.sampleMetadata = null;
     return;
   }
   const newTabsValidated = {} as Record<string, boolean>;
   forEach(templateList.value, (templateKey) => {
     newTabsValidated[templateKey] = false;
   });
-  tabsValidated.value = newTabsValidated;
+  if (validationState.sampleMetadata === null) {
+    validationState.sampleMetadata = {
+      invalidCells: {},
+      tabsValidated: {},
+    };
+  }
+  validationState.sampleMetadata.tabsValidated = newTabsValidated;
+
+  // Remove sampleData and validation state for any templates that are no longer included in the package
+  const removedTemplates = oldList.filter((template) => !newList.includes(template));
+  if (removedTemplates.length > 0) {
+    const newSampleData = { ...sampleData.value };
+    removedTemplates.forEach((template) => {
+      const sampleDataSlot = HARMONIZER_TEMPLATES[template as keyof typeof HARMONIZER_TEMPLATES]?.sampleDataSlot;
+      if (sampleDataSlot === undefined) {
+        return;
+      }
+      delete newSampleData[sampleDataSlot];
+      if (validationState.sampleMetadata) {
+        delete validationState.sampleMetadata.tabsValidated[template];
+        delete validationState.sampleMetadata.invalidCells[template];
+      }
+    });
+    sampleData.value = newSampleData;
+  }
+  hasChanged.value += 1;
 });
 
 /** Submit page */
@@ -366,6 +678,7 @@ const payloadObject: Ref<MetadataSubmission> = computed(() => ({
   studyForm,
   multiOmicsForm,
   sampleData: sampleData.value,
+  validationState,
 }));
 
 function templateHasData(templateName: string = ''): boolean {
@@ -448,28 +761,27 @@ async function submit(id: string, status?: SubmissionStatusKey) {
 
 function reset() {
   Object.assign(addressForm, addressFormDefault);
-  addressFormValid.value = false;
-  studyFormValid.value = false;
-  addressFormValid.value = false;
   Object.assign(addressForm, addressFormDefault);
   Object.assign(studyForm, studyFormDefault);
-  multiOmicsFormValid.value = false;
+  Object.assign(validationState, validationStateDefault);
   Object.assign(multiOmicsForm, multiOmicsFormDefault);
   Object.assign(multiOmicsAssociations, multiOmicsAssociationsDefault);
   packageName.value = [];
   sampleData.value = {};
   status.value = 'InProgress';
+  studyName.value = '';
   isTestSubmission.value = false;
   primaryStudyImageUrl.value = null;
   piImageUrl.value = null;
 }
 
-async function incrementalSaveRecord(id: string): Promise<number | void> {
+const incrementalSaveRecordRequest = useRequest();
+async function incrementalSaveRecord(id: string): Promise<void> {
   if (!canEditSampleMetadata()) {
-    return Promise.resolve();
+    return;
   }
   if (!canEditSubmissionByStatus()) {
-    return Promise.resolve();
+    return;
   }
 
   let payload: Partial<MetadataSubmission> = {};
@@ -486,19 +798,21 @@ async function incrementalSaveRecord(id: string): Promise<number | void> {
   }
 
   if (hasChanged.value) {
-    const response = await api.updateRecord(id, payload, permissions);
+    const response = await incrementalSaveRecordRequest.request(
+      () => api.updateRecord(id, payload, permissions)
+    );
     updateStateFromRecord(response.data);
-    return response.httpStatus;
+    return;
   }
   hasChanged.value = 0;
-  // Return a resolved Promise when hasChanged.value is false
-  return Promise.resolve();
 }
 
-async function generateRecord(isTestSubBool: boolean) {
+async function generateRecord(isTestSubBool: boolean, studyNameStr: string = '', piEmailStr: string = ''): Promise<MetadataSubmissionRecord> {
   reset();
+  studyForm.studyName = studyNameStr;
+  studyForm.piEmail = piEmailStr;
   const record = await api.createRecord(payloadObject.value, isTestSubBool);
-  isTestSubmission.value = isTestSubBool;
+  updateStateFromRecord(record);
   return record;
 }
 
@@ -513,21 +827,25 @@ function updateStateFromRecord(record: MetadataSubmissionRecord) {
   if (!isEqual(addressForm, record.metadata_submission.addressForm)) {
     Object.assign(addressForm, record.metadata_submission.addressForm);
   }
+  if (!isEqual(validationState, record.metadata_submission.validationState)) {
+    Object.assign(validationState, record.metadata_submission.validationState);
+  }
+  createdDate.value = new Date(record.created + 'Z');
+  modifiedDate.value = new Date(record.date_last_modified + 'Z');
   sampleData.value = record.metadata_submission.sampleData;
   status.value = record.status;
   if (record.permission_level !== null) {
     _permissionLevel = (record.permission_level as SubmissionEditorRole);
   }
+  studyName.value = record.study_name;
   isTestSubmission.value = record.is_test_submission;
   primaryStudyImageUrl.value = record.primary_study_image_url;
   piImageUrl.value = record.pi_image_url;
   hasChanged.value = 0;
+  author.value = record.author;
 }
 
-async function loadRecord(id: string) {
-  reset();
-  const val = await api.getRecord(id);
-  updateStateFromRecord(val);
+async function lockRecord(id: string) {
   try {
     const lockResponse = await api.lockSubmission(id);
     _submissionLockedBy = lockResponse.locked_by || null;
@@ -542,6 +860,25 @@ async function loadRecord(id: string) {
       _submissionLockedBy = null;
     }
   }
+}
+
+async function unlockRecord(id: string) {
+  try {
+    await api.unlockSubmission(id);
+    _submissionLockedBy = null;
+  } catch {
+    // Ignore errors when unlocking
+  }
+}
+
+async function loadRecord(id: string) {
+  console.log("reset")
+  reset();
+  console.log("request")
+  const val = await api.getRecord(id);
+  console.log("update state")
+  updateStateFromRecord(val);
+  console.log("finished")
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
@@ -609,34 +946,40 @@ export {
   /* state */
   multiOmicsForm,
   multiOmicsAssociations,
-  multiOmicsFormValid,
   addAwardDoi,
   removeAwardDoi,
   sampleData,
   addressForm,
   addressFormDefault,
-  addressFormValid,
   studyForm,
-  studyFormValid,
+  validationState,
   submitPayload,
   packageName,
   templateList,
   hasChanged,
-  tabsValidated,
+  author,
   status,
+  statusDisplay,
+  studyName,
+  createdDate,
+  modifiedDate,
   isTestSubmission,
+  incrementalSaveRecordRequest,
   primaryStudyImageUrl,
   piImageUrl,
   metadataSuggestions,
   suggestionMode,
   suggestionType,
   SubmissionStatusEnum,
+  submissionPages,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,
   incrementalSaveRecord,
   generateRecord,
   loadRecord,
+  lockRecord,
+  unlockRecord,
   submit,
   mergeSampleData,
   isOwner,
@@ -650,4 +993,8 @@ export {
   checkJGITemplates,
   checkDoiFormat,
   formatStatusTransitions,
+  setTabValidated,
+  setTabInvalidCells,
+  resetSampleMetadataValidation,
+  isSubmissionValid,
 };
