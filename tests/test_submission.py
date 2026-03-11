@@ -1552,7 +1552,7 @@ def test_finalize_submission(
     assert body.get("primary_study_image_url") is not None
     assert len(body.get("study_image_urls", [])) == 2
 
-    #assert that the study ID has been set on the submission
+    # Assert that the study ID has been set on the submission
     db.refresh(submission)
     assert submission.nmdc_study_id == study_id
 
