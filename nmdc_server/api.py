@@ -1926,8 +1926,8 @@ async def finalize_submission(
     submission = get_submission_for_user(db, id, user)
 
     # Update the NMDC study ID if provided
-    if body.nmdc_study_id is not None:
-        submission.nmdc_study_id = body.nmdc_study_id
+    if body.study_id is not None:
+        submission.nmdc_study_id = body.study_id
         db.commit()
 
     def make_public(image: Optional[SubmissionImagesObject]) -> Optional[str]:

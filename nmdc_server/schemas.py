@@ -734,7 +734,6 @@ class SubmissionFinalizeRequest(BaseModel):
     """
 
     study_id: str
-    nmdc_study_id: Optional[str] = None
 
 
 class SubmissionFinalizeResponse(BaseModel):
