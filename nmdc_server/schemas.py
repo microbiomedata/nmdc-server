@@ -725,17 +725,19 @@ class UploadCompleteRequest(BaseModel):
     content_type: str
 
 
-class SubmissionImagesMakePublicRequest(BaseModel):
-    """Request to make submission images public.
+class SubmissionFinalizeRequest(BaseModel):
+    """Request to make submission images public and finalize the submission.
 
     This model is used to request that all images associated with a submission
-    be made public and associated with the `nmdc:Study` ID provided.
+    be made public and associated with the `nmdc:Study` ID provided, and optionally
+    to set the NMDC study ID for the submission.
     """
 
     study_id: str
+    nmdc_study_id: Optional[str] = None
 
 
-class SubmissionImagesMakePublicResponse(BaseModel):
+class SubmissionFinalizeResponse(BaseModel):
     """Response containing the public URLs of submission image copies."""
 
     pi_image_url: Optional[str] = None

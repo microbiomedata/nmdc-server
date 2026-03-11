@@ -1903,16 +1903,16 @@ async def generate_signed_upload_url(
 
 
 @router.post(
-    "/metadata_submission/{id}/image/make_public",
-    response_model=schemas.SubmissionImagesMakePublicResponse,
+    "/metadata_submission/{id}/finalize",
+    response_model=schemas.SubmissionFinalizeResponse,
 )
-async def make_submission_images_public(
+async def finalize_submission(
     id: str,
-    body: schemas.SubmissionImagesMakePublicRequest,
+    body: schemas.SubmissionFinalizeRequest,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> schemas.SubmissionImagesMakePublicResponse:
-    """Copy the submission's images into the public images bucket and return their public URLs.
+) -> schemas.SubmissionFinalizeResponse:
+    """Finalize a submission after ingestion by making images public and optionally setting the NMDC study ID.
 
     This operation is only allowed for admin users. It is intended to be called as part of the
     process of translating submission data into nmdc-schema compatible data. We make a public copy
@@ -1924,6 +1924,11 @@ async def make_submission_images_public(
         raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     submission = get_submission_for_user(db, id, user)
+
+    # Update the NMDC study ID if provided
+    if body.nmdc_study_id is not None:
+        submission.nmdc_study_id = body.nmdc_study_id
+        db.commit()
 
     def make_public(image: Optional[SubmissionImagesObject]) -> Optional[str]:
         """Make a copy of the given image in the public images bucket and return its public URL."""
@@ -1941,7 +1946,7 @@ async def make_submission_images_public(
     public_primary_study_image = make_public(submission.primary_study_image)
     public_study_image_urls = [make_public(img) for img in submission.study_images]
 
-    return schemas.SubmissionImagesMakePublicResponse(
+    return schemas.SubmissionFinalizeResponse(
         pi_image_url=public_pi_image,
         primary_study_image_url=public_primary_study_image,
         study_image_urls=public_study_image_urls,
