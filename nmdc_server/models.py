@@ -156,6 +156,67 @@ class EnvoAncestor(Base):
     ancestor = relationship(EnvoTerm, foreign_keys=[ancestor_id], lazy="joined")
 
 
+# Generic ontology models to store all ontology classes and relations
+class OntologyClass(Base):
+    __tablename__ = "ontology_class"
+
+    id = Column(String, primary_key=True)  # e.g., "ENVO:00000001"
+    type = Column(String, nullable=False, default="nmdc:OntologyClass")
+    name = Column(String, nullable=False, index=True)  # label/name
+    definition = Column(Text)
+    alternative_names = Column(JSONB, default=list)  # array of strings
+    is_root = Column(Boolean, nullable=False, default=False)
+    is_obsolete = Column(Boolean, nullable=False, default=False)
+    # Additional metadata can be stored in annotations
+    annotations = Column(JSONB, default=dict)
+
+    # Relationships where this class is the subject
+    subject_relations = relationship(
+        "OntologyRelation",
+        foreign_keys="OntologyRelation.subject",
+        back_populates="subject_class",
+        cascade="all, delete-orphan",
+    )
+
+    # Relationships where this class is the object
+    object_relations = relationship(
+        "OntologyRelation",
+        foreign_keys="OntologyRelation.object",
+        back_populates="object_class",
+        cascade="all, delete-orphan",
+    )
+
+    @property
+    def ontology_prefix(self) -> str:
+        """Extract the ontology prefix from the ID (e.g., 'ENVO' from 'ENVO:00000001')"""
+        return self.id.split(":")[0] if ":" in self.id else ""
+
+
+class OntologyRelation(Base):
+    __tablename__ = "ontology_relation"
+    __table_args__ = (
+        UniqueConstraint(
+            "subject", "predicate", "object", name="uq_ontology_relation_subject_predicate_object"
+        ),
+        Index("idx_ontology_relation_subject", "subject"),
+        Index("idx_ontology_relation_object", "object"),
+        Index("idx_ontology_relation_predicate", "predicate"),
+    )
+
+    id = Column(Integer, primary_key=True)
+    subject = Column(String, ForeignKey(OntologyClass.id), nullable=False)
+    predicate = Column(String, nullable=False)  # e.g., "rdfs:subClassOf", "BFO:0000050"
+    object = Column(String, ForeignKey(OntologyClass.id), nullable=False)
+    type = Column(String, nullable=False, default="nmdc:OntologyRelation")
+
+    subject_class = relationship(
+        "OntologyClass", foreign_keys=[subject], back_populates="subject_relations"
+    )
+    object_class = relationship(
+        "OntologyClass", foreign_keys=[object], back_populates="object_relations"
+    )
+
+
 class KoTermToModule(Base):
     __tablename__ = "ko_term_to_module"
 
@@ -1032,7 +1093,11 @@ Index("bulk_download_data_object_id_idx", BulkDownloadDataObject.data_object_id)
 class EnvoTree(Base):
     __tablename__ = "envo_tree"
 
-    id = Column(String, primary_key=True)
+    # Surrogate primary key to allow multiple parents per term
+    pk = Column(Integer, primary_key=True)
+    # The ontology term ID (e.g., "ENVO:00000447", "PO:0009005")
+    id = Column(String, nullable=False)
+    # Parent term ID, NULL for root nodes
     parent_id = Column(String, index=True)
 
 

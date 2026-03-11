@@ -297,7 +297,7 @@ export interface LockOperationResult {
 
 export interface Doi {
   value: string;
-  provider: string;
+  provider: string | null;
 }
 
 export interface DataProtocol {
