@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watchEffect } from 'vue';
 import { GChart } from 'vue-google-charts';
-import { computedAsync } from '@vueuse/core';
 // @ts-ignore
 import colors from '@/colors';
 import { api, type Condition } from '@/data/api';
 // @ts-ignore
 import { makeTree } from '@/util';
+import useRequest from '@/use/useRequest';
 
 export interface EcosystemSankeyProps {
   conditions?: Condition[];
@@ -18,40 +18,15 @@ const {
   hierarchy = ['ecosystem', 'ecosystem_category', 'ecosystem_type', 'ecosystem_subtype', 'specific_ecosystem'] 
 } = defineProps<EcosystemSankeyProps>();
 
+const sankeyData = ref<any>([['From', 'To', 'Samples']]);
 const emit = defineEmits(['selected']);
-const errorMessage = ref<string | null>(null);
-const isLoading = computed(() => !errorMessage.value && sankeyData.value.length <= 1);
+const { loading, error, request } = useRequest();
+const errorMessage = computed(() => error.value ? 'Could not retrieve ecosystem data' : null);
 const chartRef = ref();
 
- 
 const onChartReady = (chart: any) => {
   chartRef.value = chart;
 };
-
-const sankeyData = computedAsync(
-  async () => {
-    errorMessage.value = null;
-    const data = await api.getEnvironmentSankeyAggregation(conditions);
-    const tree = makeTree(data, hierarchy);
-    return [
-      ['From', 'To', 'Samples'],
-      // generate sankey data from topological sort of sankey tree
-      ...tree.topoSort
-        // filter root node and root's direct children
-        .filter((node: any) => node.id !== '' && node.parent.id !== '')
-        .map(({
-          name, parent, count, depth,
-        }: any) => ([
-          // Add depth-dependent spacing so each level's unclassified is unique
-          ' '.repeat(depth - 1) + parent.name,
-          ' '.repeat(depth) + name,
-          count,
-        ])),
-    ];
-  },
-  [['From', 'To', 'Samples']], // Default value while loading
-  { onError: (_e) => { errorMessage.value = 'Could not retrieve ecosystem data'; } },
-);
 
 const chartEvents = {
   select: () => {
@@ -102,17 +77,37 @@ const sankeyOptions = computed(() => {
     },
   };
 });
+
+watchEffect(async () => {
+  const data = await request(() => api.getEnvironmentSankeyAggregation(conditions));
+  const tree = makeTree(data, hierarchy);
+  sankeyData.value =  [
+    ['From', 'To', 'Samples'],
+    // generate sankey data from topological sort of sankey tree
+    ...tree.topoSort
+      // filter root node and root's direct children
+      .filter((node: any) => node.id !== '' && node.parent.id !== '')
+      .map(({
+        name, parent, count, depth,
+      }: any) => ([
+        // Add depth-dependent spacing so each level's unclassified is unique
+        ' '.repeat(depth - 1) + parent.name,
+        ' '.repeat(depth) + name,
+        count,
+      ])),
+  ];
+});
 </script>
 
 <template>
   <div>
     <div
-      v-if="isLoading || errorMessage"
+      v-if="loading || errorMessage"
       class="d-flex justify-center align-center"
       style="height: 500px"
     >
       <v-progress-circular
-        v-if="isLoading"
+        v-if="loading"
         indeterminate
         color="primary"
       />
