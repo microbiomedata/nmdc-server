@@ -18,7 +18,7 @@ export default function useRequest() {
     } catch (err) {
       state.loading = false;
       state.error = String(err);
-      throw err;
+      return null;
     }
   }
 

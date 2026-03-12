@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { computedAsync } from '@vueuse/core';
-import { api, Condition, EntityType } from '@/data/api';
+import { computed, ref, watchEffect } from 'vue';
+import { api, BinResponse, Condition, EntityType } from '@/data/api';
+import useRequest from '@/use/useRequest';
 
 const props = withDefaults(defineProps<{
   field: string;
@@ -12,9 +12,20 @@ const props = withDefaults(defineProps<{
   useAllConditions: false,
   conditions: () => [],
 });
-const errorMessage = ref<string | null>(null);
+const facetSummary = ref<BinResponse<string | number> | null>(null);
+const facetSummaryUnconditional = ref<BinResponse<string | number> | null>(null);
+const conditionalRequest = useRequest();
+const unconditionalRequest = useRequest();
+const error = computed(() => {
+  if (unconditionalRequest.error.value) {
+    return 'Could not retrieve summary values';
+  } else if (conditionalRequest.error.value) {
+    return 'Could not retrieve summary values with conditions';
+  } 
+  return null;
+});
+const loading = computed(() => conditionalRequest.loading.value || unconditionalRequest.loading.value);
 
-// Computed properties for conditions (from SegmentConditions mixin logic)
 const otherConditions = computed(() =>
   props.conditions.filter((c) => (c.field !== props.field) || (c.table !== props.table))
 );
@@ -23,26 +34,20 @@ const myConditions = computed(() =>
   props.conditions.filter((c) => (c.field === props.field) && (c.table === props.table))
 );
 
-// Async computed for facetSummary
-const facetSummary = computedAsync(
-  async () => {
-    errorMessage.value = null;
-    const conditions = otherConditions.value.concat(
-      props.useAllConditions ? myConditions.value : []
-    );
-    return api.getBinnedFacet(props.table, props.field, conditions);
-  },
-  null,
-  { onError: (_e) => { errorMessage.value = 'Could not retrieve summary values with conditions'; } },
-);
+watchEffect(async () => {
+  const { table, field, useAllConditions } = props;
+  const conditions = otherConditions.value.concat(useAllConditions ? myConditions.value : []);
+  facetSummary.value = await conditionalRequest.request(
+    () => api.getBinnedFacet(table, field, conditions),
+  );
+});
 
-// Async computed for facetSummaryUnconditional
-const facetSummaryUnconditional = computedAsync(
-  async () => api.getBinnedFacet(props.table, props.field, []),
-  null,
-  { onError: (_e) => { errorMessage.value = 'Could not retrieve summary values'; } },
-);
-
+watchEffect(async () => {
+  const { table, field } = props;
+  facetSummaryUnconditional.value = await unconditionalRequest.request(
+    () => api.getBinnedFacet(table, field, []),
+  );
+});
 </script>
 
 <template>
@@ -55,7 +60,8 @@ const facetSummaryUnconditional = computedAsync(
         table,
         myConditions,
         otherConditions,
-        errorMessage,
+        error,
+        loading,
       }"
     />
   </div>

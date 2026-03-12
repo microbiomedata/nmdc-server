@@ -2,7 +2,6 @@
 import moment from 'moment';
 import {
   ref,
-  computed,
   watch,
   nextTick,
 } from 'vue';
@@ -19,7 +18,8 @@ const props = withDefaults(defineProps<{
   table: string;
   field: string;
   height?: number;
-  errorMessage: string | null;
+  error: string | null;
+  loading: boolean;
 }>(), {
   height: 160,
 });
@@ -94,28 +94,22 @@ watch(() => props.myConditions, () => {
     range.value = [min.value, max.value];
   }
 }, { immediate: true });
-
-const isLoading = computed(() => !props.errorMessage
-  && (!props.facetSummary
-  || !props.facetSummaryUnconditional
-  || !props.facetSummaryUnconditional.bins
-  || props.facetSummaryUnconditional.bins.length === 0));
 </script>
 
 <template>
   <div class="histogram">
     <div
-      v-if="isLoading || props.errorMessage"
+      v-if="loading || error"
       class="d-flex justify-center align-center"
       :style="{ height: `${height}px` }"
     >
       <v-progress-circular
-        v-if="isLoading"
+        v-if="loading"
         indeterminate
         color="primary"
       />
       <div v-else>
-        {{ props.errorMessage }}
+        {{ error }}
       </div>
     </div>
     <ChartContainer

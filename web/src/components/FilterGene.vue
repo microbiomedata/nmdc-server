@@ -57,13 +57,14 @@ export default defineComponent({
     const { loading, request } = useRequest();
     const search = ref('');
 
-    async function geneSearch(): Promise<KeggTermSearchResponse[]> {
+    async function geneSearch(): Promise<KeggTermSearchResponse[] | null> {
       return request(() => props.geneTypeParams.searchFunction(search.value || ''));
     }
 
     async function getGeneResults() {
       const resp = await geneSearch();
-      const results = resp
+      const results = [];
+      if (resp) resp
         .map((v: KeggTermSearchResponse) => ({ text: getTermDisplayText(v.term, v.text), value: v.term }));
       if (results.length === 0 && search.value && props.geneTypeParams.searchWithInputText(search.value)) {
         results.push({ value: search.value, text: search.value });

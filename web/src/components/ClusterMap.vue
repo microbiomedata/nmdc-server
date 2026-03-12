@@ -25,6 +25,7 @@ import shadowurl from 'leaflet/dist/images/marker-shadow.png';
  */
 
 import { api, Condition, EnvironmentGeospatialEntity } from '@/data/api';
+import useRequest from '@/use/useRequest';
 
 /**
  * LEAFLET icon missing hack fix
@@ -60,8 +61,8 @@ const emit = defineEmits<{
 
 const mapRef = ref();
 const mapReady = ref(false);
-const isLoading = ref(true);
-const errorMessage = ref<string | null>(null);
+const { loading, error, request } = useRequest();
+const errorMessage = computed(() => error.value ? 'Could not retrieve map data' : null);
 const markerClusterGroup = ref<any>(null);
 const mapProps = reactive({
   bounds: null as L.LatLngBoundsExpression | null,
@@ -81,20 +82,12 @@ const mapCenter = computed(() => {
 });
 
 async function getMapData() {
-  try {
-    if (props.vistab === 1) {
-      // Don't update map data if ENVIRONMENT tab is clicked
-      isLoading.value = false;
-      errorMessage.value = null;
-      return;
-    }
-    isLoading.value = true;
-    errorMessage.value = null;
-    await new Promise<void>((res) => {
-      window.setTimeout(res, 300);
-    });
-    const data = await api.getEnvironmentGeospatialAggregation(props.conditions);
-    const values: any[] = [];
+  if (props.vistab === 1) {
+    return;
+  }
+  const data = await request(() => api.getEnvironmentGeospatialAggregation(props.conditions));
+  const values: any[] = [];
+  if (data) {
     data.forEach((cluster, index) => {
       if (cluster.latitude && cluster.longitude) {
         for (let i = 0; i < cluster.count; i += 1) {
@@ -106,12 +99,8 @@ async function getMapData() {
         }
       }
     });
-    mapData.value = values;
-  } catch (_error) {
-    errorMessage.value = 'Could not load map data';
-  } finally {
-    isLoading.value = false;
   }
+  mapData.value = values;
 }
 
 function updateMarkers() {
@@ -231,7 +220,7 @@ watch([toRef(props, 'conditions')], () => {
 <template>
   <div style="position: relative">
     <div
-      v-if="isLoading || errorMessage"
+      v-if="loading || errorMessage"
       class="d-flex justify-center align-center"
       :style="{
         position: 'absolute',
@@ -242,7 +231,7 @@ watch([toRef(props, 'conditions')], () => {
       }"
     >
       <v-progress-circular
-        v-if="isLoading"
+        v-if="loading"
         indeterminate
         color="primary"
       />
@@ -253,7 +242,7 @@ watch([toRef(props, 'conditions')], () => {
     <v-btn
       small
       color="primary"
-      :disabled="isLoading || errorMessage ? true : false"
+      :disabled="loading || errorMessage ? true : false"
       :style="{
         position: 'absolute',
         bottom: '20px',
