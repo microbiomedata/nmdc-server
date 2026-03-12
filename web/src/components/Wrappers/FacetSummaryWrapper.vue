@@ -3,6 +3,7 @@ import { computed, watch, ref } from 'vue';
 // @ts-ignore
 import { valueDisplayName } from '@/util';
 import { api, Condition, EntityType, FacetSummaryResponse } from '@/data/api';
+import useRequest from '@/use/useRequest';
 
 const props = defineProps<{
   field: string,
@@ -13,9 +14,17 @@ const props = defineProps<{
 
 const facetSummary = ref<FacetSummaryResponse[] | null>(null);
 const facetSummaryUnconditional = ref<FacetSummaryResponse[] | null>(null);
-const conditionalErrorMessage = ref<string | null>(null);
-const unconditionalErrorMessage = ref<string | null>(null);
-const errorMessage = computed(() => conditionalErrorMessage.value || unconditionalErrorMessage.value);
+const conditionalRequest = useRequest();
+const unconditionalRequest = useRequest();
+const error = computed(() => {
+  if (unconditionalRequest.error.value) {
+    return 'Could not retrieve summary values';
+  } else if (conditionalRequest.error.value) {
+    return 'Could not retrieve summary values with conditions';
+  } 
+  return null;
+});
+const loading = computed(() => conditionalRequest.loading.value || unconditionalRequest.loading.value);
 
 // Computed properties for conditions (from SegmentConditions mixin logic)
 const otherConditions = computed(() => 
@@ -31,26 +40,12 @@ const fetchFacetSummary = async () => {
   const conditions = otherConditions.value.concat(
     props.useAllConditions ? myConditions.value : []
   );
-  try {
-    const result = await api.getFacetSummary(props.table, props.field, conditions);
-    // Create a new array reference to trigger reactivity
-    facetSummary.value = [...result];
-    conditionalErrorMessage.value = null;
-  } catch (_error) {
-    facetSummary.value = null;
-    conditionalErrorMessage.value = 'Could not retrieve summary values with conditions';
-  }
+  facetSummary.value = await conditionalRequest.request(() => api.getFacetSummary(props.table, props.field, conditions));
 };
 
 // Fetch unconditional facet summary
 const fetchFacetSummaryUnconditional = async () => {
-  try {
-    facetSummaryUnconditional.value = await api.getFacetSummary(props.table, props.field, []);
-    unconditionalErrorMessage.value = null;
-  } catch (_error) {
-    facetSummaryUnconditional.value = null;
-    unconditionalErrorMessage.value = 'Could not retrieve summary values';
-  }
+  facetSummaryUnconditional.value = await unconditionalRequest.request(() => api.getFacetSummary(props.table, props.field, []));
 };
 
 // Computed property for facetSummaryAggregate
@@ -106,7 +101,8 @@ fetchFacetSummaryUnconditional();
         myConditions,
         otherConditions,
         table,
-        errorMessage,
+        error,
+        loading,
       }"
     />
   </div>

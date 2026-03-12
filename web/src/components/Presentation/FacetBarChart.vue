@@ -19,7 +19,8 @@ const props = withDefaults(defineProps<{
   stacked?: boolean;
   facetSummary: FacetSummaryResponse[] | null;
   facetSummaryUnconditional: FacetSummaryResponse[] | null;
-  errorMessage?: string | null;
+  error?: string | null;
+  loading?: boolean;
 }>(), {
   showTitle: true,
   showBaseline: true,
@@ -28,7 +29,7 @@ const props = withDefaults(defineProps<{
   chart: null,
   height: 200,
   stacked: true,
-  errorMessage: null,
+  error: null,
 });
 
 const emit = defineEmits<{
@@ -138,24 +139,22 @@ const barChartOptions = computed(() => ({
   title: props.showTitle ? fieldDisplayName(props.field) : null,
   isStacked: true,
 }));
-
-const isLoading = computed(() => props.facetSummaryUnconditional == null && props.errorMessage == null);
 </script>
 
 <template>
   <div>
     <div
-      v-if="isLoading || errorMessage"
+      v-if="loading || error"
       class="d-flex justify-center align-center"
       :style="{ height: `${height}px` }"
     >
       <v-progress-circular
-        v-if="isLoading"
+        v-if="loading"
         indeterminate
         color="primary"
       />
       <div v-else>
-        {{ errorMessage }}
+        {{ error }}
       </div>
     </div>
     <GChart
