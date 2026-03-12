@@ -3,6 +3,7 @@ import Components from 'unplugin-vue-components/vite'
 import Vue from '@vitejs/plugin-vue'
 import Vuetify, { transformAssetUrls } from 'vite-plugin-vuetify'
 import Fonts from 'unplugin-fonts/vite'
+import { sentryVitePlugin } from "@sentry/vite-plugin"
 
 // Utilities
 import { defineConfig } from 'vite'
@@ -34,6 +35,13 @@ export default defineConfig({
           },
         ],
       },
+    }),
+    // The Sentry Vite Plugin uploads source maps to Sentry during the app's build/bundling process.
+    // Reference: https://docs.sentry.io/platforms/javascript/guides/vue/sourcemaps/uploading/vite/
+    sentryVitePlugin({
+      org: "microbiomedata",
+      project: "nmdc-frontend-vue",
+      authToken: process.env.SENTRY_AUTH_TOKEN,
     }),
   ],
   optimizeDeps: {
@@ -79,4 +87,7 @@ export default defineConfig({
       }
     }
   },
+  build: {
+    sourcemap: true
+  }
 })

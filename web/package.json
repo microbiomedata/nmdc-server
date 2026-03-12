@@ -64,6 +64,7 @@
     "globals": "^16.5.0",
     "npm-run-all2": "^8.0.4",
     "sass-embedded": "^1.92.1",
+    "@sentry/vite-plugin": "^5.1.1",
     "typescript": "~5.9.2",
     "unplugin-fonts": "^1.4.0",
     "unplugin-vue-components": "^29.0.0",
