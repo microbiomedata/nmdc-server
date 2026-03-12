@@ -16,6 +16,7 @@ import {
 } from '@/store';
 import { api, Condition, FacetSummaryResponse } from '@/data/api';
 import { makeSetsFromBitmask } from '@/encoding';
+import useRequest from '@/use/useRequest';
 
 const helpBarchart = 'Displays the number of omics processing runs for each data type available. Click on a bar to filter by data type.';
 const helpMap = `
@@ -49,7 +50,17 @@ const props = withDefaults(defineProps<{
 
 const sampleFacetSummary = ref<FacetSummaryResponse[] | null>(null);
 const studyFacetSummary = ref<FacetSummaryResponse[] | null>(null);
-const isUpsetLoading = ref(true);
+const sampleRequest = useRequest();
+const studyRequest = useRequest();
+const upSetLoading = computed(() => sampleRequest.loading.value || studyRequest.loading.value);
+const upSetError = computed(() => {
+  if (sampleRequest.error.value) {
+    return 'Could not retrieve sample summary values for UpSet plot';
+  } else if (studyRequest.error.value) {
+    return 'Could not retrieve study summary values for UpSet plot';
+  }
+  return null;
+});
 
 const upsetData = computed(() => {
   const multiomicsObj: Record<string, { counts: any, sets: any }> = {};
@@ -88,29 +99,9 @@ const upsetData = computed(() => {
     .map((k) => multiomicsObj[k]);
 });
 
-const upsetErrorMessage = computed(() => {
-  if (sampleFacetSummary.value === null) {
-    return 'Could not retrieve sample summary values for UpSet plot';
-  } else if (studyFacetSummary.value === null) {
-    return 'Could not retrieve study summary values for UpSet plot';
-  }
-  return null;
-});
-
 watchEffect(async () => {
-  try {
-    isUpsetLoading.value = true;
-    [sampleFacetSummary.value, studyFacetSummary.value] = await Promise.all([
-      api.getFacetSummary('biosample', 'multiomics', props.conditions),
-      api.getFacetSummary('study', 'multiomics', props.conditions),
-    ]);
-  } catch (error) {
-    console.error('Error fetching facet summaries for UpSet plot:', error);
-    sampleFacetSummary.value = null;
-    studyFacetSummary.value = null;
-  } finally {
-    isUpsetLoading.value = false;
-  }
+  sampleFacetSummary.value = await sampleRequest.request(() => api.getFacetSummary('biosample', 'multiomics', props.conditions));
+  studyFacetSummary.value = await studyRequest.request(() => api.getFacetSummary('study', 'multiomics', props.conditions));
 });
 
 function setBoundsFromMap(val: Condition[]) {
@@ -191,17 +182,17 @@ function setBoundsFromMap(val: Condition[]) {
           class="py-0 d-flex flex-column justify-center fill-height"
         >
           <div
-            v-if="isUpsetLoading || upsetErrorMessage"
+            v-if="upSetLoading || upSetError"
             class="d-flex justify-center align-center"
             style="height: 240px"
           >
             <v-progress-circular
-              v-if="isUpsetLoading"
+              v-if="upSetLoading"
               indeterminate
               color="primary"
             />
             <div v-else>
-              {{ upsetErrorMessage }}
+              {{ upSetError }}
             </div>
           </div>
           <ChartContainer
