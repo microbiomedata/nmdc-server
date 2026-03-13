@@ -171,10 +171,10 @@ export default defineComponent({
             :size="100"
             class="my-2 elevation-2"
           >
-            <img
+            <v-img
               :src="filePreview"
               :alt="inputLabel + ' preview'"
-            >
+            />
           </v-avatar>
           <img
             v-else

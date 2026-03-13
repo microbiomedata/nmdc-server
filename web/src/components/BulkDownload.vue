@@ -78,7 +78,7 @@ async function createAndDownload() {
     downloadMenuOpen.value = false;
     bulkTermsDialog.value = false;
     const val = await download();
-    window.location.assign(val.url);
+    if (val) window.location.assign(val.url);
   } catch (error) {
     console.error('Failed to create bulk download:', error);
     errorDialog.value = true;

@@ -82,6 +82,16 @@ export default defineComponent({
       });
     }
 
+    function addPublicationDoi() {
+      if (!Array.isArray(studyForm.publicationDois)) {
+        studyForm.publicationDois = [];
+      }
+      studyForm.publicationDois.push({
+        value: '',
+        provider: null,
+      });
+    }
+
     function revalidate() {
       formRef.value?.validate();
     }
@@ -123,6 +133,7 @@ export default defineComponent({
       addContributor,
       addFundingSource,
       addDataDoi,
+      addPublicationDoi,
       doiProviderValues,
       requiredRules,
       permissionLevelChoices,
@@ -330,7 +341,7 @@ export default defineComponent({
                 variant="outlined"
                 persistent-hint
                 :error-messages="contributor.name ? undefined : ['Contributor Name cannot be empty.']"
-                class="mr-3"
+                class="mr-3 mb-3"
               />
               <v-text-field
                 v-model="contributor.orcid"
@@ -339,6 +350,7 @@ export default defineComponent({
                 :disabled="currentUserOrcid === contributor.orcid || undefined"
                 label="ORCID"
                 variant="outlined"
+                class="mb-3"
                 persistent-hint
                 :style="{ maxWidth: '400px'}"
               >
@@ -429,6 +441,49 @@ export default defineComponent({
       </PageSection>
 
       <PageSection
+        heading="Publication DOIs"
+        subheading="DOIs for any publications associated with this study."
+      >
+        <div
+          v-for="(doi, i) in studyForm.publicationDois"
+          :key="`publication_doi_${i}`"
+          class="d-flex"
+        >
+          <v-card class="d-flex flex-column flex-fill pa-4 mb-4">
+            <v-text-field
+              v-model="doi.value"
+              label="Publication DOI *"
+              hide-details="auto"
+              variant="outlined"
+              required
+              :rules="requiredRules('DOI value must be provided',[
+                checkDoiFormat,
+              ])"
+            />
+          </v-card>
+          <v-btn
+            icon
+            variant="plain"
+            :disabled="!canEditSubmissionMetadata()"
+            @click="studyForm.publicationDois?.splice(i, 1)"
+          >
+            <v-icon>mdi-minus-circle</v-icon>
+          </v-btn>
+        </div>
+        <v-btn-grey
+          class="mb-4"
+          :disabled="!canEditSubmissionMetadata()"
+          @click="addPublicationDoi"
+        >
+          <v-icon class="pr-1">
+            mdi-plus-circle
+          </v-icon>
+          Add Publication DOI
+        </v-btn-grey>
+      </PageSection>
+
+
+      <PageSection
         heading="Data DOIs"
         subheading="Data DOIs for this study"
       >
@@ -447,9 +502,9 @@ export default defineComponent({
                 persistent-hint
                 variant="outlined"
                 required
-                class="mb-2 mr-3"
+                class="mr-3 flex-1-1-100"
                 :rules="requiredRules('DOI value must be provided',[
-                  v => checkDoiFormat(v) || 'DOI must be valid',
+                  checkDoiFormat,
                 ])"
               >
                 <template #message="{ message }">
@@ -467,7 +522,7 @@ export default defineComponent({
                 persistent-hint
                 variant="outlined"
                 clearable
-                class="mb-2 mr-3"
+                class="flex-1-1-100"
                 :rules="studyForm.dataDois[i]?.provider ? undefined : ['A provider must be selected.']"
               >
                 <template #message="{ message }">
@@ -480,7 +535,7 @@ export default defineComponent({
             v-if="studyForm.dataDois !== null"
             icon
             variant="plain"
-            :disabled="!isOwner()"
+            :disabled="!canEditSubmissionMetadata()"
             @click="studyForm.dataDois.splice(i, 1)"
           >
             <v-icon>mdi-minus-circle</v-icon>

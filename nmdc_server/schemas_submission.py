@@ -20,7 +20,7 @@ class Contributor(BaseModel):
 
 class Doi(BaseModel):
     value: str
-    provider: str
+    provider: Optional[str] = None
 
 
 class StudyFormCreate(BaseModel):
@@ -30,6 +30,7 @@ class StudyFormCreate(BaseModel):
     piOrcid: str
     fundingSources: Optional[List[str]] = None
     dataDois: Optional[List[Doi]] = None
+    publicationDois: Optional[List[Doi]] = None
     linkOutWebpage: List[str]
     studyDate: Optional[str] = None
     description: str
@@ -79,8 +80,10 @@ class MultiOmicsForm(BaseModel):
     unknownDoi: Optional[bool] = None
     mpProtocols: Optional[Protocols] = None
     mbProtocols: Optional[Protocols] = None
+    mbGcProtocols: Optional[Protocols] = None
     lipProtocols: Optional[Protocols] = None
     nomProtocols: Optional[Protocols] = None
+    nomLcProtocols: Optional[Protocols] = None
 
     # This allows Field Notes to continue to send alternativeNames, GOLDStudyId, and
     # NCBIBioProjectId in this form until it catches up with the new data model in its next release

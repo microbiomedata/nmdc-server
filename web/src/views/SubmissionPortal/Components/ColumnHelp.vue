@@ -62,10 +62,13 @@ export default defineComponent({
         color="grey"
         variant="outlined"
         size="small"
+        class="text-truncate justify-start"
         block
         @click="$emit('full-reference-click')"
       >
-        Full {{ harmonizerTemplate.displayName }} Reference
+        <span class="text-truncate" style="max-width: 250px;">
+          Full {{ harmonizerTemplate.displayName }} Reference
+        </span>
         <v-icon class="pl-1">
           mdi-open-in-new
         </v-icon>

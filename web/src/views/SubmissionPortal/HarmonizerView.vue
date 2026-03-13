@@ -635,12 +635,13 @@ export default defineComponent({
 
     onMounted(async () => {
       incrementalSaveRecordRequest.reset();
-      const [schema, goldEcosystemTree] = await schemaRequest(() => Promise.all([
+      const schemaResults = await schemaRequest(() => Promise.all([
         api.getSubmissionSchema(),
         api.getGoldEcosystemTree(),
       ]));
       const r = document.getElementById('harmonizer-root');
-      if (r && schema) {
+      if (r && schemaResults) {
+        const [schema, goldEcosystemTree] = schemaResults;
         await harmonizerApi.init(r, schema, activeTemplate.value?.schemaClass, goldEcosystemTree);
         await nextTick();
         // Load data and invalid cells for the active tab
@@ -1073,7 +1074,7 @@ export default defineComponent({
             <v-icon class="pr-1">
               mdi-arrow-left-circle
             </v-icon>
-            Go to Template Selection
+            Go to Sample Environment
           </v-btn-grey>
           <v-spacer />
           <div class="d-flex align-center">

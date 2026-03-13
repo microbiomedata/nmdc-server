@@ -7,7 +7,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from nmdc_schema.nmdc import SubmissionStatusEnum
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
 
@@ -892,6 +892,7 @@ def get_submissions_for_user(
     column_sort: str,
     order: str,
     is_test_submission_filter: Optional[bool] = None,
+    search_text: Optional[str] = None,
 ):
     """Return all submissions that a user has permission to view."""
     column = (
@@ -914,6 +915,14 @@ def get_submissions_for_user(
     if is_test_submission_filter != None:
         all_submissions = all_submissions.filter(
             models.SubmissionMetadata.is_test_submission == is_test_submission_filter
+        )
+    if search_text:
+        search_text = f"%{search_text}%"
+        all_submissions = all_submissions.filter(
+            or_(
+                models.SubmissionMetadata.study_name.ilike(search_text),
+                models.User.name.ilike(search_text),
+            )
         )
 
     if user.is_admin:

@@ -1,106 +1,92 @@
-<script lang="ts">
-import {
-  computed, defineComponent, PropType, ref,
-} from 'vue';
+<script setup lang="ts">
+import { computed, ref } from 'vue';
 import { GChart } from 'vue-google-charts';
 // @ts-ignore
 import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
-import { FacetSummaryResponse } from '@/data/api';
+import { Condition, FacetSummaryResponse } from '@/data/api';
 import { useTheme } from 'vuetify';
+import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
-export default defineComponent({
-  name: 'FacetBarChart',
-  components: {
-    GChart,
-  },
-  props: {
-    showTitle: {
-      type: Boolean,
-      default: true,
-    },
-    showBaseline: {
-      type: Boolean,
-      default: true,
-    },
-    leftMargin: {
-      type: Number,
-      default: 80,
-    },
-    rightMargin: {
-      type: Number,
-      default: 40,
-    },
-    chart: {
-      type: String,
-      default: null,
-    },
-    table: {
-      type: String,
-      default: null,
-    },
-    field: {
-      type: String,
-      default: null,
-    },
-    height: {
-      type: Number,
-      default: 200,
-    },
-    stacked: {
-      type: Boolean,
-      default: true,
-    },
-    facetSummary: {
-      type: Array as PropType<FacetSummaryResponse[]>,
-      required: true,
-    },
-    facetSummaryUnconditional: {
-      type: Array as PropType<FacetSummaryResponse[]>,
-      required: true,
-    },
-  },
-  emits: ['selected'],
-  setup(props, { emit }) {
-    const theme = useTheme();
-    const chartRef = ref();
+const props = withDefaults(defineProps<{
+  showTitle?: boolean;
+  showBaseline?: boolean;
+  leftMargin?: number;
+  rightMargin?: number;
+  chart?: string | null;
+  table: string;
+  field: string;
+  height?: number;
+  stacked?: boolean;
+  facetSummary: FacetSummaryResponse[] | null;
+  facetSummaryUnconditional: FacetSummaryResponse[] | null;
+  error?: string | null;
+  loading?: boolean;
+}>(), {
+  showTitle: true,
+  showBaseline: true,
+  leftMargin: 80,
+  rightMargin: 40,
+  chart: null,
+  height: 200,
+  stacked: true,
+  error: null,
+});
 
-     
-    const onChartReady = (chart: any) => {
-      chartRef.value = chart;
-    };
-    const chartEvents = {
-      select: () => {
-        const selection = chartRef.value.getSelection();
-        const value = props.facetSummaryUnconditional[selection[0].row]?.facet;
-        if (selection.length === 1) {
-          emit('selected', {
-            conditions: [{
-              field: props.field,
-              op: '==',
-              value,
-              table: props.table,
-            }],
-          });
-        }
-      },
-    };
-    const chartData = computed(() => {
-      return [
-        [
-          { label: fieldDisplayName(props.field) },
-          { label: 'Match', role: 'data' },
-          { role: 'scope' },
-          { role: 'style' },
-          { label: 'No Match', role: 'data' },
-          { role: 'scope' },
-          { role: 'style' },
-          { role: 'annotation' },
-        ],
+const emit = defineEmits<{
+  (e: 'selected', payload: { conditions: Condition[] }): void;
+}>();
+
+const theme = useTheme();
+const chartRef = ref();
+
+const onChartReady = (chart: any) => {
+  chartRef.value = chart;
+};
+
+const chartEvents = {
+  select: () => {
+    const selection = chartRef.value.getSelection();
+    if (selection.length === 0) {
+      return;
+    }
+    const value = !props.facetSummaryUnconditional ? null : props.facetSummaryUnconditional[selection[0].row]?.facet;
+    if (value && selection.length === 1) {
+      emit('selected', {
+        conditions: [{
+          field: props.field,
+          op: '==',
+          value,
+          table: props.table,
+        }],
+      });
+    }
+  },
+};
+
+const chartData = computed(() => {
+  let data = [
+    [
+      { label: fieldDisplayName(props.field) },
+      { label: 'Match', role: 'data' },
+      { role: 'scope' },
+      { role: 'style' },
+      { label: 'No Match', role: 'data' },
+      { role: 'scope' },
+      { role: 'style' },
+      { role: 'annotation' },
+    ]
+  ];
+
+  const currentFacetSummary = props.facetSummary;
+
+  if (currentFacetSummary && props.facetSummaryUnconditional) {
+    data = [
+      ...data,
       ...props.facetSummaryUnconditional.map(
         (facet) => {
-          const count = (props.facetSummary.find((e) => e.facet === facet.facet) || {}).count || 0;
-          const excludedCount = facet.count - ((props.facetSummary.find(
+          const count = (currentFacetSummary.find((e) => e.facet === facet.facet) || {}).count || 0;
+          const excludedCount = facet.count - ((currentFacetSummary.find(
             (e) => e.facet === facet.facet,
           ) || {}).count || 0);
           return [
@@ -118,58 +104,58 @@ export default defineComponent({
           ];
         },
       ),
-    ];
-    });
-    const barChartOptions = computed(() => ({
-      height: props.height,
-      chartArea: {
-        left: props.leftMargin,
-        right: props.rightMargin,
-        top: 0,
-        width: '85%',
-        height: '100%',
-      },
-      hAxis: {
-        textStyle: {
-          fontName: 'Roboto',
-        },
-        gridlines: {
-          count: 0,
-        },
-        ticks: [],
-        baselineColor: props.showBaseline ? 'black' : 'transparent',
-        baseline: 0,
-        viewWindowMode: 'maximized',
-      },
-      vAxis: {
-        textStyle: {
-          fontName: 'Roboto',
-        },
-      },
-      legend: { position: 'none' },
-      annotations: { alwaysOutside: true, stem: { color: 'transparent' } },
-      title: props.showTitle ? fieldDisplayName(props.field) : null,
-      isStacked: true,
-    }));
-
-    return {
-      chartRef,
-      onChartReady,
-      chartEvents,
-      chartData,
-      barChartOptions,
-    };
-  },
+    ]
+  }
+  return data;
 });
+
+const barChartOptions = computed(() => ({
+  height: props.height,
+  chartArea: {
+    left: props.leftMargin,
+    right: props.rightMargin,
+    top: 0,
+    width: '85%',
+    height: '100%',
+  },
+  hAxis: {
+    textStyle: {
+      fontName: 'Roboto',
+    },
+    gridlines: {
+      count: 0,
+    },
+    ticks: [],
+    baselineColor: props.showBaseline ? 'black' : 'transparent',
+    baseline: 0,
+    viewWindowMode: 'maximized',
+  },
+  vAxis: {
+    textStyle: {
+      fontName: 'Roboto',
+    },
+  },
+  legend: { position: 'none' },
+  annotations: { alwaysOutside: true, stem: { color: 'transparent' } },
+  title: props.showTitle ? fieldDisplayName(props.field) : null,
+  isStacked: true,
+}));
 </script>
 
 <template>
-  <GChart
-    type="BarChart"
-    class="rounded overflow-hidden"
-    :data="chartData"
-    :options="barChartOptions"
-    :events="chartEvents as any"
-    @ready="onChartReady"
-  />
+  <div>
+    <LoadingOverlay
+      :loading="loading"
+      :error="error"
+      :height="height"
+    />
+    <GChart
+      type="BarChart"
+      class="rounded overflow-hidden"
+      :data="chartData"
+      :options="barChartOptions"
+      :events="chartEvents as any"
+      @ready="onChartReady"
+    />
+  </div>
 </template>

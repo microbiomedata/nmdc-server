@@ -8,6 +8,7 @@ import {
   api,
   Condition,
   DoiInfo,
+  LabelLink,
   StudySearchResults,
 } from '@/data/api';
 import { setConditions, setUniqueCondition } from '@/store';
@@ -24,9 +25,8 @@ import AttributeRow from '@/components/Presentation/AttributeRow.vue';
 import DoiCitation from '@/components/Presentation/DoiCitation.vue';
 import DownloadDialog from '@/components/DownloadDialog.vue';
 import ErrorDialog from '@/components/ErrorDialog.vue';
+import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json';
 
-const GOLD_STUDY_LINK_BASE = 'https://gold.jgi.doe.gov/study?id=';
-const BIOPROJECT_LINK_BASE = 'https://bioregistry.io/';
 const DEFAULT_BIOSAMPLE_PAGE_SIZE = 5;
 
 export default defineComponent({
@@ -70,6 +70,7 @@ export default defineComponent({
     const goldLinks = ref<string[]>([]);
     const bioprojectLinks = ref<string[]>([]);
     const websiteLinks = ref<string[]>([]);
+    const emslLinks = ref<LabelLink[]>([]);
 
     const biosampleSearch = usePaginatedResults(
       conditions,
@@ -124,16 +125,25 @@ export default defineComponent({
       awardDois.value = Object.values(_study.doi_map).filter((doi) => doi.category === 'award_doi');
       datasetDois.value = Object.values(_study.doi_map).filter((doi) => doi.category === 'dataset_doi');
 
-      goldLinks.value = (_study.gold_study_identifiers || []).map((gold_id: string) => (
-        GOLD_STUDY_LINK_BASE + gold_id.replace('gold:', '')
-      ));
-      bioprojectLinks.value = (_study.annotations?.insdc_bioproject_identifiers || []).map((id: string) => (
-        BIOPROJECT_LINK_BASE + id
-      ));
+      goldLinks.value = (_study.gold_study_identifiers || []).map((id: string) => {
+        const goldId = id.split(':')[1];
+        return NmdcSchema.prefixes['gold'].prefix_reference + goldId;
+      });
+      bioprojectLinks.value = (_study.annotations?.insdc_bioproject_identifiers || []).map((id: string) => {
+        const projectId = id.split(':')[1];
+        return NmdcSchema.prefixes['bioproject'].prefix_reference + projectId;
+      });
       websiteLinks.value = [
         ...(_study.homepage_website || []),
         ...(_study.principal_investigator_websites || []),
       ];
+      emslLinks.value = (_study.annotations?.emsl_project_identifiers || []).map((id: string) => {
+        const projectId = id.split(':')[1];
+        return {
+          label: projectId,
+          url: NmdcSchema.prefixes['emsl.project'].prefix_reference + projectId
+        };
+      });
 
       conditions.value = [{
         op: '==',
@@ -195,6 +205,7 @@ export default defineComponent({
       publicationDois,
       awardDois,
       datasetDois,
+      emslLinks,
       biosampleSearch,
       parentStudies,
       smAndDown,
@@ -495,6 +506,27 @@ export default defineComponent({
                 rel="noopener noreferrer"
               >
                 {{ link }}
+              </a>
+            </div>
+          </div>
+        </AttributeRow>
+
+        <AttributeRow
+          v-if="emslLinks.length > 0"
+          label="EMSL Project Identifiers"
+        >
+          <div class="stack-sm">
+            <div
+              v-for="emslLink in emslLinks"
+              :key="emslLink.label"
+            >
+              <a
+                v-if="emslLink.label"
+                :href="emslLink.url"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ emslLink.label }}
               </a>
             </div>
           </div>
