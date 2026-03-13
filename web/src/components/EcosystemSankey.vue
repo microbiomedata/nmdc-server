@@ -7,6 +7,7 @@ import { api, type Condition } from '@/data/api';
 // @ts-ignore
 import { makeTree } from '@/util';
 import useRequest from '@/use/useRequest';
+import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
 export interface EcosystemSankeyProps {
   conditions?: Condition[];
@@ -101,22 +102,12 @@ watchEffect(async () => {
 
 <template>
   <div>
-    <div
-      v-if="loading || errorMessage"
-      class="d-flex justify-center align-center"
-      style="height: 500px"
-    >
-      <v-progress-circular
-        v-if="loading"
-        indeterminate
-        color="primary"
-      />
-      <div v-else>
-        {{ errorMessage }}
-      </div>
-    </div>
+    <LoadingOverlay
+      :loading="loading"
+      :error="errorMessage"
+      :height="500"
+    />
     <GChart
-      v-else
       ref="chart"
       :settings="{
         packages: ['sankey'],

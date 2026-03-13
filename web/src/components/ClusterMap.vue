@@ -26,6 +26,7 @@ import shadowurl from 'leaflet/dist/images/marker-shadow.png';
 
 import { api, Condition, EnvironmentGeospatialEntity } from '@/data/api';
 import useRequest from '@/use/useRequest';
+import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
 /**
  * LEAFLET icon missing hack fix
@@ -219,26 +220,11 @@ watch([toRef(props, 'conditions')], () => {
 
 <template>
   <div style="position: relative">
-    <div
-      v-if="loading || errorMessage"
-      class="d-flex justify-center align-center"
-      :style="{
-        position: 'absolute',
-        inset: 0,
-        zIndex: 2,
-        height: `${height}px`,
-        background: 'rgba(255,255,255,0.7)',
-      }"
-    >
-      <v-progress-circular
-        v-if="loading"
-        indeterminate
-        color="primary"
-      />
-      <div v-else>
-        {{ errorMessage }}
-      </div>
-    </div>
+    <LoadingOverlay
+      :loading="loading"
+      :error="errorMessage"
+      :height="height"
+    />
     <v-btn
       small
       color="primary"

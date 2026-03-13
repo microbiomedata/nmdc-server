@@ -10,6 +10,7 @@ import BinnedSummaryWrapper from '@/components/Wrappers/BinnedSummaryWrapper.vue
 // ENDTODO
 import TooltipCard from '@/components/TooltipCard.vue';
 import ClusterMap from '@/components/ClusterMap.vue';
+import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
 import {
   toggleConditions, setUniqueCondition,
@@ -181,22 +182,12 @@ function setBoundsFromMap(val: Condition[]) {
           :text="helpUpset"
           class="py-0 d-flex flex-column justify-center fill-height"
         >
-          <div
-            v-if="upSetLoading || upSetError"
-            class="d-flex justify-center align-center"
-            style="height: 240px"
-          >
-            <v-progress-circular
-              v-if="upSetLoading"
-              indeterminate
-              color="primary"
-            />
-            <div v-else>
-              {{ upSetError }}
-            </div>
-          </div>
+          <LoadingOverlay
+            :loading="upSetLoading"
+            :error="upSetError"
+            :height="240"
+          />
           <ChartContainer
-            v-else
             :height="240"
           >
             <template #default="{ width, height }">

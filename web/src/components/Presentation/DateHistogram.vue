@@ -8,6 +8,7 @@ import {
 
 import ChartContainer from '@/components/Presentation/ChartContainer.vue';
 import TimeHistogram from '@/components/Presentation/TimeHistogram.vue';
+import LoadingOverlay from '@/components/LoadingOverlay.vue';
 import { BinResponse, Condition } from '@/data/api';
 
 const props = withDefaults(defineProps<{
@@ -98,22 +99,13 @@ watch(() => props.myConditions, () => {
 
 <template>
   <div class="histogram">
-    <div
-      v-if="loading || error"
-      class="d-flex justify-center align-center"
-      :style="{ height: `${height}px` }"
-    >
-      <v-progress-circular
-        v-if="loading"
-        indeterminate
-        color="primary"
-      />
-      <div v-else>
-        {{ error }}
-      </div>
-    </div>
+    <LoadingOverlay
+      :loading="loading"
+      :error="error"
+      :height="height"
+    />
     <ChartContainer
-      v-else
+      v-if="facetSummaryUnconditional && facetSummary"
       :height="height"
     >
       <template #default="{ width }">

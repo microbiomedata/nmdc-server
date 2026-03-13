@@ -6,6 +6,7 @@ import { fieldDisplayName } from '@/util';
 import { ecosystems } from '@/encoding';
 import { Condition, FacetSummaryResponse } from '@/data/api';
 import { useTheme } from 'vuetify';
+import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
 const props = withDefaults(defineProps<{
   showTitle?: boolean;
@@ -143,22 +144,12 @@ const barChartOptions = computed(() => ({
 
 <template>
   <div>
-    <div
-      v-if="loading || error"
-      class="d-flex justify-center align-center"
-      :style="{ height: `${height}px` }"
-    >
-      <v-progress-circular
-        v-if="loading"
-        indeterminate
-        color="primary"
-      />
-      <div v-else>
-        {{ error }}
-      </div>
-    </div>
+    <LoadingOverlay
+      :loading="loading"
+      :error="error"
+      :height="height"
+    />
     <GChart
-      v-else
       type="BarChart"
       class="rounded overflow-hidden"
       :data="chartData"
