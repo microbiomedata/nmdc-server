@@ -17,7 +17,8 @@ RUN yarn install
 COPY . .
 
 # Build the app, temporarily setting an environment variable named `SENTRY_AUTH_TOKEN` (which the
-# Sentry Vite Plugin looks for) to the value of the "build secret" named `sentry_auth_token`.
+# Sentry Vite Plugin looks for) to the value of the "build secret" named `sentry_auth_token`
+# (if such a "build secret" exists).
 #
 # Note: This allows the Sentry Vite plugin to upload source maps to Sentry during the Vite app
 #       build process, without exposing the secret's value (a sensitive token) in logs/history
@@ -27,7 +28,13 @@ COPY . .
 # - https://docs.sentry.io/platforms/javascript/guides/vue/sourcemaps/uploading/vite/#configuration
 # - https://docs.docker.com/build/building/secrets/#using-build-secrets
 #
-RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
+# Note: We include `NODE_OPTIONS="--max-old-space-size=3072"` in order to avoid getting a
+#       "JavaScript heap out of memory" error. We started getting that error once we began
+#       including source maps in our builds. We get the error with 2048, but not with 3072.
+#       Reference: https://stackoverflow.com/a/48392705
+#
+RUN --mount=type=secret,required=false,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
+    NODE_OPTIONS="--max-old-space-size=3072" \
     yarn run build
 
 
