@@ -197,6 +197,11 @@ export interface DoiInfo {
   provider: string,
 }
 
+export interface LabelLink {
+  label?: string,
+  url: string,
+}
+
 export interface StudySearchResults extends BaseSearchResult {
   principal_investigator_websites: string[];
   principal_investigator_name: string;
@@ -227,6 +232,7 @@ export interface StudySearchResults extends BaseSearchResult {
   annotations: {
     insdc_bioproject_identifiers?: string[];
     title: string;
+    emsl_project_identifiers: string[]
   };
   sample_count: number;
   study_category: string;
