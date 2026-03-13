@@ -73,7 +73,7 @@ async function addSubmissionRole(submission_id: string, orcid: string, role: str
   return resp.data;
 }
 
-async function listRecords(searchParams: SearchParams, isTestFilter: boolean | null) {
+async function listRecords(searchParams: SearchParams, isTestFilter: boolean | null, searchText: string) {
   const params: Record<string, any> = {
     limit: searchParams.limit,
     offset: searchParams.offset,
@@ -82,6 +82,9 @@ async function listRecords(searchParams: SearchParams, isTestFilter: boolean | n
   };
   if (isTestFilter !== null) {
     params.is_test_submission_filter = isTestFilter;
+  }
+  if (searchText !== '') {
+    params.search_text = searchText;
   }
   const resp = await client.get<PaginatedResponse<MetadataSubmissionRecordSlim>>(
     'metadata_submission/slim',

@@ -124,6 +124,7 @@ emits: ['revalidate'],
           />
         </v-radio-group>
       </div>
+
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Metatranscriptome"
@@ -212,7 +213,7 @@ emits: ['revalidate'],
 
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metaproteome"
+        label="Metaproteome (LC-MS)"
         value="mp"
         hide-details
       />
@@ -220,9 +221,10 @@ emits: ['revalidate'],
         v-if="multiOmicsForm.omicsProcessingTypes.includes('mp')"
         data-type="mpProtocols"
       />
+
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Metabolome"
+        label="Metabolome (LC-MS)"
         value="mb"
         hide-details
       />
@@ -230,6 +232,18 @@ emits: ['revalidate'],
         v-if="multiOmicsForm.omicsProcessingTypes.includes('mb')"
         data-type="mbProtocols"
       />
+
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Metabolome (GC-MS)"
+        value="mb-gc"
+        hide-details
+      />
+      <ExternalProtocolForm
+        v-if="multiOmicsForm.omicsProcessingTypes.includes('mb-gc')"
+        data-type="mbGcProtocols"
+      />
+
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
         label="Natural Organic Matter (FT-ICR MS)"
@@ -240,14 +254,26 @@ emits: ['revalidate'],
         v-if="multiOmicsForm.omicsProcessingTypes.includes('nom')"
         data-type="nomProtocols"
       />
+
       <v-checkbox
         v-model="multiOmicsForm.omicsProcessingTypes"
-        label="Lipidome"
-        value="lipidome-emsl"
+        label="Natural Organic Matter (LC-FT-ICR MS)"
+        value="nom-lc"
         hide-details
       />
       <ExternalProtocolForm
-        v-if="multiOmicsForm.omicsProcessingTypes.includes('lipidome-emsl')"
+        v-if="multiOmicsForm.omicsProcessingTypes.includes('nom-lc')"
+        data-type="nomLcProtocols"
+      />
+
+      <v-checkbox
+        v-model="multiOmicsForm.omicsProcessingTypes"
+        label="Lipidome (LC-MS)"
+        value="lipidome"
+        hide-details
+      />
+      <ExternalProtocolForm
+        v-if="multiOmicsForm.omicsProcessingTypes.includes('lipidome')"
         data-type="lipProtocols"
       />
     </div>

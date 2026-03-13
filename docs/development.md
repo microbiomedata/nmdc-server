@@ -302,13 +302,15 @@ See [this documentation](./local_ingest.md) for information about ingesting from
 tox
 ```
 
-In order for the `py312` test suite to run properly, it needs to be able to communicate with a running `postgres` server and the fake GCS service. You can use the docker configuration to get these services up and running:
+In order for the `py312` test suite to run properly, it needs to be able to communicate with a running `postgres` 
+server and the fake GCS service. You can use the docker configuration to get these services up and running:
 
 ```bash
 docker compose up db storage
 ```
 
-You'll also need to set environment variables so the tests know where these resources can be found. If you're running the services via `docker compose`, then you can use the following values:
+You'll also need to set environment variables so the tests know where these resources can be found. If you're 
+running the services via `docker compose`, then you can use the following values:
 
 ```bash
 export NMDC_TESTING_DATABASE_URI=postgresql://postgres:postgres@localhost:5432/nmdc_testing

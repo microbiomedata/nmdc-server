@@ -83,8 +83,7 @@ export default defineComponent({
           return valid || 'DOI must be provided if a provider is selected.';
         },
         (value: string) => {
-          const valid = !value || checkDoiFormat(value);
-          return valid || 'DOI must be in the correct format.';
+          return !value || checkDoiFormat(value);
         },
       ]
     );

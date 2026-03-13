@@ -1,7 +1,6 @@
-<script lang="ts">
+<script setup lang="ts">
 import {
-  computed,
-  defineComponent, PropType, reactive, ref, toRef, watch, onMounted, nextTick,
+  computed, reactive, ref, toRef, watch, onMounted, nextTick,
 } from 'vue';
 
 /**
@@ -26,6 +25,8 @@ import shadowurl from 'leaflet/dist/images/marker-shadow.png';
  */
 
 import { api, Condition, EnvironmentGeospatialEntity } from '@/data/api';
+import useRequest from '@/use/useRequest';
+import LoadingOverlay from '@/components/LoadingOverlay.vue';
 
 /**
  * LEAFLET icon missing hack fix
@@ -45,204 +46,189 @@ Icon.Default.mergeOptions({
  * END icon hack
  */
 
-export default defineComponent({
-  components: {
-    LMap,
-    LTileLayer,
-  },
+const props = withDefaults(defineProps<{
+  conditions?: Condition[];
+  height?: number;
+  vistab?: number | null;
+}>(), {
+  conditions: () => [],
+  height: 360,
+  vistab: null,
+});
 
-  props: {
-    conditions: {
-      type: Array as PropType<Condition[]>,
-      default: () => [],
-    },
-    height: {
-      type: Number,
-      default: 360,
-    },
-    vistab: {
-      type: Number,
-      default: null,
-    },
-  },
-  emits: ['selected'],
-  setup(props, { emit }) {
-    const mapRef = ref();
-    const mapReady = ref(false);
-    const markerClusterGroup = ref<any>(null);
-    const mapProps = reactive({
-      bounds: null as L.LatLngBoundsExpression | null,
-      zoom: 3,
-      url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-      iconSize: 64,
-      attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
-    });
-    const mapData = ref(
-      [] as (EnvironmentGeospatialEntity & { latLng: L.LatLngExpression, key: string })[],
-    );
-    const mapCenter = computed(() => {
-      const data: L.LatLngExpression[] = mapData.value.map(({ latLng }) => latLng);
-      if (data.length === 0) return null;
-      // @ts-ignore -- the type annotation for this method is wrong.
-      return (new L.LatLngBounds(data));
-    });
+const emit = defineEmits<{
+  (e: 'selected', value: Condition[]): void;
+}>();
 
-    async function getMapData() {
-      if (props.vistab === 1) {
-        // Don't update map data if ENVIRONMENT tab is clicked
-        return;
-      }
-      await new Promise<void>((res) => {
-        window.setTimeout(res, 300);
-      });
-      const data = await api.getEnvironmentGeospatialAggregation(props.conditions);
-      const values: any[] = [];
-      data.forEach((cluster, index) => {
-        if (cluster.latitude && cluster.longitude) {
-          for (let i = 0; i < cluster.count; i += 1) {
-            values.push({
-              ...cluster,
-              key: `${index}_${i}`,
-              latLng: L.latLng(cluster.latitude, cluster.longitude),
-            });
-          }
+const mapRef = ref();
+const mapReady = ref(false);
+const { loading, error, request } = useRequest();
+const errorMessage = computed(() => error.value ? 'Could not retrieve map data' : null);
+const markerClusterGroup = ref<any>(null);
+const mapProps = reactive({
+  bounds: null as L.LatLngBoundsExpression | null,
+  zoom: 3,
+  url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+  iconSize: 64,
+  attribution: '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors',
+});
+const mapData = ref(
+  [] as (EnvironmentGeospatialEntity & { latLng: L.LatLngExpression, key: string })[],
+);
+const mapCenter = computed(() => {
+  const data: L.LatLngExpression[] = mapData.value.map(({ latLng }) => latLng);
+  if (data.length === 0) return null;
+  // @ts-ignore -- the type annotation for this method is wrong.
+  return (new L.LatLngBounds(data));
+});
+
+async function getMapData() {
+  if (props.vistab === 1) {
+    return;
+  }
+  const data = await request(() => api.getEnvironmentGeospatialAggregation(props.conditions));
+  const values: any[] = [];
+  if (data) {
+    data.forEach((cluster, index) => {
+      if (cluster.latitude && cluster.longitude) {
+        for (let i = 0; i < cluster.count; i += 1) {
+          values.push({
+            ...cluster,
+            key: `${index}_${i}`,
+            latLng: L.latLng(cluster.latitude, cluster.longitude),
+          });
         }
-      });
-      mapData.value = values;
-    }
-
-    function updateMarkers() {
-      const leafletMap = mapRef.value?.leafletObject;
-      if (!leafletMap || !mapReady.value) return;
-
-      // Remove existing cluster group if it exists
-      if (markerClusterGroup.value) {
-        leafletMap.removeLayer(markerClusterGroup.value);
-      }
-
-      // Create new marker cluster group
-      // @ts-ignore - MarkerClusterGroup is added by leaflet.markercluster plugin
-      markerClusterGroup.value = L.markerClusterGroup();
-
-      // Add markers to the cluster group
-      mapData.value.forEach((m) => {
-        const marker = L.marker(m.latLng);
-        const popupContent = `
-          <h3>Sample Collection</h3>
-          <ul class="pl-4">
-            <li>Ecosystem: ${m.ecosystem || 'N/A'}</li>
-            <li>Ecosystem Category: ${m.ecosystem_category || 'N/A'}</li>
-            <li>Latitude: ${m.latitude}</li>
-            <li>Longitude: ${m.longitude}</li>
-          </ul>
-        `;
-        marker.bindPopup(popupContent);
-        markerClusterGroup.value.addLayer(marker);
-      });
-
-      // Add the cluster group to the map
-      leafletMap.addLayer(markerClusterGroup.value);
-
-      // Fit bounds if we have data
-      if (mapData.value.length > 0 && mapCenter.value) {
-        const fitBoundsOptions = {
-          padding: [20, 20],
-          maxZoom: 5,
-        };
-        leafletMap.fitBounds(mapCenter.value, fitBoundsOptions);
-      }
-    }
-
-    function updateBounds() {
-      const { bounds } = mapProps;
-      if (bounds) {
-        emit('selected', [
-          {
-            field: 'latitude',
-            op: 'between',
-            value: [
-              //  @ts-ignore
-              bounds._southWest.lat, bounds._northEast.lat,
-            ],
-            table: 'biosample',
-          },
-          {
-            field: 'longitude',
-            op: 'between',
-            value: [
-              //  @ts-ignore
-              bounds._southWest.lng, bounds._northEast.lng,
-            ],
-            table: 'biosample',
-          },
-        ]);
-      }
-    }
-
-    function onMapReady() {
-      // Add a small delay to ensure the map is fully initialized
-      setTimeout(() => {
-        mapReady.value = true;
-      }, 100);
-    }
-
-    onMounted(async () => {
-      await nextTick();
-      // Wait for map to be ready before loading data
-      if (!mapReady.value) {
-        setTimeout(() => {
-          if (mapReady.value) {
-            getMapData();
-          }
-        }, 200);
-      } else {
-        getMapData();
       }
     });
+  }
+  mapData.value = values;
+}
 
-    // Watch for map data changes and update markers
-    watch(mapData, () => {
-      if (mapReady.value) {
-        nextTick(() => {
-          updateMarkers();
-        });
-      }
-    });
+function updateMarkers() {
+  const leafletMap = mapRef.value?.leafletObject;
+  if (!leafletMap || !mapReady.value) return;
 
-    // Watch for map ready state
-    watch(mapReady, (ready) => {
-      if (ready && mapData.value.length > 0) {
-        nextTick(() => {
-          updateMarkers();
-        });
-      }
-    });
+  // Remove existing cluster group if it exists
+  if (markerClusterGroup.value) {
+    leafletMap.removeLayer(markerClusterGroup.value);
+  }
 
-    watch([toRef(props, 'conditions')], () => {
-      if (mapReady.value) {
-        getMapData();
-      }
-    });
+  // Create new marker cluster group
+  // @ts-ignore - MarkerClusterGroup is added by leaflet.markercluster plugin
+  markerClusterGroup.value = L.markerClusterGroup();
 
-    return {
-      mapCenter,
-      mapData,
-      mapProps,
-      mapRef,
-      mapReady,
-      onMapReady,
-      /* methods */
-      updateBounds,
+  // Add markers to the cluster group
+  mapData.value.forEach((m) => {
+    const marker = L.marker(m.latLng);
+    const popupContent = `
+      <h3>Sample Collection</h3>
+      <ul class="pl-4">
+        <li>Ecosystem: ${m.ecosystem || 'N/A'}</li>
+        <li>Ecosystem Category: ${m.ecosystem_category || 'N/A'}</li>
+        <li>Latitude: ${m.latitude}</li>
+        <li>Longitude: ${m.longitude}</li>
+      </ul>
+    `;
+    marker.bindPopup(popupContent);
+    markerClusterGroup.value.addLayer(marker);
+  });
+
+  // Add the cluster group to the map
+  leafletMap.addLayer(markerClusterGroup.value);
+
+  // Fit bounds if we have data
+  if (mapData.value.length > 0 && mapCenter.value) {
+    const fitBoundsOptions = {
+      padding: [20, 20],
+      maxZoom: 5,
     };
-  },
+    leafletMap.fitBounds(mapCenter.value, fitBoundsOptions);
+  }
+}
+
+function updateBounds() {
+  const { bounds } = mapProps;
+  if (bounds) {
+    emit('selected', [
+      {
+        field: 'latitude',
+        op: 'between',
+        value: [
+          //  @ts-ignore
+          bounds._southWest.lat, bounds._northEast.lat,
+        ],
+        table: 'biosample',
+      },
+      {
+        field: 'longitude',
+        op: 'between',
+        value: [
+          //  @ts-ignore
+          bounds._southWest.lng, bounds._northEast.lng,
+        ],
+        table: 'biosample',
+      },
+    ]);
+  }
+}
+
+function onMapReady() {
+  // Add a small delay to ensure the map is fully initialized
+  setTimeout(() => {
+    mapReady.value = true;
+  }, 100);
+}
+
+onMounted(async () => {
+  await nextTick();
+  // Wait for map to be ready before loading data
+  if (!mapReady.value) {
+    setTimeout(() => {
+      if (mapReady.value) {
+        getMapData();
+      }
+    }, 200);
+  } else {
+    getMapData();
+  }
+});
+
+// Watch for map data changes and update markers
+watch(mapData, () => {
+  if (mapReady.value) {
+    nextTick(() => {
+      updateMarkers();
+    });
+  }
+});
+
+// Watch for map ready state
+watch(mapReady, (ready) => {
+  if (ready && mapData.value.length > 0) {
+    nextTick(() => {
+      updateMarkers();
+    });
+  }
+});
+
+watch([toRef(props, 'conditions')], () => {
+  if (mapReady.value) {
+    getMapData();
+  }
 });
 </script>
 
 <template>
-  <div>
+  <div style="position: relative">
+    <LoadingOverlay
+      :loading="loading"
+      :error="errorMessage"
+      :height="height"
+    />
     <v-btn
       small
       color="primary"
+      :disabled="loading || errorMessage ? true : false"
       :style="{
         position: 'absolute',
         bottom: '20px',
