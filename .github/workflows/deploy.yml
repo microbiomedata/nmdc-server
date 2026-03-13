@@ -90,10 +90,9 @@ jobs:
 
           # Specify `--secret` options for the underlying `$ docker build` command.
           #
-          # If the image being build is the one named "client", then define a "Secret mount" named
-          # `sentry_auth_token` that Docker can use to access the value of the repository-level
-          # secret named `SENTRY_AUTH_TOKEN` when building the image (see the `Dockerfile`), so the
-          # Sentry Vite plugin can upload source maps to Sentry during the Vite app build process.
+          # If the image being built is the one named "client", then include a "build secret" named
+          # `sentry_auth_token` that `$ docker build` can use to access the value of the repository-level
+          # secret named `SENTRY_AUTH_TOKEN` when building the image (see `Dockerfile` for its use).
           #
           # References:
           # - https://docs.docker.com/build/ci/github-actions/secrets
