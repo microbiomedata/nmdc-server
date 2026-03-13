@@ -34,7 +34,7 @@ COPY . .
 #       Reference: https://stackoverflow.com/a/48392705
 #
 RUN --mount=type=secret,required=false,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
-    NODE_OPTIONS="--max-old-space-size=3072" \
+    NODE_OPTIONS="${NODE_OPTIONS} --max-old-space-size=3072" \
     yarn run build
 
 
