@@ -478,6 +478,14 @@ def aggregate_data_object_by_workflow(
     return aggregations.get_data_object_aggregation(db, conditions)
 
 
+def search_data_objects(
+    db: Session,
+    conditions: List[query.ConditionSchema],
+) -> Query:
+    """Search for data objects, optionally filtered by biosample conditions."""
+    return query.DataObjectQuerySchema(conditions=conditions).execute(db)
+
+
 # principal investigator
 def get_pi_image(db: Session, principal_investigator_id: UUID) -> Optional[bytes]:
     pi = db.get(models.PrincipalInvestigator, principal_investigator_id)  # type: ignore

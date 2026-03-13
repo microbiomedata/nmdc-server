@@ -67,6 +67,10 @@ const metadataOptions = computed(() => [
     id: 'studies',
     label: 'Studies',
   },
+  {
+    id: 'data_objects',
+    label: 'Data Objects',
+  },
 ]);
 
 async function createAndDownload() {
