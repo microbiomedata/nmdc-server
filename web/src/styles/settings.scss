@@ -35,3 +35,9 @@
   flex-direction: column;
   gap: 16px;
 }
+
+// Hide all GChart error messages
+// Selects any element whose ID begins with "google-visualization-errors"
+div[id^="google-visualization-errors"] {
+  display: none !important;
+}

@@ -6,7 +6,7 @@ import NmdcSchema from 'nmdc-schema/nmdc_schema/nmdc_materialized_patterns.json'
 
 import { geneFunctionTables, types } from '@/encoding';
 import {
-  api, AttributeSummary, Condition, DatabaseSummaryResponse, entityType,
+  api, AttributeSummary, Condition, DatabaseSummaryResponse, EntityType,
 } from '@/data/api';
 
 import ConditionChips from '@/components/Presentation/ConditionChips.vue';
@@ -148,7 +148,7 @@ export default defineComponent({
 
     api.getDatabaseSummary().then((s) => { dbSummary.value = s; });
 
-    function dbSummaryForTable(table: entityType, field: string): AttributeSummary {
+    function dbSummaryForTable(table: EntityType, field: string): AttributeSummary {
       if (table in dbSummary.value) {
         return dbSummary.value[table].attributes[field] as AttributeSummary;
       }
