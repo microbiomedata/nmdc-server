@@ -1,7 +1,7 @@
 """Create `biosample_related_document` table
 
 Revision ID: 6867009bb496
-Revises: c5852f4f16b1
+Revises: 43ce041c88cb
 Create Date: 2026-02-26 08:56:09.654967
 
 """
@@ -14,7 +14,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision: str = "6867009bb496"
-down_revision: Optional[str] = "c5852f4f16b1"
+down_revision: Optional[str] = "43ce041c88cb"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
