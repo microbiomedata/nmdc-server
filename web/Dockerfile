@@ -19,11 +19,13 @@ COPY . .
 # Build the app, temporarily setting an environment variable named `SENTRY_AUTH_TOKEN` (which the
 # Sentry Vite Plugin looks for) to the value of the "build secret" named `sentry_auth_token`.
 #
-# Note: This allows the Sentry Vite plugin to upload source maps to Sentry during the Vite app's
+# Note: This allows the Sentry Vite plugin to upload source maps to Sentry during the Vite app
 #       build process, without exposing the secret's value (a sensitive token) in logs/history
 #       (which would happen if we were to provide it as a regular "build arg" via `ARG`).
 #
-# Docs: https://docs.docker.com/build/building/secrets/#using-build-secrets
+# References:
+# - https://docs.sentry.io/platforms/javascript/guides/vue/sourcemaps/uploading/vite/#configuration
+# - https://docs.docker.com/build/building/secrets/#using-build-secrets
 #
 RUN --mount=type=secret,id=sentry_auth_token,env=SENTRY_AUTH_TOKEN \
     yarn run build

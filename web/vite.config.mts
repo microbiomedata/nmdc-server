@@ -36,7 +36,7 @@ export default defineConfig({
         ],
       },
     }),
-    // The Sentry Vite Plugin uploads source maps to Sentry during the app's build/bundling process.
+    // The Sentry Vite Plugin uploads source maps to Sentry during the Vite app build process.
     // Reference: https://docs.sentry.io/platforms/javascript/guides/vue/sourcemaps/uploading/vite/
     sentryVitePlugin({
       org: "microbiomedata",
