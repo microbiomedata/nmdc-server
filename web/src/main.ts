@@ -18,6 +18,7 @@ if (import.meta.env.PROD) {
     app,
     dsn: 'https://87132695029c4406afe033fb3b13b115@o267860.ingest.sentry.io/5658761',
     tracesSampleRate: 1.0,
+    release: import.meta.env.VITE_APP_SENTRY_RELEASE_NAME || 'unknown',
   });
 }
 

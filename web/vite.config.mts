@@ -49,6 +49,9 @@ export default defineConfig({
       org: "microbiomedata",
       project: "nmdc-frontend-vue",
       authToken: process.env.SENTRY_AUTH_TOKEN,
+      release: {
+        name: process.env.VITE_APP_SENTRY_RELEASE_NAME || 'unknown',
+      },
     }),
   ],
   optimizeDeps: {
