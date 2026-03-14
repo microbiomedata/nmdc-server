@@ -38,7 +38,7 @@ export default defineConfig({
     }),
     // The Sentry Vite Plugin uploads source maps to Sentry during the Vite app build process.
     //
-    // Quote from the Vite docs (linked below):
+    // Quote from the Sentry docs (linked below):
     //
     // > Place the Sentry Vite plugin after all other plugins in your plugins array. This ensures
     // > source maps are generated correctly and tree-shaking doesn't remove Sentry's instrumentation.
