@@ -102,9 +102,10 @@ def load_biosamples(
 
         # Store its "associated_studies" value in the dictionary we will return.
         if "associated_studies" in biosample_document:
-            biosample_associated_studies_values[biosample_document["id"]] = biosample_document[
-                "associated_studies"
-            ]
+            associated_studies = biosample_document["associated_studies"]
+            if not isinstance(associated_studies, list):
+                raise ValueError(f"Value is not schema-compliant: {associated_studies=}")
+            biosample_associated_studies_values[biosample_document["id"]] = associated_studies
 
         db.add(biosample_related_document)
 
@@ -195,9 +196,10 @@ def load_data_generations(
 
         # Store its "has_input" value in the dictionary we will return.
         if "has_input" in data_generation_document:
-            data_generation_has_input_values[data_generation_document["id"]] = (
-                data_generation_document["has_input"]
-            )
+            has_input = data_generation_document["has_input"]
+            if not isinstance(has_input, list):
+                raise ValueError(f"Value is not schema-compliant: {has_input=}")
+            data_generation_has_input_values[data_generation_document["id"]] = has_input
 
     return data_generation_has_input_values
 
@@ -272,9 +274,10 @@ def load_material_processings(
 
         # Store its "has_input" value in the dictionary we will return.
         if "has_input" in material_processing_document:
-            material_processing_has_input_values[material_processing_document["id"]] = (
-                material_processing_document["has_input"]
-            )
+            has_input = material_processing_document["has_input"]
+            if not isinstance(has_input, list):
+                raise ValueError(f"Value is not schema-compliant: {has_input=}")
+            material_processing_has_input_values[material_processing_document["id"]] = has_input
 
     return material_processing_has_input_values
 
@@ -354,9 +357,10 @@ def load_workflow_executions(
 
         # Store its "has_input" value in the dictionary we will return.
         if "has_input" in workflow_execution_document:
-            workflow_execution_has_input_values[workflow_execution_document["id"]] = (
-                workflow_execution_document["has_input"]
-            )
+            has_input = workflow_execution_document["has_input"]
+            if not isinstance(has_input, list):
+                raise ValueError(f"Value is not schema-compliant: {has_input=}")
+            workflow_execution_has_input_values[workflow_execution_document["id"]] = has_input
 
     return workflow_execution_has_input_values
 
@@ -365,12 +369,21 @@ def load_data_objects(
     db: Session,
     data_object_set: Collection,
     workflow_execution_ids_by_input_id: dict[str, List[str]],
-) -> None:
+) -> dict[str, str]:
     """
     Reads each document from the `workflow_execution_set` MongoDB collection, identifies its
     [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
     session) that represents that document.
+
+    Returns a dictionary where each item's key is the `id` value of a `DataObject` document that has
+    a `was_generated_by` field, and each item's value is the value of that `was_generated_by` field.
+    
+    Note: According to the NMDC Schema, the range of `was_generated_by` is the `id` of an instance
+          of`DataEmitterProcess`, the (abstract) parent class of `DataGeneration` and
+          `WorkflowExecution`.
     """
+
+    data_object_was_generated_by_values = {}
 
     for data_object_document in data_object_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
@@ -394,7 +407,54 @@ def load_data_objects(
             biosample_related_document.downstream_neighbor_ids
         )
 
+
         db.add(biosample_related_document)
+
+        # Store its "was_generated_by" value in the dictionary we will return.
+        if "was_generated_by" in data_object_document:
+            was_generated_by = data_object_document["was_generated_by"]
+            if not isinstance(was_generated_by, str):
+                raise ValueError(f"Value is not schema-compliant: {was_generated_by=}")
+            data_object_was_generated_by_values[data_object_document["id"]] = was_generated_by
+
+    return data_object_was_generated_by_values
+
+
+def backfill_downstream_neighbor_lists_of_data_emitter_processes(
+    db: Session,
+    data_emitter_process_ids_by_generated_data_object_id: dict[str, List[str]],
+) -> None:
+    """
+    Updates existing rows containing documents representing `DataEmitterProcess` documents,
+    so that those rows' `downstream_neighbor_ids` account for the relationships described
+    by the dictionary passed in, which was derived from `was_generated_by` relationships.
+
+    Note: `DataEmitterProcess` is the (abstract) parent class of `DataGeneration` and `WorkflowExecution`.
+    """
+
+    # Update existing rows containing documents representing `DataEmitterProcess` documents,
+    # so that those rows' `downstream_neighbor_ids` account for the relationships described by
+    # the dictionary passed in.
+    for data_emitter_process_id, generated_data_object_ids in (
+        data_emitter_process_ids_by_generated_data_object_id.items()
+    ):
+        if not generated_data_object_ids:
+            continue
+
+        biosample_related_document = (
+            db.query(BiosampleRelatedDocument)
+            .filter(BiosampleRelatedDocument.id == data_emitter_process_id)
+            .one_or_none()
+        )
+        if biosample_related_document is None:
+            continue
+
+        existing_downstream_neighbor_ids = (
+            biosample_related_document.downstream_neighbor_ids or []
+        )
+        biosample_related_document.downstream_neighbor_ids = dedupe(
+            existing_downstream_neighbor_ids + generated_data_object_ids
+        )
 
 
 def populate_biosample_ids_column(db: Session, biosample_ids: List[str]) -> None:
@@ -578,7 +638,21 @@ def load(db: Session, mongodb: Database) -> None:
         db.commit()
 
     with duration_logger(logger, "💾 Loading data objects"):
-        load_data_objects(db, data_object_set, workflow_execution_ids_by_input_id)
+        data_object_was_generated_by_values = load_data_objects(
+            db,
+            data_object_set,
+            workflow_execution_ids_by_input_id
+        )
+        db.commit()
+
+    with duration_logger(logger, "🪏 Backfilling downstream neighbor lists of data emitter processes"):
+        dict_of_strings = data_object_was_generated_by_values  # concise alias
+        dict_of_lists = {k: [v] for k,v in dict_of_strings.items()}  # list-ify the (string) values
+        data_emitter_process_ids_by_generated_data_object_id = invert_dict_of_lists(dict_of_lists)
+        backfill_downstream_neighbor_lists_of_data_emitter_processes(
+            db,
+            data_emitter_process_ids_by_generated_data_object_id,
+        )
         db.commit()
 
     # Use the downstream neighbor identities we gathered above to determine which biosample(s)
