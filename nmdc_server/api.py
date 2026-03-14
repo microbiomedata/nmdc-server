@@ -882,11 +882,15 @@ async def search_data_object_source_metadata(
     )
     biosample_ids_list = [id for (id,) in biosample_ids]
     # Could use the hydrate param to get data_object metadata in one query
-    data_objects_linked_instances = nmdc_search.get_linked_instances(ids=biosample_ids_list, types=["nmdc:DataObject"])
+    data_objects_linked_instances = nmdc_search.get_linked_instances(
+        ids=biosample_ids_list, types=["nmdc:DataObject"]
+    )
     data_object_ids = [instance["id"] for instance in data_objects_linked_instances]
     results = data_object_search.get_records_by_id(data_object_ids)
     if not results:
-        raise HTTPException(status_code=404, detail="Could not retrieve source data for data objects")
+        raise HTTPException(
+            status_code=404, detail="Could not retrieve source data for data objects"
+        )
     return results
 
 
