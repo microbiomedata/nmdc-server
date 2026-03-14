@@ -54,7 +54,7 @@ def upgrade():
             postgresql.ARRAY(sa.String()),
             nullable=False,
             server_default=sa.text("'{}'"),  # in Postgres, "{}" represents an empty array
-            comment="IDs of documents that are immediate downstream neighbors of this document",
+            comment="IDs of documents that are immediately downstream of the document",
         ),
     )
     # Create a GIN index on the "biosample_ids" array column in an attempt to speed up searches by its values.
