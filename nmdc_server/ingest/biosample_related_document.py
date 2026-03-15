@@ -403,7 +403,7 @@ def load_data_objects(
     workflow_execution_ids_by_input_id: dict[str, List[str]],
 ) -> dict[str, str]:
     """
-    Reads each document from the `workflow_execution_set` MongoDB collection, identifies its
+    Reads each document from the `data_object_set` MongoDB collection, identifies its
     [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
     session) that represents that document.
 
@@ -411,7 +411,7 @@ def load_data_objects(
     a `was_generated_by` field, and each item's value is the value of that `was_generated_by` field.
 
     Note: According to the NMDC Schema, the range of `was_generated_by` is the `id` of an instance
-          of`DataEmitterProcess`, the (abstract) parent class of `DataGeneration` and
+          of `DataEmitterProcess`, the (abstract) parent class of `DataGeneration` and
           `WorkflowExecution`.
     """
 
@@ -453,7 +453,7 @@ def load_data_objects(
 
 def backfill_downstream_neighbor_lists_of_data_emitter_processes(
     db: Session,
-    data_emitter_process_ids_by_generated_data_object_id: dict[str, List[str]],
+    generated_data_object_ids_by_data_emitter_process_id: dict[str, List[str]],
 ) -> None:
     """
     Updates existing rows containing documents representing `DataEmitterProcess` documents,
@@ -469,7 +469,7 @@ def backfill_downstream_neighbor_lists_of_data_emitter_processes(
     for (
         data_emitter_process_id,
         generated_data_object_ids,
-    ) in data_emitter_process_ids_by_generated_data_object_id.items():
+    ) in generated_data_object_ids_by_data_emitter_process_id.items():
         if not generated_data_object_ids:
             continue
 
@@ -686,11 +686,11 @@ def load(db: Session, mongodb: Database) -> None:
         logger, "🪏 Backfilling downstream neighbor lists of data emitter processes"
     ):
         dict_of_strings = data_object_was_generated_by_values  # concise alias
-        dict_of_lists = {k: [v] for k, v in dict_of_strings.items()}  # list-ify the (string) values
-        data_emitter_process_ids_by_generated_data_object_id = invert_dict_of_lists(dict_of_lists)
+        dict_of_lists = {data_object_id: [v] for data_object_id, v in dict_of_strings.items()}  # list-ify the (string) values
+        generated_data_object_ids_by_data_emitter_process_id = invert_dict_of_lists(dict_of_lists)
         backfill_downstream_neighbor_lists_of_data_emitter_processes(
             db,
-            data_emitter_process_ids_by_generated_data_object_id,
+            generated_data_object_ids_by_data_emitter_process_id,
         )
         db.commit()
 
