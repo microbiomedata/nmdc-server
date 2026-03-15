@@ -19,7 +19,7 @@ from nmdc_api_utilities.data_object_search import DataObjectSearch
 from nmdc_api_utilities.nmdc_search import NMDCSearch
 from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -850,6 +850,48 @@ def data_object_aggregation(
     db: Session = Depends(get_db),
 ):
     return crud.aggregate_data_object_by_workflow(db, query.conditions)
+
+
+async def search_data_object_source_metadata_in_pg(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """
+    Gets all `DataObject` documents related to the `Biosampmle`s specified via the `SearchQuery`.
+    """
+
+    # Get the list of `Biosample` `id`s specified via the search query.
+    biosample_ids = (
+        crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
+    )
+    biosample_ids_list = [id for (id,) in biosample_ids]
+    print(f"Number of Biosample IDs: {len(biosample_ids_list)}")
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    # Get all `DataObject` documents related to any of the specified `Biosample`s.
+    #
+    # Note: We order them by `id` to facilitate testing and manual review.
+    #
+    # Note: We don't bother using `DISTINCT`, since `.overlap` is evaluated _once_ per row of the
+    #       table (even if multiple specified `Biosample` `id`s overlap the `biosample_ids` on that
+    #       row), so a given row of the table will only appear at most once in the result.
+    #
+    stmt = (
+        select(models.BiosampleRelatedDocument.document)
+        .where(
+            models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list),
+            models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject",
+        )
+        .order_by(models.BiosampleRelatedDocument.id)
+    )
+    rows = db.execute(stmt).all()  # e.g. [(doc1,), (doc2,), ...]
+    documents = [row[0] for row in rows]  # e.g. [doc1, doc2]
+    print(f"Number of related DataObject documents: {len(documents)}")
+
+    return documents
 
 
 @router.post(
