@@ -361,7 +361,7 @@ def load_workflow_executions(
         #       (although "upstream-facing" seems more intuitive to me). Since we are trying to
         #       mimic the behavior of the Runtime's "linked instances" endpoint here, we'll treat it
         #       as "downstream-facing" here also.
-        # 
+        #
         #       Keep an eye on the following GitHub Issue, which is about the slot's "direction":
         #       https://github.com/microbiomedata/nmdc-runtime/issues/1400
         #
@@ -390,7 +390,9 @@ def load_workflow_executions(
             was_informed_by = workflow_execution_document["was_informed_by"]
             if not isinstance(was_informed_by, list):
                 raise ValueError(f"Value is not schema-compliant: {was_informed_by=}")
-            workflow_execution_was_informed_by_values[workflow_execution_document["id"]] = was_informed_by
+            workflow_execution_was_informed_by_values[workflow_execution_document["id"]] = (
+                was_informed_by
+            )
 
     return workflow_execution_has_input_values, workflow_execution_was_informed_by_values
 
@@ -407,7 +409,7 @@ def load_data_objects(
 
     Returns a dictionary where each item's key is the `id` value of a `DataObject` document that has
     a `was_generated_by` field, and each item's value is the value of that `was_generated_by` field.
-    
+
     Note: According to the NMDC Schema, the range of `was_generated_by` is the `id` of an instance
           of`DataEmitterProcess`, the (abstract) parent class of `DataGeneration` and
           `WorkflowExecution`.
@@ -437,7 +439,6 @@ def load_data_objects(
             biosample_related_document.downstream_neighbor_ids
         )
 
-
         db.add(biosample_related_document)
 
         # Store its "was_generated_by" value in the dictionary we will return.
@@ -465,9 +466,10 @@ def backfill_downstream_neighbor_lists_of_data_emitter_processes(
     # Update existing rows containing documents representing `DataEmitterProcess` documents,
     # so that those rows' `downstream_neighbor_ids` account for the relationships described by
     # the dictionary passed in.
-    for data_emitter_process_id, generated_data_object_ids in (
-        data_emitter_process_ids_by_generated_data_object_id.items()
-    ):
+    for (
+        data_emitter_process_id,
+        generated_data_object_ids,
+    ) in data_emitter_process_ids_by_generated_data_object_id.items():
         if not generated_data_object_ids:
             continue
 
@@ -479,9 +481,7 @@ def backfill_downstream_neighbor_lists_of_data_emitter_processes(
         if biosample_related_document is None:
             continue
 
-        existing_downstream_neighbor_ids = (
-            biosample_related_document.downstream_neighbor_ids or []
-        )
+        existing_downstream_neighbor_ids = biosample_related_document.downstream_neighbor_ids or []
         biosample_related_document.downstream_neighbor_ids = dedupe(
             existing_downstream_neighbor_ids + generated_data_object_ids
         )
@@ -618,10 +618,9 @@ def load(db: Session, mongodb: Database) -> None:
     data_object_set = mongodb.get_collection("data_object_set")
 
     with duration_logger(logger, "🖥️ Loading workflow executions"):
-        (
-            workflow_execution_has_input_values,
-            workflow_execution_was_informed_by_values
-        ) = load_workflow_executions(db, workflow_execution_set)
+        workflow_execution_has_input_values, workflow_execution_was_informed_by_values = (
+            load_workflow_executions(db, workflow_execution_set)
+        )
         workflow_execution_ids_by_input_id = invert_dict_of_lists(
             workflow_execution_has_input_values
         )
@@ -679,15 +678,15 @@ def load(db: Session, mongodb: Database) -> None:
 
     with duration_logger(logger, "💾 Loading data objects"):
         data_object_was_generated_by_values = load_data_objects(
-            db,
-            data_object_set,
-            workflow_execution_ids_by_input_id
+            db, data_object_set, workflow_execution_ids_by_input_id
         )
         db.commit()
 
-    with duration_logger(logger, "🪏 Backfilling downstream neighbor lists of data emitter processes"):
+    with duration_logger(
+        logger, "🪏 Backfilling downstream neighbor lists of data emitter processes"
+    ):
         dict_of_strings = data_object_was_generated_by_values  # concise alias
-        dict_of_lists = {k: [v] for k,v in dict_of_strings.items()}  # list-ify the (string) values
+        dict_of_lists = {k: [v] for k, v in dict_of_strings.items()}  # list-ify the (string) values
         data_emitter_process_ids_by_generated_data_object_id = invert_dict_of_lists(dict_of_lists)
         backfill_downstream_neighbor_lists_of_data_emitter_processes(
             db,
