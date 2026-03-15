@@ -692,7 +692,9 @@ def load(db: Session, mongodb: Database) -> None:
         logger, "🪏 Backfilling downstream neighbor lists of data emitter processes"
     ):
         dict_of_strings = data_object_was_generated_by_values  # concise alias
-        dict_of_lists = {data_object_id: [v] for data_object_id, v in dict_of_strings.items()}  # list-ify the (string) values
+        dict_of_lists = {
+            data_object_id: [v] for data_object_id, v in dict_of_strings.items()
+        }  # list-ify the (string) values
         generated_data_object_ids_by_data_emitter_process_id = invert_dict_of_lists(dict_of_lists)
         backfill_downstream_neighbor_lists_of_data_emitter_processes(
             db,

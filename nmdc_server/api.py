@@ -873,18 +873,19 @@ async def search_data_object_source_metadata_in_pg(
 
     # Get all `DataObject` documents related to any of the specified `Biosample`s.
     #
-    # Note: We order them by `id` to facilitate testing and manual review.
-    #
-    # Note: We don't bother using `DISTINCT`, since `.overlap` is evaluated _once_ per row of the
+    # Note: We don't bother using `DISTINCT`, since `overlap` is only evaluated _once_ per row of the
     #       table (even if multiple specified `Biosample` `id`s overlap the `biosample_ids` on that
     #       row), so a given row of the table will only appear at most once in the result.
     #
+    #       We include the `type: ignore[attr-defined]` comment because we're using old SQLAlchemy
+    #       stubs that do not account for the existence of an `overlap` method on array columns.
+    #
+    # Note: We order them by `id` to facilitate testing and manual review.
+    #
     stmt = (
-        select(models.BiosampleRelatedDocument.document)
-        .where(
-            models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list),
-            models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject",
-        )
+        select([models.BiosampleRelatedDocument.document])
+        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
         .order_by(models.BiosampleRelatedDocument.id)
     )
     rows = db.execute(stmt).all()  # e.g. [(doc1,), (doc2,), ...]
