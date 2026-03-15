@@ -466,6 +466,12 @@ def backfill_downstream_neighbor_lists_of_data_emitter_processes(
     # Update existing rows containing documents representing `DataEmitterProcess` documents,
     # so that those rows' `downstream_neighbor_ids` account for the relationships described by
     # the dictionary passed in.
+    #
+    # TODO: We have a performance optimization opportunity here. Instead of issuing one query per
+    #       `DataEmitterProcess` (i.e. per key in the dictionary), we could issue a single query
+    #       that retrieves all of the relevant rows at once, and then update their
+    #       `downstream_neighbor_ids` in Python, and then commit all the updated rows at once.
+    #
     for (
         data_emitter_process_id,
         generated_data_object_ids,
