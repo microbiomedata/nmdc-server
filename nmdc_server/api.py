@@ -440,7 +440,7 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
     endpoint_map = {
         "biosamples": search_biosample_source_metadata,
         "studies": search_study_source_metadata,
-        "data_objects": search_data_object_source_metadata,
+        "data_objects": search_data_object_source_metadata_in_pg,
     }
 
     zip_buffer = io.BytesIO()
