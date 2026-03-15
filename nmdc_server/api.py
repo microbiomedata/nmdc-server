@@ -857,7 +857,7 @@ async def search_data_object_source_metadata_in_pg(
     db: Session = Depends(get_db),
 ) -> list[dict]:
     """
-    Gets all `DataObject` documents related to the `Biosampmle`s specified via the `SearchQuery`.
+    Gets all `DataObject` documents related to the `Biosample`s specified via the `SearchQuery`.
     """
 
     # Get the list of `Biosample` `id`s specified via the search query.
