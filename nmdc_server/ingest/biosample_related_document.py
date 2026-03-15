@@ -158,6 +158,7 @@ def load_studies(
 def load_data_generations(
     db: Session,
     data_generation_set: Collection,
+    workflow_execution_ids_by_informant_id: dict[str, List[str]],
 ) -> dict[str, list[str]]:
     """
     Reads each document from the `data_generation_set` MongoDB collection, identifies its
@@ -186,6 +187,12 @@ def load_data_generations(
         if "generates_calibration" in data_generation_document:
             biosample_related_document.downstream_neighbor_ids.append(
                 data_generation_document["generates_calibration"]
+            )
+        # Note: Instead of querying the `workflow_execution_set` MongoDB collection here,
+        #       we take advantage of the look-up table passed in.
+        if data_generation_document["id"] in workflow_execution_ids_by_informant_id:
+            biosample_related_document.downstream_neighbor_ids.extend(
+                workflow_execution_ids_by_informant_id[data_generation_document["id"]]
             )
 
         biosample_related_document.downstream_neighbor_ids = dedupe(
@@ -326,7 +333,7 @@ def load_processed_samples(
 def load_workflow_executions(
     db: Session,
     workflow_execution_set: Collection,
-) -> dict[str, list[str]]:
+) -> tuple[dict[str, list[str]], dict[str, list[str]]]:
     """
     Reads each document from the `workflow_execution_set` MongoDB collection, identifies its
     [immediate] downstream neighbors, and creates a `BiosampleRelatedDocument` row (in the Postgres
@@ -334,6 +341,7 @@ def load_workflow_executions(
     """
 
     workflow_execution_has_input_values = {}
+    workflow_execution_was_informed_by_values = {}
 
     for workflow_execution_document in workflow_execution_set.find({}, projection_omitting_oid):
         biosample_related_document = BiosampleRelatedDocument()
@@ -349,6 +357,21 @@ def load_workflow_executions(
                 workflow_execution_document["has_output"]
             )
 
+        # TODO: The Runtime currently designates the `uses_calibration` slot as "downstream-facing"
+        #       (although "upstream-facing" seems more intuitive to me). Since we are trying to
+        #       mimic the behavior of the Runtime's "linked instances" endpoint here, we'll treat it
+        #       as "downstream-facing" here also.
+        # 
+        #       Keep an eye on the following GitHub Issue, which is about the slot's "direction":
+        #       https://github.com/microbiomedata/nmdc-runtime/issues/1400
+        #
+        #       Reference: https://microbiomedata.github.io/nmdc-schema/uses_calibration/
+        #
+        if "uses_calibration" in workflow_execution_document:
+            biosample_related_document.downstream_neighbor_ids.extend(
+                workflow_execution_document["uses_calibration"]
+            )
+
         biosample_related_document.downstream_neighbor_ids = dedupe(
             biosample_related_document.downstream_neighbor_ids
         )
@@ -362,7 +385,14 @@ def load_workflow_executions(
                 raise ValueError(f"Value is not schema-compliant: {has_input=}")
             workflow_execution_has_input_values[workflow_execution_document["id"]] = has_input
 
-    return workflow_execution_has_input_values
+        # Store its "was_informed_by" value in the dictionary we will return.
+        if "was_informed_by" in workflow_execution_document:
+            was_informed_by = workflow_execution_document["was_informed_by"]
+            if not isinstance(was_informed_by, list):
+                raise ValueError(f"Value is not schema-compliant: {was_informed_by=}")
+            workflow_execution_was_informed_by_values[workflow_execution_document["id"]] = was_informed_by
+
+    return workflow_execution_has_input_values, workflow_execution_was_informed_by_values
 
 
 def load_data_objects(
@@ -587,8 +617,25 @@ def load(db: Session, mongodb: Database) -> None:
     workflow_execution_set = mongodb.get_collection("workflow_execution_set")
     data_object_set = mongodb.get_collection("data_object_set")
 
+    with duration_logger(logger, "🖥️ Loading workflow executions"):
+        (
+            workflow_execution_has_input_values,
+            workflow_execution_was_informed_by_values
+        ) = load_workflow_executions(db, workflow_execution_set)
+        workflow_execution_ids_by_input_id = invert_dict_of_lists(
+            workflow_execution_has_input_values
+        )
+        workflow_execution_ids_by_informant_id = invert_dict_of_lists(
+            workflow_execution_was_informed_by_values
+        )
+        db.commit()
+
     with duration_logger(logger, "🔬 Loading data generations"):
-        data_generation_has_input_values = load_data_generations(db, data_generation_set)
+        data_generation_has_input_values = load_data_generations(
+            db,
+            data_generation_set,
+            workflow_execution_ids_by_informant_id,
+        )
         data_generation_ids_by_input_id = invert_dict_of_lists(data_generation_has_input_values)
         db.commit()
 
@@ -627,13 +674,6 @@ def load(db: Session, mongodb: Database) -> None:
             processed_sample_set,
             data_generation_ids_by_input_id,
             material_processing_ids_by_input_id,
-        )
-        db.commit()
-
-    with duration_logger(logger, "🖥️ Loading workflow executions"):
-        workflow_execution_has_input_values = load_workflow_executions(db, workflow_execution_set)
-        workflow_execution_ids_by_input_id = invert_dict_of_lists(
-            workflow_execution_has_input_values
         )
         db.commit()
 
