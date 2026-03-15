@@ -879,11 +879,13 @@ async def search_data_object_source_metadata_in_pg(
     #
     #       We include the `type: ignore[attr-defined]` comment because we're using old SQLAlchemy
     #       stubs that do not account for the existence of an `overlap` method on array columns.
+    #       Similarly, we use `type: ignore[arg-type]` since the old stubs do not account for
+    #       the fact that `select` now expects columns directly, not an iterable of columns.
     #
     # Note: We order them by `id` to facilitate testing and manual review.
     #
     stmt = (
-        select([models.BiosampleRelatedDocument.document])
+        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
         .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
         .order_by(models.BiosampleRelatedDocument.id)
