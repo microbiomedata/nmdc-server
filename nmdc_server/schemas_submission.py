@@ -213,6 +213,7 @@ class SubmissionMetadataSchema(SubmissionMetadataSchemaSlim, SubmissionMetadataS
     author_orcid: str
     field_notes_metadata: Optional[Dict[str, Any]] = None
     metadata_submission: MetadataSubmissionRecord
+    nmdc_study_id: Optional[str] = None
 
     lock_updated: Optional[datetime] = None
     locked_by: Optional[schemas.User] = None

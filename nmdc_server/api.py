@@ -1903,27 +1903,38 @@ async def generate_signed_upload_url(
 
 
 @router.post(
-    "/metadata_submission/{id}/image/make_public",
-    response_model=schemas.SubmissionImagesMakePublicResponse,
+    "/metadata_submission/{id}/finalize",
+    response_model=schemas.SubmissionFinalizeResponse,
 )
-async def make_submission_images_public(
+async def finalize_submission(
     id: str,
-    body: schemas.SubmissionImagesMakePublicRequest,
+    body: schemas.SubmissionFinalizeRequest,
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
-) -> schemas.SubmissionImagesMakePublicResponse:
-    """Copy the submission's images into the public images bucket and return their public URLs.
+) -> schemas.SubmissionFinalizeResponse:
+    """Finalize a submission after ingestion into MongoDB.
+
+    The following operations are performed as part of finalization:
+        - making images public
+        - setting the NMDC study ID
+        - changing the submission status to "Released"
 
     This operation is only allowed for admin users. It is intended to be called as part of the
-    process of translating submission data into nmdc-schema compatible data. We make a public copy
-    instead of changing the permissions of the original image because the submission images
-    bucket uses uniform bucket-level access, which means we can't change the permissions of
-    individual objects.
+    process of translating submission data into nmdc-schema compatible data.
+
+    We make a public copy of the images instead of changing the permissions of the original images
+    because the submission images bucket uses uniform bucket-level access, which means we can't
+    change the permissions of individual objects.
     """
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     submission = get_submission_for_user(db, id, user)
+
+    # Update the NMDC study ID and status
+    submission.nmdc_study_id = body.study_id
+    submission.status = SubmissionStatusEnum.Released.text
+    db.commit()
 
     def make_public(image: Optional[SubmissionImagesObject]) -> Optional[str]:
         """Make a copy of the given image in the public images bucket and return its public URL."""
@@ -1941,7 +1952,7 @@ async def make_submission_images_public(
     public_primary_study_image = make_public(submission.primary_study_image)
     public_study_image_urls = [make_public(img) for img in submission.study_images]
 
-    return schemas.SubmissionImagesMakePublicResponse(
+    return schemas.SubmissionFinalizeResponse(
         pi_image_url=public_pi_image,
         primary_study_image_url=public_primary_study_image,
         study_image_urls=public_study_image_urls,
