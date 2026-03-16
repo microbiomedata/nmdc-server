@@ -1552,9 +1552,11 @@ def test_finalize_submission(
     assert body.get("primary_study_image_url") is not None
     assert len(body.get("study_image_urls", [])) == 2
 
-    # Assert that the study ID has been set on the submission
+    # Assert that the study ID has been set on the submission and the status has been updated
+    # to "Released"
     db.refresh(submission)
     assert submission.nmdc_study_id == study_id
+    assert submission.status == SubmissionStatusEnum.Released.text
 
     # The expected public image object names should be the same as the submission image names,
     # but with the submission ID replaced by the study ID

@@ -448,6 +448,7 @@ class MetadataSubmissionFactory(SQLAlchemyModelFactory):
     pi_image: models.SubmissionImagesObject | None = None
     primary_study_image: models.SubmissionImagesObject | None = None
     study_images: list[models.SubmissionImagesObject] = []
+    nmdc_study_id: Optional[str] = None
 
 
 class SubmissionRoleFactory(SQLAlchemyModelFactory):

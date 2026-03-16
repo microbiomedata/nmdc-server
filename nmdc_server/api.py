@@ -1912,21 +1912,28 @@ async def finalize_submission(
     user: models.User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> schemas.SubmissionFinalizeResponse:
-    """Finalize a submission after ingestion by making images public and setting the NMDC study ID.
+    """Finalize a submission after ingestion into MongoDB.
+
+    The following operations are performed as part of finalization:
+        - making images public
+        - setting the NMDC study ID
+        - changing the submission status to "Released"
 
     This operation is only allowed for admin users. It is intended to be called as part of the
-    process of translating submission data into nmdc-schema compatible data. We make a public copy
-    instead of changing the permissions of the original image because the submission images
-    bucket uses uniform bucket-level access, which means we can't change the permissions of
-    individual objects.
+    process of translating submission data into nmdc-schema compatible data.
+
+    We make a public copy of the images instead of changing the permissions of the original images
+    because the submission images bucket uses uniform bucket-level access, which means we can't
+    change the permissions of individual objects.
     """
     if not user.is_admin:
         raise HTTPException(status_code=403, detail="Your account has insufficient privileges.")
 
     submission = get_submission_for_user(db, id, user)
 
-    # Update the NMDC study ID if provided
+    # Update the NMDC study ID and status
     submission.nmdc_study_id = body.study_id
+    submission.status = SubmissionStatusEnum.Released.text
     db.commit()
 
     def make_public(image: Optional[SubmissionImagesObject]) -> Optional[str]:
