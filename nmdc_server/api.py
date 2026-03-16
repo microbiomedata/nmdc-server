@@ -1849,7 +1849,7 @@ async def suggest_meta_from_study(
     db: Session = Depends(get_db),
     suggester: SampleMetadataSuggester = Depends(SampleMetadataSuggester),
     user: models.User = Depends(get_current_user),
-) -> str:
+) -> List[schemas_submission.MetadataSuggestion]:
     submission_model = get_submission_for_user(
         db,
         id,
@@ -1861,8 +1861,18 @@ async def suggest_meta_from_study(
         ],
     )
     submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
-    suggester.get_suggestions_from_study_information(submission)
-    return "OK"
+    suggestions = suggester.get_suggestions_from_study_information(submission)
+    response: List[schemas_submission.MetadataSuggestion] = []
+    for metadata_field in suggestions.get("metadata_fields", []):
+        response.append(
+            schemas_submission.MetadataSuggestion(
+                type=schemas_submission.MetadataSuggestionType.ATTENTION,
+                slot=metadata_field["field_name"],
+                source=metadata_field["reason"],
+                is_ai_generated=True,
+            )
+        )
+    return response
 
 
 @router.post(
