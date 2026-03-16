@@ -978,6 +978,7 @@ const appBannerHeight = inject(AppBannerHeightKey);
           class="z-above-data-harmonizer"
         >
           <HarmonizerSidebar
+            :submission-id="id"
             :column-help="selectedHelpDict"
             :harmonizer-api="harmonizerApi"
             :harmonizer-template="activeTemplate!"
