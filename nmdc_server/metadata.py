@@ -5,7 +5,7 @@ import nmdc_geoloc_tools
 
 from nmdc_server.config import settings
 from nmdc_server.logger import get_logger
-from nmdc_server.schemas_submission import MetadataSuggestionType
+from nmdc_server.schemas_submission import MetadataSuggestionType, SubmissionMetadataSchema
 
 
 class SampleMetadataSuggester:
@@ -34,6 +34,22 @@ class SampleMetadataSuggester:
                 # just don't suggest an elevation.
                 pass
         return None
+
+    @staticmethod
+    def get_suggestions_from_study_information(submission: SubmissionMetadataSchema) -> None:
+        """Get suggestions based on study-level information from a submission"""
+
+        study_name = submission.metadata_submission.studyForm.studyName
+        study_description = submission.metadata_submission.studyForm.description
+        study_notes = submission.metadata_submission.studyForm.notes
+        print(
+            "I have the following information to pass to the nmdc-metadata-suggestor-ai-tool:\n"
+            f"  - Study name: {study_name}\n"
+            f"  - Study description: {study_description}\n"
+            f"  - Study notes: {study_notes}\n"
+            f"I assume that some day I will be able to call the nmdc-metadata-suggestor-ai-tool "
+            f"with this information and get back some suggestions based on it.",
+        )
 
     def get_suggestions(
         self, sample: Dict[str, str], *, types: Optional[List[MetadataSuggestionType]] = None
