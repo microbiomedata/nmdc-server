@@ -40,7 +40,7 @@
     "leaflet": "^1.7.1",
     "leaflet.markercluster": "^1.5.3",
     "linkify-it": "^4.0.1",
-    "lodash": "^4.17.21",
+    "lodash": "^4.17.23",
     "moment": "^2.29.4",
     "nmdc-schema": "https://github.com/microbiomedata/nmdc-schema#v11.16.1",
     "popper.js": "1.16.1",
