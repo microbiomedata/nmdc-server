@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-interface ContactCardProps {
+export interface ContactCardProps {
   /**
    * The elevation of the card.
    */
