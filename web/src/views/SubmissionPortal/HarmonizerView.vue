@@ -824,10 +824,10 @@ const appBannerHeight = inject(AppBannerHeightKey);
             nudge-bottom="4px"
             :close-on-click="true"
           >
-            <template #activator="{ props }">
+            <template #activator="{ props: activatorProps }">
               <v-btn
                 variant="outlined"
-                v-bind="props"
+                v-bind="activatorProps"
               >
                 <v-icon class="pr-1">
                   mdi-eye
@@ -910,10 +910,10 @@ const appBannerHeight = inject(AppBannerHeightKey);
             :key="templateKey"
             right
           >
-            <template #activator="{ props }">
+            <template #activator="{ props: activatorProps }">
               <div
                 style="display: flex;"
-                v-bind="props"
+                v-bind="activatorProps"
               >
                 <v-tab>
                   {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
@@ -1026,9 +1026,9 @@ const appBannerHeight = inject(AppBannerHeightKey);
           <v-tooltip
             top
           >
-            <template #activator="{ props }">
+            <template #activator="{ props: activatorProps }">
               <div
-                v-bind="props"
+                v-bind="activatorProps"
               >
                 <v-btn
                   color="success"
@@ -1117,7 +1117,7 @@ html {
 }
 
 .spreadsheet-input {
-  width: 0px;
+  width: 0;
 }
 
 .harmonizer-style-container {
