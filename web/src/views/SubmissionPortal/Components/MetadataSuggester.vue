@@ -3,7 +3,6 @@
  * Component to display metadata suggestions and allow users to accept or reject them.
  */
 import { computed, ref, watchEffect } from 'vue';
-import { groupBy } from 'lodash';
 import {
   addMetadataSuggestions,
   removeMetadataSuggestions,
@@ -20,6 +19,7 @@ import {
 import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
 import { getRejectedSuggestions, setRejectedSuggestions } from '@/store/localStorage';
 import { useRoute } from 'vue-router';
+import { AI_SUGGESTION_BG } from '@/views/SubmissionPortal/colors.ts';
 
 interface MetadataSuggesterProps {
   /**
@@ -41,7 +41,6 @@ interface MetadataSuggesterProps {
   schemaClassName: string;
 }
 
-const TOOLTIP_DELAY = '600';
 const suggestionModeOptions = Object.values(SuggestionsMode);
 const suggestionTypeOptions = Object.values(SuggestionType);
 
@@ -61,16 +60,15 @@ watchEffect(() => {
   rejectedSuggestions.value = getRejectedSuggestions(props.submissionId, props.schemaClassName);
 });
 
-// Filter out rejected suggestions and group by row
-const suggestionsByRow = computed(() => {
-  const filteredSuggestions = metadataSuggestions.value.filter((suggestion) => {
+// Suggestions that have been neither accepted nor rejected.
+const pendingSuggestions = computed(() => (
+  metadataSuggestions.value.filter((suggestion) => {
     const key = getSuggestionKey(suggestion);
     return !rejectedSuggestions.value.includes(key);
-  });
-  return groupBy(filteredSuggestions, 'row');
-});
+  })
+));
 
-const hasSuggestions = computed(() => Object.keys(suggestionsByRow.value).length > 0);
+const hasSuggestions = computed(() => pendingSuggestions.value.length > 0);
 
 /**
  * Accepts the given suggestions by setting the cell data via the Harmonizer API and removing the suggestions from
@@ -113,10 +111,10 @@ function rejectSuggestions(suggestions: MetadataSuggestion[]) {
 function handleJumpToCell(suggestion: MetadataSuggestion) {
   const { row, slot } = suggestion;
   const col = props.harmonizerApi.slotInfo.get(slot)?.columnIndex;
-  if (col === undefined || row === null) {
+  if (col === undefined) {
     return;
   }
-  props.harmonizerApi.jumpToRowCol(row, col);
+  props.harmonizerApi.jumpToRowCol(row || 0, col);
 }
 
 /**
@@ -139,14 +137,14 @@ function handleAcceptSuggestion(suggestion: MetadataSuggestion) {
  * Handle clicking the accept all button.
  */
 function handleAcceptAllSuggestions() {
-  acceptSuggestions(Object.values(suggestionsByRow.value).flat());
+  acceptSuggestions(pendingSuggestions.value);
 }
 
 /**
  * Handle clicking the reject all button.
  */
 function handleRejectAllSuggestions() {
-  rejectSuggestions(Object.values(suggestionsByRow.value).flat());
+  rejectSuggestions(pendingSuggestions.value);
 }
 
 /**
@@ -194,250 +192,274 @@ function getSlotTitle(slot: string) {
 
 <template>
   <v-card elevation="0">
-    <v-card-title class="d-flex align-center mb-3">
-      <span>Metadata Suggester</span>
-      <v-spacer />
-      <v-tooltip
-        bottom
-        min-width="300px"
-        max-width="600px"
-        :open-delay="TOOLTIP_DELAY"
-      >
-        <span>
-          As you enter sample metadata, the Metadata Suggester will offer suggestions for metadata values based on the
-          metadata values you have already entered.
-        </span>
-        <template #activator="{ props: activatorProps }">
-          <v-icon
-            size="x-small"
-            v-bind="activatorProps"
-          >
-            mdi-information-outline
-          </v-icon>
-        </template>
-      </v-tooltip>
-    </v-card-title>
-
-    <v-card-text v-if="enabled">
-      <v-row dense>
-        <v-col cols="6">
-          <v-select
-            v-model="suggestionMode"
-            :items="suggestionModeOptions"
-            hide-details
-            label="Suggestion Mode"
-            variant="outlined"
-          />
-        </v-col>
-        <v-col cols="6">
-          <v-select
-            v-model="suggestionType"
-            :items="suggestionTypeOptions"
-            hide-details
-            label="Suggestion Type"
-            variant="outlined"
-          />
-        </v-col>
-      </v-row>
-
-      <v-row v-if="suggestionMode === SuggestionsMode.ON_DEMAND">
-        <v-col>
-          <v-btn
-            color="primary"
-            block
-            :loading="onDemandSuggestionsLoading"
-            @click="handleSuggestForSelectedRows"
-          >
-            Suggest for Selected Rows
-          </v-btn>
-        </v-col>
-      </v-row>
-
-      <v-row v-if="hasSuggestions">
-        <v-col>
-          <div class="d-flex justify-space-between align-center">
-            <div class="text-body-1 text--primary font-weight-medium">
-              All Suggestions
-            </div>
-            <div>
-              <v-tooltip
-                bottom
-                :open-delay="TOOLTIP_DELAY"
-              >
-                <template #activator="{ props: activatorProps }">
-                  <v-btn
-                    variant="text"
-                    color="primary"
-                    icon
-                    v-bind="activatorProps"
-                    @click="handleRejectAllSuggestions"
-                  >
-                    <v-icon>
-                      mdi-close
-                    </v-icon>
-                  </v-btn>
-                </template>
-                <span>Reject all suggestions</span>
-              </v-tooltip>
-
-              <v-tooltip
-                bottom
-                :open-delay="TOOLTIP_DELAY"
-              >
-                <template #activator="{ props: activatorProps }">
-                  <v-btn
-                    variant="text"
-                    color="primary"
-                    icon
-                    v-bind="activatorProps"
-                    @click="handleAcceptAllSuggestions"
-                  >
-                    <v-icon>
-                      mdi-check
-                    </v-icon>
-                  </v-btn>
-                </template>
-                <span>Accept all suggestions</span>
-              </v-tooltip>
-            </div>
-          </div>
-        </v-col>
-      </v-row>
-
-      <v-row>
-        <v-col>
-          <div
-            v-if="!hasSuggestions"
-            class="text--disabled"
-          >
-            No suggestions available.
-          </div>
-
-          <div
-            v-for="(suggestion, row) in suggestionsByRow"
-            :key="row"
-          >
-            <div class="text-body-2">
-              Row: {{ Number(row) + 1 }}
-            </div>
-
-            <v-sheet
-              :key="row"
-              class="mb-4"
-              elevation="0"
-              rounded
-              variant="outlined"
+    <v-defaults-provider
+      :defaults="{
+        VSelect: {
+          density: 'compact',
+          variant: 'outlined',
+        },
+        VTooltip: {
+          location: 'bottom',
+          maxWidth: '500px',
+          openDelay: 600,
+        }
+      }"
+    >
+      <v-card-title class="d-flex align-center mb-3">
+        <span>Metadata Suggester</span>
+        <v-spacer />
+        <v-tooltip bottom>
+          <span>
+            As you enter sample metadata, the Metadata Suggester will offer suggestions for metadata values based on the
+            metadata values you have already entered.
+          </span>
+          <template #activator="{ props: activatorProps }">
+            <v-icon
+              size="x-small"
+              v-bind="activatorProps"
             >
-              <div
-                v-for="s in suggestion"
-                :key="s.slot"
-                class="ma-2"
-              >
-                <div class="flex-grow-1 full-width">
-                  <div class="text-body-2">
-                    <span class="grey--text">Column:</span> {{ getSlotTitle(s.slot) }}
-                  </div>
-                </div>
+              mdi-information-outline
+            </v-icon>
+          </template>
+        </v-tooltip>
+      </v-card-title>
 
-                <div class="d-flex flex-wrap align-center justify-end">
-                  <div class="flex-grow-1">
-                    <span
-                      v-if="s.current_value"
-                      class="value previous"
-                      v-text="s.current_value"
-                    />
-                    <span
-                      class="value suggested"
-                      v-text="s.value"
-                    />
-                  </div>
+      <v-card-text v-if="enabled">
+        <v-row dense>
+          <v-col cols="6">
+            <v-select
+              v-model="suggestionMode"
+              :items="suggestionModeOptions"
+              hide-details
+              label="Suggestion Mode"
+            />
+          </v-col>
+          <v-col cols="6">
+            <v-select
+              v-model="suggestionType"
+              :items="suggestionTypeOptions"
+              hide-details
+              label="Suggestion Type"
+            />
+          </v-col>
+        </v-row>
 
-                  <div class="flex-shrink-0 flex-grow-0">
-                    <v-tooltip
-                      bottom
-                      :open-delay="TOOLTIP_DELAY"
-                    >
-                      <template #activator="{ props: activatorProps }">
-                        <v-btn
-                          variant="text"
-                          icon
-                          color="primary"
-                          v-bind="activatorProps"
-                          @click="handleJumpToCell(s)"
-                        >
-                          <v-icon>
-                            mdi-target
-                          </v-icon>
-                        </v-btn>
-                      </template>
-                      <span>Jump to cell</span>
-                    </v-tooltip>
+        <v-row v-if="suggestionMode === SuggestionsMode.ON_DEMAND">
+          <v-col>
+            <v-btn
+              color="primary"
+              block
+              :loading="onDemandSuggestionsLoading"
+              @click="handleSuggestForSelectedRows"
+            >
+              Suggest for Selected Rows
+            </v-btn>
+          </v-col>
+        </v-row>
 
-                    <v-tooltip
-                      bottom
-                      :open-delay="TOOLTIP_DELAY"
-                    >
-                      <template #activator="{ props: activatorProps }">
-                        <v-btn
-                          variant="text"
-                          icon
-                          color="primary"
-                          v-bind="activatorProps"
-                          @click="handleRejectSuggestion(s)"
-                        >
-                          <v-icon>
-                            mdi-close
-                          </v-icon>
-                        </v-btn>
-                      </template>
-                      <span>Reject suggestion</span>
-                    </v-tooltip>
-
-                    <v-tooltip
-                      bottom
-                      :open-delay="TOOLTIP_DELAY"
-                    >
-                      <template #activator="{ props: activatorProps }">
-                        <v-btn
-                          variant="text"
-                          icon
-                          color="primary"
-                          v-bind="activatorProps"
-                          @click="handleAcceptSuggestion(s)"
-                        >
-                          <v-icon>
-                            mdi-check
-                          </v-icon>
-                        </v-btn>
-                      </template>
-                      <span>Accept suggestion</span>
-                    </v-tooltip>
-                  </div>
-                </div>
+        <v-row v-if="hasSuggestions">
+          <v-col class="py-0">
+            <div class="d-flex justify-space-between align-center">
+              <div class="text-body-1 font-weight-medium">
+                All Suggestions
               </div>
-            </v-sheet>
-          </div>
-        </v-col>
-      </v-row>
+              <div>
+                <v-tooltip>
+                  <template #activator="{ props: activatorProps }">
+                    <v-btn
+                      variant="text"
+                      density="comfortable"
+                      color="primary"
+                      icon
+                      v-bind="activatorProps"
+                      @click="handleRejectAllSuggestions"
+                    >
+                      <v-icon>
+                        mdi-close
+                      </v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Reject all suggestions</span>
+                </v-tooltip>
 
-      <v-row v-if="rejectedSuggestions.length > 0">
-        <v-col>
-          <v-btn
-            color="grey"
-            variant="outlined"
-            small
-            block
-            @click="handleResetRejectedSuggestions"
-          >
-            Reset rejected suggestions
-          </v-btn>
-        </v-col>
-      </v-row>
-    </v-card-text>
+                <v-tooltip>
+                  <template #activator="{ props: activatorProps }">
+                    <v-btn
+                      variant="text"
+                      density="comfortable"
+                      color="primary"
+                      icon
+                      v-bind="activatorProps"
+                      @click="handleAcceptAllSuggestions"
+                    >
+                      <v-icon>
+                        mdi-check
+                      </v-icon>
+                    </v-btn>
+                  </template>
+                  <span>Accept all suggestions</span>
+                </v-tooltip>
+              </div>
+            </div>
+          </v-col>
+        </v-row>
 
-    <v-card-text v-else>
-      Suggestions are disabled because you do not have permission to edit the metadata.
-    </v-card-text>
+        <v-row>
+          <v-col>
+            <div
+              v-if="!hasSuggestions"
+              class="text--disabled"
+            >
+              No suggestions available.
+            </div>
+
+            <div
+              v-for="suggestion in pendingSuggestions"
+              :key="getSuggestionKey(suggestion)"
+            >
+              <v-card
+                class="mb-4 mx-n2"
+                density="default"
+                :color="suggestion.is_ai_generated ? AI_SUGGESTION_BG : undefined"
+              >
+                <v-card-text class="pa-2">
+                  <div class="flex-grow-1 full-width">
+                    <div class="text-body-2">
+                      <div
+                        v-if="suggestion.is_ai_generated"
+                        class="d-flex justify-space-between align-center mb-1 text-blue-darken-4 font-weight-medium"
+                      >
+                        <div class="d-flex align-baseline">
+                          <v-icon
+                            size="x-small"
+                            class="mr-1"
+                          >
+                            mdi-creation
+                          </v-icon>
+                          AI Suggested
+                        </div>
+                        <v-tooltip max-width="500px">
+                          <template #activator="{ props: activatorProps }">
+                            <v-icon
+                              size="small"
+                              color="blue-darken-4"
+                              v-bind="activatorProps"
+                            >
+                              mdi-information-outline
+                            </v-icon>
+                          </template>
+                          <span>AI recommends areas of interest based on the content of the submission summary. To dismiss, select the X to remove it.</span>
+                        </v-tooltip>
+                      </div>
+                      <div v-if="suggestion.row">
+                        <span class="font-weight-medium">Row:</span> {{ suggestion.row }}
+                      </div>
+                      <div>
+                        <span class="font-weight-medium">Column:</span> {{ getSlotTitle(suggestion.slot) }}
+                      </div>
+                      <div v-if="suggestion.source">
+                        <span class="font-weight-medium">Source:</span> {{ suggestion.source }}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="d-flex flex-wrap align-center justify-end">
+                    <div class="flex-grow-1">
+                      <span
+                        v-if="suggestion.current_value"
+                        class="value previous"
+                        v-text="suggestion.current_value"
+                      />
+                      <span
+                        v-if="suggestion.value"
+                        class="value suggested"
+                        v-text="suggestion.value"
+                      />
+                    </div>
+
+                    <div class="flex-shrink-0 flex-grow-0">
+                      <v-tooltip>
+                        <template #activator="{ props: activatorProps }">
+                          <v-btn
+                            variant="text"
+                            density="comfortable"
+                            icon
+                            color="primary"
+                            v-bind="activatorProps"
+                            @click="handleJumpToCell(suggestion)"
+                          >
+                            <v-icon>
+                              mdi-target
+                            </v-icon>
+                          </v-btn>
+                        </template>
+                        <span>Jump to cell</span>
+                      </v-tooltip>
+
+                      <v-tooltip>
+                        <template #activator="{ props: activatorProps }">
+                          <v-btn
+                            variant="text"
+                            density="comfortable"
+                            icon
+                            color="primary"
+                            v-bind="activatorProps"
+                            @click="handleRejectSuggestion(suggestion)"
+                          >
+                            <v-icon>
+                              mdi-close
+                            </v-icon>
+                          </v-btn>
+                        </template>
+                        <span>Reject suggestion</span>
+                      </v-tooltip>
+
+                      <v-tooltip
+                        v-if="suggestion.value && suggestion.row"
+                      >
+                        <template #activator="{ props: activatorProps }">
+                          <v-btn
+                            variant="text"
+                            density="comfortable"
+                            icon
+                            color="primary"
+                            v-bind="activatorProps"
+                            @click="handleAcceptSuggestion(suggestion)"
+                          >
+                            <v-icon>
+                              mdi-check
+                            </v-icon>
+                          </v-btn>
+                        </template>
+                        <span>Accept suggestion</span>
+                      </v-tooltip>
+                    </div>
+                  </div>
+                </v-card-text>
+              </v-card>
+            </div>
+          </v-col>
+        </v-row>
+
+        <v-row v-if="rejectedSuggestions.length > 0">
+          <v-col>
+            <v-btn
+              color="grey"
+              variant="outlined"
+              small
+              block
+              @click="handleResetRejectedSuggestions"
+            >
+              Reset rejected suggestions
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+
+      <v-card-text v-else>
+        Suggestions are disabled because you do not have permission to edit the metadata.
+      </v-card-text>
+    </v-defaults-provider>
   </v-card>
 </template>
 

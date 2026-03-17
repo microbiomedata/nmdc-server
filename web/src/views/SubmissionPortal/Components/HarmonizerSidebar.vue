@@ -51,12 +51,12 @@ const TABS = [
     label: 'Column Info',
   },
   {
-    icon: 'mdi-text-search',
-    label: 'Find & Replace',
-  },
-  {
     icon: 'mdi-assistant',
     label: 'Metadata Suggester',
+  },
+  {
+    icon: 'mdi-text-search',
+    label: 'Find & Replace',
   },
   {
     icon: 'mdi-swap-vertical',
@@ -112,16 +112,16 @@ const handleImport = (file: File) => {
         />
       </v-window-item>
       <v-window-item>
-        <FindReplace
-          :harmonizer-api="harmonizerApi"
-        />
-      </v-window-item>
-      <v-window-item>
         <MetadataSuggester
           :submission-id="submissionId"
           :enabled="metadataEditingAllowed"
           :harmonizer-api="harmonizerApi"
           :schema-class-name="harmonizerTemplate.schemaClass || ''"
+        />
+      </v-window-item>
+      <v-window-item>
+        <FindReplace
+          :harmonizer-api="harmonizerApi"
         />
       </v-window-item>
       <v-window-item>

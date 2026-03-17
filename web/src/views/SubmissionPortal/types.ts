@@ -206,11 +206,13 @@ export interface MetadataSuggestionRequest {
 }
 
 export interface MetadataSuggestion {
-  type: 'add' | 'replace'
-  row: number
-  slot: string
-  value: string
-  current_value?: string
+  type: 'add' | 'replace' | 'attention';
+  row: number | null;
+  slot: string;
+  value: string | null;
+  current_value: string | null;
+  is_ai_generated: boolean;
+  source: string | null;
 }
 
 export interface NmdcAddress {

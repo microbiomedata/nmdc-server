@@ -133,6 +133,11 @@ async function getMetadataSuggestions(data: MetadataSuggestionRequest[], type: S
   return resp.data;
 }
 
+async function getMetadataSuggestionsFromStudyDetails(submissionId: string) {
+  const resp = await client.post<MetadataSuggestion[]>(`metadata_submission/${submissionId}/study-suggest`);
+  return resp.data;
+}
+
 async function generateSignedUploadUrl(submissionId: string, file: File): Promise<SignedUrl> {
   const endpoint = `metadata_submission/${submissionId}/image/signed_upload_url`;
   const resp = await client.post<SignedUrl>(endpoint, {
@@ -179,6 +184,7 @@ export {
   unlockSubmission,
   deleteSubmission,
   getMetadataSuggestions,
+  getMetadataSuggestionsFromStudyDetails,
   generateSignedUploadUrl,
   getAllStatusTransitions,
   setSubmissionImage,
