@@ -62,10 +62,25 @@ watchEffect(() => {
 
 // Suggestions that have been neither accepted nor rejected.
 const pendingSuggestions = computed(() => (
-  metadataSuggestions.value.filter((suggestion) => {
-    const key = getSuggestionKey(suggestion);
-    return !rejectedSuggestions.value.includes(key);
-  })
+    metadataSuggestions.value
+      .filter((suggestion) => {
+        const key = getSuggestionKey(suggestion);
+        return !rejectedSuggestions.value.includes(key);
+      })
+      .sort((a, b) => {
+        // Put suggestions with a specific row number before those without, and sort by row number ascending
+        if (a.row !== null && b.row === null) {
+          return -1;
+        }
+        if (a.row === null && b.row !== null) {
+          return 1;
+        }
+        if (a.row !== null && b.row !== null) {
+          return a.row - b.row;
+        }
+        // If both suggestions have no row number, sort by slot name
+        return a.slot.localeCompare(b.slot);
+      })
 ));
 
 const hasSuggestions = computed(() => pendingSuggestions.value.length > 0);
@@ -160,7 +175,10 @@ async function handleSuggestForSelectedRows() {
   // inner array is [startRow, startCol, endRow, endCol]. Reduce this to a flat array of row numbers contained in
   // the selected ranges.
   const rows = selectedRanges.reduce((acc, range) => {
-    for (let i = range[0]; i && range[2] && i <= range[2]; i += 1) {
+    if (range[0] === undefined || range[2] === undefined) {
+      return acc;
+    }
+    for (let i = range[0]; i <= range[2]; i += 1) {
       acc.push(i);
     }
     return acc;
@@ -319,6 +337,7 @@ function getSlotTitle(slot: string) {
             >
               <v-card
                 class="mb-4 mx-n2"
+                elevation="2"
                 density="default"
                 :color="suggestion.is_ai_generated ? AI_SUGGESTION_BG : undefined"
               >
@@ -351,8 +370,8 @@ function getSlotTitle(slot: string) {
                           <span>AI recommends areas of interest based on the content of the submission summary. To dismiss, select the X to remove it.</span>
                         </v-tooltip>
                       </div>
-                      <div v-if="suggestion.row">
-                        <span class="font-weight-medium">Row:</span> {{ suggestion.row }}
+                      <div v-if="suggestion.row !== null">
+                        <span class="font-weight-medium">Row:</span> {{ suggestion.row + 1 }}
                       </div>
                       <div>
                         <span class="font-weight-medium">Column:</span> {{ getSlotTitle(suggestion.slot) }}
@@ -415,7 +434,7 @@ function getSlotTitle(slot: string) {
                       </v-tooltip>
 
                       <v-tooltip
-                        v-if="suggestion.value && suggestion.row"
+                        v-if="suggestion.value !== null && suggestion.row !== null"
                       >
                         <template #activator="{ props: activatorProps }">
                           <v-btn
