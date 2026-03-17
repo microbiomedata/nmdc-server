@@ -1861,18 +1861,7 @@ async def suggest_meta_from_study(
         ],
     )
     submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
-    suggestions = suggester.get_suggestions_from_study_information(submission)
-    response: List[schemas_submission.MetadataSuggestion] = []
-    for metadata_field in suggestions.get("metadata_fields", []):
-        response.append(
-            schemas_submission.MetadataSuggestion(
-                type=schemas_submission.MetadataSuggestionType.ATTENTION,
-                slot=metadata_field["field_name"],
-                source=metadata_field["reason"],
-                is_ai_generated=True,
-            )
-        )
-    return response
+    return suggester.get_suggestions_from_study_information(submission)
 
 
 @router.post(
@@ -1889,20 +1878,9 @@ async def suggest_metadata(
     response: List[schemas_submission.MetadataSuggestion] = []
     for item in body:
         suggestions = suggester.get_suggestions(item.data, types=types)
-        for slot, value in suggestions.items():
-            response.append(
-                schemas_submission.MetadataSuggestion(
-                    type=(
-                        schemas_submission.MetadataSuggestionType.REPLACE
-                        if slot in item.data
-                        else schemas_submission.MetadataSuggestionType.ADD
-                    ),
-                    row=item.row,
-                    slot=slot,
-                    value=value,
-                    current_value=item.data.get(slot, None),
-                )
-            )
+        for suggestion in suggestions:
+            suggestion.row = item.row
+            response.append(suggestion)
     return response
 
 

@@ -972,7 +972,7 @@ def test_metadata_suggest(client: TestClient, suggest_payload, logged_in_user):
             "value": "16.00",
             "current_value": None,
             "is_ai_generated": False,
-            "source": None,
+            "source": "Google Maps API",
         },
         {
             "type": "replace",
@@ -981,7 +981,7 @@ def test_metadata_suggest(client: TestClient, suggest_payload, logged_in_user):
             "value": "16.00",
             "current_value": "0",
             "is_ai_generated": False,
-            "source": None,
+            "source": "Google Maps API",
         },
     ]
 
@@ -1001,7 +1001,7 @@ def test_metadata_suggest_single_type(client: TestClient, suggest_payload, logge
             "value": "16.00",
             "current_value": None,
             "is_ai_generated": False,
-            "source": None,
+            "source": "Google Maps API",
         },
     ]
 
@@ -1021,7 +1021,7 @@ def test_metadata_suggest_multiple_types(client: TestClient, suggest_payload, lo
             "value": "16.00",
             "current_value": None,
             "is_ai_generated": False,
-            "source": None,
+            "source": "Google Maps API",
         },
         {
             "type": "replace",
@@ -1030,7 +1030,7 @@ def test_metadata_suggest_multiple_types(client: TestClient, suggest_payload, lo
             "value": "16.00",
             "current_value": "0",
             "is_ai_generated": False,
-            "source": None,
+            "source": "Google Maps API",
         },
     ]
 
