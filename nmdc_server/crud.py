@@ -7,7 +7,7 @@ from uuid import UUID
 
 from fastapi import HTTPException, status
 from nmdc_schema.nmdc import SubmissionStatusEnum
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, select
 from sqlalchemy.orm import Query, Session
 from sqlalchemy.sql import func
 
@@ -484,6 +484,31 @@ def search_data_objects(
 ) -> Query:
     """Search for data objects, optionally filtered by biosample conditions."""
     return query.DataObjectQuerySchema(conditions=conditions).execute(db)
+
+def get_data_object_documents_for_biosample_ids(
+    db: Session, biosample_ids_list: list[str]
+) -> list[dict]:
+    """
+    Get all `DataObject` documents related to any of the specified `Biosample`s.
+
+    Note: We don't bother using `DISTINCT`, since `overlap` is only evaluated _once_ per row of the
+    table (even if multiple specified `Biosample` `id`s overlap the `biosample_ids` on that
+    row), so a given row of the table will only appear at most once in the result.
+    We include the `type: ignore[attr-defined]` comment because we're using old SQLAlchemy
+    stubs that do not account for the existence of an `overlap` method on array columns.
+    Similarly, we use `type: ignore[arg-type]` since the old stubs do not account for
+    the fact that `select` now expects columns directly, not an iterable of columns.
+
+    Note: We order them by `id` to facilitate testing and manual review.
+    """
+    statement = (
+        select(models.BiosampleRelatedDocument.document)
+        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
+        .order_by(models.BiosampleRelatedDocument.id)
+    )
+    rows = db.execute(statement).all()
+    return [row[0] for row in rows]
 
 
 # principal investigator
