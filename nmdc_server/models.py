@@ -21,7 +21,7 @@ from sqlalchemy import (
     Table,
     Text,
     UniqueConstraint,
-    func,
+    event,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
@@ -29,7 +29,6 @@ from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, backref, query_expression, relationship
 from sqlalchemy.orm.attributes import get_history
 from sqlalchemy.orm.relationships import RelationshipProperty
-from sqlalchemy import event
 
 from nmdc_server.database import Base, update_multiomics_sql
 
@@ -1330,18 +1329,14 @@ class InvalidatedToken(Base):
 def update_submission_metadata_date(mapper, _connection, target):
     """
     Update date_last_modified only when actual submission data changes, not when lock-related fields are modified.
-    
+
     This event fires before an UPDATE statement is executed. We check which attributes have changed
     and only set date_last_modified to the current time if submission data columns changed.
     """
-    
+
     # Columns that relate to the lock mechanism and should not trigger a date_last_modified update
-    lock_columns = {
-        "locked_by_id",
-        "locked_by",
-        "lock_updated"
-    }
-    
+    lock_columns = {"locked_by_id", "locked_by", "lock_updated"}
+
     # Check if any submission data column has been modified
     for col in mapper.columns:
         if col.name not in lock_columns:
