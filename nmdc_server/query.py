@@ -979,11 +979,11 @@ class DataObjectQuerySchema(BaseQuerySchema):
         # If conditions are provided, filter data objects by related omics_processing/biosamples
         if self.conditions:
             model = self.table.model
-            
+
             # Get omics_processing IDs matching the conditions directly
             omics_processing_query = OmicsProcessingQuerySchema(conditions=self.conditions)
             omics_processing_subquery = omics_processing_query.query(db).subquery()
-            
+
             # Get DataObjects that are outputs of those omics_processing
             data_object_query = (
                 db.query(model)
@@ -998,7 +998,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
                 )
                 .distinct()
             )
-            
+
             return data_object_query
         else:
             # Use the standard query() method when no conditions (relies on data_object_filter)
