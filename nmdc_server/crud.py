@@ -435,6 +435,19 @@ def search_biosample(
     ).execute(db, prefetch_omics_processing_data)
 
 
+def get_biosample_ids(
+    db: Session,
+    conditions: List[query.ConditionSchema],
+):
+    """
+    Get the list of `Biosample` `id`s specified via the search query.
+    """
+    biosample_ids = (
+        search_biosample(db, conditions, []).with_entities(models.Biosample.id).all()
+    )
+    return [id for (id,) in biosample_ids]
+
+
 def facet_biosample(
     db: Session, attribute: str, conditions: List[query.ConditionSchema], **kwargs
 ) -> query.FacetResponse:
@@ -505,6 +518,38 @@ def get_data_object_documents_for_biosample_ids(
         select(models.BiosampleRelatedDocument.document)
         .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
+        .order_by(models.BiosampleRelatedDocument.id)
+    )
+    rows = db.execute(statement).all()
+    return [row[0] for row in rows]
+
+
+def get_workflow_execution_documents_for_biosample_ids(
+    db: Session, biosample_ids_list: list[str]
+) -> list[dict]:
+    """
+    Get all `WorkflowExecution` documents related to any of the specified `Biosample`s.
+    """
+    statement = (
+        select(models.BiosampleRelatedDocument.document)
+        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:WorkflowExecution")
+        .order_by(models.BiosampleRelatedDocument.id)
+    )
+    rows = db.execute(statement).all()
+    return [row[0] for row in rows]
+
+
+def get_data_generation_documents_for_biosample_ids(
+    db: Session, biosample_ids_list: list[str]
+) -> list[dict]:
+    """
+    Get all `DataGeneration` documents related to any of the specified `Biosample`s.
+    """
+    statement = (
+        select(models.BiosampleRelatedDocument.document)
+        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataGeneration")
         .order_by(models.BiosampleRelatedDocument.id)
     )
     rows = db.execute(statement).all()

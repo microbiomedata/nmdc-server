@@ -68,8 +68,16 @@ const metadataOptions = computed(() => [
     label: 'Studies',
   },
   {
+    id: 'data_generations',
+    label: 'Data Generations',
+  },
+  {
     id: 'data_objects',
     label: 'Data Objects',
+  },
+  {
+    id: 'workflow_executions',
+    label: 'Workflow Executions',
   },
 ]);
 

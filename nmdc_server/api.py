@@ -441,6 +441,8 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
         "biosamples": search_biosample_source_metadata,
         "studies": search_study_source_metadata,
         "data_objects": search_data_object_source_metadata,
+        "data_generations": search_data_generation_source_metadata,
+        "workflow_executions": search_workflow_execution_source_metadata,
     }
 
     zip_buffer = io.BytesIO()
@@ -859,17 +861,47 @@ async def search_data_object_source_metadata(
     """
     Gets all `DataObject` documents related to the `Biosample`s specified via the `SearchQuery`.
     """
-    # Get the list of `Biosample` `id`s specified via the search query.
-    biosample_ids = (
-        crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
-    )
-    biosample_ids_list = [id for (id,) in biosample_ids]
+    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
 
     # If there were no `Biosample` `id`s specified, return no documents.
     if len(biosample_ids_list) == 0:
         return []
 
     documents = crud.get_data_object_documents_for_biosample_ids(db, biosample_ids_list)
+    return documents
+
+
+async def search_data_generation_source_metadata(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """
+    Gets all `DataGeneration` documents related to the `Biosample`s specified via the `SearchQuery`.
+    """
+    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_data_generation_documents_for_biosample_ids(db, biosample_ids_list)
+    return documents
+
+
+async def search_workflow_execution_source_metadata(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """
+    Gets all `WorkflowExecution` documents related to the `Biosample`s specified via the `SearchQuery`.
+    """
+    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_workflow_execution_documents_for_biosample_ids(db, biosample_ids_list)
     return documents
 
 
