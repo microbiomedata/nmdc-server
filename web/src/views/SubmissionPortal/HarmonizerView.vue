@@ -1,5 +1,6 @@
 <script lang="ts">
 import { computed, defineComponent, inject, nextTick, onMounted, ref, watch } from 'vue';
+import { useTimeoutFn } from '@vueuse/core';
 import { clamp, debounce, flattenDeep, has, isEqual, sum } from 'lodash';
 import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
@@ -201,12 +202,13 @@ export default defineComponent({
     // Count is incremented on successful saves. We use a separate ref for showing the success message because we want
     // to not show it when this view first mounts (based on saves that may have happened in other views). And we want
     // to be able to hide it after a delay.
-    const showSaveSuccessMessage = ref(false);
+    const isSaveSuccessMessageVisible = ref(false);
+    const { start: startHideSuccessMessageTimer } = useTimeoutFn(() => {
+      isSaveSuccessMessageVisible.value = false;
+    }, 5000);
     watch(() => incrementalSaveRecordRequest.count.value, () => {
-      showSaveSuccessMessage.value = true;
-      setTimeout(() => {
-        showSaveSuccessMessage.value = false;
-      }, 5000);
+      isSaveSuccessMessageVisible.value = true;
+      startHideSuccessMessageTimer();
     });
 
     let changeBatch: any[] = [];
@@ -716,7 +718,7 @@ export default defineComponent({
       isTestSubmission,
       StatusAlert,
       submissionState,
-      showSaveSuccessMessage,
+      isSaveSuccessMessageVisible,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -870,7 +872,7 @@ export default defineComponent({
           </span>
 
           <!-- Show success message if save was successful, error message is handled by SaveErrorSnackbar component -->
-          <span v-if="showSaveSuccessMessage">
+          <span v-if="isSaveSuccessMessageVisible">
             <v-icon
               color="green"
             >
