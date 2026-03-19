@@ -985,6 +985,70 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
 
 
 @router.get(
+    "/bulk_download/{bulk_download_id}/metadata/data_objects.json",
+    tags=["download"],
+)
+async def get_bulk_download_biosample_metadata(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a JSON array of nmdc:DataObject documents for all files that were
+    included in the specified bulk download.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+    
+    biosample_ids_list = crud.get_biosample_ids(db, bulk_download.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_data_object_documents_for_files(db, biosample_ids_list)
+
+    return JSONResponse(content=documents)
+
+
+@router.get(
+    "/bulk_download/{bulk_download_id}/metadata/linked_instances.json",
+    tags=["download"],
+)
+async def get_bulk_download_study_metadata(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a JSON array of study records for all studies whose biosamples were
+    included in the specified bulk download.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+    
+    biosample_ids_list = crud.get_biosample_ids(db, bulk_download.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_data_object_documents_for_files(db, biosample_ids_list)
+
+    return JSONResponse(content=documents)
+
+
+@router.get(
     "/bulk_download/{bulk_download_id}",
     tags=["download"],
 )

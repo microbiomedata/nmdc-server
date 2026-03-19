@@ -448,6 +448,28 @@ def get_biosample_ids(
     return [id for (id,) in biosample_ids]
 
 
+def get_studies_for_bulk_download_conditions(
+    db: Session,
+    conditions: List[query.ConditionSchema],
+) -> List[models.Study]:
+    """
+    Return the unique `Study` objects whose biosamples match the given conditions.
+    Uses a subquery so only one round-trip is needed.
+    """
+    study_id_subquery = (
+        search_biosample(db, conditions, [])
+        .with_entities(models.Biosample.study_id)
+        .distinct()
+        .subquery()
+    )
+    return (
+        db.query(models.Study)
+        .filter(models.Study.id.in_(study_id_subquery))
+        .order_by(models.Study.id)
+        .all()
+    )
+
+
 def facet_biosample(
     db: Session, attribute: str, conditions: List[query.ConditionSchema], **kwargs
 ) -> query.FacetResponse:
@@ -497,6 +519,23 @@ def search_data_objects(
 ) -> Query:
     """Search for data objects, optionally filtered by biosample conditions."""
     return query.DataObjectQuerySchema(conditions=conditions).execute(db)
+
+
+def get_data_object_documents_for_files(
+    db: Session, downstream_neighbor_ids_list: list[str]
+) -> list[dict]:
+    """
+    Get all `DataObject` documents related to any of the specified files (represented by their downstream neighbor ID).
+    """
+    statement = (
+        select(models.BiosampleRelatedDocument.document)
+        .where(models.BiosampleRelatedDocument.downstream_neighbor_ids.overlap(downstream_neighbor_ids_list))  # type: ignore[attr-defined]
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
+        .order_by(models.BiosampleRelatedDocument.id)
+    )
+    rows = db.execute(statement).all()
+    return [row[0] for row in rows]
+
 
 def get_data_object_documents_for_biosample_ids(
     db: Session, biosample_ids_list: list[str]
@@ -703,6 +742,24 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
             url=data_object.url, replacement_url_prefix=settings.zip_streamer_nersc_data_base_url
         )
         file_descriptions.append({"url": url, "zipPath": file.path})
+
+    # Append on-the-fly metadata files at the top level of the archive.
+    # ZipStreamer will GET these endpoints from within the Docker network after
+    # `bulk_download.expired` has already been set to True, so those endpoints
+    # deliberately skip the expired check.
+    base = settings.api_internal_url
+    file_descriptions.append(
+        {
+            "url": f"{base}/api/bulk_download/{id}/metadata/data_objects.json",
+            "zipPath": "data_objects.json",
+        }
+    )
+    file_descriptions.append(
+        {
+            "url": f"{base}/api/bulk_download/{id}/metadata/linked_instances.json",
+            "zipPath": "linked_instances.json",
+        }
+    )
 
     zip_file_descriptor["files"] = file_descriptions
 
