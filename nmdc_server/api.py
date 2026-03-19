@@ -1014,10 +1014,10 @@ async def get_bulk_download_data_object_metadata(
 
 
 @router.get(
-    "/bulk_download/{bulk_download_id}/metadata/linked_instances.json",
+    "/bulk_download/{bulk_download_id}/metadata/related_biosamples.json",
     tags=["download"],
 )
-async def get_bulk_download_linked_instances(
+async def get_bulk_download_related_biosamples(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
 ):
@@ -1040,16 +1040,16 @@ async def get_bulk_download_linked_instances(
         return []
 
     # Get a dictionary keyed by data object ID, where the value is a list of biosample IDs associated with that data object.
-    data_objects_linked_instances = nmdc_search.get_linked_instances_and_associate_ids(
+    data_objects_related_biosamples = nmdc_search.get_linked_instances_and_associate_ids(
         ids=data_object_ids_list, types=["nmdc:Biosample"]
     )
 
-    if not data_objects_linked_instances:
+    if not data_objects_related_biosamples:
         raise HTTPException(
-            status_code=404, detail="Could not retrieve linked instances for data objects"
+            status_code=404, detail="Could not retrieve related biosamples for data objects"
         )
 
-    return JSONResponse(content=data_objects_linked_instances)
+    return JSONResponse(content=data_objects_related_biosamples)
 
 
 @router.get(

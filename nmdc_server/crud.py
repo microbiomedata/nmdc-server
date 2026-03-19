@@ -721,8 +721,8 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     )
     file_descriptions.append(
         {
-            "url": f"{base}/api/bulk_download/{id}/metadata/linked_instances.json",
-            "zipPath": "metadata/linked_instances.json",
+            "url": f"{base}/api/bulk_download/{id}/metadata/related_biosamples.json",
+            "zipPath": "metadata/related_biosamples.json",
         }
     )
 
