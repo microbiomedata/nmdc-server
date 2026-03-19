@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     zip_streamer_url: str = "http://zipstreamer:4008/download"
     zip_streamer_chunk_size_bytes: int = 2 * 1024 * 1024
     zip_streamer_nersc_data_base_url: str = "https://data.microbiomedata.org/data"
-    api_internal_url: str = "http://backend:8000"
+    portal_api_internal_url: str = "http://backend:8000"
     """Internal base URL of the backend API, used by ZipStreamer to fetch on-the-fly metadata
     files that are added to bulk-download zip archives."""
 

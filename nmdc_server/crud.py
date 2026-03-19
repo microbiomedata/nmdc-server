@@ -690,7 +690,7 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     # ZipStreamer will GET these endpoints from within the Docker network after
     # `bulk_download.expired` has already been set to True, so those endpoints
     # deliberately skip the expired check.
-    base = settings.api_internal_url
+    base = settings.portal_api_internal_url
     file_descriptions.append(
         {
             "url": f"{base}/api/bulk_download/{id}/metadata/data_objects.json",
