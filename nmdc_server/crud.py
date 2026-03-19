@@ -446,28 +446,6 @@ def get_biosample_ids(
     return [id for (id,) in biosample_ids]
 
 
-def get_studies_for_bulk_download_conditions(
-    db: Session,
-    conditions: List[query.ConditionSchema],
-) -> List[models.Study]:
-    """
-    Return the unique `Study` objects whose biosamples match the given conditions.
-    Uses a subquery so only one round-trip is needed.
-    """
-    study_id_subquery = (
-        search_biosample(db, conditions, [])
-        .with_entities(models.Biosample.study_id)
-        .distinct()
-        .subquery()
-    )
-    return (
-        db.query(models.Study)
-        .filter(models.Study.id.in_(study_id_subquery))
-        .order_by(models.Study.id)
-        .all()
-    )
-
-
 def facet_biosample(
     db: Session, attribute: str, conditions: List[query.ConditionSchema], **kwargs
 ) -> query.FacetResponse:
