@@ -1002,7 +1002,7 @@ async def get_bulk_download_data_object_metadata(
     bulk_download = db.get(models.BulkDownload, bulk_download_id)
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
-    
+
     data_object_names_list = [file.data_object.name for file in bulk_download.files]
 
     # If there were no files specified, return no documents.
@@ -1032,14 +1032,14 @@ async def get_bulk_download_linked_instances(
     bulk_download = db.get(models.BulkDownload, bulk_download_id)
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
-    
+
     nmdc_search = NMDCSearch()
     data_object_ids_list = [file.data_object.id for file in bulk_download.files]
-    
+
     # If there were no files specified, return no documents.
     if len(data_object_ids_list) == 0:
         return []
-    
+
     # Get a dictionary keyed by data object ID, where the value is a list of biosample IDs associated with that data object.
     data_objects_linked_instances = nmdc_search.get_linked_instances_and_associate_ids(
         ids=data_object_ids_list, types=["nmdc:Biosample"]
