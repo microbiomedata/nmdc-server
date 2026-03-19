@@ -15,10 +15,9 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Response, 
 from fastapi.responses import JSONResponse
 from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_api_utilities.biosample_search import BiosampleSearch
-from nmdc_api_utilities.nmdc_search import NMDCSearch
 from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -1019,39 +1018,55 @@ async def get_bulk_download_data_object_metadata(
     "/bulk_download/{bulk_download_id}/metadata/related_biosamples.json",
     tags=["download"],
 )
-async def get_bulk_download_related_biosamples(
+async def get_bulk_download_data_object_to_biosamples_map(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
 ):
     r"""
-    Return a JSON dictionary of data object IDs with their associated biosample IDs
-    for all files included in the specified bulk download.
+    Return a JSON dictionary mapping each data object ID with its associated biosample IDs.
+    Each data object ID corresponds to a different file within the bulk download.
 
     This endpoint is called by ZipStreamer when it builds the zip archive, so it
     intentionally does **not** check the `expired` flag on the bulk download.
     """
-    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    data_object_id_to_biosample_ids_map: dict[str, list[str]] = {}
+
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)
     if bulk_download is None:
-        raise HTTPException(status_code=404, detail="Bulk download not found")
-
-    nmdc_search = NMDCSearch()
-    data_object_ids_list = [file.data_object.id for file in bulk_download.files]
-
-    # If there were no files specified, return no documents.
-    if len(data_object_ids_list) == 0:
-        return []
-
-    # Get a dictionary keyed by data object ID, where the value is a list of biosample IDs associated with that data object.
-    data_objects_related_biosamples = nmdc_search.get_linked_instances_and_associate_ids(
-        ids=data_object_ids_list, types=["nmdc:Biosample"]
-    )
-
-    if not data_objects_related_biosamples:
         raise HTTPException(
-            status_code=404, detail="Could not retrieve related biosamples for data objects"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bulk download not found",
         )
 
-    return JSONResponse(content=data_objects_related_biosamples)
+    # Get the `id` of each `DataObject` corresponding to each file in this `BulkDownload`.
+    data_object_ids = [file.data_object.id for file in bulk_download.files]
+    if len(data_object_ids) == 0:
+        logger.warning(f"No data object IDs found for bulk download '{bulk_download_id}'")
+        return data_object_id_to_biosample_ids_map
+
+    # Get the `id` of each `Biosample` related to any of those `DataObject`s.
+    statement = (
+        select(
+            models.BiosampleRelatedDocument.id,
+            models.BiosampleRelatedDocument.biosample_ids,
+        )  # type: ignore[arg-type]
+        .where(models.BiosampleRelatedDocument.id.in_(data_object_ids))
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
+        .order_by(models.BiosampleRelatedDocument.id)
+    )
+    rows = db.execute(statement).all()
+    for row in rows:
+        data_object_id_to_biosample_ids_map[row[0]] = row[1]
+
+    if len(data_object_id_to_biosample_ids_map.keys()) == 0:
+        logger.warning(f"No biosample IDs found for bulk download '{bulk_download_id}'")
+
+    # Ensure the dictionary we return accounts for all the `DataObject` `id`s.
+    for data_object_id in data_object_ids:
+        if data_object_id not in data_object_id_to_biosample_ids_map.keys():
+            data_object_id_to_biosample_ids_map[data_object_id] = []
+
+    return JSONResponse(content=data_object_id_to_biosample_ids_map)
 
 
 @router.get(
