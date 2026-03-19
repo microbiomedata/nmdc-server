@@ -525,7 +525,7 @@ def get_data_object_documents_by_name(db: Session, names_list: list[str]) -> lis
     This is used to get all the DataObjects for files in a bulk download.
     """
     statement = (
-        select(models.BiosampleRelatedDocument.document)
+        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
         .where(models.BiosampleRelatedDocument.document["name"].astext.in_(names_list))
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
     )
@@ -551,8 +551,8 @@ def get_data_object_documents_for_biosample_ids(
     Note: We order them by `id` to facilitate testing and manual review.
     """
     statement = (
-        select(models.BiosampleRelatedDocument.document)
-        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))
+        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
+        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
         .order_by(models.BiosampleRelatedDocument.id)
     )
@@ -567,8 +567,8 @@ def get_workflow_execution_documents_for_biosample_ids(
     Get all `WorkflowExecution` documents related to any of the specified `Biosample`s.
     """
     statement = (
-        select(models.BiosampleRelatedDocument.document)
-        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))
+        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
+        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:WorkflowExecution")
         .order_by(models.BiosampleRelatedDocument.id)
     )
@@ -583,8 +583,8 @@ def get_data_generation_documents_for_biosample_ids(
     Get all `DataGeneration` documents related to any of the specified `Biosample`s.
     """
     statement = (
-        select(models.BiosampleRelatedDocument.document)
-        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))
+        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
+        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataGeneration")
         .order_by(models.BiosampleRelatedDocument.id)
     )

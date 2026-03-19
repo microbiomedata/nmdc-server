@@ -999,7 +999,7 @@ async def get_bulk_download_data_object_metadata(
     This endpoint is called by ZipStreamer when it builds the zip archive, so it
     intentionally does **not** check the `expired` flag on the bulk download.
     """
-    bulk_download = db.get(models.BulkDownload, bulk_download_id)
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
 
@@ -1029,7 +1029,7 @@ async def get_bulk_download_linked_instances(
     This endpoint is called by ZipStreamer when it builds the zip archive, so it
     intentionally does **not** check the `expired` flag on the bulk download.
     """
-    bulk_download = db.get(models.BulkDownload, bulk_download_id)
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
 
