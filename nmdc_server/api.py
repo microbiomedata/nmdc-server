@@ -1023,8 +1023,8 @@ async def get_bulk_download_linked_instances(
     db: Session = Depends(get_db),
 ):
     r"""
-    Return a JSON list of linked_instances nested by data object for 
-    all files included in the specified bulk download.
+    Return a JSON dictionary of data object IDs with their associated biosample IDs 
+    for all files included in the specified bulk download.
 
     This endpoint is called by ZipStreamer when it builds the zip archive, so it
     intentionally does **not** check the `expired` flag on the bulk download.
@@ -1040,7 +1040,8 @@ async def get_bulk_download_linked_instances(
     if len(data_object_ids_list) == 0:
         return []
     
-    data_objects_linked_instances = nmdc_search.get_linked_instances(ids=data_object_ids_list, types=["nmdc:Biosample"])
+    # Get a dictionary keyed by data object ID, where the value is a list of biosample IDs associated with that data object.
+    data_objects_linked_instances = nmdc_search.get_linked_instances_and_associate_ids(ids=data_object_ids_list, types=["nmdc:Biosample"])
 
     if not data_objects_linked_instances:
         raise HTTPException(status_code=404, detail="Could not retrieve linked instances for data objects")

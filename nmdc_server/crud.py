@@ -530,10 +530,10 @@ def get_data_object_documents_by_name(
     """
     statement = (
         select(models.BiosampleRelatedDocument.document)
-        .where(models.BiosampleRelatedDocument.document['name'].astext.in_(names_list)
+        .where(models.BiosampleRelatedDocument.document['name'].astext.in_(names_list))
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
     )
-)
+
     rows = db.execute(statement).all()
     return [row[0] for row in rows]
 
@@ -752,13 +752,13 @@ def get_zip_download(db: Session, id: UUID) -> Dict[str, Any]:
     file_descriptions.append(
         {
             "url": f"{base}/api/bulk_download/{id}/metadata/data_objects.json",
-            "zipPath": "data_objects.json",
+            "zipPath": "metadata/data_objects.json",
         }
     )
     file_descriptions.append(
         {
             "url": f"{base}/api/bulk_download/{id}/metadata/linked_instances.json",
-            "zipPath": "linked_instances.json",
+            "zipPath": "metadata/linked_instances.json",
         }
     )
 
