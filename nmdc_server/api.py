@@ -900,7 +900,9 @@ async def search_workflow_execution_source_metadata(
     if len(biosample_ids_list) == 0:
         return []
 
-    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:WorkflowExecution")
+    documents = crud.get_documents_by_biosample_ids(
+        db, biosample_ids_list, "nmdc:WorkflowExecution"
+    )
     return documents
 
 
