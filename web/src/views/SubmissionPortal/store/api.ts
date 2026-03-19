@@ -49,7 +49,7 @@ async function updateRecord(id: string, record: Partial<MetadataSubmission>, per
     metadata_submission: record,
     permissions,
   });
-  return { data: resp.data, httpStatus: resp.status };
+  return resp.data;
 }
 
 async function updateSubmissionStatus(submission_id: string, newStatus: string) {

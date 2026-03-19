@@ -1,5 +1,6 @@
 <script lang="ts">
 import { computed, defineComponent, inject, nextTick, onMounted, ref, watch } from 'vue';
+import { useTimeoutFn } from '@vueuse/core';
 import { clamp, debounce, flattenDeep, has, isEqual, sum } from 'lodash';
 import { read, utils, writeFile } from 'xlsx';
 import { api } from '@/data/api';
@@ -50,6 +51,7 @@ import SubmissionNavigationSidebar from './Components/SubmissionNavigationSideba
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import StatusAlert from './Components/StatusAlert.vue';
+import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -105,6 +107,7 @@ const ALWAYS_READ_ONLY_COLUMNS = [
 
 export default defineComponent({
   components: {
+    SaveErrorSnackbar,
     HarmonizerSidebar,
     SubmissionNavigationSidebar,
     SubmissionDocsLink,
@@ -196,6 +199,17 @@ export default defineComponent({
     ));
 
     const saveRecord = () => incrementalSaveRecord(props.id);
+    // Count is incremented on successful saves. We use a separate ref for showing the success message because we want
+    // to not show it when this view first mounts (based on saves that may have happened in other views). And we want
+    // to be able to hide it after a delay.
+    const isSaveSuccessMessageVisible = ref(false);
+    const { start: startHideSuccessMessageTimer } = useTimeoutFn(() => {
+      isSaveSuccessMessageVisible.value = false;
+    }, 5000);
+    watch(() => incrementalSaveRecordRequest.count.value, () => {
+      isSaveSuccessMessageVisible.value = true;
+      startHideSuccessMessageTimer();
+    });
 
     let changeBatch: any[] = [];
     const debouncedSuggestionRequest = debounce(async () => {
@@ -634,7 +648,6 @@ export default defineComponent({
     });
 
     onMounted(async () => {
-      incrementalSaveRecordRequest.reset();
       const schemaResults = await schemaRequest(() => Promise.all([
         api.getSubmissionSchema(),
         api.getGoldEcosystemTree(),
@@ -705,6 +718,7 @@ export default defineComponent({
       isTestSubmission,
       StatusAlert,
       submissionState,
+      isSaveSuccessMessageVisible,
       /* methods */
       doSubmit,
       downloadSamples,
@@ -723,6 +737,7 @@ export default defineComponent({
 </script>
 
 <template>
+  <SaveErrorSnackbar />
   <SubmissionNavigationSidebar />
   <div
     :style="{'overflow-y': 'hidden', 'overflow-x': 'hidden', 'height': `calc(100vh - ${APP_HEADER_HEIGHT + (appBannerHeight || 0)}px)`}"
@@ -841,36 +856,31 @@ export default defineComponent({
             </v-btn>
           </v-card>
           <submission-docs-link anchor="sample-metadata" />
-          <span v-if="incrementalSaveRecordRequest.count.value > 0">
-            <span
-              v-if="incrementalSaveRecordRequest.loading.value"
-              class="text-center"
-            >
-              <v-progress-circular
-                color="primary"
-                :width="1"
-                size="20"
-                indeterminate
-              />
-              Saving progress
-            </span>
-            <span v-if="!incrementalSaveRecordRequest.error.value && !incrementalSaveRecordRequest.loading.value">
-              <v-icon
-                color="green"
-              >
-                mdi-check
-              </v-icon>
-              Changes saved successfully
-            </span>
-            <span v-else-if="incrementalSaveRecordRequest.error.value && !incrementalSaveRecordRequest.loading.value">
-              <v-icon
-                color="red"
-              >
-                mdi-close
-              </v-icon>
-              Failed to save changes
-            </span>
+
+          <!-- Show loading indicator -->
+          <span
+            v-if="incrementalSaveRecordRequest.loading.value"
+            class="text-center"
+          >
+            <v-progress-circular
+              color="primary"
+              :width="1"
+              size="20"
+              indeterminate
+            />
+            Saving progress
           </span>
+
+          <!-- Show success message if save was successful, error message is handled by SaveErrorSnackbar component -->
+          <span v-if="isSaveSuccessMessageVisible">
+            <v-icon
+              color="green"
+            >
+              mdi-check
+            </v-icon>
+            Changes saved successfully
+          </span>
+
           <v-spacer />
           <v-autocomplete
             v-model="jumpToModel"

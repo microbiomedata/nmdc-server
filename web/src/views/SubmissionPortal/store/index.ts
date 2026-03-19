@@ -751,8 +751,7 @@ async function submit(id: string, status?: SubmissionStatusKey) {
   if (!canEditSubmissionByStatus()) {
     throw new Error('Unable to submit with current submission status.');
   }
-  const response = await api.updateRecord(id, payloadObject.value);
-  let record = response.data;
+  let record = await api.updateRecord(id, payloadObject.value);
   if (status) {
     record = await api.updateSubmissionStatus(id, status);
   }
@@ -801,7 +800,9 @@ async function incrementalSaveRecord(id: string): Promise<void> {
     const response = await incrementalSaveRecordRequest.request(
       () => api.updateRecord(id, payload, permissions)
     );
-    if (response) updateStateFromRecord(response.data);
+    if (response) {
+      updateStateFromRecord(response);
+    }
     return;
   }
   hasChanged.value = 0;
