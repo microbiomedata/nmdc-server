@@ -988,7 +988,7 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
     "/bulk_download/{bulk_download_id}/metadata/data_objects.json",
     tags=["download"],
 )
-async def get_bulk_download_biosample_metadata(
+async def get_bulk_download_data_object_metadata(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
 ):
@@ -1003,13 +1003,13 @@ async def get_bulk_download_biosample_metadata(
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
     
-    biosample_ids_list = crud.get_biosample_ids(db, bulk_download.conditions)
+    data_object_names_list = [file.data_object.name for file in bulk_download.files]
 
-    # If there were no `Biosample` `id`s specified, return no documents.
-    if len(biosample_ids_list) == 0:
+    # If there were no files specified, return no documents.
+    if len(data_object_names_list) == 0:
         return []
 
-    documents = crud.get_data_object_documents_for_files(db, biosample_ids_list)
+    documents = crud.get_data_object_documents_by_name(db, data_object_names_list)
 
     return JSONResponse(content=documents)
 
@@ -1018,13 +1018,13 @@ async def get_bulk_download_biosample_metadata(
     "/bulk_download/{bulk_download_id}/metadata/linked_instances.json",
     tags=["download"],
 )
-async def get_bulk_download_study_metadata(
+async def get_bulk_download_linked_instances(
     bulk_download_id: UUID,
     db: Session = Depends(get_db),
 ):
     r"""
-    Return a JSON array of study records for all studies whose biosamples were
-    included in the specified bulk download.
+    Return a JSON list of linked_instances nested by data object for 
+    all files included in the specified bulk download.
 
     This endpoint is called by ZipStreamer when it builds the zip archive, so it
     intentionally does **not** check the `expired` flag on the bulk download.
@@ -1032,20 +1032,20 @@ async def get_bulk_download_study_metadata(
     bulk_download = db.get(models.BulkDownload, bulk_download_id)
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
-
-    bulk_download = db.get(models.BulkDownload, bulk_download_id)
-    if bulk_download is None:
-        raise HTTPException(status_code=404, detail="Bulk download not found")
     
-    biosample_ids_list = crud.get_biosample_ids(db, bulk_download.conditions)
-
-    # If there were no `Biosample` `id`s specified, return no documents.
-    if len(biosample_ids_list) == 0:
+    nmdc_search = NMDCSearch()
+    data_object_ids_list = [file.data_object.id for file in bulk_download.files]
+    
+    # If there were no files specified, return no documents.
+    if len(data_object_ids_list) == 0:
         return []
+    
+    data_objects_linked_instances = nmdc_search.get_linked_instances(ids=data_object_ids_list, types=["nmdc:Biosample"])
 
-    documents = crud.get_data_object_documents_for_files(db, biosample_ids_list)
+    if not data_objects_linked_instances:
+        raise HTTPException(status_code=404, detail="Could not retrieve linked instances for data objects")
 
-    return JSONResponse(content=documents)
+    return JSONResponse(content=data_objects_linked_instances)
 
 
 @router.get(

@@ -521,18 +521,19 @@ def search_data_objects(
     return query.DataObjectQuerySchema(conditions=conditions).execute(db)
 
 
-def get_data_object_documents_for_files(
-    db: Session, downstream_neighbor_ids_list: list[str]
+def get_data_object_documents_by_name(
+    db: Session, names_list: list[str]
 ) -> list[dict]:
     """
-    Get all `DataObject` documents related to any of the specified files (represented by their downstream neighbor ID).
+    Get all `DataObject` documents whose `name` exists in the specified list of names.
+    This is used to get all the DataObjects for files in a bulk download.
     """
     statement = (
         select(models.BiosampleRelatedDocument.document)
-        .where(models.BiosampleRelatedDocument.downstream_neighbor_ids.overlap(downstream_neighbor_ids_list))  # type: ignore[attr-defined]
+        .where(models.BiosampleRelatedDocument.document['name'].astext.in_(names_list)
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
-        .order_by(models.BiosampleRelatedDocument.id)
     )
+)
     rows = db.execute(statement).all()
     return [row[0] for row in rows]
 
