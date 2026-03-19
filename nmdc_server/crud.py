@@ -442,9 +442,7 @@ def get_biosample_ids(
     """
     Get the list of `Biosample` `id`s specified via the search query.
     """
-    biosample_ids = (
-        search_biosample(db, conditions, []).with_entities(models.Biosample.id).all()
-    )
+    biosample_ids = search_biosample(db, conditions, []).with_entities(models.Biosample.id).all()
     return [id for (id,) in biosample_ids]
 
 
@@ -521,16 +519,14 @@ def search_data_objects(
     return query.DataObjectQuerySchema(conditions=conditions).execute(db)
 
 
-def get_data_object_documents_by_name(
-    db: Session, names_list: list[str]
-) -> list[dict]:
+def get_data_object_documents_by_name(db: Session, names_list: list[str]) -> list[dict]:
     """
     Get all `DataObject` documents whose `name` exists in the specified list of names.
     This is used to get all the DataObjects for files in a bulk download.
     """
     statement = (
         select(models.BiosampleRelatedDocument.document)
-        .where(models.BiosampleRelatedDocument.document['name'].astext.in_(names_list))
+        .where(models.BiosampleRelatedDocument.document["name"].astext.in_(names_list))
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
     )
 
