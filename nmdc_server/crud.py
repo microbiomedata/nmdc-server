@@ -534,11 +534,11 @@ def get_data_object_documents_by_ids(db: Session, ids_list: list[str]) -> list[d
     return [row[0] for row in rows]
 
 
-def get_data_object_documents_for_biosample_ids(
-    db: Session, biosample_ids_list: list[str]
+def get_documents_by_biosample_ids(
+    db: Session, biosample_ids_list: list[str], high_level_type: str
 ) -> list[dict]:
     """
-    Get all `DataObject` documents related to any of the specified `Biosample`s.
+    Get all documents of type, `high_level_type`, related to any of the specified `Biosample`s.
 
     Note: We don't bother using `DISTINCT`, since `overlap` is only evaluated _once_ per row of the
     table (even if multiple specified `Biosample` `id`s overlap the `biosample_ids` on that
@@ -553,39 +553,7 @@ def get_data_object_documents_for_biosample_ids(
     statement = (
         select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
         .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
-        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
-        .order_by(models.BiosampleRelatedDocument.id)
-    )
-    rows = db.execute(statement).all()
-    return [row[0] for row in rows]
-
-
-def get_workflow_execution_documents_for_biosample_ids(
-    db: Session, biosample_ids_list: list[str]
-) -> list[dict]:
-    """
-    Get all `WorkflowExecution` documents related to any of the specified `Biosample`s.
-    """
-    statement = (
-        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
-        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
-        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:WorkflowExecution")
-        .order_by(models.BiosampleRelatedDocument.id)
-    )
-    rows = db.execute(statement).all()
-    return [row[0] for row in rows]
-
-
-def get_data_generation_documents_for_biosample_ids(
-    db: Session, biosample_ids_list: list[str]
-) -> list[dict]:
-    """
-    Get all `DataGeneration` documents related to any of the specified `Biosample`s.
-    """
-    statement = (
-        select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
-        .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
-        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataGeneration")
+        .where(models.BiosampleRelatedDocument.high_level_type == high_level_type)
         .order_by(models.BiosampleRelatedDocument.id)
     )
     rows = db.execute(statement).all()

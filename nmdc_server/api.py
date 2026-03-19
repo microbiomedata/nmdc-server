@@ -417,17 +417,16 @@ async def search_biosample_source_metadata(
     db: Session = Depends(get_db),
 ):
     """
-    Get a list of biosample source metadata via the Runtime API
-    based on supplied conditions
+    Gets all `DataObject` documents related to the `Biosample`s specified via the `SearchQuery`.
     """
-    biosample_search = BiosampleSearch()
-    biosample_ids = (
-        crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
-    )
-    results = biosample_search.get_records_by_id([id for (id,) in biosample_ids])
-    if not results:
-        raise HTTPException(status_code=404, detail="Could not retrieve source data for biosamples")
-    return results
+    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:Biosample")
+    return documents
 
 
 @router.post("/download_metadata", tags=["bulk_download"])
@@ -687,15 +686,16 @@ async def search_study_source_metadata(
     db: Session = Depends(get_db),
 ):
     """
-    Get a list of study source metadata via the Runtime API
-    based on supplied conditions.
+    Gets all `Study` documents related to the `Biosample`s specified via the `SearchQuery`.
     """
-    study_search = StudySearch()
-    study_ids = crud.search_study(db, q.conditions).with_entities(models.Study.id).all()
-    results = study_search.get_records_by_id([id for (id,) in study_ids])
-    if not results:
-        raise HTTPException(status_code=404, detail="Could not retrieve source data for studies")
-    return results
+    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:Study")
+    return documents
 
 
 # data_generation
@@ -866,7 +866,7 @@ async def search_data_object_source_metadata(
     if len(biosample_ids_list) == 0:
         return []
 
-    documents = crud.get_data_object_documents_for_biosample_ids(db, biosample_ids_list)
+    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:DataObject")
     return documents
 
 
@@ -883,7 +883,7 @@ async def search_data_generation_source_metadata(
     if len(biosample_ids_list) == 0:
         return []
 
-    documents = crud.get_data_generation_documents_for_biosample_ids(db, biosample_ids_list)
+    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:DataGeneration")
     return documents
 
 
@@ -900,7 +900,7 @@ async def search_workflow_execution_source_metadata(
     if len(biosample_ids_list) == 0:
         return []
 
-    documents = crud.get_workflow_execution_documents_for_biosample_ids(db, biosample_ids_list)
+    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:WorkflowExecution")
     return documents
 
 
