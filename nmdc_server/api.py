@@ -1002,13 +1002,13 @@ async def get_bulk_download_data_object_metadata(
     if bulk_download is None:
         raise HTTPException(status_code=404, detail="Bulk download not found")
 
-    data_object_names_list = [file.data_object.name for file in bulk_download.files]
+    data_object_ids_list = [file.data_object.id for file in bulk_download.files]
 
     # If there were no files specified, return no documents.
-    if len(data_object_names_list) == 0:
+    if len(data_object_ids_list) == 0:
         return []
 
-    documents = crud.get_data_object_documents_by_name(db, data_object_names_list)
+    documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
 
     return JSONResponse(content=documents)
 

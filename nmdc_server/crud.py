@@ -519,14 +519,14 @@ def search_data_objects(
     return query.DataObjectQuerySchema(conditions=conditions).execute(db)
 
 
-def get_data_object_documents_by_name(db: Session, names_list: list[str]) -> list[dict]:
+def get_data_object_documents_by_ids(db: Session, ids_list: list[str]) -> list[dict]:
     """
-    Get all `DataObject` documents whose `name` exists in the specified list of names.
+    Get all `DataObject` documents whose `id` exists in the specified list of IDs.
     This is used to get all the DataObjects for files in a bulk download.
     """
     statement = (
         select(models.BiosampleRelatedDocument.document)  # type: ignore[arg-type]
-        .where(models.BiosampleRelatedDocument.document["name"].astext.in_(names_list))
+        .where(models.BiosampleRelatedDocument.id.in_(ids_list))
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
     )
 
