@@ -975,34 +975,7 @@ class DataObjectQuerySchema(BaseQuerySchema):
         )
 
     def execute(self, db: Session) -> Query:
-        """Execute the data object query, optionally filtered by biosample/omics_processing conditions."""
-        # If conditions are provided, filter data objects by related omics_processing/biosamples
-        if self.conditions:
-            model = self.table.model
-
-            # Get omics_processing IDs matching the conditions directly
-            omics_processing_query = OmicsProcessingQuerySchema(conditions=self.conditions)
-            omics_processing_subquery = omics_processing_query.query(db).subquery()
-
-            # Get DataObjects that are outputs of those omics_processing
-            data_object_query = (
-                db.query(model)
-                .join(
-                    models.omics_processing_output_association,
-                    model.id == models.omics_processing_output_association.c.data_object_id,
-                )
-                .join(
-                    omics_processing_subquery,
-                    models.omics_processing_output_association.c.omics_processing_id
-                    == omics_processing_subquery.c.id,
-                )
-                .distinct()
-            )
-
-            return data_object_query
-        else:
-            # Use the standard query() method when no conditions (relies on data_object_filter)
-            return self.query(db)
+        return self.query(db)
 
     # WARNING: This logic is duplicated in the DataObject.is_selected method.
     def _data_object_filter_subquery(
