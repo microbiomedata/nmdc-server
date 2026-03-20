@@ -6,18 +6,30 @@ export NGINX_CLIENT_MAX_BODY_SIZE=${NGINX_CLIENT_MAX_BODY_SIZE:-10m}
 
 envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
-# Inject run-time configuration into the built index.html by replacing the placeholder comment
-# with a <script> tag that sets a global JS variable. This allows the frontend to read
-# environment-specific settings (e.g. Sentry DSN) that are not known at build time.
+# Build an HTML snippet containing the values of environment variables,
+# and inject that snippet into our built app's `index.html` file.
 #
-# Note: SENTRY_DSN is expected to be a URL (e.g. "https://key@host/project-id") and
-# SENTRY_ENVIRONMENT_NAME is expected to be a simple identifier (e.g. "production").
-# SENTRY_TRACES_SAMPLE_RATE is expected to be a number between 0.0 and 1.0.
-# Both values are operator-supplied via environment variables and are never user-supplied.
-SENTRY_DSN="${SENTRY_DSN:-}"
-SENTRY_ENVIRONMENT_NAME="${SENTRY_ENVIRONMENT_NAME:-unknown}"
-SENTRY_TRACES_SAMPLE_RATE="${SENTRY_TRACES_SAMPLE_RATE:-1.0}"
-INDEX_HTML="/www/data/index.html"
-sed -i "s|<!-- __NMDC_CONFIG_INJECTION_PLACEHOLDER__ -->|<script>window.__nmdc_config__ = { sentryDsn: \"${SENTRY_DSN}\", sentryEnvironmentName: \"${SENTRY_ENVIRONMENT_NAME}\", sentryTracesSampleRate: ${SENTRY_TRACES_SAMPLE_RATE} };</script>|g" "${INDEX_HTML}"
+# Note: The injected snippet will consist of a `<script>` element containing
+#       JavaScript code that inserts an property named `__nmdc_config__` into
+#       the global `window` object. That property will be an object containing
+#       Sentry configuration parameters. The reason we do it this way is that
+#       we don't know the Sentry environment name at app build time or at
+#       container image build time — only at container start time/run time.
+#
+SENTRY_DSN="${SENTRY_DSN:-}"                                   # get from Sentry dashboard
+SENTRY_ENVIRONMENT_NAME="${SENTRY_ENVIRONMENT_NAME:-unknown}"  # e.g. "production", "development", "local", "unknown"
+SENTRY_TRACES_SAMPLE_RATE="${SENTRY_TRACES_SAMPLE_RATE:-0.0}"  # any number from 0.0 to 1.0
+PLACEHOLDER = "<!-- __NMDC_CONFIG_INJECTION_PLACEHOLDER__ -->"
+HTML_SNIPPET=$(cat <<'EOF'
+    <script>
+        window.__nmdc_config__ = {
+            sentryDsn: "${SENTRY_DSN}",
+            sentryEnvironmentName: "${SENTRY_ENVIRONMENT_NAME}",
+            sentryTracesSampleRate: ${SENTRY_TRACES_SAMPLE_RATE}
+        };
+    </script>
+EOF
+)
+sed -i "s|${PLACEHOLDER}|${HTML_SNIPPET}|g" /www/data/index.html
 
 nginx -g 'daemon off;'
