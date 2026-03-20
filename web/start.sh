@@ -20,7 +20,7 @@ SENTRY_DSN="${SENTRY_DSN:-}"                                   # get from Sentry
 SENTRY_ENVIRONMENT_NAME="${SENTRY_ENVIRONMENT_NAME:-unknown}"  # e.g. "production", "development", "local", "unknown"
 SENTRY_TRACES_SAMPLE_RATE="${SENTRY_TRACES_SAMPLE_RATE:-0.0}"  # any number from 0.0 to 1.0
 PLACEHOLDER="<!-- __NMDC_CONFIG_INJECTION_PLACEHOLDER__ -->"
-HTML_SNIPPET=$(cat <<"EOF"
+HTML_SNIPPET=$(cat <<EOF
     <script>
         window.__nmdc_config__ = {
             sentryDsn: "${SENTRY_DSN}",
