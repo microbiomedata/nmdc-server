@@ -12,5 +12,7 @@ interface Window {
     sentryDsn?: string;
     /** Name of the deployment environment (e.g. "production", "development"). */
     sentryEnvironmentName?: string;
+    /** Fraction of transactions to sample for performance tracing (0.0–1.0). */
+    sentryTracesSampleRate?: number;
   };
 }

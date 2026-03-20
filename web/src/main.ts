@@ -20,7 +20,7 @@ if (import.meta.env.PROD) {
       app,
       dsn: sentryDsn,
       environment: window.__nmdc_config__?.sentryEnvironmentName || 'unknown',
-      tracesSampleRate: 1.0,
+      tracesSampleRate: window.__nmdc_config__?.sentryTracesSampleRate ?? 1.0,
       release: import.meta.env.VITE_APP_SENTRY_RELEASE_NAME || 'unknown',
     });
   }
