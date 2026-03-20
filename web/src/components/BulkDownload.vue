@@ -67,6 +67,18 @@ const metadataOptions = computed(() => [
     id: 'studies',
     label: 'Studies',
   },
+  {
+    id: 'data_generations',
+    label: 'Data Generations',
+  },
+  {
+    id: 'data_objects',
+    label: 'Data Objects',
+  },
+  {
+    id: 'workflow_executions',
+    label: 'Workflow Executions',
+  },
 ]);
 
 async function createAndDownload() {
@@ -182,7 +194,7 @@ watch(
             </template>
             <span>
               Choose a group of files to download based on file type
-              from the currently filtered search results.
+              from the currently filtered sample results.
             </span>
           </v-tooltip>
         </v-tab>
@@ -203,7 +215,7 @@ watch(
               </v-icon>
             </template>
             <span>
-              Download metadata as JSON for the currently filtered search results.
+              Download different types of metadata as JSON that are associated with the currently filtered sample results.
             </span>
           </v-tooltip>
         </v-tab>

@@ -17,7 +17,7 @@ from linkml_runtime.utils.schemaview import SchemaView
 from nmdc_api_utilities.biosample_search import BiosampleSearch
 from nmdc_api_utilities.study_search import StudySearch
 from nmdc_schema.nmdc import SubmissionStatusEnum
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.orm import Session
 from starlette.responses import StreamingResponse
 
@@ -416,17 +416,16 @@ async def search_biosample_source_metadata(
     db: Session = Depends(get_db),
 ):
     """
-    Get a list of biosample source metadata via the Runtime API
-    based on supplied conditions
+    Gets all `DataObject` documents related to the `Biosample`s specified via the `SearchQuery`.
     """
-    biosample_search = BiosampleSearch()
-    biosample_ids = (
-        crud.search_biosample(db, q.conditions, []).with_entities(models.Biosample.id).all()
-    )
-    results = biosample_search.get_records_by_id([id for (id,) in biosample_ids])
-    if not results:
-        raise HTTPException(status_code=404, detail="Could not retrieve source data for biosamples")
-    return results
+    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:Biosample")
+    return documents
 
 
 @router.post("/download_metadata", tags=["bulk_download"])
@@ -438,6 +437,9 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
     endpoint_map = {
         "biosamples": search_biosample_source_metadata,
         "studies": search_study_source_metadata,
+        "data_objects": search_data_object_source_metadata,
+        "data_generations": search_data_generation_source_metadata,
+        "workflow_executions": search_workflow_execution_source_metadata,
     }
 
     zip_buffer = io.BytesIO()
@@ -683,15 +685,16 @@ async def search_study_source_metadata(
     db: Session = Depends(get_db),
 ):
     """
-    Get a list of study source metadata via the Runtime API
-    based on supplied conditions.
+    Gets all `Study` documents related to the `Biosample`s specified via the `SearchQuery`.
     """
-    study_search = StudySearch()
-    study_ids = crud.search_study(db, q.conditions).with_entities(models.Study.id).all()
-    results = study_search.get_records_by_id([id for (id,) in study_ids])
-    if not results:
-        raise HTTPException(status_code=404, detail="Could not retrieve source data for studies")
-    return results
+    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:Study")
+    return documents
 
 
 # data_generation
@@ -849,6 +852,59 @@ def data_object_aggregation(
     return crud.aggregate_data_object_by_workflow(db, query.conditions)
 
 
+async def search_data_object_source_metadata(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """
+    Gets all `DataObject` documents related to the `Biosample`s specified via the `SearchQuery`.
+    """
+    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:DataObject")
+    return documents
+
+
+async def search_data_generation_source_metadata(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """
+    Gets all `DataGeneration` documents related to the `Biosample`s specified via the `SearchQuery`.
+    """
+    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_documents_by_biosample_ids(db, biosample_ids_list, "nmdc:DataGeneration")
+    return documents
+
+
+async def search_workflow_execution_source_metadata(
+    q: query.SearchQuery = query.SearchQuery(),
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """
+    Gets all `WorkflowExecution` documents related to the `Biosample`s specified via the `SearchQuery`.
+    """
+    biosample_ids_list = crud.get_biosample_ids(db, q.conditions)
+
+    # If there were no `Biosample` `id`s specified, return no documents.
+    if len(biosample_ids_list) == 0:
+        return []
+
+    documents = crud.get_documents_by_biosample_ids(
+        db, biosample_ids_list, "nmdc:WorkflowExecution"
+    )
+    return documents
+
+
 @router.get("/principal_investigator/{principal_investigator_id}", tags=["principal_investigator"])
 async def get_pi_image(principal_investigator_id: UUID, db: Session = Depends(get_db)):
     image = crud.get_pi_image(db, principal_investigator_id)
@@ -926,6 +982,91 @@ async def stream_zip_archive(zip_file_descriptor: Dict[str, Any]):
                 logger.warning(message)
             last_chunk_time = this_chunk_time
             yield chunk
+
+
+@router.get(
+    "/bulk_download/{bulk_download_id}/metadata/data_objects.json",
+    tags=["download"],
+)
+async def get_bulk_download_data_object_metadata(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a JSON array of nmdc:DataObject documents for all files that were
+    included in the specified bulk download.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+
+    data_object_ids_list = [file.data_object.id for file in bulk_download.files]
+
+    # If there were no files specified, return no documents.
+    if len(data_object_ids_list) == 0:
+        return []
+
+    documents = crud.get_data_object_documents_by_ids(db, data_object_ids_list)
+
+    return JSONResponse(content=documents)
+
+
+@router.get(
+    "/bulk_download/{bulk_download_id}/metadata/related_biosamples.json",
+    tags=["download"],
+)
+async def get_bulk_download_data_object_to_biosamples_map(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a JSON dictionary mapping each data object ID with its associated biosample IDs.
+    Each data object ID corresponds to a different file within the bulk download.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    data_object_id_to_biosample_ids_map: dict[str, list[str]] = {}
+
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    if bulk_download is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Bulk download not found",
+        )
+
+    # Get the `id` of each `DataObject` corresponding to each file in this `BulkDownload`.
+    data_object_ids = [file.data_object.id for file in bulk_download.files]
+    if len(data_object_ids) == 0:
+        logger.warning(f"No data object IDs found for bulk download '{bulk_download_id}'")
+        return data_object_id_to_biosample_ids_map
+
+    # Get the `id` of each `Biosample` related to any of those `DataObject`s.
+    statement = (
+        select(
+            models.BiosampleRelatedDocument.id,  # type: ignore[arg-type]
+            models.BiosampleRelatedDocument.biosample_ids,
+        )
+        .where(models.BiosampleRelatedDocument.id.in_(data_object_ids))
+        .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
+        .order_by(models.BiosampleRelatedDocument.id)
+    )
+    rows = db.execute(statement).all()
+    for row in rows:
+        data_object_id_to_biosample_ids_map[row[0]] = row[1]
+
+    if len(data_object_id_to_biosample_ids_map.keys()) == 0:
+        logger.warning(f"No biosample IDs found for bulk download '{bulk_download_id}'")
+
+    # Ensure the dictionary we return accounts for all the `DataObject` `id`s.
+    for data_object_id in data_object_ids:
+        if data_object_id not in data_object_id_to_biosample_ids_map.keys():
+            data_object_id_to_biosample_ids_map[data_object_id] = []
+
+    return JSONResponse(content=data_object_id_to_biosample_ids_map)
 
 
 @router.get(

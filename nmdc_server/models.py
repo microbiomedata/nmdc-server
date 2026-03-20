@@ -23,7 +23,7 @@ from sqlalchemy import (
     UniqueConstraint,
     event,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Session, backref, query_expression, relationship
@@ -496,6 +496,21 @@ class Biosample(Base, AnnotatedModel):
     def populate_multiomics(cls, db: Session):
         db.execute(update_multiomics_sql)
         db.commit()
+
+
+class BiosampleRelatedDocument(Base):
+    """
+    Table containing JSON documents (typically ingested from a MongoDB database)
+    related to biosamples.
+    """
+
+    __tablename__ = "biosample_related_document"
+
+    id = Column(String, primary_key=True)
+    biosample_ids = Column(ARRAY(String), nullable=False, default=list)
+    high_level_type = Column(String, nullable=False)
+    document = Column(JSONB, nullable=False)
+    downstream_neighbor_ids = Column(ARRAY(String), nullable=False, default=list)
 
 
 omics_processing_output_association = output_association("omics_processing")
