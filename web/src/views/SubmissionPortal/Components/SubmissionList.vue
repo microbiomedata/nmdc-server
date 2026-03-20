@@ -408,7 +408,7 @@ export default defineComponent({
             <template #[`item.status`]="{ item }">
               <div class="d-flex align-center">
                 <v-select
-                  v-if="currentUser?.is_admin || isReviewerForSubmission(item)"
+                  v-if="currentUser?.is_admin  || isReviewerForSubmission(item)"
                   :model-value="item.status"
                   :items="getFormattedStatusTransitions(item)"
                   :loading="statusUpdatingSubmissionId === item.id"

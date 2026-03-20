@@ -132,15 +132,15 @@ export default defineComponent({
       <v-list class="pa-0">
         <AttributeItem
           v-for="({ name, target }) in alternateIdentifiers"
-          :key="name"
           class="mb-2"
+          :key="name"
           v-bind="{ item, link: { name, target } }"
           :image="name.startsWith('gold') ? gold : name.startsWith('img') ? img : ''"
         />
         <AttributeItem
           v-for="emslId, index in item.emsl_biosample_identifiers"
-          :key="emslId"
           class="mb-2"
+          :key="emslId"
           v-bind="{ item, field: 'emsl_biosample_identifiers', index, displayName: 'EMSL Identifier' }"
           :image="emsl"
         />
