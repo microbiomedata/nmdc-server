@@ -5,4 +5,17 @@ export DNS_ADDRESS=$(grep -m 1 ^nameserver /etc/resolv.conf | sed -E -n 's/\D*(\
 export NGINX_CLIENT_MAX_BODY_SIZE=${NGINX_CLIENT_MAX_BODY_SIZE:-10m}
 
 envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+
+# Inject runtime configuration into the built index.html by replacing the placeholder comment
+# with a <script> tag that sets a global JS variable. This allows the frontend to read
+# environment-specific settings (e.g. Sentry DSN) that are not known at build time.
+#
+# Note: SENTRY_DSN is expected to be a URL (e.g. "https://key@host/project-id") and
+# SENTRY_ENVIRONMENT_NAME is expected to be a simple identifier (e.g. "production").
+# Both values are operator-supplied via environment variables and are never user-supplied.
+SENTRY_DSN="${SENTRY_DSN:-}"
+SENTRY_ENVIRONMENT_NAME="${SENTRY_ENVIRONMENT_NAME:-unknown}"
+INDEX_HTML="/www/data/index.html"
+sed -i "s|<!-- __NMDC_RUNTIME_CONFIG__ -->|<script>window.__nmdc_config__ = { sentryDsn: \"${SENTRY_DSN}\", sentryEnvironmentName: \"${SENTRY_ENVIRONMENT_NAME}\" };</script>|g" "${INDEX_HTML}"
+
 nginx -g 'daemon off;'

@@ -108,7 +108,9 @@ export default defineComponent({
             <v-tab
               v-bind="props"
             >
-              <v-icon size="x-large">{{ tab.icon }}</v-icon>
+              <v-icon size="x-large">
+                {{ tab.icon }}
+              </v-icon>
             </v-tab>
           </template>
           <span>{{ tab.label }}</span>
