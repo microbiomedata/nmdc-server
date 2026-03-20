@@ -6,7 +6,7 @@ export NGINX_CLIENT_MAX_BODY_SIZE=${NGINX_CLIENT_MAX_BODY_SIZE:-10m}
 
 envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
-# Inject runtime configuration into the built index.html by replacing the placeholder comment
+# Inject run-time configuration into the built index.html by replacing the placeholder comment
 # with a <script> tag that sets a global JS variable. This allows the frontend to read
 # environment-specific settings (e.g. Sentry DSN) that are not known at build time.
 #
