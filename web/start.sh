@@ -10,7 +10,7 @@ envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 # and inject that snippet into our built app's `index.html` file.
 #
 # Note: The injected snippet will consist of a `<script>` element containing
-#       JavaScript code that inserts an property named `__nmdc_config__` into
+#       JavaScript code that inserts a property named `__nmdc_config__` into
 #       the global `window` object. That property will be an object containing
 #       Sentry configuration parameters. The reason we do it this way is that
 #       we don't know the Sentry environment name at app build time or at
@@ -19,8 +19,8 @@ envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 SENTRY_DSN="${SENTRY_DSN:-}"                                   # get from Sentry dashboard
 SENTRY_ENVIRONMENT_NAME="${SENTRY_ENVIRONMENT_NAME:-unknown}"  # e.g. "production", "development", "local", "unknown"
 SENTRY_TRACES_SAMPLE_RATE="${SENTRY_TRACES_SAMPLE_RATE:-0.0}"  # any number from 0.0 to 1.0
-PLACEHOLDER = "<!-- __NMDC_CONFIG_INJECTION_PLACEHOLDER__ -->"
-HTML_SNIPPET=$(cat <<'EOF'
+PLACEHOLDER="<!-- __NMDC_CONFIG_INJECTION_PLACEHOLDER__ -->"
+HTML_SNIPPET=$(cat <<"EOF"
     <script>
         window.__nmdc_config__ = {
             sentryDsn: "${SENTRY_DSN}",
