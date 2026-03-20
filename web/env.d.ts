@@ -4,7 +4,7 @@
 interface Window {
   /**
    * Runtime configuration injected into `index.html` at container startup.
-   * Values are set by replacing the `<!-- __NMDC_RUNTIME_CONFIG__ -->` placeholder
+   * Values are set by replacing the `<!-- __NMDC_CONFIG_INJECTION_PLACEHOLDER__ -->` placeholder
    * with a `<script>` tag that assigns this object.
    */
   __nmdc_config__?: {

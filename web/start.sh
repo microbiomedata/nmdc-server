@@ -16,6 +16,6 @@ envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 SENTRY_DSN="${SENTRY_DSN:-}"
 SENTRY_ENVIRONMENT_NAME="${SENTRY_ENVIRONMENT_NAME:-unknown}"
 INDEX_HTML="/www/data/index.html"
-sed -i "s|<!-- __NMDC_RUNTIME_CONFIG__ -->|<script>window.__nmdc_config__ = { sentryDsn: \"${SENTRY_DSN}\", sentryEnvironmentName: \"${SENTRY_ENVIRONMENT_NAME}\" };</script>|g" "${INDEX_HTML}"
+sed -i "s|<!-- __NMDC_CONFIG_INJECTION_PLACEHOLDER__ -->|<script>window.__nmdc_config__ = { sentryDsn: \"${SENTRY_DSN}\", sentryEnvironmentName: \"${SENTRY_ENVIRONMENT_NAME}\" };</script>|g" "${INDEX_HTML}"
 
 nginx -g 'daemon off;'
