@@ -1031,7 +1031,7 @@ async def get_bulk_download_data_object_to_biosamples_map(
     """
     data_object_id_to_biosample_ids_map: dict[str, list[str]] = {}
 
-    bulk_download = db.get(models.BulkDownload, bulk_download_id)
+    bulk_download = db.get(models.BulkDownload, bulk_download_id) # type: ignore[attr-defined]
     if bulk_download is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -1047,9 +1047,9 @@ async def get_bulk_download_data_object_to_biosamples_map(
     # Get the `id` of each `Biosample` related to any of those `DataObject`s.
     statement = (
         select(
-            models.BiosampleRelatedDocument.id,
+            models.BiosampleRelatedDocument.id,  # type: ignore[arg-type]
             models.BiosampleRelatedDocument.biosample_ids,
-        )  # type: ignore[arg-type]
+        )
         .where(models.BiosampleRelatedDocument.id.in_(data_object_ids))
         .where(models.BiosampleRelatedDocument.high_level_type == "nmdc:DataObject")
         .order_by(models.BiosampleRelatedDocument.id)
