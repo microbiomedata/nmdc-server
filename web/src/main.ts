@@ -13,11 +13,14 @@ export const app = createApp(App)
 
 registerPlugins(app)
 
-if (import.meta.env.PROD) {
+// Initialize Sentry if a Sentry DSN is defined.
+const sentryDsn = window.__nmdc_config__?.sentryDsn;
+if (typeof sentryDsn === "string" && sentryDsn.length > 0) {
   Sentry.init({
     app,
-    dsn: 'https://87132695029c4406afe033fb3b13b115@o267860.ingest.sentry.io/5658761',
-    tracesSampleRate: 1.0,
+    dsn: sentryDsn,
+    environment: window.__nmdc_config__?.sentryEnvironment || 'unknown',
+    tracesSampleRate: window.__nmdc_config__?.sentryTracesSampleRate ?? 0.0,
     release: import.meta.env.VITE_APP_SENTRY_RELEASE_NAME || 'unknown',
   });
 }
