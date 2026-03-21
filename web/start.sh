@@ -23,14 +23,14 @@ envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 #       we use a different approach, one which involves a temporary file.
 #
 echo 'Injecting NMDC config snippet into HTML file'
-SENTRY_DSN="${SENTRY_DSN:-}"                                   # get from Sentry dashboard
-SENTRY_ENVIRONMENT_NAME="${SENTRY_ENVIRONMENT_NAME:-unknown}"  # e.g. "production", "development", "local", "unknown"
+SENTRY_DSN="${SENTRY_DSN:-}"  # get from Sentry dashboard
+SENTRY_ENVIRONMENT="${SENTRY_ENVIRONMENT:-unknown}"  # e.g. "production", "development", "local", "unknown"
 SENTRY_TRACES_SAMPLE_RATE="${SENTRY_TRACES_SAMPLE_RATE:-0.0}"  # any number from 0.0 to 1.0
 cat > /tmp/__nmdc_config__.html.snippet <<EOF
     <script>
         window.__nmdc_config__ = {
             sentryDsn: "${SENTRY_DSN}",
-            sentryEnvironmentName: "${SENTRY_ENVIRONMENT_NAME}",
+            sentryEnvironment: "${SENTRY_ENVIRONMENT}",
             sentryTracesSampleRate: ${SENTRY_TRACES_SAMPLE_RATE}
         };
     </script>

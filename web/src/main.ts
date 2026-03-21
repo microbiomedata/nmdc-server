@@ -19,7 +19,7 @@ if (typeof sentryDsn === "string" && sentryDsn.length > 0) {
   Sentry.init({
     app,
     dsn: sentryDsn,
-    environment: window.__nmdc_config__?.sentryEnvironmentName || 'unknown',
+    environment: window.__nmdc_config__?.sentryEnvironment || 'unknown',
     tracesSampleRate: window.__nmdc_config__?.sentryTracesSampleRate ?? 0.0,
     release: import.meta.env.VITE_APP_SENTRY_RELEASE_NAME || 'unknown',
   });
