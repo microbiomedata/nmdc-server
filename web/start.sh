@@ -16,11 +16,15 @@ envsubst < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 #       we don't know the Sentry environment name at app build time or at
 #       container image build time — only at container start time/run time.
 #
+# Note: The reason we don't use a plain `sed 's/old/new/' file` command to
+#       inject the snippet is that that command would risk sed interpreting
+#       characters in the replacement string as sed control characters. So,
+#       we use a different approach, one which involves a temporary file.
+#
 SENTRY_DSN="${SENTRY_DSN:-}"                                   # get from Sentry dashboard
 SENTRY_ENVIRONMENT_NAME="${SENTRY_ENVIRONMENT_NAME:-unknown}"  # e.g. "production", "development", "local", "unknown"
 SENTRY_TRACES_SAMPLE_RATE="${SENTRY_TRACES_SAMPLE_RATE:-0.0}"  # any number from 0.0 to 1.0
-PLACEHOLDER="<!-- __NMDC_CONFIG_INJECTION_PLACEHOLDER__ -->"
-HTML_SNIPPET=$(cat <<EOF
+cat > /tmp/__nmdc_config__.html.snippet <<EOF
     <script>
         window.__nmdc_config__ = {
             sentryDsn: "${SENTRY_DSN}",
@@ -29,7 +33,9 @@ HTML_SNIPPET=$(cat <<EOF
         };
     </script>
 EOF
-)
-sed -i "s|${PLACEHOLDER}|${HTML_SNIPPET}|g" /www/data/index.html
+sed -i \
+    -e '/<!-- __NMDC_CONFIG_INJECTION_PLACEHOLDER__ -->/r /tmp/__nmdc_config__.html.snippet' \
+    -e '/<!-- __NMDC_CONFIG_INJECTION_PLACEHOLDER__ -->/d' \
+    /www/data/index.html
 
 nginx -g 'daemon off;'
