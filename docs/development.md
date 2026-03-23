@@ -338,6 +338,20 @@ docker-compose run backend alembic -c nmdc_server/alembic.ini upgrade head
 docker-compose run backend alembic -c nmdc_server/alembic.ini revision --autogenerate
 ```
 
+## Testing migrations
+
+Here are some commands we find helpful when writing new migrations. We typically run these once we have filled out the function bodies of both the `upgrade` and `downgrade` functions.
+
+```shell
+# Migrate the database forward by 1 migration.
+# This can be used to invoke a migration's `upgrade` function.
+docker compose run --rm backend alembic -c nmdc_server/alembic.ini upgrade +1
+
+# Migrate the database backward by 1 migration.
+# This can be used to invoke a migration's `downgrade` function.
+docker compose run --rm backend alembic -c nmdc_server/alembic.ini downgrade -1
+```
+
 ## Developing with the shell
 
 A handy IPython shell is provided with some commonly used symbols automatically
