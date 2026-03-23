@@ -873,13 +873,9 @@ async function unlockRecord(id: string) {
 }
 
 async function loadRecord(id: string) {
-  console.log("reset")
   reset();
-  console.log("request")
   const val = await api.getRecord(id);
-  console.log("update state")
   updateStateFromRecord(val);
-  console.log("finished")
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
