@@ -36,7 +36,7 @@ from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
-from nmdc_server.metadata import SampleMetadataSuggester
+from nmdc_server.metadata import SampleMetadataSuggester, get_sample_metadata_suggester
 from nmdc_server.models import (
     SubmissionEditorRole,
     SubmissionImagesObject,
@@ -1847,7 +1847,7 @@ async def submit_metadata(
 async def suggest_meta_from_study(
     id: str,
     db: Session = Depends(get_db),
-    suggester: SampleMetadataSuggester = Depends(SampleMetadataSuggester),
+    suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
     user: models.User = Depends(get_current_user),
 ) -> List[schemas_submission.MetadataSuggestion]:
     submission_model = get_submission_for_user(
@@ -1871,7 +1871,7 @@ async def suggest_meta_from_study(
 )
 async def suggest_metadata(
     body: List[schemas_submission.MetadataSuggestionRequest],
-    suggester: SampleMetadataSuggester = Depends(SampleMetadataSuggester),
+    suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
     types: Union[List[schemas_submission.MetadataSuggestionType], None] = Query(None),
     user: models.User = Depends(get_current_user),
 ) -> List[schemas_submission.MetadataSuggestion]:
