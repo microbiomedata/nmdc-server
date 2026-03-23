@@ -276,6 +276,7 @@ export interface MetadataSubmissionRecordSlim {
 export interface MetadataSubmissionRecord extends MetadataSubmissionRecordSlim {
   author_orcid: string;
   metadata_submission: MetadataSubmission;
+  nmdc_study_id: string | null;
   locked_by: User;
   lock_updated: string;
   permission_level: string | null;

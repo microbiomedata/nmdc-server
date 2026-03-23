@@ -14,9 +14,10 @@ import {
 import { unlockSubmission } from './store/api';
 import SubmissionPermissionBanner from '@/views/SubmissionPortal/Components/SubmissionPermissionBanner.vue';
 import StatusAlert from '@/views/SubmissionPortal/Components/StatusAlert.vue';
+import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
 
 export default defineComponent({
-  components: {StatusAlert, SubmissionPermissionBanner, SubmissionNavigationSidebar, OrcidId },
+  components: {SaveErrorSnackbar, StatusAlert, SubmissionPermissionBanner, SubmissionNavigationSidebar, OrcidId },
 
   props: {
     id: {
@@ -70,6 +71,7 @@ export default defineComponent({
       indeterminate
       color="primary"
     />
+    <SaveErrorSnackbar />
     <SubmissionNavigationSidebar class="mx-0" />
     <div v-if="loggedInUserHasLock || !isEditingSubmission">
       <SubmissionPermissionBanner v-if="showPermissionBanner" />

@@ -1,5 +1,5 @@
 import { computed, Ref } from 'vue';
-import { Condition, entityType } from '@/data/api';
+import { Condition, EntityType } from '@/data/api';
 
 export default function useFacetSummaryData({
   field,
@@ -7,7 +7,7 @@ export default function useFacetSummaryData({
   conditions,
 }: {
   field: Ref<string>,
-  table: Ref<entityType>,
+  table: Ref<EntityType>,
   conditions: Ref<Condition[]>,
 }) {
   const otherConditions = computed(() => (
