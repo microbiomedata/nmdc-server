@@ -3,7 +3,7 @@
 This field will store the NMDC study identifier for submissions.
 
 Revision ID: 87821b18f9e3
-Revises: 43ce041c88cb
+Revises: 6867009bb496
 Create Date: 2026-03-06 19:49:29.023313
 
 """
@@ -15,7 +15,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "87821b18f9e3"
-down_revision: Optional[str] = "43ce041c88cb"
+down_revision: Optional[str] = "6867009bb496"
 branch_labels: Optional[str] = None
 depends_on: Optional[str] = None
 
