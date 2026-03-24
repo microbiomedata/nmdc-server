@@ -44,10 +44,9 @@ import {
   suggestionMode,
   templateList,
   validationState,
-  mergeMetadataSuggestions,
   packageName,
+  fetchSuggestionsFromStudyInfo,
 } from './store';
-import { getMetadataSuggestionsFromStudyDetails } from './store/api'
 import { AppBannerHeightKey } from './SubmissionView.vue';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
 import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
@@ -630,18 +629,10 @@ async function fetchSuggestionsFromStudyDetails() {
   if (!activeTemplate.value?.schemaClass) {
     return [];
   }
-  const suggestions = await getMetadataSuggestionsFromStudyDetails(props.id);
-  // The suggestions that are returned are for all templates in packageName. We need to iterate over them to group them
-  // by the underlying schema class they are part of.
-  for (const template of packageName.value) {
-    const templateSchemaClass = HARMONIZER_TEMPLATES[template]?.schemaClass;
-    if (templateSchemaClass) {
-      const suggestionsForTemplate = suggestions.filter((s) => harmonizerApi.isSlotInClass(s.slot, templateSchemaClass));
-      if (suggestionsForTemplate.length) {
-        mergeMetadataSuggestions(props.id, templateSchemaClass, suggestionsForTemplate);
-      }
-    }
-  }
+  const allSchemaClassNames = packageName.value
+    .map((pkg) => HARMONIZER_TEMPLATES[pkg]?.schemaClass)
+    .filter((c) => c !== undefined);
+  return fetchSuggestionsFromStudyInfo(props.id, allSchemaClassNames, activeTemplate.value.schemaClass, harmonizerApi);
 }
 
 watch(() => canEditSampleMetadata(), (canEdit) => {
