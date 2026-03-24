@@ -899,7 +899,7 @@ function mergeSampleData(key: string | undefined, data: any[]) {
  * @param requests
  * @param batchSize
  */
-async function addMetadataSuggestions(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
+async function fetchSuggestionsFromSampleRows(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
   const batches = chunk(requests, batchSize);
   for (let i = 0; i < batches.length; i += 1) {
     const batch = batches[i] || [];
@@ -918,6 +918,31 @@ async function addMetadataSuggestions(submissionId: string, schemaClassName: str
     metadataSuggestions.value.push(...suggestions);
   }
 
+  setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
+}
+
+/**
+ * Merge the given metadata suggestions to the list of pending suggestions. Then sync the pending suggestions with local
+ * storage. If there is an existing suggestion for the same slot, row and type as an incoming suggestion, the existing
+ * suggestion will be replaced by the incoming one.
+ *
+ * @param submissionId
+ * @param schemaClassName
+ * @param suggestions
+ */
+function mergeMetadataSuggestions(submissionId: string, schemaClassName: string, suggestions: MetadataSuggestion[]) {
+  suggestions.forEach((suggestion) => {
+    const existingIndex = metadataSuggestions.value.findIndex(
+      (s) => s.row === suggestion.row && s.slot === suggestion.slot && s.type === suggestion.type,
+    );
+    if (existingIndex >= 0) {
+      // Replace existing suggestion
+      metadataSuggestions.value[existingIndex] = suggestion;
+    } else {
+      // Add new suggestion
+      metadataSuggestions.value.push(suggestion);
+    }
+  });
   setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
 }
 
@@ -984,7 +1009,8 @@ export {
   canEditSubmissionMetadata,
   canEditSubmissionByStatus,
   editableByStatus,
-  addMetadataSuggestions,
+  fetchSuggestionsFromSampleRows,
+  mergeMetadataSuggestions,
   removeMetadataSuggestions,
   templateHasData,
   checkJGITemplates,

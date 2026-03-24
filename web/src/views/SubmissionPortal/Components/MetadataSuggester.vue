@@ -4,7 +4,7 @@
  */
 import { computed, ref, watchEffect } from 'vue';
 import {
-  addMetadataSuggestions,
+  fetchSuggestionsFromSampleRows,
   removeMetadataSuggestions,
   metadataSuggestions,
   suggestionMode,
@@ -185,7 +185,7 @@ async function handleSuggestForSelectedRows() {
   }, [] as number[]);
   const changedRowData = props.harmonizerApi.getDataByRows(rows);
   try {
-    await addMetadataSuggestions((route.params as { id: string }).id, props.schemaClassName, changedRowData);
+    await fetchSuggestionsFromSampleRows((route.params as { id: string }).id, props.schemaClassName, changedRowData);
   } finally {
     onDemandSuggestionsLoading.value = false;
   }
