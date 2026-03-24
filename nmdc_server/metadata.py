@@ -86,34 +86,23 @@ class ElevationSuggester(Suggester):
 class SampleMetadataSuggester:
     """A class to suggest sample metadata values based on partial sample metadata."""
 
-    def __init__(self):
-        self._llm_client = None
-        if not settings.llm_service_account_credentials_file:
-            logger.warning(
-                "LLM service account credentials file is not set. SampleMetadataSuggester will not "
-                "be able to provide suggestions based on study information."
-            )
-
-    @property
-    def llm_client(self) -> LLMClient | None:
-        if settings.llm_service_account_credentials_file and self._llm_client is None:
-            self._llm_client = LLMClient(
-                access_provider="gcp",
-                credentials_file=settings.llm_service_account_credentials_file,
-            )
-        return self._llm_client
-
     def get_suggestions_from_study_information(
         self,
         submission: SubmissionMetadataSchema,
     ) -> List[MetadataSuggestion]:
         """Get suggestions based on study-level information from a submission"""
-        if not self.llm_client:
+        if not settings.llm_service_account_credentials_file:
+            logger.warning(
+                "LLM service account credentials file is not set. Not providing study-level suggestions."
+            )
             return []
 
+        llm_client = LLMClient(
+            access_provider="gcp", credentials_file=settings.llm_service_account_credentials_file
+        )
         recommendation_pipeline_output = run_recommendation_pipeline(
             submission.model_dump(),
-            self.llm_client,
+            llm_client,
         )
 
         suggestions: List[MetadataSuggestion] = []
