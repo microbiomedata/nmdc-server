@@ -9,6 +9,8 @@ import {
   metadataSuggestions,
   suggestionMode,
   suggestionType,
+  fetchSuggestionsFromSampleRowsRequest,
+  fetchSuggestionsFromStudyInfoRequest,
 } from '@/views/SubmissionPortal/store';
 import {
   CellData,
@@ -206,10 +208,26 @@ function handleResetRejectedSuggestions() {
 function getSlotTitle(slot: string) {
   return props.harmonizerApi.slotInfo.get(slot)?.title ?? slot;
 }
+
+const loading = computed(() => (
+  fetchSuggestionsFromSampleRowsRequest.loading.value || fetchSuggestionsFromStudyInfoRequest.loading.value
+));
 </script>
 
 <template>
-  <v-card elevation="0">
+  <v-card
+    elevation="0"
+    tile
+    :loading="loading"
+  >
+    <template #loader="{ isActive }">
+      <v-progress-linear
+        :active="isActive"
+        color="primary"
+        height="2"
+        indeterminate
+      />
+    </template>
     <v-defaults-provider
       :defaults="{
         VSelect: {
