@@ -217,9 +217,10 @@ class Settings(BaseSettings):
     llm_service_account_credentials_file: Optional[str] = None
     """Path to the service account credentials JSON file used by nmdc-metadata-suggestor-ai-tool.
 
-    For local development, this file should be copied into the the auth subfolder of this project,
-    and the should be set in your .env file as `/auth/...` since the local auth folder is mounted
-    to `/auth` in the docker container.
+    If needed for local development, get this file from an NMDC team member. The file should be
+    copied into the auth subfolder of this project, and the corresponding environment variable
+    should be set in your .env file as `/auth/...` since the local auth folder is mounted to `/auth`
+    in the docker container.
     """
 
     @property
