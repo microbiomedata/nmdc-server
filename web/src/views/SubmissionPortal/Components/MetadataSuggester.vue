@@ -151,10 +151,18 @@ function handleAcceptSuggestion(suggestion: MetadataSuggestion) {
 }
 
 /**
+ * Determine if a suggestion can be accepted. A suggestion can be accepted if it has a non-null value and row number.
+ * @param suggestion
+ */
+function canAcceptSuggestion(suggestion: MetadataSuggestion) {
+  return suggestion.value !== null && suggestion.row !== null;
+}
+
+/**
  * Handle clicking the accept all button.
  */
 function handleAcceptAllSuggestions() {
-  acceptSuggestions(pendingSuggestions.value);
+  acceptSuggestions(pendingSuggestions.value.filter(canAcceptSuggestion));
 }
 
 /**
@@ -333,7 +341,7 @@ const loading = computed(() => (
                       </v-icon>
                     </v-btn>
                   </template>
-                  <span>Accept all suggestions</span>
+                  <span>Accept all suggestions that apply to specific cells</span>
                 </v-tooltip>
               </div>
             </div>
@@ -452,7 +460,7 @@ const loading = computed(() => (
                       </v-tooltip>
 
                       <v-tooltip
-                        v-if="suggestion.value !== null && suggestion.row !== null"
+                        v-if="canAcceptSuggestion(suggestion)"
                       >
                         <template #activator="{ props: activatorProps }">
                           <v-btn
