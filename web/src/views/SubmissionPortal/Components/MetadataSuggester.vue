@@ -20,7 +20,6 @@ import {
 } from '@/views/SubmissionPortal/types';
 import type HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi';
 import { getRejectedSuggestions, setRejectedSuggestions } from '@/store/localStorage';
-import { useRoute } from 'vue-router';
 import { AI_SUGGESTION_BG } from '@/views/SubmissionPortal/colors.ts';
 
 interface MetadataSuggesterProps {
@@ -52,7 +51,6 @@ function getSuggestionKey(suggestion: MetadataSuggestion) {
 
 const props = defineProps<MetadataSuggesterProps>();
 
-const route = useRoute();
 const rejectedSuggestions = ref([] as string[]);
 const onDemandSuggestionsLoading = ref(false);
 
@@ -195,7 +193,7 @@ async function handleSuggestForSelectedRows() {
   }, [] as number[]);
   const changedRowData = props.harmonizerApi.getDataByRows(rows);
   try {
-    await fetchSuggestionsFromSampleRows((route.params as { id: string }).id, props.schemaClassName, changedRowData);
+    await fetchSuggestionsFromSampleRows(props.submissionId, props.schemaClassName, changedRowData);
   } finally {
     onDemandSuggestionsLoading.value = false;
   }
@@ -206,7 +204,7 @@ async function handleSuggestForSelectedRows() {
  */
 function handleResetRejectedSuggestions() {
   rejectedSuggestions.value = [];
-  setRejectedSuggestions((route.params as { id: string }).id, props.schemaClassName, rejectedSuggestions.value);
+  setRejectedSuggestions(props.submissionId, props.schemaClassName, rejectedSuggestions.value);
 }
 
 /**
