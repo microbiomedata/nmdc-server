@@ -423,9 +423,9 @@ export default class HarmonizerApi {
     return this.schema.slots[slotName];
   }
 
-  isSlotInClass(slotName: string, className: string) {
+  isSlotInClass(slotName: string, className: string): boolean {
     const classAttributes = this.schema.classes?.[className]?.attributes;
-    return classAttributes && slotName in classAttributes;
+    return !!classAttributes && slotName in classAttributes;
   }
 
   getSlotRank(slotName: string, className: string) {
