@@ -1070,6 +1070,31 @@ async def get_bulk_download_data_object_to_biosamples_map(
 
 
 @router.get(
+    "/bulk_download/{bulk_download_id}/README.md",
+    tags=["download"],
+)
+async def get_bulk_download_readme(
+    bulk_download_id: UUID,
+    db: Session = Depends(get_db),
+):
+    r"""
+    Return a static README.md file that explains the contents of the bulk download
+    and provides instructions for how to use the data and metadata.
+
+    This endpoint is called by ZipStreamer when it builds the zip archive, so it
+    intentionally does **not** check the `expired` flag on the bulk download.
+    """
+    bulk_download = db.get(models.BulkDownload, bulk_download_id)  # type: ignore[attr-defined]
+    if bulk_download is None:
+        raise HTTPException(status_code=404, detail="Bulk download not found")
+
+    readme_path = resources.files("nmdc_server") / "bulk_download_readme.md"
+    readme_content = readme_path.read_text(encoding="utf-8")
+
+    return Response(content=readme_content, media_type="text/markdown")
+
+
+@router.get(
     "/bulk_download/{bulk_download_id}",
     tags=["download"],
 )
