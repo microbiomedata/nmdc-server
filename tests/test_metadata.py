@@ -1,7 +1,7 @@
 from nmdc_server.metadata import ElevationSuggester
 
 
-def test_sample_metadata_suggester_elevation():
+def test_elevation_suggester():
     suggester = ElevationSuggester()
 
     # Test with valid lat_lon
