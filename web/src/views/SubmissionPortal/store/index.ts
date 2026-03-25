@@ -35,7 +35,6 @@ import {
 import { getPendingSuggestions, setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
 import useRequest from '@/use/useRequest.ts';
-import { getMetadataSuggestionsFromStudyDetails } from './api';
 import HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi.ts';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
@@ -936,7 +935,7 @@ const fetchSuggestionsFromStudyInfoRequest = useRequest();
  */
 async function fetchSuggestionsFromStudyInfo(submissionId: string, allSchemaClassNames: string[], activeSchemaClassName: string, harmonizerApi: HarmonizerApi) {
   return fetchSuggestionsFromStudyInfoRequest.request(async () => {
-    const suggestions = await getMetadataSuggestionsFromStudyDetails(submissionId);
+    const suggestions = await api.getMetadataSuggestionsFromStudyDetails(submissionId);
     for (const schemaClassName of allSchemaClassNames) {
       const suggestionsForClass = getPendingSuggestions(submissionId, schemaClassName);
       suggestions.forEach((suggestion) => {
