@@ -940,7 +940,7 @@ async function fetchSuggestionsFromStudyInfo(submissionId: string, allSchemaClas
       const suggestionsForClass = getPendingSuggestions(submissionId, schemaClassName);
       suggestions.forEach((suggestion) => {
         if (!harmonizerApi.isSlotInClass(suggestion.slot, schemaClassName)) {
-          return
+          return;
         }
         const existingIndex = suggestionsForClass.findIndex(
           (s) => s.row === suggestion.row && s.slot === suggestion.slot && s.type === suggestion.type,
