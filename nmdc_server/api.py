@@ -428,11 +428,50 @@ async def search_biosample_source_metadata(
     return documents
 
 
+class _ChunkBuffer:
+    """
+    A write-only, non-seekable file-like object that accumulates written bytes as a list of
+    chunks. Call `pop_chunks()` to drain and yield the accumulated chunks.
+
+    This is used with `zipfile.ZipFile` in write mode so that we can yield zip bytes
+    incrementally (after each entry is written) rather than buffering the entire archive in
+    memory before sending a single byte to the client.
+
+    Python 3.9+ supports writing to non-seekable streams via `zipfile.ZipFile`. When a stream
+    is not seekable, `zipfile` uses a data-descriptor record after each compressed entry instead
+    of seeking back to patch the local file header — so no `seek()` is needed.
+    """
+
+    def __init__(self) -> None:
+        self._chunks: list[bytes] = []
+
+    def write(self, data: bytes) -> int:
+        self._chunks.append(bytes(data))
+        return len(data)
+
+    def flush(self) -> None:
+        pass
+
+    def seekable(self) -> bool:
+        return False
+
+    def pop_chunks(self) -> list[bytes]:
+        """Return all accumulated chunks and reset the internal buffer."""
+        chunks, self._chunks = self._chunks, []
+        return chunks
+
+
 @router.post("/download_metadata", tags=["bulk_download"])
 async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get_db)):
     """
     Download multiple metadata lists as a zip file given a list of endpoint labels.
     Endpoint labels are mapped to functions that retrieve JSON.
+
+    Uses a `StreamingResponse` so that HTTP headers are sent to the client (and through any
+    reverse proxies) immediately, before any data is fetched. Each endpoint's results are
+    fetched, serialised, and written into the zip one at a time, and the resulting bytes are
+    yielded to the client as they are produced. This keeps peak memory proportional to the
+    largest single endpoint's payload rather than the sum of all payloads.
     """
     endpoint_map = {
         "biosamples": search_biosample_source_metadata,
@@ -442,25 +481,30 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
         "workflow_executions": search_workflow_execution_source_metadata,
     }
 
-    zip_buffer = io.BytesIO()
-
     if not q.endpoints or len(q.endpoints) == 0:
         raise HTTPException(
             status_code=400,
             detail="No endpoints specified for metadata download.",
         )
 
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for endpoint_name in q.endpoints:
-            if endpoint_name in endpoint_map:
-                data = await endpoint_map[endpoint_name](q=q, db=db)
-                json_str = json.dumps(data, indent=2, ensure_ascii=False)
-                zip_file.writestr(f"{endpoint_name}.json", json_str.encode("utf-8"))
+    async def generate_zip():
+        buf = _ChunkBuffer()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+            for endpoint_name in q.endpoints:
+                if endpoint_name in endpoint_map:
+                    data = await endpoint_map[endpoint_name](q=q, db=db)
+                    json_bytes = json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
+                    del data
+                    zf.writestr(f"{endpoint_name}.json", json_bytes)
+                    del json_bytes
+                    for chunk in buf.pop_chunks():
+                        yield chunk
+        # Yield any remaining bytes (central directory + end-of-central-directory record).
+        for chunk in buf.pop_chunks():
+            yield chunk
 
-    zip_buffer.seek(0)
-
-    return Response(
-        content=zip_buffer.getvalue(),
+    return StreamingResponse(
+        generate_zip(),
         media_type="application/zip",
         headers={"Content-Disposition": "attachment; filename=metadata.zip"},
     )
