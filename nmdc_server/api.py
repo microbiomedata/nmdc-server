@@ -463,7 +463,8 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
                     zf.writestr(f"{endpoint_name}.json", json_bytes)
                     del json_bytes
         zip_buffer.seek(0)
-        yield zip_buffer.read()
+        while chunk := zip_buffer.read(settings.zip_streamer_chunk_size_bytes):
+            yield chunk
 
     return StreamingResponse(
         generate_zip(),
