@@ -5,7 +5,7 @@ import zipfile
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
-from typing import IO, Any, Dict, List, Optional, Union, cast
+from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
 import httpx
@@ -427,50 +427,16 @@ async def search_biosample_source_metadata(
     return documents
 
 
-class _ChunkBuffer:
-    """
-    A write-only, non-seekable file-like object that accumulates written bytes as a list of
-    chunks. Call `pop_chunks()` to drain and yield the accumulated chunks.
-
-    This is used with `zipfile.ZipFile` in write mode so that we can yield zip bytes
-    incrementally (after each entry is written) rather than buffering the entire archive in
-    memory before sending a single byte to the client.
-
-    Python 3.9+ supports writing to non-seekable streams via `zipfile.ZipFile`. When a stream
-    is not seekable, `zipfile` uses a data-descriptor record after each compressed entry instead
-    of seeking back to patch the local file header — so no `seek()` is needed.
-    """
-
-    def __init__(self) -> None:
-        self._chunks: list[bytes] = []
-
-    def write(self, data: bytes) -> int:
-        self._chunks.append(bytes(data))
-        return len(data)
-
-    def flush(self) -> None:
-        pass
-
-    def seekable(self) -> bool:
-        return False
-
-    def pop_chunks(self) -> list[bytes]:
-        """Return all accumulated chunks and reset the internal buffer."""
-        chunks, self._chunks = self._chunks, []
-        return chunks
-
-
 @router.post("/download_metadata", tags=["bulk_download"])
 async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get_db)):
     """
     Download multiple metadata lists as a zip file given a list of endpoint labels.
     Endpoint labels are mapped to functions that retrieve JSON.
 
-    Uses a `StreamingResponse` so that HTTP headers are sent to the client (and through any
-    reverse proxies) immediately, before any data is fetched. Each endpoint's results are
-    fetched, serialised, and written into the zip one at a time, and the resulting bytes are
-    yielded to the client as they are produced. This keeps peak memory proportional to the
-    largest single endpoint's payload rather than the sum of all payloads.
+    Uses a `StreamingResponse` so that FastAPI sends the HTTP response headers to the
+    client (and through any reverse proxies) immediately when this handler returns, before
+    the generator body begins executing. This prevents proxies from timing out or closing
+    the connection while waiting for response headers during a slow build of a large archive.
     """
     endpoint_map = {
         "biosamples": search_biosample_source_metadata,
@@ -487,8 +453,8 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
         )
 
     async def generate_zip():
-        buf = _ChunkBuffer()
-        with zipfile.ZipFile(cast(IO[bytes], buf), "w", zipfile.ZIP_DEFLATED) as zf:
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
             for endpoint_name in q.endpoints:
                 if endpoint_name in endpoint_map:
                     data = await endpoint_map[endpoint_name](q=q, db=db)
@@ -496,11 +462,8 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
                     del data
                     zf.writestr(f"{endpoint_name}.json", json_bytes)
                     del json_bytes
-                    for chunk in buf.pop_chunks():
-                        yield chunk
-        # Yield any remaining bytes (central directory + end-of-central-directory record).
-        for chunk in buf.pop_chunks():
-            yield chunk
+        zip_buffer.seek(0)
+        yield zip_buffer.read()
 
     return StreamingResponse(
         generate_zip(),
