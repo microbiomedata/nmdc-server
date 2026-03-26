@@ -1,12 +1,11 @@
 import csv
-import io
 import json
 import time
 import zipfile
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, StringIO
-from typing import Any, Dict, List, Optional, Union
+from typing import IO, Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
 import httpx
@@ -489,7 +488,7 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
 
     async def generate_zip():
         buf = _ChunkBuffer()
-        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        with zipfile.ZipFile(cast(IO[bytes], buf), "w", zipfile.ZIP_DEFLATED) as zf:
             for endpoint_name in q.endpoints:
                 if endpoint_name in endpoint_map:
                     data = await endpoint_map[endpoint_name](q=q, db=db)
