@@ -4,7 +4,7 @@ import time
 import zipfile
 from enum import StrEnum
 from importlib import resources
-from io import BytesIO, StringIO
+from io import BytesIO, RawIOBase, StringIO
 from typing import Any, Dict, List, Optional, Union
 from uuid import UUID, uuid4
 
@@ -406,7 +406,7 @@ async def get_biosample_source_metadata(biosample_id: str):
     return source_biosample
 
 
-class _StreamingBuffer:
+class _StreamingBuffer(RawIOBase):
     """
     A non-seekable, write-only buffer used to stream a ZIP archive incrementally.
 
@@ -423,12 +423,13 @@ class _StreamingBuffer:
     """
 
     def __init__(self) -> None:
+        super().__init__()
         self._buf: bytearray = bytearray()
 
     # file-like interface expected by zipfile
-    def write(self, data: bytes) -> int:
-        self._buf.extend(data)
-        return len(data)
+    def write(self, b: bytes | bytearray | memoryview) -> int:  # type: ignore[override]
+        self._buf.extend(b)
+        return len(b)
 
     def seekable(self) -> bool:
         return False
@@ -436,8 +437,8 @@ class _StreamingBuffer:
     def readable(self) -> bool:
         return False
 
-    def flush(self) -> None:
-        pass
+    def writable(self) -> bool:
+        return True
 
     # drain interface for the async generator
     def drain(self) -> bytes:
