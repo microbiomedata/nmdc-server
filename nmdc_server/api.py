@@ -1,5 +1,4 @@
 import csv
-import io
 import json
 import time
 import zipfile
@@ -433,6 +432,11 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
     """
     Download multiple metadata lists as a zip file given a list of endpoint labels.
     Endpoint labels are mapped to functions that retrieve JSON.
+
+    Uses a `StreamingResponse` so that FastAPI sends the HTTP response headers to the
+    client (and through any reverse proxies) immediately when this handler returns, before
+    the generator body begins executing. This prevents proxies from timing out or closing
+    the connection while waiting for response headers during a slow build of a large archive.
     """
     endpoint_map = {
         "biosamples": search_biosample_source_metadata,
@@ -442,25 +446,28 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
         "workflow_executions": search_workflow_execution_source_metadata,
     }
 
-    zip_buffer = io.BytesIO()
-
     if not q.endpoints or len(q.endpoints) == 0:
         raise HTTPException(
             status_code=400,
             detail="No endpoints specified for metadata download.",
         )
 
-    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-        for endpoint_name in q.endpoints:
-            if endpoint_name in endpoint_map:
-                data = await endpoint_map[endpoint_name](q=q, db=db)
-                json_str = json.dumps(data, indent=2, ensure_ascii=False)
-                zip_file.writestr(f"{endpoint_name}.json", json_str.encode("utf-8"))
+    async def generate_zip():
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+            for endpoint_name in q.endpoints:
+                if endpoint_name in endpoint_map:
+                    data = await endpoint_map[endpoint_name](q=q, db=db)
+                    json_bytes = json.dumps(data, indent=2, ensure_ascii=False).encode("utf-8")
+                    del data
+                    zf.writestr(f"{endpoint_name}.json", json_bytes)
+                    del json_bytes
+        zip_buffer.seek(0)
+        while chunk := zip_buffer.read(settings.zip_streamer_chunk_size_bytes):
+            yield chunk
 
-    zip_buffer.seek(0)
-
-    return Response(
-        content=zip_buffer.getvalue(),
+    return StreamingResponse(
+        generate_zip(),
         media_type="application/zip",
         headers={"Content-Disposition": "attachment; filename=metadata.zip"},
     )
