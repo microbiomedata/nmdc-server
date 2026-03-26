@@ -2,7 +2,7 @@ import re
 from collections import defaultdict
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Type, TypeVar, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Type, TypeVar, cast
 from uuid import UUID
 
 from fastapi import HTTPException, status
@@ -513,10 +513,18 @@ def get_data_object_documents_by_ids(db: Session, ids_list: list[str]) -> list[d
 
 
 def get_documents_by_biosample_ids(
-    db: Session, biosample_ids_list: list[str], high_level_type: str
-) -> list[dict]:
+    db: Session,
+    biosample_ids_list: list[str],
+    high_level_type: str,
+    batch_size: int = 1000,
+) -> Iterator[dict]:
     """
-    Get all documents of type, `high_level_type`, related to any of the specified `Biosample`s.
+    Yield documents of type, `high_level_type`, related to any of the specified `Biosample`s.
+
+    Results are streamed from the database in batches of `batch_size` rows using a server-side
+    cursor (`stream_results=True` / `yield_per`), so the full result set is never held in memory
+    at once.  This is important for high-volume types such as `nmdc:WorkflowExecution` whose
+    result sets can exceed 1 GB.
 
     Note: We don't bother using `DISTINCT`, since `overlap` is only evaluated _once_ per row of the
     table (even if multiple specified `Biosample` `id`s overlap the `biosample_ids` on that
@@ -533,9 +541,10 @@ def get_documents_by_biosample_ids(
         .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
         .where(models.BiosampleRelatedDocument.high_level_type == high_level_type)
         .order_by(models.BiosampleRelatedDocument.id)
+        .execution_options(yield_per=batch_size)
     )
-    rows = db.execute(statement).all()
-    return [row[0] for row in rows]
+    for row in db.execute(statement):
+        yield row[0]
 
 
 # principal investigator

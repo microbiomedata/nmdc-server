@@ -571,14 +571,6 @@ async function getBiosampleSource(id: string): Promise<BiosampleResultFromSource
   return data;
 }
 
-async function searchBiosampleSource(conditions: Condition[]) {
-  const { data } = await client.post<string[]>(
-    `biosample/search/source_metadata`,
-    { conditions }
-  );
-  return data;
-}
-
 async function getMetadataZip(conditions: Condition[], endpoints: string[]) {
   const { data } = await client.post<Blob>(
     `download_metadata`,
@@ -1027,7 +1019,6 @@ const api = {
   getGoldEcosystemTree,
   me,
   searchBiosample,
-  searchBiosampleSource,
   searchOmicsProcessing,
   searchStudy,
   searchReadsQC,
