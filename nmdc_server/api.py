@@ -35,7 +35,7 @@ from nmdc_server.data_object_filters import WorkflowActivityTypeEnum
 from nmdc_server.database import get_db
 from nmdc_server.ingest.envo import nested_envo_trees
 from nmdc_server.logger import get_logger
-from nmdc_server.metadata import SampleMetadataSuggester
+from nmdc_server.metadata import SampleMetadataSuggester, get_sample_metadata_suggester
 from nmdc_server.models import (
     SubmissionEditorRole,
     SubmissionImagesObject,
@@ -2013,33 +2013,47 @@ async def submit_metadata(
 
 
 @router.post(
+    "/metadata_submission/{id}/study-suggest",
+    tags=["metadata_submission"],
+    responses=login_required_responses,
+)
+async def suggest_meta_from_study(
+    id: str,
+    db: Session = Depends(get_db),
+    suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
+    user: models.User = Depends(get_current_user),
+) -> List[schemas_submission.MetadataSuggestion]:
+    submission_model = get_submission_for_user(
+        db,
+        id,
+        user,
+        allowed_roles=[
+            SubmissionEditorRole.owner,
+            SubmissionEditorRole.editor,
+            SubmissionEditorRole.metadata_contributor,
+        ],
+    )
+    submission = schemas_submission.SubmissionMetadataSchema.model_validate(submission_model)
+    return suggester.get_suggestions_from_study_information(submission)
+
+
+@router.post(
     "/metadata_submission/suggest",
     tags=["metadata_submission"],
     responses=login_required_responses,
 )
 async def suggest_metadata(
     body: List[schemas_submission.MetadataSuggestionRequest],
-    suggester: SampleMetadataSuggester = Depends(SampleMetadataSuggester),
+    suggester: SampleMetadataSuggester = Depends(get_sample_metadata_suggester),
     types: Union[List[schemas_submission.MetadataSuggestionType], None] = Query(None),
     user: models.User = Depends(get_current_user),
 ) -> List[schemas_submission.MetadataSuggestion]:
     response: List[schemas_submission.MetadataSuggestion] = []
     for item in body:
         suggestions = suggester.get_suggestions(item.data, types=types)
-        for slot, value in suggestions.items():
-            response.append(
-                schemas_submission.MetadataSuggestion(
-                    type=(
-                        schemas_submission.MetadataSuggestionType.REPLACE
-                        if slot in item.data
-                        else schemas_submission.MetadataSuggestionType.ADD
-                    ),
-                    row=item.row,
-                    slot=slot,
-                    value=value,
-                    current_value=item.data.get(slot, None),
-                )
-            )
+        for suggestion in suggestions:
+            suggestion.row = item.row
+            response.append(suggestion)
     return response
 
 

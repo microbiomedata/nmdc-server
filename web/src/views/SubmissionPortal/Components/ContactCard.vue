@@ -1,62 +1,60 @@
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script setup lang="ts">
+
+export interface ContactCardProps {
+  /**
+   * The elevation of the card.
+   */
+  elevation?: string;
+}
 
 type EmailSubjects = 'support' | 'bug' | 'feature';
 
-export default defineComponent({
-  props: {
-    elevation: {
-      type: String,
-      default: '24',
-    },
-  },
-  setup() {
-    function emailTemplate(value: EmailSubjects) {
-      const subjects: { [_key in EmailSubjects]: string } = {
-        support: 'Support Request',
-        bug: 'Bug Report',
-        feature: 'Feature Request',
-      };
-      const subject = encodeURIComponent(subjects[value]);
-      return `mailto:support@microbiomedata.org?subject=${subject}`;
-    }
-
-    const items = [
-      {
-        title: 'Visit our support page',
-        icon: 'mdi-open-in-new',
-        color: 'primary',
-        link: 'https://microbiomedata.org/contact/',
-      },
-      {
-        title: 'Send us a message',
-        subtitle: 'Ask us for help',
-        icon: 'mdi-email',
-        color: 'blue',
-        link: emailTemplate('support'),
-      },
-      {
-        title: 'Report an issue',
-        subtitle: 'Let us know of any bugs',
-        icon: 'mdi-bug',
-        color: 'red',
-        link: emailTemplate('bug'),
-      },
-      {
-        title: 'Request a feature',
-        subtitle: 'Suggest a new feature',
-        icon: 'mdi-plus-circle',
-        color: 'grey-darken-2',
-        link: emailTemplate('feature'),
-      }
-    ]
-
-    return {
-      items,
-    };
-  },
+withDefaults(defineProps<ContactCardProps>(), {
+  elevation: '24',
 });
+
+
+function emailTemplate(value: EmailSubjects) {
+  const subjects: { [_key in EmailSubjects]: string } = {
+    support: 'Support Request',
+    bug: 'Bug Report',
+    feature: 'Feature Request',
+  };
+  const subject = encodeURIComponent(subjects[value]);
+  return `mailto:support@microbiomedata.org?subject=${subject}`;
+}
+
+const items = [
+  {
+    title: 'Visit our support page',
+    icon: 'mdi-open-in-new',
+    color: 'primary',
+    link: 'https://microbiomedata.org/contact/',
+  },
+  {
+    title: 'Send us a message',
+    subtitle: 'Ask us for help',
+    icon: 'mdi-email',
+    color: 'blue',
+    link: emailTemplate('support'),
+  },
+  {
+    title: 'Report an issue',
+    subtitle: 'Let us know of any bugs',
+    icon: 'mdi-bug',
+    color: 'red',
+    link: emailTemplate('bug'),
+  },
+  {
+    title: 'Request a feature',
+    subtitle: 'Suggest a new feature',
+    icon: 'mdi-plus-circle',
+    color: 'grey-darken-2',
+    link: emailTemplate('feature'),
+  }
+];
 </script>
+
 <template>
   <v-card
     :elevation="elevation"

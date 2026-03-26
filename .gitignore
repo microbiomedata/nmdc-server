@@ -11,3 +11,9 @@ vetur.config.js
 build/**
 data/**
 .DS_Store
+.agents
+
+# Ignore all files in the auth directory except for the README.md file.
+# **DO NOT** add additional exclusions here unless they have already been discussed and approved by the team.
+auth/*
+!auth/README.md

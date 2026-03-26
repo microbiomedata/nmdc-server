@@ -1,5 +1,5 @@
-<script lang="ts">
-import { computed, defineComponent, inject, nextTick, onMounted, ref, watch } from 'vue';
+<script setup lang="ts">
+import { computed, inject, nextTick, onMounted, ref, watch } from 'vue';
 import { useTimeoutFn } from '@vueuse/core';
 import { clamp, debounce, flattenDeep, has, isEqual, sum } from 'lodash';
 import { read, utils, writeFile } from 'xlsx';
@@ -24,7 +24,7 @@ import { stateRefs } from '@/store';
 import { getPendingSuggestions } from '@/store/localStorage';
 import HarmonizerApi from './harmonizerApi';
 import {
-  addMetadataSuggestions,
+  fetchSuggestionsFromSampleRows,
   canEditSampleMetadata,
   canEditSubmissionByStatus,
   hasChanged,
@@ -35,7 +35,6 @@ import {
   isTestSubmission,
   mergeSampleData,
   metadataSuggestions,
-  packageName,
   resetSampleMetadataValidation,
   sampleData,
   setTabInvalidCells,
@@ -45,6 +44,8 @@ import {
   suggestionMode,
   templateList,
   validationState,
+  packageName,
+  fetchSuggestionsFromStudyInfo,
 } from './store';
 import { AppBannerHeightKey } from './SubmissionView.vue';
 import SubmissionNavigationSidebar from './Components/SubmissionNavigationSidebar.vue';
@@ -52,6 +53,7 @@ import SubmissionDocsLink from './Components/SubmissionDocsLink.vue';
 import SubmissionPermissionBanner from './Components/SubmissionPermissionBanner.vue';
 import StatusAlert from './Components/StatusAlert.vue';
 import SaveErrorSnackbar from '@/views/SubmissionPortal/Components/SaveErrorSnackbar.vue';
+import { DH_EMPTY_CELL, DH_INVALID_CELL, DH_RECOMMENDED, DH_REQUIRED } from '@/views/SubmissionPortal/colors.ts';
 
 interface ValidationErrors {
   [error: string]: [number, number][],
@@ -60,19 +62,19 @@ interface ValidationErrors {
 const ColorKey = {
   required: {
     label: 'Required field',
-    color: 'yellow',
+    color: DH_REQUIRED,
   },
   recommended: {
     label: 'Recommended field',
-    color: 'plum',
+    color: DH_RECOMMENDED,
   },
   invalidCell: {
     label: 'Invalid cell',
-    color: '#ffcccb',
+    color: DH_INVALID_CELL,
   },
   emptyCell: {
     label: 'Empty invalid cell',
-    color: '#ff91a4',
+    color: DH_EMPTY_CELL,
   },
 };
 
@@ -105,100 +107,84 @@ const ALWAYS_READ_ONLY_COLUMNS = [
   'jgi_proposal_id',
 ];
 
-export default defineComponent({
-  components: {
-    SaveErrorSnackbar,
-    HarmonizerSidebar,
-    SubmissionNavigationSidebar,
-    SubmissionDocsLink,
-    SubmissionPermissionBanner,
-    StatusAlert,
-  },
+const props = defineProps<{
+  id: string,
+}>();
 
-  props: {
-    id: {
-      type: String,
-      required: true,
-    },
-  },
+const harmonizerApi = new HarmonizerApi();
+const jumpToModel = ref();
+const highlightedValidationError = ref(0);
+const validationActiveCategory = ref('All Errors');
+const columnVisibility = ref('all');
+const sidebarOpen = ref(true);
 
-  setup(props) {
-    const { user } = stateRefs;
+const activeTemplateKey = ref(templateList.value[0]);
+const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value!]);
+const activeTabIndex = ref(0);
+const activeTemplateData = computed(() => {
+  if (!activeTemplate.value?.sampleDataSlot) {
+    return [];
+  }
+  return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
+});
+const hasValidSampleEnvironmentSelection = computed(() => isEqual(validationState.sampleEnvironmentForm, []));
+const hasValidUserFacilitySelection = computed(() => isEqual(validationState.multiOmicsForm, []));
+const tabsValidated = computed(() => validationState.sampleMetadata?.tabsValidated || {});
 
-    const harmonizerElement = ref();
-    const harmonizerApi = new HarmonizerApi();
-    const jumpToModel = ref();
-    const highlightedValidationError = ref(0);
-    const validationActiveCategory = ref('All Errors');
-    const columnVisibility = ref('all');
-    const sidebarOpen = ref(true);
+const submitDialog = ref(false);
 
-    const activeTemplateKey = ref(templateList.value[0]);
-    const activeTemplate = ref(HARMONIZER_TEMPLATES[activeTemplateKey.value!]);
-    const activeTabIndex = ref(0);
-    const activeTemplateData = computed(() => {
-      if (!activeTemplate.value?.sampleDataSlot) {
-        return [];
+const validationSuccessSnackbar = ref(false);
+const importErrorSnackbar = ref(false);
+const notImportedWorksheetNames = ref([] as string[]);
+const emptySheetSnackbar = ref(false);
+
+watch(activeTemplate, () => {
+  // WARNING: It's important to do the column settings update /before/ data. Otherwise,
+  // columns will not be rendered with the correct width.
+  harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
+
+  // If the environment tab selected is a mixin it should be readonly
+  const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'mixin');
+  if (environmentList.includes(activeTemplateKey.value!)) {
+    harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
+    harmonizerApi.setMaxRows(activeTemplateData.value.length);
+  }
+  harmonizerApi.loadData(activeTemplateData.value);
+  harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
+  harmonizerApi.changeVisibility(columnVisibility.value);
+});
+
+const validationErrors = computed(() => {
+  const remapped: ValidationErrors = {};
+  const invalid: Record<number, Record<number, string>> = validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {};
+  if (Object.keys(invalid).length) {
+    remapped['All Errors'] = [];
+  }
+  Object.entries(invalid).forEach(([row, rowErrors]) => {
+    Object.entries(rowErrors).forEach(([col, errorText]) => {
+      const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
+      const issue = errorText || 'Other Validation Error';
+      if (has(remapped, issue)) {
+        remapped[issue]?.push(entry);
+      } else {
+        remapped[issue] = [entry];
       }
-      return sampleData.value[activeTemplate.value.sampleDataSlot] || [];
+      remapped['All Errors']?.push(entry);
     });
-    const hasValidSampleEnvironmentSelection = computed(() => isEqual(validationState.sampleEnvironmentForm, []));
-    const hasValidUserFacilitySelection = computed(() => isEqual(validationState.multiOmicsForm, []));
+  });
+  return remapped;
+});
 
-    const submitDialog = ref(false);
+const validationErrorGroups = computed(() => Object.keys(validationErrors.value));
 
-    const validationSuccessSnackbar = ref(false);
-    const importErrorSnackbar = ref(false);
-    const notImportedWorksheetNames = ref([] as string[]);
-    const emptySheetSnackbar = ref(false);
+const validationTotalCounts = computed(() => Object.fromEntries(
+  Object.entries(validationState.sampleMetadata?.invalidCells || {}).map(([template, cells]) => ([
+    template,
+    sum(Object.values(cells).map((row) => Object.keys(row).length)),
+  ])),
+));
 
-    watch(activeTemplate, () => {
-      // WARNING: It's important to do the column settings update /before/ data. Otherwise,
-      // columns will not be rendered with the correct width.
-      harmonizerApi.setColumnsReadOnly(ALWAYS_READ_ONLY_COLUMNS);
-
-      // If the environment tab selected is a mixin it should be readonly
-      const environmentList = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'mixin');
-      if (environmentList.includes(activeTemplateKey.value!)) {
-        harmonizerApi.setColumnsReadOnly(COMMON_COLUMNS);
-        harmonizerApi.setMaxRows(activeTemplateData.value.length);
-      }
-      harmonizerApi.loadData(activeTemplateData.value);
-      harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
-      harmonizerApi.changeVisibility(columnVisibility.value);
-    });
-
-    const validationErrors = computed(() => {
-      const remapped: ValidationErrors = {};
-      const invalid: Record<number, Record<number, string>> = validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {};
-      if (Object.keys(invalid).length) {
-        remapped['All Errors'] = [];
-      }
-      Object.entries(invalid).forEach(([row, rowErrors]) => {
-        Object.entries(rowErrors).forEach(([col, errorText]) => {
-          const entry: [number, number] = [parseInt(row, 10), parseInt(col, 10)];
-          const issue = errorText || 'Other Validation Error';
-          if (has(remapped, issue)) {
-            remapped[issue]?.push(entry);
-          } else {
-            remapped[issue] = [entry];
-          }
-          remapped['All Errors']?.push(entry);
-        });
-      });
-      return remapped;
-    });
-
-    const validationErrorGroups = computed(() => Object.keys(validationErrors.value));
-
-    const validationTotalCounts = computed(() => Object.fromEntries(
-      Object.entries(validationState.sampleMetadata?.invalidCells || {}).map(([template, cells]) => ([
-        template,
-        sum(Object.values(cells).map((row) => Object.keys(row).length)),
-      ])),
-    ));
-
-    const saveRecord = () => incrementalSaveRecord(props.id);
+const saveRecord = () => incrementalSaveRecord(props.id);
     // Count is incremented on successful saves. We use a separate ref for showing the success message because we want
     // to not show it when this view first mounts (based on saves that may have happened in other views). And we want
     // to be able to hide it after a delay.
@@ -211,529 +197,483 @@ export default defineComponent({
       startHideSuccessMessageTimer();
     });
 
-    let changeBatch: any[] = [];
-    const debouncedSuggestionRequest = debounce(async () => {
-      const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
-      await addMetadataSuggestions(props.id, activeTemplate.value?.schemaClass!, changedRowData);
-      changeBatch = [];
-    }, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
+let changeBatch: any[] = [];
+const debouncedSuggestionRequest = debounce(async () => {
+  const changedRowData = harmonizerApi.getDataByRows(changeBatch.map((change) => change[0]));
+  await fetchSuggestionsFromSampleRows(props.id, activeTemplate.value?.schemaClass!, changedRowData);
+  changeBatch = [];
+}, SUGGESTION_REQUEST_DELAY, { leading: false, trailing: true });
 
-    watch(suggestionMode, () => {
-      // If live suggestions are disabled, clear the queue and cancel the timer
-      if (suggestionMode.value !== SuggestionsMode.LIVE) {
-        changeBatch = [];
-        debouncedSuggestionRequest.cancel();
+watch(suggestionMode, () => {
+  // If live suggestions are disabled, clear the queue and cancel the timer
+  if (suggestionMode.value !== SuggestionsMode.LIVE) {
+    changeBatch = [];
+    debouncedSuggestionRequest.cancel();
+  }
+});
+
+function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
+  const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
+  if (environmentKeys.includes(templateKey)) {
+    return true;
+  }
+  const row_types = row[TYPE_FIELD];
+  if (!row_types) {
+    return false;
+  }
+  if (templateKey === EMSL) {
+    return row_types.includes('lipidomics')
+      || row_types.includes('metaproteomics')
+      || row_types.includes('metabolomics')
+      || row_types.includes('natural organic matter');
+  }
+  if (templateKey === JGI_MG) {
+    return row_types.includes('metagenomics');
+  }
+  if (templateKey === JGI_MG_LR) {
+    return row_types.includes('metagenomics_long_read');
+  }
+  if (templateKey === JGI_MT) {
+    return row_types.includes('metatranscriptomics');
+  }
+  if (templateKey === DATA_MG) {
+    return row_types.includes('metagenomics');
+  }
+  if (templateKey === DATA_MG_INTERLEAVED) {
+    return row_types.includes('metagenomics');
+  }
+  if (templateKey === DATA_MT) {
+    return row_types.includes('metatranscriptomics');
+  }
+  if (templateKey === DATA_MT_INTERLEAVED) {
+    return row_types.includes('metatranscriptomics');
+  }
+  return false;
+}
+
+// DataHarmonizer is a bit loose in its definition of empty cells. They can be null or and empty string.
+const isNonEmpty = (val: any) => val !== null && val !== '';
+
+function synchronizeTabData(templateKey: string) {
+  const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
+  if (environmentKeys.includes(templateKey)) {
+    return;
+  }
+  const nextData = { ...sampleData.value };
+  const templateSlot = HARMONIZER_TEMPLATES[templateKey]?.sampleDataSlot;
+
+  const environmentSlots = templateList.value
+    .filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published')
+    .map((t) => HARMONIZER_TEMPLATES[t]?.sampleDataSlot);
+
+  if (!templateSlot || !environmentSlots) {
+    return;
+  }
+
+  // ensure the necessary keys exist in the data object
+  environmentSlots.forEach((slot) => {
+    if (!nextData[slot as string]) {
+      nextData[slot as string] = [];
+    }
+  });
+
+  if (!nextData[templateSlot]) {
+    nextData[templateSlot] = [];
+  }
+
+  // add/update any rows from the environment tabs to the active tab if they apply and if
+  // they aren't there already.
+  environmentSlots.forEach((environmentSlot) => {
+    nextData[environmentSlot as string]?.forEach((row) => {
+      const rowId = row[SCHEMA_ID];
+
+      const existing = nextData[templateSlot] && nextData[templateSlot].find((r) => r[SCHEMA_ID] === rowId);
+      if (!existing && rowIsVisibleForTemplate(row, templateKey)) {
+        const newRow = {} as Record<string, any>;
+        COMMON_COLUMNS.forEach((col) => {
+          newRow[col] = row[col];
+        });
+        nextData[templateSlot]?.push(newRow);
+        //update validation status for the tab, if data changed it needs to be revalidated
+        setTabValidated(templateKey, false);
+      }
+      if (existing) {
+        COMMON_COLUMNS.forEach((col) => {
+          existing[col] = row[col];
+        });
+        //update validation status for the tab, if data changed it needs to be revalidated
+        setTabValidated(templateKey, false);
       }
     });
-
-    function rowIsVisibleForTemplate(row: Record<string, any>, templateKey: string) {
-      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
-      if (environmentKeys.includes(templateKey)) {
-        return true;
-      }
-      const row_types = row[TYPE_FIELD];
-      if (!row_types) {
+  });
+  // remove any rows from the active tab if they were removed from the environment tabs
+  // or no longer apply to the active tab
+  if (nextData[templateSlot].length > 0) {
+    nextData[templateSlot] = nextData[templateSlot].filter((row) => {
+      if (!rowIsVisibleForTemplate(row, templateKey)) {
         return false;
       }
-      if (templateKey === EMSL) {
-        return row_types.includes('lipidomics')
-          || row_types.includes('metaproteomics')
-          || row_types.includes('metabolomics')
-          || row_types.includes('natural organic matter');
-      }
-      if (templateKey === JGI_MG) {
-        return row_types.includes('metagenomics');
-      }
-      if (templateKey === JGI_MG_LR) {
-        return row_types.includes('metagenomics_long_read');
-      }
-      if (templateKey === JGI_MT) {
-        return row_types.includes('metatranscriptomics');
-      }
-      if (templateKey === DATA_MG) {
-        return row_types.includes('metagenomics');
-      }
-      if (templateKey === DATA_MG_INTERLEAVED) {
-        return row_types.includes('metagenomics');
-      }
-      if (templateKey === DATA_MT) {
-        return row_types.includes('metatranscriptomics');
-      }
-      if (templateKey === DATA_MT_INTERLEAVED) {
-        return row_types.includes('metatranscriptomics');
-      }
-      return false;
-    }
-
-    // DataHarmonizer is a bit loose in its definition of empty cells. They can be null or and empty string.
-    const isNonEmpty = (val: any) => val !== null && val !== '';
-
-    function synchronizeTabData(templateKey: string) {
-      const environmentKeys = templateList.value.filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published');
-      if (environmentKeys.includes(templateKey)) {
-        return;
-      }
-      const nextData = { ...sampleData.value };
-      const templateSlot = HARMONIZER_TEMPLATES[templateKey]?.sampleDataSlot;
-
-      const environmentSlots = templateList.value
-        .filter((t) => HARMONIZER_TEMPLATES[t]?.status === 'published')
-        .map((t) => HARMONIZER_TEMPLATES[t]?.sampleDataSlot);
-
-      if (!templateSlot || !environmentSlots) {
-        return;
-      }
-
-      // ensure the necessary keys exist in the data object
-      environmentSlots.forEach((slot) => {
-        if (!nextData[slot as string]) {
-          nextData[slot as string] = [];
-        }
+      //update validation status for the tab, if data changed it needs to be revalidated
+      setTabValidated(templateKey, false);
+      const rowId = row[SCHEMA_ID];
+      return environmentSlots.some((environmentSlot) => {
+        const environmentRow = nextData[environmentSlot as string]?.findIndex((r) => r[SCHEMA_ID] === rowId);
+        return environmentRow !== undefined && environmentRow >= 0;
       });
-
-      if (!nextData[templateSlot]) {
-        nextData[templateSlot] = [];
-      }
-
-      // add/update any rows from the environment tabs to the active tab if they apply and if
-      // they aren't there already.
-      environmentSlots.forEach((environmentSlot) => {
-        nextData[environmentSlot as string]?.forEach((row) => {
-          const rowId = row[SCHEMA_ID];
-
-          const existing = nextData[templateSlot] && nextData[templateSlot].find((r) => r[SCHEMA_ID] === rowId);
-          if (!existing && rowIsVisibleForTemplate(row, templateKey)) {
-            const newRow = {} as Record<string, any>;
-            COMMON_COLUMNS.forEach((col) => {
-              newRow[col] = row[col];
-            });
-            nextData[templateSlot]?.push(newRow);
-            //update validation status for the tab, if data changed it needs to be revalidated
-            setTabValidated(templateKey, false);
-          }
-          if (existing) {
-            COMMON_COLUMNS.forEach((col) => {
-              existing[col] = row[col];
-            });
-            //update validation status for the tab, if data changed it needs to be revalidated
-            setTabValidated(templateKey, false);
-          }
-        });
-      });
-      // remove any rows from the active tab if they were removed from the environment tabs
-      // or no longer apply to the active tab
-      if (nextData[templateSlot].length > 0) {
-        nextData[templateSlot] = nextData[templateSlot].filter((row) => {
-          if (!rowIsVisibleForTemplate(row, templateKey)) {
-            return false;
-          }
-          //update validation status for the tab, if data changed it needs to be revalidated
-          setTabValidated(templateKey, false);
-          const rowId = row[SCHEMA_ID];
-          return environmentSlots.some((environmentSlot) => {
-            const environmentRow = nextData[environmentSlot as string]?.findIndex((r) => r[SCHEMA_ID] === rowId);
-            return environmentRow !== undefined && environmentRow >= 0;
-          });
-        });
-      }
-      sampleData.value = nextData;
-    }
-
-    /**
-     * This should be called whenever rows are removed from the data harmonizer.
-     * It ensures that row deletion is cascaded to facility templates from the main
-     * environment templates
-     */
-    const syncAndMergeTabsForRemovedRows = () => {
-      mergeSampleData(
-        activeTemplate.value?.sampleDataSlot,
-        harmonizerApi.exportJson(),
-      );
-      // If there are any sampleDataSlots populated that somehow are missing from
-      // the template list, make sure those data are updated as well.
-      Object.keys(sampleData.value).forEach((key) => {
-        // Loop through keys in the sampleData for the submission. Each
-        // key maps to a template. We have to find that template.
-        const [templateKey, template] = Object.entries(HARMONIZER_TEMPLATES).find(([, template]) => (
-          template?.sampleDataSlot === key
-        )) || [undefined, undefined];
-        if (template && templateKey) {
-          // If we found the template, synchronize the data
-          // Make sure we carry the deletion through to the sampleData
-          // The current tab's data needs to be updated first, then synchronized
-          synchronizeTabData(templateKey);
-        }
-      });
-    };
-
-    const onDataChange = async (changes: any[]) => {
-      // If we're in live suggestion mode and the user can edit the metadata, add the changes to a batch. Once the user
-      // has not made further changes for a certain amount of time, send the batch to the backend for suggestions.
-      if (suggestionMode.value === SuggestionsMode.LIVE && canEditSampleMetadata()) {
-        // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
-        // where either the previous value or updated value (or both) are non-empty.
-        const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
-        changeBatch.push(...nonEmptyChanges);
-        debouncedSuggestionRequest();
-      }
-      // If any changes touched the sample name or analysis/data type columns on an environment
-      // tab, we need to synch those changes to non-active tabs
-      const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value?.schemaClass || '');
-      const shouldSynchronizeTabs = !!changes.find((change) => {
-        const isRelevantColumn = templateOrderedAttrNames[change[1]] === SAMP_NAME || templateOrderedAttrNames[change[1]] === ANALYSIS_TYPE;
-        const isNonemptyChange = isNonEmpty(change[2]) || isNonEmpty(change[3]);
-        return isNonemptyChange && isRelevantColumn;
-      });
-
-      hasChanged.value += 1;
-      if (shouldSynchronizeTabs) {
-        syncAndMergeTabsForRemovedRows();
-      } else {
-        const data = harmonizerApi.exportJson();
-        mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
-      }
-      setTabValidated(activeTemplateKey.value!, false);
-      saveRecord(); // This is a background save that we intentionally don't wait for
-    };
-
-    const { request: schemaRequest, loading: schemaLoading } = useRequest();
-
-    async function jumpTo({ row, column }: { row: number; column: number }) {
-      harmonizerApi.jumpToRowCol(row, column);
-      await nextTick();
-      jumpToModel.value = null;
-    }
-
-    function focus() {
-      window.focus();
-    }
-
-    function errorClick(index: number) {
-      const currentSeries = validationErrors.value[validationActiveCategory.value];
-      highlightedValidationError.value = clamp(index, 0, (currentSeries?.length || 0) - 1);
-      const currentError = currentSeries ? currentSeries[highlightedValidationError.value] : null;
-      if (currentError && currentError[0] !== undefined && currentError[1] !== undefined) {
-        harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
-      }
-    }
-
-    async function validate() {
-      const data = harmonizerApi.exportJson(); // Gets data from harmonizer API
-
-      // Check if the spreadsheet is empty
-      const isEmpty = Object.keys(data).length === 0;
-      // Update invalid cells if empty
-      if (isEmpty) {
-        harmonizerApi.setInvalidCells({});
-        setTabInvalidCells(activeTemplateKey.value!, {});
-        setTabValidated(activeTemplateKey.value!, false);
-        emptySheetSnackbar.value = true;
-        saveRecord(); // This is a background save that we intentionally don't wait for
-        return;
-      }
-
-      mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
-      const result = await harmonizerApi.validate();
-      const valid = Object.keys(result).length === 0;
-      if (!valid && !sidebarOpen.value) {
-        sidebarOpen.value = true;
-      }
-
-      setTabInvalidCells(activeTemplateKey.value!, result);
-      setTabValidated(activeTemplateKey.value!, valid);
-      saveRecord(); // This is a background save that we intentionally don't wait for
-
-      if (valid === false) {
-        errorClick(0);
-      }
-      validationSuccessSnackbar.value = Object.values(validationState.sampleMetadata?.tabsValidated || {}).every((value) => value);
-    }
-
-    const submissionState = computed(() => {
-      const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
-      const canSubmitByStatus = status.value === 'InProgress'
-      const isSubmitted = submitCount.value > 0 || status.value === 'SubmittedPendingReview';
-      let submitDisabledReason: string | null = null;
-      if (!hasSubmitPermission) {
-        submitDisabledReason = 'You do not have permission to submit this record.';
-      } else if (!canSubmitByStatus) {
-        submitDisabledReason = `Submission cannot be made while in status: ${status.value}.`;
-      } else if (!isSubmissionValid()) {
-        submitDisabledReason = 'Some forms contain validation errors.';
-      }
-      return {
-        isSubmitted,
-        submitDisabledReason,
-        canSubmit: submitDisabledReason === null,
-      };
     });
+  }
+  sampleData.value = nextData;
+}
 
-    const handleSubmitClick = () => {
-      if (submissionState.value.canSubmit) {
-        submitDialog.value = true;
-      }
-    };
-
-    const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
-      .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
-        const val = {
-          type: !columnName ? 'subheader' : 'item',
-          text: columnName ? `  ${columnName}` : sectionName,
-          value: {
-            sectionName, columnName, column, row: 0,
-          },
-        };
-        return val;
-      }))));
-
-    const validationItems = computed(() => validationErrorGroups.value.map((errorGroup) => {
-      const errors = validationErrors.value[errorGroup];
-      return {
-        text: `${errorGroup} (${errors?.length})`,
-        value: errorGroup,
-      };
-    }));
-
-    watch(validationActiveCategory, () => errorClick(0));
-    watch(columnVisibility, () => {
-      harmonizerApi.changeVisibility(columnVisibility.value);
-    });
-
-    watch(activeTabIndex, (newIndex) => {
-      changeTemplate(newIndex);
-    });
-
-    const selectedHelpDict = computed(() => {
-      if (harmonizerApi.selectedColumn.value) {
-        return harmonizerApi.getHelp(harmonizerApi.selectedColumn.value);
-      }
-      return null;
-    });
-
-    const { request: submitRequest, loading: submitLoading, count: submitCount } = useRequest();
-    const doSubmit = () => submitRequest(async () => {
-      const data = await harmonizerApi.exportJson();
-      mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
-      await submit(props.id, 'SubmittedPendingReview');
-      submitDialog.value = false;
-    });
-
-    async function downloadSamples() {
-      templateList.value.forEach((templateKey) => {
-        synchronizeTabData(templateKey);
-      });
-
-      const workbook = utils.book_new();
-      templateList.value.forEach((templateKey) => {
-        const template = HARMONIZER_TEMPLATES[templateKey];
-        if (!template?.sampleDataSlot || !template.schemaClass) {
-          return;
-        }
-        const worksheet = utils.json_to_sheet([
-          harmonizerApi.getHeaderRow(template.schemaClass),
-          ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot] || []),
-        ], {
-          skipHeader: true,
-        });
-        utils.book_append_sheet(workbook, worksheet, template.excelWorksheetName || template.displayName);
-      });
-      writeFile(workbook, EXPORT_FILENAME, { compression: true });
+/**
+ * This should be called whenever rows are removed from the data harmonizer.
+ * It ensures that row deletion is cascaded to facility templates from the main
+ * environment templates
+ */
+const syncAndMergeTabsForRemovedRows = () => {
+  mergeSampleData(
+    activeTemplate.value?.sampleDataSlot,
+    harmonizerApi.exportJson(),
+  );
+  // If there are any sampleDataSlots populated that somehow are missing from
+  // the template list, make sure those data are updated as well.
+  Object.keys(sampleData.value).forEach((key) => {
+    // Loop through keys in the sampleData for the submission. Each
+    // key maps to a template. We have to find that template.
+    const [templateKey, template] = Object.entries(HARMONIZER_TEMPLATES).find(([, template]) => (
+      template?.sampleDataSlot === key
+    )) || [undefined, undefined];
+    if (template && templateKey) {
+      // If we found the template, synchronize the data
+      // Make sure we carry the deletion through to the sampleData
+      // The current tab's data needs to be updated first, then synchronized
+      synchronizeTabData(templateKey);
     }
+  });
+};
 
-    function openFile(file: File) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event == null || event.target == null) {
-          return;
-        }
-        const workbook = read(event.target.result);
-        const imported = {} as Record<string, any>;
-        const notImported = [] as string[];
-        Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
-          const template = Object.values(HARMONIZER_TEMPLATES).find((template) => (
-            template.excelWorksheetName === name || template.displayName === name
-          ));
-          const templateSelected = templateList.value.find((selectedTemplate) => {
-            const templateName = HARMONIZER_TEMPLATES[selectedTemplate]?.displayName || '';
-            return (
-              template?.displayName === templateName
-              || template?.excelWorksheetName === templateName
-            );
-          });
-          if (!template || !template.sampleDataSlot || !template.schemaClass || !templateSelected) {
-            notImported.push(name);
-            return;
-          }
+const onDataChange = async (changes: any[]) => {
+  // If we're in live suggestion mode and the user can edit the metadata, add the changes to a batch. Once the user
+  // has not made further changes for a certain amount of time, send the batch to the backend for suggestions.
+  if (suggestionMode.value === SuggestionsMode.LIVE && canEditSampleMetadata()) {
+    // Many "empty" changes can be fired when clearing an entire row or column. We only care about the ones
+    // where either the previous value or updated value (or both) are non-empty.
+    const nonEmptyChanges = changes.filter((change) => isNonEmpty(change[2]) || isNonEmpty(change[3]));
+    changeBatch.push(...nonEmptyChanges);
+    debouncedSuggestionRequest();
+  }
+  // If any changes touched the sample name or analysis/data type columns on an environment
+  // tab, we need to synch those changes to non-active tabs
+  const templateOrderedAttrNames = harmonizerApi.getOrderedAttributeNames(activeTemplate.value?.schemaClass || '');
+  const shouldSynchronizeTabs = !!changes.find((change) => {
+    const isRelevantColumn = templateOrderedAttrNames[change[1]] === SAMP_NAME || templateOrderedAttrNames[change[1]] === ANALYSIS_TYPE;
+    const isNonemptyChange = isNonEmpty(change[2]) || isNonEmpty(change[3]);
+    return isNonemptyChange && isRelevantColumn;
+  });
 
-          // The spreadsheet has slot names as the header row. So `sheet_to_json` will produce array
-          // of objects with slot names as keys. But we want the imported data to be keyed on slot
-          // IDs. This code reads the worksheet data and remaps the keys from slot names to IDs.
-          const slotIdToNameMap = harmonizerApi.getHeaderRow(template.schemaClass);
-          const slotNameToIdMap = Object.fromEntries(Object.entries(slotIdToNameMap).map(([k, v]) => [v, k]));
-          const worksheetData: Record<string, string>[] = utils.sheet_to_json(worksheet);
-          const remappedData = worksheetData.map((row) => Object.fromEntries(Object.entries(row)
-            .filter(([slotName]) => slotNameToIdMap[slotName] !== undefined)
-            .map(([slotName, value]) => [slotNameToIdMap[slotName], value])));
+  hasChanged.value += 1;
+  if (shouldSynchronizeTabs) {
+    syncAndMergeTabsForRemovedRows();
+  } else {
+    const data = harmonizerApi.exportJson();
+    mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
+  }
+  setTabValidated(activeTemplateKey.value!, false);
+  saveRecord(); // This is a background save that we intentionally don't wait for
+};
 
-          imported[template.sampleDataSlot] = harmonizerApi.unflattenArrayValues(
-            remappedData,
-            template.schemaClass,
-          );
-        });
+const { request: schemaRequest, loading: schemaLoading } = useRequest();
 
-        // Alert the user if any worksheets were not imported
-        notImportedWorksheetNames.value = notImported;
-        importErrorSnackbar.value = notImported.length > 0;
+async function jumpTo({ row, column }: { row: number; column: number }) {
+  harmonizerApi.jumpToRowCol(row, column);
+  await nextTick();
+  jumpToModel.value = null;
+}
 
-        // Load imported data
-        sampleData.value = imported;
+function focus() {
+  window.focus();
+}
 
-        // Clear validation state
-        harmonizerApi.setInvalidCells({});
-        resetSampleMetadataValidation();
+function errorClick(index: number) {
+  const currentSeries = validationErrors.value[validationActiveCategory.value];
+  highlightedValidationError.value = clamp(index, 0, (currentSeries?.length || 0) - 1);
+  const currentError = currentSeries ? currentSeries[highlightedValidationError.value] : null;
+  if (currentError && currentError[0] !== undefined && currentError[1] !== undefined) {
+    harmonizerApi.jumpToRowCol(currentError[0], currentError[1]);
+  }
+}
 
-        // Sync with backend
-        hasChanged.value += 1;
-        saveRecord(); // This is a background save that we intentionally don't wait for
+async function validate() {
+  const data = harmonizerApi.exportJson(); // Gets data from harmonizer API
 
-        // Load data for active tab into DataHarmonizer
-        harmonizerApi.loadData(activeTemplateData.value);
-      };
-      reader.readAsArrayBuffer(file);
-    }
+  // Check if the spreadsheet is empty
+  const isEmpty = Object.keys(data).length === 0;
+  // Update invalid cells if empty
+  if (isEmpty) {
+    harmonizerApi.setInvalidCells({});
+    setTabInvalidCells(activeTemplateKey.value!, {});
+    setTabValidated(activeTemplateKey.value!, false);
+    emptySheetSnackbar.value = true;
+    saveRecord(); // This is a background save that we intentionally don't wait for
+    return;
+  }
 
-    /**
-     * Set up the hands on table with appropriate event handlers
-     * for interactions with the Data Harmonizer.
-     */
-    function addHooks() {
-      harmonizerApi.addChangeHook(onDataChange);
-      harmonizerApi.addRowRemovedHook(async () => {
-        syncAndMergeTabsForRemovedRows();
-        hasChanged.value += 1;
-        saveRecord();
-      });
-    }
+  mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
+  const result = await harmonizerApi.validate();
+  const valid = Object.keys(result).length === 0;
+  if (!valid && !sidebarOpen.value) {
+    sidebarOpen.value = true;
+  }
 
-    async function changeTemplate(index: number) {
-      if (!harmonizerApi.ready.value) {
-        return;
-      }
+  setTabInvalidCells(activeTemplateKey.value!, result);
+  setTabValidated(activeTemplateKey.value!, valid);
+  saveRecord(); // This is a background save that we intentionally don't wait for
 
-      await validate();
+  if (valid === false) {
+    errorClick(0);
+  }
+  validationSuccessSnackbar.value = Object.values(validationState.sampleMetadata?.tabsValidated || {}).every((value) => value);
+}
 
-      const nextTemplateKey = templateList.value[index];
-      const nextTemplate = nextTemplateKey ? HARMONIZER_TEMPLATES[nextTemplateKey] : null;
-
-      if (nextTemplate && nextTemplateKey) {
-        // Get the stashed suggestions (if any) for the next template and present them.
-        metadataSuggestions.value = getPendingSuggestions(props.id, nextTemplate.schemaClass!);
-
-        // When changing templates we may need to populate the common columns
-        // from the environment tabs
-        synchronizeTabData(nextTemplateKey);
-        activeTemplateKey.value = nextTemplateKey;
-        activeTemplate.value = nextTemplate;
-        harmonizerApi.useTemplate(nextTemplate.schemaClass);
-        addHooks();
-      }
-    }
-
-    watch(() => canEditSampleMetadata(), (canEdit) => {
-      if (harmonizerApi.ready.value) {
-        if (!canEdit) {
-          harmonizerApi.setTableReadOnly();
-        }
-      }
-    });
-
-    onMounted(async () => {
-      const schemaResults = await schemaRequest(() => Promise.all([
-        api.getSubmissionSchema(),
-        api.getGoldEcosystemTree(),
-      ]));
-      const r = document.getElementById('harmonizer-root');
-      if (r && schemaResults) {
-        const [schema, goldEcosystemTree] = schemaResults;
-        await harmonizerApi.init(r, schema, activeTemplate.value?.schemaClass, goldEcosystemTree);
-        await nextTick();
-        // Load data and invalid cells for the active tab
-        harmonizerApi.loadData(activeTemplateData.value);
-        harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
-        // If the tab has no validation state from the server, mark it as unvalidated
-        if (!validationState.sampleMetadata || !has(validationState.sampleMetadata.tabsValidated, activeTemplateKey.value!)) {
-          setTabValidated(activeTemplateKey.value!, false);
-        }
-        addHooks();
-        metadataSuggestions.value = getPendingSuggestions(props.id, activeTemplate.value?.schemaClass!);
-        if (!canEditSampleMetadata()) {
-          harmonizerApi.setTableReadOnly();
-        }
-      }
-    });
-
-    // Get app banner height provided by SubmissionView. This will be used to correctly size
-    // the DataHarmonizer container, which needs a fixed height.
-    const appBannerHeight = inject(AppBannerHeightKey);
-
-    return {
-      user,
-      APP_HEADER_HEIGHT,
-      appBannerHeight,
-      HELP_SIDEBAR_WIDTH,
-      TABS_HEIGHT,
-      ColorKey,
-      HARMONIZER_TEMPLATES,
-      columnVisibility,
-      harmonizerElement,
-      jumpToModel,
-      harmonizerApi,
-      tabsValidated: validationState.sampleMetadata?.tabsValidated || {},
-      invalidCells: validationState.sampleMetadata?.invalidCells || {},
-      incrementalSaveRecordRequest,
-      submitLoading,
-      submitCount,
-      selectedHelpDict,
-      packageName,
-      fields,
-      highlightedValidationError,
-      sidebarOpen,
-      validationItems,
-      validationActiveCategory,
-      templateList,
-      activeTemplate,
-      activeTemplateKey,
-      activeTabIndex,
-      validationErrors,
-      validationErrorGroups,
-      validationTotalCounts,
-      submitDialog,
-      hasValidSampleEnvironmentSelection,
-      hasValidUserFacilitySelection,
-      validationSuccessSnackbar,
-      schemaLoading,
-      importErrorSnackbar,
-      notImportedWorksheetNames,
-      emptySheetSnackbar,
-      isTestSubmission,
-      StatusAlert,
-      submissionState,
-      isSaveSuccessMessageVisible,
-      /* methods */
-      doSubmit,
-      downloadSamples,
-      errorClick,
-      openFile,
-      focus,
-      jumpTo,
-      validate,
-      changeTemplate,
-      canEditSampleMetadata,
-      canEditSubmissionByStatus,
-      handleSubmitClick,
-    };
-  },
+const submissionState = computed(() => {
+  const hasSubmitPermission = isOwner() || stateRefs.user?.value?.is_admin;
+  const canSubmitByStatus = status.value === 'InProgress'
+  const isSubmitted = submitCount.value > 0 || status.value === 'SubmittedPendingReview';
+  let submitDisabledReason: string | null = null;
+  if (!hasSubmitPermission) {
+    submitDisabledReason = 'You do not have permission to submit this record.';
+  } else if (!canSubmitByStatus) {
+    submitDisabledReason = `Submission cannot be made while in status: ${status.value}.`;
+  } else if (!isSubmissionValid()) {
+    submitDisabledReason = 'Some forms contain validation errors.';
+  }
+  return {
+    isSubmitted,
+    submitDisabledReason,
+    canSubmit: submitDisabledReason === null,
+  };
 });
+
+const handleSubmitClick = () => {
+  if (submissionState.value.canSubmit) {
+    submitDialog.value = true;
+  }
+};
+
+const fields = computed(() => flattenDeep(Object.entries(harmonizerApi.schemaSectionColumns.value)
+  .map(([sectionName, children]) => Object.entries(children).map(([columnName, column]) => {
+    const val = {
+      type: !columnName ? 'subheader' : 'item',
+      text: columnName ? `  ${columnName}` : sectionName,
+      value: {
+        sectionName, columnName, column, row: 0,
+      },
+    };
+    return val;
+  }))));
+
+const validationItems = computed(() => validationErrorGroups.value.map((errorGroup) => {
+  const errors = validationErrors.value[errorGroup];
+  return {
+    text: `${errorGroup} (${errors?.length})`,
+    value: errorGroup,
+  };
+}));
+
+watch(validationActiveCategory, () => errorClick(0));
+watch(columnVisibility, () => {
+  harmonizerApi.changeVisibility(columnVisibility.value);
+});
+
+watch(activeTabIndex, (newIndex) => {
+  changeTemplate(newIndex);
+});
+
+const selectedHelpDict = computed(() => {
+  if (harmonizerApi.selectedColumn.value) {
+    return harmonizerApi.getHelp(harmonizerApi.selectedColumn.value);
+  }
+  return null;
+});
+
+const { request: submitRequest, loading: submitLoading, count: submitCount } = useRequest();
+const doSubmit = () => submitRequest(async () => {
+  const data = await harmonizerApi.exportJson();
+  mergeSampleData(activeTemplate.value?.sampleDataSlot, data);
+  await submit(props.id, 'SubmittedPendingReview');
+  submitDialog.value = false;
+});
+
+async function downloadSamples() {
+  templateList.value.forEach((templateKey) => {
+    synchronizeTabData(templateKey);
+  });
+
+  const workbook = utils.book_new();
+  templateList.value.forEach((templateKey) => {
+    const template = HARMONIZER_TEMPLATES[templateKey];
+    if (!template?.sampleDataSlot || !template.schemaClass) {
+      return;
+    }
+    const worksheet = utils.json_to_sheet([
+      harmonizerApi.getHeaderRow(template.schemaClass),
+      ...HarmonizerApi.flattenArrayValues(sampleData.value[template.sampleDataSlot] || []),
+    ], {
+      skipHeader: true,
+    });
+    utils.book_append_sheet(workbook, worksheet, template.excelWorksheetName || template.displayName);
+  });
+  writeFile(workbook, EXPORT_FILENAME, { compression: true });
+}
+
+function openFile(file: File) {
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    if (event == null || event.target == null) {
+      return;
+    }
+    const workbook = read(event.target.result);
+    const imported = {} as Record<string, any>;
+    const notImported = [] as string[];
+    Object.entries(workbook.Sheets).forEach(([name, worksheet]) => {
+      const template = Object.values(HARMONIZER_TEMPLATES).find((template) => (
+        template.excelWorksheetName === name || template.displayName === name
+      ));
+      const templateSelected = templateList.value.find((selectedTemplate) => {
+        const templateName = HARMONIZER_TEMPLATES[selectedTemplate]?.displayName || '';
+        return (
+          template?.displayName === templateName
+          || template?.excelWorksheetName === templateName
+        );
+      });
+      if (!template || !template.sampleDataSlot || !template.schemaClass || !templateSelected) {
+        notImported.push(name);
+        return;
+      }
+
+      // The spreadsheet has slot names as the header row. So `sheet_to_json` will produce array
+      // of objects with slot names as keys. But we want the imported data to be keyed on slot
+      // IDs. This code reads the worksheet data and remaps the keys from slot names to IDs.
+      const slotIdToNameMap = harmonizerApi.getHeaderRow(template.schemaClass);
+      const slotNameToIdMap = Object.fromEntries(Object.entries(slotIdToNameMap).map(([k, v]) => [v, k]));
+      const worksheetData: Record<string, string>[] = utils.sheet_to_json(worksheet);
+      const remappedData = worksheetData.map((row) => Object.fromEntries(Object.entries(row)
+        .filter(([slotName]) => slotNameToIdMap[slotName] !== undefined)
+        .map(([slotName, value]) => [slotNameToIdMap[slotName], value])));
+
+      imported[template.sampleDataSlot] = harmonizerApi.unflattenArrayValues(
+        remappedData,
+        template.schemaClass,
+      );
+    });
+
+    // Alert the user if any worksheets were not imported
+    notImportedWorksheetNames.value = notImported;
+    importErrorSnackbar.value = notImported.length > 0;
+
+    // Load imported data
+    sampleData.value = imported;
+
+    // Clear validation state
+    harmonizerApi.setInvalidCells({});
+    resetSampleMetadataValidation();
+
+    // Sync with backend
+    hasChanged.value += 1;
+    saveRecord(); // This is a background save that we intentionally don't wait for
+
+    // Load data for active tab into DataHarmonizer
+    harmonizerApi.loadData(activeTemplateData.value);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+/**
+ * Set up the hands on table with appropriate event handlers
+ * for interactions with the Data Harmonizer.
+ */
+function addHooks() {
+  harmonizerApi.addChangeHook(onDataChange);
+  harmonizerApi.addRowRemovedHook(async () => {
+    syncAndMergeTabsForRemovedRows();
+    hasChanged.value += 1;
+    saveRecord();
+  });
+}
+
+async function changeTemplate(index: number) {
+  if (!harmonizerApi.ready.value) {
+    return;
+  }
+
+  await validate();
+
+  const nextTemplateKey = templateList.value[index];
+  const nextTemplate = nextTemplateKey ? HARMONIZER_TEMPLATES[nextTemplateKey] : null;
+
+  if (nextTemplate && nextTemplateKey) {
+    // Get the stashed suggestions (if any) for the next template and present them.
+    metadataSuggestions.value = getPendingSuggestions(props.id, nextTemplate.schemaClass!);
+
+    // When changing templates we may need to populate the common columns
+    // from the environment tabs
+    synchronizeTabData(nextTemplateKey);
+    activeTemplateKey.value = nextTemplateKey;
+    activeTemplate.value = nextTemplate;
+    harmonizerApi.useTemplate(nextTemplate.schemaClass);
+    addHooks();
+  }
+}
+
+async function fetchSuggestionsFromStudyDetails() {
+  if (!activeTemplate.value?.schemaClass) {
+    return [];
+  }
+  const allSchemaClassNames = packageName.value
+    .map((pkg) => HARMONIZER_TEMPLATES[pkg]?.schemaClass)
+    .filter((c) => c !== undefined);
+  return fetchSuggestionsFromStudyInfo(props.id, allSchemaClassNames, activeTemplate.value.schemaClass, harmonizerApi);
+}
+
+watch(() => canEditSampleMetadata(), (canEdit) => {
+  if (harmonizerApi.ready.value) {
+    if (!canEdit) {
+      harmonizerApi.setTableReadOnly();
+    }
+  }
+});
+
+onMounted(async () => {
+  const schemaResults = await schemaRequest(() => Promise.all([
+    api.getSubmissionSchema(),
+    api.getGoldEcosystemTree(),
+  ]));
+  const r = document.getElementById('harmonizer-root');
+  if (r && schemaResults) {
+    const [schema, goldEcosystemTree] = schemaResults;
+    await harmonizerApi.init(r, schema, activeTemplate.value?.schemaClass, goldEcosystemTree);
+    await nextTick();
+    // Load data and invalid cells for the active tab
+    harmonizerApi.loadData(activeTemplateData.value);
+    harmonizerApi.setInvalidCells(validationState.sampleMetadata?.invalidCells[activeTemplateKey.value!] || {});
+    // If the tab has no validation state from the server, mark it as unvalidated
+    if (!validationState.sampleMetadata || !has(validationState.sampleMetadata.tabsValidated, activeTemplateKey.value!)) {
+      setTabValidated(activeTemplateKey.value!, false);
+    }
+    addHooks();
+    // Revive any stashed suggestions (in localstorage) for the active template
+    metadataSuggestions.value = getPendingSuggestions(props.id, activeTemplate.value?.schemaClass!);
+    // Fetch suggestions generated by study-level forms
+    void fetchSuggestionsFromStudyDetails();
+    if (!canEditSampleMetadata()) {
+      harmonizerApi.setTableReadOnly();
+    }
+  }
+});
+
+// Get app banner height provided by SubmissionView. This will be used to correctly size
+// the DataHarmonizer container, which needs a fixed height.
+const appBannerHeight = inject(AppBannerHeightKey);
 </script>
 
 <template>
@@ -902,10 +842,10 @@ export default defineComponent({
             nudge-bottom="4px"
             :close-on-click="true"
           >
-            <template #activator="{ props }">
+            <template #activator="{ props: activatorProps }">
               <v-btn
                 variant="outlined"
-                v-bind="props"
+                v-bind="activatorProps"
               >
                 <v-icon class="pr-1">
                   mdi-eye
@@ -988,10 +928,10 @@ export default defineComponent({
             :key="templateKey"
             right
           >
-            <template #activator="{ props }">
+            <template #activator="{ props: activatorProps }">
               <div
                 style="display: flex;"
-                v-bind="props"
+                v-bind="activatorProps"
               >
                 <v-tab>
                   {{ HARMONIZER_TEMPLATES[templateKey]?.displayName }}
@@ -1063,6 +1003,7 @@ export default defineComponent({
           class="z-above-data-harmonizer"
         >
           <HarmonizerSidebar
+            :submission-id="id"
             :column-help="selectedHelpDict"
             :harmonizer-api="harmonizerApi"
             :harmonizer-template="activeTemplate!"
@@ -1103,9 +1044,9 @@ export default defineComponent({
           <v-tooltip
             top
           >
-            <template #activator="{ props }">
+            <template #activator="{ props: activatorProps }">
               <div
-                v-bind="props"
+                v-bind="activatorProps"
               >
                 <v-btn
                   color="success"
@@ -1194,7 +1135,7 @@ html {
 }
 
 .spreadsheet-input {
-  width: 0px;
+  width: 0;
 }
 
 .harmonizer-style-container {

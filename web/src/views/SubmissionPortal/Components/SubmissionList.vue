@@ -255,7 +255,7 @@ export default defineComponent({
   <div>
     <v-menu
       offset-x
-      left
+      location="left"
     >
       <template #activator="{ props }">
         <v-btn

@@ -294,12 +294,18 @@ class MetadataSuggestionRequest(BaseModel):
 
 class MetadataSuggestionType(str, Enum):
     ADD = "add"
+    """Indicates that a value is being suggested for a metadata slot that does not currently have a value."""
     REPLACE = "replace"
+    """Indicates that a value is being suggested for a metadata slot that already has a value."""
+    ATTENTION = "attention"
+    """Indicates that the user should be aware of the metadata slot, but no specific value is being suggested."""
 
 
 class MetadataSuggestion(BaseModel):
     type: MetadataSuggestionType
-    row: int
+    row: Optional[int] = None
     slot: str
-    value: str
+    value: Optional[str] = None
     current_value: Optional[str] = None
+    is_ai_generated: bool = False
+    source: Optional[str] = None

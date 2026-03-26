@@ -32,9 +32,10 @@ import {
   SuggestionsMode,
   SuggestionType,
 } from '@/views/SubmissionPortal/types';
-import { setPendingSuggestions } from '@/store/localStorage';
+import { getPendingSuggestions, setPendingSuggestions } from '@/store/localStorage';
 import * as api from './api';
 import useRequest from '@/use/useRequest.ts';
+import HarmonizerApi from '@/views/SubmissionPortal/harmonizerApi.ts';
 
 const permissionTitleToDbValueMap: Record<PermissionTitle, SubmissionEditorRole> = {
   Viewer: 'viewer',
@@ -873,13 +874,9 @@ async function unlockRecord(id: string) {
 }
 
 async function loadRecord(id: string) {
-  console.log("reset")
   reset();
-  console.log("request")
   const val = await api.getRecord(id);
-  console.log("update state")
   updateStateFromRecord(val);
-  console.log("finished")
 }
 
 watch(payloadObject, () => { hasChanged.value += 1; }, { deep: true });
@@ -894,6 +891,7 @@ function mergeSampleData(key: string | undefined, data: any[]) {
   };
 }
 
+const fetchSuggestionsFromSampleRowsRequest = useRequest();
 /**
  * Get metadata suggestions from the server and add them to the list of pending suggestions. Then sync the pending
  * suggestions with local storage.
@@ -903,26 +901,65 @@ function mergeSampleData(key: string | undefined, data: any[]) {
  * @param requests
  * @param batchSize
  */
-async function addMetadataSuggestions(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
-  const batches = chunk(requests, batchSize);
-  for (let i = 0; i < batches.length; i += 1) {
-    const batch = batches[i] || [];
+async function fetchSuggestionsFromSampleRows(submissionId: string, schemaClassName: string, requests: MetadataSuggestionRequest[], batchSize: number = 10) {
+  return fetchSuggestionsFromSampleRowsRequest.request(async () => {
+    const batches = chunk(requests, batchSize);
+    for (let i = 0; i < batches.length; i += 1) {
+      const batch = batches[i] || [];
 
 
-    const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
+      const suggestions = await api.getMetadataSuggestions(batch, suggestionType.value);
 
-    // Drop all the existing suggestions for the rows in this batch
-    batch.forEach((request) => {
-      metadataSuggestions.value = metadataSuggestions.value.filter(
-        (suggestion) => suggestion.row !== request.row,
-      );
-    });
+      // Drop all the existing suggestions for the rows in this batch
+      batch.forEach((request) => {
+        metadataSuggestions.value = metadataSuggestions.value.filter(
+          (suggestion) => suggestion.row !== request.row,
+        );
+      });
 
-    // Add the new suggestions to the list
-    metadataSuggestions.value.push(...suggestions);
-  }
+      // Add the new suggestions to the list
+      metadataSuggestions.value.push(...suggestions);
+    }
 
-  setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
+    setPendingSuggestions(submissionId, schemaClassName, metadataSuggestions.value);
+  });
+}
+
+const fetchSuggestionsFromStudyInfoRequest = useRequest();
+/**
+ * Get suggestions from the server based on study information. These suggestions are not tied to specific submission
+ * schema classes, so this function needs to sort out which classes the target slot is part of and then sync the pending
+ * suggestions with local storage. If there is an existing suggestion for the same slot, row and type as an incoming
+ * suggestion, the existing suggestion will be replaced by the incoming one. The in-memory list of suggestions will also
+ * be updated to trigger reactivity in the UI if the active schema class is the one being updated.
+ */
+async function fetchSuggestionsFromStudyInfo(submissionId: string, allSchemaClassNames: string[], activeSchemaClassName: string, harmonizerApi: HarmonizerApi) {
+  return fetchSuggestionsFromStudyInfoRequest.request(async () => {
+    const suggestions = await api.getMetadataSuggestionsFromStudyDetails(submissionId);
+    for (const schemaClassName of allSchemaClassNames) {
+      const suggestionsForClass = getPendingSuggestions(submissionId, schemaClassName);
+      suggestions.forEach((suggestion) => {
+        if (!harmonizerApi.isSlotInClass(suggestion.slot, schemaClassName)) {
+          return;
+        }
+        const existingIndex = suggestionsForClass.findIndex(
+          (s) => s.row === suggestion.row && s.slot === suggestion.slot && s.type === suggestion.type,
+        );
+        if (existingIndex >= 0) {
+          // Replace existing suggestion
+          suggestionsForClass[existingIndex] = suggestion;
+        } else {
+          // Add new suggestion
+          suggestionsForClass.push(suggestion);
+        }
+      });
+      setPendingSuggestions(submissionId, schemaClassName, suggestionsForClass);
+      if (schemaClassName === activeSchemaClassName) {
+        // If the active schema class is the one we just updated, also update the in-memory list of suggestions to trigger reactivity
+        metadataSuggestions.value = getPendingSuggestions(submissionId, schemaClassName);
+      }
+    }
+  });
 }
 
 /**
@@ -973,6 +1010,8 @@ export {
   suggestionType,
   SubmissionStatusEnum,
   submissionPages,
+  fetchSuggestionsFromSampleRowsRequest,
+  fetchSuggestionsFromStudyInfoRequest,
   /* functions */
   getSubmissionLockedBy,
   getPermissionLevel,
@@ -988,7 +1027,8 @@ export {
   canEditSubmissionMetadata,
   canEditSubmissionByStatus,
   editableByStatus,
-  addMetadataSuggestions,
+  fetchSuggestionsFromSampleRows,
+  fetchSuggestionsFromStudyInfo,
   removeMetadataSuggestions,
   templateHasData,
   checkJGITemplates,

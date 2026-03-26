@@ -217,6 +217,15 @@ class Settings(BaseSettings):
     github_authentication_token: Optional[str] = None
     github_issue_assignee: Optional[str] = None
 
+    llm_service_account_credentials_file: Optional[str] = None
+    """Path to the service account credentials JSON file used by nmdc-metadata-suggestor-ai-tool.
+
+    If needed for local development, get this file from an NMDC team member. The file should be
+    copied into the auth subfolder of this project, and the corresponding environment variable
+    should be set in your .env file as `/auth/...` since the local auth folder is mounted to `/auth`
+    in the docker container.
+    """
+
     @property
     def current_db_uri(self) -> str:
         if self.environment == "testing":
