@@ -5,7 +5,7 @@ import zipfile
 from enum import StrEnum
 from importlib import resources
 from io import BytesIO, RawIOBase, StringIO
-from typing import Any, Dict, List, Optional, Union
+from typing import IO, Any, Dict, List, Optional, Union, cast
 from uuid import UUID, uuid4
 
 import httpx
@@ -487,7 +487,7 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
         biosample_ids = crud.get_biosample_ids(db, q.conditions)
         buf = _StreamingBuffer()
 
-        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zf:
+        with zipfile.ZipFile(cast(IO[bytes], buf), "w", zipfile.ZIP_DEFLATED) as zf:
             for high_level_type in q.endpoints:
                 filename = allowed_document_types.get(high_level_type)
                 if filename is None:
