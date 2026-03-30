@@ -6,14 +6,10 @@ from nmdc_schema.nmdc import SubmissionStatusEnum
 from sqlalchemy.orm import Session
 from starlette.testclient import TestClient
 
-from nmdc_server import fakes, models
+from nmdc_server import fakes
 from nmdc_server.ingest import envo
 from nmdc_server.models import SubmissionEditorRole
 from nmdc_server.validation.env_triad import (
-    ASTRONOMICAL_BODY_PART,
-    BIOME,
-    ENVIRONMENTAL_MATERIAL,
-    FieldValidationResult,
     parse_ontology_id,
     validate_submission_triad,
 )
@@ -36,43 +32,34 @@ def ontology_hierarchy(db: Session):
     - PO:0025143 (tepal apex) - plant ontology term (in ontology_class only)
     """
     # Root terms
+    fakes.OntologyClassFactory(id="ENVO:00000001", name="environmental system", is_root=True)
     fakes.OntologyClassFactory(
-        id="ENVO:00000001", name="environmental system", is_root=True
+        id="ENVO:00000428", name="biome", definition="A biome is an ecosystem"
     )
     fakes.OntologyClassFactory(
-        id="ENVO:00000428", name="biome",
-        definition="A biome is an ecosystem"
+        id="ENVO:00000446", name="terrestrial biome", definition="A biome that is on land"
     )
     fakes.OntologyClassFactory(
-        id="ENVO:00000446", name="terrestrial biome",
-        definition="A biome that is on land"
+        id="ENVO:01000219",
+        name="anthropogenic terrestrial biome",
+        definition="A terrestrial biome that has been modified by humans",
+    )
+    fakes.OntologyClassFactory(id="ENVO:00010483", name="environmental material", is_root=True)
+    fakes.OntologyClassFactory(
+        id="ENVO:00001998", name="soil", definition="Soil is an environmental material"
+    )
+    fakes.OntologyClassFactory(id="ENVO:01000813", name="astronomical body part", is_root=True)
+    fakes.OntologyClassFactory(
+        id="ENVO:00000067", name="cave", definition="A natural underground space"
     )
     fakes.OntologyClassFactory(
-        id="ENVO:01000219", name="anthropogenic terrestrial biome",
-        definition="A terrestrial biome that has been modified by humans"
-    )
-    fakes.OntologyClassFactory(
-        id="ENVO:00010483", name="environmental material", is_root=True
-    )
-    fakes.OntologyClassFactory(
-        id="ENVO:00001998", name="soil",
-        definition="Soil is an environmental material"
-    )
-    fakes.OntologyClassFactory(
-        id="ENVO:01000813", name="astronomical body part", is_root=True
-    )
-    fakes.OntologyClassFactory(
-        id="ENVO:00000067", name="cave",
-        definition="A natural underground space"
-    )
-    fakes.OntologyClassFactory(
-        id="ENVO:99999999", name="obsolete term",
-        is_obsolete=True, definition="This term is obsolete"
+        id="ENVO:99999999",
+        name="obsolete term",
+        is_obsolete=True,
+        definition="This term is obsolete",
     )
     # Non-ENVO term (Plant Ontology)
-    fakes.OntologyClassFactory(
-        id="PO:0025143", name="tepal apex"
-    )
+    fakes.OntologyClassFactory(id="PO:0025143", name="tepal apex")
     db.commit()
 
     # Relationships: rdfs:subClassOf (direct parents)
@@ -119,28 +106,51 @@ def _make_submission_with_samples(
             "sampleData": sample_data,
             "packageName": package_name,
             "multiOmicsForm": {
-                "studyNumber": "", "JGIStudyId": "",
-                "omicsProcessingTypes": [], "facilities": [],
+                "studyNumber": "",
+                "JGIStudyId": "",
+                "omicsProcessingTypes": [],
+                "facilities": [],
             },
             "studyForm": {
-                "studyName": "", "piName": "", "piEmail": "", "piOrcid": "",
-                "linkOutWebpage": [], "description": "", "notes": "",
-                "contributors": [], "alternativeNames": [],
-                "GOLDStudyId": "", "NCBIBioProjectId": "",
+                "studyName": "",
+                "piName": "",
+                "piEmail": "",
+                "piOrcid": "",
+                "linkOutWebpage": [],
+                "description": "",
+                "notes": "",
+                "contributors": [],
+                "alternativeNames": [],
+                "GOLDStudyId": "",
+                "NCBIBioProjectId": "",
             },
             "templates": [],
             "addressForm": {
                 "shipper": {
-                    "name": "", "email": "", "phone": "", "line1": "",
-                    "line2": "", "city": "", "state": "", "postalCode": "", "country": "",
+                    "name": "",
+                    "email": "",
+                    "phone": "",
+                    "line1": "",
+                    "line2": "",
+                    "city": "",
+                    "state": "",
+                    "postalCode": "",
+                    "country": "",
                 },
-                "shippingConditions": "", "sample": "", "description": "",
-                "experimentalGoals": "", "randomization": "",
-                "permitNumber": "", "biosafetyLevel": "", "comments": "",
+                "shippingConditions": "",
+                "sample": "",
+                "description": "",
+                "experimentalGoals": "",
+                "randomization": "",
+                "permitNumber": "",
+                "biosafetyLevel": "",
+                "comments": "",
             },
             "validationState": {
-                "studyForm": None, "multiOmicsForm": None,
-                "sampleEnvironmentForm": None, "senderShippingInfoForm": None,
+                "studyForm": None,
+                "multiOmicsForm": None,
+                "sampleEnvironmentForm": None,
+                "senderShippingInfoForm": None,
                 "sampleMetadata": None,
             },
         },
@@ -189,7 +199,8 @@ def test_parse_ontology_id_uberon():
 def test_valid_triad_passes_ontology_checks(db: Session, ontology_hierarchy, logged_in_user):
     """A submission with valid ontology terms in the correct hierarchy should pass."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -211,7 +222,8 @@ def test_valid_triad_passes_ontology_checks(db: Session, ontology_hierarchy, log
 def test_missing_required_fields(db: Session, ontology_hierarchy, logged_in_user):
     """Missing env triad fields should produce errors."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -230,7 +242,8 @@ def test_missing_required_fields(db: Session, ontology_hierarchy, logged_in_user
 def test_empty_string_fields(db: Session, ontology_hierarchy, logged_in_user):
     """Empty string env triad fields should produce errors."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -251,7 +264,8 @@ def test_empty_string_fields(db: Session, ontology_hierarchy, logged_in_user):
 def test_unparseable_ontology_id(db: Session, ontology_hierarchy, logged_in_user):
     """Values without a [CURIE] should fail validation."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -275,7 +289,8 @@ def test_unparseable_ontology_id(db: Session, ontology_hierarchy, logged_in_user
 def test_term_not_in_database(db: Session, ontology_hierarchy, logged_in_user):
     """Terms with valid CURIE format but not in the database should fail."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -300,7 +315,8 @@ def test_term_not_in_database(db: Session, ontology_hierarchy, logged_in_user):
 def test_obsolete_term_rejected(db: Session, ontology_hierarchy, logged_in_user):
     """Obsolete terms should fail validation."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -323,7 +339,8 @@ def test_obsolete_term_rejected(db: Session, ontology_hierarchy, logged_in_user)
 def test_wrong_hierarchy_broad_scale_not_biome(db: Session, ontology_hierarchy, logged_in_user):
     """env_broad_scale must be a subclass of biome."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -347,7 +364,8 @@ def test_wrong_hierarchy_broad_scale_not_biome(db: Session, ontology_hierarchy, 
 def test_wrong_hierarchy_medium_is_biome(db: Session, ontology_hierarchy, logged_in_user):
     """env_medium should NOT be a subclass of biome."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -371,7 +389,8 @@ def test_wrong_hierarchy_medium_is_biome(db: Session, ontology_hierarchy, logged
 def test_duplicate_term_across_triad_slots(db: Session, ontology_hierarchy, logged_in_user):
     """Same ontology ID used in multiple triad slots should produce cross-field error."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -396,7 +415,8 @@ def test_po_term_allowed_for_plant_associated_local_scale(
 ):
     """PO terms should be allowed for env_local_scale in plant_associated_data."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "plant_associated_data": [
                 {
@@ -419,7 +439,8 @@ def test_po_term_allowed_for_plant_associated_local_scale(
 def test_multiple_samples_mixed_validity(db: Session, ontology_hierarchy, logged_in_user):
     """Submission with mix of valid and invalid samples should fail overall."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -450,7 +471,8 @@ def test_multiple_samples_mixed_validity(db: Session, ontology_hierarchy, logged
 def test_non_environmental_data_slots_ignored(db: Session, ontology_hierarchy, logged_in_user):
     """Sample data under non-ENVIRONMENTAL_DATA_SLOTS keys should be ignored."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "jgi_mg_data": [
                 {
@@ -470,7 +492,8 @@ def test_non_environmental_data_slots_ignored(db: Session, ontology_hierarchy, l
 def test_submission_with_no_sample_data(db: Session, ontology_hierarchy, logged_in_user):
     """Submission with empty sampleData should pass (no samples to validate)."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={},
     )
 
@@ -487,7 +510,8 @@ def test_validate_env_triad_single_endpoint(
 ):
     """POST /metadata_submission/{id}/validate_env_triad returns validation results."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -514,7 +538,8 @@ def test_validate_env_triad_single_endpoint_with_errors(
 ):
     """Endpoint returns structured errors for invalid submissions."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -553,7 +578,8 @@ def test_validate_env_triad_bulk_endpoint(
 ):
     """Admin bulk validation returns results for matching submissions."""
     _make_submission_with_samples(
-        db, logged_in_admin_user,
+        db,
+        logged_in_admin_user,
         sample_data={
             "soil_data": [
                 {
@@ -583,7 +609,8 @@ def test_status_change_blocked_for_invalid_triad(
 ):
     """Transitioning to SubmittedPendingReview should fail with invalid env triad."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -613,7 +640,8 @@ def test_status_change_allowed_for_valid_triad(
 ):
     """Transitioning to SubmittedPendingReview should succeed with valid env triad."""
     submission = _make_submission_with_samples(
-        db, logged_in_user,
+        db,
+        logged_in_user,
         sample_data={
             "soil_data": [
                 {
@@ -634,5 +662,7 @@ def test_status_change_allowed_for_valid_triad(
         url=f"/api/metadata_submission/{submission.id}/status",
         json=jsonable_encoder({"status": SubmissionStatusEnum.SubmittedPendingReview.text}),
     )
-    assert response.status_code == 200, f"Expected 200 but got {response.status_code}: {response.text}"
+    assert (
+        response.status_code == 200
+    ), f"Expected 200 but got {response.status_code}: {response.text}"
     assert response.json()["status"] == SubmissionStatusEnum.SubmittedPendingReview.text

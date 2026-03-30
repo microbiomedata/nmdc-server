@@ -163,9 +163,7 @@ def _prefetch_term_data(db: Session, ontology_ids: set[str]) -> _PrefetchedTermD
         return result
 
     # Query 1: Check envo_term for existence and obsolete status
-    envo_terms = (
-        db.query(EnvoTerm.id, EnvoTerm.data).filter(EnvoTerm.id.in_(ontology_ids)).all()
-    )
+    envo_terms = db.query(EnvoTerm.id, EnvoTerm.data).filter(EnvoTerm.id.in_(ontology_ids)).all()
     found_ids = set()
     for term_id, data in envo_terms:
         found_ids.add(term_id)
@@ -263,9 +261,7 @@ def _validate_field(
 
     # Hierarchy checks
     term_ancestors = prefetched.ancestors.get(ontology_id, set())
-    required_ancestor, disallowed_ancestors = FIELD_HIERARCHY_RULES.get(
-        field_name, (None, [])
-    )
+    required_ancestor, disallowed_ancestors = FIELD_HIERARCHY_RULES.get(field_name, (None, []))
 
     if required_ancestor:
         # For env_local_scale, allow non-ENVO terms from permitted ontologies
@@ -332,22 +328,41 @@ def _validate_sample_triad(
     # Cross-field check: no duplicate ontology IDs across the three triad slots
     seen_ids: dict[str, str] = {}
     for field_name in ENV_TRIAD_FIELDS:
-        field_result: FieldValidationResult = getattr(result, field_name)
-        if field_result.ontology_id:
-            if field_result.ontology_id in seen_ids:
+        fr: FieldValidationResult = getattr(result, field_name)
+        if fr.ontology_id:
+            if fr.ontology_id in seen_ids:
                 result.cross_field_errors.append(
-                    f"Ontology term '{field_result.ontology_id}' is used in both "
-                    f"{seen_ids[field_result.ontology_id]} and {field_name}"
+                    f"Ontology term '{fr.ontology_id}' is used in both "
+                    f"{seen_ids[fr.ontology_id]} and {field_name}"
                 )
             else:
-                seen_ids[field_result.ontology_id] = field_name
+                seen_ids[fr.ontology_id] = field_name
 
     return result
 
 
-def validate_submission_triad(
-    db: Session, submission: Any
-) -> SubmissionTriadValidationResult:
+def _collect_ids_needing_lookup(sample_data: dict, schema_enums: dict, env_pkg: str) -> set[str]:
+    """First pass: collect ontology IDs that need DB lookup (didn't pass enum check)."""
+    ids_needing_lookup: set[str] = set()
+    for template_type in sample_data:
+        if template_type not in ENVIRONMENTAL_DATA_SLOTS:
+            continue
+        samples = sample_data[template_type] or []
+        for sample in samples:
+            for field_name in ENV_TRIAD_FIELDS:
+                value = sample.get(field_name)
+                if not value or not str(value).strip():
+                    continue
+                cleaned = str(value).strip().lstrip("_")
+                if _check_enum_membership(cleaned, field_name, env_pkg, schema_enums):
+                    continue
+                ontology_id = parse_ontology_id(cleaned)
+                if ontology_id:
+                    ids_needing_lookup.add(ontology_id)
+    return ids_needing_lookup
+
+
+def validate_submission_triad(db: Session, submission: Any) -> SubmissionTriadValidationResult:
     """Validate all env triad fields across all samples in a submission.
 
     This is the main entry point for validation. It:
@@ -367,27 +382,8 @@ def validate_submission_triad(
     # Load schema enums once
     schema_enums = fetch_submission_schema_enums()
 
-    # First pass: collect ontology IDs that need DB lookup (didn't pass enum check)
-    ids_needing_lookup: set[str] = set()
-    for template_type in sample_data:
-        if template_type not in ENVIRONMENTAL_DATA_SLOTS:
-            continue
-        samples = sample_data[template_type] or []
-        for sample in samples:
-            for field_name in ENV_TRIAD_FIELDS:
-                value = sample.get(field_name)
-                if not value or not str(value).strip():
-                    continue
-                cleaned = str(value).strip().lstrip("_")
-                # If it's in the enum, no DB lookup needed
-                if _check_enum_membership(cleaned, field_name, env_pkg, schema_enums):
-                    continue
-                # Otherwise, parse the ID for DB lookup
-                ontology_id = parse_ontology_id(cleaned)
-                if ontology_id:
-                    ids_needing_lookup.add(ontology_id)
-
-    # Batch prefetch only the terms that need ontology checks
+    # First pass: collect IDs needing DB lookup, then batch prefetch
+    ids_needing_lookup = _collect_ids_needing_lookup(sample_data, schema_enums, env_pkg)
     prefetched = _prefetch_term_data(db, ids_needing_lookup)
 
     # Second pass: validate each sample
