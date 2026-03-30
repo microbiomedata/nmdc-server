@@ -451,8 +451,11 @@ class _StreamingBuffer(RawIOBase):
 @router.post("/download_metadata", tags=["bulk_download"])
 async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get_db)):
     """
-    Download multiple metadata lists as a zip file given a list of endpoint labels.
-    Endpoint labels are mapped to functions that retrieve JSON.
+    Download multiple metadata lists as a zip file given a list of requested
+    document types.
+
+    The request body should specify `endpoints` as a list of `high_level_type`
+    values (e.g., `"nmdc:Biosample"`, `"nmdc:Study"`).
 
     Uses a `StreamingResponse` so that FastAPI sends the HTTP response headers to
     the client (and through any reverse proxies) immediately when this handler
@@ -467,7 +470,7 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
     one DB batch (~1 000 rows) rather than the full uncompressed dataset.
     """
     # The set of document types the client is allowed to request.  Each value is used
-    # directly as the high_level_type filter in BiosampleRelatedDocumen.
+    # directly as the high_level_type filter in BiosampleRelatedDocument.
     # The value is used as the JSON file name.
     allowed_document_types = {
         "nmdc:Biosample": "biosamples",
@@ -495,14 +498,17 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
 
                 with zf.open(f"{filename}.json", "w") as jf:
                     if not biosample_ids:
+                        # Write an empty list if there are no biosamples matching the query
                         jf.write(b"[]")
                     else:
+                        # Stream each document as a JSON object on a separate line, wrapped in a list.
                         jf.write(b"[\n")
                         first = True
                         for doc in crud.get_documents_by_biosample_ids(
                             db, biosample_ids, high_level_type
                         ):
                             if not first:
+                                # Write a comma before all but the first document to maintain valid JSON list syntax.
                                 jf.write(b",\n")
                             jf.write(json.dumps(doc, ensure_ascii=False).encode("utf-8"))
                             first = False
@@ -512,6 +518,7 @@ async def download_metadata(q: query.MultiSearchQuery, db: Session = Depends(get
                             chunk = buf.drain()
                             if chunk:
                                 yield chunk
+                        # End the JSON list.
                         jf.write(b"\n]")
 
                 # The entry's compressor is finalised and the data descriptor is

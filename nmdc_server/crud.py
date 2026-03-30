@@ -541,7 +541,7 @@ def get_documents_by_biosample_ids(
         .where(models.BiosampleRelatedDocument.biosample_ids.overlap(biosample_ids_list))  # type: ignore[attr-defined]
         .where(models.BiosampleRelatedDocument.high_level_type == high_level_type)
         .order_by(models.BiosampleRelatedDocument.id)
-        .execution_options(yield_per=batch_size)
+        .execution_options(stream_results=True, yield_per=batch_size)
     )
     for row in db.execute(statement):
         yield row[0]
